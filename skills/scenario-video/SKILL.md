@@ -1,6 +1,7 @@
 ---
 name: scenario-video
 description: "Use when generating or editing video on Scenario via MCP: text-to-video, image-to-video (animating a still, first/last frame anchors), motion prompt iteration, lipsync and talking avatars, video upscale to 4K, prompt-based video editing, trim, split, concat, reframe, resize, extend, frame extraction, background removal, or waiting on long video jobs. Keywords: txt2video, img2video, video2video, I2V, T2V, V2V, ads, film previz, game cinematics, social clips."
+license: MIT
 ---
 
 # Scenario Video Generation and Editing

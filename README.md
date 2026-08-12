@@ -1,6 +1,8 @@
 # Scenario Agent Skills
 
-[Agent Skills](https://agentskills.io) that teach AI coding agents (Claude Code, Cursor, Codex, Copilot, and 70+ others) how to create production-ready content with [Scenario](https://scenario.com) through the [Scenario MCP server](https://mcp.scenario.com): images, video, audio, textures, skyboxes, 3D assets, and custom-trained models, for games, entertainment, and any creative vertical.
+Agent Skills that teach AI coding agents (Claude Code, Cursor, Codex, Copilot, and 70+ others) how to create production-ready content with [Scenario](https://scenario.com) through the [Scenario MCP server](https://mcp.scenario.com): images, video, audio, textures, skyboxes, 3D assets, and custom-trained models, for games, entertainment, and any creative vertical.
+
+Skills follow the [Agent Skills](https://agentskills.io) format.
 
 [![skills.sh](https://skills.sh/b/scenario-labs/skills)](https://skills.sh/scenario-labs/skills)
 
@@ -24,15 +26,15 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 
 ## Skills
 
-| Skill                                                            | Use it for                                                                                                       |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [scenario](skills/scenario/SKILL.md)                             | Connecting to the Scenario MCP and the core generation loop: discover, schema, run, wait, display, download       |
-| [scenario-game-assets](skills/scenario-game-assets/SKILL.md)     | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches        |
-| [scenario-textures](skills/scenario-textures/SKILL.md)           | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                         |
-| [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)           | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                    |
-| [scenario-3d](skills/scenario-3d/SKILL.md)                       | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download  |
-| [scenario-video](skills/scenario-video/SKILL.md)                 | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities |
-| [scenario-audio](skills/scenario-audio/SKILL.md)                 | Music, sound effects, voice and speech generation, video scoring, audio utilities                                 |
+| Skill                                                              | Use it for                                                                                                        |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| [scenario](skills/scenario/SKILL.md)                               | Connecting to the Scenario MCP and the core generation loop: discover, schema, run, wait, display, download       |
+| [scenario-game-assets](skills/scenario-game-assets/SKILL.md)       | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches        |
+| [scenario-textures](skills/scenario-textures/SKILL.md)             | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                         |
+| [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)             | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                    |
+| [scenario-3d](skills/scenario-3d/SKILL.md)                         | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download  |
+| [scenario-video](skills/scenario-video/SKILL.md)                   | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities |
+| [scenario-audio](skills/scenario-audio/SKILL.md)                   | Music, sound effects, voice and speech generation, video scoring, audio utilities                                 |
 | [scenario-model-training](skills/scenario-model-training/SKILL.md) | Training custom models for style, character, or product consistency, and generating with them                     |
 
 ## Example prompts
@@ -45,7 +47,7 @@ Once the skills are installed and the MCP server is connected, ask your agent th
 
 ## What is an Agent Skill?
 
-A skill is a `SKILL.md` file with procedural knowledge an agent loads on demand. The format is the open [Agent Skills specification](https://agentskills.io/specification); the `skills` CLI installs these files into 70+ agents, and the ecosystem directory lives at [skills.sh](https://www.skills.sh).
+A skill is a `SKILL.md` file with procedural knowledge an agent loads on demand, defined by the open [Agent Skills specification](https://agentskills.io/specification). The `skills` CLI installs these files into 70+ agents, and the ecosystem directory lives at [skills.sh](https://www.skills.sh).
 
 ## Contributing
 

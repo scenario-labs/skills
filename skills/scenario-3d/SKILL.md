@@ -1,6 +1,7 @@
 ---
 name: scenario-3d
 description: Use when generating or handling 3D assets through the Scenario MCP server, including text-to-3D or image-to-3D meshes, GLB, FBX, OBJ, or VOX files, PBR-textured or game-ready models, voxel models, multi-view reconstruction, retexture, remesh, UV unwrap, or rigging steps, previewing a mesh in the inline 3D viewer, capturing a viewer screenshot, or downloading a model for import into Unity, Unreal, Godot, or Blender.
+license: MIT
 ---
 
 # Scenario 3D Asset Workflows

@@ -1,6 +1,7 @@
 ---
 name: scenario
 description: Use when connecting a coding agent to Scenario (scenario.com) through MCP, or when a task involves generating images, video, 3D, audio, sprites, textures, or game assets with Scenario. Also when picking a Scenario model, refining a generation prompt, uploading reference images, waiting on generation jobs, checking credits or quota, hitting Scenario auth or Forbidden errors, or setting up mcp.scenario.com in Claude Code, Cursor, or VSCode.
+license: MIT
 ---
 
 # Scenario

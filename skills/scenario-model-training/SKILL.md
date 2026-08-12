@@ -1,6 +1,7 @@
 ---
 name: scenario-model-training
 description: "Use when generated assets must keep a consistent style, character, or product look and prompts or reference images stop scaling, or when a user asks to train a custom model on their images through the Scenario MCP, fine-tune a LoRA, clone a voice, upload a training dataset, configure epochs, estimate training cost, or generate with their own trained model. Keywords: custom model, fine-tune, LoRA training, dataset, training job, style consistency."
+license: MIT
 ---
 
 # Scenario Model Training

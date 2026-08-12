@@ -31,7 +31,7 @@ CI enforces the mechanical parts of this contract on every push and PR: [`skills
 uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
 ```
 
-- Frontmatter: `name` and `description` only, under 1024 characters total.
+- Frontmatter: `name`, `description`, and `license: MIT`, nothing else. The spec caps `name` at 64 characters and `description` at 1024; the other spec-optional fields (`compatibility`, `metadata`, `allowed-tools`) are not used in this repo.
 - `name`: lowercase letters, numbers, and hyphens; must equal the directory name.
 - `description`: third person, starts with "Use when", describes triggering conditions only (never a summary of the skill's workflow), under 500 characters, rich in keywords an agent would search for.
 - Body: 400-600 words (hard cap 900). Structure: Overview, Quick reference, one excellent worked example, Common mistakes.

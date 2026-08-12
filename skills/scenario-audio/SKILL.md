@@ -1,6 +1,7 @@
 ---
 name: scenario-audio
 description: Use when generating or handling audio on Scenario via MCP. Triggers include music tracks, background scores, soundtracks, game sound effects, SFX, foley, ambience, looping audio, voiceover, narration, speech, TTS, text-to-speech, voice cloning, re-voicing a recording, scoring or adding sound to a video, transcription, or requests to create, wait on, play, or download audio files (MP3, WAV) with Scenario tools.
+license: MIT
 ---
 
 # Scenario Audio Generation
