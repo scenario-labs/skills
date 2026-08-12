@@ -12,18 +12,12 @@ Scenario (scenario.com) generates AI images, video, 3D, and audio across 500+ mo
 
 ## Setup
 
-Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Two auth methods, same endpoint:
-
-- OAuth (recommended): add the URL and sign in with a Scenario account.
-- API key: from app.scenario.com/settings/api, sent as `Authorization: Basic base64(key:secret)`.
+Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: add the URL, sign in with a Scenario account, and no credentials pass through the conversation.
 
 Claude Code:
 
 ```bash
 claude mcp add --transport http scenario https://mcp.scenario.com/mcp
-# API key variant:
-claude mcp add --transport http scenario https://mcp.scenario.com/mcp \
-  --header "Authorization: Basic $(echo -n 'KEY:SECRET' | base64)"
 ```
 
 Cursor / VSCode (`mcp.json`):
@@ -32,7 +26,7 @@ Cursor / VSCode (`mcp.json`):
 { "mcpServers": { "scenario": { "url": "https://mcp.scenario.com/mcp" } } }
 ```
 
-For API key auth, add `"headers": {"Authorization": "Basic <base64 key:secret>"}`.
+For headless or CI use, the same endpoint accepts API keys (`Authorization: Basic base64(key:secret)`, keys from app.scenario.com/settings/api). Build the header per the [connection guide](https://mcp.scenario.com/docs) and keep it out of the conversation: reference an environment variable in the client config (`--header "Authorization: Basic $SCENARIO_MCP_AUTH"`) or edit the config file directly. Never ask an agent to collect, encode, or echo a key or secret.
 
 The default toolset is the core loop below. Reconnect with `https://mcp.scenario.com/mcp?toolsets=full` to expose everything, or reach any tool at runtime via `scenario_tools_search` plus the `scenario_tool_execute_read` / `write` / `delete` executors.
 
