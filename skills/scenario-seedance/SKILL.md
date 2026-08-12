@@ -38,7 +38,7 @@ In reference mode, frame one anchors to the base state of the reference world, a
 3. `upload_asset` the product stills (see the `scenario` skill) to get asset ids.
 4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "@image1 defines the bottle and label. Slow dolly-in as condensation beads. No text, no captions.", "referenceImages": ["asset_a", "asset_b"], "duration": 8, "resolution": "720p", "generateAudio": false}}` for the cost estimate; re-estimate after any change to duration, resolution, or references.
 5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
-6. `asset_display` the output. For a file, take the URL from `asset_get` and fetch it with `curl -L` (`asset_download` converts image formats only).
+6. `asset_display` the output. For a file, `asset_download` with no `format` returns a download URL; fetch it with `curl -L` (`format` converts image formats only).
 
 ## Common mistakes
 

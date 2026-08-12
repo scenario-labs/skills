@@ -32,4 +32,5 @@ The auto-caption on a returned asset describes what the model thinks it made and
 
 - `model_run` with `dry_run: true` returns the estimate and creates no job; dry-run before a batch. Duration, resolution, and reference videos carry cost (the schema flags `cost_impact`); reference images and audio do not.
 - Reference audio above about 100KB goes up with the multipart `upload_asset` flow: PUT each part with no added checksum headers, then `upload_asset_complete`.
-- For video and audio files, `asset_download` converts image formats only: take the file URL from `asset_get` and fetch it with `curl -L`.
+- `asset_download` returns a download URL for any asset kind; its `format` parameter converts image formats only, so omit it for video and audio. Fetch with `curl -L`: the URL may redirect.
+- `asset_get` carries a `url` too, plus measured `properties` (`duration`, `frameRate`, `nbFrames`, `width`, `height`, `codecName`). That is the cheap way to check a clip's real length before laying it into a timeline: a model asked for eight seconds does not always return exactly eight.

@@ -14,15 +14,15 @@ Connection and the core generation loop: see the `scenario` skill in this repo.
 
 ## Quick reference
 
-| Step           | Tool                          | Notes                                                                                                      |
-| -------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Find a model   | `search`                      | `target="models"`, `public=true`, query `"image to video"`, `"video upscale"`, `"lipsync"`, `"video edit"` |
-| Inspect inputs | `model_schema_get`            | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)             |
-| Upload source  | `upload_asset`                | A local still or clip becomes an `asset_id`; never pass file paths                                         |
-| Refine prompt  | `prompt_spark`                | Optional; rewrites a thin motion idea into an on-model prompt                                              |
-| Generate       | `model_run`                   | `wait=false` for video; `dry_run=true` to estimate cost first                                              |
-| Wait           | `jobs_wait`                   | Re-call with the returned `pending_job_ids` until done                                                     |
-| Review         | `asset_display` / `asset_get` | Display inline; save video from the `asset_get` URL with `curl -L`                                         |
+| Step           | Tool                               | Notes                                                                                                      |
+| -------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Find a model   | `search`                           | `target="models"`, `public=true`, query `"image to video"`, `"video upscale"`, `"lipsync"`, `"video edit"` |
+| Inspect inputs | `model_schema_get`                 | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)             |
+| Upload source  | `upload_asset`                     | A local still or clip becomes an `asset_id`; never pass file paths                                         |
+| Refine prompt  | `prompt_spark`                     | Optional; rewrites a thin motion idea into an on-model prompt                                              |
+| Generate       | `model_run`                        | `wait=false` for video; `dry_run=true` to estimate cost first                                              |
+| Wait           | `jobs_wait`                        | Re-call with the returned `pending_job_ids` until done                                                     |
+| Review         | `asset_display` / `asset_download` | Display inline; `asset_download` returns the file URL, save it with `curl -L`                              |
 
 ## Worked example: animate a key art still into a short ad clip
 
@@ -31,7 +31,7 @@ Connection and the core generation loop: see the `scenario` skill in this repo.
 3. `upload_asset` the still; it returns `asset_id="asset_abc"`.
 4. `model_run` with `parameters={"image": "asset_abc", "prompt": "slow dolly-in, steam rising from the mug, shallow depth of field"}` and `wait=false`. Returns a `job_id`.
 5. `jobs_wait` with `job_ids=["job_xyz"]`. On `status="in_progress"`, call again, passing the returned `pending_job_ids` as `job_ids`.
-6. `asset_display` the output video; save the file from the `asset_get` URL with `curl -L`.
+6. `asset_display` the output video; `asset_download` (no `format`) returns the file URL, save it with `curl -L`.
 
 Iterating on motion: the source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. Several image-to-video models also accept first and last frame anchors or keyframe sequences (Kling, Veo 3.1, Seedance, Luma Ray 3.2); take exact parameter names from `model_schema_get`, never from memory.
 
@@ -52,4 +52,4 @@ All editing is `model_run` on a video-input model; discover each with `search`:
 - Polling `job_get` in a loop: use `jobs_wait`; its ~180s timeout is not an error; re-call with `pending_job_ids`.
 - Treating search hits as stable: catalogs evolve, so re-run `search` and prefer non-deprecated hits (many deprecated models carry a `deprecated:<replacement_id>` tag pointing at the successor; some only a bare tag).
 - Pasting raw CDN URLs into chat: use `asset_display` for inline preview.
-- Downloading video with `asset_download`: image conversion only; take the file URL from `asset_get`.
+- Passing `format` to `asset_download` for a video: it converts image formats only, so omit it.

@@ -19,7 +19,7 @@ Scenario generates audio through the same loop as images: discover a model, read
 | Generate       | `model_run`                                                                              | schema-conformant parameters; wait=false for long jobs                    |
 | Wait           | `jobs_wait`                                                                              | blocks server-side; re-call passing pending_job_ids as job_ids on timeout |
 | Listen         | `asset_display`                                                                          | renders an inline audio player                                            |
-| Save           | `asset_get`                                                                              | file URL, then `curl -L -o out.mp3 "<url>"`                               |
+| Save           | `asset_download`                                                                         | returns a download URL: `curl -L -o out.mp3 "<url>"`                      |
 
 Find existing audio assets with `search` target="assets", filters={kind: "audio"}. OAuth callers pass team_id and project_id on every call (discover them with `teams_list`; see the `scenario` skill).
 
@@ -38,7 +38,7 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 3. `model_run` model_id="model_elevenlabs-sound-effects-v2", parameters={"prompt": "heavy wooden treasure chest creaking open, single event, dry, no music"}.
 4. If the response is status='in_progress', `jobs_wait` job_ids=["job_xxx"]. Timeout is not an error; re-call with the returned pending_job_ids as job_ids.
 5. `asset_display` asset_id="asset_xxx" to play it inline.
-6. `asset_get` asset_id="asset_xxx", then save its file URL with `curl -L`.
+6. `asset_download` asset_id="asset_xxx" with no `format`, then save the returned URL with `curl -L`.
 
 Prompting tips:
 
@@ -52,6 +52,6 @@ Prompting tips:
 - Skipping `model_schema_get`: one audio model's parameters will not fit another (voices, durations, and lyric fields all differ).
 - Polling `job_get` in a loop: music jobs can run minutes. Use `jobs_wait`; on timeout re-call with pending_job_ids.
 - Pasting raw asset URLs into chat: use `asset_display` to play audio.
-- Saving audio with `asset_download`: image conversion only; take the file URL from `asset_get`.
+- Passing `format` to `asset_download` for audio: it converts image formats only, so omit it.
 - Putting voice direction inside TTS text ("say this angrily"): direction can end up spoken. Use the schema's emotion or voice fields.
 - Sending image parameters (width, height) to audio models: their schemas do not accept them.

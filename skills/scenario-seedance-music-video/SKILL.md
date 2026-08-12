@@ -56,5 +56,5 @@ Each shot runs until the next starts and the last to the master's end, so gaps a
 - Prompting an opening state in reference mode: it will not appear; pass a first-frame `image`.
 - Judging a clip from a sparse contact sheet: a continuous camera move looks like a hard cut; measure first (see [references/shots.md](references/shots.md)).
 - Trusting the beat grid: sections and cut candidates are suggestions; check them against what you hear.
-- Downloading clips with `asset_download`: image conversion only; take each file URL from `asset_get` and `curl -L` it.
+- Passing `format` to `asset_download` for a clip: it converts image formats only, so omit it and `curl -L` the returned URL.
 - Calling it done without watching the delivery with sound, then muted.
