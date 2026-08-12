@@ -20,7 +20,12 @@
     {
       "title": "Video and audio",
       "description": "Video generation and editing, music, sound effects, voice, and speech.",
-      "skills": ["scenario-video", "scenario-audio"]
+      "skills": [
+        "scenario-video",
+        "scenario-seedance",
+        "scenario-seedance-music-video",
+        "scenario-audio"
+      ]
     },
     {
       "title": "Custom models",
