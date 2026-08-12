@@ -12,7 +12,6 @@ delivered soundtrack is bit for bit the file you supplied.
 # MIT. Ported from https://github.com/edemaistre/scenario-seedance-2-5-music-video,
 # Copyright (c) 2026 Emmanuel de Maistre.
 
-
 from __future__ import annotations
 
 import argparse
