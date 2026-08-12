@@ -26,7 +26,7 @@ jobs:
       - name: House style
         run: ./scripts/check-style.sh
       - name: Formatting (prettier)
-        run: ./scripts/check-format.sh
+        run: pnpm format:check
       - name: Skill supporting files
         run: ./scripts/check-skill-files.sh
       - name: Spelling (cspell)
