@@ -36,6 +36,7 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | [scenario-video](skills/scenario-video/SKILL.md)                   | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities |
 | [scenario-seedance](skills/scenario-seedance/SKILL.md)             | Seedance video: mode selection (first frame, references, edit, extend), conditioning traps, cost gating           |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                   | Music, sound effects, voice and speech generation, video scoring, audio utilities                                 |
+| [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a finished music video: beat-aligned shots, lyric transcription, verified ffmpeg assembly |
 | [scenario-model-training](skills/scenario-model-training/SKILL.md) | Training custom models for style, character, or product consistency, and generating with them                     |
 
 ## Example prompts
