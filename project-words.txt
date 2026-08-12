@@ -1,8 +1,13 @@
 equirectangular
+ffprobe
 inpaint
 kling
 krea
 luma
+mux
+muxed
+muxes
+numpy
 remesh
 remeshing
 retexture
