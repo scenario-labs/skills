@@ -20,14 +20,14 @@ Scenario generates audio through the same loop as images: discover a model, read
 | Listen | `asset_display` | renders an inline audio player |
 | Save | `asset_download` | follow redirects: `curl -L -o out.mp3 "<url>"` |
 
-Find existing audio assets with `search` target="assets", filters={kind: "audio"}. OAuth callers pass team_id and project_id on every call (discover them with `teams_list` and `projects_list`; see the `scenario` skill).
+Find existing audio assets with `search` target="assets", filters={kind: "audio"}. OAuth callers pass team_id and project_id on every call (discover them with `teams_list`; see the `scenario` skill).
 
 ## What the audio surface covers
 
-- Music: text-to-music models produce instrumental tracks or full songs; several accept lyrics with section tags and duration controls. Useful for video soundtracks and prototype background music.
-- Sound effects: text-to-SFX models generate short clips from a description; some support seamless looping. Useful for game audio, foley, and ambience.
+- Music: text-to-music models produce instrumental tracks or full songs; several accept lyrics with section tags and duration controls.
+- Sound effects: text-to-SFX models generate short clips from a description; some support seamless looping.
 - Voice and speech: text-to-speech models with preset voices, multilingual output, and emotion or pacing controls; some clone a voice from a short reference clip; speech-to-speech models re-voice an existing recording.
-- Video to audio: models that score a silent video or add synchronized sound effects to it, taking a video asset as input.
+- Video to audio: models that score a silent video or add synchronized sound effects, taking a video asset as input.
 - Utilities: audio cut, split, and extract tools plus speech-to-text transcription; discover them with `search` query="audio" or query="tool".
 
 ## Worked example: a game sound effect
@@ -49,7 +49,7 @@ Prompting tips:
 
 - Hardcoding model IDs: availability differs per team and evolves. Re-discover with `search` each session.
 - Skipping `model_schema_get`: one audio model's parameters will not fit another (voices, durations, and lyric fields all differ).
-- Polling `job_get` in a loop: music jobs can run minutes. Use `jobs_wait` and continue by passing pending_job_ids as job_ids.
+- Polling `job_get` in a loop: music jobs can run minutes. Use `jobs_wait`; on timeout re-call with pending_job_ids.
 - Pasting raw asset URLs into chat: use `asset_display` to play audio, `asset_download` when a file URL is needed.
 - Putting voice direction inside TTS text ("say this angrily"): direction can end up spoken. Use the schema's emotion or voice fields.
 - Sending image parameters (width, height) to audio models: their schemas do not accept them.

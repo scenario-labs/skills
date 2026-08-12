@@ -7,7 +7,7 @@ description: Use when connecting a coding agent to Scenario (scenario.com) throu
 
 ## Overview
 
-Scenario (scenario.com) generates AI images, video, 3D, and audio across 500+ models plus custom model training, for teams in games, entertainment, and any creative vertical. Its MCP server exposes the full pipeline to any MCP client. Core principle: discover a model, inspect its schema, run it, wait for the job, display the asset.
+Scenario (scenario.com) generates AI images, video, 3D, and audio across 500+ models plus custom model training. Its MCP server exposes the full pipeline to any MCP client. Core principle: discover a model, inspect its schema, run it, wait for the job, display the asset.
 
 ## Setup
 
@@ -71,4 +71,4 @@ Reference images and other local inputs go up with `upload_asset`: prefer the mu
 - Hardcoding model ids from memory: catalogs evolve and differ per team, re-run `search`.
 - Rendering asset CDN URLs directly: use `asset_display`.
 - OAuth calls returning Forbidden: `team_id` and `project_id` are missing, call `teams_list` first.
-- Debugging blind when something misbehaves: run the `diagnose` MCP prompt (or the `diagnostics_run` tool when the client cannot invoke MCP prompts) for a diagnostics report with trace ids, and `usage` for credit consumption questions.
+- Debugging blind: run the `diagnose` MCP prompt (or `diagnostics_run` where MCP prompts are unsupported) for a diagnostics report with trace ids, and `usage` for credit questions.
