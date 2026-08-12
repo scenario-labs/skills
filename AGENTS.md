@@ -12,7 +12,7 @@ Public Agent Skills for [Scenario](https://scenario.com): procedural knowledge t
 skills/<name>/SKILL.md   # name must equal the directory name
 ```
 
-Supporting files (heavy references, scripts) may sit next to a SKILL.md only when the content is too large to inline.
+Supporting files (heavy references, scripts) may sit next to a SKILL.md only when the content is too large to inline. Link supporting files directly from SKILL.md: agents resolve file references one level deep, so a reference chained through another supporting file may never be read.
 
 ## Public content only
 
@@ -35,6 +35,7 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
 - `name`: lowercase letters, numbers, and hyphens; must equal the directory name.
 - `description`: third person, starts with "Use when", describes triggering conditions only (never a summary of the skill's workflow), under 500 characters, rich in keywords an agent would search for.
 - Body: 400-600 words (hard cap 900). Structure: Overview, Quick reference, one excellent worked example, Common mistakes.
+- Why the budget: agents load only `name` and `description` at startup; the body enters context only when the skill triggers, and then every word competes with the user's task. Spend words on facts an agent would otherwise guess wrong, not on prose.
 - Ground every tool and parameter claim in the [tool reference](https://mcp.scenario.com/docs/tools). Never present a model ID as a constant: model availability differs per team, so teach discovery via `search`.
 - Cross-reference the `scenario` skill for connection setup instead of repeating it.
 - Style: no em dashes, ever (use a comma, a colon, parentheses, or two sentences). No marketing language. Agent-agnostic wording: do not assume a specific agent outside clearly labeled setup snippets.

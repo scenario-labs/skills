@@ -2,6 +2,8 @@
 
 [Agent Skills](https://agentskills.io) that teach AI coding agents (Claude Code, Cursor, Codex, Copilot, and 70+ others) how to create production-ready content with [Scenario](https://scenario.com) through the [Scenario MCP server](https://mcp.scenario.com): images, video, audio, textures, skyboxes, 3D assets, and custom-trained models, for games, entertainment, and any creative vertical.
 
+[![skills.sh](https://skills.sh/b/scenario-labs/skills)](https://skills.sh/scenario-labs/skills)
+
 ## Install
 
 ```bash
@@ -32,6 +34,14 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | [scenario-video](skills/scenario-video/SKILL.md)                 | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                 | Music, sound effects, voice and speech generation, video scoring, audio utilities                                 |
 | [scenario-model-training](skills/scenario-model-training/SKILL.md) | Training custom models for style, character, or product consistency, and generating with them                     |
+
+## Example prompts
+
+Once the skills are installed and the MCP server is connected, ask your agent things like:
+
+- "Generate four style-matched potion icons with transparent backgrounds for my RPG inventory"
+- "Make a seamless brick texture, then upscale it to 2048 without breaking the tiling"
+- "Turn this concept sketch into a 3D prop and let me preview it before I export the GLB"
 
 ## What is an Agent Skill?
 

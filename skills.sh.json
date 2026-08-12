@@ -1,0 +1,31 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Getting started",
+      "description": "Connect the Scenario MCP server and learn the core generation loop every other skill builds on.",
+      "skills": ["scenario"]
+    },
+    {
+      "title": "Game art and environments",
+      "description": "Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.",
+      "skills": [
+        "scenario-game-assets",
+        "scenario-textures",
+        "scenario-skyboxes",
+        "scenario-3d"
+      ]
+    },
+    {
+      "title": "Video and audio",
+      "description": "Video generation and editing, music, sound effects, voice, and speech.",
+      "skills": ["scenario-video", "scenario-audio"]
+    },
+    {
+      "title": "Custom models",
+      "description": "Train custom models on your own art for style, character, or product consistency.",
+      "skills": ["scenario-model-training"]
+    }
+  ]
+}
