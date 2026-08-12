@@ -5,11 +5,12 @@
   "packageManager": "pnpm@11.21.0",
   "scripts": {
     "prepare": "husky",
-    "validate": "pnpm style && pnpm format:check && pnpm skill-files && pnpm spell && pnpm spec",
+    "validate": "pnpm style && pnpm format:check && pnpm skill-files && pnpm groupings && pnpm spell && pnpm spec",
     "style": "./scripts/check-style.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "skill-files": "./scripts/check-skill-files.sh",
+    "groupings": "node ./scripts/check-groupings.mjs",
     "spell": "./scripts/check-spelling.sh",
     "spec": "./scripts/validate-skills.sh",
     "test": "./scripts/test-skill-scripts.sh"
