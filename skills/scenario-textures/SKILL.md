@@ -14,14 +14,14 @@ Connection and the core generation loop: see the `scenario` skill in this repo.
 
 ## Quick reference
 
-| Step | Tool | Notes |
-| --- | --- | --- |
+| Step                | Tool                                                                        | Notes                                 |
+| ------------------- | --------------------------------------------------------------------------- | ------------------------------------- |
 | Find texture models | `search` with `target="models"`, `query="seamless tileable"`, `public=true` | Also try `query="texture"` or `"PBR"` |
-| Inspect inputs | `model_schema_get` | Always call before `model_run` |
-| Generate | `model_run` | Schema-conformant parameters |
-| Wait | `jobs_wait` | Never poll `job_get` in a loop |
-| View and save | `asset_display`, then `asset_download` | Download for engine import |
-| Upscale | `model_run` on a texture upscaler | 2x to 8x, tiling preserved |
+| Inspect inputs      | `model_schema_get`                                                          | Always call before `model_run`        |
+| Generate            | `model_run`                                                                 | Schema-conformant parameters          |
+| Wait                | `jobs_wait`                                                                 | Never poll `job_get` in a loop        |
+| View and save       | `asset_display`, then `asset_download`                                      | Download for engine import            |
+| Upscale             | `model_run` on a texture upscaler                                           | 2x to 8x, tiling preserved            |
 
 ## What live search confirms (examples to re-discover, not constants)
 

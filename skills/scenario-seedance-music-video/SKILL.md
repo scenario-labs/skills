@@ -14,14 +14,14 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 
 ## Quick reference
 
-| Step      | Call                                          | Notes                                                              |
-| --------- | --------------------------------------------- | ------------------------------------------------------------------ |
-| 1. Song   | `python3 scripts/song.py master.mp3 -o song.json` | hash, duration, loudness, tempo, sections, cut candidates |
-| 2. Lyrics | `search` query `"audio to text"`, `model_run`  | supplied lyrics win; sung-vocal transcription is a draft |
-| 3. Story  | one page, shown to the user first              | the cheapest place to be wrong; name what must not drift            |
-| 4. Frames | image model at the delivery aspect ratio       | reference stills, one per look to hold                     |
-| 5. Shots  | Seedance `model_run`, `generateAudio: false`   | `dry_run` first; `wait=false`; `jobs_wait` with `pending_job_ids`   |
-| 6. Cut    | `python3 scripts/build.py edit.json out.mp4`   | one ffmpeg pass: conform, concatenate, mux master, verify           |
+| Step      | Call                                              | Notes                                                             |
+| --------- | ------------------------------------------------- | ----------------------------------------------------------------- |
+| 1. Song   | `python3 scripts/song.py master.mp3 -o song.json` | hash, duration, loudness, tempo, sections, cut candidates         |
+| 2. Lyrics | `search` query `"audio to text"`, `model_run`     | supplied lyrics win; sung-vocal transcription is a draft          |
+| 3. Story  | one page, shown to the user first                 | the cheapest place to be wrong; name what must not drift          |
+| 4. Frames | image model at the delivery aspect ratio          | reference stills, one per look to hold                            |
+| 5. Shots  | Seedance `model_run`, `generateAudio: false`      | `dry_run` first; `wait=false`; `jobs_wait` with `pending_job_ids` |
+| 6. Cut    | `python3 scripts/build.py edit.json out.mp4`      | one ffmpeg pass: conform, concatenate, mux master, verify         |
 
 Ask once before starting: team and project, track clearance, aspect ratio and length, what must and must not appear, spend ceiling. Then run without stopping.
 

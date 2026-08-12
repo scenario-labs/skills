@@ -14,15 +14,15 @@ Connection and the core generation loop: see the `scenario` skill in this repo.
 
 ## Quick reference
 
-| Step           | Tool                              | Notes                                                                                            |
-| -------------- | --------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Find a model   | `search`                          | `target="models"`, `public=true`, query `"image to video"`, `"video upscale"`, `"lipsync"`, `"video edit"` |
-| Inspect inputs | `model_schema_get`                | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)    |
-| Upload source  | `upload_asset`                    | A local still or clip becomes an `asset_id`; never pass file paths                                |
-| Refine prompt  | `prompt_spark`                    | Optional; rewrites a thin motion idea into an on-model prompt                                     |
-| Generate       | `model_run`                       | `wait=false` for video; `dry_run=true` to estimate cost first                                     |
-| Wait           | `jobs_wait`                       | Re-call with the returned `pending_job_ids` until done                                            |
-| Review         | `asset_display` / `asset_get`     | Display inline; save video from the `asset_get` URL with `curl -L`                            |
+| Step           | Tool                          | Notes                                                                                                      |
+| -------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Find a model   | `search`                      | `target="models"`, `public=true`, query `"image to video"`, `"video upscale"`, `"lipsync"`, `"video edit"` |
+| Inspect inputs | `model_schema_get`            | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)             |
+| Upload source  | `upload_asset`                | A local still or clip becomes an `asset_id`; never pass file paths                                         |
+| Refine prompt  | `prompt_spark`                | Optional; rewrites a thin motion idea into an on-model prompt                                              |
+| Generate       | `model_run`                   | `wait=false` for video; `dry_run=true` to estimate cost first                                              |
+| Wait           | `jobs_wait`                   | Re-call with the returned `pending_job_ids` until done                                                     |
+| Review         | `asset_display` / `asset_get` | Display inline; save video from the `asset_get` URL with `curl -L`                                         |
 
 ## Worked example: animate a key art still into a short ad clip
 

@@ -12,14 +12,14 @@ Scenario generates audio through the same loop as images: discover a model, read
 
 ## Quick reference
 
-| Step | Tool | Notes |
-| --- | --- | --- |
-| Find a model | `search` target="models", query="music" / "sound effect" / "text to speech", public=true | audio generators list `txt2audio` in capabilities |
-| Inspect inputs | `model_schema_get` | audio schemas vary widely: durations, lyrics, voices, looping |
-| Generate | `model_run` | schema-conformant parameters; wait=false for long jobs |
-| Wait | `jobs_wait` | blocks server-side; re-call passing pending_job_ids as job_ids on timeout |
-| Listen | `asset_display` | renders an inline audio player |
-| Save | `asset_get` | file URL, then `curl -L -o out.mp3 "<url>"` |
+| Step           | Tool                                                                                     | Notes                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Find a model   | `search` target="models", query="music" / "sound effect" / "text to speech", public=true | audio generators list `txt2audio` in capabilities                         |
+| Inspect inputs | `model_schema_get`                                                                       | audio schemas vary widely: durations, lyrics, voices, looping             |
+| Generate       | `model_run`                                                                              | schema-conformant parameters; wait=false for long jobs                    |
+| Wait           | `jobs_wait`                                                                              | blocks server-side; re-call passing pending_job_ids as job_ids on timeout |
+| Listen         | `asset_display`                                                                          | renders an inline audio player                                            |
+| Save           | `asset_get`                                                                              | file URL, then `curl -L -o out.mp3 "<url>"`                               |
 
 Find existing audio assets with `search` target="assets", filters={kind: "audio"}. OAuth callers pass team_id and project_id on every call (discover them with `teams_list`; see the `scenario` skill).
 

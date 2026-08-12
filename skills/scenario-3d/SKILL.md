@@ -12,14 +12,14 @@ Scenario runs text-to-3D, image-to-3D, and 3D-to-3D models behind the same MCP g
 
 ## Quick reference
 
-| Step | Tool | Notes |
-| --- | --- | --- |
-| Find 3D models | `search` (`target="models"`, `query="image to 3d"`, `public=true`) | Capabilities: `txt23d`, `img23d`, `3d23d` |
-| Inspect inputs | `model_schema_get` | Always call before `model_run` |
-| Generate | `model_run` | Pass reference images as asset IDs |
-| Wait | `jobs_wait` | Long jobs return `in_progress` with a `job_id`; pass it in `job_ids`; never poll `job_get` in a loop |
-| Preview | `asset_display` | Interactive GLB/FBX/VOX/OBJ viewer on MCP App hosts |
-| Download | `asset_download` | Returns a URL; save with `curl -L` |
+| Step           | Tool                                                               | Notes                                                                                                |
+| -------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Find 3D models | `search` (`target="models"`, `query="image to 3d"`, `public=true`) | Capabilities: `txt23d`, `img23d`, `3d23d`                                                            |
+| Inspect inputs | `model_schema_get`                                                 | Always call before `model_run`                                                                       |
+| Generate       | `model_run`                                                        | Pass reference images as asset IDs                                                                   |
+| Wait           | `jobs_wait`                                                        | Long jobs return `in_progress` with a `job_id`; pass it in `job_ids`; never poll `job_get` in a loop |
+| Preview        | `asset_display`                                                    | Interactive GLB/FBX/VOX/OBJ viewer on MCP App hosts                                                  |
+| Download       | `asset_download`                                                   | Returns a URL; save with `curl -L`                                                                   |
 
 ## Workflow: concept image to game-ready mesh
 

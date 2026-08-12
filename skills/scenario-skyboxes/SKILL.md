@@ -14,13 +14,13 @@ Connection and the core generation loop: see the `scenario` skill in this repo.
 
 ## Quick reference
 
-| Step | Tool | Purpose |
-| ---- | ---- | ------- |
-| 1 | `search` (target="models", query="skybox", public=true) | Discover current skybox models |
-| 2 | `model_schema_get` | Exact parameter contract for the chosen model |
-| 3 | `model_run` | Generate the panorama |
-| 4 | `jobs_wait` | Block until the job completes |
-| 5 | `asset_display` / `asset_download` | Review inline, then save the file |
+| Step | Tool                                                    | Purpose                                       |
+| ---- | ------------------------------------------------------- | --------------------------------------------- |
+| 1    | `search` (target="models", query="skybox", public=true) | Discover current skybox models                |
+| 2    | `model_schema_get`                                      | Exact parameter contract for the chosen model |
+| 3    | `model_run`                                             | Generate the panorama                         |
+| 4    | `jobs_wait`                                             | Block until the job completes                 |
+| 5    | `asset_display` / `asset_download`                      | Review inline, then save the file             |
 
 Model IDs below were live `search` hits at authoring time. Re-discover them each time: availability differs per team and evolves.
 

@@ -40,17 +40,17 @@ OAuth callers must pass `team_id` and `project_id` on most tools: call `teams_li
 
 ## Quick reference
 
-| Step               | Tool                                     | Notes                                                  |
-| ------------------ | ---------------------------------------- | ------------------------------------------------------ |
-| 1. Find a model    | `search` with `target="models"`          | Free; never hardcode model ids                         |
-| 2. Get the schema  | `model_schema_get`                       | Always before `model_run`                              |
-| 3. Generate        | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost     |
-| 4. Wait            | `jobs_wait`                              | Server-side long-poll; never loop `job_get`            |
-| 5. View / save     | `asset_display` / `asset_download`       | Never paste raw asset URLs                             |
-| Upload inputs      | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                           |
-| Refine a prompt    | `prompt_spark`                           | Rewrites thin prompts per model                        |
-| Long-tail tools    | `scenario_tools_search`                  | Full catalog, then permission-scoped executors         |
-| Quota / debugging  | `usage`, `diagnostics_run`               | CU consumption; support report (`diagnose` MCP prompt) |
+| Step              | Tool                                     | Notes                                                  |
+| ----------------- | ---------------------------------------- | ------------------------------------------------------ |
+| 1. Find a model   | `search` with `target="models"`          | Free; never hardcode model ids                         |
+| 2. Get the schema | `model_schema_get`                       | Always before `model_run`                              |
+| 3. Generate       | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost     |
+| 4. Wait           | `jobs_wait`                              | Server-side long-poll; never loop `job_get`            |
+| 5. View / save    | `asset_display` / `asset_download`       | Never paste raw asset URLs                             |
+| Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                           |
+| Refine a prompt   | `prompt_spark`                           | Rewrites thin prompts per model                        |
+| Long-tail tools   | `scenario_tools_search`                  | Full catalog, then permission-scoped executors         |
+| Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; support report (`diagnose` MCP prompt) |
 
 ## The core generation loop
 

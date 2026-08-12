@@ -16,14 +16,14 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 
 Mode follows from the inputs (names from the live schema):
 
-| Mode         | Inputs                          | Behavior                                                       |
-| ------------ | ------------------------------- | -------------------------------------------------------------- |
-| Text         | `prompt`                        | `aspectRatio` honored (21:9 through 9:16)    |
-| First frame  | `image` (+ `prompt`)            | opens on that frame; `aspectRatio` ignored              |
-| First + last | `image` + `lastFrameImage`      | `lastFrameImage` is only valid alongside `image`                |
-| Reference    | `referenceImages` (up to 30)    | carries identity and world, not the opening state               |
-| Edit         | `referenceVideos` + edit prompt | requires `duration: -1`; output follows the source  |
-| Extend       | `referenceVideos` + boundary prompt | continues the clip; geometry follows the source             |
+| Mode         | Inputs                              | Behavior                                           |
+| ------------ | ----------------------------------- | -------------------------------------------------- |
+| Text         | `prompt`                            | `aspectRatio` honored (21:9 through 9:16)          |
+| First frame  | `image` (+ `prompt`)                | opens on that frame; `aspectRatio` ignored         |
+| First + last | `image` + `lastFrameImage`          | `lastFrameImage` is only valid alongside `image`   |
+| Reference    | `referenceImages` (up to 30)        | carries identity and world, not the opening state  |
+| Edit         | `referenceVideos` + edit prompt     | requires `duration: -1`; output follows the source |
+| Extend       | `referenceVideos` + boundary prompt | continues the clip; geometry follows the source    |
 
 `image` and the reference arrays are mutually exclusive. `referenceVideos` (up to 10) and `referenceAudio` (up to 10, timing and energy conditioning) combine with `referenceImages`. Reference parameters are arrays even for one asset. Prompt tags bind by array order: `@image1` is `referenceImages[0]`; likewise `@video1`, `@audio1`. Duration: 4 to 30 seconds or -1 auto (the longest reference clip's length). Resolution: `480p` or `720p`. `generateAudio` defaults to true. No seed, mask, or camera parameter exists: camera moves live in the prompt, one dominant move per shot.
 

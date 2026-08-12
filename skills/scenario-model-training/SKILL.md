@@ -16,17 +16,17 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
 
 ## Quick reference
 
-| Step | Tool |
-| --- | --- |
-| Pick a base architecture | `recommend_training` (LLM-powered, cost-bearing) |
-| Create the model shell | `model_create` (`data.type` from the recommendation) |
-| Upload the dataset | `upload_asset` + `upload_asset_complete` |
-| Attach training images | `train` action `upload_images` |
-| Estimate cost | `train` action `configure` with `dry_run: true` |
-| Launch | `train` action `configure` without `dry_run` (or `start` for defaults); never both |
-| Wait | `jobs_wait` with the returned job id |
-| Generate | `model_schema_get` on YOUR model id, then `model_run` |
-| Manage | `models_list`, `model_get`, `model_update` |
+| Step                     | Tool                                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| Pick a base architecture | `recommend_training` (LLM-powered, cost-bearing)                                   |
+| Create the model shell   | `model_create` (`data.type` from the recommendation)                               |
+| Upload the dataset       | `upload_asset` + `upload_asset_complete`                                           |
+| Attach training images   | `train` action `upload_images`                                                     |
+| Estimate cost            | `train` action `configure` with `dry_run: true`                                    |
+| Launch                   | `train` action `configure` without `dry_run` (or `start` for defaults); never both |
+| Wait                     | `jobs_wait` with the returned job id                                               |
+| Generate                 | `model_schema_get` on YOUR model id, then `model_run`                              |
+| Manage                   | `models_list`, `model_get`, `model_update`                                         |
 
 ## Worked example: a style LoRA for game props
 
