@@ -25,6 +25,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: House style
         run: ./scripts/check-style.sh
+      - name: Formatting (prettier)
+        run: ./scripts/check-format.sh
       - name: Skill supporting files
         run: ./scripts/check-skill-files.sh
       - name: Spelling (cspell)

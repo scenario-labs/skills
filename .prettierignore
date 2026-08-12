@@ -1,0 +1,8 @@
+# Generated files
+pnpm-lock.yaml
+skills-lock.json
+.husky/_/
+
+# Vendored dev skills, kept byte-identical to their published source
+.claude/skills/
+.agents/skills/

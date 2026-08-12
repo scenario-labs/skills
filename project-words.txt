@@ -4,6 +4,7 @@ inpaint
 kling
 krea
 luma
+mvdan
 mux
 muxed
 muxes
@@ -12,6 +13,7 @@ remesh
 remeshing
 retexture
 retexturing
+shfmt
 tripo
 upscales
 veed

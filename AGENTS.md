@@ -28,7 +28,7 @@ This repository is public. Everything in it, including commit messages, PR text,
 
 ## Authoring contract
 
-CI enforces the mechanical parts of this contract on every push and PR: [`skills-ref validate`](https://github.com/agentskills/agentskills/tree/main/skills-ref) (the Agent Skills reference validator) for the spec rules, plus house-style greps, spell checking (cspell), and supporting-file checks. Run the content checks locally with `pnpm run validate` (commit messages and PR titles are linted separately with commitlint), or spec-validate a single skill with:
+CI enforces the mechanical parts of this contract on every push and PR: [`skills-ref validate`](https://github.com/agentskills/agentskills/tree/main/skills-ref) (the Agent Skills reference validator) for the spec rules, plus house-style greps, formatting (prettier), spell checking (cspell), and supporting-file checks. Run the content checks locally with `pnpm run validate` (commit messages and PR titles are linted separately with commitlint), or spec-validate a single skill with:
 
 ```bash
 uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
@@ -50,10 +50,11 @@ Anthropic's [skill-creator](https://www.skills.sh/anthropics/skills/skill-creato
 
 ## Repo tooling
 
-One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, and the husky git hooks. A Claude Code SessionStart hook (`.claude/hooks/ensure-husky.sh`) runs it automatically when the hooks are missing, so agent sessions always commit with the hooks active.
+One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, prettier, and the husky git hooks. A Claude Code SessionStart hook (`.claude/hooks/ensure-husky.sh`) runs it automatically when the hooks are missing, so agent sessions always commit with the hooks active.
 
 - Commit messages and PR titles follow Conventional Commits, enforced by commitlint (`commitlint.config.js`) in three places: the husky `commit-msg` hook, a commitlint job on PR commits, and the `pr-name-linter` workflow on the PR title. Valid scopes are the skill directory names (derived automatically from `skills/`) plus `skills`, `agents`, `ci`, `deps`, `docs`, and `tooling`.
-- The husky `pre-commit` hook runs the same scripts as CI: `scripts/check-style.sh` (house style), `scripts/check-skill-files.sh` (supporting files next to a SKILL.md are linked and runnable), `scripts/check-spelling.sh` (cspell), and `scripts/validate-skills.sh` (spec validation).
+- The husky `pre-commit` hook runs the same scripts as CI: `scripts/check-style.sh` (house style), `scripts/check-format.sh` (prettier), `scripts/check-skill-files.sh` (supporting files next to a SKILL.md are linked and runnable), `scripts/check-spelling.sh` (cspell), and `scripts/validate-skills.sh` (spec validation).
+- Formatting is enforced by prettier with the config committed in `.prettierrc.json`, so the CLI and the VS Code extension agree. `pnpm format` rewrites the repo; `pnpm format:check` (what `scripts/check-format.sh` runs) only verifies. Coverage is everything prettier can parse (markdown, JSON, YAML, JS/TS) plus shell scripts via `prettier-plugin-sh`, which formats with mvdan-sh, the engine behind shfmt. Generated files and the vendored dev skills are excluded in `.prettierignore`.
 - Spelling: add legitimate project terms to `project-words.txt`; never disable cspell inline.
 - PRs are squash-merged, so the PR title becomes the commit header on `main`. The `/squash-message` command drafts that message and `/pr-summary` refreshes the PR body (both in `.claude/commands/`).
 - The `skill-files-reviewer` agent (`.claude/agents/`) reviews supporting files added or changed next to a SKILL.md: justified, linked from SKILL.md, runnable, public content only, house style.

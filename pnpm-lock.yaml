@@ -20,6 +20,12 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      prettier:
+        specifier: ^3.9.6
+        version: 3.9.6
+      prettier-plugin-sh:
+        specifier: ^0.19.0
+        version: 0.19.0(prettier@3.9.6)
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.2.0)(vite@8.2.1(@types/node@26.2.0)(jiti@2.6.1)(yaml@2.9.0))
@@ -354,6 +360,31 @@ packages:
 
   '@oxc-project/types@0.143.0':
     resolution: {integrity: sha512-u6JZdLBTLotrNC9Vd6vPssINdzcCzleKAH6EJKImQb7GtYvX5keN2dxkoK44stCc4tffE6QQRtZTXVSzsLUlWA==}
+
+  '@reteps/dockerfmt-darwin-arm64@0.5.4':
+    resolution: {integrity: sha512-urMqV+dQyvVI8/WrXwClX9e1PEyS35wFdwJjpZYmL09AkV4Io5U1oam8UBKK7jZk0+YsdF88ay6e86Kn6DIyQg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@reteps/dockerfmt-darwin-x64@0.5.4':
+    resolution: {integrity: sha512-fJORy6DFxbgDiMqxpLTPZlb5KUY0Vq0iR4NGnyKnuYZ9LdZUS508DK2kt/AJ87/jIKNV1qRG0JXG1Tc6xdvWjw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@reteps/dockerfmt-linux-arm64@0.5.4':
+    resolution: {integrity: sha512-6pVakO06eXtDuvxy1Dnjs/gQyUoGGycle8PRSt5IFRwLi/AVaOQwfkfmW0WP8VH9wNUeti6BfJ3ksTn2G+XMxg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@reteps/dockerfmt-linux-x64@0.5.4':
+    resolution: {integrity: sha512-OD6SIlUV1D4TgJoTui3FMBAZsGbTSPYsiT0BKhD6jMUcJb3GpFTa7dY9rL8rP9FUqfL7OTHVUGUOL4Rh64Olog==}
+    cpu: [x64]
+    os: [linux]
+
+  '@reteps/dockerfmt@0.5.4':
+    resolution: {integrity: sha512-HEGgXVVOb+JtGUSSzXl/XPKFIZjMDTUoHarCjaQdkY+cb5M9K/O3b5xm+x0IPIk3SfHurbc0bSgcFsQlzjitxA==}
+    engines: {node: ^v12.20.0 || ^14.13.0 || >=16.0.0}
+    hasBin: true
 
   '@rolldown/binding-android-arm64@1.2.3':
     resolution: {integrity: sha512-zrJtHDcaZJ1Fp7xf4hNl+7seH9Cn/N5TwLYkhgXREtBwAd/jaqW3uqeHxpDugJLVICWg4eW44kOQEGJ1r6jCGw==}
@@ -1026,6 +1057,17 @@ packages:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
     engines: {node: ^10 || ^12 || >=14}
 
+  prettier-plugin-sh@0.19.0:
+    resolution: {integrity: sha512-39VXFZH/cOGtcuu8aeSvqp/hhwomOR4QroZUj+jBz2cNb3os9s0sqFZSNlYts6jdtLLDU7D2YT3Z1+abtb7adQ==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      prettier: ^3.6.0
+
+  prettier@3.9.6:
+    resolution: {integrity: sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==}
+    engines: {node: '>=14'}
+    hasBin: true
+
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
@@ -1051,6 +1093,10 @@ packages:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
     hasBin: true
+
+  sh-syntax@0.6.0:
+    resolution: {integrity: sha512-52VK6z/cdZHv7UURjIcwfBUQZrAhIEEe0bY4lrkfypjnFIKsDZdD3Uaz/dBiw/sF8BeX0Mssv140s8EnrsJ9dQ==}
+    engines: {node: '>=16.0.0'}
 
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
@@ -1573,6 +1619,25 @@ snapshots:
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
   '@oxc-project/types@0.143.0': {}
+
+  '@reteps/dockerfmt-darwin-arm64@0.5.4':
+    optional: true
+
+  '@reteps/dockerfmt-darwin-x64@0.5.4':
+    optional: true
+
+  '@reteps/dockerfmt-linux-arm64@0.5.4':
+    optional: true
+
+  '@reteps/dockerfmt-linux-x64@0.5.4':
+    optional: true
+
+  '@reteps/dockerfmt@0.5.4':
+    optionalDependencies:
+      '@reteps/dockerfmt-darwin-arm64': 0.5.4
+      '@reteps/dockerfmt-darwin-x64': 0.5.4
+      '@reteps/dockerfmt-linux-arm64': 0.5.4
+      '@reteps/dockerfmt-linux-x64': 0.5.4
 
   '@rolldown/binding-android-arm64@1.2.3':
     optional: true
@@ -2104,6 +2169,14 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  prettier-plugin-sh@0.19.0(prettier@3.9.6):
+    dependencies:
+      '@reteps/dockerfmt': 0.5.4
+      prettier: 3.9.6
+      sh-syntax: 0.6.0
+
+  prettier@3.9.6: {}
+
   require-directory@2.1.1: {}
 
   require-from-string@2.0.2: {}
@@ -2133,6 +2206,8 @@ snapshots:
       '@rolldown/binding-win32-x64-msvc': 1.2.3
 
   semver@7.8.5: {}
+
+  sh-syntax@0.6.0: {}
 
   siginfo@2.0.0: {}
 
