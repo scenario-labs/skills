@@ -1,5 +1,1 @@
-./scripts/check-style.sh
-pnpm format:check
-./scripts/check-skill-files.sh
-./scripts/check-spelling.sh
-./scripts/validate-skills.sh
+pnpm validate

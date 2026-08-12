@@ -24,15 +24,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: House style
-        run: ./scripts/check-style.sh
+        run: pnpm style
       - name: Formatting (prettier)
         run: pnpm format:check
       - name: Skill supporting files
-        run: ./scripts/check-skill-files.sh
+        run: pnpm skill-files
       - name: Spelling (cspell)
-        run: ./scripts/check-spelling.sh
+        run: pnpm spell
       - name: Spec validation (skills-ref, the Agent Skills reference validator)
-        run: ./scripts/validate-skills.sh
+        run: pnpm spec
 
   script-tests:
     runs-on: ubuntu-latest
@@ -59,7 +59,7 @@ jobs:
             pip install -r "$req"
           done
       - name: Run skill-script test suites
-        run: ./scripts/test-skill-scripts.sh
+        run: pnpm test
 
   commitlint:
     if: github.event_name == 'pull_request'

@@ -5,10 +5,14 @@
   "packageManager": "pnpm@11.21.0",
   "scripts": {
     "prepare": "husky",
-    "validate": "./scripts/check-style.sh && pnpm format:check && ./scripts/check-skill-files.sh && ./scripts/check-spelling.sh && ./scripts/validate-skills.sh",
+    "validate": "pnpm style && pnpm format:check && pnpm skill-files && pnpm spell && pnpm spec",
+    "style": "./scripts/check-style.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "spell": "./scripts/check-spelling.sh"
+    "skill-files": "./scripts/check-skill-files.sh",
+    "spell": "./scripts/check-spelling.sh",
+    "spec": "./scripts/validate-skills.sh",
+    "test": "./scripts/test-skill-scripts.sh"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
