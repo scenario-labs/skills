@@ -15,19 +15,32 @@ import { fileURLToPath } from "node:url";
 process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
 
 const errors = [];
+const bail = (message) => {
+  for (const error of [...errors, message]) console.error(error);
+  process.exit(1);
+};
+// JSON Schema length limits count code points, not UTF-16 code units
+const codePoints = (value) => [...value].length;
 
 let config;
 try {
   config = JSON.parse(readFileSync("skills.sh.json", "utf8"));
 } catch (error) {
-  console.error(`skills.sh.json: not valid JSON (${error.message})`);
-  process.exit(1);
+  bail(`skills.sh.json: not valid JSON (${error.message})`);
+}
+if (config === null || typeof config !== "object" || Array.isArray(config)) {
+  bail("skills.sh.json: the top-level value must be an object");
 }
 
 const allowedRootKeys = ["$schema", "schema", "notGrouped", "groupings"];
 for (const key of Object.keys(config)) {
   if (!allowedRootKeys.includes(key)) {
     errors.push(`skills.sh.json: unknown top-level key "${key}"`);
+  }
+}
+for (const key of ["$schema", "schema"]) {
+  if (config[key] !== undefined && typeof config[key] !== "string") {
+    errors.push(`skills.sh.json: ${key} must be a string URL`);
   }
 }
 if (
@@ -39,21 +52,29 @@ if (
   );
 }
 if (!Array.isArray(config.groupings) || config.groupings.length === 0) {
-  console.error("skills.sh.json: groupings must be a non-empty array");
-  process.exit(1);
+  bail("skills.sh.json: groupings must be a non-empty array");
 }
 if (config.groupings.length > 50) {
   errors.push("skills.sh.json: at most 50 groupings are allowed");
 }
 
-const skillDirs = readdirSync("skills", { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => entry.name);
+let skillDirs;
+try {
+  skillDirs = readdirSync("skills", { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .map((entry) => entry.name);
+} catch (error) {
+  bail(`skills/: cannot list skill directories (${error.message})`);
+}
 
 const allowedGroupKeys = ["title", "description", "skills"];
 const listedIn = new Map();
 
 config.groupings.forEach((group, index) => {
+  if (group === null || typeof group !== "object" || Array.isArray(group)) {
+    errors.push(`skills.sh.json: grouping ${index} must be an object`);
+    return;
+  }
   const label =
     typeof group.title === "string" && group.title !== ""
       ? `grouping "${group.title}"`
@@ -67,7 +88,7 @@ config.groupings.forEach((group, index) => {
   if (
     typeof group.title !== "string" ||
     group.title === "" ||
-    group.title.length > 120
+    codePoints(group.title) > 120
   ) {
     errors.push(
       `skills.sh.json: ${label} needs a title of 1 to 120 characters`,
@@ -75,7 +96,8 @@ config.groupings.forEach((group, index) => {
   }
   if (
     group.description !== undefined &&
-    (typeof group.description !== "string" || group.description.length > 500)
+    (typeof group.description !== "string" ||
+      codePoints(group.description) > 500)
   ) {
     errors.push(
       `skills.sh.json: ${label} description must be a string of at most 500 characters`,
@@ -91,8 +113,15 @@ config.groupings.forEach((group, index) => {
 
   for (const skill of group.skills) {
     if (typeof skill !== "string" || skill === "") {
-      errors.push(`skills.sh.json: ${label} contains a non-string skill name`);
+      errors.push(
+        `skills.sh.json: ${label} contains a skill entry that is not a non-empty string`,
+      );
       continue;
+    }
+    if (codePoints(skill) > 120) {
+      errors.push(
+        `skills.sh.json: ${label} skill name "${skill.slice(0, 40)}..." exceeds 120 characters`,
+      );
     }
     if (listedIn.has(skill)) {
       errors.push(
