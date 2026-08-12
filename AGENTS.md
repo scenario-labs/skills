@@ -10,9 +10,12 @@ Public Agent Skills for [Scenario](https://scenario.com): procedural knowledge t
 
 ```
 skills/<name>/SKILL.md   # name must equal the directory name
+tests/<name>/            # test suite for any script shipped with skill <name>
 ```
 
 Supporting files (heavy references, scripts) may sit next to a SKILL.md only when the content is too large to inline. Link supporting files directly from SKILL.md: agents resolve file references one level deep, so a reference chained through another supporting file may never be read.
+
+Every script shipped with a skill has a test suite in `tests/<name>/` at the repo root, never inside the skill directory: published skill directories carry only what an agent needs at runtime. Python scripts are tested with stdlib `unittest`; TypeScript scripts with vitest. See Validation and testing.
 
 ## Public content only
 
@@ -57,6 +60,7 @@ One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, an
 ## Validation and testing
 
 - `skills-ref validate` must pass for every skill before any commit (the pre-commit hook and CI both run it via `scripts/validate-skills.sh`).
+- Every script shipped with a skill has a test suite in `tests/<name>/`. Python scripts use stdlib `unittest` (files named `test_*.py`); TypeScript scripts use vitest (files named `*.test.ts`). `scripts/test-skill-scripts.sh` runs every suite and fails when a shipped script has no suite; CI runs it on every push and PR. It is not part of the pre-commit hook (suites may need system tools such as ffmpeg), so run it manually when touching a script. A `tests/<name>/requirements.txt` declares extra Python dependencies for CI.
 - Before merging a new or changed skill, run the application test below. Mechanical validation checks the format; the application test checks whether the skill actually teaches.
 
 ### Application test protocol

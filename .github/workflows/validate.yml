@@ -32,6 +32,26 @@ jobs:
       - name: Spec validation (skills-ref, the Agent Skills reference validator)
         run: ./scripts/validate-skills.sh
 
+  script-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install per-suite Python dependencies
+        run: |
+          shopt -s nullglob
+          for req in tests/*/requirements.txt; do
+            pip install -r "$req"
+          done
+      - name: Run skill-script test suites
+        run: ./scripts/test-skill-scripts.sh
+
   commitlint:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
