@@ -5,8 +5,16 @@ cd "$(dirname "$0")/.."
 
 fail=0
 
-if grep -rn --include='*.md' -e '—' skills README.md AGENTS.md .claude/commands .claude/agents 2>/dev/null; then
+# GNU grep exits 2 on any error (e.g. a missing path) even when matches were
+# found, so treat 0 as "violations found" and >=2 as a loud config failure
+# instead of letting either case pass silently.
+grep_status=0
+grep -rn --include='*.md' -e '—' skills README.md AGENTS.md .claude/commands .claude/agents || grep_status=$?
+if [ "$grep_status" -eq 0 ]; then
   echo 'Em dashes are forbidden (house style)'
+  fail=1
+elif [ "$grep_status" -ge 2 ]; then
+  echo "check-style: grep failed (exit $grep_status); a checked path is probably missing"
   fail=1
 fi
 

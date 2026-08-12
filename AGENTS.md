@@ -25,7 +25,7 @@ This repository is public. Everything in it, including commit messages, PR text,
 
 ## Authoring contract
 
-CI enforces the mechanical parts of this contract on every push and PR: [`skills-ref validate`](https://github.com/agentskills/agentskills/tree/main/skills-ref) (the Agent Skills reference validator) for the spec rules, plus house-style greps, spell checking (cspell), and supporting-file checks. Run everything locally with `pnpm run validate`, or spec-validate a single skill with:
+CI enforces the mechanical parts of this contract on every push and PR: [`skills-ref validate`](https://github.com/agentskills/agentskills/tree/main/skills-ref) (the Agent Skills reference validator) for the spec rules, plus house-style greps, spell checking (cspell), and supporting-file checks. Run the content checks locally with `pnpm run validate` (commit messages and PR titles are linted separately with commitlint), or spec-validate a single skill with:
 
 ```bash
 uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
