@@ -4,10 +4,10 @@ inpaint
 kling
 krea
 luma
-mvdan
 mux
 muxed
 muxes
+mvdan
 numpy
 remesh
 remeshing
