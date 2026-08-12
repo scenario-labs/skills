@@ -39,6 +39,16 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
 - Cross-reference the `scenario` skill for connection setup instead of repeating it.
 - Style: no em dashes, ever (use a comma, a colon, parentheses, or two sentences). No marketing language. Agent-agnostic wording: do not assume a specific agent outside clearly labeled setup snippets.
 
+## Authoring aids
+
+When authoring or reworking a skill, Anthropic's [skill-creator](https://www.skills.sh/anthropics/skills/skill-creator) is a useful companion. Install it globally so it never lands in this repo:
+
+```bash
+npx skills add anthropics/skills -s skill-creator -g
+```
+
+Do not commit third-party skills here: the skills CLI scans standard skill directories, so anything committed would show up as a skill of this repo on skills.sh. Where skill-creator's generic guidance and this file disagree, this file wins.
+
 ## Validation and testing
 
 - `skills-ref validate` must pass for every skill before any commit (command above; CI runs it too).
