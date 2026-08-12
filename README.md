@@ -53,6 +53,8 @@ A skill is a `SKILL.md` file with procedural knowledge an agent loads on demand,
 
 See [AGENTS.md](AGENTS.md) for the authoring contract, the public-content policy, validation, and the application-testing bar. One-time setup after cloning: `pnpm install` (installs commitlint, cspell, and the husky git hooks). `pnpm run validate` runs the same content checks CI runs; commit messages and the PR title are linted separately with commitlint. PRs welcome; PR titles follow Conventional Commits since they become the squash commit header on `main`.
 
+Every script shipped with a skill has a test suite in `tests/<name>/`; `./scripts/test-skill-scripts.sh` runs them all (CI does too). Suites need Python 3.11+ with any `tests/<name>/requirements.txt` dependencies installed, plus ffmpeg on PATH where a suite uses it. Python suites use stdlib `unittest`, TypeScript suites use vitest.
+
 ## License
 
 [MIT](LICENSE)
