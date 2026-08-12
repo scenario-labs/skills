@@ -38,7 +38,9 @@ for dir in tests/*/; do
   if compgen -G "${dir}test_*.py" > /dev/null; then
     ran=1
     echo "== ${name}: python unittest =="
-    python3 -B -m unittest discover -s "$dir" -t . || fail=1
+    # No -t: hyphenated skill names are not importable as packages, so each
+    # suite directory is its own top level and modules load as bare names.
+    python3 -B -m unittest discover -s "$dir" || fail=1
   fi
   if compgen -G "${dir}*.test.ts" > /dev/null; then
     ran=1
