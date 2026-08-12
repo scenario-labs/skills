@@ -62,6 +62,20 @@ class BuildTestCase(unittest.TestCase):
         with self.assertRaisesRegex(build.BuildError, "needs"):
             self.plan_for([{"clip": "a.mp4", "at": 0, "in": 2.5}, {"clip": "b.mp4", "at": 2.0}])
 
+    def test_a_low_fps_clip_is_budgeted_at_the_edit_fps(self) -> None:
+        # 3s at 15fps is 45 native frames, but 72 once resampled to 24fps,
+        # enough for a 60-frame slot the native count alone would fail.
+        make_clip(self.root / "slow.mp4", 3.0, "green", fps=15)
+        job = self.plan_for([{"clip": "slow.mp4", "at": 0}, {"clip": "b.mp4", "at": 2.5}])
+        self.assertEqual(job["shots"][0]["span"], 60)
+
+    def test_a_high_fps_clip_cannot_spend_frames_the_resampler_drops(self) -> None:
+        # 1s at 60fps is 60 native frames, but only 24 survive resampling to
+        # 24fps, so a 36-frame slot must be rejected at plan time.
+        make_clip(self.root / "fast.mp4", 1.0, "green", fps=60)
+        with self.assertRaisesRegex(build.BuildError, "frames"):
+            self.plan_for([{"clip": "fast.mp4", "at": 0}, {"clip": "b.mp4", "at": 1.5}])
+
     def test_missing_clip_is_reported(self) -> None:
         with self.assertRaisesRegex(build.BuildError, "clip not found"):
             self.plan_for([{"clip": "nope.mp4", "at": 0}])

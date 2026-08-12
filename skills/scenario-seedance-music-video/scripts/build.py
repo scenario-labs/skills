@@ -84,6 +84,21 @@ def video_frames(info: dict) -> int:
     return int(round(duration * num / den))
 
 
+def frames_at_fps(info: dict, fps: int) -> int:
+    """Frame budget of a clip once the graph resamples it to the edit's fps.
+
+    The filter graph applies fps=<target> before the frame trim, so a clip's
+    native frame count is its budget only when the rates already agree;
+    otherwise the count converts through the native rate (floor, so a clip
+    is never credited a frame the resampler will not deliver).
+    """
+    native = video_frames(info)
+    num, den = (int(x) for x in streams(info, "video")[0]["r_frame_rate"].split("/"))
+    if num <= 0 or den <= 0 or num == fps * den:
+        return native
+    return native * den * fps // num
+
+
 def load_edit(path: Path) -> dict:
     edit = json.loads(path.read_text())
     for key in ("master", "shots"):
@@ -135,7 +150,7 @@ def plan(edit: dict, root: Path) -> dict:
         head = int(round(float(shot.get("in", 0.0)) * fps))
         if head < 0:
             raise BuildError(f"shot {index} has a negative 'in'")
-        available = video_frames(probe(clip)) - head
+        available = frames_at_fps(probe(clip), fps) - head
         if available < span:
             raise BuildError(
                 f"{clip.name} gives {available} frames after the head trim but the edit needs {span}. "
