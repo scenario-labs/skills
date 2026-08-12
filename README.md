@@ -34,6 +34,7 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)             | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                    |
 | [scenario-3d](skills/scenario-3d/SKILL.md)                         | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download  |
 | [scenario-video](skills/scenario-video/SKILL.md)                   | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities |
+| [scenario-seedance](skills/scenario-seedance/SKILL.md)             | Seedance video: mode selection (first frame, references, edit, extend), conditioning traps, cost gating           |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                   | Music, sound effects, voice and speech generation, video scoring, audio utilities                                 |
 | [scenario-model-training](skills/scenario-model-training/SKILL.md) | Training custom models for style, character, or product consistency, and generating with them                     |
 
