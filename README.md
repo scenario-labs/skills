@@ -49,7 +49,7 @@ A skill is a `SKILL.md` file with procedural knowledge an agent loads on demand.
 
 ## Contributing
 
-See [AGENTS.md](AGENTS.md) for the authoring contract, the public-content policy, validation (`skills-ref validate`), and the application-testing bar. PRs welcome.
+See [AGENTS.md](AGENTS.md) for the authoring contract, the public-content policy, validation, and the application-testing bar. One-time setup after cloning: `pnpm install` (installs commitlint, cspell, and the husky git hooks). `pnpm run validate` runs every check CI runs. PRs welcome; PR titles follow Conventional Commits since they become the squash commit header on `main`.
 
 ## License
 

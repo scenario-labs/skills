@@ -1,0 +1,17 @@
+{
+  "name": "@scenario-labs/skills",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "prepare": "husky",
+    "validate": "./scripts/check-style.sh && ./scripts/check-skill-files.sh && ./scripts/check-spelling.sh && ./scripts/validate-skills.sh",
+    "spell": "./scripts/check-spelling.sh"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
+    "cspell": "^10.0.1",
+    "husky": "^9.1.7"
+  }
+}

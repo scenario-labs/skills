@@ -1,0 +1,12 @@
+equirectangular
+inpaint
+kling
+krea
+luma
+remesh
+remeshing
+retexture
+retexturing
+tripo
+upscales
+veed

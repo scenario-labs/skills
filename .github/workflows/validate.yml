@@ -5,25 +5,47 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v6
-      - name: Spec validation (skills-ref, the Agent Skills reference validator)
-        run: |
-          for d in skills/*/; do
-            uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate "$d"
-          done
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
       - name: House style
-        run: |
-          if grep -rn --include='*.md' -e '—' skills README.md AGENTS.md; then
-            echo 'Em dashes are forbidden (house style)'
-            exit 1
-          fi
-          fail=0
-          for f in skills/*/SKILL.md; do
-            grep -Eq '^description: "?Use when' "$f" || { echo "$f: description must start with \"Use when\""; fail=1; }
-          done
-          exit $fail
+        run: ./scripts/check-style.sh
+      - name: Skill supporting files
+        run: ./scripts/check-skill-files.sh
+      - name: Spelling (cspell)
+        run: ./scripts/check-spelling.sh
+      - name: Spec validation (skills-ref, the Agent Skills reference validator)
+        run: ./scripts/validate-skills.sh
+
+  commitlint:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint commit messages
+        run: pnpm exec commitlint --from=origin/${{ github.event.pull_request.base.ref }} --verbose

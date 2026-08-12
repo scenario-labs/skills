@@ -25,7 +25,7 @@ This repository is public. Everything in it, including commit messages, PR text,
 
 ## Authoring contract
 
-CI enforces the mechanical parts of this contract on every push and PR: [`skills-ref validate`](https://github.com/agentskills/agentskills/tree/main/skills-ref) (the Agent Skills reference validator) for the spec rules, plus house-style greps. Run it locally with:
+CI enforces the mechanical parts of this contract on every push and PR: [`skills-ref validate`](https://github.com/agentskills/agentskills/tree/main/skills-ref) (the Agent Skills reference validator) for the spec rules, plus house-style greps, spell checking (cspell), and supporting-file checks. Run everything locally with `pnpm run validate`, or spec-validate a single skill with:
 
 ```bash
 uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
@@ -44,9 +44,19 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
 
 Anthropic's [skill-creator](https://www.skills.sh/anthropics/skills/skill-creator) (Apache-2.0) is vendored as a dev skill in `.claude/skills/` and `.agents/skills/`, so agents working in a clone of this repo pick it up automatically. `skills-lock.json` records its source and hash; refresh with `npx skills update`. Vendored dev skills live only in agent directories and are never part of the published set: the skills CLI and skills.sh surface only `skills/` (verified against this repo). Where skill-creator's generic guidance and this file disagree, this file wins.
 
+## Repo tooling
+
+One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, and the husky git hooks. A Claude Code SessionStart hook (`.claude/hooks/ensure-husky.sh`) runs it automatically when the hooks are missing, so agent sessions always commit with the hooks active.
+
+- Commit messages and PR titles follow Conventional Commits, enforced by commitlint (`commitlint.config.js`) in three places: the husky `commit-msg` hook, a commitlint job on PR commits, and the `pr-name-linter` workflow on the PR title. Valid scopes are the skill directory names (derived automatically from `skills/`) plus `skills`, `agents`, `ci`, `deps`, `docs`, and `tooling`.
+- The husky `pre-commit` hook runs the same scripts as CI: `scripts/check-style.sh` (house style), `scripts/check-skill-files.sh` (supporting files next to a SKILL.md are linked and runnable), `scripts/check-spelling.sh` (cspell), and `scripts/validate-skills.sh` (spec validation).
+- Spelling: add legitimate project terms to `project-words.txt`; never disable cspell inline.
+- PRs are squash-merged, so the PR title becomes the commit header on `main`. The `/squash-message` command drafts that message and `/pr-summary` refreshes the PR body (both in `.claude/commands/`).
+- The `skill-files-reviewer` agent (`.claude/agents/`) reviews supporting files added or changed next to a SKILL.md: justified, linked from SKILL.md, runnable, public content only, house style.
+
 ## Validation and testing
 
-- `skills-ref validate` must pass for every skill before any commit (command above; CI runs it too).
+- `skills-ref validate` must pass for every skill before any commit (the pre-commit hook and CI both run it via `scripts/validate-skills.sh`).
 - Before merging a new or changed skill, run the application test below. Mechanical validation checks the format; the application test checks whether the skill actually teaches.
 
 ### Application test protocol
@@ -65,6 +75,6 @@ Anthropic's [skill-creator](https://www.skills.sh/anthropics/skills/skill-creato
 
 ## Conventions
 
-- Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
-- PRs target `main`.
+- Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`), enforced by commitlint (see Repo tooling).
+- PRs target `main` and are squash-merged; the PR title is the future commit header.
 - `CLAUDE.md` is a symlink to this file.

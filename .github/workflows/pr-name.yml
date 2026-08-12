@@ -1,0 +1,29 @@
+name: pr-name-linter
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      # PRs are squash-merged, so the PR title becomes the commit header on main.
+      # Lint it with the repo commitlint config (same types and scopes as commits).
+      - name: Lint the PR title
+        env:
+          PR_TITLE: "${{ github.event.pull_request.title }}"
+        run: echo "${PR_TITLE}" | pnpm exec commitlint --verbose

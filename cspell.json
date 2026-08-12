@@ -1,0 +1,21 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "dictionaryDefinitions": [
+    {
+      "name": "project-words",
+      "path": "./project-words.txt"
+    }
+  ],
+  "dictionaries": ["project-words"],
+  "allowCompoundWords": true,
+  "ignorePaths": [
+    "node_modules/**",
+    ".claude/skills/**",
+    ".agents/skills/**",
+    "pnpm-lock.yaml",
+    "skills-lock.json",
+    "LICENSE"
+  ],
+  "useGitignore": true
+}
