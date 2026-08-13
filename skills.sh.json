@@ -8,6 +8,11 @@
       "skills": ["scenario"]
     },
     {
+      "title": "Images",
+      "description": "Generate and edit images: model choice, sizing, references, masked edits.",
+      "skills": ["scenario-image"]
+    },
+    {
       "title": "Game art and environments",
       "description": "Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.",
       "skills": [
