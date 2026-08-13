@@ -28,7 +28,7 @@ The technique that works, and the one agents skip: write out everything that mus
 
 Enumerate specifics rather than gesturing at them: subject geometry, camera height and angle, subject size and position in frame, lighting direction, each named sub-element and where it sits, palette by name or hex, and embedded text. Look at the baseline first (`asset_display`): you cannot enumerate a shade you have not seen, and vague anchors drift.
 
-Attach the approved baseline as a reference image alongside it. Current image models converge on `referenceImages`, but the cap varies (5 to 14) and some require it, so read `model_schema_get`. It is array-typed, so one asset still goes in as `["asset_..."]` and a bare string is dropped silently. State each reference's role in the prompt.
+Attach the approved baseline as a reference image alongside it. Current image models converge on `referenceImages`, but the cap varies (5 to 14) and some require it, so read `model_schema_get`. It is array-typed, so one asset still goes in as `["asset_..."]` and a bare string is dropped silently. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (`collection_create`, `collection_add_assets`, catalog tools on the write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
 
 A set takes one `model_run` per item: a batch-count field repeats one prompt, so it cannot carry a per-item delta clause.
 
