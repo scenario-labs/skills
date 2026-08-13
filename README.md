@@ -38,6 +38,7 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                 |
 | [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a finished music video: beat-aligned shots, lyric transcription, verified ffmpeg assembly     |
 | [scenario-model-training](skills/scenario-model-training/SKILL.md)             | Training custom models for style, character, or product consistency, and generating with them                     |
+| [scenario-workflows](skills/scenario-workflows/SKILL.md)                       | Running saved workflows (apps): building the run inputs, dry-run pricing, publishing drafts, approval gates       |
 
 ## Example prompts
 
