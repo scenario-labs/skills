@@ -18,6 +18,8 @@ Scenario has no editing tools on the MCP surface. Every compositor, concatenator
 | Anything overlapping: overlay, bed, titles | `model_scenario-compose-video` |
 | Still layout (thumbnails, sheets, key art) | `model_scenario-compose-image` |
 
+These ids are authoring-time search hits, not constants: re-discover them, availability differs per team.
+
 Concat is sequential: `videos` takes 2 to 50 files (never 1) and the optional `transitions` array's "length must be number of videos - 1", 18 types.
 
 Video Studio is an absolute timeline: `layers` holds 1 to 50 image, video or audio sources placed by `startTime` and stacked by `zIndex` (higher in front), with per-layer `transitionIn`/`transitionOut`/`transitionDuration` instead of a between-clip array. At least one layer must be a video, so a music bed over a still is rejected.
