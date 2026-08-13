@@ -53,10 +53,10 @@ const rows = lines
   .slice(start + 1, end)
   .map((line) => line.trim())
   .filter((line) => line.startsWith("|"))
-  // drop the header row and the |---| separator row
-  .filter(
-    (line) => !/^\|[\s|:-]+\|$/.test(line) && !/^\|\s*Skill\s*\|/.test(line),
-  );
+  // a GFM table's first two pipe rows are the header and the |---|
+  // separator; skip them by position so a header copy-edit cannot
+  // make this check fail
+  .slice(2);
 
 const rowFor = new Map();
 for (const row of rows) {
