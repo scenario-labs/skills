@@ -1,6 +1,6 @@
 ---
 name: scenario-video
-description: "Use when generating or editing video on Scenario via MCP: text-to-video, image-to-video (animating a still, first/last frame anchors), motion prompt iteration, lipsync and talking avatars, video upscale to 4K, prompt-based video editing, trim, split, concat, reframe, resize, extend, frame extraction, background removal, or waiting on long video jobs. Keywords: txt2video, img2video, video2video, I2V, T2V, V2V, ads, film previz, game cinematics, social clips."
+description: "Use when generating or editing video on Scenario via MCP: text-to-video, image-to-video (animating a still, first/last frame anchors), motion prompt iteration, lipsync and talking avatars, dubbing or translating a clip into another language, video upscale to 4K, prompt-based video editing, trim, split, concat, reframe, resize, extend, frame extraction, or a clip rejected for exceeding a duration limit. Keywords: txt2video, img2video, video2video, I2V, T2V, V2V, localization, game cinematics."
 license: MIT
 ---
 
@@ -40,10 +40,23 @@ Iterating on motion: the source image already fixes the look, so prompt only mot
 All editing is `model_run` on a video-input model; discover each with `search`:
 
 - Prompt-driven edits (restyle, swap objects, characters, or backgrounds): query `"video edit"` (Grok Edit Video, Wan 2.7 Video Edit, Lucy Edit, Luma Modify Video).
-- Lipsync and dubbing: query `"lipsync"` for video-to-video sync (Sync Lipsync, Kling Lipsync, Veed) and talking-portrait image-to-video avatars.
+- Lipsync and dubbing: query `"lipsync"` or `"dubbing"`; see the next section, the two are not the same step.
 - Upscaling up to 4K: query `"video upscale"` (Topaz, SeedVR2, Magnific, Flash VSR).
 - Deterministic utilities: query `"tool"` or `"video"` for trim (Video Cut), split, concat with transitions, resize, reverse, reframe to new aspect ratios, background removal, and frame extraction (Video to Image Sequence).
 - Extending a clip with new footage from its last frame: query `"extend video"`.
+
+## Dubbing is not lipsync
+
+Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Two separate steps, in this order:
+
+1. **Dub.** Takes the clip as `file`, a required `targetLang` (an ISO 639-1 or BCP-47 code from the schema's allowed values), and `sourceLang`, which defaults to `auto`. `keyterms` is array-typed and carries names, brands, and jargon across untranslated; a bare string is ignored, so pass `["Scenario"]` even for one term.
+2. **Lipsync.** Takes `video` and `audio` separately, plus `syncMode` for when the two durations disagree: `cut_off` (the default), `loop`, `bounce`, `silence`, or `remap`. Leaving the default is what truncates a dub that ran longer than its source.
+
+Building a localized talking head from nothing runs audio, then video, then dub, then lipsync. Judge it on a stylized character before promising it on a photoreal one.
+
+## Duration limits
+
+Input clips have hard ceilings, and models reject rather than trim: a 30.08 second reference against a 30.0 second limit fails the whole run. The error states both numbers. Trim first with the deterministic cut or split tools (`search` `query="video cut"`), landing under the limit rather than exactly on it.
 
 ## Common mistakes
 
