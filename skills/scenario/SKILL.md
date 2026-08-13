@@ -26,11 +26,11 @@ Cursor / VSCode (`mcp.json`):
 { "mcpServers": { "scenario": { "url": "https://mcp.scenario.com/mcp" } } }
 ```
 
-For headless or CI use, the same endpoint accepts API keys (`Authorization: Basic base64(key:secret)`, keys from app.scenario.com/settings/api). Build the header per the [connection guide](https://mcp.scenario.com/docs), reference it from an environment variable, and never ask an agent to collect, encode, or echo a secret.
+For headless or CI use, the endpoint also accepts API keys (`Authorization: Basic base64(key:secret)`, keys from app.scenario.com/settings/api). Build the header per the [connection guide](https://mcp.scenario.com/docs), reference it from an environment variable, and never ask an agent to echo a secret.
 
-The default toolset is the core loop below. Reconnect with `?toolsets=full` for everything, or reach any tool at runtime via `scenario_tools_list` and `scenario_tools_search` plus the `scenario_tool_execute_read` / `write` / `delete` executors.
+The default toolset is the core loop below. `?toolsets=full` exposes everything; otherwise reach any tool via `scenario_tools_list` / `scenario_tools_search` plus the `scenario_tool_execute_read` / `write` / `delete` executors.
 
-Scope fills itself in only when exactly one team and project remain possible; otherwise the reply says so and lists them. Ask the user which to use rather than picking one.
+Scope fills itself in only when exactly one team and project remain possible; otherwise the reply says so and lists them. Ask the user rather than picking one, then pass their answer as `team_id` and `project_id` on later calls.
 
 ## Quick reference
 
@@ -49,13 +49,13 @@ Scope fills itself in only when exactly one team and project remain possible; ot
 
 Worked example, generating a stylized game prop image:
 
-1. `search` with `target="models"`, `query="flux"`, `public=true`. Re-discover ids each time: availability differs per team.
+1. `search` with `target="models"`, `query="flux"`, `public=true`, or `recommend` with `prompt` set to the user's own words. Re-discover ids each time: availability differs per team.
 2. `model_schema_get` on the pick: exact field names, types, required flags, defaults. Names are per-model (`numOutputs`, not `numImages`), file-typed fields take asset ids even when named `...Url`, and `cost_impact: true` marks the fields that move the price.
-3. If that schema carries `runs_as: "lora"`, the model cannot be invoked by its own id. Read `run_with.required_arguments`: `model_run` takes its `model_id` (the base model), and its `parameters` (the `loras` wiring) merge into inputs drawn from the LoRA's own schema. Sending `required_arguments` as the whole request discards your prompt. This is routine, not an edge case: much of the catalog is LoRAs and `recommend` returns them as top picks.
+3. If that schema carries `runs_as: "lora"`, the model cannot be invoked by its own id. Read `run_with.required_arguments`: `model_run` takes its `model_id` (the base model), and its `parameters` (the `loras` wiring) merge into inputs drawn from the LoRA's own schema. Sending `required_arguments` as the whole request discards your prompt. Much of the catalog is LoRAs, so this is routine.
 4. Optional: `prompt_spark` rewrites a thin prompt into an on-model one; skip it when the prompt is already deliberate.
 5. `model_run` with `model_id` and schema-conformant `parameters` (file inputs take asset_ids). Returns asset_ids, or `status="in_progress"` with a `job_id`.
 6. `jobs_wait` with `job_ids=[...]`, up to 32 per call. A timeout is not an error: read `pending_job_ids` off the response and call `jobs_wait` again with those as `job_ids`.
-7. `asset_display` to show the asset inline; `asset_download` for a file URL (`curl -L`, it may redirect).
+7. `asset_display` to show the asset inline; `asset_download` returns a file URL, and its `format` chooses the delivered type (`png` default, `webp`, `jpg`). Save with `curl -L`, it may redirect.
 
 Local inputs go up with `upload_asset`: prefer the multipart path (pass `file_size`, PUT the presigned URLs, then `upload_asset_complete`); inline base64 only for files under ~100KB.
 
