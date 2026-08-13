@@ -3,6 +3,7 @@ ffprobe
 inpaint
 kling
 krea
+loras
 luma
 mux
 muxed
