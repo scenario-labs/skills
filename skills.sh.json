@@ -44,9 +44,9 @@
       "skills": ["scenario-workflows", "scenario-workflow-authoring"]
     },
     {
-      "title": "Feedback",
-      "description": "Turn a blocked session into a reproducible public issue, redacted and approved before it is posted.",
-      "skills": ["scenario-report"]
+      "title": "Troubleshooting",
+      "description": "Get past a blocked generation, and turn a stuck session into a reproducible public issue.",
+      "skills": ["scenario-moderation", "scenario-report"]
     }
   ]
 }
