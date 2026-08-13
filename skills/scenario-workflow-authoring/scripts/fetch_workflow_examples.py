@@ -15,9 +15,9 @@ API surface per the Workflows & Apps page on https://docs.scenario.com:
 GET https://api.cloud.scenario.com/v1/workflows with HTTP Basic auth
 (base64 of key:secret), privacy=public to list public workflows, pageSize
 (max 100) plus paginationToken for paging, and a nextPaginationToken field
-in the response for the next page. Live list responses carry editorInfo
-per workflow; when one does not, the full record is fetched from
-GET /v1/workflows/{id} before the workflow is skipped.
+in the response for the next page. Public listings never include flow or
+editorInfo (the full parameter is ignored there, per the API reference),
+so each tagged hit's editor graph comes from GET /v1/workflows/{id}.
 """
 
 from __future__ import annotations
@@ -221,8 +221,9 @@ def main(argv: list[str] | None = None) -> int:
                 continue
             trimmed = trim_workflow(workflow)
             if trimmed is None:
-                # A listing that omits the editor graph is not proof there is
-                # none: fetch the full record before deciding.
+                # Public listings never include the editor graph (the API
+                # reference: full is ignored there), so the full record is
+                # the only place to read it from.
                 try:
                     trimmed = trim_workflow(fetch_workflow(auth_header, workflow["id"]))
                 except RuntimeError as err:
