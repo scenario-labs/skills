@@ -37,6 +37,11 @@
       "title": "Workflows and apps",
       "description": "Discover and run saved Scenario workflows, the multi-step pipelines users call apps.",
       "skills": ["scenario-workflows"]
+    },
+    {
+      "title": "Feedback",
+      "description": "Turn a blocked session into a reproducible public issue, redacted and approved before it is posted.",
+      "skills": ["scenario-report"]
     }
   ]
 }
