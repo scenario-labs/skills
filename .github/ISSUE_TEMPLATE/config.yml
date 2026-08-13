@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Account, billing, credits, or a security report
+    url: https://app.scenario.com
+    about: Anything tied to your account is private. Use in-app support, not a public issue.
+  - name: Scenario documentation
+    url: https://docs.scenario.com
+    about: Guides and product documentation.
+  - name: Scenario MCP tool reference
+    url: https://mcp.scenario.com/docs/tools
+    about: Every MCP tool with its parameters, worth a look before filing.

@@ -1,0 +1,97 @@
+name: Bug report
+description: Something in a skill, the MCP server, or a generation behaves wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public and permanent. Before you submit, remove API keys, signed asset URLs, team and project ids, emails, local paths with your username, and any artwork or prompt you do not want published.
+
+        Account, billing, credit, and security problems do not belong here: use in-app support at https://app.scenario.com.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened
+      description: One or two sentences. The symptom, not the suspected cause.
+      placeholder: jobs_wait keeps returning the same texture upscale job in pending_job_ids, 20 minutes after model_run accepted it.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where
+      options:
+        - A skill in this repository (guidance wrong, missing, or misleading)
+        - Scenario MCP server (tool errors, schemas, auth, jobs)
+        - Model or generation output
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps as exact tool calls with their arguments. Say which `search` call found the model id, and whether that model is public. Substitute a public prompt for a confidential one and say that you did.
+      placeholder: |
+        1. search target="models" query="texture upscale" public=true, picked <model id>
+        2. model_schema_get model_id="<model id>"
+        3. model_run model_id="<model id>" parameters={"image": "asset_...", "upscaleFactor": 4}
+        4. jobs_wait job_ids=["job_..."], re-called 5 times with the returned pending_job_ids
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: The verbatim error or response. Paste it as text, not a screenshot, so it is searchable.
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often
+      options:
+        - Every time
+        - Intermittent
+        - Once so far
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Trace ids from `diagnostics_run`, job ids, model ids, and the UTC timestamp of the failing call. No signed asset URLs, they are credentials. Screenshots welcome.
+      placeholder: |
+        trace ids: mcpt_..., mcpt_...
+        job id: job_...
+        when: 2026-08-13T15:43:24Z
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: "From `diagnostics_run`, copy only these fields. Do not paste the whole report: it lists your teams and projects."
+      placeholder: |
+        version: 0.25.0
+        endpoint: prod
+        auth_type: oauth
+        self_test.layer: tenant-scope
+        agent and OS: Claude Code on macOS 15
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched open and closed issues for a duplicate.
+          required: true
+        - label: This report contains no keys, tokens, signed asset URLs, team or project ids, or personal data.
+          required: true

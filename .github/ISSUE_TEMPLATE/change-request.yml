@@ -1,0 +1,56 @@
+name: Change request
+description: A missing capability, unclear guidance, or a workflow that costs more than it should
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public and permanent. Before you submit, remove API keys, team and project ids, emails, and any unreleased project detail you do not want published.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to get done, and what stops you today? Describe the goal, not the solution.
+      placeholder: I generate icon batches for a live game and cannot tell which model produced which batch three weeks later.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where
+      options:
+        - A skill in this repository
+        - Scenario MCP server
+        - Models and generation
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What you do now
+      description: The current workaround and what it costs, in steps, minutes, or credits.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+      description: Optional. A shape you have in mind, and any alternative you already rejected and why.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: How often this comes up and who it affects. Say if it blocks you outright.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched open and closed issues for a duplicate.
+          required: true
+        - label: This request contains no keys, tokens, team or project ids, or personal data.
+          required: true
