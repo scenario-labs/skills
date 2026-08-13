@@ -9,9 +9,9 @@ import os
 import sys
 import tempfile
 import unittest
+import unittest.mock as mock
 import urllib.parse
 from pathlib import Path
-from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "skills" / "scenario-workflow-authoring" / "scripts"
 if str(SCRIPTS) not in sys.path:
@@ -36,12 +36,20 @@ class FakeResponse:
         return False
 
 
-def serve_pages(pages: list[dict], requests: list) -> mock.Mock:
-    """urlopen stand-in that records each request and replays canned pages."""
+def serve_pages(pages: list[dict], requests: list, details: dict | None = None) -> mock.Mock:
+    """urlopen stand-in: replays canned list pages, routes /workflows/{id} to details."""
+    detail_payloads = details or {}
 
     def _open(request, timeout=None):
         requests.append(request)
-        return FakeResponse(pages[min(len(requests), len(pages)) - 1])
+        path = urllib.parse.urlparse(request.full_url).path
+        if not path.endswith("/workflows"):
+            wid = urllib.parse.unquote(path.rsplit("/", 1)[-1])
+            return FakeResponse(detail_payloads[wid])
+        served = sum(
+            1 for r in requests if urllib.parse.urlparse(r.full_url).path.endswith("/workflows")
+        )
+        return FakeResponse(pages[min(served, len(pages)) - 1])
 
     return mock.Mock(side_effect=_open)
 
@@ -64,11 +72,11 @@ def graph_workflow(wid: str, tags: list[str] | None, **overrides) -> dict:
     return workflow
 
 
-def run_main(pages: list[dict], argv: list[str], env: dict | None = ENV):
+def run_main(pages: list[dict], argv: list[str], env: dict | None = ENV, details: dict | None = None):
     requests: list = []
     out, err = io.StringIO(), io.StringIO()
     environ = dict(env) if env else {}
-    with mock.patch("urllib.request.urlopen", serve_pages(pages, requests)) as opener:
+    with mock.patch("urllib.request.urlopen", serve_pages(pages, requests, details)) as opener:
         with mock.patch.dict(os.environ, environ, clear=True):
             with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
                 code = fwe.main(argv)
@@ -153,15 +161,47 @@ class TagFilterTestCase(unittest.TestCase):
         self.assertEqual(written, ["b"])
 
     def test_tagged_workflow_without_editor_graph_is_skipped(self) -> None:
-        code, written, _, err = self.run_filter(
-            [
-                graph_workflow("a", ["featured"], editorInfo={"nodes": [], "edges": []}),
-                graph_workflow("b", ["featured"], editorInfo=None),
-            ]
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            code, requests, _, err, _ = run_main(
+                [
+                    {
+                        "workflows": [
+                            graph_workflow("a", ["featured"], editorInfo={"nodes": [], "edges": []}),
+                            graph_workflow("b", ["featured"], editorInfo=None),
+                        ]
+                    }
+                ],
+                ["--output-dir", tmp],
+                details={
+                    "a": {"workflow": {"id": "a", "name": "Workflow a"}},
+                    "b": {"workflow": {"id": "b", "name": "Workflow b"}},
+                },
+            )
+            written = sorted(p.stem for p in Path(tmp).glob("*.json"))
         self.assertEqual(code, 0)
         self.assertEqual(written, [])
         self.assertIn("no editor graph", err)
+        # The full record was consulted before each skip.
+        detail_paths = [
+            urllib.parse.urlparse(r.full_url).path
+            for r in requests
+            if not urllib.parse.urlparse(r.full_url).path.endswith("/workflows")
+        ]
+        self.assertEqual(detail_paths, ["/v1/workflows/a", "/v1/workflows/b"])
+
+    def test_listing_without_graph_falls_back_to_the_full_record(self) -> None:
+        listed = graph_workflow("a", ["featured"])
+        del listed["editorInfo"]
+        detail = {"workflow": graph_workflow("a", ["featured"])}
+        with tempfile.TemporaryDirectory() as tmp:
+            code, requests, out, _, _ = run_main(
+                [{"workflows": [listed]}], ["--output-dir", tmp], details={"a": detail}
+            )
+            payload = json.loads((Path(tmp) / "a.json").read_text())
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["nodes"], [{"id": "n1", "type": "model", "data": {"modelId": "m"}}])
+        self.assertIn("Wrote 1", out)
+        self.assertEqual(len(requests), 2)
 
     def test_zero_matches_still_exits_zero_with_a_notice(self) -> None:
         code, written, out, _ = self.run_filter([graph_workflow("c", ["upscale"])])
@@ -258,6 +298,25 @@ class TrimTestCase(unittest.TestCase):
         )
         self.assertEqual(fwe.input_keys({"inputKeys": ["k1", "k2"]}), ["k1", "k2"])
         self.assertEqual(fwe.input_keys({}), [])
+
+    def test_editor_info_input_keys_win_over_fallbacks(self) -> None:
+        # Live records keep the ordered pin list at editorInfo.inputKeys.
+        workflow = {
+            "editorInfo": {"inputKeys": ["text1", "image5"]},
+            "inputKeys": ["stale"],
+            "inputs": {"other": {}},
+        }
+        self.assertEqual(fwe.input_keys(workflow), ["text1", "image5"])
+        # An empty editorInfo list still defers to the fallbacks.
+        self.assertEqual(
+            fwe.input_keys({"editorInfo": {"inputKeys": []}, "inputs": {"a": {}}}), ["a"]
+        )
+
+    def test_for_each_end_keeps_its_parent_node_id(self) -> None:
+        node = fwe.trim_node(
+            {"id": "fe1_end", "type": "forEachEnd", "data": {"parentNodeId": "fe1"}}
+        )
+        self.assertEqual(node, {"id": "fe1_end", "type": "forEachEnd", "data": {"parentNodeId": "fe1"}})
 
     def test_workflow_without_nodes_is_not_an_example(self) -> None:
         self.assertIsNone(fwe.trim_workflow({"id": "w", "editorInfo": {"edges": []}}))

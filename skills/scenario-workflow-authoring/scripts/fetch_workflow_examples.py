@@ -15,7 +15,9 @@ API surface per the Workflows & Apps page on https://docs.scenario.com:
 GET https://api.cloud.scenario.com/v1/workflows with HTTP Basic auth
 (base64 of key:secret), privacy=public to list public workflows, pageSize
 (max 100) plus paginationToken for paging, and a nextPaginationToken field
-in the response for the next page.
+in the response for the next page. Live list responses carry editorInfo
+per workflow; when one does not, the full record is fetched from
+GET /v1/workflows/{id} before the workflow is skipped.
 """
 
 from __future__ import annotations
@@ -36,9 +38,10 @@ PAGE_SIZE = 100
 
 DEFAULT_TAGS = ("featured", "sc:featured")
 
-# Structural node data worth keeping. Everything else in a node's data is
-# content (prompt text, asset references, parameter values) and is dropped.
-NODE_DATA_KEYS = ("type", "modelId", "title", "isInput", "isOutput")
+# Structural node data worth keeping: pin flags, model binding, and the
+# forEachEnd loop pairing. Everything else in a node's data is content
+# (prompt text, asset references, parameter values) and is dropped.
+NODE_DATA_KEYS = ("type", "modelId", "title", "isInput", "isOutput", "parentNodeId")
 
 EDGE_KEYS = ("source", "sourceHandle", "target", "targetHandle")
 
@@ -65,6 +68,24 @@ def fetch_page(auth_header: str, pagination_token: str | None = None, page_size:
         raise RuntimeError(f"GET {API_URL} failed with HTTP {err.code}{hint}") from err
     except urllib.error.URLError as err:
         raise RuntimeError(f"GET {API_URL} failed: {err.reason}") from err
+
+
+def fetch_workflow(auth_header: str, workflow_id: str) -> dict:
+    """Fetch one workflow's full record (GET /v1/workflows/{id})."""
+    url = f"{API_URL}/{urllib.parse.quote(workflow_id, safe='')}"
+    request = urllib.request.Request(
+        url,
+        headers={"Authorization": auth_header, "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            payload = json.load(response)
+    except urllib.error.HTTPError as err:
+        raise RuntimeError(f"GET {url} failed with HTTP {err.code}") from err
+    except urllib.error.URLError as err:
+        raise RuntimeError(f"GET {url} failed: {err.reason}") from err
+    workflow = payload.get("workflow") if isinstance(payload, dict) else None
+    return workflow if isinstance(workflow, dict) else payload
 
 
 def iter_public_workflows(auth_header: str, max_pages: int, page_size: int = PAGE_SIZE):
@@ -96,6 +117,13 @@ def trim_edge(edge: dict) -> dict:
 
 
 def input_keys(workflow: dict) -> list[str]:
+    # The authoring grammar keeps the ordered pin list at editorInfo.inputKeys
+    # (verified against live records); check there before any fallback.
+    editor_info = workflow.get("editorInfo")
+    if isinstance(editor_info, dict):
+        keys = editor_info.get("inputKeys")
+        if isinstance(keys, list) and keys and all(isinstance(k, str) for k in keys):
+            return keys
     keys = workflow.get("inputKeys")
     if isinstance(keys, list) and all(isinstance(k, str) for k in keys):
         return keys
@@ -192,6 +220,14 @@ def main(argv: list[str] | None = None) -> int:
                 print("skipping a tagged workflow with no id", file=sys.stderr)
                 continue
             trimmed = trim_workflow(workflow)
+            if trimmed is None:
+                # A listing that omits the editor graph is not proof there is
+                # none: fetch the full record before deciding.
+                try:
+                    trimmed = trim_workflow(fetch_workflow(auth_header, workflow["id"]))
+                except RuntimeError as err:
+                    print(f"skipping {workflow['id']}: {err}", file=sys.stderr)
+                    continue
             if trimmed is None:
                 print(f"skipping {workflow['id']}: tagged but has no editor graph", file=sys.stderr)
                 continue

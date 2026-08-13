@@ -63,7 +63,7 @@ Common `data` fields on every node: `title` (display name), `isInput` / `isOutpu
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `text`          | `value` (the string)                                                                                                                          |
 | `asset`         | `type` (`image` \| `video` \| `audio` \| `3d`, note `3d` not `3d-model`), `value` (asset id, or array when `isMultiple: true`), `isRequired?` |
-| `model` / `llm` | `modelId`, `form` (scalar params keyed by the model's input names, e.g. `{"prompt": "..."}`)                                                  |
+| `model` / `llm` | `modelId`, `form` (scalar-only settings keyed by the model's input names, e.g. `{"guidance": 7.5}`; wired inputs like `prompt` never go here) |
 | `transformText` | `value` (a CEL expression, see below)                                                                                                         |
 | `splitText`     | `splitDelimiter` (default `,`)                                                                                                                |
 | `groupItems`    | `value` (a CEL list expression)                                                                                                               |
