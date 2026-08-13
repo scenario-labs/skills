@@ -6,6 +6,8 @@ body:
     attributes:
       value: |
         This issue is public and permanent. Before you submit, remove API keys, team and project ids, emails, and any unreleased project detail you do not want published.
+
+        Would rather not post in public? Send the same fields to support@scenario.com instead.
   - type: textarea
     id: problem
     attributes:
@@ -52,5 +54,5 @@ body:
       options:
         - label: I searched open and closed issues for a duplicate.
           required: true
-        - label: This request contains no keys, tokens, team or project ids, or personal data.
+        - label: This request contains no keys, tokens, or personal data, and any team or project id in it is one I chose to make public.
           required: true

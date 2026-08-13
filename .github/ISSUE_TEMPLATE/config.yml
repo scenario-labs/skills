@@ -1,8 +1,11 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Email support instead
+    url: mailto:support@scenario.com
+    about: Same report, private channel. The right place for anything you would rather not publish, including your team and project ids.
   - name: Account, billing, credits, or a security report
     url: https://app.scenario.com
-    about: Anything tied to your account is private. Use in-app support, not a public issue.
+    about: Anything tied to your account is private. Use in-app support or support@scenario.com, not a public issue.
   - name: Scenario documentation
     url: https://docs.scenario.com
     about: Guides and product documentation.

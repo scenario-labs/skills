@@ -5,9 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        This issue is public and permanent. Before you submit, remove API keys, signed asset URLs, team and project ids, emails, local paths with your username, and any artwork or prompt you do not want published.
+        This issue is public and permanent. Before you submit, remove API keys, signed asset URLs, emails, local paths with your username, and any artwork or prompt you do not want published. Team and project ids identify your account: leave them out unless we ask, and share them by email rather than here.
 
-        Account, billing, credit, and security problems do not belong here: use in-app support at https://app.scenario.com.
+        Would rather not post in public? Send the same fields to support@scenario.com instead. Account, billing, credit, and security problems always go there, or to in-app support at https://app.scenario.com.
   - type: textarea
     id: summary
     attributes:
@@ -93,5 +93,5 @@ body:
       options:
         - label: I searched open and closed issues for a duplicate.
           required: true
-        - label: This report contains no keys, tokens, signed asset URLs, team or project ids, or personal data.
+        - label: This report contains no keys, tokens, signed asset URLs, or personal data, and any team or project id in it is one I chose to make public.
           required: true
