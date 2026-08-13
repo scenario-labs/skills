@@ -52,7 +52,7 @@ Name the model id and whether `search` finds it with `public=true`, the exact `p
 ## Posting
 
 - With GitHub tooling: search `repo:scenario-labs/skills` for duplicates, then create the issue with the label `bug` or `enhancement`, mirroring the form headings in the body.
-- Browser only: build `https://github.com/scenario-labs/skills/issues/new?template=bug.yml&summary=...&repro=...`, percent-encoding each value. Parameter names are the form field ids: `summary`, `area`, `repro`, `expected`, `actual`, `evidence`, `env`, `frequency`; change requests use `problem`, `area`, `today`, `proposal`, `impact`. The user ticks the confirmation boxes and submits. Past about 8000 characters the URL returns 414: drop `evidence`.
+- Browser only: build `https://github.com/scenario-labs/skills/issues/new?template=bug.yml&summary=...&repro=...`, percent-encoding each value. Parameter names are the form field ids: `summary`, `area`, `repro`, `expected`, `actual`, `evidence`, `env`, `frequency`; change requests switch to `template=change-request.yml` and use `problem`, `area`, `today`, `proposal`, `impact` (a param matching no field id on the selected form is dropped silently). The user ticks the confirmation boxes and submits. Past about 8000 characters the URL returns 414: drop `evidence`.
 - By email: `support@scenario.com`, subject `[bug] <title>` or `[change request] <title>`, body carrying those same fields as labeled lines. Whatever was withheld from a public issue (team id, project id, account email) travels safely here.
 
 ## Common mistakes
