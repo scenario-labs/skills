@@ -21,7 +21,7 @@ Scenario generates audio through the same loop as images: discover a model, read
 | Listen         | `asset_display`                                                                          | renders an inline audio player                                            |
 | Save           | `asset_download`                                                                         | returns a download URL: `curl -L -o out.mp3 "<url>"`                      |
 
-Find existing audio assets with `search` target="assets", filters={kind: "audio"}. OAuth callers pass team_id and project_id on every call (discover them with `teams_list`; see the `scenario` skill).
+Find existing audio assets with `search` target="assets", filters={kind: "audio"}. Team and project scope (`team_id`, `project_id`): see the `scenario` skill.
 
 ## What the audio surface covers
 

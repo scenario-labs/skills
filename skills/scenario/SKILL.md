@@ -30,7 +30,7 @@ For headless or CI use, the endpoint also accepts API keys (`Authorization: Basi
 
 The default toolset is the core loop below. `?toolsets=full` exposes everything; otherwise reach any tool via `scenario_tools_list` / `scenario_tools_search` plus the `scenario_tool_execute_read` / `write` / `delete` executors.
 
-Read-only tools fill in scope themselves when exactly one team and project remain possible. Tools that change data (`model_run`, `upload_asset`) never do: their refusal names the one candidate to confirm, or lists the choices. Ask the user rather than picking one, then pass their answer as `team_id` and `project_id` on later calls.
+Read-only tools fill in scope themselves when exactly one team and project remain possible. Tools that change data (`model_run`, `upload_asset`) never do: their refusal names the one candidate to confirm, or lists the choices. Ask the user rather than picking one (`teams_list` and `projects_list` enumerate the options), then pass their answer as `team_id` and `project_id` on later calls.
 
 ## Quick reference
 
