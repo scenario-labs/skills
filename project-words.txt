@@ -1,3 +1,4 @@
+captioner
 equirectangular
 ffprobe
 inpaint
