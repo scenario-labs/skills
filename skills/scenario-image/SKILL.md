@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Images are Scenario's largest catalog, split across `txt2img` (generate from a prompt) and `img2img` (edit, restyle, inpaint, upscale). The loop is the one the `scenario` skill teaches. What breaks image runs is the per-model contract: sizing fields, prompt limits, and reference caps differ between two models that do the same job, so read `model_schema_get` every time. Holding one look across a set: see `scenario-consistency`. Sprites, icons, and tilesets: see `scenario-game-assets`.
+Scenario runs hundreds of image models, split across `txt2img` (generate from a prompt) and `img2img` (edit, restyle, inpaint, upscale). The loop is the one the `scenario` skill teaches. What breaks image runs is the per-model contract: sizing fields, prompt limits, and reference caps differ between two models that do the same job, so read `model_schema_get` every time. Holding one look across a set: see `scenario-consistency`. Sprites, icons, and tilesets: see `scenario-game-assets`.
 
 ## Quick reference
 
@@ -28,7 +28,7 @@ All three are per-model, so take them from the schema rather than from a previou
 
 - **Size.** Models use one of two families: either an enum `aspectRatio` (`1:1`, `16:9`, `9:16`, often `match_input_image`) paired with a `resolution` in megapixels, or numeric `width` and `height` in pixels carrying `min`, `max`, and a `step` the value must land on. Pixels sent to an enum field, or an off-step size, are rejected.
 - **Prompt length.** The prompt field's `max_length` ranges from roughly 2000 characters to 32000. A prompt that fits one model is a 400 on the next.
-- **References.** `referenceImages` is array-typed with a per-model cap (commonly 8 to 10). Pass an array even for one asset: a bare string is dropped silently, so the run succeeds while ignoring the reference. State each reference's role in the prompt.
+- **References.** `referenceImages` is array-typed, and its cap is the schema's `max_length` on that field, which varies widely. Pass an array even for one asset: a bare string is dropped silently, so the run succeeds while ignoring the reference. State each reference's role in the prompt.
 
 `numOutputs` repeats one prompt, so it yields variations, not a set. Anything with a per-item difference needs one `model_run` per item.
 
