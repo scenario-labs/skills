@@ -10,7 +10,7 @@ license: MIT
 
 Scenario has no editing tools on the MCP surface. Every compositor, concatenator, trimmer and captioner is a deterministic model run through `model_run`. Find them with `search`, `target="models"`, `public=true`, `filters={"tags": ["tool"]}` (84 hits at authoring time), one capability per query. Connection and the core loop: see the `scenario` skill; the clips themselves: see `scenario-video`.
 
-## Pick the backend first
+## Quick reference: pick the backend first
 
 | Need                                       | Model                          |
 | ------------------------------------------ | ------------------------------ |
@@ -20,7 +20,7 @@ Scenario has no editing tools on the MCP surface. Every compositor, concatenator
 
 Concat is sequential: `videos` takes 2 to 50 files (never 1) and the optional `transitions` array's "length must be number of videos - 1", 18 types.
 
-Video Studio is an absolute timeline: `layers` holds 1 to 50 image, video or audio sources placed by `startTime` and stacked by `zIndex`, with per-layer `transitionIn`/`transitionOut`/`transitionDuration` instead of a between-clip array. At least one layer must be a video, so a music bed over a still is rejected.
+Video Studio is an absolute timeline: `layers` holds 1 to 50 image, video or audio sources placed by `startTime` and stacked by `zIndex` (higher in front), with per-layer `transitionIn`/`transitionOut`/`transitionDuration` instead of a between-clip array. At least one layer must be a video, so a music bed over a still is rejected.
 
 ## The Video Studio contract
 
@@ -40,7 +40,7 @@ A layer has no `type` field: its kind is inferred from `source`, which accepts o
 
 1. For every source, `asset_get` and read `properties`: the real `duration` (audio carries it too), `frameRate` on video, and `width`/`height` on video and images alike. A model asked for eight seconds does not always return exactly eight.
 2. Add them up to get each clip's `startTime`, then `model_schema_get` on `model_scenario-compose-video`.
-3. `model_run` it with `layers` holding the three clips at their computed `startTime`s (`zIndex: 0`), a logo PNG pinned by `x`/`y`/`anchor`, and the music as an audio layer. `volume` (0 to 2) and `mute` are per-layer and apply to video layers too, so balance the bed from either side. Set `canvasMode: "custom"` with `canvasWidth` and `canvasHeight`; `fps` defaults to 30.
+3. `model_run` it with `layers` holding the three clips at their computed `startTime`s (`zIndex: 0`), a logo PNG pinned by `x`/`y`/`anchor` at `zIndex: 1`, and the music as an audio layer trimmed to the clips' total with `trimEnd`, since auto `durationMode` computes from every layer, the bed included. `volume` (0 to 2) and `mute` are per-layer and apply to video layers too, so balance the bed from either side. Set `canvasMode: "custom"` with `canvasWidth` and `canvasHeight`; `fps` defaults to 30.
 4. `jobs_wait`, then caption the finished cut rather than each clip: `model_scenario-caption-studio` takes it as `video` and transcribes whatever audio the master actually carries, so lower the bed's `volume` rather than muting the dialogue. It burns captions in by default, takes an existing `.srt` as `subtitles`, a file input needing `upload_asset` first, returns a sidecar when `outputSrt` is true, and positions them with `textPosition` (`top`, `middle` or `bottom`, default `bottom`, so move it off a bottom-edge overlay).
 5. `asset_display` to review, then `asset_download` with `format` left unset (it is an image conversion target) for the file.
 
