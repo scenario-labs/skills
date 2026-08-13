@@ -31,6 +31,8 @@ jobs:
         run: pnpm skill-files
       - name: skills.sh.json grouping coverage
         run: pnpm groupings
+      - name: README skills table coverage
+        run: pnpm readme
       - name: Spelling (cspell)
         run: pnpm spell
       - name: Spec validation (skills-ref, the Agent Skills reference validator)
