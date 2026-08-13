@@ -149,7 +149,7 @@ A webapp export file is `{"version": "1.0", "name", "description", "editorInfo":
 ## Choosing nodes
 
 - Deliverables are model nodes: a brief asking for N distinct outputs gets N model nodes.
-- `llm` nodes are the top authoring failure mode. Default to none. Legitimate only when the user asked for LLM writing (captioning, rewriting, prompt variations), when fanning one brief into N different prompts via `forEach`, or when text must be computed at run time from an upstream asset. N samples of ONE prompt is one model node with its output-count parameter (name varies per model: `samples`, `nbImages`, `count`; check the schema), never an llm fan-out.
+- `llm` nodes are the top authoring failure mode. Default to none. Legitimate only when the user asked for LLM writing (captioning, rewriting, prompt variations), when fanning one brief into N different prompts via `forEach`, or when text must be computed at run time from an upstream asset; "refine the prompt" is not a reason. N samples of ONE prompt is one model node with its output-count parameter (name varies per model: `samples`, `nbImages`, `count`; check the schema), never an `llm` or `forEach` fan-out.
 - Composing a prompt from several outputs is `transformText`, not `llm`.
 - Tool-style models (upscale, remove background) define BOTH input and output handles, so pick the model before wiring. Studio-style composition models are fixed to their built-in model.
 

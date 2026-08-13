@@ -22,7 +22,7 @@ Only `workflows_list`, `workflow_get` and `workflow_run` are listed by default; 
 | 4. Run                | `workflow_run` with `inputs`       | Returns a job                  |
 | 5. Wait               | `jobs_wait`                        | Re-call with `pending_job_ids` |
 
-Ids are prefixed `wflow_`, not `workflow_` as tool-doc examples show; copy them from `workflows_list`. `search` with `target="workflows"` returned 403 at authoring time.
+Ids are prefixed `wflow_`, not `workflow_` as tool-doc examples show; copy them from `workflows_list`. `search` with `target="workflows"` returned 403 at authoring time, with or without `public=true`.
 
 ## Cap every list call
 

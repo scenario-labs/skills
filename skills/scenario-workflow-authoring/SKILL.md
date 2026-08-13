@@ -10,7 +10,7 @@ license: MIT
 
 A workflow has two representations: `editor_info` (the editable node graph: `nodes`, `edges`, `inputKeys`) and `flow` (the compiled runnable form). Authoring through MCP means writing the whole `editor_info` document: there are no per-node editing tools; every change is a read, modify, write of the full graph through `workflow_create` or `workflow_update`. Never hand-write `flow`: `workflow_publish` compiles `editor_info` into it and flips status to `ready`. Editing a ready workflow's `editor_info` leaves the stale `flow` running until you publish again.
 
-Read [references/editor-info.md](references/editor-info.md) before writing any graph: it holds the node type vocabulary, the edge direction rule, per-node data contracts, and a validated minimal example. Create, update, publish, copy and delete live in the tool catalog (`scenario_tools_search` plus the matching executor, see the `scenario` skill). Running and pricing: the `scenario-workflows` skill.
+Read [references/editor-info.md](references/editor-info.md) before writing any graph: it holds the node type vocabulary, the node choice doctrine (when an `llm` node is legitimate), the edge direction rule, per-node data contracts, and a validated minimal example. Create, update, publish, copy and delete live in the tool catalog (`scenario_tools_search` plus the matching executor, see the `scenario` skill). Running and pricing: the `scenario-workflows` skill.
 
 ## Quick reference
 
@@ -23,11 +23,7 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 | 5. Publish        | `workflow_publish`                   | Compiles `flow`, needs input+output pins |
 | 6. Validate       | `workflow_run` with `dry_run=true`   | Prices and runs the real validator       |
 
-`workflow_create` is two calls under the hood: a failed create may still have created a draft whose id is in the error. Recover with `workflow_update` on that id; re-creating duplicates. Seed step 1 from the session itself: `search` with `target="workflows"` and `public=true` finds featured workflows, and `workflow_get` returns each full graph. [scripts/fetch_workflow_examples.py](scripts/fetch_workflow_examples.py) bulk-exports the same examples as trimmed files for maintainers (setup in its header).
-
-## Choosing nodes
-
-One `model` node per requested deliverable. Add an `llm` node only when the user asked for LLM writing, when one brief fans out to N different prompts via `forEach`, or when text must be computed at run time from an upstream asset; "refine the prompt" is not a reason. N samples of one prompt is the model's own output-count parameter, never an `llm` or `forEach` fan-out. Compose a prompt from several sources with `transformText` (CEL), not an `llm`. Tool-style models define both input and output handles, so pick the model before wiring.
+`workflow_create` is two calls under the hood: a failed create may still have created a draft whose id is in the error. Recover with `workflow_update` on that id; re-creating duplicates. Seed step 1 with `workflow_get`: it returns the full graph of any workflow whose id you have, public ones included (an id or app URL the user supplies, or your own team's from `workflows_list`). Do not hunt ids with `search`: its `workflows` target returned 403 at authoring time, with or without `public=true` (the `scenario-workflows` skill records the same). [scripts/fetch_workflow_examples.py](scripts/fetch_workflow_examples.py) bulk-exports trimmed featured-workflow graphs for maintainers (setup in its header).
 
 ## Worked example: a text-to-image app
 
