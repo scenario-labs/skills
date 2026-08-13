@@ -1,0 +1,122 @@
+---
+description: Validate one skill end to end in a clean-room agent, then report the result to the PR.
+argument-hint: <skill-name> [--pr <number>] [--plan-only] [--task "..."] [--no-post] [--keep]
+disable-model-invocation: true
+---
+
+Validate the skill named in $ARGUMENTS by having a fresh agent do real work with it, then report where that agent got stuck. A defect here is a defect in the skill text, never in the agent.
+
+Flags: `--pr <number>` targets a PR instead of detecting one, `--plan-only` runs the zero-cost planning protocol from AGENTS.md instead of live generation, `--task "..."` supplies the use case instead of writing one, `--no-post` stops before publishing anything, `--keep` keeps the run directory.
+
+Live runs spend Scenario credits. Keep every generation the smallest one that still proves the point.
+
+## 1. Review the objective
+
+Read `skills/<name>/SKILL.md` and every file it links. If the name matches no directory under `skills/`, list the close ones and stop.
+
+State, in your own words: the objective (one sentence), the triggering conditions the `description` claims, and the three to six non-obvious facts the skill exists to teach, the ones an agent would otherwise guess wrong (upload flow, `jobs_wait` re-calls, `runs_as` wiring, dry runs, launch semantics). Those facts are the traps the run has to spring.
+
+## 2. Write a concrete use case
+
+One realistic task, in the words a user would actually use, that forces at least three of those traps and cannot be satisfied by generic MCP intuition. Give it explicit success criteria (which artifacts must exist, and what has to be true of them) and a hard budget (how many generations, which of them may be `dry_run`). Print the task and the criteria before spending anything. With `--task`, use the supplied task and still write the criteria.
+
+## 3. Run the mechanical checks first
+
+They are free and they catch the cheap failures: `pnpm spec` (spec validation), plus `pnpm test` when the skill ships a script. Record the results and continue either way; the report carries both layers.
+
+## 4. Spin up the fresh agent
+
+Build a run directory outside the repository and install the skill under test into it, from the working tree, so the run tests the version under review rather than the published one:
+
+```bash
+SKILL="<name>"
+RUN=$(mktemp -d "${TMPDIR:-/tmp}/skill-validate-$SKILL-XXXXXX")
+mkdir -p "$RUN/.claude/skills" "$RUN/assets"
+cp -R "skills/$SKILL" skills/scenario "$RUN/.claude/skills/"
+awk 'f; /^---$/ { if (++c == 2) f = 1 }' .claude/agents/skill-tester.md >"$RUN/contract.md"
+```
+
+Copy `scenario` alongside every other skill: real installs ship both. Write the task from step 2 to `$RUN/task.md`, including the budget, the success criteria, and the run directory path.
+
+Then pick the strongest isolation available. Run `cd "$RUN" && claude mcp list`.
+
+- **Separate process** (preferred, and a genuinely empty context) when that lists a connected Scenario server:
+
+  ```bash
+  cd "$RUN" && claude -p --setting-sources user,project \
+    --append-system-prompt "$(cat "$RUN/contract.md")" \
+    --allowedTools "mcp__<server> Read Write Bash" \
+    --output-format json "$(cat "$RUN/task.md")" | tee "$RUN/result.json"
+  ```
+
+  Use the server name `claude mcp list` printed. The child loads the skills from `$RUN/.claude/skills/` and never sees this repository.
+
+- **Subagent** when the list is empty because this session's Scenario tools come from a connector rather than a local MCP config (cloud and web sessions). Spawn the `skill-tester` agent with the contract, the task, and the run directory path. Isolation is weaker: it can still see repository context, which is why the contract tells it to ignore it.
+
+Say in the report which mode ran. With `--plan-only`, the same setup applies but the task asks for a numbered tool-call plan with exact tool names and argument shapes, executing nothing.
+
+## 5. Grade the run
+
+Fetch https://mcp.scenario.com/docs/tools fresh rather than recalling it, then judge:
+
+- **Objective met.** The artifacts exist and satisfy the criteria from step 2. Open them; do not take the tester's word for it.
+- **Real names only.** Every tool and parameter the tester used exists. One invented name is a fail.
+- **Correct flow.** Discovery, `model_schema_get`, `model_run`, `jobs_wait` re-called with `pending_job_ids` (never `job_get` polling), then `asset_display` or `asset_download`.
+- **No constant model ids.** They came from a `search` step.
+- **Traps handled** the way the skill teaches.
+- **No guessing.** Anything asserted that appears in neither the SKILL.md nor the tool reference is a guess, even when it happens to be right. The tester's `guesses` and `friction` entries are the shortest route to the missing sentence.
+
+Verdict: pass, pass with notes, or fail. Tie every defect to the exact line of SKILL.md to add or change. After a fix, re-run with a new fresh agent: an agent that already failed is contaminated by its own mistake.
+
+## 6. Determine the context
+
+`git rev-parse --abbrev-ref HEAD`, then look for an open PR with that head branch: `gh pr view --json number,url,title` when `gh` is available, otherwise the GitHub MCP tools (`list_pull_requests` with `head: <owner>:<branch>`). `--pr` overrides the detection. Say which context you found before acting on it.
+
+## 7. Report
+
+Assemble the report with the template below. This repository is public: only publicly shareable language (see AGENTS.md), and never a signed asset URL, which is a credential in itself. Assets travel as ids and local filenames; surface the files in this session so they can be looked at or dragged into the thread.
+
+**In a PR context**, post it as a PR comment (`gh pr comment <n> --body-file` or the GitHub MCP `add_issue_comment`), ending with the attribution line, and print the comment URL. `--no-post` prints the report here instead.
+
+**With no PR**, ask what to do with it: open a tracker issue for the defects (the `scenario-report` skill covers the forms and the redaction rules), save it to a file, post it to a PR number they name, or leave it in this conversation. Post nothing until they pick.
+
+Finally, delete the run directory unless `--keep` was passed, and say where the assets went if it survives.
+
+```markdown
+## Skill validation: `<name>` (<verdict>)
+
+Objective: <one sentence>
+Use case: <the task, one or two sentences>
+Run: <separate process|subagent>, model <model>, commit <sha>, <UTC timestamp>
+
+### Mechanical checks
+
+| Check     | Result |
+| --------- | ------ |
+| pnpm spec |        |
+| pnpm test |        |
+
+### End to end
+
+| #   | Tool | Outcome |
+| --- | ---- | ------- |
+
+Objective met: yes/no. <one sentence on what the agent produced>
+
+### Evidence
+
+| Artifact | Asset id | Job id | Model id | File |
+| -------- | -------- | ------ | -------- | ---- |
+
+### Defects
+
+1. `skills/<name>/SKILL.md:<line>` <what the agent got wrong> -> <the sentence to add or change>
+
+### Re-run
+
+`/skills:validate <name>` after the fix, with a fresh agent.
+
+---
+
+_Generated by [Claude Code](https://claude.ai/code)_
+```
