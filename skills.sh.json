@@ -29,9 +29,9 @@
       ]
     },
     {
-      "title": "Custom models",
-      "description": "Train custom models on your own art for style, character, or product consistency.",
-      "skills": ["scenario-model-training"]
+      "title": "Consistency and custom models",
+      "description": "Hold one character, product, or style across a whole set, and train custom models on your own art.",
+      "skills": ["scenario-consistency", "scenario-model-training"]
     },
     {
       "title": "Workflows and apps",

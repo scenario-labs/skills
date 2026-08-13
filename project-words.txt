@@ -6,6 +6,7 @@ kling
 krea
 loras
 luma
+mlsd
 mux
 muxed
 muxes
