@@ -289,6 +289,27 @@ class FullRecordTestCase(unittest.TestCase):
         self.assertIn("HTTP 404", err)
         self.assertIn("Wrote 1", out)
 
+    def test_connection_error_on_retrieve_also_skips_not_aborts(self) -> None:
+        # APIConnectionError is not an APIStatusError: a transient network
+        # blip on one retrieve must not abort the whole export.
+        request = httpx.Request("GET", "https://api.cloud.scenario.com/v1/workflows/a")
+        api = FakeWorkflowsAPI(
+            chain_pages(
+                [listed_workflow("a", ["featured"]), listed_workflow("b", ["featured"])]
+            ),
+            details={
+                "a": scenario_sdk.APIConnectionError(request=request),
+                "b": full_workflow("b", editor_info=GRAPH),
+            },
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out, err, _ = run_main(api, ["--output-dir", tmp])
+            written = sorted(p.stem for p in Path(tmp).glob("*.json"))
+        self.assertEqual(code, 0)
+        self.assertEqual(written, ["b"])
+        self.assertIn("skipping a", err)
+        self.assertIn("Wrote 1", out)
+
 
 class TrimTestCase(unittest.TestCase):
     def test_node_data_keeps_the_allowlist_and_drops_content(self) -> None:

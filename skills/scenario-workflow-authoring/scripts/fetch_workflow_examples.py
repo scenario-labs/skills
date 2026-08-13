@@ -179,7 +179,10 @@ def main(argv: list[str] | None = None) -> int:
                 # the only place to read it from.
                 try:
                     trimmed = trim_workflow(client.workflows.retrieve(workflow.id).workflow)
-                except scenario_sdk.APIStatusError as err:
+                except scenario_sdk.APIError as err:
+                    # APIError also covers connection and timeout errors, which
+                    # are siblings of APIStatusError: one flaky retrieve must
+                    # skip that workflow, never abort the whole export.
                     print(f"skipping {workflow.id}: {describe_error(err)}", file=sys.stderr)
                     continue
             if trimmed is None:
