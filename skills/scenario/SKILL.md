@@ -42,7 +42,7 @@ Scope fills itself in only when exactly one team and project remain possible; ot
 | 4. Wait           | `jobs_wait`                              | Server-side long-poll; never loop `job_get`        |
 | 5. View / save    | `asset_display` / `asset_download`       | Never paste raw asset URLs                         |
 | Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                       |
-| Refine a prompt   | `prompt_spark`                           | Advisory, never a required step                    |
+| Refine a prompt   | `prompt_spark`                           | Advisory; takes `model_id` plus `prompt`           |
 | Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt              |
 
 ## The core generation loop
@@ -51,13 +51,13 @@ Worked example, generating a stylized game prop image:
 
 1. `search` with `target="models"`, `query="flux"`, `public=true`, or `recommend` with `prompt` set to the user's own words. Re-discover ids each time: availability differs per team.
 2. `model_schema_get` on the pick: exact field names, types, required flags, defaults. Names are per-model (`numOutputs`, not `numImages`), file-typed fields take asset ids even when named `...Url`, and `cost_impact: true` marks the fields that move the price.
-3. If that schema carries `runs_as: "lora"`, the model cannot be invoked by its own id. Read `run_with.required_arguments`: `model_run` takes its `model_id` (the base model), and its `parameters` (the `loras` wiring) merge into inputs drawn from the LoRA's own schema. Sending `required_arguments` as the whole request discards your prompt. Much of the catalog is LoRAs, so this is routine.
-4. Optional: `prompt_spark` rewrites a thin prompt into an on-model one; skip it when the prompt is already deliberate.
+3. If that schema carries `runs_as: "lora"`, the model cannot be invoked by its own id. Read `run_with.required_arguments`: `model_run` takes its `model_id` (the base model), and its `parameters` (the `loras` wiring) merge into inputs drawn from the LoRA's own schema, which already lists the inherited generation fields, so one `model_schema_get` is enough. Sending `required_arguments` as the whole request discards your prompt. Much of the catalog is LoRAs, so this is routine.
+4. Optional: `prompt_spark` rewrites a thin prompt into an on-model one. It requires `model_id` (the model or LoRA you are about to run) alongside `prompt`. Skip it when the prompt is already deliberate.
 5. `model_run` with `model_id` and schema-conformant `parameters` (file inputs take asset_ids). Returns asset_ids, or `status="in_progress"` with a `job_id`.
 6. `jobs_wait` with `job_ids=[...]`, up to 32 per call. A timeout is not an error: read `pending_job_ids` off the response and call `jobs_wait` again with those as `job_ids`.
 7. `asset_display` to show the asset inline; `asset_download` returns a file URL, and its `format` chooses the delivered type (`png` default, `webp`, `jpg`). Save with `curl -L`, it may redirect.
 
-Local inputs go up with `upload_asset`: prefer the multipart path (pass `file_size`, PUT the presigned URLs, then `upload_asset_complete`); inline base64 only for files under ~100KB.
+Local inputs go up with `upload_asset`: prefer multipart (pass `file_size`, PUT the presigned URLs, then `upload_asset_complete`); inline base64 only under ~100KB.
 
 ## Common mistakes
 
