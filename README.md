@@ -40,7 +40,8 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions   |
 | [scenario-consistency](skills/scenario-consistency/SKILL.md)                   | Holding one character, product, or style across a set: baseline-plus-delta prompts, reference images, control maps |
 | [scenario-model-training](skills/scenario-model-training/SKILL.md)             | Training custom models for style, character, or product consistency, and generating with them                      |
-| [scenario-workflows](skills/scenario-workflows/SKILL.md)                       | Running saved workflows (apps): building the run inputs, dry-run pricing, publishing drafts, approval gates        |
+| [scenario-workflows](skills/scenario-workflows/SKILL.md)                       | Running saved workflows (apps): building the run inputs, dry-run pricing, unsticking approval gates                |
+| [scenario-workflow-authoring](skills/scenario-workflow-authoring/SKILL.md)     | Creating and editing workflow graphs: the editor_info grammar, node wiring, publishing drafts into runnable apps   |
 | [scenario-report](skills/scenario-report/SKILL.md)                             | Reporting a bug or change request as a reproducible, redacted issue on this repository's public tracker            |
 
 ## Example prompts

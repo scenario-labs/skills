@@ -35,8 +35,8 @@
     },
     {
       "title": "Workflows and apps",
-      "description": "Discover and run saved Scenario workflows, the multi-step pipelines users call apps.",
-      "skills": ["scenario-workflows"]
+      "description": "Discover, run, build, and publish Scenario workflows, the multi-step pipelines users call apps.",
+      "skills": ["scenario-workflows", "scenario-workflow-authoring"]
     },
     {
       "title": "Feedback",
