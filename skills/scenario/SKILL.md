@@ -16,12 +16,13 @@ Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: no cre
 
 The default toolset is the core loop below; `?toolsets=full` exposes everything. Any other tool: `scenario_tools_search` with the verb as `query` returns its schema and lane; the matching `scenario_tool_execute_read` / `write` / `delete` runs it with `{name, parameters}` (`team_id` and `project_id` go inside `parameters`).
 
-On OAuth connections every data-changing tool (and most others) takes `team_id` and `project_id`; a Forbidden error usually means missing or wrong scope. Read-only tools fill them in when exactly one candidate remains; writes never do: the refusal names the candidate or lists the choices (`teams_list` / `projects_list` enumerate them). Ask the user rather than picking for them. A non-interactive run takes the pair from its task instructions; when they name none, stop and list the choices instead of picking.
+Resolve scope first, then pass `team_id` and `project_id` on every later call. `teams_list` returns the teams with their projects; `projects_list` requires a `team_id`, so it cannot come first. Confirm the pair with the user rather than picking. A non-interactive run takes the pair from its task instructions; when they name none, stop and list the choices instead of picking. The server fills scope in only for read-only tools, and only while one candidate remains, so an unresolved scope fails the call instead of guessing. A Forbidden error usually means missing or wrong scope.
 
 ## Quick reference
 
 | Step              | Tool                                     | Notes                                              |
 | ----------------- | ---------------------------------------- | -------------------------------------------------- |
+| Resolve scope     | `teams_list`, then `projects_list`       | Once per session; pass the ids on every call       |
 | Find a model      | `search` or `recommend`                  | Free; never hardcode model ids                     |
 | Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as`         |
 | Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost |
@@ -45,8 +46,16 @@ Generating a stylized game prop image:
 
 Local inputs go up with `upload_asset`: multipart preferred (pass `file_size`, PUT the presigned URLs, then `upload_asset_complete`); inline base64 only under ~100KB.
 
+## Limits that stop a batch
+
+- **Concurrency.** A team may only have so many custom jobs running at once. Past that, `model_run` returns 429 `PlanLimitReachedError` with `details.actionName: "parallel-custom-jobs"` and the ceiling in `details.actionLimit`. Launch with `wait=false`, keep that many in flight, and let `jobs_wait` retire them before launching more. An immediate retry just repeats the error.
+- **Model access.** 403 `ModelAccessRestrictedError` names `modelId` and `requiredPlan`: surface the upgrade or pick another model, since retrying never clears it.
+- **Field caps.** Prompt `max_length` varies widely between models, and `model_schema_get` is the only place it is stated.
+
 ## Common mistakes
 
 - A bare value where the schema says `array: true`: pass the array anyway; a scalar can be silently dropped, ignoring your reference image or LoRA.
 - Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. `ask_user` means present the options; the user's pick wins. On `proceed`, prefer `specialty.model_id` when present, else the top `ranked` entry. Never run a `requires_plan_upgrade` entry; show it with its upgrade option.
+- Calling a tool with scope left out because an earlier call worked without it: the fill-in only applies while one candidate remains, so the same omission fails once a second team or project is in play.
+- Reaching for `job_cancel` on a stuck generation: it covers other job types and refuses these. Let `jobs_wait` finish, or stop re-calling it.
 - Debugging blind: the `diagnose` MCP prompt (or `diagnostics_run`) returns a report with trace ids; `usage` answers credit questions.
