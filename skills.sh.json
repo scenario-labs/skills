@@ -31,6 +31,11 @@
       "title": "Custom models",
       "description": "Train custom models on your own art for style, character, or product consistency.",
       "skills": ["scenario-model-training"]
+    },
+    {
+      "title": "Workflows and apps",
+      "description": "Discover and run saved Scenario workflows, the multi-step pipelines users call apps.",
+      "skills": ["scenario-workflows"]
     }
   ]
 }

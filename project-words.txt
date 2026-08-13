@@ -18,3 +18,4 @@ shfmt
 tripo
 upscales
 veed
+wflow
