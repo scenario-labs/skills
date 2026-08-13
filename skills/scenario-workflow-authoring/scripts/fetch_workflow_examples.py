@@ -1,37 +1,38 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["scenario-sdk"]
+# ///
 """Fetch public featured Scenario workflows as structural wiring examples.
 
-Lists public workflows from the Scenario REST API, keeps the ones tagged
-featured (or sc:featured) that carry an editor graph, and writes one trimmed
-JSON file per workflow. The trim keeps node types, edge wiring, and input
-keys, and drops content values (prompts, asset ids, parameter values): each
-file is a structural reference for wiring a similar workflow, never content
-to reuse.
+Built on the official Scenario Python SDK (scenario-sdk on PyPI): run it
+with `uv run scripts/fetch_workflow_examples.py` (uv reads the inline
+dependency block above) or `pip install scenario-sdk` first. Credentials
+come from the SDK's standard environment variables, SCENARIO_SDK_API_KEY
+and SCENARIO_SDK_API_SECRET.
 
-    SCENARIO_API_KEY=... SCENARIO_API_SECRET=... \\
-        python3 scripts/fetch_workflow_examples.py --output-dir workflow-examples
+Lists public workflows, keeps the ones tagged featured (or sc:featured),
+and writes one trimmed JSON file per workflow. Public listings never
+include flow or editorInfo (per the API reference, the full parameter is
+ignored there), so each tagged hit's editor graph comes from a per-id
+retrieve. The trim keeps node types, edge wiring, and input keys, and
+drops content values (prompts, asset ids, parameter values): each file is
+a structural reference for wiring a similar workflow, never content to
+reuse.
 
-API surface per the Workflows & Apps page on https://docs.scenario.com:
-GET https://api.cloud.scenario.com/v1/workflows with HTTP Basic auth
-(base64 of key:secret), privacy=public to list public workflows, pageSize
-(max 100) plus paginationToken for paging, and a nextPaginationToken field
-in the response for the next page. Public listings never include flow or
-editorInfo (the full parameter is ignored there, per the API reference),
-so each tagged hit's editor graph comes from GET /v1/workflows/{id}.
+    SCENARIO_SDK_API_KEY=... SCENARIO_SDK_API_SECRET=... \\
+        uv run scripts/fetch_workflow_examples.py --output-dir workflow-examples
 """
 
 from __future__ import annotations
 
 import argparse
-import base64
 import json
 import os
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
 
-API_URL = "https://api.cloud.scenario.com/v1/workflows"
+import scenario_sdk
+from scenario_sdk import Scenario
 
 # Documented maximum page size (default is 50).
 PAGE_SIZE = 100
@@ -46,56 +47,15 @@ NODE_DATA_KEYS = ("type", "modelId", "title", "isInput", "isOutput", "parentNode
 EDGE_KEYS = ("source", "sourceHandle", "target", "targetHandle")
 
 
-def build_auth_header(key: str, secret: str) -> str:
-    token = base64.b64encode(f"{key}:{secret}".encode("utf-8")).decode("ascii")
-    return f"Basic {token}"
-
-
-def fetch_page(auth_header: str, pagination_token: str | None = None, page_size: int = PAGE_SIZE) -> dict:
-    params = {"privacy": "public", "pageSize": str(page_size)}
-    if pagination_token:
-        params["paginationToken"] = pagination_token
-    url = f"{API_URL}?{urllib.parse.urlencode(params)}"
-    request = urllib.request.Request(
-        url,
-        headers={"Authorization": auth_header, "Accept": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            return json.load(response)
-    except urllib.error.HTTPError as err:
-        hint = " (check SCENARIO_API_KEY / SCENARIO_API_SECRET)" if err.code in (401, 403) else ""
-        raise RuntimeError(f"GET {API_URL} failed with HTTP {err.code}{hint}") from err
-    except urllib.error.URLError as err:
-        raise RuntimeError(f"GET {API_URL} failed: {err.reason}") from err
-
-
-def fetch_workflow(auth_header: str, workflow_id: str) -> dict:
-    """Fetch one workflow's full record (GET /v1/workflows/{id})."""
-    url = f"{API_URL}/{urllib.parse.quote(workflow_id, safe='')}"
-    request = urllib.request.Request(
-        url,
-        headers={"Authorization": auth_header, "Accept": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            payload = json.load(response)
-    except urllib.error.HTTPError as err:
-        raise RuntimeError(f"GET {url} failed with HTTP {err.code}") from err
-    except urllib.error.URLError as err:
-        raise RuntimeError(f"GET {url} failed: {err.reason}") from err
-    workflow = payload.get("workflow") if isinstance(payload, dict) else None
-    return workflow if isinstance(workflow, dict) else payload
-
-
-def iter_public_workflows(auth_header: str, max_pages: int, page_size: int = PAGE_SIZE):
-    token = None
-    for _ in range(max_pages):
-        page = fetch_page(auth_header, token, page_size)
-        yield from page.get("workflows") or []
-        token = page.get("nextPaginationToken")
-        if not token:
+def iter_public_workflows(client: Scenario, max_pages: int, page_size: int = PAGE_SIZE):
+    page = client.workflows.list(privacy="public", page_size=page_size)
+    pages_walked = 1
+    while True:
+        yield from page.workflows
+        if pages_walked >= max_pages or not page.has_next_page():
             break
+        page = page.get_next_page()
+        pages_walked += 1
 
 
 def _pick(source: dict, keys: tuple[str, ...]) -> dict:
@@ -116,40 +76,24 @@ def trim_edge(edge: dict) -> dict:
     return _pick(edge, EDGE_KEYS)
 
 
-def input_keys(workflow: dict) -> list[str]:
+def input_keys(workflow, editor_info: dict) -> list[str]:
     # The authoring grammar keeps the ordered pin list at editorInfo.inputKeys
     # (verified against live records); check there before any fallback.
-    editor_info = workflow.get("editorInfo")
-    if isinstance(editor_info, dict):
-        keys = editor_info.get("inputKeys")
-        if isinstance(keys, list) and keys and all(isinstance(k, str) for k in keys):
-            return keys
-    keys = workflow.get("inputKeys")
-    if isinstance(keys, list) and all(isinstance(k, str) for k in keys):
+    keys = editor_info.get("inputKeys")
+    if isinstance(keys, list) and keys and all(isinstance(k, str) for k in keys):
         return keys
-    # The docs show an inputs field on workflow objects without pinning its
-    # shape, so accept the likely shapes and fall back to an empty list.
-    inputs = workflow.get("inputs")
-    if isinstance(inputs, dict):
-        return list(inputs.keys())
-    if isinstance(inputs, list):
-        found = []
-        for item in inputs:
-            if isinstance(item, str):
-                found.append(item)
-            elif isinstance(item, dict):
-                for field in ("key", "name", "id"):
-                    value = item.get(field)
-                    if isinstance(value, str):
-                        found.append(value)
-                        break
-        return found
-    return []
+    # Fall back to the typed inputs carried by the workflow record.
+    names = []
+    for item in getattr(workflow, "inputs", None) or []:
+        name = getattr(item, "name", None)
+        if isinstance(name, str):
+            names.append(name)
+    return names
 
 
-def trim_workflow(workflow: dict) -> dict | None:
-    """Trim a workflow to its structural wiring, or None without an editor graph."""
-    editor_info = workflow.get("editorInfo")
+def trim_workflow(workflow) -> dict | None:
+    """Trim a workflow record to its structural wiring, or None without an editor graph."""
+    editor_info = getattr(workflow, "editor_info", None)
     if not isinstance(editor_info, dict):
         return None
     nodes = editor_info.get("nodes")
@@ -159,12 +103,12 @@ def trim_workflow(workflow: dict) -> dict | None:
     if not isinstance(edges, list):
         edges = []
     return {
-        "id": workflow.get("id"),
-        "name": workflow.get("name") or "",
-        "description": workflow.get("description") or "",
+        "id": workflow.id,
+        "name": workflow.name or "",
+        "description": workflow.description or "",
         "nodes": [trim_node(node) for node in nodes if isinstance(node, dict)],
         "edges": [trim_edge(edge) for edge in edges if isinstance(edge, dict)],
-        "inputKeys": input_keys(workflow),
+        "inputKeys": input_keys(workflow, editor_info),
     }
 
 
@@ -194,30 +138,39 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
+def describe_error(err: Exception) -> str:
+    if isinstance(err, (scenario_sdk.AuthenticationError, scenario_sdk.PermissionDeniedError)):
+        return (
+            f"Scenario API refused the credentials (HTTP {err.status_code}):"
+            " check SCENARIO_SDK_API_KEY / SCENARIO_SDK_API_SECRET"
+        )
+    if isinstance(err, scenario_sdk.APIStatusError):
+        return f"Scenario API request failed with HTTP {err.status_code}"
+    return f"Scenario API request failed: {err}"
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    key = os.environ.get("SCENARIO_API_KEY", "").strip()
-    secret = os.environ.get("SCENARIO_API_SECRET", "").strip()
+    key = os.environ.get("SCENARIO_SDK_API_KEY", "").strip()
+    secret = os.environ.get("SCENARIO_SDK_API_SECRET", "").strip()
     if not key or not secret:
         print(
-            "SCENARIO_API_KEY and SCENARIO_API_SECRET must be set: the workflows"
-            " endpoint requires HTTP Basic auth with your Scenario API key and secret.",
+            "SCENARIO_SDK_API_KEY and SCENARIO_SDK_API_SECRET must be set: the"
+            " official scenario-sdk reads your Scenario API key and secret from"
+            " these environment variables.",
             file=sys.stderr,
         )
         return 1
 
-    auth_header = build_auth_header(key, secret)
+    client = Scenario()
     wanted = set(args.tag) if args.tag else set(DEFAULT_TAGS)
     kept = 0
     try:
-        for workflow in iter_public_workflows(auth_header, args.max_pages):
+        for workflow in iter_public_workflows(client, args.max_pages):
             # Tag filtering happens client side: the documented tags query
             # parameter does not state how multiple tags combine, and this
             # needs any-of semantics.
-            if not set(workflow.get("tagSet") or []) & wanted:
-                continue
-            if not workflow.get("id"):
-                print("skipping a tagged workflow with no id", file=sys.stderr)
+            if not set(workflow.tag_set or []) & wanted:
                 continue
             trimmed = trim_workflow(workflow)
             if trimmed is None:
@@ -225,12 +178,12 @@ def main(argv: list[str] | None = None) -> int:
                 # reference: full is ignored there), so the full record is
                 # the only place to read it from.
                 try:
-                    trimmed = trim_workflow(fetch_workflow(auth_header, workflow["id"]))
-                except RuntimeError as err:
-                    print(f"skipping {workflow['id']}: {err}", file=sys.stderr)
+                    trimmed = trim_workflow(client.workflows.retrieve(workflow.id).workflow)
+                except scenario_sdk.APIStatusError as err:
+                    print(f"skipping {workflow.id}: {describe_error(err)}", file=sys.stderr)
                     continue
             if trimmed is None:
-                print(f"skipping {workflow['id']}: tagged but has no editor graph", file=sys.stderr)
+                print(f"skipping {workflow.id}: tagged but has no editor graph", file=sys.stderr)
                 continue
             path = write_example(args.output_dir, trimmed)
             kept += 1
@@ -239,8 +192,8 @@ def main(argv: list[str] | None = None) -> int:
                 f" ({len(trimmed['nodes'])} nodes, {len(trimmed['edges'])} edges,"
                 f" {len(trimmed['inputKeys'])} inputs) -> {path}"
             )
-    except RuntimeError as err:
-        print(str(err), file=sys.stderr)
+    except scenario_sdk.ScenarioError as err:
+        print(describe_error(err), file=sys.stderr)
         return 1
 
     if kept == 0:

@@ -23,7 +23,7 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 | 5. Publish        | `workflow_publish`                   | Compiles `flow`, needs input+output pins |
 | 6. Validate       | `workflow_run` with `dry_run=true`   | Prices and runs the real validator       |
 
-`workflow_create` is two calls under the hood: a failed create may still have created a draft whose id is in the error. Recover with `workflow_update` on that id; re-creating duplicates. To seed step 1 with public featured examples, run [scripts/fetch_workflow_examples.py](scripts/fetch_workflow_examples.py) with API credentials.
+`workflow_create` is two calls under the hood: a failed create may still have created a draft whose id is in the error. Recover with `workflow_update` on that id; re-creating duplicates. Seed step 1 from the session itself: `search` with `target="workflows"` and `public=true` finds featured workflows, and `workflow_get` returns each full graph. [scripts/fetch_workflow_examples.py](scripts/fetch_workflow_examples.py) bulk-exports the same examples as trimmed files for maintainers (setup in its header).
 
 ## Choosing nodes
 
