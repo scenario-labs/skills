@@ -1,6 +1,6 @@
 ---
 name: scenario-consistency
-description: "Use when one look must hold across many Scenario generations: the same character across scenes or a turnaround, the same product across angles and colorways, the same style across an icon set or tileset, or a variant that matches an approved baseline except for one change. Triggers include make this match, same character, keep it consistent, character sheet, reference sheet, style bible, on-model, locked pose, and asking whether to train a LoRA. Keywords: consistency, identity, reference image, control map, ControlNet, seed."
+description: "Use when one look must hold across many Scenario generations: the same character across scenes or a turnaround, the same product across angles and colorways, the same style across an icon set or tileset, or a variant that matches an approved baseline except for one change. Triggers include make this match, same character, keep it consistent, character sheet, reference sheet, on-model, and whether to train a LoRA. Keywords: consistency, identity, reference image, control map, ControlNet, seed."
 license: MIT
 ---
 
@@ -40,10 +40,17 @@ Generate the control map and pass it as a conditioning input. Never extract the 
 
 The control block (`controlImage`, `controlModality`, `controlStrength`, `controlStart`, `controlEnd`) exists only on models listing `controlnet` in `capabilities`, so check that before planning around it; models without it take reference images instead. The two vocabularies differ: `controlModality` allows `canny`, `tile`, `depth`, `blur`, `pose`, `gray` and `low-quality`, so only canny, depth and pose map across, and `grayscale` becomes `gray`. `controlStrength` defaults to 0.7 with a recommended 0.3 to 0.8 band: near 0.7 for canny, depth and tile, 0.8 to 0.9 for pose, gray and blur, rigid above 0.9. Strength is how much, `controlStart` and `controlEnd` are when: `controlEnd` near 0.65 locks composition early, then releases so the prompt refines detail.
 
+## Worked example: five poses of one mascot
+
+1. `asset_display` the approved hero (`asset_hero`) and write its baseline: the full must-not-change enumeration above.
+2. `search` (`target="models"`, `public=true`) for an image model, preferring reference-image slots, then `model_schema_get`: the reference field's exact name, cap, and whether it is required.
+3. One `model_run` per pose, five in all: the byte-identical baseline, the pose alone in the final clause, the hero as `referenceImages: ["asset_hero"]` (array, even alone). No seed. No control map: a pose map from the hero locks the very pose being changed.
+4. `jobs_wait` on the five job ids, re-calling with `pending_job_ids` until done. `asset_display` each against the hero; fix drift by tightening the enumeration, not by chaining outputs.
+
 ## Common mistakes
 
 - Reaching for a seed to make two different prompts match: it reproduces one generation and transfers nothing. Across a set leave it unset; set one only to re-roll a single unchanged prompt.
 - Writing "same as before": there is no memory between calls, so restate the baseline in full every time.
 - Chaining a set output to output: drift compounds. Anchor every item to the same approved baseline.
-- Training a LoRA for one character: train for a house style spanning many assets. A trained LoRA also cannot be run by its own id (see `scenario`).
+- Training a LoRA for one character: train for a house style spanning many assets. A trained LoRA also never runs by its own id: its schema's `runs_as` and `run_with` carry the base-model call (see `scenario`).
 - Assuming `asset_detect` modality names are valid `controlModality` values.
