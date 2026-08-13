@@ -16,6 +16,8 @@ numpy
 outpainting
 remesh
 remeshing
+retarget
+retargets
 retexture
 retexturing
 shfmt

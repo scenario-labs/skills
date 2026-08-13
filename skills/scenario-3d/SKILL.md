@@ -1,6 +1,6 @@
 ---
 name: scenario-3d
-description: Use when generating or handling 3D assets through the Scenario MCP server, including text-to-3D or image-to-3D meshes, GLB, FBX, OBJ, or VOX files, PBR-textured or game-ready models, voxel models, multi-view reconstruction, retexture, remesh, UV unwrap, or rigging steps, previewing a mesh in the inline 3D viewer, capturing a viewer screenshot, or downloading a model for import into Unity, Unreal, Godot, or Blender.
+description: Use when generating or handling 3D assets through the Scenario MCP server, including text-to-3D or image-to-3D meshes, GLB, FBX, OBJ, or VOX files, PBR-textured or game-ready models, voxel models, multi-view reconstruction, retexture, remesh, UV unwrap, auto-rigging a biped or quadruped character, skin weights, or retargeting an animation, previewing a mesh in the inline 3D viewer, capturing a viewer screenshot, or downloading a model for import into Unity, Unreal, Godot, or Blender.
 license: MIT
 ---
 
@@ -39,7 +39,21 @@ Multi-view models accept several images of the same subject from different angle
 
 ## Refining meshes
 
-3D-to-3D utilities (`3d23d` capability) cover retexturing, remeshing, UV unwrapping, rigging, animation, and part segmentation. Find them with `search` `target="models"`, `query="mesh"` or `query="retexture"`. Most take an existing 3D `asset_id` as input.
+3D-to-3D utilities (`3d23d` capability) cover retexturing, remeshing, UV unwrapping, and part segmentation. Find them with `search` `target="models"`, `query="mesh"` or `query="retexture"`. Most take an existing 3D `asset_id` as input.
+
+## Rigging and animation
+
+Rigging is a separate `3d23d` step run on a finished mesh, not a flag on the generator. Find the models with `search` `query="rigging"`.
+
+Body plan picks the model. Humanoid models take just the mesh (plus a front-facing hint on some) and infer a biped skeleton. Non-biped work goes to a model exposing `rigType`, whose values cover `quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, and `aquatic`. Nothing exposes a custom bone hierarchy or a skin-influence count, so export the rigged file and finish weighting or retargeting in a DCC such as Blender or Maya.
+
+Three schema details decide whether the output is usable:
+
+- **Input format.** Rigging models accept GLB, and often OBJ, FBX, or STL. OBJ cannot carry a rig, so the output goes out as GLB or FBX.
+- **Size ceiling.** File inputs carry a `max_size` (one rigging model caps at 30 MB). A mesh over the ceiling has to be decimated first.
+- **Animation versus rig.** Setting the optional `animation` field retargets a preset clip, and by default only the retarget file comes back. Set `includeRiggedModel` to keep the plain rigged mesh too.
+
+When only motion is wanted, motion-transfer video models animate a still character image with no skeleton at all: see `scenario-video`.
 
 ## Common mistakes
 
@@ -48,3 +62,5 @@ Multi-view models accept several images of the same subject from different angle
 - Hardcoding model IDs: catalogs rotate (live search shows Meshy 6 models tagged deprecated in favor of Meshy 7). Re-discover with `search` each session.
 - Pasting raw asset URLs into chat instead of calling `asset_display`.
 - Forgetting `-L` with curl: download URLs may redirect before serving the file.
+- Promising a named skeleton or a specific influence count: pick the body plan and the export format, then finish the rest in a DCC.
+- Sending a biped to a `rigType` model: the enum has no biped value, because humanoids have their own rigging models.
