@@ -1,6 +1,6 @@
 ---
 name: scenario-video
-description: "Use when generating or editing video on Scenario via MCP: text-to-video, image-to-video (animating a still, first/last frame anchors), motion prompt iteration, lipsync and talking avatars, dubbing or translating a clip into another language, video upscale to 4K, prompt-based video editing, trim, split, concat, reframe, resize, extend, frame extraction, or a clip rejected for exceeding a duration limit. Keywords: txt2video, img2video, video2video, I2V, T2V, V2V, localization, game cinematics."
+description: "Use when generating or editing video on Scenario via MCP: text-to-video, image-to-video (animating a still, first/last frame anchors), motion prompting, lipsync and talking avatars, dubbing or translating a clip into another language, video upscale to 4K, prompt-based video editing, trim, split, reframe, background removal, waiting on long video jobs, or a clip rejected for exceeding a duration limit. Keywords: txt2video, img2video, video2video, I2V, T2V, V2V, localization, game cinematics."
 license: MIT
 ---
 
@@ -42,17 +42,18 @@ All editing is `model_run` on a video-input model; discover each with `search`:
 - Prompt-driven edits (restyle, swap objects, characters, or backgrounds): query `"video edit"` (Grok Edit Video, Wan 2.7 Video Edit, Lucy Edit, Luma Modify Video).
 - Lipsync and dubbing: query `"lipsync"` or `"dubbing"`; see the next section, the two are not the same step.
 - Upscaling up to 4K: query `"video upscale"` (Topaz, SeedVR2, Magnific, Flash VSR).
-- Deterministic utilities: query `"tool"` or `"video"` for trim (Video Cut), split, concat with transitions, resize, reverse, reframe to new aspect ratios, background removal, and frame extraction (Video to Image Sequence).
+- Deterministic utilities: query `"tool"` for trim, split, concat with transitions, resize, reverse, reframe, background removal, and audio or frame extraction. Assembling clips into a finished cut: see `scenario-video-assembly`.
 - Extending a clip with new footage from its last frame: query `"extend video"`.
 
 ## Dubbing is not lipsync
 
-Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Two separate steps, in this order:
+Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Three steps, in this order:
 
-1. **Dub.** Takes the clip as `file`, a required `targetLang` (an ISO 639-1 or BCP-47 code from the schema's allowed values), and `sourceLang`, which defaults to `auto`. `keyterms` is array-typed and carries names, brands, and jargon across untranslated; a bare string is ignored, so pass `["Scenario"]` even for one term.
-2. **Lipsync.** Takes `video` and `audio` separately, plus `syncMode` for when the two durations disagree: `cut_off` (the default), `loop`, `bounce`, `silence`, or `remap`. Leaving the default is what truncates a dub that ran longer than its source.
+1. **Dub.** Takes the clip as `file` and a required `targetLang` from the schema's allowed values. `sourceLang` auto-detects, though the value meaning auto differs per model. When a brand or name must survive translation, pick a hit whose schema carries `keyterms`, since not all do; it is array-typed, so pass `["Scenario"]` even for one term.
+2. **Extract.** Dubbing a video returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the new speech out with an audio extraction tool.
+3. **Lipsync.** Takes `video` and `audio` separately, plus `syncMode` where the schema exposes it (`cut_off`, `loop`, `bounce`, `silence`, `remap`). Defaults differ, so set it explicitly: a dub longer than its source is truncated under `cut_off` and repeated under `loop`.
 
-Building a localized talking head from nothing runs audio, then video, then dub, then lipsync. Judge it on a stylized character before promising it on a photoreal one.
+Building a localized talking head from nothing runs audio, video, dub, extract, lipsync. Judge it on a stylized character before promising it on a photoreal one.
 
 ## Duration limits
 
