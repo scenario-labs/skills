@@ -28,17 +28,17 @@ All three are per-model, so take them from the schema rather than from a previou
 
 - **Size.** Sizing has no common shape: numeric `width` and `height` with `min`, `max`, and a `step` to land on; an enum (`aspectRatio`, a `resolution` in megapixels or K tiers, a `size` mixing tiers with pixel pairs); or an aspect ratio alone, which puts an exact pixel target out of reach entirely. Pixels sent to an enum field, or an off-step value, are rejected. When the schema cannot express the size asked for, report what it can reach rather than rounding silently.
 - **Prompt length.** The prompt field's `max_length` ranges from roughly 2000 characters to 32000. A prompt that fits one model is a 400 on the next.
-- **References.** Name (`referenceImages`, `image`), cap, and cardinality all come from the schema, and the name settles none of them: a field called `referenceImages` is a single scalar file on some models. Pass an array only where the schema says `array: true`, and there pass one even for a lone asset, since a bare string is dropped silently and the run then succeeds while ignoring the reference. State each reference's role in the prompt.
+- **References.** Name (`referenceImages`, `image`), cap, and cardinality all come from the schema, and the name settles none of them: a field called `referenceImages` is a single scalar file on some models. Pass an array only where the schema says `array: true`, and there pass one even for a lone asset, since a bare string is dropped silently and the run then succeeds while ignoring the reference. With several references, say in the prompt which is which.
 
 A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields variations, not a set. Anything with a per-item difference needs one `model_run` per item.
 
 ## Worked example: replacing a label on a product shot
 
 1. `recommend` with `capability="img2img"` and the user's own words as `prompt`. On `next_step.type="ask_user"`, present the options instead of picking; skip any `requires_plan_upgrade` entry.
-2. `upload_asset` the product photo, which returns an `asset_id`.
+2. `upload_asset` the product photo, then `upload_asset_complete`, which returns the `asset_id`. Only the inline path under ~100KB skips the second call.
 3. `model_schema_get` on the pick: the reference field's name and cap, which sizing family it uses, the prompt `max_length`, and whether a `mask` field exists.
-4. For a masked edit, build the mask from the source image, then read the `mask` field's own description: it usually demands the source's format and dimensions plus an alpha channel, so export with alpha preserved.
-5. `model_run` with `parameters={"prompt": "...", "referenceImages": ["asset_abc"]}` plus the mask and sizing fields the schema named. Use `dry_run=true` first when cost matters.
+4. For a masked edit, read the `mask` field's own description before building anything. Masks are not interchangeable: one model wants an alpha channel at the source's exact dimensions, another wants a black and white image it resizes itself, and which pixels get painted differs too.
+5. `model_run` with the schema's own field names: the prompt, the reference (wrapped in an array only where the schema says `array: true`), plus the mask and sizing fields it named. Use `dry_run=true` first when cost matters.
 6. `jobs_wait`, then `asset_display` to review and `asset_download` to save.
 
 ## Common mistakes
