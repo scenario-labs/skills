@@ -26,9 +26,9 @@ Inpainting and outpainting are `img2img`, not capabilities of their own.
 
 All three are per-model, so take them from the schema rather than from a previous run:
 
-- **Size.** Sizing has no common shape: numeric `width` and `height` with `min`, `max`, and a `step` to land on, or an enum, either `aspectRatio` plus a megapixel `resolution` or a single `size` mixing tiers and pixel pairs (`2K`, `4096*2304`). Pixels sent to an enum field, or an off-step value, are rejected. When no enum value reaches the target, report the achievable size rather than rounding silently.
+- **Size.** Sizing has no common shape: numeric `width` and `height` with `min`, `max`, and a `step` to land on; an enum (`aspectRatio`, a `resolution` in megapixels or K tiers, a `size` mixing tiers with pixel pairs); or an aspect ratio alone, which puts an exact pixel target out of reach entirely. Pixels sent to an enum field, or an off-step value, are rejected. When the schema cannot express the size asked for, report what it can reach rather than rounding silently.
 - **Prompt length.** The prompt field's `max_length` ranges from roughly 2000 characters to 32000. A prompt that fits one model is a 400 on the next.
-- **References.** The reference field is array-typed, and both its name (`referenceImages`, `images`) and its cap come from the schema. Pass an array even for one asset: a bare string is dropped silently, so the run succeeds while ignoring the reference. State each reference's role in the prompt.
+- **References.** Name (`referenceImages`, `image`), cap, and cardinality all come from the schema, and the name settles none of them: a field called `referenceImages` is a single scalar file on some models. Pass an array only where the schema says `array: true`, and there pass one even for a lone asset, since a bare string is dropped silently and the run then succeeds while ignoring the reference. State each reference's role in the prompt.
 
 A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields variations, not a set. Anything with a per-item difference needs one `model_run` per item.
 
@@ -43,8 +43,8 @@ A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields
 
 ## Common mistakes
 
-- Passing a single reference as a bare string: it is dropped without an error, and the output quietly ignores it.
+- Passing a bare string where the schema marks the reference field `array: true`: it is dropped without an error, and the output quietly ignores it.
 - Reusing one model's parameter block on another: `aspectRatio` and `width`/`height` rarely coexist, and unknown fields are rejected.
 - Retrying a 403 `ModelAccessRestrictedError`: it names `modelId` and `requiredPlan`, so surface the upgrade or pick another model.
 - Prompting "transparent background": diffusion outputs are opaque. Use a `background` field when the schema has one, otherwise run a background-removal model afterwards.
-- Sizing a mask for convenience: models taking a mask generally require the source's exact format and dimensions.
+- Assuming a model can hit a requested pixel size: some expose an aspect ratio and nothing else.
