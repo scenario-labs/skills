@@ -20,4 +20,6 @@ Cursor / VSCode (`mcp.json`):
 
 ## API keys (headless or CI)
 
-The same endpoint accepts `Authorization: Basic base64(key:secret)`; create keys at app.scenario.com/settings/api. Build the header per the [connection guide](https://mcp.scenario.com/docs) and keep it out of the conversation: reference an environment variable in the client config (`--header "Authorization: Basic $SCENARIO_MCP_AUTH"`) or edit the config file directly. Never ask an agent to collect, encode, or echo a key or secret.
+Where nobody is present to complete the OAuth prompt, the same endpoint also authenticates with a Scenario API key, created at app.scenario.com/settings/api. Wiring one into a client is an operator task done by hand: the [connection guide](https://mcp.scenario.com/docs#using-an-api-key) carries the current steps for each client.
+
+Credentials stay out of the conversation. An agent asked to set this up points to the guide and stops there. It does not ask for a key or secret, does not place one in a command, a config file, or a message, and does not repeat one that appears in its context.
