@@ -33,7 +33,7 @@ Connection and the core generation loop: see the `scenario` skill in this repo.
 5. `jobs_wait` with `job_ids=["job_xyz"]`. On `status="in_progress"`, call again, passing the returned `pending_job_ids` as `job_ids`.
 6. `asset_display` the output video; `asset_download` (no `format`) returns the file URL, save it with `curl -L`.
 
-Iterating on motion: the source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. Several image-to-video models also accept first and last frame anchors or keyframe sequences (Kling, Veo 3.1, Seedance, Luma Ray 3.2); take exact parameter names from `model_schema_get`, never from memory.
+Iterating on motion: the source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. Several also accept first and last frame anchors or keyframe sequences; take exact parameter names from `model_schema_get`, never from memory.
 
 ## Editing existing footage
 
@@ -42,7 +42,7 @@ All editing is `model_run` on a video-input model; discover each with `search`:
 - Prompt-driven edits (restyle, swap objects, characters, or backgrounds): query `"video edit"` (Grok Edit Video, Wan 2.7 Video Edit, Lucy Edit, Luma Modify Video).
 - Lipsync and dubbing: query `"lipsync"` or `"dubbing"`; see the next section, the two are not the same step.
 - Upscaling up to 4K: query `"video upscale"` (Topaz, SeedVR2, Magnific, Flash VSR).
-- Deterministic utilities: query `"tool"` for trim, split, concat with transitions, resize, reverse, reframe, background removal, and audio or frame extraction. Assembling clips into a finished cut: see `scenario-video-assembly`.
+- Deterministic utilities: query `"tool"` for trim, split, concat with transitions, resize, reverse, reframe, and background removal. Extraction tools sit outside that page, so query them by name (`"audio extract"`, `"image sequence"`). Assembling clips into a finished cut: see `scenario-video-assembly`.
 - Extending a clip with new footage from its last frame: query `"extend video"`.
 
 ## Dubbing is not lipsync
@@ -51,19 +51,19 @@ Dubbing translates the speech and keeps each speaker's own voice, tone, and timi
 
 1. **Dub.** Takes the clip as `file` and a required `targetLang` from the schema's allowed values. Omit `sourceLang` to auto-detect, since the value that means auto differs between models. When a brand or name must survive translation, pick a hit whose schema carries `keyterms`, as not all do; where it is `array: true`, pass `["Scenario"]` even for one term.
 2. **Extract.** Dubbing a video returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the new speech out with `search` `query="audio extract"`, which surfaces the tool; a generic `query="tool"` buries it.
-3. **Lipsync.** Takes `video` and `audio` separately, plus `syncMode` where the schema exposes it (`cut_off`, `loop`, `bounce`, `silence`, `remap`). Defaults differ, so set it explicitly: a dub longer than its source is truncated under `cut_off` and repeated under `loop`.
+3. **Lipsync.** Takes `video` and `audio` separately, plus `syncMode` where the schema exposes it (`cut_off`, `loop`, `bounce`, `silence`, `remap`), which decides what happens when the two durations disagree. The names do not say which one loses, so read the field description and set it rather than inheriting a default.
 
 Building a localized talking head from nothing runs audio, video, dub, extract, lipsync. Judge it on a stylized character before promising it on a photoreal one.
 
 ## Duration limits
 
-Input clips have hard ceilings, and models reject rather than trim: a 30.08 second reference against a 30.0 second limit fails the whole run. The error states both numbers. Trim first with the deterministic cut or split tools (`search` `query="video cut"`), landing under the limit rather than exactly on it.
+Where a model bounds input length it rejects rather than trims, and by a hair: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A ceiling is not a standard field, so look for it in the file field's own description, and expect plenty of models to state none. When one applies, trim first with the deterministic cut or split tools (`search` `query="video cut"`), landing under the limit rather than exactly on it.
 
 ## Common mistakes
 
 - Passing a local file path as `image` or `video`: models take `asset_id`s; `upload_asset` first.
 - Calling `model_run` without `model_schema_get`: field names and duration limits differ per model; a payload that worked on Kling will not fit Veo.
 - Polling `job_get` in a loop: use `jobs_wait`; its ~180s timeout is not an error; re-call with `pending_job_ids`.
-- Treating search hits as stable: catalogs evolve, so re-run `search` and prefer non-deprecated hits (many deprecated models carry a `deprecated:<replacement_id>` tag pointing at the successor; some only a bare tag).
+- Treating search hits as stable: catalogs evolve, so re-run `search` and prefer non-deprecated hits (a `deprecated:<replacement_id>` tag names the successor).
 - Pasting raw CDN URLs into chat: use `asset_display` for inline preview.
 - Passing `format` to `asset_download` for a video: it converts image formats only, so omit it.
