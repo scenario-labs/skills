@@ -1,6 +1,6 @@
 ---
 name: scenario-game-assets
-description: Use when creating game art through the Scenario MCP, including sprites, sprite sheets, game icons, props, loot, tilesets, seamless tiles, isometric buildings, top-down maps, pixel art, and character or concept art, or when game assets need transparent backgrounds, background removal, style-consistent variation batches, upscaling, pixel-grid cleanup, or engine-ready PNG export for Unity, Godot, or Unreal.
+description: Use when creating game art through the Scenario MCP, including sprites, sprite sheets, game icons, props, loot, tilesets, seamless tiles, isometric buildings, top-down maps, pixel art, UI components such as buttons and panels, and character or concept art, or when game assets need transparent backgrounds, background removal, restyling one approved component into a variation set, upscaling, pixel-grid cleanup, or engine-ready PNG export for Unity, Godot, or Unreal.
 license: MIT
 ---
 
@@ -40,6 +40,18 @@ Request: "four style-matched potion icons for an RPG inventory."
 - `asset_describe` turns one on-style asset into a promptable style synthesis to reuse across prompts (full-toolset tool: if it is not listed, reconnect with `?toolsets=full` or run it via `scenario_tools_search` + `scenario_tool_execute_read`; see the `scenario` skill).
 - `search` target="assets" with images={like: ["asset_..."]} finds existing assets that already match the target look.
 - For a locked-in project style, train a custom LoRA on the project's own art: see the `scenario-model-training` skill in this repo. Trained models run through the same generation loop.
+
+## Preparing a reference for a variation batch
+
+Restyling one approved component into a set (a button, a panel, a popup well, an icon family) fails on the reference more often than on the prompt. The model has no way to separate the object from what was composited onto it, so everything in the reference is treated as the thing being copied.
+
+- **Crop to the object's own bounds.** Transparent padding reads as composition, so the output lands at a different scale and offset every run. Downstream code that measures the sprite then gets a different box each time. Trim the alpha, generate, and re-pad to a fixed canvas afterwards.
+- **Strip baked effects before generating.** A drop shadow, outer glow, or bevel in the reference is read as part of the silhouette and comes back thickened, doubled, or fused to the object. Feed the flat art and re-apply the effect in engine, where it stays adjustable.
+- **Say which parts are functional.** A nine-slice panel needs stretchable middles and fixed corners, and diffusion has no concept of either. Name the constraint in the prompt, then check the output rather than assuming it held.
+- **One object, plain field, no scene.** Several objects in one reference get recombined into a hybrid.
+- **Check the alpha edge after background removal.** A removed shadow leaves a semi-transparent fringe that reads as a halo once the asset sits on a colored UI background.
+
+Verify the set by measurement, not by eye: compare each output's alpha bounding box against the source before accepting the batch.
 
 ## Common mistakes
 
