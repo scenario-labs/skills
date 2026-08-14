@@ -1,6 +1,6 @@
 ---
 name: scenario-video
-description: "Use when generating or editing video on Scenario via MCP: text-to-video, image-to-video (animating a still, first/last frame anchors), motion prompting, lipsync and talking avatars, dubbing or translating a clip into another language, video upscale to 4K, prompt-based video editing, trim, split, reframe, background removal, waiting on long video jobs, or a clip rejected for exceeding a duration limit. Keywords: txt2video, img2video, video2video, I2V, T2V, V2V, localization, game cinematics."
+description: "Use when generating or editing video on Scenario via MCP: text-to-video, image-to-video (still animation, first/last frame anchors), motion prompting, lipsync and talking avatars, dubbing or translating a clip, video upscale to 4K, prompt-based editing, trim, split, concat, extend, reframe, background removal, frame or audio extraction, or a clip rejected for exceeding a duration limit. Keywords: txt2video, img2video, video2video, I2V, T2V, V2V, localization."
 license: MIT
 ---
 
@@ -49,8 +49,8 @@ All editing is `model_run` on a video-input model; discover each with `search`:
 
 Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Three steps, in this order:
 
-1. **Dub.** Takes the clip as `file` and a required `targetLang` from the schema's allowed values. `sourceLang` auto-detects, though the value meaning auto differs per model. When a brand or name must survive translation, pick a hit whose schema carries `keyterms`, since not all do; it is array-typed, so pass `["Scenario"]` even for one term.
-2. **Extract.** Dubbing a video returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the new speech out with an audio extraction tool.
+1. **Dub.** Takes the clip as `file` and a required `targetLang` from the schema's allowed values. Omit `sourceLang` to auto-detect, since the value that means auto differs between models. When a brand or name must survive translation, pick a hit whose schema carries `keyterms`, as not all do; where it is `array: true`, pass `["Scenario"]` even for one term.
+2. **Extract.** Dubbing a video returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the new speech out with `search` `query="audio extract"`, which surfaces the tool; a generic `query="tool"` buries it.
 3. **Lipsync.** Takes `video` and `audio` separately, plus `syncMode` where the schema exposes it (`cut_off`, `loop`, `bounce`, `silence`, `remap`). Defaults differ, so set it explicitly: a dub longer than its source is truncated under `cut_off` and repeated under `loop`.
 
 Building a localized talking head from nothing runs audio, video, dub, extract, lipsync. Judge it on a stylized character before promising it on a photoreal one.
