@@ -3,7 +3,6 @@ equirectangular
 ffprobe
 inpaint
 inpainting
-outpainting
 kling
 krea
 loras
@@ -14,6 +13,7 @@ muxed
 muxes
 mvdan
 numpy
+outpainting
 remesh
 remeshing
 retexture
