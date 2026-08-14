@@ -16,7 +16,7 @@ Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: no cre
 
 The default toolset is the core loop below; `?toolsets=full` exposes everything. Any other tool: `scenario_tools_search` with the verb as `query` returns its schema and lane; the matching `scenario_tool_execute_read` / `write` / `delete` runs it with `{name, parameters}` (`team_id` and `project_id` go inside `parameters`).
 
-On OAuth connections every data-changing tool (and most others) takes `team_id` and `project_id`; a Forbidden error usually means missing or wrong scope. Read-only tools fill them in when exactly one candidate remains; writes never do: the refusal names the candidate or lists the choices (`teams_list` / `projects_list` enumerate them). Ask the user rather than picking for them.
+On OAuth connections every data-changing tool (and most others) takes `team_id` and `project_id`; a Forbidden error usually means missing or wrong scope. Read-only tools fill them in when exactly one candidate remains; writes never do: the refusal names the candidate or lists the choices (`teams_list` / `projects_list` enumerate them). Ask the user rather than picking for them. A non-interactive run takes the pair from its task instructions; when they name none, stop and list the choices instead of picking.
 
 ## Quick reference
 
