@@ -65,7 +65,7 @@ One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, pr
 - `skills-ref validate` must pass for every skill before any commit (the pre-commit hook and CI both run it via `pnpm spec`).
 - Every script shipped with a skill has a test suite in `tests/<name>/`. Python scripts use stdlib `unittest` (files named `test_*.py`); TypeScript scripts use vitest (files named `*.test.ts`). `pnpm test` runs every suite and fails when a shipped script has no suite; CI runs it on every push and PR. It is not part of the pre-commit hook (suites may need system tools such as ffmpeg), so run it manually when touching a script. A `tests/<name>/requirements.txt` declares extra Python dependencies for CI.
 - Before merging a new or changed skill, run the application test below. Mechanical validation checks the format; the application test checks whether the skill actually teaches.
-- `/skills:validate <name>` (`.claude/commands/skills/`) drives that test: it writes a use case for the skill, installs the working-tree copy into a clean-room agent that has no repository context, runs it end to end against the real MCP server, grades the transcript, and posts the report to the PR for the current branch (or asks what to do with it when there is none). `--plan-only` runs the zero-cost planning variant below instead of live generation.
+- `/skills:validate <name>` (`.claude/commands/skills/`) drives that test: it writes a use case for the skill, installs the working-tree copy into a clean-room agent that has no repository context, runs it end to end against the real MCP server in a team and project you choose, grades the transcript, and posts the report to the PR for the current branch (or asks what to do with it when there is none). `--plan-only` runs the zero-cost planning variant below instead of live generation.
 
 ### Application test protocol
 
@@ -74,8 +74,8 @@ One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, pr
 3. Pick a task that forces the skill's non-obvious facts (upload flow, job-wait re-calls, dry runs, launch semantics), not one answerable with generic MCP intuition.
 4. Grade the plan against the [tool reference](https://mcp.scenario.com/docs/tools), fetched fresh rather than recalled:
    - Every tool and parameter named in the plan exists. One invented name is a fail.
-   - Correct flow: discovery, `model_schema_get`, `model_run`, `jobs_wait` (re-called with `pending_job_ids`, never `job_get` polling), then `asset_display` / `asset_download`.
-   - Model ids come from a `search` step, never asserted as constants.
+   - Correct flow: discovery, `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job still running (fast models return complete inline; `job_get` polling is never correct), then `asset_display` / `asset_download`.
+   - Model ids come from a `search` or `recommend` step, never asserted as constants.
    - The task's trap steps are handled the way the skill teaches.
    - Anything asserted that appears in neither the SKILL.md nor the tool reference counts as a guess, even when it happens to be right.
 5. A failure is a defect in the skill text: fix the missing or ambiguous sentence, then re-run with a new fresh agent (a failed agent is contaminated by its own mistake).

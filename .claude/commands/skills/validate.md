@@ -36,7 +36,7 @@ cp -R "skills/$SKILL" skills/scenario "$RUN/.claude/skills/"
 awk 'f; /^---$/ { if (++c == 2) f = 1 }' .claude/agents/skill-tester.md >"$RUN/contract.md"
 ```
 
-Copy `scenario` alongside every other skill: real installs ship both. Write the task from step 2 to `$RUN/task.md`, including the budget, the success criteria, and the run directory path.
+Copy `scenario` alongside every other skill: real installs ship both. Ask which team and project the run should use before spending anything: every generation and upload lands in that scope, and the tester must never pick one (`teams_list` and `projects_list` enumerate the choices). Write the task from step 2 to `$RUN/task.md`, including the budget, the success criteria, the run directory path, and the team and project.
 
 Then pick the strongest isolation available. Run `cd "$RUN" && claude mcp list`.
 
@@ -49,7 +49,7 @@ Then pick the strongest isolation available. Run `cd "$RUN" && claude mcp list`.
     --output-format json "$(cat "$RUN/task.md")" | tee "$RUN/result.json"
   ```
 
-  Use the server name `claude mcp list` printed. The child loads the skills from `$RUN/.claude/skills/` and never sees this repository.
+  Use the server name `claude mcp list` printed, normalized the way tool prefixes are: dots and spaces become underscores, so `claude.ai Scenario` is `mcp__claude_ai_Scenario`. The child loads the skills from `$RUN/.claude/skills/` and never sees this repository, though `--setting-sources user,project` (which a user-scope connector needs) also carries the user's plugins and hooks into it; watch the transcript for injected noise.
 
 - **Subagent** when the list is empty because this session's Scenario tools come from a connector rather than a local MCP config (cloud and web sessions). Spawn the `skill-tester` agent with the contract, the task, and the run directory path. Isolation is weaker: it can still see repository context, which is why the contract tells it to ignore it.
 
@@ -61,8 +61,8 @@ Fetch https://mcp.scenario.com/docs/tools fresh rather than recalling it, then j
 
 - **Objective met.** The artifacts exist and satisfy the criteria from step 2. Open them; do not take the tester's word for it.
 - **Real names only.** Every tool and parameter the tester used exists. One invented name is a fail.
-- **Correct flow.** Discovery, `model_schema_get`, `model_run`, `jobs_wait` re-called with `pending_job_ids` (never `job_get` polling), then `asset_display` or `asset_download`.
-- **No constant model ids.** They came from a `search` step.
+- **Correct flow.** Discovery, `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job still running (fast models return complete inline, and `job_get` polling is never correct), then `asset_display` or `asset_download`.
+- **No constant model ids.** They came from a `search` or `recommend` step.
 - **Traps handled** the way the skill teaches.
 - **No guessing.** Anything asserted that appears in neither the SKILL.md nor the tool reference is a guess, even when it happens to be right. The tester's `guesses` and `friction` entries are the shortest route to the missing sentence.
 
@@ -74,7 +74,7 @@ Verdict: pass, pass with notes, or fail. Tie every defect to the exact line of S
 
 ## 7. Report
 
-Assemble the report with the template below. This repository is public: only publicly shareable language (see AGENTS.md), and never a signed asset URL, which is a credential in itself. Assets travel as ids and local filenames; surface the files in this session so they can be looked at or dragged into the thread.
+Assemble the report with the template below. This repository is public: only publicly shareable language (see AGENTS.md), never a signed asset URL, which is a credential in itself, and never the team or project the run used. Assets travel as ids and local filenames; surface the files in this session so they can be looked at or dragged into the thread.
 
 **In a PR context**, post it as a PR comment (`gh pr comment <n> --body-file` or the GitHub MCP `add_issue_comment`), ending with the attribution line, and print the comment URL. `--no-post` prints the report here instead.
 
