@@ -28,7 +28,7 @@ The technique that works, and the one agents skip: write out everything that mus
 
 Enumerate specifics rather than gesturing at them: subject geometry, camera height and angle, subject size and position in frame, lighting direction, each named sub-element and where it sits, palette by name or hex, and embedded text. Look at the baseline first (`asset_display`): you cannot enumerate a shade you have not seen, and vague anchors drift.
 
-Attach the approved baseline as a reference image alongside it. Current image models converge on `referenceImages`, but the cap varies (5 to 14) and some require it, so read `model_schema_get`. It is array-typed, so one asset still goes in as `["asset_..."]` and a bare string is dropped silently. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (`collection_create`, `collection_add_assets`, catalog tools on the write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
+Attach the approved baseline as a reference image alongside it. Current image models converge on `referenceImages`, but the name settles nothing: cap, requiredness, and cardinality all come from `model_schema_get`, and on some models the field is a single scalar file. Pass an array only where the schema says `array: true`, and there wrap even a lone asset as `["asset_..."]`: a bare string is dropped silently and the run succeeds while ignoring it. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (`collection_create`, `collection_add_assets`, catalog tools on the write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
 
 A set takes one `model_run` per item: a batch-count field repeats one prompt, so it cannot carry a per-item delta clause.
 
@@ -43,8 +43,8 @@ The control block (`controlImage`, `controlModality`, `controlStrength`, `contro
 ## Worked example: five poses of one mascot
 
 1. `asset_display` the approved hero (`asset_hero`) and write its baseline: the full must-not-change enumeration above.
-2. `search` (`target="models"`, `public=true`) for an image model, preferring reference-image slots, then `model_schema_get`: the reference field's exact name, cap, and whether it is required.
-3. One `model_run` per pose, five in all: the byte-identical baseline, the pose alone in the final clause, the hero as `referenceImages: ["asset_hero"]` (array, even alone). No seed. No control map: a pose map from the hero locks the very pose being changed.
+2. `search` (`target="models"`, `public=true`) for an image model, preferring reference-image slots, then `model_schema_get`: the reference field's exact name, cap, cardinality, and whether it is required.
+3. One `model_run` per pose, five in all: the byte-identical baseline, the pose alone in the final clause, the hero in the reference field shaped as the schema says: `["asset_hero"]` only under `array: true`. No seed. No control map: a pose map from the hero locks the very pose being changed.
 4. `jobs_wait` on the five job ids, re-calling with `pending_job_ids` until done. `asset_display` each against the hero; fix drift by tightening the enumeration, not by chaining outputs.
 
 ## Common mistakes
