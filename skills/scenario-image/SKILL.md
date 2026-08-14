@@ -26,18 +26,18 @@ Inpainting and outpainting are `img2img`, not capabilities of their own.
 
 All three are per-model, so take them from the schema rather than from a previous run:
 
-- **Size.** Models use one of two families: either an enum `aspectRatio` (`1:1`, `16:9`, `9:16`, often `match_input_image`) paired with a `resolution` in megapixels, or numeric `width` and `height` in pixels carrying `min`, `max`, and a `step` the value must land on. Pixels sent to an enum field, or an off-step size, are rejected.
+- **Size.** Sizing has no common shape: numeric `width` and `height` with `min`, `max`, and a `step` to land on, or an enum, either `aspectRatio` plus a megapixel `resolution` or a single `size` mixing tiers and pixel pairs (`2K`, `4096*2304`). Pixels sent to an enum field, or an off-step value, are rejected. When no enum value reaches the target, report the achievable size rather than rounding silently.
 - **Prompt length.** The prompt field's `max_length` ranges from roughly 2000 characters to 32000. A prompt that fits one model is a 400 on the next.
-- **References.** `referenceImages` is array-typed, and its cap is the schema's `max_length` on that field, which varies widely. Pass an array even for one asset: a bare string is dropped silently, so the run succeeds while ignoring the reference. State each reference's role in the prompt.
+- **References.** The reference field is array-typed, and both its name (`referenceImages`, `images`) and its cap come from the schema. Pass an array even for one asset: a bare string is dropped silently, so the run succeeds while ignoring the reference. State each reference's role in the prompt.
 
-`numOutputs` repeats one prompt, so it yields variations, not a set. Anything with a per-item difference needs one `model_run` per item.
+A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields variations, not a set. Anything with a per-item difference needs one `model_run` per item.
 
 ## Worked example: replacing a label on a product shot
 
 1. `recommend` with `capability="img2img"` and the user's own words as `prompt`. On `next_step.type="ask_user"`, present the options instead of picking; skip any `requires_plan_upgrade` entry.
 2. `upload_asset` the product photo, which returns an `asset_id`.
 3. `model_schema_get` on the pick: the reference field's name and cap, which sizing family it uses, the prompt `max_length`, and whether a `mask` field exists.
-4. For a masked edit, build the mask from the source image. It must match the source's format and dimensions and carry an alpha channel, so export with alpha preserved.
+4. For a masked edit, build the mask from the source image, then read the `mask` field's own description: it usually demands the source's format and dimensions plus an alpha channel, so export with alpha preserved.
 5. `model_run` with `parameters={"prompt": "...", "referenceImages": ["asset_abc"]}` plus the mask and sizing fields the schema named. Use `dry_run=true` first when cost matters.
 6. `jobs_wait`, then `asset_display` to review and `asset_download` to save.
 
@@ -47,4 +47,4 @@ All three are per-model, so take them from the schema rather than from a previou
 - Reusing one model's parameter block on another: `aspectRatio` and `width`/`height` rarely coexist, and unknown fields are rejected.
 - Retrying a 403 `ModelAccessRestrictedError`: it names `modelId` and `requiredPlan`, so surface the upgrade or pick another model.
 - Prompting "transparent background": diffusion outputs are opaque. Use a `background` field when the schema has one, otherwise run a background-removal model afterwards.
-- Sizing a mask for convenience: a mask differing from the source in format or dimensions fails the run.
+- Sizing a mask for convenience: models taking a mask generally require the source's exact format and dimensions.
