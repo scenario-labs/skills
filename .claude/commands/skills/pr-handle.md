@@ -4,7 +4,7 @@ argument-hint: <PR_number> [--plan-only]
 disable-model-invocation: true
 ---
 
-Catch up PR $ARGUMENTS: switch to its branch, rebase onto `main`, triage every open review comment (fix when needed, reply in thread), then run `/skills:validate` when the PR adds or significantly changes a skill.
+Handle PR $ARGUMENTS: switch to its branch, rebase onto `main`, triage every open review comment (fix when needed, reply in thread), then run `/skills:validate` when the PR adds or significantly changes a skill.
 
 Flags: `--plan-only` is forwarded to `/skills:validate` (zero-cost planning instead of live generation).
 
