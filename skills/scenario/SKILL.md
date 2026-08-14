@@ -18,9 +18,9 @@ The default toolset is the core loop below; `?toolsets=full` exposes everything.
 
 ## Scope, and the two errors that name it
 
-Resolve scope first, then pass `team_id` and `project_id` on every later call. `teams_list` returns the teams with their projects; `projects_list` requires a `team_id`, so it cannot come first. Confirm the pair with the user rather than picking. A non-interactive run takes the pair from its task instructions; when they name none, stop and list the choices.
+Resolve scope first, then pass `team_id` and `project_id` on every later call. `teams_list` returns the teams with their projects; `projects_list` requires a `team_id`, so it cannot come first. Confirm the pair with the user rather than picking.
 
-The server fills scope in only for read-only tools, and only while one candidate remains, so an unresolved scope fails the call rather than guessing, and the error names which half is wrong. `context_missing` means nothing resolved: run `teams_list`, then `projects_list`. `context_ambiguous` means several fit: present them and let the user choose, because a guess here writes assets into someone else's project. Together these are the most common failure across every tool below, and they surface mid-session on the first call that drops the pair once a second team or project is in play. A Forbidden error usually means wrong scope rather than missing scope.
+The server fills scope in only for read-only tools, and only while one candidate remains, so an unresolved scope fails the call rather than guessing, and the error names which half is wrong. `context_missing` means nothing resolved: run `teams_list`, then `projects_list`. `context_ambiguous` means several fit: present them and let the user choose, because a guess here writes assets into someone else's project. A non-interactive run takes the pair from its task instructions; when they name none, stop and list the choices. Together these are the most common failure across every tool below, and they surface mid-session on the first call that drops the pair once a second team or project is in play. A Forbidden error usually means wrong scope rather than missing scope.
 
 ## Quick reference
 
