@@ -44,7 +44,7 @@ Generating a stylized game prop image:
 6. `jobs_wait` with `job_ids=[...]` (up to 32). A timeout is not an error: re-call with the returned `pending_job_ids` as `job_ids`.
 7. `asset_display` shows the asset inline. `asset_download` returns a file URL; `format` converts image outputs (`png` default, `webp`, `jpg`), omit it for video, 3D, or audio. Save with `curl -L`, it may redirect.
 
-Local inputs go up with `upload_asset`: multipart preferred (pass `file_size`, PUT the presigned URLs, then `upload_asset_complete`); inline base64 only under ~100KB.
+Local inputs go up with `upload_asset`, which always needs `file_name`, `content_type`, and `kind` (`image`, `audio`, `video`, `3d`). Multipart is preferred: add `file_size`, PUT each presigned URL, then call `upload_asset_complete` with the returned `upload_id` and nothing else. Inline `data` only under ~100KB. Both tools reject any field they do not name, so invent none.
 
 ## Limits that stop a batch
 
