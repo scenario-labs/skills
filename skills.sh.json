@@ -39,6 +39,11 @@
       "skills": ["scenario-consistency", "scenario-model-training"]
     },
     {
+      "title": "Reviewing and organizing output",
+      "description": "Read finished assets back: caption them, extract a style or a control map, check a batch against a brief, and file the keepers.",
+      "skills": ["scenario-asset-analysis"]
+    },
+    {
       "title": "Workflows and apps",
       "description": "Discover, run, build, and publish Scenario workflows, the multi-step pipelines users call apps.",
       "skills": ["scenario-workflows", "scenario-workflow-authoring"]
