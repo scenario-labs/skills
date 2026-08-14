@@ -57,11 +57,11 @@ Say in the report which mode ran. With `--plan-only`, the same setup applies but
 
 ## 5. Grade the run
 
-Fetch https://mcp.scenario.com/docs/tools fresh rather than recalling it, then judge:
+Fetch https://mcp.scenario.com/docs/tools fresh rather than recalling it, then judge. With `--plan-only`, judge the numbered plan by the same rubric: objective met asks whether the planned calls would reach the criteria, and the evidence table stays empty.
 
 - **Objective met.** The artifacts exist and satisfy the criteria from step 2. Open them; do not take the tester's word for it.
 - **Real names only.** Every tool and parameter the tester used exists. One invented name is a fail.
-- **Correct flow.** Discovery, `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job still running (fast models return complete inline, and `job_get` polling is never correct), then `asset_display` or `asset_download`.
+- **Correct flow.** The loop the skill under test teaches. For a generation task that is discovery, `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job still running (fast models return complete inline, and `job_get` polling is never correct), then `asset_display` or `asset_download`. Skills built on other loops (workflows, training, reporting) are graded against their own.
 - **No constant model ids.** They came from a `search` or `recommend` step.
 - **Traps handled** the way the skill teaches.
 - **No guessing.** Anything asserted that appears in neither the SKILL.md nor the tool reference is a guess, even when it happens to be right. The tester's `guesses` and `friction` entries are the shortest route to the missing sentence.

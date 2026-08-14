@@ -74,7 +74,7 @@ One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, pr
 3. Pick a task that forces the skill's non-obvious facts (upload flow, job-wait re-calls, dry runs, launch semantics), not one answerable with generic MCP intuition.
 4. Grade the plan against the [tool reference](https://mcp.scenario.com/docs/tools), fetched fresh rather than recalled:
    - Every tool and parameter named in the plan exists. One invented name is a fail.
-   - Correct flow: discovery, `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job still running (fast models return complete inline; `job_get` polling is never correct), then `asset_display` / `asset_download`.
+   - Correct flow: the loop the skill under test teaches. For a generation task: discovery, `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job still running (fast models return complete inline; `job_get` polling is never correct), then `asset_display` / `asset_download`.
    - Model ids come from a `search` or `recommend` step, never asserted as constants.
    - The task's trap steps are handled the way the skill teaches.
    - Anything asserted that appears in neither the SKILL.md nor the tool reference counts as a guess, even when it happens to be right.
