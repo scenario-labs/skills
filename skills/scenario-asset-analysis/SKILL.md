@@ -35,8 +35,8 @@ All four bill credits and all four take `dry_run: true` for an estimate first. R
 
 1. Collect the asset ids from the run (`jobs_wait` returns them).
 2. `asset_analyze` with `dry_run: true` on the first chunk to price the pass.
-3. `asset_analyze` with `images` set to 10 ids and an `instruction` that states the brief and fixes the output: "For each image in order, reply `<index>: pass|fail, <reason in under 12 words>`. Fail anything not centered, not on a plain field, or carrying text." Repeat per chunk. Answers land as text assets (one, or one per image): `asset_download` them to read the verdicts.
-4. `asset_describe` on the strongest pass. Its promptable synthesis goes straight into the next batch's prompt, which holds the look without a training run (see `scenario-consistency`).
+3. `asset_analyze` with `images` set to 10 ids and an `instruction` that states the brief and fixes the output: "For each image in order, reply `<index>: pass|fail, <reason in under 12 words>`, a reason on every line, passes included. Fail anything not centered, not on a plain field, or carrying text." Repeat per chunk. Answers land as text assets (one, or one per image): `asset_download` them to read the verdicts.
+4. `asset_describe` on the strongest pass. Its promptable synthesis goes straight into the next batch's prompt, which holds the look without a training run (see `scenario-consistency`); when the synthesis is only a short title, prompt with the description instead.
 5. File the result: `collection_create`, then `collection_add_assets` in chunks of at most 49 ids. `asset_add_tags` is additive, so tag the failures rather than rebuilding a tag set.
 
 ## Common mistakes
