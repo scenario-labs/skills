@@ -48,14 +48,12 @@ Local inputs go up with `upload_asset`: multipart preferred (pass `file_size`, P
 
 ## Limits that stop a batch
 
-- **Concurrency.** A team may only have so many custom jobs running at once. Past that, `model_run` returns 429 `PlanLimitReachedError` with `details.actionName: "parallel-custom-jobs"` and the ceiling in `details.actionLimit`. Launch with `wait=false`, keep that many in flight, and let `jobs_wait` retire them before launching more. An immediate retry just repeats the error.
-- **Model access.** 403 `ModelAccessRestrictedError` names `modelId` and `requiredPlan`: surface the upgrade or pick another model, since retrying never clears it.
-- **Field caps.** Prompt `max_length` varies widely between models, and `model_schema_get` is the only place it is stated.
+- **Concurrency.** A team may only have so many custom jobs running at once. Past that, `model_run` returns a 429 whose `details` name the limit (`actionName: "parallel-custom-jobs"`) and the ceiling (`actionLimit`). Launch with `wait=false`, keep that many in flight, and let `jobs_wait` retire them before launching more. An immediate retry just repeats the error.
+- **Model access.** A 403 on `model_run` names the model and the plan it needs: surface the upgrade or pick another model, since retrying never clears it. `recommend` flags the same models in advance with `requires_plan_upgrade` and `required_plan`.
 
 ## Common mistakes
 
 - A bare value where the schema says `array: true`: pass the array anyway; a scalar can be silently dropped, ignoring your reference image or LoRA.
 - Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. `ask_user` means present the options; the user's pick wins. On `proceed`, prefer `specialty.model_id` when present, else the top `ranked` entry. Never run a `requires_plan_upgrade` entry; show it with its upgrade option.
 - Calling a tool with scope left out because an earlier call worked without it: the fill-in only applies while one candidate remains, so the same omission fails once a second team or project is in play.
-- Reaching for `job_cancel` on a stuck generation: it covers other job types and refuses these. Let `jobs_wait` finish, or stop re-calling it.
 - Debugging blind: the `diagnose` MCP prompt (or `diagnostics_run`) returns a report with trace ids; `usage` answers credit questions.
