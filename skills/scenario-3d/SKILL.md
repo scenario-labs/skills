@@ -45,12 +45,12 @@ Multi-view models accept several images of the same subject from different angle
 
 Rigging is a separate `3d23d` step run on a finished mesh, not a flag on the generator. Find the models with `search` `query="rigging"`.
 
-Body plan picks the model. Humanoid models take just the mesh (plus a front-facing hint on some) and infer a biped skeleton. Non-biped work goes to a model exposing `rigType`, whose values cover `quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, and `aquatic`. Nothing exposes a custom bone hierarchy or a skin-influence count, so export the rigged file and finish weighting or retargeting in a DCC such as Blender or Maya.
+Body plan picks the model. Humanoid models take the mesh and little else (a front-facing hint, or an approximate height, depending on the model) and infer a biped skeleton. Non-biped work goes to a model exposing `rigType`, whose values cover `quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, and `aquatic`. Nothing exposes a custom bone hierarchy or a skin-influence count, so export the rigged file and finish weighting or retargeting in a DCC such as Blender or Maya.
 
 Three schema details decide whether the output is usable:
 
 - **Input format.** Rigging models accept GLB, and often OBJ, FBX, or STL. OBJ cannot carry a rig, so the output goes out as GLB or FBX.
-- **Size ceiling.** File inputs carry a `max_size` (one rigging model caps at 30 MB). A mesh over the ceiling has to be decimated first.
+- **Size ceiling.** A `max_size` on the file input is the exception rather than the rule (one humanoid rigging model caps at 30 MB). Check the schema before assuming a large mesh needs decimating.
 - **Animation versus rig.** Setting the optional `animation` field retargets a preset clip, and by default only the retarget file comes back. Set `includeRiggedModel` to keep the plain rigged mesh too.
 
 When only motion is wanted, motion-transfer video models animate a still character image with no skeleton at all: see `scenario-video`.
