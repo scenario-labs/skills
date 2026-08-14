@@ -37,6 +37,8 @@ With both present the prompt sits near the threshold, which is why the same inte
 3. **Soften recognizable names in the direct model input.** Describe the design in the prompt and carry identity with a reference image instead, which holds the look better anyway (see `scenario-consistency`).
 4. **Constrain any upstream rewriter.** When an LLM node writes the final prompt, put steps 2 and 3 in its instructions, or the block returns on the next run.
 
+Then stop. If every model refuses and one honest rewrite has not cleared it, the filter is reading something real: say so and hand it back to the user. Grinding out variants until one slips through is evasion, not art direction.
+
 ## Common mistakes
 
 - Retrying the identical prompt: near-threshold prompts pass intermittently, so a retry that happens to work has fixed nothing.
