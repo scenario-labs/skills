@@ -58,5 +58,5 @@ Local inputs go up with `upload_asset`, which always needs `file_name`, `content
 ## Common mistakes
 
 - A bare value where the schema says `array: true`: a scalar can be silently dropped, ignoring your reference image or LoRA.
-- Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. `ask_user` means present the options; the user's pick wins. On `proceed`, prefer `specialty.model_id` when present, else the top `ranked` entry.
+- Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. `ask_user` means present the options; the user's pick wins (non-interactive: task instructions name the pick, else `proceed`). On `proceed`, prefer `specialty.model_id`, else the top `ranked` entry.
 - Debugging blind: the `diagnose` MCP prompt (or `diagnostics_run`) returns trace ids; `usage` answers credit questions.
