@@ -117,7 +117,7 @@ def render(args):
 
     if not args.text:
         badge_font = load_font(args.font, max(MIN_FONT_SIZE, height // 48))
-        draw.text((left, top), args.badge, font=badge_font, fill=args.color,
+        draw.text((left + 1, top + 1), args.badge, font=badge_font, fill=args.color,
                   stroke_width=1, stroke_fill=(0, 0, 0, 200))
         image.save(args.out, "PNG")
         return image
@@ -154,7 +154,7 @@ def render(args):
 
     if args.badge:
         badge_font = load_font(args.font, max(MIN_FONT_SIZE, height // 48))
-        draw.text((left, top), args.badge, font=badge_font, fill=args.color,
+        draw.text((left + 1, top + 1), args.badge, font=badge_font, fill=args.color,
                   stroke_width=1, stroke_fill=(0, 0, 0, 200))
 
     image.save(args.out, "PNG")
