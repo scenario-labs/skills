@@ -18,13 +18,14 @@ elif [ "$grep_status" -ge 2 ]; then
   fail=1
 fi
 
-# MCP is the only runtime surface a skill teaches (AGENTS.md, "Authoring
-# contract"), so skill documentation should not hand an agent the official SDK
-# in place of a tool it could call itself. Scripts are free to use the SDK, so a
-# hit here is a notice for review to weigh and never a failure: it asks whether
-# the mention describes a script or teaches the agent's own route.
+# MCP is the surface a skill teaches (AGENTS.md, "Authoring contract"), so skill
+# documentation should not hand an agent the official SDK in place of a tool it
+# could call itself. Scripts are free to use the SDK, so a hit here is a notice
+# for review to weigh and never a failure: it asks whether the mention describes
+# a script or teaches the agent's own route. The pattern is case insensitive, so
+# it already covers the SCENARIO_SDK_API_KEY and _SECRET environment variables.
 grep_status=0
-sdk_hits=$(grep -rniE --include='*.md' -e 'scenario[-_]sdk' -e 'SCENARIO_SDK_API' skills) || grep_status=$?
+sdk_hits=$(grep -rniE --include='*.md' -e 'scenario[-_]sdk' skills) || grep_status=$?
 if [ "$grep_status" -eq 0 ]; then
   echo "$sdk_hits"
   echo 'Notice (not a failure): skill documentation mentions the Scenario SDK. Confirm it describes a script rather than the route an agent takes at runtime, per AGENTS.md "Authoring contract".'
