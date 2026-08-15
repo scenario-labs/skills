@@ -1,4 +1,5 @@
 captioner
+Cinzel
 diegetic
 equirectangular
 ffprobe
@@ -21,6 +22,7 @@ retarget
 retargets
 retexture
 retexturing
+RRGGBB
 shfmt
 tripo
 unpublishing

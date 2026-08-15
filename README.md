@@ -26,26 +26,27 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 
 ## Skills
 
-| Skill                                                                          | Use it for                                                                                                         |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| [scenario](skills/scenario/SKILL.md)                                           | Connecting to the Scenario MCP and the core generation loop: discover, schema, run, wait, display, download        |
-| [scenario-image](skills/scenario-image/SKILL.md)                               | Text-to-image and image editing: model choice, sizing fields, prompt limits, reference images, masked inpainting   |
-| [scenario-game-assets](skills/scenario-game-assets/SKILL.md)                   | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches         |
-| [scenario-textures](skills/scenario-textures/SKILL.md)                         | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                          |
-| [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)                         | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                     |
-| [scenario-3d](skills/scenario-3d/SKILL.md)                                     | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download   |
-| [scenario-video](skills/scenario-video/SKILL.md)                               | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities  |
-| [scenario-seedance](skills/scenario-seedance/SKILL.md)                         | Seedance video: mode selection (first frame, references, edit, extend), conditioning traps, native sound, cost     |
-| [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                  |
-| [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a music video: beat-aligned shots, lyric transcription, shot sound under the master, assembly  |
-| [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions   |
-| [scenario-consistency](skills/scenario-consistency/SKILL.md)                   | Holding one character, product, or style across a set: baseline-plus-delta prompts, reference images, control maps |
-| [scenario-model-training](skills/scenario-model-training/SKILL.md)             | Training custom models for style, character, or product consistency, and generating with them                      |
-| [scenario-asset-analysis](skills/scenario-asset-analysis/SKILL.md)             | Reading assets back: captions, style descriptions, batch review against a brief, control maps, collections, tags   |
-| [scenario-workflows](skills/scenario-workflows/SKILL.md)                       | Running saved workflows (apps): building the run inputs, dry-run pricing, unsticking approval gates                |
-| [scenario-workflow-authoring](skills/scenario-workflow-authoring/SKILL.md)     | Creating and editing workflow graphs: the editor_info grammar, node wiring, publishing drafts into runnable apps   |
-| [scenario-moderation](skills/scenario-moderation/SKILL.md)                     | Recovering a blocked generation: provider-side filters, model switching, proportional wording, look-alike errors   |
-| [scenario-report](skills/scenario-report/SKILL.md)                             | Reporting a bug or change request as a reproducible, redacted issue on this repository's public tracker            |
+| Skill                                                                          | Use it for                                                                                                            |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| [scenario](skills/scenario/SKILL.md)                                           | Connecting to the Scenario MCP and the core generation loop: discover, schema, run, wait, display, download           |
+| [scenario-image](skills/scenario-image/SKILL.md)                               | Text-to-image and image editing: model choice, sizing fields, prompt limits, reference images, masked inpainting      |
+| [scenario-game-assets](skills/scenario-game-assets/SKILL.md)                   | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches            |
+| [scenario-textures](skills/scenario-textures/SKILL.md)                         | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                             |
+| [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)                         | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                        |
+| [scenario-3d](skills/scenario-3d/SKILL.md)                                     | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download      |
+| [scenario-video](skills/scenario-video/SKILL.md)                               | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities     |
+| [scenario-seedance](skills/scenario-seedance/SKILL.md)                         | Seedance video: mode selection (first frame, references, edit, extend), conditioning traps, native sound, cost        |
+| [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                     |
+| [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a music video: beat-aligned shots, lyric transcription, shot sound under the master, assembly     |
+| [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions      |
+| [scenario-text-overlay](skills/scenario-text-overlay/SKILL.md)                 | Letter-perfect text overlays: templated transparent PNG cards (taglines, CTAs, legal supers, rich cards) to composite |
+| [scenario-consistency](skills/scenario-consistency/SKILL.md)                   | Holding one character, product, or style across a set: baseline-plus-delta prompts, reference images, control maps    |
+| [scenario-model-training](skills/scenario-model-training/SKILL.md)             | Training custom models for style, character, or product consistency, and generating with them                         |
+| [scenario-asset-analysis](skills/scenario-asset-analysis/SKILL.md)             | Reading assets back: captions, style descriptions, batch review against a brief, control maps, collections, tags      |
+| [scenario-workflows](skills/scenario-workflows/SKILL.md)                       | Running saved workflows (apps): building the run inputs, dry-run pricing, unsticking approval gates                   |
+| [scenario-workflow-authoring](skills/scenario-workflow-authoring/SKILL.md)     | Creating and editing workflow graphs: the editor_info grammar, node wiring, publishing drafts into runnable apps      |
+| [scenario-moderation](skills/scenario-moderation/SKILL.md)                     | Recovering a blocked generation: provider-side filters, model switching, proportional wording, look-alike errors      |
+| [scenario-report](skills/scenario-report/SKILL.md)                             | Reporting a bug or change request as a reproducible, redacted issue on this repository's public tracker               |
 
 ## Example prompts
 
