@@ -35,12 +35,4 @@ Hook rate (3-second views over impressions) is the creative diagnostic to name: 
 4. Price it: `dry_run: true` on every planned `model_run` (the estimate rides in the dry-run response), multiply by the floors, add stills, audio, and assembly runs. Present the table, get the sign-off, then generate.
 5. Track with `usage`; the metric is cost per usable shot (spend over accepted clips). Re-forecast after the first shot lands: the first scene is calibration.
 
-## Disclosure tier, decided at the brief
-
-The ad is AI-generated, and duties scale with realism, so pick the tier now because it shapes the concept:
-
-- Photoreal scenes (most product ads): plan a visible AI disclosure for EU delivery and platform toggles at upload.
-- Clearly stylized or impossible imagery: reduced duty, and the lowest-risk lane.
-- Synthetic humans: the highest tier: prominent platform labels, a conspicuous synthetic-performer line for some US states, and never presented as a real customer or testimonial. A no-humans, product-sensory route avoids the tier entirely and is also what image-to-video renders best.
-
 The per-platform shipping checklist lives in [delivery.md](delivery.md).

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Render a text card as a transparent PNG for video-ad overlays.
 
-Text cards (taglines, CTAs, legal supers, the AI-disclosure mark) must be
-verbatim and sit inside platform safe zones, so they are rendered
-deterministically here and composited as image layers, never generated.
+Text cards (taglines, CTAs, legal supers) must be verbatim and sit inside
+platform safe zones, so they are rendered deterministically here and
+composited as image layers, never generated.
 
 Portrait canvases clear the top 14%, bottom 35%, and 8% per side, the
 composite 9:16 safe zone; landscape canvases keep a 10% title-safe margin.
@@ -11,7 +11,7 @@ composite 9:16 safe zone; landscape canvases keep a 10% title-safe margin.
 Usage:
   card.py --size 9:16 --text "Night, distilled." --out card.png
   card.py --size 1920x1080 --text "EPA-estimated 310 mi" --position bottom \
-      --font-size 40 --backing --badge "AI-generated" --out super.png
+      --font-size 40 --backing --out super.png
 
 Requires Pillow (pip install pillow).
 """
@@ -115,13 +115,6 @@ def render(args):
     box = safe_box(width, height)
     left, top, right, bottom = box
 
-    if not args.text:
-        badge_font = load_font(args.font, max(MIN_FONT_SIZE, height // 48))
-        draw.text((left + 1, top + 1), args.badge, font=badge_font, fill=args.color,
-                  stroke_width=1, stroke_fill=(0, 0, 0, 200))
-        image.save(args.out, "PNG")
-        return image
-
     font, lines, line_height = fit_text(draw, args.text, args.font, box, args.font_size)
     block_height = line_height * len(lines)
     if args.position == "top":
@@ -152,11 +145,6 @@ def render(args):
             stroke_fill=(0, 0, 0, 200),
         )
 
-    if args.badge:
-        badge_font = load_font(args.font, max(MIN_FONT_SIZE, height // 48))
-        draw.text((left + 1, top + 1), args.badge, font=badge_font, fill=args.color,
-                  stroke_width=1, stroke_fill=(0, 0, 0, 200))
-
     image.save(args.out, "PNG")
     return image
 
@@ -164,19 +152,16 @@ def render(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--size", required=True, help="9:16, 16:9, or WIDTHxHEIGHT")
-    parser.add_argument("--text", help="card text, rendered verbatim (omit for a badge-only card)")
+    parser.add_argument("--text", required=True, help="card text, rendered verbatim")
     parser.add_argument("--out", required=True, help="output PNG path")
     parser.add_argument("--font", help="path to a .ttf/.ttc font file")
     parser.add_argument("--font-size", type=int, help="fixed size; errors if it cannot fit")
     parser.add_argument("--color", default="#FFFFFF", help="text color, hex")
     parser.add_argument("--position", choices=["top", "center", "bottom"], default="center")
     parser.add_argument("--backing", action="store_true", help="dark backing box behind the text")
-    parser.add_argument("--badge", help="small corner text, e.g. an AI-disclosure mark")
     args = parser.parse_args(argv)
-    if args.text is not None and not args.text.strip():
+    if not args.text.strip():
         raise SystemExit("--text must not be empty")
-    if not args.text and not args.badge:
-        raise SystemExit("provide --text, --badge, or both")
     render(args)
     print(args.out)
 

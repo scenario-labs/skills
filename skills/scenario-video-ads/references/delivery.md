@@ -10,7 +10,7 @@ Durations are placement-exact: bumpers exactly 6s; CTV slots exactly 15s or 30s 
 
 ## Assembly
 
-The cut, overlays, and captions are all model runs (contract in `scenario-video-assembly`): clips as video layers, the logo and every text card as image layers, the music as an audio layer. Render text cards deterministically with [card.py](../scripts/card.py): exact type, positioned inside the safe zone, including the visible AI-disclosure mark when the tier requires it. Legal and locale text must be verbatim, which is why it is never generated.
+The cut, overlays, and captions are all model runs (contract in `scenario-video-assembly`): clips as video layers, the logo and every text card as image layers, the music as an audio layer. Render text cards deterministically with [card.py](../scripts/card.py): exact type, positioned inside the safe zone. Legal and locale text must be verbatim, which is why it is never generated.
 
 Keep every generated frame text-free so locale and legal variants are overlay swaps, not regenerations: German text runs about 30 percent longer than English, right-to-left locales mirror alignment and directional motion, and legal supers differ per market (WLTP-qualified range wording in the UK and EU, "EPA-estimated" in the US, retouching labels on altered bodies in France and Norway).
 
@@ -33,5 +33,4 @@ Give overlays hard in and out points rather than fades, and QC the assembled mas
 2. Cumulative effect: review the assembled cut as a whole for sensuality, driving behavior, and body framing; ad review judges the sum of shots, not each shot.
 3. Flashes: no more than 3 luminance flashes in any second and no saturated red flashing; broadcast and CTV clearance test this mechanically, and strobe hooks are the classic failure.
 4. Sound-off pass: watch the master muted; the message must survive on picture and captions alone. Then watch it with sound.
-5. AI disclosure, stacking by destination: EU delivery needs a visible disclosure at first exposure (a small persistent "AI-generated" mark burned into the creative satisfies it; metadata alone does not). TikTok Ads Manager has an AI-content toggle to flip (reversing it requires replacing the creative). Meta detects and labels AI ads automatically. YouTube's upload questions about realistic synthetic scenes are answered yes. Synthetic-human performers add stricter duties, including a conspicuous disclosure for some US states, and are never presented as real customers. Do not strip content credentials during transcodes.
-6. Report: files per placement, actual spend against the approved board (`usage`), cost per usable shot, and the upload-time labels the advertiser still owes.
+5. Report: files per placement, actual spend against the approved board (`usage`), and cost per usable shot.

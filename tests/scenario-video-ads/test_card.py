@@ -82,15 +82,6 @@ class RenderTests(unittest.TestCase):
         self.assertGreaterEqual(x0, left)
         self.assertLessEqual(x1, right)
 
-    def test_badge_marks_the_safe_zone_corner(self):
-        plain = self.render([])
-        badged = self.render(["--badge", "AI-generated"])
-        left, top, _, _ = card.safe_box(1080, 1920)
-        probe = badged.crop((left, top, left + 300, top + 60))
-        self.assertIsNotNone(probe.getchannel("A").getbbox())
-        plain_probe = plain.crop((left, top, left + 300, top + 60))
-        self.assertIsNone(plain_probe.getchannel("A").getbbox())
-
     def test_backing_draws_a_box_behind_the_text(self):
         image = self.render(["--backing"])
         x0, y0, x1, y1 = self.content_bbox(image)
@@ -109,18 +100,7 @@ class RenderTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             run(["--size", "9:16", "--text", "   ", "--out", str(out)])
 
-    def test_badge_only_card(self):
-        out = pathlib.Path(tempfile.mkdtemp()) / "badge.png"
-        run(["--size", "9:16", "--badge", "AI-generated", "--out", str(out)])
-        image = Image.open(out)
-        left, top, right, bottom = card.safe_box(1080, 1920)
-        x0, y0, x1, y1 = image.getchannel("A").getbbox()
-        self.assertGreaterEqual(x0, left)
-        self.assertGreaterEqual(y0, top)
-        self.assertLess(x1, left + 400)
-        self.assertLess(y1, top + 80)
-
-    def test_neither_text_nor_badge_exits(self):
+    def test_missing_text_exits(self):
         out = pathlib.Path(tempfile.mkdtemp()) / "none.png"
         with self.assertRaises(SystemExit):
             run(["--size", "9:16", "--out", str(out)])

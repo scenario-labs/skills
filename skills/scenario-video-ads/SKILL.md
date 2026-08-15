@@ -26,7 +26,7 @@ Ask the brief once, then run without stopping. The one approval that matters sit
 | 6. Fidelity gate | Extract frames from every product or character clip, spot-the-difference against the approved reference  | storyboard.md, `scenario-asset-analysis`                           |
 | 7. Audio         | Music generated on the cut's beat grid, voiceover to a word budget, sonic logo                           | `scenario-audio`, [references/delivery.md](references/delivery.md) |
 | 8. Assemble      | Timeline, text cards from [scripts/card.py](scripts/card.py) as image layers, captions in safe zones     | `scenario-video-assembly`, delivery.md                             |
-| 9. Pre-flight    | Disclosure, policy, flashes, sound-off pass, loudness, spend report                                      | delivery.md                                                        |
+| 9. Pre-flight    | Policy, flashes, sound-off pass, loudness, spend report                                                  | delivery.md                                                        |
 
 ## Worked example: a perfume ad, 9:16, 20 seconds
 
@@ -36,7 +36,7 @@ Ask the brief once, then run without stopping. The one approval that matters sit
 4. Stills at 9:16: composite the real bottle into styled plates with an image-edit model, baseline-plus-delta prompts. The user approves each still: image money is cheap, video money is not.
 5. Animate each approved still: `model_schema_get` first, prompt movement first ("slow push-in over 4 seconds, the bottle rests fixed in place"), `generateAudio: false`.
 6. Gate every clip: frame-extract, then one `asset_analyze` call against the checklist. Label drift fails the clip; regenerate from the same still, never from the drifted output.
-7. Music at a stated BPM so cuts land on bars; compose the timeline, card.py renders the tagline and the visible AI mark into the safe zone; caption the master.
+7. Music at a stated BPM so cuts land on bars; compose the timeline, card.py renders the tagline into the safe zone; caption the master.
 8. Pre-flight per delivery.md, then report spend from `usage` against the approved board.
 
 ## Common mistakes
@@ -48,4 +48,4 @@ Ask the brief once, then run without stopping. The one approval that matters sit
 - Leaving `generateAudio` at its default: the soundtrack is built in assembly, so clips with baked-in audio fight the bed.
 - Cropping a 16:9 master to 9:16: each ratio is its own composition, decided at the storyboard.
 - Two objectives in one brief: brand and performance in the same asset serves neither; make two cuts from one board instead.
-- Shipping without the pre-flight: an undisclosed AI ad, a sensual perfume cut, or a wrong-length CTV file dies in ad review, not in generation.
+- Shipping without the pre-flight: a sensual perfume cut or a wrong-length CTV file dies in ad review, not in generation.
