@@ -14,10 +14,10 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 
 ## The two soundtracks
 
-Music written inside a shot restarts in a new key at every cut, so the score comes from outside the video model: here, the supplied master. What Seedance makes on its own side is the sound bolted to the picture. Both deliveries are valid, and the choice sets `generateAudio` on every shot, so make it before generating:
+Music written inside a shot restarts in a new key at every cut, so the score comes from outside the video model: here, the supplied master. What Seedance makes on its own side is the sound bolted to the picture. The choice sets `generateAudio` on every shot, so make it before generating:
 
 - Song alone: `generateAudio: false` everywhere. build.py stream-copies the master whenever MP4 allows, so the delivered soundtrack is the supplied file, bit for bit.
-- Song over the shots' own sound: `generateAudio: true` with "diegetic sound only, no music, no score" in every prompt, plus `"sound": 0.2` in the edit file. build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip rather than reshaping the song. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file stays hash-checked.
+- Song over the shots' own sound: `generateAudio: true` with "diegetic sound only, no music, no score" in every prompt, plus `"sound": 0.2` in the edit file. build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file stays hash-checked.
 
 ## Quick reference
 
@@ -55,13 +55,14 @@ Ask once before starting: team and project, track clearance, aspect ratio and le
 }
 ```
 
-Each shot runs until the next starts and the last to the master's end, so gaps are impossible, and every `at` snaps to the nearest frame. `in` is an optional head trim. `sound` is the gain on the clips' own audio, 0.1 to 0.3 under a mastered track; drop the line for the song alone. The build fails loudly on a clip too short, a mix that would clip, or delivered audio that is not the master.
+Each shot runs until the next starts and the last to the master's end, so gaps are impossible, and every `at` snaps to the nearest frame. `in` is an optional head trim. `sound` is the gain on the clips' own audio, sized to what they carry: 0.1 to 0.3 under a mastered track, up to 1.0 when the clips run quiet (build.py takes 0 to 4); drop the line for the song alone. The build fails loudly on a clip too short, a mix that would clip, or delivered audio that is not the master.
 
 ## Common mistakes
 
-- Letting a shot score itself: two scores then fight, and the shot's own restarts at every cut.
+- Letting a shot score itself: its score restarts at every cut.
 - Turning `sound` on while the prompts still allow music: exclude it in words, since `generateAudio` is one switch over the whole track.
-- Trimming, normalizing, fading, or re-encoding the master yourself: build.py copies it when the delivery allows, carries it at unity when it does not, and hash-checks the file either way.
+- Trimming, normalizing, fading, or re-encoding the master yourself: build.py copies it or carries it at unity, and hash-checks the file either way.
+- Trusting a requested aspect ratio: stills and clips land near it, not on it, and build.py pads the difference; crop to the delivery ratio first.
 - Prompting an opening state in reference mode: it will not appear; pass a first-frame `image`.
 - Judging a clip from a sparse contact sheet: a continuous camera move looks like a hard cut; measure first (see [references/shots.md](references/shots.md)).
 - Trusting the beat grid: sections and cut candidates are suggestions; check them against what you hear.

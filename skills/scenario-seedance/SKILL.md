@@ -16,14 +16,14 @@ Connection and the core loop: see the `scenario` skill in this repo; model-agnos
 
 Mode follows from the inputs (names from the live schema):
 
-| Mode         | Inputs                              | Behavior                                                              |
-| ------------ | ----------------------------------- | --------------------------------------------------------------------- |
-| Text         | `prompt`                            | `aspectRatio` honored (21:9 through 9:16)                             |
-| First frame  | `image` (+ `prompt`)                | opens on that frame; `aspectRatio` ignored, size follows `resolution` |
-| First + last | `image` + `lastFrameImage`          | `lastFrameImage` is only valid alongside `image`                      |
-| Reference    | `referenceImages`                   | carries identity and world, not the opening state                     |
-| Edit         | `referenceVideos` + edit prompt     | requires `duration: -1`; output follows the source                    |
-| Extend       | `referenceVideos` + boundary prompt | continues the clip; geometry follows the source                       |
+| Mode         | Inputs                              | Behavior                                                                                               |
+| ------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Text         | `prompt`                            | `aspectRatio` honored (21:9 through 9:16)                                                              |
+| First frame  | `image` (+ `prompt`)                | opens on that frame; `aspectRatio` ignored, size follows `resolution` and may land only near the ratio |
+| First + last | `image` + `lastFrameImage`          | `lastFrameImage` is only valid alongside `image`                                                       |
+| Reference    | `referenceImages`                   | carries identity and world, not the opening state                                                      |
+| Edit         | `referenceVideos` + edit prompt     | requires `duration: -1`; output follows the source                                                     |
+| Extend       | `referenceVideos` + boundary prompt | continues the clip; geometry follows the source                                                        |
 
 `image` and the reference arrays are mutually exclusive. `referenceVideos` and `referenceAudio` (timing and energy conditioning) combine with `referenceImages`; on the 2.0 line reference audio also requires one image or video reference, where 2.5 takes it alone. Reference parameters are arrays even for one asset. Prompt tags bind by array order: `@image1` is `referenceImages[0]`, likewise `@video1` and `@audio1`. No seed, mask, or camera parameter exists: camera moves live in the prompt, one dominant move per shot.
 
