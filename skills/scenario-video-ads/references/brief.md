@@ -25,13 +25,13 @@ Collect everything in one round, then produce without stopping until the priced 
 | Consideration | Demonstration: one provable claim, proven visually (the Epic Split pattern)                 | 15 to 30s      | Click-through, engagement, view rate | Benefit line plus CTA                          |
 | Conversion    | Performance: hook in the first 3 seconds, product and text in frame one, offer made plainly | 6 to 15s       | Click-through, cost per action, ROAS | Explicit text CTA, end card, offer in captions |
 
-Hook rate (3-second views over impressions) is the creative diagnostic to name: benchmark reports put healthy around a quarter to a third of viewers, higher for retargeting than cold audiences. Expect few variants to win, which is why hooks get alternates and the rest of the board does not.
+Hook rate (3-second views over impressions) is the creative diagnostic to name: treat a quarter to a third of viewers surviving the hook as a healthy planning target, higher for retargeting than cold audiences. Expect few variants to win, which is why hooks get alternates and the rest of the board does not.
 
 ## Pricing the board
 
 1. Shot count: performance cuts run one shot per 2 to 3 seconds; brand films run fewer, longer beats. Add 2 to 3 inserts.
 2. Variants: 3 alternates for the hook shot, 1 take planned everywhere else.
-3. Retry floors from documented AI productions (planning floors, not industry averages): 3 generations per usable product-only shot, 5 to 10 for complex motion, liquids, or cloth, up to 20 when faces or hands are on screen. The floors are why the storyboard avoids humans unless the concept needs them.
+3. Retry floors (planning assumptions, not industry averages): 3 generations per usable product-only shot, 5 to 10 for complex motion, liquids, or cloth, up to 20 when faces or hands are on screen. The floors are why the storyboard avoids humans unless the concept needs them.
 4. Price it: `dry_run: true` on every planned `model_run` (the estimate rides in the dry-run response), multiply by the floors, add stills, audio, and assembly runs. Present the table, get the sign-off, then generate.
 5. Track with `usage`; the metric is cost per usable shot (spend over accepted clips). Re-forecast after the first shot lands: the first scene is calibration.
 
