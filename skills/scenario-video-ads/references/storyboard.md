@@ -62,3 +62,5 @@ Every clip showing the product or a character passes this before it may enter th
 3. A brand-critical difference fails the clip. Regenerate from the same approved still with a tightened stillness clause, or demote the shot to an insert where the subject is smaller. Never anchor the next attempt to the drifted output.
 
 Build the checklist once at brief time with `asset_analyze` on the product shot, with an instruction naming the fields to inventory (label text and typography, cap, bands, silhouette and proportions, materials, palette). `asset_describe` is the wrong tool for this: it returns a reusable style synthesis for prompts, not a detail inventory.
+
+Proportions are the check that feature lists miss: a composite can keep every named feature (color, light signature, wheels, label) while quietly re-proportioning the product, and "silhouette consistent" passes it. Make the checklist carry measured ratios (length to height, cabin to body, wheel size relative to body, label size relative to face), state them in the still prompts, and have the gate compare those ratios against the reference rather than judging plausibility.
