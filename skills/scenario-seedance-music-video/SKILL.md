@@ -17,7 +17,7 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 Music written inside a shot restarts in a new key at every cut, so the score comes from outside the video model: here, the supplied master. What Seedance makes on its own side is the sound bolted to the picture. Both deliveries are valid, and the choice sets `generateAudio` on every shot, so make it before generating:
 
 - Song alone: `generateAudio: false` everywhere. build.py stream-copies the master whenever MP4 allows, so the delivered soundtrack is the supplied file, bit for bit.
-- Song over the shots' own sound: `generateAudio: true` with "diegetic sound only, no music, no score" in every prompt, plus `"sound": 0.2` in the edit file. build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip rather than reshaping the song to fit. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file itself is still hash-checked.
+- Song over the shots' own sound: `generateAudio: true` with "diegetic sound only, no music, no score" in every prompt, plus `"sound": 0.2` in the edit file. build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip rather than reshaping the song. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file stays hash-checked.
 
 ## Quick reference
 
@@ -55,7 +55,7 @@ Ask once before starting: team and project, track clearance, aspect ratio and le
 }
 ```
 
-Each shot runs until the next starts and the last to the master's end, so gaps are impossible. `in` is an optional head trim. `sound` is the gain on the clips' own audio, 0.1 to 0.3 under a mastered track; drop the line for the song alone. The build fails loudly when a clip is too short, when the mix would clip, or when the delivered audio is not the master.
+Each shot runs until the next starts and the last to the master's end, so gaps are impossible. `in` is an optional head trim. `sound` is the gain on the clips' own audio, 0.1 to 0.3 under a mastered track; drop the line for the song alone. The build fails loudly on a clip too short, a mix that would clip, or delivered audio that is not the master.
 
 ## Common mistakes
 
