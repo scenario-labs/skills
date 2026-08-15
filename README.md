@@ -38,6 +38,7 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | [scenario-seedance](skills/scenario-seedance/SKILL.md)                         | Seedance video: mode selection (first frame, references, edit, extend), conditioning traps, native sound, cost        |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                     |
 | [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a music video: beat-aligned shots, lyric transcription, shot sound under the master, assembly     |
+| [scenario-video-ads](skills/scenario-video-ads/SKILL.md)                       | Producing a video ad from a product shot: brief, storyboard, cinematic grammar, fidelity gates, budget, delivery   |
 | [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions      |
 | [scenario-text-overlay](skills/scenario-text-overlay/SKILL.md)                 | Letter-perfect text overlays: templated transparent PNG cards (taglines, CTAs, legal supers, rich cards) to composite |
 | [scenario-consistency](skills/scenario-consistency/SKILL.md)                   | Holding one character, product, or style across a set: baseline-plus-delta prompts, reference images, control maps    |
