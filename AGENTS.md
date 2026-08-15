@@ -41,6 +41,8 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
 - Why the budget: agents load only `name` and `description` at startup; the body enters context only when the skill triggers, and then every word competes with the user's task. Spend words on facts an agent would otherwise guess wrong, not on prose.
 - Body over budget? Trim before you split. The body loads on every trigger; a supporting file loads only when the agent follows its link, so facts every run needs stay in the body, and a linked reference holds only content that is genuinely situational (deep reference tables, per-mode detail, scripts). Splitting to dodge the budget adds a hop to the same context cost: a reference the agent must always read is a longer body in disguise.
 - Ground every tool and parameter claim in the [tool reference](https://mcp.scenario.com/docs/tools). Never present a model ID as a constant: model availability differs per team, so teach discovery via `search`.
+- MCP is the only runtime surface a skill teaches. Every step an agent performs goes through an MCP tool, including the ones reachable another way: never route an agent through the Scenario REST API, the official SDK, or a CLI, even when that route would work. A capability the MCP server does not expose is a gap to report, not a gap to bridge with an API call. Fetching a URL an MCP tool already returned (`asset_download` then `curl -L`) is not an API call and stays fine.
+- One exception, for maintainers only: a script under `skills/<name>/scripts/` may use the official public SDK when its job is something a maintainer does outside a run, never something an agent does during one. Its link in SKILL.md has to say who the script is for, so no agent reads it as the workflow.
 - Cross-reference the `scenario` skill for connection setup instead of repeating it.
 - Style: no em dashes, ever (use a comma, a colon, parentheses, or two sentences). No marketing language. Agent-agnostic wording: do not assume a specific agent outside clearly labeled setup snippets.
 
@@ -77,6 +79,7 @@ One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, pr
    - Every tool and parameter named in the plan exists. One invented name is a fail.
    - Correct flow: the loop the skill under test teaches. For a generation task: discovery, `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job still running (fast models return complete inline; `job_get` polling is never correct), then `asset_display` / `asset_download`.
    - Model ids come from a `search` or `recommend` step, never asserted as constants.
+   - Every step stays on MCP. A plan that reaches for the REST API, the SDK, or a CLI where an MCP tool exists is a fail, and so is one that invents an API call to cover a capability MCP lacks. Saving a URL an MCP tool returned does not count.
    - The task's trap steps are handled the way the skill teaches.
    - Anything asserted that appears in neither the SKILL.md nor the tool reference counts as a guess, even when it happens to be right.
 5. A failure is a defect in the skill text: fix the missing or ambiguous sentence, then re-run with a new fresh agent (a failed agent is contaminated by its own mistake).

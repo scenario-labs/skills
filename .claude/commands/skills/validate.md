@@ -63,6 +63,7 @@ Fetch https://mcp.scenario.com/docs/tools fresh rather than recalling it, then j
 - **Real names only.** Every tool and parameter the tester used exists. One invented name is a fail.
 - **Correct flow.** The loop the skill under test teaches. For a generation task that is discovery, `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job still running (fast models return complete inline, and `job_get` polling is never correct), then `asset_display` or `asset_download`. Skills built on other loops (workflows, training, reporting) are graded against their own.
 - **No constant model ids.** They came from a `search` or `recommend` step.
+- **MCP only.** Every step went through an MCP tool. Reaching for the Scenario REST API, the official SDK, or a CLI is a fail even when it produced the artifact, and inventing an API call to cover something MCP does not expose is a worse one: the gap belongs in the defects list. Saving a URL `asset_download` returned does not count.
 - **Traps handled** the way the skill teaches.
 - **No guessing.** Anything asserted that appears in neither the SKILL.md nor the tool reference is a guess, even when it happens to be right. The tester's `guesses` and `friction` entries are the shortest route to the missing sentence.
 
