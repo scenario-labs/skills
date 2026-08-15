@@ -109,6 +109,22 @@ class RenderTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             run(["--size", "9:16", "--text", "   ", "--out", str(out)])
 
+    def test_badge_only_card(self):
+        out = pathlib.Path(tempfile.mkdtemp()) / "badge.png"
+        run(["--size", "9:16", "--badge", "AI-generated", "--out", str(out)])
+        image = Image.open(out)
+        left, top, right, bottom = card.safe_box(1080, 1920)
+        x0, y0, x1, y1 = image.getchannel("A").getbbox()
+        self.assertGreaterEqual(x0, left)
+        self.assertGreaterEqual(y0, top)
+        self.assertLess(x1, left + 400)
+        self.assertLess(y1, top + 80)
+
+    def test_neither_text_nor_badge_exits(self):
+        out = pathlib.Path(tempfile.mkdtemp()) / "none.png"
+        with self.assertRaises(SystemExit):
+            run(["--size", "9:16", "--out", str(out)])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -115,6 +115,13 @@ def render(args):
     box = safe_box(width, height)
     left, top, right, bottom = box
 
+    if not args.text:
+        badge_font = load_font(args.font, max(MIN_FONT_SIZE, height // 48))
+        draw.text((left, top), args.badge, font=badge_font, fill=args.color,
+                  stroke_width=1, stroke_fill=(0, 0, 0, 200))
+        image.save(args.out, "PNG")
+        return image
+
     font, lines, line_height = fit_text(draw, args.text, args.font, box, args.font_size)
     block_height = line_height * len(lines)
     if args.position == "top":
@@ -157,7 +164,7 @@ def render(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--size", required=True, help="9:16, 16:9, or WIDTHxHEIGHT")
-    parser.add_argument("--text", required=True, help="card text, rendered verbatim")
+    parser.add_argument("--text", help="card text, rendered verbatim (omit for a badge-only card)")
     parser.add_argument("--out", required=True, help="output PNG path")
     parser.add_argument("--font", help="path to a .ttf/.ttc font file")
     parser.add_argument("--font-size", type=int, help="fixed size; errors if it cannot fit")
@@ -166,8 +173,10 @@ def main(argv=None):
     parser.add_argument("--backing", action="store_true", help="dark backing box behind the text")
     parser.add_argument("--badge", help="small corner text, e.g. an AI-disclosure mark")
     args = parser.parse_args(argv)
-    if not args.text.strip():
+    if args.text is not None and not args.text.strip():
         raise SystemExit("--text must not be empty")
+    if not args.text and not args.badge:
+        raise SystemExit("provide --text, --badge, or both")
     render(args)
     print(args.out)
 
