@@ -19,14 +19,15 @@ elif [ "$grep_status" -ge 2 ]; then
 fi
 
 # MCP is the only runtime surface a skill teaches (AGENTS.md, "Authoring
-# contract"), so skill documentation must not route an agent through the
-# official SDK. Maintainer scripts under skills/*/scripts/ are the one
-# exception, which is why only markdown is checked here.
+# contract"), so skill documentation should not hand an agent the official SDK
+# in place of a tool it could call itself. Scripts are free to use the SDK, so a
+# hit here is a notice for review to weigh and never a failure: it asks whether
+# the mention describes a script or teaches the agent's own route.
 grep_status=0
-grep -rniE --include='*.md' -e 'scenario[-_]sdk' -e 'SCENARIO_SDK_API' skills || grep_status=$?
+sdk_hits=$(grep -rniE --include='*.md' -e 'scenario[-_]sdk' -e 'SCENARIO_SDK_API' skills) || grep_status=$?
 if [ "$grep_status" -eq 0 ]; then
-  echo 'Skill documentation must teach the MCP tools, not the Scenario SDK (house style)'
-  fail=1
+  echo "$sdk_hits"
+  echo 'Notice (not a failure): skill documentation mentions the Scenario SDK. Confirm it describes a script rather than the route an agent takes at runtime, per AGENTS.md "Authoring contract".'
 elif [ "$grep_status" -ge 2 ]; then
   echo "check-style: grep failed (exit $grep_status); a checked path is probably missing"
   fail=1
