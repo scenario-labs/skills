@@ -16,23 +16,40 @@ def ffmpeg(args: list[str]) -> None:
     subprocess.run(["ffmpeg", "-v", "error", "-y", *args], check=True, capture_output=True)
 
 
-def make_clip(path: Path, seconds: float, color: str = "blue", fps: int = 24, size: str = "320x240") -> Path:
-    ffmpeg(
-        [
-            "-f", "lavfi", "-i", f"color=c={color}:s={size}:r={fps}:d={seconds}",
-            "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", str(path),
+def make_clip(
+    path: Path,
+    seconds: float,
+    color: str = "blue",
+    fps: int = 24,
+    size: str = "320x240",
+    tone: int | None = None,
+    gain: float = 1.0,
+) -> Path:
+    """A flat colour clip. With a tone it also carries its own audio, as a generated shot does."""
+    args = ["-f", "lavfi", "-i", f"color=c={color}:s={size}:r={fps}:d={seconds}"]
+    if tone is not None:
+        args += [
+            "-f", "lavfi", "-i", f"sine=frequency={tone}:duration={seconds}",
+            "-filter_complex", f"[1:a]volume={gain},aformat=channel_layouts=stereo[a]",
+            "-map", "0:v", "-map", "[a]", "-c:a", "aac",
         ]
-    )
+    args += ["-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", str(path)]
+    ffmpeg(args)
     return path
 
 
-def make_master(path: Path, seconds: float = 4.0, codec: str = "mp3") -> Path:
+def make_master(path: Path, seconds: float = 4.0, codec: str = "mp3", gain: float = 1.0) -> Path:
     codec_args = {
         "mp3": ["-c:a", "libmp3lame", "-b:a", "128k"],
         "wav": ["-c:a", "pcm_s16le"],
         "aac": ["-c:a", "aac", "-b:a", "128k"],
     }[codec]
-    ffmpeg(["-f", "lavfi", "-i", f"sine=frequency=440:duration={seconds}", "-ac", "2", *codec_args, str(path)])
+    ffmpeg(
+        [
+            "-f", "lavfi", "-i", f"sine=frequency=440:duration={seconds}",
+            "-af", f"volume={gain}", "-ac", "2", *codec_args, str(path),
+        ]
+    )
     return path
 
 

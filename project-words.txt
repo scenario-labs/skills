@@ -1,4 +1,5 @@
 captioner
+diegetic
 equirectangular
 ffprobe
 inpaint

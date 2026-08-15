@@ -8,6 +8,11 @@ muxes the untouched master, and checks the delivery. One ffmpeg pass.
 
 The master is never re-encoded when its codec can live in MP4 as is, so the
 delivered soundtrack is bit for bit the file you supplied.
+
+Set "sound" in the edit file to a linear gain (0.1 to 0.3 is a bed) and the
+clips' own audio is mixed under the master at that level instead of dropped.
+The master still goes in at unity, but the delivery is then one AAC encode
+rather than a copy, so the bit-for-bit guarantee is traded for the sound.
 """
 # MIT. Ported from https://github.com/edemaistre/scenario-seedance-2-5-music-video,
 # Copyright (c) 2026 Emmanuel de Maistre.
@@ -109,6 +114,26 @@ def load_edit(path: Path) -> dict:
     return edit
 
 
+def audio_layout(stream: dict) -> str:
+    layout = stream.get("channel_layout")
+    if layout:
+        return layout
+    named = {1: "mono", 2: "stereo"}.get(int(stream.get("channels", 0)))
+    if named is None:
+        raise BuildError("the master's channel layout is unknown, so clip sound cannot be conformed to it")
+    return named
+
+
+def read_sound(edit: dict) -> float:
+    """Gain applied to the clips' own audio. 0, absent or null keeps the master alone."""
+    sound = edit.get("sound", 0) or 0
+    if isinstance(sound, bool) or not isinstance(sound, (int, float)):
+        raise BuildError('"sound" is a linear gain on the clips\' own audio, a number such as 0.2')
+    if not 0 <= sound <= 4:
+        raise BuildError('"sound" must be between 0 and 4; 0.1 to 0.3 puts a bed under a mastered track')
+    return float(sound)
+
+
 def plan(edit: dict, root: Path) -> dict:
     """Turn 'at' times into exact frame spans and check every clip is long enough."""
     fps = int(edit.get("fps", 24))
@@ -116,6 +141,7 @@ def plan(edit: dict, root: Path) -> dict:
     height = int(edit.get("height", 720))
     if fps <= 0 or width <= 0 or height <= 0:
         raise BuildError("fps, width and height must be positive")
+    sound = read_sound(edit)
 
     master = (root / edit["master"]).resolve()
     if not master.is_file():
@@ -150,18 +176,32 @@ def plan(edit: dict, root: Path) -> dict:
         head = int(round(float(shot.get("in", 0.0)) * fps))
         if head < 0:
             raise BuildError(f"shot {index} has a negative 'in'")
-        available = frames_at_fps(probe(clip), fps) - head
+        clip_info = probe(clip)
+        available = frames_at_fps(clip_info, fps) - head
         if available < span:
             raise BuildError(
                 f"{clip.name} gives {available} frames after the head trim but the edit needs {span}. "
                 f"Generate it longer, or move the following shot later."
             )
-        planned.append({"clip": clip, "head": head, "span": span, "start_frame": bounds[index]})
+        planned.append({
+            "clip": clip,
+            "head": head,
+            "span": span,
+            "start_frame": bounds[index],
+            "has_audio": bool(streams(clip_info, "audio")),
+        })
+
+    if sound and not any(shot["has_audio"] for shot in planned):
+        raise BuildError(
+            'no clip carries audio, so "sound" has nothing to mix. Generate the shots with '
+            'generateAudio: true, or drop "sound" and deliver the master alone.'
+        )
 
     return {
         "fps": fps,
         "width": width,
         "height": height,
+        "sound": sound,
         "master": master,
         "master_info": master_info,
         "master_duration": master_duration,
@@ -188,19 +228,120 @@ def filter_graph(job: dict) -> str:
     return ";".join(parts)
 
 
+def inputs(job: dict) -> tuple[list[str], dict[int, int]]:
+    """Every clip, then the master, then one silence source per clip that has no audio.
+
+    Returns the -i arguments and, for those silent clips, the input index standing in
+    for them, so the sound graph can reach them by number.
+    """
+    args: list[str] = []
+    for shot in job["shots"]:
+        args += ["-i", str(shot["clip"])]
+    args += ["-i", str(job["master"])]
+
+    silence: dict[int, int] = {}
+    if job["sound"]:
+        master_audio = streams(job["master_info"], "audio")[0]
+        source = f"anullsrc=channel_layout={audio_layout(master_audio)}:sample_rate={master_audio['sample_rate']}"
+        for index, shot in enumerate(job["shots"]):
+            if shot["has_audio"]:
+                continue
+            silence[index] = len(job["shots"]) + 1 + len(silence)
+            args += ["-f", "lavfi", "-t", f"{shot['span'] / job['fps']:.9f}", "-i", source]
+    return args, silence
+
+
+def sound_graph(job: dict, silence: dict[int, int]) -> str:
+    """The clips' own audio, cut to the same spans as the picture and mixed under the master.
+
+    The master enters amix first at unity with normalize=0, so nothing rescales it:
+    the gain rides on the bed alone.
+    """
+    master_audio = streams(job["master_info"], "audio")[0]
+    conform = (
+        f"aformat=sample_fmts=fltp:sample_rates={master_audio['sample_rate']}"
+        f":channel_layouts={audio_layout(master_audio)}"
+    )
+    parts, labels = [], []
+    for index, shot in enumerate(job["shots"]):
+        seconds = shot["span"] / job["fps"]
+        if shot["has_audio"]:
+            head = shot["head"] / job["fps"]
+            source = f"[{index}:a]atrim=start={head:.9f}:end={head + seconds:.9f},asetpts=PTS-STARTPTS,"
+        else:
+            source = f"[{silence[index]}:a]"
+        labels.append(f"[a{index}]")
+        # apad before the final atrim: a clip whose audio stops short of its picture
+        # would otherwise pull every later shot's sound early.
+        parts.append(f"{source}{conform},apad,atrim=end={seconds:.9f},asetpts=PTS-STARTPTS[a{index}]")
+    parts.append(f"{''.join(labels)}concat=n={len(labels)}:v=0:a=1[bed]")
+    parts.append(f"[bed]volume={job['sound']}[bedgain]")
+    parts.append(f"[{len(job['shots'])}:a:0]{conform}[master]")
+    parts.append("[master][bedgain]amix=inputs=2:duration=first:normalize=0[aout]")
+    return ";".join(parts)
+
+
+def measure(args: list[str], graph: str, label: str) -> dict[str, float]:
+    """Peak level in dBFS and sample count of one graph output, from a single decode.
+
+    The stats run on float samples, so an over reads above 0 instead of being clamped
+    out of sight. Overall values accumulate frame by frame, so the largest is the total.
+    """
+    printed = run(
+        ["ffmpeg", "-v", "error", *args, "-filter_complex",
+         f"{graph};[{label}]astats=metadata=1:reset=0:measure_perchannel=none"
+         ":measure_overall=Peak_level+Number_of_samples,ametadata=mode=print:file=-[stats]",
+         "-map", "[stats]", "-f", "null", "-"]
+    ).decode("utf-8", "replace")
+    stats: dict[str, float] = {}
+    for line in printed.splitlines():
+        name, _, value = line.partition("=")
+        key = name.removeprefix("lavfi.astats.Overall.")
+        if key == name:
+            continue
+        try:
+            stats[key] = max(stats.get(key, float("-inf")), float(value))
+        except ValueError:
+            continue
+    if "Peak_level" not in stats or "Number_of_samples" not in stats:
+        raise BuildError("ffmpeg reported no audio statistics, so the mix could not be checked")
+    return stats
+
+
+def check_headroom(job: dict) -> dict[str, float]:
+    """Measure the mix before paying for the video encode, and never reshape the song to fit."""
+    args, silence = inputs(job)
+    stats = measure(args, sound_graph(job, silence), "aout")
+    peak = stats["Peak_level"]
+    if peak > 0:
+        master_peak = measure(["-i", str(job["master"])], "[0:a:0]anull[m]", "m")["Peak_level"]
+        if master_peak > -0.1:
+            raise BuildError(
+                f"the master already peaks at {master_peak:.2f} dBFS, so any bed clips it. "
+                f'Deliver without "sound", or supply a master with headroom.'
+            )
+        raise BuildError(
+            f'the mix peaks at {peak:.2f} dBFS and would clip. Lower "sound" from {job["sound"]} '
+            f"to about {job['sound'] * 10 ** (-peak / 20):.3f} and build again."
+        )
+    return {"peak_dbfs": peak, "samples": stats["Number_of_samples"]}
+
+
 def render(job: dict, output: Path, crf: int) -> str:
     master_codec = streams(job["master_info"], "audio")[0]["codec_name"]
-    copyable = master_codec in COPYABLE
+    copyable = master_codec in COPYABLE and not job["sound"]
     audio_index = len(job["shots"])
+    args, silence = inputs(job)
 
-    command = ["ffmpeg", "-y", "-v", "error"]
-    for shot in job["shots"]:
-        command += ["-i", str(shot["clip"])]
-    command += ["-i", str(job["master"])]
+    graph = filter_graph(job)
+    if job["sound"]:
+        graph = f"{graph};{sound_graph(job, silence)}"
+
+    command = ["ffmpeg", "-y", "-v", "error", *args]
     command += [
-        "-filter_complex", filter_graph(job),
+        "-filter_complex", graph,
         "-map", "[vout]",
-        "-map", f"{audio_index}:a:0",
+        "-map", "[aout]" if job["sound"] else f"{audio_index}:a:0",
         # No -frames:v here. It ends the whole output once the video hits the limit, which
         # truncates the master whenever the audio runs past the last video frame. The trim
         # filter in the graph already fixes the count exactly.
@@ -212,7 +353,9 @@ def render(job: dict, output: Path, crf: int) -> str:
 
     output.parent.mkdir(parents=True, exist_ok=True)
     run(command)
-    return "copy" if copyable else "aac_320k"
+    if copyable:
+        return "copy"
+    return "mix_aac_320k" if job["sound"] else "aac_320k"
 
 
 def verify(job: dict, output: Path, audio_mode: str, master_sha_before: str) -> dict:
@@ -245,9 +388,12 @@ def verify(job: dict, output: Path, audio_mode: str, master_sha_before: str) -> 
         # There is nothing to compare bit for bit, but it must still be a single pass.
         checks["audio_encoded_once"] = audio[0]["codec_name"] == "aac"
 
-    master_duration = job["master_duration"]
-    final_audio_duration = float(audio[0].get("duration", master_duration))
-    checks["audio_duration_preserved"] = abs(final_audio_duration - master_duration) <= 1.0 / job["fps"]
+    # A mix delivers decoded samples, so it lands on the master's true length; the container
+    # duration of an MP3 counts the encoder's padding on top of it and would read as a drift.
+    mix = job.get("mix")
+    expected_audio = mix["samples"] / int(master_audio["sample_rate"]) if mix else job["master_duration"]
+    final_audio_duration = float(audio[0].get("duration", expected_audio))
+    checks["audio_duration_preserved"] = abs(final_audio_duration - expected_audio) <= 1.0 / job["fps"]
 
     checks["master_untouched"] = sha256_file(job["master"]) == master_sha_before
 
@@ -262,7 +408,7 @@ def verify(job: dict, output: Path, audio_mode: str, master_sha_before: str) -> 
             "video_codec": video[0]["codec_name"],
             "audio_codec": audio[0]["codec_name"],
             "audio_mode": audio_mode,
-            "master_duration_seconds": round(master_duration, 6),
+            "master_duration_seconds": round(job["master_duration"], 6),
             "output_duration_seconds": round(float(info["format"]["duration"]), 6),
         },
     }
@@ -273,10 +419,15 @@ def build(edit_path: Path, output: Path, root: Path | None = None, crf: int = 18
     root = Path(root) if root else edit_path.parent
     job = plan(load_edit(edit_path), root)
     master_sha = sha256_file(job["master"])
+    if job["sound"]:
+        job["mix"] = check_headroom(job)
     audio_mode = render(job, Path(output), crf)
     report = verify(job, Path(output), audio_mode, master_sha)
     report["output"] = str(output)
     report["master_sha256"] = master_sha
+    if job["sound"]:
+        report["detail"]["sound_gain"] = job["sound"]
+        report["detail"]["mix_peak_dbfs"] = round(job["mix"]["peak_dbfs"], 2)
     report["shots"] = [
         {
             "clip": shot["clip"].name,

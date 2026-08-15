@@ -142,6 +142,83 @@ class BuildTestCase(unittest.TestCase):
         self.assertTrue(report["passed"], report["checks"])
         self.assertEqual(report["detail"]["size"], "320x240")
 
+    # the clips' own sound, mixed under the master
+
+    def test_sound_mixes_the_clips_under_the_master(self) -> None:
+        make_clip(self.root / "sa.mp4", 3.0, "blue", tone=880)
+        make_clip(self.root / "sb.mp4", 3.0, "red", tone=660)
+        edit = write_edit(
+            self.root / "edit.json", "master.mp3",
+            [{"clip": "sa.mp4", "at": 0}, {"clip": "sb.mp4", "at": 2.0}],
+            sound=0.25,
+        )
+        report = build.build(edit, self.root / "out.mp4", self.root)
+
+        self.assertTrue(report["passed"], report["checks"])
+        self.assertEqual(report["detail"]["audio_mode"], "mix_aac_320k")
+        self.assertTrue(report["checks"]["audio_encoded_once"])
+        self.assertTrue(report["checks"]["master_untouched"])
+        self.assertEqual(report["detail"]["sound_gain"], 0.25)
+
+        # The bed is audible: the mix sits above the master's own peak, and under full scale.
+        alone = build.measure(["-i", str(self.master)], "[0:a:0]anull[m]", "m")["Peak_level"]
+        self.assertGreater(report["detail"]["mix_peak_dbfs"], alone)
+        self.assertLess(report["detail"]["mix_peak_dbfs"], 0)
+
+    def test_a_clip_without_audio_is_covered_by_silence(self) -> None:
+        make_clip(self.root / "sa.mp4", 3.0, "blue", tone=880)
+        edit = write_edit(
+            self.root / "edit.json", "master.mp3",
+            [{"clip": "sa.mp4", "at": 0}, {"clip": "b.mp4", "at": 2.0}],
+            sound=0.25,
+        )
+        report = build.build(edit, self.root / "out.mp4", self.root)
+        self.assertTrue(report["passed"], report["checks"])
+        self.assertEqual(report["detail"]["frames"], report["detail"]["expected_frames"])
+
+    def test_a_mix_that_would_clip_is_refused_before_rendering(self) -> None:
+        make_master(self.root / "hot.mp3", 4.0, gain=7)
+        make_clip(self.root / "hot.mp4", 3.0, "blue", tone=880, gain=7)
+        edit = write_edit(
+            self.root / "edit.json", "hot.mp3",
+            [{"clip": "hot.mp4", "at": 0}, {"clip": "b.mp4", "at": 2.0}],
+            sound=1.0,
+        )
+        out = self.root / "clipped.mp4"
+        with self.assertRaisesRegex(build.BuildError, "would clip"):
+            build.build(edit, out, self.root)
+        self.assertFalse(out.exists())
+
+    def test_a_master_without_headroom_is_named_as_the_cause(self) -> None:
+        make_master(self.root / "full.wav", 4.0, codec="wav", gain=16)
+        make_clip(self.root / "hot.mp4", 3.0, "blue", tone=880, gain=7)
+        edit = write_edit(
+            self.root / "edit.json", "full.wav",
+            [{"clip": "hot.mp4", "at": 0}, {"clip": "b.mp4", "at": 2.0}],
+            sound=0.2,
+        )
+        with self.assertRaisesRegex(build.BuildError, "master already peaks"):
+            build.build(edit, self.root / "clipped.mp4", self.root)
+
+    def test_sound_with_no_clip_audio_anywhere_is_rejected(self) -> None:
+        with self.assertRaisesRegex(build.BuildError, "nothing to mix"):
+            self.plan_for(
+                [{"clip": "a.mp4", "at": 0}, {"clip": "b.mp4", "at": 2.0}],
+                sound=0.2,
+            )
+
+    def test_sound_must_be_a_number(self) -> None:
+        with self.assertRaisesRegex(build.BuildError, "linear gain"):
+            self.plan_for([{"clip": "a.mp4", "at": 0}], sound="loud")
+
+    def test_sound_outside_its_range_is_rejected(self) -> None:
+        with self.assertRaisesRegex(build.BuildError, "between 0 and 4"):
+            self.plan_for([{"clip": "a.mp4", "at": 0}], sound=12)
+
+    def test_no_sound_key_keeps_the_master_alone(self) -> None:
+        job = self.plan_for([{"clip": "a.mp4", "at": 0}, {"clip": "b.mp4", "at": 2.0}])
+        self.assertEqual(job["sound"], 0)
+
     def test_cli_returns_zero_and_writes_the_file(self) -> None:
         edit = write_edit(
             self.root / "edit.json", "master.mp3",

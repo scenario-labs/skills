@@ -35,9 +35,9 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)                         | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                     |
 | [scenario-3d](skills/scenario-3d/SKILL.md)                                     | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download   |
 | [scenario-video](skills/scenario-video/SKILL.md)                               | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities  |
-| [scenario-seedance](skills/scenario-seedance/SKILL.md)                         | Seedance video: mode selection (first frame, references, edit, extend), conditioning traps, cost gating            |
+| [scenario-seedance](skills/scenario-seedance/SKILL.md)                         | Seedance video: mode selection (first frame, references, edit, extend), conditioning traps, native sound, cost     |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                  |
-| [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a finished music video: beat-aligned shots, lyric transcription, verified ffmpeg assembly      |
+| [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a music video: beat-aligned shots, lyric transcription, shot sound under the master, assembly  |
 | [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions   |
 | [scenario-consistency](skills/scenario-consistency/SKILL.md)                   | Holding one character, product, or style across a set: baseline-plus-delta prompts, reference images, control maps |
 | [scenario-model-training](skills/scenario-model-training/SKILL.md)             | Training custom models for style, character, or product consistency, and generating with them                      |

@@ -1,6 +1,6 @@
 ---
 name: scenario-seedance
-description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video from a first frame, first and last frame anchors, reference-to-video with identity, product, or world references, prompt-based video editing, extending a clip, audio-conditioned motion, or deciding between first-frame and reference conditioning. Keywords: Seedance 2.5, ByteDance, T2V, I2V, V2V, multimodal references, video extension."
+description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video from a first frame, first and last frame anchors, reference-to-video with identity, product, or world references, prompt-based video editing, extending a clip, audio-conditioned motion, keeping native sound while the music is scored elsewhere, or deciding between first-frame and reference conditioning. Keywords: Seedance 2.5, Seedance 2.0, ByteDance, T2V, I2V, V2V, multimodal references, native audio, video extension."
 license: MIT
 ---
 
@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Seedance, ByteDance's video family on Scenario, folds text-to-video, first/last frame, reference-to-video, editing, and extension into one model that infers the mode from your inputs and prompt, so the conditioning inputs you pass decide more than prompt wording does. Discover it with `search` and treat `model_schema_get` as the contract: the family evolves and availability differs per team.
+Seedance, ByteDance's video family on Scenario, folds text-to-video, first/last frame, reference-to-video, editing, and extension into one model that infers the mode from your inputs and prompt, so the conditioning you pass decides more than prompt wording does. Discover it with `search` and treat `model_schema_get` as the contract: members ship side by side, agreeing on the shape and disagreeing on every number.
 
 Connection and the core generation loop: see the `scenario` skill in this repo. Model-agnostic video work: see the `scenario-video` skill in this repo.
 
@@ -21,24 +21,34 @@ Mode follows from the inputs (names from the live schema):
 | Text         | `prompt`                            | `aspectRatio` honored (21:9 through 9:16)          |
 | First frame  | `image` (+ `prompt`)                | opens on that frame; `aspectRatio` ignored         |
 | First + last | `image` + `lastFrameImage`          | `lastFrameImage` is only valid alongside `image`   |
-| Reference    | `referenceImages` (up to 30)        | carries identity and world, not the opening state  |
+| Reference    | `referenceImages`                   | carries identity and world, not the opening state  |
 | Edit         | `referenceVideos` + edit prompt     | requires `duration: -1`; output follows the source |
 | Extend       | `referenceVideos` + boundary prompt | continues the clip; geometry follows the source    |
 
-`image` and the reference arrays are mutually exclusive. `referenceVideos` (up to 10) and `referenceAudio` (up to 10, timing and energy conditioning) combine with `referenceImages`. Reference parameters are arrays even for one asset. Prompt tags bind by array order: `@image1` is `referenceImages[0]`; likewise `@video1`, `@audio1`. Duration: 4 to 30 seconds or -1 auto (the longest reference clip's length). Resolution: `480p` or `720p`. `generateAudio` defaults to true. No seed, mask, or camera parameter exists: camera moves live in the prompt, one dominant move per shot.
+`image` and the reference arrays are mutually exclusive. `referenceVideos` and `referenceAudio` (timing and energy conditioning) combine with `referenceImages`; on the 2.0 line reference audio also requires one image or video reference, where 2.5 takes it alone. Reference parameters are arrays even for one asset. Prompt tags bind by array order: `@image1` is `referenceImages[0]`, likewise `@video1` and `@audio1`. No seed, mask, or camera parameter exists: camera moves live in the prompt, one dominant move per shot.
+
+Caps are per member, so read them off `model_schema_get`. At authoring time 2.5 took 30 reference images, 10 videos, 10 audio, and 4 to 30 seconds at 480p or 720p, against 9, 3, 3, and 4 to 15 seconds on the 2.0, Fast, and Mini hits, with 1080p and 4k on 2.0 alone and no `lastFrameImage` on Mini.
 
 ## The conditioning rule
 
 In reference mode, frame one anchors to the base state of the reference world, and no prompt wording overrides it. If the shot must open in a specific state, render a still of it and pass it as `image`; use `referenceImages` when only identity, world, and palette matter. Deciding this per shot before generating is worth more than any prompt tuning.
+
+## Sound from the shot, music from elsewhere
+
+`generateAudio` (default true) is one switch over the whole track: it scores the shot as well as sounding it, and no field separates the two. A score written inside a shot survives no cut, since each shot invents its own key and tempo and the next one restarts them.
+
+So run the lanes apart. Keep `generateAudio: true` for what the picture makes, footsteps, impacts, room tone, dialogue, each landing on frame, and exclude the score in the prompt ("diegetic sound only, no music, no score"). Score the sequence once with a music model (see the `scenario-audio` skill) and lay that track over the assembled cut (see the `scenario-video-assembly` skill, or `scenario-seedance-music-video` when the song comes first): re-scoring then costs one audio run, not every shot again.
+
+The prompt is the only lever here, so listen to what comes back: when music leaks in anyway, re-run that shot with `generateAudio: false` and add sound from a sound-effects or video-to-audio model.
 
 ## Worked example: a product shot from references
 
 1. `search` with `target="models"`, `query="seedance"`, `public=true`. Prefer the newest non-deprecated hit, e.g. `model_bytedance-seedance-2-5` (a live hit at authoring time: re-discover each session).
 2. `model_schema_get` with that id: confirm fields, caps, and defaults first.
 3. `upload_asset` the product stills (see the `scenario` skill) to get asset ids.
-4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "@image1 defines the bottle and label. Slow dolly-in as condensation beads. No text, no captions.", "referenceImages": ["asset_a", "asset_b"], "duration": 8, "resolution": "720p", "generateAudio": false}}` for the cost estimate; re-estimate after any change to duration, resolution, or references.
+4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "@image1 defines the bottle and label. Slow dolly-in as condensation beads. Diegetic sound only, no music. No text, no captions.", "referenceImages": ["asset_a", "asset_b"], "duration": 8, "resolution": "720p", "generateAudio": true}` for the cost estimate; re-estimate after any change to duration, resolution, or references.
 5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
-6. `asset_display` the output. For a file, `asset_download` with no `format` returns a download URL; fetch it with `curl -L` (`format` converts image formats only).
+6. `asset_display` the output and watch it with sound before the music goes on. For a file, `asset_download` with no `format` returns a download URL; fetch it with `curl -L`.
 
 ## Common mistakes
 
@@ -46,6 +56,6 @@ In reference mode, frame one anchors to the base state of the reference world, a
 - A bare string where the schema says array: one reference still goes as `["asset_x"]`.
 - Combining `image` with `referenceImages` or `referenceVideos`: mutually exclusive inputs.
 - Edit mode with a fixed duration: editing requires `duration: -1`.
-- Setting `aspectRatio` in first-frame, edit, or extend modes: ignored; geometry follows the input.
-- Leaving `generateAudio` at its default (true) when the soundtrack comes later.
+- Carrying one member's caps to another: 30 references, 30 seconds, and 1080p are each true of one and false of the next.
+- Letting shots score themselves and then cutting them together: the music restarts at every cut.
 - Rendering captions, prices, logos, or UI: reserve clean space and composite text in post.
