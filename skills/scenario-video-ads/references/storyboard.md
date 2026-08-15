@@ -61,4 +61,4 @@ Every clip showing the product or a character passes this before it may enter th
 2. One `asset_analyze` call (batching contract in `scenario-asset-analysis`): the approved reference first, then the frames, with an instruction of the shape: "Play spot the difference. Against image 1, list every visible difference in label text and placement, logo geometry, cap and silhouette shape, material and tint, palette. Per image: pass or fail, then the differences."
 3. A brand-critical difference fails the clip. Regenerate from the same approved still with a tightened stillness clause, or demote the shot to an insert where the subject is smaller. Never anchor the next attempt to the drifted output.
 
-The checklist itself is built once at brief time by running `asset_describe` on the original product shot.
+Build the checklist once at brief time with `asset_analyze` on the product shot, with an instruction naming the fields to inventory (label text and typography, cap, bands, silhouette and proportions, materials, palette). `asset_describe` is the wrong tool for this: it returns a reusable style synthesis for prompts, not a detail inventory.

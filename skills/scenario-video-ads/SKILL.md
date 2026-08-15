@@ -30,7 +30,7 @@ Ask the brief once, then run without stopping. The one approval that matters sit
 
 ## Worked example: a perfume ad, 9:16, 20 seconds
 
-1. Brief once: awareness, twist creativity, 20s for Reels and TikTok, ceiling in CU. Upload the product shot, then build the fidelity checklist from it with `asset_describe` (label text, cap geometry, glass tint): every later check reuses it.
+1. Brief once: awareness, twist creativity, 20s for Reels and TikTok, ceiling in CU. Upload the product shot, then build the fidelity checklist from it with `asset_analyze`, instructing it to inventory label text, cap geometry, and glass tint: every later check reuses it (`asset_describe` returns a style line, not this inventory).
 2. Concept names its anchor: open inside the gala-and-gown cliche, break it on beat three. Show the page to the user.
 3. Storyboard 7 panels at 2 to 4 seconds each, hero shot designed first, 3 hook variants, 2 inserts as cut cover. `dry_run` every planned run, multiply by retry floors, present the budget table.
 4. Stills at 9:16: composite the real bottle into styled plates with an image-edit model, baseline-plus-delta prompts. The user approves each still: image money is cheap, video money is not.
