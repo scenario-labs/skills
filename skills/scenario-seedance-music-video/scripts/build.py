@@ -251,11 +251,12 @@ def inputs(job: dict) -> tuple[list[str], dict[int, int]]:
     return args, silence
 
 
-def sound_graph(job: dict, silence: dict[int, int]) -> str:
+def sound_graph(job: dict, silence: dict[int, int], mix: bool = True) -> str:
     """The clips' own audio, cut to the same spans as the picture and mixed under the master.
 
     The master enters amix first at unity with normalize=0, so nothing rescales it:
-    the gain rides on the bed alone.
+    the gain rides on the bed alone. With mix off the graph stops at the gained bed,
+    which is what a failed headroom check measures to size the gain that would fit.
     """
     master_audio = streams(job["master_info"], "audio")[0]
     conform = (
@@ -276,9 +277,16 @@ def sound_graph(job: dict, silence: dict[int, int]) -> str:
         parts.append(f"{source}{conform},apad,atrim=end={seconds:.9f},asetpts=PTS-STARTPTS[a{index}]")
     parts.append(f"{''.join(labels)}concat=n={len(labels)}:v=0:a=1[bed]")
     parts.append(f"[bed]volume={job['sound']}[bedgain]")
+    if not mix:
+        return ";".join(parts)
     parts.append(f"[{len(job['shots'])}:a:0]{conform}[master]")
     parts.append("[master][bedgain]amix=inputs=2:duration=first:normalize=0[aout]")
     return ";".join(parts)
+
+
+def level(dbfs: float) -> float:
+    """A dBFS reading as a linear amplitude, where full scale is 1."""
+    return 10 ** (dbfs / 20)
 
 
 def measure(args: list[str], graph: str, label: str) -> dict[str, float]:
@@ -314,15 +322,21 @@ def check_headroom(job: dict) -> dict[str, float]:
     stats = measure(args, sound_graph(job, silence), "aout")
     peak = stats["Peak_level"]
     if peak > 0:
+        # Scaling the whole mix down would be the wrong sum: the master rides at unity and
+        # only the bed carries the gain, so the gain that fits is the one leaving the bed
+        # exactly the room the master's own peak does not use.
         master_peak = measure(["-i", str(job["master"])], "[0:a:0]anull[m]", "m")["Peak_level"]
-        if master_peak > -0.1:
+        master_level = level(master_peak)
+        bed_level = level(measure(args, sound_graph(job, silence, mix=False), "bedgain")["Peak_level"])
+        room = level(-0.3) - master_level
+        if room <= 0 or bed_level <= 0:
             raise BuildError(
                 f"the master already peaks at {master_peak:.2f} dBFS, so any bed clips it. "
                 f'Deliver without "sound", or supply a master with headroom.'
             )
         raise BuildError(
             f'the mix peaks at {peak:.2f} dBFS and would clip. Lower "sound" from {job["sound"]} '
-            f"to about {job['sound'] * 10 ** (-peak / 20):.3f} and build again."
+            f"to at most {job['sound'] * room / bed_level:.3f} and build again."
         )
     return {"peak_dbfs": peak, "samples": stats["Number_of_samples"]}
 

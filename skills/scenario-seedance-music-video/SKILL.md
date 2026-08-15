@@ -30,7 +30,7 @@ Music written inside a shot restarts in a new key at every cut, so the score com
 | 5. Shots  | Seedance `model_run`, audio per the choice above  | `dry_run` first; `wait=false`; `jobs_wait` with `pending_job_ids` |
 | 6. Cut    | `python3 scripts/build.py edit.json out.mp4`      | one ffmpeg pass: conform, concatenate, lay the master, verify     |
 
-Ask once before starting: team and project, track clearance, aspect ratio and length, sound under the song or not, what must and must not appear, spend ceiling. Then run without stopping.
+Ask once before starting: team and project, track clearance, aspect ratio and length, sound under the song or not, what must and must not appear, spend ceiling. With no one to answer, take the song alone, since it is the delivery that keeps the master bit for bit. Then run without stopping.
 
 ## Worked example: one verse, three shots
 

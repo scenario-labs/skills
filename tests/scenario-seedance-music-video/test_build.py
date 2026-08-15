@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -188,6 +189,24 @@ class BuildTestCase(unittest.TestCase):
         with self.assertRaisesRegex(build.BuildError, "would clip"):
             build.build(edit, out, self.root)
         self.assertFalse(out.exists())
+
+    def test_the_gain_the_refusal_suggests_actually_fits(self) -> None:
+        # Only the bed carries the gain, so a suggestion that scales the whole mix would
+        # still clip and send the next build round the same loop.
+        make_master(self.root / "hot.mp3", 4.0, gain=7)
+        make_clip(self.root / "hot.mp4", 3.0, "blue", tone=880, gain=7)
+        shots = [{"clip": "hot.mp4", "at": 0}, {"clip": "b.mp4", "at": 2.0}]
+        edit = write_edit(self.root / "edit.json", "hot.mp3", shots, sound=1.0)
+
+        with self.assertRaises(build.BuildError) as refusal:
+            build.build(edit, self.root / "clipped.mp4", self.root)
+        suggested = re.search(r"to at most ([0-9.]+)", str(refusal.exception))
+        self.assertIsNotNone(suggested, str(refusal.exception))
+
+        retry = write_edit(self.root / "retry.json", "hot.mp3", shots, sound=float(suggested.group(1)))
+        report = build.build(retry, self.root / "fitted.mp4", self.root)
+        self.assertTrue(report["passed"], report["checks"])
+        self.assertLessEqual(report["detail"]["mix_peak_dbfs"], 0)
 
     def test_a_master_without_headroom_is_named_as_the_cause(self) -> None:
         make_master(self.root / "full.wav", 4.0, codec="wav", gain=16)
