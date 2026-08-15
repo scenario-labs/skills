@@ -89,6 +89,16 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(center_edge[:3], (0, 0, 0))
         self.assertGreater(center_edge[3], 0)
 
+    def test_backing_stays_inside_the_safe_zone(self):
+        left, top, right, bottom = card.safe_box(1080, 1920)
+        for position in ("top", "bottom"):
+            image = self.render(["--backing", "--position", position])
+            x0, y0, x1, y1 = self.content_bbox(image)
+            self.assertGreaterEqual(x0, left)
+            self.assertGreaterEqual(y0, top)
+            self.assertLessEqual(x1, right)
+            self.assertLessEqual(y1, bottom)
+
     def test_fixed_font_size_that_cannot_fit_exits(self):
         out = pathlib.Path(tempfile.mkdtemp()) / "nofit.png"
         with self.assertRaises(SystemExit):

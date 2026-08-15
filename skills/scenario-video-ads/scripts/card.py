@@ -17,7 +17,6 @@ Requires Pillow (pip install pillow).
 """
 
 import argparse
-import sys
 
 PRESETS = {"9:16": (1080, 1920), "16:9": (1920, 1080)}
 FONT_CANDIDATES = [
@@ -85,7 +84,7 @@ def wrap_lines(draw, text, font, max_width):
     return lines
 
 
-def fit_text(draw, text, font_path, box, requested_size):
+def fit_text(draw, text, font_path, box, requested_size, backing=False):
     left, top, right, bottom = box
     max_width, max_height = right - left, bottom - top
     size = requested_size or max(MIN_FONT_SIZE, max_height // 8)
@@ -93,9 +92,12 @@ def fit_text(draw, text, font_path, box, requested_size):
         font = load_font(font_path, size)
         lines = wrap_lines(draw, text, font, max_width)
         line_height = round(size * 1.25)
+        # The backing box pads by line_height // 2 per side and must also
+        # stay inside the safe zone, so reserve that pad in the fit budget.
+        pad_budget = line_height if backing else 0
         block_height = line_height * len(lines)
         widest = max(draw.textlength(line, font=font) for line in lines)
-        if block_height <= max_height and widest <= max_width:
+        if block_height + pad_budget <= max_height and widest + pad_budget <= max_width:
             return font, lines, line_height
         if requested_size:
             raise SystemExit(
@@ -115,21 +117,24 @@ def render(args):
     box = safe_box(width, height)
     left, top, right, bottom = box
 
-    font, lines, line_height = fit_text(draw, args.text, args.font, box, args.font_size)
+    font, lines, line_height = fit_text(
+        draw, args.text, args.font, box, args.font_size, args.backing
+    )
     block_height = line_height * len(lines)
+    pad = line_height // 2 if args.backing else 0
     if args.position == "top":
-        y = top
+        y = top + pad
     elif args.position == "bottom":
-        y = bottom - block_height
+        y = bottom - block_height - pad
     else:
         y = top + (bottom - top - block_height) // 2
 
     if args.backing:
-        pad = line_height // 2
         widest = max(draw.textlength(line, font=font) for line in lines)
         x0 = (width - widest) // 2 - pad
+        # rounded_rectangle inks the max corner, so pull it in one pixel
         draw.rounded_rectangle(
-            (x0, y - pad, width - x0, y + block_height + pad),
+            (x0, y - pad, width - x0 - 1, y + block_height + pad - 1),
             radius=pad,
             fill=(0, 0, 0, 153),
         )
