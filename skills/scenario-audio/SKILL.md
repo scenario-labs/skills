@@ -43,7 +43,7 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 Prompting tips:
 
 - SFX: name the source, material, action, and acoustic space, and say what to exclude ("no music", "no reverb"). One event per clip; generate variations as separate runs.
-- Music: give genre, mood, tempo, and instrumentation in the style field, and set the instrumental flag rather than saying it in words.
+- Music: give genre, mood, tempo, and instrumentation. Short beds usually take a single prompt, with duration or looping in the schema; songs with vocals split the request across fields, below.
 - Speech: keep the text field to the words to speak. Voice choice, language, emotion, and pacing live in separate schema fields or inline tags depending on the model; check the schema instead of packing direction into the text.
 
 ## Songs with vocals
