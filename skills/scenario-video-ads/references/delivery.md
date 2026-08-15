@@ -16,6 +16,8 @@ Keep every generated frame text-free so locale and legal variants are overlay sw
 
 Captions: burned in for sound-off feeds, white sans-serif on a dark backing, 3 to 7 words per cue, inside the safe zone, and moved off the bottom edge when an overlay sits there (the caption tool exposes a text position field).
 
+Give overlays hard in and out points rather than fades, and QC the assembled master by extracting its frames and checking every overlay window: compositors have dropped mid-timeline image layers that carried fade parameters, and a fade can be simulated safely with two or three stacked copies of the layer at rising opacity.
+
 ## Audio
 
 - Music is generated, not licensed by default: commercial tracks need sync licenses for paid media, and platform music libraries do not travel with the creative (TikTok's commercial library is TikTok-only), so a cross-platform campaign cannot rely on them. Generation contract: `scenario-audio`.

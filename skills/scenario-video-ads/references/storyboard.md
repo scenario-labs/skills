@@ -51,7 +51,7 @@ People, when the concept needs them: gaze directed at the product pulls the view
 
 ## Prompting image-to-video
 
-Each shot prompt is self-contained: the model knows nothing of adjacent shots. Movement first, then the subject's state, then atmosphere. State product stillness positively, once: "the bottle rests fixed in place". Negative commands ("do not morph") do nothing and can trip filters. Put the hardest detail first. Conditioning: pass the approved still as the first frame when the shot must open on it; use reference images when only identity, world, and palette must hold (the trade is the subject of `scenario-seedance`). `generateAudio: false` everywhere.
+Each shot prompt is self-contained: the model knows nothing of adjacent shots. Movement first, then the subject's state, then atmosphere. For any shot that must END on the pristine product (a landing, a settle, a return to the packshot), generate the opposite motion from the product photo as the first frame and reverse the clip (`search` query `"video reverse"` surfaces the tool): the final frame is then the untouched photo by construction. State product stillness positively, once: "the bottle rests fixed in place". Negative commands ("do not morph") do nothing and can trip filters. Put the hardest detail first. Conditioning: pass the approved still as the first frame when the shot must open on it; use reference images when only identity, world, and palette must hold (the trade is the subject of `scenario-seedance`). `generateAudio: false` everywhere.
 
 ## The fidelity gate
 
