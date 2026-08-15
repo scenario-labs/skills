@@ -25,7 +25,7 @@ Ask the brief once, then run without stopping. The one approval that matters sit
 | 5. Animate       | Image-to-video per approved still, one camera move, `generateAudio: false` where the schema has it, `wait=false` | `scenario-video`, `scenario-seedance`                              |
 | 6. Fidelity gate | Extract frames from every product or character clip, spot-the-difference against the approved reference          | storyboard.md, `scenario-asset-analysis`                           |
 | 7. Audio         | Music generated on the cut's beat grid, voiceover to a word budget, sonic logo                                   | `scenario-audio`, [references/delivery.md](references/delivery.md) |
-| 8. Assemble      | Timeline, text cards from [scripts/card.py](scripts/card.py) as image layers, captions in safe zones             | `scenario-video-assembly`, delivery.md                             |
+| 8. Assemble      | Timeline, text cards from `scenario-text-overlay` as image layers, captions in safe zones                        | `scenario-video-assembly`, delivery.md                             |
 | 9. Pre-flight    | Policy, flashes, sound-off pass, loudness, spend report                                                          | delivery.md                                                        |
 
 ## Worked example: a perfume ad, 9:16, 20 seconds
@@ -36,7 +36,7 @@ Ask the brief once, then run without stopping. The one approval that matters sit
 4. Stills at 9:16: composite the real bottle into styled plates with an image-edit model, baseline-plus-delta prompts. The user approves each still: image money is cheap, video money is not.
 5. Animate each approved still: `model_schema_get` first, prompt movement first ("slow push-in over 4 seconds, the bottle rests fixed in place"), `generateAudio: false` when the schema lists it.
 6. Gate every clip: frame-extract, then one `asset_analyze` call against the checklist. Label drift fails the clip; regenerate from the same still, never from the drifted output.
-7. Music at a stated BPM so cuts land on bars; compose the timeline, card.py renders the tagline into the safe zone; caption the master.
+7. Music at a stated BPM so cuts land on bars; compose the timeline, `scenario-text-overlay` renders the tagline card into the safe zone; caption the master.
 8. Pre-flight per delivery.md, then report spend from `usage` against the approved board.
 
 ## Common mistakes

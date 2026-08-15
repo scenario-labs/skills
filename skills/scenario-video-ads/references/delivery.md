@@ -10,7 +10,7 @@ Durations are placement-exact: bumpers exactly 6s; CTV slots exactly 15s or 30s 
 
 ## Assembly
 
-The cut, overlays, and captions are all model runs (contract in `scenario-video-assembly`): clips as video layers, the logo and every text card as image layers, the music as an audio layer. Render text cards deterministically with [card.py](../scripts/card.py): exact type, positioned inside the safe zone. Legal and locale text must be verbatim, which is why it is never generated.
+The cut, overlays, and captions are all model runs (contract in `scenario-video-assembly`): clips as video layers, the logo and every text card as image layers, the music as an audio layer. Render text cards deterministically with the `scenario-text-overlay` skill, canvas sized to the master: exact type, boxes positioned inside the safe zone. Legal and locale text must be verbatim, which is why it is never generated.
 
 Keep every generated frame text-free so locale and legal variants are overlay swaps, not regenerations: German text runs about 30 percent longer than English, right-to-left locales mirror alignment and directional motion, and legal supers differ per market (WLTP-qualified range wording in the UK and EU, "EPA-estimated" in the US, retouching labels on altered bodies in France and Norway).
 
