@@ -30,14 +30,14 @@ Music written inside a shot restarts in a new key at every cut, so the score com
 | 5. Shots  | Seedance `model_run`, audio per the choice above  | `dry_run` first; `wait=false`; `jobs_wait` with `pending_job_ids` |
 | 6. Cut    | `python3 scripts/build.py edit.json out.mp4`      | one ffmpeg pass: conform, concatenate, lay the master, verify     |
 
-Ask once before starting: team and project, track clearance, aspect ratio and length, sound under the song or not, what must and must not appear, spend ceiling. With no one to answer, take the song alone, since it is the delivery that keeps the master bit for bit. Then run without stopping.
+Ask once before starting: team and project, track clearance, aspect ratio and length, sound under the song or not, what must and must not appear, spend ceiling. With no one to answer, take the song alone, since it keeps the master bit for bit, and write the story down rather than waiting to show it. Then run without stopping.
 
 ## Worked example: one verse, three shots
 
-1. `python3 scripts/song.py master.mp3 -o song.json`. Sections are shot boundaries, cut candidates are cut points; listen before trusting them. The master stays read-only.
+1. `python3 scripts/song.py master.mp3 -o song.json`. Sections are shot boundaries, cut candidates are cut points; listen before trusting them.
 2. Upload the master: multipart `upload_asset`, then `upload_asset_complete` (see the `scenario` skill). `search` a transcription model (query `"audio to text"`), `model_schema_get`, `model_run`, `jobs_wait`. Instrumental track: say so and move on.
 3. Write one page: what happens, where, how it turns across the sections; name the closing image. Show it to the user before spending anything.
-4. Generate reference stills with an image model (via `search`) at the delivery aspect ratio, one per look. Look at them: they set identity and palette downstream.
+4. Generate reference stills with an image model (via `search`) at the delivery aspect ratio, one per look. Look at them: they set identity and palette downstream. Holding one character across several: see the `scenario-consistency` skill in this repo.
 5. Per shot, decide the conditioning: opening state matters, pass a first-frame `image`; only identity and world matter, pass `referenceImages` (see [references/shots.md](references/shots.md)). Generate each shot one or two seconds longer than its slot for a trim handle.
 6. Write `edit.json` and run `python3 scripts/build.py edit.json out.mp4`:
 
@@ -55,7 +55,7 @@ Ask once before starting: team and project, track clearance, aspect ratio and le
 }
 ```
 
-Each shot runs until the next starts and the last to the master's end, so gaps are impossible. `in` is an optional head trim. `sound` is the gain on the clips' own audio, 0.1 to 0.3 under a mastered track; drop the line for the song alone. The build fails loudly on a clip too short, a mix that would clip, or delivered audio that is not the master.
+Each shot runs until the next starts and the last to the master's end, so gaps are impossible, and every `at` snaps to the nearest frame. `in` is an optional head trim. `sound` is the gain on the clips' own audio, 0.1 to 0.3 under a mastered track; drop the line for the song alone. The build fails loudly on a clip too short, a mix that would clip, or delivered audio that is not the master.
 
 ## Common mistakes
 
@@ -65,5 +65,4 @@ Each shot runs until the next starts and the last to the master's end, so gaps a
 - Prompting an opening state in reference mode: it will not appear; pass a first-frame `image`.
 - Judging a clip from a sparse contact sheet: a continuous camera move looks like a hard cut; measure first (see [references/shots.md](references/shots.md)).
 - Trusting the beat grid: sections and cut candidates are suggestions; check them against what you hear.
-- Passing `format` to `asset_download` for a clip: it converts image formats only, so omit it and `curl -L` the returned URL.
 - Calling it done without watching the delivery with sound, then muted.
