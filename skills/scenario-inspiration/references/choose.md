@@ -19,7 +19,7 @@ Option count follows the user's state, not a house number.
 | Exploring, no formed preference (the usual case)      | 3 or 4        |
 | Asking to see range, with a preference to filter with | 5, on request |
 
-Three to four is a reasoned default, not a measured optimum: working memory holds about four things at once, and choice overload bites hardest exactly under preference uncertainty, which is the normal state early in a brief. Three concepts is a long-standing industry convention with a client-relationship rationale behind it rather than evidence. Do not claim research settles the number.
+Three to four is a reasoned default, not a measured optimum: it is about as many things as anyone holds side by side, and too much choice hurts most when preferences are still unformed, which is the normal state early in a brief. Three concepts is a long-standing industry convention rather than a finding. Do not claim research settles the number.
 
 ## The bar: mutual exclusivity
 
@@ -53,19 +53,19 @@ Show all options together in one message rather than one at a time. Marking whic
 
 ## Around the options
 
-**Watch the order.** Primacy favors the first, recency the last, and the middle is systematically underweighted. Rotate which conceptual pole lands in which slot between rounds, and never let position encode a recommendation. If you have one, say it in words after the pick, or offer it as a read the user is free to discount.
+**Watch the order.** Position drives picks: the ends of a list get attention the middle does not. Rotate which conceptual pole lands in which slot between rounds, and never let position encode a recommendation. If you have one, say it in words after the pick, or offer it as a read the user is free to discount.
 
 **Show the discards.** Two or three lines naming what was cut and why. A set where everything survived reads as pattern matching on the shape of a good answer; a set with visible abandonments reads as judgment. This is the cheapest credibility available.
 
 **Always offer a real escape hatch**, phrased as an option rather than a courtesy, and enumerate its useful forms so it is not a dead end: none of these, a mix of two, the right idea but wrong execution, or wrong axis entirely.
 
-**"I cannot decide" means the options are too close.** Deferral rises when nothing is decisively better, so the fix is more spread on the named axis, not fewer options and not the same question asked again.
+**"I cannot decide" means the options are too close.** The fix is more spread on the named axis, not fewer options and not the same question asked again.
 
 ## Ask for the pick, then the reason
 
-Ask for the choice first and the reason second, and keep the reason optional. Requiring someone to justify an aesthetic preference before making it degrades the choice itself, so the order matters: choose, then explain, and never block on the explanation.
+Ask for the choice first and the reason second, and keep the reason optional. Making someone justify a preference before forming it distorts the preference, so the order matters: choose, then explain, and never block on the explanation.
 
-Do not leave the reason as an open field. Most people cannot produce structured critique unprompted. Offer the handles from the axis you varied: "was it the light, the palette, the framing, or the subject?" turns an unanswerable question into a one-word answer that still names the attribute.
+Do not leave the reason as an open field, which asks for structured critique on the spot. Offer the handles from the axis you varied instead: "was it the light, the palette, the framing, or the subject?" turns an unanswerable question into a one-word answer that still names the attribute.
 
 When the round matters, ask for a graft instead of a favorite: "which is closest, and what would you take from one of the others?" A cross-option answer such as "C's lighting on A's composition" carries far more than a ranking, and it is how directors talk anyway.
 

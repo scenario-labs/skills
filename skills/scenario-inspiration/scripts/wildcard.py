@@ -404,8 +404,9 @@ def render(cards: list[dict[str, str]], seed: int) -> str:
 
 def render_list() -> str:
     lines = ["facet       pool  notes"]
+    domains = sum(len(v) for v in DOMAIN_CLUSTERS.values())
     lines.append(
-        f"{'domain':<11} {len(DOMAIN_CLUSTERS) * 8:>4}  "
+        f"{'domain':<11} {domains:>4}  "
         f"{len(DOMAIN_CLUSTERS)} clusters, one card each per draw"
     )
     for facet in FACET_ORDER:

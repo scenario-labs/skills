@@ -11,16 +11,9 @@ Chance favors a prepared mind, and an unprimed search returns whatever the brief
 
 Then run the literal, obvious query once and keep the result. That baseline is not a candidate set; it is the control. Anything the widening produces has to include things the baseline did not, or the widening did nothing and you should say so instead of claiming variety.
 
-## Four words that are not synonyms
+## Say which one you mean
 
-| Word           | Means                                                     |
-| -------------- | --------------------------------------------------------- |
-| Novelty        | The item is unknown to this user or this team             |
-| Diversity      | The items in the set are unlike each other                |
-| Unexpectedness | The item is unlike what the obvious approach would return |
-| Serendipity    | Unexpected and relevant, at the same time                 |
-
-Asking for diversity when you mean unexpectedness gets you a well-spread set of obvious things. Aim for maximum distance from the reference subject to a hard relevance floor, not a free blend of the two.
+Novelty is an item this team has not seen. Diversity is a set whose items are unlike each other. Unexpectedness is an item unlike what the obvious approach returns. Serendipity is unexpected and relevant at once. Asking for diversity when you mean unexpectedness gets you a well-spread set of obvious things. Aim for maximum distance from the reference subject subject to a hard relevance floor, not a free blend of the two.
 
 ## Operators, not adjectives
 
@@ -31,7 +24,7 @@ Randomize the operator, never the subject. The subject stays exactly what the br
 | Operator             | The move                                                                                                                                                    |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Constraint inversion | Write the brief's 3 to 6 unstated rules ("lighting is naturalistic", "the camera is at eye level"), then drop or negate exactly one per variant             |
-| Constraint injection | Add an arbitrary obligatory element the brief never asked for; a required constraint reliably raises rated creativity over a free hand                      |
+| Constraint injection | Add an arbitrary obligatory element the brief never asked for, and hold the rest of the brief fixed                                                         |
 | Bisociation          | Collide the subject with a second frame that is internally rule-rich and rarely co-occurs. If the connection is immediately visible, the frame is too close |
 | Blend                | List A's elements, list B's, name the structure they share, project a chosen subset of each, then run the blend to see what it implies                      |
 | Purpose over surface | State the brief's function ("move heavy things up a shaft safely"), hold it fixed, and find domains that solve it by a different mechanism                  |
@@ -48,11 +41,11 @@ The test that separates a real analogy from a decorative one: do the mechanisms 
 | **Open**  | Default                   | Two or three queries on different axes, one wildcard card, both semantic settings |
 | **Wide**  | Nothing decided yet       | Four or more queries, four wildcard cards, a wander chain, far rung included      |
 
-Pure randomness earns about one slot in twenty, and it belongs in its own labeled lane rather than mixed into the main results. An unexpected item that turns out to be irrelevant costs more satisfaction than it buys.
+Keep pure randomness to about one slot per set, in its own labeled lane rather than mixed into the main results. An unexpected item that turns out to be irrelevant costs more than it buys.
 
 ## The distance ladder
 
-Sample near, middle, and far, then let evaluation pick. Do not commit to "as far as possible": the evidence is split, with lab studies finding far-field examples raise novelty and a large field study finding conceptually closer sources more useful. The reconciliation that fits both is that structural analogy helps and arbitrary unrelatedness does not, so measure distance in mechanism, not in surface topic.
+Sample near, middle, and far, then let evaluation pick. Do not commit to "as far as possible". Measure distance in mechanism rather than in surface topic: a domain that solves the same problem by another means is useful, and a domain that is merely unrelated is not.
 
 Far sampling raises variance rather than the average: more hits and more misses. Generate more candidates on the far rung and expect to discard most of them.
 
@@ -62,20 +55,20 @@ Far sampling raises variance rather than the average: more hits and more misses.
 - **Search the feeling, not the category.** Querying the category name returns the category reflex delivered to your desk.
 - **Check the anchor noun is not half a fixed compound.** "Light bulb", "hard surface", and "brass instrument" hijack a query toward the compound.
 - **Anchor an abstract treatment with a concrete noun**, or the results turn into stock abstraction.
-- **Never search a brand you intend to resemble.** You will get a knockoff of it and so will the output.
+- **Never search a brand you intend to resemble.** You get a knockoff of it, and so does the output.
 
 ## The Scenario search dials
 
 `search` is free, so run several. The dials that change what comes back:
 
-| Dial                     | Behavior                                                                                                                                                                                         |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `query_semantic_ratio`   | 0 (default) is keyword and matches an asset's stored caption text, so a concept word can return nothing while an image of exactly that thing sits in the project. 0.8 searches meaning. Run both |
-| `public`                 | Omitted or false searches the team's own assets; `true` searches the public catalog                                                                                                              |
-| `images: {like, unlike}` | Steer by example in both directions. Seeds may reappear in their own results                                                                                                                     |
-| `filters`                | `kind`, `tags`, `created_after`, `collection_ids`, `model_id`, `privacy`                                                                                                                         |
-| `sort_by`                | Ignored while semantic search is active                                                                                                                                                          |
-| `target: "models"`       | Keyword beats semantic for named styles. Each hit carries `shortDescription`, `tags`, and `exampleAssetIds`                                                                                      |
+| Dial                     | Behavior                                                                                                                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `query_semantic_ratio`   | 0 (default) is keyword and matches the asset's stored text, so a concept word returned nothing at authoring time while images of exactly that thing sat in the project. 0.8 searches meaning. Run both |
+| `public`                 | Omitted or false searches the team's own assets; `true` searches the public catalog                                                                                                                    |
+| `images: {like, unlike}` | Steer by example in both directions. Seeds may reappear in their own results                                                                                                                           |
+| `filters`                | `kind`, `tags`, `created_after`, `collection_ids`, `model_id`, `privacy`                                                                                                                               |
+| `sort_by`                | Ignored while semantic search is active                                                                                                                                                                |
+| `target: "models"`       | Keyword beats semantic for named styles. Each hit carries `shortDescription`, `tags`, and `exampleAssetIds`                                                                                            |
 
 Run the same brief at both ends of `query_semantic_ratio` and look at what only one of them found. The keyword pass surfaces literal but odd matches, the semantic pass surfaces conceptual ones, and the difference between the two lists is where the surprises are. Running one setting and calling it a search is the most common way to miss them.
 
@@ -83,7 +76,7 @@ Keep `unlike` short. Negative examples deserve much less weight than positives, 
 
 Two payloads make public search worth more than a normal image search. Public asset hits carry `metadata.prompt`, the exact wording that produced them, which is style research you can read rather than guess at. Public model hits carry `exampleAssetIds`, a ready-made board for that look: `asset_display` a handful before deciding anything.
 
-`estimatedTotalHits` is not a result count. It comes back large next to an empty `assets` array, so never report it as "found N".
+`estimatedTotalHits` is not a result count. At authoring time it came back large next to an empty `assets` array, so never report it as "found N".
 
 ## The wander chain
 
@@ -112,14 +105,14 @@ Name the card you drew alongside the result it produced, so the user can pin it 
 
 ## What goes wrong, and the counter
 
-- **The first reference anchors everything.** Shown one example, people reproduce its features even when told its flaws. Counting ideas will not detect this; compare features against the seed instead. For depth, seed with exactly one uncommon reference up front. For breadth, withhold references until after a first blind pass, or supply several from distinct categories.
-- **The first three ideas are warmup.** Serial position is real. Generate past them before presenting anything.
-- **Every user converges.** Assistance that raises one person's novelty also makes everyone's output more similar to everyone else's. Vary the wildcard seed per session and the operators per round so two people with the same brief do not receive the same four directions.
+- **The first reference anchors everything downstream.** Counting ideas will not detect it, because the count stays healthy while every idea carries the seed's features; compare features against the seed instead. For depth, seed with exactly one uncommon reference up front. For breadth, withhold references until after a first blind pass, or supply several from distinct categories.
+- **The first three ideas are warmup.** Generate past them before presenting anything.
+- **Every user converges.** Vary the wildcard seed per session and the operators per round, so two people with the same brief do not receive the same four directions.
 - **Round two restates round one.** Keep a running list of what this session already proposed and reject a candidate that sits too close to it. Novelty measured against an archive beats novelty asserted.
-- **Strangeness is not serendipity.** An unexpected find qualifies only when all three hold: it was unexpected, you can articulate the connection to the task, and you can state its concrete value. Two out of three is noise. Park the near misses in a short list the user can return to instead of arguing for them.
+- **Strangeness is not serendipity.** An unexpected find qualifies only when all three hold: it was unexpected, you can articulate the connection to the task, and you can state its concrete value. Two out of three is noise.
 
 ## Audit the set before presenting it
 
-Score the candidate set on four axes: fluency (how many distinct ideas), flexibility (how many distinct categories they span), originality (how rare each is), elaboration (detail per idea). The failure signature is high fluency with low flexibility: ten ideas, one category. The fix is a category coverage requirement, not "generate more".
+Cover distinct categories rather than producing more ideas inside one. The failure signature is a long list that collapses into two kinds of thing, and the fix is a category requirement, not "generate more".
 
 Then two checks you can actually run. Does the set contain anything the baseline query did not return? And is each item far from its nearest reference, rather than the set being far on average? A set can look spread out while hiding a cluster of near-duplicates, and the nearest one is what gives that away.

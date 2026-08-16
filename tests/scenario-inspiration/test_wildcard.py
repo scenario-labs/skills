@@ -193,6 +193,30 @@ class RenderTest(unittest.TestCase):
         for cluster in wildcard.DOMAIN_CLUSTERS:
             self.assertIn(cluster, out)
 
+    def test_render_list_counts_domains_rather_than_assuming_cluster_size(self):
+        # Guards against a hardcoded domains-per-cluster factor, which would
+        # print a wrong total the moment one cluster gains or loses an entry.
+        total = sum(len(v) for v in wildcard.DOMAIN_CLUSTERS.values())
+        domain_line = next(
+            line for line in wildcard.render_list().splitlines() if "clusters," in line
+        )
+        self.assertIn(str(total), domain_line)
+
+    def test_render_list_totals_survive_an_uneven_cluster(self):
+        original = wildcard.DOMAIN_CLUSTERS
+        uneven = {k: list(v) for k, v in original.items()}
+        uneven[sorted(uneven)[0]].append("a freshly added domain")
+        wildcard.DOMAIN_CLUSTERS = uneven
+        try:
+            domain_line = next(
+                line
+                for line in wildcard.render_list().splitlines()
+                if "clusters," in line
+            )
+            self.assertIn(str(sum(len(v) for v in uneven.values())), domain_line)
+        finally:
+            wildcard.DOMAIN_CLUSTERS = original
+
 
 class CliTest(unittest.TestCase):
     def run_cli(self, argv):
