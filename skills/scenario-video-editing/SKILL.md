@@ -12,7 +12,7 @@ Every image post-processing effect has a video twin, and each is a `model_run` o
 
 ## The twin rule
 
-A video effect's id is the image id with `-video` appended, its file field is `video` rather than `image`, and the knobs are identical: `model_scenario-postprocessing-lut-video` takes the same `lutStyle` enum and `lutIntensity` as `model_scenario-postprocessing-lut`. All eighteen have twins: blur, chromatic aberration, color correction, crystallize, cubism, desaturate, dissolve, dodge and burn, glow and bloom, grain, 3D color LUT, oilify, parabolize, posterize, sharpen, solarize, tint, vignette.
+A video effect's id is the image id with `-video` appended, its file field is `video` rather than `image`, and the knobs are identical: `model_scenario-postprocessing-lut-video` takes the same `lutStyle` enum and `lutIntensity` as `model_scenario-postprocessing-lut`. All eighteen have twins, from blur and color correction through oilify, posterize and vignette.
 
 One twin differs: Dissolve (Video) blends the clip with a still `dissolveImage`, not a second clip; crossfading two clips is a concat transition.
 
@@ -35,7 +35,7 @@ All via `search`, `target="models"`, `public=true`; re-discover rather than hard
 
 On the video twins the `video` input carries `cost_impact: true`, which the image versions do not: price tracks the footage rather than the settings. Trim to the frames that ship, then grade; `dry_run=true` prices a payload before it runs. Video tools also outlast `model_run`'s wait window, so launch with `wait=false` and follow with `jobs_wait`, re-calling it with the returned `pending_job_ids`. A client-side timeout on `jobs_wait` is as harmless as the server's own: re-call it with the same ids rather than treating the job as lost.
 
-Checking costs nothing: `asset_get` on a video returns `firstFrame` and `lastFrame` as their own asset ids, so `asset_display` one to confirm a grade or layout before chaining another billable run onto it.
+Checking costs nothing: `asset_get` returns `firstFrame` and `lastFrame` as their own asset ids, so `asset_display` one to confirm a grade before chaining another billable run onto it.
 
 ## Field names drift between neighbors
 
@@ -49,8 +49,10 @@ Checking costs nothing: `asset_get` on a video returns `firstFrame` and `lastFra
 
 No tool model repaints a video's canvas: Resize Video fits the clip inside the target, or stretches it when `preserveAspectRatio` is false. Neither gives a 16:9 clip a vertical frame, so that brief needs a decision before any spend, between two routes an order of magnitude apart in price.
 
-- **Generative reframe** (`query="reframe"`, Luma Ray 3.2 Reframe and Wan 2.2 Reframe, `scenario-video` territory) outpaints past the frame and keeps the whole picture. It is the most expensive step in such a job, and a resolution ceiling can put the requested size out of reach, so `dry_run` and read the schema before promising it.
-- **Compositor** (Video Studio, cropping or pillarboxing onto a vertical canvas) is cheap but throws away width or adds bars. Its layer geometry is `scenario-video-assembly`'s contract, not a one-line setting: `dry_run` prices a payload without validating it, and a mis-composed job still returns `status: "success"` at exactly the right dimensions.
+- **Generative reframe** (`query="reframe"`, Luma Ray 3.2 Reframe and Wan 2.2 Reframe, `scenario-video` territory) outpaints past the frame and keeps the whole picture, at by far the highest price in such a job. Resolution ceilings bite: a schema can allow a vertical ratio and its top resolution tier separately yet reject the pair at run time.
+- **Compositor** (Video Studio, cropping or pillarboxing onto a vertical canvas) is cheap but throws away width or adds bars, and its layer geometry is `scenario-video-assembly`'s contract rather than a one-line setting.
+
+`dry_run` prices a payload without validating it, so either route can bill for a run that fails outright or returns a mis-composed frame at exactly the right dimensions.
 
 ## Worked example: a graded cutdown
 
@@ -68,3 +70,4 @@ Launch every `model_run` below with `wait=false` and retire it with `jobs_wait` 
 - Grading each source clip and then concatenating: grade the finished master once, or the shots drift apart.
 - Reaching for local ffmpeg, or for an MCP tool named `video_edit`: the surface is `model_run` on tool models.
 - Polling `job_get` in a loop instead of `jobs_wait`, whose timeout is not an error.
+- Trusting a Grain profile to add grain: the 22 profiles are looks, not intensities, and some soften the picture instead. Compare a frame against the input.
