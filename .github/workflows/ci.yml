@@ -33,6 +33,8 @@ jobs:
         run: pnpm groupings
       - name: README skills table coverage
         run: pnpm readme
+      - name: project-words.txt sorted
+        run: pnpm words:check
       - name: Spelling (cspell)
         run: pnpm spell
       - name: Spec validation (skills-ref, the Agent Skills reference validator)
