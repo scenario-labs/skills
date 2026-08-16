@@ -39,6 +39,15 @@ for f in skills/*/SKILL.md; do
     echo "$f: description must start with \"Use when\""
     fail=1
   }
+
+  # Body word budget (AGENTS.md "Authoring contract"): 400-600 words with a
+  # hard cap of 900. Only the hard cap fails the build; the 400-600 target
+  # stays editorial. The body is everything after the closing frontmatter ---.
+  words=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f" | wc -w | tr -d ' ')
+  if [ "$words" -gt 900 ]; then
+    echo "$f: body is $words words, over the 900-word hard cap"
+    fail=1
+  fi
 done
 
 exit $fail
