@@ -39,6 +39,7 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | Skill                                                                          | Use it for                                                                                                            |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | [scenario](skills/scenario/SKILL.md)                                           | Connecting to the Scenario MCP and the core generation loop: discover, schema, run, wait, display, download           |
+| [scenario-inspiration](skills/scenario-inspiration/SKILL.md)                   | Finding a direction before generating: serendipity, reference hunting, A/B/C/D concept options, moodboard collections |
 | [scenario-image](skills/scenario-image/SKILL.md)                               | Text-to-image and image editing: model choice, sizing fields, prompt limits, reference images, masked inpainting      |
 | [scenario-game-assets](skills/scenario-game-assets/SKILL.md)                   | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches            |
 | [scenario-textures](skills/scenario-textures/SKILL.md)                         | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                             |

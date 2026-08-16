@@ -8,6 +8,11 @@
       "skills": ["scenario"]
     },
     {
+      "title": "Finding a direction",
+      "description": "Turn a blank brief into references, options someone can choose between, and a moodboard the next batch runs from.",
+      "skills": ["scenario-inspiration"]
+    },
+    {
       "title": "Images",
       "description": "Generate and edit images: model choice, sizing, references, masked edits, and letter-perfect text overlay cards.",
       "skills": ["scenario-image", "scenario-text-overlay"]

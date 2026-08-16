@@ -5,7 +5,9 @@ MYBRAND
 MYSTYLE
 Qwen
 RRGGBB
+artic
 binet
+bisociation
 captioner
 diegetic
 equirectangular
@@ -31,6 +33,7 @@ numpy
 outpainting
 remesh
 remeshing
+rerank
 retarget
 retargets
 retexture
