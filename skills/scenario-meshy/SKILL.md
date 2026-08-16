@@ -32,7 +32,7 @@ One silent rule runs through every texture control: an image beats text. On the 
 
 ## Generate raw, refine on purpose
 
-Keep `shouldRemesh` off on Meshy 7 Image to 3D (the schema recommends it): take the raw mesh at generation, then control polycount with Remesh, which owns `targetPolycount`, topology, `resizeHeight` (0 keeps scale), and origin placement. On the generator, `targetPolycount` does nothing while `shouldRemesh` is off. `ultraMode` buys finer geometry for extra cost but accepts one input image; when hidden sides matter more than micro detail, spend the budget on up to four views instead. Costs spread widely (at authoring time the single-image Meshy 7 p50 ran three times the multi-image one), so `dry_run` before batches.
+Keep `shouldRemesh` off on Meshy 7 Image to 3D (the schema recommends it): take the raw mesh at generation, then control polycount with Remesh, which owns `targetPolycount`, topology, `resizeHeight` in meters (0 keeps scale), and origin placement. On the generator, `targetPolycount` does nothing while `shouldRemesh` is off. `ultraMode` buys finer geometry for extra cost but accepts one input image; when hidden sides matter more than micro detail, spend the budget on up to four views instead. Costs spread widely (at authoring time the single-image Meshy 7 p50 ran three times the multi-image one), so `dry_run` before batches.
 
 ## Rig or animate, not both
 

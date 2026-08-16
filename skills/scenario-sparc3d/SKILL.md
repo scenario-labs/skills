@@ -41,7 +41,7 @@ In `images`, slot one is the front view; extras are back, left, and right, in th
 3. `upload_asset` the concept image, or generate one first with a text-to-image model.
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"images": ["asset_front"], "requestType": 3, "resolution": "1536fast", "face": 500000, "pbr": true}` for the cost estimate; re-estimate after touching any cost knob.
 5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout; expect several rounds.
-6. `asset_display` to preview the mesh, then `asset_download` for engine import.
+6. `asset_display` to preview the mesh, then `asset_download` for engine import. No schema field selects the container (the catalog advertises GLB, OBJ, STL, and FBX): confirm the delivered format from the returned asset before promising an engine target.
 
 ## Common mistakes
 

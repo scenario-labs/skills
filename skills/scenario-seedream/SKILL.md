@@ -23,7 +23,7 @@ At authoring time (fields and caps are per member, read the live schema):
 | 4.5              | `referenceImages`           | `size` (2K, 4K) plus `aspectRatio` enum             | subject-preserving edits; `"auto"` ratio follows the source |
 | 5.0 Pro Layerize | one `image`, required       | `size` tier: auto, 1K, 1.5K, 2K                     | splits, never generates; prompt optional                    |
 
-On the three generators, mode follows from the inputs: empty `referenceImages` is text-to-image, one or more is an edit, and the array shape holds even for one asset. Sequence mode (`sequentialImageGeneration: "auto"` plus `maxImages`) lets Lite and 4.5 return a related set in one run, input plus generated capped at 15 images; Pro has no sequence fields. Pro also cost two to three times as much per image as Lite or 4.5 and took about two minutes against under one, so iterate on the cheap members and spend Pro on finals; `dry_run` both before a batch.
+On the three generators, mode follows from the inputs: empty `referenceImages` is text-to-image, one or more is an edit, and the array shape holds even for one asset. Sequence mode (`sequentialImageGeneration: "auto"` plus `maxImages`) lets Lite and 4.5 return a related set in one run, input plus generated capped at 15 images; Pro has no sequence fields. Pro also cost two to three times as much per image as Lite or 4.5 and took about two minutes against under one, so iterate on the cheap members and spend Pro on finals; `dry_run` both before a batch (the estimate prices the run exactly as submitted, a whole sequence included).
 
 ## Write the exact copy into the prompt
 

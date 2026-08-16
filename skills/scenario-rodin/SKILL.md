@@ -22,7 +22,7 @@ Pick the member by task:
 | Text to 3D (`txt23d`)         | Gen-2.5 Text to 3D, or Fast | `prompt`          |
 | Split and retexture (`3d23d`) | Bang!                       | `model` + `image` |
 
-`images` is an array even for one still (up to 5 at authoring time), every entry a view of one subject, never an alternative concept. Prompt is optional on the image members: left empty, Rodin writes one from the images. Shared generator knobs: `qualityMeshOption` (topology and poly budget in one enum string, "18K Quad"), `material` (PBR, Shaded, All, None), `textureDelight` (strips baked lighting), `TAPose` (T or A pose for rigging), `seed` (0 to 65535).
+`images` is an array even for one still (up to 5 at authoring time), every entry a view of one subject, never an alternative concept. Prompt is optional on the image members: left empty, Rodin writes one from the images. Shared generator knobs: `qualityMeshOption` (topology and poly budget in one enum string, "18K Quad"), `material` (PBR, Shaded, All, None), `textureDelight` (strips baked lighting), `TAPose` (true poses the character in T or A pose for rigging; the schema does not pick between them), `seed` (0 to 65535).
 
 ## The lane decides the dialect
 
@@ -30,7 +30,7 @@ Full and Fast express the same ideas through different parameters, so a payload 
 
 ## Bang! wants a finished mesh
 
-Bang! is 3D-to-3D: it takes an existing 3D asset as `model` plus a reference `image` (both required at authoring time, `prompt` is optional guidance), splits the mesh into semantically meaningful parts, and regenerates each part's materials in the same pass. `strength` (2 to 12, default 5) sets how fine the split gets; `material` defaults to PBR here, not All; `resolution` "Basic" is 2K, "High" is 4K. At authoring time it ran several minutes and cost more per asset than a default generator run: `dry_run` it like any other member.
+Bang! is 3D-to-3D: it takes an existing 3D asset as `model` plus a reference `image` (both required at authoring time, `prompt` is optional guidance), splits the mesh into semantically meaningful parts, and regenerates each part's materials in the same pass. `strength` (2 to 12, default 5) sets how fine the split gets, higher splitting into more parts; `material` defaults to PBR here, not All; `resolution` "Basic" is 2K, "High" is 4K. At authoring time it ran several minutes and cost more per asset than a default generator run: `dry_run` it like any other member.
 
 ## Worked example: a rig-ready character from turnaround stills
 

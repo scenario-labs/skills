@@ -50,4 +50,4 @@ Native: V3 Generate Transparent writes the alpha channel directly, so icons, sti
 - Leaving expansion on with exact copy in the prompt: the rewrite can change the words before the model sees them.
 - Prompting a transparent background on V4: generate on V3 Transparent or chain Remove Background instead.
 - Inpainting on Character with `image` but no `mask`: they go together (black repaints, white stays, mask resized to the image), `characterReferenceImage` stays required, and sizing fields are ignored while inpainting.
-- Setting `fontNameH1` and `fontFileH1` together on Layerize: a tier's font comes from a font name or a font file, never both.
+- Setting `fontNameH1` and `fontFileH1` together on Layerize: a tier's font comes from a font name or a font file, never both. `upload_asset` has no font kind, so with only a local font file use the font name route and flag the gap.

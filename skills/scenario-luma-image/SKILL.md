@@ -29,7 +29,7 @@ The model follows a reference reliably only when the prompt says what to take fr
 
 ## Create prompts describe, edit prompts preserve
 
-Create prompts read as one scene in natural prose: subject, setting, lighting, mood, style, and always name the lighting, the single biggest quality lever. For text in the image, put the exact string in quotes; rendered text (including non-Latin scripts on the Max tier) is a family strength. Edit prompts are surgical: state the change first, then pin what must not move ("Change X to Y. Keep Z exactly as it is."). One scene or one change per run.
+Create prompts read as one scene in natural prose: subject, setting, lighting, mood, style, and always name the lighting, the single biggest quality lever. For text in the image, put the exact string in quotes; rendered text is a family strength, and the Max tier's advertised edge is accurate non-Latin scripts, not Latin text generally. Edit prompts are surgical: state the change first, then pin what must not move ("Change X to Y. Keep Z exactly as it is."). One scene or one change per run.
 
 ## Worked example: a travel poster with rendered title text
 

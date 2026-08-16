@@ -16,12 +16,12 @@ Connection and the core loop: see the `scenario` skill in this repo; model-agnos
 
 H3's mode follows from the inputs (names from the live schema):
 
-| Mode         | Inputs                                                 | Behavior                                                      |
-| ------------ | ------------------------------------------------------ | ------------------------------------------------------------- |
-| Text         | `prompt`                                               | `aspectRatio` honored (21:9 through 9:16, default `adaptive`) |
-| First frame  | `firstFrameImage` (+ `prompt`)                         | shape follows the image; `aspectRatio` ignored                |
-| First + last | `firstFrameImage` + `lastFrameImage`                   | `lastFrameImage` is valid only alongside `firstFrameImage`    |
-| Reference    | `referenceImages`, `referenceVideos`, `referenceAudio` | guides subject, style, motion, and voice, not forced frames   |
+| Mode         | Inputs                                                 | Behavior                                                                                 |
+| ------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Text         | `prompt`                                               | `aspectRatio` honored (21:9 through 9:16, default `adaptive`)                            |
+| First frame  | `firstFrameImage` (+ `prompt`)                         | shape follows the image; `aspectRatio` ignored                                           |
+| First + last | `firstFrameImage` + `lastFrameImage`                   | `lastFrameImage` is valid only alongside `firstFrameImage`                               |
+| Reference    | `referenceImages`, `referenceVideos`, `referenceAudio` | guides subject, style, motion, and voice, not forced frames; `aspectRatio` still applies |
 
 Keyframes and references are mutually exclusive: neither frame combines with any reference array. `referenceAudio` never rides alone; it requires at least one image or video reference. Reference parameters are arrays even for one asset. At authoring time H3 took 9 reference images, 3 videos, and 3 audio files (videos and audio each 2 to 15 seconds, and 2 to 15 seconds in total), 5 to 15 seconds of output, at `768P` or `2K`.
 
