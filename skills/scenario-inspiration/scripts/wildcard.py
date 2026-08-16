@@ -456,8 +456,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         cards = draw(args.count, facets, random.Random(seed))
     except ValueError as exc:
+        # parser.error() prints usage and exits 2; it never returns.
         parser.error(str(exc))
-        return 2
 
     if args.json:
         sys.stdout.write(json.dumps({"seed": seed, "cards": cards}, indent=2) + "\n")
