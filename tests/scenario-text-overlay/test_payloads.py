@@ -123,6 +123,25 @@ class ValidatePayloadTests(unittest.TestCase):
         self.assert_invalid(text_payload(variables={"line": "x"}))
         self.assert_invalid(text_payload(variables=[{"key": "", "value": "x"}]))
         self.assert_invalid(text_payload(variables=[{"key": "n", "value": 3}]))
+        self.assert_invalid(text_payload(variables=[{"key": "n"}]))
+
+    def test_section_values_accepted(self):
+        variables = [
+            {"key": "title", "value": "Aether Bolt"},
+            {"key": "features", "value": [{"name": "Fast"}, {"name": "Light"}]},
+            {"key": "sale", "value": True},
+        ]
+        kind, data = overlay.validate_payload(rich_payload(variables=variables))
+        self.assertEqual(kind, "rich")
+        self.assertEqual(data["variables"], variables)
+
+    def test_section_values_reject_nested_numbers_and_surrogates(self):
+        self.assert_invalid(
+            text_payload(variables=[{"key": "f", "value": [{"n": 3}]}])
+        )
+        self.assert_invalid(
+            text_payload(variables=[{"key": "f", "value": [{"n": "\ud83d"}]}])
+        )
 
     def test_line_height_and_letter_spacing_types(self):
         self.assert_invalid(text_payload(line_height=0.4))

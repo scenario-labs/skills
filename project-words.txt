@@ -1,5 +1,6 @@
-captioner
 Cinzel
+RRGGBB
+captioner
 diegetic
 equirectangular
 ffprobe
@@ -22,7 +23,6 @@ retarget
 retargets
 retexture
 retexturing
-RRGGBB
 shfmt
 tripo
 unpublishing

@@ -62,11 +62,12 @@ def resolve_font_file(payload):
         match = re.search(r"url\((https://fonts\.gstatic\.com/[^)]+\.ttf)\)", css)
         if match:
             return _cache_font(_download(match.group(1)), ".ttf")
-    except OSError:
-        pass
+        detail = "no TrueType URL in the css2 response"
+    except OSError as error:
+        detail = error
     print(
-        f"warning: could not fetch Google Font {payload['font_family']!r}; "
-        "falling back to a system font",
+        f"warning: could not fetch Google Font {payload['font_family']!r} "
+        f"({detail}); falling back to a system font",
         file=sys.stderr,
     )
     return None

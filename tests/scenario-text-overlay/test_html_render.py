@@ -82,6 +82,7 @@ class TextLayerHtmlTests(unittest.TestCase):
         document = html_render.text_layer_html(payload, "x", 40)
         self.assertIn("@font-face", document)
         self.assertIn("https://example.com/brand.woff2", document)
+        self.assertIn("font-display: block", document)
 
     def test_measure_page_waits_for_fonts_and_records_fit(self):
         document = html_render.text_layer_html(self.payload(), "x", 40, measure=True)

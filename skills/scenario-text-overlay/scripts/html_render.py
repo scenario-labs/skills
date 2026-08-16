@@ -20,6 +20,9 @@ from urllib.parse import quote_plus, urlparse
 DEFAULT_STYLE = "html, body { margin:0; padding:0; background: transparent; }"
 BROWSER_ENV = "SCENARIO_TEXT_OVERLAY_BROWSER"
 MIN_SHRINK_SIZE = 4
+# Virtual time pauses while resource fetches (fonts included) are pending,
+# and both font paths are paint-blocking (font-display: block), so
+# --screenshot captures the loaded face, never fallback glyphs.
 _VIRTUAL_TIME_BUDGET_MS = 10000
 
 # Hostname suffixes a page may reference without a warning. Anything else
@@ -117,7 +120,8 @@ def text_layer_html(payload, rendered_text, font_size, measure=False):
             f"@font-face {{ font-family: '{family}'; "
             f"src: url('{payload['font_url']}'); "
             f"font-weight: {payload['font_weight']}; "
-            f"font-style: {payload['font_style']}; }}"
+            f"font-style: {payload['font_style']}; "
+            "font-display: block; }"
         )
     clip = f" height:{box['h']}px; overflow:hidden;" if payload["overflow"] == "clip" else ""
     body = (

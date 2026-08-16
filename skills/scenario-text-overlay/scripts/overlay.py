@@ -77,6 +77,28 @@ def _check_choice(value, field, choices):
     return value
 
 
+def _check_value(value, field):
+    # A {{name}} substitution takes a string; Mustache section data may be
+    # a boolean or nest lists and objects, but every leaf is still a string
+    # (numbers would render with float formatting drift, so stringify them).
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return _check_text(value, field)
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            _check_value(item, f"{field}[{index}]")
+        return value
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if not isinstance(key, str) or not key:
+                _fail(f"{field} needs non-empty string keys")
+            _check_text(key, f"{field} key")
+            _check_value(item, f"{field}.{key}")
+        return value
+    _fail(f"{field} must be a string (stringify numbers), boolean, list, or object")
+
+
 def _check_variables(payload):
     variables = payload.get("variables", [])
     if not isinstance(variables, list):
@@ -84,10 +106,10 @@ def _check_variables(payload):
     for entry in variables:
         if not isinstance(entry, dict) or not entry.get("key") or not isinstance(entry["key"], str):
             _fail("each variable needs a non-empty string key")
-        if not isinstance(entry.get("value"), str):
-            _fail(f"variable {entry.get('key')!r} needs a string value (stringify numbers)")
         _check_text(entry["key"], "variable key")
-        _check_text(entry["value"], f"variable {entry['key']!r}")
+        if "value" not in entry:
+            _fail(f"variable {entry['key']!r} needs a value")
+        _check_value(entry["value"], f"variable {entry['key']!r}")
     return variables
 
 
