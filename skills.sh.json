@@ -22,6 +22,20 @@
       ]
     },
     {
+      "title": "Image model families",
+      "description": "The top image families in depth: generation and editing modes, reference rules, and the caps that differ per member.",
+      "skills": [
+        "scenario-gpt-image",
+        "scenario-mai-image",
+        "scenario-seedream",
+        "scenario-gemini-image",
+        "scenario-reve",
+        "scenario-ideogram",
+        "scenario-grok-imagine-image",
+        "scenario-luma-image"
+      ]
+    },
+    {
       "title": "Game art and environments",
       "description": "Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.",
       "skills": [
@@ -32,16 +46,51 @@
       ]
     },
     {
+      "title": "3D model families",
+      "description": "The top 3D families in depth: mesh generation, retexture and rigging toolchains, portraits, and explorable worlds and splats.",
+      "skills": [
+        "scenario-meshy",
+        "scenario-rodin",
+        "scenario-sparc3d",
+        "scenario-3d-worlds"
+      ]
+    },
+    {
       "title": "Video and audio",
       "description": "Video generation and editing, music, sound effects, voice, and speech.",
       "skills": [
         "scenario-video",
         "scenario-video-editing",
-        "scenario-seedance",
         "scenario-seedance-music-video",
         "scenario-video-ads",
         "scenario-audio",
         "scenario-video-assembly"
+      ]
+    },
+    {
+      "title": "Video model families",
+      "description": "The top video families in depth: conditioning modes, native audio, editing and extension, and per-member caps and costs.",
+      "skills": [
+        "scenario-minimax-video",
+        "scenario-gemini-omni",
+        "scenario-grok-imagine-video",
+        "scenario-veo",
+        "scenario-seedance",
+        "scenario-kling",
+        "scenario-vidu",
+        "scenario-wan",
+        "scenario-runway",
+        "scenario-luma-video"
+      ]
+    },
+    {
+      "title": "Audio model families",
+      "description": "The top audio families in depth: music, covers and stems, sound effects, speech, dubbing, and video scoring.",
+      "skills": [
+        "scenario-minimax-music",
+        "scenario-elevenlabs",
+        "scenario-ace-step",
+        "scenario-sonilo"
       ]
     },
     {
