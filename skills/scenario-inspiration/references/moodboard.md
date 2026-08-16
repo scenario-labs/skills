@@ -46,7 +46,7 @@ All of these are catalog tools: get schemas with `scenario_tools_search` and run
 
 Because a collection has no description field, the board's thesis lives in its name. Name it for the direction and the subject, not "moodboard 2".
 
-**A public asset from another team cannot join your collection.** `collection_add_assets` on one returned 403 Forbidden at authoring time. It is still a valid `search` seed and `asset_display` renders it, but to board it you need your own copy: `asset_download`, `curl -L` the returned URL, then `upload_asset` (multipart: `file_name`, `content_type`, `kind`, `file_size`) and `upload_asset_complete`. Same path for anything arriving from outside Scenario.
+**A public asset from another team cannot join your collection.** `collection_add_assets` on one returned 403 Forbidden at authoring time. It is still a valid `search` seed and `asset_display` renders it, but to board it you need your own copy: `asset_download`, `curl -L` the returned URL, then `upload_asset` (multipart: `file_name`, `content_type`, `kind`, `file_size`) and `upload_asset_complete`. Two things about that copy. `asset_download` returns a png re-encode unless you ask for another `format`, so the file can land larger than the original and the upload is sized off the copy, not the source. And `upload_asset` answers with `part_size`, `total_parts`, per-part `content_length`, and an `instructions` string: follow those rather than assuming one PUT, because anything past `part_size` comes back as several parts. Same path for anything arriving from outside Scenario.
 
 ## Spending the board
 

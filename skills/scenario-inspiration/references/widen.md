@@ -74,14 +74,14 @@ Far sampling raises variance rather than the average: more hits and more misses.
 
 `search` is free, so run several. The dials that change what comes back:
 
-| Dial                     | Behavior                                                                                                                                                                                               |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `query_semantic_ratio`   | 0 (default) is keyword and matches the asset's stored text, so a concept word returned nothing at authoring time while images of exactly that thing sat in the project. 0.8 searches meaning. Run both |
-| `public`                 | Omitted or false searches the team's own assets; `true` searches the public catalog                                                                                                                    |
-| `images: {like, unlike}` | Steer by example in both directions. Seeds may reappear in their own results                                                                                                                           |
-| `filters`                | `kind`, `tags`, `created_after`, `collection_ids`, `model_id`, `privacy`                                                                                                                               |
-| `sort_by`                | Ignored while semantic search is active                                                                                                                                                                |
-| `target: "models"`       | Keyword beats semantic for named styles. Each hit carries `shortDescription`, `tags`, and `exampleAssetIds`                                                                                            |
+| Dial                     | Behavior                                                                                                                                                                                                  |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `query_semantic_ratio`   | 0 (default) is keyword and matches the asset's stored text, so a concept word returned nothing at authoring time while images of exactly that thing sat in the project. 0.8 searches meaning. Run both    |
+| `public`                 | Omitted or false searches the team's own assets; `true` searches the public catalog                                                                                                                       |
+| `images: {like, unlike}` | Steer by example in both directions. Seeds may reappear in their own results                                                                                                                              |
+| `filters`                | `kind`, `tags`, `created_after`, `collection_ids`, `model_id`, `privacy`                                                                                                                                  |
+| `sort_by`                | Ignored while semantic search is active                                                                                                                                                                   |
+| `target: "models"`       | Keyword beats semantic for named styles, but misses by returning nothing at all: re-run at 0.8 before concluding the catalog lacks a look. Each hit carries `shortDescription`, `tags`, `exampleAssetIds` |
 
 Run the same brief at both ends of `query_semantic_ratio` and look at what only one of them found. The keyword pass surfaces literal but odd matches, the semantic pass surfaces conceptual ones, and the difference between the two lists is where the surprises are. Running one setting and calling it a search is the most common way to miss them.
 
