@@ -10,7 +10,7 @@ license: MIT
 
 Four tools read assets back instead of making new ones: three fixed-purpose, one open-ended. They answer the questions that come after a batch lands, which is where most of the work actually is: is this on brief, what look is this, what does this show, what can the next model condition on.
 
-None of them are in the default toolset. Get schemas with `scenario_tools_search`, then run each through the executor matching its `permission`: `asset_caption` and `asset_describe` are read-class, `asset_analyze` and `asset_detect` are write-class. Or reconnect with `?toolsets=full`. Connection and scope: see the `scenario` skill in this repo.
+None of them are in the default toolset. Get schemas with `scenario_tools_search`, then run each through the executor matching its `permission`: `asset_caption` and `asset_describe` are read-class, `asset_analyze` and `asset_detect` are write-class. Or reconnect with `?toolsets=full`. Connection and scope: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 ## Quick reference
 

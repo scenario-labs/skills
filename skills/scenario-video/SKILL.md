@@ -8,9 +8,9 @@ license: MIT
 
 ## Overview
 
-Scenario exposes a large video catalog through one MCP loop: text-to-video and image-to-video generators (Kling, Veo, Seedance, LTX, Luma, Runway, Grok) plus video-to-video editors, lipsync, upscalers, and deterministic cut/split/concat tools. Video jobs run long, so launch with `wait=false` and block on `jobs_wait` instead of polling.
+Scenario exposes a large video catalog through one MCP loop: text-to-video and image-to-video generators (Kling, Veo, Seedance, LTX, Luma, Runway, Grok) plus video-to-video editors, lipsync, upscalers, and deterministic cut/split/concat tools.
 
-Connection and the core generation loop: see the `scenario` skill in this repo.
+Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 ## Quick reference
 
@@ -33,21 +33,21 @@ Connection and the core generation loop: see the `scenario` skill in this repo.
 5. `jobs_wait` with `job_ids=["job_xyz"]`. On `status="in_progress"`, call again, passing the returned `pending_job_ids` as `job_ids`.
 6. `asset_display` the output video; `asset_download` (no `format`) returns the file URL, save it with `curl -L`.
 
-Iterating on motion: the source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. Several also accept first and last frame anchors or keyframe sequences; take exact parameter names from `model_schema_get`, never from memory.
+The source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. Several also accept first and last frame anchors or keyframe sequences; take exact parameter names from `model_schema_get`, never from memory.
 
 ## Editing existing footage
 
 All editing is `model_run` on a video-input model; discover each with `search`:
 
 - Prompt-driven edits (restyle, swap objects, characters, or backgrounds): query `"video edit"` (Grok Edit Video, Wan 2.7 Video Edit, Lucy Edit, Luma Modify Video).
-- Lipsync and dubbing: query `"lipsync"` or `"dubbing"`; see the next section, the two are not the same step.
+- Lipsync and dubbing: query `"lipsync"` or `"dubbing"`; see the next section.
 - Upscaling up to 4K: query `"video upscale"` (Topaz, SeedVR2, Magnific, Flash VSR).
 - Deterministic utilities: query `"tool"` for trim, split, concat with transitions, resize, reverse, reframe, and background removal. Extraction tools sit outside that page, so query them by name (`"audio extract"`, `"image sequence"`). Assembling clips into a finished cut: see `scenario-video-assembly`.
 - Extending a clip with new footage from its last frame: query `"extend video"`.
 
 ## Dubbing is not lipsync
 
-Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Three steps, in this order:
+Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Three steps:
 
 1. **Dub.** Takes the clip as `file` and a required `targetLang` from the schema's allowed values. Omit `sourceLang` to auto-detect, since the value that means auto differs between models. When a brand or name must survive translation, pick a hit whose schema carries `keyterms`, as not all do; where it is `array: true`, pass `["Scenario"]` even for one term.
 2. **Extract.** Dubbing a video returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the new speech out with `search` `query="audio extract"`, which surfaces the tool; a generic `query="tool"` buries it.
@@ -57,7 +57,7 @@ Building a localized talking head from nothing runs audio, video, dub, extract, 
 
 ## Duration limits
 
-Where a model bounds input length it rejects rather than trims, and by a hair: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A ceiling is not a standard field, so look for it in the file field's own description, and expect plenty of models to state none. When one applies, trim first with the deterministic cut or split tools (`search` `query="video cut"`), landing under the limit rather than exactly on it.
+Where a model bounds input length it rejects rather than trims: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A ceiling is not a standard field, so look for it in the file field's own description, and expect plenty of models to state none. When one applies, trim first with the deterministic cut or split tools (`search` `query="video cut"`), landing under the limit rather than exactly on it.
 
 ## Common mistakes
 

@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario generates audio through the same loop as images: discover a model, read its schema, run it, wait, download. The live catalog covers three generation lanes (music, sound effects, voice/speech) plus video-to-audio soundtrack models and audio utilities. Connection and the core generation loop: see the `scenario` skill in this repo.
+Scenario generates audio through the same loop as images. The live catalog covers three generation lanes (music, sound effects, voice/speech) plus video-to-audio soundtrack models and audio utilities. Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 ## Quick reference
 
@@ -43,12 +43,12 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 Prompting tips:
 
 - SFX: name the source, material, action, and acoustic space, and say what to exclude ("no music", "no reverb"). One event per clip; generate variations as separate runs.
-- Music: give genre, mood, tempo, and instrumentation. Short beds usually take a single prompt, with duration or looping in the schema; songs with vocals are their own lane, below.
-- Speech: keep the text field to the words to speak. Voice choice, language, emotion, and pacing live in separate schema fields or inline tags depending on the model; check the schema instead of packing direction into the text.
+- Music: give genre, mood, tempo, and instrumentation. Short beds usually take a single prompt, with duration or looping in the schema.
+- Speech: keep the text field to the words to speak. Voice choice, language, emotion, and pacing live in separate schema fields or inline tags; check the schema instead of packing direction into the text.
 
 ## Songs with vocals
 
-A full-length song is not a longer music bed, and song schemas vary more than the rest of the audio lane, so `model_schema_get` decides everything here. Current families shape the request three ways: a style prompt plus a separate lyric sheet, a single prose prompt carrying style and structure together, or an ordered section array with per-section lyrics, styles, and durations.
+A full-length song is not a longer music bed, and song schemas vary more than the rest of the audio lane, so `model_schema_get` decides everything. Current families shape the request three ways: a style prompt plus a separate lyric sheet, a single prose prompt carrying style and structure, or an ordered section array with per-section lyrics, styles, and durations.
 
 - **Words never go in a style field.** On split-field models the style field carries genre, mood, tempo in BPM, key, vocal style, and instrumentation; the lyric field carries the words, shaped by section tags such as `[Verse]` and `[Chorus]`.
 - **Instrumental is a flag where the schema has one.** Asking for "no vocals" in the style text does not reliably suppress them; when no flag exists, the schema's text fields are the only lever.

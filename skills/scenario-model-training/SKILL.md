@@ -8,9 +8,9 @@ license: MIT
 
 ## Overview
 
-Train a custom model when one look must hold across many assets: an icon set, a recurring character, a product line. Prompts and references are cheaper for one-offs; training pays off when dozens of generations must stay on-style.
+Train a custom model when one look must hold across many assets: an icon set, a recurring character, a product line.
 
-Connection and the core generation loop: see the `scenario` skill in this repo.
+Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 Training tools are not in the default toolset: get schemas with `scenario_tools_search`, run reads (`recommend_training`, `model_get`) via `scenario_tool_execute_read` and writes (`model_create`, `train`, `model_update`) via `scenario_tool_execute_write`, or reconnect with `?toolsets=full`.
 
@@ -34,7 +34,7 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
 2. `model_create` with `data: {"name": "rpg-prop-icons", "type": "<type from step 1>"}`. Note the returned model id.
 3. Upload each dataset file with `upload_asset` plus `upload_asset_complete` (see the `scenario` skill) and collect the asset ids. Match `dataset_requirements` from step 1. For `image_pairs` datasets, map pairs with `train` action `set_pairs`.
 4. `train` with `action: "upload_images"`, `model_id`, `images: [<asset ids>]`, at most 10 per call (see Dataset limits). `train` changes data, so pass `team_id` and `project_id` (scope: see the `scenario` skill).
-5. `train` with `action: "configure"`, `config: {"epochs": 12}`, `dry_run: true` returns the cost estimate without starting. `epochs` is the main cost lever (scales linearly); `nb_repeats`, `batch_size`, and `learning_rate` carry per-family ranges in the schema. To launch, re-run the same call without `dry_run` (`configure` and `start` hit the same trigger endpoint; `start` uses defaults).
+5. `train` with `action: "configure"`, `config: {"epochs": 12}`, `dry_run: true` returns the cost estimate without starting. `epochs` is the main cost lever (scales linearly); `nb_repeats`, `batch_size`, and `learning_rate` carry per-family ranges in the schema. To launch, re-run the same call without `dry_run` (`configure` and `start` hit the same trigger endpoint).
 6. The launch response includes a job: `jobs_wait` with its id in `job_ids`. Training outlasts the server wait budget, so re-call with the returned `pending_job_ids` until completed; never poll `job_get`.
 7. Generate: `model_schema_get` on your new model id, then `model_run`; custom models carry their own parameter contract.
 8. Manage: `models_list` with `filters: {"privacy": "private", "status": "trained"}` lists ready models (`filters.type` narrows server-side). `model_get` with `include_description: true` fetches the full docs. `model_update` edits `name`, `shortDescription`, `description`, `privacy`.
@@ -43,8 +43,8 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
 
 Nearly every `train` failure is dataset handling, not hyper-parameters.
 
-- **Ten ids per call.** `upload_images` takes at most 10 asset ids; more returns 400 `Too many assetIds provided in a single request`. Chunk the dataset and call once per chunk, which is additive: the model accumulates the whole set.
-- **Chunks must not overlap.** Re-sending an id already attached returns 400 `The provided assetId is already a training image of this model`. After a partial failure, re-send only the chunks that did not land, not the whole list.
+- **Ten ids per call.** `upload_images` takes at most 10 asset ids; more returns 400 `Too many assetIds provided in a single request`. Chunk the dataset and call once per chunk: the model accumulates the whole set.
+- **Chunks must not overlap.** Re-sending an id already attached returns 400 `The provided assetId is already a training image of this model`. After a partial failure, re-send only the chunks that did not land.
 - **Two separate plan ceilings.** Dataset size is capped per team: past it, `upload_images` returns 429 naming `add-training-image` with the ceiling in `actionLimit`. Chunking cannot get around that one, so trim to the strongest images or surface the upgrade. Concurrent trainings are capped separately as `parallel-training`, and some plans set it to zero.
 - **Images before configuration.** `configure` or `start` on an empty dataset fails validation on the training-image count. Pair datasets need whole pairs, with a family minimum above one.
 - **One launch at a time.** Once a run is live, `configure` and `start` both return 400 `Model is already training`. Wait it out with `jobs_wait`, or `train` with `action: "stop"`. Repeated launches also hit a cooldown whose 429 names `remainingSeconds`.

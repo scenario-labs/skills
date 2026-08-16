@@ -10,7 +10,7 @@ license: MIT
 
 Scenario hosts dedicated skybox models that produce seamless equirectangular 360 panoramas, plus a seam-preserving skybox upscaler. Always generate with a skybox-specific model rather than a generic image model: these enforce the seam continuity and pole geometry that ordinary text-to-image output lacks.
 
-Connection and the core generation loop: see the `scenario` skill in this repo.
+Connection and the core generation loop: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 ## Quick reference
 

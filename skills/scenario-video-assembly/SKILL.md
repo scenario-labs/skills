@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario has no editing tools on the MCP surface. Every compositor, concatenator, trimmer and captioner is a deterministic model run through `model_run`. Find them with `search`, `target="models"`, `public=true`, `filters={"tags": ["tool"]}` (84 hits at authoring time), one capability per query. Connection and the core loop: see the `scenario` skill; the clips themselves: see `scenario-video`.
+Scenario has no editing tools on the MCP surface. Every compositor, concatenator, trimmer and captioner is a deterministic model run through `model_run`. Find them with `search`, `target="models"`, `public=true`, `filters={"tags": ["tool"]}` (84 hits at authoring time), one capability per query. Connection and the core loop: see the `scenario` skill; the clips themselves: see `scenario-video`. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 ## Quick reference: pick the backend first
 

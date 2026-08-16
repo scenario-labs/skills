@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-"Make variant two look exactly like variant one except for X" is the most repeated creative ask, and agents reach for seeds, which do not solve it. Consistency comes from what you feed the model, in rising order of durability: a prompt baseline, reference images, a control map, a trained model. Connection and the core loop: see the `scenario` skill; training: see `scenario-model-training`.
+"Make variant two look exactly like variant one except for X" is the most repeated creative ask, and agents reach for seeds, which do not solve it. Consistency comes from what you feed the model, in rising order of durability: a prompt baseline, reference images, a control map, a trained model. Connection and the core loop: see the `scenario` skill; training: see `scenario-model-training`. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 ## Quick reference
 
@@ -20,15 +20,15 @@ license: MIT
 | Seed reuse                 | one image's exact roll      | low    | re-rolling a single generation         |
 | Trained LoRA               | a house style at scale      | high   | repeated brand work, not one character |
 
-Scenario's published pipeline guidance says to "generate one strong reference image, then pass it as an image input to every scene generation", to prefer models with the most reference-image slots, and that LoRA training "is for repeated brand-style work at scale, not single character runs".
+Scenario's published pipeline guidance says to "generate one strong reference image, then pass it as an image input to every scene generation" and to prefer models with the most reference-image slots.
 
 ## The baseline-plus-delta prompt
 
-The technique that works, and the one agents skip: write out everything that must **not** change, then put the single change in a final clause. Keep the prompt byte-identical between runs and edit only that clause.
+Write out everything that must **not** change, then put the single change in a final clause. Keep the prompt byte-identical between runs and edit only that clause.
 
-Enumerate specifics rather than gesturing at them: subject geometry, camera height and angle, subject size and position in frame, lighting direction, each named sub-element and where it sits, palette by name or hex, and embedded text. Look at the baseline first (`asset_display`): you cannot enumerate a shade you have not seen, and vague anchors drift.
+Enumerate specifics: subject geometry, camera height and angle, subject size and position in frame, lighting direction, each named sub-element and where it sits, palette by name or hex, and embedded text. Look at the baseline first (`asset_display`): you cannot enumerate a shade you have not seen, and vague anchors drift.
 
-Attach the approved baseline as a reference image alongside it. Current image models converge on `referenceImages`, but the name settles nothing: cap, requiredness, and cardinality all come from `model_schema_get`, and on some models the field is a single scalar file. Pass an array only where the schema says `array: true`, and there wrap even a lone asset as `["asset_..."]`: a bare string is dropped silently and the run succeeds while ignoring it. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (`collection_create`, `collection_add_assets`, catalog tools on the write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
+Attach the approved baseline as a reference image alongside it. Current image models converge on `referenceImages`, but cap, requiredness, and cardinality all come from `model_schema_get`, and on some models the field is a single scalar file. Pass an array only where the schema says `array: true`, and there wrap even a lone asset as `["asset_..."]`: a bare string is dropped silently and the run succeeds while ignoring it. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (`collection_create`, `collection_add_assets`, catalog tools on the write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
 
 A set takes one `model_run` per item: a batch-count field repeats one prompt, so it cannot carry a per-item delta clause.
 
@@ -38,7 +38,7 @@ Generate the control map and pass it as a conditioning input. Never extract the 
 
 `asset_detect` takes an `asset_id` and a `modality` from `canny`, `depth`, `grayscale`, `lineart_anime`, `mlsd`, `normal`, `pose`, `scribble`, `segmentation`, `sketch` (`remove_background` defaults true). Catalog-only and write lane, despite the docs page grouping it under Analysis: run it via `scenario_tool_execute_write`.
 
-The control block (`controlImage`, `controlModality`, `controlStrength`, `controlStart`, `controlEnd`) exists only on models listing `controlnet` in `capabilities`, so check that before planning around it; models without it take reference images instead. The two vocabularies differ: `controlModality` allows `canny`, `tile`, `depth`, `blur`, `pose`, `gray` and `low-quality`, so only canny, depth and pose map across, and `grayscale` becomes `gray`. `controlStrength` defaults to 0.7 with a recommended 0.3 to 0.8 band: near 0.7 for canny, depth and tile, 0.8 to 0.9 for pose, gray and blur, rigid above 0.9. Strength is how much, `controlStart` and `controlEnd` are when: `controlEnd` near 0.65 locks composition early, then releases so the prompt refines detail.
+The control block (`controlImage`, `controlModality`, `controlStrength`, `controlStart`, `controlEnd`) exists only on models listing `controlnet` in `capabilities`, so check that before planning around it; models without it take reference images instead. `controlModality` allows `canny`, `tile`, `depth`, `blur`, `pose`, `gray` and `low-quality`, so only canny, depth and pose map across, and `grayscale` becomes `gray`. `controlStrength` defaults to 0.7 with a recommended 0.3 to 0.8 band: near 0.7 for canny, depth and tile, 0.8 to 0.9 for pose, gray and blur, rigid above 0.9. Strength is how much, `controlStart` and `controlEnd` are when: `controlEnd` near 0.65 locks composition early, then releases so the prompt refines detail.
 
 ## Worked example: five poses of one mascot
 

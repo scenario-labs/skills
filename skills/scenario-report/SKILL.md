@@ -12,7 +12,7 @@ Public tracker: `https://github.com/scenario-labs/skills/issues`, forms `bug.yml
 
 Two constraints. A public issue is permanent, so redact first and post only after the user approves the exact text. The reader has no access to the user's account, so the report must carry everything needed to reproduce from outside.
 
-Connection and the core generation loop: see the `scenario` skill in this repo.
+Connection and the core generation loop: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 Account, billing, credit, quota, sign-in, and security problems never go in a public issue: send those to `support@scenario.com` or in-app support at `app.scenario.com`.
 

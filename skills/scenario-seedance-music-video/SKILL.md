@@ -10,11 +10,11 @@ license: MIT
 
 Five steps: song, lyrics, story, frames, video. The supplied master is the only score, and no shot writes its own. [scripts/build.py](scripts/build.py) lays the master over the cut once, at the end, and proves the file untouched by hash. [scripts/song.py](scripts/song.py) reads the master so cuts land on its structure. The scripts need ffmpeg and ffprobe on PATH, and numpy for song.py.
 
-Connection and the core generation loop: see the `scenario` skill in this repo. The Seedance parameter contract and conditioning traps: see the `scenario-seedance` skill in this repo.
+Connection and the core generation loop: see the `scenario` skill in this repo. The Seedance parameter contract and conditioning traps: see the `scenario-seedance` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 ## The two soundtracks
 
-Music written inside a shot restarts in a new key at every cut, so the score comes from outside the video model: here, the supplied master. What Seedance makes on its own side is the sound bolted to the picture. The choice sets `generateAudio` on every shot, so make it before generating:
+Music written inside a shot restarts in a new key at every cut, so the score comes from outside the video model: the supplied master. What Seedance makes is the sound bolted to the picture. The choice sets `generateAudio` on every shot, so make it before generating:
 
 - Song alone: `generateAudio: false` everywhere. build.py stream-copies the master whenever MP4 allows, so the delivered soundtrack is the supplied file, bit for bit.
 - Song over the shots' own sound: `generateAudio: true` with "diegetic sound only, no music, no score" in every prompt, plus `"sound": 0.2` in the edit file. build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file stays hash-checked.
@@ -30,14 +30,14 @@ Music written inside a shot restarts in a new key at every cut, so the score com
 | 5. Shots  | Seedance `model_run`, audio per the choice above  | `dry_run` first; `wait=false`; `jobs_wait` with `pending_job_ids` |
 | 6. Cut    | `python3 scripts/build.py edit.json out.mp4`      | one ffmpeg pass: conform, concatenate, lay the master, verify     |
 
-Ask once before starting: team and project, track clearance, aspect ratio and length, sound under the song or not, what must and must not appear, spend ceiling. With no one to answer, take the song alone, since it keeps the master bit for bit, and write the story down rather than waiting to show it. Then run without stopping.
+Ask once before starting: team and project, track clearance, aspect ratio and length, sound under the song or not, what must and must not appear, spend ceiling. With no one to answer, take the song alone, and write the story down rather than waiting to show it. Then run without stopping.
 
 ## Worked example: one verse, three shots
 
 1. `python3 scripts/song.py master.mp3 -o song.json`. Sections are shot boundaries, cut candidates are cut points; listen before trusting them.
 2. Upload the master: multipart `upload_asset`, then `upload_asset_complete` (see the `scenario` skill). `search` a transcription model (query `"audio to text"`), `model_schema_get`, `model_run`, `jobs_wait`. Instrumental track: say so and move on.
 3. Write one page: what happens, where, how it turns across the sections; name the closing image. Show it to the user before spending anything.
-4. Generate reference stills with an image model (via `search`) at the delivery aspect ratio, one per look. Look at them: they set identity and palette downstream. Holding one character across several: see the `scenario-consistency` skill in this repo.
+4. Generate reference stills with an image model (via `search`) at the delivery aspect ratio, one per look. Look at them: they set identity and palette downstream. Holding one character across several: see the `scenario-consistency` skill.
 5. Per shot, decide the conditioning: opening state matters, pass a first-frame `image`; only identity and world matter, pass `referenceImages` (see [references/shots.md](references/shots.md)). Generate each shot one or two seconds longer than its slot for a trim handle.
 6. Write `edit.json` and run `python3 scripts/build.py edit.json out.mp4`:
 
@@ -55,7 +55,7 @@ Ask once before starting: team and project, track clearance, aspect ratio and le
 }
 ```
 
-Each shot runs until the next starts and the last to the master's end, so gaps are impossible, and every `at` snaps to the nearest frame. `in` is an optional head trim. `sound` is the gain on the clips' own audio, sized to what they carry: 0.1 to 0.3 under a mastered track, up to 1.0 when the clips run quiet (build.py takes 0 to 4); drop the line for the song alone. The build fails loudly on a clip too short, a mix that would clip, or delivered audio that is not the master.
+Each shot runs until the next starts and the last to the master's end, so gaps are impossible, and every `at` snaps to the nearest frame. `in` is an optional head trim. `sound` is the gain on the clips' own audio: 0.1 to 0.3 under a mastered track, up to 1.0 when the clips run quiet (build.py takes 0 to 4); drop the line for the song alone. The build fails loudly on a clip too short, a mix that would clip, or delivered audio that is not the master.
 
 ## Common mistakes
 

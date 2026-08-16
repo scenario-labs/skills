@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Content filters run on the model provider's side, not on Scenario. A block is therefore a property of the model that was picked, not of the account or of the prompt in the abstract, and the same prompt usually passes on other models in the catalog. Treat a block as a routing problem first and a wording problem second. This skill is about false positives on content a team is entitled to make; it is not a way to produce content a provider prohibits. Core loop: see the `scenario` skill.
+Content filters run on the model provider's side, not on Scenario. A block is therefore a property of the model that was picked, not of the account or of the prompt in the abstract, and the same prompt usually passes on other models in the catalog. Treat a block as a routing problem first and a wording problem second. This skill is about false positives on content a team is entitled to make; it is not a way to produce content a provider prohibits. Core loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
 ## Quick reference
 
