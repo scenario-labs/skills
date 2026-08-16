@@ -26,7 +26,7 @@ Shared fields: `referenceImages` (up to 14, an array even for one), `numOutputs`
 
 ## Write instructions, not tags
 
-Describe subject, setting, and style in plain sentences. For edits, state the change and what must survive it: "keep the shoe's shape, colors, and branding unchanged; place it on a sunlit deck". With several references, assign roles by position ("image 1 is the character's face, image 2 the outfit, image 3 the background style"); unassigned references blur together. Lock identity explicitly: say the features must be preserved while pose, lighting, or scene changes. `thinkingLevel` defaults to `HIGH`, the careful setting; drop to `MINIMAL` for speed on simple runs.
+Describe subject, setting, and style in plain sentences. For edits, state the change and what must survive it: "keep the shoe's shape, colors, and branding unchanged; place it on a sunlit deck". With several references, assign roles by position ("image 1 is the character's face, image 2 the outfit, image 3 the background style"); unassigned references blur together. Lock identity explicitly: say the features must be preserved while pose, lighting, or scene changes. On Flash and Lite, `thinkingLevel` defaults to `HIGH`, the careful setting; drop to `MINIMAL` for speed on simple runs.
 
 ## Price the member before the batch
 
