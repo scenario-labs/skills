@@ -36,7 +36,7 @@ Everything is in seconds at `step: 0.1`, so do not promise frame-accurate cuts. 
 
 `canvasMode` and `durationMode` both default to `"auto"`, computed from the layers: a custom frame is `canvasMode: "custom"` plus numeric `canvasWidth` and `canvasHeight` (there are no top-level `width`/`height`, and unlike the layers' string `width`/`height` these are numbers), and a custom length is `durationMode: "custom"` plus the top-level `duration`. `fit` only acts on a layer that also sets the layer's own `width` and `height`, strings like `x` and `y`: to reframe a clip, set both to the canvas size and pass `"cover"` (crops) or `"contain"` (letterboxes), since the default `"fill"` stretches. The output field is `videoOutputFormat` here, `imageOutputFormat` in Image Studio, and `outputFormat` in concat and the trim utilities.
 
-A layer has no `type` field: its kind is inferred from `source`, which accepts only image, video and audio. There is no text layer, so titles, lower thirds and end cards arrive as rendered PNGs composited as image layers.
+A layer has no `type` field: its kind is inferred from `source`, which accepts only image, video and audio. There is no text layer, so titles, lower thirds and end cards arrive as rendered PNGs composited as image layers; `scenario-text-overlay` renders them letter-perfect.
 
 ## Worked example: three clips, a music bed, and captions
 
