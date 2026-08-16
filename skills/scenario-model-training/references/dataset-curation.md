@@ -5,7 +5,7 @@ Read this before uploading training images, and whenever the task is to build or
 ## Universal rules
 
 - **Small and deliberate beats big and noisy.** 5 to 15 images is the sweet spot for most single-image LoRAs (styles tolerate up to about 20); a 12-image set with one clear intent outperforms 40 mixed pieces. Trimming also keeps you clear of the per-plan dataset ceiling described in SKILL.md.
-- **Resolution floor.** Aim for 1024px or more on every side; upscale marginal images before training (the platform offers 2x upscaling) instead of feeding soft sources.
+- **Resolution floor.** Aim for 1024px or more on every side; upscale marginal images in-platform before training instead of feeding soft sources.
 - **Consistency in the one thing being taught, variety in everything else.** Every image must reinforce the same target (same character, same artistic hand, same material). Everything the model should treat as variable (subject, pose, background, framing, lighting) should actually vary across the set.
 - **Drop duplicates and near-duplicates.** Repetition teaches the repeated composition, not the concept.
 

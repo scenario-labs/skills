@@ -1,4 +1,9 @@
 Cinzel
+KAEL
+Kontext
+MYBRAND
+MYSTYLE
+Qwen
 RRGGBB
 binet
 captioner
@@ -38,8 +43,3 @@ upscales
 veed
 wflow
 wltp
-Qwen
-Kontext
-KAEL
-MYBRAND
-MYSTYLE
