@@ -33,6 +33,6 @@ Hook rate (3-second views over impressions) is the creative diagnostic to name: 
 2. Variants: 3 alternates for the hook shot, 1 take planned everywhere else.
 3. Retry floors (planning assumptions, not industry averages): 3 generations per usable product-only shot, 5 to 10 for complex motion, liquids, or cloth, up to 20 when faces or hands are on screen. The floors are why the storyboard avoids humans unless the concept needs them.
 4. Price it: `dry_run: true` on every planned `model_run` (the estimate rides in the dry-run response), multiply by the floors, add stills, audio, and assembly runs. Present the table, get the sign-off, then generate; when nobody can answer, the brief's spend ceiling stands in for the sign-off, so generate only while the priced board fits it.
-5. Track with `usage`; the metric is cost per usable shot (spend over accepted clips). Re-forecast after the first shot lands: the first scene is calibration.
+5. Track with `usage`; the metric is cost per usable shot (spend over accepted clips). Same-day `usage` totals can lag aggregation, so ledger the per-job `cuCost` values as ground truth. Re-forecast after the first shot lands: the first scene is calibration.
 
 The per-platform shipping checklist lives in [delivery.md](delivery.md).
