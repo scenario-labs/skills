@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Train a custom model when one look must hold across many assets: an icon set, a recurring character, a product line.
+Train a custom model when one look must hold across many assets: an icon set, a recurring character, a product line. Prompts, references, and control maps are cheaper first steps: see `scenario-consistency`.
 
 Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
 
@@ -30,7 +30,7 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
 
 ## Worked example: a style LoRA for game props
 
-1. `recommend_training` with `prompt: "hand-painted prop icons for a mobile RPG"`, `modality: "image"`, `dataset_shape: "single_images"`. Returns a recommended variant, alternatives, and `dataset_requirements` (shape and size bounds). Cost-bearing: call it once with clear intent rather than iterating. The returned `type` feeds `model_create` `data.type`.
+1. `recommend_training` with `prompt: "hand-painted prop icons for a mobile RPG"`, `modality: "image"`, `dataset_shape: "single_images"`. Returns a recommended variant, alternatives, and `dataset_requirements` (shape and size bounds). Cost-bearing: call it once with clear intent.
 2. `model_create` with `data: {"name": "rpg-prop-icons", "type": "<type from step 1>"}`. Note the returned model id.
 3. Upload each dataset file with `upload_asset` plus `upload_asset_complete` (see the `scenario` skill) and collect the asset ids. Match `dataset_requirements` from step 1. For `image_pairs` datasets, map pairs with `train` action `set_pairs`.
 4. `train` with `action: "upload_images"`, `model_id`, `images: [<asset ids>]`, at most 10 per call (see Dataset limits). `train` changes data, so pass `team_id` and `project_id` (scope: see the `scenario` skill).
