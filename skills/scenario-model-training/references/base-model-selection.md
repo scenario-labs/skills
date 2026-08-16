@@ -6,7 +6,7 @@ The base architecture is the one training decision that cannot be undone: a LoRA
 
 Ask (or extract from the brief) before recommending anything, and map each answer to a `recommend_training` argument:
 
-1. **What must the model reproduce?** A character, a product or object, an environment, an overall style, or a transformation applied to existing images. Maps to `subject`; a transformation means an edit LoRA, so also `dataset_shape: "image_pairs"`.
+1. **What must the model reproduce?** A character, a product or object, an environment, an overall style, or a transformation applied to existing images. Maps to `subject` (an overall style is `"style_transfer"`); a transformation means an edit LoRA, so also `dataset_shape: "image_pairs"`.
 2. **Realistic, stylized, or mixed rendering?** Maps to `style`.
 3. **What matters most: quality, speed, or cost?** Maps to `priority` (default `balanced`). Anchor it with expected volume: hero art and key visuals justify `quality`; thousands of assets or near real-time use justify `speed` or `cost`.
 4. **What does the dataset look like?** Single images or before/after pairs; audio for voice. Maps to `dataset_shape` (and `modality: "voice"` for cloning, covered in SKILL.md).
@@ -29,7 +29,7 @@ Positioning of the current image families, as documented in the Scenario knowled
 | Flux 2 Edit, Qwen Edit | Edit LoRAs trained on before/after pairs; Qwen Edit responds best to context-preserving instructions ("replace X with Y").                        |
 | Flux.1, Flux Kontext   | Legacy families, excluded from recommendations unless `legacy_ok: true`.                                                                          |
 
-Z-Image is the only family whose trained LoRA carries across its own variants; treat every other version choice as final. When the user hesitates between quality and speed tiers, ask where the volume will be generated, not where the training happens: training is a one-time cost, inference is forever.
+Z-Image is the only family whose trained LoRA carries across its own variants; treat every other version choice as final. That portability also settles a conflict the tool can create: with `priority: "cost"`, `recommend_training` may recommend the Turbo variant, which trains worse; prefer the plain Z-Image alternative from the same response and run the finished LoRA on Turbo. When the user hesitates between quality and speed tiers, ask where the volume will be generated, not where the training happens: training is a one-time cost, inference is forever.
 
 ## Confirm the cost
 
