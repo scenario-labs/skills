@@ -10,7 +10,7 @@ license: MIT
 
 Train a custom model when one look must hold across many assets: an icon set, a recurring character, a product line. Prompts, references, and control maps are cheaper first steps: see `scenario-consistency`.
 
-Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
+Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 Training tools are not in the default toolset: get schemas with `scenario_tools_search`, run reads (`recommend_training`, `model_get`) via `scenario_tool_execute_read` and writes (`model_create`, `train`, `model_update`) via `scenario_tool_execute_write`, or reconnect with `?toolsets=full`.
 

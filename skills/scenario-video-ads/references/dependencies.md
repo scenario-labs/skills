@@ -24,4 +24,4 @@ npx skills add scenario-labs/skills --skill <name>
 npx skills add scenario-labs/skills --skill '*'
 ```
 
-When the user declines an install, state which stage degrades and how (the procedures you would be guessing at) before improvising.
+When the user declines an install, or no one is there to answer, state which stage degrades and how (the procedures you would be guessing at) before improvising.

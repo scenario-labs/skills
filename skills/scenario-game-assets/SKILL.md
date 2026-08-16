@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario's public catalog carries purpose-trained models per asset type (sprites, icons, props, tilesets, isometric scenes, pixel art, concept art) plus utilities for background removal, upscaling, and pixel cleanup. Discover by asset type, inspect the schema, generate, post-process, export. Connection and core loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
+Scenario's public catalog carries purpose-trained models per asset type (sprites, icons, props, tilesets, isometric scenes, pixel art, concept art) plus utilities for background removal, upscaling, and pixel cleanup. Discover by asset type, inspect the schema, generate, post-process, export. Connection and core loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

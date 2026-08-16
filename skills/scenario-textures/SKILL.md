@@ -10,7 +10,7 @@ license: MIT
 
 Scenario generates seamless, tileable textures from text or reference images, upscales them without breaking the tile, and applies PBR materials when texturing 3D meshes. Model availability differs per team and evolves, so always discover models with `search` at run time instead of hardcoding IDs.
 
-Connection and the core generation loop: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
+Connection and the core generation loop: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

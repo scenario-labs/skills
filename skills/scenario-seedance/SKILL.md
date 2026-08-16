@@ -10,7 +10,7 @@ license: MIT
 
 Seedance, ByteDance's video family on Scenario, folds every mode below into one model that infers which from your inputs, so the conditioning you pass decides more than prompt wording. Discover it with `search` and treat `model_schema_get` as the contract: members ship side by side, agreeing on the shape and disagreeing on every number.
 
-Connection and the core loop: see the `scenario` skill in this repo; model-agnostic video work: the `scenario-video` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
+Connection and the core loop: see the `scenario` skill in this repo; model-agnostic video work: the `scenario-video` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

@@ -10,7 +10,7 @@ license: MIT
 
 A Scenario workflow is a saved node graph chaining several models into one call; users say "app" and mean one whose status is `ready`. `workflow_run` returns a job tracked like any other generation.
 
-Only `workflows_list`, `workflow_get` and `workflow_run` are listed by default; approve and reject run through `scenario_tools_search` plus their executor lane. Connection and the core loop: the `scenario` skill. Creating, editing and publishing graphs: the `scenario-workflow-authoring` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
+Only `workflows_list`, `workflow_get` and `workflow_run` are listed by default; approve and reject run through `scenario_tools_search` plus their executor lane. Connection and the core loop: the `scenario` skill. Creating, editing and publishing graphs: the `scenario-workflow-authoring` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

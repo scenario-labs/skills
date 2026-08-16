@@ -10,7 +10,7 @@ license: MIT
 
 Scenario exposes a large video catalog through one MCP loop: text-to-video and image-to-video generators (Kling, Veo, Seedance, LTX, Luma, Runway, Grok) plus video-to-video editors, lipsync, upscalers, and deterministic cut/split/concat tools.
 
-Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
+Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

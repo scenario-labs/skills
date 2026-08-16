@@ -10,7 +10,7 @@ license: MIT
 
 Five steps: song, lyrics, story, frames, video. The supplied master is the only score, and no shot writes its own. [scripts/build.py](scripts/build.py) lays the master over the cut once, at the end, and proves the file untouched by hash. [scripts/song.py](scripts/song.py) reads the master so cuts land on its structure. The scripts need ffmpeg and ffprobe on PATH, and numpy for song.py.
 
-Connection and the core generation loop: see the `scenario` skill in this repo. The Seedance parameter contract and conditioning traps: see the `scenario-seedance` skill. If a sibling skill named here is missing from your available skills, pause and ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`) rather than reconstructing its workflow from tool schemas.
+Connection and the core generation loop: see the `scenario` skill in this repo. The Seedance parameter contract and conditioning traps: see the `scenario-seedance` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## The two soundtracks
 
