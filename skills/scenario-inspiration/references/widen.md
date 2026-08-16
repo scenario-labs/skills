@@ -33,6 +33,19 @@ Randomize the operator, never the subject. The subject stays exactly what the br
 
 The test that separates a real analogy from a decorative one: do the mechanisms map, or only the labels? Cross-brief is the one operator that cannot return something irrelevant, because every candidate is already relevant to something the user asked for.
 
+## Ask yourself for a distribution, not an answer
+
+The operators above widen what you search for. This one widens what you propose, and it is the direct counter to the opening problem: an aligned model asked for one idea returns its most typical one, because the preference data behind alignment rewards familiar text. Asking for the distribution instead relieves that pressure (Verbalized Sampling, arXiv 2510.01171).
+
+1. Write k candidates, each with your own estimate of how likely you were to produce it. Five to ten is enough.
+2. Name the head and discard it out loud, with a one-line reason each. Prime already named the top one; this catches the next few.
+3. Generate again from below the threshold, and build the option set from there.
+4. Carry the estimate into the option set, so a director can see which direction is the consensus and which is the long shot.
+
+The numbers are the model's guesses about itself, not calibrated probabilities. They are good for ordering candidates and for setting a discard threshold. They are not a measurement, so never present one as a percentage of anything real.
+
+This composes with the operators rather than replacing them: draw a wildcard, apply an operator, then ask for the distribution of what that combination could become.
+
 ## The dial: three stops, not a slider
 
 | Stop      | When                      | Settings                                                                          |

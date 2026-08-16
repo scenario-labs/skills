@@ -49,7 +49,7 @@ Write labels in strict parallel: same shape, same attribute order, roughly the s
 | Fails when | The condition under which it is wrong, stated as plainly                     |
 | Odds       | Safe consensus, or long shot                                                 |
 
-Show all options together in one message rather than one at a time. Marking which are the consensus and which are the long shots gives a director the axis they actually care about; a relevance ranking does not.
+Show all options together in one message rather than one at a time. Marking which are the consensus and which came off the tail gives a director the axis they actually care about; a relevance ranking does not. Say it in those words, not as a number, because the estimate behind it is not calibrated.
 
 ## Around the options
 

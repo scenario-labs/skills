@@ -10,14 +10,14 @@ license: MIT
 
 Asked for inspiration, an agent averages. It returns the most typical answer for the brief, so every user with a similar brief gets the same look. This skill trades that for four phases: **prime**, **widen**, **choose**, **board**. Connection and scope: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
-Three moves carry most of the value. Name the reflex answer for this brief and the answer of someone merely avoiding that reflex, then rule out both, because an agent told to be original lands on the second-obvious answer. Randomize the operator, never the subject: what varies is the transformation applied to the brief, and a random subject is just noise. Then make the user pick, because options that never resolve are a gallery, not direction.
+Four moves carry most of the value. Name the reflex answer for this brief and the answer of someone merely avoiding that reflex, then rule out both, because an agent told to be original lands on the second-obvious answer. Randomize the operator, never the subject: what varies is the transformation applied to the brief, and a random subject is just noise. When you generate candidates yourself instead of searching for them, ask yourself for a distribution rather than an answer, and work from its tail. Then make the user pick, because options that never resolve are a gallery, not direction.
 
 ## Quick reference
 
 | Phase     | Do                                                                                     | Detail                                                   |
 | --------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | 1. Prime  | Locked constraints, the open axis, both reflexes, what counts as a hit                 | [references/widen.md](references/widen.md)               |
-| 2. Widen  | Three lanes plus wildcard draws; over-gather, near and far                             | widen.md, [references/sources.md](references/sources.md) |
+| 2. Widen  | Four lanes plus wildcard draws; over-gather, near and far                              | widen.md, [references/sources.md](references/sources.md) |
 | 3. Choose | Three or four mutually exclusive directions one named axis apart, plus an escape hatch | [references/choose.md](references/choose.md)             |
 | 4. Board  | The pick becomes a collection, every reference annotated with its job                  | [references/moodboard.md](references/moodboard.md)       |
 
