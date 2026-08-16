@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Keeps the hand-maintained Skills table in README.md in sync with the
-// skills/ directory:
+// Keeps the hand-maintained Skills tables in README.md (one per grouping,
+// mirroring skills.sh.json) in sync with the skills/ directory:
 // - every skill directory has exactly one row linking skills/<name>/SKILL.md,
 //   so a new skill cannot ship without its human-facing index entry
 // - every row points at an existing skill directory with a matching label,
@@ -49,14 +49,20 @@ for (let i = start + 1; i < lines.length; i++) {
   }
 }
 
-const rows = lines
-  .slice(start + 1, end)
-  .map((line) => line.trim())
-  .filter((line) => line.startsWith("|"))
-  // a GFM table's first two pipe rows are the header and the |---|
-  // separator; skip them by position so a header copy-edit cannot
-  // make this check fail
-  .slice(2);
+// The section holds one table per grouping (mirroring skills.sh.json), so
+// skip each table's first two pipe rows (header and |---| separator) by
+// position so a header copy-edit cannot make this check fail.
+const rows = [];
+let pipeRun = 0;
+for (const raw of lines.slice(start + 1, end)) {
+  const line = raw.trim();
+  if (!line.startsWith("|")) {
+    pipeRun = 0;
+    continue;
+  }
+  pipeRun += 1;
+  if (pipeRun > 2) rows.push(line);
+}
 
 const rowFor = new Map();
 for (const row of rows) {
