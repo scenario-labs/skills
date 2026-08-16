@@ -14,7 +14,7 @@ The cut, overlays, and captions are all model runs (contract in `scenario-video-
 
 Keep every generated frame text-free so locale and legal variants are overlay swaps, not regenerations: German text runs about 30 percent longer than English, right-to-left locales mirror alignment and directional motion, and legal supers differ per market (WLTP-qualified range wording in the UK and EU, "EPA-estimated" in the US, retouching labels on altered bodies in France and Norway).
 
-Captions: burned in for sound-off feeds, white sans-serif on a dark backing, 3 to 7 words per cue, inside the safe zone, and moved off the bottom edge when an overlay sits there (the caption tool exposes a text position field).
+Captions: burned in for sound-off feeds, white sans-serif on a dark backing, 3 to 7 words per cue, inside the safe zone, and moved off the bottom edge when an overlay sits there (`model_schema_get` on the caption tool decides whether position is a field or the overlay must move instead).
 
 Give overlays hard in and out points rather than fades, and QC the assembled master by extracting its frames and checking every overlay window: compositors have dropped mid-timeline image layers that carried fade parameters, and a fade can be simulated safely with two or three stacked copies of the layer at rising opacity.
 

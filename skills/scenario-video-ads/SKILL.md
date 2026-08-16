@@ -33,7 +33,7 @@ Ask the brief once, then run without stopping. The one approval that matters sit
 1. Brief once: awareness, twist creativity, 20s for Reels and TikTok, ceiling in CU. Upload the product shot, then build the fidelity checklist from it with `asset_analyze`, instructing it to inventory label text, cap geometry, and glass tint: every later check reuses it (`asset_describe` returns a style line, not this inventory).
 2. Concept names its anchor: open inside the gala-and-gown cliche, break it on beat three. Show the page to the user.
 3. Storyboard 7 panels at 2 to 4 seconds each, hero shot designed first, 3 hook variants, 2 inserts as cut cover. `dry_run` every planned run, multiply by retry floors, present the budget table.
-4. Stills at 9:16: composite the real bottle into styled plates with an image-edit model, baseline-plus-delta prompts. The user approves each still: image money is cheap, video money is not.
+4. Stills at 9:16: composite the real bottle into styled plates with an image-edit model, baseline-plus-delta prompts. Each still is approved before animating, by the user or by the fidelity checklist when nobody can answer: image money is cheap, video money is not.
 5. Animate each approved still: `model_schema_get` first, prompt movement first ("slow push-in over 4 seconds, the bottle rests fixed in place"), `generateAudio: false` when the schema lists it.
 6. Gate every clip: frame-extract, then one `asset_analyze` call against the checklist. Label drift fails the clip; regenerate from the same still, never from the drifted output.
 7. Music at a stated BPM so cuts land on bars; compose the timeline, `scenario-text-overlay` renders the tagline card into the safe zone; caption the master.

@@ -1,6 +1,7 @@
+Cinzel
+RRGGBB
 binet
 captioner
-Cinzel
 diegetic
 equirectangular
 ffprobe
@@ -30,7 +31,6 @@ retargets
 retexture
 retexturing
 roas
-RRGGBB
 shfmt
 tripo
 unpublishing

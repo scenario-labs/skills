@@ -13,7 +13,7 @@ Write a one-page concept before any panel: what happens, what turns, the closing
 
 Cliches to subvert knowingly rather than repeat: perfume (ballgown on a beach, whispered French, a lone figure in a desert), car (winding mountain road, wet neon asphalt at night, salt-flat donuts, spec-list voiceover), fashion (slow-motion fabric with no idea behind it). Discarding every code at `wild` is legitimate but flag the cost: a category stripped of all its codes stops reading as the category.
 
-Show the concept to the user. It is the cheapest place to be wrong.
+Show the concept to the user: it is the cheapest place to be wrong. When nobody can answer, record the chosen anchor and its one-line rationale, then continue.
 
 ## Beats and panels
 
