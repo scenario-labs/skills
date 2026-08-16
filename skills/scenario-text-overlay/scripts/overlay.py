@@ -89,14 +89,14 @@ def _check_value(value, field):
         for index, item in enumerate(value):
             _check_value(item, f"{field}[{index}]")
         return value
-    if isinstance(value, dict):
-        for key, item in value.items():
-            if not isinstance(key, str) or not key:
-                _fail(f"{field} needs non-empty string keys")
-            _check_text(key, f"{field} key")
-            _check_value(item, f"{field}.{key}")
-        return value
-    _fail(f"{field} must be a string (stringify numbers), boolean, list, or object")
+    if not isinstance(value, dict):
+        _fail(f"{field} must be a string (stringify numbers), boolean, list, or object")
+    for key, item in value.items():
+        if not isinstance(key, str) or not key:
+            _fail(f"{field} needs non-empty string keys")
+        _check_text(key, f"{field} key")
+        _check_value(item, f"{field}.{key}")
+    return value
 
 
 def _check_variables(payload):
