@@ -8,7 +8,7 @@ Describing a living artist's style by name in a prompt is both a rights risk and
 
 ## Lane 1: the team's own assets
 
-The most skipped lane, and usually the best one, because it is already on brand and already licensed. `search` with `target: "assets"` and `public` omitted searches the current project. Run it in both lanes: keyword matches the asset's stored caption text, so `query_semantic_ratio: 0.8` is what finds a concept the caption never spelled out.
+The most skipped lane, and usually the best one, because it is already on brand and already licensed. `search` with `target: "assets"` and `public` omitted searches the current project. Run it at both ends of `query_semantic_ratio`: keyword matches the asset's stored caption text, so 0.8 is what finds a concept the caption never spelled out.
 
 Existing collections are prior art. `collections_list`, then `search` with `filters.collection_ids`, tells you what direction this team already chose once.
 
