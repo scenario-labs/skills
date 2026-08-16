@@ -33,7 +33,7 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 
 ## Worked example: a game sound effect
 
-1. `search` target="models", query="sound effect", public=true. Returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only; re-discover every session, catalogs differ per team).
+1. `search` target="models", query="sound effect", public=true. Returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only).
 2. `model_schema_get` model_id="model_elevenlabs-sound-effects-v2". Returns the exact fields: prompt plus model-specific controls such as duration or looping.
 3. `model_run` model_id="model_elevenlabs-sound-effects-v2", parameters={"prompt": "heavy wooden treasure chest creaking open, single event, dry, no music"}.
 4. If the response is status='in_progress', `jobs_wait` job_ids=["job_xxx"]. Timeout is not an error; re-call with the returned pending_job_ids as job_ids.
@@ -43,7 +43,7 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 Prompting tips:
 
 - SFX: name the source, material, action, and acoustic space, and say what to exclude ("no music", "no reverb"). One event per clip; generate variations as separate runs.
-- Music: give genre, mood, tempo, and instrumentation. Short beds usually take a single prompt, with duration or looping in the schema.
+- Music: give genre, mood, tempo, and instrumentation. Short beds usually take a single prompt, with duration or looping in the schema; songs with vocals are their own lane, below.
 - Speech: keep the text field to the words to speak. Voice choice, language, emotion, and pacing live in separate schema fields or inline tags; check the schema instead of packing direction into the text.
 
 ## Songs with vocals
