@@ -39,10 +39,10 @@ The source image already fixes the look, so prompt only motion, camera, and timi
 
 All editing is `model_run` on a video-input model; discover each with `search`:
 
-- Prompt-driven edits (restyle, swap objects, characters, or backgrounds): query `"video edit"` (Grok Edit Video, Wan 2.7 Video Edit, Lucy Edit, Luma Modify Video).
+- Prompt-driven edits (restyle, swap objects, characters, backgrounds, or reframe to another aspect ratio): query `"video edit"` or `"reframe"` (Grok Edit Video, Wan 2.7 Video Edit, Lucy Edit, Luma Modify Video, Luma Ray 3.2 Reframe). A reframe outpaints past the frame, unlike a deterministic resize.
 - Lipsync and dubbing: query `"lipsync"` or `"dubbing"`; see the next section.
 - Upscaling up to 4K: query `"video upscale"` (Topaz, SeedVR2, Magnific, Flash VSR).
-- Deterministic utilities: query `"tool"` for trim, split, concat with transitions, resize, reverse, reframe, and background removal. Extraction tools sit outside that page, so query them by name (`"audio extract"`, `"image sequence"`). Assembling clips into a finished cut: see `scenario-video-assembly`.
+- Deterministic utilities (trim, split, resize, effects, grading, frame extraction, background removal): see `scenario-video-editing`. Assembling a finished cut: see `scenario-video-assembly`.
 - Extending a clip with new footage from its last frame: query `"extend video"`.
 
 ## Dubbing is not lipsync

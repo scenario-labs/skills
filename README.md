@@ -41,11 +41,13 @@ Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scena
 | [scenario](skills/scenario/SKILL.md)                                           | Connecting to the Scenario MCP and the core generation loop: discover, schema, run, wait, display, download           |
 | [scenario-inspiration](skills/scenario-inspiration/SKILL.md)                   | Finding a direction before generating: serendipity, reference hunting, A/B/C/D concept options, moodboard collections |
 | [scenario-image](skills/scenario-image/SKILL.md)                               | Text-to-image and image editing: model choice, sizing fields, prompt limits, reference images, masked inpainting      |
+| [scenario-image-editing](skills/scenario-image-editing/SKILL.md)               | Tool-model image edits: 3D LUT grades, effects, expand and reframe, resize, slicing, layers, background removal       |
 | [scenario-game-assets](skills/scenario-game-assets/SKILL.md)                   | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches            |
 | [scenario-textures](skills/scenario-textures/SKILL.md)                         | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                             |
 | [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)                         | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                        |
 | [scenario-3d](skills/scenario-3d/SKILL.md)                                     | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download      |
 | [scenario-video](skills/scenario-video/SKILL.md)                               | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities     |
+| [scenario-video-editing](skills/scenario-video-editing/SKILL.md)               | Tool-model footage edits: LUT grades and effects, trim, split, resize, reverse, frames, masks, layers                 |
 | [scenario-seedance](skills/scenario-seedance/SKILL.md)                         | Seedance video: mode selection (first frame, references, edit, extend), conditioning traps, native sound, cost        |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                     |
 | [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a music video: beat-aligned shots, lyric transcription, shot sound under the master, assembly     |

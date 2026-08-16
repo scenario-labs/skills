@@ -14,8 +14,12 @@
     },
     {
       "title": "Images",
-      "description": "Generate and edit images: model choice, sizing, references, masked edits, and letter-perfect text overlay cards.",
-      "skills": ["scenario-image", "scenario-text-overlay"]
+      "description": "Generate and edit images: model choice, sizing, references, masked edits, post-processing tools, and letter-perfect text overlay cards.",
+      "skills": [
+        "scenario-image",
+        "scenario-image-editing",
+        "scenario-text-overlay"
+      ]
     },
     {
       "title": "Game art and environments",
@@ -32,6 +36,7 @@
       "description": "Video generation and editing, music, sound effects, voice, and speech.",
       "skills": [
         "scenario-video",
+        "scenario-video-editing",
         "scenario-seedance",
         "scenario-seedance-music-video",
         "scenario-video-ads",

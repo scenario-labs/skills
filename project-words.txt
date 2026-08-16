@@ -9,6 +9,7 @@ artic
 binet
 bisociation
 captioner
+desaturate
 diegetic
 equirectangular
 ffprobe
@@ -30,7 +31,9 @@ muxed
 muxes
 mvdan
 numpy
+oilify
 outpainting
+posterize
 remesh
 remeshing
 rerank
@@ -41,6 +44,7 @@ retexturing
 roas
 shfmt
 tripo
+uncrop
 unpublishing
 upscales
 veed
