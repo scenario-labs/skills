@@ -24,6 +24,7 @@ One twin differs: Dissolve (Video) blends the clip with a still `dissolveImage`,
 | Trim to a range       | `model_scenario-video-cut` (`startTime`, `endTime`)                      |
 | Cut into segments     | `model_scenario-video-split` (`cutPoints`; N points give N+1 clips)      |
 | Rescale or re-encode  | `model_scenario-resize-video`                                            |
+| Play a clip backwards | `model_reverse-video`                                                    |
 | Frames out, frames in | `model_scenario-video-to-image-seq`, `model_scenario-image-seq-to-video` |
 | Subjects as layers    | `model_scenario-video-layers-extractor`                                  |
 | Masks, cutouts, audio | query `"segmentation"`, `"video background removal"`, `"audio extract"`  |
@@ -32,27 +33,35 @@ All via `search`, `target="models"`, `public=true`; re-discover rather than hard
 
 ## Cost follows the clip, so trim first
 
-On the video twins the `video` input carries `cost_impact: true`, which the image versions do not: price tracks the footage rather than the settings. Trim to the frames that ship, then grade; `dry_run=true` prices a payload before it runs. Video tools also outlast `model_run`'s wait window, so launch with `wait=false` and follow with `jobs_wait`, re-calling it with the returned `pending_job_ids`.
+On the video twins the `video` input carries `cost_impact: true`, which the image versions do not: price tracks the footage rather than the settings. Trim to the frames that ship, then grade; `dry_run=true` prices a payload before it runs. Video tools also outlast `model_run`'s wait window, so launch with `wait=false` and follow with `jobs_wait`, re-calling it with the returned `pending_job_ids`. A client-side timeout on `jobs_wait` is as harmless as the server's own: re-call it with the same ids rather than treating the job as lost.
+
+Checking costs nothing: `asset_get` on a video returns `firstFrame` and `lastFrame` as their own asset ids, so `asset_display` one to confirm a grade or layout before chaining another billable run onto it.
 
 ## Field names drift between neighbors
 
 - Video Cut takes a scalar `video`. Resize Video takes `video` as an `array: true` field capped at one item, where a bare id is dropped silently.
 - The output format field is `outputFormat` on cut and split, `videoOutputFormat` on resize.
-- `preserveAudio` defaults to true on cut, split and resize.
+- `preserveAudio` defaults to true on cut, split and resize; the effects expose no audio field and pass the track through.
+- Enum values are copied, not retyped: one `lutStyle` string contains a space.
 - `asset_download` takes no `format` for a video: it converts image formats only.
 
 ## Resizing is not reframing
 
-No tool model repaints a video's canvas: Resize Video fits the clip inside the target, or stretches it when `preserveAspectRatio` is false. Changing aspect ratio for real is either a generative reframe model (`query="reframe"` surfaces Luma Ray 3.2 Reframe and Wan 2.2 Reframe, `scenario-video` territory) or Video Studio with the layer's `fit` set to `"cover"`.
+No tool model repaints a video's canvas: Resize Video fits the clip inside the target, or stretches it when `preserveAspectRatio` is false. Neither gives a 16:9 clip a vertical frame, so that brief needs a decision before any spend, between two routes an order of magnitude apart in price.
 
-## Worked example: a graded vertical cutdown
+- **Generative reframe** (`query="reframe"`, Luma Ray 3.2 Reframe and Wan 2.2 Reframe, `scenario-video` territory) outpaints past the frame and keeps the whole picture. It is the most expensive step in such a job, and a resolution ceiling can put the requested size out of reach, so `dry_run` and read the schema before promising it.
+- **Compositor** (Video Studio, cropping or pillarboxing onto a vertical canvas) is cheap but throws away width or adds bars. Its layer geometry is `scenario-video-assembly`'s contract, not a one-line setting: `dry_run` prices a payload without validating it, and a mis-composed job still returns `status: "success"` at exactly the right dimensions.
+
+## Worked example: a graded cutdown
+
+Launch every `model_run` below with `wait=false` and retire it with `jobs_wait` before the next step reads its asset.
 
 1. `asset_get` the master and read `properties.duration` before choosing times.
-2. `model_run` `model_scenario-video-cut` with `startTime` and `endTime` in seconds.
-3. `model_schema_get`, then `model_run` `model_scenario-postprocessing-lut-video` on the trimmed asset with `lutIntensity` near 0.6.
-4. Run the Grain twin on that output with `wait=false`, then `jobs_wait`.
-5. Resize last: `model_scenario-resize-video`, `video` as a one-item array, `videoOutputFormat: "mp4"`.
-6. `asset_display` to review, then `asset_download` with no `format`.
+2. Trim: `model_scenario-video-cut` with `startTime` and `endTime` in seconds. Going first is what makes every later step cheaper.
+3. Reshape: `model_scenario-resize-video`, `video` as a one-item array, `videoOutputFormat: "mp4"`. It rescales within the clip's own aspect ratio, so a different shape is the reframe decision above, taken here rather than bolted on later.
+4. Grade: `model_schema_get`, then the LUT twin with `lutIntensity` near 0.6.
+5. Texture: the Grain twin on that output, last, so its grain is sized for the delivered frame rather than resampled by a later resize.
+6. `asset_display` the result's `firstFrame` to confirm the look, then `asset_download` with no `format`.
 
 ## Common mistakes
 
