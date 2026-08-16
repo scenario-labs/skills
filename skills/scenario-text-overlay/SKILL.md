@@ -60,9 +60,9 @@ Connection and the core MCP loop: see the `scenario` skill. The overlay meets it
 - Baking changeable strings into the template: variants and localizations should be edits to `variables`; the uploaded payload is the reproducibility contract.
 - Using `{{var}}` for values holding `&`, `<`, or `>`: it HTML-escapes, so they render as literal entity text; `{{{var}}}` is the raw opt-out (full Mustache rules: the payload reference).
 - Leaving images or fonts as remote URLs: inline them as `data:` URIs (Google Fonts links excepted) or the render depends on the network and drifts.
-- Skipping the visual check before upload: font resolution differs per machine; open the PNG first.
+- Skipping the visual check before upload: font resolution differs per machine, and light text on the transparent canvas previews as blank; flatten over a contrasting backdrop first.
 - Letting a generation model paint the text instead: generated type drifts frame to frame; overlays exist to avoid exactly that.
 - Merging the overlay locally with Pillow or ffmpeg: compositing is a `model_run` on the compose models, so the finished creative lands on the platform beside its layers.
-- Sizing the canvas to something other than the destination: match the target resolution so the overlay composites 1:1 with no post-scale blur.
+- Sizing the canvas to something other than the destination: match the target resolution so the overlay composites 1:1 with no post-scale blur. Content layers may scale inside the compose run when a generation model cannot hit the exact size; the overlay must not.
 - Expecting the fallback to match the browser: Pillow draws plain text only; rich layers need a Chromium-family browser installed.
 - Trusting `wrap` with a hard box: it lets text spill below; use `shrink` (fits or fails loudly) or `clip` when the box is binding.
