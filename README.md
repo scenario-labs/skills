@@ -23,7 +23,7 @@ Some skills direct sibling skills per stage, so installing one of them alone lea
 npx skills add scenario-labs/skills -s scenario -s scenario-video-ads -s scenario-image -s scenario-video -s scenario-seedance -s scenario-audio -s scenario-video-assembly -s scenario-text-overlay -s scenario-consistency -s scenario-asset-analysis
 
 # Seedance music video
-npx skills add scenario-labs/skills -s scenario -s scenario-seedance-music-video -s scenario-seedance -s scenario-audio -s scenario-video-assembly -s scenario-consistency
+npx skills add scenario-labs/skills -s scenario -s scenario-seedance-music-video -s scenario-seedance -s scenario-consistency
 ```
 
 Skills need the Scenario MCP server connected:
