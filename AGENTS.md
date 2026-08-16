@@ -21,7 +21,7 @@ Every script shipped with a skill has a test suite in `tests/<name>/` at the rep
 
 This repository is public. Everything in it, including commit messages, PR text, and issue text, must be limited to publicly shareable language:
 
-- Reference only public surfaces: scenario.com, app.scenario.com, mcp.scenario.com and its `/docs`, docs.scenario.com, and the public model catalog.
+- Reference only public surfaces: scenario.com, app.scenario.com, help.scenario.com (the Scenario Knowledge Base), mcp.scenario.com and its `/docs`, docs.scenario.com, and the public model catalog.
 - Never reference internal repositories, source file paths, internal hostnames or environments, internal project or team names, customer names, real team/project/API identifiers, credentials, pricing internals, or unreleased features.
 - Facts must be verifiable from public surfaces (the tool reference at mcp.scenario.com/docs/tools, live public catalog searches). If a fact is only knowable from internal sources, leave it out.
 - When in doubt, treat it as internal: ask, or drop it. Example: no internal repository naming.
