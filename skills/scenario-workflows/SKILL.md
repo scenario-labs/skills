@@ -1,6 +1,6 @@
 ---
 name: scenario-workflows
-description: "Use when a task involves running a Scenario workflow through MCP, including anything the user calls a Scenario app, a saved pipeline, or a multi-step generation graph. Triggers include listing workflows, building the inputs object for workflow_run, pricing a run with a dry run, approving or rejecting the approval node a run is stuck on, or a workflows_list reply that flooded the context. Creating or editing graphs is scenario-workflow-authoring. Keywords: workflow, app, pipeline, approval gate."
+description: "Use when a task involves running a Scenario workflow through MCP, including anything the user calls a Scenario app or a saved multi-step pipeline. Triggers include listing workflows, building the inputs object for workflow_run, pricing a run with a dry run, approving or rejecting a stuck approval node, a run rejected for input length, or a workflows_list reply that flooded the context. Creating or editing graphs is scenario-workflow-authoring. Keywords: workflow, app, pipeline, approval gate."
 license: MIT
 ---
 
@@ -38,6 +38,7 @@ Only `draft` and `ready` filter server-side; other statuses filter each page cli
 - Never harvest keys from `editorInfo.nodes[].data.name`; node names go stale.
 - `required` is an object: test `required.always === true`, a truthiness check reads `{"always": false}` as required too.
 - Inputs are typed: `string`, `file`, `file_array`, `string_array`, more. `file` takes an asset id (upload first). Match the type: the API drops scalar-for-array mismatches silently and still charges; `workflow_run` wraps simple scalars into arrays, but only simple ones.
+- `inputs[]` is not the whole contract: string inputs carry per-node length ceilings it never lists, surfacing only at run time as a 400 naming the key and the cap (text nodes rejected past 4096 characters at authoring time). The dry run enforces the same validator at zero cost, so route long texts through `dry_run=true` and shorten to fit rather than retrying verbatim.
 - `workflow_get` wraps `inputs_definition`/`editor_info` in `workflow`; `workflows_list` wraps `inputs`/`editorInfo` in `workflows`.
 
 ## Worked example: run a saved app
