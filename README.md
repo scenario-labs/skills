@@ -159,6 +159,7 @@ Read finished assets back: caption them, extract a style or a control map, check
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | [scenario-asset-analysis](skills/scenario-asset-analysis/SKILL.md) | Reading assets back: captions, style descriptions, batch review against a brief, control maps, collections, tags                    |
 | [scenario-quality-gate](skills/scenario-quality-gate/SKILL.md)     | Pass/warn/fail image verdicts from the Quality Gate: free stored reads, dry-run pricing, feeding suggestions back into the next run |
+| [scenario-refine-loop](skills/scenario-refine-loop/SKILL.md)       | Iterating until output matches the brief: rubric first, batched critique verdicts, cheapest targeted fix, round caps                |
 
 ### Formats and placements
 
