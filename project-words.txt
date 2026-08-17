@@ -65,5 +65,6 @@ upscales
 vace
 veed
 vidu
+webtoon
 wflow
 wltp
