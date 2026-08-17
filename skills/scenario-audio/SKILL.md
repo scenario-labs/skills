@@ -31,6 +31,8 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 - Video to audio: models that score a silent video or add synchronized sound effects, taking a video asset as input.
 - Utilities: audio cut, split, and extract tools plus speech-to-text transcription; discover with `search` query="audio" or query="tool".
 
+Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music, SFX), `scenario-ace-step` and `scenario-minimax-music` (songs), `scenario-sonilo` (SFX and video scoring).
+
 ## Worked example: a game sound effect
 
 1. `search` target="models", query="sound effect", public=true. Returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only).
@@ -48,12 +50,11 @@ Prompting tips:
 
 ## Songs with vocals
 
-A full-length song is not a longer music bed, and song schemas vary more than the rest of the audio lane, so `model_schema_get` decides everything. Current families shape the request three ways: a style prompt plus a separate lyric sheet, a single prose prompt carrying style and structure, or an ordered section array with per-section lyrics, styles, and durations.
+A full-length song is not a longer music bed; song schemas vary more than the rest of the audio lane, and the per-model contracts live in `scenario-ace-step` and `scenario-minimax-music`. What holds across families:
 
-- **Words never go in a style field.** On split-field models the style field carries genre, mood, tempo in BPM, key, vocal style, and instrumentation; the lyric field carries the words, shaped by section tags such as `[Verse]` and `[Chorus]`.
-- **Instrumental is a flag where the schema has one.** Asking for "no vocals" in the style text does not reliably suppress them; when no flag exists, the schema's text fields are the only lever.
-- **Auto-lyrics is also a flag** on the family that has one: with the lyric field empty, it writes lyrics from the style brief. Empty lyrics with no flag is not the same request.
-- **Text fields are length-capped**, with caps that differ per model and field, and going over is a 400 rather than a truncation.
+- **Words never go in a style field.** The style field carries genre, mood, tempo, key, vocal style, and instrumentation; the lyric field carries the words, shaped by section tags such as `[Verse]` and `[Chorus]`.
+- **Instrumental and auto-lyrics are flags** where the schema has them; asking for either in prose is unreliable.
+- **Text fields are length-capped** per model and field, and going over is a 400 rather than a truncation.
 
 Where the schema exposes a duration field (flagged `cost_impact`), it caps both length and price; where none exists, the lyric sheet or prompt sets both. Either way, price the song with `dry_run: true` before committing, and launch with `wait=false`.
 

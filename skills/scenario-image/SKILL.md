@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario runs hundreds of image models, split across `txt2img` (generate from a prompt) and `img2img` (edit, restyle, inpaint, upscale). The loop is the one the `scenario` skill teaches. What breaks image runs is the per-model contract: sizing fields, prompt limits, and reference caps differ between two models that do the same job, so read `model_schema_get` every time. Grading, effects, expand, resize and the other deterministic tool models: see `scenario-image-editing`. Holding one look across a set: see `scenario-consistency`. Sprites, icons, and tilesets: see `scenario-game-assets`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Scenario runs hundreds of image models, split across `txt2img` (generate from a prompt) and `img2img` (edit, restyle, inpaint, upscale). The loop is the one the `scenario` skill teaches. What breaks image runs is the per-model contract: sizing fields, prompt limits, and reference caps differ between two models that do the same job, so read `model_schema_get` every time. Per-family contracts (sizing families, reference caps, edit modes): `scenario-seedream`, `scenario-gpt-image`, `scenario-gemini-image`, `scenario-ideogram`, `scenario-reve`, `scenario-luma-image`, `scenario-mai-image`, `scenario-grok-imagine-image`. Grading, effects, expand, resize and the other deterministic tool models: see `scenario-image-editing`. Holding one look across a set: see `scenario-consistency`. Sprites, icons, and tilesets: see `scenario-game-assets`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 
@@ -39,7 +39,7 @@ A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields
 3. `model_schema_get` on the pick: the reference field's name and cap, which sizing family it uses, the prompt `max_length`, and whether a `mask` field exists.
 4. For a masked edit, read the `mask` field's own description before building anything. Masks are not interchangeable: one model wants an alpha channel at the source's exact dimensions, another wants a black and white image it resizes itself, and which pixels get painted differs too.
 5. `model_run` with the schema's own field names: the prompt, the reference (wrapped in an array only where the schema says `array: true`), plus the mask and sizing fields it named. Use `dry_run=true` first when cost matters.
-6. `jobs_wait`, then `asset_display` to review and `asset_download` to save.
+6. `jobs_wait`; its ~180s timeout is not an error, so re-call it with the returned `pending_job_ids` as `job_ids`. Then `asset_display` to review and `asset_download` to save.
 
 ## Common mistakes
 

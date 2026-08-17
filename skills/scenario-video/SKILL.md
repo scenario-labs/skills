@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario exposes a large video catalog through one MCP loop: text-to-video and image-to-video generators (Kling, Veo, Seedance, LTX, Luma, Runway, Grok) plus video-to-video editors, lipsync, upscalers, and deterministic cut/split/concat tools.
+Scenario exposes a large video catalog through one MCP loop: text-to-video and image-to-video generators plus video-to-video editors, lipsync, upscalers, and deterministic cut/split/concat tools. Per-family contracts: `scenario-kling`, `scenario-veo`, `scenario-seedance`, `scenario-gemini-omni`, `scenario-luma-video`, `scenario-runway`, `scenario-grok-imagine-video`, `scenario-wan`, `scenario-minimax-video`, `scenario-vidu`.
 
 Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
@@ -26,12 +26,12 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 
 ## Worked example: animate a key art still into a short ad clip
 
-1. `search` with `target="models"`, `query="image to video"`, `public=true`. Live hits include `model_kling-v2-6-i2v-pro` and `model_veo3-1-fast`; re-discover rather than hardcoding, availability shifts per team.
-2. `model_schema_get` with `model_id="model_kling-v2-6-i2v-pro"`. Note the image field, duration options, and any last-frame anchor.
+1. `search` with `target="models"`, `query="image to video"`, `public=true`. Prefer the newest non-deprecated hits; re-discover rather than hardcoding, availability shifts per team and generations churn.
+2. `model_schema_get` on the pick. Note the image field, duration options, and any last-frame anchor.
 3. `upload_asset` the still; it returns `asset_id="asset_abc"`.
 4. `model_run` with `parameters={"image": "asset_abc", "prompt": "slow dolly-in, steam rising from the mug, shallow depth of field"}` and `wait=false`. Returns a `job_id`.
 5. `jobs_wait` with `job_ids=["job_xyz"]`. On `status="in_progress"`, call again, passing the returned `pending_job_ids` as `job_ids`.
-6. `asset_display` the output video; `asset_download` (no `format`) returns the file URL, save it with `curl -L`.
+6. `asset_display` the output; `asset_download` (no `format`), saving the URL with `curl -L`.
 
 The source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. Several also accept first and last frame anchors or keyframe sequences; take exact parameter names from `model_schema_get`, never from memory.
 
@@ -57,7 +57,7 @@ Building a localized talking head from nothing runs audio, video, dub, extract, 
 
 ## Duration limits
 
-Where a model bounds input length it rejects rather than trims: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A ceiling is not a standard field, so look for it in the file field's own description, and expect plenty of models to state none. When one applies, trim first with the deterministic cut or split tools (`search` `query="video cut"`), landing under the limit rather than exactly on it.
+Where a model bounds input length it rejects rather than trims: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A ceiling is not a standard field: look for it in the file field's own description; many state none. When one applies, trim first with the deterministic cut or split tools (`search` `query="video cut"`), landing under the limit rather than exactly on it.
 
 ## Common mistakes
 
