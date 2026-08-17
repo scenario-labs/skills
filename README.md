@@ -96,12 +96,13 @@ Generate and edit images: model choice, sizing, references, masked edits, post-p
 
 Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.
 
-| Skill                                                        | Use it for                                                                                                       |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| [scenario-game-assets](skills/scenario-game-assets/SKILL.md) | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches       |
-| [scenario-textures](skills/scenario-textures/SKILL.md)       | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                        |
-| [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)       | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                   |
-| [scenario-3d](skills/scenario-3d/SKILL.md)                   | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download |
+| Skill                                                                  | Use it for                                                                                                       |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [scenario-game-assets](skills/scenario-game-assets/SKILL.md)           | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches       |
+| [scenario-sprite-animation](skills/scenario-sprite-animation/SKILL.md) | Walk cycles, idle loops, and VFX sprites: animation models, GIF vs sprite sheet output, frame slicing, cleanup   |
+| [scenario-textures](skills/scenario-textures/SKILL.md)                 | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                        |
+| [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)                 | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                   |
+| [scenario-3d](skills/scenario-3d/SKILL.md)                             | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download |
 
 ### Video and audio
 

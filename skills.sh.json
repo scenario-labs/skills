@@ -28,6 +28,7 @@
       "description": "Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.",
       "skills": [
         "scenario-game-assets",
+        "scenario-sprite-animation",
         "scenario-textures",
         "scenario-skyboxes",
         "scenario-3d"
