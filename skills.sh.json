@@ -17,6 +17,7 @@
       "description": "Generate and edit images: model choice, sizing, references, masked edits, post-processing tools, and letter-perfect text overlay cards.",
       "skills": [
         "scenario-image",
+        "scenario-product-shots",
         "scenario-image-editing",
         "scenario-text-overlay",
         "scenario-storyboards"
