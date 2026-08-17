@@ -48,7 +48,7 @@ Motion members require a character `image` and a driving `video`; `characterOrie
 2. `model_schema_get` with that id: multiPrompt shape, duration values, element caps.
 3. `upload_asset` the start frame and the character's frontal photo (see the `scenario` skill).
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"startImage": "asset_s", "multiPrompt": [{"prompt": "Wide shot, @Element1 crosses the plaza, slow dolly-in", "duration": "5"}, {"prompt": "Close-up, @Element1 smiles and says: 'we made it'", "duration": "4"}], "generateAudio": true, "elements": [{"frontalImage": "asset_f"}]}` for the cost estimate; re-estimate after changing durations, tier, or audio.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the output and review both shots with sound.
 
 ## Common mistakes

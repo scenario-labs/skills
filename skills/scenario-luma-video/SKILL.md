@@ -39,7 +39,7 @@ Ray rewards natural-language prompts of roughly 50 to 300 words built around mot
 2. `model_schema_get` with the generator id: options and their vetoes before anything else.
 3. `upload_asset` the product still (see the `scenario` skill) to get an asset id.
 4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "A crystal perfume bottle catches soft window light as a single drop arcs off the stopper, slow push-in, product commercial style.", "startFrame": "asset_a", "duration": "5s", "resolution": "1080p", "aspectRatio": "16:9"}`; re-estimate after any option change.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `model_schema_get` the Reframe sibling, then `model_run` with `parameters={"video": "<generated asset id>", "aspectRatio": "9:16", "prompt": "continue the marble counter downward and the softly lit wall upward", "resolution": "1080p"}`, same wait discipline.
 7. `asset_display` both and inspect the outpainted edges before delivery.
 

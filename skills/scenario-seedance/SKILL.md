@@ -47,7 +47,7 @@ The prompt is the only lever, so listen to what comes back: when music leaks in 
 2. `model_schema_get` with that id: fields, caps, and defaults before anything else.
 3. `upload_asset` the product stills (see the `scenario` skill) to get asset ids.
 4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "@image1 defines the bottle and label. Slow dolly-in as condensation beads. Diegetic sound only, no music. No text, no captions.", "referenceImages": ["asset_a", "asset_b"], "duration": 8, "resolution": "720p", "generateAudio": true}` for the cost estimate; re-estimate after any change to duration, resolution, or references.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the output and watch it with sound before the music goes on.
 
 ## Common mistakes

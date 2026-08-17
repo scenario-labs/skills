@@ -39,7 +39,7 @@ Native: V3 Generate Transparent writes the alpha channel directly, so icons, sti
 1. `search` with `target="models"`, `query="ideogram"`, `public=true`. Members return as separate hits; match by name, e.g. `model_ideogram-v4` for typography (a live hit at authoring time: re-discover each session).
 2. `model_schema_get` with that id: field names, allowed values, and defaults before anything else.
 3. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"prompt": "Retro travel poster, warm dusk palette. The headline reads \"KYOTO IN BLOOM\" in bold serif across the top; caption \"April 2027\" bottom right.", "imageSize": "portrait_16_9", "renderingSpeed": "QUALITY", "enablePromptExpansion": false, "numOutputs": 2}` for the cost estimate.
-4. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+4. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 5. `asset_display` the outputs and pick one.
 6. To make the copy editable, discover the Layerize member the same way (`model_ideogram-v3-layerize-text` at authoring time), read its schema, and `model_run` with `parameters={"image": "<poster asset id>"}`: a generated asset's id feeds a file input directly, no re-upload. The output is a text-erased base plus text blocks with role, position, and content.
 7. `jobs_wait`, then `asset_display` and `asset_download`.
