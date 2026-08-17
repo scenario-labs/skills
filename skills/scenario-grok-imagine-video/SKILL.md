@@ -40,7 +40,7 @@ Generation members produce native audio and no parameter controls it: the prompt
 2. `model_schema_get` with that id: fields, caps, and defaults before anything else.
 3. `upload_asset` the hero still (see the `scenario` skill) to get its asset id.
 4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "The frame shows a knight on a cliff at dusk. She lowers her sword, turns to the camera, and says quietly: 'It ends tonight.' Slow dolly-in, wind lifting her cloak. Audio: wind, distant thunder, her line clear. No music.", "image": "asset_abc", "duration": 8, "resolution": "1080p"}` for the cost estimate; re-estimate after any change to duration, resolution, or `numOutputs`.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the output and watch it with sound: the audio direction is judged by ear.
 
 ## Common mistakes

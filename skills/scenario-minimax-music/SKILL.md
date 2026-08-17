@@ -40,7 +40,7 @@ Music Cover takes its source through `audioUrl`: `upload_asset` the MP3 or WAV f
 1. `search` with `target="models"`, `query="minimax music"`, `public=true`. Prefer the newest non-deprecated hit, e.g. `model_minimax-music-3-0` (a live hit at authoring time: re-discover each session); the cover member lists `audio2audio` in capabilities.
 2. `model_schema_get` with that id: fields, caps, and defaults before anything else.
 3. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "epic orchestral trailer, 140 BPM, D minor, female vocals, taiko and strings", "lyrics": "[Intro]\n(Low strings)\n\n[Verse]\nWe were born below the thunder\n...\n\n[Outro]\n(Choir fades)"}`. Re-estimate after lyric edits: character count moves the price.
-4. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+4. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 5. `asset_display` the output and listen before laying it under a cut.
 
 ## Common mistakes

@@ -41,7 +41,7 @@ T2V and I2V want a 120 to 180 word single-shot paragraph in present tense: scene
 2. `model_schema_get` with that id: duration bounds, resolutions, defaults.
 3. `upload_asset` the start and end stills (see the `scenario` skill) for two asset ids.
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"generationType": "start_end_to_video", "images": ["asset_start", "asset_end"], "prompt": "The knight slowly lowers his sword as dusk settles over the courtyard. The camera dollies in on his face.", "duration": 8, "resolution": "1080p"}`; expand the prompt to the full paragraph shape above in real runs, and re-estimate after any change to duration or resolution.
-5. Re-run `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Re-run `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the output and check both anchor frames landed.
 
 ## Common mistakes

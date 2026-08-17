@@ -40,7 +40,7 @@ Edit is the inverse: motion, camera path, and timing are locked from the source 
 2. `model_schema_get` with that id: required fields, caps, and defaults before anything else.
 3. `upload_asset` two or three angles of the mascot (see the `scenario` skill) to get asset ids.
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"prompt": "The character skips across a rain-slick plaza, catches a falling leaf, and holds it up in triumph. Overcast soft light, low tracking shot. Audio: light rain, footsteps on wet stone, one bright chirp.", "referenceImages": ["asset_a", "asset_b"], "duration": 8, "aspectRatio": "16:9"}`; references and duration move the cost, so re-estimate after changing either.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the output and review it with sound: the audio is part of the deliverable.
 
 ## Common mistakes

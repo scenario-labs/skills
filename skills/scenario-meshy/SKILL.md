@@ -42,7 +42,7 @@ Rigging and Animation are alternatives, not stages. Animation auto-rigs internal
 
 1. `search` with `target="models"`, `query="meshy"`, `public=true`. Single-image route: `model_meshy-7-img23d` (a live hit at authoring time: re-discover each session).
 2. `model_schema_get` with that id, then `upload_asset` the character photo (see the `scenario` skill).
-3. `model_run` with `dry_run=true` and `parameters={"image": ["asset_photo"], "poseMode": "t-pose", "texturePrompt": "worn leather armor, muted palette", "enablePbr": true}` for the estimate; then re-run with `wait=false` and `jobs_wait` with the job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+3. `model_run` with `dry_run=true` and `parameters={"image": ["asset_photo"], "poseMode": "t-pose", "texturePrompt": "worn leather armor, muted palette", "enablePbr": true}` for the estimate; then re-run with `wait=false` and `jobs_wait` with the job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 4. `asset_display` the GLB; check silhouette and texture before spending further.
 5. `search` for the animation member, `model_schema_get`, then `model_run` with `parameters={"model": "<GLB asset id from step 4>", "heightMeters": 1.8, "actionId": <id from the library>}`.
 6. `jobs_wait`, `asset_display`, then `asset_download` for engine import.

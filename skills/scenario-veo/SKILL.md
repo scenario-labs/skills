@@ -40,7 +40,7 @@ Write present-tense prose ordered as cinematography, subject, action, context, s
 2. `model_schema_get` on the chosen id: confirm which reference inputs exist before writing the payload.
 3. `upload_asset` two character stills (see the `scenario` skill) to get asset ids.
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"prompt": "Medium shot, the knight lowers her visor and says, \"Hold the line.\" Torchlight flickers on wet stone. Ambient noise: distant thunder. SFX: metal visor clank.", "referenceImages": ["asset_a", "asset_b"], "referenceImagesType": "ASSET", "duration": 8, "resolution": "1080p", "aspectRatio": "16:9", "generateAudio": true}`. Estimate the same job on the Fast id (drop `referenceImagesType`, absent there) and compare.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the output and review with sound. To iterate on wording alone, hold an explicit `seed` fixed across reruns.
 
 ## Common mistakes
