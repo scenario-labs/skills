@@ -153,9 +153,10 @@ Hold one character, product, or style across a whole set, and train custom model
 
 Read finished assets back: caption them, extract a style or a control map, check a batch against a brief, and file the keepers.
 
-| Skill                                                              | Use it for                                                                                                       |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| [scenario-asset-analysis](skills/scenario-asset-analysis/SKILL.md) | Reading assets back: captions, style descriptions, batch review against a brief, control maps, collections, tags |
+| Skill                                                              | Use it for                                                                                                           |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| [scenario-asset-analysis](skills/scenario-asset-analysis/SKILL.md) | Reading assets back: captions, style descriptions, batch review against a brief, control maps, collections, tags     |
+| [scenario-refine-loop](skills/scenario-refine-loop/SKILL.md)       | Iterating until output matches the brief: rubric first, batched critique verdicts, cheapest targeted fix, round caps |
 
 ### Workflows and apps
 
