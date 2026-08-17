@@ -1,6 +1,6 @@
 ---
 name: scenario-asset-analysis
-description: "Use when Scenario assets need reading rather than generating: captioning images for a dataset or alt text, extracting a reusable style description from an on-model reference, asking what an asset shows, checking a batch against a brief before delivery, or extracting a canny, depth, pose, or segmentation control map. Also when finished assets need filing into collections or tagging. Keywords: caption, describe, analyze, review, QA, control map, ControlNet, segmentation, tag, collection."
+description: "Use when Scenario assets need reading or finding rather than generating: captioning images for a dataset or alt text, extracting a style description or a canny, depth, pose, or segmentation control map, asking what an asset shows, checking a batch against a brief, finding an asset by text, tags, or visual similarity to a reference, or filing assets into collections. Keywords: caption, describe, analyze, QA, control map, find similar, reverse image search, semantic search, tag, collection."
 license: MIT
 ---
 
@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Four tools read assets back instead of making new ones: three fixed-purpose, one open-ended. They answer the questions that come after a batch lands, which is where most of the work actually is: is this on brief, what look is this, what does this show, what can the next model condition on.
+Four tools read assets back instead of making new ones: three fixed-purpose, one open-ended. With `search` (default toolset) they answer the questions that come after a batch lands, which is where most of the work actually is: is this on brief, what look is this, what does this show, what can the next model condition on, where did last week's approved version go.
 
 None of them are in the default toolset. Get schemas with `scenario_tools_search`, then run each through the executor matching its `permission`: `asset_caption` and `asset_describe` are read-class, `asset_analyze` and `asset_detect` are write-class. Or reconnect with `?toolsets=full`. Connection and scope: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
@@ -31,13 +31,21 @@ All four bill credits and all four take `dry_run: true` for an estimate first. R
 
 `asset_analyze` and `asset_detect` wait up to 180s and then hand back a `job_id`; carry on with `jobs_wait` as anywhere else.
 
+## Finding an asset again
+
+Retrieval is `search` with `target="assets"`, and at least one of `query`, `filters`, `filter`, `image`, or `images` must be set: an empty call is a 400, not an everything-list.
+
+- **By text.** `query` is keyword matching by default; `query_semantic_ratio` moves it toward meaning (0.5 to 0.8 suits mood queries like "dark medieval atmosphere", 1 is pure semantic). `sort_by` (say `["createdAt:desc"]`) is ignored while that ratio is above 0, so a newest-first list needs keyword mode.
+- **By similarity.** `image` takes one asset id or image URL and returns lookalikes; `images` takes `{"like": [...], "unlike": [...]}` to steer with positive and negative examples (the two fields are mutually exclusive). `image_semantic_ratio` decides what similar means: 1, the default, matches subject and mood; 0 matches image features, the setting for hunting near-duplicates and crops. Add a `query` beside it for "like these, but more stylized".
+- **By structure.** `filters` narrows on `kind`, `tags`, `model_id`, `collection_ids`, and `created_after`/`created_before`, ANDed with everything above.
+
 ## Worked example: reviewing a batch against a brief
 
 1. Collect the asset ids from the run (`jobs_wait` returns them).
 2. `asset_analyze` with `dry_run: true` on the first chunk to price the pass.
 3. `asset_analyze` with `images` set to 10 ids and an `instruction` that states the brief and fixes the output: "For each image in order, reply `<index>: pass|fail, <reason in under 12 words>`, a reason on every line, passes included. Fail anything not centered, not on a plain field, or carrying text." Repeat per chunk. Answers land as text assets (one, or one per image): `asset_download` them to read the verdicts.
 4. `asset_describe` on the strongest pass. Its promptable synthesis goes straight into the next batch's prompt, which holds the look without a training run (see `scenario-consistency`); when the synthesis is only a short title, prompt with the description instead.
-5. File the result: `collection_create`, then `collection_add_assets` in chunks of at most 49 ids. `asset_add_tags` is additive, so tag the failures rather than rebuilding a tag set.
+5. File the result: `collection_create`, then `collection_add_assets` in chunks of at most 49 ids. `asset_add_tags` is additive, so tag the failures rather than rebuilding a tag set. The set comes back later with `search` `filters={"collection_ids": [...]}`, and its lookalikes with `images={"like": [...]}`.
 
 ## Common mistakes
 
