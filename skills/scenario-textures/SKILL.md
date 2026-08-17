@@ -18,25 +18,25 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 | ------------------- | --------------------------------------------------------------------------- | ------------------------------------- |
 | Find texture models | `search` with `target="models"`, `query="seamless tileable"`, `public=true` | Also try `query="texture"` or `"PBR"` |
 | Inspect inputs      | `model_schema_get`                                                          | Always call before `model_run`        |
-| Generate            | `model_run`                                                                 | Schema-conformant parameters          |
-| Wait                | `jobs_wait`                                                                 | Never poll `job_get` in a loop        |
+| Generate            | `model_run`                                                                 | `dry_run=true` prices a batch first   |
+| Wait                | `jobs_wait`                                                                 | Re-call with `pending_job_ids`        |
 | View and save       | `asset_display`, then `asset_download`                                      | Download for engine import            |
 | Upscale             | `model_run` on a texture upscaler                                           | 2x to 8x, tiling preserved            |
 
-## What live search confirms (examples to re-discover, not constants)
+## What live search confirmed at authoring time (examples to re-discover, not constants)
 
 - Seamless generation: `model_scenario-texture` (Scenario Texture) takes a prompt (a tileable hint is appended automatically), `width`/`height` from 16 to 3840 in multiples of 16, `quality`, `seed`, up to 10 `referenceImages` for style, and `eraseSeam` with `overlap`/`featherRadius` to inpaint away both seam axes.
 - Themed texture LoRAs (Flux.1 LoRA, tag `sc:texture`): floors, marble, concrete, stone walls, wood boards, brick, terracotta, hand-painted, cybernetic, realistic textures. They expose dedicated texture capabilities (`txt2img_texture`, `img2img_texture`, `controlnet_texture`).
 - Tiling-safe upscaling: `model_sc-upscale-flux-texture` (Scenario Texture Upscale), `upscaleFactor` 2 to 8, presets `precise`/`balanced`/`creative`, optional prompt and style images.
 - Material-look conversion: `model_sc-texture-converter` (Texture Converter) turns a flat image into a surface material using `raised`, `shiny`, `polished`, `angular` sliders and an `invert` relief toggle.
-- PBR maps ship with 3D texturing and image-to-3D models, not as standalone 2D map decomposition. Examples seen live: Tripo 3.0 Texturing (PBR mode outputs albedo, metallic, roughness, normal), Tencent Texture Edit (prompt mode outputs full PBR maps for FBX models), Meshy 7 Retexture (optional PBR maps). Enable the model's PBR toggle found via `model_schema_get`.
+- PBR maps ship with 3D texturing and image-to-3D models, not as standalone 2D map decomposition. Examples seen live: Tripo 3.0 Texturing (PBR mode outputs albedo, metallic, roughness, normal), Tencent Texture Edit (prompt mode outputs full PBR maps for FBX models), Meshy 7 Retexture (optional PBR maps). Enable the model's PBR toggle found via `model_schema_get`. Retexturing a full mesh is a 3D-to-3D pipeline: see `scenario-3d`, and `scenario-meshy` for the Meshy retexture contract.
 
 ## Worked example: seamless brick, iterated then upscaled
 
 1. `search` `target="models"`, `query="seamless tileable"`, `public=true`, pick the seamless generator (e.g. `model_scenario-texture`).
 2. `model_schema_get` `model_id="model_scenario-texture"`.
-3. `model_run` with `parameters={"prompt": "weathered red brick wall, moss in the mortar joints", "width": 1024, "height": 1024, "eraseSeam": true, "seed": 42}`.
-4. `jobs_wait` with `job_ids=["job_..."]` (the id returned by `model_run`), then `asset_display` the output asset.
+3. `model_run` with `parameters={"prompt": "weathered red brick wall, moss in the mortar joints", "width": 1024, "height": 1024, "eraseSeam": true, "seed": 42}`. For a themed pack, price the batch with `dry_run=true` first, then launch the runs with `wait=false`.
+4. `jobs_wait` with `job_ids=["job_..."]` (the ids returned by `model_run`). A ~180s timeout is not an error: re-call with the returned `pending_job_ids` as `job_ids`, never a second `model_run`. Then `asset_display` the output asset.
 5. Iterate: rerun with the same `seed` and an edited prompt, or add `referenceImages=["asset_..."]` to lock a style.
 6. Upscale: `model_schema_get` then `model_run` `model_id="model_sc-upscale-flux-texture"` with `parameters={"image": "asset_...", "upscaleFactor": 4, "preset": "precise"}`.
 7. `asset_download` the final asset for engine import.

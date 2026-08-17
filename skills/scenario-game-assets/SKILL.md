@@ -28,16 +28,16 @@ Request: "four style-matched potion icons for an RPG inventory."
 
 1. `search` target="models", query="game icon", public=true. Typical hits: cartoon icon LoRAs ("Stylized Game Icons & Props"). Confirm the pick with the user: catalogs differ per team; re-discover, never hardcode model IDs.
 2. `model_schema_get` model_id="<picked id>". Note the prompt field, size fields, and any sample-count parameter.
-3. `model_run` parameters={"prompt": "health potion, corked glass bottle, glowing red liquid, bold outline, centered, plain background"}. Batch via the schema's sample-count parameter when present, or rerun varying only the item ("mana potion", "stamina potion") with the wording template fixed for a coherent set.
-4. `jobs_wait` job_ids=["<returned job_id>"] (up to 32 ids, one call covers the batch), then `asset_display` to review.
+3. `model_run` parameters={"prompt": "health potion, corked glass bottle, glowing red liquid, bold outline, centered, plain background"}. Batch via the schema's sample-count parameter when present, or rerun varying only the item ("mana potion", "stamina potion") with the wording template fixed for a coherent set. Price the batch with `dry_run=true`, then launch with `wait=false`.
+4. `jobs_wait` job_ids=["<returned job_id>"] (up to 32 ids, one call covers the batch); on timeout re-call with the returned `pending_job_ids`, never a second `model_run`. Then `asset_display` to review.
 5. `search` query="background removal" (Photoroom, Pixelcut, 851 Labs), `model_schema_get` the pick, then `model_run` with its image field set to the generated asset id. Some models generate native alpha; search "transparent".
-6. Optional: upscale keepers (search "upscale", `model_schema_get` as always; Scenario's Flux upscalers go 2x to 8x and beyond).
+6. Optional: upscale keepers (search "upscale", `model_schema_get` as always; upscalers go 2x to 8x and beyond).
 7. `asset_download` asset_id, format="png" (PNG keeps alpha). Follow redirects: `curl -L -o potion.png "<url>"`.
 
 ## Style consistency
 
 - Reference images: `upload_asset` the art direction images, then pass the asset ids (never local paths) to the model's image or reference parameters.
-- `asset_describe` turns one on-style asset into a promptable style synthesis reusable across prompts (full-toolset tool: if unlisted, reconnect with `?toolsets=full` or run via `scenario_tools_search` + `scenario_tool_execute_read`; see the `scenario` skill).
+- `asset_describe` turns one on-style asset into a promptable style synthesis reusable across prompts (catalog tool: run via `scenario_tools_search` + `scenario_tool_execute_read`; see the `scenario` skill).
 - `search` target="assets" images={like: ["asset_..."]} finds assets already matching the target look.
 - For a locked-in project style, train a custom LoRA on the project's own art (the `scenario-model-training` skill); trained models use the same generation loop.
 
