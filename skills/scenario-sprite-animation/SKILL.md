@@ -24,7 +24,7 @@ The authoring-time hit for the first lane (Retro Diffusion Animation; re-discove
 
 ## Worked example: a knight walk cycle for a pixel RPG
 
-1. `search` for the lane as above, confirm the pick with the user, then `model_schema_get` it.
+1. `search` for the lane as above, confirm the pick with the user (unattended, take it from the task instructions, else the top hit), then `model_schema_get` it.
 2. If an approved static knight exists (made per `scenario-game-assets`), flatten it onto a plain background and `upload_asset` it as the `image` reference. Describe the knight in the `prompt` anyway: the reference steers, the words decide.
 3. `model_run` with the walking style, `returnSpritesheet=true`, and a noted `seed`, then `jobs_wait` as usual.
 4. `asset_display` the sheet and count its grid, then run the slicer with that grid to get one PNG per frame.
