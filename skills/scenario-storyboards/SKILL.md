@@ -26,8 +26,8 @@ A storyboard headed for animation stops at stage 4: approved panels become first
 ## Worked example: a six-panel comic page
 
 1. Script the page as a table: panel, shot (wide, medium, close), action, dialogue. Dialogue is written down here, never prompted into the art.
-2. Cast lock: generate or upload the hero, iterate until approved, then `asset_display` it and write its baseline enumeration (geometry, costume, palette by name or hex) per `scenario-consistency`.
-3. Style: `search` with `target="models"`, `query="comic"`, `public=true`; the public catalog carried comic-style LoRA hits at authoring time. Confirm the pick with the user, then `model_schema_get` it for the reference field's name, cap, and cardinality.
+2. Cast lock: generate or upload the hero and iterate until approved; unattended, the script's own character description stands in for the approval, so take the candidate that matches it and continue. `asset_display` the hero and write its baseline enumeration (geometry, costume, palette by name or hex) per `scenario-consistency`.
+3. Style: `search` with `target="models"`, `query="comic"`, `public=true`; the public catalog carried comic-style LoRA hits at authoring time. Confirm the pick with the user (unattended, take it from the task instructions, else the top hit), then `model_schema_get` it for the reference field's name, cap, and cardinality.
 4. Six `model_run` calls. Each prompt is the style line plus the character baseline, byte-identical across panels, plus that panel's clause (shot, action, setting), plus "clean art, no lettering, no speech bubbles". Wire the hero reference as the schema says: an array only under `array: true`. A batch-count field repeats one prompt, so it cannot carry per-panel clauses.
 5. `jobs_wait` on the six jobs, re-calling with `pending_job_ids`. Review each panel against the hero; fix drift by tightening that panel's enumeration and re-running from the baseline, never by chaining from a neighboring panel.
 6. Letter with `scenario-text-overlay`, composite the cards as layers, assemble the page, then file panels and page in a collection (`scenario-asset-analysis`).
