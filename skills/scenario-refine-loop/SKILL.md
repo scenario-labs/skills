@@ -22,13 +22,13 @@ Agents fail generation QA in two symmetric ways: accepting the first roll, or re
 
 Fix routing, cheapest first:
 
-| The verdict says              | Fix                                                                         |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| One local defect on a keeper  | Masked inpaint of that region (`scenario-image`)                            |
-| Color, framing, or finish off | A deterministic tool pass (`scenario-image-editing`), not a re-roll         |
-| Wrong content or composition  | Edit the delta clause, re-run from the approved baseline                    |
-| Identity or style drift       | Tighten the enumeration, add or re-role references (`scenario-consistency`) |
-| Every line failing            | Change the model (re-discover via `search` or `recommend`), keep the prompt |
+| The verdict says                                | Fix                                                                         |
+| ----------------------------------------------- | --------------------------------------------------------------------------- |
+| One local defect on a keeper                    | Masked inpaint of that region (`scenario-image`)                            |
+| A uniform finish off (grade, tint, crop)        | A deterministic tool pass (`scenario-image-editing`), not a re-roll         |
+| Wrong content, composition, or rendered palette | Edit the delta clause, re-run from the approved baseline                    |
+| Identity or style drift                         | Tighten the enumeration, add or re-role references (`scenario-consistency`) |
+| Every line failing                              | Change the model (re-discover via `search` or `recommend`), keep the prompt |
 
 Change one variable per round. A round that swaps prompt, references, and model at once cannot attribute the improvement, so the next failure restarts from zero.
 
@@ -42,7 +42,7 @@ Change one variable per round. A round that swaps prompt, references, and model 
 1. Rubric from the brief, five lines: single object, centered, plain field, palette #2A9D8F and #E9C46A only, no text.
 2. Generate four, one `model_run` each per `scenario-image`, then `jobs_wait`.
 3. One `asset_analyze` call with all four ids in `images` and the rubric-plus-shape instruction; answers land as text assets, `asset_download` them to read the verdicts.
-4. Two fail. Icon 2 is off palette: re-run its prompt with the hex codes pinned. Icon 4 has one smeared edge: masked inpaint of that corner. Icons 1 and 3 ship untouched.
+4. Two fail. Icon 2 is off palette, which is rendered content rather than a finish: edit the delta clause by pinning the hex codes in the prompt and re-run from the baseline. Icon 4 has one smeared edge: masked inpaint of that corner. Icons 1 and 3 ship untouched.
 5. Re-critique only the two new assets with the byte-identical instruction. Clean round: stop, file the keepers in a collection (`scenario-asset-analysis`).
 
 ## Common mistakes
@@ -51,5 +51,5 @@ Change one variable per round. A round that swaps prompt, references, and model 
 - Asking `asset_analyze` to improve or fix the image: it returns text only; every fix is a new run.
 - Re-rolling the whole batch because one item failed: route per item.
 - Writing the rubric after seeing the batch: it inherits the batch's flaws as the standard.
-- Running the loop uncapped: failed jobs are reimbursed, unsatisfying ones are not; `usage` tracks spend against the brief's ceiling.
+- Running the loop uncapped: failed jobs are reimbursed, unsatisfying ones are not. Gate rounds on the costs the runs themselves report (`dry_run` prices the next round ahead); `usage` totals lag and answer the report after the run, not the mid-run gate.
 - Retrying a criterion a third time on the same model: two misses under two different fixes is evidence about the model, not bad luck.
