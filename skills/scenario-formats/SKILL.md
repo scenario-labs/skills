@@ -25,11 +25,11 @@ The last rung applies more often than it looks: 16:9 key art seldom survives to 
 
 ## Order of operations
 
-1. Approve one master first, at the largest clean size available, on a text-free plate.
+1. Approve one master first, at the largest clean size available, on a text-free plate (unattended, the task's named master or the brief's own description stands in for the approval).
 2. Derive every format from that master, never from another derivative: derivative-of-derivative compounds re-rendering artifacts.
 3. Reframe and expand before grading and grain: generative canvas work re-renders the image, so finishing passes applied first come back partly reinterpreted (`scenario-image-editing` holds the pipeline order).
-4. Re-overlay lettering per format with `scenario-text-overlay`, sized to each canvas: type scaled by a resize turns soft, and each placement has its own safe area. Keep critical content and text away from the edges platform UI covers, and confirm exact current specs per platform with the user rather than assuming them.
-5. Verify by measurement: reframe ratio enums are approximate (a 4:5 request came back 29:36 at authoring time), so check output dimensions and finish with a resize, then batch-check that subjects and lettering survived with `asset_analyze` (`scenario-asset-analysis`).
+4. Verify by measurement before finishing: reframe ratio enums are approximate (a 4:5 request came back 29:36 at authoring time), so check output dimensions, land exact with a resize, and batch-check that subjects survived with `asset_analyze` (`scenario-asset-analysis`).
+5. Letter last: re-overlay lettering per format with `scenario-text-overlay`, sized to each final canvas, since type scaled by a resize turns soft and each placement has its own safe area. Keep critical content and text away from the edges platform UI covers, and confirm current per-platform specs with the user rather than assuming them (unattended, take them from the task instructions, else state the assumption in the delivery report).
 
 ## Worked example: key art to story, feed, and thumbnail
 
@@ -37,7 +37,7 @@ The last rung applies more often than it looks: 16:9 key art seldom survives to 
 2. 1:1 feed: generative reframe with a prompt naming what must stay ("the knight centered, both banners visible"), then a resize pass to the exact deliverable pixels.
 3. 9:16 story: a far ratio, so recompose natively: one run per `scenario-image` with the master as reference and a 9:16 composition clause; the master holds palette and subject on-look.
 4. Thumbnail: readability rules the crop, so reframe tight on the face or product, then `asset_display` the result and judge it small: thumbnails are seen at a tenth of their size.
-5. Overlay the title card per format, verify dimensions against the deliverable list, then file the set in a collection.
+5. Verify dimensions against the deliverable list, overlay the title card per format onto each final canvas, then file the set in a collection.
 
 ## Common mistakes
 
