@@ -32,15 +32,15 @@ Shadows and reflections carry the realism: a cutout pasted without them floats. 
 
 1. `upload_asset` the studio photo, then `upload_asset_complete`: `asset_can`.
 2. Build the checklist once with `asset_analyze` (write lane, contract in `scenario-asset-analysis`).
-3. Packshot: `search` `"product photo"`, `model_schema_get` the hit, run with the background set to the brand hex and margins per the marketplace's current spec (confirm specs with the user).
-4. Scenes: `recommend` with `capability="img2img"`; on `next_step.type="ask_user"`, present the options. `model_schema_get` the pick, then three runs, each the preserve-first prompt with one scene clause and `asset_can` wired as the schema says (an array only under `array: true`).
+3. Packshot: `search` `"product photo"`, `model_schema_get` the hit, then run it with `asset_can` in its image field, the background set to the brand hex, and margins per the marketplace's current spec (confirm specs with the user; unattended, take them from the task instructions, else keep the tool's defaults).
+4. Scenes: `recommend` with `capability="img2img"`; on `next_step.type="ask_user"`, present the options (unattended, the task instructions name the pick, else proceed with the top one). `model_schema_get` the pick, then three runs, each the preserve-first prompt with one scene clause and `asset_can` wired as the schema says (an array only under `array: true`).
 5. `jobs_wait`, then gate all four outputs in one `asset_analyze` call against the checklist. A drifted label fails the shot: re-run from `asset_can` with the preservation clause tightened, never from the drifted output.
 6. Upscale the keepers, `asset_download` with `format="png"`, file the set in a collection.
 
 ## Common mistakes
 
 - Generating the product from a text description because the photo seems easy to describe: the one unfixable error, since no edit restores a label that never existed.
-- Compositing from a screenshot of a crop: fidelity caps at the source; ask for the original file.
+- Compositing from a screenshot of a crop: fidelity caps at the source; ask for the original file, and when nobody can supply one, proceed with the best source at hand and flag the ceiling in the delivery note.
 - Skipping the gate because it "looks fine": label drift hides at thumbnail size; the checklist compare reads letter by letter.
 - Prompting prices, claims, or promo copy into the image: overlay them with `scenario-text-overlay`; regulations and locales change faster than plates.
 - Removing the background and losing the real shadow with it: restage with a shadow-building tool or prompt a new one.
