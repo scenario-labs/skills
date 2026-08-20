@@ -50,10 +50,10 @@ Prompting tips:
 
 ## Songs with vocals
 
-A full-length song is not a longer music bed; song schemas vary more than the rest of the audio lane, and the per-model contracts live in `scenario-ace-step` and `scenario-minimax-music`. What holds across families:
+A full-length song is not a longer music bed, and song schemas vary more than the rest of the audio lane, so `model_schema_get` decides the shape: a style prompt plus a separate lyric sheet, a single prose prompt carrying style and structure, or an ordered section array with per-section text and styles. Per-model contracts: `scenario-ace-step`, `scenario-minimax-music`, `scenario-elevenlabs`.
 
-- **Words never go in a style field.** The style field carries genre, mood, tempo, key, vocal style, and instrumentation; the lyric field carries the words, shaped by section tags such as `[Verse]` and `[Chorus]`.
-- **Instrumental and auto-lyrics are flags** where the schema has them; asking for either in prose is unreliable.
+- **Words never go in a style field.** Where the schema splits the two, the style field carries genre, mood, tempo, key, vocal style, and instrumentation; the lyric field carries the words, shaped by section tags such as `[Verse]` and `[Chorus]`.
+- **Instrumental and auto-lyrics are flags** where the schema has them; asking for either in prose is unreliable, and where no flag exists the text fields are the only lever.
 - **Text fields are length-capped** per model and field, and going over is a 400 rather than a truncation.
 
 Where the schema exposes a duration field (flagged `cost_impact`), it caps both length and price; where none exists, the lyric sheet or prompt sets both. Either way, price the song with `dry_run: true` before committing, and launch with `wait=false`.
