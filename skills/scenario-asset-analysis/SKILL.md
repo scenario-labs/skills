@@ -1,6 +1,6 @@
 ---
 name: scenario-asset-analysis
-description: "Use when Scenario assets need reading or finding rather than generating: captioning images for a dataset or alt text, extracting a style description or a canny, depth, pose, or segmentation control map, asking what an asset shows, checking a batch against a brief, finding an asset by text, tags, or visual similarity to a reference, or filing assets into collections. Keywords: caption, describe, analyze, QA, control map, find similar, reverse image search, semantic search, tag, collection."
+description: "Use when finished Scenario assets have to give something back: a caption for a dataset or alt text, a reusable style description, a verdict against a brief, a canny, depth, pose, or segmentation control map for the next model, or the asset itself found again by text, tags, or visual similarity and filed into a collection. Keywords: caption, describe, analyze, QA, control map, find similar, reverse image search, semantic search, tag, collection."
 license: MIT
 ---
 
