@@ -1,4 +1,6 @@
 Cinzel
+DALL-E
+HDRI
 KAEL
 Kontext
 MYBRAND

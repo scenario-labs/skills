@@ -1,6 +1,6 @@
 ---
 name: scenario-luma-image
-description: "Use when generating or editing images with Luma Uni-1 models on Scenario via MCP: text-to-image, prompt-based editing of an existing image, style or character reference images with named roles, web search grounding for real-world subjects, rendering exact title text into posters, aspect ratio control, or choosing between Uni-1 Max and Uni-1. Keywords: Luma Labs, Uni-1, txt2img, img2img, image edit, reference images, webSearch, reasoning image model."
+description: "Use when generating or editing images with Luma Uni-1 models on Scenario via MCP: text-to-image, prompt-based editing of an existing image, style or character reference images with named roles, web search grounding for real-world subjects, rendering exact title text into posters, aspect ratio control, or choosing between Uni-1 Max and Uni-1. Keywords: Luma Labs, Uni-1, Photon, txt2img, img2img, image edit, reference images, webSearch, reasoning image model."
 license: MIT
 ---
 
