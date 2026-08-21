@@ -1,6 +1,6 @@
 ---
 name: scenario
-description: Use when connecting a coding agent to Scenario (scenario.com) through MCP, or when a task involves generating images, video, 3D, audio, sprites, textures, or game assets with Scenario. Also when picking a Scenario model, running a LoRA, refining a generation prompt, uploading reference images, waiting on generation jobs, checking credits or quota, hitting Scenario auth, scope, or Forbidden errors, or setting up mcp.scenario.com in Claude Code, Cursor, or VSCode.
+description: Use when connecting an AI agent to Scenario (scenario.com) through MCP, or when a task involves generating images, video, 3D, audio, sprites, textures, or game assets. Also when picking a Scenario model, running a LoRA, refining a generation prompt, uploading reference images, waiting on generation jobs, checking credits or quota, hitting Scenario auth, scope, or Forbidden errors, or setting up mcp.scenario.com in Claude Code, Cursor, or other.
 license: MIT
 ---
 
@@ -20,7 +20,12 @@ The default toolset is the core loop below; `?toolsets=full` exposes everything.
 
 Resolve scope first, then pass `team_id` and `project_id` on every later call. `teams_list` returns the teams with their projects; `projects_list` requires a `team_id`, so it cannot come first. Confirm the pair with the user rather than picking.
 
-The server fills scope only for read-only tools while one candidate remains: otherwise the call fails rather than guesses, the error naming which half is wrong. `context_missing` means nothing resolved: run `teams_list`, then `projects_list`. `context_ambiguous` means several fit: present them and let the user choose, a guess here writes into someone else's project. A non-interactive run takes the pair from its task instructions; when they name none, stop and list the choices. These are the most common failure across every tool below, surfacing on the first call that drops the pair. A Forbidden error usually means wrong scope rather than missing scope.
+The server will only auto-fill scope for read-only tools when there's a single possible match; otherwise, the call fails and the error will specify which part is missing or wrong.
+
+- `context_missing`: Nothing resolved. Run `teams_list` then `projects_list`.
+- `context_ambiguous`: Multiple options. Show them and let the user choose: never guess, as you could use the wrong project.
+
+For non-interactive runs, use the `team_id` and `project_id` from the task instructions. If those aren't provided, stop and list the available choices. These scope errors appear the first time the team and project pair is missing. A Forbidden error usually means you used the wrong scope, not that you forgot it.
 
 ## Quick reference
 
