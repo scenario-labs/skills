@@ -30,6 +30,7 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 - Voice and speech: text-to-speech with preset voices, multilingual output, and emotion or pacing controls; some clone a voice from a short clip, and speech-to-speech re-voices a recording.
 - Video to audio: models that score a silent video or add synchronized effects.
 - Utilities: audio cut, split, and extract tools plus speech-to-text transcription; discover with `search` query="audio" or query="tool".
+- Stem separation: one named stem per run (`search` query="stem"), vocals included, with no instrumental option.
 
 Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music, SFX), `scenario-ace-step` and `scenario-minimax-music` (songs), `scenario-sonilo` (SFX and video scoring).
 
@@ -66,6 +67,5 @@ Where the schema exposes a duration field (flagged `cost_impact`), it caps both 
 - Pasting raw asset URLs into chat: use `asset_display` to play audio.
 - Passing `format` to `asset_download` for audio: it converts image formats only, so omit it.
 - Putting voice direction inside TTS text ("say this angrily"): direction can end up spoken. Use the schema's emotion or voice fields.
-- Sending image parameters (width, height) to audio models: their schemas do not accept them.
 - Pasting lyrics into the style field: the model then describes a song instead of singing one.
 - Putting `dry_run` or `wait` inside `parameters`: they are `model_run`'s own arguments, so a stray `dry_run` still charges and a stray `wait` blocks up to 180s.

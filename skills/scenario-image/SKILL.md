@@ -34,7 +34,7 @@ A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields
 
 ## Worked example: replacing a label on a product shot
 
-1. `recommend` with `capability="img2img"` and the user's own words as `prompt`. On `next_step.type="ask_user"`, present the options instead of picking; skip any `requires_plan_upgrade` entry.
+1. `recommend` with `capability="img2img"` and the user's own words as `prompt`. Handle `next_step` as the `scenario` skill directs, and never run a `requires_plan_upgrade` entry.
 2. `upload_asset` the product photo, then `upload_asset_complete`, which returns the `asset_id`. Only the inline path under ~100KB skips the second call.
 3. `model_schema_get` on the pick: the reference field's name and cap, which sizing family it uses, the prompt `max_length`, and whether a `mask` field exists.
 4. For a masked edit, read the `mask` field's own description before building anything. Masks are not interchangeable: one model wants an alpha channel at the source's exact dimensions, another wants a black and white image it resizes itself, and which pixels get painted differs too. With no mask in hand, `search` (`target="models"`, `query="segment"`, `public=true`) finds `img2img` segmentation models that take a short noun phrase or a box and return one mask per object; most hits segment 3D meshes, so check `capabilities`. Where no convention fits, an instruction editor scopes the edit in prose instead.

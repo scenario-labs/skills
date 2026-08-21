@@ -19,7 +19,6 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 | Find a model   | `search`                           | `target="models"`, `public=true`, query `"image to video"`, `"video upscale"`, `"lipsync"`, `"video edit"` |
 | Inspect inputs | `model_schema_get`                 | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)             |
 | Upload source  | `upload_asset`                     | A local still or clip becomes an `asset_id`                                                                |
-| Refine prompt  | `prompt_spark`                     | Optional; rewrites a thin motion idea into an on-model prompt                                              |
 | Generate       | `model_run`                        | `wait=false` for video; `dry_run=true` to estimate cost first                                              |
 | Wait           | `jobs_wait`                        | Re-call with the returned `pending_job_ids` until done                                                     |
 | Review         | `asset_display` / `asset_download` | Display inline; `asset_download` returns the file URL, save it with `curl -L`                              |
@@ -50,8 +49,8 @@ All editing is `model_run` on a video-input model; discover each with `search`:
 Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Three steps:
 
 1. **Dub.** Takes the clip as `file` and a required `targetLang` from the schema's allowed values. Omit `sourceLang` to auto-detect, since the value that means auto differs between models. When a brand or name must survive translation, pick a hit whose schema carries `keyterms`, as not all do; where it is `array: true`, pass `["Scenario"]` even for one term.
-2. **Extract.** Dubbing a video returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the new speech out with `search` `query="audio extract"`, which surfaces the tool; a generic `query="tool"` buries it.
-3. **Lipsync.** The clip and the track are separate fields, `video`/`audio` on most hits and `videoUrl`/`audioFile` on others. A duration-mismatch control is not universal: where present it is `syncMode` or `lipsyncMode` (`cut_off`, `loop`, `bounce`, `silence`, `remap`) with a per-model default, and there `loop` and `bounce` extend the shorter stream while `cut_off` ends at it; elsewhere a `loop` boolean loops the audio instead. Take names and defaults from `model_schema_get`.
+2. **Extract.** Dubbing returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the speech out with `search` `query="audio extract"`; a generic `query="tool"` buries it.
+3. **Lipsync.** Pass the dubbed video together with its extracted track. No schema says whether the input's own audio survives, so listen to the output before shipping. The clip and the track are separate fields, `video`/`audio` on most hits and `videoUrl`/`audioFile` on others. A duration-mismatch control is not universal: where present it is `syncMode` or `lipsyncMode` (`cut_off`, `loop`, `bounce`, `silence`, `remap`) with a per-model default, and there `loop` and `bounce` extend the shorter stream while `cut_off` ends at it; elsewhere a `loop` boolean loops the audio instead. Take names and defaults from `model_schema_get`.
 
 Judge a localized talking head on a stylized character before promising it on a photoreal one.
 
