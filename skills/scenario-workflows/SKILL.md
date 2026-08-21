@@ -1,6 +1,6 @@
 ---
 name: scenario-workflows
-description: "Use when a task involves running a Scenario workflow through MCP, including anything the user calls a Scenario app or a saved multi-step pipeline. Triggers include listing workflows, building the inputs object for workflow_run, pricing a run with a dry run, approving or rejecting a stuck approval node, a run rejected for input length, or a workflows_list reply that flooded the context. Creating or editing graphs is scenario-workflow-authoring. Keywords: workflow, app, pipeline, approval gate."
+description: "Use when a task involves running a Scenario workflow through MCP, including anything the user calls a Scenario app, a saved pipeline, or a multi-step generation graph. Triggers include listing workflows, building workflow_run's inputs object, pricing a run with a dry run, approving or rejecting a stuck approval node, a run rejected for input length, or a workflows_list reply flooding the context. Creating or editing graphs is scenario-workflow-authoring. Keywords: workflow, app, approval gate."
 license: MIT
 ---
 
