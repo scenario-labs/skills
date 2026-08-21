@@ -36,8 +36,8 @@ The last rung applies more often than it looks: 16:9 key art seldom survives to 
 1. Master: 16:9 text-free key art, approved.
 2. 1:1 feed: generative reframe with a prompt naming what must stay ("the knight centered, both banners visible"), then a resize pass to the exact deliverable pixels.
 3. 9:16 story: a far ratio, so recompose natively: one run per `scenario-image` with the master as reference and a 9:16 composition clause; the master holds palette and subject on-look.
-4. Thumbnail: readability rules the crop, so reframe tight on the face or product, then `asset_display` the result and judge it small: thumbnails are seen at a tenth of their size.
-5. Verify dimensions against the deliverable list, overlay the title card per format onto each final canvas, then file the set in a collection.
+4. Thumbnail: readability rules the crop, so reframe tight on the face or product, land exact with a resize, then `asset_display` the result and judge it small: thumbnails are seen at a tenth of their size.
+5. Verify dimensions against the deliverable list and batch-check that subjects survived with one `asset_analyze` pass, then overlay the title card per format onto each final canvas and file the set in a collection.
 
 ## Common mistakes
 
