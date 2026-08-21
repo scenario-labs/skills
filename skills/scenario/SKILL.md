@@ -29,23 +29,23 @@ For non-interactive runs, use the `team_id` and `project_id` from the task instr
 
 ## Quick reference
 
-| Step              | Tool                                     | Notes                                              |
-| ----------------- | ---------------------------------------- | -------------------------------------------------- |
-| Resolve scope     | `teams_list`, then `projects_list`       | Once per session; pass the ids on every call       |
-| Find a model      | `search` or `recommend`                  | Free; never hardcode model ids                     |
-| Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as`         |
-| Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost |
-| Wait              | `jobs_wait`                              | Server-side long-poll; never loop `job_get`        |
-| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                         |
-| Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                       |
-| Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                 |
-| Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt              |
+| Step              | Tool                                     | Notes                                                   |
+| ----------------- | ---------------------------------------- | ------------------------------------------------------- |
+| Resolve scope     | `teams_list`, then `projects_list`       | Once per session; pass the ids on every call            |
+| Find a model      | `search` or `recommend`                  | Free; `recommend` for a capability, `search` for a name |
+| Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as` and caps     |
+| Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost      |
+| Wait              | `jobs_wait`                              | Server-side long-poll; never loop `job_get`             |
+| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                              |
+| Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                            |
+| Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                      |
+| Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                   |
 
 ## Worked example
 
 Generating a stylized game prop image:
 
-1. `search` with `target="models"`, `query="flux"`, `public=true`, or `recommend` with the user's own words as `prompt`. Re-discover ids each time: availability differs per team.
+1. `recommend` with the user's own words as `prompt` when the need is a capability; `search` with `target="models"`, `query="flux"`, `public=true` when you have a name, and for private or unlisted models. `search` ranks by keyword and its `filters` hold no capability key, so a capability-worded query can rank the wrong output type first. Re-discover ids each time: availability differs per team.
 2. `model_schema_get` on the pick: exact field names, types, required flags, defaults, and caps such as the prompt's `max_length` (an overrun is a 400, never a trim). File fields take asset ids even when named `...Url`, and `cost_impact: true` flags what moves the price.
 3. If the schema carries `runs_as` (`"lora"` or `"composition"`), never send that model's own id to `model_run`. Its `run_with.required_arguments` holds the real call: `model_id` there is the base model, and its `parameters` (the `loras` or `modelId` wiring) merge into inputs from the same schema. Sending `required_arguments` alone discards your prompt.
 4. Optional: `prompt_spark` rewrites a thin prompt into an on-model one; pass the discovered id (a LoRA's own, not its base) and the draft `prompt`. Skip deliberate prompts.
@@ -58,11 +58,11 @@ Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and 
 ## Limits that stop a batch
 
 - **Concurrency.** Past a per-team ceiling, `model_run` returns a 429 whose `details` name the limit (`actionName`) and the ceiling (`actionLimit`). Launch with `wait=false` until a 429 names the ceiling, hold that many in flight, and let `jobs_wait` retire them first; an immediate retry repeats the error.
-- **Cancellation.** A launched job is committed spend: `job_cancel` rejects most generation jobs (400 `Cannot cancel this type of job`), so plan batches with no abort path; a `jobs_wait` timeout needs a re-call with `pending_job_ids`, not a cancel.
+- **Cancellation.** A launched job is committed spend: `job_cancel` rejects most generation jobs (400 `Cannot cancel this type of job`), so plan batches with no abort path. `jobs_wait` takes no timeout argument either, so "wait briefly, then bail" is not expressible: it long-polls to the server budget, and a timeout is a re-call with `pending_job_ids`, never a cancel.
 - **Model access.** A 403 on `model_run` names the model and the plan it needs: surface the upgrade or pick another model, retrying never clears it. `recommend` flags these ahead of time as `requires_plan_upgrade`; never run one.
 
 ## Common mistakes
 
-- A bare value where the schema says `array: true`: silently dropped, the run ignoring your reference or LoRA.
+- A bare value where the schema says `array: true`: silently dropped, the run ignoring your reference or LoRA. `asset_get` on the output echoes what the run consumed (`metadata.referenceImages`, `parentId`), the cheapest proof it was not.
 - Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. On `ask_user`, present the options; the user's pick wins (non-interactive: task instructions, else `proceed`). On `proceed`, prefer `specialty.model_id`, else the top `ranked` entry.
 - Debugging blind: the `diagnose` MCP prompt (or `diagnostics_run`) returns trace ids; `usage` answers credit questions.
