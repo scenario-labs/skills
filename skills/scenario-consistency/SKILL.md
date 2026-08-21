@@ -1,6 +1,6 @@
 ---
 name: scenario-consistency
-description: "Use when one look must hold across many Scenario generations: the same character across scenes or a turnaround, the same product across angles and colorways, the same style across an icon set or tileset, or a variant that matches an approved baseline except for one change. Triggers include make this match, same character, keep it consistent, character sheet, reference sheet, on-model, and whether to train a LoRA. Keywords: consistency, identity, reference image, control map, ControlNet, seed."
+description: "Use when one look must hold across Scenario generations: one character across scenes or a turnaround, one product across angles and colorways, one style across icon sets or tilesets, a character from an uploaded image or drawing, or a variant off an approved baseline by one change. Triggers include make this match, same character, keep it consistent, character sheet, reference sheet, on-model, when to train a LoRA. Keywords: consistency, identity, reference image, control map, ControlNet, seed."
 license: MIT
 ---
 
@@ -20,7 +20,7 @@ license: MIT
 | Seed reuse                 | one image's exact roll      | low    | re-rolling a single generation         |
 | Trained LoRA               | a house style at scale      | high   | repeated brand work, not one character |
 
-Scenario's published pipeline guidance says to "generate one strong reference image, then pass it as an image input to every scene generation" and to prefer models with the most reference-image slots.
+Scenario's published pipeline guidance: generate one strong reference image, pass it as an image input to every scene generation, and prefer models with the most reference-image slots.
 
 ## The baseline-plus-delta prompt
 
@@ -28,29 +28,31 @@ Write out everything that must **not** change, then put the single change in a f
 
 Enumerate specifics: subject geometry, camera height and angle, subject size and position in frame, lighting direction, each named sub-element and where it sits, palette by name or hex, and embedded text. Look at the baseline first (`asset_display`): you cannot enumerate a shade you have not seen, and vague anchors drift.
 
-Attach the approved baseline as a reference image alongside it. Current image models converge on `referenceImages`, but cap, requiredness, and cardinality all come from `model_schema_get`, and on some models the field is a single scalar file. Pass an array only where the schema says `array: true`, and there wrap even a lone asset as `["asset_..."]`: a bare string is dropped silently and the run succeeds while ignoring it. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (`collection_create`, `collection_add_assets`, catalog tools on the write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
+Attach the approved baseline as a reference image alongside it. Image models converge on `referenceImages`, but cap, requiredness, and cardinality all come from `model_schema_get`, and on some models the field is a single scalar file. Wrap an array only where the schema says `array: true`, even a lone asset as `["asset_..."]`: a bare string is silently dropped and the run succeeds while ignoring it. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (catalog tools, write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
 
-A set takes one `model_run` per item: a batch-count field repeats one prompt, so it cannot carry a per-item delta clause.
+The anchor can be an upload: the user's character art, sketch, or product photo goes up with `upload_asset` plus `upload_asset_complete` (see `scenario`) and rides the reference field like any approved hero. `asset_describe` (see `scenario-asset-analysis`) turns it into a promptable synthesis to seed the baseline enumeration.
+
+A set takes one `model_run` per item: a batch-count field repeats one prompt and cannot carry a per-item delta clause.
 
 ## Locking structure with a control map
 
-Generate the control map and pass it as a conditioning input. Never extract the map for the attribute that is the delta: a pose map from the approved image locks the very pose you were asked to change, so a pose set needs its map from a target-pose image, or none at all.
+Generate the map and pass it as a conditioning input. Never extract it for the attribute that is the delta: a pose map from the approved image locks the pose you were asked to change; a pose set needs its map from a target-pose image, or none.
 
 `asset_detect` takes an `asset_id` and a `modality` from `canny`, `depth`, `grayscale`, `lineart_anime`, `mlsd`, `normal`, `pose`, `scribble`, `segmentation`, `sketch` (`remove_background` defaults true). Catalog-only and write lane, despite the docs page grouping it under Analysis: run it via `scenario_tool_execute_write`.
 
-The control block (`controlImage`, `controlModality`, `controlStrength`, `controlStart`, `controlEnd`) exists only on models listing `controlnet` in `capabilities`, so check that before planning around it; models without it take reference images instead. `controlModality` allows `canny`, `tile`, `depth`, `blur`, `pose`, `gray` and `low-quality`, so only canny, depth and pose map across, and `grayscale` becomes `gray`. `controlStrength` defaults to 0.7 with a recommended 0.3 to 0.8 band: near 0.7 for canny, depth and tile, 0.8 to 0.9 for pose, gray and blur, rigid above 0.9. Strength is how much, `controlStart` and `controlEnd` are when: `controlEnd` near 0.65 locks composition early, then releases so the prompt refines detail.
+The control block (`controlImage`, `controlModality`, `controlStrength`, `controlStart`, `controlEnd`) exists only on models listing `controlnet` in `capabilities`: check before planning around it; models without it take reference images. `controlModality` allows `canny`, `tile`, `depth`, `blur`, `pose`, `gray` and `low-quality`: only canny, depth and pose map across, `grayscale` becoming `gray`. `controlStrength` defaults to 0.7 with a recommended 0.3 to 0.8 band: near 0.7 for canny, depth and tile, 0.8 to 0.9 for pose, gray and blur, rigid above 0.9. Strength is how much, `controlStart` and `controlEnd` are when: `controlEnd` near 0.65 locks composition early, then releases so the prompt refines detail.
 
 ## Worked example: five poses of one mascot
 
 1. `asset_display` the approved hero (`asset_hero`) and write its baseline: the full must-not-change enumeration above.
-2. `search` (`target="models"`, `public=true`) for an image model, preferring reference-image slots, then `model_schema_get`: the reference field's exact name, cap, cardinality, and whether it is required.
-3. One `model_run` per pose, five in all: the byte-identical baseline, the pose alone in the final clause, the hero in the reference field shaped as the schema says: `["asset_hero"]` only under `array: true`. No seed. No control map: a pose map from the hero locks the very pose being changed.
-4. `jobs_wait` on the five job ids, re-calling with `pending_job_ids` until done. `asset_display` each against the hero; fix drift by tightening the enumeration, not by chaining outputs.
+2. `recommend` with the task's own words as `prompt` (`search` only for a named family), preferring models with reference-image slots, then `model_schema_get`: the reference field's name, cap, cardinality, requiredness.
+3. One `model_run` per pose, five in all: the byte-identical baseline, the pose alone in the final clause, the hero in the reference field shaped as the schema says: `["asset_hero"]` only under `array: true`. No seed. No control map: a pose map from the hero locks the pose being changed.
+4. `jobs_wait` on the five jobs, re-calling with `pending_job_ids` until done. `asset_display` each against the hero; fix drift by tightening the enumeration, not by chaining outputs.
 
 ## Common mistakes
 
-- Reaching for a seed to make two different prompts match: it reproduces one generation and transfers nothing. Across a set leave it unset; set one only to re-roll a single unchanged prompt.
-- Writing "same as before": there is no memory between calls, so restate the baseline in full every time.
+- Reaching for a seed to make two prompts match: it reproduces one generation and transfers nothing. Leave it unset across a set; set one only to re-roll a single unchanged prompt.
+- Writing "same as before": there is no memory between calls; restate the baseline in full each time.
 - Chaining a set output to output: drift compounds. Anchor every item to the same approved baseline.
 - Training a LoRA for one character: train for a house style spanning many assets. A trained LoRA also never runs by its own id: its schema's `runs_as` and `run_with` carry the base-model call (see `scenario`).
 - Assuming `asset_detect` modality names are valid `controlModality` values.
