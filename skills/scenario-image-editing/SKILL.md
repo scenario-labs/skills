@@ -1,6 +1,6 @@
 ---
 name: scenario-image-editing
-description: "Use when editing an existing image on Scenario through MCP with a tool model rather than a new generation: upscale or enhance to 2x, 4K, or 8K, super resolution, 3D LUT color grade, color correction, posterize, vignette, film grain, blur, sharpen, glow, chromatic aberration, oilify, crystallize, dodge and burn, tint, desaturate, expand or uncrop a canvas, reframe an aspect ratio, resize to exact pixels, slice tiles, contact sheet, split into layers, remove a background or watermark, vectorize."
+description: "Use when editing an existing image on Scenario through MCP with a tool model, not a new generation: upscale or enhance to 2x, 4K, 8K, super resolution, 3D LUT color grade, color correction, posterize, solarize, vignette, film grain, blur, sharpen, glow, chromatic aberration, oilify, cubism, crystallize, dodge and burn, tint, desaturate, expand or uncrop, reframe an aspect ratio, resize to exact pixels, slice tiles, contact sheet, split into layers, remove a background or watermark, vectorize."
 license: MIT
 ---
 
@@ -36,7 +36,7 @@ These finish inside `model_run`, returning `status: "success"` with the assets a
 
 ## Upscaling is a model family, not a knob
 
-Upscalers are prompt-optional `img2img` models: discover with `filters={"tags": ["image-upscale"]}` (21 hits at authoring time). Fidelity upscalers (Topaz, Recraft Crisp) sharpen and enlarge what exists, the pick when output must stay on-model; creative ones (Magnific Creative, the Clarity pair) carry a creativity dial that invents detail and can redraw fine features, so compare against the source. Sizing is per model, a factor (2x to 16x) or a target resolution or megapixels, ceilings 4K to 8K, all from `model_schema_get`. Cost follows output pixels: `dry_run` the exact size before a batch. Purpose-built variants protect seams on tileable textures and continuity on 360 panoramas: see `scenario-textures` and `scenario-skyboxes`.
+Upscalers are prompt-optional `img2img` models: discover with `filters={"tags": ["image-upscale"]}` (21 hits at authoring time). Fidelity upscalers (Topaz, Recraft Crisp) sharpen and enlarge what exists, the pick when output must stay on-model; creative ones (Magnific Creative, the Clarity pair) carry a creativity dial that invents detail and can redraw fine features, so compare against the source. Sizing is per model, a factor (2x to 16x) or a target resolution or megapixels, ceilings 4K to 8K, all from `model_schema_get`. Cost follows output pixels: `dry_run` the exact size before a batch. Unlike the inline effects above, upscales run as jobs: `jobs_wait`, re-called with `pending_job_ids` on timeout. Purpose-built variants protect seams on tileable textures and continuity on 360 panoramas: see `scenario-textures` and `scenario-skyboxes`.
 
 ## Expanding a canvas is four different tools
 
