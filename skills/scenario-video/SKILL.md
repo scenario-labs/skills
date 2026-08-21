@@ -39,14 +39,14 @@ The source image already fixes the look, so prompt only motion, camera, and timi
 All editing is `model_run` on a video-input model; discover each with `search`:
 
 - Prompt-driven edits (restyle, swap objects, characters, backgrounds, or reframe to another aspect ratio): query `"video edit"` or `"reframe"`. A reframe outpaints past the frame, unlike a deterministic resize.
-- Lipsync and dubbing: query `"lipsync"` or `"dubbing"`; see the next section.
+- Lipsync and dubbing: see the next section.
 - Upscaling up to 4K: query `"video upscale"`.
 - Deterministic utilities (trim, split, resize, effects, grading, frame extraction, background removal): see `scenario-video-editing`. Assembling a finished cut: see `scenario-video-assembly`.
 - Extending a clip with new footage from its last frame: query `"extend video"`.
 
 ## Dubbing is not lipsync
 
-Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Three steps:
+Dubbing translates the speech and keeps each speaker's own voice, tone, and timing. It does not move the mouth, so a dubbed talking head still has lips forming the original language. Three steps, after any trim the limits below require:
 
 1. **Dub.** Takes the clip as `file` and a required `targetLang` from the schema's allowed values. Omit `sourceLang` to auto-detect, since the value that means auto differs between models. When a brand or name must survive translation, pick a hit whose schema carries `keyterms`, as not all do; where it is `array: true`, pass `["Scenario"]` even for one term.
 2. **Extract.** Dubbing returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the speech out with `search` `query="audio extract"`; a generic `query="tool"` buries it.
