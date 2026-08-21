@@ -37,7 +37,7 @@ A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields
 1. `recommend` with `capability="img2img"` and the user's own words as `prompt`. On `next_step.type="ask_user"`, present the options instead of picking; skip any `requires_plan_upgrade` entry.
 2. `upload_asset` the product photo, then `upload_asset_complete`, which returns the `asset_id`. Only the inline path under ~100KB skips the second call.
 3. `model_schema_get` on the pick: the reference field's name and cap, which sizing family it uses, the prompt `max_length`, and whether a `mask` field exists.
-4. For a masked edit, read the `mask` field's own description before building anything. Masks are not interchangeable: one model wants an alpha channel at the source's exact dimensions, another wants a black and white image it resizes itself, and which pixels get painted differs too.
+4. For a masked edit, read the `mask` field's own description before building anything. Masks are not interchangeable: one model wants an alpha channel at the source's exact dimensions, another wants a black and white image it resizes itself, and which pixels get painted differs too. With no mask in hand, `search` (`target="models"`, `query="segment"`, `public=true`) finds `img2img` segmentation models that take a short noun phrase or a box and return one mask per object; most hits segment 3D meshes, so check `capabilities`. Where no convention fits, an instruction editor scopes the edit in prose instead.
 5. `model_run` with the schema's own field names: the prompt, the reference (wrapped in an array only where the schema says `array: true`), plus the mask and sizing fields it named. Use `dry_run=true` first when cost matters.
 6. `jobs_wait`; its ~180s timeout is not an error, so re-call it with the returned `pending_job_ids` as `job_ids`. Then `asset_display` to review and `asset_download` to save.
 
@@ -47,4 +47,4 @@ A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields
 - Reusing one model's parameter block on another: `aspectRatio` and `width`/`height` rarely coexist, and unknown fields are rejected.
 - Retrying a 403 `ModelAccessRestrictedError`: it names `modelId` and `requiredPlan`, so surface the upgrade or pick another model.
 - Prompting "transparent background": diffusion outputs are opaque. Use a `background` field when the schema has one, otherwise run a background-removal model afterwards.
-- Assuming a model can hit a requested pixel size: some expose an aspect ratio and nothing else.
+- Assuming a model can hit a requested pixel size: some expose an aspect ratio and nothing else. Confirm what landed with `asset_get`, which reports `properties.width` and `properties.height`; `jobs_wait` returns asset ids only.

@@ -12,14 +12,14 @@ Scenario generates audio through the same loop as images. The live catalog cover
 
 ## Quick reference
 
-| Step           | Tool                                                                                     | Notes                                                                     |
-| -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Find a model   | `search` target="models", query="music" / "sound effect" / "text to speech", public=true | audio generators list `txt2audio` in capabilities                         |
-| Inspect inputs | `model_schema_get`                                                                       | audio schemas vary widely: durations, lyrics, voices, looping             |
-| Generate       | `model_run`                                                                              | schema-conformant parameters; wait=false for long jobs                    |
-| Wait           | `jobs_wait`                                                                              | blocks server-side; re-call passing pending_job_ids as job_ids on timeout |
-| Listen         | `asset_display`                                                                          | renders an inline audio player                                            |
-| Save           | `asset_download`                                                                         | returns a download URL: `curl -L -o out.mp3 "<url>"`                      |
+| Step           | Tool                                                                                     | Notes                                                         |
+| -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Find a model   | `search` target="models", query="music" / "sound effect" / "text to speech", public=true | audio generators list `txt2audio` in capabilities             |
+| Inspect inputs | `model_schema_get`                                                                       | audio schemas vary widely: durations, lyrics, voices, looping |
+| Generate       | `model_run`                                                                              | schema-conformant parameters; wait=false for long jobs        |
+| Wait           | `jobs_wait`                                                                              | blocks server-side; on timeout re-call with pending_job_ids   |
+| Listen         | `asset_display`                                                                          | renders an inline audio player                                |
+| Save           | `asset_download`                                                                         | returns a download URL: `curl -L -o out.mp3 "<url>"`          |
 
 Find existing audio assets with `search` target="assets", filters={kind: "audio"}. Team and project scope (`team_id`, `project_id`): see the `scenario` skill.
 
@@ -27,8 +27,8 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 
 - Music: text-to-music models produce short beds or full-length songs with vocals; the song lane has its own contract, below.
 - Sound effects: text-to-SFX models generate short clips from a description; some support seamless looping.
-- Voice and speech: text-to-speech models with preset voices, multilingual output, and emotion or pacing controls; some clone a voice from a short reference clip; speech-to-speech re-voices an existing recording.
-- Video to audio: models that score a silent video or add synchronized sound effects, taking a video asset as input.
+- Voice and speech: text-to-speech with preset voices, multilingual output, and emotion or pacing controls; some clone a voice from a short clip, and speech-to-speech re-voices a recording.
+- Video to audio: models that score a silent video or add synchronized effects.
 - Utilities: audio cut, split, and extract tools plus speech-to-text transcription; discover with `search` query="audio" or query="tool".
 
 Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music, SFX), `scenario-ace-step` and `scenario-minimax-music` (songs), `scenario-sonilo` (SFX and video scoring).
@@ -36,27 +36,27 @@ Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music,
 ## Worked example: a game sound effect
 
 1. `search` target="models", query="sound effect", public=true. Returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only).
-2. `model_schema_get` model_id="model_elevenlabs-sound-effects-v2". Returns the exact fields: prompt plus model-specific controls such as duration or looping.
-3. `model_run` model_id="model_elevenlabs-sound-effects-v2", parameters={"prompt": "heavy wooden treasure chest creaking open, single event, dry, no music"}.
-4. If the response is status='in_progress', `jobs_wait` job_ids=["job_xxx"]. Timeout is not an error; re-call with the returned pending_job_ids as job_ids.
+2. `model_schema_get` with that `model_id`. Returns the exact fields: prompt plus controls such as duration or looping.
+3. `model_run` with the same `model_id` and parameters={"prompt": "heavy wooden treasure chest creaking open, single event, dry, no music"}.
+4. If status='in_progress', `jobs_wait` job_ids=["job_xxx"], re-calling with the returned pending_job_ids on timeout.
 5. `asset_display` asset_id="asset_xxx" to play it inline.
-6. `asset_download` asset_id="asset_xxx" with no `format`, then save the returned URL with `curl -L`.
+6. `asset_download` with no `format`, then save the returned URL with `curl -L`.
 
 Prompting tips:
 
 - SFX: name the source, material, action, and acoustic space, and say what to exclude ("no music", "no reverb"). One event per clip; generate variations as separate runs.
-- Music: give genre, mood, tempo, and instrumentation. Short beds usually take a single prompt, with duration or looping in the schema; songs with vocals are their own lane, below.
-- Speech: keep the text field to the words to speak. Voice choice, language, emotion, and pacing live in separate schema fields or inline tags depending on the model; check the schema instead of packing direction into the text.
+- Music: give genre, mood, tempo, and instrumentation. Short beds usually take a single prompt, with duration or looping in the schema.
+- Speech: keep the text field to the words to speak; voice, language, emotion, and pacing live in separate schema fields or inline tags.
 
 ## Songs with vocals
 
-A full-length song is not a longer music bed, and song schemas vary more than the rest of the audio lane, so `model_schema_get` decides the shape: a style prompt plus a separate lyric sheet, a single prose prompt carrying style and structure, or an ordered section array with per-section text and styles. Per-model contracts: `scenario-ace-step`, `scenario-minimax-music`, `scenario-elevenlabs`.
+A full-length song is not a longer music bed, and song schemas vary more than the rest of the lane, so `model_schema_get` decides the shape: a style prompt plus a separate lyric sheet, one prose prompt carrying both, or an ordered section array with per-section text and styles.
 
 - **Words never go in a style field.** Where the schema splits the two, the style field carries genre, mood, tempo, key, vocal style, and instrumentation; the lyric field carries the words, shaped by section tags such as `[Verse]` and `[Chorus]`.
-- **Instrumental and auto-lyrics are flags** where the schema has them; asking for either in prose is unreliable, and where no flag exists the text fields are the only lever.
+- **Instrumental and auto-lyrics are flags** where the schema has them; asking for either in prose is unreliable, and where no flag exists the text fields are the only lever. Flipping the instrumental flag on a rerun gives a different take, not the same song: `seed`, where a model has one, only repeats identical settings. For an instrumental of a track you already have, try an audio2audio cover model (`search` `query="cover"`), checking the schema since not all carry the flag.
 - **Text fields are length-capped** per model and field, and going over is a 400 rather than a truncation.
 
-Where the schema exposes a duration field (flagged `cost_impact`), it caps both length and price; where none exists, the lyric sheet or prompt sets both. Either way, price the song with `dry_run: true` before committing, and launch with `wait=false`.
+Where the schema exposes a duration field (flagged `cost_impact`), it caps both length and price; where none exists, the lyric sheet or prompt sets both. Either way, price the song with `dry_run: true` before committing, then launch with `wait: false`; both are `model_run` arguments, not `parameters` keys.
 
 ## Common mistakes
 
@@ -68,4 +68,4 @@ Where the schema exposes a duration field (flagged `cost_impact`), it caps both 
 - Putting voice direction inside TTS text ("say this angrily"): direction can end up spoken. Use the schema's emotion or voice fields.
 - Sending image parameters (width, height) to audio models: their schemas do not accept them.
 - Pasting lyrics into the style field: the model then describes a song instead of singing one.
-- Running a full-length song without `dry_run`: when the schema has no duration field, the lyric sheet sets both the length and the bill.
+- Putting `dry_run` or `wait` inside `parameters`: they are `model_run`'s own arguments, so a stray `dry_run` still charges and a stray `wait` blocks up to 180s.

@@ -18,7 +18,7 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 | -------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Find a model   | `search`                           | `target="models"`, `public=true`, query `"image to video"`, `"video upscale"`, `"lipsync"`, `"video edit"` |
 | Inspect inputs | `model_schema_get`                 | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)             |
-| Upload source  | `upload_asset`                     | A local still or clip becomes an `asset_id`; never pass file paths                                         |
+| Upload source  | `upload_asset`                     | A local still or clip becomes an `asset_id`                                                                |
 | Refine prompt  | `prompt_spark`                     | Optional; rewrites a thin motion idea into an on-model prompt                                              |
 | Generate       | `model_run`                        | `wait=false` for video; `dry_run=true` to estimate cost first                                              |
 | Wait           | `jobs_wait`                        | Re-call with the returned `pending_job_ids` until done                                                     |
@@ -26,22 +26,22 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 
 ## Worked example: animate a key art still into a short ad clip
 
-1. `search` with `target="models"`, `query="image to video"`, `public=true`. Prefer the newest non-deprecated hits; re-discover rather than hardcoding, availability shifts per team and generations churn.
+1. `search` with `target="models"`, `query="image to video"`, `public=true`. Prefer the newest non-deprecated hits.
 2. `model_schema_get` on the pick. Note the image field, duration options, and any last-frame anchor.
 3. `upload_asset` the still; it returns `asset_id="asset_abc"`.
 4. `model_run` with `parameters={"image": "asset_abc", "prompt": "slow dolly-in, steam rising from the mug, shallow depth of field"}` and `wait=false`. Returns a `job_id`.
-5. `jobs_wait` with `job_ids=["job_xyz"]`. On `status="in_progress"`, call again, passing the returned `pending_job_ids` as `job_ids`.
-6. `asset_display` the output; `asset_download` (no `format`), saving the URL with `curl -L`.
+5. `jobs_wait` with `job_ids=["job_xyz"]`, re-calling with the returned `pending_job_ids` while any remain.
+6. `asset_display` the output, then `asset_download` (no `format`).
 
-The source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. Several also accept first and last frame anchors or keyframe sequences; take exact parameter names from `model_schema_get`, never from memory.
+The source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. Several also accept first and last frame anchors or keyframe sequences; take the exact names from `model_schema_get`.
 
 ## Editing existing footage
 
 All editing is `model_run` on a video-input model; discover each with `search`:
 
-- Prompt-driven edits (restyle, swap objects, characters, backgrounds, or reframe to another aspect ratio): query `"video edit"` or `"reframe"` (Grok Edit Video, Wan 2.7 Video Edit, Lucy Edit, Luma Modify Video, Luma Ray 3.2 Reframe). A reframe outpaints past the frame, unlike a deterministic resize.
+- Prompt-driven edits (restyle, swap objects, characters, backgrounds, or reframe to another aspect ratio): query `"video edit"` or `"reframe"`. A reframe outpaints past the frame, unlike a deterministic resize.
 - Lipsync and dubbing: query `"lipsync"` or `"dubbing"`; see the next section.
-- Upscaling up to 4K: query `"video upscale"` (Topaz, SeedVR2, Magnific, Flash VSR).
+- Upscaling up to 4K: query `"video upscale"`.
 - Deterministic utilities (trim, split, resize, effects, grading, frame extraction, background removal): see `scenario-video-editing`. Assembling a finished cut: see `scenario-video-assembly`.
 - Extending a clip with new footage from its last frame: query `"extend video"`.
 
@@ -51,13 +51,13 @@ Dubbing translates the speech and keeps each speaker's own voice, tone, and timi
 
 1. **Dub.** Takes the clip as `file` and a required `targetLang` from the schema's allowed values. Omit `sourceLang` to auto-detect, since the value that means auto differs between models. When a brand or name must survive translation, pick a hit whose schema carries `keyterms`, as not all do; where it is `array: true`, pass `["Scenario"]` even for one term.
 2. **Extract.** Dubbing a video returns a dubbed video, not a bare track, and lipsync wants an audio asset. Pull the new speech out with `search` `query="audio extract"`, which surfaces the tool; a generic `query="tool"` buries it.
-3. **Lipsync.** Takes `video` and `audio` separately, plus `syncMode` where the schema exposes it (`cut_off`, `loop`, `bounce`, `silence`, `remap`), which decides what happens when the two durations disagree. The names do not say which one loses, so read the field description and set it rather than inheriting a default.
+3. **Lipsync.** The clip and the track are separate fields, `video`/`audio` on most hits and `videoUrl`/`audioFile` on others. A duration-mismatch control is not universal: where present it is `syncMode` or `lipsyncMode` (`cut_off`, `loop`, `bounce`, `silence`, `remap`) with a per-model default, and there `loop` and `bounce` extend the shorter stream while `cut_off` ends at it; elsewhere a `loop` boolean loops the audio instead. Take names and defaults from `model_schema_get`.
 
-Building a localized talking head from nothing runs audio, video, dub, extract, lipsync. Judge it on a stylized character before promising it on a photoreal one.
+Judge a localized talking head on a stylized character before promising it on a photoreal one.
 
 ## Duration limits
 
-Where a model bounds input length it rejects rather than trims: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A ceiling is not a standard field: look for it in the file field's own description; many state none. When one applies, trim first with the deterministic cut or split tools (`search` `query="video cut"`), landing under the limit rather than exactly on it.
+Where a model bounds input length it rejects rather than trims: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A ceiling can be a typed `max_duration` on the file field, prose in that field's description, or absent, so check both, on the audio input as readily as the video. When one applies, trim with the deterministic cut or split tools (`search` `query="video cut"`, `public=true`) before the run that enforces it, and before any step whose output must match the trimmed footage, such as a dub. Land inside the stated range, not on its edge.
 
 ## Common mistakes
 

@@ -31,7 +31,7 @@ A realistic sequence for "make a 3D treasure chest prop":
 4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `wait=false` (`dry_run=true` first to price a batch), then `jobs_wait` with `job_ids=["<job_id>"]` (it accepts up to 32 ids; re-call it with the returned `pending_job_ids` as `job_ids` if it times out).
 5. `asset_display` with the output `asset_id` to preview, then `asset_download` and `curl -L -o chest.glb "<url>"` for engine import.
 
-Multi-view models accept several images of the same subject from different angles; the accepted count varies per model (from 1-4 up to 8), so take it and the image ordering from `model_schema_get` (the first image is usually the front view).
+Multi-view models accept several images of one subject from different angles; the count and the ordering vary per model, so take both from `model_schema_get` (the first image is usually the front view).
 
 ## Inspecting results
 
@@ -45,15 +45,15 @@ Multi-view models accept several images of the same subject from different angle
 
 Rigging is a separate `3d23d` step run on a finished mesh, not a flag on the generator. Find the models with `search` `query="rigging"`.
 
-Body plan picks the model. Humanoid models take the mesh and little else (a front-facing hint, or an approximate height, depending on the model) and infer a biped skeleton. Non-biped work goes to a model exposing `rigType`, whose values cover `quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, and `aquatic`. Nothing exposes a custom bone hierarchy or a skin-influence count, so export the rigged file and finish weighting or retargeting in a DCC such as Blender or Maya.
+Body plan picks the model. Humanoid models take the mesh and little else (a front-facing hint, or an approximate height, depending on the model) and infer a biped skeleton. Non-biped work goes to a model exposing `rigType`, whose values cover `quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, and `aquatic`.
 
 Three schema details decide whether the output is usable:
 
-- **Input format.** Rigging models accept GLB, and often OBJ, FBX, or STL. OBJ cannot carry a rig, so the output goes out as GLB or FBX.
+- **Formats.** Rigging models accept GLB, and often OBJ, FBX, or STL. None exposes an output-format field, so the rig comes back as GLB or FBX and most descriptions do not say which: expect a DCC pass when the engine needs the other.
 - **Size ceiling.** A `max_size` on the file input is the exception rather than the rule (one humanoid rigging model caps at 30 MB). Check the schema before assuming a large mesh needs decimating.
 - **Animation versus rig.** Setting the optional `animation` field retargets a preset clip, and by default only the retarget file comes back. Set `includeRiggedModel` to keep the plain rigged mesh too.
 
-When only motion is wanted, motion-transfer video models animate a still character image with no skeleton at all: see `scenario-video`.
+When only motion is wanted, motion-transfer video models animate a still character image with no skeleton at all: see `scenario-video`. Video-to-motion models that auto-rig an uploaded mesh are the one place an `outputFormat` enum picks the engine target.
 
 ## Common mistakes
 
@@ -62,5 +62,5 @@ When only motion is wanted, motion-transfer video models animate a still charact
 - Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor). Re-discover with `search` each session.
 - Pasting raw asset URLs into chat instead of calling `asset_display`.
 - Forgetting `-L` with curl: download URLs may redirect before serving the file.
-- Promising a named skeleton or a specific influence count: pick the body plan and the export format, then finish the rest in a DCC.
+- Promising a named skeleton or a specific influence count: pick the body plan, then finish the rest in a DCC.
 - Sending a biped to a `rigType` model: the enum has no biped value, because humanoids have their own rigging models.
