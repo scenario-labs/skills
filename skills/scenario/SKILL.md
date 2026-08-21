@@ -57,7 +57,7 @@ Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and 
 | Error                                | Recovery                                                                                                                                |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `context_missing`                    | Nothing resolved: `teams_list`, then `projects_list`                                                                                    |
-| `context_ambiguous`                  | Several fit: present the options; the user picks                                                                                        |
+| `context_ambiguous`                  | Several fit: present the options; the user picks (non-interactive: task instructions name the pair, else stop and list)                 |
 | 403 Forbidden                        | Usually wrong scope, not missing: re-check the id pair                                                                                  |
 | 403 naming a plan                    | Surface the upgrade or switch models; retrying never clears it. `recommend` pre-flags these as `requires_plan_upgrade`                  |
 | 429 with `actionName`/`actionLimit`  | Concurrency ceiling: launch `wait=false`, hold `actionLimit` jobs in flight, let `jobs_wait` retire them; an immediate retry repeats it |
