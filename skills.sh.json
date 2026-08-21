@@ -101,7 +101,7 @@
     {
       "title": "Reviewing and organizing output",
       "description": "Read finished assets back: caption them, extract a style or a control map, check a batch against a brief, and file the keepers.",
-      "skills": ["scenario-asset-analysis"]
+      "skills": ["scenario-asset-analysis", "scenario-refine-loop"]
     },
     {
       "title": "Workflows and apps",
