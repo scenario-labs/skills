@@ -32,12 +32,12 @@ Write the script the way boards are drawn: a few verbs per shot ("Strut in. Pose
 
 ## Worked example: a 12-shot dance in one run
 
-1. Write the script: 12 shots over 24 seconds, edge poses named, every exit matching the next entry. Show it to the user first; it is the cheapest place to be wrong.
+1. Write the script: 12 shots over 24 seconds, edge poses named, every exit matching the next entry. Show it to the user first; it is the cheapest place to be wrong; unattended, write it down and continue.
 2. Generate the character sheet with an image model (via `search`), then the numbered 12-panel board with the sheet as reference so every panel is the same performer. Upload anything local with `upload_asset` (see the `scenario` skill).
 3. `search` with `target="models"`, `query="seedance"`, `public=true`; prefer the newest non-deprecated hit, e.g. `model_bytedance-seedance-2-5` (a live hit at authoring time: re-discover each session), then `model_schema_get` for caps and defaults.
 4. `model_run` with `dry_run=true` and `parameters={"prompt": "<the timecoded script>", "referenceImages": ["asset_sheet", "asset_board"], "duration": 24, "resolution": "720p"}` for the estimate; re-estimate after any change.
 5. Re-run with `wait=false`, then `jobs_wait` with the job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
-6. `asset_display` and step through every cut: both sides must agree in pose and match the panel. Repair a broken shot in the chained lane: split the master at its timecodes, regenerate it from its two boundary stills, rejoin (`scenario-video-editing`, `scenario-video-assembly`).
+6. `asset_display` and step through every cut: both sides must agree in pose and match the panel. Repair a broken shot in the chained lane: render its two boundary stills (as that lane teaches), split the master at the shot's timecodes, regenerate the shot between them, rejoin (`scenario-video-editing`, `scenario-video-assembly`).
 
 ## Common mistakes
 
