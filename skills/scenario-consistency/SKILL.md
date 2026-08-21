@@ -1,6 +1,6 @@
 ---
 name: scenario-consistency
-description: "Use when one look must hold across many Scenario generations: the same character across scenes or a turnaround, the same product across angles and colorways, the same style across an icon set or tileset, a character built from a user-uploaded image or drawing, or a variant matching an approved baseline except one change. Triggers include make this match, same character, character sheet, on-model, and whether to train a LoRA. Keywords: consistency, identity, reference image, ControlNet, seed."
+description: "Use when one look must hold across Scenario generations: one character across scenes or a turnaround, one product across angles and colorways, one style across icon sets or tilesets, a character from an uploaded image or drawing, or a variant off an approved baseline by one change. Triggers include make this match, same character, keep it consistent, character sheet, reference sheet, on-model, when to train a LoRA. Keywords: consistency, identity, reference image, control map, ControlNet, seed."
 license: MIT
 ---
 
@@ -45,7 +45,7 @@ The control block (`controlImage`, `controlModality`, `controlStrength`, `contro
 ## Worked example: five poses of one mascot
 
 1. `asset_display` the approved hero (`asset_hero`) and write its baseline: the full must-not-change enumeration above.
-2. `search` (`target="models"`, `public=true`) preferring reference-image slots, then `model_schema_get`: the reference field's name, cap, cardinality, requiredness.
+2. `recommend` with the task's own words as `prompt` (`search` only for a named family), preferring models with reference-image slots, then `model_schema_get`: the reference field's name, cap, cardinality, requiredness.
 3. One `model_run` per pose, five in all: the byte-identical baseline, the pose alone in the final clause, the hero in the reference field shaped as the schema says: `["asset_hero"]` only under `array: true`. No seed. No control map: a pose map from the hero locks the pose being changed.
 4. `jobs_wait` on the five jobs, re-calling with `pending_job_ids` until done. `asset_display` each against the hero; fix drift by tightening the enumeration, not by chaining outputs.
 
