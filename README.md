@@ -24,6 +24,9 @@ npx skills add scenario-labs/skills -s scenario -s scenario-video-ads -s scenari
 
 # Seedance music video
 npx skills add scenario-labs/skills -s scenario -s scenario-seedance-music-video -s scenario-seedance -s scenario-consistency
+
+# Seedance storyboarded choreography
+npx skills add scenario-labs/skills -s scenario -s scenario-seedance-storyboard -s scenario-seedance -s scenario-consistency -s scenario-video-editing -s scenario-video-assembly
 ```
 
 Skills need the Scenario MCP server connected:
@@ -103,14 +106,15 @@ The top 3D families in depth: mesh generation, retexture and rigging toolchains,
 
 Video generation and editing, music, sound effects, voice, and speech.
 
-| Skill                                                                          | Use it for                                                                                                        |
-| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| [scenario-video](skills/scenario-video/SKILL.md)                               | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities |
-| [scenario-video-editing](skills/scenario-video-editing/SKILL.md)               | Tool-model footage edits: LUT grades and effects, trim, split, resize, reverse, frames, masks, layers             |
-| [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a music video: beat-aligned shots, lyric transcription, shot sound under the master, assembly |
-| [scenario-video-ads](skills/scenario-video-ads/SKILL.md)                       | Producing a video ad from a product shot: brief, storyboard, cinematic grammar, fidelity gates, budget, delivery  |
-| [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                 |
-| [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions  |
+| Skill                                                                          | Use it for                                                                                                                            |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-video](skills/scenario-video/SKILL.md)                               | Text-to-video and image-to-video, motion prompting, lipsync, video editing, upscaling, cut/split/concat utilities                     |
+| [scenario-video-editing](skills/scenario-video-editing/SKILL.md)               | Tool-model footage edits: LUT grades and effects, trim, split, resize, reverse, frames, masks, layers                                 |
+| [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a music video: beat-aligned shots, lyric transcription, shot sound under the master, assembly                     |
+| [scenario-seedance-storyboard](skills/scenario-seedance-storyboard/SKILL.md)   | Movement that holds across cuts: timecoded shot scripts, character sheets and boards, pose-chained shots that play as one performance |
+| [scenario-video-ads](skills/scenario-video-ads/SKILL.md)                       | Producing a video ad from a product shot: brief, storyboard, cinematic grammar, fidelity gates, budget, delivery                      |
+| [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                                     |
+| [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions                      |
 
 ### Video model families
 
