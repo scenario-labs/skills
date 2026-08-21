@@ -12,15 +12,15 @@ Scenario's public catalog carries purpose-trained models per asset type (sprites
 
 ## Quick reference
 
-| Task                       | Call                                                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Find a model by asset type | `search` target="models", public=true, query="sprite" / "game icon" / "tileset" / "isometric" / "pixel art" |
-| Inspect inputs             | `model_schema_get` (always before `model_run`)                                                              |
-| Generate                   | `model_run`, then `jobs_wait`                                                                               |
-| Transparent background     | `search` query="background removal", run that tool model on the asset                                       |
-| Upscale or enhance         | `search` query="upscale" (2x to 16x tools exist)                                                            |
-| Pixel-art cleanup          | `search` query="pixel" (grid snapping, palette reduction)                                                   |
-| Export for an engine       | `asset_download` with format="png"                                                                          |
+| Task                       | Call                                                                                                                          |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Find a model by asset type | `search` target="models", public=true, query="sprite" / "game icon" / "tileset" / "isometric" / "pixel art"                   |
+| Inspect inputs             | `model_schema_get` (always before `model_run`)                                                                                |
+| Generate                   | `model_run` (`dry_run=true` prices a batch; launch `wait=false`), then `jobs_wait`; on timeout re-call with `pending_job_ids` |
+| Transparent background     | `search` query="background removal", run that tool model on the asset                                                         |
+| Upscale or enhance         | `search` query="upscale" (2x to 16x tools exist)                                                                              |
+| Pixel-art cleanup          | `search` query="pixel" (grid snapping, palette reduction)                                                                     |
+| Export for an engine       | `asset_download` with format="png"                                                                                            |
 
 ## Worked example: a transparent potion icon set
 
