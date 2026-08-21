@@ -26,8 +26,8 @@ The authoring-time hit for the first lane (Retro Diffusion Animation; re-discove
 
 1. `search` for the lane as above, confirm the pick with the user (unattended, take it from the task instructions, else the top hit), then `model_schema_get` it.
 2. If an approved static knight exists (made per `scenario-game-assets`), flatten it onto a plain background and `upload_asset` it as the `image` reference. Describe the knight in the `prompt` anyway: the reference steers, the words decide.
-3. `model_run` with the walking style, `returnSpritesheet=true`, and a noted `seed`, then `jobs_wait` as usual.
-4. `asset_display` the sheet and count its grid, then run the slicer with that grid to get one PNG per frame.
+3. `model_run` with the walking style and a noted `seed`, then `jobs_wait` as usual. `asset_display` the GIF and play it: tween errors and the loop direction (forward or ping-pong) only show in motion.
+4. Re-run with the same `seed` and `returnSpritesheet=true` for the engine frames, `asset_display` the sheet and count its grid, then run the slicer with that grid to get one PNG per frame.
 5. Per-frame finishing per `scenario-game-assets`: background removal where frames need alpha, pixel cleanup for grid and palette, upscaling on a pixel-preserving route, `asset_download` with `format="png"`.
 6. Verify the cycle two ways: step the frames in order, and compare each frame's alpha bounding box, since a foot escaping the box makes the sprite hop in engine.
 
