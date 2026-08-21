@@ -41,7 +41,7 @@ The music mux members replace the whole original track by default. `keepSpeechVo
 2. `model_schema_get` with that id: fields and caps before anything else.
 3. `upload_asset` the clip (see the `scenario` skill) to get its asset id.
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"video": "asset_x", "segments": [{"start": 0, "end": 4, "prompt": "footsteps on wet metal, close and sharp"}, {"start": 4, "end": 12, "prompt": "plasma rifle shots, hollow hangar reverb"}]}`: cost scales with clip length.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the muxed video, then `asset_download` it and the separate track.
 
 ## Common mistakes

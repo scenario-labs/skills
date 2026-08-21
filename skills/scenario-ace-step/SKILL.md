@@ -44,7 +44,7 @@ Keep `prompt` to a one-line style caption (genre, mood, instruments, production)
 1. `search` with `target="models"`, `query="ace-step"`, `public=true`. Pick members by mode name, e.g. `model_ace-step-1-5-turbo-text-to-music` and `model_ace-step-1-5-turbo-repaint` (live hits at authoring time: re-discover each session).
 2. `model_schema_get` on each id before running it.
 3. `model_run` the Text to Music member with `dry_run=true` and `parameters={"prompt": "indie folk, warm, fingerpicked guitar, soft female vocals", "lyrics": "[Verse]\n...\n[Chorus]\n...", "duration": 90, "vocalLanguage": "en"}`; re-estimate after changing `duration` or `numOutputs`.
-4. Repeat with `wait=false`, then `jobs_wait` with the job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+4. Repeat with `wait=false`, then `jobs_wait` with the job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 5. `asset_display` to listen; note the chorus window, say 24 to 52 seconds.
 6. `model_run` the Repaint member with `parameters={"srcAudio": "<asset id>", "repaintingStart": 24, "repaintingEnd": 52, "thinking": false, "prompt": "Repaint the selected section with new sung lyrics:", "lyrics": "<full sheet with the new chorus in place>"}`.
 7. Listen again, then `asset_download` the keeper (omit `format` for audio).

@@ -38,7 +38,7 @@ Text inside the image: quote the exact copy, spell out typography (weight, case,
 2. `model_schema_get` with that id: sizing bounds, mask presence, and defaults first.
 3. `upload_asset` the product photo (see the `scenario` skill) for its asset id.
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"prompt": "Editorial product photography, soft daylight. The exact bottle from the reference image on brushed concrete, label, shape, and color preserved. Headline \"DRINK GREEN\" in bold sans-serif, centered, no extra words, no duplicate text.", "referenceImages": ["asset_x"], "width": 1536, "height": 1024, "quality": "high"}` for the cost estimate.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the result and proofread the rendered text before batching; `asset_download` to save.
 
 ## Common mistakes

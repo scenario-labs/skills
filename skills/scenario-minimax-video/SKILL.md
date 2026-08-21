@@ -43,7 +43,7 @@ Write the rest as natural prose, ordered camera, subject, action, scene, lightin
 2. `model_schema_get` with that id: modes, caps, and allowed values before anything else.
 3. `upload_asset` two clean, evenly lit character stills (see the `scenario` skill) to get asset ids.
 4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "[Tracking shot] The scout from the reference images sprints across a rooftop at dusk, coat snapping in the wind, warm rim light, footsteps and distant traffic in the audio, cinematic realism.", "referenceImages": ["asset_a", "asset_b"], "duration": 8, "resolution": "2K", "aspectRatio": "16:9"}` for the cost estimate; re-estimate after changing duration, resolution, or the reference count.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`; H3 at 2K commonly runs several minutes.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`; H3 at 2K commonly runs several minutes.
 6. `asset_display` the output and review it with sound on: dialogue and SFX sync are part of what you paid for.
 
 ## Common mistakes

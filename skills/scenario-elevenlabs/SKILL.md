@@ -47,7 +47,7 @@ Both Dubbing members take an audio or video `file` with a required `targetLang`,
 2. `model_schema_get` with that id: fields and defaults before anything else.
 3. `upload_asset` the trailer video (see the `scenario` skill) to get an asset id.
 4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"file": "asset_x", "targetLang": "es", "keyterms": ["Aetherfall", "Kestrel Squad"]}`. The file drives the price: re-estimate per input.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the result (a video, because the input was) and confirm the keyterms survived; `asset_download` with no `format` to save it.
 
 ## Common mistakes

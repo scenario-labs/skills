@@ -38,7 +38,7 @@ Both editors take one source image and a plain instruction, under different fiel
 1. `search` with `target="models"`, `query="mai image"`, `public=true`. Note the generation and edit hits, e.g. `model_microsoft-mai-image-2-5-pro` and `model_microsoft-mai-image-2-5-edit` (live hits at authoring time: re-discover each session).
 2. `model_schema_get` on the generation pick: ratio list, prompt cap, defaults.
 3. `model_run` with `dry_run=true` and `parameters={"prompt": "A photorealistic poster of a climber on a granite wall at dawn, warm rim light, the headline 'ASCEND' in tall condensed sans-serif across the top, a small tagline 'Hold your line' lower left, editorial sports aesthetic.", "aspectRatio": "2:3", "numOutputs": 4}`. `numOutputs` moves cost, so re-estimate after changing it.
-4. Repeat with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+4. Repeat with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 5. `asset_display` the four outputs and keep one asset id.
 6. `model_schema_get` on the edit pick, then `model_run` with `parameters={"referenceImages": ["asset_x"], "prompt": "Keep the climber, lighting, and layout unchanged. Change only the headline to 'ASCEND HIGHER', same font, color, and placement."}`; `jobs_wait`, then `asset_display`.
 

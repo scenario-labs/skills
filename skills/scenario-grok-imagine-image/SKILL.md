@@ -38,7 +38,7 @@ Editing is prompt-driven: pass up to three `referenceImages` and describe the ch
 2. `model_schema_get` with that id: the reference cap, `quality` and `resolution` values, and the ratio list before anything else.
 3. `upload_asset` the product photo (see the `scenario` skill) to get its asset id.
 4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "Add a minimalist front label to the bottle where the title reads \"LUMEN\" in a clean white serif and a smaller line beneath reads \"Sparkling Citrus Soda\". Keep the bottle shape, glass tint, background, shadows, and lighting unchanged, no other text.", "referenceImages": ["asset_abc"], "quality": "medium", "resolution": "2k"}`; re-estimate after any change to `quality`, `resolution`, `numOutputs`, or references.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` and proofread the label at full size, then `asset_download` the keeper.
 
 ## Common mistakes

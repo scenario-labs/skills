@@ -38,7 +38,7 @@ Layerize returns a base layer plus up to 16 transparent PNG cutouts, rebuilding 
 1. `search` with `target="models"`, `query="seedream"`, `public=true`. Prefer the newest non-deprecated hit for the job, e.g. `model_bytedance-seedream-5-0-pro` (a live hit at authoring time: re-discover each session).
 2. `model_schema_get` with that id: sizing fields, caps, defaults.
 3. `model_run` with that id, `dry_run=true`, and `parameters={"prompt": "Concert poster, teal and cream, screen-print grain. Headline reads \"MIDNIGHT ORBIT\", date line \"Nov 14, Union Hall\".", "width": 1600, "height": 2368}`; both sizing fields move price.
-4. Rerun `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+4. Rerun `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 5. `asset_display` and proofread the rendered text.
 6. `model_schema_get` on the Layerize hit, then `model_run` with that id and `parameters={"image": "<poster asset id>", "prompt": "Separate this poster into transparent layers: the headline text, the date line, and the background. Clean edges, complete transparency.", "size": "2K"}`.
 7. `jobs_wait`, then `asset_display` each layer and `asset_download` the keepers.

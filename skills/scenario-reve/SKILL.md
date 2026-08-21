@@ -39,7 +39,7 @@ Neither member takes a mask, so the prompt carries the whole edit: state what ch
 2. `model_schema_get` on the pick: field names, caps, and the ratio list before anything else.
 3. `upload_asset` the poster (see the `scenario` skill) to get an asset id.
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"prompt": "Replace the headline on the poster in <frame>0</frame> with 'SUMMER SALE', matching the original font, perspective, and lighting. Change nothing else.", "references": ["asset_x"], "aspectRatio": "auto"}` for the cost estimate.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` to check the swap, then `asset_download` to save.
 
 ## Common mistakes

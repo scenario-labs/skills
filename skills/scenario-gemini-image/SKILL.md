@@ -38,7 +38,7 @@ The cost cliff sits between members more than between resolutions: at authoring 
 2. `model_schema_get` with that id: fields, caps, and defaults.
 3. `upload_asset` the product photo and the style reference (see the `scenario` skill) to get asset ids.
 4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"prompt": "Image 1 is the product: keep its shape, label, and colors exactly. Image 2 sets the mood: warm sunset palette, soft shadows. Place the product on a marble counter in natural window light.", "referenceImages": ["asset_a", "asset_b"], "aspectRatio": "4:5", "resolution": "2K", "numOutputs": 2}` for the cost estimate.
-5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
+5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` to review both variations, `asset_download` to save the pick.
 
 ## Common mistakes
