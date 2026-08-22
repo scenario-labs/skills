@@ -25,11 +25,11 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 
 ## What live search confirmed at authoring time (examples to re-discover, not constants)
 
-- Seamless generation: `model_scenario-texture` (Scenario Texture) takes a prompt (a tileable hint is appended automatically), `width`/`height` from 16 to 3840 in multiples of 16, `quality`, `seed`, up to 10 `referenceImages` for style, and `eraseSeam` with `overlap`/`featherRadius` to inpaint away both seam axes.
+- Seamless generation: `model_scenario-texture` (Scenario Texture) takes a prompt (a tileable hint is appended automatically), `width`/`height` from 16 to 3840 in multiples of 16, `quality`, `seed`, up to 10 `referenceImages` for style, and `eraseSeam` (off by default) with `overlap`/`featherRadius` to inpaint away both seam axes.
 - Themed texture LoRAs (Flux.1 LoRA, tag `sc:texture`): floors, marble, concrete, stone walls, wood boards, brick, terracotta, hand-painted, cybernetic, realistic textures. They expose dedicated texture capabilities (`txt2img_texture`, `img2img_texture`, `controlnet_texture`).
 - Tiling-safe upscaling: `model_sc-upscale-flux-texture` (Scenario Texture Upscale), `upscaleFactor` 2 to 8, presets `precise`/`balanced`/`creative`, optional prompt and style images.
 - Material-look conversion: `model_sc-texture-converter` (Texture Converter) turns a flat image into a surface material using `raised`, `shiny`, `polished`, `angular` sliders and an `invert` relief toggle.
-- PBR maps ship with 3D texturing and image-to-3D models, not as standalone 2D map decomposition. Examples seen live: Tripo 3.0 Texturing (PBR mode outputs albedo, metallic, roughness, normal), Tencent Texture Edit (prompt mode outputs full PBR maps for FBX models), Meshy 7 Retexture (optional PBR maps). Enable the model's PBR toggle found via `model_schema_get`. Retexturing a full mesh is a 3D-to-3D pipeline: see `scenario-3d`, and `scenario-meshy` for the Meshy retexture contract.
+- PBR maps come from two different routes. For a flat texture, 2D map extractors (tag `sc:texture`, `search` `query="PBR"`) return a full set in one img2img call: `model_patina` (PATINA Image to Maps) outputs base color, normal, roughness, metalness, and height, and `model_patina-material` tiles a PBR material straight from a prompt. For a mesh, 3D texturing and image-to-3D models emit the maps instead (Tripo 3.0 Texturing, Tencent Texture Edit, Meshy 7 Retexture); enable the PBR toggle found via `model_schema_get`. Retexturing a full mesh is a 3D-to-3D pipeline: see `scenario-3d`, and `scenario-meshy` for the Meshy retexture contract.
 
 ## Worked example: seamless brick, iterated then upscaled
 
@@ -46,6 +46,6 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 - Skipping `model_schema_get`: parameter names differ per model and most models reject an empty payload.
 - Using a generic upscaler on a tileable texture: it breaks the repeat at the seams. Use the texture-specific upscaler, which preserves tiling.
 - Generating huge sizes directly: generate near 1024, then upscale 2x to 8x. Generation dimensions cap at 3840.
-- Expecting a texture-to-PBR splitter: no live model decomposes a flat texture into separate map files. PBR maps come from 3D texturing models with PBR enabled.
+- Routing a flat texture through a 3D texturing model just to get PBR maps: the 2D map extractors do that in one img2img call, and the 3D models are for meshes.
 - Ignoring engine sizing: engines expect square power-of-two textures (the seamless generator defaults to 1024x1024, 1:1). The generator accepts any multiple of 16, so choose 1024 or 2048 deliberately.
 - Hardcoding model IDs: availability differs per team. Re-discover with `search` each session.
