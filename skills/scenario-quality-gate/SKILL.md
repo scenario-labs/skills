@@ -16,7 +16,7 @@ The tool is catalog-only and write-class: get the schema with `scenario_tools_se
 
 | Call                              | What happens                                                             | Cost                                                                       |
 | --------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| Plain call, usable verdict stored | Returns the stored verdict, `source: "stored"`                           | Free                                                                       |
+| Plain call, usable verdict stored | Returns the stored verdict, `source: "stored"`                           | Free (the response carries no `creativeUnitsCost`)                         |
 | Plain call, no usable verdict     | Runs a new analysis and stores the verdict, `source: "new_analysis"`     | Billed; the response carries `creativeUnitsCost` (1 CU as of this writing) |
 | `rerun: true`                     | New analysis that replaces the stored verdict                            | Billed                                                                     |
 | `dry_run: true`                   | Nothing runs; returns the price of a new analysis as `creativeUnitsCost` | Free                                                                       |
@@ -32,24 +32,25 @@ The response is `source` plus `quality_gate`: `verdict`, `overallScore`, `aiQual
 A verdict alone only sorts assets. The gate earns its cost when the feedback drives the next attempt:
 
 - `reasons` name concrete flaws ("elongated finger anatomy on the left hand", "background gradient off the brief's palette"). Use them to pick the fix path per flaw: a local defect on an otherwise approved image is a masked inpainting pass (`scenario-image`); a global one is a regeneration.
-- `suggestions` are written as actionable edits. Apply all that fit, not just the first: fold them into the next `model_run` prompt or parameters, or into the edit instruction.
-- A regenerated image is a new asset, so a plain call scores it. `rerun` is never part of the loop. It may even come back pre-scored for free: teams with auto-detect enabled score new generations automatically.
-- Fix the exit bar and a round cap up front: `verdict: "pass"` by default, or a score target the user names (`overallScore` at or above 90, say), and three rounds unless told otherwise, since every round bills a generation plus an analysis. At the cap, or when a round stops moving the scores, stop: report the best asset with its remaining flaws and ask before spending more rounds.
+- `suggestions` are written as edit instructions, often worded for manual retouching. Apply all that fit, not just the first: translate them into the next `model_run` prompt or parameters, or into the edit instruction.
+- A regenerated image is a new asset, so a plain call scores it. `rerun` is never part of the loop. It may even come back pre-scored for free: teams with auto-detect enabled (`qualityGateAutoDetect: true` on their `teams_list` row) score new generations automatically.
+- When a round repeats the same flaw classes at an unmoved score, rewording will not fix them: switch models (`recommend` again) or repair the flaw with a masked edit before spending another round.
+- Fix the exit bar and a round cap up front: `verdict: "pass"` by default, or a score target the user names (`overallScore` at or above 90, say; the named bar then outranks a bare `pass`), and three rounds unless told otherwise, since every round bills a generation plus an analysis. At the cap, or when a round stops moving the scores, stop: report the best asset with its remaining flaws and ask before spending more rounds; unattended, deliver that best asset and flag the miss.
 
 ## Worked example: iterate a hero prop to pass
 
 1. Generate per `scenario-image`: `model_run`, `jobs_wait`, collect the asset id.
 2. `scenario_tools_search` with `query="quality gate"` once for the schema, then `dry_run: true` on the first asset to surface the per-analysis price.
-3. Score: `scenario_tool_execute_write` with `{name: "asset_quality_gate_run", parameters: {asset_id, team_id, project_id}}`. It returns `source: "new_analysis"`, `verdict: "warn"`, `briefComplianceScore: 58`, and `details.briefCompliance.suggestions` asking for the logo at the top left and a flatter background.
+3. Score: `scenario_tool_execute_write` with `{name: "asset_quality_gate_run", parameters: {asset_id, team_id, project_id}}`. It returns `source: "new_analysis"` and a `quality_gate` carrying `verdict: "warn"`, `briefComplianceScore: 58`, and `details.briefCompliance.suggestions` asking for the logo at the top left and a flatter background.
 4. Fold both suggestions into the prompt, regenerate, and score the new asset with a plain call (no `rerun`).
 5. `verdict: "pass"`: deliver, and file it (collections and tags per `scenario-asset-analysis`). Later reads of any scored asset are free stored reads.
-6. The brief changes next sprint: only then `rerun: true` on assets that must be re-judged, since it replaces each stored verdict and bills again.
+6. The brief changes next sprint: only then `rerun: true` on the assets that must be re-judged.
 
 ## Common mistakes
 
 - Treating a plain call as a free read: without a usable stored verdict it silently runs and bills the analysis. Probe with `dry_run` or `asset_get` first when the spend matters.
 - Passing `rerun: true` out of habit: it re-bills verdicts that were free to read. Its one job is refreshing after the brief or sensitivity changed.
-- Expecting `briefComplianceScore` with no brief configured: the field and `details.briefCompliance` exist only when `appliedBriefIds` is non-empty.
+- Expecting `briefComplianceScore` with no brief configured: `quality_gate` carries it and `details.briefCompliance` only when `appliedBriefIds` is non-empty.
 - Applying one suggestion and rescoring each time: the lists usually carry several fixes, and one regeneration can absorb them all.
 - Running it through `scenario_tool_execute_read`: write-class, rejected by lane.
 - Scoring a video, 3D, or audio asset: image assets only.
