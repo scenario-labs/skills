@@ -5,10 +5,13 @@ duration cap, when each shot needs its own control, or when the sequence must op
 
 ## The chain
 
-Draw the board first even here: it is the cheap place to catch a broken chain. Then render each
-boundary pose as a still and run each shot in first and last frame mode, so shot N takes
-`image` = boundary still N-1 and `lastFrameImage` = boundary still N. Adjacent shots share the still,
-so every cut lands on a frame both sides already agree on. N shots cost N+1 stills and N runs.
+Draw the board first when the image budget allows: it is the cheap place to catch a broken chain. It
+is the first thing to drop when the budget is tight, because the board is never passed to the video
+model in this lane and the set review below covers the same ground; keep one image slot in reserve for
+re-rendering a drifted still instead. Then render each boundary pose as a still and run each shot in
+first and last frame mode, so shot N takes `image` = boundary still N-1 and `lastFrameImage` = boundary
+still N. Adjacent shots share the still, so every cut lands on a frame both sides already agree on.
+N shots cost N+1 stills and N runs, plus one plate per character.
 
 This mode excludes `referenceImages` (mutually exclusive with `image`), so the stills are the only
 identity a shot gets. `aspectRatio` is ignored here too: the output adapts to the first frame, so the
@@ -37,6 +40,13 @@ Free, and exact: `asset_get` returns each clip's `firstFrame` and `lastFrame` as
 so `asset_display` the outgoing `lastFrame` against the incoming `firstFrame`, one pair per join. Both
 must read as the same pose. When a delivered ending beats the drawn one, pass that clip's `lastFrame`
 asset id as the next shot's `image` instead of the drawn still.
+
+## When a shot is refused
+
+A per-shot run can be rejected on its generated audio rather than its picture, which reads as a
+content refusal on a fight that is fine to look at. Re-run that shot with `generateAudio: false`. Do
+not leave some shots scored and one silent: lay the master picture-only and score the assembled cut,
+which is the rule anyway.
 
 ## Repairing one shot
 

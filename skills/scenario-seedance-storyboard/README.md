@@ -96,6 +96,26 @@ needs (four of five live runs used the scripted lane). It moved to
 [references/chained-lane.md](references/chained-lane.md); the lane choice, the mutual-exclusion trap
 and the cost model stayed in the body.
 
+## What the chained-lane validation added
+
+A clean-room agent was given a 40-second knife duel that had to open on an exact pose, which forces
+the chained lane, with only the installed skill as documentation. It picked the lane from the one
+sentence about reference mode anchoring frame one, followed the link to the reference, applied all four
+disciplines, and verified every join for free from `asset_get`. Frame one was the specified locked-blades
+pose and all three joins were the same pose either side of the cut. Four defects came out of it:
+
+- **The board and the image budget could contradict each other.** Two plates, a board and five stills
+  hit an eight-image ceiling exactly, leaving nothing to re-render a drifted still, which is the
+  dominant failure in this lane. The reference now ranks the board below a reserved repair slot and
+  says why: the board is never passed to the video model here.
+- **No plate or board model was named at runtime.** The only named one lived in this file, which the
+  agent correctly discounted as maintainer notes. `SKILL.md` now carries a hedged authoring-time
+  example alongside the selection criteria.
+- **A height like 1080 can miss the image model's `step`,** failing as an opaque internal error. Folded
+  into the existing canvas sentence.
+- **A shot can be refused on its generated audio, not its picture.** `generateAudio: false` clears it.
+  Covered in the reference, with the instruction not to leave one shot silent while others carry sound.
+
 ## Open questions
 
 - How reliably a single-panel reshoot holds the other panels. Verified once: with the approved board
