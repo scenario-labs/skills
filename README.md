@@ -152,11 +152,12 @@ Hold one character, product, or style across a whole set, and train custom model
 
 ### Reviewing and organizing output
 
-Read finished assets back: caption them, extract a style or a control map, check a batch against a brief, and file the keepers.
+Read finished assets back: caption them, extract a style or a control map, check a batch against a brief or the Quality Gate, and file the keepers.
 
-| Skill                                                              | Use it for                                                                                                       |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| [scenario-asset-analysis](skills/scenario-asset-analysis/SKILL.md) | Reading assets back: captions, style descriptions, batch review against a brief, control maps, collections, tags |
+| Skill                                                              | Use it for                                                                                                                          |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-asset-analysis](skills/scenario-asset-analysis/SKILL.md) | Reading assets back: captions, style descriptions, batch review against a brief, control maps, collections, tags                    |
+| [scenario-quality-gate](skills/scenario-quality-gate/SKILL.md)     | Pass/warn/fail image verdicts from the Quality Gate: free stored reads, dry-run pricing, feeding suggestions back into the next run |
 
 ### Workflows and apps
 

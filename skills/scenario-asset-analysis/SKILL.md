@@ -27,7 +27,7 @@ All four bill credits and all four take `dry_run: true` for an estimate first. R
 
 - **`asset_analyze` batches.** One call carries up to 10 images against one `instruction`, so reviewing 200 assets is 20 calls, not 200. `num_outputs` (1 to 5) is unrelated: it returns several distinct answers to the same instruction, not one answer per image. Ask for a fixed per-image output shape in the `instruction` so the answers stay parseable.
 - **`asset_detect` strips the background by default.** `remove_background` defaults to true, so a depth or pose map comes back with the frame's context already gone. Set it false whenever the map has to cover the whole image.
-- **Fixed beats flexible when it fits.** `asset_caption` and `asset_describe` are purpose-built and faster than instructing an LLM to do the same job. Reach for `asset_analyze` for classification, extraction, comparison, translation, or a verdict against a brief.
+- **Fixed beats flexible when it fits.** `asset_caption` and `asset_describe` are purpose-built and faster than instructing an LLM to do the same job. Reach for `asset_analyze` for classification, extraction, comparison, translation, or a verdict against a brief. One carve-out: for a structured pass/warn/fail verdict against a configured brand brief, teams with the Quality Gate add-on have a dedicated tool that stores its verdict and re-reads it free (see `scenario-quality-gate`); `asset_analyze` stays the route when the add-on is missing or the brief exists only as prose.
 
 `asset_analyze` and `asset_detect` wait up to 180s and then hand back a `job_id`; carry on with `jobs_wait` as anywhere else.
 
