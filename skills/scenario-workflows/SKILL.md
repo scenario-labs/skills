@@ -38,7 +38,7 @@ Only `draft` and `ready` filter server-side; other statuses filter each page cli
 - Never harvest keys from `editorInfo.nodes[].data.name`; node names go stale.
 - `required` is an object: test `required.always === true`, a truthiness check reads `{"always": false}` as required too.
 - Inputs are typed: `string`, `file`, `file_array`, `string_array`, more. `file` takes an asset id (upload first). Match the type: the API drops scalar-for-array mismatches silently and still charges; `workflow_run` wraps simple scalars into arrays, but only simple ones.
-- `inputs[]` is not the whole contract: string inputs carry per-node length ceilings it never lists, surfacing only at run time as a 400 naming the key and the cap (text nodes rejected past 4096 characters at authoring time). The dry run enforces the same validator at zero cost, so route long texts through `dry_run=true` and shorten to fit rather than retrying verbatim.
+- `inputs[]` is not the whole contract: a string input inherits the length ceiling of the node behind it (a model's own prompt cap, observed as low as 4000 characters), which the record never lists and which surfaces only at run time as a 400 quoting the cap but not the input key. The dry run enforces the same validator at zero cost: route long texts through `dry_run=true` and shorten to fit rather than retrying verbatim, and with several string inputs bisect with dry runs to find the offender.
 - `workflow_get` wraps `inputs_definition`/`editor_info` in `workflow`; `workflows_list` wraps `inputs`/`editorInfo` in `workflows`.
 
 ## Worked example: run a saved app
