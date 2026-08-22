@@ -24,7 +24,7 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 
 Model IDs and the parameter facts below were live `search` hits at authoring time. Re-discover them each time: availability differs per team and evolves.
 
-- `model_scenario-skybox-flux`: text to 360 panorama, 21 style presets, automatic seam and pole correction, optional reference image with a strength slider.
+- `model_scenario-skybox-flux`: text to 360 panorama, a style preset enum (count drifts; read it from the schema), automatic seam and pole correction, optional reference image with a strength slider.
 - `model_scenario-skybox-gpt`: text to 360 panorama guided by up to 10 reference images, quality presets, width and height up to 3840 px.
 - `model_hunyuan-world-image-to-skybox`: one photo of a place to a seamless 360 skybox.
 - `model_sc-upscale-flux-skybox`: 2x to 8x skybox upscale that preserves the seamless wrap.
@@ -34,13 +34,14 @@ Model IDs and the parameter facts below were live `search` hits at authoring tim
 Example: a stylized forest skybox for a game scene.
 
 1. `search` with target="models", query="skybox", public=true. Pick a text-to-skybox model, for example `model_scenario-skybox-flux`.
-2. `model_schema_get` for that model. Expect fields like prompt, style, negativePrompt, image, strength, numOutputs, geometryEnforcement, seed.
+2. `model_schema_get` for that model. Expect fields like prompt, style, negativePrompt, image, strength, numOutputs, geometryEnforcement, seed. negativePrompt is inert unless negativePromptStrength is above 0.
 3. `model_run` with parameters={"prompt": "ancient pine forest at dawn, mist between trunks, god rays", "style": "cinematic", "numOutputs": 2}. Take style preset names from the schema response. `dry_run=true` first prices the run; launch with `wait=false`.
 4. `jobs_wait` with job_ids=[the returned job_id]. Its ~180s timeout is not an error: re-call with the returned `pending_job_ids` as `job_ids`, never a second `model_run`. Then `asset_display` each output.
 5. Iterate on mood: copy the seed from the best result and change only style (cinematic, oil-painting, cyberpunk, and more). To keep composition while shifting look, pass the favorite as image with low strength (0.2 to 0.4). To steer mood from concept art instead, switch to `model_scenario-skybox-gpt` and pass referenceImages.
-6. Export: run `model_sc-upscale-flux-skybox` with image=asset_id and upscaleFactor=4. baseModel defaults to FLUX.1-dev (stylized); a Krea-based realism option exists, so read the exact allowed values from `model_schema_get` before switching. Then `asset_download` the final asset.
+6. Export: run `model_sc-upscale-flux-skybox` with image=asset_id and the smallest upscaleFactor that reaches target (the upscale can cost several times the generation, and its `dry_run` can only run once the input asset exists, so the chain cannot be priced up front). baseModel defaults to FLUX.1-dev (stylized); a Krea-based realism option exists, and strength defaults to 0.6, which invents detail: lower it when the goal is the same panorama at higher resolution. Read the exact allowed values from `model_schema_get` before switching. Then `asset_download` the final asset.
+7. Verify the seam at no cost: compare the saved PNG's leftmost and rightmost pixel columns; on a seamless panorama they differ by near zero while columns a quarter-turn apart differ by an order of magnitude more.
 
-Engine format notes: Skybox Flux outputs equirectangular panoramas; keep the default sizing. Skybox GPT's catalog lists equirectangular 2:1 plus cubemap strip 6:1 and cubemap cross 4:3 layouts, but its schema exposes only width and height, so confirm the layout contract with `model_schema_get` before relying on a cubemap layout. Beyond flat backdrops, the same search surfaces `model_hunyuan-world-skybox-to-splat`, and a separate search (query="world") finds the Marble world models; both turn a finished panorama into a navigable 3D Gaussian splat scene, the pipeline the `scenario-3d-worlds` skill teaches end to end.
+Engine format notes: Skybox Flux outputs equirectangular panoramas; keep the default sizing (1536x768 at authoring time) and read the real dimensions off the returned asset rather than assuming them. Skybox GPT's catalog lists equirectangular 2:1 plus cubemap strip 6:1 and cubemap cross 4:3 layouts, but its schema exposes only width and height, so confirm the layout contract with `model_schema_get` before relying on a cubemap layout. Beyond flat backdrops, the same search surfaces `model_hunyuan-world-skybox-to-splat`, and a separate search (query="world") finds the Marble world models; both turn a finished panorama into a navigable 3D Gaussian splat scene, the pipeline the `scenario-3d-worlds` skill teaches end to end.
 
 ## Common mistakes
 
