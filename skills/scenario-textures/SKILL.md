@@ -27,7 +27,7 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 
 - Seamless generation: `model_scenario-texture` (Scenario Texture) takes a prompt (a tileable hint is appended automatically), `width`/`height` from 16 to 3840 in multiples of 16, `quality`, `seed`, up to 10 `referenceImages` for style, and `eraseSeam` (off by default) with `overlap`/`featherRadius` to inpaint away both seam axes.
 - Themed texture LoRAs (Flux.1 LoRA, tag `sc:texture`): floors, marble, concrete, stone walls, wood boards, brick, terracotta, hand-painted, cybernetic, realistic textures. They expose dedicated texture capabilities (`txt2img_texture`, `img2img_texture`, `controlnet_texture`).
-- Tiling-safe upscaling: `model_sc-upscale-flux-texture` (Scenario Texture Upscale), `upscaleFactor` 2 to 8, presets `precise`/`balanced`/`creative`, optional prompt and style images.
+- Tiling-safe upscaling: `model_sc-upscale-flux-texture` (Scenario Texture Upscale), `upscaleFactor` 2 (the minimum) to 8, presets `precise`/`balanced`/`creative` riding the same `strength` and controlnet sliders the schema exposes. It re-renders, so expect small tonal drift: `precise` with low strength minimizes it, and the result is compared against the source before shipping.
 - Material-look conversion: `model_sc-texture-converter` (Texture Converter) turns a flat image into a surface material using `raised`, `shiny`, `polished`, `angular` sliders and an `invert` relief toggle.
 - PBR maps come from two different routes. For a flat texture, 2D map extractors (tag `sc:texture`, `search` `query="PBR"`) return a full set in one img2img call: `model_patina` (PATINA Image to Maps) outputs base color, normal, roughness, metalness, and height, and `model_patina-material` tiles a PBR material straight from a prompt. For a mesh, 3D texturing and image-to-3D models emit the maps instead (Tripo 3.0 Texturing, Tencent Texture Edit, Meshy 7 Retexture); enable the PBR toggle found via `model_schema_get`. Retexturing a full mesh is a 3D-to-3D pipeline: see `scenario-3d`, and `scenario-meshy` for the Meshy retexture contract.
 
@@ -38,8 +38,9 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 3. `model_run` with `parameters={"prompt": "weathered red brick wall, moss in the mortar joints", "width": 1024, "height": 1024, "eraseSeam": true, "seed": 42}`. For a themed pack, price the batch with `dry_run=true` first, then launch the runs with `wait=false`.
 4. `jobs_wait` with `job_ids=["job_..."]` (the ids returned by `model_run`). A ~180s timeout is not an error: re-call with the returned `pending_job_ids` as `job_ids`, never a second `model_run`. Then `asset_display` the output asset.
 5. Iterate: rerun with the same `seed` and an edited prompt, or add `referenceImages=["asset_..."]` to lock a style.
-6. Upscale: `model_schema_get` then `model_run` `model_id="model_sc-upscale-flux-texture"` with `parameters={"image": "asset_...", "upscaleFactor": 4, "preset": "precise"}`.
-7. `asset_download` the final asset for engine import.
+6. Upscale: `model_schema_get` then `model_run` `model_id="model_sc-upscale-flux-texture"` with `parameters={"image": "asset_...", "upscaleFactor": 2, "preset": "precise"}`, raising the factor only deliberately: cost follows output pixels, and this leg can only be `dry_run`-priced once its input asset exists, so a two-step chain is never priced up front.
+7. Verify tiling at no cost: the saved PNG's left column against its right and top row against bottom should differ no more than neighboring interior columns do, and a 2x2 self-tile proof sheet shows any seam instantly.
+8. `asset_download` the final asset for engine import.
 
 ## Common mistakes
 
