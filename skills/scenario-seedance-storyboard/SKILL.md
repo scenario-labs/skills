@@ -52,5 +52,3 @@ Stop for approval before the first video run: show the script, then the plates, 
 - Expecting a scripted run to open on a prompt-described pose: reference mode anchors frame one to the base state; exact openings are the chained lane's job.
 - A script past the prompt's `max_length`, or timecodes past the duration cap: read both off `model_schema_get`; an overrun is a 400, never a trim.
 - Panels drawn at a different ratio from delivery: the reframe moves the poses the chain depends on. The grid's shape is free, each panel's is not.
-
-Why the skill makes these choices, and the runs behind them: [README.md](README.md).

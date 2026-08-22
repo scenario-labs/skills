@@ -4,6 +4,10 @@
 #   (agents resolve file references one level deep, so unlinked files are dead weight)
 # - shell scripts have a shebang and pass a bash syntax check
 # - python scripts parse
+# A skill's own README.md is exempt from the link rule: it documents the skill
+# for the agents and humans working ON the skill, not for the agent running it,
+# so linking it would spend body words and invite a runtime agent to read
+# maintainer notes as instructions.
 # Only files git knows about (tracked or staged) are checked, so untracked
 # junk like .DS_Store or editor swap files never blocks a commit.
 set -euo pipefail
@@ -18,7 +22,9 @@ for skill in skills/*/; do
 
     # Require a markdown link target, "](rel" or "](./rel", so an unrelated
     # path that merely contains rel as a substring does not count as a link.
-    if ! grep -qF "](${rel}" "${skill}SKILL.md" &&
+    # The skill's own README.md is maintainer documentation, so it is exempt.
+    if [ "$rel" != "README.md" ] &&
+      ! grep -qF "](${rel}" "${skill}SKILL.md" &&
       ! grep -qF "](./${rel}" "${skill}SKILL.md"; then
       echo "$file: not linked from ${skill}SKILL.md (expected a markdown link like [...](${rel}))"
       fail=1
