@@ -53,5 +53,6 @@ Only `draft` and `ready` filter server-side; other statuses filter each page cli
 
 - Guessing input keys from labels or the node graph instead of reading `inputs[]`.
 - Skipping the dry run: two of three ready workflows failed its validation with correctly named inputs; report that error, not the payload.
+- Reading cost or attribution off the parent job: a finished workflow job bills `cuCost: 0` and lists `assetIds` with no per-model attribution. Every node ran as its own child job carrying the real `cuCost` (together they equal the dry-run quote), and `job_get` `verbose=true` on the workflow job returns `metadata.flow` mapping each node to its child `jobId`, `modelId` and output asset ids.
 - Running a draft: `flow: []` and `hasFlow: false` while `inputs` looks complete. Publishing: see `scenario-workflow-authoring`.
 - Calling `workflow_approve` or `workflow_reject` without all three of `workflow_id`, `workflow_job_id` and `node_id`: the gate is per node; a parked run never finishes on its own. Find the run with `jobs_list`, read it with `job_get` `verbose=true` (compact replies omit `metadata`): `metadata.flow` lists per-node statuses, the pending approval node's id is `node_id`, the job's id is `workflow_job_id`, its `workflowId` the `workflow_id`. Reject cancels the run.
