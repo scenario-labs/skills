@@ -10,7 +10,7 @@ license: MIT
 
 Seedance, ByteDance's video family on Scenario, folds every mode below into one model that infers which from your inputs, so the conditioning you pass decides more than prompt wording. Discover it with `search` and treat `model_schema_get` as the contract: members ship side by side, agreeing on the shape and disagreeing on every number.
 
-Connection and the core loop: see the `scenario` skill in this repo; model-agnostic video work: the `scenario-video` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Connection and the core loop: see the `scenario` skill in this repo; model-agnostic video work: the `scenario-video` skill; choreography held across cuts from a storyboard: the `scenario-seedance-storyboard` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 
@@ -27,7 +27,7 @@ Mode follows from the inputs (names from the live schema):
 
 `image` and the reference arrays are mutually exclusive. `referenceVideos` and `referenceAudio` (timing and energy conditioning) combine with `referenceImages`; on the 2.0 line reference audio also requires one image or video reference, where 2.5 takes it alone. Reference parameters are arrays even for one asset. Prompt tags bind by array order: `@image1` is `referenceImages[0]`, likewise `@video1` and `@audio1`. No seed, mask, or camera parameter exists: camera moves live in the prompt, one dominant move per shot.
 
-Caps are per member, so read them off `model_schema_get`. At authoring time 2.5 took 30 reference images, 10 videos, 10 audio, 4 to 30 seconds, 480p or 720p; the 2.0, Fast, and Mini hits took 9, 3, 3, and 4 to 15, with 1080p and 4k on 2.0 alone and no `lastFrameImage` on Mini. Price moves further than the caps do, six times across the family for one 4 second 480p job, so `dry_run` the same job on two members before a batch.
+Caps are per member, so read them off `model_schema_get`. At authoring time 2.5 took 30 reference images, 10 videos, 10 audio, 4 to 30 seconds, up to 1080p; the 2.0, Fast, and Mini hits took 9, 3, 3, and 4 to 15, with 4k on 2.0 alone and no `lastFrameImage` on Mini. Price moves further than the caps do, six times across the family for one 4 second 480p job, so `dry_run` the same job on two members before a batch.
 
 ## The conditioning rule
 
