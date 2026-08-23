@@ -15,10 +15,11 @@ Authoring-time values (2026). Platform UI and store requirements churn: treat ev
 | X (Twitter) in-feed       | 16:9   | 1200x675        | 1:1 also renders clean in feed                                           |
 | X (Twitter) header        | 3:1    | 1500x500        | The avatar overlaps the lower left                                       |
 | LinkedIn feed / link card | 1.91:1 | 1200x627        |                                                                          |
-| Facebook feed             | 4:5    | 1080x1350       | Link cards render 1.91:1 at 1200x630                                     |
+| Facebook feed             | 4:5    | 1080x1350       | Link cards follow the Open Graph row                                     |
 | Facebook page cover       | ~2.6:1 | 820x312         | Mobile crops the sides: keep content central                             |
 | Pinterest pin             | 2:3    | 1000x1500       | Taller pins get cut in feed                                              |
 | Profile picture / avatar  | 1:1    | 400x400 or more | Displayed as a circle: keep the mark inside the inscribed circle         |
+| Link preview (Open Graph) | 1.91:1 | 1200x630        | One og:image serves most share targets; keep text large, feeds downscale |
 
 ## The 9:16 safe zone
 
@@ -56,6 +57,39 @@ Platform UI eats the edges of stories, reels, and TikTok. Keep the subject, all 
 | Steam library hero          | ~3.1:1  | 3840x1240       | The logo ships as a separate transparent PNG layer                             |
 | iOS App Store screenshot    | ~9:19.5 | 1290x2796 class | Exact sizes track current device classes: take them from the store's spec page |
 | Google Play feature graphic | ~2:1    | 1024x500        |                                                                                |
+| Epic Games Store offer      | 3:4     | 1200x1600       | Landscape variant 2560x1440                                                    |
+| itch.io cover               | ~5:4    | 630x500         |                                                                                |
+
+## Shops and marketplaces
+
+| Placement            | Ratio | Pixels          | Notes                                                               |
+| -------------------- | ----- | --------------- | ------------------------------------------------------------------- |
+| Amazon listing       | 1:1   | 1600x1600 class | Zoom needs 1000 or more on the longest side                         |
+| eBay listing         | 1:1   | 1600x1600 class | Minimum 500 on the longest side                                     |
+| Etsy listing         | 4:3   | 2700x2025       | Feed thumbnail crops to 4:3; keep 2000 or more on the shortest side |
+| Shopify product      | 1:1   | 2048x2048       |                                                                     |
+| Google Shopping feed | 1:1   | 800x800 or more | Apparel minimum 250x250                                             |
+
+Marketplace main images are policy surfaces, not creative ones: Amazon wants the product on pure white (RGB 255, 255, 255) filling about 85 percent of the frame with no text, logos, or watermarks, and the other marketplaces run close variants. The text-free master doctrine pays off here: the master is the main image, and lettered or lifestyle derivatives fill the secondary slots and social placements.
+
+## Streaming and community
+
+| Placement             | Ratio    | Pixels    | Notes                                     |
+| --------------------- | -------- | --------- | ----------------------------------------- |
+| Twitch profile banner | 2.5:1    | 1200x480  |                                           |
+| Twitch offline screen | 16:9     | 1920x1080 |                                           |
+| Twitch panel          | flexible | 320 wide  |                                           |
+| Twitch emote          | 1:1      | 112x112   | Auto-scaled to 56 and 28: must read at 28 |
+| Discord server icon   | 1:1      | 512x512   | Displayed as a circle                     |
+| Discord server banner | 16:9     | 960x540   |                                           |
+
+## Covers
+
+| Placement          | Ratio | Pixels    | Notes                                       |
+| ------------------ | ----- | --------- | ------------------------------------------- |
+| Podcast cover      | 1:1   | 3000x3000 | Minimum 1400x1400                           |
+| Music cover art    | 1:1   | 3000x3000 | Distributors commonly require the full 3000 |
+| Kindle ebook cover | 5:8   | 1600x2560 | The title must survive thumbnail size       |
 
 ## Display banners and email
 

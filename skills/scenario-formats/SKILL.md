@@ -1,6 +1,6 @@
 ---
 name: scenario-formats
-description: "Use when one approved visual must ship at many sizes or placements through Scenario: adapting a master to 1:1, 4:5, 9:16, or 16:9, social formats for feeds and stories, YouTube thumbnails, storefront capsules and app store graphics, display banners, a website hero, or choosing between crop, resize, expand, and generative reframe. Keywords: aspect ratio, resize, reframe, outpaint, expand, derivative, adaptation, safe zone, thumbnail, banner."
+description: "Use when one approved visual, image or video, must ship at many sizes or placements through Scenario: adapting a master to 1:1, 4:5, 9:16, or 16:9, social formats for feeds and stories, YouTube thumbnails, storefront capsules and app store graphics, marketplace product images, link previews, display banners, a website hero, or choosing between crop, resize, expand, and generative reframe. Keywords: aspect ratio, resize, reframe, outpaint, expand, derivative, safe zone, thumbnail, banner."
 license: MIT
 ---
 
@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Format adaptation is derivation, not regeneration: re-prompting the concept per placement makes five cousins, not five formats of one approved master. The failure modes are picking the wrong operation (a resize where canvas needed inventing, a crop that beheads the subject) and deriving in the wrong order. The canvas tools' exact contracts live in `scenario-image-editing`; this skill is the decision ladder and the order of operations around them, with per-placement ratios, pixel targets, and safe zones in [references/placement-specs.md](references/placement-specs.md). Connection and the core loop: see the `scenario` skill. Lettering per format: `scenario-text-overlay`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Format adaptation is derivation, not regeneration: re-prompting the concept per placement makes five cousins, not five formats of one approved master. The failure modes are picking the wrong operation (a resize where canvas needed inventing, a crop that beheads the subject) and deriving in the wrong order. The canvas tools' exact contracts live in `scenario-image-editing`; this skill is the decision ladder and the order of operations around them, with per-placement ratios, pixel targets, and safe zones in [references/placement-specs.md](references/placement-specs.md). A video master climbs the same ladder: video resize versus generative reframe lives in `scenario-video-editing`, and far ratios recompose per `scenario-video`. Connection and the core loop: see the `scenario` skill. Lettering per format: `scenario-text-overlay`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## The decision ladder
 
