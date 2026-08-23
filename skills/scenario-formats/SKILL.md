@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Format adaptation is derivation, not regeneration: re-prompting the concept per placement makes five cousins, not five formats of one approved master. The failure modes are picking the wrong operation (a resize where canvas needed inventing, a crop that beheads the subject) and deriving in the wrong order. The canvas tools' exact contracts live in `scenario-image-editing`; this skill is the decision ladder and the order of operations around them. Connection and the core loop: see the `scenario` skill. Lettering per format: `scenario-text-overlay`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Format adaptation is derivation, not regeneration: re-prompting the concept per placement makes five cousins, not five formats of one approved master. The failure modes are picking the wrong operation (a resize where canvas needed inventing, a crop that beheads the subject) and deriving in the wrong order. The canvas tools' exact contracts live in `scenario-image-editing`; this skill is the decision ladder and the order of operations around them, with per-placement ratios, pixel targets, and safe zones in [references/placement-specs.md](references/placement-specs.md). Connection and the core loop: see the `scenario` skill. Lettering per format: `scenario-text-overlay`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## The decision ladder
 
@@ -29,7 +29,7 @@ The last rung applies more often than it looks: 16:9 key art seldom survives to 
 2. Derive every format from that master, never from another derivative: derivative-of-derivative compounds re-rendering artifacts.
 3. Reframe and expand before grading and grain: generative canvas work re-renders the image, so finishing passes applied first come back partly reinterpreted (`scenario-image-editing` holds the pipeline order).
 4. Verify by measurement before finishing: reframe ratio enums are approximate (a 4:5 request came back 29:36 at authoring time), so check output dimensions, land exact with a resize, and batch-check that subjects survived with `asset_analyze` (`scenario-asset-analysis`).
-5. Letter last: re-overlay lettering per format with `scenario-text-overlay`, sized to each final canvas, since type scaled by a resize turns soft and each placement has its own safe area. Keep critical content and text away from the edges platform UI covers, and confirm current per-platform specs with the user rather than assuming them (unattended, take them from the task instructions, else state the assumption in the delivery report).
+5. Letter last: re-overlay lettering per format with `scenario-text-overlay`, sized to each final canvas, since type scaled by a resize turns soft and each placement has its own safe area. Keep critical content and text away from the edges platform UI covers: each placement's target and safe zone is in [references/placement-specs.md](references/placement-specs.md) as an authoring-time value, so confirm contractual specs with the user (unattended, task instructions win over the reference, and the delivery report states which was used).
 
 ## Worked example: key art to story, feed, and thumbnail
 
