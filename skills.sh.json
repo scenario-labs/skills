@@ -97,7 +97,11 @@
     {
       "title": "Consistency and custom models",
       "description": "Hold one character, product, or style across a whole set, and train custom models on your own art.",
-      "skills": ["scenario-consistency", "scenario-model-training"]
+      "skills": [
+        "scenario-consistency",
+        "scenario-identity-library",
+        "scenario-model-training"
+      ]
     },
     {
       "title": "Reviewing and organizing output",

@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-"Make variant two look exactly like variant one except for X" is the most repeated creative ask, and agents reach for seeds, which do not solve it. Consistency comes from what you feed the model, in rising order of durability: a prompt baseline, reference images, a control map, a trained model. Connection and the core loop: see the `scenario` skill; training: see `scenario-model-training`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+"Make variant two look exactly like variant one except for X" is the most repeated creative ask, and agents reach for seeds, which do not solve it. Consistency comes from what you feed the model, in rising order of durability: a prompt baseline, reference images, a control map, a trained model. Connection and the core loop: see the `scenario` skill; training: see `scenario-model-training`; creating and filing a named character or prop library, with its sheets: see `scenario-identity-library`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

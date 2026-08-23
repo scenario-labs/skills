@@ -5,6 +5,7 @@ KAEL
 Kontext
 MYBRAND
 MYSTYLE
+Nima
 Qwen
 RRGGBB
 artic
@@ -60,6 +61,8 @@ taiko
 traj
 tripo
 uncrop
+unfindable
+ungated
 unpublishing
 upscales
 vace

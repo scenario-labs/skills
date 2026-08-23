@@ -145,10 +145,11 @@ The top audio families in depth: music, covers and stems, sound effects, speech,
 
 Hold one character, product, or style across a whole set, and train custom models on your own art.
 
-| Skill                                                              | Use it for                                                                                                         |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| [scenario-consistency](skills/scenario-consistency/SKILL.md)       | Holding one character, product, or style across a set: baseline-plus-delta prompts, reference images, control maps |
-| [scenario-model-training](skills/scenario-model-training/SKILL.md) | Training custom models for style, character, or product consistency, and generating with them                      |
+| Skill                                                                  | Use it for                                                                                                                  |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-consistency](skills/scenario-consistency/SKILL.md)           | Holding one character, product, or style across a set: baseline-plus-delta prompts, reference images, control maps          |
+| [scenario-identity-library](skills/scenario-identity-library/SKILL.md) | Creating named characters and props as reusable identities: interview to brief, gated collections, Grid Maker sheets, reuse |
+| [scenario-model-training](skills/scenario-model-training/SKILL.md)     | Training custom models for style, character, or product consistency, and generating with them                               |
 
 ### Reviewing and organizing output
 
