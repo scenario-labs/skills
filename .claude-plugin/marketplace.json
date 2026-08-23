@@ -9,7 +9,7 @@
   },
   "plugins": [
     {
-      "name": "getting-started",
+      "name": "01-getting-started",
       "description": "Connect the Scenario MCP server and learn the core generation loop every other skill builds on.",
       "source": "./",
       "strict": false,
@@ -18,7 +18,7 @@
       ]
     },
     {
-      "name": "finding-a-direction",
+      "name": "02-finding-a-direction",
       "description": "Turn a blank brief into references, options someone can choose between, and a moodboard the next batch runs from.",
       "source": "./",
       "strict": false,
@@ -27,7 +27,7 @@
       ]
     },
     {
-      "name": "images",
+      "name": "03-images",
       "description": "Generate and edit images: model choice, sizing, references, masked edits, post-processing tools, and letter-perfect text overlay cards.",
       "source": "./",
       "strict": false,
@@ -39,7 +39,7 @@
       ]
     },
     {
-      "name": "game-art-and-environments",
+      "name": "04-game-art-and-environments",
       "description": "Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.",
       "source": "./",
       "strict": false,
@@ -51,7 +51,7 @@
       ]
     },
     {
-      "name": "video-and-audio",
+      "name": "05-video-and-audio",
       "description": "Video generation and editing, music, sound effects, voice, and speech.",
       "source": "./",
       "strict": false,
@@ -65,7 +65,7 @@
       ]
     },
     {
-      "name": "consistency-and-custom-models",
+      "name": "06-consistency-and-custom-models",
       "description": "Hold one character, product, or style across a whole set, and train custom models on your own art.",
       "source": "./",
       "strict": false,
@@ -76,7 +76,7 @@
       ]
     },
     {
-      "name": "reviewing-and-organizing-output",
+      "name": "07-reviewing-and-organizing-output",
       "description": "Read finished assets back: caption them, extract a style or a control map, check a batch against a brief or the Quality Gate, and file the keepers.",
       "source": "./",
       "strict": false,
@@ -86,7 +86,7 @@
       ]
     },
     {
-      "name": "workflows-and-apps",
+      "name": "08-workflows-and-apps",
       "description": "Discover, run, build, and publish Scenario workflows, the multi-step pipelines users call apps.",
       "source": "./",
       "strict": false,
@@ -96,7 +96,7 @@
       ]
     },
     {
-      "name": "troubleshooting",
+      "name": "09-troubleshooting",
       "description": "Get past a blocked generation, and turn a stuck session into a reproducible public issue.",
       "source": "./",
       "strict": false,
@@ -106,7 +106,7 @@
       ]
     },
     {
-      "name": "image-model-families",
+      "name": "10-image-model-families",
       "description": "The top image families in depth: generation and editing modes, reference rules, and the caps that differ per member.",
       "source": "./",
       "strict": false,
@@ -122,7 +122,7 @@
       ]
     },
     {
-      "name": "video-model-families",
+      "name": "11-video-model-families",
       "description": "The top video families in depth: conditioning modes, native audio, editing and extension, and per-member caps and costs.",
       "source": "./",
       "strict": false,
@@ -140,7 +140,7 @@
       ]
     },
     {
-      "name": "audio-model-families",
+      "name": "12-audio-model-families",
       "description": "The top audio families in depth: music, covers and stems, sound effects, speech, dubbing, and video scoring.",
       "source": "./",
       "strict": false,
@@ -152,7 +152,7 @@
       ]
     },
     {
-      "name": "3d-model-families",
+      "name": "13-3d-model-families",
       "description": "The top 3D families in depth: mesh generation, retexture and rigging toolchains, portraits, and explorable worlds and splats.",
       "source": "./",
       "strict": false,
