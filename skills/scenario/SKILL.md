@@ -52,6 +52,8 @@ Generating a stylized game prop image:
 
 Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and `kind` (`image`, `audio`, `video`, `3d`). Prefer multipart: add `file_size`, follow the returned `instructions` to PUT every part URL, then `upload_asset_complete` with the `upload_id`. Inline `data` only under ~100KB. Scope rides on both; they take no other fields: no parts list, no etags.
 
+Filing outputs into collections for later retrieval (the collection tools live in the tool catalog above) is taught by the `scenario-asset-analysis` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+
 ## Errors and recovery
 
 | Error                                            | Recovery                                                                                                                                                                                                                  |
