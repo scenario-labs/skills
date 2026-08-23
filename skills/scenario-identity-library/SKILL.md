@@ -12,27 +12,27 @@ A game or brand runs on named identities: characters and props that must stay re
 
 ## Quick reference
 
-| Stage   | Mechanism                                                                               | Rule                             |
-| ------- | --------------------------------------------------------------------------------------- | -------------------------------- |
-| Brief   | interview, written as the must-not-change enumeration                                   | before anything generates        |
-| Anchor  | hero generation, gated to pass                                                          | uploaded art skips generation    |
-| Library | collection named `character: <name>` or `props: <name>`                                 | gated images only                |
-| Sheet   | Grid Maker assembly of approved shots                                                   | rebuild after membership changes |
-| Reuse   | `collections_list` by name, members via `search`, references per `scenario-consistency` | any later session                |
+| Stage   | Mechanism                                                                                    | Rule                             |
+| ------- | -------------------------------------------------------------------------------------------- | -------------------------------- |
+| Brief   | interview, written as the must-not-change enumeration                                        | before anything generates        |
+| Anchor  | hero generation, gated to pass                                                               | uploaded art skips generation    |
+| Library | collection named `character: <name>` or `props: <name>`                                      | gated images only                |
+| Sheet   | Grid Maker assembly of approved shots                                                        | rebuild after membership changes |
+| Reuse   | `collections_list` prefix match, members via `search`, references per `scenario-consistency` | any later session                |
 
 ## From interview to anchor
 
 Interview before generating: the answers become the baseline enumeration every later image restates (`scenario-consistency`), so a gap here becomes drift later. Ask what it is, silhouette and proportions, palette by name or hex, two or three signature details that make it recognizable (the cracked headlamp, the brass buckle), the rendering style, and which views the set needs. Non-interactive runs take what the task supplies and flag the rest. A user who already has art skips generation: their drawing or photo is the uploaded anchor, per `scenario-consistency`.
 
-Pick one reference-capable model for the whole identity before the first run (`recommend`, then the schema gate in `scenario-consistency`): every later view rides its reference field, so a model without one disqualifies itself here, not at view three. Generate the hero, a neutral full view on a plain background (a reference slot isolates identity best from an uncluttered anchor), then gate it per `scenario-quality-gate` and iterate until it passes; where Quality Gate is not enabled, that skill's fallback review stands in. The hero is the anchor everything else cites.
+Pick one reference-capable model for the whole identity before the first run (`recommend`, then the schema gate in `scenario-consistency`): every later view rides its reference field, so a model without one disqualifies itself here, not at view three. Generate the hero, a neutral full view on a plain background (a reference slot isolates identity best from an uncluttered anchor), then gate it per `scenario-quality-gate` with a round cap fixed up front (its default is three); absent that skill and the gate itself, review against the brief enumeration, same cap. The hero is the anchor everything else cites.
 
 ## The library is a named collection
 
-`collection_create` with the exact name `character: <name>` or `props: <name>`, then `collection_add_assets` for the hero (catalog tools, write lane; the create call takes a name and nothing else). The name is the registry key: collections are not a `search` target, so a later session finds the library by paging `collections_list` (read lane) and matching the prefix, then pulls members with `search` `filters={"collection_ids": [...]}`. Admission is the gate: only passing images enter, because every future generation samples this pool as reference truth, and one off-model member poisons every pull after it. Build out the views baseline-plus-delta, one `model_run` per view, gate each, file each pass.
+`collection_create` with the exact name `character: <name>` or `props: <name>`, then `collection_add_assets` for the hero (catalog tools, write lane; the create call takes the name plus the scope pair, and no description field). The name is the registry key: collections are not a `search` target, so a later session finds the library by paging `collections_list` (read lane) and matching the prefix, then pulls members with `search` (`target="assets"`, `filters={"collection_ids": [...]}`). Admission is the gate: only passing images enter, because every future generation samples this pool as reference truth, and one off-model member poisons every pull after it. Build out the views baseline-plus-delta, one `model_run` per view, gate each, file each pass.
 
 ## Sheets are assembly, not generation
 
-Scenario's Grid Maker packs approved shots into one sheet image: find it by name (`search`, `target="models"`, `query="grid maker"`, `public=true`) and read its schema. At this writing it takes `images` (a file array capped at 100; wrap even a lone asset) plus layout fields: `columns`, `rows` computed from the count when unset, `padding`, `backgroundColor`, and a fixed `cellRatio` list. It has no prompt field: order the `images` array in reading order, because the array is the layout. The sheet is itself an asset: tag it (`asset_add_tags`, say `sheet`), file it in the collection, and rebuild it from the collection after membership changes rather than editing it. It serves humans, and it serves as a one-slot reference packing the whole turnaround when a model is slot-starved; with slots to spare, prefer the individual approved shots.
+Scenario's Grid Maker packs approved shots into one sheet image: find it by name (`search`, `target="models"`, `query="grid maker"`, `public=true`) and read its schema. At this writing it takes `images` (a file array capped at 100; wrap even a lone asset) plus layout fields: `columns`, `rows` computed from the count when unset, `padding`, `backgroundColor`, and a fixed `cellRatio` list (`auto` default). It has no prompt field: order the `images` array in reading order, because the array is the layout. The sheet is itself an asset: tag it (`asset_add_tags`, say `sheet`), file it in the collection, and rebuild it from the collection after membership changes rather than editing it. It serves humans, and it serves as a one-slot reference packing the whole turnaround when a model is slot-starved; with slots to spare, prefer the individual approved shots.
 
 ## Worked example: Nima, courier robot
 
