@@ -8,10 +8,11 @@
 //   the plugin name, same description, one ./skills/<name> path per skill),
 //   which also makes the repo installable as a Claude Code plugin marketplace,
 //   one plugin per grouping
-// - plugin names carry a two-digit position prefix (01-getting-started) because
-//   the picker sorts group names alphabetically, so the prefix is what makes it
-//   follow skills.sh.json order; inserting or merging a grouping renumbers the
-//   plugin identifiers on the next regeneration
+// - plugin names carry a two-digit position prefix (01.-getting-started,
+//   displayed by the picker as "01. Getting Started") because the picker sorts
+//   group names alphabetically, so the prefix is what makes it follow
+//   skills.sh.json order; inserting or merging a grouping renumbers the plugin
+//   identifiers on the next regeneration
 // Never edit the manifest by hand; edit skills.sh.json and run `pnpm manifest`.
 // By default regenerates in place for the pre-commit hook, re-staging the file
 // only when it is part of the commit. --check verifies without rewriting, for
@@ -61,7 +62,7 @@ const plugins = config.groupings.map((group, index) => {
     );
   }
   seen.set(slug, title);
-  const name = `${String(index + 1).padStart(2, "0")}-${slug}`;
+  const name = `${String(index + 1).padStart(2, "0")}.-${slug}`;
   const plugin = { name };
   if (group.description) plugin.description = group.description;
   plugin.source = "./";
