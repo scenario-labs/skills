@@ -20,6 +20,8 @@ Agents fail generation QA in two symmetric ways: accepting the first roll, or re
 | 4. Fix      | Route every fail line to the cheapest fix that addresses it (table below)                                                          |
 | 5. Stop     | A clean round ships; three rounds without one, or one line failing twice under different fixes, means report, not respin           |
 
+When the bar is the configured brand brief rather than a task rubric, and the team's Quality Gate add-on is enabled, critique images with `asset_quality_gate_run` instead: its `reasons` and `suggestions` feed the fix table directly (`scenario-quality-gate`; where the gate is missing it degrades to this `asset_analyze` path).
+
 Fix routing, cheapest first:
 
 | The verdict says                                | Fix                                                                                                                            |
