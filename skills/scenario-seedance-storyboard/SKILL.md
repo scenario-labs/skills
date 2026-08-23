@@ -14,19 +14,21 @@ Connection and the core loop: the `scenario` skill; the Seedance parameter contr
 
 ## Quick reference
 
-| Step      | What                               | How                                                                        |
-| --------- | ---------------------------------- | -------------------------------------------------------------------------- |
-| 1. Script | timecoded shot list                | per shot: number, framing (WS, MS, CU), action verbs, entry and exit poses |
-| 2. Plates | one per character, several angles  | image model via `search`; one clean still of a real performer also works   |
-| 3. Boards | numbered panels, delivery register | same model, plates as reference, each panel at the delivery ratio          |
-| 4. Video  | one scripted run, or chained runs  | Seedance `model_run`, one of the two lanes below                           |
-| 5. Check  | the frames at every cut agree      | extract the boundary frames (step 6), compare each to its panel            |
+| Step        | What                                        | How                                                                             |
+| ----------- | ------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1. Script   | timecoded shot list, the cast named         | per shot: number, size, angle, lens or move, action verbs, entry and exit poses |
+| 2. Plates   | one image per character, several angles     | image model via `search`; one clean still of a real performer also works        |
+| 3. Briefs   | one line per panel, coverage not pictures   | master first, hold the axis, climb the size ladder, punctuate                   |
+| 4. Panels   | one `model_run` per panel                   | plates as references, delivery register, each panel at the delivery ratio       |
+| 5. Gate     | two passes per panel, then repair one panel | artifacts and differences, per [board-craft](references/board-craft.md)         |
+| 6. Assemble | the approved panels into the board          | `model_scenario-compose-image` at explicit coordinates                          |
+| 7. Approve  | script, plates, board shown to the user     | reshoot by panel number; unattended, record and continue                        |
+| 8. Video    | one scripted run, or chained runs           | Seedance `model_run`, one of the two lanes below                                |
+| 9. Check    | the frames at every cut agree               | extract the boundary frames, compare each to its panel                          |
 
 Label each panel the way a shot list does, in that order: number, shot size, angle, lens or camera move, then three action verbs. The cinematic grammar is what makes a board read as coverage rather than twelve pictures: open on a master that establishes the geography, hold one side of the axis so screen direction never flips, climb the size ladder as tension rises, and punctuate with an insert or a reaction. Adjacent shots share an edge by construction: shot 3's exit is shot 4's entry, stated in the script and drawn into the panels.
 
-Draw the panels in the register you want delivered, photoreal for filmic footage, and give each character its own plate rather than a combined sheet, since 2.5 binds up to 30 `referenceImages` by index. Generate the panels individually and compose the grid, so one bad panel costs one panel.
-
-Then gate every panel before spending a video run, on two passes that each catch what the other misses: an AI-quality score for artifacts, and a spot-the-difference against the plate for anything that is only wrong beside the reference. A board-level verdict is not the bar, because twelve panels average their defects away: three boards here scored `pass` while one carried a physically impossible frame. Repair a failing panel by replacing that panel alone. Board craft, both passes, and the slice, repair and recompose loop: [references/board-craft.md](references/board-craft.md).
+Panels are generated one at a time so that one bad panel costs one panel, and gated before any video run on two passes that each catch what the other misses: an AI-quality score for artifacts, and a spot-the-difference against the plate for anything only wrong beside the reference. A board-level verdict is not the bar, because twelve panels average their defects away: three boards here scored `pass` while one carried a physically impossible frame.
 
 Stop for approval before the first video run: show the script, then the plates, then the numbered board, and invite a reshoot by panel number. Unattended, record the assumption and continue.
 
