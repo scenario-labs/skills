@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Prompted shot by shot, generated movement falls apart: limbs teleport, feet slide, and every cut resets the performance. So storyboard instead of prompting harder. Write a timecoded shot script, draw a character sheet and a numbered panel per shot, and hold one rule: every shot ends in the pose the next one starts from. Pinned boundaries leave nothing to reset, so the cuts play as one performance, and what holds choreography holds any movement. What that delivers is continuous motion through the handoffs, not editorially distinct cuts: for cuts a viewer can feel, take the delivered clip and cut it yourself with `scenario-video-editing`.
+Prompted shot by shot, generated movement falls apart: limbs teleport, feet slide, and every cut resets the performance. So storyboard instead of prompting harder. Write a timecoded shot script, draw a character sheet and a numbered panel per shot, and hold one rule: every shot ends in the pose the next one starts from. Pinned boundaries leave nothing to reset, so the cuts play as one performance, and what holds choreography holds any movement. What that delivers is continuous motion through the handoffs, not editorially distinct cuts: for cuts a viewer can feel, cut the delivered clip yourself with `scenario-video-editing`.
 
 Connection and the core loop: the `scenario` skill; the Seedance parameter contract, conditioning traps, and sound lanes: the `scenario-seedance` skill; identity across stills: the `scenario-consistency` skill; a board or comic page that is itself the deliverable: the `scenario-storyboards` skill; splitting and rejoining shots: the `scenario-video-editing` and `scenario-video-assembly` skills. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
@@ -35,7 +35,7 @@ Panels are generated one at a time, so one bad panel costs one panel, and gated 
 
 File as you go: one collection per sequence, created before the first generation, holding plates, panels, repairs, board and video ([board-craft](references/board-craft.md)).
 
-Stop for approval before the first video run: show the script, then the plates, then the numbered board, and invite a reshoot by panel number. Unattended, record the assumption and continue.
+Stop for approval before the first video run: show the script, the plates, the numbered board and the key frames, and invite a reshoot by panel number. Unattended, record the assumption and continue.
 
 ## Two lanes
 
@@ -46,7 +46,7 @@ Stop for approval before the first video run: show the script, then the plates, 
 ## Worked example: a 12-shot dance in one run
 
 1. Write the script: 12 shots over 24 seconds, edge poses named, every exit matching the next entry. Show it to the user first; it is the cheapest place to be wrong; unattended, write it down and continue.
-2. Generate one plate per character, then the 12 panels, then two or three photoreal key frames from the same plates. Upload anything local with `upload_asset` (see the `scenario` skill).
+2. Generate one plate per character, then the 12 panels, then two or three photoreal key frames from the same plates. Upload anything local with `upload_asset` (see the `scenario` skill). Show the board and the key frames to the user before going further.
 3. `search` with `target="models"`, `query="seedance"`, `public=true`. Hits rank by relevance, not generation, so scan them all for the newest non-deprecated member rather than the first: at authoring time `model_bytedance-seedance-2-5` (re-discover each session), which takes the most references and holds identity best. Then `model_schema_get` for caps.
 4. `model_run` with `dry_run=true` and `parameters={"prompt": "<the timecoded script>", "referenceImages": ["asset_dancer", "asset_board", "asset_key1", "asset_key2"], "duration": 24, "resolution": "1080p", "aspectRatio": "16:9"}`; re-estimate after any change.
 5. Re-run with `wait=false`, then `jobs_wait`, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
