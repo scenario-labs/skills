@@ -37,6 +37,8 @@ A verdict alone only sorts assets. The gate earns its cost when the feedback dri
 - When a round repeats the same flaw classes at an unmoved score, rewording will not fix them: switch models (`recommend` again) or repair the flaw with a masked edit before spending another round.
 - Fix the exit bar and a round cap up front: `verdict: "pass"` by default, or a score target the user names (`overallScore` at or above 90, say; the named bar then outranks a bare `pass`), and three rounds unless told otherwise, since every round bills a generation plus an analysis. At the cap, or when a round stops moving the scores, stop: report the best asset with its remaining flaws and ask before spending more rounds; unattended, deliver that best asset and flag the miss.
 
+`scenario-refine-loop` carries the loop discipline beyond the gate: one variable per round, regeneration from the approved baseline, and fix routing when the criteria go past the brief.
+
 ## Worked example: iterate a hero prop to pass
 
 1. Generate per `scenario-image`: `model_run`, `jobs_wait`, collect the asset id.
