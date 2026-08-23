@@ -4,26 +4,27 @@ Drawing the board, then proving it is fit to spend a video run on. Read this bef
 
 ## Drawing the panels
 
-Draw them as pencil line art and let the photographic plates carry the surfaces. The board's job is
-the plan, not the look: a drawn board's numbering and captions are discarded as notation, while a
-photoreal board burns them into the delivery. Measured on one sequence, prompt held byte-identical
-and only the board's register changed: the photoreal board leaked its panel numeral into 6 of 8
-shots, the pencil board into none, and the pencil delivery was fully filmic, since the plate supplied
-the surfaces the drawing did not.
+Draw them light. Thin pale pencil line, bare white paper, the setting indicated by two or three quick
+lines and no more, no heavy shading and no rendered environment. The board is a plan, and a board drawn
+as a competing picture gets treated as one.
 
-So numbering is safe on a pencil board, in frame or under it. Motion arrows are not, and they are the
-one marking to keep off the art entirely. An arrow can render into the delivery as a real arrow
-floating in shot, it does so on some panels and not others with nothing in the board to predict which,
-and no negative clause stops it: across two runs on one board, an arrow beside an extended hand
-transferred both times, arrows beside a spinning skirt once, and three arrows in open space never.
-Naming arrows in a "no arrows in frame" clause changed only how one rendered, from crisp white to
-dark red, not whether it appeared. Put motion in the prompt's per-beat timeline instead, where it
-works: sleeve lag, a dust burst on heel contact, and a train settling late all rendered from prose
-alone.
+That is the whole finding, arrived at the expensive way. A photoreal board leaked its panel numeral
+into 6 of 8 delivered shots with the prompt held byte-identical, while a pencil board leaked none, and
+the pencil delivery was fully filmic because the plates and key frames supplied the surfaces. But a
+_heavily drawn_ pencil board, full environment in every panel and dark confident arrows, still rendered
+its motion arrows into the delivery as real arrows floating in shot: three runs, and no prompt clause
+suppressed one. Redrawn light, with the same arrows in the same places, the same board delivered 48 of
+48 frames clean.
 
-Check the delivery for leaks by sweeping the whole clip at about two frames a second, not one sample
-per shot. A leaked marking can fade in part-way through a shot, so a single well-timed sample reports
-a false clean.
+So markings are safe on a light board, and that includes motion arrows, which means the annotated board
+a human actually wants to review is the same board the model gets. Draw arrows broad, soft and pale,
+feathered rather than solid, so they read as gestural annotation. Numbering and captions have never
+transferred from any pencil board: 0 leaks in 93 opportunities across four runs.
+
+Two things carry that result and both belong in the prompt, not the drawing. Declare the marks as
+guides rather than prohibiting them, and pass photoreal key frames as concept art so the model has a
+photographic source for appearance instead of the drawing. Both are in
+[video-prompt.md](video-prompt.md), which is worth reading before the run rather than after it.
 
 Give each character its own plate rather than a combined sheet. Seedance 2.5 takes up to 30
 `referenceImages` and the prompt binds them by index, so `@image1` is fighter A and `@image2` is
@@ -120,10 +121,11 @@ cannot be delivered.
 
 Not every panel flaw survives into the render, so know which classes to spend a repair on.
 
-**Transfers.** Marks the video model reads as depicted objects rather than notation. On a photoreal
-board that included a numbered badge, which burned into all 20 seconds of a delivered clip; on a
-pencil board it is the drawn motion arrow, which is why arrows stay off the art. So does anything that
-is a plan error rather than a rendering error, because the video obeys the plan: a mismatched livery, a
+**Transfers.** Marks the video model reads as depicted objects rather than notation, which is a
+property of how heavily the board is drawn rather than of the mark: a numbered badge on a photoreal
+board burned into all 20 seconds of a delivered clip, and dark arrows on a heavy pencil board rendered
+as arrows in shot, while the same marks on a light board transfer nothing. So does anything that is a
+plan error rather than a rendering error, because the video obeys the plan: a mismatched livery, a
 character on the wrong side of frame, a shot order that contradicts the script.
 
 **Often does not.** Prop and limb geometry that the video model re-derives from scratch. A staff duel

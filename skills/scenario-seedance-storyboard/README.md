@@ -41,40 +41,66 @@ plate's job is the look.
 The user's original instinct, that a drawn board was the right input, was correct throughout. The
 detour cost a badge burn-in and a run of numeral leaks.
 
-### Motion arrows are the one marking that must stay off the art
+### Arrows: a prohibition that lasted one commit
 
 The reference board this skill was modeled on carries numbers, captions and motion arrows, and its
-delivered video is clean. That made arrows look safe. They are not, and the way this was established
-is worth keeping, because the first two conclusions drawn from it were both wrong.
+delivered video is clean. Reproducing that took five wrong explanations, and the prohibition written
+after the fourth survived exactly one commit before the fifth attempt replaced it. The sequence is
+kept in full because the wrong turns are the useful part.
 
-First wrong conclusion: "arrows always transfer." A pencil board's arrow rendered into one shot as a
-crisp white vector arrow floating beside the dancer's hand, which looked decisive at n=1. Checking the
-original reference board killed it: `asset_get` confirms both the still and that heavily arrowed board
-went in as `referenceImages`, six arrowed panels including a thick block arrow, and 16 samples of the
-delivery show no arrow anywhere.
+**"Arrows always transfer."** Drawn from one crisp white vector arrow rendering beside the dancer's
+hand. Killed by checking the reference board: `asset_get` confirms both the still and that heavily
+arrowed board (six arrowed panels, including a thick block arrow) went in as `referenceImages`, and 16
+samples of its delivery show no arrow anywhere.
 
-Second wrong conclusion: "naming arrows in a negative clause causes the leak." Plausible, since the
-leaking prompt carried "No arrows, symbols or annotation marks of any kind in frame," and this repo
-already documents that a negative clause does not remove what you drew. It was pre-registered and then
-falsified by deleting that one sentence and changing nothing else:
+**"Naming arrows in a negative clause causes the leak."** Pre-registered, then falsified by deleting
+"No arrows, symbols or annotation marks of any kind in frame" and changing nothing else. The clause
+changed how the arrow rendered, from crisp white to dark red, not whether it appeared.
 
-| Run | Arrow clause | Panel 4's arrow      | Panel 7's arrows         | Panels 2, 5, 6 | Numerals | Captions |
-| --- | ------------ | -------------------- | ------------------------ | -------------- | -------- | -------- |
-| A   | present      | leaked, crisp white  | leaked, two black arrows | clean          | 0/7      | 0/8      |
-| B   | removed      | **leaked**, dark red | clean                    | clean          | 0/7      | 0/8      |
+**"The beats were not bound to their panels."** The original prompt names a panel in every beat and
+restates each entry pose, and the leaking prompts did neither, which also meant they dropped two of the
+six elements the skill's own table row 1 asks for. Falsified in the opposite direction: binding
+produced _both_ of panel 4's arrows where the unbound runs produced one each. Explicit binding raises
+panel fidelity, so more of the panel transfers, annotations included.
 
-The clause changed how the arrow rendered, not whether it appeared. So the leak is stochastic per
-shot: panel 4's arrow transferred 2 of 2, panel 7's 1 of 2, and three arrows in open space 0 of 2.
+**"Reference starvation."** The runs passed a character plate as `@image1` while the clean original
+passed a photographic still of the whole scene, so perhaps a plate leaves the model without a template
+for the frame, pushing it to mine the board for appearance. Appealing, because it also explains the
+binding result. Dropped without spending a run: identity held across all eight beats of every run and
+the model built a consistent candlelit courtyard from prose alone, so nothing in those deliveries looks
+like a model short of information. Seedance 2.5 taking a character sheet was never the question.
 
-That is the worst case for a production rule, and it is what makes the rule strict. A leak cannot be
-suppressed by prompt, cannot be predicted by inspecting the board, and costs a full video run to
-discover. So: no arrows in panel art, and motion in the prompt's per-beat timeline, which demonstrably
-carries it. Sleeve lag, a dust burst on heel contact, and a train settling late all rendered correctly
-from prose alone in both runs.
+At that point the skill said "never draw a motion arrow", resting on measurement with no mechanism.
+The user then made the observation that resolved it, about the drawing rather than the configuration:
+our board carried far more detail than the original, and its arrows were far darker.
 
-One observation deliberately left out of the skill: both leaking panels have their arrow in the
-negative space immediately beside a moving limb, while the three clean ones have theirs in open space.
-Two against three is a hunch, not a finding.
+| Run | Board              | Arrows drawn        | Guides named as guides | Concept art  | Panel 4   | Panel 7   |
+| --- | ------------------ | ------------------- | ---------------------- | ------------ | --------- | --------- |
+| A   | heavy, dark arrows | 5 panels            | no, prohibition only   | no           | 1 arrow   | both      |
+| B   | heavy, dark arrows | 5 panels            | no                     | no           | 1 arrow   | clean     |
+| C   | heavy, dark arrows | 5 panels            | no                     | no           | **both**  | both      |
+| D   | light, soft pale   | 5 panels, same spot | yes                    | 3 key frames | **clean** | **clean** |
+
+Arrow placement was held identical across all four runs, so panels 4 and 7 are directly comparable.
+Panel 4 went from 3 of 3 leaking to clean, and run D swept 48 of 48 frames with nothing on screen.
+
+So the rule is not about arrows at all. It is about how heavily the board is drawn: a board drawn as a
+competing picture is treated as one, and its markings render as objects. Drawn light, the same
+markings in the same places transfer nothing, which means the annotated board a human wants to review
+is the same board the model gets, and the two-board workaround is unnecessary.
+
+Run D is a deliberate bundle of three changes, accepted as such rather than spending more runs on
+decomposition: the light board, the guide declaration, and the concept art. The cause is undetermined
+among them, and the cheapest decomposition if it ever matters is to drop the concept art and keep the
+other two, since concept art is the most expensive of the three to mandate. Two of the three earn
+their place on other grounds anyway: run D is the best-looking delivery of the session, its courtyard
+consistent with the key frames rather than reinvented.
+
+The prompt wording is the part that would not survive paraphrase, so it moved to
+[references/video-prompt.md](references/video-prompt.md) verbatim rather than being described. The
+load-bearing discovery inside it is that a prohibition failed three times where a definition worked:
+"the storyboard's frame borders, panel numbers, caption text and motion arrows are planning guides
+drawn on paper by the director. They describe the shot, they are not objects in the world."
 
 ### Verification has to sweep, not sample
 
@@ -250,10 +276,7 @@ Also measured: the actual spend for the whole PR came to about 26k CU, against a
   eleven panels came back unchanged, labels included. One trial is not a guarantee.
 - Whether the register finding generalizes to non-photoreal deliveries: an animation-style board for an
   animation-style delivery should follow the same logic, untested.
-- Why an arrow leaks on one panel and not another. The only pattern visible in five arrowed panels
-  across two runs is that the two that leaked sit in the negative space beside a moving limb, which is
-  too little to act on. A cheap test exists: one board, the same arrow drawn at varying distance from
-  the figure, one run.
-- Whether the leak depends on anything else that differed between the clean reference board and these
-  runs. Two candidates were never separated: its first reference was a photographic still of the whole
-  scene rather than a character plate on white, and it ran at 720p rather than 1080p.
+- Which of run D's three changes suppresses the markings. Undetermined by design. One run separates
+  the concept art from the other two.
+- Where the line falls between a board light enough to stay a plan and one heavy enough to be copied.
+  Only the two extremes have been measured.
