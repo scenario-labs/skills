@@ -51,6 +51,11 @@ const pluginNameOf = (title) =>
 
 const seen = new Map();
 const plugins = config.groupings.map((group, index) => {
+  if (group === null || typeof group !== "object" || Array.isArray(group)) {
+    bail(
+      `skills.sh.json: grouping ${index} must be an object (see pnpm groupings)`,
+    );
+  }
   const title = String(group.title ?? "");
   const slug = pluginNameOf(title);
   if (slug === "") {
@@ -62,12 +67,17 @@ const plugins = config.groupings.map((group, index) => {
     );
   }
   seen.set(slug, title);
+  if (!Array.isArray(group.skills)) {
+    bail(
+      `skills.sh.json: grouping "${title}" needs a skills array (see pnpm groupings)`,
+    );
+  }
   const name = `${String(index + 1).padStart(2, "0")}.-${slug}`;
   const plugin = { name };
   if (group.description) plugin.description = group.description;
   plugin.source = "./";
   plugin.strict = false;
-  plugin.skills = (group.skills ?? []).map((skill) => `./skills/${skill}`);
+  plugin.skills = group.skills.map((skill) => `./skills/${skill}`);
   return plugin;
 });
 
