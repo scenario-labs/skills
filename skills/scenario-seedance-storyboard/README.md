@@ -116,6 +116,41 @@ pose and all three joins were the same pose either side of the cut. Four defects
 - **A shot can be refused on its generated audio, not its picture.** `generateAudio: false` clears it.
   Covered in the reference, with the instruction not to leave one shot silent while others carry sound.
 
+## The coherence gate, and why the quality gate alone is not it
+
+Two boards reached a video run carrying frames that break physical sense: an extreme close-up with four
+gauntlets for two fighters, an unattached glove and a hilt guard floating with no blade through it; and
+a low-angle wheel shot whose car had two different wheels, only one whitewall, no wheel arch, and a
+toy-proportioned body. Neither survives a viewer's first glance, and both cost a full video run.
+
+Three measurements shaped the gate that now exists:
+
+- **A board-level verdict hides panel defects.** All three boards scored 88 and `pass` at high
+  sensitivity while carrying those frames. Twelve panels average their defects away.
+- **Scoring the panel alone does not fix that either.** The broken-car panel, scored in isolation, came
+  back 92 and `pass`, and the report praised the "chrome rims" that were the defect. The gate detects
+  artifacts; it has never seen the plate, so it cannot know the car should wear matching whitewalls in
+  proper arches.
+- **The score is a weak signal for a repair.** The corrected wheel panel also scored 92. What changed
+  was the flaw list, from praising the rims to naming a taillight housing. Judge a repair on the
+  differences checklist and the new `reasons`, not on the number.
+
+So the gate is two passes per panel, and a panel must clear both: `asset_quality_gate_run` for
+artifacts (it did find melted finger joints, warped speedometer numerals and doubled blade edges that
+the eye skipped), and a spot-the-difference against the plate for anything only wrong beside the
+reference. What the two passes found together, across three boards: samurai 4 and 10, cars 2, 3, 8 and
+11, dancer 3, 7 and 8.
+
+Repair is by replacement, not by re-rolling the board: slice with `model_scenario-image-slicer`,
+regenerate only the failing panel with the plates as references and the correction stated positively,
+then recompose with `model_scenario-compose-image` so approved panels are pasted rather than
+regenerated. Measured cost of the loop: 1 CU to slice, 1 CU per panel scored, 47 CU per repaired panel,
+2 CU to recompose, against 2730 CU for the video run it protects.
+
+One honest side effect: replacing a whole cell replaces its caption too, so a repaired panel's label
+renders at a slightly different size from its neighbors. Compositing only the art region over the
+original cell would avoid it, at the cost of locating that region per board.
+
 ## Open questions
 
 - How reliably a single-panel reshoot holds the other panels. Verified once: with the approved board
