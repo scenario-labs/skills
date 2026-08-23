@@ -10,7 +10,7 @@ license: MIT
 
 Prompted shot by shot, generated movement falls apart: limbs teleport, feet slide, and every cut resets the performance. So storyboard instead of prompting harder. What this delivers is continuous motion through the handoffs, not editorially distinct cuts: for cuts a viewer can feel, cut the delivered clip yourself with `scenario-video-editing`. Write a timecoded shot script, draw a character sheet and a numbered panel per shot, and hold one rule: every shot ends in the pose the next one starts from. Pinned boundaries leave nothing to reset, so the cuts play as one performance.
 
-Connection and the core loop: the `scenario` skill; the Seedance parameter contract, conditioning traps, and sound lanes: the `scenario-seedance` skill; identity across stills: the `scenario-consistency` skill; a board or comic page that is itself the deliverable: the `scenario-storyboards` skill; splitting and rejoining shots: the `scenario-video-editing` and `scenario-video-assembly` skills. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Connection and the core loop: the `scenario` skill; the Seedance parameter contract, conditioning traps, and sound lanes: the `scenario-seedance` skill; identity across stills and a reusable character sheet: the `scenario-consistency` and `scenario-identity-library` skills; a board or comic page that is itself the deliverable: the `scenario-storyboards` skill; splitting and rejoining shots: the `scenario-video-editing` and `scenario-video-assembly` skills. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 
@@ -31,7 +31,7 @@ Label each panel as a shot list does: number, shot size, angle, lens or camera m
 
 Draw the board light: thin pale line on bare paper, the setting in two or three quick lines, no rendered environment. A board drawn as a competing picture is treated as one, and its markings render into the delivery as objects, which no prompt clause can clean. Drawn light, the same markings transfer nothing, so numbers, captions and arrows can all stay on the board a human reviews. What carries that is prompt wording, not drawing: declare the marks as the director's planning guides rather than prohibiting them, and pass the key frames as concept art so appearance has a photographic source. Both are in [video-prompt.md](references/video-prompt.md).
 
-Panels are generated one at a time, so one bad panel costs one panel, and gated before any video run on two passes: an AI-quality score for artifacts, and a spot-the-difference against the plate for what is only wrong beside the reference. A board-level verdict is not the bar: panels average their defects away.
+Panels are generated one at a time, so one bad panel costs one panel, and gated before any video run on two passes: an AI-quality score for artifacts, and a spot-the-difference against the plate. A board-level verdict is not the bar: panels average defects away.
 
 File as you go: one collection per sequence, created before the first generation, holding plates, panels, repairs, board and video ([board-craft](references/board-craft.md)).
 
