@@ -88,6 +88,12 @@ never on the number moving.
 3. Recompose with `model_scenario-compose-image` (Image Studio): one `layers` entry per panel with
    explicit `x`, `y`, `width` and `height`, `canvasMode: "custom"`, and the canvas size of the board.
    Approved panels are pasted, not regenerated, so they survive unchanged.
+
+   Keep the composed board's own aspect ratio between 0.4 and 2.5. Seedance rejects a reference image
+   outside that range, and the run fails on an opaque internal error whose `hint` is the only place the
+   range appears. A grid of 16:9 panels reaches it fast: four columns by two rows is 3.56 and fails,
+   while three by three is 1.78 and passes. Choose the grid for the ratio, not for the panel count.
+
 4. Re-gate the replaced panel before spending the video run.
 
 The economics are the argument: a repaired panel cost 47 CU against the 2730 CU video run it protects,
