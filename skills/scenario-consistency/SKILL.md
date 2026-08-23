@@ -28,7 +28,7 @@ Write out everything that must **not** change, then put the single change in a f
 
 Enumerate specifics: subject geometry, camera height and angle, subject size and position in frame, lighting direction, each named sub-element and where it sits, palette by name or hex, and embedded text. Look at the baseline first (`asset_display`): you cannot enumerate a shade you have not seen, and vague anchors drift.
 
-Attach the approved baseline as a reference image alongside it. Image models converge on `referenceImages`, but cap, requiredness, and cardinality all come from `model_schema_get`, and on some models the field is a single scalar file. Wrap an array only where the schema says `array: true`, even a lone asset as `["asset_..."]`: a bare string is silently dropped and the run succeeds while ignoring it. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (catalog tools, write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
+Attach the approved baseline as a reference image alongside it. Image models converge on `referenceImages`, but cap, requiredness, and cardinality all come from `model_schema_get`, and on some models the field is a single scalar file. A scalar `image` plus `strength` is img2img, not a reference slot: it anchors composition along with identity, and at the default strength a plain-background anchor overrides a whole-scene delta, so a scene set needs a schema with a true reference field. Wrap an array only where the schema says `array: true`, even a lone asset as `["asset_..."]`: a bare string is silently dropped and the run succeeds while ignoring it. State each reference's role in the prompt. A pool of approved on-model shots fills the remaining slots: curate it as a collection (catalog tools, write lane) and retrieve it with `search` `filters={"collection_ids": [...]}`.
 
 The anchor can be an upload: the user's character art, sketch, or product photo goes up with `upload_asset` plus `upload_asset_complete` (see `scenario`) and rides the reference field like any approved hero. `asset_describe` (see `scenario-asset-analysis`) turns it into a promptable synthesis to seed the baseline enumeration.
 
@@ -45,7 +45,7 @@ The control block (`controlImage`, `controlModality`, `controlStrength`, `contro
 ## Worked example: five poses of one mascot
 
 1. `asset_display` the approved hero (`asset_hero`) and write its baseline: the full must-not-change enumeration above.
-2. `recommend` with the task's own words as `prompt` (`search` only for a named family), preferring models with reference-image slots, then `model_schema_get`: the reference field's name, cap, cardinality, requiredness.
+2. `recommend` with the task's own words as `prompt` (`search` only for a named family), preferring models with reference-image slots, then `model_schema_get`: the reference field's name, cap, cardinality, requiredness. No reference field in the schema disqualifies the candidate: go back to the ranked list.
 3. One `model_run` per pose, five in all: the byte-identical baseline, the pose alone in the final clause, the hero in the reference field shaped as the schema says: `["asset_hero"]` only under `array: true`. No seed. No control map: a pose map from the hero locks the pose being changed.
 4. `jobs_wait` on the five jobs, re-calling with `pending_job_ids` until done. `asset_display` each against the hero; fix drift by tightening the enumeration, not by chaining outputs.
 
