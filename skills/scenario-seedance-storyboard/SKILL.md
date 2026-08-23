@@ -30,6 +30,8 @@ Label each panel the way a shot list does, in that order: number, shot size, ang
 
 Panels are generated one at a time so that one bad panel costs one panel, and gated before any video run on two passes that each catch what the other misses: an AI-quality score for artifacts, and a spot-the-difference against the plate for anything only wrong beside the reference. A board-level verdict is not the bar, because twelve panels average their defects away: three boards here scored `pass` while one carried a physically impossible frame.
 
+File as you go: one collection per sequence, created before the first generation, holding the plates, every panel and repair, the composed board and the delivered video, so the sequence stays findable (see [board-craft](references/board-craft.md)).
+
 Stop for approval before the first video run: show the script, then the plates, then the numbered board, and invite a reshoot by panel number. Unattended, record the assumption and continue.
 
 ## Two lanes

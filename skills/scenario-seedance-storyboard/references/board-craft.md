@@ -25,6 +25,26 @@ Generate the panels as individual images rather than one grid, then compose the 
 then costs one panel instead of the board, which is the same reason `scenario-storyboards` runs one
 `model_run` per panel.
 
+## Filing, before anything is generated
+
+A sequence produces dozens of assets: a plate per character, a panel per shot, a repair per failure, a
+composed board, then the video. Loose in a project they are unrecoverable a week later, and the panel
+you need to re-repair is indistinguishable from the one it replaced.
+
+So create the collection first and add each artifact as it lands, rather than tidying up at the end.
+The collection tools are catalog-only, so route them through `scenario_tools_search` once for the
+schemas and then `scenario_tool_execute_write`:
+
+- `collection_create` takes a `name` only, there is no description field, so put the sequence and the
+  date in the name.
+- `collection_add_assets` takes `collection_id` and an `asset_ids` array; batch each stage's output in
+  one call.
+- `collection_update` accepts a `thumbnail` asset id: point it at the composed board so the collection
+  is recognizable in a list.
+
+The payoff is retrieval: `search` with `target="assets"` accepts `filters.collection_ids`, so the whole
+sequence comes back in one call, and a repaired panel sits next to the panel it replaced.
+
 ## Why the gate takes two passes
 
 A board-level verdict hides panel defects. Three 12-panel boards each scored 88 and `pass` while one
