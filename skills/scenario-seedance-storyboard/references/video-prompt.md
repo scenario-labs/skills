@@ -77,6 +77,14 @@ on each hand in every frame"), which is cheap and catches the common failure.
 Only failures the timeline cannot express: duplicated limbs, feet sliding without weight transfer,
 teleporting between positions, watermarks or timecode, slow motion, speed ramps, freeze frames.
 
-Leave audio out unless it is wanted. Naming an instrument invites the model to synthesize music, which
-can fail the whole run on an output-audio copyright refusal; `generateAudio: false` avoids it, and a
-picture-only delivery costs the same.
+Ask for sound, and be specific about which sound. A silent delivery is a defect in a production cut,
+so `generateAudio: false` is the fallback after a refusal, not the default. What gets a run refused is
+naming an instrument or a genre, which invites the model to synthesize music and can fail the whole job
+on an output-audio copyright violation. So list the sources the scene itself makes and rule music out
+explicitly:
+
+> Diegetic sound only: heel taps on the boards, fabric, breath, room tone. No music, no score.
+
+Measured on two runs of the same sequence: that line delivered a clean audio track, while the same line
+with "a distant guitar" added failed on `OutputAudioSensitiveContentDetected`. Name the surfaces, the
+cloth, the breath and the room, never the instrument.

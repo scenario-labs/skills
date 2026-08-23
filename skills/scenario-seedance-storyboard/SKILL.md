@@ -56,7 +56,7 @@ Stop for approval before the first video run: show the script, then the plates, 
 
 - Prompting choreography as adjectives ("dances energetically"): timecoded verbs and edge poses survive generation; mood words do not.
 - Naming the pose but not the position: in a two-character scene a mirrored boundary still breaks the cut as hard as a wrong limb.
-- Treating a provider refusal as a picture problem: a shot can be rejected on generated audio alone, and `generateAudio: false` clears it.
+- Delivering silence by default: ask for diegetic sound and rule out music, but name no instrument or genre, which is what triggers an audio refusal. `generateAudio: false` is the fallback, not the default.
 - Expecting a scripted run to open on a prompt-described pose: reference mode anchors frame one to the base state; exact openings are the chained lane's job.
 - A script past the prompt's `max_length`, or timecodes past the duration cap: read both off `model_schema_get`; an overrun is a 400, never a trim.
 - Getting the ratios wrong: each panel must carry the delivery ratio, since a reframe moves the poses the chain depends on, and the composed board must land inside a 0.4 to 2.5 aspect ratio or Seedance rejects it as a reference and the run fails.
