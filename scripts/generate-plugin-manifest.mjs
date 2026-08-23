@@ -97,15 +97,13 @@ if (process.argv.includes("--check")) {
   process.exit(0);
 }
 
-if (existing === rendered) {
-  console.log(
-    `${MANIFEST_PATH} already in sync with skills.sh.json (${plugins.length} plugin groups)`,
-  );
-  process.exit(0);
+if (existing !== rendered) {
+  mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
+  writeFileSync(MANIFEST_PATH, rendered);
 }
-
-mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
-writeFileSync(MANIFEST_PATH, rendered);
+// Re-stage even when the working tree was already in sync: an earlier manual
+// `pnpm manifest` run leaves the regenerated file unstaged, and the commit
+// ships the index, not the working tree the check reads.
 try {
   execSync(`git diff --cached --quiet -- skills.sh.json ${MANIFEST_PATH}`, {
     stdio: "ignore",
@@ -118,5 +116,7 @@ try {
   }
 }
 console.log(
-  `${MANIFEST_PATH} regenerated from skills.sh.json (${plugins.length} plugin groups)`,
+  existing !== rendered
+    ? `${MANIFEST_PATH} regenerated from skills.sh.json (${plugins.length} plugin groups)`
+    : `${MANIFEST_PATH} already in sync with skills.sh.json (${plugins.length} plugin groups)`,
 );
