@@ -308,6 +308,35 @@ The lesson for this file: five paid video runs found the register and arrow rule
 plan-only run found a correctness bug that would have sent a user down an impossible path. Run the
 cheap test first.
 
+## Felt cuts are not what either lane delivers
+
+Two clean-room agents, given different briefs, both asked for cuts a viewer could feel, both chose the
+chained lane because `SKILL.md` routed discrete shots there, and both then extrapolated the same
+untested workaround: render each boundary twice, one still per framing, and treat the pair as a match
+cut. Neither had documentation for it. Both invented it from the same sentence, which said a size
+change at a join "would need two different stills of one pose" as a reason it could not work. A
+sentence that reliably produces the inference it was arguing against is a defect whatever it intended.
+
+The measurements say neither lane gives editorially distinct cuts. The scripted lane converted eleven
+scripted handoffs into 0, 2, 2 and 6 detected hard cuts across four runs, rendering the rest as camera
+moves. The chained lane makes both sides of a join the same frame, so the coverage size cannot differ
+across it and the join reads as continuous motion by construction.
+
+So the skill now says what it delivers in the Overview rather than leaving it to be derived after a
+lane is chosen, stops describing the paired-stills mechanism, and routes the want to where it actually
+works: deliver the continuous take and cut it at your own points with `scenario-video-editing`. The
+momentum is real because it was one take, the cuts are real because an editor made them, the cut points
+are exact and free to move, and nothing needs re-rendering.
+
+The paired-stills idea was deliberately not priced as an option. It is unmeasured, it doubles the still
+budget, it cannot be checked without a paid video run, and recommending an untested technique inside a
+skill whose whole purpose is to stop an agent guessing would undercut the rest of the file. Two
+independent agents converging on it is a reason to close the inference off, not to bless it.
+
+The `description` was left alone on purpose. Someone who wants six felt cuts should still trigger this
+skill, because it now carries the answer for them; narrowing the keywords would hide the guidance from
+exactly the reader who needs it.
+
 ## Open questions
 
 - How reliably a single-panel reshoot holds the other panels. Verified once: with the approved board

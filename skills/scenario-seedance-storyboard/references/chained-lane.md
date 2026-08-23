@@ -40,11 +40,12 @@ that gap, and all three are cheaper than a re-run:
 - **Hold the framing.** A shot whose camera travels cannot land on a boundary drawn from the anchor
   framing. Pick continuity over camera variety, or move the camera inside a single shot only.
 - **Shot size cannot change at a join.** This lane and the size ladder in `SKILL.md` pull against each
-  other, and the mechanism decides it: both sides of a chained cut are the same frame, so a size change
-  there would need two different stills of one pose. Climb the ladder with camera moves inside shots
-  (crane down, dolly in, push, pull back), and accept that the joins read as continuous motion rather
-  than as visibly distinct coverage. When varied coverage matters more than exact cuts, that is the
-  scripted lane's job.
+  other, and the mechanism decides it: both sides of a chained cut are the same frame, so the coverage
+  size on either side of it is the same too. Climb the ladder with camera moves inside shots (crane
+  down, dolly in, push, pull back), and accept that the joins read as continuous motion rather than as
+  visibly distinct coverage. When the brief needs cuts a viewer can feel, deliver the continuous take
+  and cut it at those points with `scenario-video-editing`: that route is reliable, and no
+  generation-side trick for producing a felt cut at a join has been measured here.
 
 These stills also absorb `SKILL.md` step 8: there is no `referenceImages` slot in this lane to pass
 concept art through, so the boundary stills are the key frames, and they carry the delivered look as
