@@ -32,7 +32,7 @@ Pick one reference-capable model for the whole identity before the first run (`r
 
 ## Sheets are assembly, not generation
 
-Scenario's Grid Maker packs approved shots into one sheet image: find it by name (`search`, `target="models"`, `query="grid maker"`, `public=true`) and read its schema. At this writing it takes `images` (a file array capped at 100; wrap even a lone asset) plus layout fields: `columns`, `rows` computed from the count when unset, `padding`, `backgroundColor`, and a fixed `cellRatio` list (`auto` default). It has no prompt field: order the `images` array in reading order, because the array is the layout. The sheet is itself an asset: tag it (`asset_add_tags`, say `sheet`), file it in the collection, and rebuild it after membership changes rather than editing it: pull the view-tagged members only (never a bare member list, or an old sheet becomes a grid cell), and swap the old sheet out with `collection_remove_assets`. It serves humans, and it serves as a one-slot reference packing the whole turnaround when a model is slot-starved; with slots to spare, prefer the individual approved shots.
+Scenario's Grid Maker packs approved shots into one sheet image: find it by name (`search`, `target="models"`, `query="grid maker"`, `public=true`) and read its schema. At this writing it takes `images` (a file array capped at 100; wrap even a lone asset) plus layout fields: `columns`, `rows` computed from the count when unset, `padding`, `backgroundColor`, and a fixed `cellRatio` list (`auto` default). It has no prompt field: order the `images` array in reading order, because the array is the layout. The sheet is itself an asset, filed ungated (it assembles already-approved shots, it is not a generation): tag it (`asset_add_tags`, say `sheet`), file it, and rebuild it after membership changes rather than editing it: pull the view-tagged members only (never a bare member list, or an old sheet becomes a grid cell), and swap the old sheet out with `collection_remove_assets`. It serves humans, and it serves as a one-slot reference packing the whole turnaround when a model is slot-starved; with slots to spare, prefer the individual approved shots.
 
 ## Worked example: Nima, courier robot
 
@@ -40,7 +40,7 @@ Scenario's Grid Maker packs approved shots into one sheet image: find it by name
 2. `recommend` with the brief's own words; `model_schema_get` confirms a true reference field (else the next candidate); `model_run` the hero, `jobs_wait` only on `in_progress`, gate per `scenario-quality-gate`, iterate to pass.
 3. `collection_create` `"character: Nima"`; `collection_add_assets` the hero, tagged `hero`.
 4. Three more views, baseline-plus-delta with the hero in the reference field, gated, filed on pass with their view tags.
-5. `search` the view-tagged members; run Grid Maker with `images` as [front, back, left, three-quarter] and `columns: 4`; tag the output `sheet` and file it.
+5. Run Grid Maker on the view-tagged members (this session already holds the ids; a just-filed asset can trail the `search` index) with `images` as [front, back, left, three-quarter] and `columns: 4`; tag the output `sheet` and file it.
 6. Weeks later, "Nima in a rainy alley": `collections_list` finds `character: Nima`, members come from `search`, the `hero`-tagged member and two on-model shots ride the reference field, prompt per `scenario-consistency`.
 
 ## Common mistakes
