@@ -1,6 +1,6 @@
 ---
 name: scenario-identity-library
-description: "Use when a named character or prop must become a reusable identity in Scenario: creating a character or prop from a brief or interview, building its approved image collection (character: <name> or props: <name>), assembling a character sheet or turnaround, or generating new images of an established one from its library. Triggers include create a new character, design a prop, character sheet, turnaround, more images of this character. Keywords: character design, identity, library, collection, grid."
+description: "Use when a named character or prop must become a reusable identity in Scenario: creating a character or prop from a brief or interview, building its approved image collection (character: <name> or props: <name>), assembling a character sheet or turnaround, or generating new images of an established one. Triggers include create a new character, design a prop, character sheet, turnaround, more images of this character. Keywords: character design, identity, library, collection, grid."
 license: MIT
 ---
 
@@ -28,7 +28,7 @@ Pick one reference-capable model for the whole identity before the first run (`r
 
 ## The library is a named collection
 
-`collection_create` with the exact name `character: <name>` or `props: <name>`, then `collection_add_assets` for the hero (catalog tools, write lane; the create call takes the name plus the scope pair, and no description field). The name is the registry key: collections are not a `search` target, so a later session finds the library by paging `collections_list` (read lane) and matching the prefix, then pulls members with `search` (`target="assets"`, `filters={"collection_ids": [...]}`). Admission is the gate: only passing images enter, because every future generation samples this pool as reference truth, and one off-model member poisons every pull after it. Build out the views baseline-plus-delta, one `model_run` per view, gate each, file each pass.
+`collection_create` with the exact name `character: <name>` or `props: <name>`, then `collection_add_assets` for the hero (catalog tools, write lane; the create call takes the name plus the scope pair, and no description field). The name is the registry key: collections are not a `search` target, so a later session finds the library by paging `collections_list` (read lane) and matching the prefix, then pulls members with `search` (`target="assets"`, `filters={"collection_ids": [...]}`). Admission is the gate: only passing images enter, because every future generation samples this pool as reference truth, and one off-model member poisons every pull after it. Build out the views baseline-plus-delta, one `model_run` per view, gate each, file each pass tagged with its view (`asset_add_tags`: `hero`, `back`, and so on), so a later session can tell the members apart.
 
 ## Sheets are assembly, not generation
 
@@ -37,11 +37,11 @@ Scenario's Grid Maker packs approved shots into one sheet image: find it by name
 ## Worked example: Nima, courier robot
 
 1. The interview yields the brief: rounded silhouette, copper shell, one cracked headlamp, canvas satchel, cel shading; views front, back, left, three-quarter.
-2. `recommend` with the brief's own words; `model_schema_get` confirms a true reference field (else the next candidate); `model_run` the hero, `jobs_wait`, gate per `scenario-quality-gate`, iterate to pass.
-3. `collection_create` `"character: Nima"`; `collection_add_assets` the hero.
-4. Three more views, baseline-plus-delta with the hero in the reference field, gated, filed on pass.
+2. `recommend` with the brief's own words; `model_schema_get` confirms a true reference field (else the next candidate); `model_run` the hero, `jobs_wait` only on `in_progress`, gate per `scenario-quality-gate`, iterate to pass.
+3. `collection_create` `"character: Nima"`; `collection_add_assets` the hero, tagged `hero`.
+4. Three more views, baseline-plus-delta with the hero in the reference field, gated, filed on pass with their view tags.
 5. `search` the collection members; run Grid Maker with `images` as [front, back, left, three-quarter] and `columns: 4`; tag the output `sheet` and file it.
-6. Weeks later, "Nima in a rainy alley": `collections_list` finds `character: Nima`, members come from `search`, the hero and two on-model shots ride the reference field, prompt per `scenario-consistency`.
+6. Weeks later, "Nima in a rainy alley": `collections_list` finds `character: Nima`, members come from `search`, the `hero`-tagged member and two on-model shots ride the reference field, prompt per `scenario-consistency`.
 
 ## Common mistakes
 
