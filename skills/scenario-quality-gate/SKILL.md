@@ -39,6 +39,16 @@ A verdict alone only sorts assets. The gate earns its cost when the feedback dri
 
 `scenario-refine-loop` carries the loop discipline beyond the gate: one variable per round, regeneration from the approved baseline, and fix routing when the criteria go past the brief.
 
+## What the verdict does not cover
+
+The gate is an artifact detector. Measured on real assets, three limits to design around:
+
+- **Artifacts, not plausibility.** A panel whose car carried two different wheels, a whitewall on one only, and no wheel arch above the rear tire scored 92 and `pass` at `sensitivity: "high"`, with `reasons` praising the chrome rims that were the defect. What is impossible rather than ugly needs a structural check of your own: counts and attachment (hands, fingers per hand, limbs, wheels, each attached to one body), part to whole (a wheel sits inside an arch, a guard sits on its own blade, a reflection sits under what casts it), and what carries the weight.
+- **It has never seen your reference.** `briefCompliance` needs a configured brief, and a brief is text, so no call can tell you this is not the same car or costume as the plate it was generated from. Compare the asset against its reference yourself, item by item.
+- **A composite averages its parts.** A 12-panel storyboard scored 88 and `pass` while one of its panels was physically impossible. Score the unit you are willing to reject: split a composite with `model_scenario-image-slicer`, score each part, repair only the failures, and recompose with `model_scenario-compose-image`.
+
+The score is also a weak signal that a structural repair landed: a broken panel and its corrected replacement both scored 92, and only the `reasons` changed. Re-read the flaw list, do not watch the number.
+
 ## Worked example: iterate a hero prop to pass
 
 1. Generate per `scenario-image`: `model_run`, `jobs_wait`, collect the asset id.
