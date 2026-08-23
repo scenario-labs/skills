@@ -56,13 +56,13 @@ Turn a blank brief into references, options someone can choose between, and a mo
 
 Generate and edit images: model choice, sizing, references, masked edits, post-processing tools, and letter-perfect text overlay cards.
 
-| Skill                                                            | Use it for                                                                                                            |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| [scenario-image](skills/scenario-image/SKILL.md)                 | Text-to-image and image editing: model choice, sizing fields, prompt limits, reference images, masked inpainting      |
-| [scenario-image-editing](skills/scenario-image-editing/SKILL.md) | Tool-model image edits: 3D LUT grades, effects, expand and reframe, resize, slicing, layers, background removal       |
-| [scenario-formats](skills/scenario-formats/SKILL.md)             | Deriving every placement from one master: crop vs resize vs expand vs reframe, safe areas, per-format text overlay    |
-| [scenario-text-overlay](skills/scenario-text-overlay/SKILL.md)   | Letter-perfect text overlays: templated transparent PNG cards (taglines, CTAs, legal supers, rich cards) to composite |
-| [scenario-storyboards](skills/scenario-storyboards/SKILL.md)     | Comic pages, storybooks, and pre-viz storyboards: script first, one run per panel, a locked cast, lettering in post   |
+| Skill                                                            | Use it for                                                                                                                   |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-image](skills/scenario-image/SKILL.md)                 | Text-to-image and image editing: model choice, sizing fields, prompt limits, reference images, masked inpainting             |
+| [scenario-image-editing](skills/scenario-image-editing/SKILL.md) | Tool-model image edits: 3D LUT grades, effects, expand and reframe, resize, slicing, layers, background removal              |
+| [scenario-formats](skills/scenario-formats/SKILL.md)             | Deriving every placement from one master, image or video: crop vs resize vs expand vs reframe, platform specs and safe areas |
+| [scenario-text-overlay](skills/scenario-text-overlay/SKILL.md)   | Letter-perfect text overlays: templated transparent PNG cards (taglines, CTAs, legal supers, rich cards) to composite        |
+| [scenario-storyboards](skills/scenario-storyboards/SKILL.md)     | Comic pages, storybooks, and pre-viz storyboards: script first, one run per panel, a locked cast, lettering in post          |
 
 ### Image model families
 
