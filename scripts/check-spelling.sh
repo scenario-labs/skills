@@ -8,5 +8,9 @@ pnpm exec cspell --no-progress --relative --no-must-find-files \
   'skills/**/*.md' \
   'README.md' \
   'AGENTS.md' \
+  'CODE_OF_CONDUCT.md' \
+  'CONTRIBUTING.md' \
+  'SECURITY.md' \
+  '.github/**/*.md' \
   '.claude/commands/*.md' \
   '.claude/agents/*.md'
