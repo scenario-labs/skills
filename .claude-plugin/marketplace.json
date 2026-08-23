@@ -86,7 +86,16 @@
       ]
     },
     {
-      "name": "08.-workflows-and-apps",
+      "name": "08.-formats-and-placements",
+      "description": "Ship one approved master, image or video, to every placement: ratios, safe zones, and platform specs from social feeds to shops, storefronts, and print.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/scenario-formats"
+      ]
+    },
+    {
+      "name": "09.-workflows-and-apps",
       "description": "Discover, run, build, and publish Scenario workflows, the multi-step pipelines users call apps.",
       "source": "./",
       "strict": false,
@@ -96,7 +105,7 @@
       ]
     },
     {
-      "name": "09.-troubleshooting",
+      "name": "10.-troubleshooting",
       "description": "Get past a blocked generation, and turn a stuck session into a reproducible public issue.",
       "source": "./",
       "strict": false,
@@ -106,7 +115,7 @@
       ]
     },
     {
-      "name": "10.-image-model-families",
+      "name": "11.-image-model-families",
       "description": "The top image families in depth: generation and editing modes, reference rules, and the caps that differ per member.",
       "source": "./",
       "strict": false,
@@ -122,7 +131,7 @@
       ]
     },
     {
-      "name": "11.-video-model-families",
+      "name": "12.-video-model-families",
       "description": "The top video families in depth: conditioning modes, native audio, editing and extension, and per-member caps and costs.",
       "source": "./",
       "strict": false,
@@ -140,7 +149,7 @@
       ]
     },
     {
-      "name": "12.-audio-model-families",
+      "name": "13.-audio-model-families",
       "description": "The top audio families in depth: music, covers and stems, sound effects, speech, dubbing, and video scoring.",
       "source": "./",
       "strict": false,
@@ -152,7 +161,7 @@
       ]
     },
     {
-      "name": "13.-3d-model-families",
+      "name": "14.-3d-model-families",
       "description": "The top 3D families in depth: mesh generation, retexture and rigging toolchains, portraits, and explorable worlds and splats.",
       "source": "./",
       "strict": false,
