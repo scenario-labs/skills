@@ -1,2 +1,3 @@
 pnpm words:sort
+pnpm manifest
 pnpm validate

@@ -1,6 +1,7 @@
 # Generated files
 pnpm-lock.yaml
 skills-lock.json
+.claude-plugin/marketplace.json
 .husky/_/
 
 # Vendored dev skills, kept byte-identical to their published source

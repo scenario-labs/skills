@@ -31,6 +31,8 @@ jobs:
         run: pnpm skill-files
       - name: skills.sh.json grouping coverage
         run: pnpm groupings
+      - name: Plugin marketplace manifest in sync
+        run: pnpm manifest:check
       - name: README skills table coverage
         run: pnpm readme
       - name: project-words.txt sorted
