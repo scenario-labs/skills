@@ -54,16 +54,16 @@ Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and 
 
 ## Errors and recovery
 
-| Error                                | Recovery                                                                                                                                |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `context_missing`                    | Nothing resolved: `teams_list`, then `projects_list`                                                                                    |
-| `context_ambiguous`                  | Several fit: present the options; the user picks (non-interactive: task instructions name the pair, else stop and list)                 |
-| 403 Forbidden                        | Usually wrong scope, not missing: re-check the id pair                                                                                  |
-| 403 naming a plan                    | Surface the upgrade or switch models; retrying never clears it. `recommend` pre-flags these as `requires_plan_upgrade`                  |
-| 429 with `actionName`/`actionLimit`  | Concurrency ceiling: launch `wait=false`, hold `actionLimit` jobs in flight, let `jobs_wait` retire them; an immediate retry repeats it |
-| `jobs_wait` timeout (`in_progress`)  | Not an error: re-call with the returned `pending_job_ids`, never a second `model_run` or a cancel; it takes no timeout argument         |
-| 400 `Cannot cancel this type of job` | A launched job is committed spend: `job_cancel` rejects most generation jobs, so plan batches with no abort path                        |
-| 400 `Invalid target format`          | `format` converts images only: omit it for video, 3D, audio                                                                             |
+| Error                                            | Recovery                                                                                                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `context_missing`                                | Nothing resolved: `teams_list`, then `projects_list`                                                                                             |
+| `context_ambiguous`                              | Several fit: present the options; the user picks (non-interactive: task instructions name the pair, else stop and list)                          |
+| 403 Forbidden                                    | Usually wrong scope, not missing: re-check the id pair                                                                                           |
+| 403 naming a plan                                | Surface the upgrade or switch models; retrying never clears it. `recommend` pre-flags these as `requires_plan_upgrade`: never run one            |
+| 429 with `actionName`/`actionLimit` in `details` | Per-team concurrency ceiling: launch `wait=false`, hold `actionLimit` jobs in flight, let `jobs_wait` retire them; an immediate retry repeats it |
+| `jobs_wait` timeout (`in_progress`)              | Not an error: re-call with the returned `pending_job_ids`, never a second `model_run` or a cancel; it takes no timeout argument                  |
+| 400 `Cannot cancel this type of job`             | A launched job is committed spend: `job_cancel` rejects most generation jobs, so plan batches with no abort path                                 |
+| 400 `Invalid target format`                      | `format` converts images only: omit it for video, 3D, audio                                                                                      |
 
 ## Common mistakes
 
