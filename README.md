@@ -1,10 +1,35 @@
-# Scenario Agent Skills
+<p align="center">
+  <a href="https://scenario.com" target="_blank" rel="noopener noreferrer">
+    <img src="./resources/scenario-logo.png" height="84" alt="Scenario" />
+  </a>
+  <br />
+</p>
+<div align="center">
+  <h1>
+    Scenario Agent Skills
+  </h1>
+  <a href="https://skills.sh/scenario-labs/skills">
+    <img alt="skills.sh" src="https://skills.sh/b/scenario-labs/skills" />
+  </a>
+  <a href="https://mcp.scenario.com/docs">
+    <img alt="MCP documentation" src="https://img.shields.io/badge/documentation-mcp-black.svg" />
+  </a>
+  <a href="https://docs.scenario.com">
+    <img alt="API documentation" src="https://img.shields.io/badge/documentation-api-black.svg" />
+  </a>
+  <a href="https://help.scenario.com">
+    <img alt="App documentation" src="https://img.shields.io/badge/documentation-app-black.svg" />
+  </a>
+  <a href="https://x.com/scenario_gg">
+    <img alt="Follow on X" src="https://img.shields.io/twitter/url.svg?label=%40scenario_gg&style=social&url=https%3A%2F%2Fx.com%2Fscenario_gg" />
+  </a>
+  <br />
+  <br />
+</div>
 
 Agent Skills that teach AI coding agents (Claude Code, Cursor, Codex, Copilot, and 70+ others) how to create production-ready content with [Scenario](https://scenario.com) through the [Scenario MCP server](https://mcp.scenario.com): images, video, audio, textures, skyboxes, 3D assets, and custom-trained models, for games, entertainment, and any creative vertical.
 
 Skills follow the [Agent Skills](https://agentskills.io) format.
-
-[![skills.sh](https://skills.sh/b/scenario-labs/skills)](https://skills.sh/scenario-labs/skills)
 
 ## Install
 
