@@ -6,3 +6,6 @@ skills-lock.json
 # Vendored dev skills, kept byte-identical to their published source
 .claude/skills/
 .agents/skills/
+
+# Contributor Covenant 2.1, kept byte-identical to its published source
+CODE_OF_CONDUCT.md
