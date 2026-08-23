@@ -14,22 +14,22 @@ Connection and the core loop: the `scenario` skill; the Seedance parameter contr
 
 ## Quick reference
 
-| Step        | What                                        | How                                                                             |
-| ----------- | ------------------------------------------- | ------------------------------------------------------------------------------- |
-| 1. Script   | timecoded shot list, the cast named         | per shot: number, size, angle, lens or move, action verbs, entry and exit poses |
-| 2. Plates   | one image per character, several angles     | image model via `search`; one clean still of a real performer also works        |
-| 3. Briefs   | one line per panel, coverage not pictures   | master first, hold the axis, climb the size ladder, punctuate                   |
-| 4. Panels   | one `model_run` per panel                   | plates as references, light pencil line on bare paper, each at delivery ratio   |
-| 5. Gate     | two passes per panel, then repair one panel | artifacts and differences, per [board-craft](references/board-craft.md)         |
-| 6. Assemble | the approved panels into the board          | `model_scenario-compose-image` at explicit coordinates                          |
-| 7. Approve  | script, plates, board shown to the user     | reshoot by panel number; unattended, record and continue                        |
-| 8. Frames   | two or three photoreal key frames           | same plates, delivery ratio; they set the delivered look                        |
-| 9. Video    | one scripted run, or chained runs           | Seedance `model_run`, one of the two lanes below                                |
-| 10. Check   | no board marking reached the delivery       | sample every half second, not only the cuts, and match each cut to its panel    |
+| Step        | What                                          | How                                                                             |
+| ----------- | --------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1. Script   | timecoded list, cast and setting agreed first | per shot: number, size, angle, lens or move, action verbs, entry and exit poses |
+| 2. Plates   | one image per character, several angles       | image model via `search`; one clean still of a real performer also works        |
+| 3. Briefs   | one line per panel, coverage not pictures     | master first, hold the axis, climb the size ladder, punctuate                   |
+| 4. Panels   | one `model_run` per panel                     | plates as references, light pencil line on bare paper, each at delivery ratio   |
+| 5. Gate     | two passes per panel, then repair one panel   | artifacts and differences, per [board-craft](references/board-craft.md)         |
+| 6. Assemble | the approved panels into the board            | `model_scenario-compose-image` at explicit coordinates                          |
+| 7. Approve  | script, plates, board shown to the user       | reshoot by panel number; unattended, record and continue                        |
+| 8. Frames   | two or three photoreal key frames             | same plates, delivery ratio; they set the delivered look                        |
+| 9. Video    | one scripted run, or chained runs             | Seedance `model_run`, one of the two lanes below                                |
+| 10. Check   | no board marking reached the delivery         | sample every half second, not only the cuts, and match each cut to its panel    |
 
-Label each panel the way a shot list does, in that order: number, shot size, angle, lens or camera move, then three action verbs. The cinematic grammar is what makes a board read as coverage rather than twelve pictures: open on a master that sets the geography, hold one side of the axis so screen direction never flips, climb the size ladder, and punctuate with an insert or a reaction. Adjacent shots share an edge by construction: shot 3's exit is shot 4's entry.
+Label each panel the way a shot list does, in that order: number, shot size, angle, lens or camera move, then three action verbs. Arrange them as coverage, not twelve pictures: open on a master that sets the geography, hold one side of the axis so screen direction never flips, climb the size ladder, and punctuate with an insert or a reaction. Adjacent shots share an edge by construction: shot 3's exit is shot 4's entry.
 
-Draw the board light: thin pale line on bare paper, the setting in two or three quick lines, no rendered environment. A board drawn as a competing picture is treated as one, and its markings render into the delivery as objects; a photoreal board burned its panel numeral into 6 of 8 shots, and a heavily drawn pencil board put its motion arrows on screen in three runs that no prompt clause could clean. Drawn light, the same board with the same arrows delivered 48 of 48 frames clean, so numbers, captions and arrows can all stay on the board a human reviews. What carries that is prompt wording, not drawing: declare the marks as the director's planning guides rather than prohibiting them, and pass the key frames as concept art so appearance has a photographic source. Both are in [video-prompt.md](references/video-prompt.md), which is the difference between a hit and a re-run.
+Draw the board light: thin pale line on bare paper, the setting in two or three quick lines, no rendered environment. A board drawn as a competing picture is treated as one, and its markings render into the delivery as objects, which no prompt clause can clean. Drawn light, the same markings transfer nothing, so numbers, captions and arrows can all stay on the board a human reviews. What carries that is prompt wording, not drawing: declare the marks as the director's planning guides rather than prohibiting them, and pass the key frames as concept art so appearance has a photographic source. Both are in [video-prompt.md](references/video-prompt.md), which is the difference between a hit and a re-run.
 
 Panels are generated one at a time so that one bad panel costs one panel, and gated before any video run on two passes: an AI-quality score for artifacts, and a spot-the-difference against the plate for anything only wrong beside the reference. A board-level verdict is not the bar: twelve panels average their defects away.
 
@@ -41,7 +41,7 @@ Stop for approval before the first video run: show the script, then the plates, 
 
 **One scripted run.** When the sequence fits one job's duration cap (30 seconds on 2.5 at authoring time; read it off `model_schema_get`), pass the plates, board and key frames as `referenceImages` and build the prompt to the seven-section shape in [video-prompt.md](references/video-prompt.md). One generation carries the internal cuts: the plates hold identity, the pose chain holds continuity. Name `aspectRatio`; it defaults to `adaptive` here, so a portrait board hands back a portrait video. Reference mode anchors frame one to the base state of the reference world (see `scenario-seedance`), so a sequence that must open on an exact pose belongs in the chained lane.
 
-**Chained per-shot runs.** Past the duration cap, when each shot needs its own control, or when the sequence must open on an exact pose: render each boundary pose as a still, then run shot N with `image` = still N-1 and `lastFrameImage` = still N, so adjacent shots share a frame both sides agree on. This excludes `referenceImages`, so the stills are a shot's only identity, and N shots cost N+1 stills and N runs. The disciplines and the repair path are in [references/chained-lane.md](references/chained-lane.md).
+**Chained per-shot runs.** Past the duration cap, when each shot needs its own control, or when the sequence must open on an exact pose: render each boundary pose as a still, then run shot N with `image` = still N-1 and `lastFrameImage` = still N, so adjacent shots share a frame both sides agree on. This excludes `referenceImages`, so the stills are a shot's only identity, and N shots cost N+1 stills and N runs. Each run also has a duration floor (4 seconds on 2.5 at authoring time), so N shots cannot total less than N times it, and more cuts than that allows means fewer shots or more seconds. The disciplines and the repair path are in [references/chained-lane.md](references/chained-lane.md).
 
 ## Worked example: a 12-shot dance in one run
 
@@ -50,7 +50,7 @@ Stop for approval before the first video run: show the script, then the plates, 
 3. `search` with `target="models"`, `query="seedance"`, `public=true`. Hits rank by relevance, not generation, so scan them all for the newest non-deprecated member rather than the first: at authoring time `model_bytedance-seedance-2-5` (re-discover each session), which takes the most references and holds identity best. Then `model_schema_get` for caps.
 4. `model_run` with `dry_run=true` and `parameters={"prompt": "<the timecoded script>", "referenceImages": ["asset_dancer", "asset_board", "asset_key1", "asset_key2"], "duration": 24, "resolution": "1080p", "aspectRatio": "16:9"}`; re-estimate after any change.
 5. Re-run with `wait=false`, then `jobs_wait`, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
-6. Step through the cuts: both sides must agree in pose and match the panel. Then sweep the whole clip at two frames a second, because a leaked board marking can fade in part-way through a shot, so one sample per shot reports a false clean. `asset_display` hands back a link for video, not frames, so pull them locally or with a frame-extraction model (`search`, query `"image sequence"`) when there is no local tool. Expect fewer cuts than you scripted: the model renders most handoffs as camera moves rather than cuts, which satisfies continuity but is not editorial control. Twelve discrete shots are the chained lane's job.
+6. Step through the cuts: both sides must agree in pose and match the panel. Then sweep the whole clip at two frames a second, because a leaked board marking can fade in part-way through a shot, so one sample per shot reports a false clean. `asset_display` returns a link for video, not frames, so pull them locally or with a frame-extraction model (`search`, query `"image sequence"`). Expect fewer cuts than you scripted: the model renders most handoffs as camera moves rather than cuts, which satisfies continuity but is not editorial control. Twelve discrete shots are the chained lane's job, where the duration floor makes them cost more than the 24 seconds scripted here.
 
 ## Common mistakes
 

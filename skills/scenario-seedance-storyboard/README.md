@@ -269,6 +269,45 @@ What it proved and changed:
 Also measured: the actual spend for the whole PR came to about 26k CU, against a running estimate of
 41k that had been accumulated from per-call arithmetic rather than read from `usage`. Read the meter.
 
+## What the plan-only validation found
+
+A clean-room agent, given only the installed skill and a 24-second eight-shot fight brief, produced an
+85-call plan and followed every rule this PR added without prompting: light board, diegetic audio with
+no instrument named, the 2 fps sweep, the 0.4 to 2.5 board ratio (noting correctly that it only binds
+when the board is actually passed), per-panel gating, collection before generation, `jobs_wait` with
+`pending_job_ids`, discovery instead of an asserted model id, and `aspectRatio` omitted in
+first/last-frame mode. It flagged eight uncertainties rather than guessing.
+
+It also found that the brief was impossible, which no one on this side had noticed. `SKILL.md` routes
+discrete shots to the chained lane, but `duration` accepts only -1 or 4 to 30, so eight chained shots
+occupy at least 32 seconds while the scripted lane will not honor eight cuts in 24. The worked example
+compounded it by scripting twelve shots across 24 seconds, two seconds each. Six defects came out of
+it, all fixed:
+
+- **The duration floor was never stated**, so the lane's cost arithmetic invited impossible plans. Now
+  in the body and spelled out with the numbers in the chained-lane reference.
+- **The size ladder and hold-the-framing contradicted each other.** Both sides of a chained cut are the
+  same frame, so shot size cannot change at a join. The agent called this the hardest decision in the
+  task and resolved it by inference. Now reconciled explicitly.
+- **`video-prompt.md` read as lane-neutral** while two of its seven sections only apply to the scripted
+  lane, and the chained lane had no prompt shape at all. Now labeled, with the five sections that carry
+  over named.
+- **Step 8's key frames had no home in the chained lane**, which has no `referenceImages` slot. The
+  boundary stills are the key frames; said so.
+- **The board was the approval artifact in one file and "the first thing to drop" in another**, which
+  bit immediately because the brief asked for storyboard sign-off.
+- **No step elicited the creative brief**, though the plate is load-bearing everywhere after it.
+
+Two things were deliberately not filed as defects. The agent named `numImages` where the real parameter
+is `numOutputs`, but the skill never discusses image-model parameters and the plan had already
+scheduled the schema read that would have caught it. And all six named siblings were absent from the
+clean room, which is the known install-resolution gap: the invitation sentence fired correctly and the
+agent flagged the affected phase instead of inventing a model id.
+
+The lesson for this file: five paid video runs found the register and arrow rules, and one free
+plan-only run found a correctness bug that would have sent a user down an impossible path. Run the
+cheap test first.
+
 ## Open questions
 
 - How reliably a single-panel reshoot holds the other panels. Verified once: with the approved board
