@@ -4,16 +4,32 @@ Drawing the board, then proving it is fit to spend a video run on. Read this bef
 
 ## Drawing the panels
 
-Draw them in the register you want delivered: photoreal panels return filmic footage, while pencil
-panels leave the model to invent every surface and drift. Keep panel numbers small and low contrast,
-or under the frame: a large in-frame badge can burn into the render for a whole clip, a negative
-clause does not reliably suppress it, and the delivered corners are worth checking.
+Draw them as pencil line art and let the photographic plates carry the surfaces. The board's job is
+the plan, not the look: a drawn board's numbering and captions are discarded as notation, while a
+photoreal board burns them into the delivery. Measured on one sequence, prompt held byte-identical
+and only the board's register changed: the photoreal board leaked its panel numeral into 6 of 8
+shots, the pencil board into none, and the pencil delivery was fully filmic, since the plate supplied
+the surfaces the drawing did not.
+
+So numbering is safe on a pencil board, in frame or under it. Motion arrows are not, and they are the
+one marking to keep off the art entirely. An arrow can render into the delivery as a real arrow
+floating in shot, it does so on some panels and not others with nothing in the board to predict which,
+and no negative clause stops it: across two runs on one board, an arrow beside an extended hand
+transferred both times, arrows beside a spinning skirt once, and three arrows in open space never.
+Naming arrows in a "no arrows in frame" clause changed only how one rendered, from crisp white to
+dark red, not whether it appeared. Put motion in the prompt's per-beat timeline instead, where it
+works: sleeve lag, a dust burst on heel contact, and a train settling late all rendered from prose
+alone.
+
+Check the delivery for leaks by sweeping the whole clip at about two frames a second, not one sample
+per shot. A leaked marking can fade in part-way through a shot, so a single well-timed sample reports
+a false clean.
 
 Give each character its own plate rather than a combined sheet. Seedance 2.5 takes up to 30
 `referenceImages` and the prompt binds them by index, so `@image1` is fighter A and `@image2` is
-fighter B, each at full canvas and unambiguous. A photoreal board carries identity by itself in the
-scripted lane, which puts the plates' real work upstream: holding the cast steady while the board is
-drawn.
+fighter B, each at full canvas and unambiguous. A pencil board carries no surfaces of its own, so in
+the scripted lane the plates do double duty: holding the cast steady while the board is drawn, then
+supplying identity and material to the video run.
 
 Pick the plate and board model for legible in-image text, strict grid adherence, and `referenceImages`
 input so panels lock to the plates; shortlist with `search` (at authoring time
@@ -104,10 +120,11 @@ cannot be delivered.
 
 Not every panel flaw survives into the render, so know which classes to spend a repair on.
 
-**Transfers.** Anything the video model reads as graphics rather than form: a numbered badge drawn in
-frame burned into all 20 seconds of a delivered clip. So does anything that is a plan error rather
-than a rendering error, because the video obeys the plan: a mismatched livery, a character on the wrong
-side of frame, a shot order that contradicts the script.
+**Transfers.** Marks the video model reads as depicted objects rather than notation. On a photoreal
+board that included a numbered badge, which burned into all 20 seconds of a delivered clip; on a
+pencil board it is the drawn motion arrow, which is why arrows stay off the art. So does anything that
+is a plan error rather than a rendering error, because the video obeys the plan: a mismatched livery, a
+character on the wrong side of frame, a shot order that contradicts the script.
 
 **Often does not.** Prop and limb geometry that the video model re-derives from scratch. A staff duel
 whose panels were flagged five times over for hands merging into wood and staffs bending or breaking

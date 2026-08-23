@@ -16,28 +16,85 @@ agent reconstruct the chaining mechanism itself and flag it as guesswork.
 
 ## Decisions and the evidence
 
-### Photoreal panels, not pencil drawings
+### Pencil panels with photographic plates, not photoreal panels
 
-Initially written the other way round, from a single confounded observation. A 2x2 test on one samurai
-script (board style x number placement, sheet held constant) reversed it:
+Reversed twice, and the second reversal is the one that holds. The skill first said pencil, then said
+photoreal on the strength of a 2x2 test, and now says pencil again because that test never contained
+the cell that matters.
 
-- Photoreal panels returned filmic footage.
-- Pencil panels left the model to invent every surface, and it drifted toward posed action-figure
-  plastic with odd faces in close-ups.
-- Pencil panels paired with a photographic character plate recovered the surfaces but lost the crimson
-  armor entirely by the final beat.
+The 2x2 compared board style against number placement with the character sheet held constant, and
+concluded photoreal because pencil-plus-render-sheet drifted toward posed action-figure plastic. What
+it never ran cleanly was pencil board plus a _photographic_ plate. That cell was finally measured with
+the prompt held byte-identical and only the register changed:
 
-The mechanism: the board sets the register of the delivered footage. The first version of this skill
-inferred the opposite because the one good pencil-board result came from a board paired with a real
-photographic film still, so style and reference quality were never separated.
+- Photoreal board: the panel numeral leaked into 6 of 8 delivered shots, despite an explicit negative
+  clause naming it. The quality gate had flagged that numeral as "an unwanted watermark" on all 24
+  panels of the earlier boards and was overridden. It was right.
+- Pencil board: 0 of 7 numerals and 0 of 8 captions transferred, and the delivery was fully filmic,
+  candlelit stone and fabric weight, not plastic. The plate supplied the surfaces the drawing did not.
 
-### Panel numbers: small and low contrast, not "never inside the frame"
+Repeated on a second run of the same board: 0 leaks in 30 opportunities across the two runs. The
+mechanism, stated as narrowly as the evidence allows: a drawn board reads as notation and is
+discarded, a photoreal board reads as picture and is copied. So the board's job is the plan, and the
+plate's job is the look.
 
-An earlier run burned a white panel-number badge into the top-left corner of a 20-second clip, and it
-survived an explicit "no panel numbers" negative clause. That looked like proof that numbering must
-sit outside the frame. It was not: in the controlled test neither badge-inside board leaked. The
-difference was badge prominence, not placement. So the rule is small, low-contrast numbering plus a
-check of the delivered corners, and never trusting a negative clause to remove what you drew.
+The user's original instinct, that a drawn board was the right input, was correct throughout. The
+detour cost a badge burn-in and a run of numeral leaks.
+
+### Motion arrows are the one marking that must stay off the art
+
+The reference board this skill was modeled on carries numbers, captions and motion arrows, and its
+delivered video is clean. That made arrows look safe. They are not, and the way this was established
+is worth keeping, because the first two conclusions drawn from it were both wrong.
+
+First wrong conclusion: "arrows always transfer." A pencil board's arrow rendered into one shot as a
+crisp white vector arrow floating beside the dancer's hand, which looked decisive at n=1. Checking the
+original reference board killed it: `asset_get` confirms both the still and that heavily arrowed board
+went in as `referenceImages`, six arrowed panels including a thick block arrow, and 16 samples of the
+delivery show no arrow anywhere.
+
+Second wrong conclusion: "naming arrows in a negative clause causes the leak." Plausible, since the
+leaking prompt carried "No arrows, symbols or annotation marks of any kind in frame," and this repo
+already documents that a negative clause does not remove what you drew. It was pre-registered and then
+falsified by deleting that one sentence and changing nothing else:
+
+| Run | Arrow clause | Panel 4's arrow      | Panel 7's arrows         | Panels 2, 5, 6 | Numerals | Captions |
+| --- | ------------ | -------------------- | ------------------------ | -------------- | -------- | -------- |
+| A   | present      | leaked, crisp white  | leaked, two black arrows | clean          | 0/7      | 0/8      |
+| B   | removed      | **leaked**, dark red | clean                    | clean          | 0/7      | 0/8      |
+
+The clause changed how the arrow rendered, not whether it appeared. So the leak is stochastic per
+shot: panel 4's arrow transferred 2 of 2, panel 7's 1 of 2, and three arrows in open space 0 of 2.
+
+That is the worst case for a production rule, and it is what makes the rule strict. A leak cannot be
+suppressed by prompt, cannot be predicted by inspecting the board, and costs a full video run to
+discover. So: no arrows in panel art, and motion in the prompt's per-beat timeline, which demonstrably
+carries it. Sleeve lag, a dust burst on heel contact, and a train settling late all rendered correctly
+from prose alone in both runs.
+
+One observation deliberately left out of the skill: both leaking panels have their arrow in the
+negative space immediately beside a moving limb, while the three clean ones have theirs in open space.
+Two against three is a hunch, not a finding.
+
+### Verification has to sweep, not sample
+
+Run B's eight-beat check sampled panel 4 at 10.5s and came back clean. The arrow appears at 11.0s. Only
+a two-frames-a-second sweep of the whole clip caught it, and without that sweep this section would
+have recorded a false result. A leaked marking can fade in part-way through a shot, so one sample per
+shot is not a check. That is now a rule in the skill rather than a lesson in this file.
+
+### Panel numbers: a non-problem once the board is pencil
+
+This question absorbed three rounds and turned out to be downstream of the register. An early run
+burned a white panel-number badge into the top-left corner of a 20-second clip, surviving an explicit
+"no panel numbers" clause, which read as proof that numbering must sit outside the frame. Then a
+controlled test had neither badge-inside board leak, which read as prominence rather than placement.
+Then a photoreal board leaked its numeral into 6 of 8 shots despite the negative clause.
+
+The resolution: numbering leaks from photoreal boards and not from pencil boards, at 0 of 14 across
+two runs. On the pencil board the skill now prescribes, numbering is safe in frame or under it, and
+the corner check stays only as cheap insurance. What survives from the whole detour is the smaller
+lesson, which did keep proving true: never trust a negative clause to remove what you drew.
 
 ### One plate per character, not a combined sheet
 
@@ -46,12 +103,18 @@ be one character and `@image2` another. A combined turnaround gives each charact
 canvas and leaves the model to work out which figure the prompt means. Per-character plates are
 unambiguous and full resolution. The earlier grouped sheet was habit, not a constraint.
 
-### The plate's real job is upstream
+### The plate is load-bearing at video time, not just upstream
 
-A photoreal board carried identity with no character plate passed to the video call at all, matching
-the best plate-bearing run. The plate's contribution is in making the board's characters consistent
-while the board is drawn. It still matters at video time in the chained lane, where the board is never
-passed to the model.
+Recorded here in its original form because it was wrong and the correction matters. The observation was
+real: a photoreal board carried identity with no character plate in the video call, matching the best
+plate-bearing run, which suggested the plate's only job was keeping the cast consistent while the board
+was drawn.
+
+That conclusion does not survive the register reversal. A photoreal board can carry identity alone
+because it _is_ photographic reference, and it is exactly that property that burns its numbering into
+the delivery. A pencil board carries no surfaces, so on the board the skill now prescribes the plate
+supplies identity and material to the video run and dropping it is not an option. The plate does both
+jobs, upstream and at video time, in both lanes.
 
 ### Cinematic labels, not action verbs alone
 
@@ -187,3 +250,10 @@ Also measured: the actual spend for the whole PR came to about 26k CU, against a
   eleven panels came back unchanged, labels included. One trial is not a guarantee.
 - Whether the register finding generalizes to non-photoreal deliveries: an animation-style board for an
   animation-style delivery should follow the same logic, untested.
+- Why an arrow leaks on one panel and not another. The only pattern visible in five arrowed panels
+  across two runs is that the two that leaked sit in the negative space beside a moving limb, which is
+  too little to act on. A cheap test exists: one board, the same arrow drawn at varying distance from
+  the figure, one run.
+- Whether the leak depends on anything else that differed between the clean reference board and these
+  runs. Two candidates were never separated: its first reference was a photographic still of the whole
+  scene rather than a character plate on white, and it ran at 720p rather than 1080p.
