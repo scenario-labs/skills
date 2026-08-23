@@ -24,17 +24,17 @@ The server fills scope in only for read-only tools with one candidate remaining;
 
 ## Quick reference
 
-| Step              | Tool                                     | Notes                                                   |
-| ----------------- | ---------------------------------------- | ------------------------------------------------------- |
-| Resolve scope     | `teams_list`, then `projects_list`       | Once per session; pass the ids on every call            |
-| Find a model      | `search` or `recommend`                  | Free; `recommend` for a capability, `search` for a name |
-| Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as` and caps     |
-| Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost      |
-| Wait              | `jobs_wait`                              | Server-side long-poll; never loop `job_get`             |
-| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                              |
-| Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                            |
-| Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                      |
-| Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                   |
+| Step              | Tool                                     | Notes                                                           |
+| ----------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| Resolve scope     | `teams_list`, then `projects_list`       | Once per session; pass the ids on every call                    |
+| Find a model      | `search` or `recommend`                  | Free; `recommend` for a capability, `search` for a name         |
+| Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as` and caps             |
+| Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost              |
+| Wait              | `jobs_wait`                              | Only if `model_run` returns `in_progress`; never loop `job_get` |
+| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                                      |
+| Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                    |
+| Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                              |
+| Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                           |
 
 A multi-step request ("product video with voiceover", "concept to 3D") goes to `plan_generation` (catalog-only, read lane): plain words in `description`, ordered steps out, each naming a tool and optional model hint; it runs nothing. Single-step: `recommend`.
 
@@ -54,16 +54,16 @@ Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and 
 
 ## Errors and recovery
 
-| Error                                            | Recovery                                                                                                                                         |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `context_missing`                                | Nothing resolved: `teams_list`, then `projects_list`                                                                                             |
-| `context_ambiguous`                              | Several fit: present the options; the user picks (non-interactive: task instructions name the pair, else stop and list)                          |
-| 403 Forbidden                                    | Usually wrong scope, not missing: re-check the id pair                                                                                           |
-| 403 naming a plan                                | Surface the upgrade or switch models; retrying never clears it. `recommend` pre-flags these as `requires_plan_upgrade`: never run one            |
-| 429 with `actionName`/`actionLimit` in `details` | Per-team concurrency ceiling: launch `wait=false`, hold `actionLimit` jobs in flight, let `jobs_wait` retire them; an immediate retry repeats it |
-| `jobs_wait` timeout (`in_progress`)              | Not an error: re-call with the returned `pending_job_ids`, never a second `model_run` or a cancel; it takes no timeout argument                  |
-| 400 `Cannot cancel this type of job`             | A launched job is committed spend: `job_cancel` rejects most generation jobs, so plan batches with no abort path                                 |
-| 400 `Invalid target format`                      | `format` converts images only: omit it for video, 3D, audio                                                                                      |
+| Error                                            | Recovery                                                                                                                                                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `context_missing`                                | Nothing resolved: `teams_list`, then `projects_list`                                                                                                                                                                      |
+| `context_ambiguous`                              | Several fit: present the options; the user picks (non-interactive: task instructions name the pair, else stop and list)                                                                                                   |
+| 403 Forbidden                                    | Usually wrong scope, not missing: re-check the id pair                                                                                                                                                                    |
+| 403 naming a plan                                | Surface the upgrade or switch models; retrying never clears it. `recommend` pre-flags these as `requires_plan_upgrade` (never run one) unless its response says plan gating is `_degraded`; then this row is the backstop |
+| 429 with `actionName`/`actionLimit` in `details` | Per-team concurrency ceiling: launch `wait=false`, hold `actionLimit` jobs in flight, let `jobs_wait` retire them; an immediate retry repeats it                                                                          |
+| `jobs_wait` timeout (`in_progress`)              | Not an error: re-call with the returned `pending_job_ids`, never a second `model_run` or a cancel; it takes no timeout argument                                                                                           |
+| 400 `Cannot cancel this type of job`             | A launched job is committed spend: `job_cancel` rejects most generation jobs, so plan batches with no abort path                                                                                                          |
+| 400 `Invalid target format`                      | `format` converts images only: omit it for video, 3D, audio                                                                                                                                                               |
 
 ## Common mistakes
 
