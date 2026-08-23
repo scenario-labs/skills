@@ -99,3 +99,20 @@ never on the number moving.
 The economics are the argument: a repaired panel cost 47 CU against the 2730 CU video run it protects,
 and a board that reaches the video model with a broken panel spends the whole run on a sequence that
 cannot be delivered.
+
+## What transfers from a panel to the video, and what does not
+
+Not every panel flaw survives into the render, so know which classes to spend a repair on.
+
+**Transfers.** Anything the video model reads as graphics rather than form: a numbered badge drawn in
+frame burned into all 20 seconds of a delivered clip. So does anything that is a plan error rather
+than a rendering error, because the video obeys the plan: a mismatched livery, a character on the wrong
+side of frame, a shot order that contradicts the script.
+
+**Often does not.** Prop and limb geometry that the video model re-derives from scratch. A staff duel
+whose panels were flagged five times over for hands merging into wood and staffs bending or breaking
+still delivered a clean 24 seconds: rigid staffs, four distinct hands at the bind. The panels were the
+worst of three sequences and the video was not.
+
+So the gate is worth its cost for the classes that transfer and for proving the plan before a video
+run, and a panel whose only defect is local prop geometry is worth one repair attempt, not three.

@@ -151,6 +151,35 @@ One honest side effect: replacing a whole cell replaces its caption too, so a re
 renders at a slightly different size from its neighbors. Compositing only the art region over the
 original cell would avoid it, at the cost of locating that region per board.
 
+## The full-flow validation, three sequences from scratch
+
+Three new sequences were built end to end through all nine steps: a flamenco courtyard, a staff duel on
+a temple terrace, and a 1970s night rally. New cast, new compositions, 8 panels each at 3 seconds, 24
+panels generated individually, all 24 gated, 8 repaired, 3 boards composed, 3 videos delivered.
+
+What it proved and changed:
+
+- **Per-panel gating localizes what board scoring hid.** Six panels warned or scored low across the
+  three sequences, and every finding was specific: melted fingers on the floreo, warped rally dials, a
+  staff broken into two misaligned segments, a driver's hand fused to the wheel. All had passed my own
+  eye first.
+- **The differences pass caught what the gate never mentions.** In one rally panel the yellow car sat
+  ahead of the white, contradicting the brief. Every score on that panel was fine.
+- **An intentional annotation reads as a defect.** The gate flagged the small in-frame panel numeral as
+  "an unwanted watermark" on every single panel, depressing scores by a design decision. Worth knowing
+  before treating per-panel scores as absolute.
+- **A composed board must stay inside a 0.4 to 2.5 aspect ratio.** Two 1080p runs failed outright on a
+  four-by-two grid of 16:9 panels (3.56). Three-by-three (1.78) passed. Only the job record's `hint`
+  names the range.
+- **Some panel flaws do not reach the video.** The staff sequence was the worst-scoring board of the
+  three, flagged five times for hands merging into wood and staffs bending, and it still delivered a
+  clean 24 seconds with rigid staffs and four distinct hands at the bind. Prop geometry gets re-derived;
+  burned-in graphics and plan errors do not. That distinction now sits in the reference, because it
+  decides how many repair rounds a flaw class deserves.
+
+Also measured: the actual spend for the whole PR came to about 26k CU, against a running estimate of
+41k that had been accumulated from per-call arithmetic rather than read from `usage`. Read the meter.
+
 ## Open questions
 
 - How reliably a single-panel reshoot holds the other panels. Verified once: with the approved board

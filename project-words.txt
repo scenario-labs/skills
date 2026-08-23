@@ -17,6 +17,7 @@ diegetic
 equirectangular
 explorable
 ffprobe
+floreo
 hailuo
 hitem
 inpaint
