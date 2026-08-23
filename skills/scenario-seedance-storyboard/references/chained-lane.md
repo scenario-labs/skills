@@ -16,7 +16,8 @@ still N. Adjacent shots share the still, so every cut lands on a frame both side
 N shots cost N+1 stills and N runs, plus one plate per character.
 
 Count the seconds before the stills. Each run carries its own duration floor, 4 seconds on 2.5 at
-authoring time, so N shots occupy at least N times that floor and a sequence cannot be shorter. Eight
+authoring time, and takes whole seconds only, so N shots occupy at least N times that floor, a sequence
+cannot be shorter, and any total has to be reachable as a sum of N whole numbers at or above it. Eight
 discrete shots is 32 seconds at the floor, not 24, and twelve is 48. When the brief asks for more cuts
 than the arithmetic allows, the choice is fewer shots, a longer sequence, or the scripted lane's
 camera-move handoffs instead of cuts. Read the floor off `model_schema_get` rather than trusting this

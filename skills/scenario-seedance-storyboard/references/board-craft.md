@@ -5,7 +5,9 @@ Drawing the board, then proving it is fit to spend a video run on. Read this bef
 ## Drawing the panels
 
 Draw them light. Thin pale pencil line, bare white paper, the setting indicated by two or three quick
-lines and no more, no heavy shading and no rendered environment. The board is a plan, and a board drawn
+lines and no more, no heavy shading and no rendered environment. This rule binds wherever the board is
+passed to the video model, which is the scripted lane; a chained run never shows it the board, so there
+the register is insurance for the human reviewer rather than the mechanism. The board is a plan, and a board drawn
 as a competing picture gets treated as one.
 
 That is the whole finding, arrived at the expensive way. A photoreal board leaked its panel numeral

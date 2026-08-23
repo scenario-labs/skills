@@ -6,7 +6,8 @@ sections, in this order. The wording below is measured, not stylistic: the secti
 each fixed a failure that cost a full video run to find. Fill in the specifics and keep the structure.
 
 In the chained lane, five of the seven carry over per shot: STARTING STATE, TIMELINE (one beat, not
-eight), CAMERA, MUST REMAIN UNCHANGED and CONSTRAINTS. Drop REFERENCE ROLES and GUIDES ARE NOT CONTENT.
+eight), CAMERA, MUST REMAIN UNCHANGED and CONSTRAINTS without its audio paragraph. Drop REFERENCE ROLES
+and GUIDES ARE NOT CONTENT.
 That lane passes no `referenceImages` and never shows the model a board, so there are no reference
 roles to assign and no guides to rule out, and the boundary stills carry identity and look instead.
 See [chained-lane.md](chained-lane.md).
@@ -84,8 +85,11 @@ on each hand in every frame"), which is cheap and catches the common failure.
 Only failures the timeline cannot express: duplicated limbs, feet sliding without weight transfer,
 teleporting between positions, watermarks or timecode, slow motion, speed ramps, freeze frames.
 
-Ask for sound, and be specific about which sound. A silent delivery is a defect in a production cut,
-so `generateAudio: false` is the fallback after a refusal, not the default. What gets a run refused is
+Ask for sound, and be specific about which sound. This paragraph is scripted-lane only: one run means
+one continuous audio bed, so the ask belongs in the prompt. A chained run scores the assembled master
+instead and lays every shot picture-only, per [chained-lane.md](chained-lane.md). A silent delivery is
+a defect in a production cut either way, so `generateAudio: false` is the fallback after a refusal, not
+the default. What gets a run refused is
 naming an instrument or a genre, which invites the model to synthesize music and can fail the whole job
 on an output-audio copyright violation. So list the sources the scene itself makes and rule music out
 explicitly:
