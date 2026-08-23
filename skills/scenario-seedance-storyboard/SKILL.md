@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Prompted shot by shot, generated movement falls apart: limbs teleport, feet slide, and every cut resets the performance. So storyboard instead of prompting harder. Write a timecoded shot script, draw a character sheet and a numbered panel per shot, and hold one rule: every shot ends in the pose the next one starts from. Pinned boundaries leave nothing to reset, so the cuts play as one performance, and what holds choreography holds any movement. What that delivers is continuous motion through the handoffs, not editorially distinct cuts: for cuts a viewer can feel, cut the delivered clip yourself with `scenario-video-editing`.
+Prompted shot by shot, generated movement falls apart: limbs teleport, feet slide, and every cut resets the performance. So storyboard instead of prompting harder. What this delivers is continuous motion through the handoffs, not editorially distinct cuts: for cuts a viewer can feel, cut the delivered clip yourself with `scenario-video-editing`. Write a timecoded shot script, draw a character sheet and a numbered panel per shot, and hold one rule: every shot ends in the pose the next one starts from. Pinned boundaries leave nothing to reset, so the cuts play as one performance.
 
 Connection and the core loop: the `scenario` skill; the Seedance parameter contract, conditioning traps, and sound lanes: the `scenario-seedance` skill; identity across stills: the `scenario-consistency` skill; a board or comic page that is itself the deliverable: the `scenario-storyboards` skill; splitting and rejoining shots: the `scenario-video-editing` and `scenario-video-assembly` skills. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
@@ -25,7 +25,7 @@ Connection and the core loop: the `scenario` skill; the Seedance parameter contr
 | 7. Approve  | script, plates, board shown to the user       | reshoot by panel number; unattended, record and continue                        |
 | 8. Frames   | two or three photoreal key frames             | same plates, delivery ratio; they set the delivered look                        |
 | 9. Video    | one scripted run, or chained runs             | Seedance `model_run`, one of the two lanes below                                |
-| 10. Check   | no board marking reached the delivery         | sample every half second, not only the cuts, and match each cut to its panel    |
+| 10. Check   | the delivery is clean and carries its track   | sample every half second, not only the cuts, and match each cut to its panel    |
 
 Label each panel as a shot list does: number, shot size, angle, lens or camera move, then three action verbs. Arrange them as coverage, not twelve pictures: open on a master that sets the geography, hold one side of the axis so screen direction never flips, climb the size ladder, and punctuate with an insert or a reaction. Adjacent shots share an edge by construction: shot 3's exit is shot 4's entry.
 
@@ -39,7 +39,7 @@ Stop for approval before the first video run: show the script, the plates, the n
 
 ## Two lanes
 
-**One scripted run.** When the sequence fits one job's duration cap (30 seconds on 2.5 at authoring time; read it off `model_schema_get`), pass the plates, board and key frames as `referenceImages` and build the prompt to the seven-section shape in [video-prompt.md](references/video-prompt.md). One generation carries the internal cuts: the plates hold identity, the pose chain holds continuity. Name `aspectRatio`; it defaults to `adaptive` here, so a portrait board hands back a portrait video. Reference mode anchors frame one to the base state of the reference world (see `scenario-seedance`), so a sequence that must open on an exact pose belongs in the chained lane.
+**One scripted run.** When the sequence fits one job's duration cap (30 seconds on 2.5 at authoring time), pass the plates, board and key frames as `referenceImages` and build the prompt to the seven-section shape in [video-prompt.md](references/video-prompt.md). One generation carries the internal cuts: the plates hold identity, the pose chain holds continuity. Name `aspectRatio`; it defaults to `adaptive` here, so a portrait board hands back a portrait video. Reference mode anchors frame one to the base state of the reference world (see `scenario-seedance`), so a sequence that must open on an exact pose belongs in the chained lane.
 
 **Chained per-shot runs.** Past the duration cap, when each shot needs its own control, or when the sequence must open on an exact pose: render each boundary pose as a still, then run shot N with `image` = still N-1 and `lastFrameImage` = still N, so adjacent shots share a frame both sides agree on. This excludes `referenceImages`, so the stills are a shot's only identity, and N shots cost N+1 stills and N runs. Each run also has a duration floor (4 whole seconds on 2.5 at authoring time), so N shots cannot total less than N times it, and more cuts than that means fewer shots or more seconds. The disciplines and the repair path are in [references/chained-lane.md](references/chained-lane.md).
 
@@ -58,5 +58,5 @@ Stop for approval before the first video run: show the script, the plates, the n
 - Naming the pose but not the position: in a two-character scene a mirrored boundary still breaks the cut as hard as a wrong limb.
 - Delivering silence by default: ask for diegetic sound and rule out music, but name no instrument or genre, which is what triggers an audio refusal. `generateAudio: false` is the fallback, not the default.
 - Expecting a scripted run to open on a prompt-described pose: reference mode anchors frame one to the base state; exact openings are the chained lane's job.
-- A script past the prompt's `max_length`, or timecodes past the duration cap: read both off `model_schema_get`; an overrun is a 400, never a trim.
+- A script past the prompt's `max_length`, or timecodes past the duration cap: read both off `model_schema_get` before writing it, since step 1 comes before discovery; an overrun is a 400, never a trim.
 - Getting the ratios wrong: each panel must carry the delivery ratio, since a reframe moves the poses the chain depends on, and the composed board must land inside a 0.4 to 2.5 aspect ratio or Seedance rejects it as a reference and the run fails.

@@ -89,7 +89,7 @@ Ask for sound, and be specific about which sound. This paragraph is scripted-lan
 one continuous audio bed, so the ask belongs in the prompt. A chained run scores the assembled master
 instead and lays every shot picture-only, per [chained-lane.md](chained-lane.md). A silent delivery is
 a defect in a production cut either way, so `generateAudio: false` is the fallback after a refusal, not
-the default. What gets a run refused is
+the default. The parameter defaults on, so sound needs no flag and only silence has to be asked for. What gets a run refused is
 naming an instrument or a genre, which invites the model to synthesize music and can fail the whole job
 on an output-audio copyright violation. So list the sources the scene itself makes and rule music out
 explicitly:
@@ -99,3 +99,7 @@ explicitly:
 Measured on two runs of the same sequence: that line delivered a clean audio track, while the same line
 with "a distant guitar" added failed on `OutputAudioSensitiveContentDetected`. Name the surfaces, the
 cloth, the breath and the room, never the instrument.
+
+Nothing tool-side confirms the delivered track, so the audio check is eyes and ears: play the file and
+listen for the beats the timeline named. A refusal arrives as a failed job with its own code, but a run
+that succeeds while generating nothing useful arrives looking exactly like a run that worked.

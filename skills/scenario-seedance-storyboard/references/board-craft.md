@@ -105,13 +105,21 @@ never on the number moving.
    tires, each inside a wheel arch, the wheelbase of a full-size hardtop" fixes what "not deformed"
    does not. Keep the panel's caption text in the prompt so the replacement carries its own label.
 3. Recompose with `model_scenario-compose-image` (Image Studio): one `layers` entry per panel with
-   explicit `x`, `y`, `width` and `height`, `canvasMode: "custom"`, and the canvas size of the board.
+   explicit `x`, `y`, `width` and `height`, `canvasMode: "custom"`, and the board's own canvas size.
+   Read the canvas and per-layer field names off `model_schema_get` rather than assuming them: two
+   clean-room runs guessed `canvasWidth` and `canvasHeight` from this sentence when it only described
+   the size in words.
    Approved panels are pasted, not regenerated, so they survive unchanged.
 
    Keep the composed board's own aspect ratio between 0.4 and 2.5. Seedance rejects a reference image
    outside that range, and the run fails on an opaque internal error whose `hint` is the only place the
-   range appears. A grid of 16:9 panels reaches it fast: four columns by two rows is 3.56 and fails,
-   while three by three is 1.78 and passes. Choose the grid for the ratio, not for the panel count.
+   range appears. A grid of 16:9 panels reaches it fast, and what decides it is columns against
+   rows rather than either alone: the board's ratio is 16 times the columns over 9 times the rows. Four
+   by two is 3.56 and fails, while three by three (1.78) and four by three (2.37) both pass, and a
+   six-panel board wants two by three (1.19) rather than three by two (2.67). Compute that ratio for
+   the grid you intend before composing, since it holds while the columns stay at most about 1.4 times
+   the rows and the rows at most about four times the columns. Choose the grid for the ratio, not for
+   the panel count.
 
 4. Re-gate the replaced panel before spending the video run.
 

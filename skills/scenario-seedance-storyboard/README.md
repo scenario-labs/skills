@@ -337,6 +337,42 @@ The `description` was left alone on purpose. Someone who wants six felt cuts sho
 skill, because it now carries the answer for them; narrowing the keywords would hide the guidance from
 exactly the reader who needs it.
 
+## The six plan-only defects, and one caught by verification
+
+A third clean-room run on a scripted-lane brief (the first two both chose the chained lane, so the
+scripted half had never been read cold) came back a pass with six non-blocking items. All six are fixed:
+the compose canvas fields now say to read them off `model_schema_get`, `generateAudio`'s default-on is
+stated so sound needs no flag, the audio check is named as eyes and ears with the warning that a useless
+run looks like a good one, the grid guidance generalizes, the caps are read before the script is
+written, and the deliverable statement moved to the Overview's third sentence.
+
+That run also confirmed the earlier fixes in a way a repeat brief could not have: the duration floor was
+used in reverse, to disqualify the chained lane at "4 s floor x 6 shots = 24 s > 20 s", and the audio
+lane scoping held with `generateAudio: true` in a scripted prompt and no confusion with the chained
+lane's picture-only rule.
+
+The fix for the grid item was wrong on the first attempt, and how it was caught is the part worth
+keeping. Replacing two correct examples with a general rule produced "three columns is the most that
+stays inside the range", which is false: four by three is 2.37 and sits inside it. Worse, the rule was
+unsound in both directions, since "at most three columns" permits three by two at 2.67, which the same
+sentence names as a failure, and it forbids four by three, the natural layout for this skill's own
+12-panel worked example. A five-panel board obeying it lands on 3x2 (2.67) or 1x5 (0.356) and fails
+either way.
+
+Nineteen candidate findings came out of four verification passes over the diff, run with distinct
+lenses: lost content, internal contradiction, whether each fix closes its defect, and mechanical
+compliance. Seventeen were rejected under adversarial re-check, including two that attacked the same
+grid paragraph for having wrong numbers, which it did not. The two that survived were the two that
+correctly identified the rule rather than the arithmetic as the error. Both proposed stating the formula,
+which is what the file now does.
+
+The lesson is narrower than "verify more". Replacing correct-but-narrow examples with a general rule is
+the single riskiest edit in a reference file, because a confidently stated wrong rule is worse than the
+vague text it replaced, and it reads as more authoritative. Two attacks on the canvas-fields fix were
+also rejected here on solid evidence, one verifier checking the live schema and another the sibling
+`scenario-video-assembly` skill, both confirming `canvasWidth` and `canvasHeight` are real. A harness
+that rejects seventeen of nineteen findings is doing its job in both directions.
+
 ## Open questions
 
 - How reliably a single-panel reshoot holds the other panels. Verified once: with the approved board
