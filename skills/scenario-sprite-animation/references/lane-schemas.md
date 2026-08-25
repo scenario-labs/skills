@@ -31,3 +31,23 @@ The live hits were keyframe pinning on a 24fps grid (FLUX.3 Keyframes), start pl
 ## Reading a deprecation tag
 
 A deprecation tag names a replacement (`deprecated:model_x`) or stands bare, and the pointer can cross capabilities, so prefer the replacement only when its schema still covers the need.
+
+## Packaging pixel frames
+
+Snap each frame individually with the same color count and seed, never the assembled sheet: the snapper collapses a sheet to one global grid and loses per-frame detail.
+
+Skip the pass altogether when the frames already sit on the art's native grid. The snapper re-detects a grid of its own, and on frames that were already pixel-native it regridded 384x288 down to 69x52 and took the scene with it. Probe one frame before running the set.
+
+Where snapping does apply, the snapped frames land on their own native grids a few pixels apart and need rescaling to one common size before assembly, since padding without rescaling leaves the character pulsing in size across frames. Scenario Resize Image takes `width`, `height`, and `preserveAspectRatio` and exposes no interpolation control, so check one rescaled frame rather than assuming it snapped cleanly.
+
+## Assembler timing
+
+GIF frame delays quantize to 10ms, so any fps that is not a divisor of 1000 is silently re-timed: a 12fps request lands at 100ms per frame, which is 10fps. Build the engine deliverable as mp4, which holds exact timing, and treat the GIF as a preview. Count the frames that came back either way: one run returned 7 from 8 inputs.
+
+## An aspect ratio the model ignored
+
+A video model can ignore both `aspectRatio` and a resolution enum and snap to its own latent grid: a 4:3 720p request came back 1088x800, which is neither. Probing the delivered file is what catches it.
+
+There is no geometric crop in the catalog. Scenario Resize Video and Scenario Resize Image both take `width`, `height`, and `preserveAspectRatio`, which fits inside the box when true and stretches to it when false; neither exposes a crop rect, an offset, or a cover mode. Scenario Padding Remover trims uniform borders from images only. The reframe models recompose generatively instead of cropping, so they break frame-to-frame consistency and do not belong inside a sequence.
+
+That leaves three honest options: stretch and record the distortion (1088 against the 1066.67 that exact 4:3 wants is 2.0%), letterbox with `preserveAspectRatio: true`, or pick the aspect at generation time. The last one is the cheap one, so confirm the delivered canvas before any downstream work: every stride and seam number depends on it.
