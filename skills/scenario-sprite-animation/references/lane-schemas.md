@@ -10,6 +10,8 @@ Retro Diffusion Animation: a `style` enum picks the animation type and locks the
 
 Judge the preview from the downloaded file (`asset_download` with `format="gif"`): `asset_display` shows a still, and the png default flattens it to one frame.
 
+Never slice the GIF preview for engine frames: those come from the same-seed `returnSpritesheet` re-run, sliced on the grid you counted. Verify row order and facing before naming frames.
+
 The `image` reference is converted to RGB without transparency, so flatten a transparent sprite onto a plain field deliberately.
 
 Retro Diffusion Plus takes a reference palette image via `inputPalette` for palette-guided generation, which is the one palette control outside the pixel snapper's color count.
@@ -51,3 +53,11 @@ A video model can ignore both `aspectRatio` and a resolution enum and snap to it
 There is no geometric crop in the catalog. Scenario Resize Video and Scenario Resize Image both take `width`, `height`, and `preserveAspectRatio`, which fits inside the box when true and stretches to it when false; neither exposes a crop rect, an offset, or a cover mode. Scenario Padding Remover trims uniform borders from images only. The reframe models recompose generatively instead of cropping, so they break frame-to-frame consistency and do not belong inside a sequence.
 
 That leaves three honest options: stretch and record the distortion (1088 against the 1066.67 that exact 4:3 wants is 2.0%), letterbox with `preserveAspectRatio: true`, or pick the aspect at generation time. The last one is the cheap one, so confirm the delivered canvas before any downstream work: every stride and seam number depends on it.
+
+## Sourcing the still for a scene loop
+
+The loop lanes assume a still already exists. Where it does not, treat it as a separate job with its own budget: it anchors every frame that follows, and no amount of animation work rescues a still that misses the brief.
+
+Search for a pixel-art image model and read its ceiling before planning a canvas (`search` `"pixel art"`). At authoring time Retro Diffusion Plus capped `width` and `height` at 384, so the largest exact 4:3 it delivers is 384x288, and `removeBg` defaults to false. Confirm with `model_schema_get`.
+
+Check subject-critical detail (counts, poses, who is holding what) against the brief before animating. These models are weak at exact counts: a five-child campfire came back as four across three prompting strategies (a count word, an explicit seating layout, then five children enumerated by shirt color), and the platform's own auto-caption confirmed the miss independently. Where a count or composition has to be exact, iterate the still per `scenario-refine-loop` and keep those attempts on their own budget line rather than spending the animation allowance on them.
