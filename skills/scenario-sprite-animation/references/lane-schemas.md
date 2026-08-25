@@ -16,7 +16,9 @@ Retro Diffusion Plus takes a reference palette image via `inputPalette` for pale
 
 ## Alpha and background removal
 
-Extract first, then run an image background remover on each frame (`search` `"background removal"`): the strongest hits are image models, and per-frame cutouts came back cleaner than the video-level pass in live runs. A remover's HD mode silently no-ops below its input floor, so upscale past it for better mattes on glows.
+Prefer native transparency wherever the lane offers it: a model that emits alpha directly leaves no matte to clean up, while per-frame removal can leave a fringe that reads as a seam once the frames cycle. Search for an image model whose schema carries a background option and read it (`search` `"transparent background"`). At authoring time the GPT Image family exposed `background` with `auto`, `opaque`, and `transparent`, the transparent value marked Preview, so confirm it with `model_schema_get` and check one frame before committing a batch.
+
+Where the lane has no native alpha, extract first, then run an image background remover on each frame (`search` `"background removal"`): the strongest hits are image models, and per-frame cutouts came back cleaner than the video-level pass in live runs. A remover's HD mode silently no-ops below its input floor, so upscale past it for better mattes on glows.
 
 Removing at video level before extraction also works when the output format carries alpha (`mov`, not `mp4`).
 
