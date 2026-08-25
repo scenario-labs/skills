@@ -44,7 +44,7 @@ Where snapping does apply, the snapped frames land on their own native grids a f
 
 ## Assembler timing
 
-GIF frame delays quantize to 10ms, so any fps that is not a divisor of 1000 is silently re-timed: a 12fps request lands at 100ms per frame, which is 10fps. Build the engine deliverable as mp4, which holds exact timing, and treat the GIF as a preview. Count the frames that came back either way: one run returned 7 from 8 inputs.
+GIF frame delays quantize to 10ms, so any fps that is not a divisor of 1000 is silently re-timed: a 12fps request lands at 100ms per frame, which is 10fps. Build the engine deliverable as mp4, which holds exact timing, and treat the GIF as a preview. Count the frames that came back, because the assembler trades frame accuracy to hold total duration and does it in both directions: one run returned 7 frames from 8 inputs, another returned 20 from 16, duplicating frames and re-timing an 8fps request to 100ms each.
 
 ## An aspect ratio the model ignored
 
