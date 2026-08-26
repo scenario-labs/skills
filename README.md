@@ -34,24 +34,27 @@ Skills follow the [Agent Skills](https://agentskills.io) format.
 ## Install
 
 ```bash
-# All skills
+# Every skill, no picker
+npx skills add scenario-labs/skills --skill "*"
+
+# Pick from the installer menu (it opens with nothing preselected)
 npx skills add scenario-labs/skills
 
 # A single skill
-npx skills add scenario-labs/skills -s scenario
+npx skills add scenario-labs/skills --skill scenario
 ```
 
 Some skills direct sibling skills per stage, so installing one of them alone leaves its references unfilled. Install a composed pipeline together:
 
 ```bash
 # Video ads (director skill plus the siblings it delegates to)
-npx skills add scenario-labs/skills -s scenario -s scenario-video-ads -s scenario-image -s scenario-video -s scenario-seedance -s scenario-audio -s scenario-video-assembly -s scenario-text-overlay -s scenario-consistency -s scenario-asset-analysis
+npx skills add scenario-labs/skills --skill scenario --skill scenario-video-ads --skill scenario-image --skill scenario-video --skill scenario-seedance --skill scenario-audio --skill scenario-video-assembly --skill scenario-text-overlay --skill scenario-consistency --skill scenario-asset-analysis
 
 # Seedance music video
-npx skills add scenario-labs/skills -s scenario -s scenario-seedance-music-video -s scenario-seedance -s scenario-consistency
+npx skills add scenario-labs/skills --skill scenario --skill scenario-seedance-music-video --skill scenario-seedance --skill scenario-consistency
 
 # Seedance storyboarded choreography
-npx skills add scenario-labs/skills -s scenario -s scenario-seedance-storyboard -s scenario-seedance -s scenario-consistency -s scenario-video-editing -s scenario-video-assembly
+npx skills add scenario-labs/skills --skill scenario --skill scenario-seedance-storyboard --skill scenario-seedance --skill scenario-consistency --skill scenario-video-editing --skill scenario-video-assembly
 ```
 
 Skills need the Scenario MCP server connected:
