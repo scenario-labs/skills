@@ -118,6 +118,8 @@ Video generation and editing, music, sound effects, voice, and speech.
 | [scenario-seedance-music-video](skills/scenario-seedance-music-video/SKILL.md) | Turning a song into a music video: beat-aligned shots, lyric transcription, shot sound under the master, assembly                     |
 | [scenario-seedance-storyboard](skills/scenario-seedance-storyboard/SKILL.md)   | Movement that holds across cuts: timecoded shot scripts, character sheets and boards, pose-chained shots that play as one performance |
 | [scenario-video-ads](skills/scenario-video-ads/SKILL.md)                       | Producing a video ad from a product shot: brief, storyboard, cinematic grammar, fidelity gates, budget, delivery                      |
+| [scenario-ugc](skills/scenario-ugc/SKILL.md)                                   | UGC-style creator video: talking-head and avatar ads, demos, faceless voiceover, spoken-register scripts, claim safety                |
+| [scenario-fan-cam](skills/scenario-fan-cam/SKILL.md)                           | Personalized fan-cam clips: identity edit into a broadcast still, reaction beats to video, graphics composited in post                |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                                     |
 | [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions                      |
 
