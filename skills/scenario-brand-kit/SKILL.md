@@ -12,28 +12,28 @@ An identity is decided, then rendered. Palette and typography are choices writte
 
 ## Quick reference
 
-| Need         | Route                                                                                                                                                       |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The spec     | Written first, by you with the user: palette as hex values with roles, two type families with weights, voice line, clear-space and don't rules              |
-| Logo, native | `search` `"svg"`: prompt-to-SVG generators (logos, icons, badges) were the authoring-time hits; the output is a real editable vector                        |
-| Logo, traced | An existing raster mark goes through `search` `"vectorize"` (raster-to-SVG tracers) rather than being regenerated                                           |
-| Gate         | `asset_analyze` the mark: spelling letter by letter, geometry, palette compliance; a drifted wordmark is re-run, never patched                              |
-| Variants     | `asset_download` the SVG (omit `format`, a raster conversion), edit fills and strokes to the spec's hex values locally, `upload_asset` each variant back    |
-| Applications | `recommend` with `capability="img2img"`, approved mark as reference, spec hex values named in the prompt, one placement per run                             |
-| Fix a mark   | `search` `"logo"`: an authoring-time hit repairs a drifted logo in a scene from the reference as ground truth                                               |
-| File the kit | `collection_create` plus `collection_add_assets` (tool catalog: `scenario` skill); `asset_update` gives each asset a description carrying its role and rule |
+| Need         | Route                                                                                                                                                                                          |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The spec     | Written first, by you with the user: palette as hex values with roles, two type families with weights, voice line, clear-space and don't rules                                                 |
+| Logo, native | `search` `"svg"`: prompt-to-SVG generators (logos, icons, badges) were the authoring-time hits; the output is a real editable vector                                                           |
+| Logo, traced | An existing raster mark goes through `search` `"vectorize"` (raster-to-SVG tracers) rather than being regenerated                                                                              |
+| Gate         | `asset_analyze` the mark, the spec passed via `text_inputs`: spelling letter by letter, geometry, palette; a drifted wordmark is re-run, never patched                                         |
+| Variants     | `asset_get` the mark and save its `url` (`curl -L`): it serves the stored SVG verbatim, where `asset_download` converts to `png` by default; recolor locally, `upload_asset` each variant back |
+| Applications | `recommend` with `capability="img2img"`, approved mark as reference, spec hex values named in the prompt, one placement per run                                                                |
+| Fix a mark   | `search` `"logo"`: an authoring-time hit repairs a drifted logo in a scene from the reference as ground truth                                                                                  |
+| File the kit | `collection_create` plus `collection_add_assets` (tool catalog: `scenario` skill); `asset_update` gives each asset a description carrying its role and rule                                    |
 
 ## The spec sheet
 
-One short document anchors every run and every gate: four to six hex values, each with a role (primary, ink, paper, accent); two type families with weights and their jobs (display, body); the logo's clear space and minimum size; three "never" rules (never stretch, never recolor outside the palette, never set the wordmark in another face). Prompts name hex values from it verbatim, `asset_analyze` gates against it, and it ships with the kit as its usage page. Type comes from families the destination can load (widely available or licensed): a generated "font" is a picture of one, so real text is set by `scenario-text-overlay` in the spec's family.
+One short document anchors every run and every gate: four to six hex values, each with a role (primary, ink, paper, accent); two type families with weights and their jobs (display, body); the logo's clear space and minimum size; three "never" rules (never stretch, never recolor outside the palette, never set the wordmark in another face). Prompts name hex values from it verbatim, every gate hands its full text to `asset_analyze` through `text_inputs` (a paraphrase drops exact spelling and hex roles), and it ships with the kit as its usage page. Type comes from families the destination can load (widely available or licensed): a generated "font" is a picture of one, so real text is set by `scenario-text-overlay` in the spec's family.
 
 ## Worked example: an identity for a new game studio
 
 1. Spec first. The brief names a mood; `scenario-inspiration` turns it into a chosen direction when it names nothing. Write palette, type, and rules down before any generation and confirm with the user (unattended: take the brief's constraints, decide the rest, mark it provisional).
 2. Mark: `search` with `target="models"`, `query="svg"`, `public=true`; `model_schema_get` the generator pick. One run per candidate mark, prompting flat geometry, few colors, the spec's hex values, and the studio name for the wordmark. `jobs_wait`, `asset_display`, and let the user pick (unattended: gate all, keep the best pass).
-3. Gate the pick with `asset_analyze` (write lane, contract in `scenario-asset-analysis`): name read letter by letter, geometry closed and centered, colors on palette. Fail means re-run with the prompt tightened, never an edit of the drifted output.
-4. Variants: `asset_download` the winning SVG and open it, since it is XML. Recolor fills to make mono, reversed, and paper-background variants; `upload_asset` each (`kind` `image`). One mark, colorways as data.
-5. Applications: `recommend` with `capability="img2img"`; wire the approved mark as reference exactly as the schema says (an array only under `array: true`). One run per placement (avatar, banner, wallpaper), each prompt subordinating the scene to the mark: "the exact logo from the reference, unaltered, centered on...". Gate each against the spec; a scene that mangled the mark can go through the logo-repair route in the table.
+3. Gate the pick with `asset_analyze` (write lane, contract in `scenario-asset-analysis`), the spec via `text_inputs`: name read letter by letter, geometry closed and centered, colors on palette. Fail means re-run with the prompt tightened, never an edit of the drifted output.
+4. Variants: `asset_get` the winning mark and save its `url` with `curl -L`, which serves the stored SVG verbatim (`asset_download` converts to raster, `format` defaulting to `png`). Recolor fills to make mono, reversed, and paper-background variants; `upload_asset` each (`kind` `image`). One mark, colorways as data.
+5. Applications: `recommend` with `capability="img2img"`; wire the approved mark as reference exactly as the schema says (an array only under `array: true`; a pick whose schema has no image field cannot hold the mark, so take the next option). One run per placement (avatar, banner, wallpaper), each prompt subordinating the scene to the mark: "the exact logo from the reference, unaltered, centered on...". Gate each against the spec; text the gate cannot resolve at output size is unverified, not passed (upscale and re-gate, or flag it), and a scene that mangled the mark can go through the logo-repair route in the table.
 6. Exact text (tagline, handle, URL) is composited by `scenario-text-overlay` in the spec's type, never prompted into the plate. Placement sizes derive per `scenario-formats`.
 7. File everything with `collection_create` and `collection_add_assets`, write each asset's role and rule into its `asset_update` description, and deliver the spec sheet as the kit's usage page.
 
