@@ -18,13 +18,17 @@ Retro Diffusion Plus takes a reference palette image via `inputPalette` for pale
 
 ## Alpha and background removal
 
-Prefer native transparency wherever the lane offers it: a model that emits alpha directly leaves no matte to clean up, while per-frame removal can leave a fringe that reads as a seam once the frames cycle. Search for an image model whose schema carries a background option and read it (`search` `"transparent background"`). At authoring time the GPT Image family exposed `background` with `auto`, `opaque`, and `transparent`, the transparent value marked Preview, so confirm it with `model_schema_get` and check one frame before committing a batch.
+Native transparency is an image-lane property. On the still, prefer a model whose schema carries a background option and read it (`search` `"transparent background"`): at authoring time the GPT Image family exposed `background` with `auto`, `opaque`, and `transparent`, the transparent value marked Preview, and the same search returned a dedicated transparent generator. Confirm with `model_schema_get` and check one frame before committing a batch.
 
-Where the lane has no native alpha, extract first, then run an image background remover on each frame (`search` `"background removal"`): the strongest hits are image models, and per-frame cutouts came back cleaner than the video-level pass in live runs. A remover's HD mode silently no-ops below its input floor, so upscale past it for better mattes on glows.
+No video lane observed at authoring time emitted alpha: thirty image-to-video and text-to-video schemas exposed no transparency output between them, so on a video-derived sprite the removal pass is the route rather than a fallback. Budget it from the start instead of hunting for a generator that skips it, and confirm with `model_schema_get`. Two schema features read like alpha and are not. A `background` parameter can composite a backdrop in rather than cut one out: on one avatar model it takes `color`, `image`, or `video`. A `mov` container choice is about color fidelity unless the schema says otherwise, since a `mov` carries alpha only with an alpha-capable profile such as ProRes 4444.
 
-Removing at video level before extraction also works when the output format carries alpha (`mov`, not `mp4`).
+Extract first, then run an image background remover on each frame: per-frame cutouts came back cleaner than the video-level pass in live runs. The dedicated removers default to alpha out but spell it differently (`preserveAlpha`, a `backgroundType` of `rgba`, or no control at all), so read the schema rather than assuming. Discover them by tag (`search` with `target: "models"`, `filters` `tags: ["remove-background"]`, and `public=true`) and read each hit's schema, because that tag also returns the video removers and a background replacer, which swaps a backdrop instead of removing it. A remover's HD mode silently no-ops below its input floor, so upscale past it for better mattes on glows.
 
-A transparent request can come back stored in a container without alpha, which is why the frame check in step 4 is not optional.
+Removing at video level before extraction is the one-run alternative, and the container is the whole decision. One video remover's schema states it outright: "Transparency (alpha): VP9 (.webm) and ProRes 4444 (.mov). MP4 has no alpha. GIF: limited transparency only." Set the output format explicitly, since one remover's description invites leaving it empty while its schema declares a default and lists no empty value, and copy the token from `allowed_values` rather than from the label, which read ProRes 4444 for a value spelled `mov_proresks`.
+
+Whichever route, verify alpha on one downloaded frame before batching. A transparent request can come back stored without it: one run asked for VP9 and the delivered asset carried no alpha, the subject flattened onto black. The extractor's output format is not in its schema either, so check one extracted frame, which is why the frame check in step 4 is not optional.
+
+Assembly flattens what is left. Both runs that assembled transparent frames got an opaque preview back, so treat that as expected rather than a defect to chase: the frames and the sheet carry the alpha, and the preview is for motion review.
 
 ## Video lanes
 
