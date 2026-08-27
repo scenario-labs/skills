@@ -37,7 +37,7 @@ Give the reaction an arc rather than a state: oblivious, then noticing the camer
 4. Gate the still: `asset_display` it for approval, and inventory the likeness (face geometry, hair, wardrobe) with the analysis lane from `scenario-asset-analysis`; unattended, that inventory stands in for the user's sign-off.
 5. `search` `query="image to video"`, pick per `scenario-kling` or `scenario-video`, `model_schema_get`, then `model_run` with `dry_run=true` for the quote.
 6. Run with the approved still as the start image and two beats: "she chats, unaware" then "she spots herself on the stadium screen, stands, and cheers", one slow reframing move, `wait=false`, then `jobs_wait` re-called with `pending_job_ids` on timeout, never a second `model_run`.
-7. Extract frames from the clip and compare against the approved still; likeness drift fails the clip, and the retry starts from the same still, never from the drifted output.
+7. Extract frames from the clip on-platform with a frame-extract tool model (`search` `query="extract frames"`, a tool-model lane per `scenario-video-editing`) and compare against the approved still; likeness drift fails the clip, and the retry starts from the same still, never from the drifted output.
 8. Assemble per `scenario-video-assembly`: score strip and channel bug rendered by `scenario-text-overlay` as image layers in the safe corners. `asset_display` the master, then cut 9:16 per `scenario-formats`.
 
 ## Common mistakes
