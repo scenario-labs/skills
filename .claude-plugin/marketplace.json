@@ -63,6 +63,8 @@
         "./skills/scenario-seedance-music-video",
         "./skills/scenario-seedance-storyboard",
         "./skills/scenario-video-ads",
+        "./skills/scenario-ugc",
+        "./skills/scenario-fan-cam",
         "./skills/scenario-audio",
         "./skills/scenario-video-assembly"
       ]

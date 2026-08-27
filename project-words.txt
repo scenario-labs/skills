@@ -12,6 +12,7 @@ artic
 binet
 bisociation
 captioner
+defocused
 desaturate
 diegetic
 equirectangular
