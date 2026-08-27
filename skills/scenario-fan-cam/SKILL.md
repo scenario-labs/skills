@@ -18,7 +18,7 @@ Discover ids with `search` (`target="models"`, `public=true`); never assert one 
 
 | Stage             | What happens                                                                           | Detail                                             |
 | ----------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| 1. Identity still | Image-edit member (query `"image edit"`) composites the person into a 16:9 crowd frame | `scenario-image-editing`, `scenario-consistency`   |
+| 1. Identity still | Image-edit member (query `"image edit"`) composites the person into a 16:9 crowd frame | `scenario-image`, `scenario-consistency`           |
 | 2. Still gate     | Likeness checked against the photo before any video money is spent                     | `scenario-asset-analysis`                          |
 | 3. Animate        | Image-to-video from the approved still, reaction beats, one camera move                | `scenario-kling`, `scenario-video`                 |
 | 4. Identity gate  | Frames extracted from the clip, compared to the approved still                         | `scenario-asset-analysis`                          |
@@ -32,7 +32,7 @@ Give the reaction an arc rather than a state: oblivious, then noticing the camer
 ## Worked example: caught on the stadium screen, 8 seconds
 
 1. Collect the photo, the sport or event, venue mood, wardrobe, and the wanted reaction. `upload_asset` the photo once and reuse the returned asset id.
-2. `search` `target="models"`, `query="image edit"`, `public=true`; pick a current identity-capable editor and read `model_schema_get` for its reference-image inputs (`scenario-image-editing` for the lane, `scenario-consistency` for reference discipline).
+2. `search` `target="models"`, `query="image edit"`, `public=true`; pick a current identity-capable editor and read `model_schema_get` for its reference-image inputs (`scenario-image` for the lane, `scenario-consistency` for reference discipline).
 3. Edit prompt: "the person from the reference image seated mid-crowd at a floodlit football stadium, 16:9 television cutaway, long-lens crowd compression, no text, logos, or graphics in frame". Keep the plate text-free: overlays come later.
 4. Gate the still: `asset_display` it for approval, and inventory the likeness (face geometry, hair, wardrobe) with the analysis lane from `scenario-asset-analysis`; unattended, that inventory stands in for the user's sign-off.
 5. `search` `query="image to video"`, pick per `scenario-kling` or `scenario-video`, `model_schema_get`, then `model_run` with `dry_run=true` for the quote.

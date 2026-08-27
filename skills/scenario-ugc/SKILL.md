@@ -32,14 +32,14 @@ Keep the register in every visual prompt: phone-height framing, available light,
 ## Worked example: 25-second founder ad from a portrait
 
 1. Brief once: offer, platform, runtime, the facts the founder may claim, tone. Collect the portrait and the real product photo, then run without stopping.
-2. Draft the six beats at about 60 words and confirm the wording with the user; the script is a claims surface, not just copy.
+2. Draft the six beats at about 60 words and confirm the wording with the user; the script is a claims surface, not just copy. Unattended, keep every line to wording the brief already supplied and cut any beat that would need a new claim.
 3. Voice: `upload_asset` the founder's recorded narration, or generate TTS per `scenario-elevenlabs` when they want a stand-in voice they approved.
 4. `search` `target="models"`, `query="avatar"`, `public=true`; pick the newest non-deprecated talking-avatar member and read its `model_schema_get`: input names and caps change per member.
 5. `upload_asset` the portrait. `model_run` with `dry_run=true` first: avatar members sit far apart on price, so quote before spending.
 6. Run for real with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 7. Demo insert: animate the uploaded product photo with an image-to-video member (`scenario-video`), 3 to 5 seconds, one micro-move.
 8. Assemble per `scenario-video-assembly`: talking head as the spine, insert cut over beats three and four, captions burned into the platform's safe zone, product-name card from `scenario-text-overlay` as an image layer.
-9. `asset_display` the master, verify the product frames against the uploaded photo (`scenario-asset-analysis`), and report spend from `usage`.
+9. `asset_display` the master. Gate the demo insert: extract frames on-platform (`search` `query="extract frames"`) and verify them against the uploaded photo (`scenario-asset-analysis`). Report spend from the run's job records (`jobs_list`), not from `usage`, whose headline figure is project-lifetime.
 
 ## Common mistakes
 
