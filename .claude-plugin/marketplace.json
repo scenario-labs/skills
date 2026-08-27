@@ -34,6 +34,7 @@
       "skills": [
         "./skills/scenario-image",
         "./skills/scenario-product-shots",
+        "./skills/scenario-brand-kit",
         "./skills/scenario-image-editing",
         "./skills/scenario-text-overlay",
         "./skills/scenario-storyboards"
