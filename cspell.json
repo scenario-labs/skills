@@ -15,6 +15,7 @@
     ".agents/skills/**",
     "pnpm-lock.yaml",
     "skills-lock.json",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "useGitignore": true

@@ -4,6 +4,10 @@ skills-lock.json
 .claude-plugin/marketplace.json
 .husky/_/
 
+# Owned and rewritten by release-please, whose formatting is not prettier's
+CHANGELOG.md
+.release-please-manifest.json
+
 # Vendored dev skills, kept byte-identical to their published source
 .claude/skills/
 .agents/skills/

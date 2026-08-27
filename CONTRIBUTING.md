@@ -36,6 +36,7 @@ A new or changed skill also needs the application test from AGENTS.md ("Validati
 
 - Commit messages and PR titles follow [Conventional Commits](https://www.conventionalcommits.org), enforced by commitlint. Valid scopes are the skill directory names plus `skills`, `agents`, `ci`, `deps`, `docs`, and `tooling`.
 - PRs target `main` and are squash-merged: the PR title becomes the commit header, so write it as one.
+- Merged PRs land in the next release, staged by release-please as an open release PR. Merging it tags a release, updates `CHANGELOG.md`, and posts the notes to the [Scenario changelog](https://www.scenario.com/changelog). Your commit type decides the listing: feat, fix, and docs entries appear under their scope, while chore and ci stay out of the changelog, so type a change to shipped skill content feat, fix, or docs. Never edit `CHANGELOG.md`, `version.txt`, or `.release-please-manifest.json` by hand.
 - Keep a PR to one concern. A new skill, a fix to another skill, and a tooling change are three PRs.
 - Fill in the pull request template; it mirrors the checks above.
 

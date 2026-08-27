@@ -65,6 +65,13 @@ claude mcp add --transport http scenario https://mcp.scenario.com/mcp
 
 Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scenario account (OAuth), or use an [API key](https://app.scenario.com/settings/api). Full setup lives in the `scenario` skill.
 
+## Staying up to date
+
+Installs always fetch the latest copy of each skill from `main`; there is no version pinning. Releases are how changes become visible: every feature, fix, and documentation change merged to `main` lands in the next release, staged by release-please as an open release PR. Merging that PR tags a version, updates [CHANGELOG.md](CHANGELOG.md), publishes a [GitHub release](https://github.com/scenario-labs/skills/releases), and posts the notes to the [Scenario changelog](https://www.scenario.com/changelog).
+
+- To learn that a skill changed, watch this repository's releases (Watch, then Custom, then Releases on GitHub) or check any of the changelog pages above. An entry scoped to a single skill carries that skill's name; changes spanning several skills appear under broader scopes such as `skills`.
+- To pull the changes, run `npx skills update` where you installed, or re-run your original `npx skills add` command.
+
 ## Skills
 
 ### Getting started
