@@ -23,7 +23,7 @@ The destination decides nearly every parameter, so collect one round of answers 
 | YouTube long-form, tutorial, interview   | Default look or `cinematic-fade`; restraint reads as professionalism | `maxLines` 2, `maxSegmentChars` 84 (two 42-character lines, the broadcast convention) | `bottom`                                                      | `outputSrt` for the platform's closed captions; burn in only for re-embeds     |
 | Cinematic piece, trailer, festival cut   | `cinematic-fade`                                                     | Sentence-length cues, `maxSegmentDuration` about 6                                    | `bottom`                                                      | Burn in                                                                        |
 
-Rows are authoring-time starting points to confirm with the user, not platform contracts; the per-placement safe zones behind the position column live in `scenario-formats`. An uploaded track beats burn-in for long-form because viewers toggle and restyle it, assistive tech reads it, and platforms index it for search; burn-in wins wherever the style is the point or a track cannot travel with the file.
+Rows are authoring-time starting points to confirm with the user, not platform contracts; unattended, the task's own instructions answer the interview and the matching row's defaults fill what they leave unsaid. The per-placement safe zones behind the position column live in `scenario-formats`. An uploaded track beats burn-in for long-form because viewers toggle and restyle it, assistive tech reads it, and platforms index it for search; burn-in wins wherever the style is the point or a track cannot travel with the file.
 
 ## The style ladder
 
@@ -43,7 +43,7 @@ Three tiers: `stylePreset` picks a ready-made look (7 presets, empty for the def
 3. Price it: `model_run` with `dry_run: true` and `parameters={"video": "<asset_id>", "stylePreset": "tiktok-bouncy", "maxSegmentWords": 4, "textPosition": "middle", "transcriptionPrompt": "Scenario, LoRA, Flux", "outputSrt": true}`. Re-estimate after changing `targetLanguage`, `modelSize`, `stylePrompt`, or `outputSubtitles`: all carry `cost_impact`.
 4. Run it with `wait: false`, then `jobs_wait` with the `job_id`; on timeout re-call with the returned `pending_job_ids`, never `job_get` in a loop.
 5. Review before deriving: `asset_display` the video and watch it through, checking names against the audio and cue placement against the frame; download the SRT sidecar with `asset_download` (no `format`: it converts images only).
-6. Spanish variant: re-run with `targetLanguage: "es"`, same styling. Translation happens inside the run, so one master yields a variant per market. Latin-script segmentation caps do not transfer to Chinese, Japanese, or Korean (streaming style guides run them at a third of the characters per line), so revisit `maxSegmentChars` per target language.
+6. Spanish variant: add `targetLanguage: "es"` to the same parameters, `transcriptionPrompt` included, and `dry_run` again (it moves the price) before running. Translation happens inside the run, so one master yields a variant per market. Latin-script segmentation caps do not transfer to Chinese, Japanese, or Korean (streaming style guides run them at a third of the characters per line), so revisit `maxSegmentChars` per target language.
 7. File the master, variants, and SRT assets in a collection (`scenario` skill) so the delivery set stays findable.
 
 ## Common mistakes
