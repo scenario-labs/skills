@@ -25,21 +25,21 @@ Discover ids with `search` (`target="models"`, `public=true`); never assert one 
 | Product demo inserts                | Image-to-video off the uploaded product still                    | `scenario-product-shots`, `scenario-video`            |
 | Captions, cut, 9:16 master          | Assembly tool models; text cards as image layers                 | `scenario-video-assembly`, `scenario-text-overlay`    |
 
-Script in six spoken beats: hook (one concrete tension or result), context (why this speaker cares), product moment, proof (visible demo or a user-supplied fact), turn (objection answered or before-after), close (soft CTA). Write for the mouth, not the page: contractions, false starts allowed, no taglines. Spoken pace runs near 2.5 words a second, so a 25-second ad is roughly 60 words.
+Script in six spoken beats: hook (one concrete tension or result), context (why this speaker cares), product moment, proof (visible demo or a user-supplied fact), turn (objection answered or before-after), close (soft CTA). Write for the mouth, not the page: contractions, false starts allowed, no taglines. Spoken pace runs near 2.5 words a second, so a 25-second ad is roughly 60 words; avatar clip runtime is not word count, though, since members pad sentences with silence (a 60-word script can return a clip half again the brief), so trim the pauses in assembly to hit the length.
 
-Keep the register in every visual prompt: phone-height framing, available light, a real location with clutter, one handheld drift at most. Cinematic grammar (dolly moves, golden-hour rim light, shallow anamorphic looks, graded color) reads as an ad and kills belief. Compose 9:16 natively; a cropped 16:9 master frames like television.
+Keep the register in every visual prompt: phone-height framing, available light, a real location with clutter, one handheld drift at most. Cinematic grammar (dolly moves, golden-hour rim light, shallow anamorphic looks, graded color) reads as an ad and kills belief. Compose 9:16 natively, reframing a non-vertical source still per `scenario-formats` before generating; a cropped 16:9 master frames like television.
 
 ## Worked example: 25-second founder ad from a portrait
 
 1. Brief once: offer, platform, runtime, the facts the founder may claim, tone. Collect the portrait and the real product photo, then run without stopping.
 2. Draft the six beats at about 60 words and confirm the wording with the user; the script is a claims surface, not just copy. Unattended, keep every line to wording the brief already supplied and cut any beat that would need a new claim.
 3. Voice: `upload_asset` the founder's recorded narration, or generate TTS per `scenario-elevenlabs` when they want a stand-in voice they approved.
-4. `search` `target="models"`, `query="avatar"`, `public=true`; pick the newest non-deprecated talking-avatar member and read its `model_schema_get`: input names and caps change per member.
-5. `upload_asset` the portrait. `model_run` with `dry_run=true` first: avatar members sit far apart on price, so quote before spending.
+4. `search` `target="models"`, `query="avatar"`, `public=true`; pick by input contract (a script-taking member when the speech exists only as text, an audio-taking one when a recording exists), newest breaking ties, and read `model_schema_get`: input names and caps change per member.
+5. `upload_asset` the portrait. Prompt the speaker's hands empty and the set free of products: avatar members invent props and label type. `model_run` with `dry_run=true` first: avatar members sit far apart on price, so quote before spending.
 6. Run for real with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 7. Demo insert: animate the uploaded product photo with an image-to-video member (`scenario-video`), 3 to 5 seconds, one micro-move.
 8. Assemble per `scenario-video-assembly`: talking head as the spine, insert cut over beats three and four, captions burned into the platform's safe zone, product-name card from `scenario-text-overlay` as an image layer.
-9. `asset_display` the master. Gate the demo insert: extract frames on-platform (`search` `query="extract frames"`) and verify them against the uploaded photo (`scenario-asset-analysis`). Report spend from the run's job records (`jobs_list`), not from `usage`, whose headline figure is project-lifetime.
+9. `asset_display` the master. Gate every generated clip, the talking head included: extract frames on-platform (`search` `query="extract frames"`) and verify them against the uploads (`scenario-asset-analysis`); an invented product in the speaker's hands or legible generated type fails a clip exactly like label drift on the insert. Report spend by summing this run's own job records by job id: `jobs_list` is project-scoped and over-reports, and `usage`'s headline figure is project-lifetime.
 
 ## Common mistakes
 
@@ -49,5 +49,5 @@ Keep the register in every visual prompt: phone-height framing, available light,
 - Passing both audio and `text` to a lipsync member: exclusive inputs; pick one.
 - Skipping `dry_run` on avatar and lipsync runs: per-member pricing varies too widely to guess.
 - Generating the product or any on-screen text: the product comes from the uploaded photo, type is overlaid in assembly.
-- One 40-second clip: generate per-beat clips and cut on the beat turns; single long takes drift and cost more to retry.
+- One 40-second b-roll or generated-creator take: generate per-beat clips and cut on the beat turns; single long takes drift and cost more to retry. A talking-head script stays one take, trimmed in assembly.
 - Cropping a landscape master to 9:16: heads and captions land outside the safe zone; compose vertical from the start.
