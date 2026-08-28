@@ -14,7 +14,7 @@ Scenario (scenario.com) generates AI images, video, 3D, and audio across 500+ mo
 
 Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: no credentials pass through the conversation. Client config and API-key setup for headless use: [references/setup.md](references/setup.md). Never ask an agent to collect, encode, or echo a secret.
 
-The default toolset is the core loop below; `?toolsets=full` exposes everything. Any other tool: `scenario_tools_search` with the verb as `query` returns its schema and lane; the matching `scenario_tool_execute_read` / `write` / `delete` runs it with `{name, parameters}`, scope ids inside `parameters` (unlike the core tools' top-level `team_id`/`project_id`). The lane is the result's own `permission`, not what the verb sounds like: `asset_download` and `asset_analyze` are both write-class.
+The default toolset is wider than the core loop below: `asset_get`, `job_get`, `jobs_list` and `models_list` are in it too and are called directly, so treat the table as the loop rather than the whole list. `?toolsets=full` exposes everything. The catalog tools are the ones outside it (collections, tagging, analysis, training, members, keys): `scenario_tools_search` with the verb as `query` returns the schema and lane, and the matching `scenario_tool_execute_read` / `write` / `delete` runs it with `{name, parameters}`, scope ids inside `parameters` (unlike a direct tool's top-level `team_id`/`project_id`). The lane is the result's own `permission`, not what the verb sounds like: `asset_download` and `asset_analyze` are both write-class.
 
 ## Scope first
 
@@ -32,6 +32,7 @@ The server fills scope in only for read-only tools with one candidate remaining;
 | Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost              |
 | Wait              | `jobs_wait`                              | Only if `model_run` returns `in_progress`; never loop `job_get` |
 | View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                                      |
+| Inspect an asset  | `asset_get`                              | Free; dimensions, duration, `firstFrame` / `lastFrame` ids      |
 | Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                    |
 | Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                              |
 | Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                           |

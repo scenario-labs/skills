@@ -12,7 +12,7 @@ Format adaptation is derivation, not regeneration: re-prompting the concept per 
 
 ## The decision ladder
 
-Per target format, take the first rung that fits:
+Per target format, take the first rung that fits. Each rung is a `model_run` on a model found with `search` (`target="models"`, `public=true`), never a dedicated MCP tool of its own:
 
 | The target needs                             | Operation                                                                                                                           |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
