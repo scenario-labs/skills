@@ -1,0 +1,7 @@
+# Auto-request review on release-please's release PRs: every release PR
+# rewrites these three files (and, per AGENTS.md, nothing else may touch
+# them), so owning them requests a review from the release owner exactly
+# when a release PR opens, with no effect on ordinary skill PRs.
+/CHANGELOG.md @hervenivon
+/version.txt @hervenivon
+/.release-please-manifest.json @hervenivon
