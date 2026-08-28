@@ -45,6 +45,7 @@ oilify
 outpainting
 pano
 posterize
+proresks
 remesh
 remeshed
 remeshes
@@ -55,6 +56,7 @@ retargets
 retexture
 retexturing
 reve
+rgba
 roas
 shengshu
 shfmt
