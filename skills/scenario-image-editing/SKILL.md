@@ -40,12 +40,12 @@ Upscalers are `img2img` models, many taking no prompt at all: discover with `fil
 
 ## Expanding a canvas is four different tools
 
-- **Reframe** (`model_scenario-gemini-reframe`): an `aspectRatio` enum plus a `resolution` tier (1K, 2K, 4K), so exact pixels are out of reach; optional `prompt`. The enum is approximate: `4:5` came back 1856x2304 (29:36), so a true ratio needs a Resize Image pass after it.
+- **Reframe** (`model_scenario-gemini-reframe`): an `aspectRatio` enum plus a `resolution` tier (1K, 2K, 4K), so exact pixels are out of reach; optional `prompt`. The enum is approximate: `4:5` came back 1856x2304 (29:36), so a true ratio needs a Resize Image pass after it (`fit: "cover"`, so it crops the sliver instead of squashing).
 - **Smart Reframe** (`model_scenario-smart-reframe`): `width` and `height` are required and exact, and it protects on-image text, brand marks and palette. `textDensity: "DENSE"` costs substantially more.
 - **Photoroom Expand**: exact `outputWidth` and `outputHeight` up to 4096, plus a `seed`.
 - **Photoroom Uncrop**: rebuilds a subject the frame edge cut off.
 
-Resize Image is none of these: it scales pixels, never invents canvas.
+Resize Image is none of these: it scales pixels (`fit`: `contain`, `stretch`, or `cover` to crop to an exact ratio), never invents canvas.
 
 Both reframes recompose generatively rather than filling canvas, and at tens of times an effect's price they are the chain's expensive step: `dry_run` them. They re-render, so reframe first and grade after: a grade or grain pass beforehand comes back partly reinterpreted.
 

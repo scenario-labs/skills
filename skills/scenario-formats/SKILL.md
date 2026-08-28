@@ -17,6 +17,7 @@ Per target format, take the first rung that fits:
 | The target needs                             | Operation                                                                                                                           |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Same ratio, other pixels                     | Resize: exact, scales pixels, invents nothing                                                                                       |
+| A tighter ratio, edges expendable            | Resize with `fit: "cover"`: exact, center-crops the overflow; only when the subject clears the cut                                  |
 | More canvas, composition intact              | Expand or uncrop: exact pixels, fills outward                                                                                       |
 | Another ratio, recomposed around the subject | Generative reframe; the text-protecting variant when lettering or marks are on the plate                                            |
 | A far ratio or a new visual hierarchy        | Recompose natively: a fresh run per `scenario-image` with the master as reference (`scenario-consistency`), composed for that ratio |
@@ -42,7 +43,7 @@ The last rung applies more often than it looks: 16:9 key art seldom survives to 
 ## Common mistakes
 
 - Re-prompting per format: five generations of one prompt are five different images; derive from the master.
-- Stretching into a new ratio with a resize: it scales pixels; ratio changes take reframe, expand, or recomposition.
+- Stretching into a new ratio with a resize (`fit: "stretch"`): it distorts. A ratio change is `fit: "cover"` when the edges are expendable, else reframe, expand, or recomposition.
 - Grading and grain before reframing: the order is reshape, then grade, then texture.
 - Deriving from the lettered master: generative operations re-render type; keep a text-free plate and re-overlay per format.
 - Trusting a ratio enum: measure the output and resize to exact.

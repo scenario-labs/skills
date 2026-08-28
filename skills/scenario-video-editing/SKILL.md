@@ -47,7 +47,7 @@ Checking costs nothing: `asset_get` returns `firstFrame` and `lastFrame` as thei
 
 ## Resizing is not reframing
 
-No tool model repaints a video's canvas: Resize Video fits the clip inside the target, or stretches it when `preserveAspectRatio` is false. Neither gives a 16:9 clip a vertical frame, so that brief needs a decision before any spend, between two routes an order of magnitude apart in price.
+No tool model repaints a video's canvas. Resize Video takes `fit`: `contain` (default) fits the clip inside the target, `stretch` forces the size and distorts, `cover` fills the target and center-crops the rest. `cover` is the cheap way to an exact ratio when losing the edges is acceptable, but none of them gives a 16:9 clip a vertical frame with the whole picture kept, so that brief needs a decision before any spend, between two routes an order of magnitude apart in price.
 
 - **Generative reframe** (`query="reframe"`, Luma Ray 3.2 Reframe and Wan 2.2 Reframe, `scenario-video` territory) outpaints past the frame and keeps the whole picture, at by far the highest price in such a job. Resolution ceilings bite: a schema can allow a vertical ratio and its top resolution tier separately yet reject the pair at run time.
 - **Compositor** (Video Studio, cropping or pillarboxing onto a vertical canvas) is cheap but throws away width or adds bars, and its layer geometry is `scenario-video-assembly`'s contract rather than a one-line setting.
@@ -60,7 +60,7 @@ Launch every `model_run` below with `wait=false` and retire it with `jobs_wait` 
 
 1. `asset_get` the master and read `properties.duration` before choosing times.
 2. Trim: `model_scenario-video-cut` with `startTime` and `endTime` in seconds. Going first is what makes every later step cheaper.
-3. Reshape: `model_scenario-resize-video`, `video` as a one-item array, `videoOutputFormat: "mp4"`. It rescales within the clip's own aspect ratio, so a different shape is the reframe decision above, taken here rather than bolted on later.
+3. Reshape: `model_scenario-resize-video`, `video` as a one-item array, `videoOutputFormat: "mp4"`. `fit` settles the shape at this step rather than later: `cover` lands an exact ratio once the edges are spendable, and a shape that has to keep the whole picture is the reframe decision above.
 4. Grade: `model_schema_get`, then the LUT twin with `lutIntensity` near 0.6.
 5. Texture: the Grain twin on that output, last, so its grain is sized for the delivered frame rather than resampled by a later resize.
 6. `asset_display` the result's `firstFrame` to confirm the look, then `asset_download` with no `format`.
