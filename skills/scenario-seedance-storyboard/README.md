@@ -180,8 +180,8 @@ review the stills as a set before spending a video run.
 ### Why the chained lane lives in a reference file
 
 Body words load on every trigger. After the fixes the body reached the point where the next lesson
-would break the 1400-word hard cap, and the chained lane is per-mode detail that only a chained run
-needs (four of five live runs used the scripted lane). It moved to
+would break the 1400-word hard cap in force at the time, and the chained lane is per-mode detail
+that only a chained run needs (four of five live runs used the scripted lane). It moved to
 [references/chained-lane.md](references/chained-lane.md); the lane choice, the mutual-exclusion trap
 and the cost model stayed in the body.
 

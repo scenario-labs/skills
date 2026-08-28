@@ -20,7 +20,7 @@ pnpm install
 
 ## Authoring a skill
 
-Read [AGENTS.md](AGENTS.md) before writing. It defines the frontmatter contract, the description format ("Use when..."), the 600-900 word body target, the MCP-first rule, and the house style: no em dashes, no marketing language, and model ids discovered via `search` rather than asserted as constants. The `skill-creator` dev skill vendored in `.claude/skills/` helps with drafting; where its generic guidance and AGENTS.md disagree, AGENTS.md wins.
+Read [AGENTS.md](AGENTS.md) before writing. It defines the frontmatter contract, the description format ("Use when..."), the 1000-word body target, the MCP-first rule, and the house style: no em dashes, no marketing language, and model ids discovered via `search` rather than asserted as constants. The `skill-creator` dev skill vendored in `.claude/skills/` helps with drafting; where its generic guidance and AGENTS.md disagree, AGENTS.md wins.
 
 ## Validating
 

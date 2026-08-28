@@ -98,25 +98,67 @@ for f in skills/*/SKILL.md; do
     fail=1
   }
 
-  # Body budget (AGENTS.md "Authoring contract"): 600-900 words is the house
-  # target and stays editorial, so only the hard caps fail the build, 1400 words
-  # and 500 body lines. Two units on purpose. Lines is the unit Anthropic states
-  # its own guidance in ("under 500 lines"), and words is the local proxy for the
-  # token budget the spec recommends ("< 5000 tokens"), which no shell can count
-  # honestly. Nothing outside this repo enforces either one; both caps sit well
-  # inside the advice so a legitimate clarification never has to fight the build.
-  # The body is everything after the closing frontmatter ---.
+  # 1000-word target, 2500-word hard cap; AGENTS.md "Authoring contract" carries
+  # the why. Body is everything after the closing frontmatter ---.
   body=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f")
   words=$(printf '%s\n' "$body" | wc -w | tr -d ' ')
-  lines=$(printf '%s\n' "$body" | wc -l | tr -d ' ')
-  if [ "$words" -gt 1400 ]; then
-    echo "$f: body is $words words, over the 1400-word hard cap"
-    fail=1
-  fi
-  if [ "$lines" -gt 500 ]; then
-    echo "$f: body is $lines lines, over the 500-line hard cap"
+  if [ "$words" -gt 2500 ]; then
+    echo "$f: body is $words words, over the 2500-word hard cap"
     fail=1
   fi
 done
+
+# Context fan-out: a skill plus the siblings it names in backticks, weighed
+# against the token pool Claude Code re-attaches skills from after compaction.
+# AGENTS.md "Authoring contract" carries the why. A notice and never a failure,
+# because the total moves when a skill nobody touched grows.
+reattach_pool=25000
+reattach_per_skill=5000
+fanout_notice_at=20000
+
+# The pre-commit hook runs on the macOS system bash, 3.2, which has no
+# associative arrays.
+skill_tokens_file=$(mktemp)
+trap 'rm -f "$skill_tokens_file"' EXIT
+
+for f in skills/*/SKILL.md; do
+  name=$(basename "$(dirname "$f")")
+  body=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f")
+  chars=$(printf '%s\n' "$body" | wc -c | tr -d ' ')
+  tokens=$((chars / 4))
+  if [ "$tokens" -gt "$reattach_per_skill" ]; then
+    tokens=$reattach_per_skill
+  fi
+  printf '%s\t%s\n' "$name" "$tokens" >>"$skill_tokens_file"
+done
+
+# Empty means the name is not a skill (a model id, or ordinary prose).
+skill_tokens() {
+  awk -F'\t' -v want="$1" '$1 == want { print $2; exit }' "$skill_tokens_file"
+}
+
+fanout_hits=""
+for f in skills/*/SKILL.md; do
+  name=$(basename "$(dirname "$f")")
+  body=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f")
+  total=$(skill_tokens "$name")
+  siblings=$(printf '%s\n' "$body" | grep -oE '`scenario(-[a-z0-9]+)*`' | tr -d '`' | sort -u | grep -vx "$name" || true)
+  count=0
+  for sibling in $siblings; do
+    sibling_tokens=$(skill_tokens "$sibling")
+    [ -n "$sibling_tokens" ] || continue
+    total=$((total + sibling_tokens))
+    count=$((count + 1))
+  done
+  if [ "$total" -ge "$fanout_notice_at" ]; then
+    fanout_hits="${fanout_hits}  ${name}: with its ${count} named siblings, about ${total} tokens of the ${reattach_pool}-token pool
+"
+  fi
+done
+
+if [ -n "$fanout_hits" ]; then
+  echo "Notice (not a failure): a skill's context fan-out is approaching the ${reattach_pool}-token re-attach pool Claude Code shares across skills after compaction. Past it, the least recently invoked skills are dropped entirely. Trim the body, or drop a sibling reference the workflow does not need."
+  printf '%s' "$fanout_hits"
+fi
 
 exit $fail
