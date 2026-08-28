@@ -4,9 +4,10 @@ skills-lock.json
 .claude-plugin/marketplace.json
 .husky/_/
 
-# Owned and rewritten by release-please, whose formatting is not prettier's
+# Rewritten by release-please, which emits `*` bullets prettier would rewrite.
+# .release-please-manifest.json needs no exemption: release-please reuses that
+# file's existing indent and trailing newline, so it stays prettier-clean.
 CHANGELOG.md
-.release-please-manifest.json
 
 # Vendored dev skills, kept byte-identical to their published source
 .claude/skills/

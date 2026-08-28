@@ -5,3 +5,11 @@
 /CHANGELOG.md @hervenivon
 /version.txt @hervenivon
 /.release-please-manifest.json @hervenivon
+
+# The release machinery itself. A change here redefines what a release is,
+# what lands in the notes, or where they are published, so it gets the same
+# review as the release PRs it produces.
+/release-please-config.json @hervenivon
+/.github/workflows/release-please.yml @hervenivon
+/.github/workflows/publish-changelog.yml @hervenivon
+/.github/CODEOWNERS @hervenivon

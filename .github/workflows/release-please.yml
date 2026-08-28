@@ -1,24 +1,35 @@
+name: release-please
+
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: write
-  pull-requests: write
+# No step in this job uses GITHUB_TOKEN: release-please runs on the App token
+# minted below, and create-github-app-token needs no repository scope. Anything
+# added here should get its own permissions rather than inherit write access.
+permissions: {}
 
-name: release-please
+# One release-please run at a time. Two merges in the same minute would
+# otherwise race on the release branch and on release creation.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
 
 jobs:
   release-please:
+    # Forks hold none of the App secrets, so without this the token step fails
+    # on every push to a fork's main.
+    if: github.repository == 'scenario-labs/skills'
     runs-on: ubuntu-latest
     steps:
       # Mint a GitHub App installation token so the release PR, release
       # commit, and tag are created by the App rather than the default
       # GITHUB_TOKEN. GitHub never triggers workflows from events created
       # with GITHUB_TOKEN (anti-recursion rule), so the App token is what
-      # lets the release PR run the same CI as any other PR. The client ID
-      # and private key are scenario-labs org secrets.
+      # lets the release PR run the same CI as any other PR, and what makes
+      # the published release fire publish-changelog.yml. The client ID and
+      # private key are scenario-labs org secrets.
       - name: Retrieve GitHub App Token
         uses: actions/create-github-app-token@v3.2.0
         id: app-token
@@ -30,20 +41,3 @@ jobs:
         id: release-please
         with:
           token: ${{ steps.app-token.outputs.token }}
-
-      # The release body is the CHANGELOG.md section this release added. A
-      # publish failure only warns: the tag, changelog, and GitHub release
-      # already exist, and the run stays green so they are not re-cut.
-      - name: Publish changelog to www.scenario.com
-        if: ${{ steps.release-please.outputs.release_created }}
-        env:
-          CHANGELOG_INGEST_SECRET: ${{ secrets.CHANGELOG_INGEST_SECRET }}
-          RELEASE_BODY: ${{ steps.release-please.outputs.body }}
-        run: |
-          curl -sf -X POST https://www.scenario.com/api/changelog/ingest \
-            -H "Authorization: Bearer $CHANGELOG_INGEST_SECRET" \
-            -H "Content-Type: application/json" \
-            -d "$(jq -n \
-              --arg repo "skills" \
-              --arg changelog "$RELEASE_BODY" \
-              '{repo: $repo, changelog: $changelog}')" || echo "::warning::Changelog publish failed"
