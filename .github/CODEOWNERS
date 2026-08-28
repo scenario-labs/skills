@@ -2,14 +2,17 @@
 # rewrites these three files (and, per AGENTS.md, nothing else may touch
 # them), so owning them requests a review from the release owner exactly
 # when a release PR opens, with no effect on ordinary skill PRs.
-/CHANGELOG.md @hervenivon
-/version.txt @hervenivon
-/.release-please-manifest.json @hervenivon
+#
+# The @scenario-labs/platform team is listed alongside @hervenivon so a
+# release is never blocked on one person being available.
+/CHANGELOG.md @hervenivon @scenario-labs/platform
+/version.txt @hervenivon @scenario-labs/platform
+/.release-please-manifest.json @hervenivon @scenario-labs/platform
 
 # The release machinery itself. A change here redefines what a release is,
 # what lands in the notes, or where they are published, so it gets the same
 # review as the release PRs it produces.
-/release-please-config.json @hervenivon
-/.github/workflows/release-please.yml @hervenivon
-/.github/workflows/publish-changelog.yml @hervenivon
-/.github/CODEOWNERS @hervenivon
+/release-please-config.json @hervenivon @scenario-labs/platform
+/.github/workflows/release-please.yml @hervenivon @scenario-labs/platform
+/.github/workflows/publish-changelog.yml @hervenivon @scenario-labs/platform
+/.github/CODEOWNERS @hervenivon @scenario-labs/platform
