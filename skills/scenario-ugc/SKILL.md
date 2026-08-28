@@ -32,14 +32,15 @@ Keep the register in every visual prompt: phone-height framing, available light,
 ## Worked example: 25-second founder ad from a portrait
 
 1. Brief once: offer, platform, runtime, the facts the founder may claim, tone. Collect the portrait and the real product photo, then run without stopping.
-2. Draft the six beats at about 60 words and confirm the wording with the user; the script is a claims surface, not just copy. Unattended, keep every line to wording the brief already supplied and cut any beat that would need a new claim.
-3. Voice: `upload_asset` the founder's recorded narration, or generate TTS per `scenario-elevenlabs` when they want a stand-in voice they approved.
-4. `search` `target="models"`, `query="avatar"`, `public=true`; pick by input contract (a script-taking member when the speech exists only as text, an audio-taking one when a recording exists), newest breaking ties, and read `model_schema_get`: input names and caps change per member.
-5. `upload_asset` the portrait. Prompt the speaker's hands empty and the set free of products: avatar members invent props and label type. `model_run` with `dry_run=true` first: avatar members sit far apart on price, so quote before spending.
-6. Run for real with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
-7. Demo insert: animate the uploaded product photo with an image-to-video member (`scenario-video`), 3 to 5 seconds, one micro-move.
-8. Assemble per `scenario-video-assembly`: talking head as the spine, insert cut over beats three and four, captions burned into the platform's safe zone, product-name card from `scenario-text-overlay` as an image layer.
-9. `asset_display` the master. Gate every generated clip, the talking head included: extract frames on-platform (`search` `query="extract frames"`) and verify them against the uploads (`scenario-asset-analysis`); an invented product in the speaker's hands or legible generated type fails a clip exactly like label drift on the insert. Report spend by summing this run's own job records by job id: `jobs_list` is project-scoped and over-reports, and `usage`'s headline figure is project-lifetime.
+2. Create this run's collection before the first generation (`collection_create`, catalog write lane, `name` only), then `collection_add_assets` each keeper as it lands; its returned `itemCount` is the receipt.
+3. Draft the six beats at about 60 words and confirm the wording with the user; the script is a claims surface, not just copy. Unattended, keep every line to wording the brief already supplied and cut any beat that would need a new claim.
+4. Voice: `upload_asset` the founder's recorded narration, or generate TTS per `scenario-elevenlabs` when they want a stand-in voice they approved.
+5. `search` `target="models"`, `query="avatar"`, `public=true`; pick by input contract (a script-taking member when the speech exists only as text, an audio-taking one when a recording exists), newest breaking ties, and read `model_schema_get`: input names and caps change per member.
+6. `upload_asset` the portrait. Prompt the speaker's hands empty and the set free of products: avatar members invent props and label type. `model_run` with `dry_run=true` first: avatar members sit far apart on price, so quote before spending.
+7. Run for real with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
+8. Demo insert: animate the uploaded product photo with an image-to-video member (`scenario-video`), 3 to 5 seconds, one micro-move.
+9. Assemble per `scenario-video-assembly`: talking head as the spine, insert cut over beats three and four, captions burned into the platform's safe zone, product-name card from `scenario-text-overlay` as an image layer.
+10. `asset_display` the master. Gate every generated clip, the talking head included: extract frames on-platform (`search` `query="extract frames"`) and verify them against the uploads (`scenario-asset-analysis`); an invented product in the speaker's hands or legible generated type fails a clip exactly like label drift on the insert. Report spend by summing this run's own job records by job id: `jobs_list` is project-scoped and over-reports, and `usage`'s headline figure is project-lifetime.
 
 ## Common mistakes
 

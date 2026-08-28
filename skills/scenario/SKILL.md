@@ -53,7 +53,7 @@ Generating a stylized game prop image:
 
 Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and `kind` (`image`, `audio`, `video`, `3d`). Prefer multipart: add `file_size`, follow the returned `instructions` to PUT every part URL, then `upload_asset_complete` with the `upload_id`. Inline `data` only under ~100KB. Scope rides on both; they take no other fields: no parts list, no etags.
 
-A working session piles up assets across types, and keeping them organized is part of the job: collections and tags are the mechanisms, via the tool catalog above (`collection_create`, `collection_add_assets`, `asset_add_tags`), and sibling Scenario skills go deeper on filing and retrieval where their workflows call for it.
+Filing is part of delivering, not a tidy-up: run the catalog tools above with arguments under `parameters` (never `arguments`, which the executor drops silently, surfacing as a scope error that is not one). `collection_create` takes a name and the scope pair only; `asset_ids` sent there is ignored without an error, so adding is always a second call. Confirm membership with `assets_get_bulk` and read each record's `collectionIds`; `search` `filters={"collection_ids": [...]}` lags on a fresh write. `asset_add_tags` is additive.
 
 ## Errors and recovery
 
