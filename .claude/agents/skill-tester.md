@@ -30,8 +30,8 @@ Write a short prose account for a human reader: what you did, where the document
   "calls": [
     {
       "n": 1,
-      "tool": "search",
-      "args": "target=models, query=...",
+      "tool": "recommend",
+      "args": "prompt=...",
       "result": "ok",
       "note": ""
     }
