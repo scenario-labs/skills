@@ -35,17 +35,13 @@ Resolve conflicts preserving the intent of both sides. If intents genuinely conf
 
 ## 3. Audit the skill diff for discovery misuse
 
-`search` is a real tool with legitimate uses, so no mechanical check can police discovery without drowning in false positives; this step is the judgement pass, graded against the discovery rules in AGENTS.md "Authoring contract". Diff the skill content the PR touches:
+`search` is a real tool with legitimate uses, so no mechanical check can police discovery without drowning in false positives; this step is the judgement pass. Diff the skill content the PR touches:
 
 ```bash
 git diff "origin/$BASE"...HEAD -- skills/
 ```
 
-On every added or changed line that teaches discovery or names a model id, check three things:
-
-- **`search` doing `recommend`'s job.** Discovery is `recommend` when the skill needs a capability, `search` only when the member is already known by name or is private. A capability-worded query (`query="image edit"`) is the failure case, and lane tables carry capabilities (`img2video`), never query strings.
-- **A lookup where the id is a constant.** When the operation is covered by a first-party singleton tool from the AGENTS.md list (the compositors, the timeline tools, the exact-dimension resizers, the audio structural tools, the small image utilities, the `model_scenario-postprocessing-*` effects), the skill names the id and says why it is fixed; sending the agent through `recommend` or `search` there only re-derives a constant. That list is closed: before treating any other id as fixed, apply the AGENTS.md test (the provider marker, and nothing third-party doing the same job).
-- **A generative model id asserted as a constant.** Generative ids come from a `recommend` or `search` step at runtime, whoever built the model.
+On every added or changed line that teaches discovery or names a model id, apply the discovery and model-id rules from AGENTS.md "Authoring contract", watching for their three failure modes: `search` doing `recommend`'s job (a capability-worded query, or a query string in a lane table), a `recommend` or `search` lookup for an operation covered by a first-party singleton tool whose id should be named instead, and a generative model id asserted as a constant. The singleton list is what passes the AGENTS.md test today, not a grant: before treating an id outside it as fixed, apply that test yourself.
 
 Judge only lines this PR adds or changes: a pre-existing violation nearby goes in the report as a note, never as a fix smuggled into this PR. Fix findings the way step 5 fixes review comments (smallest safe change, conventional commit, push). When the right rewrite is not obvious from the diff alone (a lane table whose capabilities need re-verifying against the live catalog), raise it instead of guessing.
 
