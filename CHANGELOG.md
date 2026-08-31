@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.38.0](https://github.com/scenario-labs/skills/compare/skills-v0.37.3...skills-v0.38.0) (2026-08-31)
+
+
+### Features
+
+* **skills:** add scenario-ugc and scenario-fan-cam, with the discovery and filing rules they proved out ([#91](https://github.com/scenario-labs/skills/issues/91)) ([c703659](https://github.com/scenario-labs/skills/commit/c70365922199a91b81831e1638c376ed9a7dea11))
+
 ## 0.37.3 (2026-08-28)
 
 
