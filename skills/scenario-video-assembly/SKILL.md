@@ -22,7 +22,7 @@ These ids are authoring-time search hits, not constants: re-discover them, avail
 
 Concat is sequential: `videos` takes 2 to 50 files (never 1) and the optional `transitions` array's "length must be number of videos - 1", 18 types.
 
-Video Studio is an absolute timeline: `layers` holds 1 to 50 image, video or audio sources placed by `startTime` and stacked by `zIndex` (higher in front), with per-layer `transitionIn`/`transitionOut`/`transitionDuration` instead of a between-clip array. At least one layer must be a video, so a music bed over a still is rejected.
+Video Studio is an absolute timeline: `layers` holds 1 to 50 image, video or audio sources placed by `startTime` and stacked by `zIndex` (higher in front), with per-layer `fadeIn`/`fadeOut` rather than a between-clip array, so a cross-fade between two clips belongs in concat. At least one layer must be a video, so a music bed over a still is rejected.
 
 ## The Video Studio contract
 
@@ -34,7 +34,7 @@ Per layer, three timing ideas have confusable names:
 
 Everything is in seconds at `step: 0.1`, so do not promise frame-accurate cuts. `x` and `y` are strings taking pixels, percentages or words, and `anchor` says which point of the layer they address: `top-left`, `top-center`, `top-right`, `center-left`, `center`, `center-right`, `bottom-left`, `bottom-center`, `bottom-right` (the middle one is bare `center`), defaulting to `"top-left"`. A bottom-right logo is `x: "right"`, `y: "bottom"`, `anchor: "bottom-right"`, flush to the edge unless you inset it with a percentage.
 
-`canvasMode` and `durationMode` both default to `"auto"`, computed from the layers: a custom frame is `canvasMode: "custom"` plus numeric `canvasWidth` and `canvasHeight` (there are no top-level `width`/`height`, and unlike the layers' string `width`/`height` these are numbers), and a custom length is `durationMode: "custom"` plus the top-level `duration`. `fit` only acts on a layer that also sets the layer's own `width` and `height`, strings like `x` and `y`: to reframe a clip, set both to the canvas size and pass `"cover"` (crops) or `"contain"` (letterboxes), since the default `"fill"` stretches. The output field is `videoOutputFormat` here, `imageOutputFormat` in Image Studio, and `outputFormat` in concat and the trim utilities.
+`canvasMode` and `durationMode` both default to `"auto"`, computed from the layers: a custom frame is `canvasMode: "custom"` plus numeric `canvasWidth` and `canvasHeight` (there are no top-level `width`/`height`, and unlike the layers' string `width`/`height` these are numbers), and a custom length is `durationMode: "custom"` plus the top-level `duration`. `fit` only acts on a layer that also sets the layer's own `width` and `height`, strings like `x` and `y`: to reframe a clip, set both to the canvas size and pass `"cover"` (crops) or `"contain"` (letterboxes), since the default `"fill"` stretches. Give an overlay layer an explicit `width` and `height` even at its native size: leaving them empty is documented as preserving the original but does not reliably, and a 560x80 strip came back at 1792x256 on a 1920x1080 canvas. The output field is `videoOutputFormat` here, `imageOutputFormat` in Image Studio, and `outputFormat` in concat and the trim utilities.
 
 A layer has no `type` field: its kind is inferred from `source`, which accepts only image, video and audio. There is no text layer, so titles, lower thirds and end cards arrive as rendered PNGs composited as image layers; `scenario-text-overlay` renders them letter-perfect.
 
