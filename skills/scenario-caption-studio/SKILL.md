@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Caption Studio is one tool model: a video in, its speech transcribed (Whisper) or an existing SRT applied, styled captions out, burned into the picture or delivered as a soft track and an `.srt` sidecar. It translates into 18 languages and styles captions three ways. Find it with `search` (`target="models"`, `query="caption"`, `public=true`); the authoring-time id is `model_scenario-caption-studio`, re-discovered rather than hardcoded. Connection and the core loop: see the `scenario` skill.
+Caption Studio is one tool model, `model_scenario-caption-studio`: a video in, its speech transcribed (Whisper) or an existing SRT applied, styled captions out, burned into the picture or delivered as a soft track and an `.srt` sidecar. It translates into 18 languages and styles captions three ways. Running that one member is this skill's whole purpose, so the id is named rather than discovered and `model_schema_get` starts the flow directly; availability differs per team, so a member the team lacks is a gap to flag, not a cue to substitute. Connection and the core loop: see the `scenario` skill.
 
 Captioning is the last pass on a finished cut: assemble first (`scenario-video-assembly`), then caption the master once. Captions carry the transcript only; text that must appear letter-perfect without being spoken (CTAs, prices, legal supers) is `scenario-text-overlay` territory. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
@@ -39,7 +39,7 @@ Three tiers: `stylePreset` picks a ready-made look (7 presets, empty for the def
 ## Worked example: a vertical social short, then a Spanish variant
 
 1. `asset_get` the assembled master: confirm duration and that it is the finished cut, since the price tracks the footage (`video` carries `cost_impact`; trim first, `scenario-video-editing`).
-2. `search` with `target="models"`, `query="caption"`, `public=true`, then `model_schema_get` on the hit.
+2. `model_schema_get` on `model_scenario-caption-studio`.
 3. Price it: `model_run` with `dry_run: true` and `parameters={"video": "<asset_id>", "stylePreset": "tiktok-bouncy", "maxSegmentWords": 4, "textPosition": "middle", "transcriptionPrompt": "Scenario, LoRA, Flux", "outputSrt": true}`. Re-estimate after changing `targetLanguage`, `modelSize`, `stylePrompt`, or `outputSubtitles`: all carry `cost_impact`.
 4. Run it with `wait: false`, then `jobs_wait` with the `job_id`; on timeout re-call with the returned `pending_job_ids`, never `job_get` in a loop.
 5. Review before deriving, since a successful job proves nothing about what rendered: download the SRT sidecar with `asset_download` (no `format`: it converts images only) and check its text for every name the `transcriptionPrompt` carries; then download the video and sweep it into contact sheets (`ffmpeg -vf "fps=2"`), reading the burned captions for spelling, casing, and placement, because a defect that appears mid-cue survives a spot check.
