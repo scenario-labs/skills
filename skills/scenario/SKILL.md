@@ -72,5 +72,5 @@ Filing is part of delivering, not a tidy-up: run the catalog tools above with ar
 ## Common mistakes
 
 - A bare value where the schema says `array: true`: silently dropped, the run ignoring your reference or LoRA. `asset_get` on the output echoes what the run consumed (`metadata.referenceImages`, `parentId`), the cheapest proof it was not.
-- Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. On `ask_user`, present the options; the user's pick wins (non-interactive: task instructions, else `proceed`). On `proceed`, prefer `specialty.model_id`, else the first `ranked` entry whose `caveats` do not mark it deprecated: the ranking is by measured performance, not by lifecycle, so a deprecated member can top it.
+- Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. On `ask_user`, present the options; the user's pick wins (non-interactive: task instructions, else `proceed`). On `proceed`, prefer `specialty.model_id`, else the first `ranked` entry its own text does not mark deprecated, reading `tradeoff` and `explanation` as well as `caveats`, since the flag lands in any of them: the ranking is by measured performance, not by lifecycle, so a deprecated member can top it.
 - Debugging blind: the `diagnose` MCP prompt (or `diagnostics_run`) returns trace ids; `usage` answers credit questions.
