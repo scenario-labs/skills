@@ -12,16 +12,15 @@ Editing an existing image is a `model_run` on a tool model: one file in, a few n
 
 ## Quick reference
 
-Discover with `search`, `target="models"`, `public=true`:
+Two discovery lanes. A family is browsed with `search` (`target="models"`, `public=true`) by tag. A single utility is a capability, so it goes to `recommend` with `capability="img2img"` and the need in the user's own words, which names the purpose-built tool and prices it against the general editors; when it answers a utility job with general editors only, find the tool by name with `search` and `filters={"tags": ["tool"]}`, as the watermark row does:
 
-| Need                         | Filter or query                                                                                                                                 |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| The effects family           | `filters={"tags": ["Post Processing"]}` (40 hits, image and video)                                                                              |
-| Upscale or enhance           | `filters={"tags": ["image-upscale"]}`                                                                                                           |
-| Any other utility            | `filters={"tags": ["tool"]}`, one query per job                                                                                                 |
-| Cutouts, watermarks, relight | `"remove background"`, `"text remover"`, `"relighting"`                                                                                         |
-| Layers, vector               | `"layers"`, `"vectorize"`                                                                                                                       |
-| Tiles, sheets                | none: `model_scenario-image-slicer`, `model_scenario-grid-maker` (fixed first-party ids, each Scenario's single deterministic tool for its job) |
+| Need                             | Route                                                                                                                                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The effects family               | `search`, `filters={"tags": ["Post Processing"]}` (40 hits, image and video)                                                                                                                                  |
+| Upscale or enhance               | `search`, `filters={"tags": ["image-upscale"]}`                                                                                                                                                               |
+| Cutouts, relight, layers, vector | `recommend`: at authoring time each lane returned its purpose-built tool ranked by measured cost and latency against the general editors, where `search` returned the same tools with nothing to rank them by |
+| Watermarks, burned-in text       | `search`, `query="text remover"`, a name lookup: at authoring time `recommend` sent watermark removal to general instruction editors and missed the purpose-built Photoroom Text Remover                      |
+| Tiles, sheets                    | none: `model_scenario-image-slicer`, `model_scenario-grid-maker` (fixed first-party ids, each Scenario's single deterministic tool for its job)                                                               |
 
 Reframe ids below are authoring-time hits: re-discover them.
 
