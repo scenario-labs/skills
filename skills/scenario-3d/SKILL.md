@@ -28,7 +28,7 @@ A realistic sequence for "make a 3D treasure chest prop":
 1. Generate the concept: pick a text-to-image model via `recommend` with the user's own words as `prompt`, then `model_schema_get` and `model_run` with a prompt describing a single centered subject on a plain background. If the user has a reference, `upload_asset` it (plus `upload_asset_complete` when multipart) and pass that asset ID instead.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include the Hunyuan 3D, Meshy, Tripo, and Trellis families.
 3. `model_schema_get` on the chosen model. 3D schemas vary widely: single image vs multi-view arrays, polycount targets, PBR toggles, topology choices.
-4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `wait=false` (`dry_run=true` first to price a batch), then `jobs_wait` with `job_ids=["<job_id>"]` (re-call it with the returned `pending_job_ids` as `job_ids` if it times out).
+4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `wait=false` (`dry_run=true` first to price a batch), then `jobs_wait` with `job_ids=["<job_id>"]` (re-call it with the returned `pending_job_ids` as `job_ids` if it times out). A downstream step (rig, retexture) has no payload to `dry_run` until its input mesh exists: quote it from `recommend` as an estimate, then re-price it with `dry_run` on the real asset before launching.
 5. `asset_display` with the output `asset_id` to preview, then `asset_download` and `curl -L -o chest.glb "<url>"` for engine import.
 
 Multi-view models accept several images of one subject from different angles; the count and the ordering vary per model, so take both from `model_schema_get` (the first image is usually the front view).

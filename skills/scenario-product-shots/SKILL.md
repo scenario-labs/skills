@@ -20,7 +20,7 @@ The product is never generated. A text-prompted bottle ships a wrong label to a 
 | Lifestyle scene    | `recommend` with `capability="img2img"`, product photo as reference, preserve-first prompt, one scene per run                                                                                                                     |
 | Relight            | `search` `"relighting"` (the authoring-time hit adjusts light, exposure, and mood, with a brand-color lock)                                                                                                                       |
 | Upscale keepers    | `recommend` with the user's own words; product-tuned upscalers existed at authoring time                                                                                                                                          |
-| Gate               | `asset_analyze` the outputs against the checklist, up to 10 per call                                                                                                                                                              |
+| Gate               | `asset_analyze` the outputs against the checklist: up to 10 ids in `images`, the saved checklist in `text_inputs`, the letter-by-letter brief in `instruction`                                                                    |
 
 ## The preserve-first prompt
 

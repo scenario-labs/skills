@@ -12,14 +12,14 @@ Scenario generates audio through the same loop as images. The live catalog cover
 
 ## Quick reference
 
-| Step           | Tool                                                                                        | Notes                                                         |
-| -------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Find a model   | `recommend` with the need in the user's own words; `search` only for a member known by name | audio generators list `txt2audio` in capabilities             |
-| Inspect inputs | `model_schema_get`                                                                          | audio schemas vary widely: durations, lyrics, voices, looping |
-| Generate       | `model_run`                                                                                 | schema-conformant parameters; wait=false for long jobs        |
-| Wait           | `jobs_wait`                                                                                 | blocks server-side; on timeout re-call with pending_job_ids   |
-| Listen         | `asset_display`                                                                             | renders an inline audio player                                |
-| Save           | `asset_download`                                                                            | returns a download URL: `curl -L -o out.mp3 "<url>"`          |
+| Step           | Tool                                                                                        | Notes                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Find a model   | `recommend` with the need in the user's own words; `search` only for a member known by name | `capability="txt2audio"` covers music, SFX, and TTS; optional, inferred from the prompt when omitted |
+| Inspect inputs | `model_schema_get`                                                                          | audio schemas vary widely: durations, lyrics, voices, looping                                        |
+| Generate       | `model_run`                                                                                 | schema-conformant parameters; wait=false for long jobs                                               |
+| Wait           | `jobs_wait`                                                                                 | blocks server-side; on timeout re-call with pending_job_ids                                          |
+| Listen         | `asset_display`                                                                             | renders an inline audio player                                                                       |
+| Save           | `asset_download`                                                                            | returns a download URL: `curl -L -o out.mp3 "<url>"`                                                 |
 
 Find existing audio assets with `search` target="assets", filters={kind: "audio"}. Team and project scope (`team_id`, `project_id`): see the `scenario` skill.
 
@@ -36,7 +36,7 @@ Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music,
 
 ## Worked example: a game sound effect
 
-1. `recommend` with the user's own words as `prompt` ("a game sound effect: a heavy wooden chest creaking open"). The ranking returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only).
+1. `recommend` with `capability="txt2audio"` and the user's own words as `prompt` ("a game sound effect: a heavy wooden chest creaking open"). The ranking returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only).
 2. `model_schema_get` with that `model_id`. Returns the exact fields: prompt plus controls such as duration or looping.
 3. `model_run` with the same `model_id` and parameters={"prompt": "heavy wooden treasure chest creaking open, single event, dry, no music"}.
 4. If status='in_progress', `jobs_wait` job_ids=["job_xxx"], re-calling with the returned pending_job_ids on timeout.

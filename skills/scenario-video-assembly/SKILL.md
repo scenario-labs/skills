@@ -20,7 +20,7 @@ Scenario has no editing tools on the MCP surface. Every compositor, concatenator
 
 These ids are constants: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive it.
 
-Concat is sequential: `videos` takes 2 to 50 files (never 1) and the optional `transitions` array's "length must be number of videos - 1", 18 types.
+Concat is sequential: `videos` takes 2 to 50 files (never 1), `preserveAudio` (default true) carries each clip's own track into the cut, and the optional `transitions` array's "length must be number of videos - 1". Each entry is an object `{type, duration}`, never a bare string: `type` is one of 18 names read off the schema (`fade`, the default, is the plain crossfade; `dissolve` is a different effect; `none` a hard cut) and `duration` runs 0.1 to 5 seconds, default 0.5. Omit the array for hard cuts throughout.
 
 Video Studio is an absolute timeline: `layers` holds 1 to 50 image, video or audio sources placed by `startTime` and stacked by `zIndex` (higher in front), with per-layer `fadeIn`/`fadeOut` rather than a between-clip array, so a cross-fade between two clips belongs in concat. At least one layer must be a video, so a music bed over a still is rejected.
 

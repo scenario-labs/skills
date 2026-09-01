@@ -29,20 +29,20 @@ per-variant cards.
 
 ## Text layer
 
-| Field            | Type   | Default   | Rules                                                                                                                                                 |
-| ---------------- | ------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text_template`  | string | required  | plain text; newlines are kept                                                                                                                         |
-| `font_family`    | string |           | a Google Fonts family name; letters, digits, spaces, `+`, `-`                                                                                         |
-| `font_url`       | string |           | https URL to a .ttf/.otf/.woff/.woff2 file                                                                                                            |
-| `font_weight`    | int    | 400       | 100, 200, ... 900                                                                                                                                     |
-| `font_style`     | string | `normal`  | `normal` or `italic`                                                                                                                                  |
-| `size`           | int    | required  | 4 to 2048 (pixels)                                                                                                                                    |
-| `color`          | string | `#000000` | `#RRGGBB`                                                                                                                                             |
-| `align`          | string | `left`    | `left`, `center`, `right`                                                                                                                             |
-| `bbox`           | list   | required  | exactly one `{x, y, w, h}`, inside the canvas                                                                                                         |
-| `line_height`    | number | 1.2       | 0.5 to 4.0, multiplier                                                                                                                                |
-| `letter_spacing` | number | 0.0       | pixels per glyph gap                                                                                                                                  |
-| `overflow`       | string | `wrap`    | `wrap` (vertical overflow allowed), `clip` (cut at the box), `shrink` (largest size from 4 up that fits the box height; errors when even 4 overflows) |
+| Field            | Type   | Default   | Rules                                                                                                                                                      |
+| ---------------- | ------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text_template`  | string | required  | plain text; newlines are kept                                                                                                                              |
+| `font_family`    | string |           | a Google Fonts family name; letters, digits, spaces, `+`, `-`                                                                                              |
+| `font_url`       | string |           | https URL to a .ttf/.otf/.woff/.woff2 file                                                                                                                 |
+| `font_weight`    | int    | 400       | 100, 200, ... 900                                                                                                                                          |
+| `font_style`     | string | `normal`  | `normal` or `italic`                                                                                                                                       |
+| `size`           | int    | required  | 4 to 2048 (pixels)                                                                                                                                         |
+| `color`          | string | `#000000` | `#RRGGBB`                                                                                                                                                  |
+| `align`          | string | `left`    | `left`, `center`, `right`                                                                                                                                  |
+| `bbox`           | list   | required  | exactly one `{x, y, w, h}`, inside the canvas                                                                                                              |
+| `line_height`    | number | 1.2       | 0.5 to 4.0, multiplier                                                                                                                                     |
+| `letter_spacing` | number | 0.0       | pixels per glyph gap                                                                                                                                       |
+| `overflow`       | string | `wrap`    | `wrap` (vertical overflow allowed), `clip` (cut at the box), `shrink` (largest size in [4, `size`] that fits the box height; errors when even 4 overflows) |
 
 Exactly one of `font_family` or `font_url`. Text wraps at `bbox.w`; the
 glyphs of the substituted text appear verbatim.

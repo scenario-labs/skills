@@ -30,6 +30,8 @@ One twin differs: Dissolve (Video) blends the clip with a still `dissolveImage`,
 | Masks, cutouts        | `recommend` with the need in the user's own words                        |
 | Pull the audio track  | `model_scenario-audio-extract`                                           |
 
+A cutout with transparency never ships as mp4: at authoring time the removal models carried alpha only as WebM or ProRes 4444 MOV, so read the output-format enum off `model_schema_get` and agree the container with the user before pricing the run.
+
 Effect lookups go through `search`, `target="models"`, `public=true`. The `model_scenario-` ids are constants: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive it. `model_reverse-video` sits outside that set and is an authoring-time hit: re-discover it by name (`search` `query="video reverse"`).
 
 ## Cost follows the clip, so trim first
@@ -40,7 +42,7 @@ Checking costs nothing: `asset_get` returns `firstFrame` and `lastFrame` as thei
 
 ## Field names drift between neighbors
 
-- Video Cut takes a scalar `video`. Resize Video takes `video` as an `array: true` field capped at one item, where a bare id is dropped silently.
+- Video Cut takes a scalar `video`. Resize Video takes `video` as an `array: true` field capped at one item, where a bare id is dropped silently; its size is `width` and `height` in pixels, both optional, and one alone keeps the aspect ratio.
 - The output format field is `outputFormat` on cut and split, `videoOutputFormat` on resize.
 - `preserveAudio` defaults to true on cut, split and resize; the effects expose no audio field and pass the track through.
 - Enum values are copied, not retyped: one `lutStyle` string contains a space.
@@ -61,9 +63,9 @@ Launch every `model_run` below with `wait=false` and retire it with `jobs_wait` 
 
 1. `asset_get` the master and read `properties.duration` before choosing times.
 2. Trim: `model_scenario-video-cut` with `startTime` and `endTime` in seconds. Going first is what makes every later step cheaper.
-3. Reshape: `model_scenario-resize-video`, `video` as a one-item array, `videoOutputFormat: "mp4"`. `fit` settles the shape at this step rather than later: `cover` lands an exact ratio once the edges are spendable, and a shape that has to keep the whole picture is the reframe decision above.
+3. Reshape: `model_scenario-resize-video`, `video` as a one-item array, `width` and `height` at the delivery size, `videoOutputFormat: "mp4"`. `fit` settles the shape at this step rather than later: `cover` lands an exact ratio once the edges are spendable, and a shape that has to keep the whole picture is the reframe decision above.
 4. Grade: `model_schema_get`, then the LUT twin with `lutIntensity` near 0.6.
-5. Texture: the Grain twin on that output, last, so its grain is sized for the delivered frame rather than resampled by a later resize.
+5. Texture: `model_schema_get`, then the Grain twin with `grainProfile` (a 22-value enum, default `kodak_portra_400` at authoring time) on that output, last, so its grain is sized for the delivered frame rather than resampled by a later resize.
 6. `asset_display` the result's `firstFrame` to confirm the look, then `asset_download` with no `format`.
 
 ## Common mistakes
