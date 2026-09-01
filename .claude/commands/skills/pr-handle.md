@@ -1,10 +1,10 @@
 ---
-description: Check out a PR, rebase onto main, triage open review comments, and validate skill changes.
+description: Check out a PR, rebase onto main, audit the skill diff for discovery misuse, triage open review comments, and validate skill changes.
 argument-hint: <PR_number> [--plan-only]
 disable-model-invocation: true
 ---
 
-Handle PR $ARGUMENTS: switch to its branch, rebase onto `main`, triage every open review comment (fix when needed, reply in thread), then run `/skills:validate` when the PR adds or significantly changes a skill.
+Handle PR $ARGUMENTS: switch to its branch, rebase onto `main`, audit the skill diff for discovery misuse, triage every open review comment (fix when needed, reply in thread), then run `/skills:validate` when the PR adds or significantly changes a skill.
 
 Flags: `--plan-only` is forwarded to `/skills:validate` (zero-cost planning instead of live generation).
 
@@ -33,7 +33,19 @@ git rebase "origin/$BASE"
 
 Resolve conflicts preserving the intent of both sides. If intents genuinely conflict, abort the rebase (`git rebase --abort`) and ask. After a successful rebase that rewrote commits already on the remote, push with `git push --force-with-lease` on the PR head only. Never force-push to `main` or `master`. Never merge the PR, enable auto-merge, or mark a draft ready.
 
-## 3. List open review comments
+## 3. Audit the skill diff for discovery misuse
+
+`search` is a real tool with legitimate uses, so no mechanical check can police discovery without drowning in false positives; this step is the judgement pass. Diff the skill content the PR touches:
+
+```bash
+git diff "origin/$BASE"...HEAD -- skills/
+```
+
+On every added or changed line that teaches discovery or names a model id, apply the discovery and model-id rules from AGENTS.md "Authoring contract", watching for their three failure modes: `search` doing `recommend`'s job (a capability-worded query, or a query string in a lane table), a `recommend` or `search` lookup for an operation covered by a first-party singleton tool whose id should be named instead, and a generative model id asserted as a constant. The singleton list is what passes the AGENTS.md test today, not a grant: before treating an id outside it as fixed, apply that test yourself.
+
+Judge only lines this PR adds or changes: a pre-existing violation nearby goes in the report as a note, never as a fix smuggled into this PR. Fix findings the way step 5 fixes review comments (smallest safe change, conventional commit, push). When the right rewrite is not obvious from the diff alone (a lane table whose capabilities need re-verifying against the live catalog), raise it instead of guessing.
+
+## 4. List open review comments
 
 Load only unresolved, non-outdated review threads for this PR. Prefer GraphQL so resolved threads stay out of context:
 
@@ -62,7 +74,7 @@ query($owner:String!,$name:String!,$number:Int!) {
 
 Filter to threads where `isResolved` is false and `isOutdated` is false. Read each comment body and the minimum location needed to act. Do not dump the full JSON into the conversation.
 
-## 4. Triage, fix, and reply in thread
+## 5. Triage, fix, and reply in thread
 
 For each open thread, decide fix, dismiss, or ask:
 
@@ -80,7 +92,7 @@ After a fix or dismiss reply, resolve the thread if you have permission (`gh api
 
 Batch known fixes into as few commits and pushes as practical. Integrate the latest remote state of the PR branch before adding new commits when you are not in the middle of a rebase rewrite.
 
-## 5. Decide whether to validate a skill
+## 6. Decide whether to validate a skill
 
 Inspect the PR diff against the base:
 
@@ -99,12 +111,13 @@ Skip validation when the PR only touches non-skill paths, or skill edits that ca
 
 If several skills qualify, run validate once per skill, sequentially. Pass `--plan-only` when that flag was in `$ARGUMENTS`. Live runs spend Scenario credits: keep generations minimal and ask which team and project to use before spending, exactly as `/skills:validate` requires.
 
-## 6. Report
+## 7. Report
 
 End with a short status:
 
 - PR URL and branch
 - Rebase result (clean, conflicts resolved, or aborted)
+- Discovery audit: clean, or each finding with its resolution (fixed, raised, or noted as pre-existing)
 - Each open thread: fixed / dismissed / asked, with the reply URL when you posted one
 - Skills validated (name, verdict, report URL) or an explicit "no skill validation needed" with the reason
 - Anything still blocked on the user

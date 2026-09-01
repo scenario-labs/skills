@@ -32,9 +32,9 @@ body:
     id: repro
     attributes:
       label: Steps to reproduce
-      description: Numbered steps as exact tool calls with their arguments. Say which `search` call found the model id, and whether that model is public. Substitute a public prompt for a confidential one and say that you did.
+      description: Numbered steps as exact tool calls with their arguments. Say which `recommend` or `search` call found the model id (or that the id is a fixed first-party tool), and whether that model is public. Substitute a public prompt for a confidential one and say that you did.
       placeholder: |
-        1. search target="models" query="texture upscale" public=true, picked <model id>
+        1. recommend prompt="upscale a game texture to 4k", picked <model id> from ranked
         2. model_schema_get model_id="<model id>"
         3. model_run model_id="<model id>" parameters={"image": "asset_...", "upscaleFactor": 4}
         4. jobs_wait job_ids=["job_..."], re-called 5 times with the returned pending_job_ids
