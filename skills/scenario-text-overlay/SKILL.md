@@ -16,14 +16,14 @@ Connection and the core MCP loop: see the `scenario` skill. The overlay meets it
 
 ## Quick reference
 
-| Step                    | Detail                                                                                          |
-| ----------------------- | ----------------------------------------------------------------------------------------------- |
-| 1. Write the payload    | Kind by field (`text_template` or `html_template`); every changeable string in `variables`      |
-| 2. Render               | `python3 overlay.py --payload card.json --out card.png`                                         |
-| 3. Verify               | Open the PNG: glyphs verbatim, box placement right, background transparent                      |
-| 4. Upload               | `upload_asset` (kind `image`, multipart path)                                                   |
-| 5. Persist the template | `asset_update` sets the description to the payload JSON; `asset_add_tags` adds `text-overlay`   |
-| 6. Composite            | `model_run` on `model_scenario-compose-image` or `model_scenario-compose-video`, overlay on top |
+| Step                    | Detail                                                                                               |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| 1. Write the payload    | Kind by field (`text_template` or `html_template`); every changeable string in `variables`           |
+| 2. Render               | `python3 overlay.py --payload card.json --out card.png`                                              |
+| 3. Verify               | Open the PNG: glyphs verbatim, box placement right, background transparent                           |
+| 4. Upload               | `upload_asset` (kind `image`, multipart path)                                                        |
+| 5. Persist the template | `asset_update` sets `metadata.description` to the payload JSON; `asset_add_tags` adds `text-overlay` |
+| 6. Composite            | `model_run` on `model_scenario-compose-image` or `model_scenario-compose-video`, overlay on top      |
 
 ## Worked example: a localized legal super
 
@@ -51,7 +51,7 @@ Connection and the core MCP loop: see the `scenario` skill. The overlay meets it
 ```
 
 2. `python3 overlay.py --payload super.json --out super.png`, then open `super.png`: the line must read exactly as written, shrunk to fit the box.
-3. Upload with `upload_asset`, then `asset_update` with the payload JSON as the description and `asset_add_tags` with `["text-overlay"]` (`asset_update`'s own `tags` field replaces the whole set): the template now lives on the platform beside its render, and the PNG itself carries it in a `tEXt` chunk.
+3. Upload with `upload_asset`, then `asset_update` with the payload JSON as `metadata.description` and `asset_add_tags` with `["text-overlay"]` (`asset_update`'s own `metadata.tags` replaces the whole set): the template now lives on the platform beside its render, and the PNG itself carries it in a `tEXt` chunk.
 4. Composite over the spot: `model_schema_get` on `model_scenario-compose-video`, then `model_run` with the base video at `zIndex` 0 and the super as an image layer above it (layer fields: `scenario-video-assembly`); `jobs_wait`, then `asset_display`.
 5. The French variant is the same payload with one `value` edited, never a new template.
 

@@ -42,7 +42,7 @@ Checking costs nothing: `asset_get` returns `firstFrame` and `lastFrame` as thei
 
 ## Field names drift between neighbors
 
-- Video Cut takes a scalar `video`. Resize Video takes `video` as an `array: true` field capped at one item, where a bare id is dropped silently; its size is `width` and `height` in pixels, both optional, and one alone keeps the aspect ratio.
+- Video Cut and the effect twins take a scalar `video`. Resize Video takes `video` as an `array: true` field capped at one item, where a bare id is dropped silently; its size is `width` and `height` in pixels, both optional, and one alone keeps the aspect ratio.
 - The output format field is `outputFormat` on cut and split, `videoOutputFormat` on resize.
 - `preserveAudio` defaults to true on cut, split and resize; the effects expose no audio field and pass the track through.
 - Enum values are copied, not retyped: one `lutStyle` string contains a space.
