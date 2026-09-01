@@ -27,9 +27,10 @@ One twin differs: Dissolve (Video) blends the clip with a still `dissolveImage`,
 | Play a clip backwards | `model_reverse-video`                                                    |
 | Frames out, frames in | `model_scenario-video-to-image-seq`, `model_scenario-image-seq-to-video` |
 | Subjects as layers    | `model_scenario-video-layers-extractor`                                  |
-| Masks, cutouts, audio | query `"segmentation"`, `"video background removal"`, `"audio extract"`  |
+| Masks, cutouts        | `recommend` with the need in the user's own words                        |
+| Pull the audio track  | `model_scenario-audio-extract`                                           |
 
-All via `search`, `target="models"`, `public=true`; re-discover rather than hardcoding, availability differs per team.
+Effect lookups go through `search`, `target="models"`, `public=true`. The named ids are constants: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive it.
 
 ## Cost follows the clip, so trim first
 

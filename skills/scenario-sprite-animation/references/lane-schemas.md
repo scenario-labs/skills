@@ -18,7 +18,7 @@ Retro Diffusion Plus takes a reference palette image via `inputPalette` for pale
 
 ## Alpha and background removal
 
-Native transparency is an image-lane property. On the still, prefer a model whose schema carries a background option and read it (`search` `"transparent background"`): at authoring time the GPT Image family exposed `background` with `auto`, `opaque`, and `transparent`, the transparent value marked Preview, and the same search returned a dedicated transparent generator. Confirm with `model_schema_get` and check one frame before committing a batch.
+Native transparency is an image-lane property. On the still, prefer a model whose schema carries a background option and read it (`recommend` with the transparent-background need in the user's own words): at authoring time the GPT Image family exposed `background` with `auto`, `opaque`, and `transparent`, the transparent value marked Preview, and the same discovery also surfaced a dedicated transparent generator. Confirm with `model_schema_get` and check one frame before committing a batch.
 
 No video lane observed at authoring time emitted alpha: every image-to-video and text-to-video schema read exposed no transparency output, so on a video-derived sprite the removal pass is the route rather than a fallback. Budget it from the start instead of hunting for a generator that skips it, and confirm with `model_schema_get`. Two schema features read like alpha and are not. A `background` parameter can composite a backdrop in rather than cut one out: on one avatar model it takes `color`, `image`, or `video`. A `mov` container choice is about color fidelity unless the schema says otherwise, since a `mov` carries alpha only with an alpha-capable profile such as ProRes 4444.
 
@@ -62,6 +62,6 @@ So `cover` is the answer for an exact ratio. The fallbacks, for when the crop wo
 
 The loop lanes assume a still already exists. Where it does not, treat it as a separate job with its own budget: it anchors every frame that follows, and no amount of animation work rescues a still that misses the brief.
 
-Search for a pixel-art image model and read its ceiling before planning a canvas (`search` `"pixel art"`). At authoring time Retro Diffusion Plus capped `width` and `height` at 384, so the largest exact 4:3 it delivers is 384x288, and `removeBg` defaults to false. Confirm with `model_schema_get`.
+Discover a pixel-art image model (`recommend` with the pixel-art still need in the user's own words) and read its ceiling before planning a canvas. At authoring time Retro Diffusion Plus capped `width` and `height` at 384, so the largest exact 4:3 it delivers is 384x288, and `removeBg` defaults to false. Confirm with `model_schema_get`.
 
 Check subject-critical detail (counts, poses, who is holding what) against the brief before animating. These models are weak at exact counts: a five-child campfire came back as four across three prompting strategies (a count word, an explicit seating layout, then five children enumerated by shirt color), and the platform's own auto-caption confirmed the miss independently. Where a count or composition has to be exact, iterate the still per `scenario-refine-loop` and keep those attempts on their own budget line rather than spending the animation allowance on them.

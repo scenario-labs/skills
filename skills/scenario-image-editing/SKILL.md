@@ -14,15 +14,16 @@ Editing an existing image is a `model_run` on a tool model: one file in, a few n
 
 Discover with `search`, `target="models"`, `public=true`:
 
-| Need                          | Filter or query                                                    |
-| ----------------------------- | ------------------------------------------------------------------ |
-| The effects family            | `filters={"tags": ["Post Processing"]}` (40 hits, image and video) |
-| Upscale or enhance            | `filters={"tags": ["image-upscale"]}`                              |
-| Any other utility             | `filters={"tags": ["tool"]}`, one query per job                    |
-| Cutouts, watermarks, relight  | `"remove background"`, `"text remover"`, `"relighting"`            |
-| Layers, tiles, sheets, vector | `"layers"`, `"slice"`, `"grid"`, `"vectorize"`                     |
+| Need                         | Filter or query                                                                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| The effects family           | `filters={"tags": ["Post Processing"]}` (40 hits, image and video)                                                                              |
+| Upscale or enhance           | `filters={"tags": ["image-upscale"]}`                                                                                                           |
+| Any other utility            | `filters={"tags": ["tool"]}`, one query per job                                                                                                 |
+| Cutouts, watermarks, relight | `"remove background"`, `"text remover"`, `"relighting"`                                                                                         |
+| Layers, vector               | `"layers"`, `"vectorize"`                                                                                                                       |
+| Tiles, sheets                | none: `model_scenario-image-slicer`, `model_scenario-grid-maker` (fixed first-party ids, each Scenario's single deterministic tool for its job) |
 
-Ids below are authoring-time hits: re-discover them.
+Reframe ids below are authoring-time hits: re-discover them.
 
 ## The effects family
 
@@ -57,7 +58,7 @@ Effects take a scalar `image`. Resize Image (`images`, max 10) and Grid Maker (`
 
 1. `upload_asset` the file, then `upload_asset_complete` unless it went inline under ~100KB.
 2. Reshape first: Resize Image to the delivery size, with `images` as an array even for the one file.
-3. `search` with `filters={"tags": ["Post Processing"]}` and `query="LUT"`, `model_schema_get` the hit, pick a `lutStyle` from its enum, price it with `model_run` and `dry_run=true`, then run it with `lutIntensity` near 0.6 for a restrained grade.
+3. `model_schema_get` on `model_scenario-postprocessing-lut` (a fixed first-party id: Scenario's single deterministic LUT tool, so discovery would only re-derive it), pick a `lutStyle` from its enum, price it with `model_run` and `dry_run=true`, then run it with `lutIntensity` near 0.6 for a restrained grade.
 4. Grain last, on that output, so its texture is sized for the shipping frame.
 5. `asset_display` to review, `asset_download` to save.
 

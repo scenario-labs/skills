@@ -35,8 +35,9 @@ the scripted lane the plates do double duty: holding the cast steady while the b
 supplying identity and material to the video run.
 
 Pick the plate and board model for legible in-image text, strict grid adherence, and `referenceImages`
-input so panels lock to the plates; shortlist with `search` (at authoring time
-`model_openai-gpt-image-2` did all three), since `recommend` can answer this step with style LoRAs.
+input so panels lock to the plates; shortlist with `recommend`, stating those three needs in the
+user's own words (at authoring time `model_openai-gpt-image-2` did all three), and since `recommend`
+can answer this step with style LoRAs, hold each hit to all three before picking.
 A board is a large canvas: it can exceed an unstated total-pixel ceiling even inside the schema's
 per-axis limits, and a height like 1080 can miss the schema's `step`, so read the error and adjust.
 

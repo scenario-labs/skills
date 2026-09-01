@@ -57,7 +57,7 @@ Each shot prompt is self-contained: the model knows nothing of adjacent shots. M
 
 Every clip showing the product or a character passes this before it may enter the edit:
 
-1. Extract frames: `search` query `"image sequence"` surfaces the video-to-frames tool; take first, middle, last, plus any frame where the subject is largest.
+1. Extract frames: `model_scenario-video-to-image-seq` is Scenario's single deterministic video-to-frames tool, so the id is a constant; take first, middle, last, plus any frame where the subject is largest.
 2. One `asset_analyze` call (batching contract in `scenario-asset-analysis`): the approved reference first, then the frames, with an instruction of the shape: "Play spot the difference. Against image 1, list every visible difference in label text and placement, logo geometry, cap and silhouette shape, material and tint, palette. Per image: pass or fail, then the differences."
 3. A brand-critical difference fails the clip. Regenerate from the same approved still with a tightened stillness clause, or demote the shot to an insert where the subject is smaller. Never anchor the next attempt to the drifted output.
 

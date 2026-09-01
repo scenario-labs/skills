@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario has no editing tools on the MCP surface. Every compositor, concatenator, trimmer and captioner is a deterministic model run through `model_run`. Find them with `search`, `target="models"`, `public=true`, `filters={"tags": ["tool"]}` (84 hits at authoring time), one capability per query. Connection and the core loop: see the `scenario` skill; the clips themselves: see `scenario-video`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Scenario has no editing tools on the MCP surface. Every compositor, concatenator, trimmer and captioner is a deterministic model run through `model_run`. Their ids are named below. Connection and the core loop: see the `scenario` skill; the clips themselves: see `scenario-video`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference: pick the backend first
 
@@ -18,7 +18,7 @@ Scenario has no editing tools on the MCP surface. Every compositor, concatenator
 | Anything overlapping: overlay, bed, titles | `model_scenario-compose-video` |
 | Still layout (thumbnails, sheets, key art) | `model_scenario-compose-image` |
 
-These ids are authoring-time search hits, not constants: re-discover them, availability differs per team.
+These ids are constants: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive it.
 
 Concat is sequential: `videos` takes 2 to 50 files (never 1) and the optional `transitions` array's "length must be number of videos - 1", 18 types.
 

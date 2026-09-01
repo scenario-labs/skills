@@ -24,7 +24,7 @@ Music written inside a shot restarts in a new key at every cut, so the score com
 | Step      | Call                                              | Notes                                                             |
 | --------- | ------------------------------------------------- | ----------------------------------------------------------------- |
 | 1. Song   | `python3 scripts/song.py master.mp3 -o song.json` | hash, duration, loudness, tempo, sections, cut candidates         |
-| 2. Lyrics | `search` query `"audio to text"`, `model_run`     | supplied lyrics win; sung-vocal transcription is a draft          |
+| 2. Lyrics | `recommend` for transcription, `model_run`        | supplied lyrics win; sung-vocal transcription is a draft          |
 | 3. Story  | one page, shown to the user first                 | the cheapest place to be wrong; name what must not drift          |
 | 4. Frames | image model at the delivery aspect ratio          | reference stills, one per look to hold                            |
 | 5. Shots  | Seedance `model_run`, audio per the choice above  | `dry_run` first; `wait=false`; `jobs_wait` with `pending_job_ids` |
@@ -35,9 +35,9 @@ Ask once before starting: team and project, track clearance, aspect ratio and le
 ## Worked example: one verse, three shots
 
 1. `python3 scripts/song.py master.mp3 -o song.json`. Sections are shot boundaries, cut candidates are cut points; listen before trusting them.
-2. Upload the master: multipart `upload_asset`, then `upload_asset_complete` (see the `scenario` skill). `search` a transcription model (query `"audio to text"`), `model_schema_get`, `model_run`, `jobs_wait`. Instrumental track: say so and move on.
+2. Upload the master: multipart `upload_asset`, then `upload_asset_complete` (see the `scenario` skill). `recommend` a transcription model (the need in the user's own words as `prompt`), `model_schema_get`, `model_run`, `jobs_wait`. Instrumental track: say so and move on.
 3. Write one page: what happens, where, how it turns across the sections; name the closing image. Show it to the user before spending anything.
-4. Generate reference stills with an image model (via `search`) at the delivery aspect ratio, one per look. Look at them: they set identity and palette downstream. Holding one character across several: see the `scenario-consistency` skill.
+4. Generate reference stills with an image model (via `recommend`) at the delivery aspect ratio, one per look. Look at them: they set identity and palette downstream. Holding one character across several: see the `scenario-consistency` skill.
 5. Per shot, decide the conditioning: opening state matters, pass a first-frame `image`; only identity and world matter, pass `referenceImages` (see [references/shots.md](references/shots.md)). Generate each shot one or two seconds longer than its slot for a trim handle.
 6. Write `edit.json` and run `python3 scripts/build.py edit.json out.mp4`:
 

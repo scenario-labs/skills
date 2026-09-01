@@ -8,20 +8,20 @@ license: MIT
 
 ## Overview
 
-Scenario generates seamless, tileable textures from text or reference images, upscales them without breaking the tile, and applies PBR materials when texturing 3D meshes. Model availability differs per team and evolves, so always discover models with `search` at run time instead of hardcoding IDs.
+Scenario generates seamless, tileable textures from text or reference images, upscales them without breaking the tile, and applies PBR materials when texturing 3D meshes. Model availability differs per team and evolves, so always discover models at run time instead of hardcoding IDs: `recommend` with the need in the user's own words for a capability, `search` for a member known by name.
 
 Connection and the core generation loop: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 
-| Step                | Tool                                                                        | Notes                                 |
-| ------------------- | --------------------------------------------------------------------------- | ------------------------------------- |
-| Find texture models | `search` with `target="models"`, `query="seamless tileable"`, `public=true` | Also try `query="texture"` or `"PBR"` |
-| Inspect inputs      | `model_schema_get`                                                          | Always call before `model_run`        |
-| Generate            | `model_run`                                                                 | `dry_run=true` prices a batch first   |
-| Wait                | `jobs_wait`                                                                 | Re-call with `pending_job_ids`        |
-| View and save       | `asset_display`, then `asset_download`                                      | Download for engine import            |
-| Upscale             | `model_run` on a texture upscaler                                           | 2x to 8x, tiling preserved            |
+| Step                | Tool                                              | Notes                                                                   |
+| ------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- |
+| Find texture models | `recommend` with the need in the user's own words | Capabilities: `txt2img_texture`, `img2img_texture`; `search` for a name |
+| Inspect inputs      | `model_schema_get`                                | Always call before `model_run`                                          |
+| Generate            | `model_run`                                       | `dry_run=true` prices a batch first                                     |
+| Wait                | `jobs_wait`                                       | Re-call with `pending_job_ids`                                          |
+| View and save       | `asset_display`, then `asset_download`            | Download for engine import                                              |
+| Upscale             | `model_run` on a texture upscaler                 | 2x to 8x, tiling preserved                                              |
 
 ## What live search confirmed at authoring time (examples to re-discover, not constants)
 
@@ -33,12 +33,12 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 
 ## Worked example: seamless brick, iterated then upscaled
 
-1. `search` `target="models"`, `query="seamless tileable"`, `public=true`, pick the seamless generator (e.g. `model_scenario-texture`).
+1. `recommend` with the user's own words as `prompt` ("seamless tileable weathered brick"), pick the seamless generator (e.g. `model_scenario-texture`).
 2. `model_schema_get` `model_id="model_scenario-texture"`.
 3. `model_run` with `parameters={"prompt": "weathered red brick wall, moss in the mortar joints", "width": 1024, "height": 1024, "eraseSeam": true, "seed": 42}`. For a themed pack, price the batch with `dry_run=true` first, then launch the runs with `wait=false`.
 4. `jobs_wait` with `job_ids=["job_..."]` (the ids returned by `model_run`). A ~180s timeout is not an error: re-call with the returned `pending_job_ids` as `job_ids`, never a second `model_run`. Then `asset_display` the output asset.
 5. Iterate: rerun with the same `seed` and an edited prompt, or add `referenceImages=["asset_..."]` to lock a style.
-6. Upscale: `model_schema_get` then `model_run` `model_id="model_sc-upscale-flux-texture"` with `parameters={"image": "asset_...", "upscaleFactor": 2, "preset": "precise"}`, raising the factor only deliberately: cost follows output pixels, and this leg can only be `dry_run`-priced once its input asset exists, so a two-step chain is never priced up front.
+6. Upscale: `recommend` with the user's own words as `prompt` ("upscale this texture without breaking the tile"), `model_schema_get` the pick, then `model_run` with `parameters={"image": "asset_...", "upscaleFactor": 2, "preset": "precise"}` (the texture upscaler's authoring-time fields), raising the factor only deliberately: cost follows output pixels, and this leg can only be `dry_run`-priced once its input asset exists, so a two-step chain is never priced up front.
 7. Verify tiling at no cost: the saved PNG's left column against its right and top row against bottom should differ no more than neighboring interior columns do, and a 2x2 self-tile proof sheet shows any seam instantly.
 8. `asset_download` the final asset for engine import.
 
@@ -49,4 +49,4 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 - Generating huge sizes directly: generate near 1024, then upscale 2x to 8x. Generation dimensions cap at 3840.
 - Routing a flat texture through a 3D texturing model just to get PBR maps: the 2D map extractors do that in one img2img call, and the 3D models are for meshes.
 - Ignoring engine sizing: engines expect square power-of-two textures (the seamless generator defaults to 1024x1024, 1:1). The generator accepts any multiple of 16, so choose 1024 or 2048 deliberately.
-- Hardcoding model IDs: availability differs per team. Re-discover with `search` each session.
+- Hardcoding model IDs: availability differs per team. Re-discover each session.

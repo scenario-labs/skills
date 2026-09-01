@@ -17,7 +17,7 @@ Connection and the core loop: the `scenario` skill; the Seedance parameter contr
 | Step        | What                                          | How                                                                             |
 | ----------- | --------------------------------------------- | ------------------------------------------------------------------------------- |
 | 1. Script   | timecoded list, cast and setting agreed first | per shot: number, size, angle, lens or move, action verbs, entry and exit poses |
-| 2. Plates   | one image per character, several angles       | image model via `search`; one clean still of a real performer also works        |
+| 2. Plates   | one image per character, several angles       | image model via `recommend`; one clean still of a real performer also works     |
 | 3. Briefs   | one line per panel, coverage not pictures     | master first, hold the axis, climb the size ladder, punctuate                   |
 | 4. Panels   | one `model_run` per panel                     | plates as references, light pencil line on bare paper, each at delivery ratio   |
 | 5. Gate     | two passes per panel, then repair one panel   | artifacts and differences, per [board-craft](references/board-craft.md)         |
@@ -50,7 +50,7 @@ Stop for approval before the first video run: show the script, the plates, the n
 3. `search` with `target="models"`, `query="seedance"`, `public=true`. Hits rank by relevance, not generation, so scan them all for the newest non-deprecated member rather than the first: at authoring time `model_bytedance-seedance-2-5` (re-discover each session), which takes the most references and holds identity best. Then `model_schema_get` for caps.
 4. `model_run` with `dry_run=true` and `parameters={"prompt": "<the timecoded script>", "referenceImages": ["asset_dancer", "asset_board", "asset_key1", "asset_key2"], "duration": 24, "resolution": "1080p", "aspectRatio": "16:9"}`; re-estimate after any change.
 5. Re-run with `wait=false`, then `jobs_wait`, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
-6. Step through the cuts: both sides must agree in pose and match the panel. Then sweep the whole clip at two frames a second, because a leaked board marking can fade in part-way through a shot, so one sample per shot reports a false clean. `asset_display` returns a link for video, not frames, so pull them locally or with a frame-extraction model (`search`, query `"image sequence"`). Expect fewer cuts than you scripted: most handoffs render as camera moves. Twelve cuts a viewer can feel are not on offer from either lane, so cut the delivered take at your twelve points instead.
+6. Step through the cuts: both sides must agree in pose and match the panel. Then sweep the whole clip at two frames a second, because a leaked board marking can fade in part-way through a shot, so one sample per shot reports a false clean. `asset_display` returns a link for video, not frames, so pull them locally or with `model_scenario-video-to-image-seq` (a fixed id: Scenario's single deterministic frame-extraction tool, so discovery would only re-derive it). Expect fewer cuts than you scripted: most handoffs render as camera moves. Twelve cuts a viewer can feel are not on offer from either lane, so cut the delivered take at your twelve points instead.
 
 ## Common mistakes
 

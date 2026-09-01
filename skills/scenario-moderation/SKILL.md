@@ -15,7 +15,7 @@ Content filters run on the model provider's side, not on Scenario. A block is th
 | Step                    | Call                                                                                   |
 | ----------------------- | -------------------------------------------------------------------------------------- |
 | Read the actual error   | `job_get` with `verbose=true`, or the `error` and `hint` fields on the `jobs_wait` row |
-| Find alternative models | `search` (`target="models"`, `public=true`), or `recommend` with the same `capability` |
+| Find alternative models | `recommend` with the same `capability` plus the user's own words                       |
 | Price an alternative    | `model_run` with `dry_run=true`                                                        |
 | Re-test the same intent | One `model_run` per candidate, prompt unchanged, so the model stays the only variable  |
 
@@ -44,7 +44,7 @@ Then stop. If every model refuses and one honest rewrite has not cleared it, the
 The studio's own character is named Onyx, and "Onyx's oversized war hammer, huge spiked head" comes back flagged.
 
 1. Read the error: `job_get` with `verbose=true`, or the `error` and `hint` fields on the `jobs_wait` row. It names moderation, so this is a filter, not a plan restriction or a team blocklist.
-2. `search` (`target="models"`, `public=true`) for two alternatives with the same capability, price each with `model_run` and `dry_run=true`, then run the unchanged prompt on each. One passes: done, the filter belonged to the first provider.
+2. `recommend` with the same `capability` and the user's own words, take two alternatives from its ranking, price each with `model_run` and `dry_run=true`, then run the unchanged prompt on each. One passes: done, the filter belonged to the first provider.
 3. Suppose all of them refuse. Rewrite once, by proportion and without the name: "a war hammer as tall as its wielder's shoulder, spiked head two hand-spans across", and carry Onyx's look with a reference image (see `scenario-consistency`).
 4. Still refused everywhere: stop and tell the user what the filter appears to be reacting to.
 
