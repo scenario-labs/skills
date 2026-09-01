@@ -14,14 +14,14 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 
 ## Quick reference
 
-| Step                | Tool                                              | Notes                                                                   |
-| ------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- |
-| Find texture models | `recommend` with the need in the user's own words | Capabilities: `txt2img_texture`, `img2img_texture`; `search` for a name |
-| Inspect inputs      | `model_schema_get`                                | Always call before `model_run`                                          |
-| Generate            | `model_run`                                       | `dry_run=true` prices a batch first                                     |
-| Wait                | `jobs_wait`                                       | Re-call with `pending_job_ids`                                          |
-| View and save       | `asset_display`, then `asset_download`            | Download for engine import                                              |
-| Upscale             | `model_run` on a texture upscaler                 | 2x to 8x, tiling preserved                                              |
+| Step                | Tool                                              | Notes                                                                                                                                                           |
+| ------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Find texture models | `recommend` with the need in the user's own words | `capability` is `txt2img` or `img2img` with the texture in `prompt` (the catalog tags texture models `txt2img_texture`, `img2img_texture`); `search` for a name |
+| Inspect inputs      | `model_schema_get`                                | Always call before `model_run`                                                                                                                                  |
+| Generate            | `model_run`                                       | `dry_run=true` prices a batch first                                                                                                                             |
+| Wait                | `jobs_wait`                                       | Re-call with `pending_job_ids`                                                                                                                                  |
+| View and save       | `asset_display`, then `asset_download`            | Download for engine import                                                                                                                                      |
+| Upscale             | `model_run` on a texture upscaler                 | 2x to 8x, tiling preserved                                                                                                                                      |
 
 ## What live search confirmed at authoring time (examples to re-discover, not constants)
 
@@ -38,7 +38,7 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 3. `model_run` with `parameters={"prompt": "weathered red brick wall, moss in the mortar joints", "width": 1024, "height": 1024, "eraseSeam": true, "seed": 42}`. For a themed pack, price the batch with `dry_run=true` first, then launch the runs with `wait=false`.
 4. `jobs_wait` with `job_ids=["job_..."]` (the ids returned by `model_run`). A ~180s timeout is not an error: re-call with the returned `pending_job_ids` as `job_ids`, never a second `model_run`. Then `asset_display` the output asset.
 5. Iterate: rerun with the same `seed` and an edited prompt, or add `referenceImages=["asset_..."]` to lock a style.
-6. Upscale: `recommend` with the user's own words as `prompt` ("upscale this texture without breaking the tile"), `model_schema_get` the pick, then `model_run` with `parameters={"image": "asset_...", "upscaleFactor": 2, "preset": "precise"}` (the texture upscaler's authoring-time fields), raising the factor only deliberately: cost follows output pixels, and this leg can only be `dry_run`-priced once its input asset exists, so a two-step chain is never priced up front.
+6. Upscale: `recommend` with `capability="img2img"` and the user's own words as `prompt` ("upscale this texture without breaking the tile"), hold the pick to tiling preservation (a generic upscaler breaks the repeat), `model_schema_get` it, then `model_run` with the image and the factor and preset fields the schema names (at authoring time the texture upscaler took `upscaleFactor: 2` and `preset: "precise"`), raising the factor only deliberately: cost follows output pixels, and this leg can only be `dry_run`-priced once its input asset exists, so a two-step chain is never priced up front.
 7. Verify tiling at no cost: the saved PNG's left column against its right and top row against bottom should differ no more than neighboring interior columns do, and a 2x2 self-tile proof sheet shows any seam instantly.
 8. `asset_download` the final asset for engine import.
 

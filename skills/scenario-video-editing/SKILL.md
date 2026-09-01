@@ -30,7 +30,7 @@ One twin differs: Dissolve (Video) blends the clip with a still `dissolveImage`,
 | Masks, cutouts        | `recommend` with the need in the user's own words                        |
 | Pull the audio track  | `model_scenario-audio-extract`                                           |
 
-Effect lookups go through `search`, `target="models"`, `public=true`. The named ids are constants: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive it.
+Effect lookups go through `search`, `target="models"`, `public=true`. The `model_scenario-` ids are constants: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive it. `model_reverse-video` sits outside that set and is an authoring-time hit: re-discover it by name (`search` `query="video reverse"`).
 
 ## Cost follows the clip, so trim first
 

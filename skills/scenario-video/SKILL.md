@@ -25,7 +25,7 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 
 ## Worked example: animate a key art still into a short ad clip
 
-1. `recommend` with the user's own words as `prompt`; the need is a capability (`img2video`), not a member known by name. Prefer the newest non-deprecated pick.
+1. `recommend` with the user's own words as `prompt`; the need is a capability (`img2video`), not a member known by name. Handle `next_step` as the `scenario` skill directs.
 2. `model_schema_get` on the pick. Note the image field, duration options, and any last-frame anchor.
 3. `upload_asset` the still; it returns `asset_id="asset_abc"`.
 4. `model_run` with `parameters={"image": "asset_abc", "prompt": "slow dolly-in, steam rising from the mug, shallow depth of field"}` and `wait=false`. Returns a `job_id`.

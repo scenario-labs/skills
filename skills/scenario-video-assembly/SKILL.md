@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario has no editing tools on the MCP surface. Every compositor, concatenator, trimmer and captioner is a deterministic model run through `model_run`. Their ids are named below. Connection and the core loop: see the `scenario` skill; the clips themselves: see `scenario-video`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Scenario has no editing tools on the MCP surface. Every compositor, concatenator, trimmer and captioner is a deterministic model run through `model_run`. The compositor, concatenator and trimmer ids are fixed and named below; Scenario ships two captioners, so that one is discovered with `recommend`. Connection and the core loop: see the `scenario` skill; the clips themselves: see `scenario-video`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference: pick the backend first
 
@@ -43,7 +43,7 @@ A layer has no `type` field: its kind is inferred from `source`, which accepts o
 1. For every source, `asset_get` and read `properties`: the real `duration` (audio carries it too), `frameRate` on video, and `width`/`height` on video and images alike. A model asked for eight seconds does not always return exactly eight.
 2. Add them up to get each clip's `startTime`, then `model_schema_get` on `model_scenario-compose-video`.
 3. `model_run` it with `layers` holding the three clips at their computed `startTime`s (`zIndex: 0`), a logo PNG pinned by `x`/`y`/`anchor` at `zIndex: 1`, and the music as an audio layer trimmed to the clips' total with `trimEnd`, since auto `durationMode` computes from every layer, the bed included. `volume` (0 to 2) and `mute` are per-layer and apply to video layers too, so balance the bed from either side. Set `canvasMode: "custom"` with `canvasWidth` and `canvasHeight`; `fps` defaults to 30.
-4. `jobs_wait`, then caption the finished cut rather than each clip: `model_scenario-caption-studio` takes it as `video` and transcribes whatever audio the master actually carries, so lower the bed's `volume` rather than muting the dialogue. It burns captions in by default, takes an existing `.srt` as `subtitles`, a file input needing `upload_asset` first, returns a sidecar when `outputSrt` is true, and positions them with `textPosition` (`top`, `middle` or `bottom`, default `bottom`, so move it off a bottom-edge overlay).
+4. `jobs_wait`, then caption the finished cut rather than each clip: `model_scenario-caption-studio` (an authoring-time pick, since Scenario ships two captioners: re-discover with `recommend`) takes it as `video` and transcribes whatever audio the master actually carries, so lower the bed's `volume` rather than muting the dialogue. It burns captions in by default, takes an existing `.srt` as `subtitles`, a file input needing `upload_asset` first, returns a sidecar when `outputSrt` is true, and positions them with `textPosition` (`top`, `middle` or `bottom`, default `bottom`, so move it off a bottom-edge overlay).
 5. `asset_display` to review, then `asset_download` with `format` left unset (it is an image conversion target) for the file.
 
 Trim, split and resize have their own tool models. Note `model_scenario-video-cut`'s `startTime`/`endTime` are source in and out points, not timeline placement.
