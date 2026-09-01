@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.39.0](https://github.com/scenario-labs/skills/compare/skills-v0.38.0...skills-v0.39.0) (2026-09-01)
+
+
+### Features
+
+* **agents:** audit discovery misuse in pr-handle and align maintainer surfaces on recommend-first discovery ([#99](https://github.com/scenario-labs/skills/issues/99)) ([e0a61d5](https://github.com/scenario-labs/skills/commit/e0a61d5ca820c1bee41b52106756bb46a202afad))
+* **scenario-brand-kit:** add brand kit skill for editable-SVG visual identities ([#92](https://github.com/scenario-labs/skills/issues/92)) ([32b9e2b](https://github.com/scenario-labs/skills/commit/32b9e2b197a58dcf24e80bfd8333deb565e9fe45))
+
 ## [0.38.0](https://github.com/scenario-labs/skills/compare/skills-v0.37.3...skills-v0.38.0) (2026-08-31)
 
 
