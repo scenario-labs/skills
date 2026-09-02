@@ -51,7 +51,7 @@ Three schema details decide whether the output is usable:
 
 - **Formats.** Rigging models accept GLB, and often OBJ, FBX, or STL. None exposes an output-format field, so the rig comes back as GLB or FBX and most descriptions do not say which: expect a DCC pass when the engine needs the other.
 - **Size ceiling.** A `max_size` on the file input is the exception rather than the rule (one humanoid rigging model caps at 30 MB). Check the schema before assuming a large mesh needs decimating.
-- **Animation versus rig.** Where a rigger exposes `animation` it retargets a preset clip, and its `allowed_values` are rig-type prefixed (`quadruped:walk`), so read them rather than guess. By default only the retarget file comes back: set `includeRiggedModel` to keep the plain rigged mesh too.
+- **Animation versus rig.** Where a rigger exposes `animation` it retargets a preset clip, and its `allowed_values` are rig-type prefixed (`quadruped:walk`), so read them rather than guess. By default only the retarget file comes back: set `includeRiggedModel` to keep the plain rigged mesh too (the two come back as separate assets with identical `metadata`, so `asset_get` tells them apart: the retarget has `properties.hasAnimations` true and an `animationFrameCount`, the plain rig false and null, and their order is not guaranteed).
 
 When only motion is wanted, motion-transfer video models animate a still character image with no skeleton at all: see `scenario-video`. Video-to-motion models that auto-rig an uploaded mesh are the one place an `outputFormat` enum picks the engine target.
 
