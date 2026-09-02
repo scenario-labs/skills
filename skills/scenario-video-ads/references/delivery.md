@@ -25,7 +25,7 @@ Give overlays hard in and out points rather than fades, and QC the assembled mas
 - Voiceover reads at 2 to 2.5 words per second: 8 to 12 words in 6s, 30 to 35 in 15s, 60 to 70 in 30s, finishing a beat before the end card. Count words before running text-to-speech. Stock or synthetic voices with commercial licenses only; cloning a real voice requires the owner's verified consent.
 - Duck the bed 12 to 18 dB under speech with the compositor's per-layer volume. A 1.5 to 3 second sonic logo sits on the end card; on skippable formats repeat a short brand sound cue inside the first 5 seconds.
 - Loudness: platforms normalize down, never up. Social masters sit near -14 LUFS integrated with -1 dBTP true peak; CTV requires -24 LKFS plus or minus 2 with -2 dBTP, so a CTV delivery is a separate audio pass. The compositor is not a loudness meter: name the conform step to the user instead of claiming compliance.
-- CTV picture floor: 1920x1080, constant frame rate, bitrate well above social norms. AI clips usually need a video upscaler pass first (`search` query `"video upscale"`).
+- CTV picture floor: 1920x1080, constant frame rate, bitrate well above social norms. AI clips usually need a video upscaler pass first (`recommend` with the upscale need in the user's own words).
 
 ## Pre-flight, before calling it shipped
 

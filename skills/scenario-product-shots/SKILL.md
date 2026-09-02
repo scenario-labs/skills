@@ -12,15 +12,15 @@ The product is never generated. A text-prompted bottle ships a wrong label to a 
 
 ## Quick reference
 
-| Need               | Route                                                                                                                                                                                               |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The source         | `upload_asset` the best photo available: sharp, evenly lit, whole product in frame (`search` `"uncrop"` finds tools that rebuild a clipped edge)                                                    |
-| Fidelity checklist | `asset_analyze` the upload once, instructing an inventory of label text, geometry, materials, and colors; every later check reuses it                                                               |
-| Packshot           | `search` `"product photo"` (a cutout-and-stage tool with solid, transparent, or custom backgrounds, margins, and shadows was the authoring-time hit) or `"remove background"` plus your own compose |
-| Lifestyle scene    | `recommend` with `capability="img2img"`, product photo as reference, preserve-first prompt, one scene per run                                                                                       |
-| Relight            | `search` `"relighting"` (the authoring-time hit adjusts light, exposure, and mood, with a brand-color lock)                                                                                         |
-| Upscale keepers    | `search` `"upscale"`; product-tuned upscalers existed at authoring time                                                                                                                             |
-| Gate               | `asset_analyze` the outputs against the checklist, up to 10 per call                                                                                                                                |
+| Need               | Route                                                                                                                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The source         | `upload_asset` the best photo available: sharp, evenly lit, whole product in frame (`search` `"uncrop"` finds tools that rebuild a clipped edge)                                                                                  |
+| Fidelity checklist | `asset_analyze` the upload once, instructing an inventory of label text, geometry, materials, and colors; every later check reuses it                                                                                             |
+| Packshot           | `recommend` with the packshot need in the user's own words (a cutout-and-stage tool with solid, transparent, or custom backgrounds, margins, and shadows was the authoring-time hit), or background removal plus your own compose |
+| Lifestyle scene    | `recommend` with `capability="img2img"`, product photo as reference, preserve-first prompt, one scene per run                                                                                                                     |
+| Relight            | `search` `"relighting"` (the authoring-time hit adjusts light, exposure, and mood, with a brand-color lock)                                                                                                                       |
+| Upscale keepers    | `recommend` with the user's own words; product-tuned upscalers existed at authoring time                                                                                                                                          |
+| Gate               | `asset_analyze` the outputs against the checklist: up to 10 ids in `images`, the saved checklist in `text_inputs`, the letter-by-letter brief in `instruction`                                                                    |
 
 ## The preserve-first prompt
 
@@ -32,7 +32,7 @@ Shadows and reflections carry the realism: a cutout pasted without them floats. 
 
 1. `upload_asset` the studio photo, then `upload_asset_complete`: `asset_can`.
 2. Build the checklist once with `asset_analyze` (write lane, contract in `scenario-asset-analysis`); the inventory lands as a text asset, so `asset_download` it and keep the text.
-3. Packshot: `search` `"product photo"`, `model_schema_get` the hit, then run it with `asset_can` in its image field, the background set to the brand hex, and margins per the marketplace's current spec (confirm specs with the user; unattended, take them from the task instructions, else keep the tool's defaults).
+3. Packshot: `recommend` with the packshot need in the user's own words, `model_schema_get` the pick, then run it with `asset_can` in its image field, the background set to the brand hex, and margins per the marketplace's current spec (confirm specs with the user; unattended, take them from the task instructions, else keep the tool's defaults).
 4. Scenes: `recommend` with `capability="img2img"`; on `next_step.type="ask_user"`, present the options (unattended, the task instructions name the pick, else `proceed`: `specialty.model_id` first, skipping a specialty whose `caveats` or `when_general_better` name the task at hand, then the top `ranked` entry, never one flagged `requires_plan_upgrade`). `model_schema_get` the pick, then three runs, each the preserve-first prompt with one scene clause and `asset_can` wired as the schema says (an array only under `array: true`).
 5. `jobs_wait`, then gate all four outputs in one `asset_analyze` call, the saved checklist passed via `text_inputs` and an instruction to read the label back letter by letter. A drifted label fails the shot: re-run from `asset_can` with the preservation clause tightened, never from the drifted output. Text the gate cannot resolve at output resolution is unverified, not passed: upscale and re-gate, or flag it in the delivery note.
 6. Upscale the keepers, `asset_download` with `format="png"`, file the set in a collection.

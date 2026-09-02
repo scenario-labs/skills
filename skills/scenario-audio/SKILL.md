@@ -12,14 +12,14 @@ Scenario generates audio through the same loop as images. The live catalog cover
 
 ## Quick reference
 
-| Step           | Tool                                                                                     | Notes                                                         |
-| -------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Find a model   | `search` target="models", query="music" / "sound effect" / "text to speech", public=true | audio generators list `txt2audio` in capabilities             |
-| Inspect inputs | `model_schema_get`                                                                       | audio schemas vary widely: durations, lyrics, voices, looping |
-| Generate       | `model_run`                                                                              | schema-conformant parameters; wait=false for long jobs        |
-| Wait           | `jobs_wait`                                                                              | blocks server-side; on timeout re-call with pending_job_ids   |
-| Listen         | `asset_display`                                                                          | renders an inline audio player                                |
-| Save           | `asset_download`                                                                         | returns a download URL: `curl -L -o out.mp3 "<url>"`          |
+| Step           | Tool                                                                                        | Notes                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Find a model   | `recommend` with the need in the user's own words; `search` only for a member known by name | `capability="txt2audio"` covers music, SFX, and TTS; optional, inferred from the prompt when omitted |
+| Inspect inputs | `model_schema_get`                                                                          | audio schemas vary widely: durations, lyrics, voices, looping                                        |
+| Generate       | `model_run`                                                                                 | schema-conformant parameters; wait=false for long jobs                                               |
+| Wait           | `jobs_wait`                                                                                 | blocks server-side; on timeout re-call with pending_job_ids                                          |
+| Listen         | `asset_display`                                                                             | renders an inline audio player                                                                       |
+| Save           | `asset_download`                                                                            | returns a download URL: `curl -L -o out.mp3 "<url>"`                                                 |
 
 Find existing audio assets with `search` target="assets", filters={kind: "audio"}. Team and project scope (`team_id`, `project_id`): see the `scenario` skill.
 
@@ -29,14 +29,14 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 - Sound effects: text-to-SFX models generate short clips from a description; some support seamless looping.
 - Voice and speech: text-to-speech with preset voices, multilingual output, and emotion or pacing controls; some clone a voice from a short clip, and speech-to-speech re-voices a recording.
 - Video to audio: models that score a silent video or add synchronized effects.
-- Utilities: audio cut, split, and extract tools plus speech-to-text transcription; discover with `search` query="audio" or query="tool".
-- Stem separation: one named stem per run (`search` query="stem"), vocals included, with no instrumental option.
+- Utilities: `model_scenario-audio-cut`, `model_scenario-audio-split`, and `model_scenario-audio-extract` (fixed ids: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive them); for speech-to-text transcription, `recommend` with the need in the user's own words.
+- Stem separation: one named stem per run (discover with `recommend`), vocals included, with no instrumental option.
 
 Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music, SFX), `scenario-ace-step` and `scenario-minimax-music` (songs), `scenario-sonilo` (SFX and video scoring).
 
 ## Worked example: a game sound effect
 
-1. `search` target="models", query="sound effect", public=true. Returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only).
+1. `recommend` with `capability="txt2audio"` and the user's own words as `prompt` ("a game sound effect: a heavy wooden chest creaking open"). The ranking returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only).
 2. `model_schema_get` with that `model_id`. Returns the exact fields: prompt plus controls such as duration or looping.
 3. `model_run` with the same `model_id` and parameters={"prompt": "heavy wooden treasure chest creaking open, single event, dry, no music"}.
 4. If status='in_progress', `jobs_wait` job_ids=["job_xxx"], re-calling with the returned pending_job_ids on timeout.
@@ -54,14 +54,14 @@ Prompting tips:
 A full-length song is not a longer music bed, and song schemas vary more than the rest of the lane, so `model_schema_get` decides the shape: a style prompt plus a separate lyric sheet, one prose prompt carrying both, or an ordered section array with per-section text and styles.
 
 - **Words never go in a style field.** Where the schema splits the two, the style field carries genre, mood, tempo, key, vocal style, and instrumentation; the lyric field carries the words, shaped by section tags such as `[Verse]` and `[Chorus]`.
-- **Instrumental and auto-lyrics are flags** where the schema has them; asking for either in prose is unreliable, and where no flag exists the text fields are the only lever. Flipping the instrumental flag on a rerun gives a different take, not the same song: `seed`, where a model has one, only repeats identical settings. For an instrumental of a track you already have, try an audio2audio cover model (`search` `query="cover"`), checking the schema since not all carry the flag.
+- **Instrumental and auto-lyrics are flags** where the schema has them; asking for either in prose is unreliable, and where no flag exists the text fields are the only lever. Flipping the instrumental flag on a rerun gives a different take, not the same song: `seed`, where a model has one, only repeats identical settings. For an instrumental of a track you already have, try an audio2audio cover model (discover with `recommend`), checking the schema since not all carry the flag.
 - **Text fields are length-capped** per model and field, and going over is a 400 rather than a truncation.
 
 Where the schema exposes a duration field (flagged `cost_impact`), it caps both length and price; where none exists, the lyric sheet or prompt sets both. Either way, price the song with `dry_run: true` before committing, then launch with `wait: false`; both are `model_run` arguments, not `parameters` keys.
 
 ## Common mistakes
 
-- Hardcoding model IDs: availability differs per team and evolves. Re-discover with `search` each session.
+- Hardcoding generative model IDs: availability differs per team and evolves. Re-discover each session, `recommend` for the need or `search` for a name; only the fixed first-party tool ids above stay constant.
 - Skipping `model_schema_get`: one audio model's parameters will not fit another (voices, durations, and lyric fields all differ).
 - Polling `job_get` in a loop: music jobs can run minutes. Use `jobs_wait`; on timeout re-call with pending_job_ids.
 - Pasting raw asset URLs into chat: use `asset_display` to play audio.

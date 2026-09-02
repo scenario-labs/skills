@@ -115,4 +115,4 @@ Banners are far ratios on tiny canvases: recompose natively (the ladder's last r
 | US letter              | 8.5x11 in  | 2550x3300         |       |
 | Movie one-sheet poster | 27x40 in   | 8100x12000        |       |
 
-Add 3 mm of bleed per edge (0.125 in on US trims) and keep text 5 mm inside the trim. 300 dpi targets exceed native generation sizes: generate the master at the largest clean size, upscale to the print target (`search` query `"upscale"`), and only then letter.
+Add 3 mm of bleed per edge (0.125 in on US trims) and keep text 5 mm inside the trim. 300 dpi targets exceed native generation sizes: generate the master at the largest clean size, upscale to the print target (find the upscaler with `recommend`, the need in the user's own words), and only then letter.

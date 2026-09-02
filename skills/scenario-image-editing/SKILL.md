@@ -12,27 +12,27 @@ Editing an existing image is a `model_run` on a tool model: one file in, a few n
 
 ## Quick reference
 
-Discover with `search`, `target="models"`, `public=true`:
+Two discovery lanes. A family is browsed with `search` (`target="models"`, `public=true`) by tag. A single utility is a capability, so it goes to `recommend` with `capability="img2img"` and the need in the user's own words, which names the purpose-built tool and prices it against the general editors; when it answers a utility job with general editors only, find the tool by name with `search` and `filters={"tags": ["tool"]}`, as the watermark row does:
 
-| Need                          | Filter or query                                                    |
-| ----------------------------- | ------------------------------------------------------------------ |
-| The effects family            | `filters={"tags": ["Post Processing"]}` (40 hits, image and video) |
-| Upscale or enhance            | `filters={"tags": ["image-upscale"]}`                              |
-| Any other utility             | `filters={"tags": ["tool"]}`, one query per job                    |
-| Cutouts, watermarks, relight  | `"remove background"`, `"text remover"`, `"relighting"`            |
-| Layers, tiles, sheets, vector | `"layers"`, `"slice"`, `"grid"`, `"vectorize"`                     |
+| Need                             | Route                                                                                                                                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The effects family               | `search`, `filters={"tags": ["Post Processing"]}` (40 hits, image and video)                                                                                                                                  |
+| Upscale or enhance               | `search`, `filters={"tags": ["image-upscale"]}`                                                                                                                                                               |
+| Cutouts, relight, layers, vector | `recommend`: at authoring time each lane returned its purpose-built tool ranked by measured cost and latency against the general editors, where `search` returned the same tools with nothing to rank them by |
+| Watermarks, burned-in text       | `search`, `query="text remover"`, a name lookup: at authoring time `recommend` sent watermark removal to general instruction editors and missed the purpose-built Photoroom Text Remover                      |
+| Tiles, sheets                    | none: `model_scenario-image-slicer`, `model_scenario-grid-maker` (fixed first-party ids, each Scenario's single deterministic tool for its job)                                                               |
 
-Ids below are authoring-time hits: re-discover them.
+Reframe ids below are authoring-time hits: re-discover them.
 
 ## The effects family
 
 Eighteen effects share one shape, a required `image` file plus one to three knobs: blur, chromatic aberration, color correction, crystallize, cubism, desaturate, dissolve, dodge and burn, glow and bloom, grain, 3D color LUT, oilify, parabolize, posterize, sharpen, solarize, tint, vignette.
 
-Ranges are per tool and unguessable. `posterizeThreshold` runs 0 to 1 (default 0.5) while Color Correction's `temperature`, `contrast` and `saturation` run -100 to 100 with `gamma` on 0.2 to 2.2, all from `model_schema_get`. Not every knob is a number: Grain takes a 22-value profile enum, a color temperature and a boolean, no strength control at all. Those profiles are looks, not intensities, and some soften instead of texturing: compare against the input rather than assuming grain landed. Grain's `grainColorTemp` (2000 to 10000) hides a sharper trap: the 6500 default is not neutral, and it warms the frame and lifts blacks harder than a restrained LUT pass does, so the texture step quietly re-grades what the grade step just set. Set it deliberately and judge the result against the graded input, not the original. Defaults disagree too: Color Correction's are no-ops (nothing set returns the input unchanged and still charges) where LUT and Posterize ship a visible default.
+Ranges are per tool and unguessable. `posterizeThreshold` runs 0 to 1 (default 0.5) while Color Correction's `temperature`, `contrast` and `saturation` run -100 to 100 with `gamma` on 0.2 to 2.2, all from `model_schema_get`. Not every knob is a number: Grain takes a 22-value profile enum, a color temperature and a boolean, no strength control at all. Those profiles are looks, not intensities, and some soften instead of texturing: compare against the input rather than assuming grain landed. Grain's `grainColorTemp` (2000 to 10000) hides a sharper trap: the 6500 default is not neutral, and it warms the frame and lifts blacks harder than a restrained LUT pass does, so the texture step quietly re-grades what the grade step just set. Set it deliberately and judge the result against the graded input, not the original; which direction neutralizes it is unverified, so compare one frame each side of 6500 before a batch. Defaults disagree too: Color Correction's are no-ops (nothing set returns the input unchanged and still charges) where LUT and Posterize ship a visible default.
 
 `lutStyle` holds 140+ exact strings, one of which contains a space (`cgc_look_teal and orange`), so copy them from the schema rather than retyping. Prefixes group them: `cgc_film_emulation_*` and `rec709_*` emulate film stocks, `cgc_log_to_rec709_*` expects log footage and will over-contrast an ordinary render, and the bulk of the list (`cgc_look_*`, `pond5_*`, `distant_land_*`, `shutterstock_*`) are look packs. Five bare presets sit outside every prefix, and one of them, `teal_orange`, is the model's default: leave `lutStyle` unset and the grade that lands is teal and orange, not neutral.
 
-These finish inside `model_run`, returning `status: "success"` with the assets attached, so no `jobs_wait`. Chain them by passing one run's `asset_id` to the next. The pipeline order across this skill: reshape and upscale first (see the next section), then grade, then texture. Grain and sharpening are high-frequency effects that any later resize interpolates away, so they go last, at delivery resolution; a LUT is resolution-tolerant and sits on either side.
+These finish inside `model_run`, returning `status: "success"` with the assets attached, so no `jobs_wait`. They are flat-priced: at authoring time every effect dry-ran at 1 CU whatever the input size (Resize Image at 2), so one `dry_run` stands for the family, where an upscale's price moves with output pixels. Chain them by passing one run's `asset_id` to the next. The pipeline order across this skill: reshape and upscale first (see the next section), then grade, then texture. Grain and sharpening are high-frequency effects that any later resize interpolates away, so they go last, at delivery resolution; a LUT is resolution-tolerant and sits on either side.
 
 ## Upscaling is a model family, not a knob
 
@@ -45,7 +45,7 @@ Upscalers are `img2img` models, many taking no prompt at all: discover with `fil
 - **Photoroom Expand**: exact `outputWidth` and `outputHeight` up to 4096, plus a `seed`.
 - **Photoroom Uncrop**: rebuilds a subject the frame edge cut off.
 
-Resize Image is none of these: it scales pixels (`fit`: `contain`, `stretch`, or `cover` to crop to an exact ratio), never invents canvas.
+Resize Image (`model_scenario-resize-image`, a fixed first-party id: Scenario's single exact-dimension resize tool, so discovery would only re-derive it) is none of these: it scales pixels to `width` and `height` (one alone keeps the ratio) and never invents canvas; `fit` decides what an off-ratio box does (`contain`, the default, may land smaller than the box, `stretch` distorts, `cover` center-crops to exact dimensions).
 
 Both reframes recompose generatively rather than filling canvas, and at tens of times an effect's price they are the chain's expensive step: `dry_run` them. They re-render, so reframe first and grade after: a grade or grain pass beforehand comes back partly reinterpreted.
 
@@ -57,7 +57,7 @@ Effects take a scalar `image`. Resize Image (`images`, max 10) and Grid Maker (`
 
 1. `upload_asset` the file, then `upload_asset_complete` unless it went inline under ~100KB.
 2. Reshape first: Resize Image to the delivery size, with `images` as an array even for the one file.
-3. `search` with `filters={"tags": ["Post Processing"]}` and `query="LUT"`, `model_schema_get` the hit, pick a `lutStyle` from its enum, price it with `model_run` and `dry_run=true`, then run it with `lutIntensity` near 0.6 for a restrained grade.
+3. `model_schema_get` on `model_scenario-postprocessing-lut` (a fixed first-party id: Scenario's single deterministic LUT tool, so discovery would only re-derive it), pick a `lutStyle` from its enum, price it with `model_run` and `dry_run=true`, then run it with `lutIntensity` near 0.6 for a restrained grade.
 4. Grain last, on that output, so its texture is sized for the shipping frame.
 5. `asset_display` to review, `asset_download` to save.
 

@@ -12,23 +12,23 @@ Scenario runs text-to-3D, image-to-3D, and 3D-to-3D models behind the same MCP g
 
 ## Quick reference
 
-| Step           | Tool                                                               | Notes                                                                                                |
-| -------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| Find 3D models | `search` (`target="models"`, `query="image to 3d"`, `public=true`) | Capabilities: `txt23d`, `img23d`, `3d23d`                                                            |
-| Inspect inputs | `model_schema_get`                                                 | Always call before `model_run`                                                                       |
-| Generate       | `model_run`                                                        | Pass reference images as asset IDs                                                                   |
-| Wait           | `jobs_wait`                                                        | Long jobs return `in_progress` with a `job_id`; pass it in `job_ids`; never poll `job_get` in a loop |
-| Preview        | `asset_display`                                                    | Interactive GLB/FBX/VOX/OBJ viewer on MCP App hosts                                                  |
-| Download       | `asset_download`                                                   | Returns a URL; save with `curl -L`                                                                   |
+| Step           | Tool                                                                           | Notes                                                                                                |
+| -------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Find 3D models | `recommend` with the capability and the user's own words (`search` for a name) | Capabilities: `txt23d`, `img23d`, `3d23d`                                                            |
+| Inspect inputs | `model_schema_get`                                                             | Always call before `model_run`                                                                       |
+| Generate       | `model_run`                                                                    | Pass reference images as asset IDs                                                                   |
+| Wait           | `jobs_wait`                                                                    | Long jobs return `in_progress` with a `job_id`; pass it in `job_ids`; never poll `job_get` in a loop |
+| Preview        | `asset_display`                                                                | Interactive GLB/FBX/VOX/OBJ viewer on MCP App hosts                                                  |
+| Download       | `asset_download`                                                               | Returns a URL; save with `curl -L`                                                                   |
 
 ## Worked example: concept image to game-ready mesh
 
 A realistic sequence for "make a 3D treasure chest prop":
 
-1. Generate the concept: pick a text-to-image model via `search`, then `model_schema_get` and `model_run` with a prompt describing a single centered subject on a plain background. If the user has a reference, `upload_asset` it (plus `upload_asset_complete` when multipart) and pass that asset ID instead.
-2. `search` `target="models"`, `query="image to 3d"`, `public=true`. Live hits include the Hunyuan 3D, Meshy, Tripo, and Trellis families.
+1. Generate the concept: pick a text-to-image model via `recommend` with the user's own words as `prompt`, then `model_schema_get` and `model_run` with a prompt describing a single centered subject on a plain background. If the user has a reference, `upload_asset` it (plus `upload_asset_complete` when multipart) and pass that asset ID instead.
+2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include the Hunyuan 3D, Meshy, Tripo, and Trellis families.
 3. `model_schema_get` on the chosen model. 3D schemas vary widely: single image vs multi-view arrays, polycount targets, PBR toggles, topology choices.
-4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `wait=false` (`dry_run=true` first to price a batch), then `jobs_wait` with `job_ids=["<job_id>"]` (re-call it with the returned `pending_job_ids` as `job_ids` if it times out).
+4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `wait=false` (`dry_run=true` first to price a batch), then `jobs_wait` with `job_ids=["<job_id>"]` (re-call it with the returned `pending_job_ids` as `job_ids` if it times out). A downstream step (rig, retexture) has no payload to `dry_run` until its input mesh exists: quote it from `recommend` as an estimate, then re-price it with `dry_run` on the real asset before launching.
 5. `asset_display` with the output `asset_id` to preview, then `asset_download` and `curl -L -o chest.glb "<url>"` for engine import.
 
 Multi-view models accept several images of one subject from different angles; the count and the ordering vary per model, so take both from `model_schema_get` (the first image is usually the front view).
@@ -39,11 +39,11 @@ Multi-view models accept several images of one subject from different angles; th
 
 ## Refining meshes
 
-3D-to-3D utilities (`3d23d` capability) cover retexturing, remeshing, UV unwrapping, and part segmentation. Find them with `search` `target="models"`, `query="mesh"` or `query="retexture"`. Most take the source `asset_id` in a `kind: "3d"` file field, usually named `model` (also `mesh`, `file3d`).
+3D-to-3D utilities (`3d23d` capability) cover retexturing, remeshing, UV unwrapping, and part segmentation. Find them with `recommend`: `capability="3d23d"` plus the operation in the user's own words. Most take the source `asset_id` in a `kind: "3d"` file field, usually named `model` (also `mesh`, `file3d`).
 
 ## Rigging and animation
 
-Rigging is a separate `3d23d` step run on a finished mesh, not a flag on the generator. Find the models with `search` `query="rigging"`.
+Rigging is a separate `3d23d` step run on a finished mesh, not a flag on the generator. Find the models with `recommend`: `capability="3d23d"` plus the rigging need in the user's own words.
 
 Body plan picks the model. Humanoid models take the mesh and little else (a front-facing hint, or an approximate height, depending on the model) and infer a biped skeleton. Non-biped work goes to a model exposing `rigType`, whose values cover `quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, and `aquatic`.
 
@@ -51,7 +51,7 @@ Three schema details decide whether the output is usable:
 
 - **Formats.** Rigging models accept GLB, and often OBJ, FBX, or STL. None exposes an output-format field, so the rig comes back as GLB or FBX and most descriptions do not say which: expect a DCC pass when the engine needs the other.
 - **Size ceiling.** A `max_size` on the file input is the exception rather than the rule (one humanoid rigging model caps at 30 MB). Check the schema before assuming a large mesh needs decimating.
-- **Animation versus rig.** Where a rigger exposes `animation` it retargets a preset clip, and its `allowed_values` are rig-type prefixed (`quadruped:walk`), so read them rather than guess. By default only the retarget file comes back: set `includeRiggedModel` to keep the plain rigged mesh too.
+- **Animation versus rig.** Where a rigger exposes `animation` it retargets a preset clip, and its `allowed_values` are rig-type prefixed (`quadruped:walk`), so read them rather than guess. By default only the retarget file comes back: set `includeRiggedModel` to keep the plain rigged mesh too (the two come back as separate assets with identical `metadata`, so `asset_get` tells them apart: the retarget has `properties.hasAnimations` true and an `animationFrameCount`, the plain rig false and null, and their order is not guaranteed).
 
 When only motion is wanted, motion-transfer video models animate a still character image with no skeleton at all: see `scenario-video`. Video-to-motion models that auto-rig an uploaded mesh are the one place an `outputFormat` enum picks the engine target.
 
@@ -59,7 +59,7 @@ When only motion is wanted, motion-transfer video models animate a still charact
 
 - Running `model_run` without `model_schema_get`: 3D model parameters differ far more between models than image models do.
 - Passing a local file path as an image input: `upload_asset` first, then pass the returned asset ID.
-- Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor). Re-discover with `search` each session.
+- Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor). Re-discover each session, `recommend` for the need or `search` for a name.
 - Pasting raw asset URLs into chat instead of calling `asset_display`.
 - Forgetting `-L` with curl: download URLs may redirect before serving the file.
 - Promising a named skeleton, an influence count, or bones for wings and extra limbs: pick the closest body plan, then finish the rest in a DCC.
