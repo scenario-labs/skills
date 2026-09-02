@@ -67,7 +67,8 @@
         "./skills/scenario-ugc",
         "./skills/scenario-fan-cam",
         "./skills/scenario-audio",
-        "./skills/scenario-video-assembly"
+        "./skills/scenario-video-assembly",
+        "./skills/scenario-caption-studio"
       ]
     },
     {

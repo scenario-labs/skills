@@ -25,6 +25,10 @@ Connection and the core MCP loop: see the `scenario` skill. The overlay meets it
 | 5. Persist the template | `asset_update` sets `metadata.description` to the payload JSON; `asset_add_tags` adds `text-overlay` |
 | 6. Composite            | `model_run` on `model_scenario-compose-image` or `model_scenario-compose-video`, overlay on top      |
 
+## Choose the face for its meaning
+
+The face is part of the message: heavy condensed sans shouts (hooks, prices, CTAs), light geometric or grotesque sans reads neutral and premium (legal supers, lower thirds, nameplates), serif signals editorial or heritage weight, rounded forms read friendly and casual. Match the media's art direction rather than fighting it, keep one family per card, and build hierarchy with `font_weight` (100 to 900) and size instead of mixing faces. `font_family` reaches any Google Fonts family, so every class above is available by name; a contractual brand face rides `font_url` instead. Meaning survives only above legibility, so judge the flattened preview at destination size, where a subtle face turns generic.
+
 ## Worked example: a localized legal super
 
 1. Payload, with the changeable line as a variable:

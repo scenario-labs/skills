@@ -47,7 +47,8 @@
         "scenario-ugc",
         "scenario-fan-cam",
         "scenario-audio",
-        "scenario-video-assembly"
+        "scenario-video-assembly",
+        "scenario-caption-studio"
       ]
     },
     {

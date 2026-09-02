@@ -130,6 +130,7 @@ Video generation and editing, music, sound effects, voice, and speech.
 | [scenario-fan-cam](skills/scenario-fan-cam/SKILL.md)                           | Personalized fan-cam clips: identity edit into a broadcast still, reaction beats to video, graphics composited in post                |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                                     |
 | [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions                      |
+| [scenario-caption-studio](skills/scenario-caption-studio/SKILL.md)             | Captioning a finished video per destination: styled burn-in or SRT, transcription hints, translation, per-platform placement          |
 
 ### Consistency and custom models
 
