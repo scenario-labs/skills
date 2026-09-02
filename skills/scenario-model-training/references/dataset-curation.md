@@ -41,7 +41,7 @@ Training consumes each image's asset `description` as its caption: a rewritten d
 - Trigger word all-or-none and byte-identical; constants present in every caption; variables genuinely differ per image.
 - Edit sets: whole pairs only, one verb pattern, an instruction on every pair.
 - No generic auto-caption boilerplate left ("beautiful", "stunning").
-- Then `train` `configure` with `dry_run: true` for the cost before launching.
+- Then `train` `configure` with `dry_run: true` for the cost before launching with `start`.
 
 ## Parameters follow the dataset
 

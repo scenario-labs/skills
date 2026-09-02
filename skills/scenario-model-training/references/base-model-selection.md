@@ -33,4 +33,4 @@ Z-Image is the only family whose trained LoRA carries across its own variants; t
 
 ## Confirm the cost
 
-The training quote is computed server-side from the base version, image count, and configuration, so never assert a price: after configuring, `train` with `dry_run: true` returns the estimate without starting anything, exactly as the worked example in SKILL.md shows.
+The training quote is computed server-side from the base version, image count, and configuration, so never assert a price: `train` `action: "configure"` with `dry_run: true` returns the estimate without starting anything, and `action: "start"` launches once the quote is approved, exactly as the worked example in SKILL.md shows.
