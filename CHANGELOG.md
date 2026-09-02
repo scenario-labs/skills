@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.2](https://github.com/scenario-labs/skills/compare/skills-v0.40.1...skills-v0.40.2) (2026-09-02)
+
+
+### Documentation
+
+* **tooling:** link the upstream skills.sh groupings report ([#106](https://github.com/scenario-labs/skills/issues/106)) ([168e668](https://github.com/scenario-labs/skills/commit/168e6682d6cd9f2fd4b6196c1c904aa449048e1a))
+
 ## [0.40.1](https://github.com/scenario-labs/skills/compare/skills-v0.40.0...skills-v0.40.1) (2026-09-02)
 
 
