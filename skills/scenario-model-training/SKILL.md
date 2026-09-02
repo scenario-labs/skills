@@ -18,17 +18,17 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
 
 ## Quick reference
 
-| Step                     | Tool                                                                               |
-| ------------------------ | ---------------------------------------------------------------------------------- |
-| Pick a base architecture | `recommend_training` (LLM-powered, cost-bearing)                                   |
-| Create the model shell   | `model_create` (`data.type` from the recommendation)                               |
-| Upload the dataset       | `upload_asset` + `upload_asset_complete`                                           |
-| Attach training images   | `train` action `upload_images`, 10 asset ids per call                              |
-| Estimate cost            | `train` action `configure` with `dry_run: true`                                    |
-| Launch                   | `train` action `configure` without `dry_run` (or `start` for defaults); never both |
-| Wait                     | `jobs_wait` with the returned job id                                               |
-| Generate                 | `model_schema_get` on YOUR model id, then `model_run`                              |
-| Manage                   | `models_list`, `model_get`, `model_update`                                         |
+| Step                     | Tool                                                                |
+| ------------------------ | ------------------------------------------------------------------- |
+| Pick a base architecture | `recommend_training` (LLM-powered, cost-bearing)                    |
+| Create the model shell   | `model_create` (`data.type` from the recommendation)                |
+| Upload the dataset       | `upload_asset` + `upload_asset_complete`                            |
+| Attach training images   | `train` action `upload_images`, 10 asset ids per call               |
+| Estimate cost            | `train` action `configure` (always a dry run, never launches)       |
+| Launch                   | `train` action `start`, with the same `config` or bare for defaults |
+| Wait                     | `jobs_wait` with the returned job id                                |
+| Generate                 | `model_schema_get` on YOUR model id, then `model_run`               |
+| Manage                   | `models_list`, `model_get`, `model_update`                          |
 
 ## Worked example: a style LoRA for game props
 
@@ -36,7 +36,7 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
 2. `model_create` with `data: {"name": "rpg-prop-icons", "type": "<type from step 1>"}`. Note the returned model id.
 3. Curate the set first (dataset reference), matching `dataset_requirements` from step 1, then upload each file with `upload_asset` plus `upload_asset_complete` (see the `scenario` skill) and collect the asset ids. For `image_pairs` datasets, map pairs with `train` action `set_pairs`.
 4. `train` with `action: "upload_images"`, `model_id`, `images: [<asset ids>]`, at most 10 per call (see Dataset limits); it changes data, so pass `team_id` and `project_id` (scope: the `scenario` skill).
-5. `train` with `action: "configure"`, `config: {"epochs": 12}`, `dry_run: true` returns the cost estimate without starting. `epochs` is the main cost lever (scales linearly); size the other levers by dataset size (dataset reference). To launch, re-run the same call without `dry_run` (`configure` and `start` hit the same trigger endpoint).
+5. `train` with `action: "configure"`, `config: {"epochs": 12}` quotes the run and launches nothing. `epochs` is the main cost lever (scales linearly); size the other levers by dataset size (dataset reference). Show the user the quote, get their go-ahead, then launch with `action: "start"` and the same `config`. Only `start` charges, and it charges the whole quote up front: cancelling refunds nothing, even at 0%.
 6. The launch response includes a job: `jobs_wait` with its id in `job_ids`. Training outlasts the server wait budget, so re-call with the returned `pending_job_ids` until completed; never poll `job_get`.
 7. Generate: `model_schema_get` on your new model id, then `model_run`; custom models carry their own parameter contract.
 8. Manage: `models_list` with `filters: {"privacy": "private", "status": "trained"}` lists ready models. `model_get` with `include_description: true` fetches the full docs; `model_update` edits name, descriptions, privacy.
@@ -49,7 +49,7 @@ Nearly every `train` failure is dataset handling, not hyper-parameters.
 - **Chunks must not overlap.** Re-sending an id already attached returns 400 `The provided assetId is already a training image of this model`. After a partial failure, re-send only the chunks that did not land.
 - **Two separate plan ceilings.** Dataset size is capped per team: past it, `upload_images` returns 429 naming `add-training-image` with the ceiling in `actionLimit`. Chunking cannot bypass it: trim to the strongest images or surface the upgrade. Concurrent trainings are capped separately as `parallel-training`, and some plans set it to zero.
 - **Images before configuration.** `configure` or `start` on an empty dataset fails validation on the training-image count. Pair datasets need whole pairs, with a family minimum above one.
-- **One launch at a time.** Once a run is live, `configure` and `start` return 400 `Model is already training`: wait with `jobs_wait` or `train` `action: "stop"`. Repeated launches also hit a cooldown whose 429 names `remainingSeconds`.
+- **One launch at a time.** Once a run is live, `start` returns 400 `Model is already training`: wait with `jobs_wait` or `train` `action: "stop"`. Repeated launches also hit a cooldown whose 429 names `remainingSeconds`.
 
 ## Common mistakes
 
@@ -57,7 +57,7 @@ Nearly every `train` failure is dataset handling, not hyper-parameters.
 - Using `recommend_training` to pick a generation model: it only picks training bases; use `recommend` or `search`.
 - Passing local paths or URLs to `train`: upload with `upload_asset` first and pass asset ids; anything else surfaces as a body-shape error naming `assetId`.
 - Reading 400 `Custom models only are supported for this endpoint` as a parameter problem: the route accepts your own trained models only; re-read the id from `models_list`.
-- Skipping `dry_run`: `configure` and `start` both accept it and return the cost estimate without charging.
+- Reading a `configure` response as a launch: it is a quote, marked `training_started: false` with no job. Only `start` launches.
 - Filtering `models_list` with `status: "ready"`: free-form values are silently ignored, returning everything including deleted models. Use `"trained"`.
 - `model_update` `data.tags` replaces the whole tag set; use `model_add_tags` / `model_remove_tags` for diffs.
 - Expecting an older base from `recommend_training`: the default excludes legacy families; set `legacy_ok: true` only when a project must stay on one.
