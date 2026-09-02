@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.40.0](https://github.com/scenario-labs/skills/compare/skills-v0.39.0...skills-v0.40.0) (2026-09-02)
+
+
+### Features
+
+* **scenario-caption-studio:** teach video captioning with Caption Studio ([#97](https://github.com/scenario-labs/skills/issues/97)) ([4fde0cc](https://github.com/scenario-labs/skills/commit/4fde0cc643e8919ee84e6d874904f9ce802b78ed))
+
+
+### Bug Fixes
+
+* **skills:** route capability discovery through recommend, name the fixed platform tools, and close validated gaps ([#100](https://github.com/scenario-labs/skills/issues/100)) ([afb4408](https://github.com/scenario-labs/skills/commit/afb44086affb74b635f2724d63791a80e330555f))
+
 ## [0.39.0](https://github.com/scenario-labs/skills/compare/skills-v0.38.0...skills-v0.39.0) (2026-09-01)
 
 
