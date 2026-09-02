@@ -61,7 +61,7 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
 
 ## Authoring aids
 
-Anthropic's [skill-creator](https://www.skills.sh/anthropics/skills/skill-creator) (Apache-2.0) is vendored as a dev skill in `.claude/skills/` and `.agents/skills/`, so agents working in a clone of this repo pick it up automatically. `skills-lock.json` records its source and hash; refresh with `npx skills update`. Vendored dev skills live only in agent directories and are never part of the published set: the skills CLI and skills.sh surface only `skills/` (verified against this repo). Where skill-creator's generic guidance and this file disagree, this file wins.
+Two of Anthropic's skills are vendored as dev skills in `.agents/skills/`, symlinked from `.claude/skills/`, so agents working in a clone of this repo pick them up automatically: [skill-creator](https://www.skills.sh/anthropics/skills/skill-creator) (Apache-2.0, from anthropics/skills) and [skill-development](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) (MIT per the plugin-dev README, from anthropics/claude-code). `skills-lock.json` records each source and hash; refresh with `npx skills update`. Vendored dev skills live only in agent directories and are never part of the published set: the skills CLI and skills.sh surface only `skills/` (verified against this repo). Where their generic guidance and this file disagree, this file wins.
 
 ## Repo tooling
 

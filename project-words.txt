@@ -8,6 +8,7 @@ MYSTYLE
 Nima
 Qwen
 RRGGBB
+anthropics
 artic
 binet
 bisociation
