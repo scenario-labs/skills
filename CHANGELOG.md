@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.1](https://github.com/scenario-labs/skills/compare/skills-v0.40.0...skills-v0.40.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* **scenario-model-training:** launch training only through start after an approved dry-run quote ([#103](https://github.com/scenario-labs/skills/issues/103)) ([75e68f9](https://github.com/scenario-labs/skills/commit/75e68f9a5078ba9a137e33e949d5daa31d8a2d79))
+
 ## [0.40.0](https://github.com/scenario-labs/skills/compare/skills-v0.39.0...skills-v0.40.0) (2026-09-02)
 
 
