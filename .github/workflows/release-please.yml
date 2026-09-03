@@ -7,6 +7,9 @@ on:
   # Manual run to force the next release PR to an exact version, replacing the
   # empty `Release-As` commit recipe. Empty input = let release-please derive
   # the version, exactly like a push-triggered run.
+  # One-shot: the override applies to this run only; the next push to main
+  # re-derives the version and rewrites the PR, so merge the release PR
+  # promptly.
   workflow_dispatch:
     inputs:
       release_as:
@@ -46,9 +49,55 @@ jobs:
           client-id: ${{ secrets.GH_ACTIONS_TOKEN_RETRIEVER_PUBLIC_REPO_CLIENT_ID }}
           private-key: ${{ secrets.GH_ACTIONS_TOKEN_RETRIEVER_PUBLIC_REPO_PRIVATE_KEY }}
 
+      # release-please-action v5 forwards `release-as` only in config-less mode
+      # (`release-type` input). In manifest mode, which this repo's
+      # release-please-config.json selects, it passes just fork/skipLabeling to
+      # Manifest.fromManifest and silently drops the version, so a forced
+      # version goes through the CLI below instead. The CLI is a
+      # lockfile-pinned devDependency (same 17.6.0 the action bundles), not an
+      # `npx` fetch: this job holds the App token, so nothing may resolve
+      # dependencies live from the registry here.
       - uses: googleapis/release-please-action@v5.0.0
+        if: ${{ !inputs.release_as }}
         id: release-please
         with:
           token: ${{ steps.app-token.outputs.token }}
-          # Empty on push events; the action treats "" as unset.
-          release-as: ${{ inputs.release_as }}
+
+      # Checkout runs on the App token so the job keeps its empty
+      # GITHUB_TOKEN permissions.
+      - uses: actions/checkout@v7
+        if: ${{ inputs.release_as }}
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v6
+        if: ${{ inputs.release_as }}
+
+      - uses: actions/setup-node@v7
+        if: ${{ inputs.release_as }}
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install the lockfile-pinned release-please CLI
+        if: ${{ inputs.release_as }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Open or retarget the release PR at the requested version
+        if: ${{ inputs.release_as }}
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_AS: ${{ inputs.release_as }}
+        run: |
+          if ! [[ "$RELEASE_AS" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::release_as must be X.Y.Z, got '${RELEASE_AS}'"
+            exit 1
+          fi
+          pnpm exec release-please release-pr \
+            --token "$GITHUB_TOKEN" \
+            --repo-url scenario-labs/skills \
+            --target-branch main \
+            --release-as "$RELEASE_AS" \
+            --config-file release-please-config.json \
+            --manifest-file .release-please-manifest.json
