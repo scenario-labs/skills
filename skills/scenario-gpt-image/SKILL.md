@@ -1,6 +1,6 @@
 ---
 name: scenario-gpt-image
-description: "Use when generating or editing images with OpenAI's GPT Image models on Scenario via MCP: text-to-image, instruction edits from reference images, inpainting with an alpha mask, in-image text for logos and infographics, transparent cutouts, exact pixel sizing up to 4K, quality tiers up to xhigh and max, or choosing between Flare, Sunburst, GPT Image 2 and 1.5. Keywords: GPT Image 2.5, GPT Image 2, OpenAI, DALL-E, gpt-image, ChatGPT image, txt2img, img2img, mask, quality, background."
+description: "Use when generating or editing images with OpenAI's GPT Image models on Scenario via MCP: text-to-image, edits from reference images, inpainting with an alpha mask, in-image text for logos and infographics, transparent cutouts, pixel sizing up to 4K, quality tiers up to xhigh and max, input fidelity for product or face detail, or choosing between Flare, Sunburst, GPT Image 2 and 1.5. Keywords: GPT Image 2.5, GPT Image 2, OpenAI, DALL-E, gpt-image, ChatGPT image, txt2img, img2img, background."
 license: MIT
 ---
 
