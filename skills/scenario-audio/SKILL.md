@@ -39,7 +39,7 @@ Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music,
 1. `recommend` with `capability="txt2audio"` and the user's own words as `prompt` ("a game sound effect: a heavy wooden chest creaking open"). The ranking returns txt2audio models such as `model_elevenlabs-sound-effects-v2` (example only).
 2. `model_schema_get` with that `model_id`. Returns the exact fields: prompt plus controls such as duration or looping.
 3. `model_run` with the same `model_id` and parameters={"prompt": "heavy wooden treasure chest creaking open, single event, dry, no music"}.
-4. If status='in_progress', `jobs_wait` job_ids=["job_xxx"], re-calling with the returned pending_job_ids on timeout.
+4. `jobs_wait` job_ids=["job_xxx"] on any `job_id` returned without assets (`in_progress` after a timed-out wait, the backend's `queued` or `in-progress` after `wait=false`), re-calling with the returned pending_job_ids on timeout.
 5. `asset_display` asset_id="asset_xxx" to play it inline.
 6. `asset_download` with no `format`, then save the returned URL with `curl -L`.
 
