@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.41.0](https://github.com/scenario-labs/skills/compare/skills-v0.40.1...skills-v0.41.0) (2026-09-10)
+
+
+### Features
+
+* **scenario-gpt-image:** add GPT Image 2.5 Flare and Sunburst with the quality price ladder ([#111](https://github.com/scenario-labs/skills/issues/111)) ([0ad9328](https://github.com/scenario-labs/skills/commit/0ad9328d8065c31e004189fc3d409fed148459bb))
+* **scenario-sprite-animation:** add the single-sheet lane with post-alignment, slice and snap-per-tile packaging ([#110](https://github.com/scenario-labs/skills/issues/110)) ([648c9d9](https://github.com/scenario-labs/skills/commit/648c9d95e5bf30ee7f18459c2f27c8bb3eead3a8))
+
+
+### Bug Fixes
+
+* **skills:** route every wait=false launch to jobs_wait regardless of the status word ([#112](https://github.com/scenario-labs/skills/issues/112)) ([ca1908c](https://github.com/scenario-labs/skills/commit/ca1908c31b965b1b9611be40f812ffe5c598166b))
+
+
+### Documentation
+
+* **tooling:** link the upstream skills.sh groupings report ([#106](https://github.com/scenario-labs/skills/issues/106)) ([168e668](https://github.com/scenario-labs/skills/commit/168e6682d6cd9f2fd4b6196c1c904aa449048e1a))
+
 ## [0.40.1](https://github.com/scenario-labs/skills/compare/skills-v0.40.0...skills-v0.40.1) (2026-09-02)
 
 
