@@ -78,3 +78,4 @@ vidu
 webtoon
 wflow
 wltp
+xhigh
