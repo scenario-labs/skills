@@ -37,7 +37,7 @@ Scenario's Grid Maker packs approved shots into one sheet image: its id is the f
 ## Worked example: Nima, courier robot
 
 1. The interview yields the brief: rounded silhouette, copper shell, one cracked headlamp, canvas satchel, cel shading; views front, back, left, three-quarter.
-2. `recommend` with the brief's own words; `model_schema_get` confirms a true reference field (else the next candidate); `model_run` the hero, `jobs_wait` only on `in_progress`, gate per `scenario-quality-gate`, iterate to pass.
+2. `recommend` with the brief's own words; `model_schema_get` confirms a true reference field (else the next candidate); `model_run` the hero, `jobs_wait` whenever `model_run` returns a `job_id` without assets, gate per `scenario-quality-gate`, iterate to pass.
 3. `collection_create` `"character: Nima"`; `collection_add_assets` the hero, tagged `hero`.
 4. Three more views, baseline-plus-delta with the hero in the reference field, gated, filed on pass with their view tags.
 5. Run Grid Maker on the view-tagged members (this session already holds the ids; a just-filed asset can trail the `search` index) with `images` as [front, back, left, three-quarter] and `columns: 4`; tag the output `sheet` and file it.
