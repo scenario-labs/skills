@@ -107,13 +107,13 @@ Generate and edit images: model choice, sizing, references, masked edits, post-p
 
 Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.
 
-| Skill                                                                  | Use it for                                                                                                       |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [scenario-game-assets](skills/scenario-game-assets/SKILL.md)           | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches       |
-| [scenario-sprite-animation](skills/scenario-sprite-animation/SKILL.md) | Walk cycles, idle loops, and VFX sprites: animation models, GIF vs sprite sheet output, frame slicing, cleanup   |
-| [scenario-textures](skills/scenario-textures/SKILL.md)                 | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                        |
-| [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)                 | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                   |
-| [scenario-3d](skills/scenario-3d/SKILL.md)                             | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download |
+| Skill                                                                  | Use it for                                                                                                                           |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| [scenario-game-assets](skills/scenario-game-assets/SKILL.md)           | Sprites, icons, props, tilesets, pixel art, concept art, transparent backgrounds, style-consistent batches                           |
+| [scenario-sprite-animation](skills/scenario-sprite-animation/SKILL.md) | Walk cycles, idle loops, VFX sprites, and animation sheets from one prompt: GIF vs sprite sheet output, frame slicing, pixel cleanup |
+| [scenario-textures](skills/scenario-textures/SKILL.md)                 | Seamless and tileable textures, PBR materials, tiling-safe upscaling, engine-ready sizing                                            |
+| [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)                 | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                                       |
+| [scenario-3d](skills/scenario-3d/SKILL.md)                             | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download                     |
 
 ### Video and audio
 
@@ -184,7 +184,7 @@ The top image families in depth: generation and editing modes, reference rules, 
 
 | Skill                                                                      | Use it for                                                                                                                                                                                         |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [scenario-gpt-image](skills/scenario-gpt-image/SKILL.md)                   | GPT Image generation and editing: member routing (mask, pixel sizing, transparency, input fidelity), in-image text, preservation prompts, cost                                                     |
+| [scenario-gpt-image](skills/scenario-gpt-image/SKILL.md)                   | GPT Image 2.5 Flare and Sunburst, GPT Image 2 and 1.5: member routing, the quality tiers up to max and their price ladder, alpha masks, transparent cutouts, in-image text, pixel sizing           |
 | [scenario-mai-image](skills/scenario-mai-image/SKILL.md)                   | MAI Image: in-image typography, quoted copy prompts, instruction editing (preserve first, one change), per-editor source input shapes, edit cost split                                             |
 | [scenario-seedream](skills/scenario-seedream/SKILL.md)                     | Seedream images: member selection (Pro, Lite, 4.5, Layerize), per-member sizing contracts, in-image text, sequence sets, layer splits, cost                                                        |
 | [scenario-gemini-image](skills/scenario-gemini-image/SKILL.md)             | Gemini image (Nano Banana): member choice (Flash, Pro, Lite), instruction editing, reference roles, video stills, Search grounding, cost                                                           |

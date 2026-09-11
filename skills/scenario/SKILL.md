@@ -24,18 +24,18 @@ The server fills scope in only for read-only tools with one candidate remaining;
 
 ## Quick reference
 
-| Step              | Tool                                     | Notes                                                           |
-| ----------------- | ---------------------------------------- | --------------------------------------------------------------- |
-| Resolve scope     | `teams_list`, then `projects_list`       | Once per session; pass the ids on every call                    |
-| Find a model      | `search` or `recommend`                  | Free; `recommend` for a capability, `search` for a name         |
-| Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as` and caps             |
-| Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost              |
-| Wait              | `jobs_wait`                              | Only if `model_run` returns `in_progress`; never loop `job_get` |
-| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                                      |
-| Inspect an asset  | `asset_get`                              | Free; dimensions, duration, `firstFrame` / `lastFrame` ids      |
-| Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                    |
-| Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                              |
-| Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                           |
+| Step              | Tool                                     | Notes                                                                        |
+| ----------------- | ---------------------------------------- | ---------------------------------------------------------------------------- |
+| Resolve scope     | `teams_list`, then `projects_list`       | Once per session; pass the ids on every call                                 |
+| Find a model      | `search` or `recommend`                  | Free; `recommend` for a capability, `search` for a name                      |
+| Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as` and caps                          |
+| Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost                           |
+| Wait              | `jobs_wait`                              | Whenever `model_run` returns a `job_id` without assets; never loop `job_get` |
+| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                                                   |
+| Inspect an asset  | `asset_get`                              | Free; dimensions, duration, `firstFrame` / `lastFrame` ids                   |
+| Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                                 |
+| Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                                           |
+| Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                                        |
 
 A multi-step request ("product video with voiceover", "concept to 3D") goes to `plan_generation` (catalog-only, read lane): plain words in `description`, ordered steps out, each naming a tool and optional model hint; it runs nothing. Single-step: `recommend`.
 
@@ -47,7 +47,7 @@ Generating a stylized game prop image:
 2. `model_schema_get` on the pick: exact field names, types, required flags, defaults, and caps such as the prompt's `max_length` (an overrun is a 400, never a trim). File fields take asset ids even when named `...Url`, and `cost_impact: true` flags what moves the price.
 3. If the schema carries `runs_as` (`"lora"` or `"composition"`), never send that model's own id to `model_run`. Its `run_with.required_arguments` holds the real call: `model_id` there is the base model, and its `parameters` (the `loras` or `modelId` wiring) merge into inputs from the same schema. Sending `required_arguments` alone discards your prompt.
 4. Optional: `prompt_spark` rewrites a thin prompt into an on-model one; pass the discovered id (a LoRA's own, not its base) and the draft `prompt`. Skip deliberate prompts.
-5. `model_run` with `model_id` and schema-conformant `parameters`. If cost matters (the default assumption unless the user says otherwise), price first with `dry_run: true`, a top-level argument beside `model_id`: no job is created and the response's `creativeUnitsCost` is the exact payload's price; a `recommend` cost quote assumes defaults, and the schema's `cost_impact` fields move the real number. Then run: asset_ids come back, or `status="in_progress"` with a `job_id`.
+5. `model_run` with `model_id` and schema-conformant `parameters`. If cost matters (the default assumption unless the user says otherwise), price first with `dry_run: true`, a top-level argument beside `model_id`: no job is created and the response's `creativeUnitsCost` is the exact payload's price; a `recommend` cost quote assumes defaults, and the schema's `cost_impact` fields move the real number. Then run: asset_ids come back, or a `job_id` for `jobs_wait`. The `status` beside it is `in_progress` when the server's wait budget ran out; with `wait=false` it is the backend's live word at creation (`queued`, `in-progress`, `warming-up`), a spelling that is not a different state.
 6. `jobs_wait` with `job_ids=[...]` (up to 32); each completed row carries `assetIds` and `cuCost`, so no `job_get` follow-up; on timeout re-call with the returned `pending_job_ids` as `job_ids`. Failed jobs are reimbursed, except xAI generations stopped by moderation.
 7. `asset_display` shows the asset inline; `asset_download` returns a file URL (save with `curl -L`, it may redirect). `format` is an image conversion (`png`, `webp`, `jpg`, and `gif` to keep an animated GIF animated: the `png` default flattens it to one frame) and nothing else; omit it for video, 3D, and audio.
 
