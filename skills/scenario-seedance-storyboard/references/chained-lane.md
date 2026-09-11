@@ -15,6 +15,8 @@ first and last frame mode, so shot N takes `image` = boundary still N-1 and `las
 still N. Adjacent shots share the still, so every cut lands on a frame both sides already agree on.
 N shots cost N+1 stills and N runs, plus one plate per character.
 
+A departure, a return or a change made off camera lands on a boundary still: the still after the exit shows the frame without the character, and the still after the return shows them back with the change visible. The shot that runs into that still writes its TIMELINE exit pose as position and posture (where she stands, hands at her chest) and does not name the changed detail, which `lastFrameImage` carries; the next shot, whose `image` shows it, is the first prompt that names it.
+
 Count the seconds before the stills. Each run carries its own duration floor, 4 seconds on 2.5 at
 authoring time, and takes whole seconds only, so N shots occupy at least N times that floor, a sequence
 cannot be shorter, and any total has to be reachable as a sum of N whole numbers at or above it. Eight
@@ -60,7 +62,8 @@ drift lands on a cut. Regenerate the offending still, not the delivered shot.
 Free, and exact: `asset_get` returns each clip's `firstFrame` and `lastFrame` as their own asset ids,
 so `asset_display` the outgoing `lastFrame` against the incoming `firstFrame`, one pair per join. Both
 must read as the same pose. When a delivered ending beats the drawn one, pass that clip's `lastFrame`
-asset id as the next shot's `image` instead of the drawn still.
+asset id as the next shot's `image` instead of the drawn still, and rewrite that shot's STARTING STATE
+and its TIMELINE beat's entry pose to what the frame shows rather than what the script planned.
 
 ## When a shot is refused
 

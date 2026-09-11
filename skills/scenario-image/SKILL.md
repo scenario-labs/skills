@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario runs hundreds of image models, split across `txt2img` (generate from a prompt) and `img2img` (edit, restyle, inpaint, upscale). The loop is the one the `scenario` skill teaches. What breaks image runs is the per-model contract: sizing fields, prompt limits, and reference caps differ between two models that do the same job, so read `model_schema_get` every time. Per-family contracts (sizing families, reference caps, edit modes): `scenario-seedream`, `scenario-gpt-image`, `scenario-gemini-image`, `scenario-ideogram`, `scenario-reve`, `scenario-luma-image`, `scenario-mai-image`, `scenario-grok-imagine-image`. Grading, effects, expand, resize and the other deterministic tool models: see `scenario-image-editing`. Holding one look across a set: see `scenario-consistency`. Sprites, icons, and tilesets: see `scenario-game-assets`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Scenario runs hundreds of image models, split across `txt2img` (generate from a prompt) and `img2img` (edit, restyle, inpaint, upscale). The loop is the one the `scenario` skill teaches. What breaks image runs is the per-model contract: sizing fields, prompt limits, and reference caps differ between two models that do the same job, so read `model_schema_get` every time. Per-family contracts (sizing families, reference caps, edit modes): `scenario-seedream`, `scenario-gpt-image`, `scenario-gemini-image`, `scenario-ideogram`, `scenario-reve`, `scenario-luma-image`, `scenario-mai-image`, `scenario-grok-imagine-image`. Upscaling, grading, effects, expand, resize and the other tool models: see `scenario-image-editing`. Holding one look across a set: see `scenario-consistency`. Sprites, icons, and tilesets: see `scenario-game-assets`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 
@@ -32,6 +32,12 @@ All three are per-model, so take them from the schema rather than from a previou
 
 A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields variations, not a set. Anything with a per-item difference needs one `model_run` per item.
 
+## Prompt wording
+
+In-image text: quote each string exactly and say where it sits ("the label reads 'NORTH', top center"), keep to a few short strings, and spell a word that keeps mangling letter by letter (NORTH: N, O, R, T, H); unquoted copy gets reworded. Copy that must be letter-perfect (prices, legal lines) is composited with `scenario-text-overlay`, never prompted. A film-still or cinematic prompt, or a ratio written in prose (2.39:1), can bake letterbox bars into the pixels, and an `asset_get` dimension check reads them as picture: ask for full frame edge to edge, no letterboxing, no black bars, and carry the ratio in the sizing field alone. Where skin shows, name its texture (visible pores, fine hairs, a faint highlight) or it tends to come back retouched smooth.
+
+An instruction edit names the change and pins the rest: "put the chair on a sunlit terrace; keep its shape, fabric and shadow exactly", or for text, "change only the headline to 'NORTH', same typeface, size and position". Anything unnamed is open to change.
+
 ## Worked example: replacing a label on a product shot
 
 1. `recommend` with `capability="img2img"` and the user's own words as `prompt`. Handle `next_step` as the `scenario` skill directs, and never run a `requires_plan_upgrade` entry.
@@ -47,4 +53,5 @@ A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields
 - Reusing one model's parameter block on another: `aspectRatio` and `width`/`height` rarely coexist, and unknown fields are rejected.
 - Retrying a 403 `ModelAccessRestrictedError`: it names `modelId` and `requiredPlan`, so surface the upgrade or pick another model.
 - Prompting "transparent background": diffusion outputs are opaque. Use a `background` field when the schema has one, otherwise run a background-removal model afterwards.
+- Re-running an approved frame at a higher size tier and expecting it back sharper: many models expose no `seed`, and where one exists it reproduces a run only with every other field unchanged, so the re-run is a new image; draft at the cheapest tier, then upscale the exact keeper (`scenario-image-editing`).
 - Assuming a model can hit a requested pixel size: some expose an aspect ratio and nothing else. Confirm what landed with `asset_get`, which reports `properties.width` and `properties.height`; `jobs_wait` returns asset ids only.

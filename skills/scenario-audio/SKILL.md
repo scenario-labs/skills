@@ -29,7 +29,7 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 - Sound effects: text-to-SFX models generate short clips from a description; some support seamless looping.
 - Voice and speech: text-to-speech with preset voices, multilingual output, and emotion or pacing controls; some clone a voice from a short clip, and speech-to-speech re-voices a recording.
 - Video to audio: models that score a silent video or add synchronized effects.
-- Utilities: `model_scenario-audio-cut`, `model_scenario-audio-split`, and `model_scenario-audio-extract` (fixed ids: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive them); for speech-to-text transcription, `recommend` with the need in the user's own words.
+- Utilities: `model_scenario-audio-cut`, `model_scenario-audio-split`, `model_scenario-audio-extract`, and `model_scenario-compose-video` (fixed ids: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive them); the compositor lays a finished track (score, voiceover, re-voiced take) over a clip as an audio layer, per `scenario-video-assembly`; for speech-to-text transcription, `recommend` with the need in the user's own words.
 - Stem separation: one named stem per run (discover with `recommend`), vocals included, with no instrumental option.
 
 Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music, SFX), `scenario-ace-step` and `scenario-minimax-music` (songs), `scenario-sonilo` (SFX and video scoring).
