@@ -12,16 +12,17 @@ An identity is decided, then rendered. Palette and typography are choices writte
 
 ## Quick reference
 
-| Need         | Route                                                                                                                                                                 |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The spec     | Written first, by you with the user, before any generation: contents under The spec sheet                                                                             |
-| Logo, native | `recommend` `capability="txt2img"`, the prompt demanding a real editable SVG and not a raster: that clause, not the capability, is what surfaces the vector generator |
-| Logo, traced | An existing raster mark: `recommend` `capability="img2img"`, the prompt saying trace to editable SVG, do not regenerate                                               |
-| Gate         | `asset_analyze` the mark with the spec via `text_inputs`; a drifted wordmark is re-run, never patched                                                                 |
-| Variants     | `asset_get` the mark, save its `url` (`curl -L`) for the stored SVG, recolor locally, `upload_asset` each variant                                                     |
-| Applications | `recommend` with `capability="img2img"`, approved mark as reference, spec hex values in the prompt, one placement per run                                             |
-| The board    | `model_scenario-compose-image` (first-party compositor, id fixed): mark, swatches, specimen, applications as positioned layers, labels via `scenario-text-overlay`    |
-| File the kit | `collection_create` before the first run, `collection_add_assets` each keeper as it lands, `asset_update` for each one's role and rule                                |
+| Need         | Route                                                                                                                                                                                                                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The spec     | Written first, by you with the user, before any generation: contents under The spec sheet                                                                                                                                                                                               |
+| Logo, native | `recommend` `capability="txt2img"`, the prompt demanding a real editable SVG and not a raster: that clause, not the capability, is what surfaces the vector generator                                                                                                                   |
+| Logo, traced | An existing raster mark: `recommend` `capability="img2img"`, the prompt saying trace to editable SVG, do not regenerate                                                                                                                                                                 |
+| Gate         | `asset_analyze` the mark with the spec via `text_inputs`; a drifted wordmark is re-run, never patched                                                                                                                                                                                   |
+| Variants     | `asset_get` the mark, save its `url` (`curl -L`) for the stored SVG, recolor locally, `upload_asset` each variant                                                                                                                                                                       |
+| Applications | `recommend` with `capability="img2img"`, approved mark as reference, spec hex values in the prompt, one placement per run                                                                                                                                                               |
+| Icon strip   | The vector generator's style members (`search`, `filters={"tags": ["style-consistency", "svg"]}`; its plain SVG members expose no image field): raster renders of the mark as `styleReferenceImages` on the first icon, then that job's `style_id` as `styleId` on the rest, never both |
+| The board    | `model_scenario-compose-image` (first-party compositor, id fixed): mark, swatches, specimen, applications as positioned layers, labels via `scenario-text-overlay`                                                                                                                      |
+| File the kit | `collection_create` before the first run, `collection_add_assets` each keeper as it lands, `asset_update` for each one's role and rule                                                                                                                                                  |
 
 ## The spec sheet
 

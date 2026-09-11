@@ -19,10 +19,10 @@ Show the concept to the user: it is the cheapest place to be wrong. When nobody 
 
 - 6s: hero shot, brand beat. 15s: hook, build, product proof, brand beat plus CTA (4 to 6 panels). 30s: hook, world, turn, proof, payoff, brand beat (6 to 8 panels plus 2 to 3 inserts).
 - The brand beat (logo, tagline, CTA) takes the last 2 to 3 seconds. Design the hero shot first: the product at its most desirable, then build beats around it.
-- Each panel specifies: what the camera sees; one camera move with tempo; a lighting note; the conditioning mode (below); on-screen text, kept for the overlay pass with the frame's center band left clear; a sound note; the slot duration.
+- Each panel specifies: what the camera sees; the camera's side of the action line, held constant across the board so a rolling car or a reaching hand keeps its screen direction from cut to cut; one camera move with tempo; a lighting note; the conditioning mode (below); on-screen text, kept for the overlay pass with the frame's center band left clear; a sound note; the slot duration.
 - Plan inserts deliberately: 2 to 3 cutaways give the edit cover, and clip-boundary artifacts disappear when cuts land on action or occlusion.
 - Generation length is not edit rhythm. Generate 3 to 5 seconds for fidelity-critical product shots, 5 to 10 for coverage, a second or two over the slot as a trim handle, then cut faster in assembly.
-- Auto-looping placements (TikTok, Reels, Shorts) reward a closed loop: a model whose schema takes first and last frame anchors can end the final shot on the opening frame.
+- Cuts are hard and made in assembly unless the brief asks for one take or a seamless flow: then chain adjacent approved stills as first and last frame anchors where the schema takes them (shot N runs from still N to still N+1), so each join is a frame both sides share and reads as a camera move, not a cut. Anchor to approved stills only, never to a rendered last frame: it is generated product. The same anchors close the loop that auto-looping placements (TikTok, Reels, Shorts) reward: end the final shot on the opening frame.
 
 ## Camera, light, people
 
@@ -30,13 +30,13 @@ Show the concept to the user: it is the cheapest place to be wrong. When nobody 
 | -------------------- | ---------------------- |
 | Desire, reveal       | slow orbit             |
 | Intimacy, focus      | slow push-in           |
-| Authenticity         | handheld               |
+| Authenticity         | subtle handheld        |
 | Authority, packshot  | locked-off static      |
 | Scale                | crane up, tilt up      |
 | Craft detail         | macro extreme close-up |
 | Context, consequence | pull-back reveal       |
 
-One move per clip, tempo stated, movement first in the prompt: "slow push-in over 4 seconds". Reliable across video models: push-in, dolly, pan, tilt, tracking, pull-back, handheld. Budget retries for: orbit, crane, rack focus, whip pan. Some schemas expose a camera enum; `model_schema_get` decides whether the move is a parameter or a prompt clause.
+One move per clip, tempo stated, movement first in the prompt: "slow push-in over 4 seconds". Default the tempo to slow: it hides what the model cannot render cleanly, where speed exposes it. Handheld takes a degree the way other moves take a tempo ("subtle handheld drift"), never bare "handheld". Reliable across video models: push-in, dolly, pan, tilt, tracking, pull-back, handheld. Budget retries for: orbit, crane, rack focus, whip pan. Some schemas expose a camera enum; `model_schema_get` decides whether the move is a parameter or a prompt clause.
 
 Lighting is locked at the still stage, so it belongs in the image prompt: dark-field for glass and liquid (bright edges on a dark ground), backlight for transparency and sheer fabric, steep side light to rake texture, large soft sources for paint and polished metal, rim light for separation, golden hour for car bodywork.
 
