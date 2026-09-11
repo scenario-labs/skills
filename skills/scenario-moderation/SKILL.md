@@ -44,7 +44,7 @@ The audio track is judged on its own. `OutputAudioSensitiveContentDetected` on a
 
 ## IP Detection is the team's own gate
 
-Teams on plans with IP Detection can have Scenario check outputs against protected IP and enforce a policy on the result. The setting rides the `teams_list` row as `ipDetectionEnforcement`; when it is anything but `disabled`, a block or flag naming IP or copyright is the team's decision, not the provider's, so switching models re-runs the same check and rewording only helps when the output genuinely resembles someone else's property. A copyright warning attached to a completed output is informational. Recovery is a conversation, not a call: tell the user which gate fired; a team admin owns the setting, and verified IP holders who keep hitting false positives on their own licensed property have an escalation path through their Scenario account manager.
+Teams on plans with IP Detection can have Scenario screen generations for protected IP and enforce a policy on the result, independently of any provider's filter. The setting rides the `teams_list` row as `ipDetectionEnforcement`: while it reads `disabled`, every IP or copyright refusal is a provider's. When it is enabled, a refusal naming IP or copyright has two possible sources with different recoveries, so read which gate the error names, and when the text does not say, run the unchanged prompt once on one alternative provider: a provider filter clears with the switch, the team's gate repeats on any model. A copyright warning attached to a completed output is informational. A team-gate refusal is a conversation, not a call: tell the user which gate fired; a team admin owns the setting, and verified IP holders who keep hitting false positives on their own licensed property have an escalation path through their Scenario account manager. Describing the design visually instead of naming the IP, and carrying identity through the team's own uploaded references, is the one wording fix that helps at both gates.
 
 ## Recovery, cheapest first
 
@@ -71,7 +71,7 @@ The studio's own character is named Onyx, and "Onyx's oversized war hammer, huge
 - Switching within the same provider: sibling members share the filter; the next candidate comes from another provider.
 - Naming a genre or instrument to exclude it in an audio-enabled prompt: the exclusion is what the audio filter reads.
 - Assuming IP ownership exempts a prompt: the filter is automated and sees only the text and images sent to it.
-- Reading an IP Detection block as a provider filter: the team's gate re-runs on every model; the recovery is the team admin, not a model switch.
+- Treating every IP-worded refusal as one gate: with enforcement on, one provider switch tells them apart, and only the provider's clears that way; the team's needs its admin.
 - Reporting a block as a Scenario fault: confirm other providers refuse it too, then file it with `scenario-report`.
 - Escalating to a pricier model expecting a laxer filter: cost and moderation strictness are unrelated.
 - Reading an empty model list as moderation: a team blocklist or a plan restriction removes models before any prompt is judged.
