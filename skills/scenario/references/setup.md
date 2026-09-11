@@ -46,4 +46,4 @@ Credentials stay out of the conversation. An agent asked to set this up points t
 
 ## Server-side applications
 
-OAuth from a web or server application fails with `redirect_uri must use a loopback address or custom URI scheme` until the application's origin is on the server's allowlist. Dynamic client re-registration does not help: only the origin is gated. Read-only access can skip OAuth and use an API key; team-level writes (model access, member roles and caps) require per-user OAuth with a team admin. To get an origin allowlisted, contact support with the bare `https` origin, no path.
+OAuth from a web or server application fails with `redirect_uri must use a loopback address or custom URI scheme` until the application's origin is on the server's allowlist. Dynamic client re-registration does not help: only the origin is gated. An API key serves the application without OAuth for generation and project work; team-level administration (model access lists, member roles and caps) needs per-user OAuth with a team admin, since the server refuses API keys there. To get an origin allowlisted, contact support with the bare `https` origin, no path.
