@@ -30,7 +30,9 @@ Schema traps (names from live schemas, caps at authoring time):
 
 - V3 dedicated lines take `prompt` or `multiPrompt`, never both; `multiPrompt` is an array of `{prompt, duration}` shots, and `shotType` (`customize` or `intelligent`) exists only on the V3 T2V members and I2V 4K. Omni keeps `prompt` required; its `multiPrompt` is a JSON string of up to 6 shots whose durations sum to `duration`.
 - `duration` is a string enum on most members (`"5"`, not `5`); Omni alone takes a number, 3 to 15. The V3 dedicated lines reach 15 seconds; O1 and 2.6 stop at 10.
+- On O1 and V3 I2V an element is a `frontalImage` plus up to 4 angle `referenceImages`: both required on O1, each optional on V3 I2V, where a `video` can define the element instead.
 - Budgets shrink beside a video: O1 Reference Images takes 7 total (elements plus images), the O1 video members 4, and Omni's `referenceImages` drops from 7 to 4 next to `referenceVideo`. Tags bind by order (`@Element1`, `@Image1`); Omni prompts use `<<<image_1>>>` and `<<<video_1>>>`.
+- A reference clip runs 3 to 10 seconds on Omni and the O1 video members, 2 to 10 on Lipsync (trim first, per `scenario-video`). Omni's `referenceVideo` defaults to `videoReferenceType: "feature"`, lending style and camera to a new clip; `"base"` edits the clip and ignores `duration`; `4k` mode refuses a reference video either way.
 - `cfgScale` (0 to 1, default 0.5): raise toward 0.8 for storyboard fidelity, drop toward 0.3 to let the model invent.
 - Prompt in director order: scene, subject, action, one camera move, then audio and style; natural sentences beat tag lists, and complex scenes hold together near 5 seconds, not 15.
 
@@ -59,4 +61,5 @@ Motion members require a character `image` and a driving `video`; `characterOrie
 - Carrying one member's caps to another: 15 seconds, `elements`, and 4K each exist on one member, not the next.
 - Compound camera moves ("dolly in while orbiting"): one dominant move per shot; split the rest across `multiPrompt` shots.
 - Overloaded negative prompts: a short artifact list steers; a long one stiffens motion.
-- Skipping `dry_run` on 4K or avatar runs: at authoring time 4K ran several times Standard and avatar cost spanned a 100x range.
+- Prompting Omni `base` to extend a clip: it edits in place, and no Kling member extends at authoring time. Continue from the clip's `lastFrame` id (`asset_get`) as the start frame of a new I2V run, then concatenate, per `scenario-video`.
+- Skipping `dry_run` on 4K or avatar runs: at authoring time 4K ran several times Standard and avatar cost spanned a 100x range. Iterate on a Standard tier; no V3, O1, or 2.6 schema carries a seed, so a 4K re-run of the keeper is a new take, while upscaling it (`scenario-video`) keeps the take.

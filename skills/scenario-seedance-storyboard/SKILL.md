@@ -14,18 +14,18 @@ Connection and the core loop: the `scenario` skill; the Seedance parameter contr
 
 ## Quick reference
 
-| Step        | What                                          | How                                                                             |
-| ----------- | --------------------------------------------- | ------------------------------------------------------------------------------- |
-| 1. Script   | timecoded list, cast and setting agreed first | per shot: number, size, angle, lens or move, action verbs, entry and exit poses |
-| 2. Plates   | one image per character, several angles       | image model via `recommend`; one clean still of a real performer also works     |
-| 3. Briefs   | one line per panel, coverage not pictures     | master first, hold the axis, climb the size ladder, punctuate                   |
-| 4. Panels   | one `model_run` per panel                     | plates as references, light pencil line on bare paper, each at delivery ratio   |
-| 5. Gate     | two passes per panel, then repair one panel   | artifacts and differences, per [board-craft](references/board-craft.md)         |
-| 6. Assemble | the approved panels into the board            | `model_scenario-compose-image` at explicit coordinates                          |
-| 7. Approve  | script, plates, board shown to the user       | reshoot by panel number; unattended, record and continue                        |
-| 8. Frames   | two or three photoreal key frames             | same plates, delivery ratio; they set the delivered look                        |
-| 9. Video    | one scripted run, or chained runs             | Seedance `model_run`, one of the two lanes below                                |
-| 10. Check   | the delivery is clean and carries its track   | sample every half second, not only the cuts, and match each cut to its panel    |
+| Step        | What                                                                                           | How                                                                             |
+| ----------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1. Script   | timecoded list, cast and setting agreed first                                                  | per shot: number, size, angle, lens or move, action verbs, entry and exit poses |
+| 2. Plates   | one image per performer who must stay recognizable, several angles; extras generic and unnamed | image model via `recommend`; one clean still of a real performer also works     |
+| 3. Briefs   | one line per panel, coverage not pictures                                                      | master first, hold the axis, climb the size ladder, punctuate                   |
+| 4. Panels   | one `model_run` per panel                                                                      | plates as references, light pencil line on bare paper, each at delivery ratio   |
+| 5. Gate     | two passes per panel, then repair one panel                                                    | artifacts and differences, per [board-craft](references/board-craft.md)         |
+| 6. Assemble | the approved panels into the board                                                             | `model_scenario-compose-image` at explicit coordinates                          |
+| 7. Approve  | script, plates, board shown to the user                                                        | reshoot by panel number; unattended, record and continue                        |
+| 8. Frames   | two or three photoreal key frames                                                              | same plates, delivery ratio; they set the delivered look                        |
+| 9. Video    | one scripted run, or chained runs                                                              | Seedance `model_run`, one of the two lanes below                                |
+| 10. Check   | the delivery is clean and carries its track                                                    | sample every half second, not only the cuts, and match each cut to its panel    |
 
 Label each panel as a shot list does: number, shot size, angle, lens or camera move, then three action verbs. Arrange them as coverage, not twelve pictures: open on a master that sets the geography, hold one side of the axis so screen direction never flips, climb the size ladder, and punctuate with an insert or a reaction. Adjacent shots share an edge by construction: shot 3's exit is shot 4's entry.
 
@@ -35,7 +35,7 @@ Panels are generated one at a time, so one bad panel costs one panel, and gated 
 
 File as you go: one collection per sequence, created before the first generation, holding plates, panels, repairs, board and video ([board-craft](references/board-craft.md)).
 
-Stop for approval before the first video run: show the script, the plates, the numbered board and the key frames, and invite a reshoot by panel number. Unattended, record the assumption and continue.
+Stop for approval before the first video run, with the key frames shown alongside the script, plates and board, and invite a reshoot by panel number; unattended, record the assumption and continue.
 
 ## Two lanes
 
@@ -50,13 +50,14 @@ Stop for approval before the first video run: show the script, the plates, the n
 3. `search` with `target="models"`, `query="seedance"`, `public=true`. Hits rank by relevance, not generation, so scan them all for the newest non-deprecated member rather than the first: at authoring time `model_bytedance-seedance-2-5` (re-discover each session), which takes the most references and holds identity best. Then `model_schema_get` for caps.
 4. `model_run` with `dry_run=true` and `parameters={"prompt": "<the timecoded script>", "referenceImages": ["asset_dancer", "asset_board", "asset_key1", "asset_key2"], "duration": 24, "resolution": "1080p", "aspectRatio": "16:9"}`; re-estimate after any change.
 5. Re-run with `wait=false`, then `jobs_wait`, re-called with `pending_job_ids` on timeout. A timeout is not a failure and never justifies a second `model_run`.
-6. Step through the cuts: both sides must agree in pose and match the panel. Then sweep the whole clip at two frames a second, because a leaked board marking can fade in part-way through a shot, so one sample per shot reports a false clean. `asset_display` returns a link for video, not frames, so pull them locally or with `model_scenario-video-to-image-seq` (a fixed id: Scenario's single deterministic frame-extraction tool, so discovery would only re-derive it). Expect fewer cuts than you scripted: most handoffs render as camera moves. Twelve cuts a viewer can feel are not on offer from either lane, so cut the delivered take at your twelve points instead.
+6. Step through the cuts: both sides must agree in pose and match the panel. Then sweep the whole clip at two frames a second, because a leaked board marking can fade in part-way through a shot, so one sample per shot reports a false clean. `asset_display` returns a link for video, not frames, so pull them locally or with `model_scenario-video-to-image-seq` (a fixed id: Scenario's single deterministic frame-extraction tool, so discovery would only re-derive it). Expect fewer cuts than scripted: most handoffs render as camera moves, so cut the delivered take at the twelve scripted points.
 
 ## Common mistakes
 
 - Prompting choreography as adjectives ("dances energetically"): timecoded verbs and edge poses survive generation; mood words do not.
 - Naming the pose but not the position: in a two-character scene a mirrored boundary still breaks the cut as hard as a wrong limb.
-- Delivering silence by default: ask for diegetic sound and rule out music, but name no instrument or genre, which is what triggers an audio refusal. `generateAudio: false` is the fallback, not the default.
+- Scripting a character who leaves frame and returns, or a change made off camera, inside one run: whatever leaves frame is gone for the rest of that run, and no boundary check can catch what happened out of shot. Land departures, returns and state changes on a chained boundary still ([chained-lane](references/chained-lane.md)).
 - Expecting a scripted run to open on a prompt-described pose: reference mode anchors frame one to the base state; exact openings are the chained lane's job.
-- A script past the prompt's `max_length`, or timecodes past the duration cap: read both off `model_schema_get` before writing it, since step 1 comes before discovery; an overrun is a 400, never a trim.
+- Delivering silence by default: ask for diegetic sound and rule out music, but name no instrument or genre, which is what triggers an audio refusal. `generateAudio: false` is the fallback, not the default.
+- A script past the prompt's `max_length`, or timecodes past the duration cap: read both off `model_schema_get` before writing the script, since step 1 comes before discovery; an overrun is a 400, never a trim. Then send the run's scripted length as `duration`: its default is Auto (-1), which the schema defines only against a reference clip, so a timecoded script sent without it runs for an unstated length.
 - Getting the ratios wrong: each panel must carry the delivery ratio, since a reframe moves the poses the chain depends on, and the composed board must land inside a 0.4 to 2.5 aspect ratio or Seedance rejects it as a reference and the run fails.

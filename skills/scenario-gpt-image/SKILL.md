@@ -43,7 +43,7 @@ Position is weight: style, medium, subject, and mood open the prompt, then scene
 
 When editing, say "change only X", list what must survive, and repeat that list on every iteration; anything unmentioned is open to change. Not every input image is an edit target: references supplied for style or mood make the run a generation with references. Give each reference a role by index ("image 1 is the product, image 2 the palette"); unassigned references blur together. `numOutputs` yields variants of one prompt, which is what layout drafts of one brief are; distinct subjects need distinct runs.
 
-Text inside the image: quote the exact copy, spell tricky words letter by letter, state typography (weight, case, placement), say how many times the copy appears, and append "no extra words, no duplicate text". Prompts naming public figures are declined; describe an archetype instead. Complex prompts can run around two minutes: wait through `jobs_wait` rather than re-running.
+Text inside the image: quote the exact copy, spell tricky words letter by letter, brief the layout (each element's zone, its size rank against the others, what stays empty), state type weight and case, say how many times the copy appears, and append "no extra words, no duplicate text". Prompts naming public figures are declined; describe an archetype instead. Complex prompts can run around two minutes: wait through `jobs_wait` rather than re-running.
 
 ## Worked example: a product hero with headline text
 

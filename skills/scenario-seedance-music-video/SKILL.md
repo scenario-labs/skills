@@ -17,7 +17,7 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 Music written inside a shot restarts in a new key at every cut, so the score comes from outside the video model: the supplied master. What Seedance makes is the sound bolted to the picture. The choice sets `generateAudio` on every shot, so make it before generating:
 
 - Song alone: `generateAudio: false` everywhere. build.py stream-copies the master whenever MP4 allows, so the delivered soundtrack is the supplied file, bit for bit.
-- Song over the shots' own sound: `generateAudio: true` with "diegetic sound only, no music, no score" in every prompt, plus `"sound": 0.2` in the edit file. build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file stays hash-checked.
+- Song over the shots' own sound: `generateAudio: true`, every prompt naming the sound the scene itself makes (heels on wet asphalt, room tone) and then "diegetic sound only, no music, no score", plus `"sound": 0.2` in the edit file. Name no instrument or genre, however well it fits the track: that invites a score, and one run failed on an output-audio content check for an added "distant guitar". build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file stays hash-checked.
 
 ## Quick reference
 
@@ -38,7 +38,7 @@ Ask once before starting: team and project, track clearance, aspect ratio and le
 2. Upload the master: multipart `upload_asset`, then `upload_asset_complete` (see the `scenario` skill). `recommend` a transcription model (the need in the user's own words as `prompt`), `model_schema_get`, `model_run`, `jobs_wait`. The transcript is a text asset among the job's asset ids: `asset_get` returns it whole in `metadata.preview` when `hasFullPreview` is true (at authoring time the Whisper-based tool wrote SRT-style timed blocks), else `asset_download` fetches the file. Instrumental track: say so and move on.
 3. Write one page: what happens, where, how it turns across the sections; name the closing image. Show it to the user before spending anything.
 4. Generate reference stills with an image model (via `recommend`) at the delivery aspect ratio, one per look. Look at them: they set identity and palette downstream. Holding one character across several: see the `scenario-consistency` skill.
-5. Per shot, decide the conditioning: opening state matters, pass a first-frame `image`; only identity and world matter, pass `referenceImages` (see [references/shots.md](references/shots.md)). Generate each shot one or two seconds longer than its slot for a trim handle.
+5. Per shot, decide the conditioning: opening state matters, pass a first-frame `image`; only identity and world matter, pass `referenceImages` (see [references/shots.md](references/shots.md)). Generate each shot one or two seconds longer than its slot for a trim handle. To land an action on a beat inside a shot, timecode it from the clip's start: the beat's master time minus the shot's `at`, plus any head trim planned as `in` (an unplanned trim moves every beat). Hold one camera move and one location across the timecodes; timecoded verbs survive generation where mood words do not.
 6. Write `edit.json` and run `python3 scripts/build.py edit.json out.mp4`:
 
 ```json

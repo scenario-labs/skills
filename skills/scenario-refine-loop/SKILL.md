@@ -12,25 +12,27 @@ Agents fail generation QA in two symmetric ways: accepting the first roll, or re
 
 ## Quick reference
 
-| Step        | Do                                                                                                                                 |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Rubric   | Before generating, turn the brief into pass/fail lines a viewer can check ("subject centered on a plain field"), never taste words |
-| 2. Generate | The smallest batch that tests the recipe; `dry_run` when cost matters                                                              |
-| 3. Critique | `asset_analyze`: up to 10 images per call, one instruction embedding the rubric and a fixed per-image output shape                 |
-| 4. Fix      | Route every fail line to the cheapest fix that addresses it (table below)                                                          |
-| 5. Stop     | A clean round ships; three rounds without one, or one line failing twice under different fixes, means report, not respin           |
+| Step        | Do                                                                                                                                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Rubric   | Before generating, turn the brief into pass/fail lines a viewer can check ("subject centered on a plain field"), never taste words                                           |
+| 2. Generate | The smallest batch that tests the recipe, at the cheapest size or quality tier the schema offers on which every rubric line can still be judged; `dry_run` when cost matters |
+| 3. Critique | `asset_analyze`: up to 10 images per call, one instruction embedding the rubric and a fixed per-image output shape                                                           |
+| 4. Fix      | Route every fail line to the cheapest fix that addresses it (table below)                                                                                                    |
+| 5. Stop     | A clean round ships; three rounds without one, or one line failing twice under different fixes, means report, not respin                                                     |
+
+A tier change is a new generation, not the keeper enlarged: re-run only the keeper's recipe at delivery tier and re-critique it, or keep what passed and upscale it with a fidelity upscaler found by `search` `target="models"`, `filters={"tags": ["image-upscale"]}`, `public=true` (fidelity versus creative picks and sizing in `scenario-image-editing`, video upscaling in `scenario-video`).
 
 When the bar is the configured brand brief rather than a task rubric, and the team's Quality Gate add-on is enabled, critique images with `asset_quality_gate_run` instead: its `reasons` and `suggestions` feed the fix table directly (`scenario-quality-gate`; where the gate is missing it degrades to this `asset_analyze` path).
 
 Fix routing, cheapest first:
 
-| The verdict says                                | Fix                                                                                                                            |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| One local defect on a keeper                    | Masked inpaint of that region (`scenario-image`)                                                                               |
-| A uniform finish off (grade, tint, crop)        | A deterministic tool pass (`scenario-image-editing`), not a re-roll                                                            |
-| Wrong content, composition, or rendered palette | Edit the delta clause, re-run from the approved baseline                                                                       |
-| Identity or style drift                         | Tighten the enumeration, add or re-role references (`scenario-consistency`)                                                    |
-| Every line failing                              | Change the model: re-discover with `recommend` (capability-shaped; `search` is for a name or a private model), keep the prompt |
+| The verdict says                                | Fix                                                                                                                                                                          |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| One local defect on a keeper                    | Masked inpaint of that region; on a schema with no `mask` field, an instruction edit of the keeper naming that one change (`scenario-image`)                                 |
+| A uniform finish off (grade, tint, crop)        | A deterministic tool pass (`scenario-image-editing`), not a re-roll                                                                                                          |
+| Wrong content, composition, or rendered palette | Edit the delta clause, re-run from the approved baseline                                                                                                                     |
+| Identity or style drift                         | Tighten the enumeration, add or re-role references (`scenario-consistency`)                                                                                                  |
+| Every line failing                              | Change the model: re-discover with `recommend` (capability-shaped; `search` is for a name, a private model, or a tag-filtered lane such as `image-upscale`), keep the prompt |
 
 Change one variable per round. A round that swaps prompt, references, and model at once cannot attribute the improvement, so the next failure restarts from zero.
 
