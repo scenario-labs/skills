@@ -35,7 +35,7 @@ Panels are generated one at a time, so one bad panel costs one panel, and gated 
 
 File as you go: one collection per sequence, created before the first generation, holding plates, panels, repairs, board and video ([board-craft](references/board-craft.md)).
 
-Stop for approval before the first video run, with the key frames shown alongside the script, plates and board.
+Stop for approval before the first video run, with the key frames shown alongside the script, plates and board, and invite a reshoot by panel number; unattended, record the assumption and continue.
 
 ## Two lanes
 
