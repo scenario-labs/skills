@@ -22,6 +22,8 @@ These ids are constants: each is Scenario's single deterministic tool for its op
 
 Concat is sequential: `videos` takes 2 to 50 files (never 1), `preserveAudio` (default true) carries each clip's own track into the cut, and the optional `transitions` array's "length must be number of videos - 1". Each entry is an object `{type, duration}`, never a bare string: `type` is one of 18 names read off the schema (`fade`, the default, is the plain crossfade; `dissolve` is a different effect; `none` a hard cut) and `duration` runs 0.1 to 5 seconds, default 0.5. Omit the array for hard cuts throughout.
 
+`preserveAudio` is not a guarantee of sync: a concatenated cut has come back with its audio drifting against the picture, with and without transitions (a confirmed defect at authoring time). A concat of clips carrying dialogue or effects is verified, never trusted: `asset_get` the output and compare `properties.duration` with the inputs' sum less the transition overlaps, then download it and check that the audio and video streams run the same length and that a visible cue (a cut, a mouth opening, an impact) lands on its sound. When speech must stay locked to the picture, assemble in Video Studio instead: each clip layer carries its own track at its `startTime`, so a drift introduced by joining has nowhere to arise, at the price of hard cuts or per-layer fades in place of the transition set. Concat stays the tool for silent clips and for cuts whose bed is laid afterwards.
+
 Video Studio is an absolute timeline: `layers` holds 1 to 50 image, video or audio sources placed by `startTime` and stacked by `zIndex` (higher in front), with per-layer `fadeIn`/`fadeOut` rather than a between-clip array, so a cross-fade between two clips belongs in concat. At least one layer must be a video, so a music bed over a still is rejected.
 
 ## The Video Studio contract
@@ -53,3 +55,4 @@ Trim, split and resize have their own tool models. Note `model_scenario-video-cu
 - Reaching for an MCP tool like `video_compose`, or for local ffmpeg. The editing surface is `model_run` on tool models.
 - Handing concat one clip, or one transition per clip: the minimum is 2 videos, and transitions run one fewer.
 - Trusting `dry_run` here as validation: it returns a cost estimate only, and assembly payloads are the most structurally complex in the catalog.
+- Captioning a concatenated master before checking its sync: the captioner times its lines to the audio it hears, so drifted audio ships drifted captions on top of it.

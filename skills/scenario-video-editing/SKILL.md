@@ -32,6 +32,8 @@ One twin differs: Dissolve (Video) blends the clip with a still `dissolveImage`,
 
 A cutout with transparency never ships as mp4: at authoring time the removal models carried alpha only as WebM or ProRes 4444 MOV, so read the output-format enum off `model_schema_get` and agree the container with the user before pricing the run.
 
+Extracted frames carry no index and share one `createdAt`, so their order exists only in the job row's `assetIds`, and that list has come back out of time order (a confirmed defect at authoring time). Before reassembling with `model_scenario-image-seq-to-video` or handing frames on, lay the returned ids into `model_scenario-grid-maker` in that order (a fixed first-party id: Scenario's single grid tool) and read the sheet against the clip's free `firstFrame` and `lastFrame` and its motion; a frame that breaks continuity is out of place, and the corrected order travels as your own id list from then on. Never rebuild order from listings or timestamps.
+
 Effect lookups go through `search`, `target="models"`, `public=true`. The `model_scenario-` ids are constants: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive it. `model_reverse-video` sits outside that set and is an authoring-time hit: re-discover it by name (`search` `query="video reverse"`).
 
 ## Cost follows the clip, so trim first
