@@ -1,6 +1,6 @@
 ---
 name: scenario-workflow-authoring
-description: "Use when a task involves creating or editing a Scenario workflow graph through MCP: building a new workflow or app from a brief, adding or rewiring nodes (models, prompts, approval gates, loops), authoring editor_info, publishing a draft, unpublishing or renaming, importing an exported workflow JSON, copying a workflow to customize it, or turning a prompt chain into a reusable app. Running or pricing an existing workflow is scenario-workflows. Keywords: node graph, editor_info, publish, CEL."
+description: "Use when a task involves creating or editing a Scenario workflow graph through MCP: building a workflow or app from a brief, adding or rewiring nodes (models, prompts, approval gates, loops), authoring editor_info, publishing a draft, importing an exported workflow JSON, migrating a graph built in Weavy, ComfyUI, or another node tool, copying a workflow, or turning a prompt chain into an app. Running or pricing a workflow is scenario-workflows. Keywords: node graph, editor_info, publish, CEL."
 license: MIT
 ---
 
@@ -31,6 +31,10 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 2. Author `editor_info`: `text1` with `data.isInput: true`, `model1` with `type: "model"`, `data.modelId` and `data.isOutput: true`, one edge from `model1`'s input to `text1`'s output (edges name the downstream node as `source`, see the reference), `inputKeys: ["text1"]`.
 3. `workflow_create` with `name`, `editor_info`, and `inputs_definition` naming `text1` as a string input. The published input key is the node id, which is why run inputs have names like `text1`.
 4. `workflow_publish`, then `workflow_run` with `dry_run=true` to validate and price. Fix the graph and re-publish if validation fails.
+
+## Migrating a graph from another node tool
+
+A pipeline exported by Weavy, ComfyUI, or another node editor does not import: only Scenario's own export round-trips. It is translated, node by node, per [references/foreign-graph-import.md](references/foreign-graph-import.md): reduce the export to a table of nodes and connections locally, map each row onto the persisted vocabulary (a generator becomes one `model` node whose member is resolved with `search` by name or `recommend` by capability, never the source's model identifier; sampler and loader plumbing folds into it; preview nodes become output pins; code and integration nodes stay unmapped), then create, publish, and `dry_run` as above. The workflow's `description` carries the list of unmapped nodes and dropped parameters, and the report to the user promises a reproduced pipeline shape, never matching renders.
 
 ## Common mistakes
 
