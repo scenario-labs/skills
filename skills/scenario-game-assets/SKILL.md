@@ -54,6 +54,14 @@ Restyling one approved component into a set (button, panel, popup well, icon fam
 
 Verify the set by measurement, not by eye: compare each output's alpha bounding box against the source before accepting the batch.
 
+## Isometric tiles and masked fills
+
+Isometric work fails on the camera before it fails on the style: every tile must share one projection, one light direction, and one shadow side, or the set never assembles on a grid. Dedicated isometric members exist in the public catalog (LoRAs for buildings, dungeons, storybook scenes, a converter that turns a photo of a building into a tile), so `recommend` with the tile need in the user's own words, then fix the camera in a prompt template that never changes across the set (the view, the ground plane, "light from the upper left", a plain background) and vary only the subject. Reuse one `seed`, and where the schema takes a scalar `image` with a `strength`, feed a rough sketch or an approved tile at low strength to hold the grid: the Knowledge Base's isometric-tile guide works this way, structure from the sketch, materials from the prompt ("stone-paved ground with moss between the cracks"). A set that outgrows prompting is a `scenario-consistency` job first and a trained LoRA on the approved tiles second (`scenario-model-training`).
+
+Content that must stay inside a shape (a cluster of hexagons, a card frame, a badge) is a masked `img2img` run, not a prompt instruction: the mask conventions differ per model (`scenario-image` covers them), the shape mask is one asset uploaded once and reused across every tile, and the prompt varies inside it. Check the boundary by measurement after each run, since a model can paint past its mask by a few pixels: compare the output's alpha or the pixels outside the mask against the source canvas locally. When the contents must vary in layout as well as subject, generate each scene on a plain background and cut it through the same mask locally, which is deterministic and free of credits; reserve the masked run for content that must respond to the shape's edges.
+
+A "low-poly" look and a low-poly mesh are different deliverables. The look is a 2D style word on an image model. The mesh is `scenario-3d`: image-to-3D schemas expose polycount targets and topology choices, a remesh step sets the final count, and the concept image feeding it wants flat shading, a clean silhouette, and a plain background so the geometry reads.
+
 ## Common mistakes
 
 - Prompting "transparent background" at a diffusion model: outputs are opaque. Cut the background afterward with a removal tool, or pick a native-alpha model.
