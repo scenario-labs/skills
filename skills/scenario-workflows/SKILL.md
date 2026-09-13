@@ -26,7 +26,7 @@ Ids are prefixed `wflow_`, not `workflow_` as tool-doc examples show; copy them 
 
 ## Cap every list call
 
-Each record carries the compiled `flow` and the whole `editorInfo` node graph with no compact flag; live records ran 5,500 to 22,000 characters. Cap `limit` at 3 or fewer, read only `id`, `name`, `hasFlow` and `inputs`, and page with `page_token` set to the previous reply's `nextPaginationToken`.
+Each record carries the compiled `flow` and the whole `editorInfo` node graph with no compact flag; live records ran 5,500 to 22,000 characters. Cap `limit` at 3 or fewer, read only `id`, `name`, `hasFlow` and `inputs`, and page with `page_token` set to the previous reply's `nextPaginationToken`. The tool schema advertised a ceiling of 200 at authoring time while the API rejects anything past 100 (a 400 naming `pageSize`), so the schema's maximum is not a value to send.
 
 Only `draft` and `ready` filter server-side; other statuses filter each page client-side (flagged `_workflowListStatusFilter`); there an empty page beside a `nextPaginationToken` means keep paging.
 
