@@ -1,6 +1,6 @@
 ---
 name: scenario-workflow-authoring
-description: "Use when a task involves creating or editing a Scenario workflow graph through MCP: building a workflow or app from a brief, adding or rewiring nodes (models, prompts, approval gates, loops), authoring editor_info, publishing a draft, importing an exported workflow JSON, migrating a graph built in Weavy, ComfyUI, or another node tool, copying a workflow, or turning a prompt chain into an app. Running or pricing a workflow is scenario-workflows. Keywords: node graph, editor_info, publish, CEL."
+description: "Use when a task involves creating or editing a Scenario workflow graph through MCP: building an app from a brief, adding or rewiring nodes (models, prompts, approval gates, loops), authoring editor_info, publishing, unpublishing or renaming, importing an exported workflow JSON, migrating a graph built in Weavy, ComfyUI, or another node tool, copying a workflow, or turning a prompt chain into an app. Running or pricing a workflow is scenario-workflows. Keywords: node graph, editor_info, CEL."
 license: MIT
 ---
 
@@ -34,7 +34,7 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 
 ## Migrating a graph from another node tool
 
-A pipeline exported by Weavy, ComfyUI, or another node editor does not import: only Scenario's own export round-trips. It is translated, node by node, per [references/foreign-graph-import.md](references/foreign-graph-import.md): reduce the export to a table of nodes and connections locally, map each row onto the persisted vocabulary (a generator becomes one `model` node whose member is resolved with `search` by name or `recommend` by capability, never the source's model identifier; sampler and loader plumbing folds into it; preview nodes become output pins; code and integration nodes stay unmapped), then create, publish, and `dry_run` as above. The workflow's `description` carries the list of unmapped nodes and dropped parameters, and the report to the user promises a reproduced pipeline shape, never matching renders.
+A pipeline exported by Weavy, ComfyUI, or another node editor does not import: only Scenario's own export round-trips. It is translated node by node, then created, published, and dry-run as above. The mapping table, member resolution, and the report the user gets are in [references/foreign-graph-import.md](references/foreign-graph-import.md); read it before touching such an export, since its first rule is to reduce the file to a table locally rather than paste it into the conversation.
 
 ## Common mistakes
 
