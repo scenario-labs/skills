@@ -60,7 +60,7 @@ Isometric work fails on the camera before it fails on the style: every tile must
 
 Content that must stay inside a shape (a cluster of hexagons, a card frame, a badge) is a masked `img2img` run, not a prompt instruction: the mask conventions differ per model (`scenario-image` covers them), the shape mask is one asset uploaded once and reused across every tile, and the prompt varies inside it. Check the boundary by measurement after each run, since a model can paint past its mask by a few pixels: compare the output's alpha or the pixels outside the mask against the source canvas locally. When the contents must vary in layout as well as subject, generate each scene on a plain background and cut it through the same mask locally, which is deterministic and free of credits; reserve the masked run for content that must respond to the shape's edges.
 
-A "low-poly" look and a low-poly mesh are different deliverables. The look is a 2D style word on an image model. The mesh is `scenario-3d`: image-to-3D schemas expose polycount targets and topology choices, a remesh step sets the final count, and the concept image feeding it wants flat shading, a clean silhouette, and a plain background so the geometry reads.
+A "low-poly" look and a low-poly mesh are different deliverables. The look is a 2D style word on an image model. The mesh is `scenario-3d`: whether the image-to-3D pick exposes a polycount target or a topology choice is read off `model_schema_get`, never assumed, and when it exposes neither a separate `3d23d` remesh utility (its own billed run, found with `recommend`) brings the count down afterwards. Either way the concept image feeding it wants flat shading, a clean silhouette, and a plain background so the geometry reads.
 
 ## Common mistakes
 
