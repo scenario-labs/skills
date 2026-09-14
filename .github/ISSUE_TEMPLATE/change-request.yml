@@ -1,6 +1,6 @@
 name: Change request
 description: A missing capability, unclear guidance, or a workflow that costs more than it should
-labels: ["enhancement"]
+type: Feature
 body:
   - type: markdown
     attributes:
