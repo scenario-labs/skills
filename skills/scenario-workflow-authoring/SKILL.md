@@ -1,6 +1,6 @@
 ---
 name: scenario-workflow-authoring
-description: "Use when a task involves creating or editing a Scenario workflow graph through MCP: building a new workflow or app from a brief, adding or rewiring nodes (models, prompts, approval gates, loops), authoring editor_info, publishing a draft, unpublishing or renaming, importing an exported workflow JSON, copying a workflow to customize it, or turning a prompt chain into a reusable app. Running or pricing an existing workflow is scenario-workflows. Keywords: node graph, editor_info, publish, CEL."
+description: "Use when a task involves creating or editing a Scenario workflow graph through MCP: building an app from a brief, adding or rewiring nodes (models, prompts, approval gates, loops), authoring editor_info, publishing, unpublishing or renaming, importing an exported workflow JSON, migrating a graph built in Weavy, ComfyUI, or another node tool, copying a workflow, or turning a prompt chain into an app. Running or pricing a workflow is scenario-workflows. Keywords: node graph, editor_info, CEL."
 license: MIT
 ---
 
@@ -27,10 +27,14 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 
 ## Worked example: a text-to-image app
 
-1. `search` for the model, then `model_schema_get`: its input names become the model node's handle names, and `required.always === true` marks what must be wired.
+1. `search` for the model, then `model_schema_get`: its input names become the model node's handle names, and its `required` flag marks what must be wired.
 2. Author `editor_info`: `text1` with `data.isInput: true`, `model1` with `type: "model"`, `data.modelId` and `data.isOutput: true`, one edge from `model1`'s input to `text1`'s output (edges name the downstream node as `source`, see the reference), `inputKeys: ["text1"]`.
 3. `workflow_create` with `name`, `editor_info`, and `inputs_definition` naming `text1` as a string input. The published input key is the node id, which is why run inputs have names like `text1`.
 4. `workflow_publish`, then `workflow_run` with `dry_run=true` to validate and price. Fix the graph and re-publish if validation fails.
+
+## Migrating a graph from another node tool
+
+A pipeline exported by Weavy, ComfyUI, or another node editor does not import: only Scenario's own export round-trips. It is translated node by node, then created, published, and dry-run as above. The mapping table, member resolution, and the report the user gets are in [references/foreign-graph-import.md](references/foreign-graph-import.md); read it before touching such an export, since its first rule is to reduce the file to a table locally rather than paste it into the conversation.
 
 ## Common mistakes
 
@@ -40,4 +44,4 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 - Retrying a failed `workflow_create` with a second create instead of `workflow_update` on the id from the error.
 - Publishing with no pins: at least one `data.isInput` node listed in `inputKeys` and one `data.isOutput` node.
 - Double-quoted CEL literals: they evaluate but corrupt the canvas editor, single quotes only.
-- Sending `workflow_id` to `workflow_copy`: its parameter is `source_workflow_id`; the copy inherits everything verbatim and needs its own publish.
+- Sending `workflow_id` to `workflow_copy`: every other workflow tool takes `workflow_id`, but its parameter is `source_workflow_id`; the copy inherits everything verbatim and needs its own publish.

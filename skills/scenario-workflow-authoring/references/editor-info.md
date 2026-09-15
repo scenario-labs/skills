@@ -229,7 +229,7 @@ This exact payload was validated live at authoring time with a real `modelId` su
 }
 ```
 
-After `workflow_create` returns the id: `workflow_publish`, then `workflow_run` with `dry_run: true` and `{"text1": "..."}` to price and validate, then run for real.
+After `workflow_create` returns the id: `workflow_publish`, then `workflow_run` with `dry_run: true` and `inputs: {"text1": "..."}` to price and validate, then run for real: the reply carries a job for `jobs_wait` (re-call with `pending_job_ids`), as after `model_run`.
 
 ## Template cloning
 
