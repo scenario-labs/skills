@@ -38,7 +38,7 @@ The source image already fixes the look, so prompt only motion, camera, and timi
 
 Write the prompt as a shot direction in sentences, not tags: shot size, setting, subject and one action, one named slow camera move, light source, style, and an audio line, in the order the family skill gives. Named moves and concrete light survive generation; mood words do not.
 
-Many generators return sound with the picture (dialogue, effects, ambience, sometimes a score), switched by `generateAudio` or `audio` where the schema has one, each with its own default; with none, the search hit says whether sound comes back, and the prompt is the only lever over what does. Effects and ambience go in plain words, dialogue in quotes, plus "no music" (the score is laid once in assembly; switch the audio off when assembly supplies the whole soundtrack) and "no subtitles, no on-screen text", since a caption tool adds captions and removes none. Exclusions ride the prompt unless the schema has `negativePrompt`. Type the viewer must read is composited in assembly (`scenario-video-assembly`): generated type drifts.
+Many generators return sound with the picture (dialogue, effects, ambience, sometimes a score), switched by `generateAudio` or `audio` where the schema has one, each with its own default; with none, the search hit says whether sound comes back, and the prompt is the only lever over what does. Effects and ambience go in plain words, dialogue in quotes, plus a generic "no music", never a named genre or instrument (the score is laid once in assembly; switch the audio off when assembly supplies the whole soundtrack) and "no subtitles, no on-screen text", since a caption tool adds captions and removes none. Exclusions ride the prompt unless the schema has `negativePrompt`. Type the viewer must read is composited in assembly (`scenario-video-assembly`): generated type drifts.
 
 ## Editing existing footage
 
@@ -48,7 +48,7 @@ All editing is `model_run` on a video-input model found with `recommend`:
 - Lipsync and dubbing: see the next section.
 - Upscaling up to 4K.
 - Deterministic utilities (trim, split, resize, effects, grading, frame extraction, background removal): see `scenario-video-editing`. Assembling a finished cut: see `scenario-video-assembly`.
-- Extending a clip from its last frame, on a dedicated extend member or by chaining first-frame runs past any member's duration cap: `asset_get` the rendered clip and pass its `lastFrame` asset id as the next run's first frame, writing that prompt from what the frame shows (positions, facing, the camera's side, so screen direction survives the seam) rather than from the plan, since renders drift from it.
+- Extending a clip from its last frame, on a dedicated extend member or by chaining first-frame runs past any member's duration cap: `asset_get` the rendered clip and pass its `lastFrame` asset id as the next run's first frame, writing that prompt from what the frame shows (positions, facing, the camera's side, so screen direction survives the seam) rather than from the plan, since renders drift from it; join the runs with `model_scenario-video-concat` (a fixed id, for the same reason as the cut and split tools; hard cuts by default, per `scenario-video-assembly`).
 
 ## Dubbing is not lipsync
 

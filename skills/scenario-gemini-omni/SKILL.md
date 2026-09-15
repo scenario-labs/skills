@@ -18,7 +18,7 @@ Two lines at authoring time, Flash and 1.1 Flash, one member per mode (names fro
 
 | Member             | Mode                | Inputs                                                                                                                                          |
 | ------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Gemini Omni        | text or first frame | `prompt` and/or `image`, plus optional `referenceImages` (up to 7)                                                                              |
+| Gemini Omni        | text or first frame | `prompt` and/or `image`, plus optional `referenceImages` (up to 7); on 1.1 an optional `lastFrameImage` beside `image`                          |
 | Reference-to-Video | consistent subjects | `referenceImages` required (1 to 7), `prompt` optional; on 1.1 a `referenceVideo` of 3 s or less can replace the images or join up to 5 of them |
 | Edit               | restyle a clip      | `video` and a change `prompt`, both required; optional `referenceImages` (1 to 5)                                                               |
 | Extend (1.1 only)  | continue a clip     | `video` required, `prompt` optional                                                                                                             |
