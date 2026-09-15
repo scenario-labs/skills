@@ -42,3 +42,4 @@ Draw far domains yourself with [scripts/wildcard.py](scripts/wildcard.py), run f
 - Boarding whatever came back. Every reference needs a job (light, color, composition, material, shape, subject, environment) or it is decoration.
 - Mixing lighting worlds on one board: a hard-flash reference and a soft-window reference cancel at generation time.
 - Handing a model an 18-image board. Reduce to three to six role-tagged references first.
+- Shipping the undirected default when the brief asked for none of it: subject centered and facing the lens, posed, evenly lit, everything in focus, a processed gloss. Every axis a prompt leaves open (framing, moment, lens, time of day, light) is filled with the model's most average answer, so name each one.

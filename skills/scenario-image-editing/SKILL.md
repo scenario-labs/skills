@@ -66,3 +66,4 @@ Effects take a scalar `image`. Resize Image (`images`, max 10) and Grid Maker (`
 - Reaching for an `image_edit` MCP tool, or for local ImageMagick or Pillow: the surface is `model_run` on tool models.
 - Prompting an effect ("more posterized"): they read numbers only. Reframe and the layer extractors take text.
 - Slicing or extracting layers before grading: both return one asset per piece, so every piece then needs its own run.
+- Saving a traced SVG with `asset_download`: it comes back rasterized, so take the stored file from `asset_get`'s `url` with `curl -L`.

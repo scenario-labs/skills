@@ -24,7 +24,7 @@ The product is never generated. A text-prompted bottle ships a wrong label to a 
 
 ## The preserve-first prompt
 
-Scene prompts subordinate the world to the product: "The exact can from the reference image, label, proportions, and colors unchanged, standing on a wet slate counter, morning side light, shallow depth of field." Name the placement, the surface, the light. What goes unstated drifts, so the checklist holds the label verbatim and the gate reads it back letter by letter rather than trusting the render.
+Scene prompts subordinate the world to the product: "The exact can from the reference image, proportions and colors unchanged, the label reads 'SUMMIT COLD BREW', no other text, standing on a wet slate counter, morning side light, shallow depth of field." Name the placement, the surface, the light. What goes unstated drifts: "label unchanged" alone leaves the type to whatever the model resolves from the reference, so the preserve clause quotes the checklist's label copy (existing on-pack text only) and the gate reads it back letter by letter rather than trusting the render.
 
 Shadows and reflections carry the realism: a cutout pasted without them floats. Prefer a stage tool that rebuilds shadows, or name one in the edit prompt ("soft contact shadow falling right").
 
@@ -34,7 +34,7 @@ Shadows and reflections carry the realism: a cutout pasted without them floats. 
 2. Build the checklist once with `asset_analyze` (write lane, contract in `scenario-asset-analysis`); the inventory lands as a text asset, so `asset_download` it and keep the text.
 3. Packshot: `recommend` with the packshot need in the user's own words, `model_schema_get` the pick, then run it with `asset_can` in its image field, the background set to the brand hex, and margins per the marketplace's current spec (confirm specs with the user; unattended, take them from the task instructions, else keep the tool's defaults).
 4. Scenes: `recommend` with `capability="img2img"`; on `next_step.type="ask_user"`, present the options (unattended, the task instructions name the pick, else `proceed`: `specialty.model_id` first, skipping a specialty whose `caveats` or `when_general_better` name the task at hand, then the top `ranked` entry, never one flagged `requires_plan_upgrade`). `model_schema_get` the pick, then three runs, each the preserve-first prompt with one scene clause and `asset_can` wired as the schema says (an array only under `array: true`).
-5. `jobs_wait`, then gate all four outputs in one `asset_analyze` call, the saved checklist passed via `text_inputs` and an instruction to read the label back letter by letter. A drifted label fails the shot: re-run from `asset_can` with the preservation clause tightened, never from the drifted output. Text the gate cannot resolve at output resolution is unverified, not passed: upscale and re-gate, or flag it in the delivery note.
+5. `jobs_wait`, then gate all four outputs in one `asset_analyze` call, the saved checklist passed via `text_inputs` and an instruction to read the label back letter by letter. A drifted label fails the shot: re-run from `asset_can` with the preserve clause tightened (the quoted copy spelled letter by letter, "no other text" kept), never from the drifted output. Text the gate cannot resolve at output resolution is unverified, not passed: upscale and re-gate, or flag it in the delivery note.
 6. Upscale the keepers, `asset_download` with `format="png"`, file the set in a collection.
 
 ## Common mistakes
