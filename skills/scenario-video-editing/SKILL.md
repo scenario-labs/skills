@@ -30,7 +30,7 @@ One twin differs: Dissolve (Video) blends the clip with a still `dissolveImage`,
 | Masks, cutouts        | `recommend` with the need in the user's own words                        |
 | Pull the audio track  | `model_scenario-audio-extract`                                           |
 
-Extracted frames carry no index and share one `createdAt`, so their order exists only in the job row's `assetIds`, and that list has come back out of time order (a confirmed defect at authoring time). Before reassembling with `model_scenario-image-seq-to-video` or handing frames on, lay the returned ids into `model_scenario-grid-maker` in that order (a fixed first-party id: Scenario's single grid tool; its `images` field takes an array of 1 to 100 ids and ignores a bare id while the run still succeeds, so past 100 frames sheet in batches or extract every Nth frame with `frameInterval`) and read the sheet against the clip's free `firstFrame` and `lastFrame` and its motion; a frame that breaks continuity is out of place, and the corrected order travels as your own id list from then on. Never rebuild order from listings or timestamps.
+Extracted frames carry no index and share one `createdAt`, so their order exists only in the job row's `assetIds`, and that list has come back out of time order (a confirmed defect at authoring time). The extractor takes a scalar `video`; every frame is `extractAllFrames: true`, and `frameInterval` (default 24 at authoring time, about one frame a second on a 24 fps clip) applies only when that flag is off. Check that the row holds exactly the clip's `nbFrames` ids (`asset_get` reports it beside `frameRate`; a short row is a dropped frame, which no reordering fixes), then, before reassembling with `model_scenario-image-seq-to-video` or handing frames on, lay the returned ids into `model_scenario-grid-maker` in that order (a fixed first-party id: Scenario's single grid tool; its `images` field takes an array of 1 to 100 ids and ignores a bare id while the run still succeeds, so past 100 frames sheet in batches or raise `frameInterval`; set `columns`, default 3 and up to 20, so a batch reads as a near-square sheet) and read the sheet against the clip's free `firstFrame` and `lastFrame` and its motion; a frame that breaks continuity is out of place, and the corrected order travels as your own id list from then on. Never rebuild order from listings or timestamps, and a preview that runs backwards on a clean sheet is the assembler's `pingpong` flag, not the order.
 
 A cutout with transparency never ships as mp4: at authoring time the removal models carried alpha only as WebM or ProRes 4444 MOV, so read the output-format enum off `model_schema_get` and agree the container with the user before pricing the run.
 
@@ -48,7 +48,7 @@ Checking costs nothing: `asset_get` returns `firstFrame` and `lastFrame` as thei
 - The output format field is `outputFormat` on cut and split, `videoOutputFormat` on resize.
 - `preserveAudio` defaults to true on cut, split and resize; the effects expose no audio field and pass the track through.
 - Enum values are copied, not retyped: one `lutStyle` string contains a space.
-- `asset_download` takes no `format` for a video: it converts image formats only.
+- `asset_download` takes no `format` for a video: it converts image formats only. A GIF from the sequence tool is an image asset and takes `format: "gif"`; the `png` default flattens it to one frame.
 
 ## Resizing is not reframing
 
