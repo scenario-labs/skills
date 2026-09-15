@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.41.1](https://github.com/scenario-labs/skills/compare/skills-v0.41.0...skills-v0.41.1) (2026-09-15)
+
+
+### Bug Fixes
+
+* **scenario-sprite-animation:** verify extractor frame order instead of assuming time order ([#117](https://github.com/scenario-labs/skills/issues/117)) ([9b56fc1](https://github.com/scenario-labs/skills/commit/9b56fc14b726c39d8c906f14b91b9c85e9009b3c))
+* **scenario:** name the search target, the api_key_create lane, and the full allowlist request ([#128](https://github.com/scenario-labs/skills/issues/128)) ([c82a963](https://github.com/scenario-labs/skills/commit/c82a963f253c131d73a76bcbdda435d7f1ed04c7))
+* **scenario:** teach per-client re-authentication and the first-call failures usage data surfaced ([#116](https://github.com/scenario-labs/skills/issues/116)) ([0af22c0](https://github.com/scenario-labs/skills/commit/0af22c0e6a59414632a73da88dbe5e90a8477b79))
+* **skills:** teach the payload errors usage data surfaces: file field names, image-only inputs, list caps, downloads ([#122](https://github.com/scenario-labs/skills/issues/122)) ([ff10d64](https://github.com/scenario-labs/skills/commit/ff10d6432c216b2ab04df66bd2e3d24329700cd0))
+* **skills:** verify audio sync after a concat and frame order after an extraction instead of trusting either ([#123](https://github.com/scenario-labs/skills/issues/123)) ([d2a84cf](https://github.com/scenario-labs/skills/commit/d2a84cf5fd78aa06f52dbbd6969aecb0f37b71f9))
+
 ## [0.41.0](https://github.com/scenario-labs/skills/compare/skills-v0.40.1...skills-v0.41.0) (2026-09-10)
 
 
