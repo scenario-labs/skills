@@ -66,3 +66,4 @@ Where a model bounds input length it rejects rather than trims: a 30.08 second r
 - Treating search hits as stable: catalogs evolve, so re-run `search` and prefer non-deprecated hits (a `deprecated:<replacement_id>` tag names the successor).
 - Pasting raw CDN URLs into chat: use `asset_display` for inline preview.
 - Passing `format` to `asset_download` for a video: it converts image formats only, so omit it.
+- Excluding music by name in an audio-enabled prompt: the soundtrack is moderated on its own, and a named genre or instrument trips it even inside an exclusion. Describe diegetic sound positively ("room tone, footsteps, one voice"), or turn the audio field off.
