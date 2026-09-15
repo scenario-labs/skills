@@ -178,6 +178,14 @@ Get past a blocked generation, and turn a stuck session into a reproducible publ
 | [scenario-moderation](skills/scenario-moderation/SKILL.md) | Recovering a blocked generation: provider-side filters, model switching, proportional wording, look-alike errors |
 | [scenario-report](skills/scenario-report/SKILL.md)         | Reporting a bug or change request as a reproducible, redacted issue on this repository's public tracker          |
 
+### Team administration
+
+Govern a team from the agent: which models it can run, who is on it and in which projects, per-member spend caps, API key roles, and who spent what.
+
+| Skill                                                      | Use it for                                                                                                             |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [scenario-team-admin](skills/scenario-team-admin/SKILL.md) | Model access control, team and project membership, per-member Creative Unit caps, API key roles, and spend attribution |
+
 ### Image model families
 
 The top image families in depth: generation and editing modes, reference rules, and the caps that differ per member.

@@ -123,7 +123,16 @@
       ]
     },
     {
-      "name": "11.-image-model-families",
+      "name": "11.-team-administration",
+      "description": "Govern a team from the agent: which models it can run, who is on it and in which projects, per-member spend caps, API key roles, and who spent what.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/scenario-team-admin"
+      ]
+    },
+    {
+      "name": "12.-image-model-families",
       "description": "The top image families in depth: generation and editing modes, reference rules, and the caps that differ per member.",
       "source": "./",
       "strict": false,
@@ -139,7 +148,7 @@
       ]
     },
     {
-      "name": "12.-video-model-families",
+      "name": "13.-video-model-families",
       "description": "The top video families in depth: conditioning modes, native audio, editing and extension, and per-member caps and costs.",
       "source": "./",
       "strict": false,
@@ -157,7 +166,7 @@
       ]
     },
     {
-      "name": "13.-audio-model-families",
+      "name": "14.-audio-model-families",
       "description": "The top audio families in depth: music, covers and stems, sound effects, speech, dubbing, and video scoring.",
       "source": "./",
       "strict": false,
@@ -169,7 +178,7 @@
       ]
     },
     {
-      "name": "14.-3d-model-families",
+      "name": "15.-3d-model-families",
       "description": "The top 3D families in depth: mesh generation, retexture and rigging toolchains, portraits, and explorable worlds and splats.",
       "source": "./",
       "strict": false,
