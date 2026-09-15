@@ -30,6 +30,8 @@ One twin differs: Dissolve (Video) blends the clip with a still `dissolveImage`,
 | Masks, cutouts        | `recommend` with the need in the user's own words                        |
 | Pull the audio track  | `model_scenario-audio-extract`                                           |
 
+Frames from the extractor carry no index and share one timestamp: their order lives only in the job row's `assetIds`, which has come back out of time order, so lay the returned order into `model_scenario-grid-maker` and read the contact sheet against the clip's `firstFrame` and `lastFrame` before feeding it to `model_scenario-image-seq-to-video` or a sheet.
+
 A cutout with transparency never ships as mp4: at authoring time the removal models carried alpha only as WebM or ProRes 4444 MOV, so read the output-format enum off `model_schema_get` and agree the container with the user before pricing the run.
 
 Extracted frames carry no index and share one `createdAt`, so their order exists only in the job row's `assetIds`, and that list has come back out of time order (a confirmed defect at authoring time). Before reassembling with `model_scenario-image-seq-to-video` or handing frames on, lay the returned ids into `model_scenario-grid-maker` in that order (a fixed first-party id: Scenario's single grid tool) and read the sheet against the clip's free `firstFrame` and `lastFrame` and its motion; a frame that breaks continuity is out of place, and the corrected order travels as your own id list from then on. Never rebuild order from listings or timestamps.

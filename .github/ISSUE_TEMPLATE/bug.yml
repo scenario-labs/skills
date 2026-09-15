@@ -1,6 +1,6 @@
 name: Bug report
 description: Something in a skill, the MCP server, or a generation behaves wrong
-labels: ["bug"]
+type: Bug
 body:
   - type: markdown
     attributes:
