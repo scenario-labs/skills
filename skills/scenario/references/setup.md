@@ -40,7 +40,7 @@ Claude Desktop reopening the browser on every message is orphaned `mcp-remote` p
 
 ## API keys (headless or CI)
 
-Where nobody is present to complete the OAuth prompt, the same endpoint also authenticates with a Scenario API key as an `Authorization: Basic <base64 of KEY:SECRET>` header, and a client that takes no headers (Claude Desktop's native configuration) reaches it through `mcp-remote`. Keys are created in the Scenario portal (the `api_key_create` catalog tool returns the link and nothing else). Wiring one into a client is an operator task done by hand: the [connection guide](https://mcp.scenario.com/docs#using-an-api-key) carries the current steps for each client.
+Where nobody is present to complete the OAuth prompt, the same endpoint also authenticates with a Scenario API key sent as an HTTP header, and a client that takes no headers (Claude Desktop's native configuration) reaches it through `mcp-remote`. Keys are created in the Scenario portal (the `api_key_create` catalog tool returns the link and nothing else). Wiring one into a client is an operator task done by hand: the [connection guide](https://mcp.scenario.com/docs#using-an-api-key) carries the header format and the current steps for each client.
 
 Credentials stay out of the conversation. An agent asked to set this up points to the guide and stops there. It does not ask for a key or secret, does not place one in a command, a config file, or a message, and does not repeat one that appears in its context.
 
