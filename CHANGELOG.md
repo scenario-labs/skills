@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.42.0](https://github.com/scenario-labs/skills/compare/skills-v0.41.1...skills-v0.42.0) (2026-09-16)
+
+
+### Features
+
+* **scenario-consistency:** add reference-to-video, style-reference, and when-to-train lanes ([#114](https://github.com/scenario-labs/skills/issues/114)) ([9dea74a](https://github.com/scenario-labs/skills/commit/9dea74a4e05110b8da154a33e6654414874902e9))
+* **scenario-moderation:** cover video, audio, and IP Detection blocks ([#115](https://github.com/scenario-labs/skills/issues/115)) ([6f8074b](https://github.com/scenario-labs/skills/commit/6f8074bc2a873dab3219dd04e2d05e0a1751e50b))
+* **scenario-team-admin:** add the team administration skill ([#118](https://github.com/scenario-labs/skills/issues/118)) ([8d41021](https://github.com/scenario-labs/skills/commit/8d41021b1333fe819b8ba1be14ad955d03d9ffa6))
+* **skills:** teach shot direction, in-image copy, and frame chaining across image and video skills ([#119](https://github.com/scenario-labs/skills/issues/119)) ([5d223d9](https://github.com/scenario-labs/skills/commit/5d223d92a0a642ba061373dbe78dfde71544de4a))
+
+
+### Bug Fixes
+
+* **scenario:** name the catalog tools' argument facts the clean-room runs kept guessing ([#129](https://github.com/scenario-labs/skills/issues/129)) ([4749955](https://github.com/scenario-labs/skills/commit/47499557acbaac68c4a7cb50369255c4f6b77d94))
+
 ## [0.41.1](https://github.com/scenario-labs/skills/compare/skills-v0.41.0...skills-v0.41.1) (2026-09-15)
 
 
