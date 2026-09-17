@@ -2,7 +2,7 @@ import copy
 import importlib.util
 import json
 import os
-import re
+from html.parser import HTMLParser
 import shutil
 import subprocess
 from pathlib import Path
@@ -234,8 +234,25 @@ class AnalyticsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             A.render(A.ingest(envelope(), "a", NOW, users=user_envelopes()), directory, "Example report")
             page = (Path(directory) / "dashboard.html").read_text()
-            data = re.search(r'<script id="report-data" type="application/json">(.*?)</script>', page, re.S).group(1)
-            script = re.findall(r'<script>(.*?)</script>', page, re.S)[0]
+            class Scripts(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.blocks = []
+                    self.current = None
+                def handle_starttag(self, tag, attrs):
+                    if tag == "script":
+                        self.current = {"attrs": dict(attrs), "text": ""}
+                def handle_data(self, data):
+                    if self.current is not None:
+                        self.current["text"] += data
+                def handle_endtag(self, tag):
+                    if tag == "script" and self.current is not None:
+                        self.blocks.append(self.current)
+                        self.current = None
+            parsed = Scripts()
+            parsed.feed(page)
+            data = next(b["text"] for b in parsed.blocks if b["attrs"].get("id") == "report-data")
+            script = next(b["text"] for b in parsed.blocks if not b["attrs"])
             harness = r'''
 const vm = require("node:vm"), assert = require("node:assert/strict");
 function element() { return {textContent:"",value:"",style:{},children:[],handlers:{},append(...x){this.children.push(...x)},replaceChildren(){this.children=[];this.textContent=""},addEventListener(n,f){this.handlers[n]=f}}; }
