@@ -138,6 +138,11 @@
         "scenario-sparc3d",
         "scenario-3d-worlds"
       ]
+    },
+    {
+      "title": "Client account research",
+      "description": "Prepare account briefings and introductory calls from authorized CRM, support, conversation, and usage sources.",
+      "skills": ["client-account-briefing"]
     }
   ]
 }
