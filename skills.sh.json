@@ -87,7 +87,7 @@
     {
       "title": "Team administration",
       "description": "Govern a team from the agent: which models it can run, who is on it and in which projects, per-member spend caps, API key roles, and who spent what.",
-      "skills": ["scenario-team-admin"]
+      "skills": ["scenario-team-admin", "scenario-admin-analytics"]
     },
     {
       "title": "Image model families",
