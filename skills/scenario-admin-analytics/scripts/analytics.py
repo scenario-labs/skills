@@ -85,7 +85,7 @@ def unwrap(data):
             if block.get("type") == "text":
                 try:
                     candidate = json.loads(block["text"])
-                    if isinstance(candidate, dict) and "totals" in candidate:
+                    if isinstance(candidate, dict) and ("totals" in candidate or "members" in candidate):
                         candidates.append(candidate)
                 except json.JSONDecodeError:
                     pass

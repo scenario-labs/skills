@@ -188,6 +188,7 @@ class AnalyticsTests(unittest.TestCase):
     def test_optional_member_labels_require_scope_and_keep_source_time(self):
         e = envelope(); e["response"]["entities"]["users"][0].pop("fullName")
         members = {"query": {"team_id": "team_example", "project_id": "project_example"}, "fetched_at": NOW.isoformat(), "response": {"members": [{"id": "user_a", "email": "person@example.invalid"}, {"id": "unrelated", "email": "omit@example.invalid"}]}}
+        members["response"] = {"content": [{"type": "text", "text": json.dumps(members["response"])}, {"type": "text", "text": "Routing note"}]}
         s = A.ingest(e, "a", NOW, members=members)
         self.assertEqual(A.analyze(s, names=True)["users"][0]["name"], "person@example.invalid")
         self.assertEqual(A.analyze(s)["users"][0]["name"], "Identity 01")
