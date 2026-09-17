@@ -162,12 +162,12 @@ Ship one approved master, image or video, to every placement: ratios, safe zones
 
 ### Workflows and apps
 
-Discover, run, build, and publish Scenario workflows, the multi-step pipelines users call apps.
+Discover, run, build, and publish Scenario workflows (apps), and migrate graphs from Weavy, ComfyUI, or other node editors.
 
-| Skill                                                                      | Use it for                                                                                                       |
-| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [scenario-workflows](skills/scenario-workflows/SKILL.md)                   | Running saved workflows (apps): building the run inputs, dry-run pricing, unsticking approval gates              |
-| [scenario-workflow-authoring](skills/scenario-workflow-authoring/SKILL.md) | Creating and editing workflow graphs: the editor_info grammar, node wiring, publishing drafts into runnable apps |
+| Skill                                                                      | Use it for                                                                                                                                               |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-workflows](skills/scenario-workflows/SKILL.md)                   | Running saved workflows (apps): building the run inputs, dry-run pricing, unsticking approval gates                                                      |
+| [scenario-workflow-authoring](skills/scenario-workflow-authoring/SKILL.md) | Creating and editing workflow graphs: editor_info grammar, node wiring, publishing apps, and migrating graphs from Weavy, ComfyUI, or other node editors |
 
 ### Troubleshooting
 

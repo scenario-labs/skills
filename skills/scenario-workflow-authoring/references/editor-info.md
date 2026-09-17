@@ -89,7 +89,7 @@ The full input `type` set observed on live workflows: `string`, `integer` (typed
 
 ## Model nodes: handles come from the model schema
 
-A model node's input handles derive from its model's input schema: handle name = input name, so the model input `prompt` becomes handle id `${nodeId}-source-prompt`. Use `model_schema_get` on the chosen model id to learn the input names, types, and required rules (`required.always === true` is unconditional; `ifDefined` / `ifNotDefined` rules are conditional). Wire every unconditionally required input or the workflow cannot run. Scalar-only settings (guidance, seed, output count) go in `data.form`, not handles. Never hardcode model ids: discover them with `search` or `recommend` per team, then schema-check. LoRA and composition model ids (`runs_as` in the schema) were not validated inside graphs at authoring time: prefer plain model ids in `data.modelId`, and dry-run to validate when using one.
+A model node's input handles derive from its model's input schema: handle name = input name, so the model input `prompt` becomes handle id `${nodeId}-source-prompt`. Use `model_schema_get` on the chosen model id to learn the input names, types, and required flags: `parameters[].required` is a boolean, unlike the `required` object in workflow `inputs_definition`. Wire required inputs or the workflow cannot run. Scalar-only settings (guidance, seed, output count) go in `data.form`, not handles. Never hardcode model ids: discover them with `search` or `recommend` per team, then schema-check. LoRA and composition model ids (`runs_as` in the schema) were not validated inside graphs at authoring time: prefer plain model ids in `data.modelId`, and dry-run to validate when using one.
 
 ## CEL expressions (transformText)
 
@@ -229,7 +229,7 @@ This exact payload was validated live at authoring time with a real `modelId` su
 }
 ```
 
-After `workflow_create` returns the id: `workflow_publish`, then `workflow_run` with `dry_run: true` and `{"text1": "..."}` to price and validate, then run for real.
+After `workflow_create` returns the id: `workflow_publish`, then `workflow_run` with `dry_run: true` and `inputs: {"text1": "..."}` to price and validate, then run for real: the reply carries a job for `jobs_wait` (re-call with `pending_job_ids`), as after `model_run`.
 
 ## Template cloning
 
