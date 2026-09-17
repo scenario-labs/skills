@@ -182,9 +182,10 @@ Get past a blocked generation, and turn a stuck session into a reproducible publ
 
 Govern a team from the agent: which models it can run, who is on it and in which projects, per-member spend caps, API key roles, and who spent what.
 
-| Skill                                                      | Use it for                                                                                                             |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| [scenario-team-admin](skills/scenario-team-admin/SKILL.md) | Model access control, team and project membership, per-member Creative Unit caps, API key roles, and spend attribution |
+| Skill                                                                | Use it for                                                                                                             |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [scenario-team-admin](skills/scenario-team-admin/SKILL.md)           | Model access control, team and project membership, per-member Creative Unit caps, API key roles, and spend attribution |
+| [scenario-admin-analytics](skills/scenario-admin-analytics/SKILL.md) | Cached MCP usage analytics, model and user rankings, CSV exports, adoption PDFs, and a local dashboard                 |
 
 ### Image model families
 

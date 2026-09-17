@@ -128,7 +128,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/scenario-team-admin"
+        "./skills/scenario-team-admin",
+        "./skills/scenario-admin-analytics"
       ]
     },
     {
