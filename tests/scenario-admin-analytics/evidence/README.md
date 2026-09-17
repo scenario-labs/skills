@@ -25,6 +25,8 @@ Calls were checked against the public [tool reference](https://mcp.scenario.com/
 
 The standalone CLI attempt stopped at local permission restrictions before data collection. The managed agent completed the test; this does not certify every host integration or the chat-only fallback. Nonzero discounts were tested with regression fixtures, not observed in the live sample. Activity pagination was not exhausted because complete usage time buckets supplied the accounting explanation. One initial unfiltered discovery response included signed metadata in private tool output; later output was field-selected and public evidence excludes it. A local supplement supplied the cross-scope comparison and accounting narrative beyond the generic report.
 
+A later [unattended scope planning check](unattended-scope-plan.md) passed both ambiguous-name and explicit-ID cases after the scope fallback was clarified. This was a focused, zero-call check.
+
 ## Synthetic dashboard screenshots
 
 These examples were rendered from [synthetic-snapshot.json](synthetic-snapshot.json) with the unchanged helper. [Synthetic checks](synthetic-checks.json) record a separate browser and PDF review. Download [dashboard.html](example/dashboard.html) and open it locally to try the filters.
