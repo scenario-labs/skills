@@ -12,6 +12,8 @@ All live customer snapshots and reports stay outside this public repository. Fix
 
 ## Validation
 
+The [committed validation evidence](../../tests/scenario-admin-analytics/evidence/README.md) records the live application result and provides screenshots, a PDF, a dashboard, and CSV exports rendered from a reproducible fictional dataset. Public examples contain no live customer data.
+
 The baseline planner without the skill lacked executable discovery, cache, and joint-ranking procedures. Application testing gives a fresh agent only this skill, the connection skill, and a task, then grades the exact call plan against the fresh public tool schema. The deployed-contract plan passed scope, stale-schema routing, inclusive dates, discount accounting, complete user matrices, cache invalidation, and desktop fallback checks. Re-run after substantive contract changes.
 
 `python3 -B -m unittest discover -s tests/scenario-admin-analytics` exercises the offline helper, accounting, cache isolation, scope/date validation, user coverage, exports, PDF creation, and dashboard filters. Install the suite's requirements to include PDF checks. Run `pnpm test` and `pnpm validate` before shipping. Render every PDF page for visual inspection separately from structural checks.
