@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.43.0](https://github.com/scenario-labs/skills/compare/skills-v0.42.0...skills-v0.43.0) (2026-09-17)
+
+
+### Features
+
+* **scenario-admin-analytics:** add cached MCP usage reporting ([#134](https://github.com/scenario-labs/skills/issues/134)) ([b5ebf6f](https://github.com/scenario-labs/skills/commit/b5ebf6f98495ec92c05d3ea6ccc3c1e416d2ae42))
+* **scenario-workflow-authoring:** teach migrating a graph built in Weavy, ComfyUI, or another node tool ([#120](https://github.com/scenario-labs/skills/issues/120)) ([e79a388](https://github.com/scenario-labs/skills/commit/e79a3887e1ce50d67fbdd7d9227054074e61dfc9)), closes [#109](https://github.com/scenario-labs/skills/issues/109)
+
 ## [0.42.0](https://github.com/scenario-labs/skills/compare/skills-v0.41.1...skills-v0.42.0) (2026-09-16)
 
 
