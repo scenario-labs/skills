@@ -20,6 +20,23 @@ pnpm install
 
 ## Authoring a skill
 
+### Shared agent commands
+
+Repository commands are available in Codex and Claude Code from the same instructions:
+
+| Codex                     | Claude Code               | Purpose                             |
+| ------------------------- | ------------------------- | ----------------------------------- |
+| `$skills-pr-summary`      | `/pr-summary`             | Refresh the current PR description  |
+| `$skills-squash-message`  | `/squash-message`         | Prepare the squash commit message   |
+| `$skills-pr-handle <PR>`  | `/skills:pr-handle <PR>`  | Handle a PR and its review comments |
+| `$skills-validate <name>` | `/skills:validate <name>` | Run a skill's application test      |
+
+Pass flags after the command, for example `$skills-validate scenario --plan-only --no-post`. Both agents require explicit invocation for the last two commands: Claude uses `disable-model-invocation: true` in shared frontmatter, and Codex uses `allow_implicit_invocation: false` in `agents/openai.yaml`. The shared `argument-hint` field restores Claude autocomplete previews. Start a new Codex session if newly added commands do not appear in the skill picker.
+
+Edit `.agents/skills/skills-*/SKILL.md`; Claude command symlinks read those same files immediately. `pnpm sync:agent-commands` creates or repairs the links, and `pnpm sync:agent-commands:check` validates metadata, argument hints, invocation guards, and links. These commands are repository tooling, not published Scenario skills, so their Claude frontmatter extensions are excluded from strict spec validation.
+
+### Skill content
+
 Read [AGENTS.md](AGENTS.md) before writing. It defines the frontmatter contract, the description format ("Use when..."), the 1000-word body target, the MCP-first rule, and the house style: no em dashes, no marketing language, and generative model ids discovered at runtime (`recommend` for a capability, `search` for a known name) rather than asserted as constants. The `skill-creator` dev skill vendored in `.claude/skills/` helps with drafting; where its generic guidance and AGENTS.md disagree, AGENTS.md wins.
 
 ## Validating

@@ -12,7 +12,8 @@
   "ignorePaths": [
     "node_modules/**",
     ".claude/skills/**",
-    ".agents/skills/**",
+    ".agents/skills/skill-creator/**",
+    ".agents/skills/skill-development/**",
     "pnpm-lock.yaml",
     "skills-lock.json",
     "CHANGELOG.md",

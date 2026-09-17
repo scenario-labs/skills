@@ -11,7 +11,8 @@ CHANGELOG.md
 
 # Vendored dev skills, kept byte-identical to their published source
 .claude/skills/
-.agents/skills/
+.agents/skills/skill-creator/
+.agents/skills/skill-development/
 
 # Contributor Covenant 2.1, kept byte-identical to its published source
 CODE_OF_CONDUCT.md

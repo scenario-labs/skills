@@ -36,7 +36,7 @@ CI enforces the mechanical parts of this contract on every push and PR: [`skills
 uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
 ```
 
-- Frontmatter: `name`, `description`, and `license: MIT`, nothing else. The spec caps `name` at 64 characters and `description` at 1024; the other spec-optional fields (`compatibility`, `metadata`, `allowed-tools`) are not used in this repo.
+- Published skill frontmatter: `name`, `description`, and `license: MIT`, nothing else. The spec caps `name` at 64 characters and `description` at 1024; the other spec-optional fields (`compatibility`, `metadata`, `allowed-tools`) are not used in this repo.
 - `name`: lowercase letters, numbers, and hyphens; must equal the directory name.
 - `description`: third person, starts with "Use when", describes triggering conditions only (never a summary of the skill's workflow), under 500 characters, rich in keywords an agent would search for.
 - Body: 1000 words is the house target; the build fails past 2500 words (`pnpm style`). Structure: Overview, Quick reference, one excellent worked example, Common mistakes.
@@ -63,9 +63,11 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
 
 Two of Anthropic's skills are vendored as dev skills in `.agents/skills/`, symlinked from `.claude/skills/`, so agents working in a clone of this repo pick them up automatically: [skill-creator](https://www.skills.sh/anthropics/skills/skill-creator) (Apache-2.0, from anthropics/skills) and [skill-development](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) (MIT per the plugin-dev README, from anthropics/claude-code). `skills-lock.json` records each source and hash; refresh with `npx skills update`. Vendored dev skills live only in agent directories and are never part of the published set: the skills CLI and skills.sh surface only `skills/` (verified against this repo). Where their generic guidance and this file disagree, this file wins.
 
+Repository commands live in regular `.agents/skills/skills-*/SKILL.md` files. Codex exposes `$skills-pr-summary`, `$skills-squash-message`, `$skills-pr-handle`, and `$skills-validate`; the [contributor guide](CONTRIBUTING.md#shared-agent-commands) maps their Claude names. Claude command paths under `.claude/commands/` are relative symlinks to those files. Edit the canonical files; run `pnpm sync:agent-commands` to create or repair links (also run by `pnpm format`). Explicit-only commands carry `disable-model-invocation: true` and `argument-hint` in shared frontmatter for Claude, plus `allow_implicit_invocation: false` in `agents/openai.yaml` for Codex. Codex CLI 0.154.0 was verified to load both commands with those Claude fields present. These maintainer skills retain their command structure and stay outside the published `skills/` catalog. Add new command mappings in `scripts/sync-agent-commands.mjs`. `pnpm validate` checks command metadata, argument hints, invocation guards, and symlinks; strict spec validation covers only published `skills/*/` because the spec rejects Claude frontmatter extensions. `pnpm test` runs the command regression suite as well as shipped-script suites.
+
 ## Repo tooling
 
-One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, prettier, and the husky git hooks. A Claude Code SessionStart hook (`.claude/hooks/ensure-husky.sh`) runs it automatically when the hooks are missing, so agent sessions always commit with the hooks active.
+One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, prettier, and the husky git hooks. A Claude Code SessionStart hook (`.claude/hooks/ensure-husky.sh`) runs it automatically when the hooks are missing. In Codex sessions, run `pnpm install --frozen-lockfile` if `node_modules` is missing or `git config --local core.hooksPath` is not `.husky/_`; the Claude Code hook does not run there.
 
 - Commit messages and PR titles follow Conventional Commits, enforced by commitlint (`commitlint.config.js`) in three places: the husky `commit-msg` hook, a commitlint job on PR commits, and the `pr-name-linter` workflow on the PR title. Valid scopes are the skill directory names (derived automatically from `skills/`) plus `skills`, `agents`, `ci`, `deps`, `docs`, and `tooling`.
 - The husky `pre-commit` hook runs `pnpm words:sort` (sorts `project-words.txt` in place, re-staging it only when it is part of the commit), `pnpm manifest` (regenerates `.claude-plugin/marketplace.json` from `skills.sh.json`, re-staging it only when it is part of the commit), then `pnpm validate`, the same checks CI runs as separate steps: `pnpm style` (house style, the body budget, and the context fan-out notice), `pnpm format:check` (prettier), `pnpm skill-files` (supporting files next to a SKILL.md are linked and runnable, a skill's own README.md excepted), `pnpm groupings` (every skill sits in a `skills.sh.json` grouping, every listed skill exists, and the file satisfies the published skills.sh schema), `pnpm manifest:check` (the plugin marketplace manifest matches `skills.sh.json`), `pnpm readme` (the README Skills section mirrors `skills.sh.json`: one subsection per grouping in the same order with the same title, description, and rows, and every skill has exactly one non-stale row), `pnpm words:check` (`project-words.txt` is sorted and deduplicated), `pnpm spell` (cspell), and `pnpm spec` (spec validation). Each is defined once in `package.json`; most run a script in `scripts/`, while `format` and `format:check` invoke prettier directly.
@@ -82,7 +84,7 @@ One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, pr
 
 ## Validation and testing
 
-- `skills-ref validate` must pass for every skill before any commit (the pre-commit hook and CI both run it via `pnpm spec`).
+- `skills-ref validate` must pass for every published skill before any commit (the pre-commit hook and CI both run it via `pnpm spec`).
 - Every script shipped with a skill has a test suite in `tests/<name>/`. Python scripts use stdlib `unittest` (files named `test_*.py`); TypeScript scripts use vitest (files named `*.test.ts`). `pnpm test` runs every suite and fails when a shipped script has no suite; CI runs it on every push and PR. It is not part of the pre-commit hook (suites may need system tools such as ffmpeg), so run it manually when touching a script. A `tests/<name>/requirements.txt` declares extra Python dependencies for CI.
 - Before merging a new or changed skill, run the application test below. Mechanical validation checks the format; the application test checks whether the skill actually teaches.
 - Catalog-only MCP tools (`collection_*`, `asset_quality_gate_run`) take their arguments under `parameters`, not `arguments`, in `scenario_tool_execute_read/write`. The wrong key fails with a misleading "team_id and project_id are required".
@@ -107,8 +109,20 @@ One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, pr
 5. A failure is a defect in the skill text: fix the missing or ambiguous sentence, then re-run with a new fresh agent (a failed agent is contaminated by its own mistake).
 6. Baseline probe, once per new skill (not per edit): run the same task with no skill installed to confirm the skill earns its context cost.
 
+## Codex commit attribution
+
+For Codex-assisted commits and prepared squash messages, include a co-author
+trailer naming the model and, when verified, the reasoning effort and speed tier:
+`Co-authored-by: Codex <model> <effort> <tier> <noreply@openai.com>`.
+For example: `Co-authored-by: Codex gpt-6-astra low fast <noreply@openai.com>`.
+Use the actual settings for the contributing session, not repository defaults
+or the example above. Omit unknown fields rather than guessing; if the model
+is unavailable, use `Co-authored-by: Codex <noreply@openai.com>`. Preserve the
+human author and existing contributor trailers. Carry these trailers into the
+final squash message so attribution survives the repository's squash workflow.
+
 ## Conventions
 
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`), enforced by commitlint (see Repo tooling).
 - PRs target `main` and are squash-merged; the PR title is the future commit header.
-- `CLAUDE.md` is a symlink to this file.
+- `CLAUDE.md` is a symlink to this file, so Claude Code and Codex read the same conventions. Shared Codex defaults live in `.codex/config.toml`; model selection stays in user configuration.
