@@ -27,7 +27,7 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 
 ## Worked example: a text-to-image app
 
-1. `search` for the model, then `model_schema_get`: its input names become the model node's handle names, and its `required` flag marks what must be wired.
+1. `recommend` with `capability: "txt2img"` and the user's brief as `prompt`, following the `scenario` skill's `next_step` discipline, then `model_schema_get`: its input names become the model node's handle names, and its `required` flag marks what must be wired. Use `search` instead when the user names a model.
 2. Author `editor_info`: `text1` with `data.isInput: true`, `model1` with `type: "model"`, `data.modelId` and `data.isOutput: true`, one edge from `model1`'s input to `text1`'s output (edges name the downstream node as `source`, see the reference), `inputKeys: ["text1"]`.
 3. `workflow_create` with `name`, `editor_info`, and `inputs_definition` naming `text1` as a string input. The published input key is the node id, which is why run inputs have names like `text1`.
 4. `workflow_publish`, then `workflow_run` with `dry_run=true` to validate and price. Fix the graph and re-publish if validation fails.
@@ -44,4 +44,4 @@ A pipeline exported by Weavy, ComfyUI, or another node editor does not import: o
 - Retrying a failed `workflow_create` with a second create instead of `workflow_update` on the id from the error.
 - Publishing with no pins: at least one `data.isInput` node listed in `inputKeys` and one `data.isOutput` node.
 - Double-quoted CEL literals: they evaluate but corrupt the canvas editor, single quotes only.
-- Sending `workflow_id` to `workflow_copy`: every other workflow tool takes `workflow_id`, but its parameter is `source_workflow_id`; the copy inherits everything verbatim and needs its own publish.
+- Sending `workflow_id` to `workflow_copy`: get, update, publish, run and delete take `workflow_id`, but copy takes `source_workflow_id`; the copy inherits everything verbatim and needs its own publish.
