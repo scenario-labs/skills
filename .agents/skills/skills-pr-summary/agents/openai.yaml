@@ -1,0 +1,3 @@
+interface:
+  short_description: "Refresh the current PR description"
+  default_prompt: "Use $skills-pr-summary to refresh the current PR description."

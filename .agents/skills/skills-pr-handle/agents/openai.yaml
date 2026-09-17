@@ -1,2 +1,6 @@
+interface:
+  short_description: "Handle a PR: <PR_number> [--plan-only]"
+  default_prompt: "Use $skills-pr-handle to handle PR <PR_number>."
+
 policy:
   allow_implicit_invocation: false

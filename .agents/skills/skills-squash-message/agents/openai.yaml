@@ -1,0 +1,3 @@
+interface:
+  short_description: "Prepare the current PR's squash commit message"
+  default_prompt: "Use $skills-squash-message to prepare the current PR's squash commit message."
