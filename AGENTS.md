@@ -107,8 +107,20 @@ One-time setup after cloning: `pnpm install`. It installs commitlint, cspell, pr
 5. A failure is a defect in the skill text: fix the missing or ambiguous sentence, then re-run with a new fresh agent (a failed agent is contaminated by its own mistake).
 6. Baseline probe, once per new skill (not per edit): run the same task with no skill installed to confirm the skill earns its context cost.
 
+## Codex commit attribution
+
+For Codex-assisted commits and prepared squash messages, include a co-author
+trailer naming the model and, when verified, the reasoning effort and speed tier:
+`Co-authored-by: Codex <model> <effort> <tier> <noreply@openai.com>`.
+For example: `Co-authored-by: Codex gpt-6-astra low fast <noreply@openai.com>`.
+Use the actual settings for the contributing session, not repository defaults
+or the example above. Omit unknown fields rather than guessing; if the model
+is unavailable, use `Co-authored-by: Codex <noreply@openai.com>`. Preserve the
+human author and existing contributor trailers. Carry these trailers into the
+final squash message so attribution survives the repository's squash workflow.
+
 ## Conventions
 
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`), enforced by commitlint (see Repo tooling).
 - PRs target `main` and are squash-merged; the PR title is the future commit header.
-- `CLAUDE.md` is a symlink to this file.
+- `CLAUDE.md` is a symlink to this file, so Claude Code and Codex read the same conventions. Shared Codex defaults live in `.codex/config.toml`; model selection stays in user configuration.
