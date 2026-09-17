@@ -240,6 +240,14 @@ The top 3D families in depth: mesh generation, retexture and rigging toolchains,
 | [scenario-sparc3d](skills/scenario-sparc3d/SKILL.md)     | Sparc3D image-to-3D: ordered multi-view input, mesh vs textured output, per-member resolution spellings, face budgets, long-job waits                                                   |
 | [scenario-3d-worlds](skills/scenario-3d-worlds/SKILL.md) | 3D worlds and splats: member choice by input (text, image, pano, multi-view, video, object), Marble draft-then-upgrade seed reuse, HY World skybox-to-splat pipeline, long-job patience |
 
+### Client account research
+
+Prepare account briefings and introductory calls from authorized CRM, support, conversation, and usage sources.
+
+| Skill                                                              | Use it for                                                                                            |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| [client-account-briefing](skills/client-account-briefing/SKILL.md) | Client research from Attio, Pylon, Slack, and optional PostHog, with a visual PDF of at most 10 pages |
+
 ## Example prompts
 
 Once the skills are installed and the MCP server is connected, ask your agent things like:
