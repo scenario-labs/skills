@@ -2,6 +2,8 @@
 name: skills-pr-handle
 description: Use when explicitly asked to handle a pull request in the Scenario skills repository, including review comments and skill validation.
 license: MIT
+argument-hint: <PR_number> [--plan-only]
+disable-model-invocation: true
 ---
 
 Handle the PR specified in the invocation arguments: switch to its branch, rebase onto `main`, audit the skill diff for discovery misuse, triage every open review comment (fix when needed, reply in thread), then run `$skills-validate` (Claude: `/skills:validate`) when the PR adds or significantly changes a skill.

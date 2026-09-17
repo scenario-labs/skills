@@ -2,6 +2,8 @@
 name: skills-validate
 description: Use when explicitly asked to run a live or plan-only application test for a published Scenario skill.
 license: MIT
+argument-hint: <skill-name> [--pr <number>] [--plan-only] [--task "..."] [--no-post] [--keep]
+disable-model-invocation: true
 ---
 
 Validate the skill named in the invocation arguments by having a fresh agent do real work with it, then report where that agent got stuck. A defect here is a defect in the skill text, never in the agent.

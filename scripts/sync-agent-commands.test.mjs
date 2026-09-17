@@ -20,13 +20,18 @@ import { commands, syncCommands } from "./sync-agent-commands.mjs";
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), "skills-commands-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  for (const { name } of commands) {
+  for (const { name, argumentHint, explicitOnly } of commands) {
     const file = join(root, ".agents/skills", name, "SKILL.md");
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(
       file,
-      `---\nname: ${name}\ndescription: Use when testing commands.\nlicense: MIT\n---\n\nRun the requested task.\n`,
+      `---\nname: ${name}\ndescription: Use when testing commands.\nlicense: MIT\n${argumentHint ? `argument-hint: ${argumentHint}\n` : ""}${explicitOnly ? "disable-model-invocation: true\n" : ""}---\n\nRun the requested task.\n`,
     );
+    if (explicitOnly) {
+      const policy = join(dirname(file), "agents/openai.yaml");
+      mkdirSync(dirname(policy), { recursive: true });
+      writeFileSync(policy, "policy:\n  allow_implicit_invocation: false\n");
+    }
   }
   return {
     root,
@@ -141,3 +146,69 @@ test("unmapped Claude commands are reported and preserved", (t) => {
   assert.match(syncCommands(root).join("\n"), /no shared command mapping/);
   assert.equal(readFileSync(extra, "utf8"), "Keep this command.\n");
 });
+
+for (const name of ["skills-pr-handle", "skills-validate"]) {
+  test(`${name} rejects missing or changed Claude argument hints`, (t) => {
+    const { root } = fixture(t);
+    assert.deepEqual(syncCommands(root), []);
+    const source = join(root, ".agents/skills", name, "SKILL.md");
+    const original = readFileSync(source, "utf8");
+    for (const replacement of ["", "argument-hint: wrong\n"]) {
+      const changed = original.replace(/^argument-hint:.*\n/m, replacement);
+      writeFileSync(source, changed);
+      for (const check of [true, false]) {
+        assert.match(
+          syncCommands(root, check).join("\n"),
+          /argument-hint must be/,
+        );
+        assert.equal(readFileSync(source, "utf8"), changed);
+      }
+    }
+  });
+
+  test(`${name} requires the Claude boolean invocation guard`, (t) => {
+    const { root } = fixture(t);
+    assert.deepEqual(syncCommands(root), []);
+    const source = join(root, ".agents/skills", name, "SKILL.md");
+    const original = readFileSync(source, "utf8");
+    for (const replacement of [
+      "",
+      "disable-model-invocation: false\n",
+      'disable-model-invocation: "true"\n',
+    ]) {
+      writeFileSync(
+        source,
+        original.replace(/^disable-model-invocation:.*\n/m, replacement),
+      );
+      for (const check of [true, false]) {
+        assert.match(
+          syncCommands(root, check).join("\n"),
+          /disable-model-invocation must be true/,
+        );
+      }
+    }
+  });
+
+  test(`${name} requires the Codex boolean invocation guard`, (t) => {
+    const { root } = fixture(t);
+    assert.deepEqual(syncCommands(root), []);
+    const policy = join(root, ".agents/skills", name, "agents/openai.yaml");
+    for (const content of [
+      "",
+      "policy: {}\n",
+      "policy:\n  allow_implicit_invocation: true\n",
+      'policy:\n  allow_implicit_invocation: "false"\n',
+      "interface:\n  allow_implicit_invocation: false\n",
+    ]) {
+      writeFileSync(policy, content);
+      for (const check of [true, false]) {
+        assert.match(
+          syncCommands(root, check).join("\n"),
+          /policy.allow_implicit_invocation must be false/,
+        );
+      }
+    }
+    unlinkSync(policy);
+    assert.match(syncCommands(root, true).join("\n"), /openai.yaml/);
+  });
+}

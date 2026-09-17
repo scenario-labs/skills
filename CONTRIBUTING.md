@@ -31,9 +31,9 @@ Repository commands are available in Codex and Claude Code from the same instruc
 | `$skills-pr-handle <PR>`  | `/skills:pr-handle <PR>`  | Handle a PR and its review comments |
 | `$skills-validate <name>` | `/skills:validate <name>` | Run a skill's application test      |
 
-Pass flags after the command, for example `$skills-validate scenario --plan-only --no-post`. Codex requires explicit invocation for the last two commands. The shared frontmatter omits Claude-specific argument hints and explicit-only settings. Start a new Codex session if newly added commands do not appear in the skill picker.
+Pass flags after the command, for example `$skills-validate scenario --plan-only --no-post`. Both agents require explicit invocation for the last two commands: Claude uses `disable-model-invocation: true` in shared frontmatter, and Codex uses `allow_implicit_invocation: false` in `agents/openai.yaml`. The shared `argument-hint` field restores Claude autocomplete previews. Start a new Codex session if newly added commands do not appear in the skill picker.
 
-Edit `.agents/skills/skills-*/SKILL.md`; Claude command symlinks read those same files immediately. `pnpm sync:agent-commands` creates or repairs the links, and `pnpm sync:agent-commands:check` detects missing or incorrect links. These commands are repository tooling, not published Scenario skills.
+Edit `.agents/skills/skills-*/SKILL.md`; Claude command symlinks read those same files immediately. `pnpm sync:agent-commands` creates or repairs the links, and `pnpm sync:agent-commands:check` validates metadata, argument hints, invocation guards, and links. These commands are repository tooling, not published Scenario skills, so their Claude frontmatter extensions are excluded from strict spec validation.
 
 ### Skill content
 

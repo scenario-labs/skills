@@ -9,6 +9,7 @@ import {
 } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 
 export const commands = [
   { name: "skills-pr-summary", path: "pr-summary.md" },
@@ -16,10 +17,15 @@ export const commands = [
   {
     name: "skills-pr-handle",
     path: "skills/pr-handle.md",
+    argumentHint: "<PR_number> [--plan-only]",
+    explicitOnly: true,
   },
   {
     name: "skills-validate",
     path: "skills/validate.md",
+    argumentHint:
+      '<skill-name> [--pr <number>] [--plan-only] [--task "..."] [--no-post] [--keep]',
+    explicitOnly: true,
   },
 ];
 
@@ -48,10 +54,34 @@ export function syncCommands(root, check = false) {
       }
       const content = readFileSync(resolve(root, source), "utf8");
       const parts = content.match(/^---\n([\s\S]*?)\n---\n\n([\s\S]*)$/);
-      const name = parts?.[1].match(/^name: (.+)$/m)?.[1];
-      const description = parts?.[1].match(/^description: (.+)$/m)?.[1];
-      if (name !== command.name || !description) {
+      const metadata = parts ? parse(parts[1]) : null;
+      if (
+        metadata?.name !== command.name ||
+        typeof metadata.description !== "string" ||
+        !metadata.description.trim() ||
+        metadata.license !== "MIT"
+      ) {
         throw new Error(`${source}: invalid command skill metadata`);
+      }
+      if (
+        command.argumentHint &&
+        metadata["argument-hint"] !== command.argumentHint
+      ) {
+        throw new Error(
+          `${source}: argument-hint must be ${command.argumentHint}`,
+        );
+      }
+      if (command.explicitOnly) {
+        if (metadata["disable-model-invocation"] !== true) {
+          throw new Error(`${source}: disable-model-invocation must be true`);
+        }
+        const policyPath = `.agents/skills/${command.name}/agents/openai.yaml`;
+        const config = parse(readFileSync(resolve(root, policyPath), "utf8"));
+        if (config?.policy?.allow_implicit_invocation !== false) {
+          throw new Error(
+            `${policyPath}: policy.allow_implicit_invocation must be false`,
+          );
+        }
       }
       const expected = relative(dirname(target), resolve(root, source));
       const stat = lstatSync(target, { throwIfNoEntry: false });
@@ -91,7 +121,7 @@ if (
     if (errors.length) {
       console.error(errors.join("\n"));
       console.error(
-        "Run pnpm sync:agent-commands after editing the canonical skills.",
+        "Fix command metadata errors, then run pnpm sync:agent-commands to repair links.",
       );
       process.exitCode = 1;
     }
