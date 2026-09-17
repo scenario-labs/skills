@@ -104,7 +104,7 @@
     },
     {
       "name": "09.-workflows-and-apps",
-      "description": "Discover, run, build, and publish Scenario workflows, the multi-step pipelines users call apps.",
+      "description": "Discover, run, build, and publish Scenario workflows (apps), and migrate graphs from Weavy, ComfyUI, or other node editors.",
       "source": "./",
       "strict": false,
       "skills": [
