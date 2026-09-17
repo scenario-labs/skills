@@ -13,4 +13,5 @@ pnpm exec cspell --no-progress --relative --no-must-find-files \
   'SECURITY.md' \
   '.github/**/*.md' \
   '.claude/commands/*.md' \
+  '.agents/skills/skills-*/SKILL.md' \
   '.claude/agents/*.md'

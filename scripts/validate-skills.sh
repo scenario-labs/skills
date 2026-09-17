@@ -9,6 +9,6 @@ if ! command -v uvx >/dev/null 2>&1; then
   exit 1
 fi
 
-for d in skills/*/; do
+for d in skills/*/ .agents/skills/skills-*/; do
   uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate "$d"
 done

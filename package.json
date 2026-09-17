@@ -5,9 +5,9 @@
   "packageManager": "pnpm@11.21.0",
   "scripts": {
     "prepare": "husky",
-    "validate": "pnpm style && pnpm format:check && pnpm skill-files && pnpm groupings && pnpm manifest:check && pnpm readme && pnpm words:check && pnpm spell && pnpm spec",
+    "validate": "pnpm style && pnpm format:check && pnpm sync:agent-commands:check && pnpm skill-files && pnpm groupings && pnpm manifest:check && pnpm readme && pnpm words:check && pnpm spell && pnpm spec",
     "style": "./scripts/check-style.sh",
-    "format": "prettier --write .",
+    "format": "prettier --write . && pnpm sync:agent-commands",
     "format:check": "prettier --check .",
     "skill-files": "./scripts/check-skill-files.sh",
     "groupings": "node ./scripts/check-groupings.mjs",
@@ -18,7 +18,10 @@
     "words:sort": "./scripts/sort-project-words.sh",
     "words:check": "./scripts/sort-project-words.sh --check",
     "spec": "./scripts/validate-skills.sh",
-    "test": "./scripts/test-skill-scripts.sh"
+    "test": "pnpm test:agent-commands && ./scripts/test-skill-scripts.sh",
+    "sync:agent-commands": "node scripts/sync-agent-commands.mjs",
+    "sync:agent-commands:check": "node scripts/sync-agent-commands.mjs --check",
+    "test:agent-commands": "node --test scripts/sync-agent-commands.test.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",

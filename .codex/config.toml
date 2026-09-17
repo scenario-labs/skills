@@ -2,6 +2,10 @@
 # Shared repository defaults. Codex loads this file only for trusted projects.
 # AGENTS.md holds the shared conventions; CLAUDE.md is a symlink to it.
 # Model selection and machine-specific settings remain in user configuration.
+# Project values override user config; use CLI -c overrides for session changes.
+
+# AGENTS.md is close to the default 32 KiB instruction limit.
+project_doc_max_bytes = 65536
 
 model_reasoning_effort = "high"
 web_search = "live"
