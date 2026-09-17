@@ -1,6 +1,6 @@
 interface:
-  short_description: "Handle a PR: <PR_number> [--plan-only]"
-  default_prompt: "Use $skills-pr-handle to handle PR <PR_number>."
+  short_description: "Finalize a PR: <PR_number> [--plan-only]. It will conduct a detailed review of the target PR."
+  default_prompt: "$skills-pr-handle <PR_number>."
 
 policy:
   allow_implicit_invocation: false
