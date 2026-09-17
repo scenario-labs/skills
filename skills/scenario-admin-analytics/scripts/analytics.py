@@ -88,6 +88,7 @@ def unwrap(data):
                     if isinstance(candidate, dict) and ("totals" in candidate or "members" in candidate):
                         candidates.append(candidate)
                 except json.JSONDecodeError:
+                    # MCP executors can append plain-text routing notes after the JSON payload.
                     pass
         if len(candidates) != 1:
             raise ValueError("Save the complete structured MCP result")
