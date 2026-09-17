@@ -39,5 +39,5 @@ Resolve a generator's member by what the source names. A provider model named in
 - Keeping one Scenario node per source node: ComfyUI plumbing collapses into the generator, and preview nodes vanish into an output pin.
 - Reading the source's edge direction into `editor_info`: Scenario persists edges the other way.
 - Mapping a source LoRA to a Scenario LoRA by name and running it by its own id: a LoRA's schema carries `runs_as`, and LoRA ids inside graphs were not validated at authoring time.
-- Guessing a `form` field from the source parameter's name: `cfg` and `guidance` describe the same knob on some models and different ones on others, so the schema's field and range decide.
+- Copying a setting because its number fits the target range: `cfg` and `guidance` can mean different things. Transfer a value only when the schema establishes the same meaning and range; otherwise omit it, keep the target default, and list the source setting as dropped. A caveat about changed behavior does not make copying it valid.
 - Delivering the graph without the dry run: it is the only validator that reads the whole `flow`, and a customer's pipeline fails on a handle nobody wired.
