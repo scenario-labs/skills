@@ -12,6 +12,8 @@ If absent, `search` with `target: "assets"`, `public: true`, `query` equal to th
 
 If nothing accessible matches, use the owning skill's local builder and MCP upload flow. Reuse matching assets without uploading again. Source hashes identify the built file bytes, not a guarantee that a downloaded platform copy uses identical encoding.
 
+The same reuse rule applies to inputs you just prepared and uploaded. An older returned asset ID or changed encoded file size alone establishes neither deduplication, conversion, nor corruption, and does not justify downloading your known input again. Inspect generated outputs and investigate an input only when there is evidence of a problem.
+
 ## Create and stage a version
 
 1. Resolve the destination supplied by the user with `teams_list` and `projects_list`. Reuse a pair already chosen in this session. Never bake destination identifiers into a published skill or manifest.
