@@ -104,11 +104,13 @@
       "files": {
         "grid": {
           "file": "sprite-grid-4x4-v1-grid.png",
-          "sha256": "0b24a6aebfe588c06c5b5437a7296d789041a9006353328a89283bd287faea32"
+          "sha256": "0b24a6aebfe588c06c5b5437a7296d789041a9006353328a89283bd287faea32",
+          "asset_id": "asset_8U1kggSG5ypxJBnVRxdcd5WU"
         },
         "alignment-guide": {
           "file": "sprite-grid-4x4-v1-alignment-guide.png",
-          "sha256": "da73b6d7a10a4b9c74d9d1bc76b75ff6782865052fb31fd4c0dcaa4599c35575"
+          "sha256": "da73b6d7a10a4b9c74d9d1bc76b75ff6782865052fb31fd4c0dcaa4599c35575",
+          "asset_id": "asset_nGE3ePf8NkdUxmiTF5jDnGgS"
         }
       }
     },
@@ -312,11 +314,13 @@
       "files": {
         "grid": {
           "file": "sprite-grid-6x6-v1-grid.png",
-          "sha256": "68148db38f0e058efbe145725d8fe7cdb534faa9fd5ae4943647c3e0bd7a918d"
+          "sha256": "68148db38f0e058efbe145725d8fe7cdb534faa9fd5ae4943647c3e0bd7a918d",
+          "asset_id": "asset_vpSevkPui9Dfg87ysZMbqWT3"
         },
         "alignment-guide": {
           "file": "sprite-grid-6x6-v1-alignment-guide.png",
-          "sha256": "db6285994ce60db596bd91b9cf3ec67e801c25db98c0a38e882020067ee6f57b"
+          "sha256": "db6285994ce60db596bd91b9cf3ec67e801c25db98c0a38e882020067ee6f57b",
+          "asset_id": "asset_HdGHjXquUF7yQwJAkea8pqYC"
         }
       }
     }

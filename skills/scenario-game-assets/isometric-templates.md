@@ -18,7 +18,7 @@ Resolve the selected template and file roles through the shared asset lifecycle 
 - `side-region`: white visible sides, black elsewhere. Flat templates share one all-black `empty-side-region-v1.png`: no side faces means no editable pixels.
 - `object-region`: ground and sides plus 448 px of vertical editing space. This is not an object silhouette or an alpha matte.
 
-Region files describe geometry, not model mask polarity. Download and inspect the source and mask pixels before the generation probe; these checks are not generation runs. Convert to the mask convention in the selected model's schema and use the uploaded, converted mask ID in the run. Retain an unmodified source canvas for measuring edits outside the allowed region. Never feed the labeled contact sheet as a generation reference.
+Region files describe geometry, not model mask polarity. Inspect the source and mask pixels before the generation probe, reusing verified local files and previous checks for known uploads; download only when those are unavailable. Convert to the mask convention in the selected model's schema and use the uploaded, converted mask ID in the run. Retain an unmodified source canvas for measuring edits outside the allowed region. Never feed the labeled contact sheet as a generation reference.
 
 Flat templates keep the shared empty side mask for a uniform bundle, but need no side-edit run. Do not substitute that empty mask for the ground region.
 
