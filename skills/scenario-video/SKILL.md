@@ -14,14 +14,14 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 
 ## Quick reference
 
-| Step           | Tool                               | Notes                                                                                                                         |
-| -------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Find a model   | `recommend` or `search`            | `recommend` with the need in the user's own words for a capability (`img2video`, lipsync, upscale, edit); `search` for a name |
-| Inspect inputs | `model_schema_get`                 | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)                                |
-| Upload source  | `upload_asset`                     | A local still or clip becomes an `asset_id`                                                                                   |
-| Generate       | `model_run`                        | `wait=false` for video; `dry_run=true` to estimate cost first                                                                 |
-| Wait           | `jobs_wait`                        | Re-call with the returned `pending_job_ids` until done; its ~180s timeout is not an error                                     |
-| Review         | `asset_display` / `asset_download` | Display inline; `asset_download` returns the file URL, save it with `curl -L`                                                 |
+| Step           | Tool                               | Notes                                                                                                                                                                                                     |
+| -------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Find a model   | `recommend` or `search`            | `recommend` with the need in the user's own words plus a `capability` from its enum (`img2video`, `video2video`; upscaling footage and syncing it to a track are both `video2video`); `search` for a name |
+| Inspect inputs | `model_schema_get`                 | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)                                                                                                            |
+| Upload source  | `upload_asset`                     | A local still or clip becomes an `asset_id`                                                                                                                                                               |
+| Generate       | `model_run`                        | `wait=false` for video; `dry_run=true` to estimate cost first                                                                                                                                             |
+| Wait           | `jobs_wait`                        | Re-call with the returned `pending_job_ids` until done; its ~180s timeout is not an error                                                                                                                 |
+| Review         | `asset_display` / `asset_download` | Display inline; `asset_download` returns the file URL, save it with `curl -L`                                                                                                                             |
 
 ## Worked example: animate a key art still into a short ad clip
 
@@ -30,7 +30,7 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 3. `upload_asset` the still; it returns `asset_id="asset_abc"`.
 4. `model_run` with `parameters={"image": "asset_abc", "prompt": "Close-up on the mug; slow dolly-in as steam curls through window light, shallow focus on the rim. Room tone, no music, no subtitles."}` and `wait=false`. Returns a `job_id`.
 5. `jobs_wait` with `job_ids=["job_xyz"]`, re-called with `pending_job_ids` while any remain.
-6. `asset_display` the output, then `asset_download` (no `format`).
+6. `asset_display` the output (`asset_id`), then `asset_download` (no `format`).
 
 The source image already fixes the look, so prompt only motion, camera, and timing ("orbit left", "hold on the final pose"), changing one clause per retry. A first-frame field pins how the clip opens (a last-frame field, where offered, how it lands); a reference-image field carries identity and look without fixing any moment. So an exact opening composition goes in as a rendered still and a recurring character or product as references; whether one run takes both is per schema, and several forbid the pair. Iterate at the cheapest resolution tier and shortest useful `duration`, then upscale the keeper: a re-run at a higher tier is a new generation, since many video schemas expose no `seed` and none promises one reproduces a shot across tiers.
 
@@ -62,10 +62,21 @@ Judge a localized talking head on a stylized character before promising it on a 
 
 ## Duration limits
 
-Where a model bounds input length it rejects rather than trims: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A ceiling can be a typed `max_duration` on the file field, prose in that field's description, or absent, so check both, on the audio input as readily as the video. When one applies, trim with the deterministic cut or split tools (`model_scenario-video-cut`, `model_scenario-video-split`, fixed ids for the same reason as the extractor above) before the run that enforces it, and before any step whose output must match the trimmed footage, such as a dub. Land inside the stated range, not on its edge.
+Where a model bounds input length it rejects rather than trims: a 30.08 second reference against a 30.0 second limit fails the whole run, with the error naming both numbers. A clean `dry_run` prices the payload and is not proof it clears a ceiling: read the input's duration off `asset_get` and compare it to the cap yourself. A ceiling can be a typed `max_duration` on the file field, prose in that field's description, or absent, so check both, on the audio input as readily as the video. When one applies, trim with the deterministic cut or split tools (`model_scenario-video-cut`, `model_scenario-video-split`, fixed ids for the same reason as the extractor above) before the run that enforces it, and before any step whose output must match the trimmed footage, such as a dub. Land inside the stated range, not on its edge.
+
+## Lipsync: footage or a still
+
+Two lanes, told apart by the input in hand. Footage plus a new track is `recommend` with `capability="video2video"` and the ask in the user's words: these members redraw the mouth region and keep the rest of the frame (`video` and `audio`, or `videoUrl` and `audioFile`; some take typed `text` with a voice instead of audio, never both). A still plus a track is `capability="img2video"`: the talking-avatar members animate the whole portrait and invent its motion, so they serve a portrait with no footage, or footage whose motion is disposable, and never rescue a clip whose lipsync failed, since the result is a different performance of a different shot. Naming lipsync as the capability gets re-read as one of these two, so name the input.
+
+Preflight is free and decides the run. Sync members redraw pixels around the mouth they detect; a face that is small in frame, turned away, occluded, or blurred by motion gives them nothing to redraw, and the run then completes and bills with the mouth still under the new track, the failure users report as "no lipsync at all". `asset_display` the clip's `firstFrame` (free, from `asset_get`): the lips should read at display size. When they do not, crop onto the face first (`model_scenario-compose-video`, the compositor `scenario-video-assembly` teaches and a fixed first-party id like the cut tools above, or a generative reframe prompted to tighten on the speaker; an outpainting reframe widens the frame and shrinks the face) rather than retrying members. A crop lowers resolution, so read the cropped clip's width and height off `asset_get` against the member's floor before pricing the sync run, and upscale it or pick a member without a floor when it falls short. With several faces in frame, pick a member exposing speaker selection (`activeSpeaker` on one at authoring time) or crop to one speaker. Per-member limits sit in the schema, not the description: one member takes clips of 2 to 10 seconds at 720p to 1080p, others carry none; the `video` field carries `cost_impact: true`, so trim to the shipped range before the run (Duration limits above).
+
+Plan gating is common here: `recommend` flags such members on their ranked entry with `requires_plan_upgrade: true` and names the plan in `required_plan` (unless its response says plan gating is `_degraded`), and running one anyway returns a 403 naming the model and the plan it needs, which no retry clears; pick an available member or surface the upgrade, per the `scenario` skill's plan row.
+
+A completed job proves the model ran, not that the mouth moved. Before shipping, download the output and the source and compare frames at the same timestamps (sweep both into contact sheets locally, `ffmpeg -vf "fps=2"`, and read the mouth region): unchanged mouth pixels across the sweep mean the face was not found, and the same payload reproduces it, so change the framing or the lane rather than the seed. Listen as well: whether the input's own track survives is undocumented (Dubbing above).
 
 ## Common mistakes
 
+- Shipping a lipsync run on the strength of its completed status: the failure mode is a still mouth under the new track, so compare frames against the source first.
 - Calling `model_run` without `model_schema_get`: a payload that worked on Kling will not fit Veo.
 - Treating search hits as stable: catalogs evolve, so re-run `search` and prefer non-deprecated hits (a `deprecated:<replacement_id>` tag names the successor).
 - Excluding music by name in an audio-enabled prompt: the soundtrack is moderated on its own, and a named genre or instrument trips it even inside an exclusion. Describe diegetic sound positively ("room tone, footsteps, one voice"), or turn the audio field off.
