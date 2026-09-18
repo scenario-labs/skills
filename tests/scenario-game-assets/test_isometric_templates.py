@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -38,7 +39,24 @@ class TemplateTests(unittest.TestCase):
             first = templates.write_bundle(Path(a))
             self.assertEqual(first, templates.write_bundle(Path(b)))
             self.assertEqual(len(first["templates"]), 4)
-            self.assertEqual(len(list(Path(a).glob("*.png"))), 17)
+            self.assertEqual(len(list(Path(a).glob("*.png"))), 16)
+            flat = [entry for entry in first["templates"]
+                    if entry["thickness"] == 0]
+            self.assertEqual(flat[0]["files"]["side-region"],
+                             flat[1]["files"]["side-region"])
+
+    def test_published_manifest_geometry_matches_builder(self):
+        reference = json.loads((SCRIPT.parent.parent /
+                                "isometric-templates.json").read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            templates.write_bundle(Path(directory))
+            built = json.loads((Path(directory) / "manifest.json").read_text())
+        self.assertEqual(reference["canvas"], built["canvas"])
+        for expected, actual in zip(reference["templates"], built["templates"], strict=True):
+            for key in ("name", "anchor", "ground_polygon", "grid_steps", "thickness", "projection"):
+                self.assertEqual(expected[key], actual[key])
+            self.assertEqual({k: v["file"] for k, v in expected["files"].items()},
+                             {k: v["file"] for k, v in actual["files"].items()})
 
 
 if __name__ == "__main__":

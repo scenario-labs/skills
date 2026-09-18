@@ -76,6 +76,8 @@ def write_bundle(destination):
         files = {}
         for role, image in images.items():
             filename = f"{name}-{role}.png"
+            if role == "side-region" and not image.getbbox():
+                filename = "empty-side-region-v1.png"
             image.save(destination / filename)
             files[role] = {"file": filename, "sha256": hashlib.sha256(
                 (destination / filename).read_bytes()).hexdigest()}

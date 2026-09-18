@@ -13,7 +13,7 @@ The manifest records the ground polygon, two lattice step vectors, anchor, thick
 
 - `reference`: neutral RGBA base. Composite onto the plain canvas required by the chosen model, preserving size and position.
 - `ground-region`: white ground footprint, black outside.
-- `side-region`: white visible sides, black elsewhere; empty for flat ground.
+- `side-region`: white visible sides, black elsewhere. Flat templates share one all-black `empty-side-region-v1.png`: no side faces means no editable pixels.
 - `object-region`: ground and sides plus 448 px of vertical editing space. This is not an object silhouette or an alpha matte.
 
 Region files describe geometry, not model mask polarity. Convert to the mask convention in the selected model's schema. Retain an unmodified source canvas for measuring edits outside the allowed region. Never feed the labeled contact sheet as a generation reference.
