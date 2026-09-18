@@ -55,6 +55,8 @@ Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and 
 
 Filing is part of delivering, not a tidy-up: run the catalog tools above with arguments under `parameters` (never `arguments`, which the executor drops silently, surfacing as a scope error that is not one). `collection_create` takes a name and the scope pair only; `asset_ids` sent there is ignored without an error, so adding is always a second call, `collection_add_assets` with `collection_id` and `asset_ids`, and re-adding a filed asset is a hard 400 naming the duplicate: drop it and continue. Confirm membership with `assets_get_bulk` and read each record's `collectionIds`; `search` `filters={"collection_ids": [...]}` lags on a fresh write. `asset_add_tags` is additive, one `asset_id` per call, so a set is one call per asset.
 
+For reusable templates or reference content, follow the [shared asset lifecycle](references/shared-assets.md): resolve existing assets, stage new versions, publish only through a supported operation, and verify public access before recording public IDs. Uploading and filing alone are not publication.
+
 ## Errors and recovery
 
 | Error                                                                  | Recovery                                                                                                                                                                                                                  |
