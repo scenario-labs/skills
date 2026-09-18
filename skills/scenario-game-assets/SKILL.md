@@ -38,7 +38,7 @@ Request: "four style-matched potion icons for an RPG inventory."
 
 - The cheap levers first: reuse one `seed` across the batch, and pin the model's prompt-expansion flag off where the schema has one; an expander rewrites each prompt independently and defeats a fixed template.
 - Reference images: `upload_asset` the art direction images, then pass the asset ids (never local paths) to the model's image or reference parameters.
-- `asset_describe` turns one on-style asset into a promptable style synthesis reusable across prompts (catalog tool: run via `scenario_tools_search` + `scenario_tool_execute_read`; see the `scenario` skill).
+- `asset_describe` turns one on-style asset into a promptable style synthesis reusable across prompts (catalog tool, billed, `dry_run: true` prices it: run via `scenario_tools_search` + `scenario_tool_execute_read`; see the `scenario` skill).
 - `search` target="assets" images={like: ["asset_..."]} finds assets already matching the target look.
 - For a locked-in project style, train a custom LoRA on the project's own art (the `scenario-model-training` skill); trained models use the same generation loop.
 
@@ -53,6 +53,20 @@ Restyling one approved component into a set (button, panel, popup well, icon fam
 - **Check the alpha edge on any transparent output.** Removed shadows leave a semi-transparent fringe; native-alpha models can ship a large semi-transparent glow around the object. Both read as a halo on a colored UI background. Check interior alpha too: a native-alpha model can punch one item's see-through surface (empty glass) to alpha 0 while painting the next item's opaque, so the set disagrees in an engine slot.
 
 Verify the set by measurement, not by eye: compare each output's alpha bounding box against the source before accepting the batch.
+
+## Isometric tiles and masked fills
+
+Choose the grid before the style. A 2:1 diamond is a common game projection; a projected hex is a different footprint. Share one projection, placement anchor, light direction, and shadow side across a set. A tile's ground footprint is not its full sprite silhouette: trees and buildings rise above it and may overlap the tile behind. Never clip a tall object through the ground mask. Check a small assembled map for joins, path connections, occlusion, and visual quality before scaling the batch; a clean alpha boundary alone is not acceptance.
+
+Use the [isometric template guide](isometric-templates.md) to choose a neutral ground or slab reference and separate ground, side, and object regions. The [JSON manifest](isometric-templates.json) records their geometry, filenames, and source hashes. The [template builder](scripts/build_isometric_templates.py), run by a maintainer or an agent needing local geometry, creates the PNGs and manifest. It generates geometry only, not finished game art. Keep the geometry reference separate from the approved style reference; neutral geometry must not force a palette or faceted look. Resolve uploaded assets and publish new versions through the `scenario` skill's [shared asset lifecycle](../scenario/references/shared-assets.md); upload local inputs only when no matching asset is accessible.
+
+Dedicated isometric members exist in the public catalog. `recommend` with the user's tile need, then `model_schema_get`. Read the reference, mask, seed, and strength fields instead of assuming they exist or that low strength preserves geometry: conventions vary. Keep the camera and lighting wording fixed while varying the subject. Reuse a seed only when supported. If the model drifts in projection or light despite a consistent reference, use `scenario-consistency`, then consider `scenario-model-training` on approved tiles.
+
+For a ground fill or content explicitly bounded to a shape, use masked `img2img`. If the specialty pick has no mask field, `recommend` again with `capability: "img2img"` and the mask need. Read mask polarity and any required base-image field from `model_schema_get` (`scenario-image` covers model-specific conventions). Template region images are white inside; adapt them to the model's convention, including alpha if required. The base canvas must match the mask dimensions and placement; an approved style reference does not replace it. When that canvas is opaque, preserve its background during the edit: asking for transparent output simultaneously contradicts the protected-canvas constraint. Extract transparency afterward. Use the ground region for terrain, and the taller object region for trees or buildings; the latter is editing space, never a final silhouette mask.
+
+Run one tile first. Measure changes outside the edit region against the source canvas and inspect the result. A few-pixel overrun on a deliberately bounded ground fill can be clipped to its mask; extensive drift needs diagnosis of polarity, base canvas, and consumed references before retrying. For taller sprites, preserve the object silhouette with native alpha or background removal and verify the ground anchor separately. A deterministic ground mask cannot repair a wrong camera or a poor composition.
+
+A "low-poly" look and a low-poly mesh are different deliverables. The look is a 2D style word on an image model. The mesh is `scenario-3d`: whether the image-to-3D pick (`recommend`, `capability: "img23d"`) exposes a polycount target or a topology choice is read off `model_schema_get`, never assumed, and when it exposes neither a separate remesh utility (its own billed run, found with `recommend`, `capability: "3d23d"`) brings the count down afterwards. Either way the concept image feeding it wants flat shading, a clean silhouette, and a plain background so the geometry reads.
 
 ## Common mistakes
 
