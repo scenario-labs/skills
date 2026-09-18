@@ -7,7 +7,6 @@
 # AGENTS.md is close to the default 32 KiB instruction limit.
 project_doc_max_bytes = 65536
 
-model_reasoning_effort = "high"
 web_search = "live"
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
