@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.44.0](https://github.com/scenario-labs/skills/compare/skills-v0.43.0...skills-v0.44.0) (2026-09-18)
+
+
+### Features
+
+* **scenario-video:** teach the lipsync lane: footage or still, face preflight, gating, and verifying the mouth moved ([#121](https://github.com/scenario-labs/skills/issues/121)) ([c7a25f5](https://github.com/scenario-labs/skills/commit/c7a25f5697d71c737690068bfd3dbc1c773db7e3))
+* **skills:** add reusable isometric and sprite templates ([#124](https://github.com/scenario-labs/skills/issues/124)) ([6a7cf57](https://github.com/scenario-labs/skills/commit/6a7cf57fbc6c89ec2d98fc5e00a8fd420e9a7df6))
+
 ## [0.43.0](https://github.com/scenario-labs/skills/compare/skills-v0.42.0...skills-v0.43.0) (2026-09-17)
 
 
