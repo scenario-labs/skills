@@ -9,7 +9,7 @@ python3 scripts/film.py config.json status
 python3 scripts/film.py config.json assemble
 ```
 
-`--blender PATH` names the executable; otherwise the config `blender` key, the `BLENDER` environment variable, `blender` on `PATH`, and the macOS application bundle are tried in that order.
+`--blender PATH` overrides the config `blender` key; that key, then the `BLENDER` environment variable, is used when set, and a set value that names a missing file is an error rather than a fallback; when neither is set, `blender` on `PATH` and then the macOS application bundle are tried.
 
 ## Modes
 
@@ -20,35 +20,35 @@ python3 scripts/film.py config.json assemble
 
 ## Configuration
 
-Copy [example-config.json](example-config.json) and replace everything that describes the asset. `project_root` is relative to the JSON file; `before` and `after` are relative to `project_root`. Both scenes must hold the same mesh geometry, transforms, and object names (only the materials differ): the run compares a geometry hash and a camera hash between the two passes and stops on a mismatch.
+Copy [example-config.json](example-config.json) and replace everything that describes the asset. `project_root` is relative to the JSON file; `before`, `after`, and `output` are relative to `project_root`. Both scenes must hold the same mesh geometry, transforms, and object names (only the materials differ): `pilot` and `run` each compare a geometry hash, a camera hash, and the render settings between the two passes, but only once both passes have rendered, so a mismatch costs a few endpoint frames in `pilot` and the whole native render in `run`.
 
-| Field                                  | Default                                                       | Effect                                                                                                            |
-| -------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `before`, `after`                      | required                                                      | The two packed `.blend` scenes                                                                                    |
-| `shots`                                | required                                                      | Ordered list, see below                                                                                           |
-| `title`, `before_label`, `after_label` | `PBR MATERIAL STUDY`, `Original materials`, `PATINA textures` | Caption text on the stacked master                                                                                |
-| `width`, `height`                      | `2368`, `1332`                                                | Native panel resolution; the stacked master adds padding and captions (2560x3200 at these)                        |
-| `fps`, `source_fps`                    | `24`, `12`                                                    | Delivery cadence and rendered cadence; 12 is interpolated to 24, 24 renders every frame                           |
-| `shot_seconds`, `transition`           | `5.5`, `0.5`                                                  | Raw shot length and crossfade overlap                                                                             |
-| `samples`                              | `24`                                                          | EEVEE render samples                                                                                              |
-| `workers`                              | `1`                                                           | Simultaneous Blender processes, 1 or 2; two only with measured memory headroom                                    |
-| `rig_scale`, `rig_origin`              | `1`, `[0, 0, 0]`                                              | Scale and ground-level center of the light rig: the asset's height divided by about ten, and its footprint center |
-| `environment`                          | Blender's bundled studio HDRI                                 | Path to a local HDRI for reflections                                                                              |
-| `output`                               | `video/automatic`                                             | Parent of the fingerprinted run folders                                                                           |
-| `font`, `bold_font`                    | first found system font                                       | Caption fonts for Pillow                                                                                          |
-| `blender`, `ffmpeg`, `ffprobe`         | see above, `ffmpeg`, `ffprobe`                                | Executables; none of the three enters the run fingerprint                                                         |
+| Field                                  | Default                                                       | Effect                                                                                                                                                                                        |
+| -------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `before`, `after`                      | required                                                      | The two packed `.blend` scenes                                                                                                                                                                |
+| `shots`                                | required                                                      | Ordered list, see below                                                                                                                                                                       |
+| `title`, `before_label`, `after_label` | `PBR MATERIAL STUDY`, `Original materials`, `PATINA textures` | Header text, and the two labels drawn after fixed `BEFORE  /  ` and `AFTER  /  ` prefixes (do not repeat before/after in a label); the footer IDENTICAL GEOMETRY / CAMERA / LIGHTING is fixed |
+| `width`, `height`                      | `2368`, `1332`                                                | Native panel resolution; the stacked master adds padding and captions (2560x3200 at these)                                                                                                    |
+| `fps`, `source_fps`                    | `24` (fixed), `12`                                            | Delivery cadence, always 24 (any other value fails validation), and rendered cadence, 12 or 24: 12 is interpolated to 24, 24 renders every frame                                              |
+| `shot_seconds`, `transition`           | `5.5`, `0.5`                                                  | Raw shot length and crossfade overlap                                                                                                                                                         |
+| `samples`                              | `24`                                                          | EEVEE render samples                                                                                                                                                                          |
+| `workers`                              | `1`                                                           | Simultaneous Blender processes, 1 or 2; two only with measured memory headroom                                                                                                                |
+| `rig_scale`, `rig_origin`              | `1`, `[0, 0, 0]`                                              | Scale and ground-level center of the light rig: the asset's height divided by about ten, and its footprint center                                                                             |
+| `environment`                          | Blender's bundled studio HDRI                                 | Path to a local HDRI for reflections                                                                                                                                                          |
+| `output`                               | `video/automatic`                                             | Parent of the fingerprinted run folders                                                                                                                                                       |
+| `font`, `bold_font`                    | first found system font                                       | Caption fonts for Pillow                                                                                                                                                                      |
+| `blender`, `ffmpeg`, `ffprobe`         | see above, `ffmpeg`, `ffprobe`                                | Executables; none of the three enters the run fingerprint                                                                                                                                     |
 
 Final duration is `shots x shot_seconds - (shots - 1) x transition`: twelve default shots make 60.5 seconds.
 
 ### Shots
 
-Each shot has `name`, `detail` (caption), `start`, and `end`. An endpoint is `[target_xyz, viewing_direction_xyz, visible_width]`: the point the 85 mm camera looks at, the direction from the target toward the camera (not normalized), and how wide the frame is at the target in scene units. Target and width ease smoothly between the endpoints. A narrow reflection strip light sweeps across the subject during every shot, sized from `rig_scale`, so roughness and normal response move on screen.
+Each shot has `name`, `start`, and `end`; `name` labels the timeline marker and the contact sheets, and the master carries only `title`, `before_label`, and `after_label`. An endpoint is `[target_xyz, viewing_direction_xyz, visible_width]`: the point the 85 mm camera looks at, the direction from the target toward the camera (not normalized), and how wide the frame is at the target in scene units. Target and width ease smoothly between the endpoints. A narrow reflection strip light sweeps across the subject during every shot, sized from `rig_scale`, so roughness and normal response move on screen.
 
 Take targets from `inventory.json` bounds; check both endpoints on the pilot sheet for clipping and occlusion. The example plan opens wide, spends ten shots on one material each (glazed ceramic, brass, roof tiles, timber, plaster, canvas, a mixed shopfront, paving, painted metal, signage), and closes with a pullback. Its coordinates were framed for one public street diorama and fit nothing else.
 
 ## Fast preset and its cost
 
-The scripts set EEVEE with ray-traced reflections at half resolution, denoised, one shadow ray and six shadow steps, AgX view transform, no depth of field, a packed studio environment plus a warm grazing key, a cool rim, a soft fill, and the moving strip. Rendering 12 fps sources for slow moves and interpolating to 24 fps halves render time at the price of motion detail; keep `source_fps` 24 for fast motion. Fewer samples leave more noise in close-ups, so read the sweep sheet before delivery.
+The scripts set EEVEE with ray-traced reflections at half resolution, denoised, one shadow ray and six shadow steps, AgX view transform, no depth of field, a packed studio environment plus a warm grazing key, a cool rim, a soft fill, and the moving strip. The rig replaces the input scenes' own setup rather than adding to it: every light object is deleted, the world node tree is rebuilt around the packed environment, and a fresh 85 mm comparison camera with depth of field off takes over from the scene camera. The `before` and `after` files are never written to; the rig lives only in the two saved `Camera Animation.blend` scenes. Rendering 12 fps sources for slow moves and interpolating to 24 fps halves render time at the price of motion detail; keep `source_fps` 24 for fast motion. Fewer samples leave more noise in close-ups, so read the sweep sheet before delivery.
 
 ## Run folder and resume
 
