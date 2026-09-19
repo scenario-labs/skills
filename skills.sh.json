@@ -32,7 +32,8 @@
         "scenario-sprite-animation",
         "scenario-textures",
         "scenario-skyboxes",
-        "scenario-3d"
+        "scenario-3d",
+        "scenario-patina-retexture"
       ]
     },
     {

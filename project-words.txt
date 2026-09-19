@@ -1,5 +1,7 @@
+BSDF
 Cinzel
 DALL-E
+EEVEE
 HDRI
 KAEL
 Kontext
@@ -16,6 +18,8 @@ binet
 bisociation
 captioner
 defocused
+denoised
+denoising
 desaturate
 diegetic
 equirectangular
@@ -32,6 +36,7 @@ kling
 krea
 kuaishou
 layerize
+libx264
 lkfs
 loras
 lufs
@@ -60,6 +65,7 @@ rerank
 retarget
 retargets
 retexture
+retextured
 retexturing
 retime
 reve
