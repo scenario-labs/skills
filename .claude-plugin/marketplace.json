@@ -50,7 +50,8 @@
         "./skills/scenario-sprite-animation",
         "./skills/scenario-textures",
         "./skills/scenario-skyboxes",
-        "./skills/scenario-3d"
+        "./skills/scenario-3d",
+        "./skills/scenario-patina-retexture"
       ]
     },
     {
