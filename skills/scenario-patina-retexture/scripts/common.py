@@ -295,6 +295,7 @@ def ensure_nodes(id_block):
         try:
             id_block.use_nodes = True
         except AttributeError:
+            # A read-only use_nodes flag can coexist with an existing node tree.
             pass
     return id_block.node_tree
 

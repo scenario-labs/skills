@@ -454,6 +454,7 @@ def tidy_ui(scene):
         try:
             obj.select_set(False)
         except RuntimeError:
+            # Objects outside the active view layer cannot be deselected here.
             pass
     bpy.context.view_layer.objects.active = None
     for screen in bpy.data.screens:

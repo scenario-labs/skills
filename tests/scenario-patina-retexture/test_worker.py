@@ -5,9 +5,9 @@ import sys
 import tempfile
 import types
 import unittest
+import unittest.mock as mock
 from pathlib import Path
 from types import SimpleNamespace
-from unittest import mock
 
 import helpers
 

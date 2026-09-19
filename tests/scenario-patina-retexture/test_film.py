@@ -5,11 +5,11 @@ import math
 import shutil
 import tempfile
 import unittest
+import unittest.mock as mock
 from pathlib import Path
 
 from PIL import Image
 
-from unittest import mock
 
 import helpers
 
