@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.45.0](https://github.com/scenario-labs/skills/compare/skills-v0.44.0...skills-v0.45.0) (2026-09-19)
+
+
+### Features
+
+* **scenario-patina-retexture:** add the PATINA retexture and comparison skill ([#137](https://github.com/scenario-labs/skills/issues/137)) ([7f3e506](https://github.com/scenario-labs/skills/commit/7f3e5064ff6c397774b2eec2bb2eae1ac2f38173))
+
 ## [0.44.0](https://github.com/scenario-labs/skills/compare/skills-v0.43.0...skills-v0.44.0) (2026-09-18)
 
 
