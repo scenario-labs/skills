@@ -76,6 +76,6 @@ Validation runs before the scene is touched and lists every problem at once: an 
 
 ## Checks before the film
 
-- Self-tile the basecolor of each family as a 2x2 sheet. A visible border means the generation carried tile edges: regenerate that family with another seed, or crop the interior and re-tile locally before wiring it. The script does not detect borders.
+- Self-tile the basecolor of each family as a 2x2 sheet. A visible border means the generation carried tile edges: check that `tileSize` matched the resolution (128 for 1024, 256 for 2048), then regenerate that family with another seed, or crop the interior and re-tile locally before wiring it. The script does not detect borders.
 - Open the output `.blend` once. The planar projection suits architecture; a curved prop, a UV seam, or wood grain running the wrong way is fixed by keeping that object's authored UVs or rotating its projection in Blender.
 - The report `<output>.materials.json` lists the geometry hash before and after, the material variants created, and the packed image count; the material count is original materials times families they map to, so 41 materials over 14 families produced 43 variants in one project.
