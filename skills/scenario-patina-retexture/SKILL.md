@@ -17,13 +17,13 @@ PATINA is Patina AI's material family on Scenario (tag `sc:texture`). This skill
 | Step           | Tool                                                             | Notes                                                                                                                        |
 | -------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Scope          | `teams_list`, `projects_list`                                    | The source asset and the generation destination may live in different projects: pass the right pair on every call            |
-| Fetch the mesh | `asset_get`, then `asset_download`                               | `properties.materialCount`, `faceCount`, `hasUVs`, `dimensions`; save with `curl -L`                                         |
+| Fetch the mesh | `asset_get`, then `asset_download`                               | `properties.materialCount`, `faceCount`, `hasUVs`, `dimensions`; save with `curl -fL`                                        |
 | Inventory      | [inventory.py](scripts/inventory.py) in Blender                  | Writes `Before.blend` and `inventory.json`: per-material object counts, bounds, base color                                   |
 | Find PATINA    | `search` with `target="models"`, `query="patina"`, `public=true` | Pick PATINA Material (`txt2img`); `model_schema_get` before running                                                          |
 | Price          | `model_run` with `dry_run=true`                                  | One 1024x1024 five-map set was 17 CU at authoring time; `width`, `height`, `maps`, `upscaleFactor`, and `numOutputs` move it |
 | Generate       | `model_run` with `wait=false`, one per family                    | Fixed `seed` per family; one `jobs_wait` over every `job_id`                                                                 |
 | Identify maps  | `asset_get` on each output                                       | `metadata.type` names the role; never rely on position                                                                       |
-| Download       | `asset_download`, then `curl -L`                                 | `textures/<family>/<role>.png`                                                                                               |
+| Download       | `asset_download`, then `curl -fL`                                | `textures/<family>/<role>.png`                                                                                               |
 | Apply          | [apply_materials.py](scripts/apply_materials.py) in Blender      | Manifest in [materials-manifest.md](references/materials-manifest.md); geometry hash asserted                                |
 | Film           | [film.py](scripts/film.py) `pilot`, `run`, `status`              | Config in [film-config.md](references/film-config.md); resumable                                                             |
 
@@ -51,12 +51,12 @@ Design shots from `inventory.json` bounds, not from the example plan, whose coor
 
 ## Worked example: retexture a street diorama and film the comparison
 
-1. `teams_list`, confirm the pair with the user. `asset_get` on the diorama (an image-to-3D result: 41 materials, no image textures, 78K faces), `asset_download`, then `curl -L -o work/street.glb "<url>"`.
+1. `teams_list`, confirm the pair with the user. `asset_get` on the diorama (an image-to-3D result: 41 materials, no image textures, 78K faces), `asset_download`, then `curl -fL -o work/street.glb "<url>"`.
 2. Inventory with `inventory.py`; group the 41 materials into families such as `plaster`, `cedar`, `terracotta`, `ceramic`, `brass`, `steel`, `glass`, `canvas`, `asphalt`, and `leaf`, with an override sending the awning objects to `canvas`.
 3. `search` for PATINA, then `model_schema_get` on PATINA Material (`model_patina-material` was the live id at authoring time; re-discover each session).
 4. `model_run` with `dry_run=true` on one family payload: 17 CU, so 14 families price at 238 CU; confirm with the user.
 5. Fourteen `model_run` calls with `wait=false`, prompts such as "aged lime plaster wall, fine mineral grain, flat, evenly lit, seamless", `seed` fixed per family; one `jobs_wait` with all fourteen ids until every row is complete.
-6. `asset_get` on each output to read `metadata.type`; `asset_display` the smoothness-labeled plaster map to settle polarity; `asset_download` and `curl -L` every map into `textures/<family>/`.
+6. `asset_get` on each output to read `metadata.type`; `asset_display` the smoothness-labeled plaster map to settle polarity; `asset_download` and `curl -fL` every map into `textures/<family>/`.
 7. Write `materials.json` (roughness ranges per family, `roughness_is_smoothness` as settled, `provenance` with job ids and cost) and run `apply_materials.py`; open `PATINA.blend` once.
 8. Copy [example-config.json](references/example-config.json), replace the shots with ones framed from the inventory bounds, run `film.py` in `pilot` mode, inspect, then `run`; hand over the master, the sharing copy, both passes, and the two editable scenes, and name the interpolation used.
 9. Optional: `upload_asset` the master as `kind: "video"` and file it with the source and the maps in a collection (`collection_create`, then `collection_add_assets`: catalog tools, run through `scenario_tool_execute_write` with their arguments under `parameters`).
