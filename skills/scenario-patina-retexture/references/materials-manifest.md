@@ -8,7 +8,7 @@ Written by `inventory.py` next to `Before.blend`. Read it instead of dumping the
 
 | Key                        | Meaning                                                                                                                                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `source`                   | The file that was imported or opened                                                                                                                                                                             |
+| `source`, `before`         | The file that was imported or opened, and the packed `Before.blend` written next to the inventory                                                                                                                |
 | `meshes`, `polygons`       | Mesh object count and total polygon count                                                                                                                                                                        |
 | `dimensions`               | World bounding box size in scene units, `[x, y, z]`                                                                                                                                                              |
 | `geometry_sha256`          | Hash of every vertex, polygon, and object transform; `apply_materials.py` asserts it is unchanged                                                                                                                |

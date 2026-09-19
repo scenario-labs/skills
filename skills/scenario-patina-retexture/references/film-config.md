@@ -36,6 +36,7 @@ Copy [example-config.json](example-config.json) and replace everything that desc
 | `environment`                          | Blender's bundled studio HDRI                                 | Path to a local HDRI for reflections                                                                              |
 | `output`                               | `video/automatic`                                             | Parent of the fingerprinted run folders                                                                           |
 | `font`, `bold_font`                    | first found system font                                       | Caption fonts for Pillow                                                                                          |
+| `blender`, `ffmpeg`, `ffprobe`         | see above, `ffmpeg`, `ffprobe`                                | Executables; none of the three enters the run fingerprint                                                         |
 
 Final duration is `shots x shot_seconds - (shots - 1) x transition`: twelve default shots make 60.5 seconds.
 
