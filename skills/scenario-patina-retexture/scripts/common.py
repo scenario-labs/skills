@@ -10,12 +10,18 @@ import hashlib
 import json
 import os
 import shutil
+import sys
+import warnings
 from pathlib import Path
 
 MACOS_BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
 
 # Keys that never change what gets rendered, so they stay out of the run fingerprint.
-FINGERPRINT_EXCLUDED = ("workers", "blender", "ffmpeg", "ffprobe", "output")
+# project_root is the anchor the file paths are taken relative to, see run_directory.
+FINGERPRINT_EXCLUDED = ("workers", "blender", "ffmpeg", "ffprobe", "output", "project_root")
+
+# Config values that name files; read_config resolves them against project_root.
+FILE_KEYS = ("before", "after", "environment", "font", "bold_font")
 
 DEFAULTS = {
     "project_root": ".",
@@ -59,7 +65,13 @@ def validate_config(config: dict) -> list[str]:
         if not isinstance(config.get(key), str) or not config[key]:
             problems.append(f"{key}: required path is missing")
     fps, source_fps = config["fps"], config["source_fps"]
-    if fps != 24 or not isinstance(source_fps, int) or source_fps <= 0 or fps % source_fps:
+    if (
+        not isinstance(fps, int)
+        or fps != 24
+        or not isinstance(source_fps, int)
+        or source_fps <= 0
+        or fps % source_fps
+    ):
         problems.append("fps/source_fps: use 12 or 24 source fps with 24 fps output")
     shot_seconds = config["shot_seconds"]
     if not is_number(shot_seconds) or shot_seconds <= 0:
@@ -68,8 +80,13 @@ def validate_config(config: dict) -> list[str]:
         source_frames = shot_seconds * source_fps
         if int(source_frames) != source_frames:
             problems.append("shot_seconds: must hold a whole number of source frames")
-        if is_number(config["transition"]) and not 0 <= config["transition"] < shot_seconds:
-            problems.append("transition: must be at least 0 and shorter than shot_seconds")
+        transition = config["transition"]
+        # xfade never runs a fade shorter than one frame: it drops the tail of the film instead.
+        if is_number(transition) and not 1 / source_fps <= transition < shot_seconds:
+            problems.append(
+                "transition: hard cuts are not supported; the crossfade must last at least"
+                " one source frame (1/source_fps) and less than shot_seconds"
+            )
     if not is_number(config["transition"]):
         problems.append("transition: must be a number")
     if config["workers"] not in (1, 2):
@@ -125,7 +142,7 @@ def read_config(path: str | os.PathLike | None = None) -> tuple[dict, Path]:
     if not root.is_absolute():
         root = (config_path.parent / root).resolve()
     config["project_root"] = str(root)
-    for key in ("before", "after"):
+    for key in FILE_KEYS:
         if isinstance(config.get(key), str) and config[key]:
             file = Path(config[key])
             config[key] = str(file if file.is_absolute() else (root / file).resolve())
@@ -156,31 +173,66 @@ def file_hash(path: str | os.PathLike) -> str:
     return digest.hexdigest()
 
 
+def portable_path(path: str | os.PathLike, root: str | os.PathLike) -> str:
+    """POSIX form of `path`: relative to `root` when it lies under it, absolute otherwise.
+
+    relpath spelled a system font as ../../usr/share/fonts/..., which changes with the
+    project's depth and moved the run folder with it.
+    """
+    resolved = Path(path).resolve()
+    root = Path(root).resolve()
+    if resolved.is_relative_to(root):
+        return resolved.relative_to(root).as_posix()
+    return resolved.as_posix()
+
+
 def run_directory(config: dict, scripts_dir: str | os.PathLike | None = None) -> Path:
-    """Run folder fingerprinted from the config, the two input scenes and these scripts.
+    """Run folder fingerprinted from the config, the input files and these scripts.
 
     Anything that changes a rendered pixel changes the folder, so a resume can only ever
-    continue an identical production. Packed .blend inputs are what make the input hash
-    meaningful: an external texture edit would not move it.
+    continue an identical production. File paths under project_root enter relative to it,
+    so moving or renaming the project keeps its run folder; a path outside it (a system
+    font) enters absolute. The files enter by content: the two .blend inputs (packed, or
+    an external texture edit would not move the folder) and the HDRI when one is
+    configured.
     """
     scripts = Path(scripts_dir) if scripts_dir else Path(__file__).parent
+    root = config["project_root"]
     evidence = {k: v for k, v in config.items() if k not in FINGERPRINT_EXCLUDED}
+    for key in FILE_KEYS:
+        if evidence.get(key):
+            evidence[key] = portable_path(evidence[key], root)
     evidence["inputs"] = {key: file_hash(config[key]) for key in ("before", "after")}
+    if config.get("environment"):
+        evidence["inputs"]["environment"] = file_hash(config["environment"])
     evidence["scripts"] = {p.name: file_hash(p) for p in sorted(scripts.glob("*.py"))}
     digest = hashlib.sha256(json.dumps(evidence, sort_keys=True).encode()).hexdigest()[:16]
-    return Path(config["project_root"]) / config["output"] / digest
+    return Path(root) / config["output"] / digest
 
 
 def resolve_blender(config: dict) -> str:
-    """Blender executable: config or --blender, then $BLENDER, then PATH, then the macOS bundle."""
+    """Blender executable: config or --blender, then $BLENDER, then PATH, then the macOS bundle.
+
+    A configured value may also be a command name found on PATH, like ffmpeg and ffprobe.
+    """
     for label, candidate in (
         ("--blender / config \"blender\"", config.get("blender")),
         ("BLENDER environment variable", os.environ.get("BLENDER")),
     ):
         if candidate:
+            # is_file first: shutil.which rejects an existing file without the executable bit.
             if Path(candidate).is_file():
                 return str(candidate)
-            raise FileNotFoundError(f"{label} points to {candidate}, which does not exist")
+            found = shutil.which(candidate)
+            if found:
+                return found
+            detail = (
+                "is a directory, not the executable"
+                " (a macOS bundle's is Blender.app/Contents/MacOS/Blender)"
+                if Path(candidate).is_dir()
+                else "does not exist"
+            )
+            raise FileNotFoundError(f"{label} points to {candidate}, which {detail}")
     found = shutil.which("blender")
     if found:
         return found
@@ -191,6 +243,20 @@ def resolve_blender(config: dict) -> str:
         " set the BLENDER environment variable, put blender on PATH, or install the macOS"
         f" app bundle at {MACOS_BLENDER}"
     )
+
+
+def world_matrix(obj):
+    """Object-to-world matrix composed up the parent chain, never read from matrix_world.
+
+    matrix_world holds what the viewport depsgraph last evaluated: after open_mainfile an
+    object hidden in the viewport or in an excluded collection reads identity, and
+    view_layer.update() does not reach it. Object parenting only: bone and vertex parents,
+    constraints and drivers are not composed. A root object's matrix_parent_inverse is
+    ignored, as Blender ignores it.
+    """
+    if obj.parent is None:
+        return obj.matrix_basis
+    return world_matrix(obj.parent) @ obj.matrix_parent_inverse @ obj.matrix_basis
 
 
 def geometry_hash(objects) -> str:
@@ -207,10 +273,32 @@ def geometry_hash(objects) -> str:
             digest.update(np.array(vertex.co, dtype=np.float32).tobytes())
         for polygon in obj.data.polygons:
             digest.update(np.array(polygon.vertices, dtype=np.int32).tobytes())
-        digest.update(np.array(obj.matrix_world, dtype=np.float32).tobytes())
+        digest.update(np.array(world_matrix(obj), dtype=np.float32).tobytes())
     return digest.hexdigest()
 
 
 def dump(data) -> str:
     """Compact JSON for stdout; the agent running the scripts reads it."""
     return json.dumps(data, separators=(",", ":"), sort_keys=True)
+
+
+def ensure_nodes(id_block):
+    """Return the node tree of a material or world, creating it on Blender 4.x.
+
+    Blender 5 materials and worlds are node trees from birth and deprecate use_nodes;
+    4.x needs use_nodes on even when a tree already exists, or the tree is ignored.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)  # Blender 5 warns on every read
+        enabled = getattr(id_block, "use_nodes", True)
+    if getattr(id_block, "node_tree", None) is None or not enabled:
+        try:
+            id_block.use_nodes = True
+        except AttributeError:
+            pass
+    return id_block.node_tree
+
+
+def script_args() -> list[str]:
+    """Arguments after the ``--`` separator Blender uses to hand argv to a script."""
+    return sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []

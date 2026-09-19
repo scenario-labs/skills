@@ -1,10 +1,14 @@
 import json
 import os
+import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
+
+import numpy as np
 
 import helpers
 
@@ -30,6 +34,36 @@ class ConfigTests(unittest.TestCase):
             self.assertNotIn("blender", config)
             self.assertNotIn("font", config)
 
+    def test_file_keys_resolve_against_project_root(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            (root / "hdri").mkdir()
+            (root / "hdri" / "studio.hdr").write_bytes(b"h")
+            absolute = str(root / "elsewhere.ttf")
+            with tempfile.TemporaryDirectory() as cwd:
+                previous = os.getcwd()
+                os.chdir(cwd)
+                try:
+                    config, _ = self.read(
+                        folder,
+                        environment="hdri/studio.hdr",
+                        font="fonts/a.ttf",
+                        bold_font=absolute,
+                    )
+                finally:
+                    os.chdir(previous)
+            self.assertEqual(config["environment"], str(root / "hdri" / "studio.hdr"))
+            self.assertEqual(config["font"], str(root / "fonts" / "a.ttf"))
+            self.assertEqual(config["bold_font"], absolute)
+            relative = common.run_directory(config, root)
+            config, _ = self.read(
+                folder,
+                environment=str(root / "hdri" / "studio.hdr"),
+                font=str(root / "fonts" / "a.ttf"),
+                bold_font=absolute,
+            )
+            self.assertEqual(relative, common.run_directory(config, root))
+
     def test_env_fallback(self):
         with tempfile.TemporaryDirectory() as folder:
             path = helpers.write_config(folder)
@@ -50,6 +84,7 @@ class ConfigTests(unittest.TestCase):
         self.assert_problem("fps/source_fps", source_fps=10)
         self.assert_problem("fps/source_fps", fps=30, source_fps=30)
         self.assert_problem("fps/source_fps", source_fps=0)
+        self.assert_problem("fps/source_fps", fps=24.0)
         with tempfile.TemporaryDirectory() as folder:
             config, _ = self.read(folder, source_fps=24)
             self.assertEqual(config["source_fps"], 24)
@@ -63,6 +98,11 @@ class ConfigTests(unittest.TestCase):
         self.assert_problem("transition", transition=5.5)
         self.assert_problem("transition", shot_seconds=2, transition=2)
         self.assert_problem("transition", transition="fast")
+        self.assert_problem("hard cuts are not supported", transition=0)
+        self.assert_problem("at least one source frame", transition=0.04)
+        with tempfile.TemporaryDirectory() as folder:
+            config, _ = self.read(folder, transition=1 / 12)
+            self.assertEqual(config["transition"], 1 / 12)
 
     def test_workers(self):
         self.assert_problem("workers: must be 1 or 2", workers=3)
@@ -159,6 +199,29 @@ class FingerprintTests(unittest.TestCase):
         (Path(self.folder.name) / "Before.blend").write_bytes(b"edited scene")
         self.assertNotEqual(base, self.fingerprint())
 
+    def test_environment_content_is_fingerprinted(self):
+        hdri = Path(self.folder.name) / "studio.hdr"
+        hdri.write_bytes(b"first")
+        base = self.fingerprint(environment="studio.hdr")
+        self.assertNotEqual(base.name, self.fingerprint().name)
+        hdri.write_bytes(b"second")
+        self.assertNotEqual(base.name, self.fingerprint(environment="studio.hdr").name)
+
+    def test_moving_the_project_keeps_the_folder(self):
+        # The destination is one level deeper; a relpath to the system font would change.
+        font = "/usr/share/fonts/truetype/Elsewhere.ttf"
+        base = self.fingerprint(font=font)
+        with tempfile.TemporaryDirectory() as parent:
+            moved = Path(parent) / "renamed project"
+            shutil.move(self.folder.name, moved)
+            try:
+                config, _ = common.read_config(moved / "film.json")
+                after = common.run_directory(config, moved / "scripts")
+            finally:
+                shutil.move(moved, self.folder.name)
+        self.assertEqual(after.name, base.name)
+        self.assertEqual(after.parent, moved.resolve() / "video/automatic")
+
     def test_script_change_moves_the_folder(self):
         base = self.fingerprint()
         (self.scripts / "a.py").write_text("print(2)\n")
@@ -166,6 +229,15 @@ class FingerprintTests(unittest.TestCase):
         # Non-Python files next to the scripts do not count.
         (self.scripts / "notes.txt").write_text("changed\n")
         self.assertEqual(self.fingerprint(), self.fingerprint())
+
+    def test_portable_path_is_relative_only_under_the_root(self):
+        self.assertEqual(common.portable_path("/p/a/b.blend", "/p"), "a/b.blend")
+        self.assertEqual(common.portable_path("/p/a/../b.blend", "/p/"), "b.blend")
+        # A sibling that merely shares the prefix, and a system font, stay absolute.
+        self.assertEqual(common.portable_path("/px/b.blend", "/p"), "/px/b.blend")
+        font = "/usr/share/fonts/truetype/Elsewhere.ttf"
+        self.assertEqual(common.portable_path(font, "/p"), font)
+        self.assertEqual(common.portable_path(font, "/p/q/r"), font)
 
 
 class BlenderResolutionTests(unittest.TestCase):
@@ -178,6 +250,21 @@ class BlenderResolutionTests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError) as caught:
             common.resolve_blender({"blender": "/definitely/not/here"})
         self.assertIn("/definitely/not/here", str(caught.exception))
+        self.assertIn("does not exist", str(caught.exception))
+
+    def test_directory_candidate_names_the_executable_inside(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(FileNotFoundError) as caught:
+                common.resolve_blender({"blender": folder})
+        message = str(caught.exception)
+        self.assertIn("is a directory", message)
+        self.assertIn("Contents/MacOS/Blender", message)
+
+    def test_command_name_candidate_is_looked_up_on_path(self):
+        with mock.patch.object(common.shutil, "which", return_value="/opt/blender/blender"):
+            self.assertEqual(common.resolve_blender({"blender": "blender"}), "/opt/blender/blender")
+            with mock.patch.dict(os.environ, {"BLENDER": "blender-4.5"}):
+                self.assertEqual(common.resolve_blender({}), "/opt/blender/blender")
 
     def test_environment_then_path_then_bundle(self):
         with tempfile.NamedTemporaryFile() as handle:
@@ -201,11 +288,19 @@ class BlenderResolutionTests(unittest.TestCase):
             self.assertIn(fragment, message)
 
 
-def stub_object(name, vertices, polygons, matrix=None):
-    identity = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+def translation(x=0.0, y=0.0, z=0.0):
+    matrix = np.identity(4)
+    matrix[:3, 3] = (x, y, z)
+    return matrix
+
+
+def stub_object(name, vertices=(), polygons=(), basis=None, parent=None, parent_inverse=None):
+    """What world_matrix and geometry_hash read, with numpy standing in for mathutils."""
     return SimpleNamespace(
         name=name,
-        matrix_world=matrix or identity,
+        parent=parent,
+        matrix_basis=np.identity(4) if basis is None else basis,
+        matrix_parent_inverse=np.identity(4) if parent_inverse is None else parent_inverse,
         data=SimpleNamespace(
             vertices=[SimpleNamespace(co=v) for v in vertices],
             polygons=[SimpleNamespace(vertices=p) for p in polygons],
@@ -224,6 +319,62 @@ class GeometryHashTests(unittest.TestCase):
         self.assertNotEqual(common.geometry_hash([a]), common.geometry_hash([renamed]))
         other = stub_object("Other", [(2, 2, 2)], [])
         self.assertEqual(common.geometry_hash([a, other]), common.geometry_hash([other, a]))
+
+    def test_hash_follows_the_parent_chain(self):
+        parent = stub_object("Parent", basis=translation(1))
+        child = stub_object("Child", [(0, 0, 0)], [], parent=parent)
+        before = common.geometry_hash([child])
+        self.assertEqual(before, common.geometry_hash([child]))
+        parent.matrix_basis[1, 3] = 2
+        self.assertNotEqual(before, common.geometry_hash([child]))
+
+
+class WorldMatrixTests(unittest.TestCase):
+    def test_root_object_is_its_basis_whatever_its_parent_inverse_holds(self):
+        # Blender ignores matrix_parent_inverse on an unparented object.
+        root = stub_object("Root", basis=translation(4, 5, 6), parent_inverse=translation(-1))
+        np.testing.assert_array_equal(common.world_matrix(root), translation(4, 5, 6))
+
+    def test_parent_inverse_cancels_the_parent_pose_at_parenting_time(self):
+        parent = stub_object("Parent", basis=translation(1, 2, 3))
+        parent.matrix_basis[0, 0] = 2
+        child = stub_object(
+            "Child",
+            basis=translation(0.5),
+            parent=parent,
+            parent_inverse=np.linalg.inv(parent.matrix_basis),
+        )
+        np.testing.assert_allclose(common.world_matrix(child), translation(0.5))
+        parent.matrix_basis[2, 3] = 4
+        np.testing.assert_allclose(common.world_matrix(child)[:3, 3], (0.5, 0, 1))
+        grandchild = stub_object("Grandchild", basis=translation(0, 0, 1), parent=child)
+        np.testing.assert_allclose(common.world_matrix(grandchild)[:3, 3], (0.5, 0, 2))
+
+
+class BlenderHelperTests(unittest.TestCase):
+    def test_ensure_nodes_enables_a_disabled_tree(self):
+        tree = object()
+        world = SimpleNamespace(node_tree=tree, use_nodes=False)
+        self.assertIs(common.ensure_nodes(world), tree)
+        self.assertTrue(world.use_nodes)
+        fresh = SimpleNamespace(node_tree=None, use_nodes=False)
+        common.ensure_nodes(fresh)
+        self.assertTrue(fresh.use_nodes)
+        enabled = SimpleNamespace(node_tree=tree, use_nodes=True)
+        self.assertIs(common.ensure_nodes(enabled), tree)
+
+    def test_ensure_nodes_tolerates_a_read_only_flag(self):
+        class Modern:
+            node_tree = object()
+            use_nodes = property(lambda self: True)
+
+        self.assertIs(common.ensure_nodes(Modern()), Modern.node_tree)
+
+    def test_script_args_follow_the_separator(self):
+        with mock.patch.object(sys, "argv", ["blender", "--python", "x.py", "--", "a", "b"]):
+            self.assertEqual(common.script_args(), ["a", "b"])
+        with mock.patch.object(sys, "argv", ["blender", "--python", "x.py"]):
+            self.assertEqual(common.script_args(), [])
 
 
 class DumpTests(unittest.TestCase):

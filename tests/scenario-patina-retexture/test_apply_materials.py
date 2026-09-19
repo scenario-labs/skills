@@ -1,7 +1,13 @@
+import contextlib
+import io
 import json
+import runpy
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 import numpy as np
 from PIL import Image
@@ -11,6 +17,23 @@ import helpers
 apply_materials = helpers.load("apply_materials")
 
 ROLES = apply_materials.ROLES
+
+
+class StubPixels:
+    """The two members of bpy's Image.pixels that image_luminance_mean touches."""
+
+    def __init__(self, rgba):
+        self.values = np.asarray(rgba, dtype=np.float32).reshape(-1)
+
+    def __len__(self):
+        return self.values.size
+
+    def foreach_get(self, buffer):
+        buffer[:] = self.values
+
+
+def stub_image(rgba, is_float=False, depth=32):
+    return SimpleNamespace(pixels=StubPixels(rgba), is_float=is_float, depth=depth)
 
 
 def write_maps(root, family, roles=ROLES):
@@ -68,6 +91,45 @@ class LuminanceTests(unittest.TestCase):
         self.assertEqual(apply_materials.linear_luminance_mean(black), 0.02)
         gray = np.full((8, 3), 0.5)
         self.assertAlmostEqual(apply_materials.linear_luminance_mean(gray), 0.214041, places=5)
+
+    def test_empty_buffer_is_an_error_not_the_floor(self):
+        with self.assertRaises(ValueError):
+            apply_materials.luminance_mean(np.zeros((0, 3)))
+        with self.assertRaises(ValueError):
+            apply_materials.image_luminance_mean(stub_image([]))
+
+    def test_image_mean_decodes_byte_buffers_only(self):
+        rgba = np.tile([0.5, 0.5, 0.5, 1.0], (16, 1))
+        mean = apply_materials.image_luminance_mean
+        self.assertAlmostEqual(mean(stub_image(rgba)), 0.214041, places=5)
+        # Float buffers (16-bit PNG, EXR) are scene-linear on load; a 16-bit RGBA reports depth 64.
+        self.assertAlmostEqual(mean(stub_image(rgba, is_float=True)), 0.5, places=5)
+        self.assertAlmostEqual(mean(stub_image(rgba, depth=64)), 0.5, places=5)
+        self.assertTrue(apply_materials.is_linear_buffer(stub_image(rgba, is_float=True, depth=32)))
+        self.assertFalse(apply_materials.is_linear_buffer(stub_image(rgba, depth=24)))
+
+
+class ApplierCacheTests(unittest.TestCase):
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.root = Path(self.folder.name)
+
+    def tearDown(self):
+        self.folder.cleanup()
+
+    def test_luminance_is_read_once_per_file(self):
+        maps = write_maps(self.root, "plaster")
+        manifest = {"families": {"plaster": family(maps), "canvas": family(dict(maps))}}
+        applier = apply_materials.Applier(manifest, self.root)
+        path = applier.map_path("plaster", "basecolor")
+        self.assertEqual(path, applier.map_path("canvas", "basecolor"))
+        self.assertTrue(path.is_absolute())
+        image = stub_image(np.tile([0.5, 0.5, 0.5, 1.0], (4, 1)))
+        applier.images[path] = image
+        self.assertAlmostEqual(applier.luminance_mean("plaster"), 0.214041, places=5)
+        image.pixels = StubPixels(np.ones((4, 4)))
+        self.assertAlmostEqual(applier.luminance_mean("canvas"), 0.214041, places=5)
+        self.assertEqual(list(applier.luminance), [path])
 
 
 class SettingsTests(unittest.TestCase):
@@ -163,7 +225,63 @@ class ValidationTests(unittest.TestCase):
         manifest = self.good_manifest()
         manifest["object_overrides"].append({"family": "canvas"})
         problems = apply_materials.validate_manifest(manifest, self.root, self.scene)
-        self.assertEqual(problems, ["object_overrides[1]: needs prefixes and a family"])
+        self.assertEqual(
+            problems,
+            ["object_overrides[1]: needs a prefixes list of non-empty strings and a family"],
+        )
+
+    def test_malformed_prefixes_never_match(self):
+        for prefixes in ("Awning", ["Awning", ""], None, [1], []):
+            with self.subTest(prefixes=prefixes):
+                manifest = self.good_manifest()
+                manifest["object_overrides"][0]["prefixes"] = prefixes
+                problems = apply_materials.validate_manifest(manifest, self.root, self.scene)
+                text = "\n".join(problems)
+                self.assertIn("object_overrides[0]: needs a prefixes list", text)
+                self.assertIn("material 'Trim' is neither mapped", text)
+                self.assertEqual(len(problems), 2)
+
+    def test_non_string_values_are_reported_not_raised(self):
+        manifest = self.good_manifest()
+        manifest["materials"]["Wall"] = {"family": "plaster"}
+        manifest["materials"]["Glass"] = ["glass"]
+        manifest["object_overrides"].append({"prefixes": ["Post"], "family": {"name": "canvas"}})
+        manifest["families"]["plaster"]["maps"]["height"] = None
+        manifest["families"]["glass"]["maps"]["normal"] = 5
+        manifest["families"]["canvas"]["normal_strength"] = "strong"
+        manifest["families"]["canvas"]["bump_distance"] = -1
+        manifest["families"]["canvas"]["tile_span"] = "1"
+        problems = apply_materials.validate_manifest(manifest, self.root, self.scene)
+        text = "\n".join(problems)
+        self.assertIn("materials['Wall']: must be a family name", text)
+        self.assertIn("materials['Glass']: must be a family name", text)
+        self.assertIn("object_overrides[1]: needs a prefixes list", text)
+        self.assertIn("family 'plaster': height map must be a path", text)
+        self.assertIn("family 'glass': normal map must be a path", text)
+        self.assertIn("family 'canvas': normal_strength must be a number", text)
+        self.assertIn("family 'canvas': bump_distance must be a number", text)
+        self.assertIn("family 'canvas': tile_span must be a positive number", text)
+        self.assertEqual(len(problems), 8)
+
+    def test_unreadable_map_is_reported(self):
+        manifest = self.good_manifest()
+        relative = manifest["families"]["plaster"]["maps"]["basecolor"]
+        (self.root / relative).write_text("<?xml version='1.0'?><Error>expired</Error>")
+        problems = apply_materials.validate_manifest(manifest, self.root, self.scene)
+        self.assertEqual(len(problems), 1)
+        self.assertIn(f"family 'plaster': basecolor map {relative} is not a readable", problems[0])
+        self.assertIsNone(apply_materials.unreadable_image(self.root / "maps.exr"))
+
+    def test_one_file_cannot_be_both_color_and_data(self):
+        manifest = self.good_manifest()
+        plaster = manifest["families"]["plaster"]["maps"]
+        manifest["families"]["glass"]["maps"]["normal"] = plaster["normal"]
+        self.assertEqual(apply_materials.validate_manifest(manifest, self.root, self.scene), [])
+        manifest["families"]["glass"]["maps"]["height"] = plaster["basecolor"]
+        problems = apply_materials.validate_manifest(manifest, self.root, self.scene)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("used both as a basecolor and as a data map", problems[0])
+        self.assertIn(str((self.root / plaster["basecolor"]).resolve()), problems[0])
 
     def test_load_manifest_resolves_root(self):
         path = self.root / "materials.json"
@@ -171,6 +289,27 @@ class ValidationTests(unittest.TestCase):
         manifest, root = apply_materials.load_manifest(path)
         self.assertEqual(manifest, {"output": "x.blend"})
         self.assertEqual(root, self.root.resolve())
+
+    def test_load_manifest_rejects_a_non_object(self):
+        path = self.root / "materials.json"
+        path.write_text("[]")
+        with self.assertRaises(SystemExit) as caught:
+            apply_materials.load_manifest(path)
+        self.assertIn("must be a JSON object", str(caught.exception))
+
+
+class EntryPointTests(unittest.TestCase):
+    def test_failure_prints_the_traceback_then_exits_with_one_line(self):
+        script = helpers.SCRIPTS / "apply_materials.py"
+        argv = ["blender", "--python", str(script), "--", "/nowhere/materials.json"]
+        with mock.patch.object(sys, "argv", argv):
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                with self.assertRaises(SystemExit) as caught:
+                    runpy.run_path(str(script), run_name="__main__")
+        self.assertTrue(str(caught.exception.code).startswith("apply_materials failed: "))
+        self.assertIn("/nowhere/materials.json", str(caught.exception.code))
+        self.assertIn("Traceback (most recent call last)", err.getvalue())
+        self.assertIn("FileNotFoundError", err.getvalue())
 
 
 if __name__ == "__main__":

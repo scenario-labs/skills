@@ -9,6 +9,8 @@ from pathlib import Path
 
 from PIL import Image
 
+from unittest import mock
+
 import helpers
 
 common = helpers.load("common")
@@ -80,6 +82,14 @@ class PlumbingTests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             film.load_font({"font": "/no/such/font.ttf"}, 20)
 
+    def test_old_pillow_without_a_sized_default_font_names_the_config_key(self):
+        with mock.patch.dict(film.FONTS, {"font": ("/no/font.ttf",)}):
+            with mock.patch.object(film.ImageFont, "load_default", side_effect=TypeError("size")):
+                with self.assertRaises(FileNotFoundError) as caught:
+                    film.load_font({}, 20)
+        self.assertIn('"font"', str(caught.exception))
+        self.assertIn("10.1", str(caught.exception))
+
     def test_status_on_a_fresh_run(self):
         with tempfile.TemporaryDirectory() as folder:
             config, _ = tiny_config(folder)
@@ -102,6 +112,12 @@ class PlumbingTests(unittest.TestCase):
             self.assertTrue(film.valid_png(good))
             self.assertFalse(film.valid_png(bad))
             self.assertFalse(film.valid_png(Path(folder) / "missing.png"))
+            still = Path(folder) / "still.jpg"
+            Image.new("RGB", (32, 32), (90, 40, 10)).save(still, quality=90)
+            self.assertTrue(film.valid_still(still))
+            still.write_bytes(still.read_bytes()[: still.stat().st_size // 2])
+            self.assertFalse(film.valid_still(still))
+            self.assertFalse(film.valid_still(Path(folder) / "missing.jpg"))
             film.archive(bad)
             self.assertFalse(bad.exists())
             self.assertEqual(len(list((Path(folder) / "archive").glob("bad_*.png"))), 1)
@@ -130,7 +146,9 @@ class ContactTests(unittest.TestCase):
             for index in range(5):
                 still = run / "review" / f"{index + 1:02d}.jpg"
                 Image.new("RGB", (80, 88), (index * 40, 90, 120)).save(still)
-            with Image.open(film.contact(config, run, "final")) as image:
+            sheet = film.contact(config, run, "final")
+            self.assertEqual(sheet, run / "review" / "Final Contact.jpg")
+            with Image.open(sheet) as image:
                 self.assertEqual(image.size, (1600, 1280))
 
     def test_tile_grid(self):
@@ -189,6 +207,8 @@ class AssembleTests(unittest.TestCase):
         for still in stills:
             with Image.open(still) as image:
                 self.assertEqual(image.size, (80, 88))
+        final_contact = Path(verification["final_contact"])
+        self.assertEqual(final_contact, self.run / "review" / "Final Contact.jpg")
         with Image.open(verification["final_contact"]) as image:
             self.assertEqual(image.size, (1600, 640))
         sweep = Path(verification["sweep_contact"])
@@ -221,6 +241,50 @@ class AssembleTests(unittest.TestCase):
         self.assertEqual(film.frame_count(self.config, stale), 36)
         archived = list((self.run / "archive").glob("Original Matched Camera_*.mp4"))
         self.assertEqual(len(archived), 1)
+
+    def assemble(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            film.main([str(self.config_path), "assemble"])
+        return json.loads((self.run / "verification.json").read_text())
+
+    def truncate(self, path):
+        path.write_bytes(path.read_bytes()[: path.stat().st_size // 2])
+
+    def test_partial_sweep_folder_is_not_trusted(self):
+        sweep = self.run / "review" / "sweep"
+        sweep.mkdir(parents=True)
+        for index in (1, 2):
+            Image.new("RGB", PANEL, (index, 0, 0)).save(sweep / f"{index:04d}.jpg")
+        verification = self.assemble()
+        self.assertIn(verification["sweep_frames"], (3, 4))
+        with Image.open(verification["sweep_contact"]) as image:
+            self.assertEqual(image.width, verification["sweep_frames"] * 80)
+        self.assertFalse((self.run / "review" / "archive").exists())
+
+    def test_truncated_sweep_frame_rebuilds_the_sheet(self):
+        first = self.assemble()
+        frame = self.run / "review" / "sweep" / "0001.jpg"
+        self.truncate(frame)
+        sheet = Path(first["sweep_contact"])
+        stamp = sheet.stat().st_mtime_ns
+        second = self.assemble()
+        self.assertEqual(second["sweep_frames"], first["sweep_frames"])
+        self.assertTrue(film.valid_still(frame))
+        self.assertNotEqual(sheet.stat().st_mtime_ns, stamp)
+        archived = list((self.run / "review" / "archive").glob("Sweep Contact_*.jpg"))
+        self.assertEqual(len(archived), 1)
+
+    def test_truncated_review_still_is_archived_and_the_sheet_redone(self):
+        self.assemble()
+        still = self.run / "review" / "02.jpg"
+        self.truncate(still)
+        self.assertFalse(film.valid_still(still))
+        self.assemble()
+        self.assertTrue(film.valid_still(still))
+        archive = self.run / "review" / "archive"
+        self.assertEqual(len(list(archive.glob("02_*.jpg"))), 1)
+        self.assertEqual(len(list(archive.glob("Final Contact_*.jpg"))), 1)
+        self.assertEqual(len(list(archive.glob("01_*.jpg"))), 0)
 
     def test_missing_source_frame_fails_loudly(self):
         film.frame_path(self.run, "run", "patina", 47).unlink()

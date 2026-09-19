@@ -3,27 +3,38 @@
     blender --background --factory-startup <Before.blend> \
         --python scripts/apply_materials.py -- <materials.json>
 
-Paths in the manifest are relative to the manifest file. Every material in the scene must be
-mapped to a family or covered by an object override; the manifest is validated in full
+Paths in the manifest are relative to the manifest file. Every material on a mesh object must
+be mapped to a family or covered by an object override; the manifest is validated in full
 before the scene is modified, and geometry is hashed before and after as proof that only
-materials changed.
+materials changed. Other object types keep their materials and are listed in the result under
+non_mesh_renderables.
 """
 
 from __future__ import annotations
 
 import json
 import sys
+import traceback
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from common import dump, geometry_hash  # noqa: E402
+from common import (  # noqa: E402
+    dump,
+    ensure_nodes,
+    geometry_hash,
+    is_number,
+    script_args,
+    world_matrix,
+)
+from inventory import non_mesh_renderables, principled_node  # noqa: E402
 
 ROLES = ("basecolor", "normal", "roughness", "metalness", "height")
 BASECOLOR_MODES = ("tint", "replace")
 UV_LAYER = "PatinaUV"
 PREFIX = "PATINA | "
 COAT_WEIGHT = {"ceramic": 0.22, "enamel": 0.12, "plastic": 0.12}
+LUMINANCE_WEIGHTS = (0.2126, 0.7152, 0.0722)
 FAMILY_DEFAULTS = {
     "normal_strength": 0.25,
     "bump_distance": 0.002,
@@ -36,13 +47,20 @@ FAMILY_DEFAULTS = {
 
 def load_manifest(path) -> tuple[dict, Path]:
     manifest_path = Path(path).resolve()
-    return json.loads(manifest_path.read_text()), manifest_path.parent
+    manifest = json.loads(manifest_path.read_text())
+    if not isinstance(manifest, dict):
+        raise SystemExit(f"Manifest problems:\n  {manifest_path}: must be a JSON object")
+    return manifest, manifest_path.parent
 
 
 def family_settings(family: dict) -> dict:
     settings = dict(FAMILY_DEFAULTS)
     settings.update(family)
     return settings
+
+
+def colorspace(role: str) -> str:
+    return "sRGB" if role == "basecolor" else "Non-Color"
 
 
 def override_family(object_name: str, overrides: list) -> str | None:
@@ -52,13 +70,42 @@ def override_family(object_name: str, overrides: list) -> str | None:
     return None
 
 
+def usable_override(override) -> bool:
+    # A bare string under startswith is a tuple of its characters, and an empty prefix
+    # matches every object, so both would retexture the whole scene with one family.
+    return (
+        isinstance(override, dict)
+        and isinstance(override.get("prefixes"), list)
+        and bool(override["prefixes"])
+        and all(isinstance(prefix, str) and prefix for prefix in override["prefixes"])
+        and isinstance(override.get("family"), str)
+        and bool(override["family"])
+    )
+
+
 def is_unit_range(value) -> bool:
     return (
         isinstance(value, (list, tuple))
         and len(value) == 2
-        and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in value)
+        and all(is_number(v) for v in value)
         and all(0 <= v <= 1 for v in value)
     )
+
+
+def unreadable_image(path: Path) -> str | None:
+    """Why Pillow rejects the file, or None when it reads or when Pillow cannot judge the format."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    if path.suffix.lower() not in Image.registered_extensions():
+        return None
+    try:
+        with Image.open(path) as image:
+            image.verify()
+    except Exception as exc:
+        return str(exc) or type(exc).__name__
+    return None
 
 
 def validate_manifest(manifest: dict, root: Path, objects_by_material: dict) -> list[str]:
@@ -81,11 +128,16 @@ def validate_manifest(manifest: dict, root: Path, objects_by_material: dict) -> 
     if not isinstance(overrides, list):
         problems.append("object_overrides: must be a list of {prefixes, family}")
         overrides = []
+    for name, family in sorted(materials.items()):
+        if not isinstance(family, str) or not family:
+            problems.append(f"materials[{name!r}]: must be a family name")
     for index, override in enumerate(overrides):
-        usable = isinstance(override, dict) and override.get("prefixes") and override.get("family")
-        if not usable:
-            problems.append(f"object_overrides[{index}]: needs prefixes and a family")
-    overrides = [o for o in overrides if isinstance(o, dict)]
+        if not usable_override(override):
+            problems.append(
+                f"object_overrides[{index}]: needs a prefixes list of non-empty strings"
+                " and a family"
+            )
+    overrides = [o for o in overrides if usable_override(o)]
     for name, objects in sorted(objects_by_material.items()):
         if name in materials:
             continue
@@ -94,15 +146,17 @@ def validate_manifest(manifest: dict, root: Path, objects_by_material: dict) -> 
         problems.append(
             f"material {name!r} is neither mapped in materials nor covered by an override"
         )
-    referenced = set(materials.values()) | {o.get("family") for o in overrides}
+    referenced = {f for f in materials.values() if isinstance(f, str)}
+    referenced |= {o["family"] for o in overrides}
     for family in sorted(f for f in referenced if f and f not in families):
         problems.append(f"family {family!r} is referenced but not defined")
+    spaces_by_path = {}
     for name, family in sorted(families.items()):
         if not isinstance(family, dict):
             problems.append(f"family {name!r}: must be an object")
             continue
         span = family.get("tile_span")
-        if not isinstance(span, (int, float)) or isinstance(span, bool) or span <= 0:
+        if not is_number(span) or span <= 0:
             problems.append(f"family {name!r}: tile_span must be a positive number of scene units")
         maps = family.get("maps", {})
         if not isinstance(maps, dict):
@@ -112,16 +166,37 @@ def validate_manifest(manifest: dict, root: Path, objects_by_material: dict) -> 
         if missing:
             problems.append(f"family {name!r}: missing map roles {', '.join(missing)}")
         for role in ROLES:
-            if role in maps and not (root / maps[role]).is_file():
-                problems.append(f"family {name!r}: {role} map {maps[role]} not found under {root}")
+            if role not in maps:
+                continue
+            relative = maps[role]
+            if not isinstance(relative, str) or not relative:
+                problems.append(f"family {name!r}: {role} map must be a path under the manifest")
+                continue
+            path = root / relative
+            if not path.is_file():
+                problems.append(f"family {name!r}: {role} map {relative} not found under {root}")
+                continue
+            reason = unreadable_image(path)
+            if reason:
+                problems.append(
+                    f"family {name!r}: {role} map {relative} is not a readable image ({reason})"
+                )
+            spaces_by_path.setdefault(path.resolve(), set()).add(colorspace(role))
         for key in ("roughness", "metalness"):
             if key in family and not is_unit_range(family[key]):
                 problems.append(f"family {name!r}: {key} must be two numbers between 0 and 1")
+        for key in ("normal_strength", "bump_distance"):
+            if key in family and (not is_number(family[key]) or family[key] < 0):
+                problems.append(f"family {name!r}: {key} must be a number of at least 0")
         if family.get("basecolor_mode", "tint") not in BASECOLOR_MODES:
             modes = ", ".join(BASECOLOR_MODES)
             problems.append(f"family {name!r}: basecolor_mode must be one of {modes}")
         if not isinstance(family.get("roughness_is_smoothness", False), bool):
             problems.append(f"family {name!r}: roughness_is_smoothness must be true or false")
+    # One file is one image datablock with one color space, however many roles point at it.
+    for path, spaces in sorted(spaces_by_path.items()):
+        if len(spaces) > 1:
+            problems.append(f"map {path} is used both as a basecolor and as a data map; copy it")
     if "provenance" in manifest and not isinstance(manifest["provenance"], dict):
         problems.append("provenance: must be an object")
     return problems
@@ -151,26 +226,41 @@ def srgb_to_linear(values):
     return np.where(values <= 0.04045, values / 12.92, ((values + 0.055) / 1.055) ** 2.4)
 
 
-def linear_luminance_mean(rgb) -> float:
-    """Mean linear luminance of sRGB-encoded pixels, floored so a tint never divides by zero."""
+def luminance_mean(linear) -> float:
+    """Mean luminance of scene-linear RGB, floored so a tint never divides by zero."""
     import numpy as np
 
-    linear = srgb_to_linear(np.asarray(rgb, dtype=np.float32).reshape((-1, 3)))
-    return max(0.02, float((linear @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)).mean()))
+    linear = np.asarray(linear, dtype=np.float32).reshape((-1, 3))
+    if linear.size == 0:
+        raise ValueError("no pixels to average")
+    return max(0.02, float((linear @ np.array(LUMINANCE_WEIGHTS, dtype=np.float32)).mean()))
+
+
+def linear_luminance_mean(rgb) -> float:
+    """luminance_mean of sRGB-encoded pixels."""
+    return luminance_mean(srgb_to_linear(rgb))
+
+
+def is_linear_buffer(image) -> bool:
+    # Blender converts float buffers (16-bit PNG, EXR) to scene-linear on load and leaves byte
+    # buffers in their stored color space. A 16-bit gray PNG reports depth 32, so is_float leads.
+    return bool(image.is_float) or image.depth > 32
 
 
 def image_luminance_mean(image) -> float:
     import numpy as np
 
-    # Byte image buffers come back in their stored color space, not linear.
-    pixels = np.asarray(image.pixels[:], dtype=np.float32).reshape((-1, 4))
-    return linear_luminance_mean(pixels[:, :3])
+    # foreach_get fills the buffer directly; pixels[:] builds a Python float per channel.
+    pixels = np.empty(len(image.pixels), dtype=np.float32)
+    image.pixels.foreach_get(pixels)
+    rgb = pixels.reshape((-1, 4))[:, :3]
+    return luminance_mean(rgb) if is_linear_buffer(image) else linear_luminance_mean(rgb)
 
 
 def add_patina_uv(obj) -> None:
     mesh = obj.data
     layer = mesh.uv_layers.new(name=UV_LAYER)
-    scale = tuple(obj.matrix_world.to_scale())
+    scale = tuple(world_matrix(obj).to_scale())
     for polygon in mesh.polygons:
         for loop_index in polygon.loop_indices:
             co = mesh.vertices[mesh.loops[loop_index].vertex_index].co
@@ -180,18 +270,11 @@ def add_patina_uv(obj) -> None:
 
 
 def original_color(material) -> tuple:
-    if material.node_tree is not None:
-        node = next((n for n in material.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
-        if node is not None:
-            return tuple(node.inputs["Base Color"].default_value)
+    """The color a tint multiplies: an unlinked Principled Base Color, else the viewport color."""
+    node = principled_node(material)
+    if node is not None and not node.inputs["Base Color"].is_linked:
+        return tuple(node.inputs["Base Color"].default_value)
     return tuple(material.diffuse_color)
-
-
-def ensure_nodes(material):
-    # Blender 5 materials are node trees from birth and deprecate use_nodes.
-    if material.node_tree is None:
-        material.use_nodes = True
-    return material.node_tree
 
 
 class Applier:
@@ -200,21 +283,38 @@ class Applier:
     def __init__(self, manifest: dict, root: Path):
         self.manifest = manifest
         self.root = root
+        # Both caches key on the resolved file: a map shared by two families is one datablock,
+        # packed once, and its mean is read once however many variants tint with it.
         self.images = {}
+        self.luminance = {}
         self.made = {}
         self.report = []
 
-    def image(self, family_name: str, role: str):
-        import bpy
+    def map_path(self, family_name: str, role: str) -> Path:
+        return (self.root / self.manifest["families"][family_name]["maps"][role]).resolve()
 
-        key = (family_name, role)
-        if key not in self.images:
-            path = self.root / self.manifest["families"][family_name]["maps"][role]
-            image = bpy.data.images.load(str(path), check_existing=True)
+    def image(self, family_name: str, role: str):
+        path = self.map_path(family_name, role)
+        if path not in self.images:
+            import bpy
+
+            try:
+                image = bpy.data.images.load(str(path))
+            except RuntimeError as exc:
+                raise RuntimeError(f"family {family_name!r} {role} map: {exc}") from None
+            # Blender loads lazily and never raises on an unreadable file; a zero size is the tell.
+            if not all(image.size):
+                raise RuntimeError(f"family {family_name!r} {role} map {path}: unreadable image")
             image.name = f"{PREFIX}{family_name} | {role}"
-            image.colorspace_settings.name = "sRGB" if role == "basecolor" else "Non-Color"
-            self.images[key] = image
-        return self.images[key]
+            image.colorspace_settings.name = colorspace(role)
+            self.images[path] = image
+        return self.images[path]
+
+    def luminance_mean(self, family_name: str) -> float:
+        path = self.map_path(family_name, "basecolor")
+        if path not in self.luminance:
+            self.luminance[path] = image_luminance_mean(self.image(family_name, "basecolor"))
+        return self.luminance[path]
 
     def variant_name(self, original_name: str, family_name: str) -> str:
         if self.manifest.get("materials", {}).get(original_name) == family_name:
@@ -273,7 +373,7 @@ class Applier:
         else:
             # Tint: PATINA luminance variation multiplied over the original palette color,
             # normalized so the mean brightness of the map does not darken the palette.
-            luminance = image_luminance_mean(textures["basecolor"].image)
+            luminance = self.luminance_mean(family_name)
             gray = node("ShaderNodeRGBToBW", "Retain Surface Variation", (-490, 560))
             links.new(textures["basecolor"].outputs["Color"], gray.inputs["Color"])
             normalize = node("ShaderNodeMath", "Normalize PATINA Luminance", (-300, 560))
@@ -380,6 +480,7 @@ def apply(manifest: dict, root: Path) -> dict:
         raise RuntimeError("Geometry changed while applying materials; output not saved")
     for image in applier.images.values():
         image.pack()
+    untouched = non_mesh_renderables(bpy.context.view_layer.objects)
     output.parent.mkdir(parents=True, exist_ok=True)
     report = {
         "geometry_sha256_before": before_hash,
@@ -387,6 +488,7 @@ def apply(manifest: dict, root: Path) -> dict:
         "mesh_objects": len(objects),
         "materials": applier.report,
         "packed_images": len(applier.images),
+        "non_mesh_renderables": untouched,
     }
     report_path = output.with_suffix(".materials.json")
     report_path.write_text(json.dumps(report, indent=2))
@@ -397,6 +499,7 @@ def apply(manifest: dict, root: Path) -> dict:
         "meshes": len(objects),
         "material_variants": len(applier.made),
         "packed_images": len(applier.images),
+        "non_mesh_renderables": untouched,
         "geometry_preserved": True,
     }
 
@@ -410,9 +513,11 @@ def main(argv: list[str]) -> dict:
     return result
 
 
-def script_args() -> list[str]:
-    return sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
-
-
 if __name__ == "__main__":
-    main(script_args())
+    try:
+        main(script_args())
+    except Exception as exc:
+        traceback.print_exc()
+        # Without --python-exit-code Blender exits 0 on an uncaught exception; SystemExit
+        # sets the status either way.
+        raise SystemExit(f"apply_materials failed: {exc}") from None

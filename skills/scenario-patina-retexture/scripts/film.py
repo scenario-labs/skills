@@ -66,6 +66,16 @@ def valid_png(path: Path) -> bool:
         return False
 
 
+def valid_still(path: Path) -> bool:
+    # JPEG verify() is a no-op in Pillow; only a full load() sees a truncated file.
+    try:
+        with Image.open(path) as image:
+            image.load()
+        return True
+    except (OSError, SyntaxError):
+        return False
+
+
 def archive(path: Path) -> None:
     """Move a stale or corrupt output aside instead of deleting it."""
     if path.exists():
@@ -91,7 +101,13 @@ def load_font(config: dict, size: int, bold: bool = False):
     for candidate in FONTS[key]:
         if Path(candidate).is_file():
             return ImageFont.truetype(candidate, size)
-    return ImageFont.load_default(size)
+    try:
+        return ImageFont.load_default(size)
+    except TypeError:  # Pillow before 10.1 has no sized built-in font
+        raise FileNotFoundError(
+            f'No caption font found: set "{key}" in the film config to a .ttf file, or'
+            " upgrade Pillow to 10.1 or newer for the built-in fallback"
+        ) from None
 
 
 def frame_path(run_dir: Path, kind: str, mode: str, frame: int) -> Path:
@@ -210,11 +226,18 @@ def render(config: dict, config_path: Path, run_dir: Path, kind: str) -> None:
         contact(config, run_dir, kind)
 
 
+def contact_path(run_dir: Path, kind: str) -> Path:
+    if kind == "pilot":
+        return run_dir / "Pilot Contact.jpg"
+    return run_dir / "review" / "Final Contact.jpg"
+
+
 def contact(config: dict, run_dir: Path, kind: str) -> Path:
     """Pilot: both endpoints of every shot, before over after. Final: one still per shot."""
-    output = run_dir / ("Pilot Contact.jpg" if kind == "pilot" else "Final Contact.jpg")
+    output = contact_path(run_dir, kind)
     if output.exists():
         return output
+    output.parent.mkdir(parents=True, exist_ok=True)
     font = load_font(config, 22)
     count = shot_frames(config)
     shots = config["shots"]
@@ -422,6 +445,9 @@ def join_clips(config: dict, run_dir: Path, mode: str) -> Path:
         run_dir,
         f"{mode}_joined",
     )
+    frames = frame_count(config, joined)
+    if frames != final_frames:
+        raise RuntimeError(f"{joined}: {frames} frames after the join, expected {final_frames}")
     return joined
 
 
@@ -488,7 +514,11 @@ def review_stills(config: dict, run_dir: Path, master: Path) -> list[Path]:
     stills = []
     for index in range(len(config["shots"])):
         still = review / f"{index + 1:02d}.jpg"
-        if not still.exists():
+        if not valid_still(still):
+            # ffmpeg -n writes nothing over an existing file, and a sheet built from the
+            # old still would be stale.
+            archive(still)
+            archive(contact_path(run_dir, "final"))
             shot_seconds = config["shot_seconds"]
             seek = index * (shot_seconds - config["transition"]) + shot_seconds / 2
             ffmpeg(
@@ -526,9 +556,13 @@ def sweep_contact(config: dict, run_dir: Path, master: Path) -> tuple[Path, int]
     when the one-still-per-shot review misses it."""
     output = run_dir / "review" / "Sweep Contact.jpg"
     folder = run_dir / "review" / "sweep"
-    frames = sorted(folder.glob("*.jpg")) if folder.exists() else []
-    if not frames:
-        folder.mkdir(parents=True, exist_ok=True)
+    frames = sorted(folder.glob("*.jpg")) if folder.is_dir() else []
+    if not output.exists() or not frames or not all(valid_still(f) for f in frames):
+        # ffmpeg writes the frames one file at a time, so a killed extraction leaves a valid
+        # partial set: only the sheet proves the folder complete.
+        shutil.rmtree(folder, ignore_errors=True)
+        archive(output)
+        folder.mkdir(parents=True)
         ffmpeg(
             config,
             ["-i", str(master), "-vf", f"fps={SWEEP_FPS}", "-q:v", "2", str(folder / "%04d.jpg")],
@@ -536,7 +570,6 @@ def sweep_contact(config: dict, run_dir: Path, master: Path) -> tuple[Path, int]
             "sweep",
         )
         frames = sorted(folder.glob("*.jpg"))
-    if not output.exists():
         labels = [f"{index / SWEEP_FPS:.1f}s" for index in range(len(frames))]
         tile(frames, SWEEP_COLUMNS, labels, load_font(config, 14)).save(output, quality=90)
     return output, len(frames)
