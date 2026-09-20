@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario runs text-to-3D, image-to-3D, and 3D-to-3D models behind the same MCP generation loop used for images. The most reliable pipeline generates a concept image first, then feeds it to an image-to-3D model; direct text-to-3D exists (`txt23d`) but image-to-3D has the larger catalog and more art direction control. Per-family contracts: `scenario-meshy`, `scenario-rodin`, `scenario-sparc3d`. Walkable scenes and Gaussian splats: `scenario-3d-worlds`. Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Scenario runs text-to-3D, image-to-3D, and 3D-to-3D models behind the same MCP generation loop used for images. The most reliable pipeline generates a concept image first, then feeds it to an image-to-3D model; direct text-to-3D exists (`txt23d`) but image-to-3D has the larger catalog and more art direction control. Per-family contracts: `scenario-meshy`, `scenario-rodin`, `scenario-sparc3d`. Walkable scenes and Gaussian splats: `scenario-3d-worlds`. Retexturing a finished mesh or scene with PBR materials: `scenario-patina-retexture`. Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 
@@ -26,7 +26,7 @@ Scenario runs text-to-3D, image-to-3D, and 3D-to-3D models behind the same MCP g
 A realistic sequence for "make a 3D treasure chest prop":
 
 1. Generate the concept: pick a text-to-image model via `recommend` with the user's own words as `prompt`, then `model_schema_get` and `model_run` with a prompt describing a single centered subject on a plain background. If the user has a reference, `upload_asset` it (plus `upload_asset_complete` when multipart) and pass that asset ID instead.
-2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include the Hunyuan 3D, Meshy, Tripo, and Trellis families.
+2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include the Hunyuan 3D, Meshy, Tripo, and Trellis families, and Scenario's own GPT-6 Astra 3D, which reconstructs one object from 1 to 8 photos or renders into an editable mesh with named parts and per-part PBR materials. Astra is built for props and hard-surface subjects, not characters, and its schema carries the cost levers a game team asks about first: `buildEffort` and `refineSteps` move the price (both `cost_impact`), and `faceBudget` caps the delivered triangle count at export (10k to 50k for a game-ready asset; the default keeps fine detail and is not that). A refinement pass on a previous output was not exposed at authoring time: an edit is a new run with the corrected references.
 3. `model_schema_get` on the chosen model. 3D schemas vary widely: single image vs multi-view arrays, polycount targets, PBR toggles, topology choices.
 4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `wait=false` (`dry_run=true` first to price a batch), then `jobs_wait` with `job_ids=["<job_id>"]` (re-call it with the returned `pending_job_ids` as `job_ids` if it times out). A downstream step (rig, retexture) has no payload to `dry_run` until its input mesh exists: quote it from `recommend` as an estimate, then re-price it with `dry_run` on the real asset before launching.
 5. `asset_display` with the output `asset_id` to preview, then `asset_download` and `curl -L -o chest.glb "<url>"` for engine import.
@@ -39,7 +39,9 @@ Multi-view models accept several images of one subject from different angles; th
 
 ## Refining meshes
 
-3D-to-3D utilities (`3d23d` capability) cover retexturing, remeshing, UV unwrapping, and part segmentation. Find them with `recommend`: `capability="3d23d"` plus the operation in the user's own words. Most take the source `asset_id` in a `kind: "3d"` file field, usually named `model` (also `mesh`, `file3d`).
+3D-to-3D utilities (`3d23d` capability) cover retexturing, remeshing, UV unwrapping, and part segmentation. Find them with `recommend`: `capability="3d23d"` plus the operation in the user's own words. Most take the source `asset_id` in a `kind: "3d"` file field, usually named `model` (also `mesh`, `file3d`); 400 `Input model is required` or `Provide a reference image or a 3D model` means the mesh went in under another name (an image field, or a URL), never that the tool wants something else.
+
+Splitting a finished mesh into parts is a contested lane, so it stays a `recommend` pick: at authoring time several vendors offered mesh segmentation with a granularity control, one combined the split with a PBR retexture, and image-to-parts members build the parts from the picture instead. A convincing mesh is not a game-ready one: part separation, joint placement, materials, and animation are each their own pass, and polygon caps differ by topology on the members that offer both (a quad cap sat well under the triangle cap on one), so read the slider's `max` off the schema instead of promising a count. A provider feature `search` does not return is not on Scenario yet, whatever the provider's own site ships: say so rather than reaching for it.
 
 ## Rigging and animation
 
