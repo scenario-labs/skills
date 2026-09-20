@@ -19,6 +19,7 @@ Scenario runs hundreds of image models, split across `txt2img` (generate from a 
 | Estimate cost     | `model_run` with `dry_run=true`; `cost_impact: true` marks the fields that move price                  |
 | Generate or edit  | `model_run`, then `jobs_wait`                                                                          |
 | Review and save   | `asset_display`, then `asset_download` (`png` default, `webp`, `jpg`)                                  |
+| Land exact pixels | Generate at the nearest reachable size, then `model_scenario-resize-image` (see Landing an exact size) |
 
 Inpainting and outpainting are `img2img`, not capabilities of their own.
 
@@ -31,6 +32,12 @@ All three are per-model, so take them from the schema rather than from a previou
 - **References.** Name (`referenceImages`, `image`), cap, and cardinality all come from the schema, and the name settles none of them: a field called `referenceImages` is a single scalar file on some models. Pass an array only where the schema says `array: true`, and there pass one even for a lone asset, since a bare string is dropped silently and the run then succeeds while ignoring the reference. With several references, say in the prompt which is which.
 
 A batch-count field (`numOutputs`, `numImages`) repeats one prompt, so it yields variations, not a set. Anything with a per-item difference needs one `model_run` per item.
+
+## Landing an exact size
+
+In-game placements need exact pixels (a 210x600 banner, a 256x256 icon), and no generative model lands them by itself. Numeric sizing fields snap to a grid (a `step` of 16 is common, with `min` and `max` bounding the range), enum fields offer fixed tiers, and a request below a member's floor is not rejected but replaced: 512x128 came back as 1408x480 on one member, with no error. So an exact target is two steps. Generate at the nearest reachable size at or above the target in the same ratio (a 256x256 icon is generated at 1024x1024, a 210x600 banner at 224x640 on a 16-pixel grid), then finish with `model_scenario-resize-image`, a fixed id since it is Scenario's single deterministic exact-dimension resize tool and discovery would only re-derive it: `images` as an array even for one asset, `width` and `height`, and `fit` `cover` to fill the box and center-crop the overflow or `stretch` for exact dimensions at the cost of distortion (`contain`, the default, can return a smaller image than the box). Confirm with `asset_get`. Downscaling also sharpens; upscaling a small render does not.
+
+Blur has the same discipline: several members default to a 1K tier with a higher one in the schema, so re-run the keeper's recipe with the resolution or `quality` tier set explicitly, or upscale it (`scenario-image-editing`), and on a custom-trained member a guidance or step count pushed high is a common cause. When outputs feel literal, split the prompt into what is fixed and what the model may invent and say so; `prompt_spark` expands a thin brief into an on-model one before the run.
 
 ## Prompt wording
 
@@ -54,4 +61,4 @@ An instruction edit names the change and pins the rest: "put the chair on a sunl
 - Retrying a 403 `ModelAccessRestrictedError`: it names `modelId` and `requiredPlan`, so surface the upgrade or pick another model.
 - Prompting "transparent background": diffusion outputs are opaque. Use a `background` field when the schema has one, otherwise run a background-removal model afterwards.
 - Re-running an approved frame at a higher size tier and expecting it back sharper: many models expose no `seed`, and where one exists it reproduces a run only with every other field unchanged, so the re-run is a new image; draft at the cheapest tier, then upscale the exact keeper (`scenario-image-editing`).
-- Assuming a model can hit a requested pixel size: some expose an aspect ratio and nothing else. Confirm what landed with `asset_get`, which reports `properties.width` and `properties.height`; `jobs_wait` returns asset ids only.
+- Assuming a model can hit a requested pixel size: some expose an aspect ratio and nothing else, and others silently substitute a size for one below their floor. Generate near, then resize (Landing an exact size), and confirm what landed with `asset_get`, which reports `properties.width` and `properties.height`; `jobs_wait` returns asset ids only.
