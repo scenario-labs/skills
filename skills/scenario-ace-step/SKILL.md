@@ -55,4 +55,4 @@ Keep `prompt` to a one-line style caption (genre, mood, instruments, production)
 - The lyric sheet in `prompt`: it caps at 512 characters and carries style; words go in `lyrics`.
 - Free-text stems ("kick drum") in `trackName` or `completeTrackClasses`: only the twelve fixed values are valid.
 - Repainting new sung lyrics without the recipe: the sentinel prompt, the full sheet with the new section in place, and `thinking: false` go together.
-- Expecting Repaint to change track length: the window regenerates in place; a different length means a new Text to Music run.
+- Expecting Repaint to change track length: the window regenerates in place. A longer version of the same track is the extend lane the `scenario-audio` skill teaches, run by another family's member; a different length from scratch is a new Text to Music run.
