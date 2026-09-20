@@ -27,7 +27,7 @@ Numbers are at authoring time: read caps off `model_schema_get`. Stem fields tak
 
 ## Lane choice
 
-Turbo and Quality siblings take the same parameters, except `audioFormat` (mp3, wav, flac), at authoring time on Repaint Turbo alone. Quality is the full-size checkpoint tuned for fidelity and prompt adherence; Turbo is distilled for speed and at authoring time costs half as much. Iterate on Turbo (lyrics, structure, windows), then re-run the keeper's parameters on the Quality sibling. The edit trio has no Turbo lane. `duration` and `numOutputs` both move the price, so `dry_run=true` before a long track or a batch.
+Turbo and Quality siblings take the same parameters, except `audioFormat` (mp3, wav, flac), at authoring time on Repaint Turbo alone. No repaint member exposed a `seed`, so two repaints of the same window are two takes (the singer can change between them): batch with `numOutputs` and pick, rather than re-running for a match. Quality is the full-size checkpoint tuned for fidelity and prompt adherence; Turbo is distilled for speed and at authoring time costs half as much. Iterate on Turbo (lyrics, structure, windows), then re-run the keeper's parameters on the Quality sibling. The edit trio has no Turbo lane. `duration` and `numOutputs` both move the price, so `dry_run=true` before a long track or a batch.
 
 ## Writing the song
 
