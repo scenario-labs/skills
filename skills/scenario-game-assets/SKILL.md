@@ -1,6 +1,6 @@
 ---
 name: scenario-game-assets
-description: Use when creating game art through the Scenario MCP, including sprites, sprite sheets, game icons, props, loot, tilesets, seamless tiles, isometric buildings, top-down maps, pixel art, UI components such as buttons and panels, and character or concept art, or when game assets need transparent backgrounds, background removal, style-consistent variation batches (restyling an approved component into a set), upscaling, pixel-grid cleanup, or engine-ready PNG export for Unity, Godot, or Unreal.
+description: Use when creating game art through the Scenario MCP, including sprites, sprite sheets, game icons, props, loot, tilesets, seamless tiles, isometric buildings, top-down maps, pixel art, UI components such as buttons and panels, parallax background layers or depth planes for side-scrollers, and character or concept art, or when game assets need transparent backgrounds, background removal, style-consistent variation batches (restyling an approved component into a set), upscaling, pixel-grid cleanup, or engine-ready PNG export for Unity, Godot, or Unreal.
 license: MIT
 ---
 
@@ -20,6 +20,7 @@ Scenario's public catalog carries purpose-trained models per asset type (sprites
 | Transparent background     | `recommend` for a native-alpha generator first; else for background removal on the asset                                                           |
 | Upscale or enhance         | `recommend` for upscaling (2x to 16x tools exist)                                                                                                  |
 | Pixel-art cleanup          | `recommend` for cleanup (grid snapping, palette reduction)                                                                                         |
+| Parallax background planes | Split a painted background with the layer tool (`recommend`, `capability: "img2img"`), or generate one plane per run; see Parallax backgrounds     |
 | Export for an engine       | `asset_download` with format="png"                                                                                                                 |
 
 ## Worked example: a transparent potion icon set
@@ -68,11 +69,21 @@ Run one tile first. Measure changes outside the edit region against the source c
 
 A "low-poly" look and a low-poly mesh are different deliverables. The look is a 2D style word on an image model. The mesh is `scenario-3d`: whether the image-to-3D pick (`recommend`, `capability: "img23d"`) exposes a polycount target or a topology choice is read off `model_schema_get`, never assumed, and when it exposes neither a separate remesh utility (its own billed run, found with `recommend`, `capability: "3d23d"`) brings the count down afterwards. Either way the concept image feeding it wants flat shading, a clean silhouette, and a plain background so the geometry reads.
 
+## Parallax backgrounds
+
+A parallax background is a stack of depth planes the engine scrolls at different speeds: an opaque sky or far plane, then two or three cutout planes with transparent gaps the planes behind show through. Two routes produce the stack; writing "layers" or "parallax" into one generation prompt produces neither, it returns a single picture of stacked layers, and on a style-trained model it returns several layers painted into one image.
+
+- **Split a painted background you already have.** The layer extractor is a contested lane (Scenario's own tool competes with third-party splitters), so `recommend` with `capability: "img2img"` and the need in the user's words ("separate this background into depth planes for parallax"), then `model_schema_get` the pick. The purpose-built tool at authoring time took a `separationInstruction`, a splitting rule and not a scene description ("four planes, front to back: foreground bushes, near trees, far hills, sky"), a `maxLayers` cap that moves the price, and an inpaint choice for filling the hole each cut leaves, also priced. It returns the cutouts plus a rebuilt background, one asset each, so review them one at a time with `asset_display`. A plane cut from a viewport-sized painting is only as wide as the viewport: a scrolling plane needs bleed past the camera on both sides, so expand each cutout with a canvas-expansion tool (`recommend` with `capability: "img2img"` and the expand need; the far plane widest, since it scrolls least and shows longest) or take the second route.
+- **Generate one plane per run.** Fix the camera, horizon line, light direction and palette words, then vary only the plane's content: the sky and far plane as an ordinary opaque image, each nearer plane as a cutout (a native-alpha generator, or a plain field plus the removal pass above; never the word transparent at a diffusion model). Say what the plane must not contain ("no ground, no sky") so the planes do not repeat each other, and generate each nearer plane wider than the far one in the ratio of its scroll speed, at a size the engine will tile or clamp.
+
+Check the stack before exporting: `model_scenario-compose-image` (a fixed first-party id, Scenario's single deterministic image compositor, so discovery would only re-derive it) takes the planes as `layers` with `zIndex` in depth order over a custom canvas with `backgroundColor: "transparent"`, and a second composite with the near planes shifted a few percent in `x` previews the parallax offset the engine will produce; a seam, a doubled horizon or a plane whose cutout edge shows a halo is visible here, before any engine work. `asset_download` each plane with `format="png"` (the far plane too, so the set shares one format), tag them with their depth order, and leave scroll speeds and looping to the engine.
+
 ## Common mistakes
 
 - Prompting "transparent background" at a diffusion model: outputs are opaque. Cut the background afterward with a removal tool, or pick a native-alpha model.
 - Exporting JPG sprites: JPG has no alpha channel; keep format="png".
 - Shipping AI pixel art with off-grid pixels or noisy palettes: post-process with a pixel cleanup tool (found with `recommend`) for grid snapping and a strict palette.
 - Skipping `model_schema_get`: specialty models (the pixel-art family) are txt2img-only with their own fields; generic parameters get rejected.
+- Asking one generation for "the layers" of a parallax background: one image comes back; depth planes are a split of a finished painting or one run per plane (see Parallax backgrounds).
 - Hand-stitching tilesets: dedicated seamless tileset generators exist (find one with `recommend`); texture-specific upscalers preserve tiling.
 - Single-sampling lettered assets: the same recipe can render one word and fail another (dark embossed text, not the reference typography). Generate several samples per run (schema's sample-count parameter) and pin exact hex colors in the prompt when the palette drifts.
