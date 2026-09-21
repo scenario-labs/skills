@@ -30,7 +30,7 @@ Find existing audio assets with `search` target="assets", filters={kind: "audio"
 - Voice and speech: text-to-speech with preset voices, multilingual output, and emotion or pacing controls; some clone a voice from a short clip, and speech-to-speech re-voices a recording.
 - Video to audio: models that score a silent video or add synchronized effects.
 - Utilities: `model_scenario-audio-cut`, `model_scenario-audio-split`, `model_scenario-audio-extract`, and `model_scenario-compose-video` (fixed ids: each is Scenario's single deterministic tool for its operation, so discovery would only re-derive them); the compositor lays a finished track (score, voiceover, re-voiced take) over a clip as an audio layer, per `scenario-video-assembly`; for speech-to-text transcription, `recommend` with the need in the user's own words.
-- Stem separation: one named stem per run (discover with `recommend`), vocals included, with no instrumental option.
+- Stem separation: one named stem per run (discover with `recommend`), vocals included, with no instrumental option. Voice isolation returns the clean speech and never the removed music and effects as a second stem, so a two-stem split (voice against everything else) is a gap to report, not a member to keep hunting for.
 
 Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music, SFX), `scenario-ace-step` and `scenario-minimax-music` (songs), `scenario-sonilo` (SFX and video scoring).
 
@@ -59,6 +59,12 @@ A full-length song is not a longer music bed, and song schemas vary more than th
 
 Where the schema exposes a duration field (flagged `cost_impact`), it caps both length and price; where none exists, the lyric sheet or prompt sets both. Either way, price the song with `dry_run: true` before committing, then launch with `wait: false`; both are `model_run` arguments, not `parameters` keys.
 
+Repeatability and batching are per member, not per lane: at authoring time the repaint members took `numOutputs` (1 to 4) and no `seed`, so a repaint that must keep the same singer is run as a batch and picked from, while the section composers had `seed` and no `numOutputs`. Read both off `model_schema_get` before promising either.
+
+## Extending a song
+
+Making an existing track longer is its own `audio2audio` lane, not a longer text-to-music run: `recommend` with `capability="audio2audio"` and the extension need in the user's words; use `search` only when the member is already known by name. The member that does it takes the song as `audio` and an ordered `sections` array (up to 30 at authoring time) where each entry either keeps a slice of the original (`sourceStartSeconds` and `sourceEndSeconds`) or generates a new one (`text` with `[Verse]`-style tags, `durationSeconds`, `positiveStyles` as an array), with `contextAdherence` deciding how closely new sections follow their neighbors. Kept slices bill like generated audio of the same length, so `dry_run` the whole plan first. The repaint, edit and add-layer members regenerate inside the original's duration and never lengthen it, and `recommend` ranked an older text-to-music member for "extend a song" at authoring time: an extension is not a `txt2audio` need, so do not take that pick.
+
 ## Common mistakes
 
 - Hardcoding generative model IDs: availability differs per team and evolves. Re-discover each session, `recommend` for the need or `search` for a name; only the fixed first-party tool ids above stay constant.
@@ -68,4 +74,5 @@ Where the schema exposes a duration field (flagged `cost_impact`), it caps both 
 - Passing `format` to `asset_download` for audio: it converts image formats only, so omit it.
 - Putting voice direction inside TTS text ("say this angrily"): direction can end up spoken. Use the schema's emotion or voice fields.
 - Pasting lyrics into the style field: the model then describes a song instead of singing one.
+- Answering "make it longer" with a repaint or a new text-to-music run: the first keeps the duration, the second loses the song; the extend lane above keeps the slices the user chose.
 - Putting `dry_run` or `wait` inside `parameters`: they are `model_run`'s own arguments, so a stray `dry_run` still charges and a stray `wait` blocks up to 180s.
