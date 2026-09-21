@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.45.0](https://github.com/scenario-labs/skills/compare/skills-v0.44.0...skills-v0.45.0) (2026-09-21)
+
+
+### Features
+
+* **scenario-3d:** cover Astra 3D's fit and cost levers, the parts lane, and game-readiness ([#141](https://github.com/scenario-labs/skills/issues/141)) ([75d8a7a](https://github.com/scenario-labs/skills/commit/75d8a7aa5356916c8ce060857bb4a3a7cd5cd48b))
+* **scenario-audio:** teach the song-extend lane, the stems gap, and per-member seed and batch ([#142](https://github.com/scenario-labs/skills/issues/142)) ([60b6b6d](https://github.com/scenario-labs/skills/commit/60b6b6dec00243988cd326f1f1cce6775ec0a409))
+* **scenario-image:** teach landing an exact pixel size, and the blur and literalness fixes ([#140](https://github.com/scenario-labs/skills/issues/140)) ([985465b](https://github.com/scenario-labs/skills/commit/985465bfd6d251840760d078f645e107270504e6))
+* **scenario-patina-retexture:** add the PATINA retexture and comparison skill ([#137](https://github.com/scenario-labs/skills/issues/137)) ([7f3e506](https://github.com/scenario-labs/skills/commit/7f3e5064ff6c397774b2eec2bb2eae1ac2f38173))
+* **scenario-video:** teach duration floors, frame-anchor rules, reference audio, LoRAs, and retirements ([#143](https://github.com/scenario-labs/skills/issues/143)) ([1d1caf4](https://github.com/scenario-labs/skills/commit/1d1caf4219cb590648eab623b21b2afaaf5df42b))
+
+
+### Bug Fixes
+
+* **scenario:** clarify quota recovery and asset delivery ([#139](https://github.com/scenario-labs/skills/issues/139)) ([8753a54](https://github.com/scenario-labs/skills/commit/8753a5459afa808a815583a633ac97d4cdf8ea14))
+
 ## [0.44.0](https://github.com/scenario-labs/skills/compare/skills-v0.43.0...skills-v0.44.0) (2026-09-18)
 
 
