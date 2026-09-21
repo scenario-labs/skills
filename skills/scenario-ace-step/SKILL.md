@@ -47,7 +47,7 @@ Keep `prompt` to a one-line style caption (genre, mood, instruments, production)
 3. `model_run` the Text to Music member with `dry_run=true` and `parameters={"prompt": "indie folk, warm, fingerpicked guitar, soft female vocals", "lyrics": "[Verse]\n...\n[Chorus]\n...", "duration": 90, "vocalLanguage": "en"}`; re-estimate after changing `duration` or `numOutputs`.
 4. Repeat with `wait=false`, then `jobs_wait` with the job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 5. `asset_display` to listen; note the chorus window, say 24 to 52 seconds.
-6. `model_run` the Repaint member with `parameters={"srcAudio": "<asset id>", "repaintingStart": 24, "repaintingEnd": 52, "thinking": false, "prompt": "Repaint the selected section with new sung lyrics:", "lyrics": "<full sheet with the new chorus in place>"}`.
+6. Decide what the fix must preserve. A new take of the chorus, voice included, is the Repaint member: `model_run` with `parameters={"srcAudio": "<asset id>", "repaintingStart": 24, "repaintingEnd": 52, "thinking": false, "prompt": "Repaint the selected section with new sung lyrics:", "lyrics": "<full sheet with the new chorus in place>"}`, expecting the chorus to arrive in a new voice. The same singer and delivery with new words is the Cover member instead: `parameters={"srcAudio": "<asset id>", "lyrics": "<full sheet with the new chorus in place>", "audioCoverStrength": 1, "numOutputs": 3}`, then the corrected span cut and spliced back as the Editing section says.
 7. Listen again, then `asset_download` the keeper (omit `format` for audio).
 
 ## Common mistakes
