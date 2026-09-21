@@ -12,16 +12,16 @@ A comparison is one brief run unchanged across several models, then judged on cr
 
 ## Quick reference
 
-| Step         | Do                                                                                                                     |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| 1. Frame     | One brief, its inputs (prompt text, reference asset ids), three to five pass/fail criteria, all written before running |
-| 2. Shortlist | `recommend` with the brief as `prompt` (`limit` up to 10); `search` for candidates the user named; keep three to five  |
-| 3. Normalize | `model_schema_get` each candidate: the shared fields, the caps that differ, the flags that rewrite prompts             |
-| 4. Price     | `model_run` with `dry_run: true` per candidate: a cost matrix before anything is spent                                 |
-| 5. Run       | `model_run` with `wait: false` per candidate, launched back to back, then one `jobs_wait` over all the job ids         |
-| 6. Measure   | `cuCost` from the `jobs_wait` rows; `createdAt` to `updatedAt` from `job_get` for the seconds                          |
-| 7. Judge     | The sheet from `model_scenario-grid-maker`, then each asset at full size, scored against the criteria                  |
-| 8. Deliver   | One table row per candidate; the assets filed in one collection and tagged by model id                                 |
+| Step         | Do                                                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Frame     | One brief, its inputs (prompt text, reference asset ids), three to five pass/fail criteria, all written before running                           |
+| 2. Shortlist | `recommend` with the brief as `prompt` (`limit` up to 10); `search` for candidates the user named; keep three to five                            |
+| 3. Normalize | `model_schema_get` each candidate: the shared fields, the caps that differ, the flags that rewrite prompts                                       |
+| 4. Price     | `model_run` with `dry_run: true` (top-level, beside `model_id`, never inside `parameters`) per candidate: a cost matrix before anything is spent |
+| 5. Run       | `model_run` with top-level `wait: false` per candidate, launched back to back, then one `jobs_wait` over all the job ids                         |
+| 6. Measure   | `cuCost` from the `jobs_wait` rows; `createdAt` to `updatedAt` from `job_get` for the seconds                                                    |
+| 7. Judge     | The sheet from `model_scenario-grid-maker`, then each asset at full size, scored against the criteria                                            |
+| 8. Deliver   | One table row per candidate; the assets filed in one collection and tagged by model id                                                           |
 
 ## Normalization
 
@@ -36,18 +36,18 @@ A comparison is one brief run unchanged across several models, then judged on cr
 
 `recommend` reports modelled cost and latency, right for the shortlist and wrong as a result: `dry_run` prices the exact payload, and the `jobs_wait` row's `cuCost` is what was billed. Time comes from `job_get`, which returns `createdAt` and `updatedAt`; their difference on a finished job is the wall-clock latency including queue time, comparable across candidates launched within the same minute. Launch every candidate before waiting on any, within the team's concurrency ceiling (the 429 rows in `scenario`), and re-call `jobs_wait` with `pending_job_ids` until every row is terminal. Record per candidate: model id, the exact `parameters` sent, `cuCost`, seconds, delivered dimensions, asset ids, and any normalization it forced (a size, a cap, a flag).
 
-Video candidates are compared on contact sheets, never on a first frame: sweep each clip with `model_scenario-video-to-image-seq` (a fixed first-party id, Scenario's single deterministic frame extractor, so discovery would only re-derive it), then sheet the frames per candidate. Audio and 3D candidates are compared on the assets themselves through `asset_display`.
+Video candidates are compared on contact sheets, never on a first frame: sweep each clip with `model_scenario-video-to-image-seq` (a fixed first-party id, Scenario's single deterministic frame extractor, so discovery would only re-derive it), wait for the extraction job, then sheet the frames per candidate; the extractor's frame-order and stride contract and the sheet's 100-image cap are in `scenario-video-editing`. Audio and 3D candidates are compared on the assets themselves through `asset_display`.
 
 ## Judging
 
-Pre-registered criteria are pass/fail statements about the output ("the label text is legible", "the scar is on the left cheek", "no extra fingers", "the background is plain"), so a result is scored, not admired, and a surprising winner cannot rewrite the test after the fact. Build the sheet with `model_scenario-grid-maker` (a fixed first-party id, Scenario's single deterministic grid tool, so discovery would only re-derive it): `images` in candidate order, wrapped as an array even for one, since the array order is the legend (the tool has no labels), `columns` equal to the candidate count so one row is one brief, `cellRatio` matching the outputs, `padding` for a gutter. Then `asset_display` each output at full size: a sheet hides fine text, edge halos and small anatomy. Score every criterion for every candidate, and put cost and seconds in the same table so the trade-off is read in one place. For a large set, `asset_analyze` (catalog, cost-bearing, `scenario_tools_search` then `scenario_tool_execute_read`, see `scenario`) can score a batch against the criteria list; pre-register its instruction too.
+Pre-registered criteria are pass/fail statements about the output ("the label text is legible", "the scar is on the left cheek", "no extra fingers", "the background is plain"), so a result is scored, not admired, and a surprising winner cannot rewrite the test after the fact. Build the sheet with `model_scenario-grid-maker` (a fixed first-party id, Scenario's single deterministic grid tool, so discovery would only re-derive it): `images` in candidate order, wrapped as an array even for one, since the array order is the legend (the tool has no labels), `columns` equal to the candidate count so one row is one brief, `cellRatio` matching the outputs, `padding` for a gutter. Then `asset_display` each output at full size: a sheet hides fine text, edge halos and small anatomy. Score every criterion for every candidate, and put cost and seconds in the same table so the trade-off is read in one place. For a large set, `asset_analyze` (catalog, cost-bearing, and write-class: `scenario_tools_search` then `scenario_tool_execute_write`, see `scenario`) can score a batch: the criteria list verbatim as its `instruction`, the outputs as `images`, one verdict per criterion per image, and a criterion the image cannot settle at output resolution (small lettering, a fine edge) recorded as unverified, never as a pass; pre-register that instruction with the criteria.
 
 ## Worked example: three image models on one prop brief
 
 1. Frame: "a rusty iron key with a skull-shaped bow, hand-painted style, plain background", a 1024 square, criteria: skull bow present, exactly one key, no lettering, plain background.
 2. `recommend` with that brief as `prompt` and `limit: 5`, then `search` with `target="models"`, `public=true` for the two models the user named; keep three. Never hardcode the ids: catalogs differ per team.
 3. `model_schema_get` on each: prompt cap, size fields, sample-count field, any prompt-expansion flag.
-4. `model_run` with `dry_run: true` on each, the same prompt, the count field at one, the closest 1024 square each allows, the expansion flag off; write the three prices down and stop if the sum exceeds the budget.
+4. `model_run` with `dry_run: true` (top-level) on each, the same prompt, the count field at one, the closest 1024 square each allows, the expansion flag off; write the three prices down and stop if the sum exceeds the budget.
 5. `model_run` three times with `wait: false`, then one `jobs_wait` with the three job ids, re-called with `pending_job_ids` on a timeout; read `cuCost` off each row and `createdAt` and `updatedAt` off `job_get` for each job.
 6. `model_scenario-grid-maker` with `images` as the three asset ids in candidate order and `columns: 3`; `asset_display` the sheet, then each asset; score the four criteria.
 7. Deliver the table (model, parameters that differed, cost, seconds, dimensions, criteria passed, notes) and file the three outputs and the sheet in a collection (`collection_create`, then `collection_add_assets`), tagging each output with its model id through `asset_add_tags`.
