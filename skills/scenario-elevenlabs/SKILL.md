@@ -35,7 +35,7 @@ Eleven v3 reads inline audio tags in the text, [whispers], [excited], [sighs], t
 
 ## Music: one prompt or thirty sections
 
-Music v2 takes one `prompt` (mood, genre, instruments, tempo), `durationSeconds` (3 to 600 at authoring time, cost impact), and `forceInstrumental` to suppress vocals: asking in prose is unreliable. Music Advanced v2 requires `sections`, up to 30 ordered segments at authoring time, each with `text`, its own `durationSeconds` (3 to 120), `positiveStyles` and `negativeStyles` (up to 10 each), and `contextAdherence` (high binds a segment to its neighbors, low frees it). Section grammar: square brackets label ([Verse], [Chorus]), curly braces direct ({soft piano intro}), and plain text is sung as lyrics. Advanced has no instrumental flag, so any plain text will be sung.
+Music v2 takes one `prompt` (mood, genre, instruments, tempo), `durationSeconds` (3 to 600 at authoring time, cost impact), and `forceInstrumental` to suppress vocals: asking in prose is unreliable. Music Advanced v2 requires `sections`, up to 30 ordered segments at authoring time, each with `text`, its own `durationSeconds` (3 to 120), `positiveStyles` and `negativeStyles` (up to 10 each), and `contextAdherence` (high binds a segment to its neighbors, low frees it). Section grammar: square brackets label ([Verse], [Chorus]), curly braces direct ({soft piano intro}), and plain text is sung as lyrics. Advanced has no instrumental flag, so any plain text will be sung. Neither music member takes `numOutputs`: one run is one composition, and sung lyrics land differently on every draw, so a batch of takes is several parallel runs with distinct `seed` values, each priced alone on its duration, which costs what a batch field would have and returns separate files with real boundaries. Two `[Verse]` blocks in one run to get two takes returns one file with no split point.
 
 ## Dubbing replaces the track, not the lips
 
@@ -56,4 +56,5 @@ Both Dubbing members take an audio or video `file` with a required `targetLang`,
 - Inline tags on Multilingual 2 or Turbo 2.5: that grammar is Eleven v3's; elsewhere a tag can be read aloud.
 - Writing "instrumental" in a Music v2 prompt instead of setting `forceInstrumental`; on Music Advanced there is no flag and plain section text is always sung.
 - Expecting lip-sync from Dubbing: the track changes, the picture does not.
+- Reaching for `numOutputs` on the music members, or repeating one long run hoping for a different take without changing `seed`: same seed and settings reproduce the same music.
 - Carrying one member's caps to another: 40,000 characters, 600 seconds, 30 sections, and 5 minutes of input audio are each true of one lane and false of the next.
