@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.46.0](https://github.com/scenario-labs/skills/compare/skills-v0.45.0...skills-v0.46.0) (2026-09-22)
+
+
+### Features
+
+* **scenario-game-assets:** teach the parallax background lane ([#146](https://github.com/scenario-labs/skills/issues/146)) ([286b77d](https://github.com/scenario-labs/skills/commit/286b77d0e3a18978aa0dbc7f04d3acb461369107))
+* **scenario-model-comparison:** add the model comparison skill ([#147](https://github.com/scenario-labs/skills/issues/147)) ([997c715](https://github.com/scenario-labs/skills/commit/997c71597e92056cf90f9f3e17d8439a54c31023))
+* **scenario-model-training:** teach sample prompts, identity drift, and the LoRA base pairing ([#144](https://github.com/scenario-labs/skills/issues/144)) ([870fe4c](https://github.com/scenario-labs/skills/commit/870fe4ccf13cb52a91d6a5908635154f6ba30220))
+* **skills:** teach lyric correction candidates and seeded music takes ([#145](https://github.com/scenario-labs/skills/issues/145)) ([b4c64a2](https://github.com/scenario-labs/skills/commit/b4c64a2b26e0d4f0d3d3de113522bcb5547a8af8))
+
+
+### Bug Fixes
+
+* **agents:** exclude maintainer skills from default discovery ([#150](https://github.com/scenario-labs/skills/issues/150)) ([4b81cfb](https://github.com/scenario-labs/skills/commit/4b81cfb32a045c087f9ab3cf64fa280fb422ef28))
+* **scenario:** make the upload contract explicit, from file_size to what a corrupt-file failure means ([#148](https://github.com/scenario-labs/skills/issues/148)) ([1d1a899](https://github.com/scenario-labs/skills/commit/1d1a899805bd396bdea8bd9ba2ed0eef17b3271e))
+
 ## [0.45.0](https://github.com/scenario-labs/skills/compare/skills-v0.44.0...skills-v0.45.0) (2026-09-21)
 
 
