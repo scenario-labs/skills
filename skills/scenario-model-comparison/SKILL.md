@@ -1,6 +1,6 @@
 ---
 name: scenario-model-comparison
-description: "Use when comparing Scenario models against each other on the same brief through MCP: a bake-off between candidate models, one prompt and one set of inputs run across several models, cost, generation time and output quality measured side by side, choosing a default model for a project or team, testing a new release against the incumbent, or documenting which model handles a style, an edit, or a reference image best. Keywords: model comparison, benchmark, bake-off, A/B test, side by side, contact sheet, cost per asset, latency."
+description: "Use when comparing Scenario models on the same brief through MCP: a bake-off with shared prompts and inputs, cost, generation time and quality measured side by side, choosing a default model, testing a new release against the incumbent, or finding which model handles a style, edit, or reference image best. Keywords: model comparison, benchmark, bake-off, A/B test, contact sheet, cost per asset, latency."
 license: MIT
 ---
 
