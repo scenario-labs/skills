@@ -2,6 +2,8 @@
 name: skills-validate
 description: Use when explicitly asked to run a live or plan-only application test for a published Scenario skill.
 license: MIT
+metadata:
+  internal: true
 argument-hint: <skill-name> [--pr <number>] [--plan-only] [--task "..."] [--no-post] [--keep]
 disable-model-invocation: true
 ---

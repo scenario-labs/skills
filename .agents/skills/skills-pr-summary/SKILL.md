@@ -2,6 +2,8 @@
 name: skills-pr-summary
 description: Use when refreshing the current pull request description in the Scenario skills repository.
 license: MIT
+metadata:
+  internal: true
 ---
 
 Update the current PR description with a fresh summary.

@@ -2,6 +2,8 @@
 name: skills-squash-message
 description: Use when preparing a squash commit message for a pull request in the Scenario skills repository.
 license: MIT
+metadata:
+  internal: true
 ---
 
 Generate a single squash commit message for the current PR.
