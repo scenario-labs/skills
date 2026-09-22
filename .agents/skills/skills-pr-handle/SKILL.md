@@ -2,6 +2,8 @@
 name: skills-pr-handle
 description: Use when explicitly asked to handle a pull request in the Scenario skills repository, including review comments and skill validation.
 license: MIT
+metadata:
+  internal: true
 argument-hint: <PR_number> [--plan-only]
 disable-model-invocation: true
 ---
