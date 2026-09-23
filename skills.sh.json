@@ -33,7 +33,8 @@
         "scenario-textures",
         "scenario-skyboxes",
         "scenario-3d",
-        "scenario-patina-retexture"
+        "scenario-patina-retexture",
+        "scenario-orbit-views"
       ]
     },
     {
