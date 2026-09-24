@@ -78,10 +78,10 @@ A completed job proves the model ran, not that the mouth moved. Before shipping,
 
 ## A whole song in one run
 
-`recommend` with `capability="audio2video"` and the user's words finds members that turn a finished song into a music video in one call. The one live at authoring time took 10 seconds to 6 minutes of `audio` and returned a video as long as the track, so:
+`recommend` with `capability="audio2video"` and the user's words finds members that turn a finished song into a music video in one call. The whole-song member live at authoring time took 10 seconds to 6 minutes of `audio` and returned a video as long as the track (the same ranking also lists segment-length members capped near 20 seconds), so:
 
 - **Trim first.** `audio` carries `cost_impact`, as does `resolution`: cut to the section that ships with `model_scenario-audio-cut`, then `dry_run` the real payload.
-- **Style reference only under the custom style.** A preset `style` ignores `styleImage`; set the custom value to use one. The character `image` is a separate, optional field.
+- **Style reference only under the custom style.** A preset `style` ignores `styleImage`; set the custom value to use one. The character `image` is a separate, optional field. It takes no prompt: `style`, `musicStyle`, and the reference images carry the direction.
 - **Lyrics become burned-in subtitles.** Leave `lyrics` empty when captions are added in assembly (`scenario-video-assembly`), or the two sets collide.
 
 Pick this lane for one pass over the whole track; beat-cut shots under per-shot direction are `scenario-seedance-music-video`. Launch with `wait=false` and `jobs_wait`, since the job scales with the song.
