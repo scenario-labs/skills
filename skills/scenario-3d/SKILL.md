@@ -41,7 +41,7 @@ Several image-to-3D families split texture from geometry, and each dial is one `
 - `delight` strips lighting and shadows baked into the reference image so the mesh lights correctly in the user's engine. It defaulted to on; turn it off only when the painted shading is the art style, as on a hand-painted prop.
 - The `pbr` flag's description said PBR on, its default, ignores the texture parameters. A texture setting the user asked for is honored only with `pbr: false` there, so read that description on the chosen member and say which one won.
 - Geometry and texture take separate seeds (`seed`, `textureSeed`): hold `seed` and the image fixed and vary `textureSeed` alone for texture variants on one shape.
-- `autoSize` scales the output to real-world meters for engine import.
+- `autoSize` scales the output to real-world meters and defaulted to off: set it to `true` for a real-scale engine import, or the mesh keeps its native size.
 
 ## Inspecting results
 
