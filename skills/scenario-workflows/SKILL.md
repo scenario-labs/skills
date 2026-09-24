@@ -14,15 +14,15 @@ Only `workflows_list`, `workflow_get` and `workflow_run` are listed by default; 
 
 ## Quick reference
 
-| Step                  | Call                               | Notes                          |
-| --------------------- | ---------------------------------- | ------------------------------ |
-| 1. List               | `workflows_list` `status="ready"`  | Always cap `limit`             |
-| 2. Read the contract  | the record's `inputs[]`            | `name` is the run key          |
-| 3. Price and validate | `workflow_run` with `dry_run=true` | Returns cost, creates no job   |
-| 4. Run                | `workflow_run` with `inputs`       | Returns a job                  |
-| 5. Wait               | `jobs_wait`                        | Re-call with `pending_job_ids` |
+| Step                  | Call                                              | Notes                          |
+| --------------------- | ------------------------------------------------- | ------------------------------ |
+| 1. List               | `workflows_list` `status="ready"`                 | Always cap `limit`             |
+| 2. Read the contract  | list `inputs[]`, get `workflow.inputs_definition` | `name` is the run key          |
+| 3. Price and validate | `workflow_run` with `dry_run=true`                | Returns cost, creates no job   |
+| 4. Run                | `workflow_run` with `inputs`                      | Returns a job                  |
+| 5. Wait               | `jobs_wait`                                       | Re-call with `pending_job_ids` |
 
-Ids are prefixed `wflow_`, not `workflow_` as tool-doc examples show; copy them from `workflows_list`. `search` with `target="workflows"` returned 403 at authoring time, with or without `public=true`.
+Ids are prefixed `wflow_`; copy them from `workflows_list` or `search`, never construct them. For a named app or a public template, call `search` with `target="workflows"`, a keyword `query`, `limit=3`, and your scope; add `public=true` for the public catalog. Workflows support keyword text and filters, not image or semantic search. To find ready apps, add the raw `filter: 'status = "ready"'` (not `filters.status`). Read hits from `workflows`, then call `workflow_get` on the chosen id and read the contract from `workflow.inputs_definition`: search summaries contain neither the run inputs nor the editable graph. Search uses `offset`, not `page_token`; heed any `_hint` on an empty page instead of repeating the same search.
 
 ## Cap every list call
 
