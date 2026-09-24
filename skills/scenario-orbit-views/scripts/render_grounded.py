@@ -271,4 +271,7 @@ def main(o):
 
 
 if __name__ == "__main__":
+    # Blender's own flags precede `--`, so without it there are no script arguments
+    if "--" not in sys.argv or sys.argv[-1] == "--":
+        raise SystemExit(__doc__)
     main(parse_args(sys.argv))

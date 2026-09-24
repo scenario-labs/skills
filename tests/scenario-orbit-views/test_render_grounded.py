@@ -1,5 +1,6 @@
 import math
 import pathlib
+import subprocess
 import sys
 import unittest
 
@@ -23,6 +24,13 @@ class ParseArgsTests(unittest.TestCase):
     def test_search_does_not_need_a_panorama(self):
         o = rg.parse_args(["--glb", "m.glb", "--out", "o", "--search"])
         self.assertTrue(o["search"])
+
+    def test_no_script_arguments_prints_usage(self):
+        script = str(SCRIPTS / "render_grounded.py")
+        for extra in ([], ["--"]):
+            run = subprocess.run([sys.executable, script, *extra], capture_output=True, text=True)
+            self.assertEqual(run.returncode, 1)
+            self.assertIn("Run with Blender", run.stderr)
 
     def test_missing_panorama_and_unknown_flag_fail(self):
         with self.assertRaises(SystemExit):
