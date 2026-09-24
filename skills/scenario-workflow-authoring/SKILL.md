@@ -43,6 +43,6 @@ A pipeline exported by Weavy, ComfyUI, or another node editor does not import: o
 - Expecting an `editor_info` update to change a live app without re-publishing.
 - Retrying a failed `workflow_create` with a second create instead of `workflow_update` on the id from the error.
 - Publishing with no pins: at least one `data.isInput` node listed in `inputKeys` and one `data.isOutput` node.
-- Adding optional prompt text through an `ifElse` into one shared `transformText`: the template reads every node it names whatever branch ran, so the text lands every time. One builder per branch, per the reference's `ifElse` section.
+- Making prompt text conditional with an `ifElse`: a shared builder adds the text on every run, and per-branch builders leave the workflow job hanging. Use one `transformText` with a CEL ternary, per the reference's `ifElse` section.
 - Double-quoted CEL literals: they evaluate but corrupt the canvas editor, single quotes only.
 - Sending `workflow_id` to `workflow_copy`: get, update, publish, run and delete take `workflow_id`, but copy takes `source_workflow_id`; the copy inherits everything verbatim and needs its own publish.

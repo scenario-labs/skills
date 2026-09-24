@@ -98,7 +98,7 @@ A model node's input handles derive from its model's input schema: handle name =
 - Variables are named `${nodeId}_${outputHandleName}`: text node `text1` with output handle `output` is `text1_output`. A variable only resolves when the corresponding edge exists; connect first, reference second.
 - String literals must be SINGLE-quoted. Double-quoted literals evaluate in CEL but corrupt the canvas editor's rendering of the expression, observed at authoring time.
 - Concatenate with `+`: `'A portrait of ' + trim(text1_output) + ' in the style of ' + text2_output`.
-- Custom functions: `trim(string)`, `slice(list, start, end)`. Standard CEL is available (`size`, `matches`, `startsWith`, `endsWith`, `contains`, `replace`, `split`, `substring`, `lowerAscii`, `upperAscii`, and the `has` / `all` / `exists` / `map` / `filter` macros).
+- Custom functions: `trim(string)`, `slice(list, start, end)`. Standard CEL is available (`size`, `matches`, `startsWith`, `endsWith`, `contains`, `replace`, `split`, `substring`, `lowerAscii`, `upperAscii`, and the `has` / `all` / `exists` / `map` / `filter` macros). The ternary `condition ? a : b` works, which is how a prompt varies with an input (see the `ifElse` section).
 - Never feed a `splitText` output (a list) into `transformText` (single text); route lists through `forEach` or `sliceAssets`.
 
 `groupItems.data.value` is also CEL, producing a list.
@@ -122,7 +122,7 @@ A model node's input handles derive from its model's input schema: handle name =
 - Operators: `isEmpty`, `isNotEmpty`, `contains`, `notContains`, `equals`, `notEquals`. Numeric comparators are not part of the authoring surface.
 - `value` is required for `contains` / `notContains` / `equals` / `notEquals` and must be omitted for `isEmpty` / `isNotEmpty`; `field` is required always.
 - Block at index i drives output handle `if(i+1)`; the `else` handle is implicit and always last. Never author an `else` block. At run time the first matching block wins.
-- A branch gates what is wired downstream of its own handle, not what a prompt template names. A `transformText` whose value references a text node (`text3_output`) reads that node's value on every run, whichever branch fired, so conditional prompt text never comes from one shared builder with the optional text wired in. Give each branch its own `transformText`, reached only through that branch's handle (a builder takes text inputs, so the branch feeds a text node that feeds the builder), with the optional text in one template and absent from the other: the builder behind the branch not taken never runs, while a builder reachable from both branches runs either way. More optional rules mean more branches and more builders, one per combination the user needs.
+- Conditional prompt text is a CEL ternary in one `transformText`, never an `ifElse`: `trim(text2_output) == 'Stormreach' ? text1_output + ', muted palette' : text1_output`, with both text nodes wired into the builder. Validated live at authoring time: each run's model received the right prompt and the workflow job completed. Both `ifElse` shapes failed: a shared builder with the optional text wired in reads every node its template names whichever branch fired, so the text lands every time; one builder per branch left the builder behind the branch not taken `pending` and the workflow job `in-progress` indefinitely, though the image was delivered.
 
 ## forEach loops
 
