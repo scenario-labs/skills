@@ -59,20 +59,20 @@ The webapp also persists a `modelInput` type (a generator setting exposed as its
 
 Common `data` fields on every node: `title` (display name), `isInput` / `isOutput` (workflow pin flags), `inputHandles` / `outputHandles` (arrays of `{id, name, label, type}`).
 
-| Type            | Data fields                                                                                                                                   |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text`          | `value` (the string)                                                                                                                          |
-| `asset`         | `type` (`image` \| `video` \| `audio` \| `3d`, note `3d` not `3d-model`), `value` (asset id, or array when `isMultiple: true`), `isRequired?` |
-| `model` / `llm` | `modelId`, `form` (scalar-only settings keyed by the model's input names, e.g. `{"guidance": 7.5}`; wired inputs like `prompt` never go here) |
-| `transformText` | `value` (a CEL expression, see below)                                                                                                         |
-| `splitText`     | `splitDelimiter` (default `,`)                                                                                                                |
-| `groupItems`    | `value` (a CEL list expression)                                                                                                               |
-| `sliceAssets`   | `from`, `count`: STRINGS, not numbers (`"0"`, `"-3"`; negative `from` counts from the end)                                                    |
-| `aspectRatio`   | `output` (exactly one of `21:9`, `16:9`, `3:2`, `4:3`, `5:4`, `1:1`, `4:5`, `3:4`, `2:3`, `9:16`, `9:21`), `quality`                          |
-| `ifElse`        | `conditionBlocks` (see below)                                                                                                                 |
-| `forEach`       | `isConcurrentRuns?` (parallel iterations; ignored on nested loops)                                                                            |
-| `forEachEnd`    | `parentNodeId` (the paired `forEach` node id)                                                                                                 |
-| `approval`      | `message` (prompt shown when paused; default "Continue ?")                                                                                    |
+| Type            | Data fields                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`          | `value` (the string)                                                                                                                                          |
+| `asset`         | `type` (`image` \| `video` \| `audio` \| `3d`, note `3d` not `3d-model`), `value` (asset id, or array when `isMultiple: true`), `isRequired?`                 |
+| `model` / `llm` | `modelId`, `form` (scalar-only settings keyed by the model's input names, e.g. `{"guidance": 7.5}`; wired inputs like `prompt` never go here)                 |
+| `transformText` | `value` (a CEL expression, see below); one input handle `<id>-source-input` (type `text`) that takes any number of edges, and one output `<id>-target-output` |
+| `splitText`     | `splitDelimiter` (default `,`)                                                                                                                                |
+| `groupItems`    | `value` (a CEL list expression)                                                                                                                               |
+| `sliceAssets`   | `from`, `count`: STRINGS, not numbers (`"0"`, `"-3"`; negative `from` counts from the end)                                                                    |
+| `aspectRatio`   | `output` (exactly one of `21:9`, `16:9`, `3:2`, `4:3`, `5:4`, `1:1`, `4:5`, `3:4`, `2:3`, `9:16`, `9:21`), `quality`                                          |
+| `ifElse`        | `conditionBlocks` (see below)                                                                                                                                 |
+| `forEach`       | `isConcurrentRuns?` (parallel iterations; ignored on nested loops)                                                                                            |
+| `forEachEnd`    | `parentNodeId` (the paired `forEach` node id)                                                                                                                 |
+| `approval`      | `message` (prompt shown when paused; default "Continue ?")                                                                                                    |
 
 Only `image` and `video` asset nodes support `isMultiple` with an array `value`; `audio` and `3d` asset nodes hold a single asset id, always.
 
@@ -82,7 +82,7 @@ A workflow-level input is a node flagged `data.isInput: true`, ordered by `edito
 
 `inputs_definition` entries mirror the pinned nodes:
 
-- Pinned `text` node: `{"type": "string", "name": "<nodeId>", "label", "description", "placeholder", "required": {"always": true|false}, "prompt": true|false, "default"}`.
+- Pinned `text` node: `{"type": "string", "name": "<nodeId>", "label", "description", "placeholder", "required": {"always": true|false}, "prompt": true|false, "default"}`. `prompt: true` only changes how the app displays the input (a text area with the prompt spark feature), never the wiring; `promptSpark` toggles the spark on its own.
 - Pinned `asset` node: `{"type": "file"}` or `"file_array"` when `isMultiple`, plus `"kind"` set to the asset `data.type`.
 
 The full input `type` set observed on live workflows: `string`, `integer` (typed as `number` in some layers), `boolean`, `file`, `file_array`, `string_array`, `model_array`, `number_array`, `inputs_array`. Array-typed inputs silently drop bare scalars at run time, so declare arrays only when the input truly takes a list.
@@ -98,7 +98,7 @@ A model node's input handles derive from its model's input schema: handle name =
 - Variables are named `${nodeId}_${outputHandleName}`: text node `text1` with output handle `output` is `text1_output`. A variable only resolves when the corresponding edge exists; connect first, reference second.
 - String literals must be SINGLE-quoted. Double-quoted literals evaluate in CEL but corrupt the canvas editor's rendering of the expression, observed at authoring time.
 - Concatenate with `+`: `'A portrait of ' + trim(text1_output) + ' in the style of ' + text2_output`.
-- Custom functions: `trim(string)`, `slice(list, start, end)`. Standard CEL is available (`size`, `matches`, `startsWith`, `endsWith`, `contains`, `replace`, `split`, `substring`, `lowerAscii`, `upperAscii`, and the `has` / `all` / `exists` / `map` / `filter` macros).
+- Custom functions: `trim(string)`, `slice(list, start, end)`. Standard CEL is available (`size`, `matches`, `startsWith`, `endsWith`, `contains`, `replace`, `split`, `substring`, `lowerAscii`, `upperAscii`, and the `has` / `all` / `exists` / `map` / `filter` macros). The ternary `condition ? a : b` works, which is how a prompt varies with an input (see the `ifElse` section).
 - Never feed a `splitText` output (a list) into `transformText` (single text); route lists through `forEach` or `sliceAssets`.
 
 `groupItems.data.value` is also CEL, producing a list.
@@ -122,6 +122,9 @@ A model node's input handles derive from its model's input schema: handle name =
 - Operators: `isEmpty`, `isNotEmpty`, `contains`, `notContains`, `equals`, `notEquals`. Numeric comparators are not part of the authoring surface.
 - `value` is required for `contains` / `notContains` / `equals` / `notEquals` and must be omitted for `isEmpty` / `isNotEmpty`; `field` is required always.
 - Block at index i drives output handle `if(i+1)`; the `else` handle is implicit and always last. Never author an `else` block. At run time the first matching block wins.
+- Gate a node by wiring a branch handle into that node's own `conditional` input: `source` the gated node, `sourceHandle: "<id>-source-conditional"` (label "Is Active", type `conditional`), `target` the `ifElse`, `targetHandle` `<ifElseId>-target-if1` (or `-else`). The `ifElse` reads its condition field through one edge into `<ifElseId>-source-input`. On the branch not taken, only that directly gated node is `skipped`. A node reading it through an ordinary edge is not gated: it stays `pending` and the workflow job never completes, though the other branch's image is delivered. So gate the node that does the work (the builder or the model), never a text node in front of it.
+- Merge branches by wiring each branch's output into the same input of one downstream node: publish compiles that into an input taking whichever branch ran (`ref: {"conditional": [...]}` in the flow). Validated live at authoring time: two gated `transformText` builders merged into one model's `prompt` gave the right prompt on each branch, and the job completed.
+- For prompt text that varies with an input, a CEL ternary in one `transformText` needs no `ifElse`: `trim(text2_output) == 'Stormreach' ? text1_output + ', muted palette' : text1_output`, with both text nodes wired into the builder's one input handle (two edges with `sourceHandle: "transform1-source-input"`, each naming its text node's output as `targetHandle`). Also validated live. What never works is one shared builder that names an optional text node behind a branch: the template reads every node it names whichever branch fired, so the text lands every time.
 
 ## forEach loops
 
@@ -229,7 +232,7 @@ This exact payload was validated live at authoring time with a real `modelId` su
 }
 ```
 
-After `workflow_create` returns the id: `workflow_publish`, then `workflow_run` with `dry_run: true` and `inputs: {"text1": "..."}` to price and validate, then run for real: the reply carries a job for `jobs_wait` (re-call with `pending_job_ids`), as after `model_run`.
+After `workflow_create` returns the id: `workflow_publish`, then `workflow_run` with `dry_run: true` and `inputs: {"text1": "..."}` to price and validate, then run for real: the reply carries a job for `jobs_wait` (re-call with `pending_job_ids`), as after `model_run`. To check what a run actually sent, read the workflow job's `metadata.flow` (in the run reply, or `job_get` with `verbose: true`): each node's `status` (`success`, `skipped`, `pending`), a transform node's `output` text, and a model node's child `jobId`, whose verbose record holds the prompt in `metadata.input.prompt`. The asset's `metadata.prompt` is not the text.
 
 ## Template cloning
 
