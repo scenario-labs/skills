@@ -115,6 +115,7 @@ Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engin
 | [scenario-skyboxes](skills/scenario-skyboxes/SKILL.md)                 | 360 equirectangular panoramas and skyboxes, seam-safe upscaling, engine export                                                                                  |
 | [scenario-3d](skills/scenario-3d/SKILL.md)                             | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download                                                |
 | [scenario-patina-retexture](skills/scenario-patina-retexture/SKILL.md) | PATINA PBR retexture of a finished mesh: material families, one map set per family, Blender apply with geometry untouched, matched before/after comparison film |
+| [scenario-orbit-views](skills/scenario-orbit-views/SKILL.md)           | New camera angles of one picture through a 3D intermediary: clay layouts in a grounded panorama, repaint per camera, matched transparent set                    |
 
 ### Video and audio
 
