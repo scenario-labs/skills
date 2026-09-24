@@ -76,6 +76,16 @@ Plan gating is common here: `recommend` flags such members on their ranked entry
 
 A completed job proves the model ran, not that the mouth moved. Before shipping, download the output and the source and compare frames at the same timestamps (sweep both into contact sheets locally, `ffmpeg -vf "fps=2"`, and read the mouth region): unchanged mouth pixels across the sweep mean the face was not found, and the same payload reproduces it, so change the framing or the lane rather than the seed. Listen as well: whether the input's own track survives is undocumented (Dubbing above).
 
+## A whole song in one run
+
+`recommend` with `capability="audio2video"` and the user's words finds members that turn a finished song into a music video in one call. The one live at authoring time took 10 seconds to 6 minutes of `audio` and returned a video as long as the track, so:
+
+- **Trim first.** `audio` carries `cost_impact`, as does `resolution`: cut to the section that ships with `model_scenario-audio-cut`, then `dry_run` the real payload.
+- **Style reference only under the custom style.** A preset `style` ignores `styleImage`; set the custom value to use one. The character `image` is a separate, optional field.
+- **Lyrics become burned-in subtitles.** Leave `lyrics` empty when captions are added in assembly (`scenario-video-assembly`), or the two sets collide.
+
+Pick this lane for one pass over the whole track; beat-cut shots under per-shot direction are `scenario-seedance-music-video`. Launch with `wait=false` and `jobs_wait`, since the job scales with the song.
+
 ## Common mistakes
 
 - Shipping a lipsync run on the strength of its completed status: the failure mode is a still mouth under the new track, so compare frames against the source first.
