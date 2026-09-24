@@ -1,6 +1,6 @@
 ---
 name: scenario-audio
-description: Use when generating or handling audio on Scenario via MCP. Triggers include music tracks, full-length songs with vocals written from lyrics, background scores, soundtracks, game sound effects, SFX, foley, ambience, looping audio, voiceover, narration, speech, TTS, text-to-speech, voice cloning, re-voicing a recording, scoring or adding sound to a video, transcription, or requests to create, wait on, play, or download audio files (MP3, WAV) with Scenario tools.
+description: Use when generating or handling audio on Scenario via MCP. Triggers include music tracks, full-length songs with vocals written from lyrics, background scores, soundtracks, game sound effects, SFX, foley, ambience, looping audio, voiceover, narration, speech, TTS, text-to-speech, dialogue, voice cloning, re-voicing a recording, scoring or adding sound to a video, transcription, or requests to create, wait on, play, or download audio files (MP3, WAV) with Scenario tools.
 license: MIT
 ---
 
@@ -49,6 +49,15 @@ Prompting tips:
 - Music: give genre, mood, tempo, and instrumentation. Short beds usually take a single prompt, with duration or looping in the schema.
 - Speech: keep the text field to the words to speak; voice, language, emotion, and pacing live in separate schema fields or inline tags.
 
+## Speech and dialogue
+
+Discover a voice member with `recommend` (`capability="txt2audio"`, the user's words, "two-person dialogue" when it is one), then read its text field's description in `model_schema_get`: that is where a member usually states its own delivery grammar.
+
+- **Tag syntax is per member, even within one family**: square brackets (`[whispers]`), angle brackets (`<sigh>`, `<short pause>`), parentheses (`(sighs)`), or wrapping pairs (`<whisper>text</whisper>`), and some read none. A tag in the wrong grammar can be spoken aloud, so copy the spelling from the text field's description; where it names none, from the member's catalog description or `recommend`'s notes, and with no source write no tags. A correctly spelled tag is a request, not a guarantee: two identical runs have disagreed on one, so have the user listen before a take is final and re-run a take whose tag was skipped.
+- **Two voices, one take.** A member with a multi-speaker array (up to 2 rows of a speaker label and a voice at authoring time) reads the text as turns, one `Name: line` per turn, each `Name` matching a row's label exactly; an unprefixed line continues the previous turn, and the single-voice field is ignored in that mode. Preset voice names say nothing about gender, age, or tone, so state which preset plays whom and let the user confirm before the paid run. A scene with more speakers is split into takes of at most two, delivered in order or laid over the picture per `scenario-video-assembly`.
+- **Text is capped and priced.** The text field carries a `max_length` (5000 characters on one member at authoring time), an overrun is a 400, and `cost_impact` marks it as the price driver: split a long script at turn boundaries and `dry_run` the first take.
+- **Pin the language** through the schema's language field when there is one, rather than naming it in the text.
+
 ## Songs with vocals
 
 A full-length song is not a longer music bed, and song schemas vary more than the rest of the lane, so `model_schema_get` decides the shape: a style prompt plus a separate lyric sheet, one prose prompt carrying both, or an ordered section array with per-section text and styles.
@@ -73,6 +82,7 @@ Making an existing track longer is its own `audio2audio` lane, not a longer text
 - Pasting raw asset URLs into chat: use `asset_display` to play audio.
 - Passing `format` to `asset_download` for audio: it converts image formats only, so omit it.
 - Putting voice direction inside TTS text ("say this angrily"): direction can end up spoken. Use the schema's emotion or voice fields.
+- Writing a dialogue as one voice reading both parts: on a multi-speaker member, fill the speaker rows and prefix every turn with its label, since with the rows empty the member reads everything in its single voice.
 - Pasting lyrics into the style field: the model then describes a song instead of singing one.
 - Answering "make it longer" with a repaint or a new text-to-music run: the first keeps the duration, the second loses the song; the extend lane above keeps the slices the user chose.
 - Putting `dry_run` or `wait` inside `parameters`: they are `model_run`'s own arguments, so a stray `dry_run` still charges and a stray `wait` blocks up to 180s.
