@@ -33,6 +33,16 @@ A realistic sequence for "make a 3D treasure chest prop":
 
 Multi-view models accept several images of one subject from different angles; the count and the ordering vary per model, so take both from `model_schema_get` (the first image is usually the front view).
 
+## Texture and lighting controls
+
+Several image-to-3D families split texture from geometry, and each dial is one `model_schema_get` away, so read them before promising a look. Authoring-time examples from the Tripo members:
+
+- `texture: false` returns a bare mesh with no texture and is a `cost_impact` field, the cheap path when the user will texture in a DCC. `textureQuality` (`fast`, `standard`, `detailed`, `extreme`) also moves the price, and a texture version picker, left empty, keeps the provider's default.
+- `delight` strips lighting and shadows baked into the reference image so the mesh lights correctly in the user's engine. It defaulted to on; turn it off only when the painted shading is the art style, as on a hand-painted prop. The export stays a lit material either way, so for no engine relighting at all the user sets an unlit shader on import.
+- The `pbr` flag's description said PBR on, its default, ignores the texture parameters. A texture setting the user asked for is honored only with `pbr: false` there, so read that description on the chosen member and say which one won.
+- Geometry and texture take separate seeds (`seed`, `textureSeed`): hold `seed` and the image fixed and vary `textureSeed` alone for texture variants on one shape.
+- `autoSize` scales the output to real-world meters and defaulted to off: set it to `true` for a real-scale engine import, or the mesh keeps its native size. The asset's `dimensions` still read the unit-normalized mesh (longest side 1.0) because the meters sit in the GLB's node scale, so `dimensions` is not proof it failed.
+
 ## Inspecting results
 
 `asset_display` renders 3D assets in an interactive viewer (GLB, FBX, VOX, OBJ) on hosts that support MCP Apps; other hosts get the `app_url` dashboard link. The viewer's capture button calls `capture_3d_view`, an app-only tool: it uploads the current camera view as a new image asset and posts the `asset_id` back into the conversation. Use that capture as a reference image for follow-up generations or similarity `search`. Never call `capture_3d_view` yourself; it requires PNG canvas data only the viewer has.
