@@ -4,7 +4,8 @@ The shadow comes from clay_<key>.png (render_grounded.py): semi-transparent pixe
 are shadow, opaque pixels are the clay body. The body is removed with a margin so no
 clay outline shows around the painted cutout, the shadow is softened and faded near
 the frame edge, and the cutout's edge pixels are defringed so background color does
-not travel with it.
+not travel with it. It then prints how much of the clay body the cutout covers, how
+much of the cutout lies outside it, and whether the frame corners are transparent.
 
   python3 studio_shadow.py clay_00.png cut_00.png out_00.png [--size 1024] [--strength 0.55]
 """
@@ -42,6 +43,19 @@ def shadow_alpha(clay, size, cut_alpha=None):
     return sh
 
 
+def cutout_check(clay, cut_alpha):
+    """(share of the clay body the cutout covers, share of the cutout outside the body, max corner alpha)."""
+    size = cut_alpha.shape[0]
+    a = np.asarray(clay.convert("RGBA").resize((size, size), Image.LANCZOS), dtype=np.float32)[..., 3] / 255
+    body = Image.fromarray(((a > 0.9) * 255).astype(np.uint8))
+    core = np.asarray(body.filter(ImageFilter.MinFilter(9))) > 0
+    halo = np.asarray(body.filter(ImageFilter.MaxFilter(25))) > 0
+    fg = cut_alpha > 0.5
+    k = max(1, size // 64)
+    corners = max(cut_alpha[:k, :k].max(), cut_alpha[:k, -k:].max(), cut_alpha[-k:, :k].max(), cut_alpha[-k:, -k:].max())
+    return float((fg & core).sum() / max(core.sum(), 1)), float((fg & ~halo).sum() / max(fg.sum(), 1)), float(corners)
+
+
 def studio_rgba(clay_path, cut_path, size=1024, strength=0.55, color=(34, 26, 18)):
     cut = defringe(Image.open(cut_path).convert("RGBA").resize((size, size), Image.LANCZOS))
     ca = np.asarray(cut, dtype=np.float32)[..., 3] / 255
@@ -64,7 +78,10 @@ def main(argv):
     size = int(argv[argv.index("--size") + 1]) if "--size" in argv else 1024
     strength = float(argv[argv.index("--strength") + 1]) if "--strength" in argv else 0.55
     studio_rgba(argv[0], argv[1], size, strength).save(argv[2])
-    print("wrote", argv[2])
+    cut = Image.open(argv[1]).convert("RGBA").resize((size, size), Image.LANCZOS)
+    covered, outside, corner = cutout_check(Image.open(argv[0]), np.asarray(cut, dtype=np.float32)[..., 3] / 255)
+    corners = "clear" if corner < 0.05 else "OPAQUE"
+    print(f"wrote {argv[2]}: covers {covered:.0%} of the clay body, {outside:.0%} outside it, corners {corners}")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,8 +7,10 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
-import _paths  # noqa: F401
-import match_view as mv
+SCRIPTS = Path(__file__).resolve().parents[2] / "skills" / "scenario-orbit-views" / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+
+import match_view as mv  # noqa: E402
 
 
 def silhouette(path, box, size=128, rgba=True):

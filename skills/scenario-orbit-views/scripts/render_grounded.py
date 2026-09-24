@@ -101,9 +101,19 @@ def camera_position(center, dist, az, el):
     return (x, y, z)
 
 
+def sun_azimuth(u, yaw=0.0):
+    """World azimuth (degrees, counter-clockwise from +X) of panorama column u (0..1) on the dome.
+
+    Cycles maps direction (cos p, sin p) to u = 0.5 - p / 2pi: the image centre faces +X and u
+    grows clockwise seen from above. The dome's mapping node turns every lookup by yaw.
+    """
+    a = math.radians(360.0 * (0.5 - u) - yaw)
+    return math.degrees(math.atan2(math.sin(a), math.cos(a)))
+
+
 def main(o):
     import bpy
-    from mathutils import Euler, Vector
+    from mathutils import Vector
 
     os.makedirs(o["out"], exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -187,10 +197,7 @@ def main(o):
                     lum = 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2]
                     if lum > best:
                         best, bu = lum, xx
-            phi = (bu / w - 0.5) * 2 * math.pi
-            d = Vector((-math.cos(phi), math.sin(phi), 0))
-            d.rotate(Euler((0, 0, -math.radians(yaw))))
-            sun_az = math.degrees(math.atan2(d.y, d.x))
+            sun_az = sun_azimuth(bu / w, yaw)
         sun = bpy.data.lights.new("Sun", "SUN")
         sun.energy = o["sun"]
         sun.angle = math.radians(12)
@@ -223,8 +230,8 @@ def main(o):
         for dv in prefs.devices:
             dv.use = True
         scene.cycles.device = "GPU"
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"GPU setup failed ({e}), rendering on CPU", file=sys.stderr)
     scene.cycles.samples = 8 if o["search"] else o["samples"]
     scene.cycles.use_denoising = True
     size = 256 if o["search"] else o["size"]

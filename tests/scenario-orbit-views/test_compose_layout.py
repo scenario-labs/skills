@@ -1,11 +1,14 @@
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from PIL import Image
 
-import _paths  # noqa: F401
-import compose_layout as cl
+SCRIPTS = Path(__file__).resolve().parents[2] / "skills" / "scenario-orbit-views" / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+
+import compose_layout as cl  # noqa: E402
 
 
 class ComposeTests(unittest.TestCase):

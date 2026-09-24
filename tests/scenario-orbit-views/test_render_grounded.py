@@ -1,8 +1,12 @@
 import math
+import pathlib
+import sys
 import unittest
 
-import _paths  # noqa: F401
-import render_grounded as rg
+SCRIPTS = pathlib.Path(__file__).resolve().parents[2] / "skills" / "scenario-orbit-views" / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+
+import render_grounded as rg  # noqa: E402
 
 
 class ParseArgsTests(unittest.TestCase):
@@ -61,6 +65,14 @@ class CameraTests(unittest.TestCase):
         self.assertAlmostEqual(x, 5)
         self.assertAlmostEqual(math.dist((x, y, z), c), 5)
         self.assertGreaterEqual(rg.camera_position(c, 5, 0, -89)[2], 0.05)
+
+    def test_sun_azimuth_follows_cycles_equirect(self):
+        # a Blender render put panorama column u=0.25 on +Y: the image centre faces +X
+        self.assertAlmostEqual(rg.sun_azimuth(0.5), 0.0)
+        self.assertAlmostEqual(rg.sun_azimuth(0.25), 90.0)
+        self.assertAlmostEqual(rg.sun_azimuth(0.75), -90.0)
+        self.assertAlmostEqual(abs(rg.sun_azimuth(0.0)), 180.0)
+        self.assertAlmostEqual(rg.sun_azimuth(0.25, yaw=90), 0.0)
 
 
 if __name__ == "__main__":
