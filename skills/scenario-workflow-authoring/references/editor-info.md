@@ -122,6 +122,7 @@ A model node's input handles derive from its model's input schema: handle name =
 - Operators: `isEmpty`, `isNotEmpty`, `contains`, `notContains`, `equals`, `notEquals`. Numeric comparators are not part of the authoring surface.
 - `value` is required for `contains` / `notContains` / `equals` / `notEquals` and must be omitted for `isEmpty` / `isNotEmpty`; `field` is required always.
 - Block at index i drives output handle `if(i+1)`; the `else` handle is implicit and always last. Never author an `else` block. At run time the first matching block wins.
+- A branch gates what is wired downstream of its own handle, not what a prompt template names. A `transformText` whose value references a text node (`text3_output`) reads that node's value on every run, whichever branch fired, so conditional prompt text never comes from one shared builder with the optional text wired in. Give each branch its own `transformText`, reached only through that branch's handle (a builder takes text inputs, so the branch feeds a text node that feeds the builder), with the optional text in one template and absent from the other: the builder behind the branch not taken never runs, while a builder reachable from both branches runs either way. More optional rules mean more branches and more builders, one per combination the user needs.
 
 ## forEach loops
 
