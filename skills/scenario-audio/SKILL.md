@@ -51,10 +51,10 @@ Prompting tips:
 
 ## Speech and dialogue
 
-Discover a voice member with `recommend` (`capability="txt2audio"`, the user's words, "two-person dialogue" when it is one), then read its text field's description in `model_schema_get`: that is where each member states its own delivery grammar.
+Discover a voice member with `recommend` (`capability="txt2audio"`, the user's words, "two-person dialogue" when it is one), then read its text field's description in `model_schema_get`: that is where a member usually states its own delivery grammar.
 
-- **Tag syntax is per member.** One family reads square-bracket tags (`[whispers]`), another angle-bracket ones (`<laugh>`, `<sigh>`, `<short pause>`), and some read none. A tag in the wrong grammar can be spoken aloud, so copy the spelling from the description.
-- **Two voices, one take.** A member with a multi-speaker array (up to 2 rows of a speaker label and a voice at authoring time) reads the text as turns, one `Name: line` per turn, each `Name` matching a row's label exactly; an unprefixed line continues the previous turn, and the single-voice field is ignored in that mode. A scene with more speakers is split into takes of at most two, delivered in order or laid over the picture per `scenario-video-assembly`.
+- **Tag syntax is per member, even within one family**: square brackets (`[whispers]`), angle brackets (`<sigh>`, `<short pause>`), parentheses (`(sighs)`), or wrapping pairs (`<whisper>text</whisper>`), and some read none. A tag in the wrong grammar can be spoken aloud, so copy the spelling from the text field's description; where it names none, from the member's catalog description or `recommend`'s notes, and with no source write no tags.
+- **Two voices, one take.** A member with a multi-speaker array (up to 2 rows of a speaker label and a voice at authoring time) reads the text as turns, one `Name: line` per turn, each `Name` matching a row's label exactly; an unprefixed line continues the previous turn, and the single-voice field is ignored in that mode. Preset voice names say nothing about gender, age, or tone, so state which preset plays whom and let the user confirm before the paid run. A scene with more speakers is split into takes of at most two, delivered in order or laid over the picture per `scenario-video-assembly`.
 - **Text is capped and priced.** The text field carries a `max_length` (5000 characters on one member at authoring time), an overrun is a 400, and `cost_impact` marks it as the price driver: split a long script at turn boundaries and `dry_run` the first take.
 - **Pin the language** through the schema's language field when there is one, rather than naming it in the text.
 
