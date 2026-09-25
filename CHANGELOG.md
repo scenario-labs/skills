@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.47.0](https://github.com/scenario-labs/skills/compare/skills-v0.46.0...skills-v0.47.0) (2026-09-25)
+
+
+### Features
+
+* **scenario-3d:** teach the texture and lighting controls on image-to-3D members ([#155](https://github.com/scenario-labs/skills/issues/155)) ([e12b710](https://github.com/scenario-labs/skills/commit/e12b71004aa7fdd4a41619335a0875f8a1ae42d1))
+* **scenario-audio:** teach two-speaker dialogue, per-member tag syntax, and text caps for speech ([#154](https://github.com/scenario-labs/skills/issues/154)) ([8b6abb9](https://github.com/scenario-labs/skills/commit/8b6abb98628d5c8c9ed717d6ca6f759181b0ef31))
+* **scenario-orbit-views:** add new camera angles through a 3D intermediary ([#151](https://github.com/scenario-labs/skills/issues/151)) ([21bccc3](https://github.com/scenario-labs/skills/commit/21bccc3b67b3311a080c3f2394c1932b71e592f3))
+* **scenario-video:** teach the whole-song music video lane ([#156](https://github.com/scenario-labs/skills/issues/156)) ([47f3101](https://github.com/scenario-labs/skills/commit/47f3101fa7e9a00997ea9b1914000d6489b23dd5))
+
+
+### Bug Fixes
+
+* **scenario-workflow-authoring:** teach ifElse gating and conditional prompt text ([#153](https://github.com/scenario-labs/skills/issues/153)) ([7c0355f](https://github.com/scenario-labs/skills/commit/7c0355fee219535e13d5cff6bc6012c53d7697fb))
+* **skills:** discover workflow templates through search ([#152](https://github.com/scenario-labs/skills/issues/152)) ([1bf9582](https://github.com/scenario-labs/skills/commit/1bf95822d5a0894dcaebe7c8259b893f5d370341))
+
 ## [0.46.0](https://github.com/scenario-labs/skills/compare/skills-v0.45.0...skills-v0.46.0) (2026-09-22)
 
 
