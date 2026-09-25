@@ -1,6 +1,6 @@
 ---
 name: scenario-video
-description: "Use when generating or editing video on Scenario via MCP: text-to-video, image-to-video (still animation, first/last frame anchors), motion prompting, lipsync and talking avatars, dubbing or translating a clip, video upscale to 4K, prompt-based editing, trim, split, concat, extend, reframe, resize, background removal, frame or audio extraction, waiting on long video jobs, or a clip rejected for exceeding a duration limit. Keywords: txt2video, img2video, video2video, I2V, T2V, V2V, localization."
+description: "Use when generating or editing video on Scenario via MCP: text-to-video, a music video from a song, image-to-video (still animation, frame anchors), motion prompting, lipsync and talking avatars, dubbing a clip, video upscale to 4K, prompt-based editing, trim, split, concat, extend, reframe, resize, background removal, frame or audio extraction, long video jobs, or a clip over a duration limit. Keywords: txt2video, img2video, video2video, audio2video, I2V, T2V, V2V, localization."
 license: MIT
 ---
 
@@ -14,14 +14,14 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 
 ## Quick reference
 
-| Step           | Tool                               | Notes                                                                                                                                                                                                     |
-| -------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Find a model   | `recommend` or `search`            | `recommend` with the need in the user's own words plus a `capability` from its enum (`img2video`, `video2video`; upscaling footage and syncing it to a track are both `video2video`); `search` for a name |
-| Inspect inputs | `model_schema_get`                 | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)                                                                                                            |
-| Upload source  | `upload_asset`                     | A local still or clip becomes an `asset_id`                                                                                                                                                               |
-| Generate       | `model_run`                        | `wait=false` for video; `dry_run=true` to estimate cost first                                                                                                                                             |
-| Wait           | `jobs_wait`                        | Re-call with the returned `pending_job_ids` until done; its ~180s timeout is not an error                                                                                                                 |
-| Review         | `asset_display` / `asset_download` | Display inline; `asset_download` returns the file URL, save it with `curl -L`                                                                                                                             |
+| Step           | Tool                               | Notes                                                                                                                                                                                                                               |
+| -------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Find a model   | `recommend` or `search`            | `recommend` with the need in the user's own words plus a `capability` from its enum (`img2video`, `video2video`, `audio2video` for a song; upscaling footage and syncing it to a track are both `video2video`); `search` for a name |
+| Inspect inputs | `model_schema_get`                 | Always before `model_run`; video schemas differ widely (duration, aspect ratio, frame anchors)                                                                                                                                      |
+| Upload source  | `upload_asset`                     | A local still or clip becomes an `asset_id`                                                                                                                                                                                         |
+| Generate       | `model_run`                        | `wait=false` for video; `dry_run=true` to estimate cost first                                                                                                                                                                       |
+| Wait           | `jobs_wait`                        | Re-call with the returned `pending_job_ids` until done; its ~180s timeout is not an error                                                                                                                                           |
+| Review         | `asset_display` / `asset_download` | Display inline; `asset_download` returns the file URL, save it with `curl -L`                                                                                                                                                       |
 
 ## Worked example: animate a key art still into a short ad clip
 
@@ -75,6 +75,16 @@ Preflight is free and decides the run. Sync members redraw pixels around the mou
 Plan gating is common here: `recommend` flags such members on their ranked entry with `requires_plan_upgrade: true` and names the plan in `required_plan` (unless its response says plan gating is `_degraded`), and running one anyway returns a 403 naming the model and the plan it needs, which no retry clears; pick an available member or surface the upgrade, per the `scenario` skill's plan row.
 
 A completed job proves the model ran, not that the mouth moved. Before shipping, download the output and the source and compare frames at the same timestamps (sweep both into contact sheets locally, `ffmpeg -vf "fps=2"`, and read the mouth region): unchanged mouth pixels across the sweep mean the face was not found, and the same payload reproduces it, so change the framing or the lane rather than the seed. Listen as well: whether the input's own track survives is undocumented (Dubbing above).
+
+## A whole song in one run
+
+`recommend` with `capability="audio2video"` and the user's words finds members that turn a finished song into a music video in one call. The whole-song member live at authoring time took 10 seconds to 6 minutes of `audio` and returned a video as long as the track (the same ranking also lists segment-length members capped near 20 seconds), so:
+
+- **Trim first.** `audio` carries `cost_impact`, as does `resolution`: cut to the section that ships with `model_scenario-audio-cut`, then `dry_run` the real payload.
+- **Style reference only under the custom style.** A preset `style` ignores `styleImage`; set the custom value to use one. The character `image` is a separate, optional field. It takes no prompt: `style`, `musicStyle`, and the reference images carry the direction.
+- **Lyrics become burned-in subtitles.** Leave `lyrics` empty when captions are added in assembly (`scenario-video-assembly`), or the two sets collide.
+
+Pick this lane for one pass over the whole track; beat-cut shots under per-shot direction are `scenario-seedance-music-video`. Launch with `wait=false` and `jobs_wait`, since the job scales with the song.
 
 ## Common mistakes
 
