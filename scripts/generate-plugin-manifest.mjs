@@ -5,7 +5,8 @@
 //   entries in .claude-plugin/marketplace.json and never reads skills.sh.json,
 //   which only drives the repo page on skills.sh
 // - each grouping becomes one plugin entry (title lowercased and hyphenated as
-//   the plugin name, same description, one ./skills/<name> path per skill),
+//   the plugin name, same description, one path per skill, nested for the
+//   expert tools under skills/<category>/<family>/),
 //   which also makes the repo installable as a Claude Code plugin marketplace,
 //   one plugin per grouping
 // - plugin names carry a two-digit position prefix (01.-getting-started,
@@ -21,6 +22,7 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { listSkills } from "./lib/skills.mjs";
 
 process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
 
@@ -42,6 +44,10 @@ if (!Array.isArray(config.groupings) || config.groupings.length === 0) {
     "skills.sh.json: groupings must be a non-empty array (see pnpm groupings)",
   );
 }
+
+const skillDirOf = new Map(
+  listSkills().map((skill) => [skill.name, skill.dir]),
+);
 
 const pluginNameOf = (title) =>
   title
@@ -77,7 +83,14 @@ const plugins = config.groupings.map((group, index) => {
   if (group.description) plugin.description = group.description;
   plugin.source = "./";
   plugin.strict = false;
-  plugin.skills = group.skills.map((skill) => `./skills/${skill}`);
+  plugin.skills = group.skills.map((skill) => {
+    if (!skillDirOf.has(skill)) {
+      bail(
+        `skills.sh.json: "${skill}" in grouping "${title}" has no skill directory (see pnpm groupings)`,
+      );
+    }
+    return `./${skillDirOf.get(skill)}`;
+  });
   return plugin;
 });
 
@@ -86,7 +99,7 @@ const manifest = {
   owner: { name: "Scenario", url: "https://scenario.com" },
   metadata: {
     description:
-      "Agent Skills for creating production-ready images, video, audio, 3D, and custom models with Scenario",
+      "Agent Skills for creating production-ready images, video, audio, 3D, and custom models with Scenario, plus expert tools for DCC software and game engines",
   },
   plugins,
 };

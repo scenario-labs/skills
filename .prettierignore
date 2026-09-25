@@ -14,5 +14,9 @@ CHANGELOG.md
 .agents/skills/skill-creator/
 .agents/skills/skill-development/
 
+# Unity project files the Unity expert tools copy into a project (a WebGL
+# template with {{{ }}} tags, a .jslib plugin), kept as Unity reads them
+skills/game-engines/unity/*/scripts/
+
 # Contributor Covenant 2.1, kept byte-identical to its published source
 CODE_OF_CONDUCT.md

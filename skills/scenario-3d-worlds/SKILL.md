@@ -36,7 +36,7 @@ The three Marble tiers (1.0 Draft, 1.1, 1.1 Plus) take identical inputs, and the
 
 Image to Skybox is an image model, not a 3D one: it expands one photo of a place into a 2:1 equirectangular panorama (`backend` trades `full` fidelity against `qwen` speed and cost). Its output asset id goes to Skybox to Splat as `panorama`. There, the three trajectory toggles (`applyNavTraj`, `applyUpRoute`, `applyReconIteration`, default true) drive cost and time; `maxSteps` sharpens marginally and materially moves neither. The splat stage ran close to an hour at median at authoring time: keep re-calling `jobs_wait` with `pending_job_ids`; a timeout is not a failure and never justifies a second `model_run`. Multi-view to Splat is the opposite, fast and cheap: best when the camera moved through a static scene with parallax.
 
-## Worked example: greybox a level from a concept image
+## Worked example: graybox a level from a concept image
 
 1. `search` with `target="models"`, `query="marble world"`, `public=true`. Tiers appear side by side, e.g. `model_worldlabs-marble-1-0-draft` (a live hit at authoring time: re-discover each session).
 2. `model_schema_get` with the Draft id: fields, caps, and defaults before anything else.

@@ -39,7 +39,7 @@ Resolve conflicts preserving the intent of both sides. If intents genuinely conf
 
 ## 3. Audit the skill diff for discovery misuse
 
-`search` is a real tool with legitimate uses, so no mechanical check can police discovery without drowning in false positives; this step is the judgement pass. Diff the skill content the PR touches:
+`search` is a real tool with legitimate uses, so no mechanical check can police discovery without drowning in false positives; this step is the judgment pass. Diff the skill content the PR touches:
 
 ```bash
 git diff "origin/$BASE"...HEAD -- skills/

@@ -6,14 +6,16 @@
 //   same order, with the same title and description, and a table whose rows
 //   are exactly the grouping's skills in the same order, so a grouping edit
 //   in skills.sh.json cannot leave the README telling a different story
-// - every skill directory has exactly one row linking skills/<name>/SKILL.md,
-//   so a new skill cannot ship without its human-facing index entry
+// - every skill directory has exactly one row linking its SKILL.md
+//   (skills/<name>/SKILL.md, or the nested path of an expert tool), so a new
+//   skill cannot ship without its human-facing index entry
 // - every row points at an existing skill directory with a matching label,
 //   so renames and removals cannot leave stale rows behind
 // - every row carries a non-empty "Use it for" description
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { listSkills } from "./lib/skills.mjs";
 
 process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
 
@@ -30,14 +32,13 @@ try {
   bail(`README.md: cannot read (${error.message})`);
 }
 
-let skillDirs;
+let skills;
 try {
-  skillDirs = readdirSync("skills", { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-    .map((entry) => entry.name);
+  skills = listSkills();
 } catch (error) {
   bail(`skills/: cannot list skill directories (${error.message})`);
 }
+const dirOf = new Map(skills.map((skill) => [skill.name, skill.dir]));
 
 // Grouping contents (titles, descriptions, membership) are validated by
 // check-groupings.mjs; here the file is only the reference the README must
@@ -158,9 +159,9 @@ for (const row of rows) {
     continue;
   }
   const [, label, link, description] = match;
-  if (link !== `skills/${label}/SKILL.md`) {
+  if (dirOf.has(label) && link !== `${dirOf.get(label)}/SKILL.md`) {
     errors.push(
-      `README.md: row "${label}" links ${link}, expected skills/${label}/SKILL.md`,
+      `README.md: row "${label}" links ${link}, expected ${dirOf.get(label)}/SKILL.md`,
     );
   }
   if (rowFor.has(label)) {
@@ -168,9 +169,9 @@ for (const row of rows) {
   } else {
     rowFor.set(label, description.trim());
   }
-  if (!skillDirs.includes(label)) {
+  if (!dirOf.has(label)) {
     errors.push(
-      `README.md: row "${label}" has no matching skills/${label}/ directory (stale row?)`,
+      `README.md: row "${label}" has no matching skill directory under skills/ (stale row?)`,
     );
   }
   if (description.trim() === "") {
@@ -178,10 +179,10 @@ for (const row of rows) {
   }
 }
 
-for (const dir of skillDirs) {
-  if (!rowFor.has(dir)) {
+for (const { name, dir } of skills) {
+  if (!rowFor.has(name)) {
     errors.push(
-      `skills/${dir}: missing from the README.md Skills table (add a "| [${dir}](skills/${dir}/SKILL.md) | ... |" row)`,
+      `${dir}: missing from the README.md Skills table (add a "| [${name}](${dir}/SKILL.md) | ... |" row)`,
     );
   }
 }
@@ -191,5 +192,5 @@ if (errors.length > 0) {
   process.exit(1);
 }
 console.log(
-  `README.md Skills section mirrors skills.sh.json (${groupings.length} groups) and covers all ${skillDirs.length} skills with no stale or duplicate rows`,
+  `README.md Skills section mirrors skills.sh.json (${groupings.length} groups) and covers all ${skills.length} skills with no stale or duplicate rows`,
 );

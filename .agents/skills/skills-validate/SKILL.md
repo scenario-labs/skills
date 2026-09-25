@@ -16,7 +16,7 @@ Live runs spend Scenario credits. Keep every generation the smallest one that st
 
 ## 1. Review the objective
 
-Read `skills/<name>/SKILL.md` and every file it links. If the name matches no directory under `skills/`, list the close ones and stop.
+Read the skill's `SKILL.md` and every file it links; `node scripts/lib/skills.mjs --dir <name>` prints its folder, nested under `skills/dcc/` or `skills/game-engines/` for an expert tool. If no skill has that name, list the close ones and stop.
 
 State, in your own words: the objective (one sentence), the triggering conditions the `description` claims, and the three to six non-obvious facts the skill exists to teach, the ones an agent would otherwise guess wrong (upload flow, `jobs_wait` re-calls, `runs_as` wiring, dry runs, launch semantics). Those facts are the traps the run has to spring.
 
@@ -36,11 +36,11 @@ Build a run directory outside the repository and install the skill under test in
 SKILL="<name>"
 RUN=$(mktemp -d "${TMPDIR:-/tmp}/skill-validate-$SKILL-XXXXXX")
 mkdir -p "$RUN/.claude/skills" "$RUN/assets"
-cp -R "skills/$SKILL" skills/scenario "$RUN/.claude/skills/"
+cp -R "$(node scripts/lib/skills.mjs --dir "$SKILL")" skills/scenario "$RUN/.claude/skills/"
 awk 'f; /^---$/ { if (++c == 2) f = 1 }' .claude/agents/skill-tester.md >"$RUN/contract.md"
 ```
 
-Copy `scenario` alongside every other skill: real installs ship both. Ask which team and project the run should use before spending anything: every generation and upload lands in that scope, and the tester must never pick one (`teams_list` and `projects_list` enumerate the choices). Write the task from step 2 to `$RUN/task.md`, including the budget, the success criteria, the run directory path, and the team and project.
+Copy `scenario` alongside every other skill: real installs ship both. For an expert tool, copy its whole family folder's skills too, since the specialists import the lead skill's `scripts/`. Ask which team and project the run should use before spending anything: every generation and upload lands in that scope, and the tester must never pick one (`teams_list` and `projects_list` enumerate the choices). Write the task from step 2 to `$RUN/task.md`, including the budget, the success criteria, the run directory path, and the team and project.
 
 Then pick the strongest isolation available. If the Claude Code CLI is installed, run `cd "$RUN" && claude mcp list`; otherwise use the subagent route below.
 
@@ -115,7 +115,7 @@ Objective met: yes/no. <one sentence on what the agent produced>
 
 ### Defects
 
-1. `skills/<name>/SKILL.md:<line>` <what the agent got wrong> -> <the sentence to add or change>
+1. `<skill folder>/SKILL.md:<line>` <what the agent got wrong> -> <the sentence to add or change>
 
 ### Re-run
 

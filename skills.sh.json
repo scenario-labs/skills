@@ -141,6 +141,93 @@
         "scenario-sparc3d",
         "scenario-3d-worlds"
       ]
+    },
+    {
+      "title": "Expert tools: ZBrush",
+      "description": "DCC software. A lead and eight specialists that drive Maxon ZBrush 2026 through its agent bridge: sculpting, characters and creatures, stylized work, hard surface, polypaint and renders, posing and 3D print, retopology and export, automation. The bridge was proven live; full live tests of every skill are still pending.",
+      "skills": [
+        "scenario-zbrush-expert",
+        "scenario-zbrush-automation",
+        "scenario-zbrush-character-creature",
+        "scenario-zbrush-hard-surface",
+        "scenario-zbrush-paint-render",
+        "scenario-zbrush-pose-print",
+        "scenario-zbrush-retopology-export",
+        "scenario-zbrush-sculpting",
+        "scenario-zbrush-stylized"
+      ]
+    },
+    {
+      "title": "Expert tools: Blender",
+      "description": "DCC software. A lead and twelve specialists that drive Blender 5.2 through Python, headless or in a live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs, Geometry Nodes, lighting, Grease Pencil, hard surface. Test suites pass headless on Blender 5.2.1.",
+      "skills": [
+        "scenario-blender-expert",
+        "scenario-blender-animation",
+        "scenario-blender-geometry-nodes",
+        "scenario-blender-grease-pencil",
+        "scenario-blender-hair",
+        "scenario-blender-hard-surface",
+        "scenario-blender-lighting-rendering",
+        "scenario-blender-previs-storyboard",
+        "scenario-blender-retopology",
+        "scenario-blender-rigging",
+        "scenario-blender-sculpting",
+        "scenario-blender-texturing-shading",
+        "scenario-blender-uv-baking"
+      ]
+    },
+    {
+      "title": "Expert tools: Maya",
+      "description": "DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through Python, batch or live: modeling, retopology and UVs, rigging, skinning, animation, groom, FX, look dev, Arnold lighting and rendering, pipeline scripting. Tested offline only; not yet run inside Maya.",
+      "skills": [
+        "scenario-maya-expert",
+        "scenario-maya-animation",
+        "scenario-maya-deformation",
+        "scenario-maya-fx",
+        "scenario-maya-groom",
+        "scenario-maya-lighting-rendering",
+        "scenario-maya-lookdev",
+        "scenario-maya-modeling",
+        "scenario-maya-pipeline-scripting",
+        "scenario-maya-retopology-uv",
+        "scenario-maya-rigging"
+      ]
+    },
+    {
+      "title": "Expert tools: Unreal Engine",
+      "description": "Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS through Editor Python, headless jobs, and Epic's Unreal MCP server: world building, materials, lighting and rendering, gameplay, animation, cinematics, VFX, pipeline automation, performance. Tested offline only; not yet run inside the engine.",
+      "skills": [
+        "scenario-unreal-expert",
+        "scenario-unreal-animation",
+        "scenario-unreal-cinematics",
+        "scenario-unreal-gameplay",
+        "scenario-unreal-lighting-rendering",
+        "scenario-unreal-materials",
+        "scenario-unreal-performance",
+        "scenario-unreal-pipeline-automation",
+        "scenario-unreal-vfx",
+        "scenario-unreal-world-building"
+      ]
+    },
+    {
+      "title": "Expert tools: Unity",
+      "description": "Game engine. A lead and thirteen specialists that drive Unity 6.3 LTS on macOS through batch mode, a live editor, and command-line builds: architecture, gameplay, 2D, animation, UI, VFX, shaders, rendering and lighting, world building, performance, mobile, Web, pipeline automation. Every procedure was run live in Unity 6.3.",
+      "skills": [
+        "scenario-unity-expert",
+        "scenario-unity-2d",
+        "scenario-unity-animation",
+        "scenario-unity-architecture",
+        "scenario-unity-gameplay",
+        "scenario-unity-mobile",
+        "scenario-unity-performance",
+        "scenario-unity-pipeline-automation",
+        "scenario-unity-rendering-lighting",
+        "scenario-unity-shaders",
+        "scenario-unity-ui",
+        "scenario-unity-vfx",
+        "scenario-unity-web",
+        "scenario-unity-world-building"
+      ]
     }
   ]
 }
