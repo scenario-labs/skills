@@ -36,10 +36,7 @@ Skills follow the [Agent Skills](https://agentskills.io) format.
 ## Install
 
 ```bash
-# Every skill, no picker (the expert tools included)
-npx skills add scenario-labs/skills --skill "*"
-
-# Pick from the installer menu (it opens with nothing preselected)
+# Pick from the installer menu, grouped by topic (it opens with nothing preselected: select before pressing enter)
 npx skills add scenario-labs/skills
 
 # A single skill
