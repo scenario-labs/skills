@@ -917,7 +917,6 @@ def run_script_job(job_path, result_path, timeout=1800, scene=None, startup_time
         log.flush()
         proc = popen(cmd, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                      start_new_session=True, env=env)
-        state, res = "running", None
         while True:
             res = read_json(result_path)
             if res and res.get("finished"):

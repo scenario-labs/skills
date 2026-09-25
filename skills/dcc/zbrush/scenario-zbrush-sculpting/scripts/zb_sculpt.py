@@ -587,7 +587,6 @@ def strokes_along(path_px, width_px, diam_px, count=3, spread=0.4, spacing=None,
     for o in offs:
         o = max(-lim, min(lim, o))
         pts = []
-        s = 0.0
         for j, p in enumerate(base):
             s = cum[-1] * j / max(1, len(base) - 1)
             t = _tangent_at(path_px, cum, s, max(1.0, diam_px / 2.0))
