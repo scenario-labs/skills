@@ -6,11 +6,15 @@
 //   falls back to the ungrouped default list when the file is invalid)
 // - every skill directory is listed in a grouping, so a new skill cannot
 //   land in the automatic "Other skills" section unnoticed
+// - expert-tool groupings hold expert tools only and come after every core
+//   grouping, so the expert tools stay at the bottom of skills.sh and the
+//   installer picker
 // - every listed skill exists and is listed only once, so renames and
 //   removals cannot leave stale entries behind
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { listSkills } from "./lib/skills.mjs";
 
 process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
 
@@ -58,17 +62,17 @@ if (config.groupings.length > 50) {
   errors.push("skills.sh.json: at most 50 groupings are allowed");
 }
 
-let skillDirs;
+let skills;
 try {
-  skillDirs = readdirSync("skills", { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-    .map((entry) => entry.name);
+  skills = listSkills();
 } catch (error) {
   bail(`skills/: cannot list skill directories (${error.message})`);
 }
+const skillByName = new Map(skills.map((skill) => [skill.name, skill]));
 
 const allowedGroupKeys = ["title", "description", "skills"];
 const listedIn = new Map();
+let firstExpertGroup = null;
 
 config.groupings.forEach((group, index) => {
   if (group === null || typeof group !== "object" || Array.isArray(group)) {
@@ -130,18 +134,33 @@ config.groupings.forEach((group, index) => {
     } else {
       listedIn.set(skill, label);
     }
-    if (!skillDirs.includes(skill)) {
+    if (!skillByName.has(skill)) {
       errors.push(
-        `skills.sh.json: "${skill}" in ${label} has no matching skills/${skill}/ directory`,
+        `skills.sh.json: "${skill}" in ${label} has no matching skill directory under skills/`,
       );
     }
   }
+
+  const known = group.skills.filter((skill) => skillByName.has(skill));
+  const experts = known.filter((skill) => skillByName.get(skill).expert);
+  if (experts.length > 0 && experts.length < known.length) {
+    errors.push(
+      `skills.sh.json: ${label} mixes expert tools (${experts.join(", ")}) with core skills; give the expert tools their own grouping`,
+    );
+  }
+  if (experts.length > 0 && firstExpertGroup === null) {
+    firstExpertGroup = label;
+  } else if (experts.length === 0 && firstExpertGroup !== null) {
+    errors.push(
+      `skills.sh.json: ${label} is a core grouping after the first expert-tool grouping (${firstExpertGroup}); expert tools stay at the bottom`,
+    );
+  }
 });
 
-for (const dir of skillDirs) {
-  if (!listedIn.has(dir)) {
+for (const skill of skills) {
+  if (!listedIn.has(skill.name)) {
     errors.push(
-      `skills/${dir}: missing from every skills.sh.json grouping (it would render under "Other skills" on skills.sh)`,
+      `${skill.dir}: missing from every skills.sh.json grouping (it would render under "Other skills" on skills.sh)`,
     );
   }
 }
@@ -151,5 +170,5 @@ if (errors.length > 0) {
   process.exit(1);
 }
 console.log(
-  `skills.sh.json groupings cover all ${skillDirs.length} skills with no stale or duplicate entries`,
+  `skills.sh.json groupings cover all ${skills.length} skills with no stale or duplicate entries`,
 );

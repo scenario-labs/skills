@@ -5,7 +5,7 @@
     "url": "https://scenario.com"
   },
   "metadata": {
-    "description": "Agent Skills for creating production-ready images, video, audio, 3D, and custom models with Scenario"
+    "description": "Agent Skills for creating production-ready images, video, audio, 3D, and custom models with Scenario, plus expert tools for DCC software and game engines"
   },
   "plugins": [
     {
@@ -191,6 +191,103 @@
         "./skills/scenario-rodin",
         "./skills/scenario-sparc3d",
         "./skills/scenario-3d-worlds"
+      ]
+    },
+    {
+      "name": "16.-expert-tools-zbrush",
+      "description": "DCC software. A lead and eight specialists that drive Maxon ZBrush 2026 through its agent bridge: sculpting, characters and creatures, stylized work, hard surface, polypaint and renders, posing and 3D print, retopology and export, automation. The bridge was proven live; full live tests of every skill are still pending.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/dcc/zbrush/scenario-zbrush-expert",
+        "./skills/dcc/zbrush/scenario-zbrush-automation",
+        "./skills/dcc/zbrush/scenario-zbrush-character-creature",
+        "./skills/dcc/zbrush/scenario-zbrush-hard-surface",
+        "./skills/dcc/zbrush/scenario-zbrush-paint-render",
+        "./skills/dcc/zbrush/scenario-zbrush-pose-print",
+        "./skills/dcc/zbrush/scenario-zbrush-retopology-export",
+        "./skills/dcc/zbrush/scenario-zbrush-sculpting",
+        "./skills/dcc/zbrush/scenario-zbrush-stylized"
+      ]
+    },
+    {
+      "name": "17.-expert-tools-blender",
+      "description": "DCC software. A lead and twelve specialists that drive Blender 5.2 through Python, headless or in a live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs, Geometry Nodes, lighting, Grease Pencil, hard surface. Test suites pass headless on Blender 5.2.1.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/dcc/blender/scenario-blender-expert",
+        "./skills/dcc/blender/scenario-blender-animation",
+        "./skills/dcc/blender/scenario-blender-geometry-nodes",
+        "./skills/dcc/blender/scenario-blender-grease-pencil",
+        "./skills/dcc/blender/scenario-blender-hair",
+        "./skills/dcc/blender/scenario-blender-hard-surface",
+        "./skills/dcc/blender/scenario-blender-lighting-rendering",
+        "./skills/dcc/blender/scenario-blender-previs-storyboard",
+        "./skills/dcc/blender/scenario-blender-retopology",
+        "./skills/dcc/blender/scenario-blender-rigging",
+        "./skills/dcc/blender/scenario-blender-sculpting",
+        "./skills/dcc/blender/scenario-blender-texturing-shading",
+        "./skills/dcc/blender/scenario-blender-uv-baking"
+      ]
+    },
+    {
+      "name": "18.-expert-tools-maya",
+      "description": "DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through Python, batch or live: modeling, retopology and UVs, rigging, skinning, animation, groom, FX, look dev, Arnold lighting and rendering, pipeline scripting. Tested offline only; not yet run inside Maya.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/dcc/maya/scenario-maya-expert",
+        "./skills/dcc/maya/scenario-maya-animation",
+        "./skills/dcc/maya/scenario-maya-deformation",
+        "./skills/dcc/maya/scenario-maya-fx",
+        "./skills/dcc/maya/scenario-maya-groom",
+        "./skills/dcc/maya/scenario-maya-lighting-rendering",
+        "./skills/dcc/maya/scenario-maya-lookdev",
+        "./skills/dcc/maya/scenario-maya-modeling",
+        "./skills/dcc/maya/scenario-maya-pipeline-scripting",
+        "./skills/dcc/maya/scenario-maya-retopology-uv",
+        "./skills/dcc/maya/scenario-maya-rigging"
+      ]
+    },
+    {
+      "name": "19.-expert-tools-unreal-engine",
+      "description": "Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS through Editor Python, headless jobs, and Epic's Unreal MCP server: world building, materials, lighting and rendering, gameplay, animation, cinematics, VFX, pipeline automation, performance. Tested offline only; not yet run inside the engine.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/game-engines/unreal/scenario-unreal-expert",
+        "./skills/game-engines/unreal/scenario-unreal-animation",
+        "./skills/game-engines/unreal/scenario-unreal-cinematics",
+        "./skills/game-engines/unreal/scenario-unreal-gameplay",
+        "./skills/game-engines/unreal/scenario-unreal-lighting-rendering",
+        "./skills/game-engines/unreal/scenario-unreal-materials",
+        "./skills/game-engines/unreal/scenario-unreal-performance",
+        "./skills/game-engines/unreal/scenario-unreal-pipeline-automation",
+        "./skills/game-engines/unreal/scenario-unreal-vfx",
+        "./skills/game-engines/unreal/scenario-unreal-world-building"
+      ]
+    },
+    {
+      "name": "20.-expert-tools-unity",
+      "description": "Game engine. A lead and thirteen specialists that drive Unity 6.3 LTS on macOS through batch mode, a live editor, and command-line builds: architecture, gameplay, 2D, animation, UI, VFX, shaders, rendering and lighting, world building, performance, mobile, Web, pipeline automation. Every procedure was run live in Unity 6.3.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/game-engines/unity/scenario-unity-expert",
+        "./skills/game-engines/unity/scenario-unity-2d",
+        "./skills/game-engines/unity/scenario-unity-animation",
+        "./skills/game-engines/unity/scenario-unity-architecture",
+        "./skills/game-engines/unity/scenario-unity-gameplay",
+        "./skills/game-engines/unity/scenario-unity-mobile",
+        "./skills/game-engines/unity/scenario-unity-performance",
+        "./skills/game-engines/unity/scenario-unity-pipeline-automation",
+        "./skills/game-engines/unity/scenario-unity-rendering-lighting",
+        "./skills/game-engines/unity/scenario-unity-shaders",
+        "./skills/game-engines/unity/scenario-unity-ui",
+        "./skills/game-engines/unity/scenario-unity-vfx",
+        "./skills/game-engines/unity/scenario-unity-web",
+        "./skills/game-engines/unity/scenario-unity-world-building"
       ]
     }
   ]

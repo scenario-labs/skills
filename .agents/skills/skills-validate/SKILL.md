@@ -16,13 +16,13 @@ Live runs spend Scenario credits. Keep every generation the smallest one that st
 
 ## 1. Review the objective
 
-Read `skills/<name>/SKILL.md` and every file it links. If the name matches no directory under `skills/`, list the close ones and stop.
+Read the skill's `SKILL.md` and every file it links; `node scripts/lib/skills.mjs --dir <name>` prints its folder, nested under `skills/dcc/` or `skills/game-engines/` for an expert tool. If no skill has that name, list the close ones and stop.
 
 State, in your own words: the objective (one sentence), the triggering conditions the `description` claims, and the three to six non-obvious facts the skill exists to teach, the ones an agent would otherwise guess wrong (upload flow, `jobs_wait` re-calls, `runs_as` wiring, dry runs, launch semantics). Those facts are the traps the run has to spring.
 
 ## 2. Write a concrete use case
 
-One realistic task, in the words a user would actually use, that forces at least three of those traps and cannot be satisfied by generic MCP intuition. Give it explicit success criteria (which artifacts must exist, and what has to be true of them) and a hard budget (how many generations, which of them may be `dry_run`). Print the task and the criteria before spending anything. With `--task`, use the supplied task and still write the criteria.
+One realistic task, in the words a user would actually use, that forces at least three of those traps and cannot be satisfied by generic MCP intuition (for an expert tool, generic knowledge of the application; its budget counts application runs, not generations). Give it explicit success criteria (which artifacts must exist, and what has to be true of them) and a hard budget (how many generations, which of them may be `dry_run`). Print the task and the criteria before spending anything. With `--task`, use the supplied task and still write the criteria.
 
 ## 3. Run the mechanical checks first
 
@@ -34,13 +34,18 @@ Build a run directory outside the repository and install the skill under test in
 
 ```bash
 SKILL="<name>"
+DIR=$(node scripts/lib/skills.mjs --dir "$SKILL")
 RUN=$(mktemp -d "${TMPDIR:-/tmp}/skill-validate-$SKILL-XXXXXX")
 mkdir -p "$RUN/.claude/skills" "$RUN/assets"
-cp -R "skills/$SKILL" skills/scenario "$RUN/.claude/skills/"
+cp -R skills/scenario "$RUN/.claude/skills/"
+case "$DIR" in
+  skills/*/*/*) cp -R "${DIR%/*}"/scenario-* "$RUN/.claude/skills/" ;; # expert tool: its whole family
+  *) cp -R "$DIR" "$RUN/.claude/skills/" ;;
+esac
 awk 'f; /^---$/ { if (++c == 2) f = 1 }' .claude/agents/skill-tester.md >"$RUN/contract.md"
 ```
 
-Copy `scenario` alongside every other skill: real installs ship both. Ask which team and project the run should use before spending anything: every generation and upload lands in that scope, and the tester must never pick one (`teams_list` and `projects_list` enumerate the choices). Write the task from step 2 to `$RUN/task.md`, including the budget, the success criteria, the run directory path, and the team and project.
+Copy `scenario` alongside every other skill: real installs ship both. An expert tool brings its whole family, since the specialists import the lead skill's `scripts/`, and a live run needs the application installed: ask which machine and application version the run may drive, and ask for a team and project only when the task hands off to a Scenario skill. Otherwise, ask which team and project the run should use before spending anything: every generation and upload lands in that scope, and the tester must never pick one (`teams_list` and `projects_list` enumerate the choices). Write the task from step 2 to `$RUN/task.md`, including the budget, the success criteria, the run directory path, and the team and project.
 
 Then pick the strongest isolation available. If the Claude Code CLI is installed, run `cd "$RUN" && claude mcp list`; otherwise use the subagent route below.
 
@@ -62,6 +67,8 @@ Say in the report which mode ran. With `--plan-only`, the same setup applies but
 ## 5. Grade the run
 
 Fetch https://mcp.scenario.com/docs/tools fresh rather than recalling it, then judge. With `--plan-only`, judge the numbered plan by the same rubric: objective met asks whether the planned calls would reach the criteria, and the evidence table stays empty.
+
+An expert tool is graded against its lead skill's execution channels and the application's own documentation instead of the tool reference: real names are the application's API, command, and UI names for the version the skill targets, the correct flow is the lead's loop (channel choice, stage gates, review renders or captures, audits), and the model-id and MCP bullets below do not apply.
 
 - **Objective met.** The artifacts exist and satisfy the criteria from step 2. Open them; do not take the tester's word for it.
 - **Real names only.** Every tool and parameter the tester used exists. One invented name is a fail.
@@ -115,7 +122,7 @@ Objective met: yes/no. <one sentence on what the agent produced>
 
 ### Defects
 
-1. `skills/<name>/SKILL.md:<line>` <what the agent got wrong> -> <the sentence to add or change>
+1. `<skill folder>/SKILL.md:<line>` <what the agent got wrong> -> <the sentence to add or change>
 
 ### Re-run
 

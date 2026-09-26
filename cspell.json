@@ -19,5 +19,16 @@
     "CHANGELOG.md",
     "LICENSE"
   ],
-  "useGitignore": true
+  "useGitignore": true,
+  "overrides": [
+    {
+      "filename": ["skills/dcc/**", "skills/game-engines/**"],
+      "ignoreRegExpList": [
+        "Urls",
+        "/^```[\\s\\S]*?^```/gm",
+        "/`[^`\\n]*`/g",
+        "/(?<![\\w-])(?=[\\w-]{11}(?![\\w-]))(?=[\\w-]*[a-z])(?:(?=[\\w-]*[\\d_-])|(?=(?:[\\w-]*[A-Z]){2}))[\\w-]{11}(?![\\w-])/g"
+      ]
+    }
+  ]
 }

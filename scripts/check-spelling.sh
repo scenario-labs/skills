@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
 pnpm exec cspell --no-progress --relative --no-must-find-files \
   'skills/**/*.md' \
   'README.md' \
+  'INSTALL.md' \
   'AGENTS.md' \
   'CODE_OF_CONDUCT.md' \
   'CONTRIBUTING.md' \

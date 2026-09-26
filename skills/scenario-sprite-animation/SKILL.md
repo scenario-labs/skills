@@ -44,7 +44,7 @@ Frame order is verified, never assumed. Extracted frames share one `createdAt` a
 ## Common mistakes
 
 - Identical first and last frames with a bare prompt: that asks for a freeze, not a loop; the motion must be named.
-- Treating margin or wording as containment for a travelling effect: what crosses the cell edge is gone, margin gets filled and crossed anyway, and containment wording cancels the throw. Keep the frames whose delivered edge band reads empty; the detached projectile is its own sprite.
+- Treating margin or wording as containment for a traveling effect: what crosses the cell edge is gone, margin gets filled and crossed anyway, and containment wording cancels the throw. Keep the frames whose delivered edge band reads empty; the detached projectile is its own sprite.
 - Assuming every model has a `seed`: many video schemas and several high-adherence image schemas have none, so reproducibility there is per-asset, not per-run.
 - Counting on an interpolation filter: none exists in the catalog, and fps is the timing lever. Pixelating a non-pixel image is a different job from cleaning pixel art: the catalog carries a pixelate tool (grid size, palette) for the first and the snapper for the second, both found with `search` (`target: "models"`, `public: true`, `filters` `tags: ["tool"]`, `query: "pixel"` returns both; the descriptions tell them apart).
 - Photo upscalers on pixel frames: they invent texture; use the pixel-preserving routes in `scenario-game-assets`.

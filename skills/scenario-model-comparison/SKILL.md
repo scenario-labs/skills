@@ -38,7 +38,7 @@ Price generations and required grid, extraction, or analysis steps. For a hard t
 
 ## Measurement
 
-`recommend` reports modelled cost and latency, right for the shortlist and wrong as a result: `dry_run` prices the exact payload, and the `jobs_wait` row's `cuCost` is what was billed. Time comes from `job_get`, which returns `createdAt` and `updatedAt`; their difference on a finished job is the wall-clock latency including queue time, comparable across candidates launched within the same minute. Launch every candidate before waiting on any, within the team's concurrency ceiling (the 429 rows in `scenario`). Use the returned `actionLimit` on a concurrency 429; never infer the ceiling from this comparison's batch size. Re-call `jobs_wait` with `pending_job_ids` until every row is terminal. Record per candidate: model id, the exact `parameters` sent, `cuCost`, seconds, delivered dimensions, asset ids, and any normalization it forced (a size, a cap, a flag).
+`recommend` reports modeled cost and latency, right for the shortlist and wrong as a result: `dry_run` prices the exact payload, and the `jobs_wait` row's `cuCost` is what was billed. Time comes from `job_get`, which returns `createdAt` and `updatedAt`; their difference on a finished job is the wall-clock latency including queue time, comparable across candidates launched within the same minute. Launch every candidate before waiting on any, within the team's concurrency ceiling (the 429 rows in `scenario`). Use the returned `actionLimit` on a concurrency 429; never infer the ceiling from this comparison's batch size. Re-call `jobs_wait` with `pending_job_ids` until every row is terminal. Record per candidate: model id, the exact `parameters` sent, `cuCost`, seconds, delivered dimensions, asset ids, and any normalization it forced (a size, a cap, a flag).
 
 Video candidates are compared on contact sheets, never on a first frame: sweep each clip with `model_scenario-video-to-image-seq` (a fixed first-party id, Scenario's single deterministic frame extractor, so discovery would only re-derive it), wait for the extraction job, then sheet the frames per candidate; the extractor's frame-order and stride contract and the sheet's 100-image cap are in `scenario-video-editing`. Audio and 3D candidates are compared on the assets themselves through `asset_display`.
 
@@ -58,7 +58,7 @@ Pre-registered criteria are pass/fail statements about the output ("the label te
 
 ## Common mistakes
 
-- Quoting `recommend`'s numbers as results: they are modelled. Bill from `jobs_wait`, time from `job_get`.
+- Quoting `recommend`'s numbers as results: they are modeled. Bill from `jobs_wait`, time from `job_get`.
 - Different sizes or sample counts across candidates, or one candidate's prompt expansion left on: the comparison then measures the payload difference.
 - One sample per candidate on a brief whose output varies wildly: run two or three where the budget allows, and say how many in the table.
 - Reading a winner as a constant: the ranking is per brief and per team catalog. Re-run when either changes, and never write the winning id into a skill or a pipeline as a fixed value.

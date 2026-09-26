@@ -5,6 +5,10 @@ cd "$(dirname "$0")/.."
 
 fail=0
 
+# Every skill's SKILL.md, core and expert tools alike (scripts/lib/skills.mjs).
+# Skill paths never hold spaces, so the list word-splits safely.
+skill_files=$(node scripts/lib/skills.mjs | sed 's|$|SKILL.md|')
+
 # Reporting helper for the em-dash rule. Every rule prints its diagnosis before
 # its evidence, and the evidence has to name the offending character: a raw
 # grep line that begins with a "- " list bullet reads like the bullet was the
@@ -61,7 +65,7 @@ annotate_em_dashes() {
 grep_status=0
 # CODE_OF_CONDUCT.md is excluded on purpose: it is the published Contributor
 # Covenant text kept byte-identical to its source, like the vendored dev skills.
-em_dash_hits=$(grep -rn --include='*.md' -e '—' skills README.md AGENTS.md CONTRIBUTING.md SECURITY.md .github .claude/commands .claude/agents) || grep_status=$?
+em_dash_hits=$(grep -rn --include='*.md' -e '—' skills README.md INSTALL.md AGENTS.md CONTRIBUTING.md SECURITY.md .github .claude/commands .claude/agents) || grep_status=$?
 if [ "$grep_status" -eq 0 ]; then
   echo 'Em dashes are forbidden (house style). Each hit below is path:line:column (column counts from 1) with the offending em dash (U+2014) wrapped in >>> <<<; a leading "- " list bullet is an ASCII hyphen, never the match.'
   annotate_em_dashes "$em_dash_hits"
@@ -92,8 +96,9 @@ elif [ "$grep_status" -ge 2 ]; then
   fail=1
 fi
 
-for f in skills/*/SKILL.md; do
-  grep -Eq '^description: "?Use when' "$f" || {
+for f in $skill_files; do
+  # Prettier single-quotes a description that itself holds double quotes.
+  grep -Eq "^description: [\"']?Use when" "$f" || {
     echo "$f: description must start with \"Use when\""
     fail=1
   }
@@ -121,7 +126,7 @@ fanout_notice_at=20000
 skill_tokens_file=$(mktemp)
 trap 'rm -f "$skill_tokens_file"' EXIT
 
-for f in skills/*/SKILL.md; do
+for f in $skill_files; do
   name=$(basename "$(dirname "$f")")
   body=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f")
   chars=$(printf '%s\n' "$body" | wc -c | tr -d ' ')
@@ -138,7 +143,7 @@ skill_tokens() {
 }
 
 fanout_hits=""
-for f in skills/*/SKILL.md; do
+for f in $skill_files; do
   name=$(basename "$(dirname "$f")")
   body=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f")
   total=$(skill_tokens "$name")

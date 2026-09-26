@@ -1,13 +1,12 @@
-import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { listSkills } from "./scripts/lib/skills.mjs";
 
-// Scopes stay in sync with the published skills automatically: every
-// directory under skills/ is a valid scope, plus the cross-cutting ones below.
+// Scopes stay in sync with the published skills automatically: every skill
+// name is a valid scope, plus the cross-cutting ones below.
 const skillsDir = join(dirname(fileURLToPath(import.meta.url)), "skills");
-const skillScopes = readdirSync(skillsDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => entry.name)
+const skillScopes = listSkills(skillsDir)
+  .map((skill) => skill.name)
   .sort();
 
 /** @type {import('@commitlint/types').UserConfig} */

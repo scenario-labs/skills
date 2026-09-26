@@ -6,14 +6,21 @@
 //   same order, with the same title and description, and a table whose rows
 //   are exactly the grouping's skills in the same order, so a grouping edit
 //   in skills.sh.json cannot leave the README telling a different story
-// - every skill directory has exactly one row linking skills/<name>/SKILL.md,
-//   so a new skill cannot ship without its human-facing index entry
+// - every skill directory has exactly one row linking its SKILL.md
+//   (skills/<name>/SKILL.md, or the nested path of an expert tool), so a new
+//   skill cannot ship without its human-facing index entry
 // - every row points at an existing skill directory with a matching label,
 //   so renames and removals cannot leave stale rows behind
 // - every row carries a non-empty "Use it for" description
-import { readdirSync, readFileSync } from "node:fs";
+// - every `npx skills add scenario-labs/skills` command, in README.md,
+//   INSTALL.md, and the expert-tools family READMEs, names only existing skills; the default
+//   command (the line after "# Every Scenario skill, without the expert tools")
+//   lists exactly the core skills, and each family README's command lists
+//   exactly its family, so a new skill cannot be left out of them
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { listSkills } from "./lib/skills.mjs";
 
 process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
 
@@ -30,14 +37,13 @@ try {
   bail(`README.md: cannot read (${error.message})`);
 }
 
-let skillDirs;
+let skills;
 try {
-  skillDirs = readdirSync("skills", { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-    .map((entry) => entry.name);
+  skills = listSkills();
 } catch (error) {
   bail(`skills/: cannot list skill directories (${error.message})`);
 }
+const dirOf = new Map(skills.map((skill) => [skill.name, skill.dir]));
 
 // Grouping contents (titles, descriptions, membership) are validated by
 // check-groupings.mjs; here the file is only the reference the README must
@@ -158,9 +164,9 @@ for (const row of rows) {
     continue;
   }
   const [, label, link, description] = match;
-  if (link !== `skills/${label}/SKILL.md`) {
+  if (dirOf.has(label) && link !== `${dirOf.get(label)}/SKILL.md`) {
     errors.push(
-      `README.md: row "${label}" links ${link}, expected skills/${label}/SKILL.md`,
+      `README.md: row "${label}" links ${link}, expected ${dirOf.get(label)}/SKILL.md`,
     );
   }
   if (rowFor.has(label)) {
@@ -168,9 +174,9 @@ for (const row of rows) {
   } else {
     rowFor.set(label, description.trim());
   }
-  if (!skillDirs.includes(label)) {
+  if (!dirOf.has(label)) {
     errors.push(
-      `README.md: row "${label}" has no matching skills/${label}/ directory (stale row?)`,
+      `README.md: row "${label}" has no matching skill directory under skills/ (stale row?)`,
     );
   }
   if (description.trim() === "") {
@@ -178,10 +184,87 @@ for (const row of rows) {
   }
 }
 
-for (const dir of skillDirs) {
-  if (!rowFor.has(dir)) {
+for (const { name, dir } of skills) {
+  if (!rowFor.has(name)) {
     errors.push(
-      `skills/${dir}: missing from the README.md Skills table (add a "| [${dir}](skills/${dir}/SKILL.md) | ... |" row)`,
+      `${dir}: missing from the README.md Skills table (add a "| [${name}](${dir}/SKILL.md) | ... |" row)`,
+    );
+  }
+}
+
+// Install commands. A missing or renamed skill fails the whole install, and a
+// skill added later would silently fall out of the all-in-one commands.
+const DEFAULT_MARKER = "# Every Scenario skill, without the expert tools";
+const installPattern = /^npx skills add scenario-labs\/skills\b(.*)$/;
+const skillsIn = (line) =>
+  [...line.matchAll(/--skill\s+(\S+)/g)].map((match) => match[1]);
+const compareSets = (label, listed, expected) => {
+  const missing = expected.filter((name) => !listed.includes(name));
+  const extra = listed.filter((name) => !expected.includes(name));
+  if (missing.length > 0 || extra.length > 0) {
+    errors.push(
+      `${label}: ${[missing.length > 0 ? `missing ${missing.join(", ")}` : "", extra.length > 0 ? `unexpected ${extra.join(", ")}` : ""].filter(Boolean).join("; ")}`,
+    );
+  }
+};
+const installCommands = (file, text) => {
+  const found = [];
+  text.split("\n").forEach((raw, index, all) => {
+    const line = raw.trim();
+    if (!installPattern.test(line)) return;
+    const names = skillsIn(line);
+    for (const name of names) {
+      if (name !== "*" && !dirOf.has(name)) {
+        errors.push(
+          `${file}:${index + 1}: install command names "${name}", which is not a skill`,
+        );
+      }
+    }
+    found.push({ names, after: (all[index - 1] ?? "").trim() });
+  });
+  return found;
+};
+
+const defaults = installCommands("README.md", readme).filter(
+  (command) => command.after === DEFAULT_MARKER,
+);
+if (defaults.length !== 1) {
+  errors.push(
+    `README.md: expected one install command right after "${DEFAULT_MARKER}", found ${defaults.length}`,
+  );
+} else {
+  compareSets(
+    "README.md: the default install command",
+    defaults[0].names,
+    skills.filter((skill) => !skill.expert).map((skill) => skill.name),
+  );
+}
+
+if (existsSync("INSTALL.md")) {
+  installCommands("INSTALL.md", readFileSync("INSTALL.md", "utf8"));
+}
+
+const families = new Map();
+for (const skill of skills.filter((entry) => entry.expert)) {
+  const readmePath = path.join(path.dirname(skill.dir), "README.md");
+  if (!families.has(readmePath)) families.set(readmePath, []);
+  families.get(readmePath).push(skill.name);
+}
+for (const [readmePath, members] of families) {
+  if (!existsSync(readmePath)) continue; // pnpm skill-files reports the missing README
+  const commands = installCommands(
+    readmePath,
+    readFileSync(readmePath, "utf8"),
+  );
+  if (commands.length !== 1) {
+    errors.push(
+      `${readmePath}: expected one install command for the family, found ${commands.length}`,
+    );
+  } else {
+    compareSets(
+      `${readmePath}: the install command`,
+      commands[0].names,
+      members,
     );
   }
 }
@@ -191,5 +274,5 @@ if (errors.length > 0) {
   process.exit(1);
 }
 console.log(
-  `README.md Skills section mirrors skills.sh.json (${groupings.length} groups) and covers all ${skillDirs.length} skills with no stale or duplicate rows`,
+  `README.md Skills section mirrors skills.sh.json (${groupings.length} groups) and covers all ${skills.length} skills with no stale or duplicate rows`,
 );
