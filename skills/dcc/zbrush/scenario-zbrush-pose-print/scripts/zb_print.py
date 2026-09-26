@@ -16,7 +16,7 @@ zb_pose.set_export_scale(target_mm) so the OBJ is written in millimetres, then:
 
     python3 zb_print.py report torso.obj arm_l.obj --target-height-mm 300 --json out.json
 
-OBJ loading and the base audit reuse zb_audit (skills/scenario-zbrush-expert/scripts). Numbers in
+OBJ loading and the base audit reuse zb_audit (<skills>/scenario-zbrush-expert/scripts). Numbers in
 the gates come from the experts named in GATE_NOTES; [added] marks this toolkit's own
 defaults, meant to be overridden by the brief. Offline tests: tests/code/zbrush-pose-print/.
 Nothing here needs ZBrush; the meshes it reads have not yet come from a live ZBrush session.

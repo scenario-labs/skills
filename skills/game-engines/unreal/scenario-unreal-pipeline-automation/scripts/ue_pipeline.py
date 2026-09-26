@@ -11,7 +11,7 @@ Unreal Engine was not installed when this was written. Names marked [verify] com
 older versions or inference; UNREAL_API lists every engine name this module touches, and
 tests/code/unreal-pipeline-automation/in_engine/first_run_checks.py checks them in the editor.
 
-Builds on the lead skill's toolkit (skills/scenario-unreal-expert/scripts): ue_env.find_engine,
+Builds on the lead skill's toolkit (<skills>/scenario-unreal-expert/scripts): ue_env.find_engine,
 ue_run.run_python / run_commandlet / run_uat / build_buildcookrun / scan_log / result, and,
 when present, ue_audit.audit_assets and ue_review.screenshot. Nothing here reimplements them.
 

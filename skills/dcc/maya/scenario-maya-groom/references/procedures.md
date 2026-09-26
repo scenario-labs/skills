@@ -1,6 +1,6 @@
 # scenario-maya-groom procedures (full code)
 
-Every procedure below is **not yet run in Maya** (written 2026-09-24; Maya 2027 not installed). Each names its test under `tests/code/maya-groom/`; `run_all.sh` runs them through `skills/scenario-maya-expert/scripts/mx_run.py`, one mayapy child each. Code that only uses the pure layer of `mx_groom` ran offline in `test_mx_groom_offline.py` (passed 2026-09-24). Names marked [verify] are not quoted from a 2027 page; `G.probe()` resolves them.
+Every procedure below is **not yet run in Maya** (written 2026-09-24; Maya 2027 not installed). Each names its test under `tests/code/maya-groom/`; `run_all.sh` runs them through `<skills>/scenario-maya-expert/scripts/mx_run.py`, one mayapy child each. Code that only uses the pure layer of `mx_groom` ran offline in `test_mx_groom_offline.py` (passed 2026-09-24). Names marked [verify] are not quoted from a 2027 page; `G.probe()` resolves them.
 
 Common header for every snippet. Every name the snippets use is defined here or in an earlier procedure (P3 defines `g` and `fill`, P4 `body`, P5 `prim`, `sec`, `tris`); P16 is the whole job as one script.
 

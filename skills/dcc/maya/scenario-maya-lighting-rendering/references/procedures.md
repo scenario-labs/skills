@@ -284,17 +284,17 @@ with open(os.path.join(OUT, "shot_tweaks.json"), "w") as f:
 
 ```bash
 # a render through mx_run (headless mayapy), then the critique in plain python3
-python3 skills/scenario-maya-expert/scripts/mx_run.py --plugins mtoa --scene shot_v003.ma \
-  skills/scenario-maya-lighting-rendering/scripts/mx_light.py -- render --camera hero_CAM --out /abs/out/v003 \
-  --aovs comp --mask subject=watch_GRP
-python3 skills/scenario-maya-lighting-rendering/scripts/mx_light.py analyze --png /abs/out/v003/_raw/shot_preview.png \
+python3 <skills >/scenario-maya-expert/scripts/mx_run.py --plugins mtoa --scene shot_v003.ma \
+  -- render --camera hero_CAM --out /abs/out/v003 \
+  --aovs comp --mask subject=watch_GRP <skills >/scenario-maya-lighting-rendering/scripts/mx_light.py
+python3 <skills >/scenario-maya-lighting-rendering/scripts/mx_light.py analyze --png /abs/out/v003/_raw/shot_preview.png \
   --exr /abs/out/v003/_raw/shot.exr --kind product --out /abs/out/v003/critique
 # noise pair and diagnosis
-python3 skills/scenario-maya-expert/scripts/mx_run.py --plugins mtoa --scene shot_v003.ma \
-  skills/scenario-maya-lighting-rendering/scripts/mx_light.py -- render-pair --camera hero_CAM --out /abs/out/noise
-python3 skills/scenario-maya-lighting-rendering/scripts/mx_light.py noise --a /abs/out/noise/seed_a/_raw/seedA.exr \
+python3 <skills >/scenario-maya-expert/scripts/mx_run.py --plugins mtoa --scene shot_v003.ma \
+  -- render-pair --camera hero_CAM --out /abs/out/noise <skills >/scenario-maya-lighting-rendering/scripts/mx_light.py
+python3 <skills >/scenario-maya-lighting-rendering/scripts/mx_light.py noise --a /abs/out/noise/seed_a/_raw/seedA.exr \
   --b /abs/out/noise/seed_b/_raw/seedB.exr
 # budget
-python3 skills/scenario-maya-lighting-rendering/scripts/mx_light.py budget --seconds 42 --test-size 960x540 \
+python3 <skills >/scenario-maya-lighting-rendering/scripts/mx_light.py budget --seconds 42 --test-size 960x540 \
   --size 3840x2160 --test-aa 3 --aa 4 --frames 120 --machines 1 --hours 24
 ```

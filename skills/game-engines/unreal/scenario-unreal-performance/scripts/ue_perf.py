@@ -8,7 +8,7 @@ suspect trees, D log parsers, E config writers, F proof) ran offline with system
 tests/code/unreal-performance/test_ue_perf_offline.py. Layer G (in-editor, needs the
 `unreal` module) is untested; every UE name in it is [verify].
 
-Shared toolkit (skills/scenario-unreal-expert/scripts, owned by the lead): ue_stat parses stat unit
+Shared toolkit (<skills>/scenario-unreal-expert/scripts, owned by the lead): ue_stat parses stat unit
 logs, CSV profiler files and TraceQuery JSONL and owns budget_check(frames, target_ms);
 ue_review takes screenshots and runs image_checks; ue_audit audits assets; ue_run runs
 headless jobs; ue_remote reaches a running editor; ue_env finds the engine (its dict has
@@ -83,7 +83,7 @@ _LEAD_SCRIPTS = os.path.normpath(os.path.join(HERE, "..", "..", "scenario-unreal
 # =========================================================================== toolkit
 def toolkit(name):
     """Import a shared toolkit module (ue_stat, ue_review, ue_audit, ue_run, ue_remote,
-    ue_env) from skills/scenario-unreal-expert/scripts; None when it is not there yet."""
+    ue_env) from <skills>/scenario-unreal-expert/scripts; None when it is not there yet."""
     if _LEAD_SCRIPTS not in sys.path and os.path.isdir(_LEAD_SCRIPTS):
         sys.path.insert(0, _LEAD_SCRIPTS)
     try:

@@ -55,8 +55,16 @@ _MODAL_PATTERNS = [
     (r"\bfileDialog2?\b", "file dialogs wait for a click"),
     (r"\bshowWindow\b.*modal|\bmodal\s*=\s*True", "modal windows block the main thread"),
 ]
-_SCENE_REPLACE = re.compile(r"\bfile\s*\([^)]*\b(new|open)\s*=\s*True[^)]*\bforce\s*=\s*True"
-                            r"|\bfile\s*\([^)]*\bforce\s*=\s*True[^)]*\b(new|open)\s*=\s*True", re.S)
+# Long or short flags (new/n, open/o, force/f), in cmds.file, its MEL form
+# inside mel.eval (the server's namespace provides mel), or PyMEL's
+# newFile/openFile.
+_TRUE = r"\s*=\s*(?:True|1)\b"
+_SCENE_REPLACE = re.compile(
+    r"\bfile\s*\((?=[^)]*\b(?:new|n|open|o)" + _TRUE + r")(?=[^)]*\b(?:force|f)" + _TRUE + r")"
+    r"|\bfile\b(?=[^;\n]*?\s-(?:force|f)\b)(?=[^;\n]*?\s-(?:new|n|open|o)\b)"
+    r"|\b(?:newFile|openFile)\s*\((?=[^)]*\b(?:force|f)" + _TRUE + r")",
+    re.S,
+)
 
 
 class BridgeError(RuntimeError):

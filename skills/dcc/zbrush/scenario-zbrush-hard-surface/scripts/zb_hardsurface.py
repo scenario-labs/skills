@@ -1,6 +1,6 @@
 """
 zb_hardsurface: hard-surface building blocks and checks for ZBrush 2026.2.1 (skill
-scenario-zbrush-hard-surface). Built on the lead toolkit (skills/scenario-zbrush-expert/scripts: zb_ops,
+scenario-zbrush-hard-surface). Built on the lead toolkit (<skills>/scenario-zbrush-expert/scripts: zb_ops,
 zb_launch, zb_review, zb_audit, zb_stroke); nothing here re-implements those.
 
 Three kinds of functions, like zb_review:

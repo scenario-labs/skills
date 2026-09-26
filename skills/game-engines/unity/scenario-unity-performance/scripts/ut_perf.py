@@ -1,7 +1,7 @@
 """
 ut_perf: the performance engineer's runner-side toolkit (scenario-unity-performance skill).
 
-Imports the shared toolkit (ut_env, ut_run, ut_stat from skills/scenario-unity-expert/scripts); adds what a
+Imports the shared toolkit (ut_env, ut_run, ut_stat from <skills>/scenario-unity-expert/scripts); adds what a
 performance pass needs on top of it:
 
     import sys; sys.path.insert(0, "<skills>/scenario-unity-performance/scripts")

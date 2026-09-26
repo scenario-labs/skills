@@ -30,7 +30,7 @@ Two layers in one file.
    marked [verify] is resolved at run time by trying candidates; misses are recorded in
    MISSING and returned by probe(). The plumbing ran offline against a fake `unreal` module.
 
-Shared toolkit (skills/scenario-unreal-expert/scripts, lead agent): ue_run.run_python / result /
+Shared toolkit (<skills>/scenario-unreal-expert/scripts, lead agent): ue_run.run_python / result /
 run_commandlet for jobs and builders, ue_review.screenshot / image_checks for captures,
 ue_audit for generic asset rules, ue_stat for stat, CSV and TraceQuery parsing. This module
 does not reimplement them.

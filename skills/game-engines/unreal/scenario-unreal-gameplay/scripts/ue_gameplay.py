@@ -21,7 +21,7 @@ Two layers in one file.
    STATUS: NOT YET RUN IN UNREAL (engine not installed on 2026-09-24). Names marked [verify]
    are tried defensively; a failed attempt is reported, never silently skipped.
 
-Shared toolkit (skills/scenario-unreal-expert/scripts, lead agent): ue_run.run_python / result /
+Shared toolkit (<skills>/scenario-unreal-expert/scripts, lead agent): ue_run.run_python / result /
 args for headless and latent jobs, ue_review.screenshot / image_checks for captures,
 ue_env.enable_plugins / find_engine / xcode_status, ue_stat for stat logs. Not reimplemented.
 

@@ -1,7 +1,7 @@
 # Procedures: skinning, Skin Tools, ROM tests, correctives, face, ML data (Maya 2027)
 
 Load when executing a stage of the workflow. Every block states its status and its test.
-**Status (2026-09-24): Maya 2027 is not installed. Every block below is NOT YET RUN IN MAYA** except where it says "ran offline" (pure Python in `mx_skin`, `tests/code/maya-deformation/test_mx_skin_offline.py`, python3). Run all tests with `tests/code/maya-deformation/run_all.sh`; each Maya test is an mx_run job (`python3 skills/scenario-maya-expert/scripts/mx_run.py tests/code/maya-deformation/<test>.py`).
+**Status (2026-09-24): Maya 2027 is not installed. Every block below is NOT YET RUN IN MAYA** except where it says "ran offline" (pure Python in `mx_skin`, `tests/code/maya-deformation/test_mx_skin_offline.py`, python3). Run all tests with `tests/code/maya-deformation/run_all.sh`; each Maya test is an mx_run job (`python3 <skills>/scenario-maya-expert/scripts/mx_run.py tests/code/maya-deformation/<test>.py`).
 
 Setup for every block (inside mayapy or through the scenario-maya-expert bridge):
 

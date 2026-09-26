@@ -11,7 +11,7 @@ tests/code/maya-retopology-uv/test_offline_math.py (99 checks pass). The MAYA fu
 logic ran against a fake in-memory maya package in test_offline_fake_maya.py (40 checks pass);
 that proves the bookkeeping, not Maya's behaviour. Every function whose docstring starts with
 MAYA is NOT YET RUN IN MAYA (Maya 2027 was not installed); their tests are
-tests/code/maya-retopology-uv/job_*.py, run through skills/scenario-maya-expert/scripts/mx_run.py by
+tests/code/maya-retopology-uv/job_*.py, run through <skills>/scenario-maya-expert/scripts/mx_run.py by
 run_all.sh.
 
 Use it WITH the lead toolkit, never instead of it:

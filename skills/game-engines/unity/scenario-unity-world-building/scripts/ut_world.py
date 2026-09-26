@@ -1,7 +1,7 @@
 """
 ut_world: the level and environment artist's runner-side toolkit (scenario-unity-world-building skill).
 
-Imports the shared toolkit from skills/scenario-unity-expert/scripts (ut_env, ut_run, ut_review, ut_stat);
+Imports the shared toolkit from <skills>/scenario-unity-expert/scripts (ut_env, ut_run, ut_review, ut_stat);
 never copies it. Adds the world-building jobs and their gates:
 
     import sys; sys.path.insert(0, "<skills>/scenario-unity-world-building/scripts")

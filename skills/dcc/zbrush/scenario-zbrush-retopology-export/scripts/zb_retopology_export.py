@@ -1,7 +1,7 @@
 """
 zb_retopology_export ("rx"): the pipeline sculptor's toolkit (skill scenario-zbrush-retopology-export).
 
-It builds on the lead toolkit in skills/scenario-zbrush-expert/scripts and never re-implements it:
+It builds on the lead toolkit in <skills>/scenario-zbrush-expert/scripts and never re-implements it:
 zb_ops does every checked press and set (resolve with exists(), read-back, levels guards,
 dialog-free exports), zb_audit measures OBJ exports, zb_launch talks to the bridge. This file
 adds the retopology, projection, UV, map, scale, export and cleanup logic on top.

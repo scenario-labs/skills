@@ -11,7 +11,7 @@ import maya.cmds as cmds, maya.mel as mel
 import mx_fx, mx_audit, mx_review
 ```
 
-Headless run: `python3 skills/scenario-maya-expert/scripts/mx_run.py --scene shot.ma --plugins abc,bifrost job.py -- args`, one child per job, `--save-as` a new version.
+Headless run: `python3 <skills>/scenario-maya-expert/scripts/mx_run.py --scene shot.ma --plugins abc,bifrost job.py -- args`, one child per job, `--save-as` a new version.
 
 ---
 

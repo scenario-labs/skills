@@ -19,6 +19,7 @@ import traceback
 from zbrush import commands as zbc
 
 PORT = int(os.environ.get("ZB_BRIDGE_PORT", "7788"))
+READ_TIMEOUT = 30.0  # seconds to receive one request line
 LOG = os.path.expanduser("~/Library/Logs/zb_bridge.log")
 MAIN_Q: "queue.Queue" = queue.Queue()
 PALETTE = "ZScript:Agent Bridge"
@@ -51,12 +52,16 @@ def run_code(code):
 
 def handle(conn):
     with conn:
+        # One accept loop serves every caller, so a client that stalls mid-request
+        # must not hold it: the read times out, the code itself runs untimed.
+        conn.settimeout(READ_TIMEOUT)
         data = b""
         while not data.endswith(b"\n"):
             chunk = conn.recv(1 << 16)
             if not chunk:
                 break
             data += chunk
+        conn.settimeout(None)
         req = json.loads(data.decode() or "{}")
         if req.get("mode") == "main":
             box = queue.Queue(maxsize=1)

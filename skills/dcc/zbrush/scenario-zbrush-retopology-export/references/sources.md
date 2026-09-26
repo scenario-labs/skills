@@ -15,7 +15,7 @@ Each entry: source, who, credential, where, what it is best for, best timestamps
 - ZBrush Activity log `~/Library/Preferences/Maxon/ZBrush_03C27D49/Logs/Activity/Activity 2026-09-24-05-20-14.txt`: canonical short paths (`Tool:Geometry:Resolution`), plugin sliders set at startup (`Zplugin:3D Print Hub:Y(mm)`).
 - SDK stub `/Applications/Maxon ZBrush 2026/Documentation/python-api/api/zbrush/commands.py` (also: `press(item_path)` has no modifier argument, so Alt-clicks are computer-use steps; `locate_subtool_by_name`; `is_enabled`) and examples (`examples/modeling/ex_mod_subtool_export.py`, `fragments/zbrush.commands.set_subtool_status.0.py`): `create_normal_map(..., local_coordinates=False)` = world space; displacement needs UVs and the lowest level; `query_mesh3d` 3 to 8 (UV bbox, tiles, per-tile counts and areas); SubTool name from `get_active_tool_path()`; status flags written as absolute values.
 - `sources/zbrush-version-deltas.md` (project): 2026 version facts (Retopo brush 2026.1, Substance Bridge 2026.2, UV Master Polygroups fix 2026.2.0, Cmd+W quits).
-- Lead skill toolkit and tests (`skills/scenario-zbrush-expert/scripts`, `tests/code/zbrush-expert`): the proven bridge, dialog-free OBJ export, `zb_audit`; the distiller's `archive/tests/retopology_visual/topo_qa.py` (ring test, reused in `rx.topo_report`).
+- Lead skill toolkit and tests (`<skills>/scenario-zbrush-expert/scripts`, `tests/code/zbrush-expert`): the proven bridge, dialog-free OBJ export, `zb_audit`; the distiller's `archive/tests/retopology_visual/topo_qa.py` (ring test, reused in `rx.topo_report`).
 
 ## Maxon official documentation (help.maxon.net, 2026 help)
 

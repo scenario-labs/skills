@@ -1,6 +1,6 @@
 # Procedures (tested on Blender 5.2.1 LTS)
 
-Every procedure below ran headless with `blender --background --factory-startup --python-exit-code 1 --python <test>`. Tests live in `tests/code/blender-lighting-rendering/` (fixture: `_common.py`, a stylized character in a 4 x 3.5 m workshop with 0.2 m walls, a window and a hanging lamp). The module is `skills/scenario-blender-lighting-rendering/scripts/bx_light.py`; import it with:
+Every procedure below ran headless with `blender --background --factory-startup --python-exit-code 1 --python <test>`. Tests live in `tests/code/blender-lighting-rendering/` (fixture: `_common.py`, a stylized character in a 4 x 3.5 m workshop with 0.2 m walls, a window and a hanging lamp). The module is `<skills>/scenario-blender-lighting-rendering/scripts/bx_light.py`; import it with:
 
 ```python
 import sys; sys.path.append("<skills>/scenario-blender-lighting-rendering/scripts"); import bx_light as BL

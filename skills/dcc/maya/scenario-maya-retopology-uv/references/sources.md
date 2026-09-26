@@ -27,7 +27,7 @@ Per-source notes are in the project's `notes/` (never edited to fit this skill);
 
 ## Toolkit and project files
 
-- `skills/scenario-maya-expert/scripts/mx_run.py`, `mx_audit.py`, `mx_review.py`: the lead's runner, mesh and UV audit, render sheets (this skill builds on them, see their docstrings).
+- `<skills>/scenario-maya-expert/scripts/mx_run.py`, `mx_audit.py`, `mx_review.py`: the lead's runner, mesh and UV audit, render sheets (this skill builds on them, see their docstrings).
 - `sources/maya-version-deltas.md` sections 2.1 and 2.2: 2027 facts (Unfold3D default, Retopologize, Flow Retopology, Quad Draw, Reduce vs Retopologize, Boolean Volume mode); section 2.3: Skin Tools layer traps, `dgaTension` (2026.3); section 2.5: Arnold `normal_map` MikkTSpace mode (MtoA 5.6.1.1).
 - `sources/docs/scripting-pipeline__whats-new-maya-2026.md`, Dynamic Geometry Attributes: `dgaTension` (stretch and squash against reference geometry, Edge and UV methods, ComponentTagExpression, output to `dgaVisualizer` or a deformer weight list), `dgaDelta`, `dgaVisualizer`, `dgaToArray`.
 - `notes/modeling/_digest_modeling_organic_base_mesh.md` (delta 1, 6, 7, 20, 22 to 26; procedure C; procedure D step 4), `notes/modeling/_digest_modeling_topology_hard_surface.md` (P7 step 5, the shear score), `notes/modeling/_digest_modeling_tools_scene_hygiene.md` (procedure F, silhouettes and bleed-through): the candidate gates behind P19 to P21.

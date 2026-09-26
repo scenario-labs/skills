@@ -7,7 +7,7 @@ Tested-pending code for every stage. The functions live in `scripts/mx_retopolog
 - `tests/code/maya-retopology-uv/test_offline_math.py`: the pure layer (topology walks, rings, lids, joint crossings, seam seeds, relax, mirror arrays, cavities, landmark similarity and warp, tubes from sections, review camera rays, texel density and UDIM math, mip padding, distortion, seams vs hard edges, split vertices, UV mirroring and stacking, UV sheets, and the deformation-ready gate: proxy bends and twists, shear, area and flip metrics, joint loop and spiral checks, topology-vs-rig diagnosis, face hinges, lid clearance and blink, silhouette overlap). 99 checks pass.
 - `tests/code/maya-retopology-uv/test_offline_fake_maya.py`: the MAYA functions' own logic against a fake in-memory `maya.cmds` / OpenMaya (all except the thin wrappers `decimate`, `rotate_shell`, `surface_hit`, `landmark_from_pixel`, `checker_review`, `tension_node`; `mx_review.review` is stubbed for `deform_test` and `overlap_review`). 40 checks pass. This proves the module's bookkeeping, not Maya's behavior.
 
-Each procedure names its Maya test (`job_*.py`, run through `skills/scenario-maya-expert/scripts/mx_run.py` by `tests/code/maya-retopology-uv/run_all.sh`). Items marked [verify] are answered by `job_probe_commands.py`; fix this page from its JSON before trusting a flag.
+Each procedure names its Maya test (`job_*.py`, run through `<skills>/scenario-maya-expert/scripts/mx_run.py` by `tests/code/maya-retopology-uv/run_all.sh`). Items marked [verify] are answered by `job_probe_commands.py`; fix this page from its JSON before trusting a flag.
 
 ## P0. Job skeleton and rules
 
@@ -15,7 +15,7 @@ _Not yet run in Maya. Every job__.py uses this shape.*
 
 ```python
 # my_job.py; run from the project root:
-#   python3 skills/scenario-maya-expert/scripts/mx_run.py --scene /abs/in/char_v003.ma \
+#   python3 <skills>/scenario-maya-expert/scripts/mx_run.py --scene /abs/in/char_v003.ma \
 #       --save-as /abs/out/char_v004.ma --plugins Unfold3D --timeout 3600 my_job.py -- --out /abs/out
 import sys
 sys.path.insert(0, "/abs/skills/scenario-maya-retopology-uv/scripts")   # mx_run already adds scenario-maya-expert/scripts

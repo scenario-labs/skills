@@ -44,7 +44,7 @@ Per-source notes: `notes/fx/` and `notes/motion-graphics/` (digests `_digest_fx_
 ## Toolkit behind the skill
 
 - scenario-maya-expert scripts: `mx_run.py` (headless jobs), `mx_bridge.py` (GUI), `mx_audit.py` (topology report used by the cloth gate), `mx_review.py` (clay review sheets, playblast, PNG and contact-sheet code reused for volumes and sprites).
-- `skills/scenario-maya-fx/scripts/mx_fx.py`: this skill's module; tests in `tests/code/maya-fx/`.
+- `<skills>/scenario-maya-fx/scripts/mx_fx.py`: this skill's module; tests in `tests/code/maya-fx/`.
 
 ## Revision history
 

@@ -25,7 +25,7 @@ Two layers in one file:
    are resolved at run time by trying candidates; misses are logged in MISSES and
    job_00_anim_probe.py records the real names.
 
-Shared toolkit (skills/scenario-unreal-expert/scripts, written by the lead agent): ue_run.run_python and
+Shared toolkit (<skills>/scenario-unreal-expert/scripts, written by the lead agent): ue_run.run_python and
 ue_run.result for headless jobs, ue_review.screenshot / render_still / image_checks for
 captures, ue_stat for stat and trace parsing, ue_audit for generic asset rules, ue_env for the
 engine, project and plugin edits. This module does not reimplement them.

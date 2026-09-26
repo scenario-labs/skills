@@ -26,7 +26,7 @@ Two layers in one file:
    [verify] are resolved at run time by trying candidates and logging what was missing;
    job_00_vfx_probe.py records the real names.
 
-Shared toolkit (skills/scenario-unreal-expert/scripts, written by the lead agent): ue_run.run_python
+Shared toolkit (<skills>/scenario-unreal-expert/scripts, written by the lead agent): ue_run.run_python
 (modes commandlet, editor, latent) and ue_run.result for jobs, ue_review.screenshot /
 wait_screenshot / set_camera / image_checks for captures, ue_stat.parse_jsonl / timer_totals /
 trace_frames / budget_check for numbers, ue_audit for generic asset rules. This module does
@@ -2365,7 +2365,7 @@ def capture_ages(comp, ages: Sequence[float], out_dir: str, width: int = 1280, h
     (lead toolkit). Writes <out_dir>/<prefix>_series.json and returns {"ages", "files", "series"}.
     Seeks longer than set_max_sim_time spill over frames; settle_ticks may need raising [verify].
     Not yet run in Unreal."""
-    import ue_review  # skills/scenario-unreal-expert/scripts
+    import ue_review  # <skills>/scenario-unreal-expert/scripts
     u = _ue()
     os.makedirs(out_dir, exist_ok=True)
     comp.set_age_update_mode(_enum(u.NiagaraAgeUpdateMode, ("DESIRED_AGE",)))

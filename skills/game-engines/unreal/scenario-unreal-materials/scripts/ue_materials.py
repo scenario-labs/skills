@@ -31,7 +31,7 @@ started with scenario-unreal-expert's ue_run.run_python):
   um.probe("/abs/probe.json"); um.audit_textures("/Game/Kit"); um.build_kit_surface(...)
   um.make_instance(...); g = um.export_graph(mat); um.lint_graph(g); um.census_project(...)
 
-Shared toolkit, not reimplemented here (skills/scenario-unreal-expert/scripts/): ue_run (headless jobs,
+Shared toolkit, not reimplemented here (<skills>/scenario-unreal-expert/scripts/): ue_run (headless jobs,
 UE_RESULT line), ue_remote (live editor), ue_review (screenshot, render_still, image_checks),
 ue_audit (generic asset audit and verdict), ue_stat (stat, CSV and trace parsers, budget_check).
 """

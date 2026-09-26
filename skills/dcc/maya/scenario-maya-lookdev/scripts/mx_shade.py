@@ -27,7 +27,7 @@ Headless through mx_run (scenario-maya-expert):
       --build /abs/textures --name case --meshes case_geo
   python3 mx_run.py --plugins mtoa --scene out/in_ld.ma mx_shade.py -- --lint --json /abs/lint.json
 
-Sources are cited as in skills/scenario-maya-lookdev/references/sources.md: OPBR (Arnold OpenPBR doc),
+Sources are cited as in <skills>/scenario-maya-lookdev/references/sources.md: OPBR (Arnold OpenPBR doc),
 SS (Arnold Standard Surface, Hair, Displacement doc), CM (Maya 2027 colour management help),
 WN25/WN27 (What's New), JHILL (mpk6IurOWbs), ARVID (cpMBRIWwghg), SARK (ZtEiVa3MPLg),
 RAYC (vPHhVrxxThU), OPBRV (tEUiIBApw-U). [added] marks this toolkit's own defaults.

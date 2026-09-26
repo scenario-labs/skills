@@ -7,7 +7,7 @@ Agent-side preamble used below:
 ```python
 import sys
 sys.path.insert(0, "<project>/skills/scenario-zbrush-hard-surface/scripts")
-import zb_hardsurface as hs          # puts skills/scenario-zbrush-expert/scripts on sys.path too
+import zb_hardsurface as hs          # puts <skills>/scenario-zbrush-expert/scripts on sys.path too
 import zb_launch as zl, zb_review, zb_audit
 zl.start()                           # lead: ZBrush with the bridge, ping, Home Page closed
 ```

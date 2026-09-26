@@ -16,7 +16,7 @@ Two halves, like zb_review:
       noise_sigma, mask_coverage, recommend_map_size, map_budget, skin_zone_plan, zone_image,
       blend, composite, id_pass, turntable_rotations, upright_score, assemble_turntable
 
-It reuses the lead toolkit (skills/scenario-zbrush-expert/scripts): zb_ops for checked presses, sets,
+It reuses the lead toolkit (<skills>/scenario-zbrush-expert/scripts): zb_ops for checked presses, sets,
 masks, stats and dialog-free file writes; zb_stroke for framing; zb_review for view capture,
 silhouettes and contact sheets; zb_launch for the bridge. Nothing here duplicates them.
 

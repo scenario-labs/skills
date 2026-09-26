@@ -3,7 +3,7 @@
 Every procedure below was run on Blender 5.2.1 LTS (build 2026-08-25) with
 `blender --background --factory-startup --python-exit-code 1 --python <test>` unless it says GUI.
 Tests live in `tests/code/blender-hair/` (`run_all.sh` runs all of them). The helpers come from
-`skills/scenario-blender-hair/scripts/bx_hair.py`. Each procedure shows the helper call, then the raw
+`<skills>/scenario-blender-hair/scripts/bx_hair.py`. Each procedure shows the helper call, then the raw
 bpy it wraps, so you can work without the module.
 
 ```python

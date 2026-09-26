@@ -13,7 +13,7 @@ Runs INSIDE ZBrush 2026 (CPython 3.11.9, no numpy). From the agent side:
     zb_pose.call("preflight_tpose")                  # through the proven bridge (zb_launch)
     zb_pose.call("set_export_scale", 300.0)
     zb_pose.call("export_parts", "/abs/out/parts")
-Inside ZBrush it imports zb_ops (skills/scenario-zbrush-expert/scripts) and uses its checked
+Inside ZBrush it imports zb_ops (<skills>/scenario-zbrush-expert/scripts) and uses its checked
 wrappers; it never re-implements them.
 
 Evidence tags on paths (PATHS):
