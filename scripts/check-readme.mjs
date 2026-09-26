@@ -12,8 +12,8 @@
 // - every row points at an existing skill directory with a matching label,
 //   so renames and removals cannot leave stale rows behind
 // - every row carries a non-empty "Use it for" description
-// - every `npx skills add scenario-labs/skills` command, in README.md and in
-//   the expert-tools family READMEs, names only existing skills; the default
+// - every `npx skills add scenario-labs/skills` command, in README.md,
+//   INSTALL.md, and the expert-tools family READMEs, names only existing skills; the default
 //   command (the line after "# Every Scenario skill, without the expert tools")
 //   lists exactly the core skills, and each family README's command lists
 //   exactly its family, so a new skill cannot be left out of them
@@ -238,6 +238,10 @@ if (defaults.length !== 1) {
     defaults[0].names,
     skills.filter((skill) => !skill.expert).map((skill) => skill.name),
   );
+}
+
+if (existsSync("INSTALL.md")) {
+  installCommands("INSTALL.md", readFileSync("INSTALL.md", "utf8"));
 }
 
 const families = new Map();
