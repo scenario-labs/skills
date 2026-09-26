@@ -12,7 +12,12 @@
 // - every row points at an existing skill directory with a matching label,
 //   so renames and removals cannot leave stale rows behind
 // - every row carries a non-empty "Use it for" description
-import { readFileSync } from "node:fs";
+// - every `npx skills add scenario-labs/skills` command, in README.md and in
+//   the expert-tools family READMEs, names only existing skills; the default
+//   command (the line after "# Every Scenario skill, without the expert tools")
+//   lists exactly the core skills, and each family README's command lists
+//   exactly its family, so a new skill cannot be left out of them
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { listSkills } from "./lib/skills.mjs";
@@ -183,6 +188,79 @@ for (const { name, dir } of skills) {
   if (!rowFor.has(name)) {
     errors.push(
       `${dir}: missing from the README.md Skills table (add a "| [${name}](${dir}/SKILL.md) | ... |" row)`,
+    );
+  }
+}
+
+// Install commands. A missing or renamed skill fails the whole install, and a
+// skill added later would silently fall out of the all-in-one commands.
+const DEFAULT_MARKER = "# Every Scenario skill, without the expert tools";
+const installPattern = /^npx skills add scenario-labs\/skills\b(.*)$/;
+const skillsIn = (line) =>
+  [...line.matchAll(/--skill\s+(\S+)/g)].map((match) => match[1]);
+const compareSets = (label, listed, expected) => {
+  const missing = expected.filter((name) => !listed.includes(name));
+  const extra = listed.filter((name) => !expected.includes(name));
+  if (missing.length > 0 || extra.length > 0) {
+    errors.push(
+      `${label}: ${[missing.length > 0 ? `missing ${missing.join(", ")}` : "", extra.length > 0 ? `unexpected ${extra.join(", ")}` : ""].filter(Boolean).join("; ")}`,
+    );
+  }
+};
+const installCommands = (file, text) => {
+  const found = [];
+  text.split("\n").forEach((raw, index, all) => {
+    const line = raw.trim();
+    if (!installPattern.test(line)) return;
+    const names = skillsIn(line);
+    for (const name of names) {
+      if (name !== "*" && !dirOf.has(name)) {
+        errors.push(
+          `${file}:${index + 1}: install command names "${name}", which is not a skill`,
+        );
+      }
+    }
+    found.push({ names, after: (all[index - 1] ?? "").trim() });
+  });
+  return found;
+};
+
+const defaults = installCommands("README.md", readme).filter(
+  (command) => command.after === DEFAULT_MARKER,
+);
+if (defaults.length !== 1) {
+  errors.push(
+    `README.md: expected one install command right after "${DEFAULT_MARKER}", found ${defaults.length}`,
+  );
+} else {
+  compareSets(
+    "README.md: the default install command",
+    defaults[0].names,
+    skills.filter((skill) => !skill.expert).map((skill) => skill.name),
+  );
+}
+
+const families = new Map();
+for (const skill of skills.filter((entry) => entry.expert)) {
+  const readmePath = path.join(path.dirname(skill.dir), "README.md");
+  if (!families.has(readmePath)) families.set(readmePath, []);
+  families.get(readmePath).push(skill.name);
+}
+for (const [readmePath, members] of families) {
+  if (!existsSync(readmePath)) continue; // pnpm skill-files reports the missing README
+  const commands = installCommands(
+    readmePath,
+    readFileSync(readmePath, "utf8"),
+  );
+  if (commands.length !== 1) {
+    errors.push(
+      `${readmePath}: expected one install command for the family, found ${commands.length}`,
+    );
+  } else {
+    compareSets(
+      `${readmePath}: the install command`,
+      commands[0].names,
+      members,
     );
   }
 }

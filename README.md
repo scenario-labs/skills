@@ -35,6 +35,49 @@ Skills follow the [Agent Skills](https://agentskills.io) format.
 
 ## Install
 
+**Everything for Scenario.** All 65 Scenario skills, without the expert tools: the default for working through the Scenario MCP.
+
+```bash
+# Every Scenario skill, without the expert tools
+npx skills add scenario-labs/skills --skill scenario --skill scenario-inspiration --skill scenario-image --skill scenario-product-shots --skill scenario-brand-kit --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-storyboards --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-patina-retexture --skill scenario-orbit-views --skill scenario-video --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-ugc --skill scenario-fan-cam --skill scenario-audio --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-consistency --skill scenario-identity-library --skill scenario-model-training --skill scenario-asset-analysis --skill scenario-quality-gate --skill scenario-refine-loop --skill scenario-model-comparison --skill scenario-formats --skill scenario-workflows --skill scenario-workflow-authoring --skill scenario-moderation --skill scenario-report --skill scenario-team-admin --skill scenario-admin-analytics --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-minimax-music --skill scenario-elevenlabs --skill scenario-ace-step --skill scenario-sonilo --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds
+```
+
+**By goal.** Each command installs the lead skills for one outcome plus the sibling skills they hand work to.
+
+**Game art and environments** (17 skills). Game-ready sprites, tilesets, textures, skyboxes, and 3D props in one consistent style.
+
+```bash
+npx skills add scenario-labs/skills --skill scenario --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-image --skill scenario-patina-retexture --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-moderation --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds
+```
+
+**Marketing and brand visuals** (20 skills). One product shot and a brief turned into on-brand stills, ads, UGC videos, and every placement size.
+
+```bash
+npx skills add scenario-labs/skills --skill scenario --skill scenario-product-shots --skill scenario-brand-kit --skill scenario-video-ads --skill scenario-ugc --skill scenario-formats --skill scenario-inspiration --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-video --skill scenario-video-editing --skill scenario-audio --skill scenario-video-assembly --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-elevenlabs
+```
+
+**Video, music video, and audio** (22 skills). Video made, edited, and scored, from a single clip to a whole-song music video, with voice, music, and sound effects.
+
+```bash
+npx skills add scenario-labs/skills --skill scenario --skill scenario-video --skill scenario-video-editing --skill scenario-audio --skill scenario-video-assembly --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-seedance-music-video --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-minimax-music --skill scenario-elevenlabs --skill scenario-ace-step --skill scenario-sonilo
+```
+
+**Consistent characters and custom models** (11 skills). One character, product, or style held across a whole set, and a model trained on your own art.
+
+```bash
+npx skills add scenario-labs/skills --skill scenario --skill scenario-consistency --skill scenario-identity-library --skill scenario-model-training --skill scenario-image-editing --skill scenario-sprite-animation --skill scenario-video --skill scenario-asset-analysis --skill scenario-quality-gate --skill scenario-seedream --skill scenario-gemini-image
+```
+
+**Images and editing** (23 skills). Images generated and edited, exact text overlays, and a sequence storyboarded.
+
+```bash
+npx skills add scenario-labs/skills --skill scenario --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-storyboards --skill scenario-game-assets --skill scenario-textures --skill scenario-skyboxes --skill scenario-video --skill scenario-video-editing --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-video-assembly --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image
+```
+
+**Expert tools.** A family installs as one set, since its specialists import the lead skill's scripts; the command is in each family README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md)).
+
+**Pick, or install one skill.**
+
 ```bash
 # Pick from the installer menu, grouped by topic (it opens with nothing preselected: select before pressing enter)
 npx skills add scenario-labs/skills
@@ -42,21 +85,6 @@ npx skills add scenario-labs/skills
 # A single skill
 npx skills add scenario-labs/skills --skill scenario
 ```
-
-Some skills direct sibling skills per stage, so installing one of them alone leaves its references unfilled. Install a composed pipeline together:
-
-```bash
-# Video ads (director skill plus the siblings it delegates to)
-npx skills add scenario-labs/skills --skill scenario --skill scenario-video-ads --skill scenario-image --skill scenario-video --skill scenario-seedance --skill scenario-audio --skill scenario-video-assembly --skill scenario-text-overlay --skill scenario-consistency --skill scenario-asset-analysis
-
-# Seedance music video
-npx skills add scenario-labs/skills --skill scenario --skill scenario-seedance-music-video --skill scenario-seedance --skill scenario-consistency
-
-# Seedance storyboarded choreography
-npx skills add scenario-labs/skills --skill scenario --skill scenario-seedance-storyboard --skill scenario-seedance --skill scenario-consistency --skill scenario-video-editing --skill scenario-video-assembly
-```
-
-An expert-tools family installs as one set, since its specialists import the lead skill's scripts; the command is in each family README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md)).
 
 The Scenario skills need the Scenario MCP server connected:
 
