@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.48.0](https://github.com/scenario-labs/skills/compare/skills-v0.47.0...skills-v0.48.0) (2026-09-26)
+
+
+### Features
+
+* **skills:** add expert tools for DCC software and game engines ([#159](https://github.com/scenario-labs/skills/issues/159)) ([9ac7861](https://github.com/scenario-labs/skills/commit/9ac7861f751aa712cbc98813ac4ead81ff4e073a))
+
 ## [0.47.0](https://github.com/scenario-labs/skills/compare/skills-v0.46.0...skills-v0.47.0) (2026-09-25)
 
 
