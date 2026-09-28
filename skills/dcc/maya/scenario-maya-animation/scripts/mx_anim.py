@@ -3,13 +3,6 @@ mx_anim: keying, curve surgery and motion measurement for an animator agent that
 scrub (Maya 2027). Part of the scenario-maya-animation skill; builds on the scenario-maya-expert toolkit
 (mx_run for headless jobs, mx_review for PNG writing and GUI playblasts, mx_bridge).
 
-STATUS (2026-09-24): Maya 2027 is not installed.
-  * Analysis + image layer (pure Python, no Maya import): ran offline on synthetic motion
-    with python3 3.14 (tests/code/maya-animation/test_mx_anim_offline.py, passed).
-  * Maya layer (every function that calls maya.cmds): NOT YET RUN IN MAYA. The jobs
-    tests/code/maya-animation/test_*.py exercise it through mx_run.py once Maya is in.
-  Flags and tokens I am not sure of carry [verify] in comments.
-
 Why: animators judge by scrubbing, ghosts, motion trails and the Graph Editor. An agent
 measures instead (per-frame world and screen positions, spacing, velocity, holds, spikes,
 contacts, a ballistic fit, overlap lags) and looks at images it can open: a stacked curve

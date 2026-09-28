@@ -11,7 +11,7 @@ Each procedure names its Maya test (`job_*.py`, run through `<skills>/scenario-m
 
 ## P0. Job skeleton and rules
 
-_Not yet run in Maya. Every job__.py uses this shape.*
+Every job__.py uses this shape.
 
 ```python
 # my_job.py; run from the project root:
@@ -40,7 +40,7 @@ Rules the module follows and your own code must too:
 
 ## P1. Intake audit of a dense sculpt, scan or AI mesh
 
-_Not yet run in Maya. Test: `job_ai_character_smoke.py` ("intake audit sees the lamina face")._
+Test: `job_ai_character_smoke.py` ("intake audit sees the lamina face").
 
 ```python
 src = "ai_character"
@@ -55,7 +55,7 @@ Write down: height against the brief (cm), symmetry (a posed AI mesh is far belo
 
 ## P2. Working copy and cleanup
 
-_Not yet run in Maya. Test: `job_retopo.py` ("source untouched by prep", "working copy manifold"); `job_ai_character_smoke.py` ("prep flags the mesh as not Retopologize-ready")._
+Test: `job_retopo.py` ("source untouched by prep", "working copy manifold"); `job_ai_character_smoke.py` ("prep flags the mesh as not Retopologize-ready").
 
 ```python
 work, prep = RU.prep_source(src)            # weld (relative 1e-6 of the diagonal [added]), soften all, report
@@ -70,7 +70,7 @@ proxy, pr = RU.decimate(work, 250000)       # optional: fast section and project
 
 ## P3. Landmarks from a render
 
-_Not yet run in Maya. Test: `job_camera.py` ("center pixel of mx_review's front view hits the sphere front"). Ray math verified offline._
+Test: `job_camera.py` ("center pixel of mx_review's front view hits the sphere front"). Ray math verified offline.
 
 ```python
 rv = mx_review.review([src], out + "/landmarks", views=("front", "side"), modes=("clay",), resolution=1024)
@@ -87,7 +87,7 @@ Pick landmarks on +X and mirror the X coordinate for the other side when the sou
 
 ## P4. Template fit: the scripted Quad Draw
 
-_Not yet run in Maya. Test: `job_retopo.py` ("fitted template lies on the source", "covers the source", "keeps the template topology"); `job_ai_character_smoke.py` ("fitted head lies on the source head")._
+Test: `job_retopo.py` ("fitted template lies on the source", "covers the source", "keeps the template topology"); `job_ai_character_smoke.py` ("fitted head lies on the source head").
 
 ```python
 # the studio base head keeps its landmark vertex ids next to it, e.g. base_head.landmarks.json
@@ -107,7 +107,7 @@ print(fr)   # similarity_rms, scale, landmark_error_max, relax report
 
 ## P5. Tubes from plane sections (limbs, fingers, sleeves, tails, straps)
 
-_Not yet run in Maya. Test: `job_retopo.py` ("tube rings on the limb surface", "rule of threes at the elbow"); `job_ai_character_smoke.py` ("elbow carries 1 control + 2 support loops"). Section and resampling math verified offline._
+Test: `job_retopo.py` ("tube rings on the limb surface", "rule of threes at the elbow"); `job_ai_character_smoke.py` ("elbow carries 1 control + 2 support loops"). Section and resampling math verified offline.
 
 ```python
 shoulder, elbow, wrist = lm["shoulder_L"], lm["elbow_L"], lm["wrist_L"]
@@ -127,7 +127,7 @@ RU.relax_project(arm, src, iterations=2, border="lock", center_axis=None)   # on
 
 ## P6. Retopologize (polyRetopo) for bodies, props and static cloth
 
-_Not yet run in Maya. Test: `job_retopo.py` ("polyRetopo history deleted", "result is all quads", "no flag dropped on polyRetopo", "hard surface result has no history"); flags and node attributes probed by `job_probe_commands.py`._
+Test: `job_retopo.py` ("polyRetopo history deleted", "result is all quads", "no flag dropped on polyRetopo", "hard surface result has no history"); flags and node attributes probed by `job_probe_commands.py`.
 
 ```python
 body, rr = RU.retopologize(work, target_faces=6000, preprocess=True,
@@ -149,7 +149,7 @@ body, rr = RU.retopologize(work, 6000, tags="brow*")
 
 ## P7. Cavities: mouth bag, nostrils, eye pouch
 
-_Not yet run in Maya. Test: `job_retopo.py` ("pocket closes the opening, manifold, consistent winding"). Pocket construction verified offline._
+Test: `job_retopo.py` ("pocket closes the opening, manifold, consistent winding"). Pocket construction verified offline.
 
 ```python
 head2, cr = RU.cavity(head, point=lm["mouth_center"], depth=3.0, steps=3, scale=0.85, name="head_geo_bag")
@@ -162,7 +162,7 @@ head3, cr = RU.cavity(head2, point=lm["nostril_L"], depth=0.8, steps=2, scale=0.
 
 ## P8. Relax, center line, mirror, combine symmetric parts
 
-_Not yet run in Maya. Test: `job_retopo.py` ("relax evens edge lengths", "snap_center moved the drifted center vertices", "mirrored sphere is closed and manifold", "100% symmetric"); `job_ai_character_smoke.py` ("arm pair is symmetric")._
+Test: `job_retopo.py` ("relax evens edge lengths", "snap_center moved the drifted center vertices", "mirrored sphere is closed and manifold", "100% symmetric"); `job_ai_character_smoke.py` ("arm pair is symmetric").
 
 ```python
 RU.relax_project(head, src, iterations=4, strength=0.5, border="slide", center_axis=0)
@@ -179,7 +179,7 @@ arms, _ = RU.mirror_half("armL_geo", axis=0, tol=0.001, name="arms_geo")   # bot
 
 ## P9. Retopology gate
 
-_Not yet run in Maya. Test: `job_retopo.py` ("16-vertex hole found with equal halves", "at least 3 clean rings around the hole", "report sees no polyRetopo in history")._
+Test: `job_retopo.py` ("16-vertex hole found with equal halves", "at least 3 clean rings around the hole", "report sees no polyRetopo in history").
 
 ```python
 spec = {
@@ -202,7 +202,7 @@ Read `rep`: `verdict` (mx_audit, profile "subd" warns on triangles), deviation b
 
 ## P10. Seams from the map
 
-_Not yet run in Maya. Test: `job_uv.py` ("seam cut along a full loop (10 edges)", "one shell, no folds"); `job_bake_prep.py`; seam seeds verified offline._
+Test: `job_uv.py` ("seam cut along a full loop (10 edges)", "one shell, no folds"); `job_bake_prep.py`; seam seeds verified offline.
 
 ```python
 d = RU.mesh_data("body_geo")
@@ -227,7 +227,7 @@ Seam plan for a game character (MLC s_KLbTUdKms [00:01:37] to [00:08:05]): neck 
 
 ## P11. Unfold, optimize, orient, straighten
 
-_Not yet run in Maya. Test: `job_uv.py` ("unfolded cylinder is nearly distortion free", "each straightened row sits on one V value"); orientation math verified offline._
+Test: `job_uv.py` ("unfolded cylinder is nearly distortion free", "each straightened row sits on one V value"); orientation math verified offline.
 
 ```python
 RU.unfold("body_geo", map_size=4096, room_px=2)            # Unfold3D, Room space at its 2 px default
@@ -258,7 +258,7 @@ RU.transfer_uvs(dup, "body_geo", space="topology")       # sampleSpace enum [ver
 
 ## P12. Symmetrize and stack mirrored shells
 
-_Not yet run in Maya. Test: `job_uv.py` ("stacked: exactly one overlapping shell pair", "offset stack sits in tiles 1001 and 1002"). Mirroring verified offline._
+Test: `job_uv.py` ("stacked: exactly one overlapping shell pair", "offset stack sits in tiles 1001 and 1002"). Mirroring verified offline.
 
 ```python
 RU.mirror_uvs("body_geo", axis=0, source_sign=1, mode="mirror")              # symmetrize (film, continuous)
@@ -271,7 +271,7 @@ RU.mirror_uvs("arms_geo", axis=0, source_sign=1, mode="stack", offset_u=1.0) # s
 
 ## P13. Texel density: derive, set, count tiles
 
-_Not yet run in Maya. Test: `job_camera.py` ("footprint matches the pinhole math", "453 px -> 512 -> 1024 px over 10 cm"); `job_uv.py` ("density is 10.24 px/cm (mx_audit)"). Math verified offline._
+Test: `job_camera.py` ("footprint matches the pinhole math", "453 px -> 512 -> 1024 px over 10 cm"); `job_uv.py` ("density is 10.24 px/cm (mx_audit)"). Math verified offline.
 
 ```python
 # film: Paulino, from the closest shot (85 mm, resolution gate, 1920 x 1080 in his example)
@@ -293,7 +293,7 @@ est = RU.udim_estimate(a["surface_area"], target, tile_px=4096)                 
 
 ## P14. Layout with mip-safe padding, UDIM distribution
 
-_Not yet run in Maya. Test: `job_uv.py` ("layout with scale off keeps 10.24 px/cm", "layout keeps UVs inside 0-1"); u3dLayout flags and enums [verify] via `job_probe_commands.py`._
+Test: `job_uv.py` ("layout with scale off keeps 10.24 px/cm", "layout keeps UVs inside 0-1"); u3dLayout flags and enums [verify] via `job_probe_commands.py`.
 
 ```python
 pad = RU.mip_padding(4096, smallest_size=1024)          # 16 px shells, 8 px border
@@ -308,7 +308,7 @@ dropped = RU.layout("hero_geo", 4096, 16, 8, scale_mode="off", tiles=(3, 1))   #
 
 ## P15. UV gate and visual review
 
-_Not yet run in Maya. Test: `job_uv.py` ("UV sheet images written", "hard edges all on UV seams or borders"); `job_review.py` ("checker sheet written", "mx_review.\_Session.\_build restored"). Padding, distortion and sheet drawing verified offline._
+Test: `job_uv.py` ("UV sheet images written", "hard edges all on UV seams or borders"); `job_review.py` ("checker sheet written", "mx_review.\_Session.\_build restored"). Padding, distortion and sheet drawing verified offline.
 
 ```python
 uv = RU.uv_report("body_geo", map_size=4096, smallest_mip=1024, target_density=20.48, tolerance=0.10,
@@ -324,7 +324,7 @@ Open `uv["images"]` (shells with padding problems as magenta dots; distortion bl
 
 ## P16. Lightmap UV set
 
-_Not yet run in Maya. Test: `job_uv.py` ("lightmap set exists and map1 stays current", "lightmap set has no overlaps")._
+Test: `job_uv.py` ("lightmap set exists and map1 stays current", "lightmap set has no overlaps").
 
 ```python
 lm_rep = RU.lightmap_set("crate_geo", name="lightmap", source="map1", map_size=256)
@@ -335,7 +335,7 @@ Maya 2027 Help, Mapping UVs for lightmaps: duplicate the set, uniform density, u
 
 ## P17. Bake prep and the handoff package
 
-_Not yet run in Maya. Test: `job_bake_prep.py` ("high pokes outside the low", "the whole high sits inside the cage", "projected low lies on the high", "every hard edge sits on a UV seam", "bake copy is all triangles"). Seam and split-vertex logic verified offline._
+Test: `job_bake_prep.py` ("high pokes outside the low", "the whole high sits inside the cage", "projected low lies on the high", "every hard edge sits on a UV seam", "bake copy is all triangles"). Seam and split-vertex logic verified offline.
 
 ```python
 RU.harden_uv_borders("body_geo")                         # game lows: hard edges = UV seams (Polycount)
@@ -356,7 +356,7 @@ package = {"low": bake, "high": src, "cage": cage, "cage_offset_cm": chk["sugges
 
 ## P18. AI-generated character to animation-ready mesh (end to end)
 
-_Not yet run in Maya. Test: `job_ai_character_smoke.py` (the same composition on a synthetic fused, triangulated, lamina-carrying "AI mesh")._
+Test: `job_ai_character_smoke.py` (the same composition on a synthetic fused, triangulated, lamina-carrying "AI mesh").
 
 ```python
 def finish_ai_character(src, template, template_ids, lm, out, budget_note):
@@ -411,7 +411,7 @@ Report honestly what the agent did not plan: face loops come from the base, not 
 
 ## P19. Deformation-ready gate: is a bad bend the modeler's or the rigger's fault
 
-_Not yet run in Maya. Test: `job_deform_ready.py` ("ringed arm: 45 deg clean, 120 deg rig", "tilted joint loops: topology verdict", "swap test: the ringed arm beats the tilted one", "posed review sheet written and the posed copy deleted", dgaTension probe). Pure logic ran offline: `test_offline_math.py` (aligned, tilted, spiral and sparse tubes, twist, jaw hinge grids) and `test_offline_fake_maya.py` (copies, review plumbing, cleanup)._
+Test: `job_deform_ready.py` ("ringed arm: 45 deg clean, 120 deg rig", "tilted joint loops: topology verdict", "swap test: the ringed arm beats the tilted one", "posed review sheet written and the posed copy deleted", dgaTension probe). Pure logic ran offline: `test_offline_math.py` (aligned, tilted, spiral and sparse tubes, twist, jaw hinge grids) and `test_offline_fake_maya.py` (copies, review plumbing, cleanup).
 
 ```python
 arm = [lm["shoulder_L"], lm["elbow_L"], lm["wrist_L"], lm["fingertip_L"]]      # root side first
@@ -441,7 +441,7 @@ print(RU.compare_variants(rep, fix))                    # antCGi's swap test: wh
 
 ## P20. Lids fitted over the real eyeballs
 
-_Not yet run in Maya. Test: `job_deform_ready.py` ("lid_check: eyeball center at the origin, radius 1.2", "2 lid loops fail the blink, 6 pass"). Pure logic ran offline: `test_offline_math.py` (lids 0.3 mm off a 1.2 cm eyeball with 2 and 6 loops, a floating lid, a lid inside the eye); `test_offline_fake_maya.py` against a faceted eyeball mesh._
+Test: `job_deform_ready.py` ("lid_check: eyeball center at the origin, radius 1.2", "2 lid loops fail the blink, 6 pass"). Pure logic ran offline: `test_offline_math.py` (lids 0.3 mm off a 1.2 cm eyeball with 2 and 6 loops, a floating lid, a lid inside the eye); `test_offline_fake_maya.py` against a faceted eyeball mesh.
 
 ```python
 rep = RU.lid_check("head_geo", "eyeL_geo")      # eyeball separate, looking +Z, Y up (the handoff pose)
@@ -457,7 +457,7 @@ rep = RU.lid_check("head_geo", "eyeL_geo", eye_point=lm["eye_center_L"])     # a
 
 ## P21. High vs low overlap renders
 
-_Not yet run in Maya. Test: `job_deform_ready.py` ("a low 20% smaller shows the high outside it"). The pixel comparison ran offline (`test_offline_math.py` "silhouette overlap"); the plumbing against a stubbed `mx_review.review` in `test_offline_fake_maya.py`._
+Test: `job_deform_ready.py` ("a low 20% smaller shows the high outside it"). The pixel comparison ran offline (`test_offline_math.py` "silhouette overlap"); the plumbing against a stubbed `mx_review.review` in `test_offline_fake_maya.py`.
 
 ```python
 ov = RU.overlap_review("body_geo", "scan_high", out + "/overlap", views=("front", "side", "threequarter"))

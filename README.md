@@ -313,7 +313,7 @@ DCC software. A lead and twelve specialists that drive Blender 5.2 through Pytho
 
 ### Expert tools: Maya
 
-DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through Python, batch or live: modeling, retopology and UVs, rigging, skinning, animation, groom, FX, look dev, Arnold lighting and rendering, pipeline scripting. Tested offline only; not yet run inside Maya.
+DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through Python, batch or live: modeling, retopology and UVs, rigging, skinning, animation, groom, FX, look dev, Arnold lighting and rendering, pipeline scripting.
 
 | Skill                                                                                         | Use it for                                                                                                                                                   |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -331,7 +331,7 @@ DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through P
 
 ### Expert tools: Unreal Engine
 
-Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS through Editor Python, headless jobs, and Epic's Unreal MCP server: world building, materials, lighting and rendering, gameplay, animation, cinematics, VFX, pipeline automation, performance. Tested offline only; not yet run inside the engine.
+Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS through Editor Python, headless jobs, and Epic's Unreal MCP server: world building, materials, lighting and rendering, gameplay, animation, cinematics, VFX, pipeline automation, performance.
 
 | Skill                                                                                                          | Use it for                                                                                                                                                   |
 | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |

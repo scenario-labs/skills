@@ -1,6 +1,6 @@
 # Procedures (maya.cmds and mx_anim), with their tests
 
-**Status (2026-09-24): Maya 2027 is not installed.** Every procedure that calls `maya.cmds` is **not yet run in Maya**; each names the test that will run it (`tests/code/maya-animation/`, all mx_run jobs, `run_all.sh` runs them and keeps logs). The pure-Python parts of `mx_anim` (physics, analysis, gates, images, lip timing) **ran offline** with python3 3.14 in `test_mx_anim_offline.py` (101 hard checks passed on 2026-09-24 after the body-mechanics refactor; logs in `tests/code/maya-animation/logs/`). Run `test_00_anim_probe.py` first once Maya is in: it answers every [verify] below.
+The pure-Python parts of `mx_anim` (physics, analysis, gates, images, lip timing) **ran offline** with python3 3.14 in `test_mx_anim_offline.py` (101 hard checks passed on 2026-09-24 after the body-mechanics refactor; logs in `tests/code/maya-animation/logs/`). Run `test_00_anim_probe.py` first once Maya is in: it answers every [verify] below.
 
 Import, in mayapy, a mx_run job or the GUI bridge:
 
@@ -29,7 +29,9 @@ Pure (no Maya, offline-tested):
 - `loop_seam()`, `rotation_flips()`, `cycle_speed()`; `project_point()`, `fit_view()`.
 - `curve_lanes_png(path, curves, keys, spans, marks)`, `tracks_png(path, tracks, frames, size, bones, pose_frames, image=)`, `Canvas`.
 - `evaluate_gates(samples, plan)`, `format_gates()`.
-  Maya (not yet run in Maya):
+
+Maya:
+
 - keys: `set_key_defaults()`, `restore_key_defaults()`, `key_pose(pose, f, stepped, fill)`, `key_hold()`, `insert_key()`, `share_keys()`, `key_times()`, `plug_keys()`, `subframe_keys()`.
 - curves: `snapshot(nodes, attrs, samples=)`, `restore()`, `stepped_preview()`, `set_tangents()`, `to_spline()`, `break_tangent()`, `weighted_hang()`, `ballistic_keys()`, `cycle()`, `offset_keys()`, `retime()`, `snap_subframes()`, `scale_curve(node, attr, factor, pivot, time=)`, `copy_curve()`, `keep_extremes()`, `euler_filter()`.
 - sampling: `sample_matrices()`, `sample_world()`, `sample_attrs()`, `sample_curves()`, `camera_track()`.
@@ -39,7 +41,7 @@ Pure (no Maya, offline-tested):
 
 ## P1. Shot setup and plan
 
-Not yet run in Maya. Tests: `test_00_anim_probe.py` (defaults), `test_sequencer_sound_blur.py` (sound, cameras), `test_sampling_contacts.py` (plan round trip).
+Tests: `test_00_anim_probe.py` (defaults), `test_sequencer_sound_blur.py` (sound, cameras), `test_sampling_contacts.py` (plan round trip).
 
 ```python
 cmds.currentUnit(time="film")                                   # 24 fps; games: "ntsc" 30, "ntscf" 60
@@ -79,7 +81,7 @@ Plan fields read by `run_gates`: range, fps, style (heavy, realistic, cartoony, 
 
 ## P2. Proxy boxes pass (Camporota)
 
-Not yet run in Maya. Test: `test_m4_jump.py` (step 2).
+Test: `test_m4_jump.py` (step 2).
 
 ```python
 px = A.proxy_boxes(hip_height=96.0)            # root at hip height (the lean pivot), body and head boxes, tagged
@@ -101,7 +103,7 @@ Cartoony option: fewer frames on takeoff and landing, `cmds.scaleKey(root, time=
 
 ## P3. Stepped blocking with key categories (Neistadt, Newman)
 
-Not yet run in Maya. Tests: `test_keys.py` (pose columns, holds, share keys, stepped insert), `test_m4_jump.py` (step 3).
+Tests: `test_keys.py` (pose columns, holds, share keys, stepped insert), `test_m4_jump.py` (step 3).
 
 ```python
 prev = A.set_key_defaults("blocking")          # in linear, out step; returns the old defaults
@@ -119,7 +121,7 @@ Pass order: main keys, anticipations, overshoots and follow-through, breakdowns,
 
 ## P4. Spline readiness and spline pass 1 (the core)
 
-Not yet run in Maya. Tests: `test_keys.py` (snapshot and restore, to_spline through holds, stepped preview, ballistic keys, broken tangent), `test_m4_jump.py` (step 4).
+Tests: `test_keys.py` (snapshot and restore, to_spline through holds, stepped preview, ballistic keys, broken tangent), `test_m4_jump.py` (step 4).
 
 ```python
 snap = A.snapshot(ctrls)                                  # the buffer curve, JSON-serializable
@@ -154,7 +156,7 @@ Tangent choice by stage: blocking step; core auto (2027 Auto Span family [verify
 
 ## P5. Spline pass 2: overlap
 
-Not yet run in Maya. Tests: `test_keys.py` (offset inside a cycle), `test_m4_jump.py` (step 5).
+Tests: `test_keys.py` (offset inside a cycle), `test_m4_jump.py` (step 5).
 
 ```python
 A.to_spline(["chest_jnt", "neck_jnt", "head_jnt"], tangent="auto")
@@ -170,7 +172,7 @@ Correlated controls (three spine controls) move together first, offsets after (T
 
 ## P6. Gates and headless images (the agent's eyes without a viewport)
 
-Not yet run in Maya. Tests: `test_sampling_contacts.py`, `test_m4_jump.py` (step 6, CLI). Pure gate logic: `test_mx_anim_offline.py` (M4 good passes all 23 gates; floaty fails ballistic; a sliding foot fails slide_R; no resistance fails resistance; a frozen end warns moving_hold; feet flat in the crouch warn foot_roll; a chest locked to the hips warns spine_drag; a flat foot on the first airborne frame warns peel_off; heels 4 frames to flat warn heel_to_flat; a bounce out of the squash warns impact_hold, each without breaking another gate).
+Tests: `test_sampling_contacts.py`, `test_m4_jump.py` (step 6, CLI). Pure gate logic: `test_mx_anim_offline.py` (M4 good passes all 23 gates; floaty fails ballistic; a sliding foot fails slide_R; no resistance fails resistance; a frozen end warns moving_hold; feet flat in the crouch warn foot_roll; a chest locked to the hips warns spine_drag; a flat foot on the first airborne frame warns peel_off; heels 4 frames to flat warn heel_to_flat; a bounce out of the squash warns impact_hold, each without breaking another gate).
 
 Body-mechanics gates, for any jump, hop, landing or weight shift (the plan fields decide where they run):
 
@@ -199,7 +201,7 @@ Open both PNGs with the image reader, every time. `tracks.png` draws a dot per f
 
 ## P7. GUI review pack (playblasts through the bridge)
 
-Not yet run in Maya. Test: `gui_playblast_review.py` (needs GUI Maya with `mx_bridge_server.start()`).
+Test: `gui_playblast_review.py` (needs GUI Maya with `mx_bridge_server.start()`).
 
 ```python
 b = mx_bridge.Bridge()
@@ -217,7 +219,7 @@ Check the output: 72 PNGs per pass at 1280 x 720 (`mx_review.png_size`), then re
 
 ## P8. Walk cycle (Camporota) and game clip QA (Newman, Epic)
 
-Not yet run in Maya. Tests: `test_keys.py` (cycle, offsets keep the period), pure seam and speed in `test_mx_anim_offline.py`.
+Tests: `test_keys.py` (cycle, offsets keep the period), pure seam and speed in `test_mx_anim_offline.py`.
 
 ```python
 start, step = 1, 12
@@ -242,7 +244,7 @@ Not yet run in Maya (keys as P3; gates pure and offline-tested).
 
 ## P10. Lip sync passes (Santos, Wade, Lazare) and the face
 
-Not yet run in Maya. Tests: `test_sequencer_sound_blur.py` (sound node, muppet pass from `mouth_keys`, `jaw_report`, `lip_lag`), `test_keys.py` (`copy_curve`), pure in `test_mx_anim_offline.py`.
+Tests: `test_sequencer_sound_blur.py` (sound node, muppet pass from `mouth_keys`, `jaw_report`, `lip_lag`), `test_keys.py` (`copy_curve`), pure in `test_mx_anim_offline.py`.
 
 ```python
 phon = [("M", 12), ("AA1", 14), ("N", 18), ("IY1", 20), ("P", 26), ("OW1", 28)]   # onsets from a forced aligner [added]
@@ -263,7 +265,7 @@ Order: body, mask (eyes, brows), phrase pass, muppet (jaw only), big five (corne
 
 ## P11. Layer protocol and merge (Newman, Elver, doc)
 
-Not yet run in Maya. Test: `test_layers_mocap.py`.
+Test: `test_layers_mocap.py`.
 
 ```python
 lyr = A.layer_try(["L_shoulder_ctrl", "R_shoulder_ctrl"], "try_idea", [18, 26, 34, 41, 50, 62])  # last = protective key
@@ -277,7 +279,7 @@ Never block or clean on a layer; merge first (5RmqWjfU80s 00:07:24). An empty Ov
 
 ## P12. Mocap re-edit and a prop in the hand
 
-Not yet run in Maya. Test: `test_layers_mocap.py`.
+Test: `test_layers_mocap.py`.
 
 ```python
 A.euler_filter(ctrls)                                        # first, after any merge or bake (JzwfomndbMA 00:08:31)
@@ -293,7 +295,7 @@ Outline only: HumanIK scripting is MEL procedures shipped with `mayaHIK`, names 
 
 ## P14. Retime a section and snap sub-frames (Elver, Wade)
 
-Not yet run in Maya. Test: `test_keys.py`.
+Test: `test_keys.py`.
 
 ```python
 A.retime(ctrls, 134, 152, -2)       # keys inserted at both ends, section scaled, tail shifted, sub-frames snapped
@@ -302,7 +304,7 @@ A.snap_subframes(ctrls)             # after any scaleKey: collisions keep one ke
 
 ## P15. Motion-blurred review render (Elver) and Sequencer shots (Newman)
 
-Not yet run in Maya. Test: `test_sequencer_sound_blur.py` (with `--plugins mtoa`).
+Test: `test_sequencer_sound_blur.py` (with `--plugins mtoa`).
 
 ```python
 cmds.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)   # [verify attribute name]

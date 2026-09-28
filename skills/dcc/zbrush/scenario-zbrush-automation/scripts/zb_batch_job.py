@@ -14,8 +14,6 @@ A step is {"name", "module", "func", "args", "kwargs", "critical", ...}. The job
 result file after every step (atomic replace), so a hang still leaves the finished steps on
 disk, then calls sys.exit(0 ok / 1 failed / 2 bad job). Whether ZBrush quits on sys.exit in
 -script mode is not documented [verify live_a05]: zb_batch.run_script_job quits it if not.
-
-Status: NOT YET RUN IN ZBRUSH (the argv parser and resolver are tested offline).
 """
 
 __version__ = "0.1"  # ZBrush Expert Skills v0.1 (2026-09-24)

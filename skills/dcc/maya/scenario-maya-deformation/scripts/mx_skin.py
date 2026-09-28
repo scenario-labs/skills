@@ -1,16 +1,6 @@
 """
 mx_skin: skinning, weight maths and deformation tests for the scenario-maya-deformation skill (Maya 2027).
 
-STATUS (2026-09-24): Maya 2027 is not installed on the build machine.
-- The pure-Python half (weight rows, closest-bone blocking, twist ramps, masks, layer compositing,
-  smoothing and sharpening, mirror and closest-point remap, ROM schedules, deformation metrics,
-  blend shape splits, linear-skinning inversion) RAN OFFLINE with synthetic meshes:
-  tests/code/maya-deformation/test_mx_skin_offline.py (python3, no Maya).
-- Every function that touches maya.cmds, OpenMaya or Skin Tools is NOT YET RUN IN MAYA. Its test
-  is in tests/code/maya-deformation/test_*.py and runs through <skills>/scenario-maya-expert/scripts/mx_run.py.
-  Names marked [verify] come from docs and must be confirmed. The Skin Tools API names (ngSkinTools2.api)
-  match the Maya 2027 Developer Help, fetched 2026-09-24.
-
 Import:
   import sys; sys.path.insert(0, "<skills>/scenario-maya-deformation/scripts"); import mx_skin as S
   (it adds ../../scenario-maya-expert/scripts to sys.path for mx_audit.resolve_mesh)

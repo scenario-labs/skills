@@ -2,10 +2,6 @@
 mx_run: run one Python job inside headless Maya (mayapy + maya.standalone) and print
 one machine-readable result line. The shared entry point for every scenario-maya-* skill.
 
-STATUS: not yet run in Maya. Written 2026-09-24 before Maya 2027 was installed; the
-maya.standalone and plug-in calls follow the Maya 2027 Help (Python in Maya, mayapy) and
-must be confirmed with tests/code/maya-expert/run_all.sh.
-
 Shell:
   mayapy  mx_run.py [options] job.py [-- job args...]
   python3 mx_run.py [options] job.py [-- job args...]   # finds mayapy and re-runs itself

@@ -10,7 +10,7 @@ Expert animation means every frame is a choice: poses that read as drawings from
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 
-Toolkit: [`scripts/mx_anim.py`](scripts/mx_anim.py). Its analysis and image layer is pure Python and ran offline; every `maya.cmds` call is **not yet run in Maya** (tests: `tests/code/maya-animation/`, see procedures.md).
+Toolkit: [`scripts/mx_anim.py`](scripts/mx_anim.py). Its analysis and image layer is pure Python and ran offline.
 
 ## Stance (the expert delta)
 

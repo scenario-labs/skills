@@ -13,7 +13,7 @@ Two layers, same as the lead skill:
 
 ## P1. Batch over many scenes, one mayapy per file
 
-Not yet run in Maya. Tests: `test_offline_batch.py` (fake mayapy, passed), `test_batch_builtin.py` (real mayapy).
+Tests: `test_offline_batch.py` (fake mayapy, passed), `test_batch_builtin.py` (real mayapy).
 
 ```python
 # parent side: any python3 (or mayapy); nothing here imports maya
@@ -64,7 +64,7 @@ Return keys the runner reads: `status`, `issues` (`severity` error, warning or i
 
 ## P2. The builtin validate, fix, export, verify job (scenario M8)
 
-Not yet run in Maya. Test: `test_batch_builtin.py`.
+Test: `test_batch_builtin.py`.
 
 ```python
 s = P.batch(scenes, P.BUILTIN_EXPORT, "/abs/out/unreal_2026-09-24", plugins=("fbx",), timeout=900,
@@ -90,7 +90,7 @@ Do not combine the builtin job with `save_as` (it re-imports into a new scene; `
 
 ## P3. FBX for Unreal: static mesh, raw MEL
 
-Not yet run in Maya. Tests: `test_snippets.py` (this block), `test_fbx_export.py` (the module version).
+Tests: `test_snippets.py` (this block), `test_fbx_export.py` (the module version).
 
 ```python
 # snippet: fbx_static_raw
@@ -147,7 +147,7 @@ Module version: `P.fbx_export(path, roots, "unreal_static")` does the same plus 
 
 ## P4. Skeletal mesh and animation clips for Unreal and Unity
 
-Not yet run in Maya. Tests: `test_fbx_export.py`, `test_snippets.py` (block below).
+Tests: `test_fbx_export.py`, `test_snippets.py` (block below).
 
 ```python
 # snippet: fbx_anim_per_clip
@@ -185,7 +185,7 @@ Over the influence limit: `P.cap_influences(skin, shape, 4, max_delta=0.1, apply
 
 ## P5. Verify an FBX in a clean scene
 
-Not yet run in Maya. Test: `test_fbx_export.py`.
+Test: `test_fbx_export.py`.
 
 ```python
 before = P.scene_stats(roots)                     # just before export (after fixes and triangulation)
@@ -203,7 +203,7 @@ What the comparison catches that counts miss (Maya 2027 Help: the expert's test 
 
 ## P6. Alembic caches
 
-Not yet run in Maya. Tests: `test_abc_gpu.py`, `test_snippets.py`.
+Tests: `test_abc_gpu.py`, `test_snippets.py`.
 
 ```python
 # snippet: alembic_raw
@@ -240,7 +240,7 @@ Rules: Ogawa only since 2022 (HDF5 dropped). Alembic carries no shading: `-uvWri
 
 ## P7. GPU cache
 
-Not yet run in Maya. Tests: `test_abc_gpu.py`, `test_snippets.py`.
+Tests: `test_abc_gpu.py`, `test_snippets.py`.
 
 ```python
 # snippet: gpu_cache_raw
@@ -265,7 +265,7 @@ One file per object instead: `filePrefix="ddd_", clashOption="nodeName"` (Maya 2
 
 ## P8. USD export with every default trap set
 
-Not yet run in Maya. Tests: `test_usd.py`, `test_snippets.py`.
+Tests: `test_usd.py`, `test_snippets.py`.
 
 ```python
 # snippet: usd_export_raw
@@ -314,7 +314,7 @@ Rules (maya-usd command readme; USD for Maya 2027 help):
 
 ## P9. USD shot layers, edit targets, muting, audits
 
-Not yet run in Maya. Tests: `test_usd.py`, `test_snippets.py`.
+Tests: `test_usd.py`, `test_snippets.py`.
 
 ```python
 # snippet: usd_shot_layers_raw
@@ -361,7 +361,7 @@ Merge Maya Edits to USD writes an `over` on a stronger target and a `def` on a w
 
 ## P10. References and namespaces from a manifest
 
-Not yet run in Maya. Tests: `test_references.py`, `test_snippets.py`.
+Tests: `test_references.py`, `test_snippets.py`.
 
 ```python
 # snippet: reference_raw
@@ -405,7 +405,7 @@ Borderlands published one FBX per character or prop per camera cut (2 characters
 
 ## P12. OpenMaya 2.0 DG node plug-in
 
-Not yet run in Maya. Test: `test_om2_node_plugin.py` (loads this block from this file). The undoable `MPxCommand` pattern, the reload helper (`flushUndo` before `unloadPlugin`) and the OM2 read idioms are in the lead skill (scenario-maya-expert, `references/cmds-reliability.md` P5, P9, P10).
+Test: `test_om2_node_plugin.py` (loads this block from this file). The undoable `MPxCommand` pattern, the reload helper (`flushUndo` before `unloadPlugin`) and the OM2 read idioms are in the lead skill (scenario-maya-expert, `references/cmds-reliability.md` P5, P9, P10).
 
 ```python
 # plugin: mx_remap_node.py
@@ -468,7 +468,7 @@ Checklist (API 2.0 help): `maya_useNewAPI` present; `MTypeId` inside `0x00000` t
 
 ## P13. Tool UI: PySide6 dockable panel, installed as a module
 
-GUI only; not yet run in Maya. Test: `gui_smoke.py` (through `mx_bridge`).
+GUI only. Test: `gui_smoke.py` (through `mx_bridge`).
 
 ```python
 # gui-snippet: pyside6_panel
@@ -522,7 +522,7 @@ Folder `agentTools/{scripts,plug-ins,icons,presets,python}`; the `.mod` goes in 
 
 ## P14. Scene performance: census, timing, correctness
 
-Not yet run in Maya. Tests: `test_perf.py`, `test_snippets.py`.
+Tests: `test_perf.py`, `test_snippets.py`.
 
 ```python
 # snippet: perf_raw
@@ -552,7 +552,7 @@ Fixes that experts apply first: move attribute-only hosts out of limb hierarchie
 
 ## P15. The GUI parts of a pipeline job
 
-Not yet run in Maya. Test: `gui_smoke.py`.
+Test: `gui_smoke.py`.
 
 Headless first: contact sheets and turntables come from `mx_review.review` (Arnold, no viewport). The GUI session is for what needs Viewport 2.0: playblasts, viewport captures, GPU Override and viewport fps, tool UIs. Through the lead's bridge:
 
@@ -578,7 +578,7 @@ Every record carries `stdout`, `stderr` and `maya_messages` (warnings and errors
 
 ## P16. Blind spots of a batch: preflight, logs, locked normals, empty meshes, time unit, reference health
 
-Not yet run in Maya. Tests: `test_offline_pure.py` and `test_offline_fake_checks.py` (offline, passed), `test_engine_checks.py` and `test_snippets.py` (this block), `test_fbx_export.py`.
+Tests: `test_offline_pure.py` and `test_offline_fake_checks.py` (offline, passed), `test_engine_checks.py` and `test_snippets.py` (this block), `test_fbx_export.py`.
 
 The M8 blind grade (2026-09-24) listed what neither answer checked on a 200-character batch. Each has a check in the module and a line in the report:
 

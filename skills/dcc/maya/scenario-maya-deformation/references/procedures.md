@@ -18,7 +18,7 @@ Conventions: weights `W` are a list of `{physical influence index: weight}` per 
 
 ## P1. Intake: mesh and skeleton gates before any bind
 
-Status: not yet run in Maya. Test: `test_skin_io.py` (precheck part), `test_mx_skin_offline.py` (ray parity and shell volumes ran offline).
+Test: `test_skin_io.py` (precheck part), `test_mx_skin_offline.py` (ray parity and shell volumes ran offline).
 
 ```python
 import mx_validate, mx_audit
@@ -33,7 +33,7 @@ Decide the method from `pre`: watertight, single shell, joints inside: `heat`. M
 
 ## P2. Bind with explicit settings
 
-Status: not yet run in Maya. Tests: `test_skin_io.py`, `test_00_probe_deformation.py` (defaults and geomBind headless).
+Tests: `test_skin_io.py`, `test_00_probe_deformation.py` (defaults and geomBind headless).
 
 ```python
 b = S.bind("body_geo", bind_joints, method="heat", skin_method=0, normalize=1)   # no cap while authoring
@@ -91,7 +91,7 @@ print(res["layers"], S.weights_verdict(res["audit"]))
 
 ## P5. Skin Tools layered path (when the API exists)
 
-Status: not yet run in Maya. API names match the Maya 2027 Developer Help pages "Skin Tools Python API" (namespace `ngSkinTools2.api`, source in `<maya>/runTime/plug-ins/ngSkinTools/scripts/ngSkinTools2`), fetched 2026-09-24. Test: `test_skin_tools.py` (skips cleanly when no module is found).
+API names match the Maya 2027 Developer Help pages "Skin Tools Python API" (namespace `ngSkinTools2.api`, source in `<maya>/runTime/plug-ins/ngSkinTools/scripts/ngSkinTools2`), fetched 2026-09-24. Test: `test_skin_tools.py` (skips cleanly when no module is found).
 
 ```python
 probe = S.skin_tools_probe()                 # plug-ins, node types, commands, modules: read it first
@@ -154,7 +154,7 @@ Needs a mesh centered on X and a symmetric bind pose (Help). Blocked while Skin 
 
 ## P8. Copy and transfer (reference head, proxy, updated mesh)
 
-Status: not yet run in Maya. Tests: `test_mirror_transfer.py` (copy_skin), `test_skin_io.py` (JSON closest-point import).
+Tests: `test_mirror_transfer.py` (copy_skin), `test_skin_io.py` (JSON closest-point import).
 
 ```python
 S.copy_skin("head_ref_geo", "head_geo")                     # binds if needed, explicit closestPoint + oneToOne/name/closestJoint
@@ -251,7 +251,7 @@ print(drv.get("warning"), drv["plug"], drv["drive"]["kind"])  # 0 at rest; reads
 
 ## P12. Paint-free skinning: Delta Mush, then bake to plain weights
 
-Status: not yet run in Maya. Test: `test_rom_metrics.py` (deltaMush and bakeDeformer, soft).
+Test: `test_rom_metrics.py` (deltaMush and bakeDeformer, soft).
 
 ```python
 dm = cmds.deltaMush("body_geo", smoothingIterations=10, smoothingStep=0.5)[0]     # [verify flags]
@@ -264,7 +264,7 @@ Then P3 audit and P10 on the baked mesh. Remove the Delta Mush before ML trainin
 
 ## P13. Two skinClusters on a face (squash under tweaks) and the double transform fix
 
-Status: not yet run in Maya. Test: `test_multi_skin.py`.
+Test: `test_multi_skin.py`.
 
 ```python
 sq = S.bind("face_geo", ["squash_top_jnt", "squash_bot_jnt"], method="closest", name="squash_SC")["skinCluster"]

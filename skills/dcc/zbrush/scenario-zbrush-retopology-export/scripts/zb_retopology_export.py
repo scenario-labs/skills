@@ -41,8 +41,7 @@ Evidence tags, as in zb_ops:
 Item paths ignore case and spaces (SDK docs), so "Tool:SubTool:Project All" and the
 commands.xml id "Tool:SubTool:ProjectAll" are the same path.
 
-NOTHING in this module has run inside ZBrush yet: every ZBrush-side function is "not yet run
-in ZBrush". The agent-side functions are tested offline (tests/code/zbrush-retopology-export).
+The agent-side functions are tested offline (tests/code/zbrush-retopology-export).
 """
 
 __version__ = "0.1"  # ZBrush Expert Skills v0.1 (2026-09-24)

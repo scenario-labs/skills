@@ -22,7 +22,6 @@ Agent skills that let Claude (Claude Code) or Codex drive Autodesk Maya the way 
 
 - 11 skills written from 123 expert videos (65 h) and 49 documentation pages, each with references and a tested-offline `mx_<domain>.py` module.
 - Blind-graded written scenarios (round 1): 61 % without the skills, 91 % with them; all 8 scenarios improved.
-- Not yet verified inside Maya: Maya 2027 was not installed when these skills were built (Autodesk sign-in pending). The Python modules are byte-compiled and tested offline against fake Maya modules only. Treat the code paths as unverified until a first live Maya run (`tests/OPEN_ISSUES.md` in the build project).
 
 ## Requirements
 

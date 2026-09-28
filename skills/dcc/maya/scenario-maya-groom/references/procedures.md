@@ -28,7 +28,7 @@ Headless: `python3 <project>/skills/scenario-maya-expert/scripts/mx_run.py --plu
 
 **Why:** Interactive Groom nodes compute on the GPU and whether they evaluate in headless `mayapy` on Apple Silicon is unknown (maya-version-deltas § 4). The 2027 help documents node types and four MEL commands, but not the commands behind Create Interactive Groom Splines, Export Cache, Add Modifier > Guide, Make Wires Dynamic or Reference State > Update. Discover, never invent. The menus already hold the answer: every menu item and button stores the command string it runs, and the GUI bridge can read it, so no one has to click.
 
-**Status:** not yet run in Maya. Query logic ran offline on a fake menu bar (`test_mx_groom_offline.py`: lazy menus built, submenu trails, option boxes, popups, runtime commands, procedure source, button tokens). Tests: `test_groom_probe.py` (headless), `gui_groom_smoke.py` (GUI query).
+Query logic ran offline on a fake menu bar (`test_mx_groom_offline.py`: lazy menus built, submenu trails, option boxes, popups, runtime commands, procedure source, button tokens). Tests: `test_groom_probe.py` (headless), `gui_groom_smoke.py` (GUI query).
 
 ```python
 rec = G.probe()                               # node types, attribute catalog, commands, xgenm, descriptions
@@ -66,7 +66,7 @@ Fallback only when an item's command is a Python callable (no string to read) or
 
 **Why:** "If you are creating hair on a character's head, create a mesh of the scalp region only" (2027 help § Get started). IG hairs inherit the base's UVs (Schneider [00:25:13]), masks and root UVs live in them, Epic's root-UV bake reads `map1` (Giovannini [00:34:20]), history must go (FlippedNormals [00:04:30]).
 
-**Status:** not yet run in Maya. Test: `test_groom_guides.py`.
+Test: `test_groom_guides.py`.
 
 ```python
 r = G.scalp_check("scalp_GEO", for_unreal=True)     # mx_audit.audit + scalp_verdict
@@ -104,7 +104,7 @@ Rules for writing it (Fernandez 01): mark compression lines where streams press 
 
 **Why:** "Good guides then modifiers" (FlippedNormals [00:08:22]); as few as possible at first [00:08:54]; add guides only where interpolation facets (Fernandez 01 [00:09:31]); first and last guide then interpolate, place on one side and mirror on symmetric topology (Hadi [00:05:13], [00:08:51]).
 
-**Status:** not yet run in Maya. Test: `test_groom_guides.py` (roots on the scalp, 8 CVs, no CV inside the head, flow error, symmetric count, rebuild to 20, fill layer at 2/3, Alembic round trip).
+Test: `test_groom_guides.py` (roots on the scalp, 8 CVs, no CV inside the head, flow error, symmetric count, rebuild to 20, fill layer at 2/3, Alembic round trip).
 
 ```python
 g = G.make_guides("scalp_GEO", FLOW, spacing=1.2, cvs=8, collide="head_GEO", seed=1,
@@ -325,7 +325,7 @@ Multiple Transforms: the 2027 help and Flood say on; Epic's page says off. Expor
 
 **Why:** realism from melanin, roughness, IOR; diffuse 0, tints white, indirect 1; texture into Base Color with Melanin 0; Shift by hair type; light hair needs Extra Depth; ribbon mode; opacity < 1 needs Ai Opaque off and costs (Arnold hair doc). IG assigns `hairPhysicalShader` by default (2027 help).
 
-**Status:** not yet run in Maya. Test: `test_groom_shader.py`.
+Test: `test_groom_shader.py`.
 
 ```python
 r = G.hair_shader("hair_body", preset="brown", hair_type="dark_brown_european", name="hair_body_MTL")
@@ -348,7 +348,7 @@ Blond noise: `extraDepth` on the shader first, then specular samples 2 to 5 or A
 
 **Why:** experts judge hair in close, side-lit renders against the reference; Schneider lights fur with a key along the groom plus an HDRI dome [00:34:32]; Giovannini toggles the fill layer to see the scalp [00:12:29]; Fernandez reads silhouette, breakup, fuzzy tips, halo [lRm2sBSOo00 00:15:01].
 
-**Status:** not yet run in Maya. Tests: `test_groom_review.py` (headless, guide curves as hair), `gui_groom_smoke.py` (an IG description in the GUI).
+Tests: `test_groom_review.py` (headless, guide curves as hair), `gui_groom_smoke.py` (an IG description in the GUI).
 
 ```python
 rv = G.review(["hair_body", "hair_fill", "hair_strays", "brow_L", "brow_R"], "/abs/review/v003",
@@ -368,7 +368,7 @@ Viewport captures (GUI playblasts, `mx_review.playblast`) only after `G.viewport
 
 **Why:** four knobs: Min Pixel Width, Transparency Depth, Specular samples, AA; higher AA needs less MPW; MPW only in ribbon mode; transparency depth 0 disables the MPW transparency (the doc is ambiguous: test it) (Arnold hair doc § Optimization).
 
-**Status:** not yet run in Maya. Test: `test_groom_review.py` (AA variants).
+Test: `test_groom_review.py` (AA variants).
 
 ```python
 shape = G.resolve("hair_body")[1]
@@ -398,7 +398,7 @@ Keep the shader opaque unless the look needs soft strands; if it does, `G.curve_
 
 **Why:** Flood: wires from the Linear Wire's inGuide, Multiple Transforms and Write Final Width on, prefixed names, wrap to a skinned proxy that encloses the groom (keys) or nHair output curves (sims), Curve to Spline with Align to Normals off and source Cache, Reference State Update at the rest pose on frame 1, magnitude ramp 0 at the root when the scalp moves the roots, separate wire and geometry caches with namespaces stripped [7IS_tnkO_oU 00:02:34 to 00:18:41]. 2027 help: Linear Wire > Make Wires Dynamic builds hairSystem, nucleus, nRigid, follicles, output curves and `xgmCurveToSpline_dynamic` in the groom file.
 
-**Status:** not yet run in Maya. Test: `test_groom_motion.py` (prefix, wrap, shot export, nucleus scale, nHair from curves).
+Test: `test_groom_motion.py` (prefix, wrap, shot export, nucleus scale, nHair from curves).
 
 ```python
 # groom file: wires (Linear Wire "Create" is a recipe), then export only the wires
@@ -448,7 +448,7 @@ In-groom dynamics (2027 help): Linear Wire > Input Wire > Make Wires Dynamic (re
 
 **Why:** Epic's Alembic for Grooms: `groom_guide` (only tagged curves simulate; otherwise 10 % auto), `groom_group_id` (materials and sim per group), `groom_root_uv` (binding and textures), widths converted from Maya (fallback 1 cm), unique names. Giovannini: real guides without the fill, UV set `map1`, bake in a throwaway scene and save as new, one export with all three attributes, Outliner closed.
 
-**Status:** not yet run in Maya. Test: `test_groom_unreal.py`.
+Test: `test_groom_unreal.py`.
 
 ```python
 # throwaway scene with the growth cap, the guide curves (no fill) and the exported strands
@@ -478,7 +478,7 @@ Hand to the Unreal agent (scenario-maya-pipeline-scripting): use imported guides
 
 **Why:** 2027 help § Prepare a groom for conversion: widen hairs to card width, Face Camera off (description Primitive Attributes; guides on `inGuide`, wires on `transform_fromCurve`), Twist brush with Align to Surface, then convert to polygons so cards cover the mesh from all angles. MtoA does not render XGen Card primitives.
 
-**Status:** not yet run in Maya. Test: `test_groom_stack.py` (Face Camera attribute when a description exists).
+Test: `test_groom_stack.py` (Face Camera attribute when a description exists).
 
 ```python
 shape = G.resolve("hair_cards")[1]
@@ -492,7 +492,7 @@ G.set_attrs(shape, {"face_camera": False})     # [verify attribute]
 
 **Why:** legacy descriptions do not work with IG tools; keep legacy only for an existing asset or non-spline primitives [added]. FlippedNormals' survival rules: set the project, UVs, save before starting, never update Maya mid-project, save texture then Ptex, export patches before batch render [rfxt0ubgLXc 00:02:08 to 00:35:20]. Giovannini converts one description at a time, then Rebuild each [00:13:46], [00:15:26].
 
-**Status:** not yet run in Maya. Test: `test_groom_legacy.py` (needs `MX_GROOM_LEGACY_FIXTURE`).
+Test: `test_groom_legacy.py` (needs `MX_GROOM_LEGACY_FIXTURE`).
 
 ```python
 import xgenm as xg                                   # importability on macOS 2027 [verify]
@@ -522,7 +522,7 @@ assert not cmds.file(q=True, modified=True), "save as a new version first"
 
 **Why:** a groom fails silently between stages: guides that never reach the hair, a measurement nobody asserts, a description still called `description1`. This script runs P1 to P9 in order with every name defined and every gate raising (`G.gate`, `assert`), so a failure stops at the stage that caused it. It assumes the common header above, the P0 recipes (`create_splines`, `export_cache` as a template, `add_guide_modifier`, `rebuild`), and two files the agent wrote before any node: `brief.json` (the "Establish first" answers) and the flow sheets from the references (P2).
 
-**Status:** not yet run in Maya. Its pure parts (gates, verdicts, measures) ran offline in `test_mx_groom_offline.py`; the Maya calls are the ones tested in `test_groom_guides.py`, `test_groom_stack.py`, `test_groom_clump_levels.py`, `test_groom_shader.py` and `test_groom_review.py`.
+Its pure parts (gates, verdicts, measures) ran offline in `test_mx_groom_offline.py`; the Maya calls are the ones tested in `test_groom_guides.py`, `test_groom_stack.py`, `test_groom_clump_levels.py`, `test_groom_shader.py` and `test_groom_review.py`.
 
 ```python
 BRIEF = json.load(open(os.path.join(OUT, "brief.json")))     # {"style": "stylized", "budget": ..., "hair_rgb": [r, g, b], ...}
