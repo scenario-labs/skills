@@ -180,6 +180,14 @@ def pick(clip_id, cycle, frames, src_fps=24.0, attack_body_only=False):
     fps = max(5.0, min(fps, 14.0)) if cycle != "attack" else max(8.0, min(fps, 12.0))
     info.update(indices=idx, fps=fps)
     kept = [rgba[i] for i in idx]
+    # a backdrop the model drifted off the key color stays opaque, and the shared canvas then
+    # grows to the whole frame; the figure never reaches the frame border, the backdrop does
+    border = float(np.mean([np.concatenate([f[0, :, 3], f[-1, :, 3], f[:, 0, 3], f[:, -1, 3]]).mean() / 255
+                            for f in kept]))
+    info["opaque_border"] = round(border, 2)
+    if border > 0.25:
+        print(f"  {clip_id}: {border:.0%} of the frame border survived the {KEY} key: the backdrop drifted "
+              "off the key color; regenerate this clip")
     if cycle != "attack":
         # a treadmill clip that walks toward or away from the camera changes the figure's size,
         # and one shared scale then ships that row too big or too small

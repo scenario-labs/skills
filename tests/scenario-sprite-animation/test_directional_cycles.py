@@ -254,6 +254,23 @@ class SheetTests(unittest.TestCase):
         _, info = sheets.pick("t_s_walk", "walk", seq)
         self.assertGreater(info["size_vs_first_frame"], 1.12)
 
+    def test_a_backdrop_that_drifted_off_the_key_is_flagged(self):
+        seq = []
+        for i in range(60):
+            a = np.zeros((240, 240, 3), np.uint8)
+            a[:] = (230, 200, 170)                                  # beige: the model repainted the field
+            a[60:200, 100:140] = (60, 60, 70)
+            leg = int(20 * np.cos(2 * np.pi * i / 16))
+            a[200:230, 100 + leg:120 + leg] = (40, 30, 30)
+            seq.append(a)
+        _, info = sheets.pick("t_e_walk", "walk", seq)
+        self.assertGreater(info["opaque_border"], 0.9)
+        good = [np.where(f == (230, 200, 170), 0, f) for f in seq]
+        for f in good:
+            f[(f == 0).all(-1)] = MAGENTA
+        _, info = sheets.pick("t_e_walk", "walk", good)
+        self.assertEqual(info["opaque_border"], 0.0)
+
     def test_attack_body_only_drops_a_detached_projectile(self):
         rgba = np.zeros((96, 96, 4), np.uint8)
         rgba[20:90, 20:50] = (40, 90, 160, 255)
