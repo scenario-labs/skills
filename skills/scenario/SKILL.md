@@ -38,7 +38,7 @@ The server fills scope in only for read-only tools with one candidate remaining;
 | Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                                        |
 | Saved preferences | `memory_recall`                          | OAuth only; before generating in a project, again after switching            |
 
-A multi-step request ("product video with voiceover", "concept to 3D") goes to `plan_generation` (catalog-only, read lane): plain words in `description`, ordered steps out, each naming a tool and optional model hint; it runs nothing. Single-step: `recommend`. A stated preference ("always 9:16") goes to catalog `memory_set` with `scope` `project_user_memory` (`user_memory` across projects): it replaces the whole layer, so `memory_get` and merge first, and it runs on the delete lane though it saves.
+A multi-step request ("product video with voiceover", "concept to 3D") goes to `plan_generation` (catalog-only, read lane): plain words in `description`, ordered steps out, each naming a tool and optional model hint; it runs nothing. Single-step: `recommend`. A stated preference ("always 9:16") goes to catalog `memory_set` with `scope` `project_user_memory` (`user_memory` across projects): it replaces the whole layer, so `memory_get` and merge first, and it runs on the delete lane.
 
 ## Worked example
 
