@@ -32,6 +32,10 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 3. `workflow_create` with `name`, `editor_info`, and `inputs_definition` naming `text1` as a string input. The published input key is the node id, which is why run inputs have names like `text1`.
 4. `workflow_publish`, then `workflow_run` with `dry_run=true` to validate and price. Fix the graph and re-publish if validation fails.
 
+## One output per item needs a loop
+
+A multiple-asset input wired straight into a model's array field (`referenceImages`, `images`) is one generation conditioned on every item at once: ten product shots in come back as one image blending them, not ten edits. When each item needs its own result, put the model inside a `forEach` over the list and read the outputs from the `forEachEnd` (wiring in the reference's forEach section); keep the direct wiring only when the items are meant as joint references for a single output. `forEach` runs one billed model job per item, so the cost grows with the list.
+
 ## Migrating a graph from another node tool
 
 A pipeline exported by Weavy, ComfyUI, or another node editor does not import: only Scenario's own export round-trips. It is translated node by node, then created, published, and dry-run as above. The mapping table, member resolution, and the report the user gets are in [references/foreign-graph-import.md](references/foreign-graph-import.md); read it before touching such an export, since its first rule is to reduce the file to a table locally rather than paste it into the conversation.
@@ -42,6 +46,7 @@ A pipeline exported by Weavy, ComfyUI, or another node editor does not import: o
 - Wiring edges producer to consumer: persisted edges point the other way.
 - Expecting an `editor_info` update to change a live app without re-publishing.
 - Retrying a failed `workflow_create` with a second create instead of `workflow_update` on the id from the error.
+- Wiring a batch of assets into one model input and expecting one output per item: that is one generation over all of them; loop with `forEach`.
 - Publishing with no pins: at least one `data.isInput` node listed in `inputKeys` and one `data.isOutput` node.
 - Gating a text node in front of a builder or model: a branch skips only the node wired to its handle, so the consumer stays pending and the job never completes. Gate the node that does the work, or use a CEL ternary for conditional prompt text, per the reference's `ifElse` section.
 - Double-quoted CEL literals: they evaluate but corrupt the canvas editor, single quotes only.
