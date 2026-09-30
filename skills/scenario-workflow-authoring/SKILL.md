@@ -34,7 +34,7 @@ Read [references/editor-info.md](references/editor-info.md) before writing any g
 
 ## One output per item needs a loop
 
-A multiple-asset input wired straight into a model's array field (`referenceImages`, `images`) is one generation conditioned on every item at once: ten product shots in come back as one image blending them, not ten edits. When each item needs its own result, put the model inside a `forEach` over the list and read the outputs from the `forEachEnd` (wiring in the reference's forEach section); keep the direct wiring only when the items are meant as joint references for a single output. `forEach` runs one billed model job per item, so the cost grows with the list.
+A multiple-asset input wired straight into a generative model's reference field is one generation conditioned on every item at once: ten product shots in come back as one image blending them, not ten edits. Field names and cardinality are per model, so read them off `model_schema_get` (`array: true` marks a list), and read the field's description as well: a few utility tools take a list and return one output per item, which needs no loop. When each item needs its own result, put the model inside a `forEach` over the list and read the outputs from the `forEachEnd` (wiring in the reference's forEach section); keep the direct wiring only when the items are meant as joint references for a single output. `forEach` runs one billed model job per item, so the cost grows with the list.
 
 ## Migrating a graph from another node tool
 
