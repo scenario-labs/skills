@@ -2,8 +2,8 @@
 
 The figure is scaled to --fig of the frame height with its feet on --base,
 centered on a flat key-color field. The headroom keeps a raised weapon inside
-the clip. Input is either a generated pose sheet (split into equal columns, one
-per facing) or the user's own art: one figure on a transparent or flat backdrop.
+the clip. Input is either a generated pose sheet (split at the empty columns
+between figures, one per facing) or the user's own art: one figure on a transparent or flat backdrop.
 Small pixel art is scaled by a whole number with nearest-neighbor so its pixels
 stay crisp. Prints a key check: how much of the figure each key color would
 erase when the clips are keyed.
@@ -124,10 +124,47 @@ def place(fig, mask, canvas, fig_frac, base_frac, key, nearest):
         fig, mask = fig.resize(size, Image.LANCZOS), mask.resize(size, Image.LANCZOS)
         note = "smooth"
     if fig.width > canvas:
-        raise ValueError(f"figure is wider than the canvas at fig {fig_frac}; lower --fig")
+        raise ValueError(f"figure is wider than the canvas at fig {fig_frac}; lower --fig, and use the same "
+                         "value for every facing so the rows keep one scale")
     out = Image.new("RGB", (canvas, canvas), KEY_RGB[key])
     out.paste(fig.convert("RGB"), ((canvas - fig.width) // 2, base - fig.height), mask)
     return out, note
+
+
+def figure_spans(fg, n):
+    """Column spans of the n figures on a pose sheet, split at the empty columns between them.
+    Equal columns cut a long side view or a wide front view in two. Specks (a spark, a loose
+    flame) join their nearest figure; if the figures touch, equal columns are the fallback."""
+    w = fg.shape[1]
+    mass = fg.sum(0)
+    occupied = mass >= max(3, 0.002 * fg.shape[0])
+    runs, x = [], 0
+    while x < w:
+        if occupied[x]:
+            x0 = x
+            while x < w and occupied[x]:
+                x += 1
+            runs.append([x0, x, int(mass[x0:x].sum())])
+        x += 1
+    total = sum(r[2] for r in runs) or 1
+
+    def merge(i):                      # merge run i into its nearer neighbor
+        left = runs[i][0] - runs[i - 1][1] if i > 0 else None
+        right = runs[i + 1][0] - runs[i][1] if i + 1 < len(runs) else None
+        j = i - 1 if right is None or (left is not None and left <= right) else i + 1
+        a, b = sorted((i, j))
+        runs[a:b + 1] = [[runs[a][0], runs[b][1], runs[a][2] + runs[b][2]]]
+
+    while len(runs) > 1 and min(r[2] for r in runs) < 0.02 * total:
+        merge(min(range(len(runs)), key=lambda i: runs[i][2]))
+    while len(runs) > n:
+        gaps = [runs[i + 1][0] - runs[i][1] for i in range(len(runs) - 1)]
+        merge(gaps.index(min(gaps)))
+    if len(runs) < n:
+        print(f"WARNING: found {len(runs)} separate figures for {n} facings; splitting into equal columns, "
+              "check every first frame (or regenerate the sheet with more space between poses)")
+        return [(w * i // n, w * (i + 1) // n) for i in range(n)]
+    return [(r[0], r[1]) for r in runs]
 
 
 def first_frames(im, facings, canvas=960, fig_frac=0.58, base_frac=0.82, key="magenta",
@@ -140,8 +177,8 @@ def first_frames(im, facings, canvas=960, fig_frac=0.58, base_frac=0.82, key="ma
     hits = key_check(rgba, fg, near)
     w = im.width
     out, notes = {}, {}
-    for i, f in enumerate(facings):
-        x0, x1 = w * i // len(facings), w * (i + 1) // len(facings)
+    spans = figure_spans(fg, len(facings)) if len(facings) > 1 else [(0, w)]
+    for f, (x0, x1) in zip(facings, spans):
         ys, xs = np.where(fg[:, x0:x1])
         if not len(ys):
             raise ValueError(f"{f}: no figure found in columns {x0}-{x1}")

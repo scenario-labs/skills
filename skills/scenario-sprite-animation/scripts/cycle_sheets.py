@@ -149,6 +149,11 @@ def body_only(rgba, grid=4):
     return out
 
 
+def fig_height(rgba):
+    ys = np.where(rgba[..., 3].any(1))[0]
+    return float(ys.max() - ys.min() + 1) if len(ys) else 0.0
+
+
 def pick(clip_id, cycle, frames, src_fps=24.0, attack_body_only=False):
     rgba = [key(f) for f in frames]
     k = src_fps / 24                     # loop ranges are tuned in 24 fps frames
@@ -175,6 +180,15 @@ def pick(clip_id, cycle, frames, src_fps=24.0, attack_body_only=False):
     fps = max(5.0, min(fps, 14.0)) if cycle != "attack" else max(8.0, min(fps, 12.0))
     info.update(indices=idx, fps=fps)
     kept = [rgba[i] for i in idx]
+    if cycle != "attack":
+        # a treadmill clip that walks toward or away from the camera changes the figure's size,
+        # and one shared scale then ships that row too big or too small
+        h0 = fig_height(rgba[0])
+        drift = float(np.median([fig_height(f) for f in kept])) / h0 if h0 else 1.0
+        info["size_vs_first_frame"] = round(drift, 2)
+        if not 0.88 <= drift <= 1.12:
+            print(f"  {clip_id}: the figure is {drift:.2f}x its first-frame height in the loop window "
+                  "(it moved toward or away from the camera); regenerate this clip")
     if cycle == "attack" and attack_body_only:
         kept = [body_only(f) for f in kept]
     return kept, info

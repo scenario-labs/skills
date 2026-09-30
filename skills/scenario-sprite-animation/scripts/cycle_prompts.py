@@ -71,8 +71,8 @@ FACING = {
  "n":  "{he} always faces straight away from the viewer, seen from behind, the same angle as the first frame, never turning around.",
 }
 CYCLE = {
- "walk":   "{medium} game sprite animation, like a treadmill: the {who} immediately starts walking in place and keeps walking for the whole clip, a steady repeating walk cycle at a relaxed pace (heel-to-toe steps, arms swing opposite the legs, slight up-and-down bob{extra}).",
- "run":    "{medium} game sprite animation, like a treadmill: the {who} immediately starts running in place and keeps running for the whole clip, a steady repeating run cycle (knees high, arms pumping, torso leaning forward, both feet leave the ground between steps{extra}).",
+ "walk":   "{medium} game sprite animation, like a treadmill: the {who} immediately starts walking in place and keeps walking for the whole clip, a steady repeating walk cycle at a relaxed pace ({walk_motion}{extra}).",
+ "run":    "{medium} game sprite animation, like a treadmill: the {who} immediately starts running in place and keeps running for the whole clip, a steady repeating run cycle ({run_motion}{extra}).",
  "idle":   "{medium} game sprite animation: the {who} stands idle in place, a subtle breathing loop: chest rises and falls, a slight weight shift, {idle}. Feet stay planted. Calm, small motion.",
  "attack": "{medium} game sprite animation: the {who} performs one {attack}, then returns to the starting ready pose. Snappy anticipation, fast strike, short follow-through.",
 }
@@ -94,11 +94,21 @@ AWAY = {"ne": ("toward the top-right corner of the screen", "{poss} left shoulde
         "n":  ("straight up the screen", "both shoulders stay level")}
 BACK_RUN = ("{medium} game sprite animation seen from behind. The {who} runs away from the viewer, {toward}, on a "
             "treadmill so {it} stays in place. We keep seeing {back_view} at the same {angle} as the first frame for "
-            "the whole clip: {shoulders}. Steady repeating run cycle, knees high, arms pumping, both feet leave the "
-            "ground briefly between steps{extra}. Locked static camera, flat solid {keyname} background, no ground "
+            "the whole clip: {shoulders}. Steady repeating run cycle ({run_motion}{extra}). Locked static camera, flat solid {keyname} background, no ground "
             "shadow, {crisp}.")
 BACK_RUN_NEG = ("side view, profile view, facing right, facing the camera, turning, rotating, camera movement, zoom, "
                 "travelling across the frame, ground shadow, background change, blur, 3D render, slowing down, stopping")
+
+# Straight front and back locomotion (S, N) turned to a three-quarter view mid-clip, or walked
+# toward the camera and grew in the frame, on a short free-ended clip. Pinning the end frame on a
+# 5 s clip held the angle on the walks and runs it was tried on; the loop search takes the middle.
+STRAIGHT = {"s", "n"}
+TOWARD = (" {he} treads in place facing the viewer and never comes closer: {it} stays the same size in the frame"
+          " for the whole clip.")
+TOWARD_NEG = ", walking toward the camera, coming closer, growing larger"
+# default gait wording is two-legged; a quadruped, a flyer or a slithering hero overrides it in the cast
+WALK_MOTION = "heel-to-toe steps, arms swing opposite the legs, slight up-and-down bob"
+RUN_MOTION = "knees high, arms pumping, torso leaning forward, both feet leave the ground between steps"
 
 POSS = {"he": "his", "she": "her", "it": "its", "they": "their"}
 
@@ -110,6 +120,8 @@ def words(h, hid, keyname):
     d["it"] = d["he"].lower()
     d["poss"] = POSS.get(d["it"], "its")
     d.setdefault("extra", "")
+    d.setdefault("walk_motion", WALK_MOTION)
+    d.setdefault("run_motion", RUN_MOTION)
     d.setdefault("idle", "a gentle sway")
     d.setdefault("attack", f"quick strike with {d['poss']} weapon, or a punch if {d['it']} has none")
     d.setdefault("back", "we see the back")
@@ -123,8 +135,9 @@ def words(h, hid, keyname):
 
 
 def clip_request(hid, d, facing, cy, first):
-    """One clip. Back-view runs pin both ends and run longer; loops that return to rest
-    pin the last frame; walk and run leave it free."""
+    """One clip. Back-view runs, and walks and runs facing straight toward or away from the
+    viewer, pin both ends and run longer; loops that return to rest pin the last frame;
+    other walks and runs leave it free."""
     if facing in BACK and cy == "run":
         toward, shoulders = AWAY[facing]
         prompt = BACK_RUN.format(toward=toward, shoulders=shoulders.format(**d),
@@ -132,12 +145,18 @@ def clip_request(hid, d, facing, cy, first):
         return {"id": f"{hid}_{facing}_{cy}", "prompt": prompt, "negative_prompt": BACK_RUN_NEG,
                 "first_frame": first, "last_frame": first, "duration_s": 5, "aspect_ratio": "1:1", "audio": False}
     neg = WRONG_ANGLE.get(facing, "side view, profile view, turning around") + ", " + NEG_REST
-    if cy in ("walk", "run"):
+    loco = cy in ("walk", "run")
+    straight = loco and facing in STRAIGHT
+    prompt = CYCLE[cy] + " " + FACING[facing]
+    if loco:
         neg += NEG_LOCO
-    return {"id": f"{hid}_{facing}_{cy}", "prompt": (CYCLE[cy] + " " + FACING[facing] + TAIL).format(**d),
+    if straight and facing == "s":
+        prompt += TOWARD
+        neg += TOWARD_NEG
+    return {"id": f"{hid}_{facing}_{cy}", "prompt": (prompt + TAIL).format(**d),
             "negative_prompt": neg, "first_frame": first,
-            "last_frame": None if cy in ("walk", "run") else first,
-            "duration_s": 3, "aspect_ratio": "1:1", "audio": False}
+            "last_frame": None if loco and not straight else first,
+            "duration_s": 5 if straight else 3, "aspect_ratio": "1:1", "audio": False}
 
 
 def build(cast):

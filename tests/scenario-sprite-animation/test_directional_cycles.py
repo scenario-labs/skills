@@ -96,6 +96,28 @@ class FirstFrameTests(unittest.TestCase):
         self.assertTrue(((ne == [50, 90, 200]).all(-1)).any())
 
 
+    def test_pose_sheet_splits_at_the_gaps_not_equal_columns(self):
+        # five facings where the long side view crosses the equal-column borders, plus a loose spark
+        sheet = np.zeros((200, 1000, 3), np.uint8)
+        sheet[:] = MAGENTA
+        spans = [(20, 120), (160, 250), (290, 590), (640, 740), (800, 900)]
+        for i, (x0, x1) in enumerate(spans):
+            sheet[40:180, x0:x1] = (40 + 40 * i, 90, 160)
+        sheet[30:34, 596:600] = (250, 200, 60)                     # a spark just right of the long figure
+        fg, _ = frames.foreground(Image.fromarray(sheet))
+        got = frames.figure_spans(fg, 5)
+        self.assertEqual(len(got), 5)
+        for (x0, x1), (g0, g1) in zip(spans, got):
+            self.assertLessEqual(g0, x0)
+            self.assertGreaterEqual(g1, x1)
+        self.assertGreaterEqual(got[2][1], 600)                    # the spark joined its figure
+
+    def test_touching_figures_fall_back_to_equal_columns(self):
+        fg = np.zeros((50, 100), bool)
+        fg[10:40, 10:90] = True
+        self.assertEqual(frames.figure_spans(fg, 2), [(0, 50), (50, 100)])
+
+
 class PromptTests(unittest.TestCase):
     def cast(self, **kw):
         base = {"heroes": {"k": {"character": "a knight", "who": "knight", "pronoun": "He"}}}
@@ -119,6 +141,28 @@ class PromptTests(unittest.TestCase):
         self.assertEqual(back["last_frame"], back["first_frame"])
         self.assertEqual(back["duration_s"], 5)
         self.assertIn("runs away from the viewer", back["prompt"])
+
+    def test_straight_front_and_back_locomotion_pins_the_end_on_a_long_clip(self):
+        c = {x["id"]: x for x in prompts.build(self.cast(facings=["s", "se", "e", "ne", "n"]))["clips"]}
+        for cid in ("k_s_walk", "k_s_run", "k_n_walk", "k_n_run"):
+            self.assertEqual(c[cid]["last_frame"], c[cid]["first_frame"], cid)
+            self.assertEqual(c[cid]["duration_s"], 5, cid)
+        self.assertIn("never comes closer", c["k_s_walk"]["prompt"])
+        self.assertIn("coming closer", c["k_s_run"]["negative_prompt"])
+        for cid in ("k_se_walk", "k_e_run"):
+            self.assertIsNone(c[cid]["last_frame"], cid)
+            self.assertEqual(c[cid]["duration_s"], 3, cid)
+
+    def test_gait_overrides_replace_the_two_legged_wording(self):
+        cast = self.cast(facings=["se", "ne"])
+        cast["heroes"]["k"].update(walk_motion="four legs in a diagonal gait, tail swaying",
+                                   run_motion="a bounding gallop, wings tucked")
+        c = {x["id"]: x for x in prompts.build(cast)["clips"]}
+        self.assertIn("four legs in a diagonal gait", c["k_se_walk"]["prompt"])
+        self.assertIn("a bounding gallop", c["k_ne_run"]["prompt"])
+        for x in c.values():
+            self.assertNotIn("arms pumping", x["prompt"])
+            self.assertNotIn("arms swing", x["prompt"])
 
     def test_negative_prompt_never_bans_the_requested_angle(self):
         c = prompts.build(self.cast(facings=["e", "s"], camera="side"))["clips"]
@@ -197,6 +241,18 @@ class SheetTests(unittest.TestCase):
         self.assertEqual(out.shape, (8, 8, 4))
         self.assertEqual(out[0, 0, 3], 0)
         self.assertEqual(out[4, 4, 3], 255)
+
+    def test_a_figure_that_grows_during_a_walk_is_flagged(self):
+        seq = []
+        for i in range(60):
+            a = np.zeros((240, 240, 3), np.uint8)
+            a[:] = MAGENTA
+            a[max(0, 110 - 2 * i):200, 100:140] = (180, 170, 150)   # walks toward the camera: grows
+            leg = int(20 * np.cos(2 * np.pi * i / 16))
+            a[200:230, 100 + leg:120 + leg] = (60, 50, 40)
+            seq.append(a)
+        _, info = sheets.pick("t_s_walk", "walk", seq)
+        self.assertGreater(info["size_vs_first_frame"], 1.12)
 
     def test_attack_body_only_drops_a_detached_projectile(self):
         rgba = np.zeros((96, 96, 4), np.uint8)
