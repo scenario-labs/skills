@@ -1,6 +1,6 @@
 ---
 name: scenario-game-assets
-description: "Use when creating game art through Scenario MCP: sprites, sprite sheets, icons, props, loot, tilesets, seamless tiles, isometric buildings, top-down maps, pixel art, UI buttons and panels, parallax background layers or depth planes for side-scrollers, and character or concept art; or when assets need transparent backgrounds, background removal, style-consistent variation batches, upscaling, pixel-grid cleanup, or PNG export for Unity, Godot, or Unreal."
+description: "Use when creating game art through Scenario MCP: sprites, sprite sheets, icons, props, loot, tilesets and autotile terrain transitions, seamless tiles, isometric buildings, top-down maps, pixel art, UI buttons and panels, parallax background layers or depth planes for side-scrollers, and character or concept art; or when assets need transparent backgrounds, background removal, style-consistent variation batches, upscaling, pixel-grid cleanup, or PNG export for Unity, Godot, or Unreal."
 license: MIT
 ---
 
@@ -69,6 +69,10 @@ Run one tile first. Measure changes outside the edit region against the source c
 
 A "low-poly" look and a low-poly mesh are different deliverables. The look is a 2D style word on an image model. The mesh is `scenario-3d`: whether the image-to-3D pick (`recommend`, `capability: "img23d"`) exposes a polycount target or a topology choice is read off `model_schema_get`, never assumed, and when it exposes neither a separate remesh utility (its own billed run, found with `recommend`, `capability: "3d23d"`) brings the count down afterwards. Either way the concept image feeding it wants flat shading, a clean silhouette, and a plain background so the geometry reads.
 
+## Terrain tilesets and transitions
+
+A top-down terrain set (grass meeting dirt) is a layout contract with the engine: every edge and corner case must exist and tile against its neighbors. `recommend` with the user's words, tile size included ("32x32 top-down tileset, grass to dirt transitions"), then `model_schema_get`. The pixel tileset member at authoring time had a `style` enum: a full tileset from one terrain prompt, a two-terrain transition mode (`extraPrompt` or `extraImage` for the second), plus single tile, variation, and object modes. Its `width` and `height` size one tile, not the sheet, and they and the mode move the price, so `dry_run` first. It promises a simple Wang set, not an engine's 47-tile blob layout: map the tiles onto the engine's autotile rules, and assemble a small test map with the compositor below before more terrains.
+
 ## Parallax backgrounds
 
 A parallax background is a stack of depth planes the engine scrolls at different speeds: an opaque sky or far plane, then two or three cutout planes with transparent gaps the planes behind show through. Two routes produce the stack; writing "layers" or "parallax" into one generation prompt produces neither, it returns a single picture of stacked layers, and on a style-trained model it returns several layers painted into one image.
@@ -85,5 +89,5 @@ Check the stack before exporting: `model_scenario-compose-image` (a fixed first-
 - Shipping AI pixel art with off-grid pixels or noisy palettes: post-process with a pixel cleanup tool (found with `recommend`) for grid snapping and a strict palette.
 - Skipping `model_schema_get`: specialty models (the pixel-art family) are txt2img-only with their own fields; generic parameters get rejected.
 - Asking one generation for "the layers" of a parallax background: one image comes back; depth planes are a split of a finished painting or one run per plane (see Parallax backgrounds).
-- Hand-stitching tilesets: dedicated seamless tileset generators exist (find one with `recommend`); texture-specific upscalers preserve tiling.
+- Hand-stitching tilesets: tileset members generate the edge and corner cases (Terrain tilesets above); texture-specific upscalers preserve tiling.
 - Single-sampling lettered assets: the same recipe can render one word and fail another (dark embossed text, not the reference typography). Generate several samples per run (schema's sample-count parameter) and pin exact hex colors in the prompt when the palette drifts.
