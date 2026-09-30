@@ -36,6 +36,23 @@ def figure(w=20, h=40, color=(200, 200, 210)):
     return Image.fromarray(a)
 
 
+def write_walk(path, period, n=72, body=(180, 170, 150)):
+    """A 480 px magenta clip of a figure bobbing with swinging legs, looping every period frames."""
+    raw = bytearray()
+    for i in range(n):
+        a = np.zeros((480, 480, 3), np.uint8)
+        a[:] = MAGENTA
+        bob = int(6 * np.sin(2 * np.pi * i / period))
+        a[150 + bob:390, 200:280] = body                                # body
+        leg = int(25 * np.sin(2 * np.pi * i / period))
+        a[330:394, 205 + leg:225 + leg] = (60, 50, 40)                  # legs swing
+        a[330:394, 255 - leg:275 - leg] = (60, 50, 40)
+        raw += a.tobytes()
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "480x480",
+                    "-r", "24", "-i", "-", "-pix_fmt", "yuv444p", "-crf", "8", str(path)],
+                   input=bytes(raw), check=True)
+
+
 class FirstFrameTests(unittest.TestCase):
     def test_small_pixel_art_scales_by_a_whole_number_onto_the_baseline(self):
         out, notes, hits = frames.first_frames(figure(), ["se"])
@@ -181,25 +198,47 @@ class SheetTests(unittest.TestCase):
         self.assertEqual(out[0, 0, 3], 0)
         self.assertEqual(out[4, 4, 3], 255)
 
+    def test_attack_body_only_drops_a_detached_projectile(self):
+        rgba = np.zeros((96, 96, 4), np.uint8)
+        rgba[20:90, 20:50] = (40, 90, 160, 255)
+        rgba[30:38, 80:88] = (200, 60, 60, 255)
+        out = sheets.body_only(rgba)
+        self.assertTrue((out[20:90, 20:50, 3] == 255).all())
+        self.assertFalse(out[30:38, 80:88, 3].any())
+        self.assertIs(sheets.body_only(out), out)
+
+    def test_an_attack_that_never_leaves_rest_samples_the_whole_clip(self):
+        still = (np.zeros((120, 120, 3), np.float32), np.ones((120, 120), np.float32))
+        s, length, _ = sheets.attack_window([still] * 30)
+        self.assertEqual((s, length), (0, 30))
+
+    @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "needs ffmpeg")
+    def test_each_facing_keeps_its_own_fps(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "clips").mkdir()
+            write_walk(tmp / "clips/t_se_walk.mp4", 16)
+            write_walk(tmp / "clips/t_ne_walk.mp4", 24, body=(90, 160, 90))
+            cast = {"facings": ["se", "ne"], "cycles": ["walk"], "fig_frac": "auto",
+                    "heroes": {"t": {"height": 48, "palette": 8}}}
+            (tmp / "cast.json").write_text(json.dumps(cast))
+            subprocess.run([sys.executable, str(SCRIPTS / "cycle_sheets.py"), str(tmp / "cast.json"),
+                            "--clips", str(tmp / "clips"), "--out", str(tmp / "sheets")],
+                           check=True, capture_output=True)
+            meta = json.loads((tmp / "sheets/meta.json").read_text())["t"]
+            self.assertEqual(meta["rows"], ["se", "sw", "ne", "nw"])
+            walk = meta["cycles"]["walk"]
+            self.assertEqual(walk["fps"], {"se": walk["se"]["fps"], "sw": walk["se"]["fps"],
+                                           "ne": walk["ne"]["fps"], "nw": walk["ne"]["fps"]})
+            self.assertNotEqual(walk["se"]["fps"], walk["ne"]["fps"])
+
     @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "needs ffmpeg")
     def test_end_to_end_walk_clip_to_sheet(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             (tmp / "clips").mkdir()
-            n, period = 72, 18
-            raw = bytearray()
-            for i in range(n):
-                a = np.zeros((480, 480, 3), np.uint8)
-                a[:] = MAGENTA
-                bob = int(6 * np.sin(2 * np.pi * i / period))
-                a[150 + bob:390, 200:280] = (180, 170, 150)                 # body
-                leg = int(25 * np.sin(2 * np.pi * i / period))
-                a[330:394, 205 + leg:225 + leg] = (60, 50, 40)              # legs swing
-                a[330:394, 255 - leg:275 - leg] = (60, 50, 40)
-                raw += a.tobytes()
-            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "480x480",
-                            "-r", "24", "-i", "-", "-pix_fmt", "yuv444p", "-crf", "8", str(tmp / "clips/t_se_walk.mp4")],
-                           input=bytes(raw), check=True)
+            period = 18
+            write_walk(tmp / "clips/t_se_walk.mp4", period)
             cast = {"facings": ["se"], "cycles": ["walk"], "fig_frac": "auto",
                     "heroes": {"t": {"height": 48, "palette": 8}}}
             (tmp / "cast.json").write_text(json.dumps(cast))

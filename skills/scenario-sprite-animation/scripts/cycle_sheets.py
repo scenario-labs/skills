@@ -11,10 +11,13 @@ Usage: python3 cycle_sheets.py cast.json [hero ...] [--clips clips] [--out sheet
 
 Clips are named <hero>_<facing>_<cycle>.mp4. Writes <out>/<hero>_<cycle>.png
 (one row per facing and mirror, N columns) and merges per-hero data (cell,
-pivot, rows, fps, loop window and seam score per clip) into <out>/meta.json.
+pivot, rows, fps per row, loop window and seam score per clip) into <out>/meta.json.
+A hero with "attack_body_only": true keeps only the largest blob in its attack
+frames, so a thrown projectile does not widen the shared canvas.
 "fig_frac": "auto" in the cast measures the figure height from the clips.
 """
 import argparse, json, subprocess
+from collections import deque
 from pathlib import Path
 import numpy as np
 from PIL import Image
@@ -107,13 +110,46 @@ def attack_window(sm):
     d = np.array([dist(f, rest) for f in sm])
     thr = max(1.5, 0.12 * d.max())
     active = np.where(d > thr)[0]
+    if len(active) == 0:                 # nothing left the rest pose: sample the whole clip
+        return 0, len(sm), d
     s, e = int(active.min()), int(active.max())
     s = max(0, s - 2)
     e = min(len(sm) - 1, e + 2)
     return s, e - s + 1, d
 
 
-def pick(clip_id, cycle, frames, src_fps=24.0):
+def body_only(rgba, grid=4):
+    """Keep the largest opaque blob. The shared canvas is the union of every kept frame, so a thrown
+    projectile or breath cloud would widen every cell of every cycle. Labeled on a grid-times-smaller
+    mask, so gaps under grid px count as touching."""
+    h, w = rgba.shape[:2]
+    a = np.array(Image.fromarray(rgba[..., 3]).resize((max(1, w // grid), max(1, h // grid)), Image.BOX)) > 0
+    label = np.zeros(a.shape, np.int32)
+    sizes = [0]
+    for y, x in zip(*np.nonzero(a)):
+        if label[y, x]:
+            continue
+        sizes.append(0)
+        n = len(sizes) - 1
+        label[y, x] = n
+        todo = deque([(y, x)])
+        while todo:
+            cy, cx = todo.popleft()
+            sizes[n] += 1
+            for ny, nx in ((cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)):
+                if 0 <= ny < a.shape[0] and 0 <= nx < a.shape[1] and a[ny, nx] and not label[ny, nx]:
+                    label[ny, nx] = n
+                    todo.append((ny, nx))
+    if len(sizes) <= 2:
+        return rgba
+    keep = np.array(Image.fromarray(((label == int(np.argmax(sizes))) * 255).astype(np.uint8))
+                    .resize((w, h), Image.NEAREST)) > 0
+    out = rgba.copy()
+    out[~keep, 3] = 0
+    return out
+
+
+def pick(clip_id, cycle, frames, src_fps=24.0, attack_body_only=False):
     rgba = [key(f) for f in frames]
     k = src_fps / 24                     # loop ranges are tuned in 24 fps frames
     sm = [small(x) for x in rgba]
@@ -138,7 +174,10 @@ def pick(clip_id, cycle, frames, src_fps=24.0):
     fps = round(FRAMES * src_fps / info["length"], 1)
     fps = max(5.0, min(fps, 14.0)) if cycle != "attack" else max(8.0, min(fps, 12.0))
     info.update(indices=idx, fps=fps)
-    return [rgba[i] for i in idx], info
+    kept = [rgba[i] for i in idx]
+    if cycle == "attack" and attack_body_only:
+        kept = [body_only(f) for f in kept]
+    return kept, info
 
 
 def bbox(frames):
@@ -265,7 +304,7 @@ def main():
             for cy in have:
                 cid = f"{c}_{f}_{cy}"
                 frames, src_fps = read_frames(Path(a.clips) / f"{cid}.mp4")
-                picked[cid], infos[cid] = pick(cid, cy, frames, src_fps)
+                picked[cid], infos[cid] = pick(cid, cy, frames, src_fps, hc.get("attack_body_only", False))
                 flag = ""
                 if infos[cid]["mode"] == "loop" and infos[cid]["seam_over_baseline"] > 0.8 and cy != "idle":
                     flag = "  <-- weak seam: widen this hero's range or regenerate"
@@ -307,6 +346,8 @@ def main():
                         im.save(d / f"{name}_{k}.png")
             sheet.save(out / f"{c}_{cy}.png")
             if a.gif:
+                # rows play side by side here, so the preview runs at the first facing's rate;
+                # each row's own rate is in meta.json
                 fps = infos[f"{c}_{facings[0]}_{cy}"]["fps"]
                 gif = [Image.new("RGBA", (cw * len(rows), ch), (40, 42, 54, 255)) for _ in range(FRAMES)]
                 for r in range(len(rows)):
@@ -322,7 +363,8 @@ def main():
         feet = int(np.where(a0.any(1))[0].max()) + 1
         meta[c] = {"cell": [cw, ch], "pivot": [cw // 2, feet], "height": height, "rows": names, "frames": FRAMES,
                    "palette": ncol if pixel else None, "box": [int(v) for v in box], "scale": round(scale, 4),
-                   "cycles": {cy: {"fps": infos[f"{c}_{facings[0]}_{cy}"]["fps"],
+                   # each facing loops at its own period, so fps is per row (a mirror plays at its source's)
+                   "cycles": {cy: {"fps": {name: infos[f"{c}_{f}_{cy}"]["fps"] for name, f, _ in rows},
                                    **{f: infos[f"{c}_{f}_{cy}"] for f in facings}}
                               for cy in have}}
         meta_path.write_text(json.dumps(meta, indent=1, default=int))
