@@ -71,7 +71,7 @@ A "low-poly" look and a low-poly mesh are different deliverables. The look is a 
 
 ## Terrain tilesets and transitions
 
-A top-down terrain set (grass meeting dirt) is a layout contract with the engine: every edge and corner case must exist and tile against its neighbors. `recommend` with the user's words, tile size included ("32x32 top-down tileset, grass to dirt transitions"), then `model_schema_get`. The pixel tileset member at authoring time had a `style` enum: a full tileset from one terrain prompt, a two-terrain transition mode (`extraPrompt` or `extraImage` for the second), plus single tile, variation, and object modes. Its `width` and `height` size one tile, not the sheet, and they and the mode move the price, so `dry_run` first. It promises a simple Wang set, not an engine's 47-tile blob layout: map the tiles onto the engine's autotile rules, and assemble a small test map with the compositor below before more terrains.
+A top-down terrain set is a layout contract with the engine: every edge and corner case must exist and join its neighbors. `recommend` with the user's words, tile size included ("32x32 top-down tileset, grass to dirt transitions"), then `model_schema_get`. The pixel tileset member at authoring time had a `style` enum: a full tileset from one terrain prompt, a two-terrain transition mode (`extraPrompt` or `extraImage` for the second), plus single tile, variation, and object modes. Its `width` and `height` size one tile, not the sheet, and they and the mode move the price, so `dry_run` first. It promises a simple Wang set, not a 47-tile blob layout: map the tiles onto the engine's autotile rules, and paint a small test map with the downloaded sheet in the engine's tile editor and check the joins before more terrains.
 
 ## Parallax backgrounds
 
@@ -89,5 +89,5 @@ Check the stack before exporting: `model_scenario-compose-image` (a fixed first-
 - Shipping AI pixel art with off-grid pixels or noisy palettes: post-process with a pixel cleanup tool (found with `recommend`) for grid snapping and a strict palette.
 - Skipping `model_schema_get`: specialty models (the pixel-art family) are txt2img-only with their own fields; generic parameters get rejected.
 - Asking one generation for "the layers" of a parallax background: one image comes back; depth planes are a split of a finished painting or one run per plane (see Parallax backgrounds).
-- Hand-stitching tilesets: tileset members generate the edge and corner cases (Terrain tilesets above); texture-specific upscalers preserve tiling.
+- Hand-stitching tilesets: tileset members generate the edge and corner cases; texture-specific upscalers preserve tiling.
 - Single-sampling lettered assets: the same recipe can render one word and fail another (dark embossed text, not the reference typography). Generate several samples per run (schema's sample-count parameter) and pin exact hex colors in the prompt when the palette drifts.
