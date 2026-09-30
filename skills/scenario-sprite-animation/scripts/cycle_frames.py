@@ -33,6 +33,27 @@ def keyed(rgb):
             "blue": ((b - np.maximum(r, g)) > 0.18) & (sat > 0.28)}
 
 
+def components(mask):
+    """4-connected components of a boolean mask, as (ys, xs) index arrays. Pure Python on
+    the masked pixels only, so there is no optional dependency to fall back from."""
+    seen = np.zeros_like(mask)
+    h, w = mask.shape
+    for y0, x0 in zip(*np.nonzero(mask)):
+        if seen[y0, x0]:
+            continue
+        seen[y0, x0] = True
+        stack, ys, xs = [(y0, x0)], [], []
+        while stack:
+            y, x = stack.pop()
+            ys.append(y)
+            xs.append(x)
+            for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+                if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not seen[ny, nx]:
+                    seen[ny, nx] = True
+                    stack.append((ny, nx))
+        yield np.array(ys), np.array(xs)
+
+
 def foreground(im):
     """(figure mask, backdrop-colored mask or None). Alpha when the art is a cut-out;
     otherwise everything that differs from the flat color around the border."""
@@ -66,15 +87,10 @@ def foreground(im):
     # tolerance so off-white clothing survives; a saturated generated field gets a looser one
     saturated = (bg.max() - bg.min()) > 128
     trapped = fg & (diff <= (12 if saturated else 4))
-    try:
-        from scipy import ndimage
-        lab, n = ndimage.label(trapped)
-        sizes = ndimage.sum(trapped, lab, range(1, n + 1))
-        big = [i + 1 for i, z in enumerate(sizes) if z > 0.002 * fg.sum()]
-        if big:
-            fg &= ~np.isin(lab, big)
-    except ImportError:
-        pass
+    min_size = 0.002 * fg.sum()
+    for comp in components(trapped):
+        if len(comp[0]) > min_size:
+            fg[comp] = False
     return fg, near
 
 
