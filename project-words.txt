@@ -980,6 +980,7 @@ rgba
 rigify
 rileyb
 roas
+scroller
 shengshu
 shfmt
 shiboken
