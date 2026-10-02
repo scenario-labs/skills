@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.49.0](https://github.com/scenario-labs/skills/compare/skills-v0.48.0...skills-v0.49.0) (2026-10-01)
+
+
+### Features
+
+* **scenario-sprite-animation:** teach the directional character cycles lane ([#169](https://github.com/scenario-labs/skills/issues/169)) ([c8a4bdd](https://github.com/scenario-labs/skills/commit/c8a4bddf2b052864f2eaf98d7ce5aa044c72bf42))
+
+
+### Bug Fixes
+
+* **scenario-3d:** cover Claude Opus 5.5 3D and the effort-only 3D Artist pricing ([#163](https://github.com/scenario-labs/skills/issues/163)) ([d87071d](https://github.com/scenario-labs/skills/commit/d87071d22edb5eb5871c9034f89cada518657891))
+* **scenario:** say that HEIC photos upload as is, without conversion ([#157](https://github.com/scenario-labs/skills/issues/157)) ([5936eaa](https://github.com/scenario-labs/skills/commit/5936eaaa72ce998920f864be1454e73e07541936))
+
+
+### Documentation
+
+* **skills:** drop the not-yet-run status notes from the Maya and ZBrush tools ([#161](https://github.com/scenario-labs/skills/issues/161)) ([5786acc](https://github.com/scenario-labs/skills/commit/5786accd3bb6d79808330230c698898862e8a1d4))
+
 ## [0.48.0](https://github.com/scenario-labs/skills/compare/skills-v0.47.0...skills-v0.48.0) (2026-09-26)
 
 
