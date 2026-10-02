@@ -12,7 +12,7 @@ Scenario (scenario.com) generates AI images, video, 3D, and audio across 500+ mo
 
 ## Setup
 
-Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: no credentials pass through the conversation. Client config, API-key setup for headless use, and per-client re-authentication: [references/setup.md](references/setup.md). Never ask an agent to collect, encode, or echo a secret. A connection that authenticated once and fails later is re-authenticated per client before anything else is debugged: a server-side authentication fix lands only through a fresh handshake, and `diagnostics_run` names the failing layer (`auth`, `tenant-scope`, `api-unreachable`, or `healthy`) with trace ids for support.
+Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: no credentials pass through the conversation. Client config, API-key setup for headless use, and per-client re-authentication: [references/setup.md](references/setup.md). Never ask an agent to collect, encode, or echo a secret. A connection that authenticated once and fails later is re-authenticated per client (setup reference) before anything else is debugged; `diagnostics_run` names the failing layer (`auth`, `tenant-scope`, `api-unreachable`, or `healthy`).
 
 The default toolset is wider than the core loop below: `asset_get`, `job_get`, `jobs_list` and `models_list` are in it too and are called directly, so treat the table as the loop rather than the whole list. `?toolsets=full` exposes everything. The catalog tools are the ones outside it (collections, tagging, analysis, training, members, keys): `scenario_tools_search` with the tool name or plain keywords as `query` (it takes only `query` and `limit`) returns the schema and lane, and the matching `scenario_tool_execute_read` / `write` / `delete` runs it with `{name, parameters}`, scope ids inside `parameters` when the target's `inputSchema` declares them, which nearly every catalog tool does (`plan_generation`, which takes only `description`, is the exception), unlike a direct tool's top-level `team_id`/`project_id`. The lane is the result's own `permission`, not what the verb sounds like: `asset_download` and `asset_analyze` are both write-class.
 
@@ -36,8 +36,9 @@ The server fills scope in only for read-only tools with one candidate remaining;
 | Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                                 |
 | Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                                           |
 | Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                                        |
+| Saved preferences | `memory_recall`                          | OAuth only; before generating in a project, again after switching            |
 
-A multi-step request ("product video with voiceover", "concept to 3D") goes to `plan_generation` (catalog-only, read lane): plain words in `description`, ordered steps out, each naming a tool and optional model hint; it runs nothing. Single-step: `recommend`.
+A multi-step request ("product video with voiceover", "concept to 3D") goes to `plan_generation` (catalog-only, read lane): plain words in `description`, ordered steps out, each naming a tool and optional model hint; it runs nothing. Single-step: `recommend`. A stated preference ("always 9:16") goes to catalog `memory_set` with `scope` `project_user_memory` (`user_memory` across projects): it replaces the whole layer, so `memory_get` and merge first, and it runs on the delete lane.
 
 ## Worked example
 
