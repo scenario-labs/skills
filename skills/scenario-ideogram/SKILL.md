@@ -1,6 +1,6 @@
 ---
 name: scenario-ideogram
-description: "Use when generating or editing images with Ideogram models on Scenario via MCP: posters, logos, menus, packaging, or signage with exact in-image text, editing an image in place while keeping its exact size, transparent PNG generation, background removal that keeps hair and glass edges, editable text layers for localization, or one consistent character from a reference. Keywords: Ideogram 4.5, Precise Edit, V4, V3, typography, aspect ratio, layerize, character reference."
+description: "Use when generating or editing images with Ideogram models on Scenario via MCP: posters, logos, menus, packaging, or signage with exact in-image text, editing an image in place while keeping its exact size, transparent PNG generation, background removal that keeps hair and glass edges, editable text layers for localization, or one consistent character from a reference. Keywords: Ideogram 4.5, Precise Edit, V4, V3, typography, aspect ratio, layerize, character reference, inpainting."
 license: MIT
 ---
 
