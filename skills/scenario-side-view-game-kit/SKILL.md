@@ -83,4 +83,5 @@ A user asks: "Make the art for my side-scroller: a fox knight hero with a rapier
 - **Stretching a platform strip.** Draw left cap + repeated middle + right cap so every length keeps the carved ends.
 - **Retro-scale level art.** Small retro paintings failed the first playtest; 1920x1152 detailed layers drawn at 2x replaced them while sprites kept nearest-neighbor scaling. Validate level 1 in the game before the rest.
 - **Pink or purple on a character.** Everything strongly magenta is keyed away; say "no pink, no purple, no magenta anywhere on the character" and reject takes that show any.
+- **Rewording a blocked combat clip.** A thrust or pickaxe swing can come back `moderation_blocked`, and the filter is the provider's: read the error, then run the unchanged payload on a pick from another provider (same `recommend`, `endImage` feature kept) per `scenario-moderation` before softening the beat.
 - **Lossy sprite strips.** Lossy WebP shifts the shared palette; only the HD layers ship lossy.
