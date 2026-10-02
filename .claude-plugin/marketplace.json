@@ -48,6 +48,7 @@
       "skills": [
         "./skills/scenario-game-assets",
         "./skills/scenario-sprite-animation",
+        "./skills/scenario-side-view-game-kit",
         "./skills/scenario-textures",
         "./skills/scenario-skyboxes",
         "./skills/scenario-3d",
