@@ -21,7 +21,7 @@ for n in "${names[@]}"; do
     .venv/bin/python - "$n" <<'PY' 2>&1 | grep -v objc
 import json,sys; p=f'assets/video/{sys.argv[1]}/meta.json'; m=json.load(open(p)); m['mask']=True; json.dump(m,open(p,'w'),indent=1)
 PY
-  else echo "$n: no tools/matte binary; skipping matte (plates still work without matte:true)"; fi
+  else echo "$n: no tools/matte binary; skipping matte. Fallbacks: Scenario background removal + tools/matte_keyed.py, then tools/matte_fallback.py (references/pipeline.md §5)"; fi
   .venv/bin/python tools/track.py "$n" 2>&1 | grep -v -E "objc|INFO|WARNING|W0000|I0000" | tail -1
 done
 echo PREP_DONE

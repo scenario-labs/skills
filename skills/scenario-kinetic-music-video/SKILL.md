@@ -88,7 +88,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - **Audio-to-video** from a frame plus a vocal-stem slice for lip-sync. The alternative is reference-audio video plus a lip-sync correction model.
   - Code instead of generation for networks, charts, UI and particles.
 - Never send the song to a video model. Turn the model's native audio off when its schema offers it (the render takes sound only from the master either way), and launch everything in parallel (`jobs_wait` re-called with `pending_job_ids`, never `job_get`, never a relaunch).
-- **Prep** every clip with `tools/prep_clip.sh`: frames, a subject matte (Apple Vision) and tracking (MediaPipe pose plus the matte bbox). Inspect the mattes. Write each clip's content, key moments, slot and matte quality into the footage map.
+- **Prep** every clip with `tools/prep_clip.sh`: frames, a subject matte (Apple Vision, with Scenario background removal as the fallback; see `references/pipeline.md` §5) and tracking (MediaPipe pose plus the matte bbox). Inspect the mattes. Write each clip's content, key moments, slot and matte quality into the footage map.
 
 ### 5. Engine and scene agents
 
@@ -132,7 +132,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 - Setup and analysis: [scaffold.sh](scripts/scaffold.sh), [audio_analysis.py](scripts/audio_analysis.py), [lyrics_align.py](scripts/lyrics_align.py), [plot_lyrics.py](scripts/plot_lyrics.py)
 - Footage generation helpers: [synth_beat.py](scripts/synth_beat.py), [beatwarp.py](scripts/beatwarp.py)
-- Footage prep: [prep_clip.sh](scripts/prep_clip.sh), [prep_video.py](scripts/prep_video.py), [matte.swift](scripts/matte.swift), [fixmatte.py](scripts/fixmatte.py), [matte_fallback.py](scripts/matte_fallback.py), [track.py](scripts/track.py)
+- Footage prep: [prep_clip.sh](scripts/prep_clip.sh), [prep_video.py](scripts/prep_video.py), [matte.swift](scripts/matte.swift), [fixmatte.py](scripts/fixmatte.py), [matte_keyed.py](scripts/matte_keyed.py), [matte_fallback.py](scripts/matte_fallback.py), [track.py](scripts/track.py)
 - Sync checks: [lipsync_check.py](scripts/lipsync_check.py), [dance_sync_check.py](scripts/dance_sync_check.py), [av_sync_check.py](scripts/av_sync_check.py)
 - Rendering and review: [render.mjs](scripts/render.mjs), [still.mjs](scripts/still.mjs), [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py)
 - Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html), [main.js](assets/engine/main.js), [core.js](assets/engine/core.js), [plate.js](assets/engine/plate.js), [roto.js](assets/engine/roto.js), [typekit.js](assets/engine/typekit.js), [hud.js](assets/engine/scenes/hud.js), plus [timeline.template.js](assets/timeline.template.js) and [scene.template.js](assets/scene.template.js)

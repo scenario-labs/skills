@@ -18,7 +18,7 @@ cp -n "$SKILL/references/agent_brief_template.md" AGENTS_BRIEF.md || true
 
 # subject matte tool (Apple Vision foreground instance mask, ~0.1 s/frame, free)
 if [ "$(uname)" = "Darwin" ] && command -v swiftc >/dev/null; then
-  [ -x tools/matte ] || swiftc -O tools/matte.swift -o tools/matte || echo "note: swiftc failed (an unaccepted Xcode license is the usual cause: sudo xcodebuild -license accept). Mattes: use tools/matte_fallback.py meanwhile."
+  [ -x tools/matte ] || swiftc -O tools/matte.swift -o tools/matte || echo "note: swiftc failed (an unaccepted Xcode license is the usual cause: sudo xcodebuild -license accept). Mattes: Scenario background removal + tools/matte_keyed.py, or tools/matte_fallback.py."
 else
   echo "note: no swiftc/macOS, so tools/matte was not built. Provide mattes as assets/video/<clip>/m_#####.png another way."
 fi
