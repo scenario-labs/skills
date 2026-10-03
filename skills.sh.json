@@ -228,6 +228,26 @@
         "scenario-unity-web",
         "scenario-unity-world-building"
       ]
+    },
+    {
+      "title": "Expert tools: Godot",
+      "description": "Game engine. A lead and thirteen specialists that drive Godot 4.7 on macOS through headless jobs, windowed captures, GUT and gdUnit4 tests, and command-line exports: architecture, gameplay, 2D, 3D worlds, animation, UI, VFX, shaders, rendering and lighting, audio, multiplayer, performance and export, pipeline automation. Every procedure was run live in Godot 4.7.2.",
+      "skills": [
+        "scenario-godot-expert",
+        "scenario-godot-2d",
+        "scenario-godot-3d-world",
+        "scenario-godot-animation",
+        "scenario-godot-architecture",
+        "scenario-godot-audio",
+        "scenario-godot-gameplay",
+        "scenario-godot-multiplayer",
+        "scenario-godot-performance-export",
+        "scenario-godot-pipeline-automation",
+        "scenario-godot-rendering-lighting",
+        "scenario-godot-shaders",
+        "scenario-godot-ui",
+        "scenario-godot-vfx"
+      ]
     }
   ]
 }

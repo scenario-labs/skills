@@ -20,3 +20,6 @@ skills/game-engines/unity/*/scripts/
 
 # Contributor Covenant 2.1, kept byte-identical to its published source
 CODE_OF_CONDUCT.md
+# Godot files the Godot expert tools copy into a project (a GitHub Actions
+# workflow and CI script template), kept as they were run in Godot
+skills/game-engines/godot/*/scripts/
