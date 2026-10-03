@@ -102,7 +102,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 ### 6. Assemble, watch, iterate
 
-- **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac).
+- **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac). Wait for it in the foreground (or poll until it prints `wrote`) and carry on to verification and delivery: never end the run while a render or encode is still going, because a headless session that stops kills it.
 - **Verify:**
   - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual. Below a correlation of about 0.15 the visual lag means nothing (type leading by `E.LEAD` reads as up to -3 frames): check onset stills instead.
   - `freezedetect`: no frozen footage.
