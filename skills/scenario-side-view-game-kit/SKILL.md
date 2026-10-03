@@ -32,7 +32,7 @@ The agent runs the scripts locally (Python 3, Pillow, NumPy; `side_sprites.py` a
 | Level finish       | `process_env.py --env env --out assets --levels N`                                                                                                                                  | Texture tiles, ledge trims flat, prop count matches          |
 | Deliver            | Strips and pose images as lossless WebP plus `<name>_meta.json` (cell, feet anchor, fps); layers as lossy WebP                                                                      | One anchor per character; nothing magenta at the edges       |
 
-Payload names below (`startImage`, `endImage`, `referenceImages`, `background`, `quality`, `numOutputs`, `cfgScale`) are the build's schemas' examples: use the fields your pick's `model_schema_get` lists. The image pick needs strong layout adherence, a reference-image input and a transparent-background option; if its schema lacks one, take the next ranked pick.
+Payload names below (`startImage`, `endImage`, `referenceImages`, `background`, `quality`, `numOutputs`, `cfgScale`) are the build's schemas' examples: use the fields your pick's `model_schema_get` lists. The image pick needs strong layout adherence, a reference-image input, a transparent-background option and the template's 1536x1024; if its schema lacks one (a pixel-art specialty pick can cap far below that size), take the next ranked pick.
 
 ## Worked example
 
@@ -51,7 +51,7 @@ A user asks: "Make the art for my side-scroller: a fox knight hero with a rapier
            "startImage": "<fox_rest id>", "endImage": "<fox_rest id>", "duration": "3", "aspectRatio": "1:1", "generateAudio": false }
    ```
 
-   Idle and hurt pin like the attack; the air spin uses the action id as both frames. Price each distinct payload with `dry_run: true` (first frame only, pinned, changed guidance), give the user the total, launch every clip with `"wait": false`, and collect them with one `jobs_wait { "job_ids": [...] }`, re-called with the returned `pending_job_ids` as `job_ids` while any is in progress (never poll `job_get`). `asset_display` each; re-run only one that turns toward the camera or travels. `asset_download` each (omit `format` on video) and save as `clips/fox_<cycle>.mp4`, `<cycle>` being exactly the step 5 `--cycles` name (`run`, `idle`, `atk1`, `spin`, `hurt`).
+   Idle and hurt pin like the attack; the air spin uses the action id as both frames. Price each distinct payload with `dry_run: true` (first frame only, pinned, changed guidance), give the user the total, launch every clip with `"wait": false`, and collect them with one `jobs_wait { "job_ids": [...] }`, re-called with the returned `pending_job_ids` as `job_ids` while any is in progress (never poll `job_get`). `asset_download` each (omit `format` on video) and save as `clips/fox_<cycle>.mp4`, `<cycle>` being exactly the step 5 `--cycles` name (`run`, `idle`, `atk1`, `spin`, `hurt`). Review each as a local contact sheet (`ffmpeg -i clips/fox_run.mp4 -vf "fps=6,scale=240:-1,tile=6x3" fox_run_sheet.png`), since `asset_display` shows no frames of a video; re-run only one that turns toward the camera or travels.
 
 4. **Pose sheet.** Text to image with `referenceImages: ["<chosen still id>"]` and the [pose-sheet template](references/prompt-templates.md#3-static-pose-sheet) (fall, wall cling, plunge, dash). Price, tell the user, run, download as `fox_poses.png`.
 
@@ -82,6 +82,6 @@ A user asks: "Make the art for my side-scroller: a fox knight hero with a rapier
 - **Trusting "seamless tileable" in a texture prompt.** The renders do not tile reliably; `process_env.py` cross-fades opposite edges instead of a re-render.
 - **Stretching a platform strip.** Draw left cap + repeated middle + right cap so every length keeps the carved ends.
 - **Retro-scale level art.** Small retro paintings failed the first playtest; 1920x1152 detailed layers drawn at 2x replaced them while sprites kept nearest-neighbor scaling. Validate level 1 in the game before the rest.
-- **Pink or purple on a character.** Everything strongly magenta is keyed away; say "no pink, no purple, no magenta anywhere on the character" and reject takes that show any.
+- **Pink or purple on a character.** Everything strongly magenta is keyed away; say "no pink, no purple, no magenta anywhere on the character" and reject takes that show any. A fast weapon swing can pick up a purple motion-blur tint and key away mid-strike, which `--drop` cannot fix since it would remove the strike itself: reject that take, or re-run with "no motion blur, the weapon keeps its colors" in the prompt and "purple or magenta tint on the weapon" in the negative (wording untested).
 - **Rewording a blocked combat clip.** A thrust or pickaxe swing can come back `moderation_blocked`, and the filter is the provider's: read the error, then run the unchanged payload on a pick from another provider (same `recommend`, `endImage` feature kept) per `scenario-moderation` before softening the beat.
 - **Lossy sprite strips.** Lossy WebP shifts the shared palette; only the HD layers ship lossy.

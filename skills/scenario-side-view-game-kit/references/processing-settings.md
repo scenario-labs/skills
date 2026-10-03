@@ -12,7 +12,7 @@ What the local scripts do, the settings of the build this skill comes from, and 
 
 ## Sprite strips (`scripts/side_sprites.py`)
 
-One facing only, one row per cycle. Clips are read as `<clips>/<name>_<cycle>.mp4`; `--cycles` lists them as `NAME:MODE:FRAMES`. Clips must be square, like their first frame: the script stops on one more than 2% off square. It imports `sprite_cycles.py` from the same folder for the key, loop search, active window, downscale, palette and outline. Run `--report` first: it prints windows and seam scores and writes nothing.
+One facing only, one row per cycle. Clips are read as `<clips>/<name>_<cycle>.mp4`; `--cycles` lists them as `NAME:MODE:FRAMES`. Clips must be square, like their first frame: the script stops on one more than 2% off square. Resolution need not match: a clip returned at 1440 px from a 960 first frame is rescaled to `--canvas` before anything else. It imports `sprite_cycles.py` from the same folder for the key, loop search, active window, downscale, palette and outline. Run `--report` first: it prints windows and seam scores and writes nothing.
 
 ### Key
 
@@ -27,7 +27,7 @@ Magenta to alpha: a pixel is background when red and blue both beat green by a m
 ### Shared canvas and finish
 
 - The crop is the union of every kept frame of every cycle, symmetric about the vertical center, padded by 8 px, and always extended down to the feet line (82%), so the air spin and the ground cycles share one anchor. The crop pads with transparency where it passes the frame edge.
-- Scale: target height (`--height`) divided by the figure height in the first frame (58% of 960 = 557 px).
+- Scale: target height (`--height`) divided by the figure height in the first frame (58% of 960 = 557 px). The build's heights (table below) are a starting point: 56 px for the hero, 66 px for an ordinary ground enemy, 78 px for a heavy one.
 - Area average on premultiplied color, contrast and saturation lift 1.12 each, one median-cut palette of **28** colors per character (no dither) built from every frame and every static pose, then a 1 px inner outline (edge pixels darkened to 38%).
 - `--drop CYCLE=I` leaves a sampled frame (0-based) out of the strip after the canvas and palette are fixed, which is how the build removed frames where a white slash trail or a dust cloud keyed into a solid block. Add `--force` to overwrite earlier outputs.
 - Static poses: `--poses` splits a pose sheet by connected components (8-neighbor on a quarter-resolution mask, largest N kept, left to right) and scales each by `--pose-scale` (0.122 in the build, tuned by eye against the strips); `--jump <name>_action.png` adds the reframed jump still at the strip scale. Both join the palette.
