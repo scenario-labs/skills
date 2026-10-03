@@ -215,6 +215,9 @@ func make_base_scene_3d(job) -> Dictionary:
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(20, 20)
 	fmesh.mesh = plane
+	var fmat := StandardMaterial3D.new()   # a material-less mesh is flagged by audit(P, "scene")
+	fmat.albedo_color = Color(0.45, 0.45, 0.48)
+	fmesh.material_override = fmat
 	floor_body.add_child(fmesh)
 	var fcol := CollisionShape3D.new()
 	fcol.name = "Collision"
