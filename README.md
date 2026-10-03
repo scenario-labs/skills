@@ -368,6 +368,27 @@ Game engine. A lead and thirteen specialists that drive Unity 6.3 LTS on macOS t
 | [scenario-unity-web](skills/game-engines/unity/scenario-unity-web/SKILL.md)                                 | Unity on the Web: WebGL and Web build settings, compression and server headers, build size and load time, portal limits, Addressables on the Web                |
 | [scenario-unity-world-building](skills/game-engines/unity/scenario-unity-world-building/SKILL.md)           | Unity levels and open worlds: terrain from code or heightmaps, procedural islands, foliage rules, ProBuilder graybox, modular kits, landmarks, spline roads     |
 
+### Expert tools: Godot
+
+Game engine. A lead and thirteen specialists that drive Godot 4.7 on macOS through headless jobs, windowed captures, GUT and gdUnit4 tests, and command-line exports: architecture, gameplay, 2D, 3D worlds, animation, UI, VFX, shaders, rendering and lighting, audio, multiplayer, performance and export, pipeline automation. Every procedure was run live in Godot 4.7.2.
+
+| Skill                                                                                                       | Use it for                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-godot-expert](skills/game-engines/godot/scenario-godot-expert/SKILL.md)                           | Godot lead: headless --script jobs, --import and --check-only, windowed captures, GUT tests, command-line exports, MCP into an editor, proof by capture        |
+| [scenario-godot-2d](skills/game-engines/godot/scenario-godot-2d/SKILL.md)                                   | Godot 2D: platformer and top-down controllers, TileMapLayer and terrains, pixel-perfect stretch and cameras, 2D lights, y-sort, parallax, AI-generated sprites |
+| [scenario-godot-3d-world](skills/game-engines/godot/scenario-godot-3d-world/SKILL.md)                       | Godot 3D levels: third-person and FPS controllers, CSG blockout, GridMap, terrain, MultiMesh scatter, streaming, Jolt physics, GLB imports                     |
+| [scenario-godot-animation](skills/game-engines/godot/scenario-godot-animation/SKILL.md)                     | Godot animation: AnimationPlayer and RESET, AnimationTree state machines and blend spaces in code, Mixamo retargeting, root motion, IK, cutscenes              |
+| [scenario-godot-architecture](skills/game-engines/godot/scenario-godot-architecture/SKILL.md)               | Godot code structure: scenes and nodes, signals and event bus autoloads, custom Resources, components, save and load, InputMap rebinding, typed GDScript       |
+| [scenario-godot-audio](skills/game-engines/godot/scenario-godot-audio/SKILL.md)                             | Godot audio: buses and effects, volume sliders, combat with hundreds of enemies, 3D sound and reverb zones, adaptive and interactive music, SFX variation      |
+| [scenario-godot-gameplay](skills/game-engines/godot/scenario-godot-gameplay/SKILL.md)                       | Godot gameplay: enemy AI that patrols, chases, and attacks, state machines, behavior trees, NavigationAgent3D, hitbox combat, dialogue, procedural dungeons    |
+| [scenario-godot-multiplayer](skills/game-engines/godot/scenario-godot-multiplayer/SKILL.md)                 | Godot multiplayer: ENet and WebSocket host and join, RPCs, MultiplayerSpawner and Synchronizer, authority, lag, lobbies, dedicated servers                     |
+| [scenario-godot-performance-export](skills/game-engines/godot/scenario-godot-performance-export/SKILL.md)   | Godot performance and shipping: profiling and monitors, CPU vs GPU bound, hitches, phones overheating, macOS, Web, Android, and iOS exports                    |
+| [scenario-godot-pipeline-automation](skills/game-engines/godot/scenario-godot-pipeline-automation/SKILL.md) | Godot pipeline: batch GLB import and naming rules, import presets and post-import scripts, editor plugins, @tool, gdUnit4 and GitHub Actions CI                |
+| [scenario-godot-rendering-lighting](skills/game-engines/godot/scenario-godot-rendering-lighting/SKILL.md)   | Godot rendering: Forward+, Mobile, or Compatibility, SDFGI, VoxelGI, and lightmaps, environment and fog, shadows, light leaks, quality tiers                   |
+| [scenario-godot-shaders](skills/game-engines/godot/scenario-godot-shaders/SKILL.md)                         | Godot shaders: .gdshader spatial, canvas_item, particles, and sky code, VisualShader in code, toon water, dissolve, outlines, stencil, post-processing         |
+| [scenario-godot-ui](skills/game-engines/godot/scenario-godot-ui/SKILL.md)                                   | Godot game UI: main menu, settings, HUD and health bars, Control layout, containers and anchors, themes, scaling to any screen, gamepad focus, localization    |
+| [scenario-godot-vfx](skills/game-engines/godot/scenario-godot-vfx/SKILL.md)                                 | Godot VFX and game feel: GPUParticles explosions, fireballs with trails, impacts, sparks and smoke, hit stop, screen shake, particle cost on phones            |
+
 ## Example prompts
 
 Once the skills are installed and the MCP server is connected, ask your agent things like:
