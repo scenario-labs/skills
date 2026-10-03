@@ -1,6 +1,6 @@
 """Fallback subject matte without Apple Vision: MediaPipe selfie segmentation -> assets/video/<clip>/m_#####.png (white = subject).
 usage: python tools/matte_fallback.py <clip> [<clip> ...]   (sets meta.mask=true)"""
-import sys, os, glob, json, numpy as np, cv2
+import sys, glob, json, numpy as np, cv2
 import mediapipe as mp
 if len(sys.argv) < 2: sys.exit(__doc__)
 seg = mp.solutions.selfie_segmentation.SelfieSegmentation(model_selection=0)
@@ -16,5 +16,8 @@ for clip in sys.argv[1:]:
         if prev is not None: m = 0.75 * m + 0.25 * prev
         prev = m
         cv2.imwrite(f.replace('/f_', '/m_').replace('.jpg', '.png'), (m * 255).astype(np.uint8))
-    p = f'{d}/meta.json'; meta = json.load(open(p)); meta['mask'] = True; json.dump(meta, open(p, 'w'), indent=1)
+    p = f'{d}/meta.json'
+    with open(p) as fh: meta = json.load(fh)
+    meta['mask'] = True
+    with open(p, 'w') as fh: json.dump(meta, fh, indent=1)
     print(clip, len(fs))

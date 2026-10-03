@@ -117,8 +117,10 @@ async function renderChunk(a, b, file, wi) {
       );
   }
   ff.stdin.end();
-  await new Promise((r) => ff.on("close", r));
+  const code = await new Promise((r) => ff.on("close", r));
   await browser.close();
+  if (code !== 0)
+    throw new Error(`ffmpeg chunk encode failed (exit ${code}): ${file}`);
 }
 const n = f1 - f0,
   per = Math.ceil(n / workers),
@@ -171,9 +173,15 @@ if (!args.noaudio)
     "320k",
   ); // apad: silence after the song ends (extended end card)
 muxArgs.push("-c:v", "copy", "-movflags", "+faststart", out);
-await new Promise((r) =>
+const muxCode = await new Promise((r) =>
   spawn("ffmpeg", muxArgs, { stdio: "inherit" }).on("close", r),
 );
+if (muxCode !== 0) {
+  console.error(
+    `ffmpeg mux failed (exit ${muxCode}); chunk files kept for inspection`,
+  );
+  process.exit(1);
+}
 parts.forEach(([, f]) => fs.unlinkSync(f));
 fs.unlinkSync(list);
 srv.close();

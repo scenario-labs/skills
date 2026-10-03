@@ -80,7 +80,7 @@ def align(path, chant=None, no_fix=()):
         t0 = out[-1]['e'] if out else 0; m = (t > t0) & (env > 0)
         pk, _ = find_peaks(env[m], height=0.3, distance=int(0.17 * fps), prominence=0.15)
         gos = [round(float(t[m][p]) - 0.06, 3) for p in pk]
-        out.append({'section': chant_sec, 'text': (chant_word + ' ') * len(gos), 'words': [{'w': chant_word, 's': g, 'e': round(g + 0.18, 3)} for g in gos], 's': gos[0], 'e': gos[-1] + 0.3})
+        if gos: out.append({'section': chant_sec, 'text': (chant_word + ' ') * len(gos), 'words': [{'w': chant_word, 's': g, 'e': round(g + 0.18, 3)} for g in gos], 's': gos[0], 'e': gos[-1] + 0.3})
     os.makedirs('engine/data', exist_ok=True); save_json({'lines': out}, 'engine/data/lyrics.json', indent=1)
     for l in out: print(f"{l['s']:7.2f}-{l['e']:7.2f} {l['section'] or '':8s} {l['text'][:70]}")
 

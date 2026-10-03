@@ -30,11 +30,11 @@ Read `references/lessons.md` before starting. Every item in it cost real time or
   - Ask what must never appear.
   - Defaults: generated footage shown clean (no filters on it), graphics layered on and around it, a fast and upbeat showreel energy.
 - **Brand:** any logo, wordmark or credit. Use official files in their official colors, only where the director wants them.
-- **Budget:** lean (6-10 video generations), moderate (12-20) or big. Price each paid step with `dry_run` before spending. Relative anchors: a 6 s 720p clip costs about twenty style frames, a 10 s clip about thirty-five, and a full mixed video about five hundred.
+- **Budget:** lean (6-10 video generations), moderate (12-20) or big. Price each paid step with `dry_run` (one run per distinct payload, then total) before spending. Relative anchors: a 6 s 720p clip costs about twenty style frames, a 10 s clip about thirty-five, and a full mixed video about five hundred.
 - **Format:** 16:9 1080p60 by default, with 9:16 or 1:1 re-layouts on offer. X caps standard accounts at 2:20, so plan a teaser.
 - **Lyrics:** use them if supplied (they beat any transcript). Otherwise transcribe and flag the uncertain words at the end.
 
-With no one around to answer, choose sensible defaults, write them into TREATMENT.md, and keep going.
+With no one around to answer, choose sensible defaults for the creative choices and write them into TREATMENT.md. Do not default the money: with no stated budget or no explicit team and project, stop before the first paid step and say what is missing.
 
 ## Workflow
 
@@ -74,20 +74,20 @@ Save the condensed results as `analysis/research_*.md`. Scene agents read them a
   - the **hook for the first 3 seconds** (the strongest idea in the video, and it must work as a muted autoplay)
   - one row per section: time range on downbeats, lyrics, look, must-have ideas
   - a footage map (filled in as clips land)
-- **PLAN.md:** a one-page version for the director to approve before you spend on footage.
+- **PLAN.md:** a one-page version for the director to approve before you spend on footage (unattended, this is the stop point if the budget is unstated).
 
 ### 4. Subject, style frames and footage on Scenario
 
 Skip this for a graphics-only video, apart from any stills or 3D props. Otherwise follow `references/pipeline.md` §3-5:
 
 - **Subject sheet:** a turnaround, expressions and callouts from the user's references. Look at it, then crop identity references from it.
-- **Style frames:** one still per shot (an image model that takes reference images), in its section's look. Compose with negative space for type, on a set that composites (black void with rim light, flat color cyc, or white high-key). No text. Contact-sheet them and get the look approved cheaply.
+- **Style frames:** one still per shot (an image model that takes reference images), in its section's look. Compose with negative space for type, on a set that composites (black void with rim light, flat color cyc, or white high-key). No text. Contact-sheet them and get the look approved cheaply (unattended: proceed only inside a stated budget).
 - **Footage routes:**
   - Image-to-video from the frame for actions.
   - A video model with reference images and reference audio, given a **synthesized beat track** for dances that lock to the song, then beat-warp.
   - **Audio-to-video** from a frame plus a vocal-stem slice for lip-sync. The alternative is reference-audio video plus a lip-sync correction model.
   - Code instead of generation for networks, charts, UI and particles.
-- Never send the song to a video model. Keep `generateAudio:false`, and launch everything in parallel.
+- Never send the song to a video model. Keep the model's native audio off, and launch everything in parallel (`jobs_wait` re-called with `pending_job_ids`, never `job_get`, never a relaunch).
 - **Prep** every clip with `tools/prep_clip.sh`: frames, a subject matte (Apple Vision) and tracking (MediaPipe pose plus the matte bbox). Inspect the mattes. Write each clip's content, key moments, slot and matte quality into the footage map.
 
 ### 5. Engine and scene agents
