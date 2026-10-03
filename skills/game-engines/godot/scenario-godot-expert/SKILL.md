@@ -10,7 +10,7 @@ Target: Godot 4.7.2.stable (standard build, no C#), macOS Apple Silicon, Metal b
 
 Expert Godot work is a loop run against evidence: set the budget, build one stage, measure it, look at it, fix it, advance. An agent without a mouse gets there by picking the right channel, passing only on a machine-readable result, and never trusting one signal alone. This skill is that protocol, the shared toolkit every scenario-godot-* skill calls ([`scripts/`](scripts/)), and the map of the team. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
-**Status (2026-10-02):** every toolkit function below ran in Godot 4.7.2 here (23 live tests, 17 offline, all pass; [`references/procedures.md`](references/procedures.md)). The pre-release triage of the 13 domain skills' findings is in `tests/OPEN_ISSUES.md` (Lead triage).
+**Status (2026-10-02):** every toolkit function below ran in Godot 4.7.2 here (23 live tests, 17 offline, all pass; [`references/procedures.md`](references/procedures.md)).
 
 ## Stance (the expert delta)
 
@@ -95,6 +95,7 @@ Or a method on any RefCounted script, `run_script(P, "res://tools/x.gd:build", a
 | `--check-only` on code using autoloads | "Identifier not found: GameState"                                                                     | `check_all` (in-process load); `check_only` files it under `autoload_false_positives`                            |
 | hand-written `project.godot`           | GodotPhysics3D, stretch disabled, UI does not scale                                                   | `new_project`, or set the keys                                                                                   |
 | `class_name` in a fresh project        | "Identifier not found"                                                                                | `import_project` first                                                                                           |
+| autoload named like its `class_name`   | 'Class "GameState" hides an autoload singleton.' (GDScript analyzer)                                  | name the autoload differently (`Game`) or drop `class_name`                                                      |
 | capture or `--write-movie` headless    | 0 frames drawn; `--write-movie` crashes                                                               | windowed `capture_scene`                                                                                         |
 | GPU timing on Metal                    | `gpu_ms` 0                                                                                            | `profile_scene(driver="vulkan")`                                                                                 |
 | export output inside the project       | build imported and packed next time                                                                   | outside, or `.gdignore` (auto)                                                                                   |
