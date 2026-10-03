@@ -1,6 +1,6 @@
 ---
 name: scenario-seedance
-description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video from a first frame, first and last frame anchors, reference-to-video with identity, product, or world references, prompt-based editing, extending a clip, audio-conditioned motion, shot sound without music, or deciding between first-frame and reference conditioning. Keywords: Seedance 2.5 and 2.0, ByteDance, T2V, I2V, V2V, multimodal references, native audio, video extension."
+description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video from a first frame, first and last frame anchors, reference-to-video with identity, product, or world references, prompt-based editing, extending a clip, audio-conditioned motion or a reference voice, shot sound without music, or deciding between first-frame and reference conditioning. Keywords: Seedance 2.5 and 2.0, ByteDance, T2V, I2V, V2V, multimodal references, native audio, video extension."
 license: MIT
 ---
 
@@ -25,7 +25,11 @@ Mode follows from the inputs (names from the live schema):
 | Edit         | `referenceVideos` + edit prompt   | requires `duration: -1`; output follows the source                                                                                                                                                                                                                                                                                                                                                                         |
 | Extend       | `referenceVideos` + extend prompt | inferred from wording: "extend @video1", what holds (character, wardrobe, light), the action that continues, no cut; geometry follows the source; `duration` is the footage appended and the output holds only that tail (a 10 s source with `duration` 15 returned 15 s of new footage at authoring time; Auto priced as the source length), so concatenate source and tail and read the delivered length off `asset_get` |
 
-`image` and the reference arrays are mutually exclusive. `referenceVideos` (motion conditioning) and `referenceAudio` (timing and energy conditioning) combine with `referenceImages`; on the 2.0 line reference audio also requires one image or video reference, where 2.5 takes it alone. Reference parameters are arrays even for one asset. Prompt tags bind by array order: `@image1` is `referenceImages[0]`, likewise `@video1` and `@audio1`, and the prompt says what each tag governs and what it leaves alone ("@image1 defines the bottle and label, nothing of the set"), for video and audio tags as much as for images. No seed, mask, or camera parameter exists: camera moves live in the prompt, one dominant move and one action per shot. Several actions go as timecoded beats ("0-2s ... 2-4s ..."), one per beat, the last ending inside `duration`, the shot named as one continuous take.
+`image` and the reference arrays are mutually exclusive. `referenceVideos` (motion conditioning) and `referenceAudio` (timing and energy, or a speaker's voice) combine with `referenceImages`; on the 2.0 line reference audio also requires one image or video reference, where 2.5 takes it alone. Reference parameters are arrays even for one asset. Prompt tags bind by array order: `@image1` is `referenceImages[0]`, likewise `@video1` and `@audio1`, and the prompt says what each tag governs and what it leaves alone ("@image1 defines the bottle and label, nothing of the set"), for video and audio tags as much as for images. No seed, mask, or camera parameter exists: camera moves live in the prompt, one dominant move and one action per shot. Several actions go as timecoded beats ("0-2s ... 2-4s ..."), one per beat, the last ending inside `duration`, the shot named as one continuous take.
+
+A reference track the prompt does not claim is easily ignored, a generated voice line most of all, so bind it to a role in words: "@audio1 is her own voice; she speaks it to camera, lips in sync" for speech, "the camera move and each action land on the beats of @audio1" for music.
+
+`duration` defaults to Auto, which on 2.5 at authoring time priced a text-to-video job as the full 30 second cap (the same 480p prompt quoted about four times its 8 second price). Set the seconds the shot needs on every run; with `referenceVideos`, Auto follows the longest reference clip instead.
 
 Caps are per member, so read them off `model_schema_get`. At authoring time 2.5 took 30 reference images, 10 videos, 10 audio, 4 to 30 seconds, up to 1080p; the 2.0, Fast, and Mini hits took 9, 3, 3, and 4 to 15, with 4k on 2.0 alone and no `lastFrameImage` on Mini. Price moves further than the caps do, six times across the family for one 4 second 480p job, so `dry_run` the same job on two members before a batch.
 
@@ -55,6 +59,8 @@ The prompt is the only lever, so listen to what comes back: when music leaks in 
 - Prompting an opening state in reference mode: it will not appear; pass it as `image`.
 - A bare string where the schema says array: one reference still goes as `["asset_x"]`.
 - Combining `image` with `referenceImages` or `referenceVideos`: mutually exclusive inputs.
+- Leaving `duration` on Auto: on 2.5 a text-to-video job priced as the 30 second cap, not the shot's length.
+- Passing a voice track beside a character reference without saying whose voice it is: the model may animate the face and ignore the track.
 - Carrying one member's caps or price to another: 30 references, 30 seconds, and 1080p are each true of one and false of the next.
 - Letting shots score themselves and then cutting them together: the music restarts at every cut.
 - Rendering captions, prices, logos, or UI: reserve clean space and composite text in post.
