@@ -87,7 +87,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - A video model with reference images and reference audio, given a **synthesized beat track** for dances that lock to the song, then beat-warp.
   - **Audio-to-video** from a frame plus a vocal-stem slice for lip-sync. The alternative is reference-audio video plus a lip-sync correction model.
   - Code instead of generation for networks, charts, UI and particles.
-- Never send the song to a video model. Keep the model's native audio off, and launch everything in parallel (`jobs_wait` re-called with `pending_job_ids`, never `job_get`, never a relaunch).
+- Never send the song to a video model. Turn the model's native audio off when its schema offers it (the render takes sound only from the master either way), and launch everything in parallel (`jobs_wait` re-called with `pending_job_ids`, never `job_get`, never a relaunch).
 - **Prep** every clip with `tools/prep_clip.sh`: frames, a subject matte (Apple Vision) and tracking (MediaPipe pose plus the matte bbox). Inspect the mattes. Write each clip's content, key moments, slot and matte quality into the footage map.
 
 ### 5. Engine and scene agents
@@ -96,7 +96,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - Set `PAL` in `core.js`, and in `engine/timeline.js` set the sections on downbeats, `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by default).
   - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label.
   - Render one still and a 5 s clip, then confirm audio and flashes line up with `av_sync_check.py`.
-- **Brief the agents.** Fill in `AGENTS_BRIEF.md` from the template, then launch one background agent per section in a single message. Each gets its file, time range, lyrics, must-have ideas and clips, and reads AGENTS_BRIEF, STYLE, TREATMENT, ENGINE_API and the research first. Log the agent ids.
+- **Brief the agents.** Fill in `AGENTS_BRIEF.md` from the template, then launch one background agent per section in a single message. Each gets its file, time range, lyrics, must-have ideas and clips, and reads AGENTS_BRIEF, STYLE, TREATMENT, ENGINE_API and the research first. Log the agent ids. For a teaser or anything under about 30 s, the lead may write the scenes itself and skip the research agents, PLAN.md and the per-section agents; keep the smoke test.
 - **Deliver clips as they land.** Message the agent that needs each one ("clip ready: content, key moments, slot").
 - **Review every report.** Contact-sheet the best stills and Read them. Fix engine-level problems yourself (they affect everyone) and tell the agents what changed.
 
@@ -104,7 +104,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 - **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac).
 - **Verify:**
-  - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual.
+  - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual. Below a correlation of about 0.15 the visual lag means nothing (type leading by `E.LEAD` reads as up to -3 frames): check onset stills instead.
   - `freezedetect`: no frozen footage.
   - Contact sheets at 0.5 s steps, 20 s per sheet.
   - Every section boundary, frame by frame.
@@ -116,7 +116,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - **Videos:** an X-ready file (2-pass 21 Mb/s, under 512 MB), a teaser (verse plus first chorus) and a master, plus one file per variant. Use distinct filenames, because macOS is case-insensitive.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet, source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
-- **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent.
+- **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent, summed from this run's `jobs_wait` rows (`cuCost`, logged in `analysis/jobs.md`); `usage` is project-wide and includes other work.
 
 ## Quality bar
 

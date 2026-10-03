@@ -52,7 +52,9 @@ def align(path, chant=None, no_fix=()):
         if tag == 'equal':
             for k in range(i2 - i1): T[i1 + k] = (W[j1 + k]['s'], W[j1 + k]['e'])
         elif tag == 'replace':
-            s, e, n = W[j1]['s'], W[j2 - 1]['e'], i2 - i1
+            # spread over at most as many transcript words as lyric words: when the supplied lyrics cover only part of
+            # the song, the tail of the transcript is not theirs (it once stretched a last word to the song's end)
+            n = i2 - i1; s, e = W[j1]['s'], W[min(j2, j1 + n) - 1]['e']
             for k in range(n): T[i1 + k] = (s + (e - s) * k / n, s + (e - s) * (k + 1) / n)
     for i in range(len(C)):
         if T[i] is None:
@@ -73,6 +75,7 @@ def align(path, chant=None, no_fix=()):
                 ws[i]['s'] = round(float(c[0]) if len(c) else ws[i + 1]['s'] - 0.28, 3)
         for i, w in enumerate(ws):
             if i + 1 < len(ws): w['e'] = round(min(max(w['e'], w['s'] + 0.12), ws[i + 1]['s']), 3)
+            w['e'] = round(min(w['e'], w['s'] + 2.0), 3)  # no sung word holds past 2 s
         l['words'] = ws; l['s'] = ws[0]['s']; l['e'] = ws[-1]['e']; out.append(l)
     if chant_sec:  # repeated chant: one word per vocal-envelope peak inside the chant section's window
         from scipy.signal import find_peaks

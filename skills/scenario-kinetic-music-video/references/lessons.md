@@ -56,7 +56,7 @@ Every item here cost real time or credits once. Read the matching section before
 
 - **Audio-to-video** from a style frame and a vocal slice gave the lip-sync shots the director liked most, at 1080p, with a camera motion option.
 - The alternative is reference-audio video with the vocal stem, then a **lip-sync correction** model (cut-off sync mode), replacing frames in place under the same clip name.
-- Measure it: `lipsync_check.py` correlates mouth openness (MediaPipe FaceMesh) with vocal RMS. About 0.5 is good, and 0.1-0.2 is weak. Tracking fails on wide shots or when a hand crosses the face. Held vowels read as "closed", so judge by eye too.
+- Measure it: `lipsync_check.py` correlates mouth openness (MediaPipe FaceMesh) with vocal RMS. About 0.5 is good, and 0.1-0.2 is weak. Tracking fails on wide shots or when a hand crosses the face. Held vowels read as "closed", so judge by eye too. Never shift a slot clip to chase a measured lag. Under 0.2, retake it in another look if the budget allows; otherwise keep the shot wider or shorter so the mouth is not the focal point.
 - The audio-to-video member capped audio at 10 s at authoring time (an 11 s slice failed with a 400), so cut slices of 10 s or less; clips come back a few frames shorter than the slice.
 - Cut vocal slices as WAV, not mp3 (priming delay). MediaPipe must be pinned to `0.10.14` (newer versions dropped `mp.solutions`).
 
@@ -106,6 +106,6 @@ Every item here cost real time or credits once. Read the matching section before
 ## Delivery
 
 - 1080p60, 2-pass x264 at about 21 Mb/s (maxrate 25M) with AAC 192k gives about 414 MB for 2:37, under X's 512 MB limit. Standard X accounts cap video at 2:20, so cut a teaser too.
-- Always run `av_sync_check.py` on the delivered file: expect 0.0 ms audio and 0 to +1 frame visual.
+- Always run `av_sync_check.py` on the delivered file: expect 0.0 ms audio and 0 to +1 frame visual. A lyric-led cut with a correlation under about 0.15 can read -2 or -3 frames because type leads by `E.LEAD`; confirm with onset stills.
 - macOS filenames are case-insensitive: an encode named like its master with different case overwrote its own input.
 - Don't delete a render output until you've confirmed it's incomplete. A stopped job may have finished the concat and only been encoding.

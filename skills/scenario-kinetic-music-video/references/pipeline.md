@@ -37,7 +37,7 @@ This creates `audio/master.*`, the `engine/` template, `tools/` (with the matte 
 - **Workspace.** Get the team and project with `teams_list`. If there is more than one, ask the user. Pass `team_id` and `project_id` on every call. Log every asset and job id in `analysis/jobs.md` as you go, because revisions need them.
 - **Upload references.** Use the multipart flow: `upload_asset(file_name, content_type, kind, file_size)` returns a presigned URL. `curl -fsS -X PUT -T file '<url>'` (no checksum headers), then `upload_asset_complete(upload_id)`. Inline base64 is only for files under 100 KB.
 - **Subject sheet first.** A subject can be a character, mascot, creature, band avatar or product.
-  - Turn the user's reference images into a model sheet (turnaround, expressions, detail callouts) before any footage. Pick an image model that takes reference images (`recommend`, then `model_schema_get`): pass the references through the model's reference-image field and ask for a wide, high-quality output with two takes (field names and size caps from `model_schema_get`).
+  - Turn the user's reference images into a model sheet (turnaround, expressions, detail callouts) before any footage. Pick an image model that takes reference images (`recommend`, then `model_schema_get`): pass the references through the model's reference-image field and ask for a wide, high-quality output, two takes when the budget allows and one per subject otherwise; a cameo subject gets its own sheet (field names and size caps from `model_schema_get`).
   - The prompt covers identity details, the outfit or materials, the rendering style with explicit NOTs (not Pixar, not chibi), the layout, and lighting that matches the video's sets.
   - Look at it. Crop identity references from it (face, full-body 3/4) with ffmpeg and upload them.
   - For a real person, use only their own photos with their consent. Never generate other real people.
@@ -52,7 +52,7 @@ This creates `audio/master.*`, the `engine/` template, `tools/` (with the matte 
 
 ## 4. Scenario: footage routes
 
-Find current models with `recommend` using the capability string for each lane (`img2video`, `audio2video`; a reference-image, reference-audio dance is `img2video` with the reference features; lip-sync correction has no capability value, so `search` for it by name) and read each schema with `model_schema_get`. The parameters below are concepts, not payloads: the schema wins. `dry_run` every distinct payload and total the quotes. Launch everything in parallel with `wait:false`, then `jobs_wait` with all job ids, re-called with `pending_job_ids` until none are pending. A wait timeout is not a failure: never relaunch a run, and never poll with `job_get`.
+Find current models with `recommend` using the capability string for each lane (`img2video`, `audio2video`; a reference-image, reference-audio dance is `img2video` with the reference features; lip-sync correction has no capability value, so `search` for it by name) and read each schema with `model_schema_get`. Pass a clip length through the `duration` argument, never in the prompt: `recommend` read "under 10 s" there as a latency limit. The parameters below are concepts, not payloads: the schema wins. `dry_run` every distinct payload and total the quotes. Launch everything in parallel with `wait:false`, then `jobs_wait` with all job ids, re-called with `pending_job_ids` until none are pending. A wait timeout is not a failure: never relaunch a run, and never poll with `job_get`.
 
 | shot                              | route                                                                                                                          | key params                                                                                                                   |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -119,7 +119,7 @@ Run `tools/track.py` after the mattes exist: it writes `box`, `c` and `top` from
 node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/v1.mp4 [--variant b] [--to <end >]
 .venv/bin/python tools/av_sync_check.py out/final/v1.mp4 0                                          # expect audio 0.0 ms; visual 0..+1 frame
 ffmpeg -i out/final/v1.mp4 -vf "freezedetect=n=0.003:d=0.25" -map 0:v -f null - 2>&1 | grep freeze_ # frozen footage or graphics
-ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg                     # then tile 8x5 per 20 s (tools/sheet.py) and Read every sheet
+ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg                     # then tile 8x5 per 20 s (`tools/sheet.py <out.jpg> <cols> <img>...`) and Read every sheet
 ```
 
 - **Freezes:** check every hit from `freezedetect`. A held footage frame (a clip that ran out, or a slot clip shown before its slot) was rejected as "static". Intentional holds of pure graphics are fine if something still moves.
