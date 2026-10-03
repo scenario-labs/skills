@@ -88,7 +88,7 @@ Find current models with `recommend` for each lane's capability and read each sc
 bash tools/prep_clip.sh                       # every assets/clips/*.mp4 → assets/video/<clip>/ frames + m_*.png mattes + track.json
 bash tools/prep_clip.sh lip_a dance_b         # or only some clips
 .venv/bin/python tools/fixmatte.py <clip>     # flat color-cyc clips: union a chroma key with the Vision matte (keeps floor shadows out)
-.venv/bin/python tools/fixmatte.py <clip> --white   # white high-key clips
+.venv/bin/python tools/fixmatte.py <clip> --white   # white high-key clips (not when the subject wears white: a white hoodie reads as background and the matte gets holes)
 .venv/bin/python tools/beatwarp.py <clip> <slot>                                     # dance clips: meta.warp time remap onto the song's accents
 .venv/bin/python tools/dance_sync_check.py assets/clips/<clip>.mp4 <slot>             # motion-onset vs beat correlation
 .venv/bin/python tools/lipsync_check.py assets/clips/<clip>.mp4 assets/audio_slices/<vocal>.wav out/ls_<clip>.png
@@ -97,12 +97,14 @@ ffmpeg -i assets/clips/<clip>.mp4 -vf "fps=2,scale=320:-1,tile=6x4" -frames:v 1 
 
 - **Mattes:** `tools/matte` uses Apple Vision's foreground-instance mask. It is free and takes about 0.1 s per frame, writing 8-bit `m_#####.png` (white = subject).
   - Open a few mattes and check them over a bright color, especially hair, fingers and anything near a white background.
-  - Without macOS, use another source (e.g. Scenario video background removal) and set `meta.mask = true`.
+  - Without macOS or without a built `tools/matte` (an unaccepted Xcode license blocks `swiftc`), `.venv/bin/python tools/matte_fallback.py <clip> ...` writes soft MediaPipe mattes and sets `meta.mask`. They keep people well and lose props and fine detail, so expect to replace them with the Vision matte (then rerun `fixmatte.py` on flat-cyc clips); Scenario video background removal is the other source.
 - **Pixel-art subjects:** soft mattes look dirty on pixel edges. Threshold to a hard binary mask on the pixel grid and add a 1-cell ink outline.
 - **Tracking:** `track.py` writes MediaPipe pose (33 landmarks) plus the matte bbox, centroid, area and top point per frame. Pose fails on non-human subjects and on wide group shots, but the matte-derived fields still work.
 - Write each clip's content, key moments (in clip time), slot and matte quality into TREATMENT.md's footage map. Agents work from it.
 
 ## 6. Engine and agents
+
+Run `tools/track.py` after the mattes exist: it writes `box`, `c` and `top` from the matte, and a clip tracked before them has pose only.
 
 - **Before launching agents:**
   - Write STYLE.md and TREATMENT.md (see SKILL.md), and AGENTS_BRIEF.md from `references/agent_brief_template.md`. Copy ENGINE_API.md into the project.

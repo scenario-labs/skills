@@ -132,7 +132,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 - Setup and analysis: [scaffold.sh](scripts/scaffold.sh), [audio_analysis.py](scripts/audio_analysis.py), [lyrics_align.py](scripts/lyrics_align.py), [plot_lyrics.py](scripts/plot_lyrics.py)
 - Footage generation helpers: [synth_beat.py](scripts/synth_beat.py), [beatwarp.py](scripts/beatwarp.py)
-- Footage prep: [prep_clip.sh](scripts/prep_clip.sh), [prep_video.py](scripts/prep_video.py), [matte.swift](scripts/matte.swift), [fixmatte.py](scripts/fixmatte.py), [track.py](scripts/track.py)
+- Footage prep: [prep_clip.sh](scripts/prep_clip.sh), [prep_video.py](scripts/prep_video.py), [matte.swift](scripts/matte.swift), [fixmatte.py](scripts/fixmatte.py), [matte_fallback.py](scripts/matte_fallback.py), [track.py](scripts/track.py)
 - Sync checks: [lipsync_check.py](scripts/lipsync_check.py), [dance_sync_check.py](scripts/dance_sync_check.py), [av_sync_check.py](scripts/av_sync_check.py)
 - Rendering and review: [render.mjs](scripts/render.mjs), [still.mjs](scripts/still.mjs), [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py)
 - Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html), [main.js](assets/engine/main.js), [core.js](assets/engine/core.js), [plate.js](assets/engine/plate.js), [roto.js](assets/engine/roto.js), [typekit.js](assets/engine/typekit.js), [hud.js](assets/engine/scenes/hud.js), plus [timeline.template.js](assets/timeline.template.js) and [scene.template.js](assets/scene.template.js)

@@ -118,7 +118,7 @@ For clips shot on a pitch-black void that should float inside a 3D world without
 - **`grade:'neutral'`** (default): values ≤ 1 pass through unchanged (no tonemap, no clamp), so footage and any palette render true. Only HDR > 1 is compressed, hue-preserving with a white-hot core (neon reads like a tube). `invert` is a true RGB invert.
 - **`grade:'warm'`**: for amber-on-black pieces that are mostly graphics. It clamps g ≤ r and b ≤ g (kills cool CA fringes), applies a 50% hue-preserving ACES blend and pulls saturated yellows toward amber. `invert` becomes a poster in `invertCol`. It shifts footage colors, so don't use it when footage must stay clean.
 - `grain`, `ca`, `vignette`, `scan`, `glitch`, `sat` and `tint` touch every pixel, including footage. Keep them at 0 over footage unless the director wants that texture.
-- `punch` (zoom), `shake` and `rot` move the whole frame. They work as camera accents over footage. `rot` samples clamp-to-edge, so add about 0.1 punch while tilted.
+- `punch` (zoom), `shake` and `rot` move the whole frame. `shake` is in UV units (0.004 is a hard hit), not pixels: pixel values blow the frame up and show as corrupt plates. They work as camera accents over footage. `rot` samples clamp-to-edge, so add about 0.1 punch while tilted.
 - `flash` is added in linear space before sRGB encoding, so 0.1 already reads strong. It is zeroed below 0.02.
 
 ## HUD

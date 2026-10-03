@@ -7,7 +7,8 @@ set -euo pipefail
 SKILL="$(cd "$(dirname "$0")/.." && pwd)"
 MASTER_SRC="${1:?give the path to the song master}"
 mkdir -p audio engine/scenes engine/data assets/fonts assets/refs assets/gen assets/clips assets/video assets/audio_slices assets/brand analysis out tools
-cp "$MASTER_SRC" "audio/master.${MASTER_SRC##*.}"
+# the song may already sit at audio/master.<ext> (cp refuses identical files and set -e would abort)
+[ "$MASTER_SRC" -ef "audio/master.${MASTER_SRC##*.}" ] || cp "$MASTER_SRC" "audio/master.${MASTER_SRC##*.}"
 cp -R "$SKILL/assets/engine/." engine/
 cp "$SKILL/scripts/"*.py "$SKILL/scripts/"*.mjs "$SKILL/scripts/"*.swift "$SKILL/scripts/prep_clip.sh" tools/
 [ -f engine/timeline.js ] || cp "$SKILL/assets/timeline.template.js" engine/timeline.js
@@ -17,7 +18,7 @@ cp -n "$SKILL/references/agent_brief_template.md" AGENTS_BRIEF.md || true
 
 # subject matte tool (Apple Vision foreground instance mask, ~0.1 s/frame, free)
 if [ "$(uname)" = "Darwin" ] && command -v swiftc >/dev/null; then
-  [ -x tools/matte ] || swiftc -O tools/matte.swift -o tools/matte
+  [ -x tools/matte ] || swiftc -O tools/matte.swift -o tools/matte || echo "note: swiftc failed (an unaccepted Xcode license is the usual cause: sudo xcodebuild -license accept). Mattes: use tools/matte_fallback.py meanwhile."
 else
   echo "note: no swiftc/macOS, so tools/matte was not built. Provide mattes as assets/video/<clip>/m_#####.png another way."
 fi
@@ -35,6 +36,7 @@ done
 npm i -s three@0.170.0 playwright@1.49 opentype.js >/dev/null
 
 # Python env (audio analysis, lyric alignment, footage prep, tracking, sync checks)
+export UV_NATIVE_TLS=1 # uv ignores the system certificate store by default and fails behind a TLS-inspecting proxy
 uv venv .venv -q --python 3.11
 .venv/bin/python -m ensurepip >/dev/null 2>&1 || true
 uv pip install -q --python .venv/bin/python faster-whisper librosa soundfile numpy scipy demucs torch torchaudio opencv-python "mediapipe==0.10.14" matplotlib pillow "git+https://github.com/CPJKU/beat_this.git"

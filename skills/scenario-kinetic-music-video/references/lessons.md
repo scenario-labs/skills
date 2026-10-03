@@ -39,6 +39,7 @@ Every item here cost real time or credits once. Read the matching section before
 - **Measure the tempo; don't trust labels.** A song generated "at 130 BPM" measured 98 with double-time drums. Use the event lists (`beats`, `kicks`…) and never a hard-coded BPM.
 - Vocals often lead the downbeat with pickups, so check the first word of each section. Section cuts go on the downbeat or just before the pickup.
 - The demucs stems, librosa and ffmpeg decode the mp3 consistently. The verified end-to-end offset was 0.0 ms.
+- **Song models mangle accented names.** A French first name with an accent was sung as "her vape". Spell the name phonetically in the sheet sent to the model (the sound, in plain English letters), keep the real spelling in `lyrics.txt`, and read the transcript for every name before spending on footage. The same run asked for about 2:00 and got 3:04, then 2:14 after the sheet was shortened and an "about 2 minutes, very short intro" cue added: the sheet length and a duration cue steer the result, so check `ffprobe` before building anything on it.
 - If the song is still being written: don't splice or layer a finished AI song (that edit was rejected). Regenerate or repaint instead, and keep energy high. Asking for a half-time bridge turned one take into a ballad.
 
 ## Generation and moderation
@@ -56,6 +57,7 @@ Every item here cost real time or credits once. Read the matching section before
 - **Audio-to-video** from a style frame and a vocal slice gave the lip-sync shots the director liked most, at 1080p, with a camera motion option.
 - The alternative is reference-audio video with the vocal stem, then a **lip-sync correction** model (cut-off sync mode), replacing frames in place under the same clip name.
 - Measure it: `lipsync_check.py` correlates mouth openness (MediaPipe FaceMesh) with vocal RMS. About 0.5 is good, and 0.1-0.2 is weak. Tracking fails on wide shots or when a hand crosses the face. Held vowels read as "closed", so judge by eye too.
+- The audio-to-video member capped audio at 10 s at authoring time (an 11 s slice failed with a 400), so cut slices of 10 s or less; clips come back a few frames shorter than the slice.
 - Cut vocal slices as WAV, not mp3 (priming delay). MediaPipe must be pinned to `0.10.14` (newer versions dropped `mp.solutions`).
 
 ## Mattes, tracking and compositing
