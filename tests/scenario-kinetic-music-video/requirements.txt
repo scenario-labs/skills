@@ -1,0 +1,3 @@
+numpy>=1.24
+soundfile>=0.12
+pillow>=10

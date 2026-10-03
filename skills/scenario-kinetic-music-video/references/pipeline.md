@@ -1,0 +1,138 @@
+# Pipeline: commands and Scenario calls
+
+## Contents
+
+1. [Scaffold](#1-scaffold)
+2. [Audio and lyrics](#2-audio-and-lyrics)
+3. [Scenario: subject, style frames, assets](#3-scenario-subject-style-frames-assets)
+4. [Scenario: footage routes](#4-scenario-footage-routes)
+5. [Footage prep: frames, mattes, tracking, checks](#5-footage-prep-frames-mattes-tracking-checks)
+6. [Engine and agents](#6-engine-and-agents)
+7. [Assembly, grade and verification](#7-assembly-grade-and-verification)
+8. [Delivery](#8-delivery)
+
+## 1. Scaffold
+
+```bash
+bash <skill >/scripts/scaffold.sh /path/to/song.mp3 # run inside the new project folder
+```
+
+This creates `audio/master.*`, the `engine/` template, `tools/` (with the matte binary on macOS), fonts, npm deps (three, playwright) and a Python 3.11 `.venv`. On a machine that already has a project, you can symlink `.venv` and `node_modules` from it to save time.
+
+## 2. Audio and lyrics
+
+```bash
+.venv/bin/python tools/audio_analysis.py audio/master.mp3 # stems + engine/data/audio.json (prints BPM and downbeats)
+.venv/bin/python tools/lyrics_align.py transcribe --prompt "<names, jargon, acronyms>"
+# → hand-write analysis/lyrics.txt (sections + corrected lines; the user's lyrics win if supplied)
+.venv/bin/python tools/lyrics_align.py align analysis/lyrics.txt --no-fix <ACRONYMS >[--chant <section >: <WORD >]
+.venv/bin/python tools/plot_lyrics.py 1:12 20:30 ... # Read the PNGs; fix outliers by hand in lyrics.json
+```
+
+- **Verify the tempo.** Beat trackers and song-generation prompts can be off by a factor (a "130 BPM" track measured 98 with double-time drums). Check the median beat dt against the kick envelope, and write the measured grid into TREATMENT.md.
+- Treat lines you couldn't make out as guesses, and list them for the user at the end.
+
+## 3. Scenario: subject, style frames, assets
+
+- **Workspace.** Get the team and project with `teams_list`. If there is more than one, ask the user. Pass `team_id` and `project_id` on every call. Log every asset and job id in `analysis/jobs.md` as you go, because revisions need them.
+- **Upload references.** Use the multipart flow: `upload_asset(file_name, content_type, kind, file_size)` returns a presigned URL. `curl -fsS -X PUT -T file '<url>'` (no checksum headers), then `upload_asset_complete(upload_id)`. Inline base64 is only for files under 100 KB.
+- **Subject sheet first.** A subject can be a character, mascot, creature, band avatar or product.
+  - Turn the user's reference images into a model sheet (turnaround, expressions, detail callouts) before any footage. Pick an image model that takes reference images (`recommend`, then `model_schema_get`): `referenceImages: [refs]`, 2048×1152, quality high, numOutputs 2.
+  - The prompt covers identity details, the outfit or materials, the rendering style with explicit NOTs (not Pixar, not chibi), the layout, and lighting that matches the video's sets.
+  - Look at it. Crop identity references from it (face, full-body 3/4) with ffmpeg and upload them.
+  - For a real person, use only their own photos with their consent. Never generate other real people.
+- **Style frames: one per shot.** Before any video, generate a 16:9 still for every planned shot in its section's look. Same model, `referenceImages: [sheet, crop]`, 1536×864, quality high. Every prompt needs:
+  - the look's art style, named explicitly ("drawn only with glowing gold light lines on pure black", "flat tangerine cyc", "B&W 35mm film")
+  - composition that leaves **negative space for the type** ("framed on the right third, left two thirds empty")
+  - a set the compositor can use (black void with a hard rim light, a flat color cyc, or a white high-key set)
+  - "No text, no letters, no logos" (all real type is done in code)
+  - Contact-sheet all the frames and show the user before spending on video. A style frame is the cheapest paid step; price the video steps with `dry_run`.
+- **Props and 3D.** Image-to-3D (image-to-3D with `{image, texture:false, pbr:false, faceLimit:20000}`) gives a GLB for three.js (wireframe → solid reveals, a creature that peels off a page).
+- Download with `asset_download` → `curl -L`. Always look at the results before going on.
+
+## 4. Scenario: footage routes
+
+Find current models with `recommend` for each lane's capability and read each schema with `model_schema_get`. Parameter names below are the ones that held at authoring time; the schema wins. Dry-run once for the price. Launch everything in parallel with `wait:false`, then `jobs_wait` / `job_get`.
+
+| shot                              | route                                                                                                              | key params                                                                                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **any action from a style frame** | image-to-video                                                                                                     | `{image: frame, duration: 5..10, resolution:'720p', generateAudio:false}`                                                                               |
+| **dance locked to the song**      | reference-image and reference-audio video + a synthesized beat track                                               | `{referenceImages:[sheet, crop or frame], referenceAudio:[beat], duration, resolution:'720p', aspectRatio:'16:9', generateAudio:false}`, then beat-warp |
+| **lip-sync** (preferred)          | audio-to-video from a style frame and a vocal slice                                                                | `{image: frame, audio: vocal_slice, resolution:'1080p', cameraMotion:'dolly_in'\|...}`                                                                  |
+| **lip-sync** (alternative)        | reference-audio video with the vocal stem, then a lip-sync correction model (`{video, audio, syncMode:'cut_off'}`) | measure with `lipsync_check.py`                                                                                                                         |
+| **a moment code does better**     | build it in JS instead (node networks, constellations, charts, UI, particles, any text)                            | generated versions of these looked worse and were replaced                                                                                              |
+
+- **Prompt shape** (every good shot had these parts):
+  1. what each `@image`/`@audio` input is for ("Animate this exact image, keep its exact art style of …")
+  2. one dominant action, with timing cues in clip seconds if needed ("near the end she slowly closes her eyes")
+  3. one camera move
+  4. the set and light, held constant ("background stays pure black", "rim light stays constant")
+  5. exclusions ("No text, no captions, no logos, no watermark, no other people. Silent footage.")
+- **Synth beat track for dances:** `.venv/bin/python tools/synth_beat.py <slot> <dur> assets/audio_slices/<name>_beat.wav`. Upload it and say "@audio1 is a percussion timing guide: every hit lands exactly on the kicks and snares". The clip then belongs at song time `slot`.
+- **Vocal slices for lip-sync** come from the vocal stem as WAV (mp3 adds priming delay): `ffmpeg -i stems/htdemucs/master/vocals.wav -ss <slot> -t <dur> -ac 1 -ar 44100 -c:a pcm_s16le assets/audio_slices/<name>.wav`. The clip belongs at `slot`. Lip-sync prompts ask for "precise, expressive lip sync, strong mouth shapes on every syllable", with the mouth always visible and hands out of frame.
+- **Never send the song itself** to a video model. Moderation rejects it, and `generateAudio:true` can reproduce the vocal and fail the job. Use beat tracks and vocal stems only.
+- **Shot mix to plan:**
+  - a hook close-up for frame 0
+  - 2-3 lip-sync shots in different looks
+  - 2-4 full-body dances or formations
+  - a long-shot action (a sprint or leap)
+  - a spin or signature move
+  - a few "concept" shots that illustrate specific lyrics
+  - a finale
+  - Include full-body long shots as well as close-ups. About 17 frames, 17 videos and 6 lip-syncs came to about 6k CU.
+- **Revisions:** a shot that doesn't work gets regenerated in a different look or replaced by code. Don't patch it with effects. For a bad cut-out (fine detail such as fingers on a keyboard, or hair on white), regenerate the shot in a style that keys cleanly (pixel art, flat color), or show the full plate inside a window.
+
+## 5. Footage prep: frames, mattes, tracking, checks
+
+```bash
+bash tools/prep_clip.sh                       # every assets/clips/*.mp4 → assets/video/<clip>/ frames + m_*.png mattes + track.json
+bash tools/prep_clip.sh lip_a dance_b         # or only some clips
+.venv/bin/python tools/fixmatte.py <clip>     # flat color-cyc clips: union a chroma key with the Vision matte (keeps floor shadows out)
+.venv/bin/python tools/fixmatte.py <clip> --white   # white high-key clips
+.venv/bin/python tools/beatwarp.py <clip> <slot>                                     # dance clips: meta.warp time remap onto the song's accents
+.venv/bin/python tools/dance_sync_check.py assets/clips/<clip>.mp4 <slot>             # motion-onset vs beat correlation
+.venv/bin/python tools/lipsync_check.py assets/clips/<clip>.mp4 assets/audio_slices/<vocal>.wav out/ls_<clip>.png
+ffmpeg -i assets/clips/<clip>.mp4 -vf "fps=2,scale=320:-1,tile=6x4" -frames:v 1 out/sheet_<clip>.jpg   # then Read it
+```
+
+- **Mattes:** `tools/matte` uses Apple Vision's foreground-instance mask. It is free and takes about 0.1 s per frame, writing 8-bit `m_#####.png` (white = subject).
+  - Open a few mattes and check them over a bright color, especially hair, fingers and anything near a white background.
+  - Without macOS, use another source (e.g. Scenario video background removal) and set `meta.mask = true`.
+- **Pixel-art subjects:** soft mattes look dirty on pixel edges. Threshold to a hard binary mask on the pixel grid and add a 1-cell ink outline.
+- **Tracking:** `track.py` writes MediaPipe pose (33 landmarks) plus the matte bbox, centroid, area and top point per frame. Pose fails on non-human subjects and on wide group shots, but the matte-derived fields still work.
+- Write each clip's content, key moments (in clip time), slot and matte quality into TREATMENT.md's footage map. Agents work from it.
+
+## 6. Engine and agents
+
+- **Before launching agents:**
+  - Write STYLE.md and TREATMENT.md (see SKILL.md), and AGENTS_BRIEF.md from `references/agent_brief_template.md`. Copy ENGINE_API.md into the project.
+  - Fill in `engine/timeline.js` (sections on downbeats, `HUD`, `POST`) and set `PAL` in `core.js`.
+  - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label. Render one still and a 5 s clip, then run `av_sync_check.py`.
+- **Launch** one `general-purpose` agent per section in a single message (background). Each prompt names its file, time range, lyrics, must-have ideas and footage, and says to read the brief first. Log the agent ids in `analysis/agents.md`, so revisions can resume them.
+- **Review** each report as it arrives: build a contact sheet of its best stills and Read it. Fix engine-level problems yourself and tell every agent what changed.
+
+## 7. Assembly, grade and verification
+
+```bash
+node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/v1.mp4 [--variant b] [--to <end >]
+.venv/bin/python tools/av_sync_check.py out/final/v1.mp4 0                                          # expect audio 0.0 ms; visual 0..+1 frame
+ffmpeg -i out/final/v1.mp4 -vf "freezedetect=n=0.003:d=0.25" -map 0:v -f null - 2>&1 | grep freeze_ # frozen footage or graphics
+ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg                     # then tile 8x5 per 20 s (tools/sheet.py) and Read every sheet
+```
+
+- **Freezes:** check every hit from `freezedetect`. A held footage frame (a clip that ran out, or a slot clip shown before its slot) was rejected as "static". Intentional holds of pure graphics are fine if something still moves.
+- Check each section boundary at −1/0/+1 frames.
+- Do a global look pass: a still sheet across all sections, then tune `POST`, the palette and the HUD theme before the final render.
+
+## 8. Delivery
+
+```bash
+ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
+ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -b:v 21M -maxrate 25M -bufsize 42M -pass 2 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_x_1080p60.mp4
+ffmpeg -i out/final/vN.mp4 -t -af "afade=t=out:st=<teaser_end-0.6>:d=0.6" out/final/teaser.mp4 <teaser_end >...
+```
+
+- **Name outputs distinctly.** macOS filenames are case-insensitive, so an encode named like its input with different case overwrites the input mid-encode.
+- **Variants:** render each with `--variant`, and name the files by what differs (`_ending_b.mp4`).
+- **Stills:** `node tools/still.mjs --t <times> --scale 1 --dir out/stills` gives lossless 1920×1080 PNGs straight from the engine.
+- **Style sheet / making-of:** publish an artifact or doc with the palette, type, subject sheets, source-vs-final footage pairs, a frame index, the pipeline and the iteration count.
