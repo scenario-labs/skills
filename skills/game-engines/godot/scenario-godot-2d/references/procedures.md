@@ -22,7 +22,7 @@ Test pattern for one physics move: the body emits `stepped` at the end of its `s
 
 ## 1. Pixel-art project settings and the stretch matrix (L1, L2)
 
-`gd_2d.pixel_art_settings(project, base, mode, aspect, window_scale, snap=False, interpolation=True, ticks=60, filter_nearest=True)` writes these keys explicitly (a hand-written project.godot gets stretch `disabled` and `keep`, per the deltas file): viewport width and height, window width and height override (base x window_scale), stretch mode, aspect, `scale_mode="integer"`, physics ticks, `physics/common/physics_interpolation`, `rendering/textures/canvas_textures/default_texture_filter=0` (Nearest), and `rendering/2d/snap/snap_2d_transforms_to_pixel` only when `snap=True`.
+`gd_2d.pixel_art_settings(project, base, mode, aspect, window_scale, snap=False, interpolation=True, ticks=60, filter_nearest=True)` writes these keys explicitly (a hand-written project.godot gets stretch `disabled` and `keep`, per the deltas file): viewport width and height, window width and height override (base x window_scale), stretch mode, aspect, `scale_mode="integer"`, physics ticks, `physics/common/physics_interpolation`, `rendering/textures/canvas_textures/default_texture_filter=0` (Nearest), and `rendering/2d/snap/snap_2d_transforms_to_pixel` (`false` unless `snap=True`, which clears the snap `gd_env.new_project(pixel_art=True)` writes).
 
 Check that the keys took effect, not only that the file changed: job `stretch_matrix.gd` reads the root Window at startup, then resizes the root headless (`root.size = s`) and reads `get_final_transform()`.
 

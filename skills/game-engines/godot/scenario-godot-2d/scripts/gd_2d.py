@@ -83,11 +83,11 @@ def pixel_art_settings(project, base=(320, 180), mode: str = "viewport", aspect:
         "display/window/stretch/scale_mode": '"integer"',
         "physics/common/physics_ticks_per_second": str(int(ticks)),
         "physics/common/physics_interpolation": "true" if interpolation else "false",
+        # Written either way: new_project(pixel_art=True) turns snap on, and snap plus interpolation jitters the camera.
+        "rendering/2d/snap/snap_2d_transforms_to_pixel": "true" if snap else "false",
     }
     if filter_nearest:
         keys["rendering/textures/canvas_textures/default_texture_filter"] = "0"
-    if snap:
-        keys["rendering/2d/snap/snap_2d_transforms_to_pixel"] = "true"
     for k, v in keys.items():
         gd_env.set_project_setting(project, k, v)
     return keys

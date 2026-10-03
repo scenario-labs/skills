@@ -517,7 +517,7 @@ def kib_per_s(bandwidth: list[dict], key: str = "sent", skip: int = 1) -> float:
 
 # ---------------------------------------------------------------- static RPC audit
 
-_RPC_RE = re.compile(r"^\s*@rpc(?:\((?P<args>[^)]*)\))?\s*(?:\n\s*)*(?:static\s+)?func\s+(?P<name>\w+)\s*\((?P<params>[^)]*)\)",
+_RPC_RE = re.compile(r"^[ \t]*@rpc(?:\((?P<args>[^)]*)\))?\s*(?:static\s+)?func\s+(?P<name>\w+)\s*\((?P<params>[^)]*)\)",
                      re.M)
 _G3_NET = [
     (re.compile(r"^\s*(remote|remotesync|puppet|puppetsync|master|mastersync)\s+func\b", re.M), "Godot 3 RPC keyword",
