@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.50.0](https://github.com/scenario-labs/skills/compare/skills-v0.49.0...skills-v0.50.0) (2026-10-03)
+
+
+### Features
+
+* **scenario-3d:** teach the staged mesh, unwrap, retexture, rig chain ([#166](https://github.com/scenario-labs/skills/issues/166)) ([135ca06](https://github.com/scenario-labs/skills/commit/135ca069b0b5c94f9d6e7fb3a7d7d6694a35a918))
+* **scenario-game-assets:** teach the terrain tileset and transition lane ([#164](https://github.com/scenario-labs/skills/issues/164)) ([afcbfcd](https://github.com/scenario-labs/skills/commit/afcbfcd54fcf41b7bc43098293b97b5e30c3b87d))
+* **scenario-ideogram:** add Ideogram 4.5 and Precise Edit with tiers, sizes, and edit tradeoffs ([#171](https://github.com/scenario-labs/skills/issues/171)) ([4069027](https://github.com/scenario-labs/skills/commit/40690270711932df21969cea9f06e903daa58e9a))
+* **scenario-side-view-game-kit:** add the side-view sprite and level layer skill ([#173](https://github.com/scenario-labs/skills/issues/173)) ([800d5b5](https://github.com/scenario-labs/skills/commit/800d5b5e0d80ff046eb4f3373c19db6b893f96e5))
+* **scenario:** put saved preferences in the core loop ([#168](https://github.com/scenario-labs/skills/issues/168)) ([a8a5463](https://github.com/scenario-labs/skills/commit/a8a54634252e943d19f1af4403f23ca582aaf0fd))
+
+
+### Bug Fixes
+
+* **scenario-gpt-image:** say what off-grid sizes and over-wide edit sources actually return ([#172](https://github.com/scenario-labs/skills/issues/172)) ([db55a34](https://github.com/scenario-labs/skills/commit/db55a34a9faae96367ccb856500e9d1e75d00ec3))
+* **scenario-seedance:** price Auto duration and bind reference audio to a role ([#165](https://github.com/scenario-labs/skills/issues/165)) ([6c59c0d](https://github.com/scenario-labs/skills/commit/6c59c0ddc809592c72ee8ca32d1dfb2418df79b8))
+* **skills:** loop a batch of assets instead of feeding it to one model call ([#167](https://github.com/scenario-labs/skills/issues/167)) ([c80bae9](https://github.com/scenario-labs/skills/commit/c80bae918f5a2d844fdab03df99854adc23f9457))
+
 ## [0.49.0](https://github.com/scenario-labs/skills/compare/skills-v0.48.0...skills-v0.49.0) (2026-10-01)
 
 
