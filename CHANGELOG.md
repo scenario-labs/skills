@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.51.0](https://github.com/scenario-labs/skills/compare/skills-v0.50.0...skills-v0.51.0) (2026-10-04)
+
+
+### Features
+
+* **skills:** add Godot expert tools ([#174](https://github.com/scenario-labs/skills/issues/174)) ([339b02b](https://github.com/scenario-labs/skills/commit/339b02b08bbc91a7c3296db5f1194402f8d514c1))
+
 ## [0.50.0](https://github.com/scenario-labs/skills/compare/skills-v0.49.0...skills-v0.50.0) (2026-10-03)
 
 
