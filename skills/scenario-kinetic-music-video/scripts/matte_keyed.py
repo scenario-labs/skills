@@ -3,7 +3,7 @@ usage: python tools/matte_keyed.py <clip> <keyed.mp4|mkv|mov> [--key magenta|gre
 Writes assets/video/<clip>/m_#####.png (white = subject) on the clip's own frame grid and sets meta.mask.
 Keying a solid color works whether or not the container kept an alpha channel, which a transparent request
 does not guarantee. Refuses to replace existing mattes unless --force is given."""
-import sys, os, glob, json, subprocess, tempfile, numpy as np, cv2
+import sys, glob, json, subprocess, tempfile, numpy as np, cv2
 
 KEYS = {'magenta': (255, 0, 255), 'green': (0, 255, 0), 'blue': (0, 0, 255)}  # RGB
 
