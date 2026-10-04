@@ -2238,10 +2238,9 @@ def socket_tube(obj, target, profile, spacing, count=None, root=None, cap=True, 
     (legs 8 to 12 Kaspar, arms 8 to 14 Dikko; a (lo, hi) range keeps the socket's own count
     when it is inside: no reduction poles), a grid-filled cap on the tip.
     Returns dict(border, count, rings, levels, cap_faces, root)."""
-    tt = _topo(target)
+    _topo(target)  # kept from the original: builds the cached topology and fails early on a bad target
     field = profile["field"]
     Lr = root if root is not None else profile["root"]
-    tt["kd"]
     lv_arr = np.array(profile["levels"])
     k_root = int(np.argmin(np.abs(lv_arr - Lr)))
     seed = profile["centers"][max(k_root - 2, 0)]

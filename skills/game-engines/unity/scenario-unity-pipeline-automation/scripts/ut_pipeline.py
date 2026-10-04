@@ -42,7 +42,9 @@ if LEAD_SCRIPTS not in sys.path:
 
 import ut_env    # noqa: E402
 import ut_run    # noqa: E402
+import ut_live   # noqa: E402, F401  re-exported: references/procedures.md imports it from here
 import ut_review  # noqa: E402
+import ut_stat   # noqa: E402, F401  kept with its siblings as part of the module's namespace
 
 AGENTKIT_SRC = os.path.join(HERE, "AgentKit")          # AgentKit/Pipeline/** -> Assets/Editor/AgentKit/Pipeline/**
 RUNTIME_SRC = os.path.join(HERE, "Runtime")            # copied to Assets/Scripts/AgentKitRuntime/

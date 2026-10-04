@@ -41,6 +41,7 @@ if EXPERT_SCRIPTS not in sys.path:
     sys.path.insert(0, EXPERT_SCRIPTS)
 
 import ut_env   # noqa: E402
+import ut_run   # noqa: E402, F401  re-exported: references/procedures.md imports it from here
 import ut_stat  # noqa: E402
 
 AGENTKIT_SRC = os.path.join(HERE, "AgentKit")      # -> Assets/Editor/AgentKit/Mobile/
