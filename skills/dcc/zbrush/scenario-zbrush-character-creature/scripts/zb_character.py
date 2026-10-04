@@ -1336,7 +1336,7 @@ def surface_noise(on=True):
 def surface_noise_apply(snorm=None, off_after=True):
     """Apply To Mesh on the current layer (SNorm 100 at high scale and strength: Surface Noise
     doc), then switch the noise off so it does not render twice."""
-    z = _z()
+    _z()
     if snorm is not None:
         _set("surf_snorm", snorm)
     before = zb_ops.stats()
@@ -1722,7 +1722,7 @@ def circle_fit(pts):
 
 def two_line_fit(pts, min_pts=4):
     """Best two-segment polyline split (plane plus plane with a corner). {'split', 'rms'}."""
-    np = _np()
+    _np()
     p = [tuple(q) for q in pts]
     best = None
     for i in range(min_pts, len(p) - min_pts + 1):
@@ -2132,7 +2132,7 @@ def alpha_check(path, border_frac=0.03, mid=0.5, tol=0.01, corner_frac=0.12):
     Henning TuRIf92oMCY 00:25:09-00:28:23 and the Alphas doc]: 16-bit single channel; the
     border band at the mid value (0.49 to 0.51) so a Focal Shift -100 DragRect stamp leaves no
     border; no clipping at 0 or 1; the corner calibration dots painted out."""
-    np = _np()
+    _np()
     f, info = _load_gray(path)
     problems, warnings = [], []
     if info["bits"] != 16:

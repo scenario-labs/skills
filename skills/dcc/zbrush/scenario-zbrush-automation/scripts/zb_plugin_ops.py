@@ -21,7 +21,6 @@ Dist 0.1, gates); SubTool loops run under zb_ops.quiet() (show_actions 0).
 """
 
 __version__ = "0.1"  # ZBrush Expert Skills v0.1 (2026-09-24)
-import math
 import os
 import time
 

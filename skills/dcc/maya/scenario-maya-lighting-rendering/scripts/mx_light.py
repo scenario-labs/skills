@@ -1524,7 +1524,7 @@ def group_levels(groups, mask, space="ACEScg"):
     """Per light group mean luminance on a mask, ranked: the dominance test that turns
     'one light stands above the others' (BR-B ch6 Balance) and 'the key is the strongest'
     (ARV-L 00:06:51) into numbers. groups: {name: HxWx3 scene-linear}."""
-    np = _np()
+    _np()
     if mask is None or not mask.any():
         return None
     lv = sorted(((float(luminance(v, space)[mask].mean()), k) for k, v in groups.items()), reverse=True)
@@ -1903,7 +1903,7 @@ def _rgb8(x):
 def annotate(rep, out_png):
     """Overlay for the report: subject outline green, clipped pixels red, crushed blue, the
     saliency peak as a cross, and the headline numbers (the paint-over substitute, TZ-C 00:16:27)."""
-    np = _np()
+    _np()
     arr = rep["_arrays"]
     img = _rgb8(arr["rgb"]).copy()
     L = arr["L"]
@@ -1928,7 +1928,7 @@ def annotate(rep, out_png):
 
 def squint_png(rep, out_png, k=None):
     """What a squinting lead sees: the frame block-averaged and blurred, then scaled back up."""
-    np = _np()
+    _np()
     rgb = rep["_arrays"]["rgb"]
     k = k or max(4, min(rgb.shape[:2]) // 48)
     small = blur(downsample(rgb, k), 1)
@@ -1971,7 +1971,7 @@ def light_group_sheet(exr, out_png, groups=None, tile=320, exposure=0.0, space="
     """Beauty plus each light group solo at the SAME exposure, one labelled contact sheet: the
     'each light alone, then together' check (BR 00:25:14, BR-B ch8 Key lights), and the
     Light Manager solo substitute (SARK 00:02:33)."""
-    np = _np()
+    _np()
     img = read_exr(exr) if isinstance(exr, str) else exr
     names = groups or [lay for lay in sorted(img.layers()) if lay.startswith("RGBA_") and not lay.endswith("_denoised")]
     cells, method = [], None

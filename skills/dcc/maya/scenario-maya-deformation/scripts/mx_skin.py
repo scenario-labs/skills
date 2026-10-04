@@ -2310,7 +2310,7 @@ def deformation_test(mesh, poses, rest_frame, sc=None, sections=None, rigid=None
                 "influences": optional joint list restricting the section}]
     rigid: {"L_sole": [vertex ids]}; accessories: [{"mesh": "shirt_geo", "body": "body_geo"}].
     Headless: points are read after currentTime; confirm the pose evaluated (max_displacement > 0)."""
-    cmds = _cmds()
+    _cmds()
     shape, xf = resolve_mesh(mesh)
     sc = sc or skin_cluster(shape)
     data = read_weights(sc, shape)

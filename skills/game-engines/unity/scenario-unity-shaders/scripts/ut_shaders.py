@@ -50,7 +50,6 @@ import json
 import math
 import os
 import re
-import shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILLS = os.path.dirname(os.path.dirname(HERE))

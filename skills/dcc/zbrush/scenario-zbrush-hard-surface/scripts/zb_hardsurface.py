@@ -1995,7 +1995,6 @@ def mirror_report(mesh, axis="x", center=0.0, tol_rel=1e-4):
     0 [added]; pass "bbox" for the bbox centre). suggest is a hint only [added]: the side with
     all or most unmatched vertices; a removed feature leaves unmatched vertices on both sides,
     so decide from where you cut when suggest is None."""
-    import numpy as np
     m, v, k, c, tol = _mirror_setup(mesh, axis, center, tol_rel)
     mir = v.copy()
     mir[:, k] = 2 * c - mir[:, k]
@@ -2022,7 +2021,6 @@ def mirror_check(before, after, keep, axis="x", center=0.0, tol_rel=1e-4):
     and after are OBJ exports (or meshes) of the same SubTool. preserved = share of the kept
     half's vertices (before) found again in the result; a wrong direction overwrites the edit
     and drops it below 1 (Pavlovich 8LNjAkqr_lI 00:06:49) [thresholds added]."""
-    import numpy as np
     if keep not in ("neg", "pos"):
         raise ValueError("keep must be neg or pos")
     mb, vb, k, c, tol = _mirror_setup(before, axis, center, tol_rel)

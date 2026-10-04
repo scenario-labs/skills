@@ -1,0 +1,7 @@
+# Lint for every Python script the skills ship, run by `pnpm lint:py` (AGENTS.md, "Repo tooling").
+# Pyflakes rules only: unused imports and variables, undefined names, broken f-strings. Formatting
+# and style stay with each script's author.
+extend-exclude = [".agents"] # vendored dev skills, refreshed by `npx skills update`
+
+[lint]
+select = ["F"]

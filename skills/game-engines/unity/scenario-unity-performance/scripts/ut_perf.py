@@ -570,7 +570,7 @@ def metal_gpu_frames(trace, process=None, skip=10):
                 ids[sub.get("id")] = (sub.get("fmt"), sub.text)
         return v
 
-    per_frame, chan, labels, procs = {}, {}, {}, {}
+    per_frame, _chan, labels, procs = {}, {}, {}, {}
     for row in node.findall("row"):
         d = dict(zip(cols, [val(e) for e in list(row)]))
         pname = (d.get("process") or (None, None))[0] or ""

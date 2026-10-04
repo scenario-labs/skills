@@ -33,7 +33,6 @@ toolkit's own default, meant to be overridden by the brief.
 __version__ = "0.1"  # ZBrush Expert Skills v0.1 (2026-09-24)
 import argparse
 import json
-import math
 import sys
 
 import numpy as np

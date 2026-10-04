@@ -14,9 +14,6 @@ from __future__ import annotations
 
 __version__ = "0.1"
 
-import json
-import math
-import re
 import shutil
 import sys
 from pathlib import Path

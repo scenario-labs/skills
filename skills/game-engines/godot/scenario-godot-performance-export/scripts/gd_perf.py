@@ -368,7 +368,7 @@ def pck_listing(pck, top: int = 20) -> dict:
         file_base, dir_off = struct.unpack_from("<QQ", data, p)
         p = off + dir_off if dir_off else p + 16 + 64
     else:
-        file_base = struct.unpack_from("<Q", data, p)[0]
+        struct.unpack_from("<Q", data, p)[0]
         p += 8 + 64
     if flags & 1:
         return {"ok": False, "error": "encrypted directory", "format": fmt}
