@@ -167,6 +167,7 @@
 !virtualising
 AABB
 AABBs
+ACGT
 ADPCM
 APFS
 ARGB
@@ -192,6 +193,7 @@ Animationsinstitut
 Anims
 Antro
 Antropus
+Archivo
 Argyriou
 Argyriou's
 Armen
@@ -281,6 +283,7 @@ Damiaan
 Damjanov
 Dawnosaur
 Decollider
+Demucs
 Denoiser
 Denoisers
 Deoccluder
@@ -290,6 +293,8 @@ Dondelinger
 Dont
 Donzallaz
 Dorenkamp
+Doto
+Droste
 Drust
 Duha
 Dylearn
@@ -528,6 +533,7 @@ Nasolabial
 Nayar
 Naydenov
 Neistadt
+Nemati
 NetworkBehaviour
 Nicky
 Nidhogg
@@ -610,6 +616,7 @@ Qwen
 RAYC
 RETO
 RHIT
+RISO
 RRGGBB
 RTGI
 RTPC
@@ -738,6 +745,7 @@ Triplanar
 Tris
 Tristana
 Trous
+Truchet
 Trümpler
 Trümpler's
 Turntabler
@@ -820,10 +828,12 @@ Zsub
 aabb
 abarichello
 adge
+afade
 anguli
 animbp
 aniso
 anthropics
+apad
 appleid
 archs
 areaa
@@ -857,18 +867,21 @@ captioner
 caruncula
 cemmalvug
 chadrik
+chibi
 chongdashu
 civis
 classdb
 contrapposto
 criss
 csound
+cycs
 dargelos
 davide
 debuff
 decompacting
 defocus
 defocused
+demucs
 denoised
 denoiser
 denoisers
@@ -906,6 +919,7 @@ fcurve
 fcurves
 ffprobe
 floreo
+fract
 frontalis
 gdext
 gdshader
@@ -925,6 +939,7 @@ hasattr
 hitem
 hlsl
 hsgrey
+htdemucs
 humanik
 icosphere
 icospheres
@@ -979,10 +994,13 @@ mazlov
 mcpt
 mikk
 misaligns
+misregistration
 mixamo
 mlsd
 mocap
+movflags
 mscorlib
+mtex
 mtoa
 mult
 mux
@@ -1053,6 +1071,7 @@ reparented
 reparenting
 repath
 repointing
+repost
 reproject
 reprojected
 reprojecting
@@ -1091,6 +1110,7 @@ rgba
 rhysd
 rigify
 rileyb
+riso
 roas
 scons
 scroller
@@ -1099,6 +1119,7 @@ shengshu
 shfmt
 shiboken
 slerp
+smin
 spammy
 spctl
 specularly
@@ -1110,6 +1131,7 @@ strobing
 strokey
 subd
 surfel
+swiftc
 symbolicated
 symbolicates
 taiko
@@ -1200,6 +1222,7 @@ uxml
 vace
 veed
 vellus
+venv
 verts
 vidu
 virtualizes
@@ -1207,9 +1230,11 @@ vivox
 volumetrics
 voxelizes
 vsync
+wdth
 webrtc
 webtoon
 wflow
+wght
 wltp
 xcarchive
 xcframework
