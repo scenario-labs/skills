@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.52.0](https://github.com/scenario-labs/skills/compare/skills-v0.51.0...skills-v0.52.0) (2026-10-04)
+
+
+### Features
+
+* **scenario-kinetic-music-video:** add kinetic typography music video skill ([#175](https://github.com/scenario-labs/skills/issues/175)) ([f8aaebb](https://github.com/scenario-labs/skills/commit/f8aaebbae0c80be35795505b6eeb67146005cbbe))
+
+
+### Bug Fixes
+
+* **skills:** lint shipped Python with ruff's pyflakes rules ([#178](https://github.com/scenario-labs/skills/issues/178)) ([ca0fec5](https://github.com/scenario-labs/skills/commit/ca0fec5e39e0db19b2637d7378f3757bc78343ad))
+
 ## [0.51.0](https://github.com/scenario-labs/skills/compare/skills-v0.50.0...skills-v0.51.0) (2026-10-04)
 
 
