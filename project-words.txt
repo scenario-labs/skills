@@ -520,6 +520,7 @@ Murch's
 Murzak
 Myhre
 NFOR
+NGSP
 NPOT
 NURBS
 Nachman
@@ -1189,11 +1190,13 @@ unkeyed
 unmarking
 unmelts
 unmirrored
+unoccluded
 unpaced
 unparent
 unparented
 unpartitioned
 unpooled
+unproject
 unpublishing
 unpulled
 unquantized

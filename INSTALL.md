@@ -29,13 +29,14 @@ Working in ZBrush, Blender or Maya? Add the expert tools for it: [ZBrush](skills
 
 ## Environment Artist
 
-Surfaces, skies, and worlds a player can walk through. 8 skills.
+Surfaces, skies, and worlds a player can walk through. 13 skills.
 
 - **Textures and Skyboxes** (`scenario-textures`, `scenario-skyboxes`). Try: "Make a seamless mossy cobblestone texture set with normal and roughness maps, and a matching overcast skybox."
 - **Walkable 3D Worlds** (`scenario-3d-worlds`). Try: "Turn this concept painting into an explorable 3D world."
+- **A Room to Walk Into** (`scenario-walkable-room`). Try: "Turn this photo of my living room into a room I can walk around in the browser and throw the cushions."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d-worlds --skill scenario-3d --skill scenario-meshy
+npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d-worlds --skill scenario-walkable-room --skill scenario-3d --skill scenario-meshy --skill scenario-image --skill scenario-gemini-image --skill scenario-audio --skill scenario-sonilo
 ```
 
 Working in Unreal Engine or Unity? Add the expert tools for it: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md).
