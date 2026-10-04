@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.53.0](https://github.com/scenario-labs/skills/compare/skills-v0.52.0...skills-v0.53.0) (2026-10-04)
+
+
+### Features
+
+* **scenario-minimax-video:** teach the H3 Max extend, insert, and recast members ([#180](https://github.com/scenario-labs/skills/issues/180)) ([5de214c](https://github.com/scenario-labs/skills/commit/5de214cc95ade09c038c7e195fda2ce641244ad0))
+* **scenario-seedream:** add 5.0 Flash and Flash Layerize ([#182](https://github.com/scenario-labs/skills/issues/182)) ([9979274](https://github.com/scenario-labs/skills/commit/9979274d3e2b457508ae99662419a6d1e0ded3a5))
+* **scenario-walkable-room:** add walkable room skill from one photo ([#185](https://github.com/scenario-labs/skills/issues/185)) ([43e1132](https://github.com/scenario-labs/skills/commit/43e1132d24ed931f11ea44165bef72e83a751d81))
+
+
+### Bug Fixes
+
+* **scenario-seedance:** tell a moderation block from a fixable prompt ([#181](https://github.com/scenario-labs/skills/issues/181)) ([f7cc98b](https://github.com/scenario-labs/skills/commit/f7cc98b7ca8d63b6a9086ca08e2fd355a49bbd5d))
+* **skills:** describe Seedance shot sound positively, never as an exclusion ([#187](https://github.com/scenario-labs/skills/issues/187)) ([87b8501](https://github.com/scenario-labs/skills/commit/87b8501aef067d2dd4e26b21485e2ce03ec2845b))
+* **skills:** file only missing ids, since one duplicate fails the whole collection add ([#183](https://github.com/scenario-labs/skills/issues/183)) ([f28b840](https://github.com/scenario-labs/skills/commit/f28b840ac355bbc8371d7f2362ea5c608ac3ff4f))
+* **skills:** launch batches in waves under the concurrency ceiling ([#184](https://github.com/scenario-labs/skills/issues/184)) ([ecaa277](https://github.com/scenario-labs/skills/commit/ecaa2773cbc6cf4ba1cf0adb275d2cb5f7a72a90))
+* **skills:** name video sound positively in scenario-video and scenario-wan ([#188](https://github.com/scenario-labs/skills/issues/188)) ([91caa01](https://github.com/scenario-labs/skills/commit/91caa011e13774a220aba7136309b49964104040))
+
 ## [0.52.0](https://github.com/scenario-labs/skills/compare/skills-v0.51.0...skills-v0.52.0) (2026-10-04)
 
 
