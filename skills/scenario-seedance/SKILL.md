@@ -41,9 +41,9 @@ In reference mode, frame one anchors to the base state of the reference world, a
 
 `generateAudio` (default true) is one switch over the whole track: it scores the shot as well as sounding it. A score written inside a shot survives no cut, since each shot invents its own key and tempo and the next one restarts them.
 
-So run the lanes apart. Keep `generateAudio: true` for what the picture makes, footsteps, impacts, room tone, dialogue, each landing on frame, and exclude the score in the prompt ("diegetic sound only, no music, no score"). Spoken lines go in quotes, sized to the clip's seconds, with the speaker named and the delivery in two or three words. Score the sequence once with a music model (see the `scenario-audio` skill) and lay that track over the assembled cut (see the `scenario-video-assembly` skill, or `scenario-seedance-music-video` when the song comes first): re-scoring then costs one audio run, not every shot again.
+So run the lanes apart. Keep `generateAudio: true` for what the picture makes, footsteps, impacts, room tone, dialogue, each landing on frame, and name only those sounds ("diegetic sound only: heels on tile, room tone"). Never name what to leave out: "no music" is what the audio filter reads, and a track blocked with `OutputAudioSensitiveContentDetected` usually traces to such an exclusion, so re-run on the same model with the sound named positively before any provider switch: the filter read the wording, not the provider (see the `scenario-moderation` skill). Spoken lines go in quotes, sized to the clip's seconds, with the speaker named and the delivery in two or three words. Score the sequence once with a music model (see the `scenario-audio` skill) and lay that track over the assembled cut (see the `scenario-video-assembly` skill, or `scenario-seedance-music-video` when the song comes first): re-scoring then costs one audio run, not every shot again.
 
-The prompt is the only lever, so listen to what comes back: when music leaks in anyway, re-run that shot with `generateAudio: false` and add sound from a sound-effects or video-to-audio model.
+The prompt is the only lever, so listen to what comes back: when music leaks in, re-run that shot with `generateAudio: false` and add sound from a sound-effects or video-to-audio model.
 
 ## When the finished video is blocked
 
@@ -54,7 +54,7 @@ A `failed` row whose error names `OutputVideoSensitiveContentDetected` (often wi
 1. `search` with `target="models"`, `query="seedance"`, `public=true`. Prefer the newest non-deprecated hit, e.g. `model_bytedance-seedance-2-5` (a live hit at authoring time: re-discover each session).
 2. `model_schema_get` with that id: fields, caps, and defaults before anything else.
 3. `upload_asset` the product stills (see the `scenario` skill) to get asset ids.
-4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "@image1 defines the bottle and label. Slow dolly-in as condensation beads. Diegetic sound only, no music. No text, no captions.", "referenceImages": ["asset_a", "asset_b"], "duration": 8, "resolution": "720p", "generateAudio": true}` for the cost estimate; re-estimate after any change to duration, resolution, or references.
+4. `model_run` with that `model_id`, `dry_run=true`, and the exact `parameters={"prompt": "@image1 defines the bottle and label. Slow dolly-in as condensation beads. Diegetic sound only: droplets on glass, soft room tone. No text, no captions.", "referenceImages": ["asset_a", "asset_b"], "duration": 8, "resolution": "720p", "generateAudio": true}` for the cost estimate; re-estimate after any change to duration, resolution, or references.
 5. Repeat `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the output and watch it with sound before the music goes on.
 
@@ -67,5 +67,6 @@ A `failed` row whose error names `OutputVideoSensitiveContentDetected` (often wi
 - Passing a voice track beside a character reference without saying whose voice it is: the model may animate the face and ignore the track.
 - Carrying one member's caps or price to another: 30 references, 30 seconds, and 1080p are each true of one and false of the next.
 - Letting shots score themselves and then cutting them together: the music restarts at every cut.
+- Writing "no music" into an audio-enabled prompt: the exclusion trips the audio filter; describe the sound positively, or turn `generateAudio` off.
 - Rendering captions, prices, logos, or UI: reserve clean space and composite text in post.
 - Retrying an output moderation block on Seedance or a Seedance sibling: the filter is the family's, so switch provider first (the `scenario-moderation` skill).
