@@ -1055,7 +1055,7 @@ def pack(objs, tex_res=2048, gap_px=None, rotate_method="CARDINAL", scale=True, 
                 for f in bm.faces:
                     f.select_set(f.index in fs)
                 bmesh.update_edit_mesh(objs[0].data)
-            res = bpy.ops.uv.pack_islands(udim_source=udim_source, rotate=r != "NONE", rotate_method=r if r != "NONE" else "CARDINAL",
+            bpy.ops.uv.pack_islands(udim_source=udim_source, rotate=r != "NONE", rotate_method=r if r != "NONE" else "CARDINAL",
                                           scale=scale, merge_overlap=merge_overlap, margin_method="FRACTION",
                                           margin=margin, shape_method=s)
         cov, over = 0.0, 0

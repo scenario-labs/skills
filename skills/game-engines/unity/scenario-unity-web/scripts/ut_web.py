@@ -34,12 +34,10 @@ __version__ = "0.1"  # scenario-unity-web skill v0.1 (2026-09-24 refactor after 
 import datetime
 import gzip
 import http.server
-import io
 import json
 import os
 import re
 import shutil
-import socket
 import ssl
 import subprocess
 import threading

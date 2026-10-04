@@ -28,7 +28,6 @@ import json
 import math
 import os
 import re
-import shutil
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))

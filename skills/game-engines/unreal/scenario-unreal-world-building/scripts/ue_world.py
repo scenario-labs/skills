@@ -2199,7 +2199,7 @@ def new_open_world_map(asset_path: str, template: Optional[str] = None) -> Dict[
 
 def world_facts() -> Dict[str, Any]:
     """Dump what wp_facts_check needs. Property names are candidates [verify]."""
-    u = _ue()
+    _ue()
     world = _world()
     facts: Dict[str, Any] = {"world": world.get_name() if world else None}
     ws = None

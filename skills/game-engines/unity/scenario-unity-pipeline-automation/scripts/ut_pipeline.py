@@ -42,9 +42,7 @@ if LEAD_SCRIPTS not in sys.path:
 
 import ut_env    # noqa: E402
 import ut_run    # noqa: E402
-import ut_live   # noqa: E402
 import ut_review  # noqa: E402
-import ut_stat   # noqa: E402
 
 AGENTKIT_SRC = os.path.join(HERE, "AgentKit")          # AgentKit/Pipeline/** -> Assets/Editor/AgentKit/Pipeline/**
 RUNTIME_SRC = os.path.join(HERE, "Runtime")            # copied to Assets/Scripts/AgentKitRuntime/

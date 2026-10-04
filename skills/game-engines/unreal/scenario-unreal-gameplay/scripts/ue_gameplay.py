@@ -2667,7 +2667,7 @@ def _vec(v):
 
 
 def _sample(world, pawn, spec, t, extra_actors):
-    unreal = _u()
+    _u()
     s = {"t": round(t, 4)}
     for item in spec:
         if item == "loc":

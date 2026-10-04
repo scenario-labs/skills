@@ -289,7 +289,7 @@ def fill_key_columns(idb, bones=None, frames=None, create_missing=False):
     if create_missing and bones is not None and idb.type == "ARMATURE":
         f0 = (frames or key_frames(idb) or [bpy.context.scene.frame_current])[0]
         for b in bones:
-            pb = idb.pose.bones[b]
+            idb.pose.bones[b]
             have = {fc.data_path for fc in fcurves(idb, [b])}
             want = {k: v for k, v in capture_pose(idb, [b])[b].items()
                     if f'pose.bones["{b}"].{k}' not in have}

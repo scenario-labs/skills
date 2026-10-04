@@ -788,7 +788,6 @@ def fit_metarig(meta, lm, knee_bend=0.012, elbow_bend=0.012, support_bones=True,
     if face:
         face_grp = _descendants(eb, "face")
         piv0, top0 = eb["spine.006"].head.copy(), eb["spine.006"].tail.copy()
-        front0 = min(min(eb[n].head.y, eb[n].tail.y) for n in face_grp)
         eye0 = eb["eye.L"].head.copy() if "eye.L" in eb else None
     # spine, neck, head (centre line)
     chain = ["pelvis", "spine1", "spine2", "spine3", "neck_base"]
@@ -1839,7 +1838,6 @@ def joint_region(rig, V, joint, reach=0.5):
     first = d1 <= d2
     d = np.where(first, d1, d2)
     s = np.where(first, t1 - 1.0, t2)
-    L = min(np.linalg.norm(j - a), np.linalg.norm(b - j))
     band = np.abs(s) <= reach
     close = band & (np.abs(s) < 0.15)          # the limb cross-section at the joint
     if close.sum() < 6:
@@ -2472,7 +2470,7 @@ def make_def_layer(rig, names, prefix="DEF-", parents=None):
     activate(rig, "EDIT")
     eb = rig.data.edit_bones
     for n in names:
-        d = copy_bone(eb, n, prefix + n, parent=None, deform=True)
+        copy_bone(eb, n, prefix + n, parent=None, deform=True)
     for n in names:
         if parents and n in parents:
             p = parents[n]

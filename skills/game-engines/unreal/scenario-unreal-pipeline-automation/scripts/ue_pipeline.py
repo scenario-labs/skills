@@ -1589,7 +1589,7 @@ def assign_materials(mesh, mi_by_slot):
 def apply_mesh_rules(mesh, decision):
     """IN-EDITOR, NOT YET RUN IN UNREAL. Nanite, LODs and collision in one pass (each change
     rebuilds the mesh; save once afterwards). Returns what was done."""
-    u = _u()
+    _u()
     sms = _sms()
     done = {}
     nd = decision["nanite"]

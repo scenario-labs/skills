@@ -42,7 +42,6 @@ import sys
 
 import bmesh
 import bpy
-from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 

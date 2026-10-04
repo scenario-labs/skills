@@ -1069,7 +1069,6 @@ def weld_loops(obj, loop_a, loop_b):
         raise ValueError(f"counts differ ({len(loop_a)} vs {len(loop_b)})")
     me = obj.data
     A = [me.vertices[i].co.copy() for i in loop_a]
-    B = [me.vertices[i].co.copy() for i in loop_b]
     n = len(A)
     best = None
     for rev in (False, True):
@@ -2084,9 +2083,6 @@ def carve_band(obj, target, curve, width=None, rings=1, count=None, protect=PROT
     if (na - nb) % 2:
         raise ValueError(f"band borders {na} and {nb} have different parity: pair odd "
                          "boundaries with parity_strip first")
-    L = sum((dense[i] - dense[i - 1]).length for i in range(len(dense)))
-    ea = [me.vertices[i].co for i in A]
-    elen = (sum((ea[i] - ea[i - 1]).length for i in range(na)) / na)
     lo = int(math.ceil(max(na, nb) / 2))
     hi = 2 * min(na, nb)
     if count is None:
@@ -2245,7 +2241,7 @@ def socket_tube(obj, target, profile, spacing, count=None, root=None, cap=True, 
     tt = _topo(target)
     field = profile["field"]
     Lr = root if root is not None else profile["root"]
-    kd = tt["kd"]
+    tt["kd"]
     lv_arr = np.array(profile["levels"])
     k_root = int(np.argmin(np.abs(lv_arr - Lr)))
     seed = profile["centers"][max(k_root - 2, 0)]

@@ -1042,6 +1042,7 @@ prefs
 previs
 procerus
 proresks
+pyflakes
 pymel
 ramus
 rasterizer

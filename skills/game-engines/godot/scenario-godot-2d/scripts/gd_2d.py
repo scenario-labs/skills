@@ -30,7 +30,6 @@ __version__ = "0.1"
 import json
 import math
 import os
-import re
 import shutil
 import time
 from pathlib import Path

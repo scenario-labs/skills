@@ -43,7 +43,7 @@ import os
 import re
 import shutil
 import time
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import List
 
 __version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor after the U5 blind grade)
 

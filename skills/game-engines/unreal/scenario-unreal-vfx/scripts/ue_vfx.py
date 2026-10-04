@@ -1439,7 +1439,7 @@ def focal_point(img, mask=None, blur_radius: int = 6) -> Tuple[float, float]:
 def focal_error(img, intended_xy: Tuple[float, float], mask=None) -> float:
     """Distance from the contrast focal point to the intended point (world_to_screen of the head
     or impact), as a fraction of the image diagonal."""
-    np = _np()
+    _np()
     a = load_image(img)
     fx, fy = focal_point(a, mask)
     h, w = a.shape[:2]
@@ -1469,7 +1469,7 @@ def axis_contrast_profile(img, head_xy: Tuple[float, float], tail_xy: Tuple[floa
 
 
 def _downsample_mask(mask, max_side: int = 256):
-    np = _np()
+    _np()
     h, w = mask.shape
     f = max(1, int(math.ceil(max(h, w) / float(max_side))))
     if f == 1:

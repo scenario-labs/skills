@@ -23,7 +23,6 @@ __version__ = "0.1"  # Unity Expert Skills v0.1 (2026-09-24: totalSize vs on-dis
 import csv
 import json
 import math
-import os
 import xml.etree.ElementTree as ET
 
 

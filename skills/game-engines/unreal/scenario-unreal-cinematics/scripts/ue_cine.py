@@ -54,13 +54,11 @@ JT = mAMp6qCt7kc (Toonen), WF = 2Q3CybANHKE / fVg5ihB8Wdc (Faucher), VP = 5SJA1F
 __version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor after blind grade U6)
 
 import contextlib
-import copy
 import glob
 import json
 import math
 import os
 import re
-import shutil
 import struct
 import subprocess
 

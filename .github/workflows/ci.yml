@@ -31,6 +31,8 @@ jobs:
         run: pnpm sync:agent-commands:check
       - name: Skill supporting files
         run: pnpm skill-files
+      - name: Python lint (ruff, pyflakes rules)
+        run: pnpm lint:py
       - name: skills.sh.json grouping coverage
         run: pnpm groupings
       - name: Plugin marketplace manifest in sync

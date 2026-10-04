@@ -2154,7 +2154,7 @@ def apply_texture_fix(tex, fix, dry_run=True):
 def audit_textures(folder, apply=False, profile="console60"):
     """Texture policy over a folder: findings per texture and the planned (or applied) fixes."""
     u = _u()
-    ar = u.AssetRegistryHelpers.get_asset_registry()
+    u.AssetRegistryHelpers.get_asset_registry()
     findings, fixes = [], {}
     for path in u.EditorAssetLibrary.list_assets(folder, recursive=True, include_folder=False):
         ad = u.EditorAssetLibrary.find_asset_data(path)
@@ -2921,7 +2921,7 @@ def census_project(folder="/Game", roots=None, budget_keys=None, with_shaders=Tr
     first; the HSPR tag pre-filters, but switch values need the object). Returns census() output
     plus per-root shader counts from list_shaders on the root."""
     u = _u()
-    ar = u.AssetRegistryHelpers.get_asset_registry()
+    u.AssetRegistryHelpers.get_asset_registry()
     recs, root_defaults, shaders = [], {}, {}
     for path in u.EditorAssetLibrary.list_assets(folder, recursive=True, include_folder=False):
         ad = u.EditorAssetLibrary.find_asset_data(path)

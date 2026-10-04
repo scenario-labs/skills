@@ -53,7 +53,6 @@ import re
 import struct
 import sys
 import time
-import zlib
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 EXPERT_SCRIPTS = os.path.normpath(os.path.join(_HERE, "..", "..", "scenario-zbrush-expert", "scripts"))
