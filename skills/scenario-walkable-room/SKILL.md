@@ -24,16 +24,16 @@ Steps 1 and 7 are the agent's own work on downloaded files; every generation in 
 
 Discover each paid stage's member with `recommend`, passing the capability and the user's own words, and read `next_step` before taking a pick, per the `scenario` skill. `recommend` has no capability for worlds, so find the single-image world member with `search` as `scenario-3d-worlds` teaches. Never assert a generative model's id as a constant. Read every pick's `model_schema_get` and price the exact payload with `model_run` `dry_run=true` before running it.
 
-| Step      | Discovery                     | What to send and check                                                                                                                     |
-| --------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Uncover   | none, read the photo yourself | Single movable items only, with a normalized box, support, size in meters, materials ([references/objects.md](references/objects.md))      |
-| Plate     | `img2img`, takes a reference  | `remove the following from the image: ...` and nothing else; compare with the photo for over-removal and recoloring                        |
-| Cut-out   | `img2img`, same member        | One edit per object on the original photo, square, about 1K, white background ([references/objects.md](references/objects.md))             |
-| World     | `search`, single-image world  | The plate, full-resolution splats, a fixed `seed`, a prompt describing the room without the objects                                        |
-| Object    | `img23d` with PBR             | One cut-out per job, PBR on, a moderate face count (about 50,000); the GLB is the job's first asset                                        |
-| Sound     | `txt2audio`, sound effects    | One clip of about 6 s per object holding several impacts separated by silence                                                              |
-| Calibrate | none, local                   | Floor, level, scale, lens, heightfield, placement ([references/calibration.md](references/calibration.md))                                 |
-| Viewer    | none, local                   | Paged splat streaming, heightfield walker, convex-hull props, grab and throw, panned sounds ([references/viewer.md](references/viewer.md)) |
+| Step      | Discovery                     | What to send and check                                                                                                                                          |
+| --------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Uncover   | none, read the photo yourself | Single movable items only, with a normalized box, support, size in meters, materials ([references/objects.md](references/objects.md))                           |
+| Plate     | `img2img`, takes a reference  | `remove the following from the image: ...` and nothing else; compare with the photo for over-removal and recoloring                                             |
+| Cut-out   | `img2img`, same member        | One edit per object on the original photo, square, about 1K, white background ([references/objects.md](references/objects.md))                                  |
+| World     | `search`, single-image world  | The plate, full-resolution splats, a fixed `seed`, a prompt describing the room without the objects                                                             |
+| Object    | `img23d` with PBR             | One cut-out per job, PBR on, a moderate face count (about 50,000); pick the GLB by its type (`asset_get` `mimeType` `model/gltf-binary`), never by output order |
+| Sound     | `txt2audio`, sound effects    | One clip of about 6 s per object holding several impacts separated by silence                                                                                   |
+| Calibrate | none, local                   | Floor, level, scale, lens, heightfield, placement ([references/calibration.md](references/calibration.md))                                                      |
+| Viewer    | none, local                   | Paged splat streaming, heightfield walker, convex-hull props, grab and throw, panned sounds ([references/viewer.md](references/viewer.md))                      |
 
 Launch every batch with `wait=false`, then `jobs_wait` on the ids, re-called with `pending_job_ids` on timeout. A world takes several minutes; a timeout is not a failure and never justifies a second `model_run`.
 
@@ -49,8 +49,8 @@ Launch every batch with `wait=false`, then `jobs_wait` on the ids, re-called wit
    `asset_display` the plate next to the photo. Removal edits sometimes recolor an object instead of erasing it, or take its neighbors too (every cushion on a bench, a carved screen beside a lamp): re-run with a narrower list, or drop that object.
 
 5. **Cut-outs.** One edit per object on the original photo, never the plate, with the isolation prompt in [references/objects.md](references/objects.md). Name anything resting on the object so it stays out.
-6. **World.** Find the single-image world member per `scenario-3d-worlds`, `model_schema_get`, `dry_run`, then run each plate with full-resolution splats, one fixed `seed` for every room, and a prompt describing the room as it is without the removed objects. `asset_download` each `.spz`.
-7. **Objects.** `recommend` with `capability="img23d"` and "textured PBR prop from a product cut-out", read the face-count, texture, and PBR fields off `model_schema_get`, `dry_run`, then one job per cut-out. Inspect every model in the viewer (`scenario-3d`) before using it, and `asset_download` the GLB.
+6. **World.** Find the single-image world member per `scenario-3d-worlds`, `model_schema_get`, `dry_run`, then run each plate with `wait=false`, full-resolution splats, one fixed `seed` for every room, and a prompt describing the room as it is without the removed objects. Collect the ids with `jobs_wait` (re-called with `pending_job_ids`; a world takes several minutes), then `asset_download` each `.spz`.
+7. **Objects.** `recommend` with `capability="img23d"` and "textured PBR prop from a product cut-out", read the face-count, texture, and PBR fields off `model_schema_get`, `dry_run`, then one job per cut-out with `wait=false` and `jobs_wait` on the ids. Each job returns several assets (the mesh with its textures and previews): take the one whose `asset_get` `mimeType` is `model/gltf-binary`, inspect it in the viewer (`scenario-3d`), then `asset_download` it.
 8. **Sounds.** `recommend` with `capability="txt2audio"` and "short impact sound effects", then one clip per object:
 
    > Four separate one-shot impacts, each followed by a full second of silence: {the object, its material} {knocked over / dropped} onto {the room's floor}, {the character of the sound}. Close-miked, dry room, no music, no voices.
@@ -67,5 +67,5 @@ Launch every batch with `wait=false`, then `jobs_wait` on the ids, re-called wit
 - Dropping props into physics on page load: noisy supports send them tumbling. Start rigid props asleep where the photo had them; let only soft ones (cushions) settle.
 - Playing a sound on every contact force: a resting object reports its own weight every step. Sound only when the object was moving into the contact.
 - Trusting PBR metalness from image-to-3D: lacquer and glaze come back as metal and render as chrome. Keep metalness only on real metal.
-- Changing the payload after a 3D job fails with a result-download timeout: that is a platform error, not a bad input. Retry once with the same payload.
+- Changing the payload after a 3D job reports `failure` with a result-download error: that is a platform error, not a bad input. Confirm with `job_get` that the job's status is `failure` and it has no assets (and that no later job for the same input succeeded, via `jobs_list`) before retrying once with the same payload; a `jobs_wait` timeout is not a failure and never justifies a second run.
 - Running heavy local jobs in parallel (calibration, mesh conversion, splat level-of-detail builds): run them one or two at a time.
