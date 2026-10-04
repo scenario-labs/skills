@@ -47,9 +47,7 @@ The prompt is the only lever, so listen to what comes back: when music leaks in 
 
 ## When the finished video is blocked
 
-A `failed` row whose error names `OutputVideoSensitiveContentDetected` (often with `PolicyViolation`, sometimes worded as possible copyright) is the provider screening the finished video, so it can arrive late in the render. Two causes produce the same error. Vocabulary that reads as harm: weapon nouns and verbs such as "axe", "blade", or "eliminated", even in a cartoon. And a character the screen takes for existing intellectual property: at authoring time that held for a studio's own well-known character, while a lesser-known one from the same studio, prompt unchanged, passed.
-
-Reword once, changing nothing but the wording: describe the action without the violent terms ("swings a tool", "drops out of frame"). If the reworded run fails the same way, and above all when a recognizable character is in the references, stop: further rewording and retries do not lift it, and the block is not a parameter you can change. Tell the user the provider refused the output, and offer the same shot on another video family, found through discovery for the same capability (the `scenario-video` skill). The failed job is reimbursed (the `scenario` skill).
+A `failed` row whose error names `OutputVideoSensitiveContentDetected` (often with `PolicyViolation`, sometimes worded as possible copyright) is the provider screening the finished render. The filter belongs to the family, so a Seedance sibling refuses the same payload and the identical retry renders it again. Handle it the way the `scenario-moderation` skill teaches: switch to another provider first, prompt unchanged. Two observations at authoring time decide what comes after. A character the screen takes for existing intellectual property stays blocked whatever the wording: a studio's own well-known character failed while a lesser-known one from the same studio, prompt unchanged, passed. Weapon and harm vocabulary ("axe", "blade", "eliminated") tripped it even in a cartoon, which is where that skill's one honest rewrite belongs. Unattended, launch the switch only within the spend the task authorized; otherwise stop and report the block with the failed job id.
 
 ## Worked example: a product shot from references
 
@@ -70,4 +68,4 @@ Reword once, changing nothing but the wording: describe the action without the v
 - Carrying one member's caps or price to another: 30 references, 30 seconds, and 1080p are each true of one and false of the next.
 - Letting shots score themselves and then cutting them together: the music restarts at every cut.
 - Rendering captions, prices, logos, or UI: reserve clean space and composite text in post.
-- Retrying an output moderation block unchanged, or rewording it a third time: one reworded run tells vocabulary from a recognized character; past it, switch families.
+- Retrying an output moderation block on Seedance or a Seedance sibling: the filter is the family's, so switch provider first (the `scenario-moderation` skill).
