@@ -1,6 +1,6 @@
 ---
 name: scenario-minimax-video
-description: "Use when generating video with MiniMax Hailuo models on Scenario via MCP: text-to-video, image-to-video from a first frame, first and last frame anchors, reference images for character or style consistency, motion from reference videos, voice from reference audio, native stereo audio with synced dialogue and SFX, bracketed camera commands, or choosing between H3 and Hailuo 2.3 or 2.3 Fast. Keywords: MiniMax, Hailuo 3.0, H3, Hailuo 2.3, T2V, I2V, V2V, 2K, native audio, promptOptimizer."
+description: "Use when generating or editing video with MiniMax Hailuo models on Scenario via MCP: text-to-video, image-to-video, first and last frame anchors, reference images, videos, or audio, native stereo audio, bracketed camera commands, extending a clip, inserting a new scene into one, or recasting the people in it from photos. Keywords: MiniMax, Hailuo 3.0, H3, H3 Max, Turbo, Extend Video, Insert Video, Recast, Hailuo 2.3, T2V, I2V, V2V, 2K."
 license: MIT
 ---
 
@@ -8,7 +8,7 @@ license: MIT
 
 ## Overview
 
-MiniMax's Hailuo video family on Scenario spans two generations. H3 (Hailuo 3.0) folds text, keyframe, and reference conditioning into one model and generates stereo audio in the same pass; the Hailuo 2.3 pair (standard and Fast) are lean text and first-frame animators. Discover them with `search` and treat `model_schema_get` as the contract: the generations agree on almost nothing, not even the spelling of a resolution.
+MiniMax's Hailuo video family on Scenario has three kinds of member. H3 (Hailuo 3.0) folds text, keyframe, and reference conditioning into one model and generates stereo audio in the same pass. The H3 Max line splits that into single-mode members (text, image, reference, lip sync), each with a faster Turbo twin on the first two. Three Max members edit a clip you already have instead of generating one: Extend Video (with a Turbo twin), Insert Video, and Recast. The older Hailuo 2.3 pair carried a `deprecated` tag naming H3 as successor at authoring time. Discover members with `search` and treat `model_schema_get` as the contract: they agree on almost nothing, not even the spelling of a resolution.
 
 Connection and the core loop: see the `scenario` skill in this repo; model-agnostic video work: the `scenario-video` skill. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
@@ -25,11 +25,23 @@ H3's mode follows from the inputs (names from the live schema):
 
 Keyframes and references are mutually exclusive: neither frame combines with any reference array. `referenceAudio` never rides alone; it requires at least one image or video reference. Reference parameters are arrays even for one asset. At authoring time H3 took 9 reference images, 3 videos, and 3 audio files (videos and audio each 2 to 15 seconds, and 2 to 15 seconds in total), 5 to 15 seconds of output, at `768P` or `2K`.
 
-The 2.3 members take only `prompt` and `firstFrameImage`, plus a coupled pair: at authoring time 10 second `duration` was available only at `768p`, and `1080p` only at 6 seconds. Their `promptOptimizer` (default true) rewrites the prompt before generation: leave it on for thin prompts, switch it off when engineered wording must survive verbatim. H3 has no such switch, and no member has a seed.
+The 2.3 members take only `prompt` and `firstFrameImage`, plus a coupled pair: at authoring time 10 second `duration` was available only at `768p`, and `1080p` only at 6 seconds. Their `promptOptimizer` (default true) rewrites the prompt before generation: leave it on for thin prompts, switch it off when engineered wording must survive verbatim. H3 has no such switch, and neither H3 nor 2.3 takes a `seed`.
 
 ## Picking the member
 
-H3 led a public image-to-video arena at authoring time and is the family's only member with references, a last-frame anchor, or native audio. It is also the slow, expensive one: a typical 2K clip cost around five times a 2.3 run and took four times as long, and reference media adds more (the first 5 reference images are free, each further image is billed, and reference videos bill per second of uploaded footage). So iterate on 2.3 Fast, spend H3 on keepers, and `dry_run` the same job on both before a batch. The 2.3 line holds its own on motion coherence and stylized rendering (anime, illustration, ink wash, game CG).
+H3 is the one member that mixes modes in a single call, and, lip sync aside, the one generator that reaches `2K`; it is also slow and expensive, and reference media adds more (reference videos bill per second of uploaded footage). The Max text and image members cap at `768P` and take a `seed` and a `promptExpansionMode` (`disabled`, `balanced`, `quality`); set it to `disabled` when engineered wording must survive verbatim. Their Turbo twins share the same inputs and are the iteration tier: draft at `480P` on Turbo, then spend the expensive member on the take you keep. A draft is a composition and motion check, not a preview of the final pixels: a different member or resolution is a new generation even with the same `seed`. `dry_run` the draft and the final payloads before a batch. Re-discover a member before naming 2.3 for new work: deprecated members can disappear from the catalog.
+
+## Editing a clip you already have
+
+These members take the existing video as `video` (any video asset id, generated or uploaded) and bill only what they make or touch, so price each with `dry_run` on the real source.
+
+| Member          | What it does                                     | Key inputs and caps at authoring time                                                                                                                                                                                                                                                                                              |
+| --------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extend (+Turbo) | adds 1 to 15 s after the source                  | source 1.625 to 60 s, up to 50 MB, aspect 0.4 to 2.5; `output` `extended` returns source plus new footage, `continuation` the new footage behind a lead-in copied from the source (see Common mistakes); `referenceAudio` replaces the source soundtrack as the audio guide; `aspectRatio` other than `auto` crops; `480P` to `2K` |
+| Insert Video    | a new 5 to 13 s scene, then the original resumes | `startTime` and `resumeTime` in source seconds (both required); `duration` is the new scene only; up to 9 `referenceImages` and 3 `referenceVideos`, billed by reference tokens; `colorMatch` on by default; `480p` or `768p`, lowercase                                                                                           |
+| Recast          | swaps up to 4 people for new ones from photos    | source 5 to 30 s, no single shot over 15 s, billed per source second; `referenceImages` one photo per person, required, mapped left to right by default; `prompt` optional, to say who becomes whom; motion, camera, cuts, and audio are kept; `768P` or `1080P`                                                                   |
+
+Write an Extend prompt about what happens next, never a description of the source: the model already sees it, and `enablePromptExpansion` (on by default) rewrites the prompt from the source to keep the continuation consistent. Recast is the lane for re-shooting the same performance with a different person; it keeps everything else, so it is the wrong tool for a new setting or style.
 
 ## Camera in brackets, motion in moderation
 
@@ -52,5 +64,8 @@ Write the rest as natural prose, ordered camera, subject, action, scene, lightin
 - Passing `referenceAudio` alone: it requires at least one image or video reference.
 - Sending `lastFrameImage` without `firstFrameImage`: the pair anchors both endpoints or neither.
 - Expecting `aspectRatio` to win over a first frame: the shape follows the image.
-- Carrying one member's values to another: 10 seconds is 768p-only on 2.3, 1080p is 6-second-only, and H3 spells resolutions `768P` and `2K` where 2.3 spells `768p` and `1080p`.
+- Carrying one member's values to another: H3 spells resolutions `768P` and `2K`, the Max generators other than lip sync stop at `768P`, Insert spells `480p` and `768p` in lowercase, and Recast offers only `768P` and `1080P`.
+- Sending Recast a clip with a single shot over 15 seconds, or one under 5: cut it first (the `scenario-video-editing` skill).
+- Pricing Recast on the output: it bills every second of the source, so trim the source to the part that needs the new people.
+- Expecting either Extend output to be new footage only: `extended` returns the source plus the continuation, and `continuation` opens on a copy of the source's last 1.625 s (39 frames at 24 fps in two authoring-time runs), then new footage that ran a little past the request (2 s gave 2.1 s, 3 s gave 3.5 s, each billed as requested). For pieces assembled later (the `scenario-video-assembly` skill), take `continuation` and cut from `startTime` 1.7: the cut tool steps by 0.1 s and 1.6 keeps a source frame (the `scenario-video-editing` skill).
 - Stacking camera moves: past 2 or 3 cues the background wobbles and textures flicker.
