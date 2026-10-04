@@ -34,7 +34,7 @@ Attach the approved baseline as a reference image alongside it. Image models con
 
 The anchor can be an upload: the user's character art, sketch, or product photo goes up with `upload_asset` plus `upload_asset_complete` (see `scenario`) and rides the reference field like any approved hero. `asset_describe` (see `scenario-asset-analysis`) returns a style synthesis (medium, palette, lighting, composition, mood) that seeds the palette and lighting lines of the enumeration; the sub-element inventory comes from looking, or from `asset_analyze` with the enumeration headings as its instruction (both are catalog tools; `asset_describe` prices with `dry_run`).
 
-A set takes one `model_run` per item: a batch-count field repeats one prompt and cannot carry a per-item delta clause.
+A set takes one `model_run` per item: a batch-count field repeats one prompt and cannot carry a per-item delta clause. Launch in waves within the team's concurrency ceiling (the `parallel-custom-jobs` row in the `scenario` skill): a launch refused with that 429 created no job, so relaunch it in the next wave instead of dropping it.
 
 ## Locking a style without a subject
 
