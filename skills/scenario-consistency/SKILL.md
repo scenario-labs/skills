@@ -34,7 +34,7 @@ Attach the approved baseline as a reference image alongside it. Image models con
 
 The anchor can be an upload: the user's character art, sketch, or product photo goes up with `upload_asset` plus `upload_asset_complete` (see `scenario`) and rides the reference field like any approved hero. `asset_describe` (see `scenario-asset-analysis`) returns a style synthesis (medium, palette, lighting, composition, mood) that seeds the palette and lighting lines of the enumeration; the sub-element inventory comes from looking, or from `asset_analyze` with the enumeration headings as its instruction (both are catalog tools; `asset_describe` prices with `dry_run`).
 
-A set takes one `model_run` per item: a batch-count field repeats one prompt and cannot carry a per-item delta clause.
+A set takes one `model_run` per item: a batch-count field repeats one prompt and cannot carry a per-item delta clause. Launch in waves within the team's concurrency ceiling (the `parallel-custom-jobs` row in the `scenario` skill): a launch refused with that 429 created no job, so relaunch it in the next wave instead of dropping it.
 
 ## Locking a style without a subject
 
@@ -62,8 +62,8 @@ Sprite sheets and animation frames are the hard case: adjacent frames from a gen
 
 1. `asset_display` the approved hero (`asset_hero`) and write its baseline: the full must-not-change enumeration above.
 2. `recommend` with the task's own words as `prompt` (`search` only for a named family), preferring models with reference-image slots, then `model_schema_get`: the reference field's name, cap, cardinality, requiredness. No reference field in the schema disqualifies the candidate: go back to the ranked list, and when that holds nothing reference-capable either (`recommend` ranks community fine-tunes and can miss first-party models), take a family name from a sibling model-family skill (`scenario-gemini-image`, `scenario-seedream`) and `search` for it.
-3. One `model_run` per pose, five in all: the byte-identical baseline, the pose alone in the final clause, the hero in the reference field shaped as the schema says: `["asset_hero"]` only under `array: true`. No seed. No control map: a pose map from the hero locks the pose being changed.
-4. `jobs_wait` on the five jobs, re-calling with `pending_job_ids` until done. `asset_display` each against the hero; fix drift by tightening the enumeration, not by chaining outputs.
+3. One `model_run` per pose, five in all, launched with `wait=false` in waves within the concurrency ceiling: the byte-identical baseline, the pose alone in the final clause, the hero in the reference field shaped as the schema says: `["asset_hero"]` only under `array: true`. No seed. No control map: a pose map from the hero locks the pose being changed.
+4. `jobs_wait` on each wave, re-calling with `pending_job_ids`, and launch the next pose as a slot frees until all five are done. `asset_display` each against the hero; fix drift by tightening the enumeration, not by chaining outputs.
 
 ## Common mistakes
 

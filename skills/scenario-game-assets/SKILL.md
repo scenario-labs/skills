@@ -16,7 +16,7 @@ Scenario's public catalog carries purpose-trained models per asset type (sprites
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Find a model by asset type | `recommend` with the asset need in the user's own words (sprite, game icon, tileset, isometric, pixel art); `search` is for a member known by name |
 | Inspect inputs             | `model_schema_get` (always before `model_run`)                                                                                                     |
-| Generate                   | `model_run` (`dry_run=true` prices a batch; launch `wait=false`), then `jobs_wait`; on timeout re-call with `pending_job_ids`                      |
+| Generate                   | `model_run` (`dry_run=true` prices a batch; `wait=false` in waves under the concurrency ceiling, relaunching 429-refused ones), then `jobs_wait`   |
 | Transparent background     | `recommend` for a native-alpha generator first; else for background removal on the asset                                                           |
 | Upscale or enhance         | `recommend` for upscaling (2x to 16x tools exist)                                                                                                  |
 | Pixel-art cleanup          | `recommend` for cleanup (grid snapping, palette reduction)                                                                                         |
