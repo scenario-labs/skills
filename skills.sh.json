@@ -25,8 +25,8 @@
       ]
     },
     {
-      "title": "Game art and environments",
-      "description": "Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.",
+      "title": "Game art and 3D",
+      "description": "Sprites, icons, tilesets, textures, skyboxes, 3D models, and walkable spaces for games, the web, and interactive scenes.",
       "skills": [
         "scenario-game-assets",
         "scenario-sprite-animation",

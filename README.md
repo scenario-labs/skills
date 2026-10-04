@@ -46,7 +46,7 @@ npx skills add scenario-labs/skills --skill scenario --skill scenario-inspiratio
 
 **By goal.** Each command installs the lead skills for one outcome plus the sibling skills they hand work to.
 
-**Game art and environments** (22 skills). Game-ready sprites, tilesets, textures, skyboxes, and 3D props in one consistent style.
+**Game art and 3D** (22 skills). Sprites, tilesets, textures, skyboxes, 3D props, and walkable spaces in one consistent style.
 
 ```bash
 npx skills add scenario-labs/skills --skill scenario --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-image --skill scenario-patina-retexture --skill scenario-walkable-room --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-moderation --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds --skill scenario-gemini-image --skill scenario-audio --skill scenario-sonilo
@@ -134,9 +134,9 @@ Generate and edit images: model choice, sizing, references, masked edits, post-p
 | [scenario-text-overlay](skills/scenario-text-overlay/SKILL.md)   | Letter-perfect text overlays: templated transparent PNG cards (taglines, CTAs, legal supers, rich cards) to composite |
 | [scenario-storyboards](skills/scenario-storyboards/SKILL.md)     | Comic pages, storybooks, and pre-viz storyboards: script first, one run per panel, a locked cast, lettering in post   |
 
-### Game art and environments
+### Game art and 3D
 
-Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.
+Sprites, icons, tilesets, textures, skyboxes, 3D models, and walkable spaces for games, the web, and interactive scenes.
 
 | Skill                                                                      | Use it for                                                                                                                                                                             |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
