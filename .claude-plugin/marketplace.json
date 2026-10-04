@@ -41,8 +41,8 @@
       ]
     },
     {
-      "name": "04.-game-art-and-environments",
-      "description": "Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.",
+      "name": "04.-game-art-and-3d",
+      "description": "Sprites, icons, tilesets, textures, skyboxes, 3D models, and walkable spaces for games, the web, and interactive scenes.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -53,7 +53,8 @@
         "./skills/scenario-skyboxes",
         "./skills/scenario-3d",
         "./skills/scenario-patina-retexture",
-        "./skills/scenario-orbit-views"
+        "./skills/scenario-orbit-views",
+        "./skills/scenario-walkable-room"
       ]
     },
     {

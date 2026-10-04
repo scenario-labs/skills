@@ -35,21 +35,21 @@ Skills follow the [Agent Skills](https://agentskills.io) format.
 
 ## Install
 
-**Everything for Scenario.** All 65 Scenario skills, without the expert tools: the default for working through the Scenario MCP.
+**Everything for Scenario.** All 66 Scenario skills, without the expert tools: the default for working through the Scenario MCP.
 
 ```bash
 # Every Scenario skill, without the expert tools
-npx skills add scenario-labs/skills --skill scenario --skill scenario-inspiration --skill scenario-image --skill scenario-product-shots --skill scenario-brand-kit --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-storyboards --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-patina-retexture --skill scenario-orbit-views --skill scenario-video --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-kinetic-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-ugc --skill scenario-fan-cam --skill scenario-audio --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-consistency --skill scenario-identity-library --skill scenario-model-training --skill scenario-asset-analysis --skill scenario-quality-gate --skill scenario-refine-loop --skill scenario-model-comparison --skill scenario-formats --skill scenario-workflows --skill scenario-workflow-authoring --skill scenario-moderation --skill scenario-report --skill scenario-team-admin --skill scenario-admin-analytics --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-minimax-music --skill scenario-elevenlabs --skill scenario-ace-step --skill scenario-sonilo --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds
+npx skills add scenario-labs/skills --skill scenario --skill scenario-inspiration --skill scenario-image --skill scenario-product-shots --skill scenario-brand-kit --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-storyboards --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-patina-retexture --skill scenario-orbit-views --skill scenario-walkable-room --skill scenario-video --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-kinetic-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-ugc --skill scenario-fan-cam --skill scenario-audio --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-consistency --skill scenario-identity-library --skill scenario-model-training --skill scenario-asset-analysis --skill scenario-quality-gate --skill scenario-refine-loop --skill scenario-model-comparison --skill scenario-formats --skill scenario-workflows --skill scenario-workflow-authoring --skill scenario-moderation --skill scenario-report --skill scenario-team-admin --skill scenario-admin-analytics --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-minimax-music --skill scenario-elevenlabs --skill scenario-ace-step --skill scenario-sonilo --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds
 ```
 
 **By role.** [INSTALL.md](INSTALL.md) groups the skills by job, from 2D artist to producer, with the outcomes each role gets and one command per role.
 
 **By goal.** Each command installs the lead skills for one outcome plus the sibling skills they hand work to.
 
-**Game art and environments** (18 skills). Game-ready sprites, tilesets, textures, skyboxes, and 3D props in one consistent style.
+**Game art and 3D** (22 skills). Sprites, tilesets, textures, skyboxes, 3D props, and walkable spaces in one consistent style.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-image --skill scenario-patina-retexture --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-moderation --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds
+npx skills add scenario-labs/skills --skill scenario --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-image --skill scenario-patina-retexture --skill scenario-walkable-room --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-moderation --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds --skill scenario-gemini-image --skill scenario-audio --skill scenario-sonilo
 ```
 
 **Marketing and brand visuals** (20 skills). One product shot and a brief turned into on-brand stills, ads, UGC videos, and every placement size.
@@ -134,9 +134,9 @@ Generate and edit images: model choice, sizing, references, masked edits, post-p
 | [scenario-text-overlay](skills/scenario-text-overlay/SKILL.md)   | Letter-perfect text overlays: templated transparent PNG cards (taglines, CTAs, legal supers, rich cards) to composite |
 | [scenario-storyboards](skills/scenario-storyboards/SKILL.md)     | Comic pages, storybooks, and pre-viz storyboards: script first, one run per panel, a locked cast, lettering in post   |
 
-### Game art and environments
+### Game art and 3D
 
-Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engines.
+Sprites, icons, tilesets, textures, skyboxes, 3D models, and walkable spaces for games, the web, and interactive scenes.
 
 | Skill                                                                      | Use it for                                                                                                                                                                             |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -148,6 +148,7 @@ Sprites, icons, tilesets, textures, skyboxes, and 3D assets ready for game engin
 | [scenario-3d](skills/scenario-3d/SKILL.md)                                 | Text or image to 3D meshes, multi-view reconstruction, retexture and remesh, inline 3D preview, GLB/FBX download                                                                       |
 | [scenario-patina-retexture](skills/scenario-patina-retexture/SKILL.md)     | PATINA PBR retexture of a finished mesh: material families, one map set per family, Blender apply with geometry untouched, matched before/after comparison film                        |
 | [scenario-orbit-views](skills/scenario-orbit-views/SKILL.md)               | New camera angles of one picture through a 3D intermediary: clay layouts in a grounded panorama, repaint per camera, matched transparent set                                           |
+| [scenario-walkable-room](skills/scenario-walkable-room/SKILL.md)           | A room from one interior photo to walk into: clean plate, splat world, PBR props with impact sounds, splat-based calibration, physics viewer with grab and throw                       |
 
 ### Video and audio
 
