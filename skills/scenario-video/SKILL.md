@@ -28,7 +28,7 @@ Connection and the core generation loop: see the `scenario` skill. If a sibling 
 1. `recommend` with the user's own words as `prompt` (the need is a capability, `img2video`); handle `next_step` as the `scenario` skill directs.
 2. `model_schema_get` on the pick. Note the image field, duration options, and any last-frame anchor.
 3. `upload_asset` the still; it returns `asset_id="asset_abc"`.
-4. `model_run` with `parameters={"image": "asset_abc", "prompt": "Close-up on the mug; slow dolly-in as steam curls through window light, shallow focus on the rim. Room tone, no music, no subtitles."}` and `wait=false`. Returns a `job_id`.
+4. `model_run` with `parameters={"image": "asset_abc", "prompt": "Close-up on the mug; slow dolly-in as steam curls through window light, shallow focus on the rim. Room tone and a soft kettle hiss, no subtitles."}` and `wait=false`. Returns a `job_id`.
 5. `jobs_wait` with `job_ids=["job_xyz"]`, re-called with `pending_job_ids` while any remain.
 6. `asset_display` the output (`asset_id`), then `asset_download` (no `format`).
 
@@ -38,7 +38,7 @@ The source image already fixes the look, so prompt only motion, camera, and timi
 
 Write the prompt as a shot direction in sentences, not tags: shot size, setting, subject and one action, one named slow camera move, light source, style, and an audio line, in the order the family skill gives. Named moves and concrete light survive generation; mood words do not.
 
-Many generators return sound with the picture (dialogue, effects, ambience, sometimes a score), switched by `generateAudio` or `audio` where the schema has one, each with its own default; with none, the search hit says whether sound comes back, and the prompt is the only lever over what does. Effects and ambience go in plain words, dialogue in quotes, plus a generic "no music", never a named genre or instrument (the score is laid once in assembly; switch the audio off when assembly supplies the whole soundtrack) and "no subtitles, no on-screen text", since a caption tool adds captions and removes none. Exclusions ride the prompt unless the schema has `negativePrompt`. Type the viewer must read is composited in assembly (`scenario-video-assembly`): generated type drifts.
+Many generators return sound with the picture (dialogue, effects, ambience, sometimes a score), switched by `generateAudio` or `audio` where the schema has one, each with its own default; with none, the search hit says whether sound comes back, and the prompt is the only lever over what does. Effects and ambience go in plain words and dialogue in quotes, naming only what should sound: "no music" can trip the soundtrack's own moderation just as a named genre or instrument does (the score is laid once in assembly; switch the audio off when assembly supplies the whole soundtrack). The picture still takes exclusions, "no subtitles, no on-screen text", since a caption tool adds captions and removes none. Exclusions ride the prompt unless the schema has `negativePrompt`. Type the viewer must read is composited in assembly (`scenario-video-assembly`): generated type drifts.
 
 ## Editing existing footage
 
@@ -91,4 +91,4 @@ Pick this lane for one pass over the whole track; beat-cut shots under per-shot 
 - Shipping a lipsync run on the strength of its completed status: the failure mode is a still mouth under the new track, so compare frames against the source first.
 - Calling `model_run` without `model_schema_get`: a payload that worked on Kling will not fit Veo.
 - Treating search hits as stable: catalogs evolve, so re-run `search` and prefer non-deprecated hits (a `deprecated:<replacement_id>` tag names the successor). Families retire whole generations on notice, and a retired member's per-member controls (a keyframe strength, an fps enum) do not carry over: re-read the successor's schema rather than porting the old payload, and when a saved id returns 404 `Model not found`, `search` the family name instead of retrying the id.
-- Excluding music by name in an audio-enabled prompt: the soundtrack is moderated on its own, and a named genre or instrument trips it even inside an exclusion. Describe diegetic sound positively ("room tone, footsteps, one voice"), or turn the audio field off.
+- Excluding music in an audio-enabled prompt: the soundtrack is moderated on its own, and "no music" or a named genre or instrument trips it even inside an exclusion. Describe diegetic sound positively ("room tone, footsteps, one voice"), or turn the audio field off.
