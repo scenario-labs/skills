@@ -290,6 +290,28 @@
         "./skills/game-engines/unity/scenario-unity-web",
         "./skills/game-engines/unity/scenario-unity-world-building"
       ]
+    },
+    {
+      "name": "21.-expert-tools-godot",
+      "description": "Game engine. A lead and thirteen specialists that drive Godot 4.7 on macOS through headless jobs, windowed captures, GUT and gdUnit4 tests, and command-line exports: architecture, gameplay, 2D, 3D worlds, animation, UI, VFX, shaders, rendering and lighting, audio, multiplayer, performance and export, pipeline automation. Every procedure was run live in Godot 4.7.2.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/game-engines/godot/scenario-godot-expert",
+        "./skills/game-engines/godot/scenario-godot-2d",
+        "./skills/game-engines/godot/scenario-godot-3d-world",
+        "./skills/game-engines/godot/scenario-godot-animation",
+        "./skills/game-engines/godot/scenario-godot-architecture",
+        "./skills/game-engines/godot/scenario-godot-audio",
+        "./skills/game-engines/godot/scenario-godot-gameplay",
+        "./skills/game-engines/godot/scenario-godot-multiplayer",
+        "./skills/game-engines/godot/scenario-godot-performance-export",
+        "./skills/game-engines/godot/scenario-godot-pipeline-automation",
+        "./skills/game-engines/godot/scenario-godot-rendering-lighting",
+        "./skills/game-engines/godot/scenario-godot-shaders",
+        "./skills/game-engines/godot/scenario-godot-ui",
+        "./skills/game-engines/godot/scenario-godot-vfx"
+      ]
     }
   ]
 }
