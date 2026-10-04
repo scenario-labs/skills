@@ -54,5 +54,5 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
 - Treating `num_outputs` as a batch size over `images`.
 - Leaving `remove_background` at its default on an `asset_detect` map that must match the source frame.
 - Running `asset_analyze` or `asset_detect` through `scenario_tool_execute_read`: both are write-class and the call is rejected by lane, not by argument.
-- Sending more than 49 ids to `collection_add_assets`, or re-adding an asset already in the collection: both are hard errors, not no-ops.
+- Sending more than 49 ids to `collection_add_assets`, or one id already in the collection: both fail the whole call, and nothing from that chunk is filed.
 - Asking `asset_analyze` to produce an image. It returns text; control maps come from `asset_detect` and final renders from `model_run`.

@@ -35,7 +35,7 @@ The strongest anti-reference is a matched pair: the same subject rendered on-sty
 | Need                   | Tool                                        | Fact that bites                                                              |
 | ---------------------- | ------------------------------------------- | ---------------------------------------------------------------------------- |
 | Create                 | `collection_create` (write)                 | Takes `name` only, no description field                                      |
-| Add references         | `collection_add_assets` (write)             | Chunk at 49 ids; re-adding an existing asset is a hard error                 |
+| Add references         | `collection_add_assets` (write)             | Chunk at 49 ids; one already-filed id fails the whole chunk                  |
 | Annotate one reference | `asset_update` (write)                      | `metadata.tags` replaces the whole set; `metadata.description` holds the why |
 | Tag a role             | `asset_add_tags` (write)                    | Additive, and the tag namespace is shared with models                        |
 | Set the hero           | `collection_update` (write)                 | `thumbnail` is how the board reads at a glance                               |
