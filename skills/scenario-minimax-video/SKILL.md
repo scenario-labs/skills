@@ -25,11 +25,11 @@ H3's mode follows from the inputs (names from the live schema):
 
 Keyframes and references are mutually exclusive: neither frame combines with any reference array. `referenceAudio` never rides alone; it requires at least one image or video reference. Reference parameters are arrays even for one asset. At authoring time H3 took 9 reference images, 3 videos, and 3 audio files (videos and audio each 2 to 15 seconds, and 2 to 15 seconds in total), 5 to 15 seconds of output, at `768P` or `2K`.
 
-The 2.3 members take only `prompt` and `firstFrameImage`, plus a coupled pair: at authoring time 10 second `duration` was available only at `768p`, and `1080p` only at 6 seconds. Their `promptOptimizer` (default true) rewrites the prompt before generation: leave it on for thin prompts, switch it off when engineered wording must survive verbatim. H3 has no such switch, and no member has a seed.
+The 2.3 members take only `prompt` and `firstFrameImage`, plus a coupled pair: at authoring time 10 second `duration` was available only at `768p`, and `1080p` only at 6 seconds. Their `promptOptimizer` (default true) rewrites the prompt before generation: leave it on for thin prompts, switch it off when engineered wording must survive verbatim. H3 has no such switch, and neither H3 nor 2.3 takes a `seed`.
 
 ## Picking the member
 
-H3 is the one member that mixes modes in a single call, and the one that reaches `2K` on generation; it is also slow and expensive, and reference media adds more (reference videos bill per second of uploaded footage). The Max text and image members cap at `768P` and take a `seed` and a `promptExpansionMode` (`disabled`, `balanced`, `quality`); set it to `disabled` when engineered wording must survive verbatim. Their Turbo twins share the same inputs and are the iteration tier: draft at `480P` on Turbo, then spend the expensive member on the take you keep. A draft is a composition and motion check, not a preview of the final pixels: a different member or resolution is a new generation even with the same `seed`. `dry_run` the draft and the final payloads before a batch. Re-discover a member before naming 2.3 for new work: deprecated members can disappear from the catalog.
+H3 is the one member that mixes modes in a single call, and, lip sync aside, the one generator that reaches `2K`; it is also slow and expensive, and reference media adds more (reference videos bill per second of uploaded footage). The Max text and image members cap at `768P` and take a `seed` and a `promptExpansionMode` (`disabled`, `balanced`, `quality`); set it to `disabled` when engineered wording must survive verbatim. Their Turbo twins share the same inputs and are the iteration tier: draft at `480P` on Turbo, then spend the expensive member on the take you keep. A draft is a composition and motion check, not a preview of the final pixels: a different member or resolution is a new generation even with the same `seed`. `dry_run` the draft and the final payloads before a batch. Re-discover a member before naming 2.3 for new work: deprecated members can disappear from the catalog.
 
 ## Editing a clip you already have
 
@@ -64,8 +64,8 @@ Write the rest as natural prose, ordered camera, subject, action, scene, lightin
 - Passing `referenceAudio` alone: it requires at least one image or video reference.
 - Sending `lastFrameImage` without `firstFrameImage`: the pair anchors both endpoints or neither.
 - Expecting `aspectRatio` to win over a first frame: the shape follows the image.
-- Carrying one member's values to another: H3 spells resolutions `768P` and `2K`, the Max generators stop at `768P`, Insert spells `480p` and `768p` in lowercase, and Recast offers only `768P` and `1080P`.
+- Carrying one member's values to another: H3 spells resolutions `768P` and `2K`, the Max generators other than lip sync stop at `768P`, Insert spells `480p` and `768p` in lowercase, and Recast offers only `768P` and `1080P`.
 - Sending Recast a clip with a single shot over 15 seconds, or one under 5: cut it first (the `scenario-video-editing` skill).
 - Pricing Recast on the output: it bills every second of the source, so trim the source to the part that needs the new people.
-- Expecting Extend's default `extended` output to be new footage only: it returns the source plus the continuation; ask for `continuation` when the pieces are assembled later.
+- Expecting Extend's default `extended` output to be new footage only: it returns the source plus the continuation; ask for `continuation` when the pieces are assembled later (the `scenario-video-assembly` skill).
 - Stacking camera moves: past 2 or 3 cues the background wobbles and textures flicker.
