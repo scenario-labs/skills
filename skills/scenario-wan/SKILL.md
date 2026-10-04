@@ -46,7 +46,7 @@ The 2.7 generators always deliver audio: upload an `audio` file to drive it, or 
 1. `search` with `target="models"`, `query="wan image to video"`, `public=true`. Prefer the newest non-deprecated hit, e.g. `model_wan-2-7-i2v` (a live hit at authoring time: re-discover each session).
 2. `model_schema_get` with that id: exclusivity notes, caps, defaults.
 3. `upload_asset` the opening and closing stills (see the `scenario` skill) for asset ids.
-4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"prompt": "She turns from the window and walks toward the door, coat swaying; slow push-in. Room tone and distant traffic, no music.", "image": "asset_open", "endImage": "asset_close", "duration": 5, "resolution": "1080p"}` for the cost estimate; re-estimate after changing duration or resolution.
+4. `model_run` with that `model_id`, `dry_run=true`, and `parameters={"prompt": "She turns from the window and walks toward the door, coat swaying; slow push-in. Room tone and distant traffic.", "image": "asset_open", "endImage": "asset_close", "duration": 5, "resolution": "1080p"}` for the cost estimate; re-estimate after changing duration or resolution.
 5. Re-run with `wait=false`, then `jobs_wait` with the returned job id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 6. `asset_display` the output and review motion and audio together.
 
