@@ -1,6 +1,6 @@
 ---
 name: scenario-seedance
-description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video from a first frame, first and last frame anchors, reference-to-video with identity, product, or world references, prompt-based editing, extending a clip, audio-conditioned motion or a reference voice, shot sound without music, or deciding between first-frame and reference conditioning. Keywords: Seedance 2.5 and 2.0, ByteDance, T2V, I2V, V2V, multimodal references, native audio, video extension."
+description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video, first and last frame anchors, reference-to-video from identity, product, or world references, prompt-based editing, extending a clip, audio-conditioned motion or voice, shot sound without music, first-frame versus reference conditioning, or an output blocked by moderation. Keywords: Seedance 2.5 and 2.0, ByteDance, T2V, I2V, V2V, native audio, OutputVideoSensitiveContentDetected."
 license: MIT
 ---
 
@@ -45,6 +45,12 @@ So run the lanes apart. Keep `generateAudio: true` for what the picture makes, f
 
 The prompt is the only lever, so listen to what comes back: when music leaks in anyway, re-run that shot with `generateAudio: false` and add sound from a sound-effects or video-to-audio model.
 
+## When the finished video is blocked
+
+A `failed` row whose error names `OutputVideoSensitiveContentDetected` (often with `PolicyViolation`, sometimes worded as possible copyright) is the provider screening the finished video, so it can arrive late in the render. Two causes produce the same error. Vocabulary that reads as harm: weapon nouns and verbs such as "axe", "blade", or "eliminated", even in a cartoon. And a character the screen takes for existing intellectual property: at authoring time that held for a studio's own well-known character, while a lesser-known one from the same studio, prompt unchanged, passed.
+
+Reword once, changing nothing but the wording: describe the action without the violent terms ("swings a tool", "drops out of frame"). If the reworded run fails the same way, and above all when a recognizable character is in the references, stop: further rewording and retries do not lift it, and the block is not a parameter you can change. Tell the user the provider refused the output, and offer the same shot on another video family, found through discovery for the same capability (the `scenario-video` skill). The failed job is reimbursed (the `scenario` skill).
+
 ## Worked example: a product shot from references
 
 1. `search` with `target="models"`, `query="seedance"`, `public=true`. Prefer the newest non-deprecated hit, e.g. `model_bytedance-seedance-2-5` (a live hit at authoring time: re-discover each session).
@@ -64,3 +70,4 @@ The prompt is the only lever, so listen to what comes back: when music leaks in 
 - Carrying one member's caps or price to another: 30 references, 30 seconds, and 1080p are each true of one and false of the next.
 - Letting shots score themselves and then cutting them together: the music restarts at every cut.
 - Rendering captions, prices, logos, or UI: reserve clean space and composite text in post.
+- Retrying an output moderation block unchanged, or rewording it a third time: one reworded run tells vocabulary from a recognized character; past it, switch families.
