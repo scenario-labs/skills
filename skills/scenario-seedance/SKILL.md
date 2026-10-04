@@ -1,6 +1,6 @@
 ---
 name: scenario-seedance
-description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video from a first frame, first and last frame anchors, reference-to-video with identity, product, or world references, prompt-based editing, extending a clip, audio-conditioned motion or a reference voice, shot sound without music, or deciding between first-frame and reference conditioning. Keywords: Seedance 2.5 and 2.0, ByteDance, T2V, I2V, V2V, multimodal references, native audio, video extension."
+description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video, first and last frame anchors, reference-to-video from identity, product, or world references, prompt-based editing, extending a clip, audio-conditioned motion or voice, shot sound without music, first-frame versus reference conditioning, or an output blocked by moderation. Keywords: Seedance 2.5 and 2.0, ByteDance, T2V, I2V, V2V, native audio, OutputVideoSensitiveContentDetected."
 license: MIT
 ---
 
@@ -45,6 +45,10 @@ So run the lanes apart. Keep `generateAudio: true` for what the picture makes, f
 
 The prompt is the only lever, so listen to what comes back: when music leaks in anyway, re-run that shot with `generateAudio: false` and add sound from a sound-effects or video-to-audio model.
 
+## When the finished video is blocked
+
+A `failed` row whose error names `OutputVideoSensitiveContentDetected` (often with `PolicyViolation`, sometimes worded as possible copyright) is the provider screening the finished render. The filter belongs to the family, so a Seedance sibling refuses the same payload and the identical retry renders it again. Handle it the way the `scenario-moderation` skill teaches: switch to another provider first, prompt unchanged apart from moving the `@image` tags to the alternative's own reference field per its schema. For `recommend`, text-to-video is `txt2video`, first-frame and reference jobs are `img2video`, edit and extend are `video2video`. Two observations at authoring time decide what comes after. A character the screen takes for existing intellectual property stays blocked whatever the wording: a studio's own well-known character failed while a lesser-known one from the same studio, prompt unchanged, passed. Weapon and harm vocabulary ("axe", "blade", "eliminated") tripped it even in a cartoon, which is where that skill's one honest rewrite belongs. When the block persists past the switch and that rewrite, on the team's own characters for example, tell the user they can write to support@scenario.com with the failed job id. Unattended, launch the switch only within the spend the task authorized; otherwise stop and report the block with the failed job id.
+
 ## Worked example: a product shot from references
 
 1. `search` with `target="models"`, `query="seedance"`, `public=true`. Prefer the newest non-deprecated hit, e.g. `model_bytedance-seedance-2-5` (a live hit at authoring time: re-discover each session).
@@ -64,3 +68,4 @@ The prompt is the only lever, so listen to what comes back: when music leaks in 
 - Carrying one member's caps or price to another: 30 references, 30 seconds, and 1080p are each true of one and false of the next.
 - Letting shots score themselves and then cutting them together: the music restarts at every cut.
 - Rendering captions, prices, logos, or UI: reserve clean space and composite text in post.
+- Retrying an output moderation block on Seedance or a Seedance sibling: the filter is the family's, so switch provider first (the `scenario-moderation` skill).
