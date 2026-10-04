@@ -1,6 +1,6 @@
 ---
 name: scenario-seedream
-description: "Use when generating or editing images with Seedream models on Scenario via MCP: text-to-image, image-to-image editing with reference images, posters or packaging with exact in-image text (non-Latin scripts included), subject-preserving instruction edits, sequence sets of related images in one run, or splitting a finished image into a base plus transparent PNG layers with Layerize. Keywords: Seedream 5.0 Pro, 5.0 Lite, 4.5, Layerize, ByteDance, txt2img, img2img, layer extraction."
+description: "Use when generating or editing images with Seedream models on Scenario via MCP: text-to-image, image-to-image editing with reference images, posters or packaging with exact in-image text (non-Latin scripts too), subject-preserving edits, sets of related images in one run, editing a transparent asset without losing its alpha, or splitting an image into transparent PNG layers with Layerize. Keywords: Seedream 5.0 Pro, Lite, Flash, 4.5, Layerize, ByteDance, txt2img, img2img, layer extraction."
 license: MIT
 ---
 
@@ -16,14 +16,20 @@ Connection and the core loop: see the `scenario` skill; model-agnostic image wor
 
 At authoring time (fields and caps are per member, read the live schema):
 
-| Member           | References                  | Sizing                                              | Notes                                                       |
-| ---------------- | --------------------------- | --------------------------------------------------- | ----------------------------------------------------------- |
-| 5.0 Pro          | `referenceImages`, up to 10 | exact `width` and `height`, 672 to 3136 px, step 16 | exact in-image text; 3500-char prompt                       |
-| 5.0 Lite         | `referenceImages`, up to 14 | `width` and `height`, up to 4K                      | fast and cheap; 2048-char prompt                            |
-| 4.5              | `referenceImages`           | `size` (2K, 4K) plus `aspectRatio` enum             | subject-preserving edits; `"auto"` ratio follows the source |
-| 5.0 Pro Layerize | one `image`, required       | `size` tier: auto, 1K, 1.5K, 2K                     | splits, never generates; prompt optional                    |
+| Member             | References                  | Sizing                                              | Notes                                                       |
+| ------------------ | --------------------------- | --------------------------------------------------- | ----------------------------------------------------------- |
+| 5.0 Pro            | `referenceImages`, up to 10 | exact `width` and `height`, 672 to 3136 px, step 16 | exact in-image text; 3500-char prompt                       |
+| 5.0 Lite           | `referenceImages`, up to 14 | `width` and `height`, up to 4K                      | fast and cheap; 2048-char prompt                            |
+| 5.0 Flash          | `referenceImages`, up to 10 | exact `width` and `height`, 672 to 3136 px, step 16 | cheapest; `background` keeps a reference's alpha            |
+| 4.5                | `referenceImages`           | `size` (2K, 4K) plus `aspectRatio` enum             | subject-preserving edits; `"auto"` ratio follows the source |
+| 5.0 Pro Layerize   | one `image`, required       | `size` tier: auto, 1K, 1.5K, 2K                     | splits, never generates; prompt optional                    |
+| 5.0 Flash Layerize | one `image`, required       | `size` tier: auto, 1K, 1.5K, 2K                     | same contract minus `optimizePromptMode`                    |
 
-On the three generators, mode follows from the inputs: empty `referenceImages` is text-to-image, one or more is an edit or a multi-reference generation (with several, the prompt gives each reference a role by position), and the array shape holds even for one asset. Sequence mode (`sequentialImageGeneration: "auto"` plus `maxImages`) lets Lite and 4.5 return a related set in one run, input plus generated capped at 15 images; Pro has no sequence fields. Pro also cost two to three times as much per image as Lite or 4.5 and took about two minutes against under one, so iterate on the cheap members and spend Pro on finals; `dry_run` both before a batch (the estimate prices the run exactly as submitted, a whole sequence included). Pro and Layerize carry `optimizePromptMode`: the default `standard` reasons about the prompt first and is slower; `fast` costs the same and is usually enough when a reference already sets the composition (on Layerize it trades some split fidelity for speed).
+On the generators, mode follows from the inputs: empty `referenceImages` is text-to-image, one or more is an edit or a multi-reference generation (with several, the prompt gives each reference a role by position), and the array shape holds even for one asset. Sequence mode (`sequentialImageGeneration: "auto"` plus `maxImages`) lets Lite and 4.5 return a related set in one run, input plus generated capped at 15 images; Pro has no sequence fields. Price per image differs widely: a 2048 px square quoted 4 CU on Flash, 6 on Lite, and 18 on Pro at authoring time, and Pro took about two minutes against under one, so iterate on the cheap members and spend Pro on finals; `dry_run` both before a batch (the estimate prices the run exactly as submitted, a whole sequence included). Pro and Pro Layerize carry `optimizePromptMode`: the default `standard` reasons about the prompt first and is slower; `fast` costs the same and is usually enough when a reference already sets the composition (on Layerize it trades some split fidelity for speed). Flash's schema says `width` and `height` apply only when Resolution is Custom, but Flash has no Resolution field: the pixels apply directly.
+
+## Keeping a transparent asset transparent
+
+Flash's `background: "transparent"` preserves alpha through an edit; it does not cut a subject out. It keeps the transparent surround, not translucency inside the subject: glass at alpha 170 came back near-opaque in one authoring-time test, so composite a translucent part in post. The field defaults to `opaque`, so a restyle that omits it flattens a valid cutout: set it on every run that must stay transparent. It applies only with exactly one reference image that already carries an alpha channel, and is ignored otherwise: a text-only run, a flattened JPEG reference, or two references all come back opaque without an error. So restyle or recolor an existing cutout (a sprite, an icon, a prop) on Flash with the PNG as the one reference, and check the result's alpha on the downloaded file before shipping it, since `asset_display` composites transparency away: with Pillow (`uv run --with pillow` when it is missing), `Image.open(path).getchannel("A").getextrema()` should start at 0 (fully transparent pixels exist), and an image with no `A` channel was flattened. To get a cutout in the first place, generate on a plain field and run background removal (the `scenario-image-editing` skill), or split the image with Layerize.
 
 ## Write the exact copy into the prompt
 
@@ -50,3 +56,4 @@ Layerize returns a base layer plus up to 16 transparent PNG cutouts, rebuilding 
 - Expecting Layerize layers to overlay the source directly: each is cropped to its own bounds, so reposition with the returned metadata.
 - Asking Pro for a sequence: the sequence fields existed on Lite and 4.5 only.
 - Moving a 3000-character prompt from Pro to Lite: prompt caps are per member.
+- Setting Flash's `background` to `transparent` on a text-only run or a flattened reference: it is silently ignored, and the image comes back opaque.
