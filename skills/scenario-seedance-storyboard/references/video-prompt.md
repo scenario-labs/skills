@@ -91,14 +91,14 @@ instead and lays every shot picture-only, per [chained-lane.md](chained-lane.md)
 a defect in a production cut either way, so `generateAudio: false` is the fallback after a refusal, not
 the default. The parameter defaults on, so sound needs no flag and only silence has to be asked for. What gets a run refused is
 naming an instrument or a genre, which invites the model to synthesize music and can fail the whole job
-on an output-audio copyright violation. So list the sources the scene itself makes and rule music out
-explicitly:
+on an output-audio copyright violation. So list the sources the scene itself makes, and only those:
 
-> Diegetic sound only: heel taps on the boards, fabric, breath, room tone. No music, no score.
+> Diegetic sound only: heel taps on the boards, fabric, breath, room tone.
 
-Measured on two runs of the same sequence: that line delivered a clean audio track, while the same line
-with "a distant guitar" added failed on `OutputAudioSensitiveContentDetected`. Name the surfaces, the
-cloth, the breath and the room, never the instrument.
+Measured on two runs of the same sequence: that line, then followed by "No music, no score.", delivered a
+clean audio track, while the same line with "a distant guitar" added failed on
+`OutputAudioSensitiveContentDetected`. The exclusion has failed that check on other runs, so leave it out.
+Name the surfaces, the cloth, the breath and the room, never the instrument and never what to omit.
 
 Nothing tool-side confirms the delivered track, so the audio check is eyes and ears: play the file and
 listen for the beats the timeline named. A refusal arrives as a failed job with its own code, but a run

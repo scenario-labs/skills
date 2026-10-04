@@ -17,7 +17,7 @@ Connection and the core generation loop: see the `scenario` skill in this repo. 
 Music written inside a shot restarts in a new key at every cut, so the score comes from outside the video model: the supplied master. What Seedance makes is the sound bolted to the picture. The choice sets `generateAudio` on every shot, so make it before generating:
 
 - Song alone: `generateAudio: false` everywhere. build.py stream-copies the master whenever MP4 allows, so the delivered soundtrack is the supplied file, bit for bit.
-- Song over the shots' own sound: `generateAudio: true`, every prompt naming the sound the scene itself makes (heels on wet asphalt, room tone) and then "diegetic sound only, no music, no score", plus `"sound": 0.2` in the edit file. Name no instrument or genre, however well it fits the track: that invites a score, and one run failed on an output-audio content check for an added "distant guitar". build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file stays hash-checked.
+- Song over the shots' own sound: `generateAudio: true`, every prompt naming the sound the scene itself makes (heels on wet asphalt, room tone) after "diegetic sound only:" and nothing else, plus `"sound": 0.2` in the edit file. Name no instrument or genre, however well it fits the track, and no exclusion such as "no music": an instrument invites a score, one run failed on an output-audio content check for an added "distant guitar", and the exclusion has failed that check too. build.py cuts each clip's audio to its slot, mixes it under the master at that gain, and refuses a mix that would clip. The delivery is then one AAC encode, trading the bit-for-bit guarantee for the sound; the master file stays hash-checked.
 
 ## Quick reference
 
@@ -60,7 +60,7 @@ Each shot runs until the next starts and the last to the master's end, so gaps a
 ## Common mistakes
 
 - Letting a shot score itself: its score restarts at every cut.
-- Turning `sound` on while the prompts still allow music: exclude it in words, since `generateAudio` is one switch over the whole track.
+- Turning `sound` on before listening to every clip: `generateAudio` is one switch over the whole track, so a clip that leaked music goes back with `generateAudio: false` rather than an exclusion in words.
 - Trimming, normalizing, fading, or re-encoding the master yourself: build.py copies it or carries it at unity, and hash-checks the file either way.
 - Trusting a requested aspect ratio: stills and clips land near it, not on it, and build.py pads the difference; crop to the delivery ratio first.
 - Prompting an opening state in reference mode: it will not appear; pass a first-frame `image`.
