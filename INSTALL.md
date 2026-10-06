@@ -4,14 +4,15 @@ Pick your role. Each command installs the skills behind that role's outcomes plu
 
 ## 2D Artist
 
-Concept art, sprites, and effects in one consistent style. 23 skills.
+Concept art, sprites, and effects in one consistent style. 24 skills.
 
 - **Concept Sketches** (`scenario-inspiration`, `scenario-image`). Try: "Give me four directions for a desert outpost, then a moodboard for the one I pick."
 - **Sprites and VFX** (`scenario-sprite-animation`, `scenario-game-assets`). Try: "Make an 8-frame run cycle sprite sheet for this knight, and a matching slash effect."
 - **Side-Scroller Kit** (`scenario-side-view-game-kit`). Try: "Make the sprites for my platformer's fox knight and a mole miner enemy, plus the layers for a mushroom forest level."
+- **One Picture, Many References** (`scenario-multi-reference`). Try: "Make one claymation still: the character from this toaster photo, the mood from this grumpy face, the room from this kitchen, the look from this clay snail."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-inspiration --skill scenario-image --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-game-assets --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-3d --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image
+npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-inspiration --skill scenario-image --skill scenario-multi-reference --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-game-assets --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-3d --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image
 ```
 
 ## 3D Artist
