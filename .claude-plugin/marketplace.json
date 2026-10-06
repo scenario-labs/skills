@@ -66,7 +66,6 @@
         "./skills/scenario-video",
         "./skills/scenario-video-editing",
         "./skills/scenario-seedance-music-video",
-        "./skills/scenario-kinetic-music-video",
         "./skills/scenario-seedance-storyboard",
         "./skills/scenario-video-ads",
         "./skills/scenario-ugc",
@@ -77,7 +76,16 @@
       ]
     },
     {
-      "name": "06.-consistency-and-custom-models",
+      "name": "06.-socials",
+      "description": "Video built for social feeds: kinetic-typography lyric videos and motion-design music videos with type timed to the sung words, platform-ready cuts, teasers, and vertical or square re-layouts.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/scenario-kinetic-music-video"
+      ]
+    },
+    {
+      "name": "07.-consistency-and-custom-models",
       "description": "Hold one character, product, or style across a whole set, and train custom models on your own art.",
       "source": "./",
       "strict": false,
@@ -88,7 +96,7 @@
       ]
     },
     {
-      "name": "07.-reviewing-and-organizing-output",
+      "name": "08.-reviewing-and-organizing-output",
       "description": "Read finished assets back: caption them, extract a style or a control map, check a batch against a brief or the Quality Gate, compare candidate models on one brief, and file the keepers.",
       "source": "./",
       "strict": false,
@@ -100,7 +108,7 @@
       ]
     },
     {
-      "name": "08.-formats-and-placements",
+      "name": "09.-formats-and-placements",
       "description": "Ship one approved master, image or video, to every placement: ratios, safe zones, and platform specs from social feeds to shops, storefronts, and print.",
       "source": "./",
       "strict": false,
@@ -109,7 +117,7 @@
       ]
     },
     {
-      "name": "09.-workflows-and-apps",
+      "name": "10.-workflows-and-apps",
       "description": "Discover, run, build, and publish Scenario workflows (apps), and migrate graphs from Weavy, ComfyUI, or other node editors.",
       "source": "./",
       "strict": false,
@@ -119,7 +127,7 @@
       ]
     },
     {
-      "name": "10.-troubleshooting",
+      "name": "11.-troubleshooting",
       "description": "Get past a blocked generation, and turn a stuck session into a reproducible public issue.",
       "source": "./",
       "strict": false,
@@ -129,7 +137,7 @@
       ]
     },
     {
-      "name": "11.-team-administration",
+      "name": "12.-team-administration",
       "description": "Govern a team from the agent: which models it can run, who is on it and in which projects, per-member spend caps, API key roles, and who spent what.",
       "source": "./",
       "strict": false,
@@ -139,7 +147,7 @@
       ]
     },
     {
-      "name": "12.-image-model-families",
+      "name": "13.-image-model-families",
       "description": "The top image families in depth: generation and editing modes, reference rules, and the caps that differ per member.",
       "source": "./",
       "strict": false,
@@ -155,7 +163,7 @@
       ]
     },
     {
-      "name": "13.-video-model-families",
+      "name": "14.-video-model-families",
       "description": "The top video families in depth: conditioning modes, native audio, editing and extension, and per-member caps and costs.",
       "source": "./",
       "strict": false,
@@ -173,7 +181,7 @@
       ]
     },
     {
-      "name": "14.-audio-model-families",
+      "name": "15.-audio-model-families",
       "description": "The top audio families in depth: music, covers and stems, sound effects, speech, dubbing, and video scoring.",
       "source": "./",
       "strict": false,
@@ -185,7 +193,7 @@
       ]
     },
     {
-      "name": "15.-3d-model-families",
+      "name": "16.-3d-model-families",
       "description": "The top 3D families in depth: mesh generation, retexture and rigging toolchains, portraits, and explorable worlds and splats.",
       "source": "./",
       "strict": false,
@@ -197,7 +205,7 @@
       ]
     },
     {
-      "name": "16.-expert-tools-zbrush",
+      "name": "17.-expert-tools-zbrush",
       "description": "DCC software. A lead and eight specialists that drive Maxon ZBrush 2026 through its agent bridge: sculpting, characters and creatures, stylized work, hard surface, polypaint and renders, posing and 3D print, retopology and export, automation. The bridge was proven live; full live tests of every skill are still pending.",
       "source": "./",
       "strict": false,
@@ -214,7 +222,7 @@
       ]
     },
     {
-      "name": "17.-expert-tools-blender",
+      "name": "18.-expert-tools-blender",
       "description": "DCC software. A lead and twelve specialists that drive Blender 5.2 through Python, headless or in a live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs, Geometry Nodes, lighting, Grease Pencil, hard surface. Test suites pass headless on Blender 5.2.1.",
       "source": "./",
       "strict": false,
@@ -235,7 +243,7 @@
       ]
     },
     {
-      "name": "18.-expert-tools-maya",
+      "name": "19.-expert-tools-maya",
       "description": "DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through Python, batch or live: modeling, retopology and UVs, rigging, skinning, animation, groom, FX, look dev, Arnold lighting and rendering, pipeline scripting.",
       "source": "./",
       "strict": false,
@@ -254,7 +262,7 @@
       ]
     },
     {
-      "name": "19.-expert-tools-unreal-engine",
+      "name": "20.-expert-tools-unreal-engine",
       "description": "Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS through Editor Python, headless jobs, and Epic's Unreal MCP server: world building, materials, lighting and rendering, gameplay, animation, cinematics, VFX, pipeline automation, performance.",
       "source": "./",
       "strict": false,
@@ -272,7 +280,7 @@
       ]
     },
     {
-      "name": "20.-expert-tools-unity",
+      "name": "21.-expert-tools-unity",
       "description": "Game engine. A lead and thirteen specialists that drive Unity 6.3 LTS on macOS through batch mode, a live editor, and command-line builds: architecture, gameplay, 2D, animation, UI, VFX, shaders, rendering and lighting, world building, performance, mobile, Web, pipeline automation. Every procedure was run live in Unity 6.3.",
       "source": "./",
       "strict": false,
@@ -294,7 +302,7 @@
       ]
     },
     {
-      "name": "21.-expert-tools-godot",
+      "name": "22.-expert-tools-godot",
       "description": "Game engine. A lead and thirteen specialists that drive Godot 4.7 on macOS through headless jobs, windowed captures, GUT and gdUnit4 tests, and command-line exports: architecture, gameplay, 2D, 3D worlds, animation, UI, VFX, shaders, rendering and lighting, audio, multiplayer, performance and export, pipeline automation. Every procedure was run live in Godot 4.7.2.",
       "source": "./",
       "strict": false,
