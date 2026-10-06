@@ -67,13 +67,14 @@ npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation
 
 ## Video Producer
 
-Trailers and clips, storyboarded, generated, cut, and captioned. 27 skills.
+Trailers and clips, storyboarded, generated, cut, and captioned. 30 skills.
 
 - **Cinematic Trailers** (`scenario-video`, `scenario-storyboards`, `scenario-video-assembly`). Try: "Storyboard a 30-second trailer from this script, generate the shots, and cut them to music."
+- **A Trailer for Your Game** (`scenario-game-trailer`). Try: "Turn these screenshots of my grandma cooking game into a 50-second action-movie trailer with a narrator and our logo at the end."
 - **Captions for Every Platform** (`scenario-caption-studio`, `scenario-formats`). Try: "Add word-by-word captions to this video and export 9:16, 1:1, and 16:9 versions."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-video --skill scenario-storyboards --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-formats --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video
+npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-video --skill scenario-storyboards --skill scenario-video-assembly --skill scenario-game-trailer --skill scenario-caption-studio --skill scenario-formats --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-game-assets --skill scenario-audio
 ```
 
 ## Marketing Artist
