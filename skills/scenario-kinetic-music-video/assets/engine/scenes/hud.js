@@ -74,7 +74,7 @@ export default {
   },
   render(E, t, rt) {
     const H = E.hud;
-    if (H.alpha <= 0.001) return 0;
+    if (H.alpha <= 0.001 && !E.debugSafe) return 0; // --safe still outlines the band when a scene hides the HUD
     const S = E.SCALE,
       c = g.ctx;
     g.clear();
@@ -203,7 +203,7 @@ export default {
     E.blitG2D(E, g, 1.0);
   },
 };
-// subtitle track: karaoke mono line, bottom-left above the progress line, shrunk to fit the safe band
+// subtitle track: karaoke mono line, bottom-left above the progress line; off landscape it shrinks to fit the safe band
 function drawSub(c, E, t, H, dark, ink, bar) {
   const ln = E.lineAt(t, 0.25);
   if (!ln || t > ln.e + 0.5) return;
@@ -212,7 +212,7 @@ function drawSub(c, E, t, H, dark, ink, bar) {
   const size = 24 * S,
     x = R.x + 92 * S,
     y = R.y + R.h - 92 * S,
-    maxW = R.w - 92 * S - 52 * S;
+    maxW = E.ORIENT === "landscape" ? undefined : R.w - 92 * S - 52 * S;
   const fade =
     clamp((t - (ln.s - 0.25)) / 0.08) * (1 - clamp((t - (ln.e + 0.35)) / 0.15));
   c.save();

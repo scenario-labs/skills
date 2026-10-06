@@ -2,8 +2,8 @@
 // render.mjs/still.mjs --canvas overrides it to render the same project at a second ratio.
 export const CANVAS = "landscape";
 
-// Optional safe-band override per orientation, as fractions of the canvas. A 9:16 canvas already defaults to the
-// platform-UI band (top 0.14, bottom 0.35, left 0.06, right 0.13); everything else defaults to the full frame.
+// Optional safe-band override per orientation, as fractions of the canvas; sides it does not name keep their default.
+// A 9:16 canvas defaults to the platform-UI band (top 0.14, bottom 0.35, left 0.06, right 0.13), anything else to the full frame.
 // export const SAFE = { landscape: { top: 0.1, bottom: 0.1, left: 0.1, right: 0.1 } };
 
 // Master edit decision list. One entry per section scene (hard cuts at section boundaries, on downbeats or just

@@ -136,7 +136,7 @@ export function drawKaraoke(ctx, E, line, t, o = {}) {
   }));
   let widths = ws.map((w) => measure(ctx, w.txt, { ...o, size }));
   let tot = widths.reduce((a, b) => a + b, 0) + gap * (ws.length - 1);
-  if (o.maxW && tot > o.maxW) {
+  if (o.maxW > 0 && tot > o.maxW) {
     const k = o.maxW / tot; // width scales linearly with size, tracking included
     size *= k;
     gap *= k;
@@ -175,10 +175,13 @@ export function drawKaraoke(ctx, E, line, t, o = {}) {
 export function drawSubtitle(ctx, E, t, o = {}) {
   const ln = E.lineAt(t, 0.25);
   if (!ln || t > ln.e + 0.5) return;
-  const R = E.SAFE;
-  const size = (o.size ?? 26) * E.SCALE;
-  const x = o.x != null ? o.x * E.SCALE : R.x + 96 * E.SCALE,
-    y = o.y != null ? o.y * E.SCALE : R.y + R.h - 90 * E.SCALE;
+  const R = E.SAFE,
+    S = E.SCALE;
+  // 990 keeps a 1080-high full-frame canvas exactly where it was at any --scale; elsewhere 90 px above the band's bottom
+  const legacy = E.CANVAS[1] === 1080 && R.y === 0 && R.h === E.H;
+  const size = (o.size ?? 26) * S;
+  const x = o.x != null ? o.x * S : R.x + 96 * S,
+    y = o.y != null ? o.y * S : legacy ? 990 * S : R.y + R.h - 90 * S;
   const fade =
     clamp((t - (ln.s - 0.25)) / 0.08) * (1 - clamp((t - (ln.e + 0.35)) / 0.15));
   ctx.save();
@@ -198,7 +201,11 @@ export function drawSubtitle(ctx, E, t, o = {}) {
     dimColor: "rgba(255,176,0,0.35)",
     lineLead: 0.25,
     tail: 0.35,
-    maxW: o.maxW ?? R.x + R.w - x - 52 * E.SCALE,
+    maxW:
+      o.maxW ??
+      (E.ORIENT === "landscape"
+        ? undefined
+        : Math.max(0, R.x + R.w - x - 52 * S)),
   });
   ctx.restore();
 }

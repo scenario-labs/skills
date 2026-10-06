@@ -25,8 +25,9 @@ try {
 const even = (n) => Math.max(2, 2 * Math.round(n / 2)); // H.264 4:2:0 needs even sides at every --scale
 const W = even(CANVAS[0] * SCALE),
   H = even(CANVAS[1] * SCALE);
-const ORIENT = cv.orientation(W, H);
-const SAFE = cv.safeRect(W, H, cv.safeInsets(W, H, TL.SAFE));
+// orientation and band come from the canvas, not the rounded preview size, so --scale never changes which entries render
+const ORIENT = cv.orientation(CANVAS[0], CANVAS[1]);
+const SAFE = cv.safeRect(W, H, cv.safeInsets(CANVAS[0], CANVAS[1], TL.SAFE));
 const ONLY = Q.get("only") ? Q.get("only").split(",") : null;
 
 const canvas = document.getElementById("c");
@@ -215,6 +216,7 @@ const E = {
   SAFE, // { x, y, w, h } in px: the band platform UI never covers (the full frame unless the canvas is 9:16-tall)
   debugSafe: Q.has("safe"), // still.mjs --safe: the HUD outlines SAFE
   safeCamera: (cam) => cv.centerOnSafe(cam, W, H, SAFE), // centers a PerspectiveCamera's frame on SAFE
+  plateFit: cv.plateFit, // E.plateFit(E, v): 'cover' when the clip's shape fits the canvas, else 'contain'
   post: { ...POST_DEFAULT },
   hud: { ...HUD_DEFAULT },
   frame: 0,
@@ -271,6 +273,10 @@ async function boot() {
     const layer = { ...entry, scene, loaded: false };
     E.layers.push(layer);
   }
+  if (ONLY && !E.layers.length)
+    throw new Error(
+      `--only ${ONLY.join(",")}: nothing renders on the ${ORIENT} canvas (check the ids and their canvas tags)`,
+    );
   await Promise.all(
     E.layers.map(async (l) => {
       if (l.scene.load) await l.scene.load(E, l);

@@ -20,7 +20,7 @@ You are one of <N> motion designers. Each of you builds one section of a <durati
 ## Ownership
 
 - You own ONLY `engine/scenes/<id>.js`, plus an optional `engine/scenes/<id>/` helper folder and `assets/<id>/` for generated data.
-- Don't edit `engine/main.js`, `core.js`, `plate.js`, `typekit.js`, `roto.js`, `timeline.js`, `scenes/hud.js` or anyone else's files. If you hit an engine bug, work around it locally and report it.
+- Don't edit `engine/main.js`, `canvas.js`, `core.js`, `plate.js`, `typekit.js`, `roto.js`, `timeline.js`, `scenes/hud.js` or anyone else's files. If you hit an engine bug, work around it locally and report it.
 - **Deterministic only:** no `Math.random`, `Date`, `performance.now` or rAF timing. Use `E.rng(seed)`, `E.hash1`, `E.noise1/2`.
 - **Performance:** at most ~35 ms per frame at 1080p. Cache in `load()`, at most 2 full-res 2D canvases redrawn per frame, and no allocation in hot loops.
 - Don't generate new AI footage or images unless the lead asks. Procedural textures in code are fine.
@@ -28,6 +28,7 @@ You are one of <N> motion designers. Each of you builds one section of a <durati
 ## Footage rules
 
 - **Footage is shown clean**: `E.drawPlate` only. No filter, glow, grain, outline, halftone, tint or grade on the subject's pixels. You may reframe, crop, mirror, cut, speed-ramp, mask into shapes, tile, or put the plate on a 3D card.
+- **Plate fit per canvas:** draw every plate with `fit: E.plateFit(E, v)` (same options in `plateToScreen`), so a clip whose shape differs from the canvas is windowed, never cover-cropped to fill.
 - **Integration:** every footage moment needs at least one graphic that is tracked to the subject, timed to its motion, continues a line or shape in the plate, or sits behind it via the matte. A plain "video + caption" is a failure.
 - **Never a frozen frame.** Keep `localT` inside the clip's duration. Slot clips (lip-sync, beat-guided dances) use `local = t − slot` and aren't shifted; other clips can use any offset.
 - **Never cover the face** during lip-sync. MID-layer type behind the subject must stay readable, so move it if a key letter is hidden.

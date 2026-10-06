@@ -31,7 +31,7 @@ Read `references/lessons.md` before starting. Every item in it cost real time or
   - Defaults: generated footage shown clean (no filters on it), graphics layered on and around it, a fast and upbeat showreel energy.
 - **Brand:** any logo, wordmark or credit. Use official files in their official colors, only where the director wants them.
 - **Budget:** lean (6-10 video generations), moderate (12-20) or big. Price each paid step with `dry_run` (one run per distinct payload, then total) before spending. Relative anchors: a 6 s 720p clip costs about twenty style frames, a 10 s clip about thirty-five, and a full mixed video about five hundred.
-- **Format:** one canvas per project, asked once: portrait 9:16 for TikTok, Reels or Shorts, landscape 16:9 for YouTube or X (unattended with no destination: landscape). It is `CANVAS` in `engine/timeline.js`, and style frames and footage are generated at that ratio, never cropped from the other. Both ratios only on request: the code re-renders free with `--canvas`, but every full-frame shot is paid again (`references/pipeline.md` §9). X caps standard accounts at 2:20, so plan a teaser.
+- **Format:** one canvas per project, asked once: portrait 9:16 for TikTok, Reels or Shorts, landscape 16:9 for YouTube or X (unattended with no destination: landscape). It is `CANVAS` in `engine/timeline.js`, and style frames and footage are generated at that ratio, never cropped from the other. On portrait, check the destination's current length cap and plan the teaser as the platform cut when the song runs longer. Both ratios only on request: the code re-renders free with `--canvas` and most shots are windowed, but each shot that must fill the second frame (hook, lip-sync close-ups, finale) is paid again (`references/pipeline.md` §9). X caps standard accounts at 2:20, so plan a teaser.
 - **Lyrics:** use them if supplied (they beat any transcript). Otherwise transcribe and flag the uncertain words at the end.
 
 With no one around to answer, choose sensible defaults for the creative choices and write them into TREATMENT.md. Do not default the money: with no stated budget or no explicit team and project, stop before the first paid step and say what is missing.
@@ -108,13 +108,13 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - `freezedetect`: no frozen footage.
   - Contact sheets at 0.5 s steps, 20 s per sheet.
   - Every section boundary, frame by frame.
-  - On portrait, a `still.mjs --safe` sheet: no word, logo or face outside the outlined band.
+  - On portrait, `still.mjs --safe` sheets, 20 s each: no word, logo or face outside the outlined band.
 - **Global look pass:** a still sheet across all sections, then tune `POST`, the palette and the HUD theme.
 - **Revisions:** map each director note (they arrive as timestamps) to its section and send it back to the owning agent via SendMessage. Resuming keeps its context. Fix a weak shot by replacing it with a new generation in a different look, or with code, never by adding effects. Offer alternatives as timeline `variant`s (render with `--variant b`) instead of guessing.
 
 ### 7. Deliver
 
-- **Videos:** a master, an upload file (landscape: X-ready, 2-pass 21 Mb/s, under 512 MB; portrait: the vertical upload in `references/pipeline.md` §8), a teaser (verse plus first chorus), plus one file per variant, and one set per canvas when both were asked for. Use distinct filenames, because macOS is case-insensitive.
+- **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready 2-pass 21 Mb/s file under 512 MB for X; portrait: the vertical upload in `references/pipeline.md` §8), a teaser (verse plus first chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and `_9x16`, when both were asked for. Use distinct filenames, because macOS is case-insensitive.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet, source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
 - **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent, summed from this run's `jobs_wait` rows (`cuCost`, logged in `analysis/jobs.md`); `usage` is project-wide and includes other work.

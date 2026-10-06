@@ -13,7 +13,10 @@ const args = Object.fromEntries(
     .filter(Boolean)
     .map((s) => {
       const [k, ...v] = s.trim().split(" ");
-      return [k, v.join(" ") || true];
+      const eq = k.indexOf("="); // --canvas=portrait as well as --canvas portrait
+      return eq > 0
+        ? [k.slice(0, eq), k.slice(eq + 1) || true]
+        : [k, v.join(" ") || true];
     }),
 );
 const fps = +(args.fps ?? 30),

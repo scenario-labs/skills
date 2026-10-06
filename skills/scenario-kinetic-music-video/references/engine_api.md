@@ -57,11 +57,12 @@ export default {
 One project renders at one canvas, `CANVAS` in timeline.js: `'landscape'` (1920×1080, the default), `'portrait'` (1080×1920), `'square'` (1080×1080) or `'WxH'` with even sides. `--canvas` on `render.mjs` and `still.mjs` overrides it to render the same project at a second ratio; an unreadable value stops the render with an error.
 
 - `E.CANVAS` is `[w, h]` at scale 1, and `E.ORIENT` is `'landscape' | 'portrait' | 'square'`.
-- `E.SAFE` is `{x, y, w, h}` in px: the band platform UI never covers. On a 9:16-tall canvas it clears roughly the top 14%, the bottom 35%, 6% on the left and 13% on the right (authoring-time values); on anything wider it is the whole frame, so landscape layouts are unchanged. `SAFE` in timeline.js overrides it per orientation, e.g. `{ landscape: { top: 0.1, bottom: 0.1, left: 0.1, right: 0.1 } }`.
-- Words, logos and faces go inside `E.SAFE`; footage and full-bleed graphics may fill the canvas behind it. The HUD and the house subtitle already lay out inside it.
-- `E.safeCamera(cam)` shifts a PerspectiveCamera's frame so the origin lands on the band's center (a no-op on landscape). Use it for 3D heroes, then set the distance so the object fits the band's width (see the scene template).
-- `E.fitSize(ctx, text, o, maxW)` returns the largest size, up to `o.size`, at which the text fits `maxW`. Hero type sized for a 1920-wide frame overflows a 1080-wide one; fit it to `E.SAFE.w`.
-- `node tools/still.mjs --safe` outlines the band in magenta (the HUD draws it) for review sheets. Never pass `--safe` to a delivery render.
+- `E.SAFE` is `{x, y, w, h}` in px: the band platform UI never covers. On a 9:16-tall canvas it clears roughly the top 14%, the bottom 35%, 6% on the left and 13% on the right (authoring-time values); on anything wider it is the whole frame, so landscape layouts are unchanged. `SAFE` in timeline.js overrides sides per orientation, e.g. `{ landscape: { top: 0.1, bottom: 0.1 } }` or `{ portrait: { top: 0.2 } }`; a side it does not name keeps its default.
+- Words, logos and faces go inside `E.SAFE`; footage and full-bleed graphics may fill the canvas behind it. The HUD and the house subtitle already lay out inside it, and off landscape the subtitle shrinks a long line to fit (a line much over 45 characters gets small, so split it in the lyrics).
+- `E.safeCamera(cam)` shifts a PerspectiveCamera's frame so the origin lands on the band's center (a no-op on a full-frame band). Use it for 3D heroes, then set the distance so the object fits the band's width (see the scene template).
+- `E.fitSize(ctx, text, o, maxW)` returns the largest size, up to `o.size`, at which the text fits `maxW`. Hero type sized for a 1920-wide frame overflows a 1080-wide one; fit it to `E.SAFE.w` divided by the largest scale its move reaches (a word popping in from 1.6× fits `E.SAFE.w / 1.6`), or enter from below 1.
+- `E.plateFit(E, v)` returns `'cover'` when the clip's shape matches the canvas and `'contain'` (a window) when it does not. Pass it as every plate's `fit` in a scene that renders on more than one canvas.
+- `node tools/still.mjs --safe` outlines the band in magenta. The HUD draws it (even at `alpha:0`), so the `hud` entry must be in `TIMELINE`. Never pass `--safe` to a delivery render.
 
 ## The E object
 
@@ -104,7 +105,7 @@ This is the default compositing mode. Footage is drawn exactly as generated, and
 - `E.drawPlate(E, v, { fit:'cover'|'contain', zoom:1, x:0, y:0, rot:0, crop:[x,y,w,h] (image UV, y down), mirror:false, opacity:1, matte:false, invert:false, feather:0.12 })` draws into the current render target.
   - `matte:true` draws only the subject (alpha from the matte). `invert:true` draws only the background.
   - `x` and `y` are px offsets at 1080p scale (multiplied by `E.SCALE` internally).
-  - `fit:'cover'` fills the canvas and crops the clip when the ratios differ; `fit:'contain'` shows the whole clip as a band or window. A 16:9 clip on a portrait canvas is windowed, never cover-cropped to fill (`pipeline.md` §9).
+  - `fit:'cover'` fills the canvas and crops the clip when the ratios differ; `fit:'contain'` shows the whole clip as a band or window. Use `fit: E.plateFit(E, v)` so a 16:9 clip on a portrait canvas is windowed, never cover-cropped to fill (`pipeline.md` §9).
 - **Layer recipe** ("type behind the subject"): `drawPlate(v)`, then MID graphics (a `blitG2D` or a 3D render), then `drawPlate(v, {matte:true})`, then FRONT graphics.
 - **Backdrop replacement** for plates shot on a flat color cyc: draw a color field, then `drawPlate(v, {matte:true})`. The backdrop becomes your color and the subject is untouched (the floor shadow is lost). Run `fixmatte.py` on those clips first.
 - `E.plateRect(E, v, opts)` gives `{x, y, w, h, cx, cy, rot}` in screen px. `E.plateToScreen(E, v, [u, v], opts)` gives `[x, y]` in screen px (E.W × E.H, y down) for a video-UV point. Pass the same opts you used for `drawPlate`.
@@ -148,7 +149,7 @@ A persistent frame glues 2D, 3D and footage sections into one piece, and its sub
 ## Timeline, variants and project config
 
 - `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?, canvas?}`. One file per section, with hard cuts at boundaries on downbeats.
-- **Per-canvas entries:** `canvas:'portrait'` (or a list of orientations) renders the entry only on that canvas, `--only` included. Use it for a section that needs its own layout per ratio: tag the landscape file `canvas:'landscape'` and its portrait twin `canvas:'portrait'`. Entries without `canvas` render everywhere.
+- **Per-canvas entries:** `canvas:'portrait'` (or a list of orientations) renders the entry only on that canvas, `--only` included; tags are case-insensitive, an unknown one stops the render with an error, and so does an `--only` that leaves nothing to render. Use it for a section that needs its own layout per ratio: tag the landscape file `canvas:'landscape'` and its portrait twin `canvas:'portrait'`. Entries without `canvas` render everywhere.
 - **Variants:** give alternate versions of a section (an ending, a hook) `variant:'a'|'b'|'c'`. Only `a` renders unless you pass `--variant b`, which lets you deliver several cuts from one project. A variant may run past the song; `render.mjs` pads silence (`apad`).
 - `CANVAS` and `SAFE` set the canvas and its safe band (see [Canvas and safe band](#canvas-and-safe-band)). `POST` in timeline.js sets project-wide post defaults. `HUD` configures the frame.
 

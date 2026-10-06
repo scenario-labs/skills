@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  canvasTags,
   centerOnSafe,
   onCanvas,
   orientation,
   parseCanvas,
+  plateFit,
   resolveCanvas,
   safeInsets,
   safeRect,
@@ -70,6 +72,13 @@ describe("safe band", () => {
     expect(safeInsets(1080, 1920, SAFE)).toEqual(TALL_SAFE);
   });
 
+  it("keeps the default for every side a partial override leaves out", () => {
+    expect(safeInsets(1080, 1920, { portrait: { top: 0.2 } })).toEqual({
+      ...TALL_SAFE,
+      top: 0.2,
+    });
+  });
+
   it("keeps the landscape rect exactly the canvas, so landscape layouts do not move", () => {
     expect(safeRect(1920, 1080, safeInsets(1920, 1080))).toEqual({
       x: 0,
@@ -127,5 +136,26 @@ describe("orientation and onCanvas", () => {
     expect(
       onCanvas({ id: "a", canvas: ["portrait", "square"] }, "square"),
     ).toBe(true);
+    expect(onCanvas({ id: "a", canvas: " Portrait " }, "portrait")).toBe(true);
+  });
+
+  it("throws on a tag it cannot read instead of dropping the section", () => {
+    expect(canvasTags({ id: "a" })).toBeNull();
+    for (const canvas of ["vertical", "9:16", ["portrait", "tall"]])
+      expect(() => canvasTags({ id: "hook_v", canvas })).toThrow(/hook_v/);
+  });
+});
+
+describe("plateFit", () => {
+  const clip = (w: number, h: number) => ({ meta: { w, h } });
+  it("fills the frame when the clip's shape matches the canvas", () => {
+    expect(plateFit({ W: 1920, H: 1080 }, clip(1280, 720))).toBe("cover");
+    expect(plateFit({ W: 540, H: 960 }, clip(720, 1280))).toBe("cover");
+  });
+
+  it("windows a clip whose shape is far from the canvas", () => {
+    expect(plateFit({ W: 1080, H: 1920 }, clip(1920, 1080))).toBe("contain");
+    expect(plateFit({ W: 1080, H: 1080 }, clip(1920, 1080))).toBe("contain");
+    expect(plateFit({ W: 1920, H: 1080 }, clip(720, 1280))).toBe("contain");
   });
 });

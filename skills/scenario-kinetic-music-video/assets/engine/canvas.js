@@ -7,7 +7,8 @@ export const PRESETS = {
 };
 
 // Platform UI covers the edges of a 9:16 feed: top bar, caption and buttons at the bottom, an action rail on the right.
-// Fractions of the canvas, authoring-time values (the band scenario-formats and scenario-video-ads compose to).
+// Fractions of the canvas, authoring-time values derived from the band scenario-formats and scenario-video-ads compose to
+// (6 to 13% per side there; the wider inset goes on the right, where the action rail sits).
 export const TALL_SAFE = { top: 0.14, bottom: 0.35, left: 0.06, right: 0.13 };
 const FULL = { top: 0, bottom: 0, left: 0, right: 0 };
 
@@ -46,12 +47,11 @@ export function orientation(w, h) {
   return w === h ? "square" : h > w ? "portrait" : "landscape";
 }
 
-// Insets for this canvas. timeline.js SAFE overrides per orientation, e.g. { landscape: { top: 0.1, bottom: 0.1 } }.
-// Without one, a 9:16-tall canvas gets TALL_SAFE and anything wider keeps the full frame.
+// Insets for this canvas: TALL_SAFE on a 9:16-tall canvas, the full frame on anything wider. timeline.js SAFE overrides
+// sides per orientation, e.g. { portrait: { top: 0.2 } }; the sides it does not name keep their default.
 export function safeInsets(w, h, overrides) {
-  const o = overrides?.[orientation(w, h)];
-  if (o) return { ...FULL, ...o };
-  return h / w >= 1.7 ? { ...TALL_SAFE } : { ...FULL };
+  const base = h / w >= 1.7 ? TALL_SAFE : FULL;
+  return { ...base, ...(overrides?.[orientation(w, h)] ?? {}) };
 }
 
 // Safe band in pixels of a W x H canvas.
@@ -73,7 +73,32 @@ export function centerOnSafe(cam, W, H, R) {
   return cam;
 }
 
+// The orientations a TIMELINE entry renders on, or null for all. A tag it cannot read throws, so a typo fails the render
+// instead of silently dropping the section on every canvas.
+export function canvasTags(entry) {
+  if (entry.canvas == null) return null;
+  const tags = []
+    .concat(entry.canvas)
+    .map((t) => String(t).trim().toLowerCase());
+  const bad = tags.filter((t) => !Object.hasOwn(PRESETS, t));
+  if (bad.length)
+    throw new Error(
+      `timeline entry ${entry.id}: canvas ${JSON.stringify(entry.canvas)} must be landscape, portrait or square`,
+    );
+  return tags;
+}
+
 // A TIMELINE entry with `canvas: 'portrait'` (or a list of orientations) renders only on that canvas; without one, on all.
 export function onCanvas(entry, orient) {
-  return entry.canvas == null || [].concat(entry.canvas).includes(orient);
+  const tags = canvasTags(entry);
+  return tags == null || tags.includes(orient);
+}
+
+// Plate fit for a clip on this canvas: 'cover' when their shapes are close enough to fill the frame, otherwise 'contain'
+// (the whole clip as a window), so a 16:9 clip on a 9:16 canvas is never cropped to a third of its width.
+// Pass the same fit to drawPlate, plateRect and plateToScreen.
+export function plateFit(E, v) {
+  const va = v.meta.w / v.meta.h,
+    sa = E.W / E.H;
+  return Math.max(va / sa, sa / va) <= 1.34 ? "cover" : "contain";
 }

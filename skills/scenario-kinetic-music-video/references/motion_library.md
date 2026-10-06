@@ -206,10 +206,11 @@ Settle time is about 4/(z·√k) s.
 
 Layout rules for a 9:16 canvas (`CANVAS = 'portrait'`), written when the engine gained one. Unlike the rest of this file, they have not been through a production yet.
 
-- **The frame is narrow and tall.** A hero line breaks into stacks of one or two words, each sized with `E.fitSize` to `E.SAFE.w`. A wide poster slam becomes a word pile-up down the band.
-- **Type sits above or below the subject, not beside it.** The vertical banner on the empty third becomes a horizontal band above the head or below the chest.
+- **The frame is narrow and tall.** A hero line breaks into stacks of one or two words, each sized with `E.fitSize` to `E.SAFE.w` divided by the largest scale its move reaches, or entering from below 1 so the overshoot stays inside the band. A wide poster slam becomes a word pile-up down the band.
+- **Short sung lines.** The house subtitle shrinks a line to fit the band, so a line much over 45 characters turns small: split it in `analysis/lyrics.txt`.
+- **Type sits above the subject, not beside it.** The vertical banner on the empty third becomes a horizontal band above the head. Below the chest works only while it stays above the bottom 35%, where the platform caption sits.
 - **Words, logos and faces stay inside `E.SAFE`.** Plates, color fields and full-bleed graphics fill the whole canvas behind them, so the platform UI covers background, never the read.
 - **Moves run along the long axis:** slides, smear slams and wipes travel up and down.
 - **3D heroes:** wrap the camera in `E.safeCamera(cam)` and fit the object to the band's width, as the scene template does.
 - **Cinema moments:** `letterbox` is a thin strip on portrait. Use a boxed plate (`fit:'contain'`) with type above and below instead.
-- **The first 3 seconds:** the hook lands big and centered in the band, and reads with the sound off, because feeds autoplay muted.
+- **The first 3 seconds:** the hook lands big and centered in the band, and reads with the sound off, since many viewers scroll muted.

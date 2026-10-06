@@ -44,7 +44,7 @@ This creates `audio/master.*`, the `engine/` template, `tools/` (with the matte 
   - For a real person, use only their own photos with their consent. Never generate other real people.
 - **Style frames: one per shot.** Before any video, generate a still at the canvas ratio (`CANVAS`: 16:9, or 9:16 on a portrait project) for every planned shot in its section's look. Same model, with the sheet and an identity crop as references, the same ratio, high quality (fields from `model_schema_get`). Every prompt needs:
   - the look's art style, named explicitly ("drawn only with glowing gold light lines on pure black", "flat tangerine cyc", "B&W 35mm film")
-  - composition that leaves **negative space for the type** ("framed on the right third, left two thirds empty"; on portrait, "subject in the lower half, upper third empty"). On portrait, keep the face and that space inside the safe band: platform UI covers roughly the top 14%, the bottom 35%, 6% on the left and 13% on the right (authoring-time values, the defaults of `E.SAFE`)
+  - composition that leaves **negative space for the type** ("framed on the right third, left two thirds empty"; on portrait, "face at about 40% of the frame height, empty space above it for type, nothing that must read in the bottom third"). On portrait, keep the face and the type space inside the safe band: platform UI covers roughly the top 14%, the bottom 35%, 6% on the left and 13% on the right (authoring-time values, the defaults of `E.SAFE`). The subject's body may run below it.
   - a set the compositor can use (black void with a hard rim light, a flat color cyc, or a white high-key set)
   - "No text, no letters, no logos" (all real type is done in code)
   - Contact-sheet all the frames and show the user before spending on video. A style frame is the cheapest paid step; price the video steps with `dry_run`, one run per distinct payload (clip length and resolution move the price), and total them. Ask the user to approve the look and the total before launching; unattended, stop if no budget or no explicit team and project was given.
@@ -57,9 +57,9 @@ Find current models with `recommend` using the capability string for each lane (
 
 | shot                              | route                                                                                                                          | key params                                                                                                                               |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **any action from a style frame** | image-to-video                                                                                                                 | first frame, duration, resolution, native audio off                                                                                      |
+| **any action from a style frame** | image-to-video                                                                                                                 | first frame, duration, resolution, the canvas ratio where the schema has an aspect field, native audio off                               |
 | **dance locked to the song**      | reference-image and reference-audio video + a synthesized beat track                                                           | reference images (sheet, crop or frame), the beat track as reference audio, duration, the canvas ratio, native audio off; then beat-warp |
-| **lip-sync** (preferred)          | audio-to-video from a style frame and a vocal slice                                                                            | first frame, the vocal slice as audio, resolution, an optional camera-motion preset                                                      |
+| **lip-sync** (preferred)          | audio-to-video from a style frame and a vocal slice                                                                            | first frame, the vocal slice as audio, resolution, the canvas ratio where the schema has one, an optional camera-motion preset           |
 | **lip-sync** (alternative)        | reference-audio video with the vocal stem, then a lip-sync correction model (video and audio in, cut-off sync mode if offered) | measure with `lipsync_check.py`                                                                                                          |
 | **a moment code does better**     | build it in JS instead (node networks, constellations, charts, UI, particles, any text)                                        | generated versions of these looked worse and were replaced                                                                               |
 
@@ -126,23 +126,23 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
 
 - **Freezes:** check every hit from `freezedetect`. A held footage frame (a clip that ran out, or a slot clip shown before its slot) was rejected as "static". Intentional holds of pure graphics are fine if something still moves.
 - Check each section boundary at −1/0/+1 frames.
-- **Portrait safe band:** `node tools/still.mjs --range 0:<end>:2 --scale 0.5 --safe --dir out/safe --sheet safe --cols 6`, then Read the sheet. Every word, logo and face sits inside the dashed band; full-bleed footage and graphics may run behind it.
+- **Portrait safe band:** for each 20 s window, `node tools/still.mjs --range <a>:<a+20>:1 --scale 0.5 --safe --dir out/safe/<a> --sheet safe --cols 5`, then Read each sheet. Every word, logo and face sits inside the dashed band; full-bleed footage and graphics may run behind it.
 - Do a global look pass: a still sheet across all sections, then tune `POST`, the palette and the HUD theme before the final render.
 
 ## 8. Delivery
 
 ```bash
-# landscape canvas: the X-ready file
+# landscape canvas: the X-ready file (YouTube takes the master itself)
 ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
 ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -b:v 21M -maxrate 25M -bufsize 42M -pass 2 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_x_1080p60.mp4
-# portrait: one vertical upload for TikTok, Reels and Shorts (the platforms re-encode, so keep quality high);
-# in a two-ratio project the input is the portrait render (§9)
+# portrait canvas: one vertical upload for TikTok, Reels and Shorts (the platforms re-encode, so keep quality high)
 ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
 # teaser: END is the teaser length in seconds, FADE = END - 0.6
-ffmpeg -i out/final/vN.mp4 -t "$END" -af "afade=t=out:st=$FADE:d=0.6" out/final/teaser.mp4
+ffmpeg -i out/final/vN.mp4 -t "$END" -af "afade=t=out:st=$FADE:d=0.6" out/final/vN_teaser.mp4
 ```
 
 - **Vertical length:** platform caps on vertical uploads change often (Shorts, Reels and TikTok each set their own); check the target's current limit before the final render, and cut the teaser when the song runs longer.
+- **Two ratios:** the renders are `vN_16x9.mp4` and `vN_9x16.mp4` (§9). Run each encode on its own canvas's render and carry the suffix into every output (`vN_9x16_vertical_1080x1920.mp4`, `vN_9x16_teaser.mp4`), so nothing collides.
 - **Name outputs distinctly.** macOS filenames are case-insensitive, so an encode named like its input with different case overwrites the input mid-encode.
 - **Variants:** render each with `--variant`, and name the files by what differs (`_ending_b.mp4`).
 - **Stills:** `node tools/still.mjs --t <times> --scale 1 --dir out/stills` gives lossless PNGs at the canvas size (1920×1080 or 1080×1920) straight from the engine.
@@ -150,14 +150,14 @@ ffmpeg -i out/final/vN.mp4 -t "$END" -af "afade=t=out:st=$FADE:d=0.6" out/final/
 
 ## 9. Two ratios from one project
 
-Only when the user asks for both: one canvas is the default. Everything in code is shared, so the analysis, lyrics, STYLE, TREATMENT, scenes and HUD render on the second canvas for free. Footage is not.
+Only when the user asks for both: one canvas is the default. Everything in code is shared, so the analysis, lyrics, STYLE, TREATMENT, scenes and HUD render on the second canvas at no generation cost. Footage is not.
 
-- **Pick the primary canvas** (the platform that matters most) and set it as `CANVAS`. Style frames and footage are generated at its ratio, as in §3 and §4.
+- **Pick the primary canvas,** the platform that matters most, and set it as `CANVAS`. When the user names both without ranking them, ask; unattended, landscape. Style frames and footage are generated at its ratio, as in §3 and §4.
 - **Per shot on the secondary canvas,** cheapest first:
-  1. **Window it.** Play the primary clip whole inside the other frame (`drawPlate` with `fit:'contain'`, a card, a split panel or a type window, per `motion_library.md` §5) and let graphics fill the rest. Free, and it reads as design.
+  1. **Window it.** Play the primary clip whole inside the other frame (a band, a card, a split panel or a type window, per `motion_library.md` §5) and let graphics fill the rest. Free, and it reads as design.
   2. **Regenerate it** at the secondary ratio: a new style frame composed for that ratio (same references, same look), then the same footage route. It costs what the original cost, so `dry_run` it. Keep it for the shots that must fill the frame: the frame-0 hook, lip-sync close-ups and the finale.
 - **Never cover-crop 16:9 to fill 9:16.** It keeps under a third of the width (608 of 1920 px on a 1080p clip, 405 of 1280 on 720p), upscaled about 1.8 to 2.7 times, and it usually cuts the subject.
 - **Budget:** quote both canvases before launching: the primary footage plus the regenerated shots. Tell the user which shots are windowed on which canvas.
-- **Scenes:** layouts that read `E.W`, `E.H` and `E.SAFE` hold on both. When a section cannot (a wide poster slam), give it a second scene file and tag the pair in `TIMELINE`: `canvas: 'landscape'` on the original, `canvas: 'portrait'` on the new one. A regenerated shot is a new clip with its own prep (§5); the portrait scene loads it.
-- **Render and verify each canvas:** `node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --canvas portrait --out out/final/vN_9x16.mp4` (the primary renders without `--canvas`). Run §7's checks on each file, plus the safe-band sheet on the portrait one (`still.mjs --canvas portrait --safe`).
-- **Deliver** one set per canvas, named by ratio (`_16x9`, `_9x16`).
+- **Scenes:** every plate takes `fit: E.plateFit(E, v)` (and the same options in `plateToScreen`), which fills the frame when the clip matches the canvas and windows it when it does not; `drawPlate`'s own default is `cover`, which would crop. A regenerated shot is a new clip with its own prep (§5), picked by canvas in the same scene (`E.loadVideo(E.ORIENT === 'portrait' ? 'hook_v' : 'hook')`). Give a section a second scene file only when its layout diverges (a wide poster slam), and tag the pair in `TIMELINE`: `canvas: 'landscape'` on one, `canvas: 'portrait'` on the other.
+- **Render and verify each canvas:** `node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/vN_16x9.mp4`, then the same with `--canvas portrait --out out/final/vN_9x16.mp4` (swap them when portrait is the primary). Run §7's checks on each file, plus the safe-band sheets on the portrait one (`still.mjs --canvas portrait --safe` when the primary is landscape).
+- **Deliver** one set per canvas, suffixed by ratio as in §8.
