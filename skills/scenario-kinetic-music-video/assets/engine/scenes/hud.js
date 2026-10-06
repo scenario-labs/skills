@@ -1,5 +1,6 @@
 // Persistent frame (z=100). It holds 2D, 3D and footage sections together as one piece, and its subtitle
 // track guarantees every sung word is readable somewhere. All content comes from `HUD` in engine/timeline.js.
+// It lays out inside E.SAFE, so on a 9:16 canvas nothing sits under the platform's own UI.
 // Scenes steer it per frame:
 //   E.hud = { alpha:1, sub:true, corners:true, label:'', theme:'dark'|'light', ink:null, accent:null }
 //   theme 'dark' = light ink for dark frames (default), 'light' = dark ink for white/colour frames. ink/accent override colours.
@@ -87,6 +88,12 @@ export default {
       if (t >= s[0]) si = i;
     });
     const sec = CFG.sections[si];
+    // Everything anchors to the safe band (the full frame on landscape, inside the platform UI on 9:16).
+    const R = E.SAFE,
+      left = R.x,
+      top = R.y,
+      right = R.x + R.w,
+      bottom = R.y + R.h;
     const M = 40 * S,
       L = 22 * S;
     c.textBaseline = "middle";
@@ -98,10 +105,10 @@ export default {
       c.strokeStyle = ink;
       c.lineWidth = 1.5 * S;
       [
-        [M, M, 1, 1],
-        [E.W - M, M, -1, 1],
-        [M, E.H - M, 1, -1],
-        [E.W - M, E.H - M, -1, -1],
+        [left + M, top + M, 1, 1],
+        [right - M, top + M, -1, 1],
+        [left + M, bottom - M, 1, -1],
+        [right - M, bottom - M, -1, -1],
       ].forEach(([x, y, sx, sy]) => {
         c.beginPath();
         c.moveTo(x, y + sy * L);
@@ -111,8 +118,8 @@ export default {
       });
       c.font = `600 ${14 * S}px "JetBrains Mono"`;
       c.fillStyle = ink;
-      const ly = M + 12 * S;
-      let lx = M + 12 * S;
+      const ly = top + M + 12 * S;
+      let lx = left + M + 12 * S;
       // top-left: optional mark + title
       if (markPath) {
         const mh = 14 * S,
@@ -138,40 +145,40 @@ export default {
       const bars = CFG.bars ?? E.A?.downbeats?.length ?? 0;
       c.fillText(
         `${pad2(si + 1)} ${sec[1]}${H.label ? "  ·  " + H.label : ""}`,
-        E.W - M - 12 * S,
+        right - M - 12 * S,
         ly,
       );
       c.globalAlpha = 0.6 * H.alpha;
       c.fillText(
         `BAR ${pad2(Math.max(1, b.bar + 1))}/${bars}`,
-        E.W - M - 12 * S - 66 * S,
+        right - M - 12 * S - 66 * S,
         ly + 22 * S,
       );
       for (let k = 0; k < 4; k++) {
         c.globalAlpha = (k === b.inBar ? 1 : 0.25) * H.alpha;
         c.fillStyle = k === b.inBar ? acc : ink;
         c.fillRect(
-          E.W - M - 12 * S - (3 - k) * 14 * S - 9 * S,
+          right - M - 12 * S - (3 - k) * 14 * S - 9 * S,
           ly + 17 * S,
           9 * S,
           9 * S,
         );
       }
       // bottom-right: counters (the spine), stacked upwards
-      const by = E.H - M - 12 * S;
+      const by = bottom - M - 12 * S;
       (CFG.counters ?? []).forEach((ct, j) => {
         c.globalAlpha = (j === 0 ? 0.9 : 0.6) * H.alpha;
         c.fillStyle = ink;
         c.fillText(
           `${ct.label ? ct.label + " " : ""}${fmt(keyed(ct.keys, t, ct.interp), ct)}${ct.suffix ?? ""}`,
-          E.W - M - 12 * S,
+          right - M - 12 * S,
           by - j * 20 * S,
         );
       });
       // bottom-left: progress hairline
       if (CFG.progress !== false) {
         const p = clamp(t / E.dur),
-          px = M + 12 * S,
+          px = left + M + 12 * S,
           pw = 220 * S;
         c.globalAlpha = 0.25 * H.alpha;
         c.fillStyle = ink;
@@ -183,19 +190,29 @@ export default {
     }
     c.restore();
     if (H.sub) drawSub(c, E, t, H, dark, ink, TH.sub ?? acc);
+    if (E.debugSafe) {
+      c.save();
+      c.strokeStyle = "#ff00ff";
+      c.lineWidth = 2 * S;
+      c.setLineDash([12 * S, 8 * S]);
+      c.strokeRect(E.SAFE.x, E.SAFE.y, E.SAFE.w, E.SAFE.h);
+      c.restore();
+    }
     g.commit();
     E.renderer.setRenderTarget(rt);
     E.blitG2D(E, g, 1.0);
   },
 };
-// subtitle track: karaoke mono line, bottom-left above the progress line
+// subtitle track: karaoke mono line, bottom-left above the progress line, shrunk to fit the safe band
 function drawSub(c, E, t, H, dark, ink, bar) {
   const ln = E.lineAt(t, 0.25);
   if (!ln || t > ln.e + 0.5) return;
-  const S = E.SCALE;
+  const S = E.SCALE,
+    R = E.SAFE;
   const size = 24 * S,
-    x = 92 * S,
-    y = E.H - 92 * S;
+    x = R.x + 92 * S,
+    y = R.y + R.h - 92 * S,
+    maxW = R.w - 92 * S - 52 * S;
   const fade =
     clamp((t - (ln.s - 0.25)) / 0.08) * (1 - clamp((t - (ln.e + 0.35)) / 0.15));
   c.save();
@@ -215,6 +232,7 @@ function drawSub(c, E, t, H, dark, ink, bar) {
     dimColor: dark ? "rgba(255,255,255,0.32)" : "rgba(0,0,0,0.3)",
     lineLead: 0.25,
     tail: 0.35,
+    maxW,
   });
   c.restore();
 }

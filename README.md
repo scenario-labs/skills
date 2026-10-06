@@ -169,11 +169,11 @@ Video generation and editing, music, sound effects, voice, and speech.
 
 ### Socials
 
-Made for social feeds: kinetic-typography lyric videos and motion-design music videos with type timed to the sung words, delivered as a master, an X-ready upload, and a teaser cut.
+Made for social feeds: kinetic-typography lyric videos and motion-design music videos with type timed to the sung words, in landscape or vertical 9:16, delivered as a master, a platform upload, and a teaser cut.
 
-| Skill                                                                        | Use it for                                                                                                                                            |
-| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [scenario-kinetic-music-video](skills/scenario-kinetic-music-video/SKILL.md) | Kinetic-typography music video: style frames and footage from Scenario, a JavaScript engine for lyric type on sung onsets, mattes, per-section agents |
+| Skill                                                                        | Use it for                                                                                                                                                               |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [scenario-kinetic-music-video](skills/scenario-kinetic-music-video/SKILL.md) | Kinetic-typography music video, landscape or 9:16: style frames and footage from Scenario, a JavaScript engine for lyric type on sung onsets, mattes, per-section agents |
 
 ### Consistency and custom models
 

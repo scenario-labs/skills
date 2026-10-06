@@ -5,7 +5,7 @@
 //   const v = await E.loadVideo('dance_hook1');           // in load()
 //   const mat = makeRotoMaterial(E, { dots: 1, edges: 0.8 }); // in load()
 //   await v.frame(localT); mat.uniforms.tVideo.value = v.tex; // in prepare()/render()
-//   mesh = new THREE.Mesh(new THREE.PlaneGeometry(16/9*h, h), mat)  -> place in any 3D scene, or use E.drawRoto(...) fullscreen.
+//   mesh = new THREE.Mesh(new THREE.PlaneGeometry((v.meta.w / v.meta.h) * h, h), mat)  -> the clip's own aspect; place in any 3D scene, or use E.drawRoto(...) fullscreen.
 import * as THREE from "three";
 
 let _glyphTex = null;

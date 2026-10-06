@@ -46,7 +46,7 @@ export default {
     g = E.makeG2D(E.W, E.H); // one full-res 2D surface, reused for MID and FRONT
     // 3D hero type: emissive front face (HDR > 1 blooms on dark looks), darker extrusion sides
     scene = new THREE.Scene();
-    cam = new THREE.PerspectiveCamera(40, E.W / E.H, 0.1, 200);
+    cam = E.safeCamera(new THREE.PerspectiveCamera(40, E.W / E.H, 0.1, 200)); // origin = center of the safe band
     cam.position.set(0, 0, 10);
     word = new THREE.Mesh(
       E.text3D("HELLO", { font: "ArchivoBlack", size: 1.6, depth: 0.45 }),
@@ -56,6 +56,15 @@ export default {
       ],
     );
     scene.add(word);
+    // keep the word inside 80% of the safe band's width on any canvas (a portrait frame is narrower than it is tall)
+    word.geometry.computeBoundingBox();
+    const bb = word.geometry.boundingBox,
+      tanHalfW = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * cam.aspect;
+    const fill = (0.8 * E.SAFE.w) / E.W;
+    cam.position.z = Math.max(
+      10,
+      (bb.max.x - bb.min.x) / fill / (2 * tanHalfW),
+    );
   },
   async prepare(E, t) {
     if (v) await v.frame(Math.max(0, t - SLOT));
@@ -68,12 +77,17 @@ export default {
     const w = E.words.find((x) => x.w.toUpperCase() === "HELLO");
     if (v) {
       E.drawPlate(E, v); // full-frame clean plate (cover)
-      g.clear(); // MID: giant type behind the subject
-      E.drawText(c, "HELLO.", E.W / 2, E.H * 0.45, {
-        font: "Archivo",
-        weight: 900,
-        stretch: "125%",
-        size: 420 * S,
+      g.clear(); // MID: giant type behind the subject, fitted to the safe band so it holds on a portrait canvas
+      const hero = { font: "Archivo", weight: 900, stretch: "125%" };
+      const R = E.SAFE;
+      E.drawText(c, "HELLO.", R.x + R.w / 2, R.y + R.h * 0.45, {
+        ...hero,
+        size: E.fitSize(
+          c,
+          "HELLO.",
+          { ...hero, size: 420 * S },
+          E.SAFE.w * 0.95,
+        ),
         color: E.PAL.accent,
         align: "center",
         s: w ? E.popScale(t, w.s, { k: 300, z: 0.45, from: 1.6 }) : 1,

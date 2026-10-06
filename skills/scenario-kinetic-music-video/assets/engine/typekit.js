@@ -93,6 +93,13 @@ export function measure(ctx, text, o = {}) {
   return w;
 }
 
+// Largest size, up to o.size, at which `text` fits maxW: hero type sized for 1920 wide overflows a portrait canvas.
+export function fitSize(ctx, text, o, maxW) {
+  const size = o.size ?? 120;
+  const w = measure(ctx, text, { ...o, size });
+  return w > maxW ? size * (maxW / w) : size;
+}
+
 // Per-letter staggered pop. Letters of `text` start at s + i*stagger. o.dy = vertical travel in px, o.jitter.
 export function drawStagger(ctx, text, x, y, t, s, o = {}) {
   const st = o.stagger ?? 0.025,
@@ -119,15 +126,23 @@ export function drawStagger(ctx, text, x, y, t, s, o = {}) {
 }
 
 // Karaoke line: all words laid out; each lights up (color + punch) at its onset. Returns layout boxes.
+// o.maxW shrinks the whole line to fit that width (a long line on a narrow portrait canvas) instead of running off it.
 export function drawKaraoke(ctx, E, line, t, o = {}) {
-  const size = o.size ?? 64;
-  const gap = size * (o.gap ?? 0.28);
+  let size = o.size ?? 64;
+  let gap = size * (o.gap ?? 0.28);
   const ws = line.words.map((w) => ({
     ...w,
     txt: o.upper === false ? w.w : w.w.toUpperCase(),
   }));
-  const widths = ws.map((w) => measure(ctx, w.txt, { ...o, size }));
-  const tot = widths.reduce((a, b) => a + b, 0) + gap * (ws.length - 1);
+  let widths = ws.map((w) => measure(ctx, w.txt, { ...o, size }));
+  let tot = widths.reduce((a, b) => a + b, 0) + gap * (ws.length - 1);
+  if (o.maxW && tot > o.maxW) {
+    const k = o.maxW / tot; // width scales linearly with size, tracking included
+    size *= k;
+    gap *= k;
+    widths = widths.map((w) => w * k);
+    tot = o.maxW;
+  }
   let x =
     o.align === "left" ? o.x : o.align === "right" ? o.x - tot : o.x - tot / 2;
   const boxes = [];
@@ -155,14 +170,15 @@ export function drawKaraoke(ctx, E, line, t, o = {}) {
   return boxes;
 }
 
-// House subtitle: small mono uppercase, bottom-left, sung words bright, upcoming words dim. The HUD draws this
-// automatically when E.hud.sub is true; scenes that show the lyric big should set E.hud.sub = false.
+// House subtitle: small mono uppercase, bottom-left of the safe band, sung words bright, upcoming words dim. The HUD
+// draws this automatically when E.hud.sub is true; scenes that show the lyric big should set E.hud.sub = false.
 export function drawSubtitle(ctx, E, t, o = {}) {
   const ln = E.lineAt(t, 0.25);
   if (!ln || t > ln.e + 0.5) return;
+  const R = E.SAFE;
   const size = (o.size ?? 26) * E.SCALE;
-  const x = (o.x ?? 96) * E.SCALE,
-    y = (o.y ?? 990) * E.SCALE;
+  const x = o.x != null ? o.x * E.SCALE : R.x + 96 * E.SCALE,
+    y = o.y != null ? o.y * E.SCALE : R.y + R.h - 90 * E.SCALE;
   const fade =
     clamp((t - (ln.s - 0.25)) / 0.08) * (1 - clamp((t - (ln.e + 0.35)) / 0.15));
   ctx.save();
@@ -182,6 +198,7 @@ export function drawSubtitle(ctx, E, t, o = {}) {
     dimColor: "rgba(255,176,0,0.35)",
     lineLead: 0.25,
     tail: 0.35,
+    maxW: o.maxW ?? R.x + R.w - x - 52 * E.SCALE,
   });
   ctx.restore();
 }

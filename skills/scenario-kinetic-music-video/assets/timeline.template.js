@@ -1,11 +1,22 @@
+// Delivery canvas, chosen once in the brief: 'landscape' (1920x1080), 'portrait' (1080x1920), 'square' or 'WxH'.
+// render.mjs/still.mjs --canvas overrides it to render the same project at a second ratio.
+export const CANVAS = "landscape";
+
+// Optional safe-band override per orientation, as fractions of the canvas. A 9:16 canvas already defaults to the
+// platform-UI band (top 0.14, bottom 0.35, left 0.06, right 0.13); everything else defaults to the full frame.
+// export const SAFE = { landscape: { top: 0.1, bottom: 0.1, left: 0.1, right: 0.1 } };
+
 // Master edit decision list. One entry per section scene (hard cuts at section boundaries, on downbeats or just
 // before a vocal pickup), plus the global HUD on top. Scenes render only inside [start, end). id = file name in engine/scenes/.
 //   file:    optional, use another file than <id>.js
 //   variant: optional alternate version of a section (e.g. two endings). Only variant 'a' renders unless you pass --variant b.
 //            Entries without a variant always render.
+//   canvas:  optional 'portrait' | 'landscape' | 'square' (or a list): the entry renders only on that canvas. Use it when one
+//            section needs a different layout per ratio; entries without it render on every canvas.
 export const TIMELINE = [
   { id: "intro", file: "_template.js", start: 0.0, end: 16.66, z: 0 }, // replace with your own scene files
   // { id: 'hook1',  start: 16.66, end: 37.60, z: 0 },
+  // { id: 'hook1_v', start: 16.66, end: 37.60, z: 0, canvas: 'portrait' }, // with canvas: 'landscape' on hook1
   // { id: 'outro',   start: 140.0, end: 150.0, z: 0, variant: 'a' },
   // { id: 'outro_b', start: 140.0, end: 153.0, z: 0, variant: 'b' },     // may run past the song: render.mjs pads silence
   { id: "hud", start: 0.0, end: 9999, z: 100 },

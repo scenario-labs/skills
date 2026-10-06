@@ -10,11 +10,23 @@ const TIMELINE = TL.TIMELINE;
 import * as roto from "./roto.js";
 import * as typekit from "./typekit.js";
 import * as plate from "./plate.js";
+import * as cv from "./canvas.js";
 
 const Q = new URLSearchParams(location.search);
 const SCALE = parseFloat(Q.get("scale") ?? "1");
-const W = Math.round(1920 * SCALE),
-  H = Math.round(1080 * SCALE);
+// A bad canvas value must reach window.__error (render.mjs reports it) instead of killing the module before boot.
+let CANVAS = cv.PRESETS.landscape,
+  canvasError = null;
+try {
+  CANVAS = cv.resolveCanvas(Q.get("canvas"), TL.CANVAS);
+} catch (e) {
+  canvasError = e;
+}
+const even = (n) => Math.max(2, 2 * Math.round(n / 2)); // H.264 4:2:0 needs even sides at every --scale
+const W = even(CANVAS[0] * SCALE),
+  H = even(CANVAS[1] * SCALE);
+const ORIENT = cv.orientation(W, H);
+const SAFE = cv.safeRect(W, H, cv.safeInsets(W, H, TL.SAFE));
 const ONLY = Q.get("only") ? Q.get("only").split(",") : null;
 
 const canvas = document.getElementById("c");
@@ -198,6 +210,11 @@ const E = {
   W,
   H,
   SCALE,
+  CANVAS, // [w, h] at scale 1
+  ORIENT, // 'landscape' | 'portrait' | 'square'
+  SAFE, // { x, y, w, h } in px: the band platform UI never covers (the full frame unless the canvas is 9:16-tall)
+  debugSafe: Q.has("safe"), // still.mjs --safe: the HUD outlines SAFE
+  safeCamera: (cam) => cv.centerOnSafe(cam, W, H, SAFE), // centers a PerspectiveCamera's frame on SAFE
   post: { ...POST_DEFAULT },
   hud: { ...HUD_DEFAULT },
   frame: 0,
@@ -212,6 +229,7 @@ const E = {
 window.E = E;
 
 async function boot() {
+  if (canvasError) throw canvasError;
   const [A, L] = await Promise.all([
     fetch("/engine/data/audio.json").then((r) => r.json()),
     fetch("/engine/data/lyrics.json").then((r) => r.json()),
@@ -239,6 +257,7 @@ async function boot() {
   E.layers = [];
   for (const entry of TIMELINE) {
     if (ONLY && !ONLY.includes(entry.id)) continue;
+    if (!cv.onCanvas(entry, ORIENT)) continue; // a scene laid out for the other canvas never renders, --only included
     if (
       !ONLY &&
       entry.variant &&
