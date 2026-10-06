@@ -62,6 +62,37 @@ class AlignPiecesTest(unittest.TestCase):
             with Image.open(self.cwd / "aligned" / name) as im:
                 self.assertEqual(im.size, (480, 240))
 
+    def test_places_an_unscaled_piece_to_the_pixel(self):
+        logo = Image.open(self.cwd / "logo.png").convert("RGBA")
+        exact = self.cwd / "exact"
+        exact.mkdir()
+        piece_at(logo, (41, 61, 161, 181), 1.0, (300, 300), (77, 33)).save(exact / "odd.png")
+        r = run("logo.png", "exact", "out", cwd=self.cwd)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        placed = json.loads((self.cwd / "out" / "align.json").read_text())["odd.png"]
+        self.assertEqual((placed["x"], placed["y"], placed["w"]), (41, 61, 120), placed)
+        self.assertFalse(placed["redrawn"])
+
+    def test_flags_a_piece_the_edit_redrew(self):
+        logo = Image.open(self.cwd / "logo.png").convert("RGBA")
+        piece = piece_at(logo, (40, 60, 161, 181), 1.0, (300, 300), (50, 50))
+        ImageDraw.Draw(piece).rectangle((80, 80, 140, 140), fill=(20, 200, 20, 255))
+        changed = self.cwd / "changed"
+        changed.mkdir()
+        piece.save(changed / "recolored.png")
+        r = run("logo.png", "changed", "out", cwd=self.cwd)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(json.loads((self.cwd / "out" / "align.json").read_text())["recolored.png"]["redrawn"])
+        self.assertIn("redrawn", r.stdout)
+
+    def test_a_missing_logo_touches_nothing(self):
+        self.assertEqual(run("logo.png", "pieces", "aligned", cwd=self.cwd).returncode, 0)
+        before = sorted(p.name for p in (self.cwd / "aligned").iterdir())
+        r = run("missing.png", "pieces", "aligned", "--force", cwd=self.cwd)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("not found", r.stderr)
+        self.assertEqual(sorted(p.name for p in (self.cwd / "aligned").iterdir()), before)
+
     def test_refuses_a_non_empty_output_without_force_and_clears_stale_pieces_with_it(self):
         self.assertEqual(run("logo.png", "pieces", "aligned", cwd=self.cwd).returncode, 0)
         again = run("logo.png", "pieces", "aligned", cwd=self.cwd)

@@ -21,9 +21,17 @@ def usage(code=1):
 
 
 def load(path):
-    raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", path, "-ac", "1", "-ar", str(SR),
-                          "-f", "f32le", "-"], capture_output=True, check=True).stdout
-    return np.frombuffer(raw, np.float32)
+    try:
+        raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", path, "-ac", "1", "-ar", str(SR),
+                              "-f", "f32le", "-"], capture_output=True, check=True).stdout
+    except FileNotFoundError:
+        sys.exit("ffmpeg is not on the PATH; install it first")
+    except subprocess.CalledProcessError as e:
+        sys.exit(f"ffmpeg could not read {path}: {e.stderr.decode(errors='replace').strip()}")
+    x = np.frombuffer(raw, np.float32)
+    if len(x) < SR:
+        sys.exit(f"{path}: under one second of audio")
+    return x
 
 
 def onset_strength(x):

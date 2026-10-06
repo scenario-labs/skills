@@ -71,6 +71,14 @@ class SongHitsTest(unittest.TestCase):
         self.assertIn("--force", again.stderr)
         self.assertEqual(run("song.wav", "hits.json", "--force", cwd=self.cwd).returncode, 0)
 
+    def test_explains_an_unreadable_file(self):
+        (self.cwd / "broken.mp3").write_bytes(b"not audio")
+        r = run("broken.mp3", "hits.json", cwd=self.cwd)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("could not read", r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
+        self.assertFalse((self.cwd / "hits.json").exists())
+
     def test_never_writes_over_the_song(self):
         before = (self.cwd / "song.wav").read_bytes()
         r = run("song.wav", "song.wav", "--force", cwd=self.cwd)
