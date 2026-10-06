@@ -30,7 +30,7 @@ Write one line per picture as `Image N (what it is) = JOB. What it lends. Do not
 | WEAR       | clothing or armor, worn as is    | what must stay visible: "The cat's own face stays visible; no human face mask."                               |
 | LAYOUT     | grid and composition             | the reference's own words: "Do not copy the word MONDAY."                                                     |
 
-Every job with its line from a kept run, plus the PROP, PATTERN, SHAPE and design-inspiration variants: [references/jobs.md](references/jobs.md). Eight kept picture and film prompts, from a 3D animated film still to a two-ink risograph poster: [references/kept-prompts.md](references/kept-prompts.md).
+Rarer jobs were tried on these sets but not kept, so treat them as untested: PROP (an object the subject holds), PATTERN (a repeated motif: "There is no creature in the scene"), and SHAPE (a silhouette: "Use only his silhouette ... as one giant solid flat cut-out shape"). WEAR also takes a design idea rather than the object: "a modest couture gown designed from this jellyfish ... Do not show a real jellyfish." Read [references/kept-prompts.md](references/kept-prompts.md) when the requested medium matches one of the eight kept sets (3D animated film, claymation, product photo, ukiyo-e print, fashion editorial, 16-bit pixel art, tilt-shift miniature, two-ink risograph poster), or to model a film prompt.
 
 Rules that held across eight kept sets of four or five references:
 

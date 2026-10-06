@@ -66,6 +66,8 @@
 !greyer
 !greys
 !greyscale
+!harbour
+!harbours
 !honour
 !honoured
 !honouring
@@ -105,6 +107,7 @@
 !moulding
 !mouldings
 !moulds
+!moustache
 !normalisable
 !normalisation
 !normalisations

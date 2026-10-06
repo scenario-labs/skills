@@ -1,6 +1,6 @@
 # Kept prompts
 
-Each prompt below produced a kept result. Pictures ran on a multi-reference image-edit model with the pictures as reference images in the numbered order; films ran on an image-to-video model with the picture as the first frame, 6 seconds, 720p, sound on. Spelling is American; the words are otherwise as run, including WHO, WHERE, STAR, and STAGE for the first two jobs.
+Each prompt below produced a kept result. Pictures ran on a multi-reference image-edit model with the pictures as reference images in the numbered order; films ran on an image-to-video model with the picture as the first frame, 6 seconds, 720p, sound on. Spelling is American; the words are otherwise as run, including WHO, WHERE, STAR, and STAGE for the main subject and the place.
 
 ## Fridge drawing (3D animated film)
 
@@ -23,16 +23,7 @@ Film:
 
 ## Grumpy toaster (claymation)
 
-Picture:
-
-```text
-A handmade stop-motion claymation film still, everything sculpted from matte plasticine. Each reference picture has exactly one job:
-Image 4 (clay snail) = STYLE. This is the most important job: the whole scene, the toaster, the counter, the cabinets, the tiles and the fridge are all chunky handmade plasticine with visible thumbprints, tool marks and soft rounded edges, slightly lumpy, matte, like a miniature stop-motion set. No photoreal surfaces, no real chrome, no CG. Do not include the snail.
-Image 1 (chrome toaster) = WHO. The character is this 1950s toaster shape, sculpted in silver-gray clay: rounded body, black lever and knob, two bread slots.
-Image 2 (old man) = EXPRESSION only. The toaster has two clay eyes, bushy white clay eyebrows and a mouth with this exact grumpy expression: deep scowl, furrowed brows, pursed lips. No human skin, no nose, no ears, no hair.
-Image 3 (1970s kitchen) = WHERE. This kitchen layout and colors: orange cabinets, mustard flower tiles, avocado fridge, wood paneling, wall clock, all made of clay.
-Wide shot, the toaster on the counter in the foreground, two clay slices of toast half popped up.
-```
+Picture: the worked example in SKILL.md, step 4.
 
 Film:
 
@@ -126,7 +117,7 @@ Picture:
 A tilt-shift miniature photograph. Each reference picture has exactly one job:
 Image 1 (ramen bowl) = WHERE. The bowl of ramen is a vast landscape seen from above at an angle: wavy noodle ridges are rolling hills, the creamy broth is a lake, the halved egg is a hill with a glowing jammy yolk, chashu slices are cliffs, nori sheets are dark standing walls, green onions are scattered bushes. The dark bowl rim is the horizon.
 Image 2 (hiker figurines) = WHO. These four tiny hikers in red, yellow, blue and green jackets with backpacks walk in a line along a noodle ridge.
-Image 3 (tilt-shift harbour) = STYLE only. Copy the miniature effect: strong blur top and bottom, one sharp band in the middle, boosted toy-like color. Do not include the harbour, houses or boats.
+Image 3 (tilt-shift harbor) = STYLE only. Copy the miniature effect: strong blur top and bottom, one sharp band in the middle, boosted toy-like color. Do not include the harbor, houses or boats.
 Image 4 (misty dawn) = LIGHT only. Soft pink and pale gold dawn light, low sun, fog drifting over the broth like morning mist.
 Wide 3:2, no text.
 ```
@@ -143,7 +134,7 @@ Picture:
 
 ```text
 A gig poster printed as a two-color risograph. Each reference picture has exactly one job:
-Image 1 (musician) = WHO. This exact man: curly dark hair, moustache, denim jacket, bass guitar over his shoulder, as a halftone photo portrait.
+Image 1 (musician) = WHO. This exact man: curly dark hair, mustache, denim jacket, bass guitar over his shoulder, as a halftone photo portrait.
 Image 2 (Swiss poster) = LAYOUT only. Copy its strict grid: a huge bold sans-serif headline flush-left across the top, narrow text columns below, one big circle offset to the right, lots of empty paper. Do not copy the word MONDAY.
 Image 3 (risograph leaves) = STYLE only. Copy the riso print texture: grain, coarse halftone dots, slight misregistration, uneven ink on textured paper. Do not include the leaves.
 Image 4 (color swatch) = PALETTE. Only two inks: fluorescent hot pink and teal, overprinting to dark where they meet, on off-white paper. No yellow, no blue.
