@@ -7,6 +7,24 @@
       "skillPath": "plugins/plugin-dev/skills/skill-development/SKILL.md",
       "computedHash": "8d262f08f33825947ea20204ebf5101e36056c98090251bd973a552ec8ef0c0c"
     },
+    "pr-handle-comments": {
+      "source": "scenario-labs/scenario-workspace",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/pr-handle-comments/SKILL.md",
+      "computedHash": "f70d5d41d1ab459cd176cb7fa5069859d6ecd24cb185d62fe0e3c6d2827667fb"
+    },
+    "pr-squash-message": {
+      "source": "scenario-labs/scenario-workspace",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/pr-squash-message/SKILL.md",
+      "computedHash": "4d3008b152b9fdc6355a840fe61452d1240e901f0efd202e4a5ea7854fefe5eb"
+    },
+    "pr-summary": {
+      "source": "scenario-labs/scenario-workspace",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/pr-summary/SKILL.md",
+      "computedHash": "8340c197893c57697a8f7ff17ed42cd565e0042c64b9e066e8ed9fe01f6039fb"
+    },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",

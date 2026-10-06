@@ -13,6 +13,9 @@ CHANGELOG.md
 .claude/skills/
 .agents/skills/skill-creator/
 .agents/skills/skill-development/
+.agents/skills/pr-summary/
+.agents/skills/pr-squash-message/
+.agents/skills/pr-handle-comments/
 
 # Unity project files the Unity expert tools copy into a project (a WebGL
 # template with {{{ }}} tags, a .jslib plugin), kept as Unity reads them
