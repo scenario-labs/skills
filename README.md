@@ -169,7 +169,7 @@ Video generation and editing, music, sound effects, voice, and speech.
 
 ### Socials
 
-Video built for social feeds: kinetic-typography lyric videos and motion-design music videos with type timed to the sung words, platform-ready cuts, teasers, and vertical or square re-layouts.
+Made for social feeds: kinetic-typography lyric videos and motion-design music videos with type timed to the sung words, delivered as a master, an X-ready upload, and a teaser cut.
 
 | Skill                                                                        | Use it for                                                                                                                                            |
 | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
