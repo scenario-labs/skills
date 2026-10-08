@@ -22,7 +22,8 @@
         "scenario-brand-kit",
         "scenario-image-editing",
         "scenario-text-overlay",
-        "scenario-storyboards"
+        "scenario-storyboards",
+        "scenario-thumbnails"
       ]
     },
     {
@@ -49,6 +50,7 @@
         "scenario-seedance-music-video",
         "scenario-seedance-storyboard",
         "scenario-video-ads",
+        "scenario-ad-variants",
         "scenario-ugc",
         "scenario-fan-cam",
         "scenario-audio",

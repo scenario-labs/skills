@@ -66,24 +66,26 @@ npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation
 
 ## Video Producer
 
-Trailers and clips, storyboarded, generated, cut, and captioned. 27 skills.
+Trailers and clips, storyboarded, generated, cut, and captioned. 29 skills.
 
 - **Cinematic Trailers** (`scenario-video`, `scenario-storyboards`, `scenario-video-assembly`). Try: "Storyboard a 30-second trailer from this script, generate the shots, and cut them to music."
 - **Captions for Every Platform** (`scenario-caption-studio`, `scenario-formats`). Try: "Add word-by-word captions to this video and export 9:16, 1:1, and 16:9 versions."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-video --skill scenario-storyboards --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-formats --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video
+npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-video --skill scenario-storyboards --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-formats --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-ad-variants --skill scenario-thumbnails
 ```
 
 ## Marketing Artist
 
-Store art and ads that stay on brand at every size. 22 skills.
+Store art and ads that stay on brand at every size. 24 skills.
 
 - **Store Art for Every Platform** (`scenario-formats`, `scenario-brand-kit`, `scenario-text-overlay`). Try: "Turn this key art into every storefront size, with our logo and the game's title."
 - **Ads From One Shot** (`scenario-product-shots`, `scenario-video-ads`, `scenario-ugc`). Try: "From this product shot, make a 15-second video ad and three UGC-style variants."
+- **Campaign Variants** (`scenario-ad-variants`). Try: "Make three hook-copy variants from this gameplay clip, preserving its action and audio."
+- **Video Thumbnails** (`scenario-thumbnails`). Try: "Make a readable boss-fight thumbnail with this character reference and the exact headline ONE HIT LEFT."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-formats --skill scenario-brand-kit --skill scenario-text-overlay --skill scenario-product-shots --skill scenario-video-ads --skill scenario-ugc --skill scenario-inspiration --skill scenario-image --skill scenario-image-editing --skill scenario-video --skill scenario-video-editing --skill scenario-audio --skill scenario-video-assembly --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-elevenlabs
+npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-formats --skill scenario-brand-kit --skill scenario-text-overlay --skill scenario-product-shots --skill scenario-video-ads --skill scenario-ugc --skill scenario-inspiration --skill scenario-image --skill scenario-image-editing --skill scenario-video --skill scenario-video-editing --skill scenario-audio --skill scenario-video-assembly --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-elevenlabs --skill scenario-ad-variants --skill scenario-thumbnails
 ```
 
 ## Technical Director

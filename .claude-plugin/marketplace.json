@@ -38,7 +38,8 @@
         "./skills/scenario-brand-kit",
         "./skills/scenario-image-editing",
         "./skills/scenario-text-overlay",
-        "./skills/scenario-storyboards"
+        "./skills/scenario-storyboards",
+        "./skills/scenario-thumbnails"
       ]
     },
     {
@@ -69,6 +70,7 @@
         "./skills/scenario-seedance-music-video",
         "./skills/scenario-seedance-storyboard",
         "./skills/scenario-video-ads",
+        "./skills/scenario-ad-variants",
         "./skills/scenario-ugc",
         "./skills/scenario-fan-cam",
         "./skills/scenario-audio",
