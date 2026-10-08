@@ -136,6 +136,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 ## Files in this skill
 
 - Setup and analysis: [scaffold.sh](scripts/scaffold.sh), [audio_analysis.py](scripts/audio_analysis.py), [lyrics_align.py](scripts/lyrics_align.py), [plot_lyrics.py](scripts/plot_lyrics.py)
+- Approved-master stem lookup for transcription, plots and vocal slices: [audio_paths.py](scripts/audio_paths.py)
 - Footage generation helpers: [synth_beat.py](scripts/synth_beat.py), [beatwarp.py](scripts/beatwarp.py)
 - Footage prep: [prep_clip.sh](scripts/prep_clip.sh), [prep_video.py](scripts/prep_video.py), [matte.swift](scripts/matte.swift), [fixmatte.py](scripts/fixmatte.py), [matte_keyed.py](scripts/matte_keyed.py), [matte_fallback.py](scripts/matte_fallback.py), [track.py](scripts/track.py)
 - Sync checks: [lipsync_check.py](scripts/lipsync_check.py), [dance_sync_check.py](scripts/dance_sync_check.py), [av_sync_check.py](scripts/av_sync_check.py)
