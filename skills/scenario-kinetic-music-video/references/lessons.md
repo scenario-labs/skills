@@ -40,7 +40,7 @@ Every item here cost real time or credits once. Read the matching section before
 - Vocals often lead the downbeat with pickups, so check the first word of each section. Section cuts go on the downbeat or just before the pickup.
 - The demucs stems, librosa and ffmpeg decode the mp3 consistently. The verified end-to-end offset was 0.0 ms.
 - **Song models mangle accented names.** A French first name with an accent was sung as "her vape". Spell the name phonetically in the sheet sent to the model (the sound, in plain English letters), keep the real spelling in `lyrics.txt`, and read the transcript for every name before spending on footage. The same run asked for about 2:00 and got 3:04, then 2:14 after the sheet was shortened and an "about 2 minutes, very short intro" cue added: the sheet length and a duration cue steer the result, so check `ffprobe` before building anything on it.
-- If the song is still being written: don't splice or layer a finished AI song (that edit was rejected). Regenerate or repaint instead, and keep energy high. Asking for a half-time bridge turned one take into a ballad.
+- Match the audio edit to the request: a new musical direction calls for new auditions; a local correction calls for a candidate patch in a defined window. Do not treat a rejected splice as a ban on editing. Asking for a half-time bridge turned one take into a ballad.
 
 ## Generation and moderation
 

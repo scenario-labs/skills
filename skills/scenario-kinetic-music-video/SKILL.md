@@ -6,7 +6,7 @@ license: MIT
 
 # Kinetic Music Video
 
-A song goes in. A 1080p60 music video comes out, landscape for YouTube and X or vertical for TikTok, Reels and Shorts: a motion designer's showreel cut to the track. Kinetic type, 2D and 3D graphics and transitions land on the beats and sung syllables. Generated footage of the subject is woven through it where the concept wants a performer. The untouched master is the only soundtrack.
+A song goes in. A 1080p60 music video comes out, landscape for YouTube and X or vertical for TikTok, Reels and Shorts: a motion designer's showreel cut to the track. Kinetic type, 2D and 3D graphics and transitions land on the beats and sung syllables. Generated footage of the subject is woven through it where the concept wants a performer. The approved master is the only soundtrack. Preserve the original; an authorized audio edit produces a new, versioned master.
 
 The work splits by what each tool does best:
 
@@ -44,7 +44,11 @@ Run `bash <skill>/scripts/scaffold.sh <song>` inside a new project folder, then 
 
 - `audio_analysis.py` writes stems and `engine/data/audio.json`: beats, downbeats, kick/snare/vocal onsets, and 60 fps envelopes. **Measure the tempo**; labels lie (a "130 BPM" song was 98 with double-time drums).
 - `lyrics_align.py transcribe`, then hand-correct `analysis/lyrics.txt`, then `lyrics_align.py align` writes `engine/data/lyrics.json` with word onsets.
-- Check timing by eye with `plot_lyrics.py`. You can't listen, but the spectrogram shows where each word starts.
+- Check timing by eye with `plot_lyrics.py`. Audition when playback is available; a spectrogram locates onsets but cannot prove pronunciation or musical continuity.
+
+### 1a. Edit the soundtrack when requested
+
+For pronunciation repairs, lyric changes, section replacements or structural cuts, read [references/audio_editing.md](references/audio_editing.md). Use `scenario-ace-step` for its Cover/Repaint contracts. Keep the current cut and master until a candidate is selected; preserve audio outside the agreed window and rebuild affected timing data after applying it. A picture-only revision reuses the approved soundtrack.
 
 ### 2. Research (parallel, background)
 
