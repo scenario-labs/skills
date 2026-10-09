@@ -35,11 +35,11 @@ Skills follow the [Agent Skills](https://agentskills.io) format.
 
 ## Install
 
-**Everything for Scenario.** All 69 Scenario skills, without the expert tools: the default for working through the Scenario MCP.
+**Everything for Scenario.** All 71 Scenario skills, without the expert tools: the default for working through the Scenario MCP.
 
 ```bash
 # Every Scenario skill, without the expert tools
-npx skills add scenario-labs/skills --skill scenario --skill scenario-inspiration --skill scenario-image --skill scenario-multi-reference --skill scenario-product-shots --skill scenario-brand-kit --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-storyboards --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-patina-retexture --skill scenario-orbit-views --skill scenario-walkable-room --skill scenario-video --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-kinetic-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-ugc --skill scenario-fan-cam --skill scenario-audio --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-consistency --skill scenario-identity-library --skill scenario-model-training --skill scenario-asset-analysis --skill scenario-quality-gate --skill scenario-refine-loop --skill scenario-model-comparison --skill scenario-formats --skill scenario-workflows --skill scenario-workflow-authoring --skill scenario-moderation --skill scenario-report --skill scenario-team-admin --skill scenario-admin-analytics --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-minimax-music --skill scenario-elevenlabs --skill scenario-ace-step --skill scenario-sonilo --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds --skill scenario-ad-variants --skill scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario --skill scenario-inspiration --skill scenario-image --skill scenario-multi-reference --skill scenario-product-shots --skill scenario-brand-kit --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-storyboards --skill scenario-game-assets --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d --skill scenario-patina-retexture --skill scenario-orbit-views --skill scenario-walkable-room --skill scenario-video --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-kinetic-music-video --skill scenario-chatgpt-pet-create --skill scenario-chatgpt-pet-update --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-ugc --skill scenario-fan-cam --skill scenario-audio --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-consistency --skill scenario-identity-library --skill scenario-model-training --skill scenario-asset-analysis --skill scenario-quality-gate --skill scenario-refine-loop --skill scenario-model-comparison --skill scenario-formats --skill scenario-workflows --skill scenario-workflow-authoring --skill scenario-moderation --skill scenario-report --skill scenario-team-admin --skill scenario-admin-analytics --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-minimax-music --skill scenario-elevenlabs --skill scenario-ace-step --skill scenario-sonilo --skill scenario-meshy --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds --skill scenario-ad-variants --skill scenario-thumbnails
 ```
 
 **By role.** [INSTALL.md](INSTALL.md) groups the skills by job, from 2D artist to producer, with the outcomes each role gets and one command per role.
@@ -74,6 +74,12 @@ npx skills add scenario-labs/skills --skill scenario --skill scenario-consistenc
 
 ```bash
 npx skills add scenario-labs/skills --skill scenario --skill scenario-image --skill scenario-multi-reference --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-storyboards --skill scenario-game-assets --skill scenario-textures --skill scenario-skyboxes --skill scenario-video --skill scenario-video-editing --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-video-assembly --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image --skill scenario-ad-variants --skill scenario-thumbnails
+```
+
+**ChatGPT and Codex pets** (3 skills). An animated pet hatched from an idea or a photo, or an existing one fixed or restyled, delivered as a sprite sheet, a GIF, and a Codex package.
+
+```bash
+npx skills add scenario-labs/skills --skill scenario --skill scenario-chatgpt-pet-create --skill scenario-chatgpt-pet-update
 ```
 
 **Expert tools.** A family installs as one set, since its specialists import the lead skill's scripts; the command is in each family README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md)).
@@ -172,11 +178,13 @@ Video generation and editing, music, sound effects, voice, and speech.
 
 ### Socials
 
-Made for social feeds: kinetic-typography lyric videos and motion-design music videos with type timed to the sung words, in landscape or vertical 9:16, delivered as a master, a platform upload, and a teaser cut.
+Made for social feeds and chat apps: kinetic-typography lyric videos with type timed to the sung words, in landscape or vertical 9:16, delivered as a master, a platform upload, and a teaser cut; and animated ChatGPT and Codex pets hatched from an idea or a photo, delivered as a sprite sheet, an animated GIF, and a Codex package.
 
 | Skill                                                                        | Use it for                                                                                                                                                               |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [scenario-kinetic-music-video](skills/scenario-kinetic-music-video/SKILL.md) | Kinetic-typography music video, landscape or 9:16: style frames and footage from Scenario, a JavaScript engine for lyric type on sung onsets, mattes, per-section agents |
+| [scenario-chatgpt-pet-create](skills/scenario-chatgpt-pet-create/SKILL.md)   | ChatGPT or Codex pet from an idea or photos: a v2 sprite sheet with sixteen look directions, a v1 copy for web upload, pixel-perfect mode, GIFs, a Codex package         |
+| [scenario-chatgpt-pet-update](skills/scenario-chatgpt-pet-update/SKILL.md)   | Change an existing pet sheet: fix or redo a row, add look directions to a v1 sheet, a new outfit or color, a rename, a check and GIF preview                             |
 
 ### Consistency and custom models
 
