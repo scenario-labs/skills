@@ -46,7 +46,9 @@ export function makePlateMaterial(o = {}) {
 }
 // Layout of a plate on screen, in pixels. fit 'cover' (default) or 'contain'; zoom scales around (x,y) offset in px from centre; rot in rad.
 export function plateRect(E, v, o = {}) {
-  const va = v.meta.w / v.meta.h,
+  const c = o.crop ?? [0, 0, 1, 1],
+    // the crop's own shape, so a cropped region is windowed rather than stretched to the clip's shape
+    va = (v.meta.w * c[2]) / (v.meta.h * c[3]),
     sa = E.W / E.H;
   const cover = (o.fit ?? "cover") === "cover";
   let w, h;
@@ -65,10 +67,12 @@ export function plateRect(E, v, o = {}) {
   return { x: cx - w / 2, y: cy - h / 2, w, h, cx, cy, rot: o.rot ?? 0 };
 }
 export function plateToScreen(E, v, p, o = {}) {
-  const r = plateRect(E, v, o);
-  let u = o.mirror ? 1 - p[0] : p[0];
+  const r = plateRect(E, v, o),
+    c = o.crop ?? [0, 0, 1, 1];
+  let u = (p[0] - c[0]) / c[2];
+  if (o.mirror) u = 1 - u;
   let x = r.x + u * r.w,
-    y = r.y + p[1] * r.h;
+    y = r.y + ((p[1] - c[1]) / c[3]) * r.h;
   if (r.rot) {
     const dx = x - r.cx,
       dy = y - r.cy,
