@@ -15,20 +15,7 @@ import pet_check  # noqa: E402
 import pet_common as pc  # noqa: E402
 
 
-def semantics(verdicts=None):
-    verdicts = verdicts or {}
-    return {
-        "directions": [
-            {
-                "label": label,
-                "expected": pc.EXPECTED[label],
-                "observed": f"looks {pc.EXPECTED[label]}",
-                "verdict": verdicts.get(label, "pass"),
-                "evidence": "pupils and nose toward that edge",
-            }
-            for label in pc.LOOK_LABELS
-        ]
-    }
+semantics = synth.semantics
 
 
 class CheckTests(unittest.TestCase):
@@ -137,6 +124,13 @@ class CheckTests(unittest.TestCase):
         for col in range(5):
             pc.cell(arr, row, col)[:] = pc.cell(self.sheet, 0, 0)
         self.assertTrue(self.check(arr, structure_only=True)["ok"])
+
+    def test_rebuilt_look_rows_need_verdicts(self):
+        out = synth.tmpdir(self) / "check.json"
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = pet_check.main([str(self.sheet_path), "--run", str(self.run_dir), "--json-out", str(out)])
+        self.assertEqual(code, 1)
+        self.assertIn("no direction verdicts exist", " ".join(pc.read_json(out)["errors"]))
 
     def test_label_normalization(self):
         self.assertEqual(pet_check.normalize_label("0"), "000")

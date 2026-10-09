@@ -74,6 +74,8 @@ class InitTests(unittest.TestCase):
         self.assertIn("#FF00FF", waving["retry_prompt"])
         for job in jobs:
             self.assertNotIn("{", job["prompt"])
+        self.assertIn("Style:", waving["retry_prompt"])
+        self.assertTrue(waving["retry_prompt"].startswith("Exactly 4 poses"))
 
     def test_refuses_a_used_folder(self):
         self.init()
@@ -133,6 +135,24 @@ class LookRedoTests(unittest.TestCase):
         self.assertIn("first half of the sweep", job["prompt"])
         for ref in job["references"]:
             self.assertTrue((tmp / "run" / ref).is_file(), ref)
+
+    def test_no_current_row_keeps_the_neighbor_but_drops_the_broken_row(self):
+        import pet_frames
+
+        tmp = synth.tmpdir(self)
+        sheet = np.zeros((2288, 1536, 4), np.uint8)
+        for row, (_, frames, _) in enumerate(pc.rows_for(2)):
+            for col in range(frames):
+                pet = synth.sprite(150)
+                pc.cell(sheet, row, col)[40:190, 40 : 40 + pet.shape[1]] = pet
+        synth.save(sheet, tmp / "sheet.png")
+        quiet(pet_frames.main, ["split", str(tmp / "sheet.png"), "--out", str(tmp / "split")])
+        args = ["init", "--from-split", str(tmp / "split"), "--only", "look-10,jumping", "--no-current-row", "--out", str(tmp / "run")]
+        quiet(pet_prepare.main, args)
+        jobs = {job["id"]: job for job in pc.read_json(tmp / "run" / "jobs.json")["jobs"]}
+        self.assertEqual(jobs["look-10"]["references"], ["references/base.png", "references/rows/look-9.png"])
+        self.assertNotIn("current version of this row", jobs["look-10"]["prompt"])
+        self.assertEqual(jobs["jumping"]["references"], ["references/base.png"])
 
     def test_a_full_look_stage_chains_its_own_strips(self):
         tmp = synth.tmpdir(self)

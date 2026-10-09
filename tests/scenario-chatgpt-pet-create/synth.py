@@ -74,6 +74,25 @@ def save(arr, path):
     Image.fromarray(np.ascontiguousarray(arr)).save(path)
 
 
+def semantics(verdicts=None):
+    """Direction verdicts in the contract's format, every label passing unless overridden."""
+    import pet_common as pc
+
+    verdicts = verdicts or {}
+    return {
+        "directions": [
+            {
+                "label": label,
+                "expected": pc.EXPECTED[label],
+                "observed": f"looks {pc.EXPECTED[label]}",
+                "verdict": verdicts.get(label, "pass"),
+                "evidence": "pupils and nose toward that edge",
+            }
+            for label in pc.LOOK_LABELS
+        ]
+    }
+
+
 def tag_color(i):
     return (200, 40 + 20 * i, 30)
 

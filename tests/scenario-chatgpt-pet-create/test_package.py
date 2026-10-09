@@ -29,6 +29,7 @@ class PackageTests(unittest.TestCase):
             cls.run_dir = synth.make_run(cls.tmp, version=2)
             pet_build.main([str(cls.run_dir)])
             sheet = str(cls.run_dir / "final" / "spritesheet.webp")
+            pc.write_json(cls.run_dir / "qa" / "direction-semantics.json", synth.semantics())
             pet_check.main([sheet, "--run", str(cls.run_dir)])
             pet_preview.main(["gif", sheet, "--out-dir", str(cls.run_dir / "previews")])
             pet_package.main(["make", str(cls.run_dir)])

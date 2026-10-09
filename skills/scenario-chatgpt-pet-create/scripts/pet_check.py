@@ -214,7 +214,7 @@ def check_pixel(arr, version, pixel, errors, metrics):
     metrics["pixel"] = {"grid": grid, "binary_alpha": binary, "frames_off_grid": off_grid, "colors": len(used), "outside_palette": len(extra)}
 
 
-def check(path, key=None, require_v2=False, structure_only=False, semantics=None, pixel=None) -> dict:
+def check(path, key=None, require_v2=False, structure_only=False, semantics=None, pixel=None, require_semantics=False) -> dict:
     path = Path(path).resolve()
     errors, warnings, metrics = [], [], {}
     report = {"file": str(path)}
@@ -228,6 +228,8 @@ def check(path, key=None, require_v2=False, structure_only=False, semantics=None
         if version == 2:
             if semantics:
                 check_semantics(Path(semantics), errors, warnings)
+            elif require_semantics:
+                errors.append("look rows were rebuilt in this run but no direction verdicts exist; write qa/direction-semantics.json")
             else:
                 warnings.append("no direction verdicts given; the look rows were not reviewed")
         if pixel:
@@ -255,7 +257,9 @@ def main(argv=None) -> int:
     if not semantics and run and (run / "qa" / "direction-semantics.json").exists():
         semantics = run / "qa" / "direction-semantics.json"
     pixel = pc.read_json(run / "pixel.json") if run and req.get("pixel") and (run / "pixel.json").exists() else None
-    report = check(args.sheet, key, args.require_v2, args.structure_only, semantics, pixel)
+    build = run / "qa" / "build.json" if run else None
+    rebuilt_looks = bool(build and build.exists() and any(r["job"].startswith("look-") for r in pc.read_json(build)["rows"]))
+    report = check(args.sheet, key, args.require_v2, args.structure_only, semantics, pixel, rebuilt_looks)
     out = args.json_out or (run / "qa" / "check.json" if run else None)
     if out:
         pc.write_json(out, report)

@@ -127,8 +127,9 @@ def strip_prompt(req: dict, frames: int, action: str, retry: bool = False) -> st
         "outline, material and props. Same size in every pose, standing on the same ground line, except where "
         "the action itself lifts the character."
     )
-    style = [] if retry else [f"Style: {req['style_text']}."]
-    return " ".join([lead, same, *style, action, background(req["chroma_key"]), FORBIDDEN])
+    style = f"Style: {req['style_text']}."
+    retry_lead = [f"Exactly {frames} poses, every one fully separated from its neighbors and none touching the image edge."] if retry else []
+    return " ".join([*retry_lead, lead, same, style, action, background(req["chroma_key"]), FORBIDDEN])
 
 
 def sizes(frames: int) -> dict:
@@ -173,8 +174,9 @@ def resolve_jobs(only: str | None, version: int) -> list:
     return [job for job in every if job in wanted]
 
 
-def build_jobs(req: dict, wanted: list, base_kind: str | None, change: str | None, kept: set = frozenset()) -> list:
-    """`kept` names the rows of an existing sheet whose strips sit in references/rows/."""
+def build_jobs(req: dict, wanted: list, base_kind: str | None, change: str | None, kept: set = frozenset(), current_rows: bool = True) -> list:
+    """`kept` names the rows of an existing sheet whose strips sit in references/rows/; `current_rows`
+    False leaves a redone row's own old strip out (its motion or directions are what is wrong)."""
     user_refs = req["references"]
     jobs = []
 
@@ -202,7 +204,7 @@ def build_jobs(req: dict, wanted: list, base_kind: str | None, change: str | Non
         prompt = base_prompt(req)
         add("base", "base", 1, prompt, prompt, user_refs, [])
     after_base = ["base"] if base_kind else []
-    redo = bool(req.get("base_sheet")) and base_kind is None
+    redo = bool(req.get("base_sheet")) and base_kind is None and current_rows
     for job in pc.STANDARD:
         if job not in wanted:
             continue
@@ -321,7 +323,7 @@ def cmd_init(args) -> int:
     else:
         base_kind = "base"
     kept = {strip.stem for strip in (run / "references" / "rows").glob("*.png")}
-    jobs = build_jobs(req, resolve_jobs(args.only, version), base_kind, args.change, kept)
+    jobs = build_jobs(req, resolve_jobs(args.only, version), base_kind, args.change, kept, not args.no_current_row)
     pc.write_json(run / "jobs.json", {"pet_id": pet_id, "chroma_key": key["hex"], "jobs": jobs})
     ready = [job["id"] for job in jobs if not job["depends_on"]]
     print(json.dumps({"ok": True, "run": str(run), "chroma_key": key, "jobs": [j["id"] for j in jobs], "ready": ready}))
@@ -412,6 +414,7 @@ def main(argv=None) -> int:
     init.add_argument("--from-split", help="folder written by pet_frames.py split: update an existing sheet")
     init.add_argument("--only", help="comma list of jobs to generate (or 'look' for the three look jobs)")
     init.add_argument("--change", help="with --from-split: edit the pet into a new look (adds an edit job)")
+    init.add_argument("--no-current-row", action="store_true", help="with --from-split: do not reference a redone row's old strip")
     init.add_argument("--out", help="run folder; default ./pets/<id>-<UTC time>")
     init.add_argument("--force", action="store_true", help="reuse a non-empty run folder")
     init.set_defaults(func=cmd_init)
@@ -425,7 +428,7 @@ def main(argv=None) -> int:
     pixel = sub.add_parser("pixel", help="grid and palette from a Pixel Snapper result of the base")
     pixel.add_argument("run")
     pixel.add_argument("--snapped", required=True, help="the downloaded Pixel Snapper output")
-    pixel.add_argument("--colors", type=int, default=16, help="palette cap (match the snapper's colors)")
+    pixel.add_argument("--colors", type=int, default=24, help="palette cap (match the snapper's colors)")
     pixel.set_defaults(func=cmd_pixel)
 
     args = parser.parse_args(argv)
