@@ -14,7 +14,7 @@ Connection and the core loop: see the `scenario` skill in this repo; model-agnos
 
 ## Quick reference
 
-Shared shape at authoring time: `prompt` (required, cap 32000 characters), `referenceImages` (an array even for one, up to 10), `numOutputs` (1 to 10 variations of one prompt), `quality`, and `background` (`auto`, `opaque`, and `transparent` on 2.5 Flare and Sunburst only). The splits:
+Shared shape at authoring time: `prompt` (required, cap 32000 characters), `referenceImages` (an array even for one, up to 10), `numOutputs` (1 to 10 variations of one prompt), `quality`, and `background` (`auto` and `opaque` everywhere, `transparent` on every member but GPT Image 2). The splits:
 
 | Contract        | 2.5 Flare and Sunburst              | GPT Image 2             | GPT Image 1.5                            |
 | --------------- | ----------------------------------- | ----------------------- | ---------------------------------------- |
