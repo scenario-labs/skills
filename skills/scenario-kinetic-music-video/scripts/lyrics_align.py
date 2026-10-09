@@ -11,7 +11,6 @@ Method (what held up on sung vocals): faster-whisper large-v3 word timestamps on
 corrected lyrics, starts snapped to vocal onsets within 80 ms, then a fix for short first words pulled early by a held note.
 wav2vec/MMS forced alignment ran ~200 ms late on singing, so it is not used. Always eyeball the result with plot_lyrics.py."""
 import os, json, re, difflib, argparse, numpy as np
-from audio_paths import vocal_stem
 
 
 def load_json(path):
@@ -25,6 +24,7 @@ def save_json(obj, path, **kw):
 
 
 def stem():
+    from audio_paths import vocal_stem
     return vocal_stem()
 
 def raw_paths(prompt):
