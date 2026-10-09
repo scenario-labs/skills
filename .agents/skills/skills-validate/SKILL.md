@@ -92,7 +92,7 @@ Assemble the report with the template below. This repository is public: only pub
 
 **With no PR**, ask what to do with it: open a tracker issue for the defects (the `scenario-report` skill covers the forms and the redaction rules), save it to a file, post it to a PR number they name, or leave it in this conversation. Post nothing until they pick.
 
-Finally, delete the run directory except `$RUN/assets/` (keep all of it with `--keep`). When the run saved files there, end with the command that opens that folder (`open` on macOS, `xdg-open` on Linux), ready to paste (Claude Code runs it in place with a leading `!`), so the files can be dragged into the report comment.
+Finally, delete the run directory except `$RUN/assets/` (keep all of it with `--keep`). When the run saved files there, end by asking whether to open that folder so the files can be dragged into the report comment, and open it (`open` on macOS, `xdg-open` on Linux) only on a yes.
 
 ```markdown
 ## Skill validation: `<name>` (<verdict>)

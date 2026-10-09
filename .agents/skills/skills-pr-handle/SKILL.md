@@ -123,5 +123,5 @@ End with a short status:
 - Rebase result (clean, conflicts resolved, or aborted)
 - Discovery audit: clean, or each finding with its resolution (fixed, raised, or noted as pre-existing)
 - Each open thread: fixed / dismissed / asked, with the reply URL when you posted one
-- Skills validated (name, verdict, report URL, and the command that opens the evidence folder when the run saved files) or an explicit "no skill validation needed" with the reason
+- Skills validated (name, verdict, report URL, and the offer to open the evidence folder when the run saved files) or an explicit "no skill validation needed" with the reason
 - Anything still blocked on the user
