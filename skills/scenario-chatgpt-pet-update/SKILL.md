@@ -14,17 +14,17 @@ This skill runs the scripts and follows the sheet contract of `scenario-chatgpt-
 
 ## Quick reference
 
-Read the sheet first, then pick the smallest change that does the job:
+Read the sheet first, then pick the smallest change that does the job. Every row below runs in a run made by `pet_prepare.py init --from-split` (step 3 of the example): it records the original sheet, which the build, the check and the package all need. Unattended, the approvals are your own judgment against the request, recorded in the run, and nothing is installed.
 
-| The user wants                                 | Do                                                                                                  | Generations   |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------- |
-| To see or check it                             | `pet_check.py`, `pet_preview.py contact` and `gif`                                                  | 0             |
-| A rename or new description                    | `init`, `pet_check.py <sheet> --run RUN`, then `pet_package.py make RUN --sheet <sheet> --name ...` | 0             |
-| Leftover pixels, color under transparency      | `pet_build.py RUN --clean`                                                                          | 0             |
-| A row whose frames pop up and down or sideways | `pet_build.py RUN --reregister <row>`: re-places the existing frames on one ground line and anchor  | 0             |
-| One or a few states redone                     | `init --only <rows>`, generate those rows, `pet_build.py RUN`: every other row stays byte for byte  | one per row   |
-| Look directions on a v1 sheet                  | `init --version 2 --only look`: cardinals, then rows 9 and 10                                       | 3             |
-| A new look (outfit, color, accessory)          | `init --change "<the change>"`: edit the identity, approve it, regenerate every row                 | 1 + every row |
+| The user wants                                 | Do                                                                                                                  | Generations   |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------- |
+| To see or check it                             | `pet_check.py`, `pet_preview.py contact` and `gif`                                                                  | 0             |
+| A rename or new description                    | `init`, `pet_check.py <sheet> --run RUN`, then `pet_package.py make RUN --sheet <sheet> --name ...`                 | 0             |
+| Leftover pixels, color under transparency      | `pet_build.py RUN --clean`                                                                                          | 0             |
+| A row whose frames pop up and down or sideways | `pet_build.py RUN --reregister <row>`: re-places the existing frames on one ground line and anchor                  | 0             |
+| One or a few states redone                     | `init --only <rows>` (a look row too), generate those rows, `pet_build.py RUN`: every other row stays byte for byte | one per row   |
+| Look directions on a v1 sheet                  | `init --version 2 --only look`: cardinals, then rows 9 and 10                                                       | 3             |
+| A new look (outfit, color, accessory)          | `init --change "<the change>"`: edit the identity, approve it, regenerate every row                                 | 1 + every row |
 
 `split` refuses anything that is not 1536x1872 or 1536x2288: other art is a new pet, made with `scenario-chatgpt-pet-create` using that art as a reference.
 

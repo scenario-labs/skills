@@ -121,7 +121,7 @@ class BuildTests(unittest.TestCase):
                 blocks = pc.cell(sheet, row, col).reshape(52, 4, 48, 4, 4)
                 self.assertTrue((blocks == blocks[:, :1, :, :1]).all())
         colors = {pc.key_hex(c) for c in sheet[sheet[..., 3] == 255][:, :3]}
-        self.assertTrue(colors <= set(palette))
+        self.assertLessEqual(colors, set(palette))
 
     def test_despill_removes_key_fringe(self):
         cell = np.zeros((pc.CELL_H, pc.CELL_W, 4), np.uint8)

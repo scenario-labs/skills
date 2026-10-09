@@ -65,17 +65,18 @@ LOOKS = {
     ),
     "look-9": (
         "Eight poses of one smooth look-around sweep, clockwise, in this order: up; up and slightly right; up-right; "
-        "right and slightly up; right; right and slightly down; down-right; down and slightly right. "
-        "The reference with four poses shows up, right, down and left: match those exactly and step evenly between them."
+        "right and slightly up; right; right and slightly down; down-right; down and slightly right."
     ),
     "look-10": (
         "Eight poses continuing the look-around sweep, clockwise, in this order: down; down and slightly left; down-left; "
         "left and slightly down; left; left and slightly up; up-left; up and slightly left. "
-        "The reference with four poses shows up, right, down and left: match those exactly and step evenly between them. "
-        "The other eight-pose reference is the first half of the sweep: continue it, so the first pose follows its last one "
-        "and the last pose is one small step before looking straight up."
+        "The last pose is one small step before looking straight up."
     ),
 }
+# Which reference sentences a look prompt carries depends on which references the job has.
+CARDINALS_REF = "The reference with four poses shows up, right, down and left: match those exactly and step evenly between them."
+FIRST_HALF_REF = "The other eight-pose reference is the first half of the sweep: continue it, so the first pose follows its last one."
+KEPT_ROW_REF = "The reference strip for these directions is the pet's current version of this row: keep its directions and order, and change only what the notes ask."
 
 FORBIDDEN = (
     "No text, numbers, labels, frames, grid lines or borders. No speed lines, motion blur, dust, shadows, sparkles, "
@@ -172,7 +173,8 @@ def resolve_jobs(only: str | None, version: int) -> list:
     return [job for job in every if job in wanted]
 
 
-def build_jobs(req: dict, wanted: list, base_kind: str | None, change: str | None) -> list:
+def build_jobs(req: dict, wanted: list, base_kind: str | None, change: str | None, kept: set = frozenset()) -> list:
+    """`kept` names the rows of an existing sheet whose strips sit in references/rows/."""
     user_refs = req["references"]
     jobs = []
 
@@ -215,16 +217,27 @@ def build_jobs(req: dict, wanted: list, base_kind: str | None, change: str | Non
         action = ACTIONS[job]
         add(job, "row", frames, strip_prompt(req, frames, action), strip_prompt(req, frames, action, True), refs, depends)
     standard_jobs = [job for job in pc.STANDARD if job in wanted]
-    look_refs = ["references/base.png"]
-    for job, frames, extra_refs, depends in (
-        ("look-cardinals", 4, [], after_base + standard_jobs),
-        ("look-9", 8, ["generated/look-cardinals.png"], ["look-cardinals"]),
-        ("look-10", 8, ["generated/look-cardinals.png", "generated/look-9.png"], ["look-9"]),
-    ):
-        if job in wanted:
-            action = f"{LOOKS[job]} {LOOK_RULES}"
-            depends = [d for d in depends if d in wanted or d == "base"]
-            add(job, "look", frames, strip_prompt(req, frames, action), strip_prompt(req, frames, action, True), look_refs + extra_refs, depends)
+    for job, frames in (("look-cardinals", 4), ("look-9", 8), ("look-10", 8)):
+        if job not in wanted:
+            continue
+        # Reference only what this run generates or what the existing sheet keeps.
+        refs, depends, sentences = ["references/base.png"], [], [LOOKS[job]]
+        if job == "look-cardinals":
+            depends = after_base + standard_jobs
+        else:
+            if "look-cardinals" in wanted:
+                refs.append("generated/look-cardinals.png")
+                depends.append("look-cardinals")
+                sentences.append(CARDINALS_REF)
+            if job == "look-10" and ("look-9" in wanted or "look-9" in kept):
+                refs.append("generated/look-9.png" if "look-9" in wanted else "references/rows/look-9.png")
+                depends += ["look-9"] if "look-9" in wanted else []
+                sentences.append(FIRST_HALF_REF)
+            if redo and job in kept:
+                refs.append(f"references/rows/{job}.png")
+                sentences.append(KEPT_ROW_REF)
+        action = " ".join([*sentences, LOOK_RULES])
+        add(job, "look", frames, strip_prompt(req, frames, action), strip_prompt(req, frames, action, True), refs, depends)
     return jobs
 
 
@@ -307,7 +320,8 @@ def cmd_init(args) -> int:
         base_kind = None
     else:
         base_kind = "base"
-    jobs = build_jobs(req, resolve_jobs(args.only, version), base_kind, args.change)
+    kept = {strip.stem for strip in (run / "references" / "rows").glob("*.png")}
+    jobs = build_jobs(req, resolve_jobs(args.only, version), base_kind, args.change, kept)
     pc.write_json(run / "jobs.json", {"pet_id": pet_id, "chroma_key": key["hex"], "jobs": jobs})
     ready = [job["id"] for job in jobs if not job["depends_on"]]
     print(json.dumps({"ok": True, "run": str(run), "chroma_key": key, "jobs": [j["id"] for j in jobs], "ready": ready}))

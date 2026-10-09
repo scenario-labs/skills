@@ -58,7 +58,7 @@ class InitTests(unittest.TestCase):
         by_id = {job["id"]: job for job in jobs}
         self.assertEqual(by_id["running-left"]["depends_on"], ["base", "running-right"])
         self.assertIn("generated/running-right.png", by_id["running-left"]["references"])
-        self.assertEqual(by_id["look-10"]["depends_on"], ["look-9"])
+        self.assertEqual(by_id["look-10"]["depends_on"], ["look-cardinals", "look-9"])
         self.assertIn("generated/look-9.png", by_id["look-10"]["references"])
         self.assertEqual(by_id["running-right"]["sizes"][pet_prepare.SUNBURST], {"width": 3584, "height": 1200})
         self.assertEqual(by_id["running-right"]["sizes"][pet_prepare.NANO_BANANA], {"aspectRatio": "8:1"})
@@ -111,6 +111,36 @@ class InitTests(unittest.TestCase):
         _, _, jobs = self.init("--from-split", str(self.tmp / "split"), "--change", "add a red scarf", out="look")
         self.assertEqual(jobs[0]["kind"], "edit")
         self.assertIn("add a red scarf", jobs[0]["prompt"])
+
+
+class LookRedoTests(unittest.TestCase):
+    def test_a_look_row_redo_references_only_files_that_will_exist(self):
+        import pet_frames
+
+        tmp = synth.tmpdir(self)
+        sheet = np.zeros((2288, 1536, 4), np.uint8)
+        for row, (_, frames, _) in enumerate(pc.rows_for(2)):
+            for col in range(frames):
+                pet = synth.sprite(150)
+                pc.cell(sheet, row, col)[40:190, 40 : 40 + pet.shape[1]] = pet
+        synth.save(sheet, tmp / "sheet.png")
+        quiet(pet_frames.main, ["split", str(tmp / "sheet.png"), "--out", str(tmp / "split")])
+        quiet(pet_prepare.main, ["init", "--from-split", str(tmp / "split"), "--only", "look-10", "--out", str(tmp / "run")])
+        job = pc.read_json(tmp / "run" / "jobs.json")["jobs"][0]
+        self.assertEqual(job["references"], ["references/base.png", "references/rows/look-9.png", "references/rows/look-10.png"])
+        self.assertEqual(job["depends_on"], [])
+        self.assertNotIn("four poses shows", job["prompt"])
+        self.assertIn("first half of the sweep", job["prompt"])
+        for ref in job["references"]:
+            self.assertTrue((tmp / "run" / ref).is_file(), ref)
+
+    def test_a_full_look_stage_chains_its_own_strips(self):
+        tmp = synth.tmpdir(self)
+        quiet(pet_prepare.main, ["init", "--name", "Bit", "--out", str(tmp / "run")])
+        jobs = {job["id"]: job for job in pc.read_json(tmp / "run" / "jobs.json")["jobs"]}
+        self.assertEqual(jobs["look-9"]["references"], ["references/base.png", "generated/look-cardinals.png"])
+        self.assertEqual(jobs["look-10"]["depends_on"], ["look-cardinals", "look-9"])
+        self.assertIn("four poses shows", jobs["look-10"]["prompt"])
 
 
 class PixelTests(unittest.TestCase):
