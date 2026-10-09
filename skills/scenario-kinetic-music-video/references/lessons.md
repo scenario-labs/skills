@@ -50,7 +50,7 @@ Every item here cost real time or credits once. Read the matching section before
 - **Sets that composite:** a pitch-black void with a hard rim light, a flat color cyc, or white high-key. A glossy floor came back as a gray gradient. Flat color cycs let you replace the backdrop via the matte.
 - Beat alignment from a beat-track reference is loose (about 1-1.5σ above chance). Always beat-warp dance clips; it matched 14/14 motion peaks within 160 ms.
 - Text baked into generated frames is never usable. Prompt "no text", and do all type in code.
-- Budget anchors, relative to one style frame (confirm live prices with `dry_run`): a 6 s 720p clip costs about twenty, 10 s about thirty-five, a lip-sync correction pass about thirteen. A full video with about 17 shots plus frames and lip-syncs came to about five hundred.
+- Budget anchors at 720p, relative to one style frame (confirm live prices with `dry_run`; 1080p ran about 2.5 times as much per clip): a 6 s clip costs about twenty, 10 s about thirty-five, a lip-sync correction pass about thirteen. A full video with about 17 shots plus frames and lip-syncs came to about five hundred.
 
 ## Lip-sync
 

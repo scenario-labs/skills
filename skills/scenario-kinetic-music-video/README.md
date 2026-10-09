@@ -34,8 +34,15 @@ synthetic footage clip (frames, matte, tracking): landscape stills of both templ
 pre-change engine at scales 1 and 0.5. Portrait and square stills were checked by eye with the
 safe band outlined, and the error paths (bad canvas, bad timeline tag, an `--only` with nothing to
 render) fail fast. `canvas.js` has a unit suite. Two plan-only application tests (portrait only;
-both ratios) passed with notes. No paid portrait production has run yet, so `motion_library.md`
-§10 says its portrait layout rules are untested.
+both ratios) passed with notes.
+
+A live application test then produced a full 1080p60 portrait video end to end (a 2:14 song,
+24 style frames, 27 clips, 9 section agents, about 15k CU) and passed with notes. It found the
+portrait subtitle running into the HUD counters, a `crop` that stretched plates, a `--chant`
+window with no end, transcription passes overwriting each other, `still.mjs` keeping a stale
+sheet, and the doc gaps behind a mic-covered lip-sync retake, the 720p-only cost anchors and a
+rejected reference crop. All are fixed; `motion_library.md` §10 notes one production behind its
+portrait rules.
 
 ## What the record does not cover
 

@@ -30,8 +30,8 @@ Read `references/lessons.md` before starting. Every item in it cost real time or
   - Ask what must never appear.
   - Defaults: generated footage shown clean (no filters on it), graphics layered on and around it, a fast and upbeat showreel energy.
 - **Brand:** any logo, wordmark or credit. Use official files in their official colors, only where the director wants them.
-- **Budget:** lean (6-10 video generations), moderate (12-20) or big. Price each paid step with `dry_run` (one run per distinct payload, then total) before spending. Relative anchors: a 6 s 720p clip costs about twenty style frames, a 10 s clip about thirty-five, and a full mixed video about five hundred.
-- **Format:** one canvas per project, asked once: portrait 9:16 for TikTok, Reels or Shorts, landscape 16:9 for YouTube or X (unattended with no destination: landscape). It is `CANVAS` in `engine/timeline.js`, and style frames and footage are generated at that ratio, never cropped from the other. On portrait, check the destination's current length cap and plan the teaser as the platform cut when the song runs longer. Both ratios only on request: the code re-renders free with `--canvas` and most shots are windowed, but each shot that must fill the second frame (hook, lip-sync close-ups, finale) is paid again (`references/pipeline.md` §9). X caps standard accounts at 2:20, so plan a teaser.
+- **Budget:** lean (6-10 video generations), moderate (12-20) or big. Price each paid step with `dry_run` (one run per distinct payload, then total) before spending. Relative anchors at 720p: a 6 s clip costs about twenty style frames, a 10 s clip about thirty-five, and a full mixed video about five hundred. A 1080p clip measured about 2.5 times its 720p price, so settle the footage resolution before quoting.
+- **Format:** one canvas per project, asked once: portrait 9:16 for TikTok, Reels or Shorts, landscape 16:9 for YouTube or X (unattended with no destination: landscape). It is `CANVAS` in `engine/timeline.js`, and style frames and footage are generated at that ratio, never cropped from the other. On portrait, check the destination's current length cap and plan the teaser as the platform cut when the song runs longer, or when you cannot check. Both ratios only on request: the code re-renders free with `--canvas` and most shots are windowed, but each shot that must fill the second frame (hook, lip-sync close-ups, finale) is paid again (`references/pipeline.md` §9). X caps standard accounts at 2:20, so plan a teaser.
 - **Lyrics:** use them if supplied (they beat any transcript). Otherwise transcribe and flag the uncertain words at the end.
 
 With no one around to answer, choose sensible defaults for the creative choices and write them into TREATMENT.md. Do not default the money: with no stated budget or no explicit team and project, stop before the first paid step and say what is missing.
@@ -81,7 +81,7 @@ Save the condensed results as `analysis/research_*.md`. Scene agents read them a
 Skip this for a graphics-only video, apart from any stills or 3D props. Otherwise follow `references/pipeline.md` §3-5:
 
 - **Subject sheet:** a turnaround, expressions and callouts from the user's references. Look at it, then crop identity references from it.
-- **Style frames:** one still per shot at the canvas ratio (an image model that takes reference images), in its section's look. Compose with negative space for type (on portrait, the face and the type space inside the safe band), on a set that composites (black void with rim light, flat color cyc, or white high-key). No text. Contact-sheet them and get the look approved cheaply (unattended: proceed only inside a stated budget).
+- **Style frames:** one still per shot at the canvas ratio (an image model that takes reference images), in its section's look. Compose with negative space for type (on portrait, the face and the type space inside the safe band), on a set that composites (black void with rim light, flat color cyc, or white high-key). No text. In a lip-sync frame nothing covers the mouth (no mic, hand or prop): a covered mouth fails the sync check and is paid again. Contact-sheet them and get the look approved cheaply (unattended: proceed only inside a stated budget).
 - **Footage routes:**
   - Image-to-video from the frame for actions.
   - A video model with reference images and reference audio, given a **synthesized beat track** for dances that lock to the song, then beat-warp.
@@ -117,7 +117,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready 2-pass 21 Mb/s file under 512 MB for X; portrait: the vertical upload in `references/pipeline.md` §8), a teaser (verse plus first chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and `_9x16`, when both were asked for. Use distinct filenames, because macOS is case-insensitive.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet, source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
-- **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent, summed from this run's `jobs_wait` rows (`cuCost`, logged in `analysis/jobs.md`); `usage` is project-wide and includes other work.
+- **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent, summed from this run's successful `jobs_wait` rows (`cuCost`, logged in `analysis/jobs.md`; a failed job is refunded but its row keeps a `cuCost`); `usage` is project-wide and includes other work.
 
 ## Quality bar
 

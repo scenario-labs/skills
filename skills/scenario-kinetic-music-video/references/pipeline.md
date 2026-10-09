@@ -23,8 +23,9 @@ This creates `audio/master.*`, the `engine/` template, `tools/` (with the matte 
 ## 2. Audio and lyrics
 
 ```bash
-.venv/bin/python tools/audio_analysis.py audio/master.mp3 # stems + engine/data/audio.json (prints BPM and downbeats)
-.venv/bin/python tools/lyrics_align.py transcribe --prompt "<names, jargon, acronyms>"
+.venv/bin/python tools/audio_analysis.py audio/master.mp3                              # stems + engine/data/audio.json (prints BPM and downbeats)
+.venv/bin/python tools/lyrics_align.py transcribe                                      # plain pass, also kept as analysis/lyrics_raw_plain.json
+.venv/bin/python tools/lyrics_align.py transcribe --prompt "<names, jargon, acronyms>" # hinted pass (lyrics_raw_hints.json); align reads the latest
 # → hand-write analysis/lyrics.txt (sections + corrected lines; the user's lyrics win if supplied)
 .venv/bin/python tools/lyrics_align.py align analysis/lyrics.txt --no-fix <ACRONYMS >[--chant <section >: <WORD >]
 .venv/bin/python tools/plot_lyrics.py 1:12 20:30 ... # Read the PNGs; fix outliers by hand in lyrics.json
@@ -32,6 +33,7 @@ This creates `audio/master.*`, the `engine/` template, `tools/` (with the matte 
 
 - **Verify the tempo.** Beat trackers and song-generation prompts can be off by a factor (a "130 BPM" track measured 98 with double-time drums). Check the median beat dt against the kick envelope, and write the measured grid into TREATMENT.md.
 - Treat lines you couldn't make out as guesses, and list them for the user at the end.
+- **A repeated shout** (`--chant <section>:<WORD>`): write that section's words into `lyrics.txt` as sung. The aligner places one WORD per vocal peak between the lines around the section, at most as many as you wrote; an empty section takes every peak up to the next line, or to the song's end.
 
 ## 3. Scenario: subject, style frames, assets
 
@@ -53,7 +55,7 @@ This creates `audio/master.*`, the `engine/` template, `tools/` (with the matte 
 
 ## 4. Scenario: footage routes
 
-Find current models with `recommend` using the capability string for each lane (`img2video`, `audio2video`; a reference-image, reference-audio dance is `img2video` with the reference features; lip-sync correction has no capability value, so `search` for it by name) and read each schema with `model_schema_get`. Pass a clip length through the `duration` argument, never in the prompt: `recommend` read "under 10 s" there as a latency limit. Footage is generated at the canvas ratio: if a member's schema has no 9:16 option, `recommend` again rather than cropping a 16:9 clip. The parameters below are concepts, not payloads: the schema wins. `dry_run` every distinct payload and total the quotes. Launch everything in parallel with `wait:false`, then `jobs_wait` with all job ids, re-called with `pending_job_ids` until none are pending. A wait timeout is not a failure: never relaunch a run, and never poll with `job_get`.
+Find current models with `recommend` using the capability string for each lane (`img2video`, `audio2video`; a reference-image, reference-audio dance is `img2video` with the reference features; lip-sync correction is `video2video`, with the job in the prompt) and read each schema with `model_schema_get`. Pass a clip length through the `duration` argument, never in the prompt: `recommend` read "under 10 s" there as a latency limit. Footage is generated at the canvas ratio: if a member's schema has no 9:16 option, `recommend` again rather than cropping a 16:9 clip. The parameters below are concepts, not payloads: the schema wins. `dry_run` every distinct payload and total the quotes. Launch everything in parallel with `wait:false`, then `jobs_wait` with all job ids, re-called with `pending_job_ids` until none are pending. A wait timeout is not a failure: never relaunch a run, and never poll with `job_get`.
 
 | shot                              | route                                                                                                                          | key params                                                                                                                               |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -70,6 +72,7 @@ Find current models with `recommend` using the capability string for each lane (
   4. the set and light, held constant ("background stays pure black", "rim light stays constant")
   5. exclusions ("No text, no captions, no logos, no watermark, no other people. Silent footage.")
 - **Synth beat track for dances:** `.venv/bin/python tools/synth_beat.py <slot> <dur> assets/audio_slices/<name>_beat.wav`. Upload it and say "@audio1 is a percussion timing guide: every hit lands exactly on the kicks and snares". The clip then belongs at song time `slot`.
+- **Reference images keep a normal shape.** A full-body crop narrower than 0.4 (width over height) failed one member's reference check after `dry_run` had priced the payload without complaint. Pad tall crops toward the canvas ratio before uploading.
 - **Vocal slices for lip-sync** come from the vocal stem as WAV (mp3 adds priming delay): `ffmpeg -i stems/htdemucs/master/vocals.wav -ss <slot> -t <dur> -ac 1 -ar 44100 -c:a pcm_s16le assets/audio_slices/<name>.wav`. The clip belongs at `slot`. Lip-sync prompts ask for "precise, expressive lip sync, strong mouth shapes on every syllable", with the mouth always visible and hands out of frame.
 - **Never send the song itself** to a video model. Moderation rejects it, and `generateAudio:true` can reproduce the vocal and fail the job. Use beat tracks and vocal stems only.
 - **Shot mix to plan:**
@@ -80,7 +83,7 @@ Find current models with `recommend` using the capability string for each lane (
   - a spin or signature move
   - a few "concept" shots that illustrate specific lyrics
   - a finale
-  - Include full-body long shots as well as close-ups. About 17 frames, 17 videos and 6 lip-syncs came to about 6k CU.
+  - Include full-body long shots as well as close-ups. About 17 frames, 17 videos and 6 lip-syncs came to about 6k CU at 720p; a 1080p portrait remake with 24 frames and 27 clips came to about 15k.
 - **Revisions:** a shot that doesn't work gets regenerated in a different look or replaced by code. Don't patch it with effects. For a bad cut-out (fine detail such as fingers on a keyboard, or hair on white), regenerate the shot in a style that keys cleanly (pixel art, flat color), or show the full plate inside a window.
 
 ## 5. Footage prep: frames, mattes, tracking, checks
