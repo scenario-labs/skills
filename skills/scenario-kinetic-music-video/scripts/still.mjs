@@ -1,4 +1,5 @@
-// Render stills at given times -> PNGs (+ optional contact sheet). usage: node tools/still.mjs --t 23.5,24,30 --scale 0.5 --dir out/stills [--only id] [--sheet name] [--variant b]
+// Render stills at given times -> PNGs (+ optional contact sheet). usage: node tools/still.mjs --t 23.5,24,30 --scale 0.5 --dir out/stills [--only id] [--sheet name] [--variant b] [--canvas portrait|landscape|square|WxH] [--safe]
+// --safe outlines the platform-UI safe band (drawn by the HUD) for review stills; never pass it to render.mjs.
 import { chromium } from "playwright";
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -11,7 +12,10 @@ const args = Object.fromEntries(
     .filter(Boolean)
     .map((s) => {
       const [k, ...v] = s.trim().split(" ");
-      return [k, v.join(" ") || true];
+      const eq = k.indexOf("="); // --canvas=portrait as well as --canvas portrait
+      return eq > 0
+        ? [k.slice(0, eq), k.slice(eq + 1) || true]
+        : [k, v.join(" ") || true];
     }),
 );
 const scale = +(args.scale ?? 0.5),
@@ -27,17 +31,14 @@ const { srv, port } = await serve(0);
 const q = new URLSearchParams({ scale: String(scale) });
 if (args.only) q.set("only", args.only);
 if (args.variant || args.ending) q.set("variant", args.variant || args.ending);
+if (args.canvas) q.set("canvas", args.canvas);
+if (args.safe) q.set("safe", "1");
 const browser = await chromium.launch({
   channel: "chrome",
   headless: true,
   args: ["--use-angle=metal", "--enable-gpu", "--ignore-gpu-blocklist"],
 });
-const page = await browser.newPage({
-  viewport: {
-    width: Math.round(1920 * scale),
-    height: Math.round(1080 * scale),
-  },
-});
+const page = await browser.newPage();
 page.on("pageerror", (e) => console.log("pageerror:", e.message));
 page.on("console", (m) => {
   if (m.type() === "error") console.log("console.error:", m.text());
@@ -51,6 +52,8 @@ if (err) {
   console.log(err);
   process.exit(1);
 }
+const [w, h] = await page.evaluate(() => [window.E.W, window.E.H]);
+await page.setViewportSize({ width: w, height: h });
 const files = [];
 for (const t of times) {
   const fps = +(args.fps ?? 60);

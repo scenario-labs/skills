@@ -1,5 +1,5 @@
 // Deterministic renderer: steps the engine frame by frame in headless Chrome, pipes JPEGs to ffmpeg.
-// usage: node tools/render.mjs --from 22 --to 30 --fps 30 --scale 0.5 --out out/preview.mp4 [--only a,b] [--workers 3] [--noaudio] [--crf 16] [--variant b] [--force]  (--to defaults to the song length; an existing --out is kept unless --force)
+// usage: node tools/render.mjs --from 22 --to 30 --fps 30 --scale 0.5 --out out/preview.mp4 [--only a,b] [--workers 3] [--noaudio] [--crf 16] [--variant b] [--canvas portrait|landscape|square|WxH] [--force]  (--to defaults to the song length; --canvas defaults to CANVAS in engine/timeline.js; an existing --out is kept unless --force)
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -13,7 +13,10 @@ const args = Object.fromEntries(
     .filter(Boolean)
     .map((s) => {
       const [k, ...v] = s.trim().split(" ");
-      return [k, v.join(" ") || true];
+      const eq = k.indexOf("="); // --canvas=portrait as well as --canvas portrait
+      return eq > 0
+        ? [k.slice(0, eq), k.slice(eq + 1) || true]
+        : [k, v.join(" ") || true];
     }),
 );
 const fps = +(args.fps ?? 30),
@@ -36,6 +39,7 @@ const { srv, port } = await serve(0);
 const q = new URLSearchParams({ scale: String(scale) });
 if (args.only) q.set("only", args.only);
 if (args.variant || args.ending) q.set("variant", args.variant || args.ending);
+if (args.canvas) q.set("canvas", args.canvas);
 const launch = () =>
   chromium.launch({
     channel: "chrome",
@@ -51,12 +55,7 @@ const launch = () =>
   });
 async function renderChunk(a, b, file, wi) {
   const browser = await launch();
-  const page = await browser.newPage({
-    viewport: {
-      width: Math.round(1920 * scale),
-      height: Math.round(1080 * scale),
-    },
-  });
+  const page = await browser.newPage();
   page.on("console", (m) => {
     if (m.type() === "error" || m.type() === "warning")
       console.log(`[w${wi}] ${m.type()}: ${m.text()}`);
@@ -68,6 +67,9 @@ async function renderChunk(a, b, file, wi) {
   });
   const err = await page.evaluate(() => window.__error);
   if (err) throw new Error(err);
+  // the engine resolved the canvas (timeline.js CANVAS or --canvas); match the page to it
+  const [w, h] = await page.evaluate(() => [window.E.W, window.E.H]);
+  await page.setViewportSize({ width: w, height: h });
   const ff = spawn(
     "ffmpeg",
     [

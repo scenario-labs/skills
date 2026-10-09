@@ -1,12 +1,12 @@
 ---
 name: scenario-kinetic-music-video
-description: "Use when turning a song into a kinetic-typography or motion-design music video, lyric video, visualizer or K-pop style MV with Scenario: a generated subject sheet, style frames and footage, plus a deterministic JavaScript/three.js engine for lyric type, mattes and tracked graphics timed to sung onsets. Also for revising, recutting or cutting teasers from such a video."
+description: "Use when turning a song into a kinetic-typography or motion-design music video, lyric video, visualizer or K-pop style MV with Scenario, landscape or vertical 9:16 for TikTok, Reels and Shorts: a generated subject sheet, style frames and footage, plus a deterministic JavaScript/three.js engine for lyric type, mattes and tracked graphics timed to sung onsets. Also for revising, recutting or cutting teasers from such a video."
 license: MIT
 ---
 
 # Kinetic Music Video
 
-A song goes in. A 1080p60 music video comes out: a motion designer's showreel cut to the track. Kinetic type, 2D and 3D graphics and transitions land on the beats and sung syllables. Generated footage of the subject is woven through it where the concept wants a performer. The untouched master is the only soundtrack.
+A song goes in. A 1080p60 music video comes out, landscape for YouTube and X or vertical for TikTok, Reels and Shorts: a motion designer's showreel cut to the track. Kinetic type, 2D and 3D graphics and transitions land on the beats and sung syllables. Generated footage of the subject is woven through it where the concept wants a performer. The untouched master is the only soundtrack.
 
 The work splits by what each tool does best:
 
@@ -31,7 +31,7 @@ Read `references/lessons.md` before starting. Every item in it cost real time or
   - Defaults: generated footage shown clean (no filters on it), graphics layered on and around it, a fast and upbeat showreel energy.
 - **Brand:** any logo, wordmark or credit. Use official files in their official colors, only where the director wants them.
 - **Budget:** lean (6-10 video generations), moderate (12-20) or big. Price each paid step with `dry_run` (one run per distinct payload, then total) before spending. Relative anchors: a 6 s 720p clip costs about twenty style frames, a 10 s clip about thirty-five, and a full mixed video about five hundred.
-- **Format:** 16:9 1080p60 by default, with 9:16 or 1:1 re-layouts on offer. X caps standard accounts at 2:20, so plan a teaser.
+- **Format:** one canvas per project, asked once: portrait 9:16 for TikTok, Reels or Shorts, landscape 16:9 for YouTube or X (unattended with no destination: landscape). It is `CANVAS` in `engine/timeline.js`, and style frames and footage are generated at that ratio, never cropped from the other. On portrait, check the destination's current length cap and plan the teaser as the platform cut when the song runs longer. Both ratios only on request: the code re-renders free with `--canvas` and most shots are windowed, but each shot that must fill the second frame (hook, lip-sync close-ups, finale) is paid again (`references/pipeline.md` §9). X caps standard accounts at 2:20, so plan a teaser.
 - **Lyrics:** use them if supplied (they beat any transcript). Otherwise transcribe and flag the uncertain words at the end.
 
 With no one around to answer, choose sensible defaults for the creative choices and write them into TREATMENT.md. Do not default the money: with no stated budget or no explicit team and project, stop before the first paid step and say what is missing.
@@ -81,7 +81,7 @@ Save the condensed results as `analysis/research_*.md`. Scene agents read them a
 Skip this for a graphics-only video, apart from any stills or 3D props. Otherwise follow `references/pipeline.md` §3-5:
 
 - **Subject sheet:** a turnaround, expressions and callouts from the user's references. Look at it, then crop identity references from it.
-- **Style frames:** one still per shot (an image model that takes reference images), in its section's look. Compose with negative space for type, on a set that composites (black void with rim light, flat color cyc, or white high-key). No text. Contact-sheet them and get the look approved cheaply (unattended: proceed only inside a stated budget).
+- **Style frames:** one still per shot at the canvas ratio (an image model that takes reference images), in its section's look. Compose with negative space for type (on portrait, the face and the type space inside the safe band), on a set that composites (black void with rim light, flat color cyc, or white high-key). No text. Contact-sheet them and get the look approved cheaply (unattended: proceed only inside a stated budget).
 - **Footage routes:**
   - Image-to-video from the frame for actions.
   - A video model with reference images and reference audio, given a **synthesized beat track** for dances that lock to the song, then beat-warp.
@@ -93,7 +93,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 ### 5. Engine and scene agents
 
 - **Smoke-test first:**
-  - Set `PAL` in `core.js`, and in `engine/timeline.js` set the sections on downbeats, `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by default).
+  - Set `PAL` in `core.js`, and in `engine/timeline.js` set `CANVAS`, the sections on downbeats, `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by default).
   - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label.
   - Render one still and a 5 s clip, then confirm audio and flashes line up with `av_sync_check.py`.
 - **Brief the agents.** Fill in `AGENTS_BRIEF.md` from the template, then launch one background agent per section in a single message. Each gets its file, time range, lyrics, must-have ideas and clips, and reads AGENTS_BRIEF, STYLE, TREATMENT, ENGINE_API and the research first. Log the agent ids. For a teaser or anything under about 30 s, the lead may write the scenes itself and skip the research agents, PLAN.md and the per-section agents; keep the smoke test.
@@ -108,12 +108,13 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - `freezedetect`: no frozen footage.
   - Contact sheets at 0.5 s steps, 20 s per sheet.
   - Every section boundary, frame by frame.
+  - On portrait, `still.mjs --safe` sheets, 20 s each: no word, logo or face outside the outlined band.
 - **Global look pass:** a still sheet across all sections, then tune `POST`, the palette and the HUD theme.
 - **Revisions:** map each director note (they arrive as timestamps) to its section and send it back to the owning agent via SendMessage. Resuming keeps its context. Fix a weak shot by replacing it with a new generation in a different look, or with code, never by adding effects. Offer alternatives as timeline `variant`s (render with `--variant b`) instead of guessing.
 
 ### 7. Deliver
 
-- **Videos:** an X-ready file (2-pass 21 Mb/s, under 512 MB), a teaser (verse plus first chorus) and a master, plus one file per variant. Use distinct filenames, because macOS is case-insensitive.
+- **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready 2-pass 21 Mb/s file under 512 MB for X; portrait: the vertical upload in `references/pipeline.md` §8), a teaser (verse plus first chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and `_9x16`, when both were asked for. Use distinct filenames, because macOS is case-insensitive.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet, source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
 - **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent, summed from this run's `jobs_wait` rows (`cuCost`, logged in `analysis/jobs.md`); `usage` is project-wide and includes other work.
@@ -123,7 +124,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - **Every word shows on time.** Each sung word is visible at its onset (as a hero or in the subtitle track), and hero words peak on the onset frame.
 - **Integration, not decoration.** Every footage moment has a graphic that reacts to it (behind via the matte, tracked to it, timed to its move, or continuing its shapes). The footage pixels are untouched.
 - **No static frames.** Footage always plays live, and something always moves.
-- **One focal point per frame.** Type frames the subject and never covers the face. Behind-the-subject type still reads.
+- **One focal point per frame.** Type frames the subject and never covers the face. Behind-the-subject type still reads. On portrait, every word, logo and face sits inside the safe band.
 - **Section variance.** Mix the looks, 2D and 3D, poster slams and quiet subtitles. Never use the same type treatment on two consecutive lines. Cut density climbs with the song's energy, and showcase moments (logo, end card) get time.
 - **Photosensitivity.** At most 3 full-frame luminance flips per second.
 - **Watch it yourself** before calling it done, then take a second look at the first 3 seconds.
@@ -135,9 +136,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - Footage prep: [prep_clip.sh](scripts/prep_clip.sh), [prep_video.py](scripts/prep_video.py), [matte.swift](scripts/matte.swift), [fixmatte.py](scripts/fixmatte.py), [matte_keyed.py](scripts/matte_keyed.py), [matte_fallback.py](scripts/matte_fallback.py), [track.py](scripts/track.py)
 - Sync checks: [lipsync_check.py](scripts/lipsync_check.py), [dance_sync_check.py](scripts/dance_sync_check.py), [av_sync_check.py](scripts/av_sync_check.py)
 - Rendering and review: [render.mjs](scripts/render.mjs), [still.mjs](scripts/still.mjs), [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py)
-- Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html), [main.js](assets/engine/main.js), [core.js](assets/engine/core.js), [plate.js](assets/engine/plate.js), [roto.js](assets/engine/roto.js), [typekit.js](assets/engine/typekit.js), [hud.js](assets/engine/scenes/hud.js), plus [timeline.template.js](assets/timeline.template.js) and [scene.template.js](assets/scene.template.js)
+- Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html), [main.js](assets/engine/main.js), [canvas.js](assets/engine/canvas.js), [core.js](assets/engine/core.js), [plate.js](assets/engine/plate.js), [roto.js](assets/engine/roto.js), [typekit.js](assets/engine/typekit.js), [hud.js](assets/engine/scenes/hud.js), plus [timeline.template.js](assets/timeline.template.js) and [scene.template.js](assets/scene.template.js)
 - [references/pipeline.md](references/pipeline.md): every command and Scenario call, step by step
-- [references/engine_api.md](references/engine_api.md): the scene contract and the full `E` API (plates, mattes, tracking, post, HUD, variants)
+- [references/engine_api.md](references/engine_api.md): the scene contract and the full `E` API (canvas and safe band, plates, mattes, tracking, post, HUD, variants)
 - [references/motion_library.md](references/motion_library.md): looks, type system, a 40-move technique library, integration ideas, transitions, timing, easing and springs, sync and cut density
 - [references/agent_brief_template.md](references/agent_brief_template.md): the brief each scene agent reads
 - [references/lessons.md](references/lessons.md): production gotchas and direction defaults that held

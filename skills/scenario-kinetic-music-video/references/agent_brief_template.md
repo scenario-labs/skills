@@ -4,7 +4,7 @@ Copy this to `AGENTS_BRIEF.md` in the project and fill in the `<…>` parts. Del
 
 ---
 
-You are one of <N> motion designers. Each of you builds one section of a <duration> music video for "<song>" by <artist>. It is rendered entirely in JavaScript (three.js + Canvas2D) by a deterministic frame-stepping engine at 1080p60<, over AI-generated footage of <subject>>.
+You are one of <N> motion designers. Each of you builds one section of a <duration> music video for "<song>" by <artist>. It is rendered entirely in JavaScript (three.js + Canvas2D) by a deterministic frame-stepping engine at 1080p60 on a <landscape 1920×1080 | portrait 1080×1920> canvas<, over AI-generated footage of <subject>>.<If both ratios ship: your scene renders on both canvases, or the lead gives you a portrait twin file.>
 
 **The director's brief, in their words:** "<paste the key adjectives and asks: energy, pace, looks, what to avoid>". Treat this as your showreel.
 
@@ -20,7 +20,7 @@ You are one of <N> motion designers. Each of you builds one section of a <durati
 ## Ownership
 
 - You own ONLY `engine/scenes/<id>.js`, plus an optional `engine/scenes/<id>/` helper folder and `assets/<id>/` for generated data.
-- Don't edit `engine/main.js`, `core.js`, `plate.js`, `typekit.js`, `roto.js`, `timeline.js`, `scenes/hud.js` or anyone else's files. If you hit an engine bug, work around it locally and report it.
+- Don't edit `engine/main.js`, `canvas.js`, `core.js`, `plate.js`, `typekit.js`, `roto.js`, `timeline.js`, `scenes/hud.js` or anyone else's files. If you hit an engine bug, work around it locally and report it.
 - **Deterministic only:** no `Math.random`, `Date`, `performance.now` or rAF timing. Use `E.rng(seed)`, `E.hash1`, `E.noise1/2`.
 - **Performance:** at most ~35 ms per frame at 1080p. Cache in `load()`, at most 2 full-res 2D canvases redrawn per frame, and no allocation in hot loops.
 - Don't generate new AI footage or images unless the lead asks. Procedural textures in code are fine.
@@ -28,6 +28,7 @@ You are one of <N> motion designers. Each of you builds one section of a <durati
 ## Footage rules
 
 - **Footage is shown clean**: `E.drawPlate` only. No filter, glow, grain, outline, halftone, tint or grade on the subject's pixels. You may reframe, crop, mirror, cut, speed-ramp, mask into shapes, tile, or put the plate on a 3D card.
+- **Plate fit per canvas:** draw every plate with `fit: E.plateFit(E, v)` (same options in `plateToScreen`), so a clip whose shape differs from the canvas is windowed, never cover-cropped to fill.
 - **Integration:** every footage moment needs at least one graphic that is tracked to the subject, timed to its motion, continues a line or shape in the plate, or sits behind it via the matte. A plain "video + caption" is a failure.
 - **Never a frozen frame.** Keep `localT` inside the clip's duration. Slot clips (lip-sync, beat-guided dances) use `local = t − slot` and aren't shifted; other clips can use any offset.
 - **Never cover the face** during lip-sync. MID-layer type behind the subject must stay readable, so move it if a key letter is hidden.
@@ -48,6 +49,7 @@ You are one of <N> motion designers. Each of you builds one section of a <durati
 - Cut density follows the section's energy in TREATMENT.md. A designed event lands on every beat.
 - At least one "how did they do that" moment per section: type behind the subject, a line that leaves the footage and becomes type, a 3D object that comes out of a 2D drawing, a match cut on shape, or a tile explosion.
 - Set `E.hud.theme` for your look (`'light'` on white or color frames).
+- **Lay out from `E.W`, `E.H` and `E.SAFE`,** never from 1920 or 1080 constants. On a portrait canvas, every word, logo and face stays inside `E.SAFE` (`motion_library.md` §10).
 
 ## Tools (run from the project root)
 
@@ -70,6 +72,7 @@ You are one of <N> motion designers. Each of you builds one section of a <durati
    - Is the type hierarchy strong?
    - Is it too empty, too busy, or generic?
 6. **Boundaries:** the first frame is a hard cut in and must be striking. Check the first and last 3 frames.
+7. **Safe band** (portrait canvas, or both ratios): a sheet with `--safe` (and `--canvas portrait` when the project's canvas is landscape). Nothing that must read sits outside the dashed band.
 
 ## Final report (to the lead)
 

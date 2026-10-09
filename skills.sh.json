@@ -47,7 +47,6 @@
         "scenario-video",
         "scenario-video-editing",
         "scenario-seedance-music-video",
-        "scenario-kinetic-music-video",
         "scenario-seedance-storyboard",
         "scenario-video-ads",
         "scenario-ugc",
@@ -56,6 +55,11 @@
         "scenario-video-assembly",
         "scenario-caption-studio"
       ]
+    },
+    {
+      "title": "Socials",
+      "description": "Made for social feeds: kinetic-typography lyric videos and motion-design music videos with type timed to the sung words, in landscape or vertical 9:16, delivered as a master, a platform upload, and a teaser cut.",
+      "skills": ["scenario-kinetic-music-video"]
     },
     {
       "title": "Consistency and custom models",

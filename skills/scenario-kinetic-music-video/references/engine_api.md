@@ -6,6 +6,7 @@ A deterministic three.js + Canvas2D compositor. Every pixel is a pure function o
 
 - [Files](#files)
 - [Scene contract](#scene-contract)
+- [Canvas and safe band](#canvas-and-safe-band)
 - [The E object](#the-e-object)
 - [Footage: clean plates, mattes and tracking](#footage-clean-plates-mattes-and-tracking)
 - [Keyed footage planes in 3D (roto)](#keyed-footage-planes-in-3d-roto)
@@ -21,11 +22,12 @@ A deterministic three.js + Canvas2D compositor. Every pixel is a pure function o
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `index.html`                          | fonts (@font-face → assets/fonts), importmap for three                                                                                                           |
 | `main.js`                             | loads data and scenes, per-frame layer compositing, bloom, final grade shader, `renderFrame` / `grab`                                                            |
+| `canvas.js`                           | canvas presets, orientation, the platform-UI safe band, per-canvas timeline filtering                                                                            |
 | `core.js`                             | math, easing, springs, RNG/noise, palette, audio/lyric timeline helpers, text canvases, 3D type, G2D surfaces, video frame sequences (frames + matte + tracking) |
 | `plate.js`                            | `drawPlate`, `plateRect`, `plateToScreen`, `plateMaterialFor`: clean footage with optional matte cut-out                                                         |
-| `typekit.js`                          | kinetic type: `popScale`, `wordAlpha`, `drawText`, `drawStagger`, `drawKaraoke`, `drawSubtitle`, `blitG2D`, `stretchKW`                                          |
+| `typekit.js`                          | kinetic type: `popScale`, `wordAlpha`, `drawText`, `fitSize`, `drawStagger`, `drawKaraoke`, `drawSubtitle`, `blitG2D`, `stretchKW`                               |
 | `roto.js`                             | `makeRotoMaterial`: luma-keyed footage planes for clips shot on a black void (stylized redraws only with `{stylized:true}`)                                      |
-| `timeline.js`                         | `TIMELINE` (scene ids, [start,end), z, variant), `HUD` config, `POST` project defaults                                                                           |
+| `timeline.js`                         | `CANVAS`, optional `SAFE`, `TIMELINE` (scene ids, [start,end), z, variant, canvas), `HUD` config, `POST` project defaults                                        |
 | `scenes/hud.js`                       | global HUD layer (z=100): corners, title + mark, section code, bar/beat, counters (the spine), progress, subtitle track                                          |
 | `data/audio.json`, `data/lyrics.json` | written by `audio_analysis.py` / `lyrics_align.py`                                                                                                               |
 
@@ -45,10 +47,22 @@ export default {
 ```
 
 - Layers composite premultiplied-normal over black in z order (an entry can set `blend: 'add'|'screen'|'multiply'`). HDR linear color. Values above the bloom threshold (1.05) bloom.
-- Previews run at `E.SCALE = 0.5` (E.W = 960). Always size 2D pixels as `px * E.SCALE`. The camera aspect is `E.W/E.H`.
+- Previews run at `E.SCALE = 0.5` (E.W = 960 on landscape, 540 on portrait). Always size 2D pixels as `px * E.SCALE`, and place them from `E.W`, `E.H` and `E.SAFE`, never from 1920 or 1080 constants. The camera aspect is `E.W/E.H`.
 - Deterministic only. No `Math.random`, `Date`, `performance.now` or rAF timing. Use `E.rng(seed)`, `E.hash1`, `E.noise1/2`. Particles use closed-form positions (no accumulated state).
 - The budget is about 35 ms/frame at 1080p. Cache text textures, geometry and canvases in `load()`. At most 2 full-res 2D canvases redrawn per frame, and no allocation in hot loops.
 - The first frame at `layer.start` is a hard cut in, so make it striking. The last frames land on an accent.
+
+## Canvas and safe band
+
+One project renders at one canvas, `CANVAS` in timeline.js: `'landscape'` (1920×1080, the default), `'portrait'` (1080×1920), `'square'` (1080×1080) or `'WxH'` with even sides. `--canvas` on `render.mjs` and `still.mjs` overrides it to render the same project at a second ratio; an unreadable value stops the render with an error.
+
+- `E.CANVAS` is `[w, h]` at scale 1, and `E.ORIENT` is `'landscape' | 'portrait' | 'square'`.
+- `E.SAFE` is `{x, y, w, h}` in px: the band platform UI never covers. On a 9:16-tall canvas it clears roughly the top 14%, the bottom 35%, 6% on the left and 13% on the right (authoring-time values); on anything wider it is the whole frame, so landscape layouts are unchanged. `SAFE` in timeline.js overrides sides per orientation, e.g. `{ landscape: { top: 0.1, bottom: 0.1 } }` or `{ portrait: { top: 0.2 } }`; a side it does not name keeps its default.
+- Words, logos and faces go inside `E.SAFE`; footage and full-bleed graphics may fill the canvas behind it. The HUD and the house subtitle already lay out inside it, and off landscape the subtitle shrinks a long line to fit (a line much over 45 characters gets small, so split it in the lyrics).
+- `E.safeCamera(cam)` shifts a PerspectiveCamera's frame so the origin lands on the band's center (a no-op on a full-frame band). Use it for 3D heroes, then set the distance so the object fits the band's width (see the scene template).
+- `E.fitSize(ctx, text, o, maxW)` returns the largest size, up to `o.size`, at which the text fits `maxW`. Hero type sized for a 1920-wide frame overflows a 1080-wide one; fit it to `E.SAFE.w` divided by the largest scale its move reaches (a word popping in from 1.6× fits `E.SAFE.w / 1.6`), or enter from below 1.
+- `E.plateFit(E, v)` returns `'cover'` when the clip's shape matches the canvas and `'contain'` (a window) when it does not. Pass it as every plate's `fit` in a scene that renders on more than one canvas.
+- `node tools/still.mjs --safe` outlines the band in magenta. The HUD draws it (even at `alpha:0`), so the `hud` entry must be in `TIMELINE`. Never pass `--safe` to a delivery render.
 
 ## The E object
 
@@ -75,7 +89,7 @@ export default {
   - `E.drawText(ctx, text, x, y, {font, size, weight, stretch:'125%'|'extra-condensed'…, tracking(em), color, alpha, align, s|sx|sy, rot, skewX, stroke, strokeOnly, glow, italic})`.
   - `E.measure(ctx, text, o)`.
   - `E.drawStagger(ctx, text, x, y, t, s, {stagger, dy, spring, e})`.
-  - `E.drawKaraoke(ctx, E, line, t, {x, y, size, align, font, litColor, dimColor})`.
+  - `E.drawKaraoke(ctx, E, line, t, {x, y, size, align, font, litColor, dimColor, maxW})`: `maxW` shrinks the whole line to fit.
   - `E.popScale(t, s, {k, z, from})` and `E.wordAlpha(t, s, e, {out})`; `E.LEAD = 0.05`.
   - `E.textTexture(text, o)` returns a cached `{tex, w, h, aspect}` for planes.
   - `E.text3D(str, {font:'ArchivoBlack'|'Anton'|'BlackHanSans', size, depth, bevel…})` returns a cached, centered TextGeometry. Use a material array `[front, side]`.
@@ -91,6 +105,7 @@ This is the default compositing mode. Footage is drawn exactly as generated, and
 - `E.drawPlate(E, v, { fit:'cover'|'contain', zoom:1, x:0, y:0, rot:0, crop:[x,y,w,h] (image UV, y down), mirror:false, opacity:1, matte:false, invert:false, feather:0.12 })` draws into the current render target.
   - `matte:true` draws only the subject (alpha from the matte). `invert:true` draws only the background.
   - `x` and `y` are px offsets at 1080p scale (multiplied by `E.SCALE` internally).
+  - `fit:'cover'` fills the canvas and crops the clip when the ratios differ; `fit:'contain'` shows the whole clip as a band or window. Use `fit: E.plateFit(E, v)` so a 16:9 clip on a portrait canvas is windowed, never cover-cropped to fill (`pipeline.md` §9).
 - **Layer recipe** ("type behind the subject"): `drawPlate(v)`, then MID graphics (a `blitG2D` or a 3D render), then `drawPlate(v, {matte:true})`, then FRONT graphics.
 - **Backdrop replacement** for plates shot on a flat color cyc: draw a color field, then `drawPlate(v, {matte:true})`. The backdrop becomes your color and the subject is untouched (the floor shadow is lost). Run `fixmatte.py` on those clips first.
 - `E.plateRect(E, v, opts)` gives `{x, y, w, h, cx, cy, rot}` in screen px. `E.plateToScreen(E, v, [u, v], opts)` gives `[x, y]` in screen px (E.W × E.H, y down) for a video-UV point. Pass the same opts you used for `drawPlate`.
@@ -107,7 +122,7 @@ For clips shot on a pitch-black void that should float inside a 3D world without
 
 - `const m = E.makeRotoMaterial(E, {footGain, keyLo, keyHi})`, then `E.rotoLevels(m, v)`. Each frame: `m.uniforms.tVideo.value = v.tex`.
 - Other uniforms: `uCrop` (Vector4 x,y,w,h in video UV), `uMirror`, `uOpacity`, `uReveal`/`uRevealDir`, `uDissolve`.
-- Put it on `new THREE.Mesh(new THREE.PlaneGeometry(16/9*h, h), m)`, or call `E.drawRotoFullscreen(E, m, {scale, x, y})`.
+- Put it on `new THREE.Mesh(new THREE.PlaneGeometry((v.meta.w / v.meta.h) * h, h), m)` (the clip's own aspect), or call `E.drawRotoFullscreen(E, m, {scale, x, y})`.
 - Output is `rgb = c·m, alpha = key·m`, so dim rim halos add light. Near-black costumes go see-through over bright graphics. Fix this with a dark backing cut to the silhouette, or a tighter key (`keyLo 0.006, keyHi 0.03`).
 - Stylized redraws (dots, edges, ASCII, scanline, cel) need `{stylized:true}`. Use them only when the director asks; effects on footage are rejected by default.
 
@@ -120,6 +135,7 @@ For clips shot on a pitch-black void that should float inside a 3D world without
 - `grain`, `ca`, `vignette`, `scan`, `glitch`, `sat` and `tint` touch every pixel, including footage. Keep them at 0 over footage unless the director wants that texture.
 - `punch` (zoom), `shake` and `rot` move the whole frame. `shake` is in UV units (0.004 is a hard hit), not pixels: pixel values blow the frame up and show as corrupt plates. They work as camera accents over footage. `rot` samples clamp-to-edge, so add about 0.1 punch while tilted.
 - `flash` is added in linear space before sRGB encoding, so 0.1 already reads strong. It is zeroed below 0.02.
+- `letterbox` masks to a 2.39:1 window across the full width, which is a thin strip on a portrait canvas. There, frame a cinema moment as a boxed plate instead.
 
 ## HUD
 
@@ -127,13 +143,15 @@ A persistent frame glues 2D, 3D and footage sections into one piece, and its sub
 
 - Per frame: `E.hud = {alpha:1, sub:true, corners:true, label:'', theme:'dark'|'light', ink, accent}`. Use `theme:'light'` on white or color frames (dark ink). Set `sub=false` only while the scene shows the full sung line itself.
 - Content comes from `HUD` in timeline.js: `title`, optional `mark` (an SVG path, official brand paths only), `sections`, `counters` (`fmt: int|short|sci|clock|text`, `interp: lin|log`), `progress`, and `dark`/`light` theme colors. The counters are where the video's spine usually shows: a clock, a countdown, or a number that explodes over the song.
+- It lays out inside `E.SAFE`, so on a portrait canvas it frames the safe band rather than the screen edges.
 - Retheme it per project or drop it (`alpha:0`). Some concepts want no HUD at all.
 
 ## Timeline, variants and project config
 
-- `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?}`. One file per section, with hard cuts at boundaries on downbeats.
+- `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?, canvas?}`. One file per section, with hard cuts at boundaries on downbeats.
+- **Per-canvas entries:** `canvas:'portrait'` (or a list of orientations) renders the entry only on that canvas, `--only` included; tags are case-insensitive, an unknown one stops the render with an error, and so does an `--only` that leaves nothing to render. Use it for a section that needs its own layout per ratio: tag the landscape file `canvas:'landscape'` and its portrait twin `canvas:'portrait'`. Entries without `canvas` render everywhere.
 - **Variants:** give alternate versions of a section (an ending, a hook) `variant:'a'|'b'|'c'`. Only `a` renders unless you pass `--variant b`, which lets you deliver several cuts from one project. A variant may run past the song; `render.mjs` pads silence (`apad`).
-- `POST` in timeline.js sets project-wide post defaults. `HUD` configures the frame.
+- `CANVAS` and `SAFE` set the canvas and its safe band (see [Canvas and safe band](#canvas-and-safe-band)). `POST` in timeline.js sets project-wide post defaults. `HUD` configures the frame.
 
 ## Fonts and 3D assets
 
@@ -143,6 +161,6 @@ A persistent frame glues 2D, 3D and footage sections into one piece, and its sub
 
 ## Commands
 
-- `node tools/still.mjs --only <id>,hud --range a:b:step --scale 0.5 --dir out/<id>/it1 --sheet sheet --cols 4` (or `--t 1.2,3.4`)
+- `node tools/still.mjs --only <id>,hud --range a:b:step --scale 0.5 --dir out/<id>/it1 --sheet sheet --cols 4` (or `--t 1.2,3.4`; add `--safe` to outline the safe band, `--canvas portrait` for the other ratio)
 - `node tools/render.mjs --only <id>,hud --from a --to b --fps 30 --scale 0.5 --out out/<id>/preview.mp4 --force`
-- Full: `node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/master.mp4 [--variant b] [--to <end>]`
+- Full: `node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/master.mp4 [--variant b] [--to <end>] [--canvas portrait]`
