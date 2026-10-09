@@ -12,8 +12,6 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 
 export const commands = [
-  { name: "skills-pr-summary", path: "pr-summary.md" },
-  { name: "skills-squash-message", path: "squash-message.md" },
   {
     name: "skills-pr-handle",
     path: "skills/pr-handle.md",

@@ -35,14 +35,14 @@ function fixture(t) {
   }
   return {
     root,
-    source: join(root, ".agents/skills/skills-pr-summary/SKILL.md"),
-    target: join(root, ".claude/commands/pr-summary.md"),
+    source: join(root, ".agents/skills/skills-validate/SKILL.md"),
+    target: join(root, ".claude/commands/skills/validate.md"),
   };
 }
 
 test("check is read-only; sync creates all commands and is idempotent", (t) => {
   const { root, target } = fixture(t);
-  assert.equal(syncCommands(root, true).length, 4);
+  assert.equal(syncCommands(root, true).length, 2);
   assert.equal(existsSync(dirname(target)), false);
   assert.deepEqual(syncCommands(root), []);
   assert.deepEqual(syncCommands(root, true), []);
@@ -104,7 +104,7 @@ test("file symlinks, missing sources and invalid metadata fail checks", (t) => {
   const original = readFileSync(source, "utf8");
   writeFileSync(
     source,
-    original.replace("name: skills-pr-summary", "name: wrong"),
+    original.replace("name: skills-validate", "name: wrong"),
   );
   assert.match(
     syncCommands(root, true).join("\n"),
