@@ -1,5 +1,7 @@
-"""lyrics_align.py align: supplied lyrics that cover only part of the song keep their own timing."""
+"""lyrics_align.py: supplied lyrics that cover only part of the song keep their own timing, a chant stays inside its
+section, and each transcription pass keeps its own copy."""
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -39,6 +41,57 @@ class PartialLyricsTest(unittest.TestCase):
             self.assertEqual(last["w"], "Hervé")
             self.assertLess(last["e"], 5.0)
             self.assertLessEqual(last["e"] - last["s"], 2.0)
+
+
+def chant_project(cwd, lyrics, peaks):
+    """Two transcribed lines (1-2 s and 10-11 s) and a vocal envelope with one short bump per peak time."""
+    (cwd / "engine" / "data").mkdir(parents=True)
+    (cwd / "analysis").mkdir()
+    fps, env = 60, [0.0] * 60 * 30
+    for p in peaks:
+        for k in range(-3, 4):
+            env[round(p * fps) + k] = max(0.0, 1.0 - abs(k) / 4)
+    (cwd / "engine" / "data" / "audio.json").write_text(
+        json.dumps({"vocal_onsets": [], "env": {"vocal": env}, "env_fps": fps}))
+    raw = [{"start": 1.0, "end": 2.0, "text": "", "words": [word("one", 1.0, 1.5), word("two", 1.5, 2.0)]},
+           {"start": 10.0, "end": 11.0, "text": "", "words": [word("three", 10.0, 10.5), word("four", 10.5, 11.0)]}]
+    (cwd / "analysis" / "lyrics_raw.json").write_text(json.dumps(raw))
+    (cwd / "lyrics.txt").write_text(lyrics)
+
+
+class ChantTest(unittest.TestCase):
+    def align(self, lyrics, peaks, chant):
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = Path(tmp)
+            chant_project(cwd, lyrics, peaks)
+            r = subprocess.run([sys.executable, str(SCRIPT), "align", "lyrics.txt", "--chant", chant],
+                               cwd=cwd, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            return json.loads((cwd / "engine" / "data" / "lyrics.json").read_text())["lines"]
+
+    def test_mid_song_chant_stays_between_its_neighbors(self):
+        lines = self.align("# section: verse\none two\n# section: hook\nGO GO\n# section: verse2\nthree four\n",
+                           [4.0, 5.0, 12.0, 20.0], "hook:GO")
+        self.assertEqual([l["section"] for l in lines], ["verse", "hook", "verse2"])
+        starts = [w["s"] for w in lines[1]["words"]]
+        self.assertEqual(len(starts), 2)
+        self.assertTrue(all(2.0 < s < 10.0 for s in starts), starts)
+
+    def test_closing_chant_takes_no_more_words_than_its_lines_hold(self):
+        lines = self.align("# section: verse\none two\nthree four\n# section: outro\nGO GO\n",
+                           [12.0, 13.0, 20.0], "outro:GO")
+        self.assertEqual(lines[-1]["section"], "outro")
+        self.assertEqual(len(lines[-1]["words"]), 2)
+        self.assertLess(lines[-1]["words"][-1]["s"], 14.0)
+
+
+class RawPathsTest(unittest.TestCase):
+    def test_each_pass_keeps_its_own_copy(self):
+        spec = importlib.util.spec_from_file_location("lyrics_align", SCRIPT)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        self.assertEqual(mod.raw_paths(""), ["analysis/lyrics_raw.json", "analysis/lyrics_raw_plain.json"])
+        self.assertEqual(mod.raw_paths("names"), ["analysis/lyrics_raw.json", "analysis/lyrics_raw_hints.json"])
 
 
 if __name__ == "__main__":

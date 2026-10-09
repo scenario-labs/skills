@@ -75,11 +75,13 @@ for (const t of times) {
 await browser.close();
 srv.close();
 if (args.sheet) {
+  // --force: the sheet is this run's output like the stills it is built from, so a re-run replaces it instead of keeping a stale one
   const r = spawnSync(".venv/bin/python", [
     "tools/sheet.py",
     `${dir}/${args.sheet}.jpg`,
     String(args.cols ?? 4),
     ...files,
+    "--force",
   ]);
   console.log(
     r.stdout.toString(),

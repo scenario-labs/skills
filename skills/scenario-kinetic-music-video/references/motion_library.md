@@ -204,7 +204,7 @@ Settle time is about 4/(z·√k) s.
 
 ## 10. Portrait canvas
 
-Layout rules for a 9:16 canvas (`CANVAS = 'portrait'`), written when the engine gained one. Unlike the rest of this file, they have not been through a production yet.
+Layout rules for a 9:16 canvas (`CANVAS = 'portrait'`), written when the engine gained one. Unlike the rest of this file, they have been through only one production so far.
 
 - **The frame is narrow and tall.** A hero line breaks into stacks of one or two words, each sized with `E.fitSize` to `E.SAFE.w` divided by the largest scale its move reaches, or entering from below 1 so the overshoot stays inside the band. A wide poster slam becomes a word pile-up down the band.
 - **Short sung lines.** The house subtitle shrinks a line to fit the band, so a line much over 45 characters turns small: split it in `analysis/lyrics.txt`.

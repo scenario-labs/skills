@@ -50,13 +50,13 @@ Every item here cost real time or credits once. Read the matching section before
 - **Sets that composite:** a pitch-black void with a hard rim light, a flat color cyc, or white high-key. A glossy floor came back as a gray gradient. Flat color cycs let you replace the backdrop via the matte.
 - Beat alignment from a beat-track reference is loose (about 1-1.5σ above chance). Always beat-warp dance clips; it matched 14/14 motion peaks within 160 ms.
 - Text baked into generated frames is never usable. Prompt "no text", and do all type in code.
-- Budget anchors, relative to one style frame (confirm live prices with `dry_run`): a 6 s 720p clip costs about twenty, 10 s about thirty-five, a lip-sync correction pass about thirteen. A full video with about 17 shots plus frames and lip-syncs came to about five hundred.
+- Budget anchors at 720p, relative to one style frame (confirm live prices with `dry_run`; 1080p ran about 2.5 times as much per clip): a 6 s clip costs about twenty, 10 s about thirty-five, a lip-sync correction pass about thirteen. A full video with about 17 shots plus frames and lip-syncs came to about five hundred.
 
 ## Lip-sync
 
 - **Audio-to-video** from a style frame and a vocal slice gave the lip-sync shots the director liked most, at 1080p, with a camera motion option.
 - The alternative is reference-audio video with the vocal stem, then a **lip-sync correction** model (cut-off sync mode), replacing frames in place under the same clip name.
-- Measure it: `lipsync_check.py` correlates mouth openness (MediaPipe FaceMesh) with vocal RMS. About 0.5 is good, and 0.1-0.2 is weak. Tracking fails on wide shots or when a hand crosses the face. Held vowels read as "closed", so judge by eye too. Never shift a slot clip to chase a measured lag. Under 0.2, retake it in another look if the budget allows; otherwise keep the shot wider or shorter so the mouth is not the focal point.
+- Measure it: `lipsync_check.py` correlates mouth openness (MediaPipe FaceMesh) with vocal RMS. About 0.5 is good, and 0.1-0.2 is weak. Tracking fails on wide shots or when a hand crosses the face. Held vowels read as "closed", so judge by eye too. Never shift a slot clip to chase a measured lag. Under 0.2, retake it in another look if the budget allows, or run a lip-sync correction pass on it (the `video2video` route in `pipeline.md` §4, about thirteen style frames); otherwise keep the shot wider or shorter so the mouth is not the focal point.
 - The audio-to-video member capped audio at 10 s at authoring time (an 11 s slice failed with a 400, and so did a slice of exactly 10.0 s), so cut slices of 9.9 s at most; clips come back a few frames shorter than the slice.
 - Cut vocal slices as WAV, not mp3 (priming delay). MediaPipe must be pinned to `0.10.14` (newer versions dropped `mp.solutions`).
 
