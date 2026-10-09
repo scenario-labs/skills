@@ -204,15 +204,18 @@ export default {
   },
 };
 // subtitle track: karaoke mono line, bottom-left above the progress line; off landscape it shrinks to fit the safe band
+// and rises above the counter stack, since a band-wide line would run into the counters at bottom-right
 function drawSub(c, E, t, H, dark, ink, bar) {
   const ln = E.lineAt(t, 0.25);
   if (!ln || t > ln.e + 0.5) return;
   const S = E.SCALE,
-    R = E.SAFE;
+    R = E.SAFE,
+    wide = E.ORIENT === "landscape",
+    lift = wide ? 92 : Math.max(92, 61 + 20 * (CFG.counters ?? []).length);
   const size = 24 * S,
     x = R.x + 92 * S,
-    y = R.y + R.h - 92 * S,
-    maxW = E.ORIENT === "landscape" ? undefined : R.w - 92 * S - 52 * S;
+    y = R.y + R.h - lift * S,
+    maxW = wide ? undefined : R.w - 92 * S - 52 * S;
   const fade =
     clamp((t - (ln.s - 0.25)) / 0.08) * (1 - clamp((t - (ln.e + 0.35)) / 0.15));
   c.save();
