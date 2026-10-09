@@ -8,6 +8,8 @@ license: MIT
 
 ## Overview
 
+For ordered independent edits of an existing clip, use `scenario-ad-variants`; this skill starts new creative.
+
 This skill is the director layer: it turns one product shot and a brief into a finished ad, delegating mechanics to the sibling skills it names per stage. Connection and the core loop: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap. The full sibling map and install commands: [references/dependencies.md](references/dependencies.md).
 
 Two rules bind every stage, because they carry the ad's credibility. The product is never generated: every product shot starts from the uploaded photo, as a first frame or composited into an approved still. Text is never generated: logos, taglines, prices, and legal lines are overlaid in assembly on text-free plates.
