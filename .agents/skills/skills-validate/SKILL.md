@@ -86,13 +86,13 @@ Verdict: pass, pass with notes, or fail. Tie every defect to the exact line of S
 
 ## 7. Report
 
-Assemble the report with the template below. This repository is public: only publicly shareable language (see AGENTS.md), never a signed asset URL, which is a credential in itself, and never the team or project the run used. Assets travel as ids and local filenames; surface the files in this session so they can be looked at or dragged into the thread.
+Assemble the report with the template below. This repository is public: only publicly shareable language (see AGENTS.md), never a signed asset URL, which is a credential in itself, and never the team or project the run used. Assets travel as ids and local filenames. GitHub has no API for comment attachments, so images reach the thread only when a human drags them into the comment's edit box.
 
 **In a PR context**, post it as a PR comment (`gh pr comment <n> --body-file` or the GitHub MCP `add_issue_comment`), ending with the attribution line, and print the comment URL. `--no-post` prints the report here instead.
 
 **With no PR**, ask what to do with it: open a tracker issue for the defects (the `scenario-report` skill covers the forms and the redaction rules), save it to a file, post it to a PR number they name, or leave it in this conversation. Post nothing until they pick.
 
-Finally, delete the run directory unless `--keep` was passed, and say where the assets went if it survives.
+Finally, delete the run directory except `$RUN/assets/` (keep all of it with `--keep`). When the run saved files there, end with the command that opens that folder (`open` on macOS, `xdg-open` on Linux), ready to paste (Claude Code runs it in place with a leading `!`), so the files can be dragged into the report comment.
 
 ```markdown
 ## Skill validation: `<name>` (<verdict>)
