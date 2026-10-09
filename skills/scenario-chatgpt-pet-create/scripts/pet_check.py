@@ -195,21 +195,23 @@ def check_semantics(path: Path, errors, warnings):
             errors.append(f"direction {label}: 'observed' and 'evidence' must describe what is visible")
 
 
-def check_pixel(arr, version, pixel, errors):
+def check_pixel(arr, version, pixel, errors, metrics):
     grid = pixel["grid"]
-    if not np.isin(arr[..., 3], (0, 255)).all():
+    binary = bool(np.isin(arr[..., 3], (0, 255)).all())
+    if not binary:
         errors.append("pixel mode: partially transparent pixels found")
+    off_grid = 0
     for row, (job, frames, _) in enumerate(pc.rows_for(version)):
         for col in range(frames):
             blocks = pc.cell(arr, row, col).reshape(pc.CELL_H // grid, grid, pc.CELL_W // grid, grid, 4)
             if not (blocks == blocks[:, :1, :, :1]).all():
+                off_grid += 1
                 errors.append(f"pixel mode: {job} frame {col} is off the {grid} px grid")
-    if pixel.get("palette"):
-        palette = {c.upper() for c in pixel["palette"]}
-        used = {pc.key_hex(c) for c in np.unique(arr[arr[..., 3] > 0][:, :3], axis=0)}
-        extra = used - palette
-        if extra:
-            errors.append(f"pixel mode: {len(extra)} colors outside the palette")
+    used = {pc.key_hex(c) for c in np.unique(arr[arr[..., 3] > 0][:, :3], axis=0)}
+    extra = used - {c.upper() for c in pixel.get("palette") or []} if pixel.get("palette") else set()
+    if extra:
+        errors.append(f"pixel mode: {len(extra)} colors outside the palette")
+    metrics["pixel"] = {"grid": grid, "binary_alpha": binary, "frames_off_grid": off_grid, "colors": len(used), "outside_palette": len(extra)}
 
 
 def check(path, key=None, require_v2=False, structure_only=False, semantics=None, pixel=None) -> dict:
@@ -229,7 +231,7 @@ def check(path, key=None, require_v2=False, structure_only=False, semantics=None
             else:
                 warnings.append("no direction verdicts given; the look rows were not reviewed")
         if pixel:
-            check_pixel(arr, version, pixel, errors)
+            check_pixel(arr, version, pixel, errors, metrics)
     report.update(ok=not errors, errors=errors, warnings=warnings, metrics=metrics)
     return report
 

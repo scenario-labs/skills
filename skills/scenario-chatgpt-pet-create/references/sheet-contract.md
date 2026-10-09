@@ -11,19 +11,19 @@ Rows 0-8 are identical in both versions, so a v1 sheet is a v2 sheet with the la
 
 ## Rows
 
-| Row | State            | Frames | What it must show                                                                        |
-| --- | ---------------- | ------ | ---------------------------------------------------------------------------------------- |
-| 0   | `idle`           | 6      | Calm breathing, a blink, slight sway; feet planted; first and last frames nearly equal   |
-| 1   | `running-right`  | 8      | Faces and moves toward screen-right, legs clearly alternating, running in place          |
-| 2   | `running-left`   | 8      | The same toward screen-left (mirror of row 1 only when nothing handed or lettered flips) |
-| 3   | `waving`         | 4      | Starts in the idle stance, a limb rises and waves, comes back down                       |
-| 4   | `jumping`        | 5      | Crouch, spring, peak clearly above the ground, descend, land in the idle stance          |
-| 5   | `failed`         | 8      | Starts in the idle stance, then a readable disappointment held to the end                |
-| 6   | `waiting`        | 6      | Expectant asking pose: the pet needs an answer or approval                               |
-| 7   | `running`        | 6      | Busy working (thinking, typing, tinkering); not locomotion                               |
-| 8   | `review`         | 6      | Leaning in, narrowed eyes or tilted head, inspecting finished work                       |
-| 9   | look `000-157.5` | 8      | Look directions `000 022.5 045 067.5 090 112.5 135 157.5`                                |
-| 10  | look `180-337.5` | 8      | Look directions `180 202.5 225 247.5 270 292.5 315 337.5`                                |
+| Row | State            | Frames | What it must show                                                                         |
+| --- | ---------------- | ------ | ----------------------------------------------------------------------------------------- |
+| 0   | `idle`           | 6      | Calm breathing, a blink, slight sway; feet planted; first and last frames nearly equal    |
+| 1   | `running-right`  | 8      | Faces and moves toward screen-right, legs clearly alternating, running in place           |
+| 2   | `running-left`   | 8      | The same toward screen-left (a mirror of row 1 only when the pet looks the same mirrored) |
+| 3   | `waving`         | 4      | Starts in the idle stance, a limb rises and waves, comes back down                        |
+| 4   | `jumping`        | 5      | Crouch, spring, peak clearly above the ground, descend, land in the idle stance           |
+| 5   | `failed`         | 8      | Starts in the idle stance, then a readable disappointment held to the end                 |
+| 6   | `waiting`        | 6      | Expectant asking pose: the pet needs an answer or approval                                |
+| 7   | `running`        | 6      | Busy working (thinking, typing, tinkering); not locomotion                                |
+| 8   | `review`         | 6      | Leaning in, narrowed eyes or tilted head, inspecting finished work                        |
+| 9   | look `000-157.5` | 8      | Look directions `000 022.5 045 067.5 090 112.5 135 157.5`                                 |
+| 10  | look `180-337.5` | 8      | Look directions `180 202.5 225 247.5 270 292.5 315 337.5`                                 |
 
 Everything in the pet's cells belongs to the pet. No speed lines, motion blur, dust, shadows, floating symbols, sparkles, text or props it does not own. An effect is fine only when it touches the pet (tears, a puff of smoke on `failed`). The pet keeps one height on every row (the jump lifts it, it does not shrink it), one ground line, and one planted lower body.
 

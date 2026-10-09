@@ -91,6 +91,9 @@ def cmd_extract(args) -> int:
     for old in out_dir.glob("[0-9][0-9].png"):
         old.unlink()
     distance = pc.key_distance(arr, key)
+    # Edge pixels blend with the background on every pet; only pixels inside the pet that look
+    # like the key mean the key is a poor choice.
+    inside = ~pc.dilate(~pc.visible(arr), 2)
     height, width = arr.shape[:2]
     frames, crops, errors, warnings = [], [], [], []
     for index, ids in enumerate(groups):
@@ -102,7 +105,7 @@ def cmd_extract(args) -> int:
         pc.save_png(crop, out_dir / name)
         crops.append(crop)
         touches = bool(mask[0].any() or mask[-1].any() or mask[:, 0].any() or mask[:, -1].any())
-        near_key = int(((distance <= 150) & mask).sum())
+        near_key = int(((distance <= 150) & mask & inside).sum())
         frames.append(
             {
                 "index": index,
@@ -116,7 +119,7 @@ def cmd_extract(args) -> int:
         if touches:
             errors.append(f"pose {index} touches the image edge, so it is cut off")
         if near_key > 800:
-            warnings.append(f"pose {index}: {near_key} pixels close to the key color (fringe or key-like colors)")
+            warnings.append(f"pose {index}: {near_key} pixels inside the pet are close to the key color")
     areas = [frame["area"] for frame in frames]
     median = float(np.median(areas))
     for frame in frames:

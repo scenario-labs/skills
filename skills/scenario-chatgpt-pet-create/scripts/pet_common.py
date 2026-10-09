@@ -136,6 +136,28 @@ def key_distance(arr: np.ndarray, key) -> np.ndarray:
     return np.sqrt(((rgb - np.asarray(key, np.float32)) ** 2).sum(-1))
 
 
+def to_linear(c: np.ndarray) -> np.ndarray:
+    return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+
+
+def to_srgb(c: np.ndarray) -> np.ndarray:
+    c = np.clip(c, 0, 1)
+    return np.where(c <= 0.0031308, c * 12.92, 1.055 * c ** (1 / 2.4) - 0.055)
+
+
+def key_like(rgb: np.ndarray, key, tolerance: float = 0.15, min_saturation: float = 0.1) -> np.ndarray:
+    """Colors carrying the key's hue (a dark or light blend with it), compared in linear light."""
+    lin = to_linear(np.asarray(rgb, np.float64) / 255)
+    key_lin = to_linear(np.asarray(key, np.float64) / 255)
+    top, bottom = lin.max(-1), lin.min(-1)
+    saturation = (top - bottom) / np.maximum(top, 1e-6)
+    centered = lin - lin.mean(-1, keepdims=True)
+    key_centered = key_lin - key_lin.mean()
+    norms = np.linalg.norm(centered, axis=-1) * np.linalg.norm(key_centered)
+    similarity = np.where(norms > 1e-9, (centered @ key_centered) / np.maximum(norms, 1e-9), -1.0)
+    return (saturation >= min_saturation) & (similarity >= 1 - tolerance)
+
+
 def remove_key(arr: np.ndarray, key, threshold: float = 96.0) -> np.ndarray:
     out = arr.copy()
     out[key_distance(arr, key) <= threshold] = 0

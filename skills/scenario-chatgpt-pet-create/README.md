@@ -21,9 +21,10 @@ The body names `model_openai-gpt-image-2-5-sunburst` and `model_google-gemini-na
 
 ## Probes (October 2026)
 
-- Sunburst, one eight-pose run cycle from a single identity reference, asked for `width` 3584 and `height` 512 (7:1): it returned 3584x1200, about 3:1, with eight separated poses on a flat background, all faces screen-right; extraction passed with no errors. `dry_run` quoted 14.75 CU and the job billed 13 CU. `pet_prepare.py` now asks for a height of at least a third of the width.
+- Sunburst, one eight-pose run cycle from a single identity reference, asked for `width` 3584 and `height` 512 (7:1): it returned 3584x1200, about 3:1, with eight separated poses on a flat background, all faces screen-right; extraction passed with no errors. `dry_run` quoted 14.75 CU; `jobs_wait` reported a `cuCost` of 13, and `usage` showed the other 1.75 CU charged to the project's Quality Gate, so the quote is the real price. `pet_prepare.py` now asks for a height of at least a third of the width.
 - Pixel Snapper (`colors` 32) on a 435x640 identity image returned 78x115 with 32 colors; keyed, the pet was 55x93 and `pet_prepare.py pixel` chose a 2 px grid. `dry_run` quoted 6.75 CU, billed 5 CU.
 - The generated strip, extracted and rebuilt into an existing v2 sheet with `--base-sheet`, changed only that row; `pet_check.py` measured the new row at 1.003 of the idle height.
+- Live application test (October 2026, a separate Claude Code process with only `scenario` and this skill installed): a pixel-perfect v2 pet from text met every file and quality criterion (checked v2 sheet, v1 cut, both GIFs, one 2 px grid and palette, nothing installed) but spent 213.5 CU against a 200 CU budget, because the tester tracked `cuCost` and the body quoted billed rather than quoted prices; one rejected working row (the model added tools) was the only repair. Fixed from it: the body budgets from `dry_run` quotes; `pet_prepare.py pixel` drops key-blend colors the snapper makes from the outline (two purple shades had reached 22k outline pixels of a green pet); `extract` warns only about key-like pixels inside the pet, not edge fringe; the working-row prompt asks for gestures without objects; one-sided details keep their side in look rows and rule out mirroring; `pet_check.py` reports pixel-mode metrics.
 
 ## Pixel-perfect mode
 

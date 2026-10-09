@@ -125,6 +125,12 @@ class CheckTests(unittest.TestCase):
         report = self.check(pixel={"grid": 4, "palette": []})
         self.assertIn("partially transparent", " ".join(report["errors"]))
 
+    def test_pixel_mode_reports_its_metrics(self):
+        report = self.check(pixel={"grid": 4, "palette": []})
+        self.assertEqual(report["metrics"]["pixel"]["grid"], 4)
+        self.assertFalse(report["metrics"]["pixel"]["binary_alpha"])
+        self.assertGreater(report["metrics"]["pixel"]["frames_off_grid"], 0)
+
     def test_structure_only_skips_quality(self):
         arr = self.sheet.copy()
         row = pc.row_index("jumping")

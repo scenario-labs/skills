@@ -74,6 +74,18 @@ class ExtractTests(unittest.TestCase):
         areas = [frame["area"] for frame in review["frames"]]
         self.assertEqual(areas[2] - areas[0], 15 * 15)
 
+    def test_edge_fringe_is_not_a_key_warning(self):
+        sprites = [synth.sprite(120, color=(40, 160, 60)) for _ in range(4)]
+        for pet in sprites:
+            ring = pc.dilate(pet[..., 3] > 0, 1) & ~(pet[..., 3] > 0)
+            pet[ring] = (200, 60, 200, 255)  # anti-aliased blend with the magenta key
+        _, review = self.extract("waving", synth.strip(sprites))
+        self.assertFalse(any("close to the key" in w for w in review["warnings"]))
+        for pet in sprites:
+            pet[40:90, 30:60] = (200, 70, 170, 255)  # kept by the key cut (distance 123) but key-like
+        _, review = self.extract("waving", synth.strip(sprites))
+        self.assertTrue(any("inside the pet are close to the key" in w for w in review["warnings"]))
+
     def test_base_writes_the_identity_reference(self):
         code, _ = self.extract("base", synth.strip([synth.sprite(200)]))
         self.assertEqual(code, 0)

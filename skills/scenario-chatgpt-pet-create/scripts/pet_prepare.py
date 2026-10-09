@@ -47,14 +47,15 @@ ACTIONS = {
     "jumping": "Small happy jump in place: pose 1 crouches to prepare, pose 2 springs up, pose 3 is the highest point with the whole character clearly above the ground line, pose 4 comes down, pose 5 lands back in the idle stance on the same ground line. The character keeps its size; the height comes from its position only.",
     "failed": "Something went wrong: the first pose is the idle stance, then the character shows disappointment (slumping, drooping ears or arms, sad eyes, a facepalm) and holds it. Tears, a puff of smoke or dizzy stars are fine only when they touch the character.",
     "waiting": "Waiting for the user: an expectant, asking pose (looking out at the viewer, an open palm, a small hopeful bob) that clearly says it needs an answer or approval. Distinct from idle and from reviewing.",
-    "running": "Busy working: the character concentrates on a task in place (thinking, typing, tinkering, scanning, tapping its chin). This is not running: no legs in motion, no travel.",
+    "running": "Busy working: the character concentrates in place with its own body only (a hand on its chin, tapping fingers, a determined frown, a small focused bob). No objects, tools or screens unless the character already has them. This is not running: no legs in motion, no travel.",
     "review": "Reviewing finished work: the character leans in, narrows its eyes or tilts its head as if inspecting something just in front of it. No new props such as magnifying glasses, papers or screens unless the character already has them.",
 }
 
 LOOK_RULES = (
     "Right and left are the viewer's right and left edges of the image, never the character's own. "
     "Body, feet and size stay exactly the same in every pose; only the eyes, head, upper body and attached parts move, "
-    "the way this character naturally looks around. Never rotate, tilt or shrink the whole character."
+    "the way this character naturally looks around. Never rotate, tilt or shrink the whole character. "
+    "Anything that sits on one side (a leaf or antenna leaning one way, a patch, a badge) stays on that same side in every pose."
 )
 LOOKS = {
     "look-cardinals": (
@@ -351,6 +352,12 @@ def cmd_pixel(args) -> int:
     pet = snapped[y0:y1, x0:x1]
     solid = pc.visible(pet)
     colors = np.unique(pet[solid][:, :3], axis=0)
+    # The snapper quantizes the outline's blend with the background into colors of their own
+    # (purple on a magenta key); the build maps those pixels to the nearest pet color instead.
+    blends = pc.key_like(colors, key)
+    if blends.all():
+        pc.fail("every snapped color carries the key's hue; re-run init with another --chroma-key")
+    colors = colors[~blends]
     if len(colors) > args.colors:
         sample = Image.fromarray(np.ascontiguousarray(pet[solid][:, :3].reshape(1, -1, 3)))
         reduced = np.array(sample.quantize(args.colors, method=Image.Quantize.MEDIANCUT).convert("RGB"))
@@ -369,7 +376,7 @@ def cmd_pixel(args) -> int:
     pc.save_png(pc.on_key(big, key, pad=factor * 4), base)
     req["pixel"] = True
     pc.write_json(run / "request.json", req)
-    print(json.dumps({"ok": True, "grid": grid, "native_size": [width, height], "colors": len(colors)}))
+    print(json.dumps({"ok": True, "grid": grid, "native_size": [width, height], "colors": len(colors), "key_blends_dropped": int(blends.sum())}))
     return 0
 
 

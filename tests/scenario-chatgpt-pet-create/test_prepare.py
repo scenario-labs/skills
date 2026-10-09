@@ -129,6 +129,19 @@ class PixelTests(unittest.TestCase):
         reference = pc.load_rgba(run / "references" / "base.png")
         self.assertGreaterEqual(reference.shape[0], 480)
 
+    def test_key_blends_stay_out_of_the_palette(self):
+        tmp = synth.tmpdir(self)
+        run = tmp / "run"
+        quiet(pet_prepare.main, ["init", "--name", "Bit", "--pixel", "--out", str(run)])
+        pet = synth.sprite(60, color=(40, 160, 60))
+        ring = pc.dilate(pet[..., 3] > 0, 1) & ~(pet[..., 3] > 0)
+        pet[ring] = (45, 21, 50, 255)  # a dark outline blended with the magenta background
+        synth.save(synth.strip([pet], margin=6), tmp / "snapped.png")
+        quiet(pet_prepare.main, ["pixel", str(run), "--snapped", str(tmp / "snapped.png")])
+        palette = pc.read_json(run / "pixel.json")["palette"]
+        self.assertNotIn("#2D1532", palette)
+        self.assertIn("#28A03C", palette)
+
     def test_rejects_an_image_that_is_not_downsized(self):
         tmp = synth.tmpdir(self)
         run = tmp / "run"

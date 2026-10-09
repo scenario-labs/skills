@@ -135,30 +135,14 @@ def snap(image: np.ndarray, left: int, top: int, grid: int, palette: np.ndarray)
     return np.repeat(np.repeat(small, grid, axis=0), grid, axis=1)
 
 
-def to_linear(c: np.ndarray) -> np.ndarray:
-    return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
-
-
-def to_srgb(c: np.ndarray) -> np.ndarray:
-    c = np.clip(c, 0, 1)
-    return np.where(c <= 0.0031308, c * 12.92, 1.055 * c ** (1 / 2.4) - 0.055)
-
-
 def despill(cell_arr: np.ndarray, key, radius: int = 5, tolerance: float = 0.15, min_saturation: float = 0.1) -> np.ndarray:
     """Recolor edge pixels that carry the key color (or are semi-transparent) from their solid neighbors."""
     alpha = cell_arr[..., 3]
     band = (alpha > 0) & pc.dilate(alpha == 0, radius)
     if not band.any():
         return cell_arr
-    lin = to_linear(cell_arr[..., :3].astype(np.float64) / 255)
-    key_lin = to_linear(np.asarray(key, np.float64) / 255)
-    top, bottom = lin.max(-1), lin.min(-1)
-    saturation = (top - bottom) / np.maximum(top, 1e-6)
-    centered = lin - lin.mean(-1, keepdims=True)
-    key_centered = key_lin - key_lin.mean()
-    norms = np.linalg.norm(centered, axis=-1) * np.linalg.norm(key_centered)
-    similarity = np.where(norms > 1e-9, (centered @ key_centered) / np.maximum(norms, 1e-9), -1.0)
-    pending = band & ((alpha < 250) | ((saturation >= min_saturation) & (similarity >= 1 - tolerance)))
+    lin = pc.to_linear(cell_arr[..., :3].astype(np.float64) / 255)
+    pending = band & ((alpha < 250) | pc.key_like(cell_arr[..., :3], key, tolerance, min_saturation))
     filled = (alpha > 0) & ~pending
     changed = np.zeros_like(pending)
     for _ in range(2 * radius + 1):
@@ -183,7 +167,7 @@ def despill(cell_arr: np.ndarray, key, radius: int = 5, tolerance: float = 0.15,
         lin[pending] = lin[pending].mean(-1, keepdims=True)
         changed |= pending
     out = cell_arr.copy()
-    out[changed, :3] = (to_srgb(lin[changed]) * 255).round().astype(np.uint8)
+    out[changed, :3] = (pc.to_srgb(lin[changed]) * 255).round().astype(np.uint8)
     out[alpha == 0] = 0
     return out
 
