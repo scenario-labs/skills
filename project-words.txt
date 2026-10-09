@@ -868,6 +868,7 @@ captioner
 caruncula
 cemmalvug
 chadrik
+chashu
 chibi
 chongdashu
 civis
@@ -963,6 +964,8 @@ jitspoe
 jobified
 jonze
 jslib
+kabuto
+kaiju
 kenzo
 kling
 krea
@@ -1014,6 +1017,7 @@ nativization
 ngons
 nlapinski
 noice
+nori
 notan
 nperf
 numpad
@@ -1113,6 +1117,7 @@ rhysd
 rigify
 rileyb
 riso
+risograph
 roas
 scons
 scroller
@@ -1165,6 +1170,7 @@ ufbx
 ugui
 uistr
 uitk
+ukiyo
 unbeveled
 unblended
 unbuilt
@@ -1234,6 +1240,7 @@ vivox
 volumetrics
 voxelizes
 vsync
+washi
 wdth
 webrtc
 webtoon

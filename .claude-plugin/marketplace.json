@@ -33,6 +33,7 @@
       "strict": false,
       "skills": [
         "./skills/scenario-image",
+        "./skills/scenario-multi-reference",
         "./skills/scenario-product-shots",
         "./skills/scenario-brand-kit",
         "./skills/scenario-image-editing",
