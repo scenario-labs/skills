@@ -14,7 +14,7 @@ Connection and the core loop: see the `scenario` skill in this repo; model-agnos
 
 ## Quick reference
 
-Shared shape at authoring time: `prompt` (required, cap 32000 characters), `referenceImages` (an array even for one, up to 10), `numOutputs` (1 to 10 variations of one prompt), `quality`, and `background` (`auto`, `opaque`, `transparent` on every member). The splits:
+Shared shape at authoring time: `prompt` (required, cap 32000 characters), `referenceImages` (an array even for one, up to 10), `numOutputs` (1 to 10 variations of one prompt), `quality`, and `background` (`auto`, `opaque`, and `transparent` on 2.5 Flare and Sunburst only). The splits:
 
 | Contract        | 2.5 Flare and Sunburst              | GPT Image 2             | GPT Image 1.5                            |
 | --------------- | ----------------------------------- | ----------------------- | ---------------------------------------- |
@@ -23,7 +23,7 @@ Shared shape at authoring time: `prompt` (required, cap 32000 characters), `refe
 | `quality`       | auto, low, medium, high, xhigh, max | auto, low, medium, high | high, medium, low (default high)         |
 | Source fidelity | prompt wording only                 | prompt wording only     | `inputFidelity`: high locks, low reworks |
 
-Routing: Flare and Sunburst share one contract and one price list, so the choice is speed against quality. OpenAI describes Flare as the small model, built for speed with image quality comparable to GPT Image 2, and Sunburst as the base model, with higher image quality than GPT Image 2: Flare for everyday work, Sunburst when accuracy beats speed (packaging copy, dense numbers, exploded diagrams, geometry-preserving edits). GPT Image 2's contract is the 2.5 contract minus the two top tiers, and it prices its `high` at their `max`, so new work starts on 2.5. GPT Image 1.5 earns its place for `inputFidelity: "low"`, which reworks a reference instead of reproducing it (only the first five references keep the higher fidelity), and for 3:2 or 2:3 output without pixel math. Transparent cutouts are no longer a 1.5 exclusive.
+Routing: Flare and Sunburst share one contract and one price list, so the choice is speed against quality. OpenAI describes Flare as the small model, built for speed with image quality comparable to GPT Image 2, and Sunburst as the base model, with higher image quality than GPT Image 2: Flare for everyday work, Sunburst when accuracy beats speed (packaging copy, dense numbers, exploded diagrams, geometry-preserving edits). GPT Image 2's contract is the 2.5 contract minus the two top tiers, and it prices its `high` at their `max`, so new work starts on 2.5. GPT Image 1.5 earns its place for `inputFidelity: "low"`, which reworks a reference instead of reproducing it (only the first five references keep the higher fidelity), and for 3:2 or 2:3 output without pixel math. Transparent cutouts route to a 2.5 member: GPT Image 2 rejects the value, and 1.5 is the fidelity and ratio member rather than the cutout one.
 
 ## Quality is the price dial
 
@@ -37,7 +37,7 @@ An edit source outside 1:3 to 3:1 comes back padded, not cropped: a 1326 by 313 
 
 The `mask` is a PNG the size of the first reference image, read through its alpha channel only: transparent pixels are edited, opaque pixels preserved, RGB white or black ignored without alpha. Export with transparency, never flattened, and convert a white-on-black mask's white region to transparent. OpenAI treats the mask as guidance rather than a hard edge: when a region must stay pixel-identical, composite the approved edit back over the original.
 
-`background: "transparent"` works on every member at every tier. Two authoring-time observations: alpha peaks at 254, never 255, so a check for fully opaque pixels reads the whole subject as semi-transparent; and the color data under transparent pixels carries a halo, so any surface that drops alpha (JPEG flattening, a thumbnail without transparency, a viewer compositing on black) shows the cutout glowing. On white or a checkerboard it is clean. Prompt the cutout as a clean cutout with a crisp silhouette, fine edges and label text preserved, no halos, no restyling, then inspect the alpha channel at hair, glass, shadows, and object edges. Keep PNG or WebP and the alpha channel through every hop, previews and downloads included.
+`background: "transparent"` returns real alpha on 2.5 Flare and Sunburst at every tier; GPT Image 2 rejects it. Two authoring-time observations on the 2.5 members: alpha peaks at 254, never 255, so a check for fully opaque pixels reads the whole subject as semi-transparent; and the color data under transparent pixels carries a halo, so any surface that drops alpha (JPEG flattening, a thumbnail without transparency, a viewer compositing on black) shows the cutout glowing. On white or a checkerboard it is clean. Prompt the cutout as a clean cutout with a crisp silhouette, fine edges and label text preserved, no halos, no restyling, then inspect the alpha channel at hair, glass, shadows, and object edges. Keep PNG or WebP and the alpha channel through every hop, previews and downloads included.
 
 ## Prompting behavior
 
@@ -59,7 +59,7 @@ Text inside the image: quote the exact copy, spell tricky words letter by letter
 ## Common mistakes
 
 - Carrying `xhigh` or `max` to GPT Image 2 or 1.5: a 400 at validation; read allowed values off each member's schema.
-- Routing cutouts to 1.5 by habit: every member takes `background: "transparent"`; 1.5 is for `inputFidelity` and ratio sizing.
+- Routing cutouts to GPT Image 2: it rejects `background: "transparent"`; use 2.5 Flare or Sunburst (1.5 is the fidelity and ratio member).
 - Carrying sizing across members: `width`/`height` on 2 and 2.5, `aspectRatio` on 1.5, never both.
 - Trusting the requested size: past 3:1, past 8,294,400 pixels, or off the 16-pixel grid, the job succeeds at a different size, and an over-wide edit source gains white bands.
 - Leaving `inputFidelity` at its high default on 1.5 when you wanted reinterpretation: drop it to low and re-`dry_run`.
