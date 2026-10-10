@@ -1,7 +1,8 @@
 """Visual lyric-timing check: vocal-stem spectrogram with word-start markers, vocal onsets and beats.
 usage: python scripts/plot_lyrics.py 1:12.5 21.5:31.5 ...   -> analysis/plots/lyrics_<a>.png  (then look at the PNGs)
 Word starts should sit on the rise of a harmonic stack / consonant burst. Held notes show as long flat stacks."""
-import sys, os, glob, json, numpy as np, librosa, matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+import sys, os, json, numpy as np, librosa, matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+from audio_paths import vocal_stem
 
 
 def load_json(path):
@@ -15,7 +16,7 @@ def save_json(obj, path, **kw):
 
 
 L = load_json('engine/data/lyrics.json'); A = load_json('engine/data/audio.json')
-y, sr = librosa.load(glob.glob('stems/htdemucs/*/vocals.wav')[0], sr=22050); os.makedirs('analysis/plots', exist_ok=True)
+y, sr = librosa.load(vocal_stem(), sr=22050); os.makedirs('analysis/plots', exist_ok=True)
 if len(sys.argv) < 2: sys.exit(__doc__)
 for rng in sys.argv[1:]:
     a, b = map(float, rng.split(':')); seg = y[int(a * sr):int(b * sr)]
