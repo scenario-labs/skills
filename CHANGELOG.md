@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.54.0](https://github.com/scenario-labs/skills/compare/skills-v0.53.0...skills-v0.54.0) (2026-10-10)
+
+
+### Features
+
+* **scenario-kinetic-music-video:** render on a portrait 9:16 canvas ([#190](https://github.com/scenario-labs/skills/issues/190)) ([9e24359](https://github.com/scenario-labs/skills/commit/9e243596c460e10304a3d7588049fd761db0e117))
+* **scenario-kinetic-music-video:** support scoped soundtrack edits ([#193](https://github.com/scenario-labs/skills/issues/193)) ([1c5f8f9](https://github.com/scenario-labs/skills/commit/1c5f8f9dfa46ab74b514a3c44f65935171b416e9))
+* **scenario-multi-reference:** add multi-reference composition skill ([#191](https://github.com/scenario-labs/skills/issues/191)) ([07731a3](https://github.com/scenario-labs/skills/commit/07731a3ce8e21b469ab807a7ac787f945e2d9114))
+* **skills:** add a Socials grouping for the kinetic music video ([9e24359](https://github.com/scenario-labs/skills/commit/9e243596c460e10304a3d7588049fd761db0e117))
+* **skills:** add ChatGPT pet create and update skills ([#201](https://github.com/scenario-labs/skills/issues/201)) ([89d0164](https://github.com/scenario-labs/skills/commit/89d01644b34af1b658de5c0bc685bf38afedb9cb))
+* **skills:** add video thumbnail and ad variant skills ([#194](https://github.com/scenario-labs/skills/issues/194)) ([30d1c88](https://github.com/scenario-labs/skills/commit/30d1c88b0873547e28ec8bf6d6ed046b2c38ee42))
+
+
+### Bug Fixes
+
+* **scenario-gpt-image:** route transparent cutouts to the 2.5 members ([#195](https://github.com/scenario-labs/skills/issues/195)) ([423eacd](https://github.com/scenario-labs/skills/commit/423eacdc3daa827022d1a3e75bfefa712fa06aa0))
+* **scenario-kinetic-music-video:** correct plate crops and chant timing ([#200](https://github.com/scenario-labs/skills/issues/200)) ([1e924df](https://github.com/scenario-labs/skills/commit/1e924dfe430847673466476d882723b5984c788d))
+* **scenario-video-assembly:** stop sending SRT files to upload_asset ([30d1c88](https://github.com/scenario-labs/skills/commit/30d1c88b0873547e28ec8bf6d6ed046b2c38ee42))
+
 ## [0.53.0](https://github.com/scenario-labs/skills/compare/skills-v0.52.0...skills-v0.53.0) (2026-10-04)
 
 
