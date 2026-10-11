@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.55.0](https://github.com/scenario-labs/skills/compare/skills-v0.54.0...skills-v0.55.0) (2026-10-11)
+
+
+### Features
+
+* **scenario-3d:** build rig-ready characters with quad topology ([#205](https://github.com/scenario-labs/skills/issues/205)) ([12194b9](https://github.com/scenario-labs/skills/commit/12194b976dbf34d7e2c7a001fb33f5aa888c88ea))
+
+
+### Bug Fixes
+
+* **scenario:** never price a later step with a placeholder asset id ([#206](https://github.com/scenario-labs/skills/issues/206)) ([b624313](https://github.com/scenario-labs/skills/commit/b6243139a8993b0482aa5515f6a2ee6e88fb8345))
+* **scenario:** read a creative-units 429 before reporting it ([#204](https://github.com/scenario-labs/skills/issues/204)) ([8d14905](https://github.com/scenario-labs/skills/commit/8d14905c10b365e5d3c88ce7f5b7c7c363abf9ef))
+* **skills:** check plan access for every 3D chain step before paying the first ([#203](https://github.com/scenario-labs/skills/issues/203)) ([ebd393e](https://github.com/scenario-labs/skills/commit/ebd393e6f34546fc30a5ba5d0490a1fb228e70a1))
+* **skills:** launch the remaining batch steps in waves ([#202](https://github.com/scenario-labs/skills/issues/202)) ([4e23bc2](https://github.com/scenario-labs/skills/commit/4e23bc2d4451f89b9827eae78f6865e0c5076a16))
+
 ## [0.54.0](https://github.com/scenario-labs/skills/compare/skills-v0.53.0...skills-v0.54.0) (2026-10-10)
 
 
