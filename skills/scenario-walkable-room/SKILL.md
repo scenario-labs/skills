@@ -35,7 +35,7 @@ Discover each paid stage's member with `recommend`, passing the capability and t
 | Calibrate | none, local                   | Floor, level, scale, lens, heightfield, placement ([references/calibration.md](references/calibration.md))                                                      |
 | Viewer    | none, local                   | Paged splat streaming, heightfield walker, convex-hull props, grab and throw, panned sounds ([references/viewer.md](references/viewer.md))                      |
 
-Launch every batch with `wait=false`, then `jobs_wait` on the ids, re-called with `pending_job_ids` on timeout. A world takes several minutes; a timeout is not a failure and never justifies a second `model_run`.
+Launch every batch with `wait=false` in waves within the team's concurrency ceiling (the `parallel-custom-jobs` row in the `scenario` skill: a launch refused with that 429 created no job, so relaunch it in the next wave), then `jobs_wait` on the ids, re-called with `pending_job_ids` on timeout. A world takes several minutes; a timeout is not a failure and never justifies a second `model_run`.
 
 ## Worked example: the user's living room, walkable, with things to throw
 

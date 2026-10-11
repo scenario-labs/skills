@@ -91,7 +91,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - A video model with reference images and reference audio, given a **synthesized beat track** for dances that lock to the song, then beat-warp.
   - **Audio-to-video** from a frame plus a vocal-stem slice for lip-sync. The alternative is reference-audio video plus a lip-sync correction model.
   - Code instead of generation for networks, charts, UI and particles.
-- Never send the song to a video model. Turn the model's native audio off when its schema offers it (the render takes sound only from the master either way), and launch everything in parallel (`jobs_wait` re-called with `pending_job_ids`, never `job_get`, never a relaunch).
+- Never send the song to a video model. Turn the model's native audio off when its schema offers it (the render takes sound only from the master either way), and launch in waves within the team's concurrency ceiling (`jobs_wait` re-called with `pending_job_ids`, never `job_get`). Relaunch only a launch refused with 429 `parallel-custom-jobs`: it created no job, and dropping it leaves a hole in the cut.
 - **Prep** every clip with `tools/prep_clip.sh`: frames, a subject matte (Apple Vision, with Scenario background removal as the fallback; see `references/pipeline.md` §5) and tracking (MediaPipe pose plus the matte bbox). Inspect the mattes. Write each clip's content, key moments, slot and matte quality into the footage map.
 
 ### 5. Engine and scene agents
