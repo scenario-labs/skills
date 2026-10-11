@@ -76,9 +76,6 @@ When only motion is wanted, motion-transfer video models animate a still charact
 ## Common mistakes
 
 - Running `model_run` without `model_schema_get`: 3D model parameters differ far more between models than image models do.
-- Passing a local file path as an image input: `upload_asset` first, then pass the returned asset ID.
 - Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor). Re-discover each session, `recommend` for the need or `search` for a name.
-- Pasting raw asset URLs into chat instead of calling `asset_display`.
-- Forgetting `-L` with curl: download URLs may redirect before serving the file.
 - Promising a named skeleton, an influence count, or bones for wings and extra limbs: pick the closest body plan, then finish the rest in a DCC.
 - Sending a biped to a `rigType` model: the enum has no biped value, because humanoids have their own rigging models.
