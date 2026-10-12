@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
+    ignore:
+      # Bumped by hand with the release-please CLI pinned in package.json,
+      # which must stay the version this action bundles.
+      - dependency-name: googleapis/release-please-action
+    commit-message:
+      prefix: ci
+      include: scope

@@ -43,7 +43,7 @@ jobs:
       # the published release fire publish-changelog.yml. The client ID and
       # private key are scenario-labs org secrets.
       - name: Retrieve GitHub App Token
-        uses: actions/create-github-app-token@v3.2.0
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: app-token
         with:
           client-id: ${{ secrets.GH_ACTIONS_TOKEN_RETRIEVER_PUBLIC_REPO_CLIENT_ID }}
@@ -57,7 +57,7 @@ jobs:
       # lockfile-pinned devDependency (same 17.6.0 the action bundles), not an
       # `npx` fetch: this job holds the App token, so nothing may resolve
       # dependencies live from the registry here.
-      - uses: googleapis/release-please-action@v5.0.0
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         if: ${{ !inputs.release_as }}
         id: release-please
         with:
@@ -65,16 +65,16 @@ jobs:
 
       # Checkout runs on the App token so the job keeps its empty
       # GITHUB_TOKEN permissions.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: ${{ inputs.release_as }}
         with:
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         if: ${{ inputs.release_as }}
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: ${{ inputs.release_as }}
         with:
           node-version: "22"
