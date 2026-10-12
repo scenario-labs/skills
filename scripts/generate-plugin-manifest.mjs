@@ -16,9 +16,10 @@
 //   identifiers on the next regeneration
 // Never edit the manifest by hand; edit skills.sh.json and run `pnpm manifest`.
 // By default regenerates in place for the pre-commit hook, re-staging the file
-// only when it is part of the commit. --check verifies without rewriting, for
-// `pnpm validate` and CI. Grouping contents are validated by check-groupings.mjs.
-import { execSync } from "node:child_process";
+// only when the commit touches it, skills.sh.json, or skills/. --check verifies
+// without rewriting, for `pnpm validate` and CI. Grouping contents are
+// validated by check-groupings.mjs.
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -127,14 +128,26 @@ if (existing !== rendered) {
 }
 // Re-stage even when the working tree was already in sync: an earlier manual
 // `pnpm manifest` run leaves the regenerated file unstaged, and the commit
-// ships the index, not the working tree the check reads.
+// ships the index, not the working tree the check reads. skills/ is watched
+// because the manifest records each skill's folder: moving one changes the
+// manifest without touching skills.sh.json.
 try {
-  execSync(`git diff --cached --quiet -- skills.sh.json ${MANIFEST_PATH}`, {
-    stdio: "ignore",
-  });
+  execFileSync(
+    "git",
+    [
+      "diff",
+      "--cached",
+      "--quiet",
+      "--",
+      "skills.sh.json",
+      "skills",
+      MANIFEST_PATH,
+    ],
+    { stdio: "ignore" },
+  );
 } catch {
   try {
-    execSync(`git add ${MANIFEST_PATH}`, { stdio: "ignore" });
+    execFileSync("git", ["add", MANIFEST_PATH], { stdio: "ignore" });
   } catch {
     // Not in a git repository; the regenerated file is still on disk.
   }

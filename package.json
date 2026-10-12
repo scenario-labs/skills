@@ -19,10 +19,11 @@
     "words:check": "./scripts/sort-project-words.sh --check",
     "spec": "./scripts/validate-skills.sh",
     "lint:py": "uvx ruff@0.16.10 check",
-    "test": "pnpm test:agent-commands && ./scripts/test-skill-scripts.sh",
+    "test": "pnpm test:agent-commands && pnpm test:manifest && ./scripts/test-skill-scripts.sh",
     "sync:agent-commands": "node scripts/sync-agent-commands.mjs",
     "sync:agent-commands:check": "node scripts/sync-agent-commands.mjs --check",
-    "test:agent-commands": "node --test scripts/sync-agent-commands.test.mjs"
+    "test:agent-commands": "node --test scripts/sync-agent-commands.test.mjs",
+    "test:manifest": "node --test scripts/generate-plugin-manifest.test.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
