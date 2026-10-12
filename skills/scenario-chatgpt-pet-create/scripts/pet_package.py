@@ -22,6 +22,16 @@ import pet_check  # noqa: E402
 import pet_common as pc  # noqa: E402
 
 
+def pet_dir(parent: Path, pet_id: str) -> Path:
+    # An id can come from a pet.json someone else wrote; install --force deletes this folder.
+    if pet_id in ("", ".", "..") or Path(pet_id).name != pet_id or "\\" in pet_id or "\0" in pet_id:
+        pc.fail(f"pet id {pet_id!r} must be a single folder name, with no / or ..")
+    path = parent / pet_id
+    if path.resolve().parent != parent.resolve():
+        pc.fail(f"{path} resolves outside {parent}; refusing to write or replace it")
+    return path
+
+
 def cmd_make(args) -> int:
     run = Path(args.run)
     req = pc.read_json(run / "request.json")
@@ -33,7 +43,7 @@ def cmd_make(args) -> int:
     if report.get("sha256") != hashlib.sha256(data).hexdigest():
         pc.fail(f"the check report is for other bytes than {sheet.name}; re-run pet_check.py on this exact file")
     pet_id = args.id or req["pet_id"]
-    folder = run / "package" / pet_id
+    folder = pet_dir(run / "package", pet_id)
     folder.mkdir(parents=True, exist_ok=True)
     target = folder / f"spritesheet{sheet.suffix.lower()}"
     target.write_bytes(data)
@@ -69,11 +79,11 @@ def cmd_make(args) -> int:
 def cmd_install(args) -> int:
     run = Path(args.run)
     pet_id = args.id or pc.read_json(run / "request.json")["pet_id"]
-    source = run / "package" / pet_id
+    source = pet_dir(run / "package", pet_id)
     if not (source / "pet.json").exists():
         pc.fail(f"{source} has no pet.json; run pet_package.py make first")
     home = Path(args.codex_home or os.environ.get("CODEX_HOME") or Path.home() / ".codex")
-    target = home / "pets" / pet_id
+    target = pet_dir(home / "pets", pet_id)
     backup = None
     if target.exists():
         if not args.force:

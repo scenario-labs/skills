@@ -75,6 +75,50 @@ class PackageTests(unittest.TestCase):
         quiet(pet_package.main, ["install", str(self.run_dir), "--codex-home", str(home), "--force"])
         self.assertTrue(list(self.package.glob("backup-blob-*")))
 
+    def test_make_refuses_an_id_that_leaves_the_package_folder(self):
+        for pet_id in ("../escape", "nested/blob", ".."):
+            with self.subTest(pet_id=pet_id), self.assertRaises(SystemExit):
+                quiet(pet_package.main, ["make", str(self.run_dir), "--id", pet_id])
+        self.assertFalse((self.run_dir / "escape").exists())
+        self.assertFalse((self.package / "nested").exists())
+
+    def test_make_refuses_a_package_folder_that_links_elsewhere(self):
+        outside = self.tmp / "make-outside"
+        outside.mkdir()
+        (outside / "file").write_text("kept")
+        (self.package / "linked").symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(SystemExit):
+            quiet(pet_package.main, ["make", str(self.run_dir), "--id", "linked"])
+        self.assertEqual(sorted(p.name for p in outside.iterdir()), ["file"])
+
+    def test_install_never_replaces_a_folder_outside_the_pets_folder(self):
+        # The id a hostile pet.json would carry; the Codex home already holds a pet, so pets/ exists.
+        home = self.tmp / "escape-home" / ".codex"
+        (home / "pets" / "pepper").mkdir(parents=True)
+        kept = home.parent / ".ssh"
+        kept.mkdir()
+        (kept / "id_ed25519").write_text("kept")
+        # What make --id ../../.ssh would have written, so install reaches the replace step.
+        planted = self.package / ".." / ".." / ".ssh"
+        planted.mkdir()
+        pc.write_json(planted / "pet.json", {"id": "../../.ssh"})
+        with self.assertRaises(SystemExit):
+            quiet(pet_package.main, ["install", str(self.run_dir), "--id", "../../.ssh", "--codex-home", str(home), "--force"])
+        self.assertEqual(sorted(p.name for p in kept.iterdir()), ["id_ed25519"])
+
+    def test_install_refuses_a_pet_folder_that_links_elsewhere(self):
+        home = self.tmp / "link-home"
+        outside = self.tmp / "outside"
+        outside.mkdir()
+        (outside / "file").write_text("kept")
+        (home / "pets").mkdir(parents=True)
+        (home / "pets" / "blob").symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(SystemExit):
+            quiet(pet_package.main, ["install", str(self.run_dir), "--codex-home", str(home), "--force"])
+        self.assertEqual(sorted(p.name for p in outside.iterdir()), ["file"])
+        # rmtree already refuses a link; the damage was the backup copying the linked folder first.
+        self.assertFalse(any((b / "file").exists() for b in self.package.glob("backup-blob-*")))
+
 
 if __name__ == "__main__":
     unittest.main()
