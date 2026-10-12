@@ -170,18 +170,18 @@ Video generation and editing, music, sound effects, voice, and speech.
 | [scenario-seedance-storyboard](skills/scenario-seedance-storyboard/SKILL.md)   | Movement that holds across cuts: timecoded shot scripts, character sheets and boards, pose-chained shots that play as one performance |
 | [scenario-video-ads](skills/scenario-video-ads/SKILL.md)                       | Producing a video ad from a product shot: brief, storyboard, cinematic grammar, fidelity gates, budget, delivery                      |
 | [scenario-ad-variants](skills/scenario-ad-variants/SKILL.md)                   | Ordered independent campaign edits from existing footage, preserving original gameplay and audio                                      |
-| [scenario-ugc](skills/scenario-ugc/SKILL.md)                                   | UGC-style creator video: talking-head and avatar ads, demos, faceless voiceover, spoken-register scripts, claim safety                |
-| [scenario-fan-cam](skills/scenario-fan-cam/SKILL.md)                           | Personalized fan-cam clips: identity edit into a broadcast still, reaction beats to video, graphics composited in post                |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                                     |
 | [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions                      |
 | [scenario-caption-studio](skills/scenario-caption-studio/SKILL.md)             | Captioning a finished video per destination: styled burn-in or SRT, transcription hints, translation, per-platform placement          |
 
 ### Socials
 
-Made for social feeds and chat apps: kinetic-typography lyric videos with type timed to the sung words, in landscape or vertical 9:16, delivered as a master, a platform upload, and a teaser cut; and animated ChatGPT and Codex pets hatched from an idea or a photo, delivered as a sprite sheet, an animated GIF, and a Codex package.
+Made for social feeds and chat apps: UGC-style creator videos, fan-cam reactions from a photo, kinetic-typography lyric videos, and animated ChatGPT and Codex pets, new or updated.
 
 | Skill                                                                        | Use it for                                                                                                                                                               |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [scenario-ugc](skills/scenario-ugc/SKILL.md)                                 | UGC-style creator video: talking-head and avatar ads, demos, faceless voiceover, spoken-register scripts, claim safety                                                   |
+| [scenario-fan-cam](skills/scenario-fan-cam/SKILL.md)                         | Personalized fan-cam clips: identity edit into a broadcast still, reaction beats to video, graphics composited in post                                                   |
 | [scenario-kinetic-music-video](skills/scenario-kinetic-music-video/SKILL.md) | Kinetic-typography music video, landscape or 9:16: style frames and footage from Scenario, a JavaScript engine for lyric type on sung onsets, mattes, per-section agents |
 | [scenario-chatgpt-pet-create](skills/scenario-chatgpt-pet-create/SKILL.md)   | ChatGPT or Codex pet from an idea or photos: a v2 sprite sheet with sixteen look directions, a v1 copy for web upload, pixel-perfect mode, GIFs, a Codex package         |
 | [scenario-chatgpt-pet-update](skills/scenario-chatgpt-pet-update/SKILL.md)   | Change an existing pet sheet: fix or redo a row, add look directions to a v1 sheet, a new outfit or color, a rename, a check and GIF preview                             |

@@ -51,8 +51,6 @@
         "scenario-seedance-storyboard",
         "scenario-video-ads",
         "scenario-ad-variants",
-        "scenario-ugc",
-        "scenario-fan-cam",
         "scenario-audio",
         "scenario-video-assembly",
         "scenario-caption-studio"
@@ -60,8 +58,10 @@
     },
     {
       "title": "Socials",
-      "description": "Made for social feeds and chat apps: kinetic-typography lyric videos with type timed to the sung words, in landscape or vertical 9:16, delivered as a master, a platform upload, and a teaser cut; and animated ChatGPT and Codex pets hatched from an idea or a photo, delivered as a sprite sheet, an animated GIF, and a Codex package.",
+      "description": "Made for social feeds and chat apps: UGC-style creator videos, fan-cam reactions from a photo, kinetic-typography lyric videos, and animated ChatGPT and Codex pets, new or updated.",
       "skills": [
+        "scenario-ugc",
+        "scenario-fan-cam",
         "scenario-kinetic-music-video",
         "scenario-chatgpt-pet-create",
         "scenario-chatgpt-pet-update"
