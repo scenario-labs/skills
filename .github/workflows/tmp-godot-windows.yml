@@ -57,4 +57,12 @@ jobs:
       - name: Family import suite
         run: python -m unittest discover -s tests/scenario-godot-expert -v
       - name: Toolkit smoke test
+        env:
+          CAPTURE_DIR: ${{ runner.temp }}
         run: python .github/tmp-godot-windows/smoke.py "${{ matrix.project }}"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: capture-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/shot.png
+          if-no-files-found: ignore

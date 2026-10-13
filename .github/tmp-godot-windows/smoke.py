@@ -35,7 +35,7 @@ def step(label, fn, required=True):
         r = {"ok": False, "error": f"{type(e).__name__}: {e}"}
     r["required"], r["s"] = required, round(time.time() - t, 1)
     results[label] = r
-    print(f"STEP {label} " + json.dumps(r, default=str, ensure_ascii=False)[:4000], flush=True)
+    print(f"STEP {label} " + json.dumps(r, default=str)[:4000], flush=True)
     return r
 
 
@@ -167,7 +167,7 @@ def role_clone():
 
 
 def capture():
-    r = gd_run.capture_scene(state["proj"], "res://main.tscn", out=str(TMP / "shot.png"), size=(320, 180), review=False, timeout=120)
+    r = gd_run.capture_scene(state["proj"], "res://main.tscn", out=str(Path(os.environ.get("CAPTURE_DIR", TMP)) / "shot.png"), size=(320, 180), review=False, timeout=120)
     return {"ok": r["ok"], "error": r["error"], "result": r.get("result"), "log_tail": r["log"][-1500:]}
 
 

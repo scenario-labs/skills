@@ -1,4 +1,4 @@
-# Godot 4.7 traps and macOS notes
+# Godot 4.7 traps and platform notes
 
 ## Godot 4.7 traps (full list: version deltas section 21; observed ones in [`references/expert-notes.md`](expert-notes.md))
 
@@ -21,3 +21,11 @@
 - `user://` is `~/Library/Application Support/Godot/app_userdata/<config/name>/` by default; isolated clones use `~/Library/Application Support/godot-agentkit/userdata/<name>-<hash>/`. Both are left behind after runs (logs, shader caches, about 100 MB in app_userdata on 2026-10-02): `gd_env.userdata_report()` lists them with sizes for a cleanup the user approves; app_userdata also holds real projects' data, never touch those.
 - Windowed Godot activates itself; `open -g` and `--embedded` did not stop it (`--embedded` crashed). The toolkit hands focus back to the previous app (`GD_RESTORE_FOCUS=0` turns that off).
 - Metal reports no GPU time: profile on Vulkan. Signing and notarization stay a human step (Artium Nihamkin, _n9l15CANag [00:04:05]). Quote every path.
+
+## Windows notes
+
+- `winget install GodotEngine.GodotEngine` puts `godot` and `godot_console` on PATH; the toolkit runs `godot`, whose output reaches the pipe. Templates in `%APPDATA%\Godot\export_templates\4.7.2.stable\`; `user://` in `%APPDATA%\Godot\app_userdata\<config/name>\`, isolated clones in `%APPDATA%\godot-agentkit\userdata\`; locks in `%LOCALAPPDATA%\godot-agentkit\locks`.
+- Python before 3.15 reads and writes text in the ANSI code page, while Godot's files are UTF-8: set `PYTHONUTF8=1` (3.15 makes UTF-8 the default). Without it, `new_project` in a folder with a Cyrillic name failed with `UnicodeEncodeError` (Python 3.12).
+- The GUI-open check reads the process table through PowerShell (`Win32_Process`), which has no working directory: an editor whose command line does not name the project is not detected.
+- No focus guard (`GD_RESTORE_FOCUS` is macOS only). Windowed runs render through D3D12, which `new_project` sets.
+- Observed on a GitHub-hosted Windows runner with Godot 4.7.2 and Python 3.12 and 3.15 (2026-10-13): locks, `new_project`, jobs, `check_all`, the GUI-open refusal, project copies and a windowed capture. The live suites behind the other notes ran on macOS only.

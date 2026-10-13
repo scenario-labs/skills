@@ -11,7 +11,7 @@ Agent skills that let Claude (Claude Code) or Codex drive Godot 4.7 the way the 
 | `scenario-godot-animation`           | animating characters or scenes in Godot 4.7: AnimationPlayer clips and RESET, AnimationTree state machines and blend spaces built in code, Mixamo or...  |
 | `scenario-godot-architecture`        | structuring Godot 4.7 game code: folders, scenes and nodes, signals or an event bus autoload, custom Resources for item data, components (health...      |
 | `scenario-godot-audio`               | adding or fixing sound in Godot 4.7: audio buses and effects, volume sliders, 'too many sounds', combat audio with hundreds of enemies, sounds...        |
-| `scenario-godot-expert`              | an agent drives Godot 4.7 on a Mac for any task: headless --script jobs, --import, --check-only, command-line exports, GUT tests, windowed...            |
+| `scenario-godot-expert`              | an agent drives Godot 4.7 on macOS or Windows for any task: headless --script jobs, --import, --check-only, command-line exports, GUT tests...           |
 | `scenario-godot-gameplay`            | building gameplay systems in Godot 4.7: enemy AI that patrols, chases and attacks, state machines, behavior trees (LimboAI), NavigationAgent3D...        |
 | `scenario-godot-multiplayer`         | a Godot 4 game goes online or co-op: host and join with ENet, WebSocket for a web build, RPCs (@rpc, rpc_id, any_peer), MultiplayerSpawner and...        |
 | `scenario-godot-performance-export`  | a Godot game stutters, drops frames, hitches when entering new areas, overheats a phone, or must ship: profiling and Performance monitors, CPU or GPU... |
@@ -48,8 +48,8 @@ Agent skills that let Claude (Claude Code) or Codex drive Godot 4.7 the way the 
 
 ## Requirements
 
-- Godot 4.7.2 standard build (tested on 4.7.2.stable; `brew install --cask godot`). No sign-in or license. Export templates for exports (`gd_env.install_templates()` downloads them, about 1.3 GB). Tested on macOS (Apple Silicon) only.
-- Python 3.9+ (system `python3`) for the runner-side toolkit; the core uses the standard library. Optional: Pillow and numpy (image checks), Playwright with an installed Chrome (Web browser checks), an Android SDK and JDK and Xcode (mobile exports), ffmpeg (audio analysis).
+- Godot 4.7.2 standard build (tested on 4.7.2.stable; `brew install --cask godot`, or `winget install GodotEngine.GodotEngine` on Windows). No sign-in or license. Export templates for exports (`gd_env.install_templates()` downloads them, about 1.3 GB). Tested on macOS (Apple Silicon); on Windows, the toolkit's locks, process checks, project copies, headless jobs and a windowed capture were run on a GitHub-hosted runner (2026-10-13), not the live suites.
+- Python 3.9+ (system `python3`; on Windows 3.15+, or `PYTHONUTF8=1` before it) for the runner-side toolkit; the core uses the standard library. Optional: Pillow and numpy (image checks), Playwright with an installed Chrome (Web browser checks), an Android SDK and JDK and Xcode (mobile exports), ffmpeg (audio analysis).
 - GUT and gdUnit4 are downloaded on demand by the toolkit.
 
 The lead skill `scenario-godot-expert` explains the execution channels: `godot --headless` jobs, windowed capture runs, an editor MCP server, and GUT or gdUnit4 tests.

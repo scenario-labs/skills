@@ -1,12 +1,12 @@
 ---
 name: scenario-godot-expert
-description: "Use when an agent drives Godot 4.7 on a Mac for any task: headless --script jobs, --import, --check-only, command-line exports, GUT tests, windowed screenshots, the headless editor (-e) or an MCP server into a running editor; when a run hangs or fails silently, a capture is black, Godot 3 code breaks in 4.x, 'Identifier not found', export templates are missing; or when a Godot brief (2D, 3D, shaders, VFX, UI, multiplayer, export) must go to the right scenario-godot-* specialist."
+description: "Use when an agent drives Godot 4.7 on macOS or Windows for any task: headless --script jobs, --import, --check-only, command-line exports, GUT tests, windowed screenshots, the headless editor (-e) or an MCP server into a running editor; when a run hangs or fails silently, a capture is black, Godot 3 code breaks in 4.x, 'Identifier not found', export templates are missing; or when a Godot brief (2D, 3D, shaders, VFX, UI, multiplayer, export) must go to the right scenario-godot-* specialist."
 license: MIT
 ---
 
 # Godot expert (technical director and agent protocol)
 
-Target: Godot 4.7.2.stable (standard build, no C#), macOS Apple Silicon, Metal by default.
+Target: Godot 4.7.2.stable (standard build, no C#), macOS Apple Silicon with Metal by default, or Windows with D3D12.
 
 Expert Godot work is a loop run against evidence: set the budget, build one stage, measure it, look at it, fix it, advance. An agent without a mouse gets there by picking the right channel, passing only on a machine-readable result, and never trusting one signal alone. This skill is that protocol, the shared toolkit every scenario-godot-* skill calls ([`scripts/`](scripts/)), and the map of the team. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
@@ -137,9 +137,9 @@ A cross-cutting item has one owner: shader stutter and web threading go to scena
 
 Check the asset before import (scenario-quality-gate) and again after it, in a capture from the game camera judged by the receiving skill, which also audits GLB scale, pivot and triangle count.
 
-## Godot 4.7 traps and macOS notes
+## Godot 4.7 traps and platform notes
 
-Read [`references/traps.md`](references/traps.md) before the first job: Godot 3 names that pass `--check-only`, `--script` hangs, unknown flags ignored, `-d` waiting on stdin, what headless cannot do (MultiMesh writes, GPUParticles), `ProjectSettings.save()` rewriting `project.godot`, import crashes, deprecated APIs; then the macOS binary, template and `user://` paths, window focus, and Metal profiling.
+Read [`references/traps.md`](references/traps.md) before the first job: Godot 3 names that pass `--check-only`, `--script` hangs, unknown flags ignored, `-d` waiting on stdin, what headless cannot do (MultiMesh writes, GPUParticles), `ProjectSettings.save()` rewriting `project.godot`, import crashes, deprecated APIs; then the macOS binary, template and `user://` paths, window focus, and Metal profiling; then the Windows paths and the `PYTHONUTF8=1` rule.
 
 ## References
 

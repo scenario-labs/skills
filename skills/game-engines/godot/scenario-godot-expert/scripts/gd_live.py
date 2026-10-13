@@ -67,7 +67,7 @@ def channels(project=None) -> dict:
         info["templates_ok"] = gd_env.templates_ok()
     except Exception as exc:  # pragma: no cover
         info["godot_error"] = str(exc)
-    info["windowed_possible"] = sys.platform == "darwin" and not os.environ.get("SSH_CONNECTION")
+    info["windowed_possible"] = sys.platform in ("darwin", "win32") and not os.environ.get("SSH_CONNECTION")
     info["running_godot"] = gd_run.running_godot()
     if project:
         info["gui_on_project"] = gd_run.gui_editor_pids(project)
