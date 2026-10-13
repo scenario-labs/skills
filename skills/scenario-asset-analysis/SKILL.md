@@ -46,7 +46,7 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
 2. `asset_analyze` with `dry_run: true` on the first chunk to price the pass.
 3. `asset_analyze` with `images` set to 10 ids and an `instruction` that states the brief and fixes the output: "For each image in order, reply `<index>: pass|fail, <reason in under 12 words>`, a reason on every line, passes included. Fail anything not centered, not on a plain field, or carrying text." Repeat per chunk. Answers land as text assets (one, or one per image): `asset_download` them to read the verdicts.
 4. `asset_describe` on the strongest pass. Its promptable synthesis goes straight into the next batch's prompt, which holds the look without a training run (see `scenario-consistency`); when the synthesis is only a short title, prompt with the description instead.
-5. File the result: `collection_create`, then `collection_add_assets` in chunks of at most 49 ids. `asset_add_tags` is additive, so tag the failures rather than rebuilding a tag set. The set comes back later with `search` `filters={"collection_ids": [...]}`, and its lookalikes with `images={"like": [...]}`.
+5. File the result: `collection_create`, then one `collection_add_assets` call with every id (it batches past 49 itself and skips ids already filed). `asset_add_tags` is additive, so tag the failures rather than rebuilding a tag set. The set comes back later with `search` `filters={"collection_ids": [...]}`, and its lookalikes with `images={"like": [...]}`.
 
 ## Common mistakes
 
@@ -54,5 +54,4 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
 - Treating `num_outputs` as a batch size over `images`.
 - Leaving `remove_background` at its default on an `asset_detect` map that must match the source frame.
 - Reusing a remembered executor lane: use the `permission` from fresh `scenario_tools_search` results, including for `dry_run`. A lane rejection means refresh discovery and use its executor, not retry the same call.
-- Sending more than 49 ids to `collection_add_assets`, or one id already in the collection: both fail the whole call, and nothing from that chunk is filed.
 - Asking `asset_analyze` to produce an image. It returns text; control maps come from `asset_detect` and final renders from `model_run`.
