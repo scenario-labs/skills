@@ -15,7 +15,8 @@ Public API (signatures are a contract for the domain skills):
                 viewport=(1152, 648), main_scene=True, do_import=True, isolate_user=False) -> Path
     install_agentkit(project, overwrite=True) -> Path
     install_gut(project, version="9.7.1", do_import=True) -> Path
-    base_project(kind, dest=None, isolate_user=True) -> Path APFS clone (cp -cR) of tests/projects/Base2D|Base3D
+    base_project(kind, dest=None, isolate_user=True) -> Path clone_tree() of tests/projects/Base2D|Base3D
+    clone_tree(src, dest) -> Path                           APFS clone (cp -cR) on macOS, shutil.copytree elsewhere
     isolate_user_dir(project, label=None) -> Path           own user:// under godot-agentkit/userdata/
     user_data_dir(project) -> Path; userdata_report() -> dict   where user:// is; leftovers with sizes
     read_project(project) -> dict                           {"section/key": raw value string}
@@ -75,7 +76,8 @@ def find_godot() -> str:
     for c in cands:
         if c and Path(c).exists():
             return str(Path(c))
-    raise FileNotFoundError("Godot not found: set $GODOT, put `godot` on PATH, or install /Applications/Godot.app (brew install --cask godot)")
+    raise FileNotFoundError("Godot not found: set $GODOT, put `godot` on PATH (Windows: winget install GodotEngine.GodotEngine), "
+                            "or install /Applications/Godot.app (brew install --cask godot)")
 
 
 def version(godot: str | None = None) -> str:
@@ -436,8 +438,17 @@ def install_gut(project, version: str = "9.7.1", do_import: bool = True) -> Path
     return dest
 
 
+def clone_tree(src, dest) -> Path:
+    """Copy folder src to the new path dest: an APFS clone on macOS (cp -cR, instant), shutil.copytree elsewhere."""
+    if sys.platform == "darwin":
+        subprocess.run(["cp", "-cR", str(src), str(dest)], check=True)
+    else:
+        shutil.copytree(src, dest, symlinks=True)
+    return Path(dest)
+
+
 def base_project(kind: str, dest=None, isolate_user: bool = True) -> Path:
-    """Clone tests/projects/Base2D or Base3D with `cp -cR` (APFS clone, instant). Never opens the base.
+    """Clone tests/projects/Base2D or Base3D with clone_tree (instant APFS clone on macOS). Never opens the base.
 
     kind: "2d" or "3d". dest defaults to a new temp folder. Falls back to new_project() when the
     base projects are not present (installed skill outside this repo). isolate_user (default True)
@@ -453,8 +464,7 @@ def base_project(kind: str, dest=None, isolate_user: bool = True) -> Path:
     if not (src / "project.godot").exists():
         return new_project(dest, template="3d" if k == "3d" else "2d", isolate_user=isolate_user)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    flag = ["-cR"] if sys.platform == "darwin" else ["-R"]
-    subprocess.run(["cp", *flag, str(src), str(dest)], check=True)
+    clone_tree(src, dest)
     install_agentkit(dest)
     if isolate_user:
         isolate_user_dir(dest)

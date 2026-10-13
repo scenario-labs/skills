@@ -3,7 +3,8 @@
 
 System python3, standard library only. Every call:
 - holds one of GD_MAX machine-wide slots (default 6; windowed runs also hold one of GD_MAX_WINDOWED,
-  default 2) through flock files in GD_LOCK_DIR (default ~/Library/Caches/godot-agentkit/locks), so
+  default 2) through lock files (flock; msvcrt.locking on Windows) in GD_LOCK_DIR (default
+  ~/Library/Caches/godot-agentkit/locks; Windows %LOCALAPPDATA%\\godot-agentkit\\locks), so
   parallel agents never overload the machine; locks die with the process, no stale locks;
 - holds a per-project lock, so two Godot processes never run on the same project;
 - refuses a project that a GUI Godot (editor or game) has open (cwd or --path match), unless
@@ -39,7 +40,6 @@ from __future__ import annotations
 
 __version__ = "0.1"
 
-import fcntl
 import hashlib
 import json
 import os
@@ -58,9 +58,37 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import gd_stat  # noqa: E402
 
+if sys.platform == "win32":
+    import msvcrt
+
+    def _lock_nb(fh) -> bool:
+        fh.seek(0)
+        try:
+            msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+        except PermissionError:
+            return False
+        return True
+
+    def _unlock(fh) -> None:
+        fh.seek(0)
+        msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+else:
+    import fcntl
+
+    def _lock_nb(fh) -> bool:
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return False
+        return True
+
+    def _unlock(fh) -> None:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+
 GD_MAX = int(os.environ.get("GD_MAX", "6"))
 GD_MAX_WINDOWED = int(os.environ.get("GD_MAX_WINDOWED", "2"))
-LOCK_DIR = Path(os.environ.get("GD_LOCK_DIR", Path.home() / "Library" / "Caches" / "godot-agentkit" / "locks"))
+_CACHE = Path(os.environ["LOCALAPPDATA"]) if sys.platform == "win32" and os.environ.get("LOCALAPPDATA") else Path.home() / "Library" / "Caches"
+LOCK_DIR = Path(os.environ.get("GD_LOCK_DIR", _CACHE / "godot-agentkit" / "locks"))
 AGENTKIT_RES = "res://addons/agentkit"
 LOG_KEEP = 200_000  # characters of log kept in the returned dict (full log is on disk)
 
@@ -76,44 +104,70 @@ def _godot() -> str:
 
 # ---------------------------------------------------------------- processes and locks
 
-def running_godot() -> list[dict]:
-    """Every running Godot process: pid, args, headless, editor, cwd. Read-only (ps + lsof)."""
+def _godot_processes() -> list[tuple[int, str]]:
+    """(pid, command line) of every process whose executable is a Godot binary."""
+    if sys.platform == "win32":
+        q = ("[Console]::OutputEncoding = [Text.Encoding]::UTF8; "
+             "Get-CimInstance Win32_Process -Filter \"Name like 'godot%'\" "
+             "| Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress")
+        out = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", q],
+                             capture_output=True, text=True, encoding="utf-8", timeout=60).stdout.strip()
+        rows = json.loads(out) if out else []
+        return [(r["ProcessId"], r["CommandLine"] or "") for r in ([rows] if isinstance(rows, dict) else rows)]
     out = subprocess.run(["ps", "-axo", "pid=,args="], capture_output=True, text=True).stdout
     procs = []
     for line in out.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        pid_s, _, args = line.partition(" ")
+        pid_s, _, args = line.strip().partition(" ")
         exe = args.split(" -", 1)[0].strip()
-        if not re.search(r"(^|/)(godot4?|Godot|Godot_v4[^/]*)$", exe):
-            continue
+        if pid_s and re.search(r"(^|/)(godot4?|Godot|Godot_v4[^/]*)$", exe):
+            procs.append((int(pid_s), args))
+    return procs
+
+
+def _cwd(pid: int) -> str | None:
+    if sys.platform == "win32":
+        return None  # no lsof: on Windows only a --path argument ties a process to a project
+    try:
+        lo = subprocess.run(["lsof", "-a", "-p", str(pid), "-d", "cwd", "-Fn"], capture_output=True, text=True, timeout=10).stdout
+        for ln in lo.splitlines():
+            if ln.startswith("n"):
+                return ln[1:]
+    except Exception:
+        pass
+    return None
+
+
+def running_godot() -> list[dict]:
+    """Every running Godot process: pid, args, headless, editor, cwd. Read-only (ps + lsof; Windows:
+    PowerShell Win32_Process, cwd None). Empty when the process table cannot be read."""
+    try:
+        rows = _godot_processes()
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return []
+    procs = []
+    for pid, args in rows:
         if "gd_run" in args or "grep" in args:
             continue
-        pid = int(pid_s)
         headless = "--headless" in args or "--display-driver headless" in args
-        cwd = None
-        try:
-            lo = subprocess.run(["lsof", "-a", "-p", str(pid), "-d", "cwd", "-Fn"], capture_output=True, text=True, timeout=10).stdout
-            for ln in lo.splitlines():
-                if ln.startswith("n"):
-                    cwd = ln[1:]
-        except Exception:
-            pass
         procs.append({"pid": pid, "args": args, "headless": headless,
-                      "editor": bool(re.search(r"(\s-e(\s|$)|--editor)", args)), "cwd": cwd})
+                      "editor": bool(re.search(r"(\s-e(\s|$)|--editor)", args)), "cwd": _cwd(pid)})
     return procs
+
+
+def _norm(path: str) -> str:
+    # The project manager passes --path with forward slashes, and Windows paths ignore case.
+    return path.replace("\\", "/").lower() if sys.platform == "win32" else path
 
 
 def gui_editor_pids(project) -> list[int]:
     """PIDs of non-headless Godot processes (GUI editor or a running game) working on this project."""
-    p = str(Path(project).resolve())
+    p = _norm(str(Path(project).resolve()))
     hits = []
     for pr in running_godot():
         if pr["headless"]:
             continue
-        a = pr["args"]
-        if (pr["cwd"] and str(Path(pr["cwd"]).resolve()) == p) or p in a or p.replace(" ", "%20") in a:
+        a = _norm(pr["args"])
+        if (pr["cwd"] and _norm(str(Path(pr["cwd"]).resolve())) == p) or p in a or p.replace(" ", "%20") in a:
             hits.append(pr["pid"])
     return hits
 
@@ -121,16 +175,14 @@ def gui_editor_pids(project) -> list[int]:
 def _flock_try(path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     fh = open(path, "a+")
-    try:
-        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        fh.seek(0)
-        fh.truncate()
-        fh.write(f"{os.getpid()} {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-        fh.flush()
-        return fh
-    except BlockingIOError:
+    if not _lock_nb(fh):
         fh.close()
         return None
+    fh.seek(0)
+    fh.truncate()
+    fh.write(f"{os.getpid()} {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    fh.flush()
+    return fh
 
 
 @contextmanager
@@ -166,7 +218,7 @@ def godot_slot(project=None, windowed: bool = False, wait: float = 1800.0):
     finally:
         for fh in held:
             try:
-                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+                _unlock(fh)
                 fh.close()
             except Exception:
                 pass
@@ -267,7 +319,7 @@ def _run(cmd: list[str], project: Path, timeout: float, windowed: bool, log_path
             if pids:
                 raise GodotBusy(f"a GUI Godot (pid {pids}) has {project} open: close it or set GD_ALLOW_EDITOR_OPEN=1")
         proc = subprocess.Popen(cmd, cwd=str(project), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, text=True, errors="replace", env=full_env)
+                                stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace", env=full_env)
         guard = None
         if windowed and sys.platform == "darwin":
             guard = _FocusGuard(proc.pid)
@@ -283,7 +335,7 @@ def _run(cmd: list[str], project: Path, timeout: float, windowed: bool, log_path
             guard.stop.set()
         code = proc.returncode
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_path.write_text(f"# {shlex.join(cmd)}\n" + (out or ""))
+    log_path.write_text(f"# {shlex.join(cmd)}\n" + (out or ""), encoding="utf-8")
     return out or "", code, timed_out, time.time() - t0, (guard.restores if guard else 0)
 
 
@@ -343,7 +395,7 @@ def run_script(project, script_path_or_method: str, args: dict | None = None, ti
                                           "result_path": str(result_file), "focus_restores": restores})
     if result_file.exists():
         try:
-            r["result"] = json.loads(result_file.read_text())
+            r["result"] = json.loads(result_file.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             pass
     res = r["result"]

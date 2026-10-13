@@ -114,8 +114,9 @@ def role_clone(master, role_name: str, clone_root=None, refresh: bool = True) ->
     dest = root / role_name
     if not dest.exists():
         dest.parent.mkdir(parents=True, exist_ok=True)
-        flag = ["-cR"] if sys.platform == "darwin" else ["-R"]
-        subprocess.run(["cp", *flag, str(master), str(dest)], check=True)
+        gd_env.clone_tree(master, dest)
+    elif refresh and sys.platform == "win32":
+        shutil.copytree(master, dest, symlinks=True, dirs_exist_ok=True, ignore=shutil.ignore_patterns(".agent_out"))
     elif refresh:
         subprocess.run(["rsync", "-a", "--exclude", ".agent_out", f"{master}/", f"{dest}/"], check=True)
     name = gd_env.read_project(master).get("application/config/name", '"Net"').strip('"')

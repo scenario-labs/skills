@@ -1,0 +1,60 @@
+# Temporary: Windows smoke test for issue #210. Drop before merge.
+name: Godot on Windows (temporary)
+
+on:
+  push:
+    branches: [fix/godot-windows]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: windows-latest
+    continue-on-error: ${{ matrix.expect_fail == true }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: "3.12"
+            project: Smoke3D
+          - python: "3.12"
+            project: "Démo-Проект"
+            utf8: "1"
+          - python: "3.15"
+            project: "Démo-Проект"
+          - python: "3.12"
+            project: "Démo-Проект"
+            expect_fail: true
+    env:
+      PYTHONUTF8: ${{ matrix.utf8 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+          allow-prereleases: true
+      - name: Install Godot 4.7.2 the way winget lays it out
+        shell: pwsh
+        run: |
+          $rel = "4.7.2-stable"
+          $zip = "Godot_v${rel}_win64.exe.zip"
+          $base = "https://github.com/godotengine/godot-builds/releases/download/$rel"
+          Invoke-WebRequest "$base/$zip" -OutFile $zip
+          Invoke-WebRequest "$base/SHA512-SUMS.txt" -OutFile sums.txt
+          $want = ((Get-Content sums.txt | Where-Object { $_ -match " $([regex]::Escape($zip))$" }) -split '\s+')[0]
+          $got = (Get-FileHash $zip -Algorithm SHA512).Hash.ToLower()
+          if ($got -ne $want) { throw "SHA512 mismatch: $got vs $want" }
+          Expand-Archive $zip -DestinationPath C:\godot-dl
+          Get-ChildItem C:\godot-dl
+          New-Item -ItemType Directory C:\godot-bin | Out-Null
+          Copy-Item "C:\godot-dl\Godot_v${rel}_win64.exe" C:\godot-bin\godot.exe
+          Copy-Item "C:\godot-dl\Godot_v${rel}_win64_console.exe" C:\godot-bin\godot_console.exe
+          "C:\godot-bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+      - name: Family import suite
+        run: python -m unittest discover -s tests/scenario-godot-expert -v
+      - name: Toolkit smoke test
+        run: python .github/tmp-godot-windows/smoke.py "${{ matrix.project }}"

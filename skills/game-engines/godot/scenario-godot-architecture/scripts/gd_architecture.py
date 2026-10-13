@@ -160,7 +160,7 @@ def bench_typing(project, n=2000, reps=5, sort_n=200000) -> dict:
 # ---------------------------------------------------------------- typing gate
 
 def typing_gate(project, dest=None, warnings=DEFAULT_WARNINGS, level: int = 2) -> dict:
-    """Clone the project (APFS clone), set each warning to Error in the clone, compile every script.
+    """Clone the project (gd_env.clone_tree), set each warning to Error in the clone, compile every script.
 
     Warnings at level 1 (warn) are not printed in a headless run (verified 4.7.2), so the gate
     needs level 2. The original project.godot is never touched. Addons are excluded by the
@@ -171,7 +171,7 @@ def typing_gate(project, dest=None, warnings=DEFAULT_WARNINGS, level: int = 2) -
         dest = Path(tempfile.mkdtemp(prefix="gd_typing_gate_")) / src.name
     dest = Path(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["cp", "-cR" if sys.platform == "darwin" else "-R", str(src), str(dest)], check=True)
+    gd_env.clone_tree(src, dest)
     for w in warnings:
         gd_env.set_project_setting(dest, f"debug/gdscript/warnings/{w}", str(level))
     r = gd_run.check_all(dest)
