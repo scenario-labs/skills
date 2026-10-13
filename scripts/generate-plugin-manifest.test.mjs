@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import {
+  appendFileSync,
   copyFileSync,
   mkdirSync,
   mkdtempSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -14,7 +16,9 @@ import { fileURLToPath } from "node:url";
 
 const scripts = dirname(fileURLToPath(import.meta.url));
 const MANIFEST = ".claude-plugin/marketplace.json";
-const SKILL = "scenario-zbrush-automation";
+const EXPERT = "scenario-zbrush-automation";
+const CORE = "scenario-other";
+const MOVED = `./skills/dcc/zbrush-tools/${EXPERT}`;
 
 // Under a git hook, GIT_DIR and friends would point every call at this repo.
 const env = Object.fromEntries(
@@ -28,14 +32,16 @@ function repo(t) {
     mkdirSync(dirname(join(root, "scripts", file)), { recursive: true });
     copyFileSync(join(scripts, file), join(root, "scripts", file));
   }
-  mkdirSync(join(root, "skills/dcc/zbrush", SKILL), { recursive: true });
-  writeFileSync(join(root, "skills/dcc/zbrush", SKILL, "SKILL.md"), "");
-  writeFileSync(
-    join(root, "skills.sh.json"),
-    JSON.stringify({
-      groupings: [{ title: "Expert tools: ZBrush", skills: [SKILL] }],
-    }),
-  );
+  for (const dir of [`skills/dcc/zbrush/${EXPERT}`, `skills/${CORE}`]) {
+    mkdirSync(join(root, dir), { recursive: true });
+    writeFileSync(join(root, dir, "SKILL.md"), "");
+  }
+  const groupings = (title) =>
+    writeFileSync(
+      join(root, "skills.sh.json"),
+      JSON.stringify({ groupings: [{ title, skills: [EXPERT, CORE] }] }),
+    );
+  groupings("Expert tools: ZBrush");
   const run = (file, args) =>
     execFileSync(file, args, {
       cwd: root,
@@ -55,32 +61,43 @@ function repo(t) {
     run(process.execPath, [join(root, "scripts/generate-plugin-manifest.mjs")]);
   const staged = () =>
     git("diff", "--cached", "--name-only").trim().split("\n");
+  const stagedManifest = () => JSON.parse(git("show", `:${MANIFEST}`));
   git("-c", "init.defaultBranch=main", "init", "-q");
   manifest();
   git("add", "-A");
   git("commit", "-q", "-m", "init");
-  return { root, git, manifest, staged };
+  mkdirSync(join(root, "skills/dcc/zbrush-tools"));
+  return { root, git, groupings, manifest, staged, stagedManifest };
 }
 
-test("moving a skill folder re-stages the manifest it changes", (t) => {
-  const { root, git, manifest, staged } = repo(t);
-  mkdirSync(join(root, "skills/dcc/zbrush-tools"));
-  git("mv", `skills/dcc/zbrush/${SKILL}`, `skills/dcc/zbrush-tools/${SKILL}`);
+test("a staged skill move re-stages the manifest it changes", (t) => {
+  const { git, manifest, staged, stagedManifest } = repo(t);
+  git("mv", `skills/dcc/zbrush/${EXPERT}`, `skills/dcc/zbrush-tools/${EXPERT}`);
   manifest();
   assert.ok(staged().includes(MANIFEST));
+  assert.ok(stagedManifest().plugins[0].skills.includes(MOVED));
   assert.equal(git("diff", "--name-only", "--", MANIFEST), "");
 });
 
-test("a commit outside skills leaves an unstaged manifest change alone", (t) => {
+test("an unstaged skill move stays out of the staged manifest", (t) => {
   const { root, git, manifest, staged } = repo(t);
-  writeFileSync(
-    join(root, "skills.sh.json"),
-    JSON.stringify({
-      groupings: [{ title: "Expert tools: ZBrush 2", skills: [SKILL] }],
-    }),
+  renameSync(
+    join(root, `skills/dcc/zbrush/${EXPERT}`),
+    join(root, `skills/dcc/zbrush-tools/${EXPERT}`),
   );
-  writeFileSync(join(root, "README.md"), "");
-  git("add", "README.md");
+  appendFileSync(join(root, `skills/${CORE}/SKILL.md`), "edit\n");
+  git("add", `skills/${CORE}/SKILL.md`);
   manifest();
-  assert.deepEqual(staged(), ["README.md"]);
+  assert.deepEqual(staged(), [`skills/${CORE}/SKILL.md`]);
+  assert.match(git("diff", "--name-only", "--", MANIFEST), /marketplace/);
+});
+
+test("an unstaged skills.sh.json edit stays out of the staged manifest", (t) => {
+  const { git, groupings, manifest, stagedManifest } = repo(t);
+  git("mv", `skills/dcc/zbrush/${EXPERT}`, `skills/dcc/zbrush-tools/${EXPERT}`);
+  groupings("Expert tools: ZBrush 2");
+  manifest();
+  const [plugin] = stagedManifest().plugins;
+  assert.equal(plugin.name, "01.-expert-tools-zbrush");
+  assert.ok(plugin.skills.includes(MOVED));
 });

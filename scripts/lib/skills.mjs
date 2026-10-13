@@ -50,6 +50,22 @@ export function listSkills(root = "skills") {
   return skills;
 }
 
+// [{ name, dir }] from repo-relative file paths as `git ls-files` prints them,
+// for a commit hook that must see the index, not the working tree. Git tracks
+// files only, so a skill folder counts once it holds a tracked file.
+export function listSkillsFromPaths(paths) {
+  const skills = new Map();
+  for (const file of paths) {
+    const parts = file.split("/");
+    const depth = EXPERT_CATEGORIES.includes(parts[1]) ? 4 : 2;
+    if (parts[0] !== "skills" || parts.length <= depth) continue;
+    if (parts.slice(1, depth).some((part) => part.startsWith("."))) continue;
+    const dir = parts.slice(0, depth).join("/");
+    skills.set(dir, { name: parts[depth - 1], dir });
+  }
+  return [...skills.values()];
+}
+
 export function layoutProblems(root = "skills") {
   const problems = [];
   const seen = new Map();

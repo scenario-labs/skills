@@ -15,15 +15,15 @@
 //   skills.sh.json order; inserting or merging a grouping renumbers the plugin
 //   identifiers on the next regeneration
 // Never edit the manifest by hand; edit skills.sh.json and run `pnpm manifest`.
-// By default regenerates in place for the pre-commit hook, re-staging the file
-// only when the commit touches it, skills.sh.json, or skills/. --check verifies
-// without rewriting, for `pnpm validate` and CI. Grouping contents are
+// By default regenerates the file in place and, for the pre-commit hook, its
+// staged copy from the staged skills.sh.json and skill folders. --check
+// verifies without rewriting, for `pnpm validate` and CI. Grouping contents are
 // validated by check-groupings.mjs.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { listSkills } from "./lib/skills.mjs";
+import { listSkills, listSkillsFromPaths } from "./lib/skills.mjs";
 
 process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
 
@@ -34,77 +34,84 @@ const bail = (message) => {
   process.exit(1);
 };
 
-let config;
-try {
-  config = JSON.parse(readFileSync("skills.sh.json", "utf8"));
-} catch (error) {
-  bail(`skills.sh.json: not valid JSON (${error.message})`);
-}
-if (!Array.isArray(config.groupings) || config.groupings.length === 0) {
-  bail(
-    "skills.sh.json: groupings must be a non-empty array (see pnpm groupings)",
-  );
-}
-
-const skillDirOf = new Map(
-  listSkills().map((skill) => [skill.name, skill.dir]),
-);
-
 const pluginNameOf = (title) =>
   title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const seen = new Map();
-const plugins = config.groupings.map((group, index) => {
-  if (group === null || typeof group !== "object" || Array.isArray(group)) {
-    bail(
-      `skills.sh.json: grouping ${index} must be an object (see pnpm groupings)`,
-    );
+// `source` names the skills.sh.json being read in error messages.
+function render(source, read, skills) {
+  let config;
+  try {
+    config = JSON.parse(read());
+  } catch (error) {
+    bail(`${source}: not valid JSON (${error.message})`);
   }
-  const title = String(group.title ?? "");
-  const slug = pluginNameOf(title);
-  if (slug === "") {
-    bail(`skills.sh.json: grouping "${title}" produces an empty plugin name`);
+  if (!Array.isArray(config.groupings) || config.groupings.length === 0) {
+    bail(`${source}: groupings must be a non-empty array (see pnpm groupings)`);
   }
-  if (seen.has(slug)) {
-    bail(
-      `skills.sh.json: groupings "${seen.get(slug)}" and "${title}" both map to plugin name "${slug}"`,
-    );
-  }
-  seen.set(slug, title);
-  if (!Array.isArray(group.skills)) {
-    bail(
-      `skills.sh.json: grouping "${title}" needs a skills array (see pnpm groupings)`,
-    );
-  }
-  const name = `${String(index + 1).padStart(2, "0")}.-${slug}`;
-  const plugin = { name };
-  if (group.description) plugin.description = group.description;
-  plugin.source = "./";
-  plugin.strict = false;
-  plugin.skills = group.skills.map((skill) => {
-    if (!skillDirOf.has(skill)) {
+
+  const skillDirOf = new Map(skills.map((skill) => [skill.name, skill.dir]));
+  const seen = new Map();
+  const plugins = config.groupings.map((group, index) => {
+    if (group === null || typeof group !== "object" || Array.isArray(group)) {
       bail(
-        `skills.sh.json: "${skill}" in grouping "${title}" has no skill directory (see pnpm groupings)`,
+        `${source}: grouping ${index} must be an object (see pnpm groupings)`,
       );
     }
-    return `./${skillDirOf.get(skill)}`;
+    const title = String(group.title ?? "");
+    const slug = pluginNameOf(title);
+    if (slug === "") {
+      bail(`${source}: grouping "${title}" produces an empty plugin name`);
+    }
+    if (seen.has(slug)) {
+      bail(
+        `${source}: groupings "${seen.get(slug)}" and "${title}" both map to plugin name "${slug}"`,
+      );
+    }
+    seen.set(slug, title);
+    if (!Array.isArray(group.skills)) {
+      bail(
+        `${source}: grouping "${title}" needs a skills array (see pnpm groupings)`,
+      );
+    }
+    const name = `${String(index + 1).padStart(2, "0")}.-${slug}`;
+    const plugin = { name };
+    if (group.description) plugin.description = group.description;
+    plugin.source = "./";
+    plugin.strict = false;
+    plugin.skills = group.skills.map((skill) => {
+      if (!skillDirOf.has(skill)) {
+        bail(
+          `${source}: "${skill}" in grouping "${title}" has no skill directory (see pnpm groupings)`,
+        );
+      }
+      return `./${skillDirOf.get(skill)}`;
+    });
+    return plugin;
   });
-  return plugin;
-});
 
-const manifest = {
-  name: "scenario-skills",
-  owner: { name: "Scenario", url: "https://scenario.com" },
-  metadata: {
-    description:
-      "Agent Skills for creating production-ready images, video, audio, 3D, and custom models with Scenario, plus expert tools for DCC software and game engines",
-  },
-  plugins,
-};
-const rendered = `${JSON.stringify(manifest, null, 2)}\n`;
+  const manifest = {
+    name: "scenario-skills",
+    owner: { name: "Scenario", url: "https://scenario.com" },
+    metadata: {
+      description:
+        "Agent Skills for creating production-ready images, video, audio, 3D, and custom models with Scenario, plus expert tools for DCC software and game engines",
+    },
+    plugins,
+  };
+  return {
+    rendered: `${JSON.stringify(manifest, null, 2)}\n`,
+    groups: plugins.length,
+  };
+}
+
+const { rendered, groups } = render(
+  "skills.sh.json",
+  () => readFileSync("skills.sh.json", "utf8"),
+  listSkills(),
+);
 
 const existing = existsSync(MANIFEST_PATH)
   ? readFileSync(MANIFEST_PATH, "utf8")
@@ -117,7 +124,7 @@ if (process.argv.includes("--check")) {
     );
   }
   console.log(
-    `${MANIFEST_PATH} is in sync with skills.sh.json (${plugins.length} plugin groups)`,
+    `${MANIFEST_PATH} is in sync with skills.sh.json (${groups} plugin groups)`,
   );
   process.exit(0);
 }
@@ -126,34 +133,51 @@ if (existing !== rendered) {
   mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
   writeFileSync(MANIFEST_PATH, rendered);
 }
-// Re-stage even when the working tree was already in sync: an earlier manual
-// `pnpm manifest` run leaves the regenerated file unstaged, and the commit
-// ships the index, not the working tree the check reads. skills/ is watched
-// because the manifest records each skill's folder: moving one changes the
-// manifest without touching skills.sh.json.
+
+// The commit ships the index, not the working tree the check reads, so the
+// staged copy is rendered from the staged skills.sh.json and skill folders: a
+// staged skill move or grouping edit reaches the commit, an unstaged one never
+// does.
+const git = (args, input) =>
+  execFileSync("git", args, {
+    input,
+    encoding: "utf8",
+    stdio: ["pipe", "pipe", "ignore"],
+  });
+let index;
 try {
-  execFileSync(
-    "git",
-    [
-      "diff",
-      "--cached",
-      "--quiet",
-      "--",
-      "skills.sh.json",
-      "skills",
-      MANIFEST_PATH,
-    ],
-    { stdio: "ignore" },
-  );
+  index = {
+    config: git(["show", ":skills.sh.json"]),
+    paths: git(["ls-files", "-z", "--", "skills"]).split("\0"),
+  };
 } catch {
+  // Not in a git repository, or skills.sh.json is not tracked yet.
+}
+if (index) {
+  const staged = render(
+    "staged skills.sh.json",
+    () => index.config,
+    listSkillsFromPaths(index.paths),
+  ).rendered;
+  let indexed = null;
   try {
-    execFileSync("git", ["add", MANIFEST_PATH], { stdio: "ignore" });
+    indexed = git(["show", `:${MANIFEST_PATH}`]);
   } catch {
-    // Not in a git repository; the regenerated file is still on disk.
+    // The manifest is not tracked yet.
+  }
+  if (staged !== indexed) {
+    const blob = git(["hash-object", "-w", "--stdin"], staged).trim();
+    git([
+      "update-index",
+      "--add",
+      "--cacheinfo",
+      `100644,${blob},${MANIFEST_PATH}`,
+    ]);
   }
 }
+
 console.log(
   existing !== rendered
-    ? `${MANIFEST_PATH} regenerated from skills.sh.json (${plugins.length} plugin groups)`
-    : `${MANIFEST_PATH} already in sync with skills.sh.json (${plugins.length} plugin groups)`,
+    ? `${MANIFEST_PATH} regenerated from skills.sh.json (${groups} plugin groups)`
+    : `${MANIFEST_PATH} already in sync with skills.sh.json (${groups} plugin groups)`,
 );
