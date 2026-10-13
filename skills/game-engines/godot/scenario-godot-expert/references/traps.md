@@ -28,4 +28,5 @@
 - Python before 3.15 reads and writes text in the ANSI code page, while Godot's files are UTF-8: set `PYTHONUTF8=1` (3.15 makes UTF-8 the default). Without it, `new_project` in a folder with a Cyrillic name failed with `UnicodeEncodeError` (Python 3.12).
 - The GUI-open check reads the process table through PowerShell (`Win32_Process`), which has no working directory: an editor whose command line does not name the project is not detected.
 - No focus guard (`GD_RESTORE_FOCUS` is macOS only). Windowed runs render through D3D12, which `new_project` sets.
+- Android export helpers are not ported: scenario-godot-performance-export's `find_android` looks for `adb`, `apksigner`, `java` and `keytool` without their `.exe` and `.bat` names, and `private_home` builds the macOS config path, so on Windows they report a working SDK and JDK as missing. Tell the user before an Android export.
 - Observed on a GitHub-hosted Windows runner with Godot 4.7.2 and Python 3.12 and 3.15 (2026-10-13): locks, `new_project`, jobs, `check_all`, the GUI-open refusal, project copies and a windowed capture. The live suites behind the other notes ran on macOS only.

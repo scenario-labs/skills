@@ -132,8 +132,8 @@ def _cwd(pid: int) -> str | None:
         for ln in lo.splitlines():
             if ln.startswith("n"):
                 return ln[1:]
-    except Exception:
-        pass
+    except (OSError, subprocess.SubprocessError, UnicodeError):
+        pass  # best effort: no lsof, a timeout or odd output leaves cwd unknown
     return None
 
 
