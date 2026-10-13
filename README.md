@@ -29,7 +29,7 @@
 
 Agent Skills that teach AI coding agents (Claude Code, Cursor, Codex, Copilot, and 70+ others) how to create production-ready content with [Scenario](https://scenario.com) through the [Scenario MCP server](https://mcp.scenario.com): images, video, audio, textures, skyboxes, 3D assets, and custom-trained models, for games, entertainment, and any creative vertical.
 
-The expert tools at the bottom of the list work differently: teams of skills that drive DCC (digital content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, Unreal Engine, Unity), distilled from expert tutorials, conference talks, and official documentation. They need the application, not the Scenario MCP server, and each family folder's README records how it was built and how far it was verified.
+The expert tools at the bottom of the list work differently: teams of skills that drive DCC (digital content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, Unreal Engine, Unity, Godot), distilled from expert tutorials, conference talks, and official documentation. They need the application, not the Scenario MCP server, and each family folder's README records how it was built and how far it was verified.
 
 Skills follow the [Agent Skills](https://agentskills.io) format.
 
@@ -82,7 +82,7 @@ npx skills add scenario-labs/skills --skill scenario --skill scenario-image --sk
 npx skills add scenario-labs/skills --skill scenario --skill scenario-chatgpt-pet-create --skill scenario-chatgpt-pet-update
 ```
 
-**Expert tools.** A family installs as one set, since its specialists import the lead skill's scripts; the command is in each family README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md)).
+**Expert tools.** A family installs as one set, since its specialists import the lead skill's scripts: select its "Expert tools" group in the installer menu, or run the command in its family README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md)).
 
 **Pick, or install one skill.**
 
@@ -93,6 +93,8 @@ npx skills add scenario-labs/skills
 # A single skill
 npx skills add scenario-labs/skills --skill scenario
 ```
+
+The menu's topic groups cannot be selected from the command line: the CLI matches `--skill` against exact skill names only, and a group flag is an open request upstream ([vercel-labs/skills#992](https://github.com/vercel-labs/skills/issues/992)). From a script or CI, run one of the commands above with `-y`, which skips every prompt.
 
 The Scenario skills need the Scenario MCP server connected:
 

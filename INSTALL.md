@@ -39,7 +39,7 @@ Surfaces, skies, and worlds a player can walk through. 13 skills.
 npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d-worlds --skill scenario-walkable-room --skill scenario-3d --skill scenario-meshy --skill scenario-image --skill scenario-gemini-image --skill scenario-audio --skill scenario-sonilo
 ```
 
-Working in Unreal Engine or Unity? Add the expert tools for it: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md).
+Working in Unreal Engine, Unity, or Godot? Add the expert tools for it: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md).
 
 ## Art Director
 
@@ -99,7 +99,7 @@ Repeatable pipelines the whole team can run. 5 skills.
 npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-workflow-authoring --skill scenario-workflows
 ```
 
-Working in Unreal Engine or Unity? Add the expert tools for it: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md).
+Working in Unreal Engine, Unity, or Godot? Add the expert tools for it: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md).
 
 ## Producer
 
@@ -114,8 +114,8 @@ npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation
 
 ## Game Developer
 
-Gameplay, UI, animation, performance, and mobile or Web builds, driven inside the engine. These are expert tools: each family installs as one set, with its command in the family README: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md).
+Gameplay, UI, animation, performance, and mobile or Web builds, driven inside the engine. These are expert tools: each family installs as one set, with its command in the family README: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md).
 
 ## Expert tools
 
-Teams of skills that drive DCC software and game engines installed on your machine. They need the application, not the Scenario MCP server. Each family installs as one set: [ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md).
+Teams of skills that drive DCC software and game engines installed on your machine. They need the application, not the Scenario MCP server. Each family installs as one set: [ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md).
