@@ -10,9 +10,9 @@ Clients with native Streamable HTTP support connect to the URL directly; that is
 
 Add the endpoint and sign in with a Scenario account when the client prompts; no credentials pass through the conversation.
 
-Claude apps (claude.ai, Claude Desktop, and Claude Code signed in with the same Claude account): one custom connector serves all three. On claude.ai, Settings, Connectors, Add custom connector, the URL, then OAuth in the browser (paid plans).
+Claude apps (claude.ai, Claude Desktop, and Claude Code signed in with the same Claude account): one custom connector serves all three. On claude.ai, Settings, Connectors, Add custom connector, the URL, then OAuth in the browser (any plan; Free allows one custom connector).
 
-Claude Code without that connector (not signed in with that account, or in CI); OAuth starts on first use, `/mcp` authenticates by hand:
+Claude Code not signed in with that account (OAuth starts on first use; `/mcp` authenticates by hand):
 
 ```bash
 claude mcp add --transport http scenario https://mcp.scenario.com/mcp
