@@ -39,7 +39,7 @@ Request: "four style-matched potion icons for an RPG inventory."
 
 - The cheap levers first: reuse one `seed` across the batch, and pin the model's prompt-expansion flag off where the schema has one; an expander rewrites each prompt independently and defeats a fixed template.
 - Reference images: `upload_asset` the art direction images, then pass the asset ids (never local paths) to the model's image or reference parameters.
-- `asset_describe` turns one on-style asset into a promptable style synthesis reusable across prompts (catalog tool, billed, `dry_run: true` prices it: run via `scenario_tools_search` + `scenario_tool_execute_read`; see the `scenario` skill).
+- `asset_describe` extracts a reusable style synthesis (billed; `dry_run: true` estimates). Discover with `scenario_tools_search`; use its `permission` to choose the executor for estimates and runs (see `scenario`).
 - `search` target="assets" images={like: ["asset_..."]} finds assets already matching the target look.
 - For a locked-in project style, train a custom LoRA on the project's own art (the `scenario-model-training` skill); trained models use the same generation loop.
 

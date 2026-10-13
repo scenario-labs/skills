@@ -8,20 +8,20 @@ license: MIT
 
 ## Overview
 
-Four tools read assets back instead of making new ones: three fixed-purpose, one open-ended. With `search` (default toolset) they answer the questions that come after a batch lands, which is where most of the work actually is: is this on brief, what look is this, what does this show, what can the next model condition on, where did last week's approved version go.
+Four tools extract captions, style descriptions, analysis, or control maps from existing assets: three fixed-purpose, one open-ended. With `search` (default toolset) they answer the questions that come after a batch lands, which is where most of the work actually is: is this on brief, what look is this, what does this show, what can the next model condition on, where did last week's approved version go.
 
-None of them are in the default toolset. Get schemas with `scenario_tools_search`, then run each through the executor matching its `permission`: `asset_caption` and `asset_describe` are read-class, `asset_analyze` and `asset_detect` are write-class. Or reconnect with `?toolsets=full`. Connection and scope: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+None of them are in the default toolset. Get schemas with `scenario_tools_search`, then run each through the executor matching the returned `permission`: `read` uses `scenario_tool_execute_read`, `write` uses `scenario_tool_execute_write`. Use that live result for both estimates and runs; do not infer the lane from an unchanged input asset. Put the tool name in `name` and its inputs under `parameters`. Or reconnect with `?toolsets=full`. Connection and scope: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 
-| Need                                 | Tool                    | Shape                                                             |
-| ------------------------------------ | ----------------------- | ----------------------------------------------------------------- |
-| A caption for one image              | `asset_caption` (read)  | `details_level`: `action` or `action+style`                       |
-| A reusable look off one image        | `asset_describe` (read) | Returns a full description plus a promptable synthesis            |
-| Anything else, in your own words     | `asset_analyze` (write) | `instruction` plus up to 10 `images` and 10 `text_inputs`         |
-| A conditioning map for another model | `asset_detect` (write)  | `modality`, one of ten including canny, depth, pose, segmentation |
+| Need                                 | Tool             | Shape                                                             |
+| ------------------------------------ | ---------------- | ----------------------------------------------------------------- |
+| A caption for one image              | `asset_caption`  | `details_level`: `action` or `action+style`                       |
+| A reusable look off one image        | `asset_describe` | Returns a full description plus a promptable synthesis            |
+| Anything else, in your own words     | `asset_analyze`  | `instruction` plus up to 10 `images` and 10 `text_inputs`         |
+| A conditioning map for another model | `asset_detect`   | `modality`, one of ten including canny, depth, pose, segmentation |
 
-All four bill credits and all four take `dry_run: true` for an estimate first. Read-class does not mean free.
+All four bill credits and all four take `dry_run: true` for an estimate first. For OAuth, pass the user-selected `team_id` and `project_id` on estimates and runs. A repeated run can create another billed job; an executor lane does not make it free.
 
 ## The four facts that change the plan
 
@@ -53,6 +53,6 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
 - One `asset_analyze` call per asset when 10 fit in a call.
 - Treating `num_outputs` as a batch size over `images`.
 - Leaving `remove_background` at its default on an `asset_detect` map that must match the source frame.
-- Running `asset_analyze` or `asset_detect` through `scenario_tool_execute_read`: both are write-class and the call is rejected by lane, not by argument.
+- Reusing a remembered executor lane: use the `permission` from fresh `scenario_tools_search` results, including for `dry_run`. A lane rejection means refresh discovery and use its executor, not retry the same call.
 - Sending more than 49 ids to `collection_add_assets`, or one id already in the collection: both fail the whole call, and nothing from that chunk is filed.
 - Asking `asset_analyze` to produce an image. It returns text; control maps come from `asset_detect` and final renders from `model_run`.
