@@ -14,8 +14,8 @@ import sys
 import tempfile
 import time
 import unittest
+import unittest.mock
 from pathlib import Path
-from unittest import mock
 
 HERE = Path(__file__).parent
 FAMILY = HERE.parents[1] / "skills" / "game-engines" / "godot"
@@ -87,8 +87,8 @@ class GuiCheck(unittest.TestCase):
             {"pid": 41, "args": f"godot --headless --path {arg}", "headless": True, "editor": False, "cwd": None},
             {"pid": 42, "args": f"godot --path {arg} -e", "headless": False, "editor": True, "cwd": None},
         ]
-        with mock.patch.object(gd_run, "running_godot", return_value=procs), \
-                mock.patch.object(gd_run, "_godot", return_value="godot"):
+        with unittest.mock.patch.object(gd_run, "running_godot", return_value=procs), \
+                unittest.mock.patch.object(gd_run, "_godot", return_value="godot"):
             self.assertEqual(gd_run.gui_editor_pids(project), [42])
             with self.assertRaises(gd_run.GodotBusy):
                 gd_run.run_script(project, "agent_audit.gd:project", timeout=60)
