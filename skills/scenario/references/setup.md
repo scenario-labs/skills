@@ -16,7 +16,20 @@ Claude Code (OAuth starts on first use; `/mcp` authenticates by hand):
 claude mcp add --transport http scenario https://mcp.scenario.com/mcp
 ```
 
-Claude Desktop (`claude_desktop_config.json`, then restart the app), Cursor (Settings, MCP; native OAuth and HTTP from 1.0), Windsurf (Cascade, Configure MCP):
+Claude Desktop (Settings, Connectors, Add custom connector, the URL, then OAuth in the browser; paid plans; connectors added on claude.ai sync here). A url-only entry in `claude_desktop_config.json` is rejected at startup ("not valid MCP server configurations and were skipped"), since that file loads stdio servers only. The file-based alternative is the `mcp-remote` stdio bridge, then restart the app:
+
+```json
+{
+  "mcpServers": {
+    "scenario": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.scenario.com/mcp"]
+    }
+  }
+}
+```
+
+Cursor (Settings, MCP; native OAuth and HTTP from 1.0), Windsurf (Cascade, Configure MCP):
 
 ```json
 { "mcpServers": { "scenario": { "url": "https://mcp.scenario.com/mcp" } } }
@@ -33,14 +46,14 @@ A connection that worked and then fails, or a server-side authentication fix, ne
 - Claude Code: `/mcp`, select Scenario, Clear authentication.
 - Cursor: Settings, Tools & MCP, deactivate and reactivate the server.
 - VS Code: Command Palette, `MCP: List Servers`, remove and re-add.
-- Claude Desktop: Settings, Developer, Edit Config, remove and re-add the entry, restart.
+- Claude Desktop: Settings, Connectors, remove and re-add the custom connector. For the `mcp-remote` config, Settings, Developer, Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
 - OpenCode: `opencode mcp logout scenario`, then `opencode mcp auth scenario`.
 
-Claude Desktop reopening the browser on every message is orphaned `mcp-remote` processes: quit the app fully and reboot; if it persists, `pkill -f mcp-remote && rm -rf ~/.mcp-auth`; then switch to the native URL configuration above, which ends the problem for good.
+Claude Desktop reopening the browser on every message is orphaned `mcp-remote` processes: quit the app fully and reboot; if it persists, `pkill -f mcp-remote && rm -rf ~/.mcp-auth`; then switch to the Connectors setup above, which ends the problem for good.
 
 ## API keys (headless or CI)
 
-Where nobody is present to complete the OAuth prompt, the same endpoint also authenticates with a Scenario API key sent as an HTTP header, and a client that takes no headers (Claude Desktop's native configuration) reaches it through `mcp-remote`. Keys are created in the Scenario portal (the `api_key_create` catalog tool, read lane, returns that link and nothing else, so calling it puts no secret in the conversation). Wiring one into a client is an operator task done by hand: the [connection guide](https://mcp.scenario.com/docs#using-an-api-key) carries the header format and the current steps for each client.
+Where nobody is present to complete the OAuth prompt, the same endpoint also authenticates with a Scenario API key sent as an HTTP header, and a client whose config file passes no headers (Claude Desktop's `claude_desktop_config.json`) reaches it through `mcp-remote`. Keys are created in the Scenario portal (the `api_key_create` catalog tool, read lane, returns that link and nothing else, so calling it puts no secret in the conversation). Wiring one into a client is an operator task done by hand: the [connection guide](https://mcp.scenario.com/docs#using-an-api-key) carries the header format and the current steps for each client.
 
 Credentials stay out of the conversation. An agent asked to set this up points to the guide and stops there. It does not ask for a key or secret, does not place one in a command, a config file, or a message, and does not repeat one that appears in its context.
 
