@@ -21,7 +21,7 @@ None of them are in the default toolset. Get schemas with `scenario_tools_search
 | Anything else, in your own words     | `asset_analyze`  | `instruction` plus up to 10 `images` and 10 `text_inputs`         |
 | A conditioning map for another model | `asset_detect`   | `modality`, one of ten including canny, depth, pose, segmentation |
 
-All four bill credits and all four take `dry_run: true` for an estimate first. For OAuth, pass the user-selected `team_id` and `project_id` on estimates and runs. A repeated run can create another billed job; an executor lane does not make it free.
+All four bill credits and all four take `dry_run: true` inside `parameters` for an estimate first. For OAuth, pass the user-selected `team_id` and `project_id` on estimates and runs. A repeated run can create another billed job; an executor lane does not make it free.
 
 ## The four facts that change the plan
 
