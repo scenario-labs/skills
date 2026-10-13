@@ -10,13 +10,15 @@ Clients with native Streamable HTTP support connect to the URL directly; that is
 
 Add the endpoint and sign in with a Scenario account when the client prompts; no credentials pass through the conversation.
 
-Claude Code (OAuth starts on first use; `/mcp` authenticates by hand):
+Claude apps (claude.ai, Claude Desktop, and Claude Code signed in with the same Claude account): one custom connector serves all three. On claude.ai, Settings, Connectors, Add custom connector, the URL, then OAuth in the browser (paid plans).
+
+Claude Code without that connector (not signed in with that account, or in CI); OAuth starts on first use, `/mcp` authenticates by hand:
 
 ```bash
 claude mcp add --transport http scenario https://mcp.scenario.com/mcp
 ```
 
-Claude Desktop (Settings, Connectors, Add custom connector, the URL, then OAuth in the browser; paid plans; connectors added on claude.ai sync here). A url-only entry in `claude_desktop_config.json` is rejected at startup ("not valid MCP server configurations and were skipped"), since that file loads stdio servers only. The file-based alternative is the `mcp-remote` stdio bridge, then restart the app:
+Claude Desktop without Connectors: the `mcp-remote` stdio bridge in `claude_desktop_config.json`, then restart the app. A url-only entry there is rejected at startup ("not valid MCP server configurations and were skipped"), since that file loads stdio servers only:
 
 ```json
 {
@@ -35,7 +37,13 @@ Cursor (Settings, MCP; native OAuth and HTTP from 1.0), Windsurf (Cascade, Confi
 { "mcpServers": { "scenario": { "url": "https://mcp.scenario.com/mcp" } } }
 ```
 
-VS Code: Command Palette, `MCP: Add Server`, HTTP, the URL. Zed: `{ "context_servers": { "scenario": { "url": "https://mcp.scenario.com/mcp" } } }` in settings. Gemini CLI: the server in `~/.gemini/settings.json`, then `/mcp auth scenario`. claude.ai: Settings, Connectors, Add custom connector, the URL (paid plans). Codex and other clients: the standard URL through their CLI or configuration file.
+Codex (`codex mcp login scenario` starts the OAuth sign-in):
+
+```bash
+codex mcp add scenario --url https://mcp.scenario.com/mcp
+```
+
+VS Code: Command Palette, `MCP: Add Server`, HTTP, the URL. Zed: `{ "context_servers": { "scenario": { "url": "https://mcp.scenario.com/mcp" } } }` in settings. Gemini CLI: the server in `~/.gemini/settings.json`, then `/mcp auth scenario`. Other clients: the standard URL through their CLI or configuration file.
 
 Verify with a free call: "List my Scenario teams" should return `teams_list` output. `diagnostics_run` names the failing layer when it does not.
 
@@ -46,7 +54,8 @@ A connection that worked and then fails, or a server-side authentication fix, ne
 - Claude Code: `/mcp`, select Scenario, Clear authentication.
 - Cursor: Settings, Tools & MCP, deactivate and reactivate the server.
 - VS Code: Command Palette, `MCP: List Servers`, remove and re-add.
-- Claude Desktop: Settings, Connectors, remove and re-add the custom connector. For the `mcp-remote` config, Settings, Developer, Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
+- claude.ai and Claude Desktop: Settings, Connectors, remove and re-add the custom connector. For Claude Desktop's `mcp-remote` config, Settings, Developer, Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
+- Codex: `codex mcp logout scenario`, then `codex mcp login scenario`.
 - OpenCode: `opencode mcp logout scenario`, then `opencode mcp auth scenario`.
 
 Claude Desktop reopening the browser on every message is orphaned `mcp-remote` processes: quit the app fully and reboot; if it persists, `pkill -f mcp-remote && rm -rf ~/.mcp-auth`; then switch to the Connectors setup above, which ends the problem for good.
