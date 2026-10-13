@@ -1,0 +1,91 @@
+name: Godot toolkit
+
+# Runs tests/scenario-godot-expert against a real Godot on each OS the toolkit
+# branches on. Only Godot script changes trigger it: the download and the
+# editor runs cost minutes, and docs changes cannot break the toolkit.
+on:
+  pull_request:
+    paths:
+      - "skills/game-engines/godot/*/scripts/**"
+      - "tests/scenario-godot-expert/**"
+      - ".github/workflows/godot.yml"
+  push:
+    branches: [main]
+    paths:
+      - "skills/game-engines/godot/*/scripts/**"
+      - "tests/scenario-godot-expert/**"
+      - ".github/workflows/godot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  toolkit:
+    name: Godot on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      GODOT_RELEASE: 4.7.2-stable
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # 3.12 rather than the newest: before 3.15, Windows Python defaults to the
+      # ANSI code page, the case the runner's UTF-8 handling exists for.
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install Godot
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux) asset="Godot_v${GODOT_RELEASE}_linux.x86_64.zip" ;;
+            macOS) asset="Godot_v${GODOT_RELEASE}_macos.universal.zip" ;;
+            Windows) asset="Godot_v${GODOT_RELEASE}_win64.exe.zip" ;;
+          esac
+          base="https://github.com/godotengine/godot-builds/releases/download/${GODOT_RELEASE}"
+          curl -fsSL -o "$asset" "$base/$asset"
+          curl -fsSL -o sums.txt "$base/SHA512-SUMS.txt"
+          grep " ${asset}\$" sums.txt > want.txt
+          if command -v sha512sum > /dev/null; then sha512sum -c want.txt; else shasum -a 512 -c want.txt; fi
+          dir="$RUNNER_TEMP/godot"
+          if [ "$RUNNER_OS" = Windows ]; then dir="$(cygpath -u "$RUNNER_TEMP")/godot"; fi
+          mkdir -p "$dir"
+          case "$RUNNER_OS" in
+            Linux)
+              unzip -q "$asset" -d "$dir"
+              ln -s "$dir/Godot_v${GODOT_RELEASE}_linux.x86_64" "$dir/godot"
+              echo "$dir" >> "$GITHUB_PATH"
+              # A display and a software Vulkan driver for the windowed capture.
+              sudo apt-get update -qq
+              sudo apt-get install -y -qq xvfb mesa-vulkan-drivers > /dev/null
+              ;;
+            macOS)
+              ditto -x -k "$asset" "$dir"
+              echo "GODOT=$dir/Godot.app/Contents/MacOS/Godot" >> "$GITHUB_ENV"
+              ;;
+            Windows)
+              # The layout winget installs: godot and godot_console on PATH.
+              unzip -q "$asset" -d "$dir"
+              cp "$dir/Godot_v${GODOT_RELEASE}_win64.exe" "$dir/godot.exe"
+              cp "$dir/Godot_v${GODOT_RELEASE}_win64_console.exe" "$dir/godot_console.exe"
+              cygpath -w "$dir" >> "$GITHUB_PATH"
+              ;;
+          esac
+      - name: Toolkit tests
+        shell: bash
+        env:
+          GD_TEST_ARTIFACTS: ${{ runner.temp }}
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then run="xvfb-run -a"; else run=""; fi
+          $run python -B -m unittest discover -s tests/scenario-godot-expert -v
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: capture-${{ matrix.os }}
+          path: ${{ runner.temp }}/shot.png
+          if-no-files-found: ignore
