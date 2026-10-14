@@ -10,7 +10,7 @@ Clients with native Streamable HTTP support connect to the URL directly; that is
 
 Add the endpoint and sign in with a Scenario account when the client prompts; no credentials pass through the conversation.
 
-Claude apps (claude.ai, Claude Desktop, and Claude Code signed in with the same Claude account): one custom connector serves all three. On Free, Pro or Max, add it on claude.ai: Customize, Connectors, Add, Add custom connector, the URL, then OAuth in the browser (Free allows one custom connector). On Team or Enterprise, the organization adds it once: an owner (on Enterprise, also anyone whose custom role includes Manage access to Libraries) opens Organization settings, Connectors, Add, Custom, Web, and pastes the URL. Each member then clicks Connect on it under Customize, Connectors and signs in with their own Scenario account; anyone else who tries to add it sees "Ask an organization owner". Keep it on OAuth: a fixed API-key header on an organization connector gives every member that key's access.
+Claude apps (claude.ai, Claude Desktop, and Claude Code signed in with the same Claude account): one custom connector serves all three. Free, Pro or Max: on claude.ai, Customize, Connectors, Add, Add custom connector, the URL, then OAuth in the browser (Free allows one). Team or Enterprise: an owner, or on Enterprise a member whose custom role includes Manage access to Libraries, adds it once under Organization settings, Connectors, Add, Custom, Web (other members see "Ask an organization owner"); each member then clicks Connect under Customize, Connectors and signs in with their own Scenario account. Keep it on OAuth: a fixed API-key header on an organization connector gives every member that key's access.
 
 Claude Code without that connector (not signed in with that account, or nobody has added it yet; OAuth starts on first use, `/mcp` authenticates by hand):
 
@@ -54,7 +54,7 @@ A connection that worked and then fails, or a server-side authentication fix, ne
 - Claude Code: `/mcp`, select Scenario, Clear authentication.
 - Cursor: Settings, Tools & MCP, deactivate and reactivate the server.
 - VS Code: Command Palette, `MCP: List Servers`, remove and re-add.
-- claude.ai and Claude Desktop: Customize, Connectors, remove and re-add the custom connector (on Team or Enterprise, connect the organization's connector again instead). For Claude Desktop's `mcp-remote` config, Settings, Developer, Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
+- claude.ai and Claude Desktop: Customize, Connectors, remove and re-add the custom connector (Team or Enterprise: reconnect instead). For Claude Desktop's `mcp-remote` config, Settings, Developer, Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
 - Codex: `codex mcp logout scenario`, then `codex mcp login scenario`.
 - OpenCode: `opencode mcp logout scenario`, then `opencode mcp auth scenario`.
 
