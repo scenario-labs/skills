@@ -68,7 +68,7 @@ In call order:
 1. `scene_summary`: note `cursor` and confirm a GUI session, since the capture needs one.
 2. `capture_reference` with `{"source": "VIEWPORT"}` returns `context_id` and `reference_id`, not an asset id. Call `reference_upload_status` with both until `state` is `imported`, and keep its `asset_id`. A scene change before the upload finishes stops it.
 3. `list_models` with `{"lane": "3d"}`; pick an image-to-3D entry from its description. `model_schema` with its `model_id` names the image input; file parameters take Scenario asset ids.
-4. `estimate_cost` with `{"lane": "3d", "model_id": "<id>", "parameters": {"<image input>": "<asset_id>"}}` returns `quote_id` and `cu_cost_exact`. Tell the user the cost in CU and stop until they say yes.
+4. `estimate_cost` with `{"lane": "3d", "model_id": "<id>", "parameters": {"<image input>": "<asset_id>"}}` returns `quote_id` and `cu_cost_exact`. Tell the user the cost in CU and stop until they say yes. Unattended, with nobody to answer, report the quote and stop here: neither this gate nor the one in step 8 is ever passed without the user.
 5. `generate` with the same `lane`, `model_id` and `parameters`, plus `quote_id` and `approved_cost` set to `cu_cost_exact` verbatim. It returns `local_id`.
 6. `wait_for_job` with `{"job_id": "<local_id>", "timeout": 170}`, again while `delivery_active` is `true`. The 3D lane stops at saved results: nothing is in the scene yet.
 7. `job_status` lists `import_units`; take the `key` of the `primary` unit. `list_local_jobs` gives `context_id` and this job's `request_id` and `revision`.
