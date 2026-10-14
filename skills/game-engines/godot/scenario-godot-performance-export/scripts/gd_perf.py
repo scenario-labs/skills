@@ -20,9 +20,10 @@ Public API:
     zip_listing(zip_or_apk, top=15) -> dict
     serve(root, coop_coep=False, port=0) -> Server      .url, .requests, .stop()
     web_smoke(url, ready_line="SHIP_BOOT", timeout=90, shot=None, init_script=None, after_ready=None) -> dict
-    find_android() -> dict                               SDK and JDK (env, ~/Library/Android/sdk, Unity Hub, Android Studio)
+    find_android() -> dict                               SDK and JDK (env, Android Studio's defaults per OS, Unity Hub)
     make_keystore(path, alias, password, dname=..., jdk=None) -> dict
-    private_home(root) -> Path                           HOME with only export_templates linked (keeps the user's editor settings untouched)
+    private_home(root) -> Path                           Godot home with only export_templates linked (keeps the user's editor settings untouched)
+    home_env(home) -> dict                               the variables that point Godot at a private_home (HOME, APPDATA or XDG_*)
     export_env(**env) (context manager)                  env for one gd_run.export call
     export_android(project, preset, out, debug=True, keystore=None, home=None, android=None) -> dict
     verify_apk(apk, android=None) -> dict
@@ -287,7 +288,7 @@ def release_audit(project) -> dict:
             if o.get(k):
                 add("secret_in_presets", "high", f"{pname}: {k} is written in export_presets.cfg", "pass it as a GODOT_* env var at export time")
         ep = p.get("export_path", "")
-        if ep and not ep.startswith("/") and not ep.startswith(".."):
+        if ep and not ep.startswith(("/", "..")) and not os.path.isabs(ep):
             d = (P / ep).parent
             if d != P and not (d / ".gdignore").exists():
                 add("export_inside_project", "medium", f"{pname}: export_path {ep} is inside the project", "export outside or add .gdignore (else the build is packed next time)")
@@ -505,33 +506,49 @@ def _java_major(java: Path) -> int:
         return 0
 
 
+def _tool(folder, name: str) -> Path | None:
+    """folder/name as this OS spells it: Windows ships adb.exe, apksigner.bat and keytool.exe."""
+    for suffix in (".exe", ".bat", ".cmd") if sys.platform == "win32" else ("",):
+        p = Path(folder) / (name + suffix)
+        if p.exists():
+            return p
+    return None
+
+
 def find_android() -> dict:
     """Locate an Android SDK and a JDK 17+. Order: ANDROID_HOME/ANDROID_SDK_ROOT and JAVA_HOME,
-    ~/Library/Android/sdk, Android Studio's JBR, Unity Hub's AndroidPlayer (SDK + OpenJDK)."""
+    Android Studio's default SDK and JBR for this OS, Unity Hub's AndroidPlayer (SDK + OpenJDK)."""
     sdks, jdks = [], []
     for e in ("ANDROID_HOME", "ANDROID_SDK_ROOT"):
         if os.environ.get(e):
             sdks.append(Path(os.environ[e]))
-    sdks.append(Path.home() / "Library" / "Android" / "sdk")
     if os.environ.get("JAVA_HOME"):
         jdks.append(Path(os.environ["JAVA_HOME"]))
-    jdks.append(Path("/Applications/Android Studio.app/Contents/jbr/Contents/Home"))
+    if sys.platform == "win32":
+        sdks.append(Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local") / "Android" / "Sdk")
+        jdks.append(Path(os.environ.get("ProgramFiles") or "C:/Program Files") / "Android" / "Android Studio" / "jbr")
+    elif sys.platform == "darwin":
+        sdks.append(Path.home() / "Library" / "Android" / "sdk")
+        jdks.append(Path("/Applications/Android Studio.app/Contents/jbr/Contents/Home"))
+    else:
+        sdks.append(Path.home() / "Android" / "Sdk")
     for u in sorted(Path("/Applications/Unity/Hub/Editor").glob("*/PlaybackEngines/AndroidPlayer"), reverse=True):
         sdks.append(u / "SDK")
         jdks.append(u / "OpenJDK")
     jdks += sorted(Path("/Library/Java/JavaVirtualMachines").glob("*/Contents/Home"), reverse=True)
     out = {"sdk": None, "jdk": None, "build_tools": None, "platforms": [], "ndk": None, "problems": []}
     for s in sdks:
-        bts = sorted((s / "build-tools").glob("*/apksigner")) if (s / "build-tools").exists() else []
-        if (s / "platform-tools" / "adb").exists() and bts:
-            out.update(sdk=str(s), build_tools=str(bts[-1].parent), platforms=sorted(p.name for p in (s / "platforms").glob("android-*")))
+        bts = sorted(d for d in (s / "build-tools").glob("*") if _tool(d, "apksigner")) if (s / "build-tools").exists() else []
+        if _tool(s / "platform-tools", "adb") and bts:
+            out.update(sdk=str(s), build_tools=str(bts[-1]), platforms=sorted(p.name for p in (s / "platforms").glob("android-*")))
             ndk = sorted((s / "ndk").glob("*")) if (s / "ndk").exists() else []
             out["ndk"] = str(ndk[-1]) if ndk else (str(s.parent / "NDK") if (s.parent / "NDK").exists() else None)
             break
     for j in jdks:
-        if (j / "bin" / "java").exists() and (j / "bin" / "keytool").exists() and _java_major(j / "bin" / "java") >= 17:
+        java = _tool(j / "bin", "java")
+        if java and _tool(j / "bin", "keytool") and _java_major(java) >= 17:
             out["jdk"] = str(j)
-            out["java_major"] = _java_major(j / "bin" / "java")
+            out["java_major"] = _java_major(java)
             break
     if not out["sdk"]:
         out["problems"].append("no Android SDK with platform-tools/adb and build-tools/*/apksigner")
@@ -546,7 +563,7 @@ def make_keystore(path, alias: str, password: str, dname: str = "CN=Android Debu
     """keytool -genkeypair (RSA 2048). Keystore and key password are the same (Godot docs: they must
     match). Never overwrites an existing keystore; returns its SHA-256 certificate fingerprint."""
     jdk = jdk or find_android().get("jdk")
-    kt = str(Path(jdk) / "bin" / "keytool") if jdk else "keytool"
+    kt = str(_tool(Path(jdk) / "bin", "keytool") or "keytool") if jdk else "keytool"
     path = Path(path)
     created = False
     if not path.exists():
@@ -563,17 +580,44 @@ def make_keystore(path, alias: str, password: str, dname: str = "CN=Android Debu
             "sha256": m.group(1).replace(":", "").lower() if m else None}
 
 
+def _godot_dirs(home: Path) -> tuple[Path, Path]:
+    """(config, data) folders Godot uses under a private home; data holds export_templates."""
+    if sys.platform == "win32":
+        g = home / "AppData" / "Roaming" / "Godot"
+        return g, g
+    if sys.platform == "darwin":
+        g = home / "Library" / "Application Support" / "Godot"
+        return g, g
+    return home / ".config" / "godot", home / ".local" / "share" / "godot"
+
+
+def home_env(home) -> dict:
+    """Variables that point a Godot child at a private_home: macOS reads HOME, Windows APPDATA and
+    LOCALAPPDATA, Linux the XDG folders (set on many machines, so HOME alone is not enough)."""
+    h = Path(home)
+    if sys.platform == "win32":
+        return {"APPDATA": str(h / "AppData" / "Roaming"), "LOCALAPPDATA": str(h / "AppData" / "Local")}
+    if sys.platform == "darwin":
+        return {"HOME": str(h)}
+    return {"HOME": str(h), "XDG_CONFIG_HOME": str(h / ".config"), "XDG_DATA_HOME": str(h / ".local" / "share"),
+            "XDG_CACHE_HOME": str(h / ".cache")}
+
+
 def private_home(root) -> Path:
-    """A HOME for Godot export runs that links only the real export templates. Godot then creates its
-    own editor settings there, taking JAVA_HOME and ANDROID_HOME as the Android path defaults
-    (verified 4.7.2), so the user's ~/Library/Application Support/Godot/editor_settings-4.7.tres is
-    never touched. macOS Godot derives its config dir from HOME (os_macos.mm get_config_path)."""
+    """A home for Godot export runs that links only the real export templates. Run Godot with
+    home_env(root): it then creates its own editor settings there, taking JAVA_HOME and ANDROID_HOME
+    as the Android path defaults (verified 4.7.2), so the user's editor_settings-4.7.tres is never
+    touched. On Windows the link is a junction, which needs no symlink privilege."""
     root = Path(root).resolve()
-    g = root / "Library" / "Application Support" / "Godot"
-    g.mkdir(parents=True, exist_ok=True)
-    link = g / "export_templates"
-    if not link.exists():
-        link.symlink_to(gd_env.TEMPLATES_ROOT)
+    config, data = _godot_dirs(root)
+    config.mkdir(parents=True, exist_ok=True)
+    data.mkdir(parents=True, exist_ok=True)
+    link = data / "export_templates"
+    if not os.path.lexists(link):
+        if sys.platform == "win32":
+            subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(gd_env.TEMPLATES_ROOT)], check=True, capture_output=True)
+        else:
+            link.symlink_to(gd_env.TEMPLATES_ROOT)
     return root
 
 
@@ -585,7 +629,7 @@ def set_private_editor_setting(home, key: str, value: str) -> bool:
     home = Path(home).resolve()
     if home == Path.home().resolve():
         raise ValueError("refusing to edit the user's real editor settings")
-    f = home / "Library" / "Application Support" / "Godot" / "editor_settings-4.7.tres"
+    f = _godot_dirs(home)[0] / "editor_settings-4.7.tres"
     if not f.exists():
         return False
     lines = f.read_text().splitlines()
@@ -625,7 +669,7 @@ def export_android(project, preset: str, out, debug: bool = True, keystore: dict
     kind = "DEBUG" if debug else "RELEASE"
     env = {"JAVA_HOME": android["jdk"], "ANDROID_HOME": android["sdk"]}
     if home:
-        env["HOME"] = str(home)
+        env.update(home_env(home))
         set_private_editor_setting(home, "export/android/java_sdk_path", android["jdk"])
         set_private_editor_setting(home, "export/android/android_sdk_path", android["sdk"])
     if keystore:
@@ -645,8 +689,8 @@ def verify_apk(apk, android: dict | None = None) -> dict:
     android = android or find_android()
     bt = Path(android["build_tools"])
     env = dict(os.environ, JAVA_HOME=android["jdk"], PATH=str(Path(android["jdk"]) / "bin") + os.pathsep + os.environ.get("PATH", ""))
-    v = subprocess.run([str(bt / "apksigner"), "verify", "--print-certs", "-v", str(apk)], capture_output=True, text=True, env=env)
-    b = subprocess.run([str(bt / "aapt2"), "dump", "badging", str(apk)], capture_output=True, text=True).stdout
+    v = subprocess.run([str(_tool(bt, "apksigner")), "verify", "--print-certs", "-v", str(apk)], capture_output=True, text=True, env=env)
+    b = subprocess.run([str(_tool(bt, "aapt2")), "dump", "badging", str(apk)], capture_output=True, text=True).stdout
     g = lambda pat: (re.search(pat, b) or [None, None])[1]  # noqa: E731
     out = {
         "verifies": v.returncode == 0 and "Verifies" in v.stdout,
@@ -713,10 +757,10 @@ def verify_macos(zip_path, workdir) -> dict:
 
 def run_exported(binary, args=(), timeout: float = 120, home=None) -> dict:
     """Run an exported desktop build (e.g. --headless -- --perf-log --perf-seconds 3 --perf-quit) and
-    parse SHIP_BOOT / PERF_SUMMARY lines. home: a private HOME so user:// lands in the test folder."""
+    parse SHIP_BOOT / PERF_SUMMARY lines. home: a private_home so user:// lands in the test folder."""
     env = dict(os.environ)
     if home:
-        env["HOME"] = str(home)
+        env.update(home_env(home))
     t0 = time.time()
     try:
         r = subprocess.run([str(binary), *args], capture_output=True, text=True, timeout=timeout, env=env, stdin=subprocess.DEVNULL)

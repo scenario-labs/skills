@@ -52,6 +52,10 @@ jobs:
           curl -fsSL -o sums.txt "$base/SHA512-SUMS.txt"
           grep " ${asset}\$" sums.txt > want.txt
           if command -v sha512sum > /dev/null; then sha512sum -c want.txt; else shasum -a 512 -c want.txt; fi
+          # JDK 17 for the Android helper tests: the runners preinstall it but default to other JDKs.
+          for v in JAVA_HOME_17_X64 JAVA_HOME_17_arm64; do
+            if [ -n "${!v:-}" ]; then echo "JAVA_HOME=${!v}" >> "$GITHUB_ENV"; break; fi
+          done
           dir="$RUNNER_TEMP/godot"
           if [ "$RUNNER_OS" = Windows ]; then dir="$(cygpath -u "$RUNNER_TEMP")/godot"; fi
           mkdir -p "$dir"

@@ -168,10 +168,10 @@ The median rises (0.10 to 0.18 ms) because the work is spread: the expert point 
 ## 6. Hitches when entering a new area (windowed)
 
 ```python
-home = gd_perf.private_home("<work>/_homes/hitch_sync")      # fresh HOME = cold shader cache
+home = gd_perf.private_home("<work>/_homes/hitch_sync")      # fresh home = cold shader cache
 r = gd_run.run_script(P, "res://addons/agentkit/perf/perf_bench.gd:hitch",
                       {"mode": "sync"}, headless=False,
-                      extra_args=["--rendering-driver", "vulkan"], env={"HOME": str(home)})
+                      extra_args=["--rendering-driver", "vulkan"], env=gd_perf.home_env(home))
 ```
 
 `hitch` loads `res://perf_fx/area.tscn` (4,000 meshes, 48 feature-varied materials) at frame 60:
@@ -247,7 +247,7 @@ gd_run.ensure_preset(S, "mac_demo", "macOS", options={...same...})
 gd_perf.preset_fields(S, "mac_demo", exclude_filter='"..."', custom_features='"demo"')
 gd_run.ensure_preset(S, "dlc_pack", "macOS", options={...})
 gd_perf.preset_fields(S, "dlc_pack", export_filter='"resources"', export_files='PackedStringArray("res://dlc/bonus.tscn")')
-with gd_perf.export_env(HOME=str(home)):
+with gd_perf.export_env(**gd_perf.home_env(home)):
     gd_run.export(S, "mac", "<builds>/Game.zip")
     gd_run.export(S, "mac_demo", "<builds>/Game_demo.zip")
     gd_run.export(S, "dlc_pack", "<builds>/dlc.pck", pack=True)
@@ -292,7 +292,7 @@ never in `export_presets.cfg` (Nihamkin, _n9l15CANag [00:25:38]; macOS export do
 LB = "<script>window.Leaderboard={getTop:n=>Promise.resolve(JSON.stringify([...])),submit:s=>{}};</script>"
 gd_run.ensure_preset(S, "web_st", "Web", options={"variant/thread_support": False, "html/head_include": LB})
 gd_run.ensure_preset(S, "web_mt", "Web", options={"variant/thread_support": True, "html/head_include": LB})
-with gd_perf.export_env(HOME=str(home)):
+with gd_perf.export_env(**gd_perf.home_env(home)):
     gd_run.export(S, "web_st", "<builds>/web_st/index.html")
 srv = gd_perf.serve("<builds>/web_st", coop_coep=False)      # True adds COOP same-origin + COEP require-corp
 r = gd_perf.web_smoke(srv.url + "index.html", shot="web.png",
@@ -346,7 +346,7 @@ print(r["apk"])
 ```
 
 Credentials go only through `GODOT_ANDROID_KEYSTORE_{DEBUG,RELEASE}_{PATH,USER,PASSWORD}`.
-`export_android` sets `JAVA_HOME`, `ANDROID_HOME` and HOME, and writes the two Android paths into
+`export_android` sets `JAVA_HOME`, `ANDROID_HOME` and the private home's variables (`home_env`: HOME on macOS, APPDATA on Windows, HOME and XDG on Linux), and writes the two Android paths into
 the private editor settings: JAVA_HOME and ANDROID_HOME only seed those paths when Godot first
 creates its editor settings file. A private home first used for a macOS or web export kept
 `java_sdk_path = ""` and the Android export failed ("A valid Java SDK path is required").
@@ -368,7 +368,7 @@ Android build template and Gradle downloads), `adb install` and on-device profil
 gd_run.ensure_preset(S, "ios_xcode", "iOS", options={"application/export_project_only": True,
     "application/app_store_team_id": "ABCDE12345", "application/bundle_identifier": "com.studio.game",
     "application/short_version": "0.1.0", "application/version": "1"})
-with gd_perf.export_env(HOME=str(home)):
+with gd_perf.export_env(**gd_perf.home_env(home)):
     gd_run.export(S, "ios_xcode", "<builds>/ios/Game.ipa", release=False)   # writes the Xcode project
 print(gd_perf.verify_xcode_project("<builds>/ios"))
 print(gd_perf.xcode_build("<builds>/ios"))      # unsigned, generic iOS destination
