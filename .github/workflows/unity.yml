@@ -1,0 +1,35 @@
+name: Unity toolkit
+
+# Runs tests/scenario-unity-expert on macOS, the OS the toolkit targets and the only
+# one where its cp -c clone test runs. No Unity: batch mode needs a signed-in license.
+# Linux already runs the suite in the CI workflow's script-tests job.
+on:
+  pull_request:
+    paths:
+      - "skills/game-engines/unity/*/scripts/**"
+      - "tests/scenario-unity-expert/**"
+      - ".github/workflows/unity.yml"
+  push:
+    branches: [main]
+    paths:
+      - "skills/game-engines/unity/*/scripts/**"
+      - "tests/scenario-unity-expert/**"
+      - ".github/workflows/unity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  toolkit:
+    name: Unity toolkit on macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Toolkit tests
+        run: python -B -m unittest discover -s tests/scenario-unity-expert -v

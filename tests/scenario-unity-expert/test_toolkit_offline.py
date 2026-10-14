@@ -2,9 +2,9 @@
 
 Before a batch run the toolkit reads the process table (`ps`) and probes a POSIX lock on
 Temp/UnityLockfile; it stops editors by PID with POSIX signals and clones projects with the
-macOS `cp -c`. None of that needs the editor, so it runs here, in `pnpm test`. The toolkit
-targets macOS (the lead skill's description says "on a Mac"): these tests run on Linux and
-macOS, and on Windows the toolkit does not import (fcntl).
+macOS `cp -c`. None of that needs the editor, so it runs in `pnpm test` (Linux) and in
+.github/workflows/unity.yml on macOS, the OS the toolkit targets (the lead skill's
+description says "on a Mac"). On Windows the toolkit does not import (fcntl).
 """
 
 import json
