@@ -8,7 +8,7 @@ Public API (signatures are a contract for the domain skills):
     version(godot=None) -> str                              e.g. "4.7.2.stable.official.ed1daf0bf"
     version_tag(godot=None) -> str                          e.g. "4.7.2.stable" (templates folder name)
     templates_dir(tag=None) -> Path
-    templates_ok(tag=None, platforms=("macos",)) -> bool
+    templates_ok(tag=None, platforms=None) -> bool          platforms default: the host OS
     install_templates(tag=None, tpz=None, keep_download=True) -> Path
     new_project(path, template="2d", renderer="forward_plus", jolt=True, name=None,
                 stretch_mode="canvas_items", stretch_aspect="expand", pixel_art=False,
@@ -49,6 +49,8 @@ if sys.platform.startswith("linux"):
     TEMPLATES_ROOT = Path.home() / ".local" / "share" / "godot" / "export_templates"
 elif sys.platform == "win32":
     TEMPLATES_ROOT = Path(os.environ.get("APPDATA", "")) / "Godot" / "export_templates"
+
+HOST_TEMPLATES = {"darwin": "macos", "win32": "windows"}.get(sys.platform, "linux")
 
 GUT_SHA256 = {
     # sha256 of https://github.com/bitwes/Gut/archive/refs/tags/v9.7.1.zip, recorded 2026-10-02
@@ -103,10 +105,10 @@ def templates_dir(tag: str | None = None) -> Path:
     return TEMPLATES_ROOT / (tag or version_tag())
 
 
-def templates_ok(tag: str | None = None, platforms=("macos",)) -> bool:
+def templates_ok(tag: str | None = None, platforms=None) -> bool:
     """True when version.txt matches and each requested platform template exists.
 
-    platforms: any of macos, linux, windows, web, android, ios.
+    platforms: any of macos, linux, windows, web, android, ios; None checks the host OS's own.
     """
     tag = tag or version_tag()
     d = templates_dir(tag)
@@ -121,7 +123,7 @@ def templates_ok(tag: str | None = None, platforms=("macos",)) -> bool:
         "android": ["android_release.apk", "android_source.zip"],
         "ios": ["ios.zip"],
     }
-    for p in platforms or ():
+    for p in (HOST_TEMPLATES,) if platforms is None else platforms:
         for f in need.get(p, []):
             if not (d / f).exists():
                 return False
