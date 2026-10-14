@@ -37,7 +37,7 @@ def tearDownModule():
 
 
 def norm(path: str) -> str:
-    return path.replace("\\", "/").rstrip("/").lower()
+    return path.replace("\\\\", "\\").replace("\\", "/").rstrip("/").lower()  # .tres strings escape backslashes
 
 
 class ToolNames(unittest.TestCase):
