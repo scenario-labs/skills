@@ -12,14 +12,14 @@ Scenario generates audio through the same loop as images. The live catalog cover
 
 ## Quick reference
 
-| Step           | Tool                                                                                        | Notes                                                                                                |
-| -------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Find a model   | `recommend` with the need in the user's own words; `search` only for a member known by name | `capability="txt2audio"` covers music, SFX, and TTS; optional, inferred from the prompt when omitted |
-| Inspect inputs | `model_schema_get`                                                                          | audio schemas vary widely: durations, lyrics, voices, looping                                        |
-| Generate       | `model_run`                                                                                 | schema-conformant parameters; wait=false for long jobs                                               |
-| Wait           | `jobs_wait`                                                                                 | blocks server-side; on timeout re-call with pending_job_ids                                          |
-| Listen         | `asset_display`                                                                             | renders an inline audio player                                                                       |
-| Save           | `asset_download`                                                                            | returns a download URL: `curl -L -o out.mp3 "<url>"`                                                 |
+| Step           | Tool                                                                                        | Notes                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Find a model   | `recommend` with the need in the user's own words; `search` only for a member known by name | `capability="txt2audio"` covers music, SFX, and TTS; optional, inferred from the prompt when omitted                    |
+| Inspect inputs | `model_schema_get`                                                                          | audio schemas vary widely: durations, lyrics, voices, looping                                                           |
+| Generate       | `model_run`                                                                                 | schema-conformant parameters; wait=false for long jobs                                                                  |
+| Wait           | `jobs_wait`                                                                                 | blocks server-side; on timeout re-call with pending_job_ids                                                             |
+| Listen         | `asset_display`                                                                             | renders an inline audio player                                                                                          |
+| Save           | `asset_download`                                                                            | the file as produced (WAV, MP3, ...): `curl -L -o out.<ext> "<url>"`, `<ext>` from the returned `mimeType` or `ffprobe` |
 
 Find existing audio assets with `search` target="assets", filters={kind: "audio"}. Team and project scope (`team_id`, `project_id`): see the `scenario` skill.
 
@@ -41,7 +41,7 @@ Per-family contracts: `scenario-elevenlabs` (speech, dubbing, re-voicing, music,
 3. `model_run` with the same `model_id` and parameters={"prompt": "heavy wooden treasure chest creaking open, single event, dry, no music"}.
 4. `jobs_wait` job_ids=["job_xxx"] on any `job_id` returned without assets (`in_progress` after a timed-out wait, the backend's `queued` or `in-progress` after `wait=false`), re-calling with the returned pending_job_ids on timeout.
 5. `asset_display` asset_id="asset_xxx" to play it inline.
-6. `asset_download` with no `format`, then save the returned URL with `curl -L`.
+6. `asset_download` with no `format`, then save the returned URL with `curl -L` under the extension its `mimeType` names.
 
 Prompting tips:
 
