@@ -11,6 +11,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -96,6 +97,13 @@ class Android(unittest.TestCase):
         k = gd_perf.make_keystore(TMP / "keys" / "debug.keystore", "androiddebugkey", "android", jdk=a["jdk"])
         self.assertTrue(k["ok"], k)
         self.assertEqual(len(k["sha256"]), 64)
+
+    @unittest.skipUnless(sys.platform.startswith("linux") and Path("/usr/lib/jvm").is_dir(), "Linux with /usr/lib/jvm")
+    def test_find_android_finds_a_linux_jdk_without_java_home(self):
+        env = {k: v for k, v in os.environ.items() if k != "JAVA_HOME"}
+        with unittest.mock.patch.dict(os.environ, env, clear=True):
+            a = gd_perf.find_android()
+        self.assertTrue(a["jdk"], a["problems"])
 
 
 if __name__ == "__main__":

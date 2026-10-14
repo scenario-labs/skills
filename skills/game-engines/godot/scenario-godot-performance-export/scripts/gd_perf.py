@@ -517,7 +517,8 @@ def _tool(folder, name: str) -> Path | None:
 
 def find_android() -> dict:
     """Locate an Android SDK and a JDK 17+. Order: ANDROID_HOME/ANDROID_SDK_ROOT and JAVA_HOME,
-    Android Studio's default SDK and JBR for this OS, Unity Hub's AndroidPlayer (SDK + OpenJDK)."""
+    Android Studio's default SDK and JBR for this OS, Unity Hub's AndroidPlayer (SDK + OpenJDK), the
+    system JDKs, then (Linux and Windows) the JDK behind `java` on PATH."""
     sdks, jdks = [], []
     for e in ("ANDROID_HOME", "ANDROID_SDK_ROOT"):
         if os.environ.get(e):
@@ -532,10 +533,16 @@ def find_android() -> dict:
         jdks.append(Path("/Applications/Android Studio.app/Contents/jbr/Contents/Home"))
     else:
         sdks.append(Path.home() / "Android" / "Sdk")
+        # Android Studio's documented Linux install folders, then the distribution JDKs.
+        jdks += [Path(d) / "jbr" for d in ("/opt/android-studio", "/usr/local/android-studio", Path.home() / "android-studio")]
+        jdks += sorted(Path("/usr/lib/jvm").glob("*"), reverse=True)
     for u in sorted(Path("/Applications/Unity/Hub/Editor").glob("*/PlaybackEngines/AndroidPlayer"), reverse=True):
         sdks.append(u / "SDK")
         jdks.append(u / "OpenJDK")
     jdks += sorted(Path("/Library/Java/JavaVirtualMachines").glob("*/Contents/Home"), reverse=True)
+    # bin/java -> the JDK home. Not on macOS: /usr/bin/java there is a stub that can open an install dialog.
+    if sys.platform != "darwin" and shutil.which("java"):
+        jdks.append(Path(shutil.which("java")).resolve().parent.parent)
     out = {"sdk": None, "jdk": None, "build_tools": None, "platforms": [], "ndk": None, "problems": []}
     for s in sdks:
         bts = sorted(d for d in (s / "build-tools").glob("*") if _tool(d, "apksigner")) if (s / "build-tools").exists() else []
