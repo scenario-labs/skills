@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.56.0](https://github.com/scenario-labs/skills/compare/skills-v0.55.0...skills-v0.56.0) (2026-10-14)
+
+
+### Features
+
+* **scenario-3d:** teach the mesh edit on the LLM-based 3D members ([#222](https://github.com/scenario-labs/skills/issues/222)) ([36b0445](https://github.com/scenario-labs/skills/commit/36b04459dc4dc53f9757beaef63ab770a8228af1))
+* **skills:** move UGC and fan-cam video into Socials ([#208](https://github.com/scenario-labs/skills/issues/208)) ([9dd33ec](https://github.com/scenario-labs/skills/commit/9dd33ec6b29afd837fc9fcbebc33b18c84d5b210))
+
+
+### Bug Fixes
+
+* **ci:** keep the commit hook's git variables away from uv's git commands ([#232](https://github.com/scenario-labs/skills/issues/232)) ([a7e3f2b](https://github.com/scenario-labs/skills/commit/a7e3f2bfb0aa26556ac13fd770d6eb940aff1a2f))
+* **scenario-chatgpt-pet-create:** refuse pet ids that leave the package or pets folder ([#209](https://github.com/scenario-labs/skills/issues/209)) ([343d66a](https://github.com/scenario-labs/skills/commit/343d66aec9b98ebefad9f2722751546861e6b60a))
+* **scenario-game-assets:** settle transparency before generating the potion set ([#219](https://github.com/scenario-labs/skills/issues/219)) ([a600293](https://github.com/scenario-labs/skills/commit/a600293862f20055b7df79a3484e6b4bd5c61105))
+* **scenario-godot-expert:** run the Godot toolkit on Windows ([#223](https://github.com/scenario-labs/skills/issues/223)) ([4e21e92](https://github.com/scenario-labs/skills/commit/4e21e92862e43870662e6b37083f3323daa697ee))
+* **scenario-godot-performance-export:** run the Android helpers on Windows and Linux ([#228](https://github.com/scenario-labs/skills/issues/228)) ([9172ac2](https://github.com/scenario-labs/skills/commit/9172ac29a7bb543a1b51a8fa7970ea404932ba37))
+* **scenario:** keep a catalog tool's dry_run inside parameters ([#218](https://github.com/scenario-labs/skills/issues/218)) ([bb1f758](https://github.com/scenario-labs/skills/commit/bb1f758fcc9a508ee456d87d382df6cbad3ba132))
+* **scenario:** name the Enterprise custom role that can also add custom connectors ([#229](https://github.com/scenario-labs/skills/issues/229)) ([f58d0cb](https://github.com/scenario-labs/skills/commit/f58d0cb46d16b249f945e5758796734299bed0ba))
+* **scenario:** name the organization-owner gate on Team and Enterprise custom connectors ([#217](https://github.com/scenario-labs/skills/issues/217)) ([a8b4077](https://github.com/scenario-labs/skills/commit/a8b40770c180c181a2bbb755b96fc8f802dfa07c))
+* **scenario:** point custom connector setup at Customize, Connectors, Add ([#231](https://github.com/scenario-labs/skills/issues/231)) ([7d32a6d](https://github.com/scenario-labs/skills/commit/7d32a6ded6a3930c278376a32c821e84ffc74db1))
+* **scenario:** say asset_download converts meshes too ([#227](https://github.com/scenario-labs/skills/issues/227)) ([15e621d](https://github.com/scenario-labs/skills/commit/15e621df3f63046f2d5fd2d48863a954121ae857))
+* **scenario:** say which catalog inputs nearly every tool declares ([#225](https://github.com/scenario-labs/skills/issues/225)) ([0d85b4c](https://github.com/scenario-labs/skills/commit/0d85b4c681fc1aaf6e6feb6e801b88de84e79994))
+* **scenario:** set up Claude apps through one connector, add Codex ([#213](https://github.com/scenario-labs/skills/issues/213)) ([12aacdd](https://github.com/scenario-labs/skills/commit/12aacdd49c69f84bef3dd9be0cd1aff6c661a52a))
+* **skills:** discover analysis executor permissions at runtime ([#214](https://github.com/scenario-labs/skills/issues/214)) ([d64e363](https://github.com/scenario-labs/skills/commit/d64e363dd994bcb2f6110e048f22d61c8ab6cb5c))
+* **skills:** file a collection in one call, since filed ids are skipped ([#221](https://github.com/scenario-labs/skills/issues/221)) ([0b5fa62](https://github.com/scenario-labs/skills/commit/0b5fa62b833b327e091f7f3d6df372c201f927b3))
+
+
+### Documentation
+
+* **skills:** say the CLI cannot install a picker group by name ([#220](https://github.com/scenario-labs/skills/issues/220)) ([8246faa](https://github.com/scenario-labs/skills/commit/8246faab0247a2f3314bce92c9b92cef4148454e)), closes [#192](https://github.com/scenario-labs/skills/issues/192)
+
 ## [0.55.0](https://github.com/scenario-labs/skills/compare/skills-v0.54.0...skills-v0.55.0) (2026-10-11)
 
 
