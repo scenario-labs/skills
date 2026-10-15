@@ -6,16 +6,17 @@ Pick your role, or the outcome you are after. Each command installs the lead ski
 
 ### 2D Artist
 
-Concept art, sprites, and effects in one consistent style. 26 skills.
+Concept art, sprites, and effects in one consistent style. 27 skills.
 
 - **Concept Sketches** (`scenario-inspiration`, `scenario-image`). Try: "Give me four directions for a desert outpost, then a moodboard for the one I pick."
 - **Sprites and VFX** (`scenario-sprite-animation`, `scenario-game-assets`). Try: "Make an 8-frame run cycle sprite sheet for this knight, and a matching slash effect."
 - **Side-Scroller Kit** (`scenario-side-view-game-kit`). Try: "Make the sprites for my platformer's fox knight and a mole miner enemy, plus the layers for a mushroom forest level."
+- **Side-Scroller Shots in Blender** (`scenario-blender-2d-animation`). Try: "Make a 10-second platformer shot of a red panda running through a jungle, animated in Blender, then the same shot in a snowy look."
 - **One Image From Many References** (`scenario-multi-reference`). Try: "Put the knight from this sheet in the tavern from this painting, lit like this third image."
 - **ChatGPT and Codex Pets** (`scenario-chatgpt-pet-create`, `scenario-chatgpt-pet-update`). Try: "Hatch a pet from our mascot, then give it a winter scarf."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-inspiration scenario-image scenario-sprite-animation scenario-side-view-game-kit scenario-game-assets scenario-image-editing scenario-text-overlay scenario-3d scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-multi-reference scenario-chatgpt-pet-create scenario-chatgpt-pet-update
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-inspiration scenario-image scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-game-assets scenario-image-editing scenario-text-overlay scenario-3d scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-multi-reference scenario-chatgpt-pet-create scenario-chatgpt-pet-update
 ```
 
 ### 3D Artist
@@ -127,10 +128,10 @@ Gameplay, UI, animation, performance, and mobile or Web builds, driven inside th
 
 ### Game art and 3D
 
-Sprites, tilesets, textures, skyboxes, 3D props, and walkable spaces in one consistent style. 22 skills.
+Sprites, tilesets, textures, skyboxes, 3D props, and walkable spaces in one consistent style. 23 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-textures scenario-skyboxes scenario-3d scenario-image scenario-patina-retexture scenario-walkable-room scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-moderation scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-gemini-image scenario-audio scenario-sonilo
+npx skills add scenario-labs/skills --skill scenario scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-textures scenario-skyboxes scenario-3d scenario-image scenario-patina-retexture scenario-walkable-room scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-moderation scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-gemini-image scenario-audio scenario-sonilo
 ```
 
 ### Marketing and brand visuals
