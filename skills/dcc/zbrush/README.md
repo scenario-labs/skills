@@ -29,7 +29,7 @@ ZBrush 2026 (2026.2) with the agent bridge described in the lead skill `scenario
 ## Install
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario-zbrush-expert --skill scenario-zbrush-automation --skill scenario-zbrush-character-creature --skill scenario-zbrush-hard-surface --skill scenario-zbrush-paint-render --skill scenario-zbrush-pose-print --skill scenario-zbrush-retopology-export --skill scenario-zbrush-sculpting --skill scenario-zbrush-stylized
+npx skills add scenario-labs/skills --skill scenario-zbrush-expert scenario-zbrush-automation scenario-zbrush-character-creature scenario-zbrush-hard-surface scenario-zbrush-paint-render scenario-zbrush-pose-print scenario-zbrush-retopology-export scenario-zbrush-sculpting scenario-zbrush-stylized
 ```
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: ZBrush" group. Update with `npx skills update`.

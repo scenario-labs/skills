@@ -13,7 +13,7 @@ Concept art, sprites, and effects in one consistent style. 26 skills.
 - **ChatGPT and Codex Pets** (`scenario-chatgpt-pet-create`, `scenario-chatgpt-pet-update`). Try: "Hatch a pet from our mascot, then give it a winter scarf."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-inspiration --skill scenario-image --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-game-assets --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-3d --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image --skill scenario-multi-reference --skill scenario-chatgpt-pet-create --skill scenario-chatgpt-pet-update
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-inspiration scenario-image scenario-sprite-animation scenario-side-view-game-kit scenario-game-assets scenario-image-editing scenario-text-overlay scenario-3d scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-multi-reference scenario-chatgpt-pet-create scenario-chatgpt-pet-update
 ```
 
 ## 3D Artist
@@ -24,7 +24,7 @@ Meshes from a picture, rigged and ready to animate. 12 skills.
 - **Rigging and Retargeting** (`scenario-meshy`). Try: "Rig this character mesh and give me a walk and an idle."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-3d --skill scenario-orbit-views --skill scenario-meshy --skill scenario-skyboxes --skill scenario-patina-retexture --skill scenario-video --skill scenario-rodin --skill scenario-sparc3d --skill scenario-3d-worlds
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-3d scenario-orbit-views scenario-meshy scenario-skyboxes scenario-patina-retexture scenario-video scenario-rodin scenario-sparc3d scenario-3d-worlds
 ```
 
 Working in ZBrush, Blender or Maya? Add the expert tools for it: [ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md).
@@ -38,7 +38,7 @@ Surfaces, skies, and worlds a player can walk through. 13 skills.
 - **A Room to Walk Into** (`scenario-walkable-room`). Try: "Turn this photo of my living room into a room I can walk around in the browser and throw the cushions."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-textures --skill scenario-skyboxes --skill scenario-3d-worlds --skill scenario-walkable-room --skill scenario-3d --skill scenario-meshy --skill scenario-image --skill scenario-gemini-image --skill scenario-audio --skill scenario-sonilo
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-textures scenario-skyboxes scenario-3d-worlds scenario-walkable-room scenario-3d scenario-meshy scenario-image scenario-gemini-image scenario-audio scenario-sonilo
 ```
 
 Working in Unreal Engine, Unity, or Godot? Add the expert tools for it: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md).
@@ -52,7 +52,7 @@ One look held across every asset, checked before it ships. 15 skills.
 - **Our Style, Trained** (`scenario-model-training`). Try: "Train a model on our 40 approved illustrations and generate new props in that style."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-consistency --skill scenario-identity-library --skill scenario-quality-gate --skill scenario-asset-analysis --skill scenario-model-training --skill scenario-image --skill scenario-image-editing --skill scenario-sprite-animation --skill scenario-video --skill scenario-refine-loop --skill scenario-seedream --skill scenario-gemini-image
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-consistency scenario-identity-library scenario-quality-gate scenario-asset-analysis scenario-model-training scenario-image scenario-image-editing scenario-sprite-animation scenario-video scenario-refine-loop scenario-seedream scenario-gemini-image
 ```
 
 ## Sound Designer
@@ -63,7 +63,7 @@ Music, voice, and effects that fit the picture. 9 skills.
 - **Sound Effects for Every Action** (`scenario-sonilo`). Try: "Score this gameplay clip with footsteps, a sword clash, and an explosion."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-audio --skill scenario-sonilo --skill scenario-video-assembly --skill scenario-minimax-music --skill scenario-elevenlabs --skill scenario-ace-step
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-audio scenario-sonilo scenario-video-assembly scenario-minimax-music scenario-elevenlabs scenario-ace-step
 ```
 
 ## Video Producer
@@ -75,7 +75,7 @@ Trailers and clips, storyboarded, generated, cut, and captioned. 31 skills.
 - **Lyric Videos** (`scenario-kinetic-music-video`). Try: "Turn this song into a vertical kinetic-typography lyric video."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-video --skill scenario-storyboards --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-formats --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-ad-variants --skill scenario-thumbnails --skill scenario-kinetic-music-video --skill scenario-ace-step
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-video scenario-storyboards scenario-video-assembly scenario-caption-studio scenario-formats scenario-image scenario-image-editing scenario-text-overlay scenario-video-editing scenario-seedance-music-video scenario-seedance-storyboard scenario-video-ads scenario-consistency scenario-asset-analysis scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-ad-variants scenario-thumbnails scenario-kinetic-music-video scenario-ace-step
 ```
 
 ## Marketing Artist
@@ -89,7 +89,7 @@ Store art and ads that stay on brand at every size. 25 skills.
 - **Fan-Cam Moments** (`scenario-fan-cam`). Try: "Put the person in this photo on the stadium jumbotron, cheering, then animate it."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-formats --skill scenario-brand-kit --skill scenario-text-overlay --skill scenario-product-shots --skill scenario-video-ads --skill scenario-ugc --skill scenario-inspiration --skill scenario-image --skill scenario-image-editing --skill scenario-video --skill scenario-video-editing --skill scenario-audio --skill scenario-video-assembly --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-elevenlabs --skill scenario-ad-variants --skill scenario-thumbnails --skill scenario-fan-cam
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam
 ```
 
 ## Technical Director
@@ -100,7 +100,7 @@ Repeatable pipelines the whole team can run. 5 skills.
 - **Custom Pipelines** (`scenario-workflows`). Try: "Run our sketch-to-final workflow on these 20 sketches and collect the results."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-workflow-authoring --skill scenario-workflows
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-workflow-authoring scenario-workflows
 ```
 
 Working in Unreal Engine, Unity, or Godot? Add the expert tools for it: [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md).
@@ -113,7 +113,7 @@ The right model at the right cost, and spend under control. 8 skills.
 - **Team Budgets** (`scenario-admin-analytics`, `scenario-team-admin`). Try: "Show last month's credit use by project, and cap each freelancer's spend."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-model-comparison --skill scenario-admin-analytics --skill scenario-team-admin --skill scenario-video-editing --skill scenario-refine-loop
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-model-comparison scenario-admin-analytics scenario-team-admin scenario-video-editing scenario-refine-loop
 ```
 
 ## Game Developer

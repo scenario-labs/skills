@@ -30,7 +30,7 @@ Maya 2027 (maya.cmds / OpenMaya, `mayapy` for batch). The lead skill `scenario-m
 ## Install
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario-maya-expert --skill scenario-maya-animation --skill scenario-maya-deformation --skill scenario-maya-fx --skill scenario-maya-groom --skill scenario-maya-lighting-rendering --skill scenario-maya-lookdev --skill scenario-maya-modeling --skill scenario-maya-pipeline-scripting --skill scenario-maya-retopology-uv --skill scenario-maya-rigging
+npx skills add scenario-labs/skills --skill scenario-maya-expert scenario-maya-animation scenario-maya-deformation scenario-maya-fx scenario-maya-groom scenario-maya-lighting-rendering scenario-maya-lookdev scenario-maya-modeling scenario-maya-pipeline-scripting scenario-maya-retopology-uv scenario-maya-rigging
 ```
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Maya" group. Update with `npx skills update`.

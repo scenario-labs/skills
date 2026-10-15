@@ -13,7 +13,8 @@
 //   so renames and removals cannot leave stale rows behind
 // - every row carries a non-empty "Use it for" description
 // - every `npx skills add scenario-labs/skills` command, in README.md,
-//   INSTALL.md, and the expert-tools family READMEs, names only existing skills; the default
+//   INSTALL.md, and the expert-tools family READMEs, passes its names after one
+//   --skill and names only existing skills; the default
 //   command (the line after "# Every Scenario skill, without the expert tools")
 //   lists exactly the core skills, and each family README's command lists
 //   exactly its family, so a new skill cannot be left out of them
@@ -198,8 +199,18 @@ for (const { name, dir } of skills) {
 // skill added later would silently fall out of the all-in-one commands.
 const DEFAULT_MARKER = "# Every Scenario skill, without the expert tools";
 const installPattern = /^npx skills add scenario-labs\/skills\b(.*)$/;
-const skillsIn = (line) =>
-  [...line.matchAll(/--skill\s+(\S+)/g)].map((match) => match[1]);
+// The CLI's --skill (-s) takes every argument up to the next flag, which is how
+// the commands here pass all their names after a single --skill.
+const skillsIn = (line) => {
+  const names = [];
+  let inSkills = false;
+  for (const token of line.split(/\s+/)) {
+    if (token === "--skill" || token === "-s") inSkills = true;
+    else if (token.startsWith("-")) inSkills = false;
+    else if (inSkills) names.push(token);
+  }
+  return names;
+};
 const compareSets = (label, listed, expected) => {
   const missing = expected.filter((name) => !listed.includes(name));
   const extra = listed.filter((name) => !expected.includes(name));
@@ -215,6 +226,13 @@ const installCommands = (file, text) => {
     const line = raw.trim();
     if (!installPattern.test(line)) return;
     const names = skillsIn(line);
+    if (
+      line.split(/\s+/).filter((t) => t === "--skill" || t === "-s").length > 1
+    ) {
+      errors.push(
+        `${file}:${index + 1}: install command repeats --skill (pass every name after one --skill)`,
+      );
+    }
     for (const name of names) {
       if (name !== "*" && !dirOf.has(name)) {
         errors.push(

@@ -57,7 +57,7 @@ The lead skill `scenario-godot-expert` explains the execution channels: `godot -
 ## Install
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario-godot-expert --skill scenario-godot-2d --skill scenario-godot-3d-world --skill scenario-godot-animation --skill scenario-godot-architecture --skill scenario-godot-audio --skill scenario-godot-gameplay --skill scenario-godot-multiplayer --skill scenario-godot-performance-export --skill scenario-godot-pipeline-automation --skill scenario-godot-rendering-lighting --skill scenario-godot-shaders --skill scenario-godot-ui --skill scenario-godot-vfx
+npx skills add scenario-labs/skills --skill scenario-godot-expert scenario-godot-2d scenario-godot-3d-world scenario-godot-animation scenario-godot-architecture scenario-godot-audio scenario-godot-gameplay scenario-godot-multiplayer scenario-godot-performance-export scenario-godot-pipeline-automation scenario-godot-rendering-lighting scenario-godot-shaders scenario-godot-ui scenario-godot-vfx
 ```
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/` (Python toolkit and GDScript AgentKit). In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Godot" group. Update with `npx skills update`.

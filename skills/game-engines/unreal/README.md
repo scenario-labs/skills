@@ -30,7 +30,7 @@ Unreal Engine 5.8 on macOS Apple Silicon. The lead skill `scenario-unreal-expert
 ## Install
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario-unreal-expert --skill scenario-unreal-animation --skill scenario-unreal-cinematics --skill scenario-unreal-gameplay --skill scenario-unreal-lighting-rendering --skill scenario-unreal-materials --skill scenario-unreal-performance --skill scenario-unreal-pipeline-automation --skill scenario-unreal-vfx --skill scenario-unreal-world-building
+npx skills add scenario-labs/skills --skill scenario-unreal-expert scenario-unreal-animation scenario-unreal-cinematics scenario-unreal-gameplay scenario-unreal-lighting-rendering scenario-unreal-materials scenario-unreal-performance scenario-unreal-pipeline-automation scenario-unreal-vfx scenario-unreal-world-building
 ```
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Unreal Engine" group. Update with `npx skills update`.

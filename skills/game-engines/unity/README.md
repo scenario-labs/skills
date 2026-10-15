@@ -39,7 +39,7 @@ The lead skill `scenario-unity-expert` explains the execution channels: batch mo
 ## Install
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario-unity-expert --skill scenario-unity-2d --skill scenario-unity-animation --skill scenario-unity-architecture --skill scenario-unity-gameplay --skill scenario-unity-mobile --skill scenario-unity-performance --skill scenario-unity-pipeline-automation --skill scenario-unity-rendering-lighting --skill scenario-unity-shaders --skill scenario-unity-ui --skill scenario-unity-vfx --skill scenario-unity-web --skill scenario-unity-world-building
+npx skills add scenario-labs/skills --skill scenario-unity-expert scenario-unity-2d scenario-unity-animation scenario-unity-architecture scenario-unity-gameplay scenario-unity-mobile scenario-unity-performance scenario-unity-pipeline-automation scenario-unity-rendering-lighting scenario-unity-shaders scenario-unity-ui scenario-unity-vfx scenario-unity-web scenario-unity-world-building
 ```
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Unity" group. Update with `npx skills update`.

@@ -11,7 +11,7 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
 ## Install
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario-blender-expert --skill scenario-blender-animation --skill scenario-blender-geometry-nodes --skill scenario-blender-grease-pencil --skill scenario-blender-hair --skill scenario-blender-hard-surface --skill scenario-blender-lighting-rendering --skill scenario-blender-previs-storyboard --skill scenario-blender-retopology --skill scenario-blender-rigging --skill scenario-blender-sculpting --skill scenario-blender-texturing-shading --skill scenario-blender-uv-baking
+npx skills add scenario-labs/skills --skill scenario-blender-expert scenario-blender-animation scenario-blender-geometry-nodes scenario-blender-grease-pencil scenario-blender-hair scenario-blender-hard-surface scenario-blender-lighting-rendering scenario-blender-previs-storyboard scenario-blender-retopology scenario-blender-rigging scenario-blender-sculpting scenario-blender-texturing-shading scenario-blender-uv-baking
 ```
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Blender" group. Update with `npx skills update`.
