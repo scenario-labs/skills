@@ -1,17 +1,19 @@
 # Install by role
 
-Pick your role. Each command installs the skills behind that role's outcomes plus the sibling skills they hand work to, on top of `scenario` (connection and the core loop) and the troubleshooting skills (`scenario-moderation`, `scenario-report`). Commands can overlap, and installing two roles is fine. To install every Scenario skill at once, or by goal, see the [README](README.md#install). The Scenario skills need the Scenario MCP server connected (setup in the README).
+Pick your role. Each command installs the skills behind that role's outcomes plus the sibling skills they hand work to, on top of `scenario` (connection and the core loop) and the troubleshooting skills (`scenario-moderation`, `scenario-report`). Commands can overlap, and installing two roles is fine. To install every Scenario skill at once, see the [README](README.md#install). The Scenario skills need the Scenario MCP server connected (setup in the README).
 
 ## 2D Artist
 
-Concept art, sprites, and effects in one consistent style. 23 skills.
+Concept art, sprites, and effects in one consistent style. 26 skills.
 
 - **Concept Sketches** (`scenario-inspiration`, `scenario-image`). Try: "Give me four directions for a desert outpost, then a moodboard for the one I pick."
 - **Sprites and VFX** (`scenario-sprite-animation`, `scenario-game-assets`). Try: "Make an 8-frame run cycle sprite sheet for this knight, and a matching slash effect."
 - **Side-Scroller Kit** (`scenario-side-view-game-kit`). Try: "Make the sprites for my platformer's fox knight and a mole miner enemy, plus the layers for a mushroom forest level."
+- **One Image From Many References** (`scenario-multi-reference`). Try: "Put the knight from this sheet in the tavern from this painting, lit like this third image."
+- **ChatGPT and Codex Pets** (`scenario-chatgpt-pet-create`, `scenario-chatgpt-pet-update`). Try: "Hatch a pet from our mascot, then give it a winter scarf."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-inspiration --skill scenario-image --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-game-assets --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-3d --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image
+npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-inspiration --skill scenario-image --skill scenario-sprite-animation --skill scenario-side-view-game-kit --skill scenario-game-assets --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-3d --skill scenario-video --skill scenario-consistency --skill scenario-model-training --skill scenario-refine-loop --skill scenario-gpt-image --skill scenario-mai-image --skill scenario-seedream --skill scenario-gemini-image --skill scenario-reve --skill scenario-ideogram --skill scenario-grok-imagine-image --skill scenario-luma-image --skill scenario-multi-reference --skill scenario-chatgpt-pet-create --skill scenario-chatgpt-pet-update
 ```
 
 ## 3D Artist
@@ -66,26 +68,28 @@ npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation
 
 ## Video Producer
 
-Trailers and clips, storyboarded, generated, cut, and captioned. 29 skills.
+Trailers and clips, storyboarded, generated, cut, and captioned. 31 skills.
 
 - **Cinematic Trailers** (`scenario-video`, `scenario-storyboards`, `scenario-video-assembly`). Try: "Storyboard a 30-second trailer from this script, generate the shots, and cut them to music."
 - **Captions for Every Platform** (`scenario-caption-studio`, `scenario-formats`). Try: "Add word-by-word captions to this video and export 9:16, 1:1, and 16:9 versions."
+- **Lyric Videos** (`scenario-kinetic-music-video`). Try: "Turn this song into a vertical kinetic-typography lyric video."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-video --skill scenario-storyboards --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-formats --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-ad-variants --skill scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-video --skill scenario-storyboards --skill scenario-video-assembly --skill scenario-caption-studio --skill scenario-formats --skill scenario-image --skill scenario-image-editing --skill scenario-text-overlay --skill scenario-video-editing --skill scenario-seedance-music-video --skill scenario-seedance-storyboard --skill scenario-video-ads --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-minimax-video --skill scenario-gemini-omni --skill scenario-grok-imagine-video --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-vidu --skill scenario-wan --skill scenario-runway --skill scenario-luma-video --skill scenario-ad-variants --skill scenario-thumbnails --skill scenario-kinetic-music-video --skill scenario-ace-step
 ```
 
 ## Marketing Artist
 
-Store art and ads that stay on brand at every size. 24 skills.
+Store art and ads that stay on brand at every size. 25 skills.
 
 - **Store Art for Every Platform** (`scenario-formats`, `scenario-brand-kit`, `scenario-text-overlay`). Try: "Turn this key art into every storefront size, with our logo and the game's title."
 - **Ads From One Shot** (`scenario-product-shots`, `scenario-video-ads`, `scenario-ugc`). Try: "From this product shot, make a 15-second video ad and three UGC-style variants."
 - **Campaign Variants** (`scenario-ad-variants`). Try: "Make three hook-copy variants from this gameplay clip, preserving its action and audio."
 - **Video Thumbnails** (`scenario-thumbnails`). Try: "Make a readable boss-fight thumbnail with this character reference and the exact headline ONE HIT LEFT."
+- **Fan-Cam Moments** (`scenario-fan-cam`). Try: "Put the person in this photo on the stadium jumbotron, cheering, then animate it."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-formats --skill scenario-brand-kit --skill scenario-text-overlay --skill scenario-product-shots --skill scenario-video-ads --skill scenario-ugc --skill scenario-inspiration --skill scenario-image --skill scenario-image-editing --skill scenario-video --skill scenario-video-editing --skill scenario-audio --skill scenario-video-assembly --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-elevenlabs --skill scenario-ad-variants --skill scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario --skill scenario-moderation --skill scenario-report --skill scenario-formats --skill scenario-brand-kit --skill scenario-text-overlay --skill scenario-product-shots --skill scenario-video-ads --skill scenario-ugc --skill scenario-inspiration --skill scenario-image --skill scenario-image-editing --skill scenario-video --skill scenario-video-editing --skill scenario-audio --skill scenario-video-assembly --skill scenario-consistency --skill scenario-asset-analysis --skill scenario-veo --skill scenario-seedance --skill scenario-kling --skill scenario-elevenlabs --skill scenario-ad-variants --skill scenario-thumbnails --skill scenario-fan-cam
 ```
 
 ## Technical Director
