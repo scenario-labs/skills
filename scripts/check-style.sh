@@ -166,4 +166,36 @@ if [ -n "$fanout_hits" ]; then
   printf '%s' "$fanout_hits"
 fi
 
+# Sentence-length table cells. AGENTS.md "Authoring contract" carries the rule
+# and why it is a notice scoped to staged files. A cell is measured rather than
+# a row, because prettier pads every row to the widest cell. CI stages nothing,
+# so this only speaks in the pre-commit hook.
+table_cell_limit=200
+staged_markdown=$(git diff --cached --name-only --diff-filter=ACMR -- 'skills/*.md' 2>/dev/null || true)
+if [ -n "$staged_markdown" ]; then
+  # An escaped pipe is cell content, not a column boundary.
+  table_hits=$(printf '%s\n' "$staged_markdown" | xargs awk -v limit="$table_cell_limit" '
+    FNR == 1 { fence = 0 }
+    /^ *```/ { fence = !fence; next }
+    fence || !/^ *\|/ || /^ *\| *:?-+/ { next }
+    {
+      row = $0
+      gsub(/\\\|/, "::", row)
+      n = split(row, cell, "|")
+      for (i = 2; i < n; i++) {
+        text = cell[i]
+        gsub(/^ +| +$/, "", text)
+        if (length(text) > limit) {
+          printf "  %s:%d: a %d-character cell\n", FILENAME, FNR, length(text)
+          break
+        }
+      }
+    }
+  ')
+  if [ -n "$table_hits" ]; then
+    echo "Notice (not a failure): a table cell in staged skill markdown runs past ${table_cell_limit} characters. Tables never wrap, so rewrite the rows that need sentences as a list (- **term**: sentence), per AGENTS.md \"Authoring contract\". Cells found:"
+    printf '%s\n' "$table_hits"
+  fi
+fi
+
 exit $fail

@@ -275,6 +275,7 @@ if (!existsSync("INSTALL.md")) {
   let part = null;
   let entry = null;
   let stated = null;
+  let previous = "";
   for (const raw of install.split("\n")) {
     const line = raw.trim();
     const heading = line.match(/^(##|###) (.+)$/);
@@ -282,9 +283,13 @@ if (!existsSync("INSTALL.md")) {
       if (heading[1] === "##") part = heading[2];
       entry = heading[2];
       stated = null;
+      previous = "";
       continue;
     }
-    const count = line.match(/\b(\d+) skills\.$/);
+    // Wrapped prose can put the number at the end of one line and "skills."
+    // at the start of the next.
+    const count = `${previous} ${line}`.match(/\b(\d+) skills\.$/);
+    previous = line;
     if (count) stated = Number(count[1]);
     if (!installPattern.test(line)) continue;
     const names = new Set(skillsIn(line));
