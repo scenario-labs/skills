@@ -10,7 +10,7 @@ license: MIT
 
 A Seedance draft is a 480p preview of a take that can later be finalized to 1080p without regenerating it: the completion is the same take at full resolution. Seedance has no seed, so a draft is the only way to approve a take cheaply and then ship that exact take. Re-running the payload at 1080p performs it again differently, and a generic upscaler returns a softer copy, not the 1080p render.
 
-The economics decide when to draft. At authoring time a 15 second edit-mode draft priced the same as a plain 480p render (366 CU), its completion 1,674 CU, and the pair together the same as rendering 1080p directly (2,040 against 2,024). Drafting saves the 1080p price of every take that gets discarded: five takes and one finalist came to about 3,500 CU, against about 10,100 for five 1080p renders. A single take with no review gains nothing.
+The economics decide when to draft. A draft prices like a plain 480p render, and a draft plus its completion costs at least a direct 1080p render: at authoring time 2,040 against 2,024 CU for a 15 second edit (366 plus 1,674), and 544 against 456 for a 4 second reference shot (84 plus 460). Drafting pays only through the takes that get discarded: five 15 second takes and one finalist came to about 3,500 CU, against about 10,100 for five 1080p renders. A single take costs more drafted than rendered.
 
 Seedance modes, conditioning and sound: `scenario-seedance`. Connection and the core loop: `scenario`. Music over the finals: `scenario-video-assembly`. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
 
@@ -23,7 +23,7 @@ Seedance modes, conditioning and sound: `scenario-seedance`. Connection and the 
 | Wait     | `jobs_wait` with every job id                                  | 15 s edit-mode drafts took 7 to 8 minutes; re-call with the returned `pending_job_ids`                                                                            |
 | Review   | `asset_download`, then local contact sheets and close-ups      | See Reviewing takes                                                                                                                                               |
 | Finisher | `search`, `target="models"`, `query="seedance draft complete"` | Its one input is `draftVideo`, a scalar file                                                                                                                      |
-| Complete | `model_run` with `draftVideo` set to the draft job's asset id  | `dry_run` first; took 2 to 3 minutes; returns 1080p H.264 with the original MOV kept on the asset                                                                 |
+| Complete | `model_run` with `draftVideo` set to the draft job's asset id  | `dry_run` first; took 1 to 3 minutes. `asset_get` reports an H.264 MP4, but `asset_download` returns the original MOV (HEVC in one run): compose by asset id      |
 | Verify   | `asset_get`                                                    | 1080 wide, the draft's frame rate and duration                                                                                                                    |
 
 A draft stays completable for 7 days from its creation. Record each take's asset id straight off its `jobs_wait` row. Review copies made from a draft (a music version, a trim) are fine, but each is a new asset: only that recorded id resolves to the draft task the finisher completes.
@@ -32,7 +32,7 @@ A draft stays completable for 7 days from its creation. Record each take's asset
 
 Takes of one payload diverge exactly where shots fail, so review every one, never just the first. Download each draft (inspecting a download is not editing it) and check, in this order:
 
-1. **Sweep**: a contact sheet over the whole clip at 2 fps (`ffmpeg -vf "fps=2,scale=150:-1,tile=10x3"`), one per take, stacked per variant. It catches identity swaps, wrong wardrobe, broken backgrounds, extra or missing props.
+1. **Sweep**: a contact sheet over the whole clip (`ffmpeg -vf "fps=2,scale=150:-1,tile=10x3"` fills it for a 15 s clip; raise `fps` on shorter ones), one per take, stacked per variant. It catches identity swaps, wrong wardrobe, broken backgrounds, extra or missing props.
 2. **Close-ups where generators fail**: hands in fast moves (gloved fingertips turned glowing red in two of three takes of one batch), long hair through turns, the face at four moments, and every prop the brief fixes, counted against its reference (one take stacked a second jack-o'-lantern on a one-lantern plate).
 3. **Timing**: when a source clip exists, frames at four matched timestamps side by side.
 
@@ -46,7 +46,7 @@ Sheets at this size cannot rule out a fault, only find one: crop before judging 
 4. Review as above. Present the ranked takes with their links and the defects found, then wait for the pick (unattended: the brief's acceptance criteria pick).
 5. Find the finisher, `model_schema_get` it, then `model_run` with `{"draftVideo": "<draft id>"}` and `dry_run=true`. Run it and `jobs_wait`.
 6. `asset_get` the completion: 1080 wide, frame rate and duration equal to the draft's. Sweep it once more: the completion matched its draft on every sampled frame at authoring time, and that match is the proof it finalized rather than regenerated.
-7. Lay the track on the completion with `model_scenario-compose-video` (a fixed id: Scenario's single timeline compositor): a video layer and an audio layer, both at `startTime: 0`, `durationMode: "custom"` at the clip's length, `canvasMode: "custom"` with numeric `canvasWidth` and `canvasHeight` set to the completion's size. Check the sync per `scenario-video-assembly`, then `asset_download`.
+7. Lay the track on the completion with `model_scenario-compose-video` (a fixed id: Scenario's single timeline compositor): a video layer and an audio layer, both at `startTime: 0`, `durationMode: "custom"` at the clip's length rounded down to the field's 0.1 s step (a 4.04 s clip loses its last frame at 4.0), `canvasMode: "custom"` with numeric `canvasWidth` and `canvasHeight` set to the completion's size. Check the sync per `scenario-video-assembly`, then `asset_download`.
 
 ## Common mistakes
 
