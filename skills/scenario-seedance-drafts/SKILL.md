@@ -46,7 +46,7 @@ Sheets at this size cannot rule out a fault, only find one: crop before judging 
 4. Review as above. Present the ranked takes with their links and the defects found, then wait for the pick (unattended: the brief's acceptance criteria pick).
 5. Find the finisher, `model_schema_get` it, then `model_run` with `{"draftVideo": "<draft id>"}` and `dry_run=true`. Run it and `jobs_wait`.
 6. `asset_get` the completion: 1080 wide, frame rate and duration equal to the draft's. Sweep it once more: the completion matched its draft on every sampled frame at authoring time, and that match is the proof it finalized rather than regenerated.
-7. Lay the track on the completion with `model_scenario-compose-video` (a fixed id: Scenario's single timeline compositor): a video layer and an audio layer, both at `startTime: 0`, `durationMode: "custom"` at the clip's length rounded down to the field's 0.1 s step (a 4.04 s clip loses its last frame at 4.0), `canvasMode: "custom"` with numeric `canvasWidth` and `canvasHeight` set to the completion's size. Check the sync per `scenario-video-assembly`, then `asset_download`.
+7. Lay the track on the completion with `model_scenario-compose-video` (a fixed id: Scenario's single timeline compositor): a video layer and an audio layer, both at `startTime: 0`, `durationMode: "custom"` at the clip's length rounded down to the field's 0.1 s step (a 4.04 s clip loses its last frame at 4.0), `canvasMode: "custom"` with numeric `canvasWidth` and `canvasHeight` set to the completion's size, and `fps` at its frame rate (the field defaults to 30). Check the sync per `scenario-video-assembly`, then `asset_download`.
 
 ## Common mistakes
 
