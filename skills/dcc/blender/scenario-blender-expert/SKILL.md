@@ -51,7 +51,11 @@ optional arguments.
   copy.
 - A timed-out call has an unknown outcome: read the scene again before retrying, never resend it
   blindly.
-- The plugin's tools never save the user's file: ask the user to save at milestones.
+- The plugin's tools never save the user's own file. The stage backup in the live row
+  (`save_as_mainfile(..., copy=True)` through `execute_python`) writes a separate file and leaves
+  the open file and its unsaved state alone: it is also the saved copy that headless work starts
+  from. Ask the user to save their own file at milestones; with no one to ask, keep working from the
+  copies and say in the report that the open file is still unsaved.
 
 Check `bpy.app.version` first; this skill set targets 5.2 LTS, while the Scenario Blender Plugin
 also runs on 5.0 and 5.1 (`scene_summary` reports the version), so check the version timeline in the
