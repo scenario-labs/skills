@@ -61,10 +61,11 @@
     },
     {
       "title": "Socials",
-      "description": "Made for social feeds and chat apps: UGC-style creator videos, fan-cam reactions from a photo, kinetic-typography lyric videos, and animated ChatGPT and Codex pets, new or updated.",
+      "description": "Made for social feeds and chat apps: UGC-style creator videos, fan-cam reactions from a photo, trend reels recast with your own character, kinetic-typography lyric videos, and animated ChatGPT and Codex pets, new or updated.",
       "skills": [
         "scenario-ugc",
         "scenario-fan-cam",
+        "scenario-reel-recast",
         "scenario-kinetic-music-video",
         "scenario-chatgpt-pet-create",
         "scenario-chatgpt-pet-update"
