@@ -21,8 +21,12 @@ def run(script, *args, cwd=None):
 
 
 def alpha(path):
+    return pixels(path)[..., 3]
+
+
+def pixels(path):
     with Image.open(path) as im:
-        return np.asarray(im.convert("RGBA"))[..., 3]
+        return np.asarray(im.convert("RGBA"))
 
 
 def size(path):
@@ -57,11 +61,14 @@ def magenta_still(path, ear=(230, 120, 200)):
 
 
 def wide_layer(path, w=400, h=120):
-    """A low strip across the whole width and one tall landmark near the left end."""
+    """A low strip whose red drifts from 30 to 230 across the width, so its two ends do not match, like a
+    generated layer's; a tall landmark in the middle; a tall tree at the right end."""
     im = rgba(w, h)
     d = ImageDraw.Draw(im)
-    d.rectangle((0, 80, w - 1, h - 1), fill=(60, 120, 60, 255))
-    d.rectangle((10, 10, 30, h - 1), fill=(120, 110, 100, 255))
+    for x in range(w):
+        d.line((x, 80, x, h - 1), fill=(30 + 200 * x // (w - 1), 120, 60, 255))
+    d.rectangle((150, 10, 170, 79), fill=(120, 110, 100, 255))
+    d.rectangle((380, 30, w - 1, h - 1), fill=(90, 60, 40, 255))
     im.save(path)
 
 

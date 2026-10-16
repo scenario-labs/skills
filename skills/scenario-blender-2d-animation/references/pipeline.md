@@ -35,7 +35,7 @@ Everything in `build_scene.py` is shared except the pictures and a short `config
 | `jungle_h`, `jungle_z0`                                                        | mid layer height in m and its bottom                                                                                                                                                                                      |
 | `ground_h`, `ground_top`                                                       | ground strip height in m, and its walkable line as a share from the top                                                                                                                                                   |
 | `island_top_px`, `pedestal_top_px`                                             | pixel row of the walkable top in the island and pedestal sprites                                                                                                                                                          |
-| `palm_h`, `nuts`, `nut_size`                                                   | tree height, where each fruit hangs (x, z offsets from the tree), fruit size                                                                                                                                              |
+| `palm_h`, `nuts`, `nut_size`                                                   | tree height, where each fruit hangs (x from the tree's center, z as a height in the scene), fruit size                                                                                                                    |
 | `hero_h`, `run_fig_px`, `run_pad_px`, `run_canvas_px`, `jump_base_px`, `run_n` | hero height in m, the figure's height and the empty rows under the feet in the run frames, the clip's height (it sets the jump still's scale against the run frames), the feet row of the jump still, the run frame count |
 
 `ground_top` deserves care: putting the feet exactly on the grass tips makes the hero float. Set it so the feet sink
@@ -66,7 +66,8 @@ The hero's speed (0.2 m per frame) is matched to the run cycle's stride, so the 
 
 ## A new look
 
-1. A new concept frame, then the same nine roles with it as the reference ([prompts.md](prompts.md)).
+1. A new concept frame, the same eight pictures with it as the reference, and a run clip from the new rest pose
+   ([prompts.md](prompts.md)).
 2. Process into `SET_DIR/game/` with the same file names.
 3. Measure the per-look numbers into `SET_DIR/game/config.json`.
 4. `build_scene.py -- --set SET_DIR --review`, check, then `--final`.

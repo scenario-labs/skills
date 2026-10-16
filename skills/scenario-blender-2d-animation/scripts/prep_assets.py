@@ -11,8 +11,9 @@
 
 cut: names are given in reading order; sprites smaller than 4000 opaque px are dropped as specks, and pieces
 closer than CUT_GROW px (environment variable, default 12) are kept together. Ask for wide gaps on the sheet.
-tile: the seam is moved to the stretch where the layer's silhouette is lowest, then fade_px (default 256) of the
-two ends are cross-faded, so the output is fade_px narrower than the input.
+tile: each end is cut in, by at most a quarter of the width, past any tall feature (a landmark there is cut
+away), then fade_px (default 256, at most a quarter of the width) of the two cuts are cross-faded, so the output
+is fade_px narrower than the kept columns, which it prints.
 Existing outputs are kept unless --force is given. Needs Python 3 with Pillow, NumPy and SciPy.
 """
 import os, sys
@@ -86,18 +87,26 @@ def key(src, dst):
 def tile(src, dst, fade=256):
     im = np.asarray(Image.open(src).convert("RGBA")).astype(np.float32)
     w = im.shape[1]
-    # put the repeat seam where the silhouette is lowest (plain foliage, open sea), never through a
-    # landmark: roll the image so that stretch sits at the edges, then cross-fade only there
+    reach = w // 4
+    if fade > reach:
+        sys.exit(f"error: fade_px {fade} is more than a quarter of the {w} px width")
+    # a generated layer's two ends never match, so they are the only place to blend the repeat. Rolling the
+    # image to move the seam elsewhere left those ends butted unblended inside the tile (a hard edge in every
+    # look). Instead cut each end in, by at most a quarter of the width, past any feature much taller than
+    # the lowest stretch there (plain foliage, open sea), so a landmark is cut away rather than ghosted, and
+    # cross-fade the two cuts. Taking the lowest stretch outright kept 1264 of a 3072 px forest.
     a = im[..., 3] > 128
     top = np.where(a.any(0), a.argmax(0), a.shape[0])          # first opaque row per column (bigger = lower)
-    win = 2 * fade
-    score = np.array([top[np.arange(x, x + win) % w].min() for x in range(0, w, 8)])
-    best = int(np.argmax(score)) * 8                            # window whose tallest feature is lowest
-    im = np.roll(im, -(best + fade), axis=1)                    # its center becomes the left/right edge
-    out = im[:, :w - fade].copy()
+    def outermost(starts):                                      # within a tenth of the height of the lowest
+        lows = np.array([top[x:x + fade].min() for x in starts])
+        return starts[int(np.argmax(lows >= lows.max() - a.shape[0] // 10))]
+    x0 = outermost(range(0, reach + 1, 8))
+    x1 = outermost(range(w - fade, w - fade - reach - 1, -8)) + fade
+    out = im[:, x0:x1 - fade].copy()
     t = np.linspace(0, 1, fade)[None, :, None]
-    out[:, :fade] = im[:, w - fade:] * (1 - t) + im[:, :fade] * t   # left edge continues the right edge
+    out[:, :fade] = im[:, x1 - fade:x1] * (1 - t) + im[:, x0:x0 + fade] * t   # left edge continues the right edge
     Image.fromarray(np.clip(out, 0, 255).astype(np.uint8)).save(dst)
+    print(f"{dst}: columns {x0} to {x1} of {w}, ends cross-faded over {fade} px, {out.shape[1]} px wide")
 
 
 FORCE = "--force" in sys.argv

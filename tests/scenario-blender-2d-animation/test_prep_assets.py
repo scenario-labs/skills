@@ -78,15 +78,18 @@ class TileTests(unittest.TestCase):
         self.out = self.dir / "jungle_tile.png"
         synth.wide_layer(self.layer)
 
-    def test_seam_avoids_the_landmark(self):
+    def test_blends_the_two_ends_without_cutting_a_landmark(self):
         r = synth.run("prep_assets.py", "tile", self.layer, self.out, 64)
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual(synth.size(self.out), (400 - 64, 120))
         a = synth.alpha(self.out)
-        tower = np.where(a[12] > 0)[0]
-        self.assertEqual(len(tower), 21)                # the landmark is whole: not cut in two
-        self.assertTrue((a[12, tower] == 255).all())    # and not cross-faded with the low strip
         self.assertTrue((a[100] == 255).all())          # the strip still runs edge to edge
+        tower = np.where(a[12] > 0)[0]
+        self.assertEqual(len(tower), 21)                # the middle landmark is whole
+        self.assertTrue((a[12, tower] == 255).all())    # and not cross-faded
+        self.assertEqual(len(np.where(a[32] > 0)[0]), 21)   # the tree at the end is cut away, not faded in
+        red = synth.pixels(self.out)[100, :, 0].astype(int)
+        steps = np.abs(np.diff(np.append(red, red[0])))     # every column step, the repeat included
+        self.assertLess(steps.max(), 8)                 # the raw ends (red 30 and 230) never meet unblended
 
     def test_usage_without_arguments(self):
         r = synth.run("prep_assets.py")
