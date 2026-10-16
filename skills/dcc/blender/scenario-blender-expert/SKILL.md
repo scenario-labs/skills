@@ -16,18 +16,45 @@ flag the gap.
 
 ## 1. Execution channel
 
-| Channel                                                                                    | Use for                                                                                | Rules                                                                                                                                                                                                                              |
-| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live GUI Blender (user's session over the MCP bridge)                                      | anything interactive: real sculpt/paint brushes, weight painting, viewport screenshots | One short, idempotent script per call returning a compact result dict. Get-or-create by name. Never touch objects you did not create. Save a stage backup `bpy.ops.wm.save_as_mainfile(filepath=..., copy=True)` after each stage. |
-| Headless helper `blender -b [file] --factory-startup --python-exit-code 1 -P x.py -- args` | renders, audits, batch ops, anything when no bridge is up                              | Always `--factory-startup`: without it the user's add-ons load (on this machine one of them makes network API calls). Without `--python-exit-code` a failing script still exits 0. Print a final machine-readable result line.     |
+| Channel                                                                                    | Use for                                                                                | Rules                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live GUI Blender (user's session over the MCP bridge)                                      | anything interactive: real sculpt/paint brushes, weight painting, viewport screenshots | One short, idempotent script per call returning a compact result dict. Get-or-create by name. Never touch objects you did not create. Save a stage backup `bpy.ops.wm.save_as_mainfile(filepath=..., copy=True)` after each stage.                                                                                                                                                                                    |
+| Headless helper `blender -b [file] --factory-startup --python-exit-code 1 -P x.py -- args` | renders, audits, batch ops, anything when no bridge is up                              | Use `--factory-startup` so the user's add-ons and preferences stay out of the run (an add-on can call the network or change defaults); the Scenario Blender Plugin's headless server, `blender --background scene.blend --command scenario_blender`, is the exception because it needs the extension loaded. Without `--python-exit-code` a failing script still exits 0. Print a final machine-readable result line. |
 
 Never open your own GUI Blender window to test things on the user's machine: windows steal focus and
 pile up. Live work goes through the user's already-running Blender; everything else runs headless,
 one Blender process at a time per agent (other sessions may be rendering on the same machine).
 
-Check `bpy.app.version` first; this skill set targets 5.2 LTS. Many tutorials the experts recorded
-use 2.8x to 4.2 UI: read [`references/blender-5.2-deltas.md`](references/blender-5.2-deltas.md)
-before trusting any remembered operator, brush name or API.
+**Live channel: the Scenario Blender Plugin.** When the user's Blender runs the Scenario Blender
+Plugin, its local MCP server `scenario-blender` is the bridge (setup and tool reference at
+[blender.scenario.com](https://blender.scenario.com/)). Its tool names differ from other Blender MCP
+servers: there is no `execute_blender_code`, `get_scene_info`, `get_viewport_screenshot` or
+`import_asset`.
+
+| Step                          | Plugin tool                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| Read the scene before acting  | `scene_summary`, then `object_detail` for one object and `datablocks_summary` for counts          |
+| Check an API before scripting | `blender_api_help` with a `bpy` path                                                              |
+| Run bpy                       | `execute_python`, with `bpy` and a `result` dict preloaded                                        |
+| Look                          | `screenshot_viewport` (viewport with overlays), `render_still` (camera or viewport at a set size) |
+| Select, move the timeline     | `select_objects`, `set_frame`                                                                     |
+
+- `execute_python` stays off until the user enables **Allow connected agents to run Python** in the
+  plugin preferences. A `PermissionError` means ask for it or stay on the specific tools. A refused
+  spelling (quit, factory reset, file deletion) changed nothing: rewrite the call.
+- Budget every call: the plugin stops a call after 120 s and some agent clients stop waiting after
+  60 s. Make one logical change per call, so one Undo reverts it, and send bakes, QuadriFlow on
+  dense meshes, turntables, playblasts and final renders to a headless Blender working on a saved
+  copy.
+- A timed-out call has an unknown outcome: read the scene again before retrying, never resend it
+  blindly.
+- The plugin's tools never save the user's file: ask the user to save at milestones.
+
+Check `bpy.app.version` first; this skill set targets 5.2 LTS, while the Scenario Blender Plugin
+also runs on 5.0 and 5.1 (`scene_summary` reports the version), so check the version timeline in the
+deltas before using a recent API. Many tutorials the experts recorded use 2.8x to 4.2 UI: read
+[`references/blender-5.2-deltas.md`](references/blender-5.2-deltas.md) before trusting any
+remembered operator, brush name or API.
 
 **Verified capability matrix (Blender 5.2.1):**
 
@@ -50,7 +77,10 @@ before trusting any remembered operator, brush name or API.
    meshes, the domain's own checks) AND render a review sheet
    ([`scripts/bx_review.py`](scripts/bx_review.py): silhouette, matcap, wire from
    front/side/three-quarter/low) and open it with the image reader. Experts orbit constantly; the
-   review sheet is the agent's orbit. Judge with the domain's `references/critique.md`.
+   review sheet is the agent's orbit. Every image read stays in the agent's context: for quick looks
+   use `render_still` at about 768 px wide or `screenshot_viewport`, and keep review sheets near
+   1600 px (`res=400` for four views and three modes). Judge with the domain's
+   `references/critique.md`.
 5. **Fix before advancing.** A problem found at blockout costs one script; found after texturing it
    costs the stage.
 6. **Deliver with evidence:** final renders, audit numbers, and what was not verified.
@@ -86,6 +116,10 @@ textures), text-image-to-blender-blockout (camera-locked blockouts for render-to
   `stroke(mode, world_points, size, strength)`, `run(op, **kw)`, `set_paint_color`, `screenshot`.
 
 Import pattern: `import sys; sys.path.append("<this skill>/scripts"); import bx_audit, bx_review`.
+Replace `<this skill>` with the absolute path of the installed skill folder: Blender's Python does
+not share the agent's working directory, and over a live bridge the code runs inside the user's
+Blender. Check the path in the first call (`result["ok"] = os.path.isdir(path)`) and
+`importlib.reload` a module after the skill updates.
 
 ## 5. Version traps that break most remembered code
 
