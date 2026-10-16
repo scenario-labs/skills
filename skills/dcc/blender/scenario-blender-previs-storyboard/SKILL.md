@@ -19,11 +19,12 @@ flag the gap.
 Toolkit: [`scripts/bx_previs.py`](scripts/bx_previs.py) (tested on 5.2.1):
 `import sys; sys.path += ["<this skill>/scripts", "<scenario-blender-expert>/scripts"]; import bx_previs as P`.
 
-**Which skill.** This one: story previs and animatics judged by a director and an editor. When the
-playblast instead guides a render-to-real video model (Seedance), the rules change: saturated color
-identities, no lens jump on a cut, eased moves, a hand-off sheet; an approved animatic that must
-become a video guide is rebuilt to those rules. Shared: metric Z-up, roots at the feet, one camera
-per shot bound to a marker, `to_track_quat('-Z','Y')` look-at. Strokes:
+**Which skill.** This one: story previs and animatics judged by a director and an editor. Out of
+scope: a playblast that guides a render-to-real video model (Seedance). It follows other rules
+(saturated color identities, no lens jump on a cut, eased moves, a hand-off sheet) that the workflow
+and `P.audit` below do not apply or check, so do not hand a director's animatic to a video model as
+is: rebuild it to those rules outside this workflow. Shared: metric Z-up, roots at the feet, one
+camera per shot bound to a marker, `to_track_quat('-Z','Y')` look-at. Strokes:
 scenario-blender-grease-pencil. Animation after layout: scenario-blender-animation. Real rigs:
 scenario-blender-rigging.
 
