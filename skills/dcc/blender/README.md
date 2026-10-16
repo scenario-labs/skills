@@ -6,15 +6,17 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
 
 ## Status
 
-- 13 skills, distilled from about 200 expert videos (Blender Studio, Blender Conference 2019 to
-  2026, top instructors): `scenario-blender-expert` (router: execution channel, expert loop, review
-  sheets `bx_review`, mesh audit `bx_audit`, live brushes `bx_gui`, Blender 5 API traps, bpy
+- 14 skills. Thirteen are distilled from about 200 expert videos (Blender Studio, Blender Conference
+  2019 to 2026, top instructors): `scenario-blender-expert` (router: execution channel, expert loop,
+  review sheets `bx_review`, mesh audit `bx_audit`, live brushes `bx_gui`, Blender 5 API traps, bpy
   reliability) and `scenario-blender-sculpting`, `scenario-blender-retopology`,
   `scenario-blender-uv-baking`, `scenario-blender-texturing-shading`, `scenario-blender-hair`,
   `scenario-blender-rigging`, `scenario-blender-animation`, `scenario-blender-previs-storyboard`,
   `scenario-blender-geometry-nodes`, `scenario-blender-lighting-rendering`,
   `scenario-blender-grease-pencil`, `scenario-blender-hard-surface`, each with a tested
-  `bx_<domain>.py`.
+  `bx_<domain>.py`. The fourteenth, `scenario-blender-blockout`, builds camera-locked blockouts that
+  guide a render-to-real video pass through the Scenario Blender Plugin; its `bx_blockout.py` is
+  syntax- and lint-checked here but has not yet been run in Blender.
 - Evidence: blind-graded written scenarios, with skills won 7 of 7 against the same model without
   them; execution tests better on retopology and bake + material, on par or better on sculpting
   after refactor, on par on a bouncing ball; all 12 test suites pass headless on Blender 5.2.1.
@@ -25,7 +27,7 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
 ## Install
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario-blender-expert scenario-blender-animation scenario-blender-geometry-nodes scenario-blender-grease-pencil scenario-blender-hair scenario-blender-hard-surface scenario-blender-lighting-rendering scenario-blender-previs-storyboard scenario-blender-retopology scenario-blender-rigging scenario-blender-sculpting scenario-blender-texturing-shading scenario-blender-uv-baking
+npx skills add scenario-labs/skills --skill scenario-blender-expert scenario-blender-animation scenario-blender-blockout scenario-blender-geometry-nodes scenario-blender-grease-pencil scenario-blender-hair scenario-blender-hard-surface scenario-blender-lighting-rendering scenario-blender-previs-storyboard scenario-blender-retopology scenario-blender-rigging scenario-blender-sculpting scenario-blender-texturing-shading scenario-blender-uv-baking
 ```
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's
@@ -47,6 +49,10 @@ Ported from
 built on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this
 repository's frontmatter (`name`, `description`, `license`), no version line in the skill bodies,
 the sibling-install line in each `SKILL.md`, and paths into the build project made relative.
+
+`scenario-blender-blockout` was written for this repository on 2026-10-16 from the author's own
+blockout workflow: rewritten for the Scenario Blender Plugin's local Scenario MCP server, every
+plugin tool and argument checked against the plugin's `docs/MCP.md`, and a new toolkit.
 
 Paths such as `tests/...` inside the references point to the test evidence on the build machine.
 They are provenance only; the skills do not need them to run.

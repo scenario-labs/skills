@@ -1,0 +1,131 @@
+---
+name: scenario-blender-blockout
+description: "Use when a text brief or a reference image must become a Blender blockout whose playblast guides a render-to-real video pass (a video model that takes a reference clip, such as Seedance, or the Render Video lane of the Scenario Blender Plugin): graybox or previs built for a video model, color-coded proxies at metric scale, proxy figures, a camera locked to the timeline, rail or tracking camera rigs, lens per shot, framing and occlusion checks, a playblast, a hand-off sheet for the video prompt. Also when a render-to-real pass renders the proxies as boxes, reads one figure as two people, swaps a car's front and rear, drifts at the end, or the guide camera pops on a cut."
+license: MIT
+---
+
+# Blender blockout for a render-to-real video pass
+
+The blockout is the guide clip: the video model copies the camera path, framing, lens feel, easing, cut points, shot lengths, the position and scale of every mass, figure facing and every trajectory, and it invents the rest from text and images (materials, light, weather, what each proxy really is, faces, wardrobe, extras, sound). So the blockout has full authority over motion and layout and none over look. Ambiguity ruins the pass; crudeness does not: a bent lamppost comes back as a snake, loose limb blocks as extra people, an unmarked car driving backward. Fix identity in geometry first, in prompt text second, and judge the result on a synced side-by-side of playblast and video, never in the viewport alone. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+
+**REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes). Video generation: the `scenario` skill (connection, uploads, jobs) and `scenario-seedance` (reference-video fields).
+
+Toolkit: [`scripts/bx_blockout.py`](scripts/bx_blockout.py): `import sys; sys.path.append("<this skill>/scripts"); import bx_blockout as B`, where `<this skill>` is the absolute path of the installed folder, since the code runs inside the user's Blender. Builders are get-or-create by name, so a call can run again, and they refuse a name the user's own work already holds (names are global to the file). An empty audit result is a pass. The module docstring shows the call order.
+
+**Which skill.** This one: guides for a video model. Story previs and animatics judged by a director and an editor: scenario-blender-previs-storyboard; an approved animatic that must guide a video model is rebuilt here.
+
+## 1. Restate the brief as a build plan
+
+Before any call, write down:
+
+- **Elements and their primitive**: "bus = long box with a marked front", "figures = connected box proxies". Never model past what the brief names.
+- **Dimensions** in meters for everything; when the brief is silent, take them from [the contract tables](references/contract.md) and say so.
+- **Format**: integer fps, aspect, seconds. The range is 1 to fps x seconds (8 s at 24 fps: 1..192).
+- **Shots**: count, move, lens, framing invariants ("hero always in frame, full figure"), cut style; beats pinned to seconds, converted to frames now.
+- **Identity colors**: hero red, then blue, green, yellow, purple, cyan.
+- **Deliberate gaps** the video model fills, and **acceptance tests** the brief states: they become mandatory audits.
+
+Decide what the brief leaves open and record the decision; do not stop to ask. Spending is the exception: Scenario prices are shown and approved by the user (section 3). With a reference image: list its masses, block them at plausible scale, match camera height and lens, `render_still` from the camera, compare, adjust until the composition matches, and only then animate.
+
+## 2. Output contract
+
+Four deliverables: the scene, a locked camera timeline, the playblast, the hand-off sheet.
+
+- **Scene hygiene.** Role prefixes (`ENV_`, `FIG_`, `PRP_`, `CAM_`, `CRV_`, `RIG_`, `NULL_target_`, full table in the contract), one root collection with role sub-collections. Park the default Cube, Light and Camera with `B.park`, never delete. If the file holds other work, build in a new scene (`B.make_scene`) and touch nothing existing; every object must trace to one of your stages.
+- **Scale.** Meters, Z up, ground at z = 0, figure roots at the feet. The model keeps every mass where it is at its size, mistakes included. Nothing familiar for scale: add a `REF_` figure.
+- **Color is the identity channel.** One saturated color per character or tracked element (`B.PALETTE`, hero red), the set in neutral gray (0.32 to 0.55), one light, a dark world. `B.paint` sets both the object color and a material, so Solid view (color type Object or Material) and Workbench renders show it; an all-gray playblast has lost identity. Grid or checker texture only where the camera travels and depth must read, declared "replace, never inherit" in the sheet.
+- **Timeline.** `B.lock_format` before any geometry: integer fps, frames 1 to fps x seconds, 1920x1080 (2520x1080 for 21:9) at 100 %. One camera per shot, bound to a `CUT_` marker on its first frame (`B.bind_cuts`), hard cuts, zero transition frames.
+- **Camera rigs.** Rail: `B.rail_camera` (curve, dolly on Follow Path, aim with Track To, camera). Handheld tracking, straight push-in and multi-shot masters: recipes in the contract. Reframe by moving the aim target, never by rotating the camera.
+- **Lens.** One lens per shot from shot size (`B.lens_for_coverage`; 28 mm orbits, 42 to 45 mm over-the-shoulder, 24 to 30 mm interiors, 85 mm macro), `clip_start` 0.05. A cut changes lens only by changing camera: never key a lens step on a cut frame. A lens may ease inside a shot (a deliberate zoom), never jump.
+- **Easing.** Bezier keys with auto-clamped handles (`B.smooth_keys`); speed is key spacing on the rail (`B.key_rail`), a pause is two near-equal values. LINEAR only for per-frame baked travel (vehicles, wheels). Keys run past every cut so nothing stops on the boundary.
+- **Handheld** is NOISE F-curve modifiers, never keyed jitter. Measure the result with `B.audit_handheld` against the budget in the contract; `animation_data_clear()` removes the modifiers, so re-add them after rekeying.
+
+## 3. Channel: the Scenario Blender Plugin
+
+The live channel is the plugin's local Scenario MCP server, `scenario-blender` (the guide at [blender.scenario.com](https://blender.scenario.com/) calls the plugin Scenario for Blender). Tool reference: its `docs/MCP.md`.
+
+| Need                          | Tool and arguments                                                                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Probe before building         | `scene_summary` with `fields` (`["type"]`), `limit` (up to 500) and `offset` from `next_offset`; `datablocks_summary` for counts    |
+| One object, a camera's lens   | `object_detail` with `name` (cameras add `lens_mm`, `sensor_width`, `clip`)                                                         |
+| Build, key, audit             | `execute_python` with `code`: `bpy` and `result = {}` preloaded; fill `result` with what you need back                              |
+| Check an API before scripting | `blender_api_help` with `path`                                                                                                      |
+| Step to a beat                | `set_frame` with `frame`                                                                                                            |
+| Look through the shot camera  | `render_still` with `source` `CAMERA`, `width` 768, `height` 432 (GUI only); `screenshot_viewport` with `max_size` for the viewport |
+| Select objects                | `select_objects` with `names`                                                                                                       |
+
+- `execute_python` stays off until the user enables **Allow connected agents to run Python**; a `PermissionError` means ask. Without it only the plugin's Blockout and `camera_path` build, and neither makes figures or rigs.
+- The plugin stops a call after 120 s and some agent clients stop waiting at 60 s. Send one stage piece per call (a set section, one figure, one rig, one audit). Releases up to 0.11.0 ignore `limit`, `offset`, `fields` and `max_size`, so `scene_summary` returns every object: check `datablocks_summary` on a heavy file first.
+- A timed-out call has an unknown outcome: read the scene (`scene_summary` with `name_contains`) before sending it again.
+- Every changing call records one Undo step; no tool saves the user's file. Run `B.stage_backup(label)` after each stage (a copy; the open file stays as it was) and ask the user to save at milestones.
+
+**Where the plugin's own tools fit.**
+
+- **Blockout** (`estimate_blockout` with `action` `DESIGN` or `REFINE`, `approve_blockout` with `quote_id` and the user-approved `approved_cost`): the Scenario LLM turns the description, Type and Scale the user typed in the Blockout panel into a plan of category-colored primitives, and the user's **Build plan** button builds the `Blockout` collection (no tool builds geometry). It fits Stage 2 for a generic set the user is willing to pay for. It makes no figures, facing, cameras, timeline or identity colors; its category colors are muted (vehicles read pale red, so repaint them neutral or in their identity color). A rebuild replaces the collection and drops manual edits, and objects added to it block rebuilds: build everything else in your own collections. After a failure or restart, recover the paid plan (`list_local_jobs`, `prepare_blockout_plan`, `blockout_plan_status`, `apply_blockout_plan` after the user approves) instead of paying again.
+- **`camera_path`** (`preset` such as `orbit`, `push_in` or `crane`, or `waypoints`; `duration`, `focal`, `aim_at_subject`): keys one `Scenario Shot Camera` around a static center (the selection or the scene), sets it as scene camera, resets the frame range to its duration and turns the preview range off. It fits a single shot of a static set. It cannot follow a moving subject or bind cuts, so tracking, rails and multi-shot sequences use `B.rail_camera`. After it, run `B.lock_format` and the audits again.
+- **Render Video** (`render_form`, `estimate_cost`, `generate`): the video pass inside Blender, section 6.
+
+## 4. Build order
+
+Back up after every stage; a reset is recovered from the last backup ([contract](references/contract.md)). Every `execute_python` call starts with `B.guard(expected_file=..., scene=...)`: queued calls land in whatever file is open.
+
+0. **Probe**, read-only: `scene_summary`, `datablocks_summary`. Other work present: new scene.
+1. **Format and scaffolding**: `B.make_scene`, `B.lock_format`, `B.collection` tree, `B.park`, dark world.
+2. **Set**: thick boxes at true scale (`B.box`), repeats as linked duplicates of one mesh. Or the plugin Blockout for a generic set.
+3. **Figures**: `B.proxy_figure` per character: nine touching parts on a root at the feet, feet showing the facing. Animate only the root (travel, yaw, pose beats) from a table of (frame, location, facing). Detail goes to the hero; background people stay simple and connected.
+4. **Props and vehicles**: literal primitives at true position. Mark a vehicle's front in geometry (light blocks and grille in front, red blocks at the rear); wheels at z = radius with one spin channel. No loose blocks near a figure.
+5. **Light**: one area light; named key, fill, rim only when the brief designs light.
+6. **Cameras**: rigs and lenses per shot, `B.bind_cuts`.
+7. **Motion polish**: `B.key_rail` and `B.smooth_keys`, keys past cuts, handheld, vehicle travel as one monotone curve keyed per frame.
+8. **Audit** (section 5) until clean. When set dressing hides the hero, move the blockers and keep the camera plan.
+9. **Finalize**: frame 1, shot 1's camera, `B.audit_frames`, `B.state_audit`, final backup, then playblast and hand-off sheet.
+
+## 5. Audits: numbers judge, then look
+
+| Check                                | Helper                                                                        |
+| ------------------------------------ | ----------------------------------------------------------------------------- |
+| Frame math and resolution            | `B.audit_frames(seconds, fps)`                                                |
+| Markers bound, switches, lens, jumps | `B.audit_cuts()` (`same_lens_across_cuts=True` when the brief wants one lens) |
+| Subjects in frame per shot           | `B.audit_framing({"CAM_s1": ["FIG_red"]}, whole=True)` for full figures       |
+| Head never hidden                    | `B.audit_occlusion("FIG_red")`                                                |
+| Too close, outside the legal volume  | `B.audit_distance(subject, volume=...)` (full-figure shots only)              |
+| Interpenetration                     | `B.audit_intersections(names)`                                                |
+| Feet and wheels on the ground        | `B.audit_ground(names)`                                                       |
+| Handheld amplitude                   | `B.audit_handheld("CAM_s1")`                                                  |
+| Census before hand-off               | `B.state_audit()`                                                             |
+
+Audit each shot's own subject (the wheel for a macro, the hand for an insert). Then look: `set_frame` and `render_still` at the first, middle and last frame of every shot, and check what numbers miss: a vehicle's front, connected figures, rigid props without organic curves, nothing stray at frame edges, an ending as locked as the opening. Thresholds and readings: [audits](references/audits.md). An audit samples every `step` frames; on a long shot raise `step` to stay under the call limit.
+
+## 6. Playblast, hand-off sheet, video pass
+
+**Playblast.** Headless, on the latest `B.stage_backup` copy, with scenario-blender-expert's `bx_review.playblast(out_path, res_pct=100)`: an H.264 MP4 of the scene camera over the frame range in Workbench, cuts following the bound markers. With no shell, the same call through `execute_python` blocks Blender while it renders: keep it to short clips, and after a timeout look for the file before running it again. Add camera stills at each shot's start, middle and end.
+
+**Hand-off sheet**, built from the scene ([template](references/handoff.md)): color legend tied to reference images, the cut list from `B.cut_list()` with exact times, which entities are blocked and which exist only in words, every artifact with its timecode, each motion state in words ("creeps", "stands still"), and tie-break clauses ("if text and video disagree about motion, the video wins").
+
+**Video pass**, always through Scenario, after the user approves the exact price:
+
+- **Plugin, Render Video lane**: `B.solid_view()` so the camera viewport shows identity colors, `force_solid` false (it turns everything one gray), a timeline length the model accepts with `match_timeline` on. `list_models` with `lane` `render_video`, `model_schema`, `render_form` `configure` (`model_id`, `look`, `capture_source` `CAMERA`), `prepare` with `role` `scene`, `inspect` until `ready_to_estimate`, `estimate_cost` and `generate` with that lane and no `parameters`, `wait_for_job` re-called while `delivery_active`, then `prepare_result_application` and `apply_result_application` to bring the clip in. The capture is a silent 1280x720 clip with overlays hidden.
+- **Hosted Scenario MCP**, for the full-resolution playblast: upload the playblast as the `scenario` skill shows, discover a model that takes a reference video, `model_schema_get`, `model_run` with `dry_run` first, `jobs_wait`, `asset_download`.
+
+Write the prompt motion-first: the clip is rehearsal footage, the cast is described by role and motion, never by the proxies' shapes, and style comes from a four-panel style board rather than one restyled frame. On the plugin lane the plugin states the clip's and images' roles itself, so `look` holds only cast and style. Grammar, clauses and tested limits: [handoff](references/handoff.md).
+
+## Worked example
+
+Brief: "10 s, 24 fps: a red runner sprints between crate rows toward camera in a warehouse; a blue guard steps out at second 6; handheld 35 mm backing away."
+
+1. `scene_summary` `{"fields": ["type"], "limit": 100}`: the file holds other work, so build beside it.
+2. `execute_python`: `B.make_scene("BLK_warehouse")`; next call `B.guard(scene="BLK_warehouse")`, `B.lock_format(24, 10)` (1..240), collections, backup.
+3. Floor 34 x 20 m, 7 m walls, two rows of 1.2 m crates with `B.box`; backup.
+4. `B.proxy_figure("red", 1.8, (0, 15, 0), facing_deg=0)`, root keyed to (0, 1, 0) by frame 200; the blue guard steps into the aisle over frames 144 to 156; backup.
+5. `B.rail_camera("s1", [(0, 3, 1.5), (0, -1, 1.5), (0, -4, 1.5)], follow="FIG_red", target_offset=(0, 0, 1.2), lens=35)`, `B.key_rail("RIG_dolly_s1", [(1, 0), (260, 1)])`, `B.bind_cuts([(1, "CAM_s1")])`, handheld noise within budget.
+6. `B.audit_frames(10, 24)`, `B.audit_cuts()`, `B.audit_framing({"CAM_s1": ["FIG_red", "FIG_blue"]}, whole=True)`, `B.audit_occlusion("FIG_red")`, `B.audit_handheld("CAM_s1")`; move crates until clean.
+7. `set_frame` 1, 120, 240 with `render_still` each, and look. Backup, headless playblast, `B.cut_list()` into the sheet.
+
+## Common mistakes and downstream misreads
+
+- **Identity not in geometry**: a floating head or slab arms; loose blocks near a figure read as extra people; a car with no marked front driven in reverse; an occupant behind an opaque cabin vanishes (give the cabin alpha).
+- **Camera grammar**: a key on the cut frame freezes motion there; an overhead orbit read as a cut; seats mirrored on a reverse camera; invented reverse shots in dialogue; drift in the last seconds.
+- **Ambiguous motion**: slow proxy motion reads as either rolling or still; the sheet decides.
+- **Fragile detail**: sub-pixel parts change identity between restyles; a style that implies text invents gibberish lettering.
+- **Opening-frame fiction**: "starts at the door" needs a doorway behind frame 1; high shots over flat ground read flat.
+- **State drift**: render probes that leave resolution or file path changed; pre-existing objects adopted as your own; Blender 5 slotted actions hiding F-curves (use `B.fcurves`).
