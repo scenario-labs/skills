@@ -363,8 +363,8 @@ def key_lens(cam, keys, interpolation="LINEAR"):
 def handheld(cam, strength=0.012, scale=22.0, frame=None):
     """Operator feel: NOISE F-modifiers on the camera's X/Z rotation (one key is enough).
     Default blend REPLACE centres the noise on the curve; ADD offsets it by strength/2
-    (both measured on 5.2.1). Starting values from text-image-to-blender-blockout
-    (0.010 to 0.018 rad at an 18 to 26 frame scale). animation_data_clear() removes them."""
+    (both measured on 5.2.1). Starting values from render-to-real guide
+    playblasts (0.010 to 0.018 rad at an 18 to 26 frame scale). animation_data_clear() removes them."""
     f = bpy.context.scene.frame_current if frame is None else frame
     if not any(fc.data_path == "rotation_euler" for fc in fcurves(cam)):
         cam.keyframe_insert("rotation_euler", frame=f)

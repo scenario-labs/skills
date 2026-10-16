@@ -72,7 +72,7 @@ Never report a model, rig, animation or render as done without having looked at 
 | 2D / 2.5D animator                                  | scenario-blender-grease-pencil                                                                                                                                                                             | GP animation                                                 |
 
 Related skills outside this set: scenario-3d (generate meshes to finish here), scenario-textures (AI
-textures), text-image-to-blender-blockout (camera-locked blockouts for render-to-real video).
+textures).
 
 ## 4. Shared toolkit (`scripts/`, all tested on 5.2.1)
 

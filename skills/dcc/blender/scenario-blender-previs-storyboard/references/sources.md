@@ -14,6 +14,6 @@ was re-checked on 5.2.1.
 | [Grease Pencil 2D 3D Hybrid Storyboard Animatic](https://www.youtube.com/watch?v=H10rQoSg41c) | Paul Coulthard, professional storyboard artist (Spitfire Storyboards)                                                         | 53:18, 2020-03-31 | Hybrid order of work: floor path, keyed GP object, roughs, camera commitment, proxy men, Track To, constant vs linear, markers for cuts (v2-era UI, API translated) | 00:05:13 drawing planes; 00:15:58 path first; 00:19:47 commit to camera; 00:26:33 lenses; 00:32:23 interpolation; 00:34:10 proxy parenting; 00:41:44 Track To; 00:44:46 markers                                                                                                                            |
 | [Storyboarding in Blender masterclass](https://www.youtube.com/watch?v=Xx68qcqMXS4)           | BouncyBrain, story artist billed as DreamWorks (boarded a 360-degree shot on the Super Mario movie)                           | 19:23, 2024-07-25 | The drawing-on-glass rig and 6 fps boarding; the rest is wordless time-lapse                                                                                        | 00:08:03 6 fps; 00:09:45 glass rig; 00:11:27 world effects                                                                                                                                                                                                                                                 |
 
-Related skill outside this set: text-image-to-blender-blockout (guide playblasts for render-to-real
-video models); its camera rig grammar, handheld amplitudes and hero-in-frame audits are reused where
-they agree with the experts above.
+Guide playblasts for render-to-real video models: the camera rig grammar, handheld amplitudes and
+hero-in-frame audits come from production tests of such guides, and are kept where they agree with
+the experts above.
