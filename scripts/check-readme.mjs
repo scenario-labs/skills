@@ -289,7 +289,11 @@ if (!existsSync("INSTALL.md")) {
     if (!installPattern.test(line)) continue;
     const names = new Set(skillsIn(line));
     if (part === "By role") for (const name of names) inRoles.add(name);
-    if (stated !== null && stated !== names.size) {
+    if (stated === null) {
+      errors.push(
+        `INSTALL.md: "${entry}" has no "N skills." line before its command`,
+      );
+    } else if (stated !== names.size) {
       errors.push(
         `INSTALL.md: "${entry}" says ${stated} skills, its command installs ${names.size}`,
       );
