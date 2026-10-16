@@ -1,7 +1,7 @@
 # Prompt patterns
 
-Ten generations make one look: a concept frame, then nine asset roles that all take the concept as their reference
-image. The patterns below are the ones that worked for the three looks of the reference shot (a red panda in a
+Ten generations make one look: a concept frame, eight pictures that take the concept as their reference image, and
+a run clip whose first frame is the hero's reframed rest pose, never the concept. The patterns below are the ones that worked for the three looks of the reference shot (a red panda in a
 golden-hour jungle, a black cat on a moonlit Halloween street, a snow leopard cub in a white winter valley).
 Replace the bracketed parts; keep the structure and the "no ..." lists, they carry most of the work.
 

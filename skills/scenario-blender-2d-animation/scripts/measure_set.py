@@ -37,8 +37,11 @@ def opaque(path):
     return np.asarray(Image.open(path).convert('RGBA'))[..., 3] > 128
 
 
-def first_row(a, cover):
-    return int(np.argmax(a.mean(1) > cover))
+def first_row(a, cover, name):
+    rows = a.mean(1) > cover
+    if not rows.any():   # argmax of all-False is 0, which would read as a line at the very top
+        sys.exit(f'error: no row of {name} is more than {cover:.0%} opaque; check its transparency and cut')
+    return int(np.argmax(rows))
 
 
 def main():
@@ -57,13 +60,13 @@ def main():
     island = opaque(os.path.join(g, 'island.png'))
     pedestal = opaque(os.path.join(g, 'pedestal.png'))
     jump = opaque(os.path.join(g, 'hero_jump.png'))
-    ground90 = first_row(ground, 0.9) / ground.shape[0]
+    ground90 = first_row(ground, 0.9, 'ground_tile.png') / ground.shape[0]
     values = {
-        'sea_horizon': round(first_row(sea, 0.9) / sea.shape[0], 3),
+        'sea_horizon': round(first_row(sea, 0.9, 'sea_tile.png') / sea.shape[0], 3),
         'ground_h': args.ground_h,
         'ground_top': round(ground90 + args.sink / args.ground_h, 3),
-        'island_top_px': first_row(island, 0.6),
-        'pedestal_top_px': first_row(pedestal, 0.8),
+        'island_top_px': first_row(island, 0.6, 'island.png'),
+        'pedestal_top_px': first_row(pedestal, 0.8, 'pedestal.png'),
         'jump_base_px': int(np.where(jump.any(1))[0].max()),
     }
     print(json.dumps(values, indent=1))

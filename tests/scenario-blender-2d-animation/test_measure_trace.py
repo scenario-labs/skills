@@ -31,6 +31,12 @@ class MeasureSetTests(unittest.TestCase):
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("island.png not found", r.stderr)
 
+    def test_refuses_a_line_no_row_reaches(self):
+        synth._sprite(self.game / "island.png", 192, 64, (0, 6, 80, 40))   # 42% wide, under the 60% line
+        r = synth.run("measure_set.py", self.game)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("island.png", r.stderr)
+
 
 class TraceHullsTests(unittest.TestCase):
     def setUp(self):
