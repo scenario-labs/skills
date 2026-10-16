@@ -102,7 +102,7 @@ Audit each shot's own subject (the wheel for a macro, the hand for an insert). T
 
 **Hand-off sheet**, built from the scene ([template](references/handoff.md)): color legend tied to reference images, the cut list from `B.cut_list()` with exact times, which entities are blocked and which exist only in words, every artifact with its timecode, each motion state in words ("creeps", "stands still"), and tie-break clauses ("if text and video disagree about motion, the video wins").
 
-**Video pass**, always through Scenario, after the user approves the exact price:
+**Video pass**, always through Scenario, after the user approves the exact price. Unattended, stop at the quote (`estimate_cost` or `dry_run`), report it, and skip local uploads that need the user's file choice:
 
 - **Plugin, Render Video lane**: `B.solid_view()` so the camera viewport shows identity colors, `force_solid` false (it turns everything one gray), a timeline length the model accepts with `match_timeline` on. `list_models` with `lane` `render_video`, `model_schema`, `render_form` `configure` (`model_id`, `look`, `capture_source` `CAMERA`), `prepare` with `role` `scene`, `inspect` until `ready_to_estimate`, `estimate_cost` and `generate` with that lane and no `parameters`, `wait_for_job` re-called while `delivery_active`, then `prepare_result_application` and `apply_result_application` to bring the clip in. The capture is a silent 1280x720 clip with overlays hidden.
 - **Hosted Scenario MCP**, for the full-resolution playblast: upload the playblast as the `scenario` skill shows, discover a model that takes a reference video, `model_schema_get`, `model_run` with `dry_run` first, `jobs_wait`, `asset_download`.

@@ -155,6 +155,7 @@ def lock_format(fps=24, seconds=8, resolution=(1920, 1080), scene=None):
     sc.frame_start, sc.frame_end = start, end
     sc.render.resolution_x, sc.render.resolution_y = resolution
     sc.render.resolution_percentage = 100
+    sc["bx_resolution"] = list(resolution)  # audit_frames checks against it
     return {"fps": int(fps), "frame_range": [start, end], "resolution": list(resolution)}
 
 
@@ -252,7 +253,8 @@ def proxy_figure(name, height=1.75, location=(0.0, 0.0, 0.0), facing_deg=0.0, rg
     """Connected box figure: root empty FIG_<name> at the feet (z = 0) and nine touching
     parts (legs, feet, pelvis, torso, head, arms). The feet point along local -Y, so the
     facing reads in silhouette. facing_deg is the yaw: 0 faces -Y, 90 faces +X.
-    Animate only the root for travel, facing and pose beats. Returns the root name."""
+    Animate only the root for travel, facing and pose beats. Its parts share one material,
+    MAT_FIG_<name>, so the figure can be recolored alone. Returns the root name."""
     root_name = f"FIG_{name}"
     existing = bpy.data.objects.get(root_name)
     root = _own(existing, lambda: bpy.data.objects.new(root_name, None))
@@ -267,6 +269,7 @@ def proxy_figure(name, height=1.75, location=(0.0, 0.0, 0.0), facing_deg=0.0, rg
             rgb=rgb,
             coll=coll,
             parent=root,
+            material_name=f"MAT_{root_name}",  # recolor one figure without touching others
         )
     root.location = location
     root.rotation_euler = (0.0, 0.0, math.radians(facing_deg))
@@ -500,9 +503,10 @@ def _world_box(objs, depsgraph):
 # -- audits ------------------------------------------------------------------------------
 
 
-def audit_frames(seconds, fps=None, scene=None):
+def audit_frames(seconds, fps=None, scene=None, resolution=None):
     """Frame math: integer fps, (end - start + 1) / fps equals the brief's seconds, frame 1
-    start, resolution at 100 %. Returns a list of problems ([] passes)."""
+    start, resolution at 100 % and at the size lock_format set (1920x1080 when it never
+    ran, or `resolution`). Returns a list of problems ([] passes)."""
     sc = scene or bpy.context.scene
     problems = []
     real_fps = sc.render.fps / (sc.render.fps_base or 1.0)
@@ -517,6 +521,10 @@ def audit_frames(seconds, fps=None, scene=None):
         problems.append(f"frame_start is {sc.frame_start}, expected 1")
     if sc.render.resolution_percentage != 100:
         problems.append(f"resolution_percentage is {sc.render.resolution_percentage}")
+    expected = list(resolution or sc.get("bx_resolution", (1920, 1080)))
+    actual = [sc.render.resolution_x, sc.render.resolution_y]
+    if actual != expected:
+        problems.append(f"resolution is {actual[0]}x{actual[1]}, expected {expected[0]}x{expected[1]}")
     return problems
 
 
