@@ -31,13 +31,16 @@ Plugin, its local MCP server `scenario-blender` is the bridge (setup and tool re
 servers: there is no `execute_blender_code`, `get_scene_info`, `get_viewport_screenshot` or
 `import_asset`.
 
-| Step                          | Plugin tool                                                                                       |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| Read the scene before acting  | `scene_summary`, then `object_detail` for one object and `datablocks_summary` for counts          |
-| Check an API before scripting | `blender_api_help` with a `bpy` path                                                              |
-| Run bpy                       | `execute_python`, with `bpy` and a `result` dict preloaded                                        |
-| Look                          | `screenshot_viewport` (viewport with overlays), `render_still` (camera or viewport at a set size) |
-| Select, move the timeline     | `select_objects`, `set_frame`                                                                     |
+| Step                          | Plugin tool and main arguments                                                                                                                 |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read the scene before acting  | `scene_summary`, then `object_detail` with `name` for one object and `datablocks_summary` for counts                                           |
+| Check an API before scripting | `blender_api_help` with `path`, such as `bpy.types.BevelModifier`                                                                              |
+| Run bpy                       | `execute_python` with `code`; `bpy` and `result = {}` are preloaded, so fill `result`                                                          |
+| Look                          | `screenshot_viewport` (viewport with overlays), `render_still` with `source` (`CAMERA` or `VIEWPORT`), `width` and `height`; both need the GUI |
+| Select, move the timeline     | `select_objects` with `names` (a list), `set_frame` with `frame`                                                                               |
+
+Read each tool's input schema from the server before its first call: it is the reference for
+optional arguments.
 
 - `execute_python` stays off until the user enables **Allow connected agents to run Python** in the
   plugin preferences. A `PermissionError` means ask for it or stay on the specific tools. A refused
@@ -111,7 +114,9 @@ textures), text-image-to-blender-blockout (camera-locked blockouts for render-to
   edge-length CV, and fidelity to a high poly; `verdict(report)` lists problems. CLI:
   `blender -b f.blend --python bx_audit.py -- --object Name [--high Sculpt] [--json out.json]`.
 - `bx_review.py`: `review(objs, out_dir, views, modes)` writes one contact sheet (rows = modes, cols
-  = views) in a temporary scene, user settings untouched; `playblast(path)`; `turntable(obj, path)`.
+  = views) in a temporary scene, user settings untouched; `playblast(out_path, res_pct=50)`;
+  `turntable(obj, out_path, frames=72, res=720)`. Only `review` has a command line: call the others
+  from a short wrapper script.
 - `bx_gui.py`: real brushes in a live session: `set_view`, `activate_brush(mode, name)`,
   `stroke(mode, world_points, size, strength)`, `run(op, **kw)`, `set_paint_color`, `screenshot`.
 
