@@ -57,7 +57,7 @@ images, 10 videos, 10 audio, 4 to 30 seconds, up to 1080p; the 2.0, Fast, and Mi
 caps do, six times across the family for one 4 second 480p job, so `dry_run` the same job on two
 members before a batch.
 
-Several takes to compare, or one to approve before paying for 1080p: `draft: true` (2.5 at authoring time, `resolution` ignored while it is on) renders a 480p take, priced like a plain 480p render, that a separate finisher completes to 1080p without regenerating it. With no seed, it is the only way to ship the exact take that was approved: re-running the payload at 1080p performs it again differently. Variations, review and completion: the `scenario-seedance-drafts` skill.
+**Draft mode.** Seedance 2.5 has a draft mode: `draft: true` renders a cheap 480p preview, priced like a plain 480p render (`resolution` is ignored). A separate model, Seedance 2.5 Draft Complete, turns that preview into the same video at 1080p within 7 days: find it with `search`, `query="seedance draft complete"` (`model_bytedance-seedance-2-5-draft-complete` at authoring time), and pass the draft as `draftVideo`. Draft several takes, then complete only the one you keep. Re-running the prompt at 1080p instead gives a different video, since Seedance has no seed. Full workflow: the `scenario-seedance-drafts` skill.
 
 ## The conditioning rule
 
