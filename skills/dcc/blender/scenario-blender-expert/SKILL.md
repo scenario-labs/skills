@@ -26,7 +26,8 @@ pile up. Live work goes through the user's already-running Blender; everything e
 one Blender process at a time per agent (other sessions may be rendering on the same machine).
 
 **Live channel: the Scenario Blender Plugin.** When the user's Blender runs the Scenario Blender
-Plugin, its local MCP server `scenario-blender` is the bridge (setup and tool reference at
+Plugin, its local MCP server `scenario-blender` is the bridge. Setup, quotes, generation and placing
+results are the `scenario-blender` skill's work; this section covers the bpy side (guide at
 [blender.scenario.com](https://blender.scenario.com/)). Its tool names differ from other Blender MCP
 servers: there is no `execute_blender_code`, `get_scene_info`, `get_viewport_screenshot` or
 `import_asset`.
