@@ -16,15 +16,15 @@ Seedance modes, conditioning and sound: `scenario-seedance`. Connection and the 
 
 ## Quick reference
 
-| Step     | Call                                                           | What to know                                                                                                                                                      |
-| -------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Discover | `search`, `target="models"`, `query="seedance"`, `public=true` | `model_schema_get` the newest member: `draft` is a boolean there (2.5 at authoring time), and `resolution` is ignored while it is on                              |
-| Draft    | `model_run` with `"draft": true`, `wait=false`                 | One call per take: no seed and no batch-count field, so repeat the identical payload. Set `duration` to the shot (Auto priced the 30 s cap); edit mode takes `-1` |
-| Wait     | `jobs_wait` with every job id                                  | 15 s edit-mode drafts took 7 to 8 minutes; re-call with the returned `pending_job_ids`                                                                            |
-| Review   | `asset_download`, then local contact sheets and close-ups      | See Reviewing takes                                                                                                                                               |
-| Finisher | `search`, `target="models"`, `query="seedance draft complete"` | Its one input is `draftVideo`, a scalar file                                                                                                                      |
-| Complete | `model_run` with `draftVideo` set to the draft job's asset id  | `dry_run` first; took 1 to 3 minutes. `asset_get` reports an H.264 MP4, but `asset_download` returns the original MOV (HEVC in one run): compose by asset id      |
-| Verify   | `asset_get`                                                    | 1080 wide, the draft's frame rate and duration                                                                                                                    |
+| Step     | Call                                                                          | What to know                                                                                                                                                      |
+| -------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discover | `search`, `target="models"`, `query="seedance"`, `public=true`                | `model_schema_get` the newest member: `draft` is a boolean there (2.5 at authoring time), and `resolution` is ignored while it is on                              |
+| Draft    | `model_run` with `"draft": true`, `wait=false`                                | One call per take: no seed and no batch-count field, so repeat the identical payload. Set `duration` to the shot (Auto priced the 30 s cap); edit mode takes `-1` |
+| Wait     | `jobs_wait` with every job id                                                 | 15 s edit-mode drafts took 7 to 8 minutes; re-call with the returned `pending_job_ids`                                                                            |
+| Review   | `asset_download`, then local contact sheets and close-ups                     | See Reviewing takes                                                                                                                                               |
+| Finisher | `search`, `target="models"`, `query="seedance draft complete"`, `public=true` | Its one input is `draftVideo`, a scalar file                                                                                                                      |
+| Complete | `model_run` with `draftVideo` set to the draft job's asset id                 | `dry_run` first; took 1 to 3 minutes. `asset_get` reports an H.264 MP4, but `asset_download` returns the original MOV (HEVC in one run): compose by asset id      |
+| Verify   | `asset_get`                                                                   | 1080 wide, the draft's frame rate and duration                                                                                                                    |
 
 A draft stays completable for 7 days from its creation. Record each take's asset id straight off its `jobs_wait` row. Review copies made from a draft (a music version, a trim) are fine, but each is a new asset: only that recorded id resolves to the draft task the finisher completes.
 
