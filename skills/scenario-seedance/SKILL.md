@@ -57,7 +57,10 @@ images, 10 videos, 10 audio, 4 to 30 seconds, up to 1080p; the 2.0, Fast, and Mi
 caps do, six times across the family for one 4 second 480p job, so `dry_run` the same job on two
 members before a batch.
 
-**Draft mode.** `draft: true` on Seedance 2.5 renders a cheap 480p preview (`resolution` ignored). `model_bytedance-seedance-2-5-draft-complete` (at authoring time; input `draftVideo`) turns it into the same video at 1080p within 7 days. Complete only the take you keep: re-running the prompt at 1080p gives a different video. See the `scenario-seedance-drafts` skill.
+**Draft mode.** `draft: true` on Seedance 2.5 renders a cheap 480p preview (`resolution` ignored).
+`model_bytedance-seedance-2-5-draft-complete` (at authoring time; input `draftVideo`) turns it into
+the same video at 1080p within 7 days. Complete only the take you keep: re-running the prompt at
+1080p gives a different video. See the `scenario-seedance-drafts` skill.
 
 ## The conditioning rule
 
