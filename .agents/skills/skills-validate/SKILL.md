@@ -13,9 +13,9 @@ then report where that agent got stuck. A defect here is a defect in the skill t
 agent.
 
 Flags: `--pr <number>` targets a PR instead of detecting one, `--plan-only` runs the zero-cost
-planning protocol from AGENTS.md instead of live generation, `--task "..."` supplies the use case
-instead of writing one, `--no-post` stops before publishing anything, `--keep` keeps the run
-directory.
+planning protocol from docs/application-test.md instead of live generation, `--task "..."` supplies
+the use case instead of writing one, `--no-post` stops before publishing anything, `--keep` keeps
+the run directory.
 
 Live runs spend Scenario credits. Keep every generation the smallest one that still proves the
 point.

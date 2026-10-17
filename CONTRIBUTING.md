@@ -74,10 +74,11 @@ pnpm validate # house style, formatting, supporting files, groupings, README tab
 pnpm test     # only needed when a shipped script changed; suites live in tests/<name>/
 ```
 
-A new or changed skill also needs the application test from AGENTS.md ("Validation and testing"): a
-clean-room agent runs a realistic task with only the skill installed, and its plan is graded against
-the public tool reference. `/skills:validate <name>` drives it end to end. Mechanical validation
-checks the format; the application test checks whether the skill actually teaches.
+A new or changed skill also needs the application test from
+[docs/application-test.md](docs/application-test.md): a clean-room agent runs a realistic task with
+only the skill installed, and its plan is graded against the public tool reference.
+`/skills:validate <name>` drives it end to end. Mechanical validation checks the format; the
+application test checks whether the skill actually teaches.
 
 ## Commits and pull requests
 

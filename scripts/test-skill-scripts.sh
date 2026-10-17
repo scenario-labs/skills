@@ -2,7 +2,7 @@
 # Runs the test suites for scripts shipped with skills (see AGENTS.md):
 # - every core skill that ships a .py or .ts file (at any depth) must have
 #   at least one test file under tests/<name>/; expert tools are exempt
-#   (AGENTS.md, "Expert tools"), and check-skill-files.sh still parses every
+#   (docs/expert-tools.md), and check-skill-files.sh still parses every
 #   Python script they ship
 # - every tests/<name>/ directory must match an existing skill and hold
 #   at least one test file

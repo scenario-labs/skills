@@ -1,0 +1,40 @@
+# Expert tools
+
+Read this before editing anything under `skills/dcc/` or `skills/game-engines/`.
+[AGENTS.md](../AGENTS.md) says what the tier is; this file lists how the authoring contract differs
+for it.
+
+The authoring contract applies with these differences, because the tier drives an application rather
+than the MCP server:
+
+- The MCP rules (MCP as the surface, `recommend` discovery, model ids) do not apply. The rest does,
+  including the frontmatter, the 2500-word cap, house style, public content only, and the
+  sibling-install sentence.
+- Descriptions follow the spec's 1024-character cap, not the 500-character target. Bodies run near
+  the cap, not the 1000-word target. Both are the author's choice, kept until a live run shows what
+  to trim.
+- Shipped scripts need no suite of their own under `tests/<name>/`: the behavior suites live in the
+  author's build project and run against the application.
+  - One suite per family, `tests/scenario-<app>-expert/` (the same file in each), imports every
+    script with system Python and checks that each skill name a script uses to find the lead's
+    `scripts/` exists. `pnpm skill-files` still parses every Python script.
+  - Godot is the exception that runs the application: its toolkit branches per OS (locks, the
+    process table, copies). `tests/scenario-godot-expert/test_toolkit_live.py` runs against a real
+    Godot on Linux, macOS, and Windows in `.github/workflows/godot.yml` whenever a Godot script
+    changes. Without Godot installed its live tests skip; its lock and GUI-check tests still run in
+    `pnpm test`.
+  - Unity's `tests/scenario-unity-expert/test_toolkit_offline.py` needs no application: it runs the
+    toolkit's lock probe, process-table parsing, and signal handling in `pnpm test`.
+    `.github/workflows/unity.yml` runs it on macOS, the OS the toolkit targets, whenever a Unity
+    script changes.
+- A link to a subfolder (`scripts/AgentKit/`, never `scripts/` itself) covers the files under it:
+  these skills ship code trees an agent copies into a project whole.
+- cspell skips code, fenced and inline, and YouTube video ids. Prose is checked as everywhere else
+  (`cspell.json` overrides).
+- Each family is one `skills.sh.json` grouping titled "Expert tools: <app>". Every expert grouping
+  comes after every core grouping, so the expert tools stay at the bottom of skills.sh and the
+  installer picker (`pnpm groupings` enforces both). A new core grouping goes above them, which
+  renumbers their plugin ids.
+- The [application test protocol](application-test.md) grades MCP plans. For an expert tool, grade
+  the plan against the lead skill's execution channels and the application's own documentation
+  instead.

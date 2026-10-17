@@ -16,7 +16,7 @@ change are three PRs. See CONTRIBUTING.md and AGENTS.md.
 
 - [ ] `pnpm format` ran, then `pnpm validate` passes locally
 - [ ] `pnpm test` passes (required only when a shipped script changed)
-- [ ] For a new or changed skill: the application test from AGENTS.md ran
+- [ ] For a new or changed skill: the application test from docs/application-test.md ran
       (`/skills:validate <name>`), and the result is summarized below
 
 <!-- Application test result: the task used, pass or fail, what was fixed.

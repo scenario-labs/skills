@@ -293,40 +293,10 @@ applications installed on the user's machine through their Python, bridges, and 
 - The family folder's `README.md` records how the family was built and how far it was verified. It
   sits outside every skill folder, so no install ships it. It carries no version; this repository's
   releases do.
-
-The authoring contract applies with these differences, because the tier drives an application rather
-than the MCP server:
-
-- The MCP rules (MCP as the surface, `recommend` discovery, model ids) do not apply. The rest does,
-  including the frontmatter, the 2500-word cap, house style, public content only, and the
-  sibling-install sentence.
-- Descriptions follow the spec's 1024-character cap, not the 500-character target. Bodies run near
-  the cap, not the 1000-word target. Both are the author's choice, kept until a live run shows what
-  to trim.
-- Shipped scripts need no suite of their own under `tests/<name>/`: the behavior suites live in the
-  author's build project and run against the application.
-  - One suite per family, `tests/scenario-<app>-expert/` (the same file in each), imports every
-    script with system Python and checks that each skill name a script uses to find the lead's
-    `scripts/` exists. `pnpm skill-files` still parses every Python script.
-  - Godot is the exception that runs the application: its toolkit branches per OS (locks, the
-    process table, copies). `tests/scenario-godot-expert/test_toolkit_live.py` runs against a real
-    Godot on Linux, macOS, and Windows in `.github/workflows/godot.yml` whenever a Godot script
-    changes. Without Godot installed its live tests skip; its lock and GUI-check tests still run in
-    `pnpm test`.
-  - Unity's `tests/scenario-unity-expert/test_toolkit_offline.py` needs no application: it runs the
-    toolkit's lock probe, process-table parsing, and signal handling in `pnpm test`.
-    `.github/workflows/unity.yml` runs it on macOS, the OS the toolkit targets, whenever a Unity
-    script changes.
-- A link to a subfolder (`scripts/AgentKit/`, never `scripts/` itself) covers the files under it:
-  these skills ship code trees an agent copies into a project whole.
-- cspell skips code, fenced and inline, and YouTube video ids. Prose is checked as everywhere else
-  (`cspell.json` overrides).
-- Each family is one `skills.sh.json` grouping titled "Expert tools: <app>". Every expert grouping
-  comes after every core grouping, so the expert tools stay at the bottom of skills.sh and the
-  installer picker (`pnpm groupings` enforces both). A new core grouping goes above them, which
-  renumbers their plugin ids.
-- The application test protocol grades MCP plans. For an expert tool, grade the plan against the
-  lead skill's execution channels and the application's own documentation instead.
+- Before editing anything under `skills/dcc/` or `skills/game-engines/`, read
+  [docs/expert-tools.md](docs/expert-tools.md). The authoring contract applies there with
+  differences: no MCP rules, longer descriptions and bodies, family-level tests, and the expert
+  groupings last.
 
 ## Authoring aids
 
@@ -340,30 +310,9 @@ than the MCP server:
   there exclude them from CLI discovery. Agent directories alone do not, since the CLI also scans
   `.agents/skills/` and `.claude/skills/`.
 - Where their generic guidance and this file disagree, this file wins.
-
-Repository commands:
-
-- They live in regular `.agents/skills/skills-*/SKILL.md` files. Codex exposes `$skills-pr-handle`
-  and `$skills-validate`; the [contributor guide](CONTRIBUTING.md#shared-agent-commands) maps their
-  Claude names.
-- Claude command paths under `.claude/commands/` are relative symlinks to those files. Edit the
-  canonical files, then run `pnpm sync:agent-commands` to create or repair links (`pnpm format` runs
-  it too).
-- Explicit-only commands carry `disable-model-invocation: true` and `argument-hint` in shared
-  frontmatter for Claude, plus `allow_implicit_invocation: false` in `agents/openai.yaml` for Codex.
-  Codex CLI 0.154.0 was verified to load both commands with those Claude fields present.
-- These maintainer skills keep their command structure and stay outside the published `skills/`
-  catalog.
-- Set `metadata.internal: true` (a YAML boolean) in each command's frontmatter to exclude it from
-  normal CLI discovery and bulk installs. Explicit skill requests or `INSTALL_INTERNAL_SKILLS=1` can
-  still include it. The flag does not remove existing skills.sh listings: request removal from the
-  maintainers (see [vercel-labs/skills#1578](https://github.com/vercel-labs/skills/issues/1578)).
-- Add new command mappings in `scripts/sync-agent-commands.mjs`.
-- `pnpm validate` checks command metadata, argument hints, invocation guards, and symlinks. Strict
-  spec validation covers only published `skills/*/`, because the spec rejects Claude frontmatter
-  extensions.
-- `pnpm test` runs the command, plugin-manifest, style, and readme regression suites as well as the
-  shipped-script suites.
+- Repository commands live in `.agents/skills/skills-*/SKILL.md`, with Claude command symlinks under
+  `.claude/commands/`. Before adding or editing one, read
+  [docs/agent-commands.md](docs/agent-commands.md).
 
 ## Repo tooling
 
@@ -394,7 +343,8 @@ Repository commands:
   - **`pnpm style`**: house style, the body budget, and the fan-out, table-cell, sentence-length,
     and wording notices.
   - **`pnpm format:check`**: prettier.
-  - **`pnpm sync:agent-commands:check`**: the command links and metadata (see Authoring aids).
+  - **`pnpm sync:agent-commands:check`**: the command links and metadata (see
+    [docs/agent-commands.md](docs/agent-commands.md)).
   - **`pnpm skill-files`**: supporting files next to a SKILL.md are linked and runnable, a skill's
     own `README.md` excepted.
   - **`pnpm lint:py`**: ruff's pyflakes rules over every Python script, configured in `ruff.toml`,
@@ -404,7 +354,7 @@ Repository commands:
   - **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
   - **`pnpm readme`**: the README Skills section mirrors `skills.sh.json`, one subsection per
     grouping in the same order with the same title, description, and rows, and every skill has
-    exactly one non-stale row. It also checks the install commands (see below).
+    exactly one non-stale row. It also checks the install commands (see Adding a skill).
   - **`pnpm words:check`**: `project-words.txt` is sorted and deduplicated.
   - **`pnpm spell`**: cspell.
   - **`pnpm spec`**: spec validation.
@@ -437,54 +387,18 @@ Repository commands:
   sorted (byte order, deduplicated): the pre-commit hook sorts it, and `pnpm words:sort` does it by
   hand.
 
-### skills.sh and install commands
+### Adding a skill
 
-- `pnpm groupings` proves `skills.sh.json` valid, not that skills.sh has applied it.
-  - Per the [customize docs](https://www.skills.sh/docs/customize), the directory reads the file
-    only after its telemetry has seen the repository: in practice, after a fresh
-    `npx skills add scenario-labs/skills` run with telemetry enabled.
-  - Repo pages are cached, so the skill content on
-    [the repo page](https://www.skills.sh/scenario-labs/skills) trails `main` by hours.
-  - Ungrouped listings appear under "Other skills". `notGrouped` controls their position, not their
-    visibility.
-- `pnpm manifest` (`scripts/generate-plugin-manifest.mjs`) generates
-  `.claude-plugin/marketplace.json` from `skills.sh.json`, the single source of truth. Never edit
-  the manifest by hand. `pnpm manifest:check` fails validation and CI when the two drift; the
-  pre-commit hook regenerates the manifest.
-  - The manifest gives the `npx skills add` picker its group headers. The skills CLI groups the
-    picker by the manifest's plugin entries and never reads `skills.sh.json`, which only drives the
-    skills.sh repo page.
-  - Plugin names carry a two-digit position prefix (`01.-getting-started`, shown as "01. Getting
-    Started"), because the picker sorts group names alphabetically. The prefix makes it follow the
-    `skills.sh.json` order, so inserting or merging a grouping renumbers the plugin ids on
-    regeneration.
-  - The manifest also makes the repo a Claude Code plugin marketplace, one plugin per grouping.
-- Install commands:
-  - `npx skills add scenario-labs/skills` opens a picker with nothing preselected, so a reader who
-    runs the bare command and hits enter installs nothing. The README says so on the command.
-  - The README does not offer `--skill "*"`: it takes every skill, the expert tools included, and an
-    agent loads every installed skill's description at startup.
-  - The README Install section leads with a default command that writes out every core skill, then
-    points to `INSTALL.md`.
-  - `INSTALL.md` holds one command per role and one per goal. A role command is a base of `scenario`
-    plus the troubleshooting skills, the role's lead skills, and the siblings they name in
-    backticks, one level deep (transitively would pull in nearly everything). A goal command is
-    `scenario`, the goal's lead skills, and their siblings.
-  - Roles are the complete taxonomy; goals are shortcuts for readers who think in outcomes. Both
-    stay in `INSTALL.md`, not the README, so every curated command sits in one checked file.
-  - `pnpm readme` checks that every install command passes all its names after one `--skill` (the
-    CLI collects names up to the next flag) and names only real skills. It checks that the default
-    lists exactly the core skills, and that each family README's command lists exactly its family.
-  - Until the skills CLI can install a group from the command line
-    ([#192](https://github.com/scenario-labs/skills/issues/192)), `pnpm readme` also fails when a
-    core skill sits in no `INSTALL.md` role command, or when a role's or goal's "N skills." count
-    disagrees with its command.
-  - After adding a core skill, add it to the role it serves (as an outcome bullet when it leads one)
-    and to any goal it leads or serves, each with any sibling it names that the command lacks. Then
-    update the counts.
-  - A skills.sh pack URL (`npx skills add https://skills.sh/p/<id>`) is the only install that
-    preselects a set. Packs are created manually on skills.sh behind a Vercel sign-in (no CLI or
-    API); pack links belong in README.md's Install section.
+- List it in a `skills.sh.json` grouping and give it one row in the README Skills section
+  (`pnpm groupings` and `pnpm readme` check both).
+- A core skill also joins the README default install command, the `INSTALL.md` role it serves (as an
+  outcome bullet when it leads one), and any goal it leads or serves. Add any sibling it names that
+  a command lacks, then update the "N skills." counts.
+- An expert skill joins its family README's install command.
+- Never edit `.claude-plugin/marketplace.json`: the pre-commit hook regenerates it from
+  `skills.sh.json`.
+- How skills.sh, the installer picker, and the install commands work:
+  [docs/listing-and-install.md](docs/listing-and-install.md).
 
 ### Pull requests and releases
 
@@ -503,47 +417,16 @@ Repository commands:
   - Every other Conventional Commits type is invisible to the changelog: chore and ci by design, but
     also refactor, test, style, and build. A release window holding only those cuts no release at
     all, so a change to shipped skill content must be typed feat, fix, or docs.
-  - release-please never lets you pick the version. To force an exact one, dispatch the workflow by
-    hand: `gh workflow run release-please.yml --ref main -f release_as=X.Y.Z`, which must be higher
-    than `.release-please-manifest.json`. Never push an empty `Release-As` commit to `main`.
-  - The dispatch runs the release-please CLI (pinned in `package.json` to the version the action
-    bundles), not the action: release-please-action v5 silently drops `release-as` in manifest mode,
-    which this repo's `release-please-config.json` selects.
-  - The override is one-shot: the next push to `main` re-derives the version and rewrites the
-    release PR, so merge it promptly. A pin that survives pushes is `"release-as"` in
-    `release-please-config.json`, through a PR, removed once released.
-  - Merging the release PR tags `skills-vX.Y.Z`, titles the GitHub release `skills: vX.Y.Z`,
-    rewrites `CHANGELOG.md`, `version.txt`, and `.release-please-manifest.json`, and publishes the
-    GitHub release.
-  - `.github/workflows/publish-changelog.yml` then posts the notes to the public changelog at
-    [scenario.com/changelog](https://www.scenario.com/changelog). It hangs off the
-    `release: published` event, not the release-please run, because release-please reports a created
-    release exactly once. Re-run a failed post from the Actions tab, or dispatch it by tag.
-  - Those three files are release-please's alone, never hand-edited, like the marketplace manifest.
-    That is why `CHANGELOG.md` sits in `.prettierignore`, where it also keeps prettier from
-    rewriting release-please's `*` bullets. It also sits in cspell's ignorePaths, as a guard should
-    the spell-check globs widen; `scripts/check-spelling.sh` does not reach it today.
-  - In `.release-please-manifest.json`, exactly `0.0.0` is the sentinel for "no release yet": it
-    makes `initial-version` and the root `bootstrap-sha` apply. Editing it to match
-    `initial-version` looks like a sync fix and silently changes the first release number.
-  - The release PR title (`chore: release skills X.Y.Z`) passes commitlint because an omitted scope
-    only warns.
-  - The `skills-` tag prefix matches the sibling repositories' convention. It is set by hand as
-    `component` plus `include-component-in-tag` in `release-please-config.json`, because
-    `release-type: simple` derives none, unlike `release-type: node`, which takes one from the
-    `package.json` name.
-  - Changing the tag format orphans release-please from its own history unless the existing tag and
-    its GitHub release move with it. The next changelog then replays every commit since
-    `bootstrap-sha`.
+- release-please owns `CHANGELOG.md`, `version.txt`, and `.release-please-manifest.json`, like the
+  marketplace manifest: never hand-edit them.
+- Forcing a version, the tag format, the changelog post, and Dependabot:
+  [docs/ci-and-releases.md](docs/ci-and-releases.md).
 
 ### CI and review agents
 
 - Every `uses:` in `.github/workflows/` names a full commit SHA with the release in a trailing
   comment (`actions/checkout@<sha> # v7.0.1`), never a tag: a tag is a pointer its publisher can
   move.
-- Dependabot (`.github/dependabot.yml`) proposes one grouped `ci(deps)` PR a week, for releases at
-  least seven days old. It skips release-please-action, which moves by hand together with the
-  `release-please` pin in `package.json`.
 - The `skill-files-reviewer` agent (`.claude/agents/`) reviews supporting files added or changed
   next to a SKILL.md: justified, linked from SKILL.md, runnable, MCP for the agent's own steps,
   public content only, house style.
@@ -561,15 +444,17 @@ Repository commands:
   push and PR. It is not in the pre-commit hook, since suites may need system tools such as ffmpeg,
   so run it by hand when touching a script. A `tests/<name>/requirements.txt` declares extra Python
   dependencies for CI.
-- Before merging a new or changed skill, run the application test below. Mechanical validation
-  checks the format; the application test checks whether the skill actually teaches.
+- `pnpm test` runs the command, plugin-manifest, style, and readme regression suites as well as the
+  shipped-script suites.
+- Before merging a new or changed skill, run the application test. Mechanical validation checks the
+  format; the application test checks whether the skill actually teaches.
 - `/skills:validate <name>` (`.claude/commands/skills/`) drives that test:
   - it writes a use case for the skill;
   - installs the working-tree copy into a clean-room agent with no repository context;
   - runs it end to end against the real MCP server, in a team and project you choose;
   - grades the transcript;
   - posts the report to the current branch's PR, or asks what to do with it when there is none.
-  - `--plan-only` runs the zero-cost planning variant below instead of live generation.
+  - `--plan-only` runs the zero-cost planning variant of the protocol instead of live generation.
 
 Rules learned from past runs:
 
@@ -588,40 +473,7 @@ Rules learned from past runs:
 - Stop hunting a mechanism after roughly two inconclusive controlled runs: ship the rule that holds
   regardless and record the open question.
 
-### Application test protocol
-
-1. Spawn a fresh agent with no conversation history. Give it only:
-   - a framing line ("you are an agent connected to the Scenario MCP server; the skill document
-     below is installed");
-   - the SKILL.md under test, plus the `scenario` SKILL.md when testing any other skill, since real
-     installs ship both;
-   - one realistic task.
-2. Ask for a numbered tool-call plan with exact tool names and argument shapes. Planning only: the
-   agent must not execute tools, browse, or consult anything beyond the provided documents, and must
-   flag uncertainty instead of guessing.
-3. Pick a task that forces the skill's non-obvious facts (upload flow, job-wait re-calls, dry runs,
-   launch semantics), not one answerable with generic MCP intuition.
-4. Grade the plan against the [tool reference](https://mcp.scenario.com/docs/tools), fetched fresh
-   rather than recalled:
-   - Every tool and parameter named in the plan exists. One invented name is a fail.
-   - Correct flow: the loop the skill under test teaches. For a generation task: discovery,
-     `model_schema_get`, `model_run`, then `jobs_wait` re-called with `pending_job_ids` for any job
-     still running (fast models return complete inline; `job_get` polling is never correct), then
-     `asset_display` / `asset_download`.
-   - Generative model ids come from a `recommend` or `search` step, never asserted as constants. A
-     named first-party tool model is not a violation when it is a sanctioned singleton or the member
-     the skill under test is dedicated to; a named generative model always is.
-   - The agent's own steps stay on MCP. A plan that reaches for the REST API, the SDK, or a CLI
-     where an MCP tool exists fails, and so does one that invents an API call to cover a capability
-     MCP lacks. Running a script the skill ships does not fail, whatever that script uses
-     internally, and neither does saving a URL an MCP tool returned.
-   - The task's trap steps are handled the way the skill teaches.
-   - Anything asserted that appears in neither the SKILL.md nor the tool reference counts as a
-     guess, even when it happens to be right.
-5. A failure is a defect in the skill text. Fix the missing or ambiguous sentence, then re-run with
-   a new fresh agent: a failed agent is contaminated by its own mistake.
-6. Baseline probe, once per new skill (not per edit): run the same task with no skill installed, to
-   confirm the skill earns its context cost.
+The protocol itself: [docs/application-test.md](docs/application-test.md).
 
 ## Codex commit attribution
 
