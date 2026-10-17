@@ -47,7 +47,9 @@ Before any call, write down:
   beats pinned to seconds, converted to frames now.
 - **Levels**: density (simple, medium, advanced, expert: footprint, elements, heroes, extras,
   shots), fidelity (rough, shaped, detailed) and color scheme, read off the brief and set apart:
-  [levels](references/levels.md). Expert means many elements, movers and cuts, never finer blocks.
+  [levels](references/levels.md). Where the brief is silent: advanced, shaped, category colors, and
+  say so; drop to simple or medium only when the brief names one actor in one place. Expert means
+  many elements, movers and cuts, never finer blocks.
 - **Identity colors**: hero red, then blue, green, yellow, purple, cyan.
 - **Deliberate gaps** the video model fills, and **acceptance tests** the brief states: they become
   mandatory audits.

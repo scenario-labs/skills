@@ -3,6 +3,12 @@
 Three dials, set in the build plan and recorded in the hand-off sheet. They are independent: an
 expert scene can be rough, a simple one detailed. `K` is `bx_kits`, `B` is `bx_blockout`.
 
+**Defaults when the brief is silent: advanced density, shaped fidelity, category colors.** A dressed
+world with crowd, traffic and two to four shots is what makes the render read as a real place, and
+it held as well as the simple scene in the test below. Go down only when the brief is genuinely
+small (one actor, one place, one move); go up to expert when it asks for scale, a crowd or a cut
+sequence. Record the choice in the build plan.
+
 ## Density: how much scene
 
 | Level    | Footprint | Elements   | Heroes | Extras    | Shots   | Each shot  | One take   | Typical brief                                                  |
