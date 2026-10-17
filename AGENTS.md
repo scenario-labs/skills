@@ -16,6 +16,21 @@ skyboxes, 3D, and custom models, for games, entertainment, and any creative vert
 - The one exception to the MCP focus: the expert tools, teams of skills that drive DCC software and
   game engines installed on the user's machine (see Expert tools).
 
+## Quick start
+
+- `pnpm install`: once after cloning. It installs the git hooks.
+- `pnpm format && pnpm validate`: before committing. These are the checks CI runs.
+- `pnpm test`: after touching a script. It runs Python suites with the `python3` on your PATH, so a
+  suite with a `tests/<name>/requirements.txt` fails on imports unless those packages are installed.
+  Run that suite with its packages:
+
+  ```bash
+  uv run --no-project --with-requirements tests/<name>/requirements.txt python -m unittest discover -s tests/<name>
+  ```
+
+- `/skills:validate <name>` (`$skills-validate` in Codex): the application test, before merging a
+  skill change.
+
 ## Layout
 
 ```
