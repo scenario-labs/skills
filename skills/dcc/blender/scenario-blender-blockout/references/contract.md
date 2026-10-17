@@ -1,6 +1,7 @@
 # Blockout contract tables
 
-Situational detail for the output contract in SKILL.md: names, dimensions, colors, format, lenses, rigs, handheld budgets, scene recipes and recovery. `B` is `bx_blockout`.
+Situational detail for the output contract in SKILL.md: names, dimensions, colors, format, lenses,
+rigs, handheld budgets, scene recipes and recovery. `B` is `bx_blockout`.
 
 ## Names and collections
 
@@ -14,9 +15,12 @@ Situational detail for the output contract in SKILL.md: names, dimensions, color
 | `REF_`                     | scale reference figure                | `TXT_`         | one text object per letter            |
 | `LGT_key`, `LGT_rim`, etc. | lights named by purpose               | `ZZ_parked`    | hidden collection for parked defaults |
 
-- Cameras carry the shot index and a slug: `CAM_01_establish`, `CAM_02_ots_blue`; a single-camera scene uses `CAM_main`.
-- One root collection per build (`BLK_<scene>`) with role children (`ENV`, `FIGS`, `PROPS`, `RIG`, `LIGHTS`).
-- A scene the video model must fill with invented content gets a parked `CAM_gap` aimed at empty space, so the playblast shows black for exactly that span, and the sheet says why.
+- Cameras carry the shot index and a slug: `CAM_01_establish`, `CAM_02_ots_blue`; a single-camera
+  scene uses `CAM_main`.
+- One root collection per build (`BLK_<scene>`) with role children (`ENV`, `FIGS`, `PROPS`, `RIG`,
+  `LIGHTS`).
+- A scene the video model must fill with invented content gets a parked `CAM_gap` aimed at empty
+  space, so the playblast shows black for exactly that span, and the sheet says why.
 
 ## Dimensions
 
@@ -40,13 +44,23 @@ Typical real-world values; say in the plan which ones you assumed.
 
 ## Color
 
-- Palette (`B.PALETTE`, linear RGB): red (0.80, 0.05, 0.05), blue (0.05, 0.18, 0.85), green (0.05, 0.60, 0.12), yellow (0.90, 0.72, 0.04), purple (0.50, 0.07, 0.78), cyan (0.04, 0.75, 0.80). The hero takes red. These colors are load-bearing: the prompt later says which reference image each one becomes.
+- Palette (`B.PALETTE`, linear RGB): red (0.80, 0.05, 0.05), blue (0.05, 0.18, 0.85), green (0.05,
+  0.60, 0.12), yellow (0.90, 0.72, 0.04), purple (0.50, 0.07, 0.78), cyan (0.04, 0.75, 0.80). The
+  hero takes red. These colors are load-bearing: the prompt later says which reference image each
+  one becomes.
 - Set gray 0.32 to 0.55 (`B.NEUTRAL` 0.42), one light, world color about 0.035 to 0.055.
-- `B.paint` shares one material per color (`MAT_cc0d0d`); a figure gets its own (`MAT_FIG_<name>` via `material_name`) so it can be recolored alone. For linked duplicates put the material on the mesh, which `B.box` does.
-- When facing matters on a single block (a monolith, a statue base): red front face, black back, green sides and top.
-- Grid floors, checkerboards and textured walls go only where the camera travels and depth must read; the sheet calls them "motion-tracking aid, replace, never inherit".
-- Lookdev or restyle rig: all gray clay, one sun, no identity colors, by design; it tests silhouettes, not characters.
-- The plugin's Blockout colors by category with muted values (wall 0.78, floor 0.62, vehicle a pale red 0.75, 0.40, 0.40). Keep its set elements, recolor anything that becomes a tracked character or vehicle.
+- `B.paint` shares one material per color (`MAT_cc0d0d`); a figure gets its own (`MAT_FIG_<name>`
+  via `material_name`) so it can be recolored alone. For linked duplicates put the material on the
+  mesh, which `B.box` does.
+- When facing matters on a single block (a monolith, a statue base): red front face, black back,
+  green sides and top.
+- Grid floors, checkerboards and textured walls go only where the camera travels and depth must
+  read; the sheet calls them "motion-tracking aid, replace, never inherit".
+- Lookdev or restyle rig: all gray clay, one sun, no identity colors, by design; it tests
+  silhouettes, not characters.
+- The plugin's Blockout colors by category with muted values (wall 0.78, floor 0.62, vehicle a pale
+  red 0.75, 0.40, 0.40). Keep its set elements, recolor anything that becomes a tracked character or
+  vehicle.
 
 ## Format
 
@@ -55,11 +69,14 @@ Typical real-world values; say in the plan which ones you assumed.
 | 24  | 1..144 | 1..192 | 1..240 | 1..288 | 1..360 | 1..480 | 1..720 |
 | 30  | 1..180 | 1..240 | 1..300 | 1..360 | 1..450 | 1..600 | 1..900 |
 
-Resolution: 16:9 1920x1080, 21:9 2520x1080, 9:16 1080x1920, always at 100 %. Prefer several short shots to one long take when layout fidelity matters (see handoff.md, tested limits).
+Resolution: 16:9 1920x1080, 21:9 2520x1080, 9:16 1080x1920, always at 100 %. Prefer several short
+shots to one long take when layout fidelity matters (see handoff.md, tested limits).
 
 ## Lenses
 
-`B.lens_for_coverage(distance_m, vertical_coverage_m)`: focal = sensor height x distance / vertical coverage, sensor 36 mm wide fitted to a 16:9 frame (20.25 mm high), clamped 14 to 85 mm. Coverage for a shot size: full figure about 2.2 m, cowboy 1.4 m, medium (waist up) 1.0 m, close-up 0.4 m.
+`B.lens_for_coverage(distance_m, vertical_coverage_m)`: focal = sensor height x distance / vertical
+coverage, sensor 36 mm wide fitted to a 16:9 frame (20.25 mm high), clamped 14 to 85 mm. Coverage
+for a shot size: full figure about 2.2 m, cowboy 1.4 m, medium (waist up) 1.0 m, close-up 0.4 m.
 
 | Shot                              | Lens                     |
 | --------------------------------- | ------------------------ |
@@ -70,33 +87,57 @@ Resolution: 16:9 1920x1080, 21:9 2520x1080, 9:16 1080x1920, always at 100 %. Pre
 | Underwater route                  | 20 mm                    |
 | Macro insert                      | 85 mm, `clip_start` 0.03 |
 
-Lens is a property of the shot: a cut may change it by changing camera, a shot may ease it slowly, nothing may step it in one frame.
+Lens is a property of the shot: a cut may change it by changing camera, a shot may ease it slowly,
+nothing may step it in one frame.
 
 ## Camera rigs
 
-**Rail** (`B.rail_camera`): `CRV_<shot>` Bezier rail, `RIG_dolly_<shot>` on Follow Path (fixed position, no curve follow, `offset_factor` keyed 0 to 1 with `B.key_rail`), `RIG_aim_<shot>` child with Track To on `NULL_target_<shot>` (-Z, up Y), the camera under the aim at zero local transform. Reframe by animating the target. With `follow=<figure root>` the target rides the subject at `target_offset`, so a tracking shot holds its subject while the rail sets the camera's path.
+**Rail** (`B.rail_camera`): `CRV_<shot>` Bezier rail, `RIG_dolly_<shot>` on Follow Path (fixed
+position, no curve follow, `offset_factor` keyed 0 to 1 with `B.key_rail`), `RIG_aim_<shot>` child
+with Track To on `NULL_target_<shot>` (-Z, up Y), the camera under the aim at zero local transform.
+Reframe by animating the target. With `follow=<figure root>` the target rides the subject at
+`target_offset`, so a tracking shot holds its subject while the rail sets the camera's path.
 
-**Tracking a moving subject**: lay the rail along the subject's path at the planned height and side distance, then key the dolly so the camera keeps its planned lead on the subject. Plan it as rows of (frame, lead distance, coverage) and derive offsets from the rail length. For a constant lead on a constant-speed subject, `B.key_rail` keys evenly spaced in frame and value hold a constant speed: the auto-clamped ease only flattens the first and last key, which sit outside the shot. When the subject outruns the frame, rebuild the rail from those rows and recompute the lens from coverage; do not rotate the camera to catch up.
+**Tracking a moving subject**: lay the rail along the subject's path at the planned height and side
+distance, then key the dolly so the camera keeps its planned lead on the subject. Plan it as rows of
+(frame, lead distance, coverage) and derive offsets from the rail length. For a constant lead on a
+constant-speed subject, `B.key_rail` keys evenly spaced in frame and value hold a constant speed:
+the auto-clamped ease only flattens the first and last key, which sit outside the shot. When the
+subject outruns the frame, rebuild the rail from those rows and recompute the lens from coverage; do
+not rotate the camera to catch up.
 
-**Handheld tracking**: dolly (location noise) > gimbal (Track To the target) > camera (rotation noise). `B.rail_camera` gives the chain; add the noise below.
+**Handheld tracking**: dolly (location noise) > gimbal (Track To the target) > camera (rotation
+noise). `B.rail_camera` gives the chain; add the noise below.
 
-**Straight push-in**: the camera parented to a dolly empty with a fixed local rotation and no Track To; key only the dolly. Use it when "push in from the door" must stay perfectly straight.
+**Straight push-in**: the camera parented to a dolly empty with a fixed local rotation and no Track
+To; key only the dolly. Use it when "push in from the door" must stay perfectly straight.
 
-**Multi-shot master**: key each camera's own location, and its rotation from a look-at (`(target - cam).to_track_quat('-Z', 'Y')`). Cameras that ride a vehicle are parented to its root; pass-by cameras stay world-locked.
+**Multi-shot master**: key each camera's own location, and its rotation from a look-at
+(`(target - cam).to_track_quat('-Z', 'Y')`). Cameras that ride a vehicle are parented to its root;
+pass-by cameras stay world-locked.
 
-**Plugin `camera_path`**: one `Scenario Shot Camera` through `Shot N` marker objects, aimed at a static center; fits single orbits, push-ins, cranes and flyovers around a still set.
+**Plugin `camera_path`**: one `Scenario Shot Camera` through `Shot N` marker objects, aimed at a
+static center; fits single orbits, push-ins, cranes and flyovers around a still set.
 
 ## Easing and motion
 
 - Bezier keys, auto-clamped handles (`B.smooth_keys`): flat at the first and last key, no overshoot.
-- Speed is key spacing on the dolly's `offset_factor`: an acceleration is widening gaps, a pause is two near-equal values.
-- LINEAR only for per-frame baked travel: a vehicle's position as one monotone curve keyed every frame (creep, launch at an exact second and drift become speed changes on one curve), wheel spin = distance / radius on one rotation channel.
-- Keys run past each cut frame (shot ends at 192, last key at 210), so nothing rests on the boundary.
-- Figures: animate the root only. Beats are tables of (frame, location, facing, pitch); a dive is a lift then a pitch to about 85 degrees. A walk can stay a gliding root, since the video pass draws the gait; when the brief needs stride timing, rotate each leg about the hip with one shared period (about 28 frames at 24 fps), opposite phase per side.
+- Speed is key spacing on the dolly's `offset_factor`: an acceleration is widening gaps, a pause is
+  two near-equal values.
+- LINEAR only for per-frame baked travel: a vehicle's position as one monotone curve keyed every
+  frame (creep, launch at an exact second and drift become speed changes on one curve), wheel spin =
+  distance / radius on one rotation channel.
+- Keys run past each cut frame (shot ends at 192, last key at 210), so nothing rests on the
+  boundary.
+- Figures: animate the root only. Beats are tables of (frame, location, facing, pitch); a dive is a
+  lift then a pitch to about 85 degrees. A walk can stay a gliding root, since the video pass draws
+  the gait; when the brief needs stride timing, rotate each leg about the hip with one shared period
+  (about 28 frames at 24 fps), opposite phase per side.
 
 ## Handheld budgets
 
-Starting values, measured afterwards with `B.audit_handheld` (which compares the camera with its NOISE modifiers live and muted):
+Starting values, measured afterwards with `B.audit_handheld` (which compares the camera with its
+NOISE modifiers live and muted):
 
 | Setup                     | Channel                | Amplitude          | Noise scale       |
 | ------------------------- | ---------------------- | ------------------ | ----------------- |
@@ -117,13 +158,18 @@ for fc in B.fcurves(cam):
 result["handheld"] = B.audit_handheld("CAM_s1")  # adjust strength until it lands in budget
 ```
 
-Blend type changes the result (REPLACE centers the noise on the curve, ADD offsets it), so trust the measurement, not the setting. `animation_data_clear()` deletes the modifiers with the keys.
+Blend type changes the result (REPLACE centers the noise on the curve, ADD offsets it), so trust the
+measurement, not the setting. `animation_data_clear()` deletes the modifiers with the keys.
 
 ## Vehicles
 
-- Front marked in geometry: emissive or light-gray headlight blocks and a grille at the front, red blocks at the rear. When red is also a figure's identity color, use a dark red for the rear blocks so the two never read as one element.
-- Wheels: cylinders rotated so the spin axis is one local axis, centered at z = radius, one keyed rotation channel.
-- Interior shots: build the cabin (dashboard, steering wheel, a sphere-head driver) and give the cabin shell alpha (about 0.22, blended) so interior cameras see through it.
+- Front marked in geometry: emissive or light-gray headlight blocks and a grille at the front, red
+  blocks at the rear. When red is also a figure's identity color, use a dark red for the rear blocks
+  so the two never read as one element.
+- Wheels: cylinders rotated so the spin axis is one local axis, centered at z = radius, one keyed
+  rotation channel.
+- Interior shots: build the cabin (dashboard, steering wheel, a sphere-head driver) and give the
+  cabin shell alpha (about 0.22, blended) so interior cameras see through it.
 
 ## Several scenes in one clip
 
@@ -145,8 +191,13 @@ Blend type changes the result (REPLACE centers the noise on the curve, ADD offse
 
 ## Recovery and provenance
 
-- Probe first, read-only, and trace every object you later touch to one of your stages; a scene that already looks finished is someone else's work until proven otherwise.
-- `B.guard` in every call: queued calls run in whatever file and scene are open when they reach Blender.
+- Probe first, read-only, and trace every object you later touch to one of your stages; a scene that
+  already looks finished is someone else's work until proven otherwise.
+- `B.guard` in every call: queued calls run in whatever file and scene are open when they reach
+  Blender.
 - Keep payloads short; one stage piece per call.
-- Reset mid-build: from the last `B.stage_backup` copy, append the whole scene (`bpy.ops.wm.append` on `<backup>.blend/Scene/<name>`) or the root collection (`bpy.data.libraries.load`), then set the frame range, fps, resolution, engine, scene camera and world again, since a collection carries none of them.
+- Reset mid-build: from the last `B.stage_backup` copy, append the whole scene (`bpy.ops.wm.append`
+  on `<backup>.blend/Scene/<name>`) or the root collection (`bpy.data.libraries.load`), then set the
+  frame range, fps, resolution, engine, scene camera and world again, since a collection carries
+  none of them.
 - Headless helpers run on a backup copy with `--factory-startup`, never on the open file.
