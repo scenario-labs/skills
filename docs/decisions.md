@@ -58,6 +58,16 @@ Releases through 0.37.3 tagged bare `vX.Y.Z`. That is because a `release-type: n
 its component free from the `package.json` name, while `release-type: simple` has none to derive.
 Setting `component` plus `include-component-in-tag` by hand produced the `skills-` prefix.
 
+## AGENTS.md size
+
+- Codex reads 32 KiB of `AGENTS.md` by default (`project_doc_max_bytes`) and silently drops the
+  rest. `.codex/config.toml` raised it to 64 KiB, but Codex ignores that file in untrusted projects.
+- In October 2026 `AGENTS.md` reached 43 KB, so an untrusted Codex session would stop reading inside
+  the release notes, before the Codex attribution rules.
+- Claude Code also warns about a memory file past 40,000 characters, at the default context size.
+- The fix moved situational sections into `docs/` (31.6 KB left), dropped the override, and made
+  `pnpm style` fail past 32 KiB.
+
 ## Video verification
 
 A one-frame-per-shot spot check read clean at 10.5s on a clip whose artifact appears at 11.0s. Hence

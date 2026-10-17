@@ -340,8 +340,8 @@ applications installed on the user's machine through their Python, bridges, and 
      edits never reach the commit.
   3. `pnpm validate`: the checks below, which CI runs as separate steps.
 - What `pnpm validate` runs:
-  - **`pnpm style`**: house style, the body budget, and the fan-out, table-cell, sentence-length,
-    and wording notices.
+  - **`pnpm style`**: house style, the body budget, the `AGENTS.md` size cap, and the fan-out,
+    table-cell, sentence-length, and wording notices.
   - **`pnpm format:check`**: prettier.
   - **`pnpm sync:agent-commands:check`**: the command links and metadata (see
     [docs/agent-commands.md](docs/agent-commands.md)).
@@ -491,4 +491,6 @@ The protocol itself: [docs/application-test.md](docs/application-test.md).
 
 - PRs target `main`. Commit types and squash merges: see Repo tooling.
 - `CLAUDE.md` is a symlink to this file, so Claude Code and Codex read the same conventions.
+- This file stays under 32 KiB, all Codex reads by default (`pnpm style` fails past it). Content
+  only some tasks need goes in `docs/`, behind a pointer saying when to read it.
 - Shared Codex defaults live in `.codex/config.toml`; model selection stays in user configuration.

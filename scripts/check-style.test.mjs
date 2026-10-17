@@ -280,3 +280,21 @@ test("ignores workflow on lines the change does not add", (t) => {
   git("add", REFERENCE);
   assert.ok(!style().includes(TERM));
 });
+
+const AGENTS_CAP = "Codex reads by default";
+
+test("fails when AGENTS.md passes 32 KiB", (t) => {
+  const { write, style } = repo(t);
+  write("AGENTS.md", "x".repeat(32769));
+  assert.throws(style, (error) => {
+    assert.ok(error.stdout.includes(`AGENTS.md is 32769 bytes`), error.stdout);
+    assert.ok(error.stdout.includes(AGENTS_CAP), error.stdout);
+    return true;
+  });
+});
+
+test("accepts AGENTS.md of exactly 32 KiB", (t) => {
+  const { write, style } = repo(t);
+  write("AGENTS.md", "x".repeat(32768));
+  assert.ok(!style().includes(AGENTS_CAP));
+});

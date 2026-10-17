@@ -113,6 +113,15 @@ for f in $skill_files; do
   fi
 done
 
+# Codex reads 32 KiB of AGENTS.md by default and silently drops the rest; an
+# untrusted checkout ignores the .codex/config.toml that could raise it.
+agents_limit=32768
+agents_bytes=$(wc -c <AGENTS.md | tr -d ' ')
+if [ "$agents_bytes" -gt "$agents_limit" ]; then
+  echo "AGENTS.md is $agents_bytes bytes, over the $agents_limit Codex reads by default. Move content only some tasks need into docs/, behind a pointer, per AGENTS.md \"Conventions\"."
+  fail=1
+fi
+
 # Context fan-out: a skill plus the siblings it names in backticks, weighed
 # against the token pool Claude Code re-attaches skills from after compaction.
 # AGENTS.md "Authoring contract" carries the why. A notice and never a failure,
