@@ -3,7 +3,7 @@
 - cut:   split a transparent sprite sheet into one PNG per sprite (connected components),
          reading order = rows top to bottom, then left to right.
 - key:   magenta (#FF00FF) background -> soft alpha + despill (HD cartoon, no pixelation).
-- tile:  make a layer repeat horizontally without a seam (cross-fade its two ends).
+- tile:  make a layer repeat horizontally without a seam (join its two ends).
 
   python3 prep_assets.py cut sheet.png out_dir name1,name2,... [--force]
   python3 prep_assets.py key in.png out.png [--force]
@@ -11,9 +11,9 @@
 
 cut: names are given in reading order; sprites smaller than 4000 opaque px are dropped as specks, and pieces
 closer than CUT_GROW px (environment variable, default 12) are kept together. Ask for wide gaps on the sheet.
-tile: each end is cut in, by at most a quarter of the width, past any tall feature (a landmark there is cut
-away), then fade_px (default 256, at most a quarter of the width) of the two cuts are cross-faded, so the output
-is fade_px narrower than the kept columns, which it prints.
+tile: the last fade_px (default 256, at most a quarter of the width) overlap the first, and the two ends are cut
+apart along the path where they differ least, so a tree there is kept or dropped whole, never ghosted; only
+the broad color is cross-faded. The output is fade_px narrower than the input.
 Existing outputs are kept unless --force is given. Needs Python 3 with Pillow, NumPy and SciPy.
 """
 import os, sys
@@ -84,29 +84,44 @@ def key(src, dst):
     Image.fromarray(key_rgb(np.asarray(Image.open(src).convert("RGB")))).save(dst)
 
 
-def tile(src, dst, fade=256):
+def tile(src, dst, fade=256, feather=8):
     im = np.asarray(Image.open(src).convert("RGBA")).astype(np.float32)
     w = im.shape[1]
-    reach = w // 4
-    if fade > reach:
+    if fade > w // 4:
         sys.exit(f"error: fade_px {fade} is more than a quarter of the {w} px width")
-    # a generated layer's two ends never match, so they are the only place to blend the repeat. Rolling the
-    # image to move the seam elsewhere left those ends butted unblended inside the tile (a hard edge in every
-    # look). Instead cut each end in, by at most a quarter of the width, past any feature much taller than
-    # the lowest stretch there (plain foliage, open sea), so a landmark is cut away rather than ghosted, and
-    # cross-fade the two cuts. Taking the lowest stretch outright kept 1264 of a 3072 px forest.
-    a = im[..., 3] > 128
-    top = np.where(a.any(0), a.argmax(0), a.shape[0])          # first opaque row per column (bigger = lower)
-    def outermost(starts):                                      # within a tenth of the height of the lowest
-        lows = np.array([top[x:x + fade].min() for x in starts])
-        return starts[int(np.argmax(lows >= lows.max() - a.shape[0] // 10))]
-    x0 = outermost(range(0, reach + 1, 8))
-    x1 = outermost(range(w - fade, w - fade - reach - 1, -8)) + fade
-    out = im[:, x0:x1 - fade].copy()
+    # a generated layer's two ends never match, and both plain joins failed in a validation run: rolling the
+    # image to cross-fade a quiet stretch left the ends butted unblended inside the tile (a hard edge), and
+    # cross-fading the ends themselves ghosted every tree standing in one end and not the other. So the last
+    # fade_px overlap the first and the shapes are cut along the path where the two ends differ least (the sky
+    # between crowns), so a tree is kept or dropped whole; only the broad color is cross-faded, and only where
+    # both ends have content, so a lighting drift across the layer leaves no step at the cut.
+    A, B = im[:, w - fade:], im[:, :fade]              # A continues the tile's last column, B runs into the rest
+    err = ((A[..., :3] * A[..., 3:] - B[..., :3] * B[..., 3:]) / 255) ** 2   # premultiplied: sky matches sky
+    err = err.sum(2) + (A[..., 3] - B[..., 3]) ** 2
+    err = ndimage.maximum_filter1d(err, 2 * feather + 1, axis=1)   # keep the feathered band clear as well
+    err[:, :feather + 1] = err[:, fade - feather - 1:] = np.inf     # so the tile's own edges stay A and B
+    cost = err.copy()
+    for y in range(1, len(cost)):                       # cheapest top-to-bottom path, one column per row at most
+        p = cost[y - 1]
+        cost[y] += np.minimum(p, np.minimum(np.r_[np.inf, p[:-1]], np.r_[p[1:], np.inf]))
+    path = np.empty(len(cost), int)
+    path[-1] = cost[-1].argmin()
+    for y in range(len(cost) - 2, -1, -1):
+        x = path[y + 1]
+        path[y] = x - 1 + cost[y, x - 1:x + 2].argmin()
+    m = np.clip((np.arange(fade)[None, :] - path[:, None]) / (2 * feather) + 0.5, 0, 1)[..., None]   # 0 is A, 1 is B
     t = np.linspace(0, 1, fade)[None, :, None]
-    out[:, :fade] = im[:, x1 - fade:x1] * (1 - t) + im[:, x0:x0 + fade] * t   # left edge continues the right edge
+    sigma = (fade / 8, fade / 8, 0)
+    def broad(X):                                       # color averaged over opaque pixels only, and coverage
+        cover = ndimage.gaussian_filter(X[..., 3:] / 255, sigma)
+        return ndimage.gaussian_filter(X[..., :3] * X[..., 3:] / 255, sigma) / np.maximum(cover, 1e-3), cover
+    (ca, wa), (cb, wb) = broad(A), broad(B)
+    seam = A * (1 - m) + B * m
+    seam[..., :3] += (cb - ca) * (t - m) * np.clip(np.minimum(wa, wb) * 4, 0, 1)
+    out = im[:, :w - fade].copy()
+    out[:, :fade] = seam
     Image.fromarray(np.clip(out, 0, 255).astype(np.uint8)).save(dst)
-    print(f"{dst}: columns {x0} to {x1} of {w}, ends cross-faded over {fade} px, {out.shape[1]} px wide")
+    print(f"{dst}: ends joined over {fade} px, {out.shape[1]} px wide")
 
 
 FORCE = "--force" in sys.argv

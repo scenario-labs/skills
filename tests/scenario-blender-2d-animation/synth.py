@@ -62,13 +62,15 @@ def magenta_still(path, ear=(230, 120, 200)):
 
 def wide_layer(path, w=400, h=120):
     """A low strip whose red drifts from 30 to 230 across the width, so its two ends do not match, like a
-    generated layer's; a tall landmark in the middle; a tall tree at the right end."""
+    generated layer's; a tall landmark in the middle; a tall tree at the right end and a low bush near the left
+    end, which the other end does not have."""
     im = rgba(w, h)
     d = ImageDraw.Draw(im)
     for x in range(w):
         d.line((x, 80, x, h - 1), fill=(30 + 200 * x // (w - 1), 120, 60, 255))
     d.rectangle((150, 10, 170, 79), fill=(120, 110, 100, 255))
     d.rectangle((380, 30, w - 1, h - 1), fill=(90, 60, 40, 255))
+    d.rectangle((20, 72, 40, 79), fill=(70, 140, 50, 255))
     im.save(path)
 
 

@@ -62,7 +62,7 @@ Pass `team_id` and `project_id` on every call (the `scenario` skill covers picki
 - Cutting leafy sheets with the default grow: the five foreground plants came out as four pieces until the cut ran with `CUT_GROW=2`. Check the printed count against the names.
 - Not checking enclosed pink after keying: `prep_assets.py key` keeps pink enclosed by the silhouette (a cat's inner ears), but look at ears, tongues and flowers.
 - Hard-coding the run length: the cat and the snow leopard looped in 12 frames, the red panda in 9. Copy `run_n` from `run_loop.py`'s output.
-- A landmark at the end of a wide layer: `tile` cuts each end in past tall features (up to a quarter of the width) before it cross-fades them, so a landmark there is lost; ask for content spread across the width.
+- A landmark at the end of a wide layer: `tile` joins the two ends along the path where they differ least, keeping a tree whole or dropping it, but a landmark as wide as the overlap gets cut; ask for content spread across the width.
 - Passing a local path or URL to `model_run`: upload the file first and pass the asset id.
 - Hard-coding model ids or prices, or polling `job_get` instead of re-calling `jobs_wait`.
 
