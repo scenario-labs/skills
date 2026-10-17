@@ -419,7 +419,11 @@ def join_clips(config: dict, run_dir: Path, mode: str) -> Path:
     inputs, filters = [], []
     for index in range(shots):
         inputs += ["-i", str(run_dir / "clips" / f"{mode}_{index:02d}.mp4")]
-        filters.append(f"[{index}:v]settb=AVTB,setpts=PTS-STARTPTS,format=yuv420p[v{index}]")
+        # Since ffmpeg 7.0, setpts reports an unknown frame rate, which xfade rejects; fps
+        # restores it. settb comes after fps: a 1/24 time base shifts the fade's blend weights.
+        filters.append(
+            f"[{index}:v]setpts=PTS-STARTPTS,fps={fps},settb=AVTB,format=yuv420p[v{index}]"
+        )
     last = "v0"
     for index in range(1, shots):
         offset = index * (config["shot_seconds"] - config["transition"])

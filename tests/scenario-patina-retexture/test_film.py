@@ -90,6 +90,24 @@ class PlumbingTests(unittest.TestCase):
         self.assertIn('"font"', str(caught.exception))
         self.assertIn("10.1", str(caught.exception))
 
+    def test_join_restores_the_frame_rate_xfade_needs(self):
+        # ffmpeg 6.x accepts the old graph, so AssembleTests cannot catch a regression there.
+        with tempfile.TemporaryDirectory() as folder:
+            config, _ = tiny_config(folder, shots=[helpers.shot(str(i)) for i in range(3)])
+            run = Path(folder) / "run"
+            run.mkdir()
+            frames = round(film.final_duration(config) * config["fps"])
+            with mock.patch.object(film, "ffmpeg") as encode:
+                with mock.patch.object(film, "frame_count", return_value=frames):
+                    film.join_clips(config, run, "patina")
+        args = encode.call_args.args[1]
+        graph = args[args.index("-filter_complex") + 1].split(";")
+        for index in range(3):
+            chain = next(f for f in graph if f.startswith(f"[{index}:v]"))
+            steps = [s.split("=")[0] for s in chain.split("]")[1].split("[")[0].split(",")]
+            names = [s for s in steps if s in ("setpts", "fps", "settb")]
+            self.assertEqual(names, ["setpts", "fps", "settb"], chain)
+
     def test_status_on_a_fresh_run(self):
         with tempfile.TemporaryDirectory() as folder:
             config, _ = tiny_config(folder)
