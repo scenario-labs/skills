@@ -105,6 +105,10 @@ What held and what broke:
 - Seedance gave the richest finish and followed the push-in most closely. With five similar figures
   it reordered the runners; naming each proxy color and the running order in the prompt is the fix
   to try first.
+- Full-length 1080p Seedance passes (6 to 12 s, the whole playblast) with the color mapping and
+  running order written out ("red figure in front = the leader ... purple, the tallest, last in
+  line") kept all five runners in order across four cuts, and hands, faces and foot contact held.
+  Write that mapping into every multi-character prompt.
 - H3 matched Seedance on layout and was the fastest. On the five-runner scene it also mixed some
   identities.
 - LTX kept the proxy color order exactly but left some proxy shapes visible (ball-topped posts, cone
