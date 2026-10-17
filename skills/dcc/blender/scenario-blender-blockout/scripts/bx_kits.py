@@ -144,17 +144,19 @@ class Parts:
             bmesh.ops.bevel(self.bm, geom=edges, offset=bevel, segments=2, affect="EDGES", profile=0.5)
         return self
 
-    def to_object(self, name, location=(0.0, 0.0, 0.0), facing_deg=0.0, coll=None, parent=None):
+    def to_object(self, name, location=(0.0, 0.0, 0.0), facing_deg=0.0, coll=None, parent=None, material_name=None):
         """Write the parts into object `name` (get-or-create, like B.box): one shared
-        material per color, object color set to the first part's color."""
+        material per color (the first part's color takes `material_name` when given),
+        object color set to the first part's color."""
         obj = bpy.data.objects.get(name)
         if obj is not None:
             B._own(obj, None)
         mesh = obj.data if obj is not None else bpy.data.meshes.new(name)
         # Slots first: clearing a mesh's materials resets every face's material index.
         mesh.materials.clear()
-        for rgb in self.colors:
-            mesh.materials.append(B.identity_material(B.material_name_for(rgb), rgb))
+        for i, rgb in enumerate(self.colors):
+            mat_name = material_name if i == 0 and material_name else B.material_name_for(rgb)
+            mesh.materials.append(B.identity_material(mat_name, rgb))
         bmesh.ops.recalc_face_normals(self.bm, faces=self.bm.faces)
         self.bm.to_mesh(mesh)
         self.bm.free()
@@ -425,9 +427,11 @@ def figure(name, height=1.75, location=(0.0, 0.0, 0.0), facing_deg=0.0, rgb=B.PA
     block for facing, one object; it glides and the video model invents the gait (our film
     work found this safer than any rigged walk, which the model copied as sliding feet).
     shaped: thirteen jointed parts that `walk_path` steps. detailed: shaped plus a nose
-    block and a hair cap, for medium shots where head turns matter. Returns the root name."""
+    block and a hair cap, for medium shots where head turns matter. The figure's color is
+    on its own material, MAT_FIG_<name>, so it can be recolored alone. Returns the root name."""
     lvl = _fidelity(fidelity)
     root_name = f"FIG_{name}"
+    own = f"MAT_{root_name}"
     if lvl == 0:
         p = Parts()
         r = height * 0.13
@@ -436,7 +440,7 @@ def figure(name, height=1.75, location=(0.0, 0.0, 0.0), facing_deg=0.0, rgb=B.PA
         p.add("sphere", (2 * r, 2 * r, 1.2 * r), (0, 0, height * 0.10), rgb, segments=16)
         p.add("sphere", (height * 0.15, height * 0.16, height * 0.17), (0, 0, height * 0.90), rgb, segments=16)
         p.add("box", (height * 0.04, height * 0.05, height * 0.035), (0, -height * 0.085, height * 0.90), rgb)
-        obj = p.to_object(root_name, location, facing_deg, coll)
+        obj = p.to_object(root_name, location, facing_deg, coll, material_name=own)
         obj["height"] = height
         obj["capsule"] = True
         return obj.name
@@ -455,7 +459,7 @@ def figure(name, height=1.75, location=(0.0, 0.0, 0.0), facing_deg=0.0, rgb=B.PA
         par = made.get(parent, root)
         pivot_world = Vector([height * c for c in pivot])
         par_pivot = Vector([height * c for c in _JOINTED[parent][1]]) if parent else Vector((0, 0, 0))
-        obj = p.to_object(f"{root_name}_{part}", pivot_world - par_pivot, 0.0, coll, parent=par)
+        obj = p.to_object(f"{root_name}_{part}", pivot_world - par_pivot, 0.0, coll, parent=par, material_name=own)
         obj.rotation_mode = "XYZ"
         made[part] = obj
     root.location = location
