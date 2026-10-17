@@ -47,7 +47,13 @@ jobs:
         run: pnpm spec
 
   script-tests:
-    runs-on: ubuntu-latest
+    # Each Ubuntu release ships its own apt ffmpeg: 6.1 on 24.04, 8.0 on 26.04. A suite that
+    # passed on 6.1 broke on 7.0 (#262). Both are named because ubuntu-latest moves.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,7 +69,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg && ffmpeg -version | head -n 1
       - name: Install per-suite Python dependencies
         run: |
           shopt -s nullglob

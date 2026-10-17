@@ -39,6 +39,12 @@ which commit types release and which files release-please owns.
 
 ## CI
 
+- `script-tests` runs once on `ubuntu-24.04` and once on `ubuntu-26.04`, which install ffmpeg 6.1
+  and 8.0 from apt.
+  - Each runner is the coverage for one ffmpeg version, so both stay named, never `ubuntu-latest`.
+  - When a newer LTS runner ships, add it as a new entry rather than renaming an existing one.
+  - Never hardcode a count derived from a probed duration in a test. ffmpeg 8 reports an MP3's
+    gapless duration, while 6.1 and 7.1 include the encoder padding.
 - Dependabot (`.github/dependabot.yml`) proposes one grouped `ci(deps)` PR a week, for releases at
   least seven days old. It skips release-please-action, which moves by hand together with the
   `release-please` pin in `package.json`.

@@ -436,10 +436,11 @@ applications installed on the user's machine through their Python, bridges, and 
   use stdlib `unittest` (files named `test_*.py`), TypeScript scripts vitest (files named
   `*.test.ts`).
 - `pnpm test` runs every suite and fails when a shipped script has no suite; CI runs it on every
-  push and PR. It is not in the pre-commit hook, since suites may need system tools such as ffmpeg,
-  so run it by hand when touching a script. A `tests/<name>/requirements.txt` declares extra Python
-  dependencies. CI installs them with pip. Locally, `pnpm test` runs that suite under uv with them
-  on the `python3` on PATH, and falls back to the bare `python3` only when uv is missing.
+  push and PR, on two ffmpeg versions ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)). It is
+  not in the pre-commit hook, since suites may need system tools such as ffmpeg, so run it by hand
+  when touching a script. A `tests/<name>/requirements.txt` declares extra Python dependencies. CI
+  installs them with pip. Locally, `pnpm test` runs that suite under uv with them on the `python3`
+  on PATH, and falls back to the bare `python3` only when uv is missing.
 - `pnpm test` runs the command, plugin-manifest, style, readme, and test-runner regression suites as
   well as the shipped-script suites.
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the
