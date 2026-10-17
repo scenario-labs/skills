@@ -21,13 +21,8 @@ skyboxes, 3D, and custom models, for games, entertainment, and any creative vert
 - `pnpm install`: once after cloning. It installs the git hooks.
 - `pnpm format && pnpm validate`: before committing. `format` rewrites files locally; `validate`
   runs the checks CI runs, `format:check` included.
-- `pnpm test`: after touching a script. It runs Python suites with the `python3` on your PATH, so a
-  suite with a `tests/<name>/requirements.txt` fails on imports unless those packages are installed.
-  Run that suite with its packages:
-
-  ```bash
-  uv run --no-project --with-requirements tests/<name>/requirements.txt python -m unittest discover -s tests/<name>
-  ```
+- `pnpm test`: after touching a script. Through uv, each Python suite gets the packages its
+  `tests/<name>/requirements.txt` lists.
 
 - `/skills:validate <name>` (`$skills-validate` in Codex): the application test, before merging a
   skill change.
@@ -443,9 +438,10 @@ applications installed on the user's machine through their Python, bridges, and 
 - `pnpm test` runs every suite and fails when a shipped script has no suite; CI runs it on every
   push and PR. It is not in the pre-commit hook, since suites may need system tools such as ffmpeg,
   so run it by hand when touching a script. A `tests/<name>/requirements.txt` declares extra Python
-  dependencies for CI.
-- `pnpm test` runs the command, plugin-manifest, style, and readme regression suites as well as the
-  shipped-script suites.
+  dependencies. CI installs them with pip. Locally, `pnpm test` runs that suite under uv with them
+  on the `python3` on PATH, and falls back to the bare `python3` only when uv is missing.
+- `pnpm test` runs the command, plugin-manifest, style, readme, and test-runner regression suites as
+  well as the shipped-script suites.
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the
   format; the application test checks whether the skill actually teaches.
 - `/skills:validate <name>` (`.claude/commands/skills/`) drives that test:

@@ -455,9 +455,10 @@ title are linted separately with commitlint. PRs welcome; PR titles follow Conve
 since they become the squash commit header on `main`.
 
 Every script shipped with a skill has a test suite in `tests/<name>/`; `pnpm test` runs them all (CI
-does too). Suites need Python 3.11+ with any `tests/<name>/requirements.txt` dependencies installed,
-plus ffmpeg on PATH where a suite uses it. Python suites use stdlib `unittest`, TypeScript suites
-use vitest.
+does too). Suites need Python 3.11+, plus ffmpeg on PATH where a suite uses it. With uv installed,
+`pnpm test` gives each suite the dependencies in its `tests/<name>/requirements.txt`; without uv,
+install them into `python3` first. Python suites use stdlib `unittest`, TypeScript suites use
+vitest.
 
 ## License
 

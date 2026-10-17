@@ -6,7 +6,8 @@
 #   Python script they ship
 # - every tests/<name>/ directory must match an existing skill and hold
 #   at least one test file
-# - Python suites (test_*.py) run with stdlib unittest
+# - Python suites (test_*.py) run with stdlib unittest, under uv when the
+#   suite declares a requirements.txt and uv is installed
 # - TypeScript suites (*.test.ts) run with vitest
 # Suites may need system tools such as ffmpeg, so this runs in CI and on
 # demand, not in the pre-commit hook.
@@ -55,9 +56,19 @@ for dir in tests/*/; do
   if find "$dir" -type f -name 'test_*.py' | grep -q .; then
     ran=1
     echo "== ${name}: python unittest =="
+    # uv installs a suite's requirements into a cached environment of its
+    # own, so a local run needs no pip step. python3 is pinned by path
+    # because uv otherwise prefers an active conda or virtual environment.
+    # Without uv, python3 must already have them, as CI's pip step ensures.
+    python=(python3)
+    req="${dir}requirements.txt"
+    if [ -f "$req" ] && command -v uv >/dev/null; then
+      python=(uv run --quiet --no-project --python "$(command -v python3)"
+      --with-requirements "$req" python)
+    fi
     # No -t: hyphenated skill names are not importable as packages, so each
     # suite directory is its own top level and modules load as bare names.
-    python3 -B -m unittest discover -s "$dir" || fail=1
+    "${python[@]}" -B -m unittest discover -s "$dir" || fail=1
   fi
   if find "$dir" -type f -name '*.test.ts' | grep -q .; then
     ran=1
