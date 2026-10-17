@@ -47,7 +47,7 @@ Exact times go here (7.792 s), approximations belong only in the brief. A slow p
 
 ## Prompt grammar: motion first
 
-A prompt that names the proxies' shapes ("the box figure becomes", "each cone is") anchors the model on those shapes and it renders them as they are. Describe the finished shot instead, as if it already existed.
+A prompt that names the proxies' shapes ("the box figure becomes", "each cone is") anchors the model on those shapes and it renders them as they are. Describe the finished shot instead, as if it already existed. This grammar is for Seedance-style reference models; a 3D-to-video model that asks what each proxy stands for takes the replacement-map grammar in [levels](levels.md).
 
 1. **Rehearsal header.** "The reference video is rehearsal footage: stand-ins walked the scene so camera, timing and movement could be locked. The final shot replaces every stand-in with the real cast and set. Take from the video only the camera path and framing, the timing of every action, and each element's screen position, path, ground contact and scale. No shape, proportion, silhouette or surface in the video belongs in the final frame."
 2. **Cast list by role and motion**, one line per moving element, then the set: "A woman in a teal wax jacket walks down the corridor toward camera." Take roles from the object names; keep the names and shapes out of the prompt.

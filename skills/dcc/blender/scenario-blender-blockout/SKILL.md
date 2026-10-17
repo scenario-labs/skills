@@ -1,6 +1,6 @@
 ---
 name: scenario-blender-blockout
-description: "Use when a text brief or a reference image must become a Blender blockout whose playblast guides a render-to-real video pass (a video model that takes a reference clip, such as Seedance, or the Render Video lane of the Scenario Blender Plugin): graybox or previs built for a video model, color-coded proxies at metric scale, proxy figures, a camera locked to the timeline, rail or tracking camera rigs, lens per shot, framing and occlusion checks, a playblast, a hand-off sheet for the video prompt. Also when a render-to-real pass renders the proxies as boxes, reads one figure as two people, swaps a car's front and rear, drifts at the end, or the guide camera pops on a cut."
+description: "Use when a text brief or a reference image must become a Blender blockout whose playblast guides a render-to-real video pass (a video model that takes a reference clip, such as Seedance, or the Render Video lane of the Scenario Blender Plugin): graybox or previs built for a video model, color-coded proxies at metric scale from rough to detailed, density levels from a simple shot to an expert scene with crowds, traffic and many cuts, proxy figures, a camera locked to the timeline, rail or tracking camera rigs, lens per shot, framing and occlusion checks, a playblast, a hand-off sheet for the video prompt. Also when a render-to-real pass renders the proxies as boxes, reads one figure as two people, swaps a car's front and rear, drifts at the end, or the guide camera pops on a cut."
 license: MIT
 ---
 
@@ -10,7 +10,7 @@ The blockout is the guide clip: the video model copies the camera path, framing,
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes). Video generation: `scenario-blender` (the plugin's quote, generate and place flow), the `scenario` skill (connection, uploads, jobs) and `scenario-seedance` (reference-video fields).
 
-Toolkit: [`scripts/bx_blockout.py`](scripts/bx_blockout.py): `import sys; sys.path.append("<this skill>/scripts"); import bx_blockout as B`, where `<this skill>` is the absolute path of the installed folder, since the code runs inside the user's Blender. Builders are get-or-create by name, so a call can run again, and they refuse a name the user's own work already holds (names are global to the file). An empty audit result is a pass. The module docstring shows the call order.
+Toolkit: [`scripts/bx_blockout.py`](scripts/bx_blockout.py): `import sys; sys.path.append("<this skill>/scripts"); import bx_blockout as B`, where `<this skill>` is the absolute path of the installed folder, since the code runs inside the user's Blender. Builders are get-or-create by name, so a call can run again, and they refuse a name the user's own work already holds (names are global to the file). An empty audit result is a pass. The module docstring shows the call order. [`scripts/bx_kits.py`](scripts/bx_kits.py) (`import bx_kits as K`, same rules) adds buildings, stalls, trees, lamps, rocks and vehicles at three fidelity tiers, figures that step or glide, crowds, traffic, color schemes and `K.audit_budget`.
 
 **Which skill.** This one: guides for a video model. Story previs and animatics judged by a director and an editor: scenario-blender-previs-storyboard; an approved animatic that must guide a video model is rebuilt here.
 
@@ -22,6 +22,7 @@ Before any call, write down:
 - **Dimensions** in meters for everything; when the brief is silent, take them from [the contract tables](references/contract.md) and say so.
 - **Format**: integer fps, aspect, seconds. The range is 1 to fps x seconds (8 s at 24 fps: 1..192).
 - **Shots**: count, move, lens, framing invariants ("hero always in frame, full figure"), cut style; beats pinned to seconds, converted to frames now.
+- **Levels**: density (simple, medium, advanced, expert: footprint, elements, heroes, extras, shots), fidelity (rough, shaped, detailed) and color scheme, read off the brief and set apart: [levels](references/levels.md). Expert means many elements, movers and cuts, never finer blocks.
 - **Identity colors**: hero red, then blue, green, yellow, purple, cyan.
 - **Deliberate gaps** the video model fills, and **acceptance tests** the brief states: they become mandatory audits.
 
@@ -33,7 +34,7 @@ Four deliverables: the scene, a locked camera timeline, the playblast, the hand-
 
 - **Scene hygiene.** Role prefixes (`ENV_`, `FIG_`, `PRP_`, `CAM_`, `CRV_`, `RIG_`, `NULL_target_`, full table in the contract), one root collection with role sub-collections. Park the default Cube, Light and Camera with `B.park`, never delete. If the file holds other work, build in a new scene (`B.make_scene`) and touch nothing existing; every object must trace to one of your stages.
 - **Scale.** Meters, Z up, ground at z = 0, figure roots at the feet. The model keeps every mass where it is at its size, mistakes included. Nothing familiar for scale: add a `REF_` figure.
-- **Color is the identity channel.** One saturated color per character or tracked element (`B.PALETTE`, hero red), the set in neutral gray (0.32 to 0.55), one light, a dark world. `B.paint` sets both the object color and a material, so Solid view (color type Object or Material) and Workbench renders show it; an all-gray playblast has lost identity. Grid or checker texture only where the camera travels and depth must read, declared "replace, never inherit" in the sheet.
+- **Color separates masses and names identities.** One saturated color per hero (`B.PALETTE`, hero red), the set in one `K.scheme` (category hues by default, identity grays, or material colors), extras in mid grays, one light, a dark world. `B.paint` and the kits set object color and materials; a kit carries several colors, so Solid view needs color type Material (`B.solid_view("MATERIAL")`, the playblast's default). An all-gray playblast has lost identity. Grid or checker texture only where the camera travels and depth must read, declared "replace, never inherit" in the sheet.
 - **Timeline.** `B.lock_format` before any geometry: integer fps, frames 1 to fps x seconds, 1920x1080 (2520x1080 for 21:9) at 100 %. One camera per shot, bound to a `CUT_` marker on its first frame (`B.bind_cuts`), hard cuts, zero transition frames.
 - **Camera rigs.** Rail: `B.rail_camera` (curve, dolly on Follow Path, aim with Track To, camera). Handheld tracking, straight push-in and multi-shot masters: recipes in the contract. Reframe by moving the aim target, never by rotating the camera.
 - **Lens.** One lens per shot from shot size (`B.lens_for_coverage`; 28 mm orbits, 42 to 45 mm over-the-shoulder, 24 to 30 mm interiors, 85 mm macro), `clip_start` 0.05. A cut changes lens only by changing camera: never key a lens step on a cut frame. A lens may ease inside a shot (a deliberate zoom), never jump.
@@ -42,22 +43,7 @@ Four deliverables: the scene, a locked camera timeline, the playblast, the hand-
 
 ## 3. Channel: the Scenario Blender Plugin
 
-The live channel is the plugin's local Scenario MCP server, `scenario-blender` (the guide at [blender.scenario.com](https://blender.scenario.com/) calls the plugin Scenario for Blender). Tool reference: its `docs/MCP.md`.
-
-| Need                          | Tool and arguments                                                                                                                  |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Probe before building         | `scene_summary` with `fields` (`["type"]`), `limit` (up to 500) and `offset` from `next_offset`; `datablocks_summary` for counts    |
-| One object, a camera's lens   | `object_detail` with `name` (cameras add `lens_mm`, `sensor_width`, `clip`)                                                         |
-| Build, key, audit             | `execute_python` with `code`: `bpy` and `result = {}` preloaded; fill `result` with what you need back                              |
-| Check an API before scripting | `blender_api_help` with `path`                                                                                                      |
-| Step to a beat                | `set_frame` with `frame`                                                                                                            |
-| Look through the shot camera  | `render_still` with `source` `CAMERA`, `width` 768, `height` 432 (GUI only); `screenshot_viewport` with `max_size` for the viewport |
-| Select objects                | `select_objects` with `names`                                                                                                       |
-
-- `execute_python` stays off until the user enables **Allow connected agents to run Python**; a `PermissionError` means ask. Without it only the plugin's Blockout and `camera_path` build, and neither makes figures or rigs.
-- The plugin stops a call after 120 s and some agent clients stop waiting at 60 s. Send one stage piece per call (a set section, one figure, one rig, one audit). Releases up to 0.11.0 ignore `limit`, `offset`, `fields` and `max_size`, so `scene_summary` returns every object: check `datablocks_summary` on a heavy file first.
-- A timed-out call has an unknown outcome: read the scene (`scene_summary` with `name_contains`) before sending it again.
-- Every changing call records one Undo step; no tool saves the user's file. Run `B.stage_backup(label)` after each stage (a copy; the open file stays as it was) and ask the user to save at milestones.
+The live channel is the plugin's local Scenario MCP server, `scenario-blender` (the guide at [blender.scenario.com](https://blender.scenario.com/) calls the plugin Scenario for Blender). Tool table, call limits and recovery after a timeout: [plugin](references/plugin.md). The two that bite first: `execute_python` stays off until the user enables **Allow connected agents to run Python** (a `PermissionError` means ask), and a call stops after 120 s, so send one stage piece per call and run `B.stage_backup(label)` after each stage.
 
 **Where the plugin's own tools fit.**
 
@@ -71,8 +57,8 @@ Back up after every stage; a reset is recovered from the last backup ([contract]
 
 0. **Probe**, read-only: `scene_summary`, `datablocks_summary`. Other work present: new scene.
 1. **Format and scaffolding**: `B.make_scene`, `B.lock_format`, `B.collection` tree, `B.park`, dark world.
-2. **Set**: thick boxes at true scale (`B.box`), repeats as linked duplicates of one mesh. Or the plugin Blockout for a generic set.
-3. **Figures**: `B.proxy_figure` per character: nine touching parts on a root at the feet, feet showing the facing. Animate only the root (travel, yaw, pose beats) from a table of (frame, location, facing). Detail goes to the hero; background people stay simple and connected.
+2. **Set**: kits at the chosen fidelity (`K.building`, `K.stall`, `K.tree`) or thick boxes (`B.box`) at true scale, repeats as linked duplicates (`K.instance`). Or the plugin Blockout for a generic set.
+3. **Figures**: `K.figure` per hero, root at the feet, facing marked: shaped (jointed) for a 3D-to-video model, a rough capsule for a Seedance hero ([levels](references/levels.md)). Travel with `K.walk_path` from a table of (frame, position); extras with `K.crowd`.
 4. **Props and vehicles**: literal primitives at true position. Mark a vehicle's front in geometry (light blocks and grille in front, red blocks at the rear); wheels at z = radius with one spin channel. No loose blocks near a figure.
 5. **Light**: one area light; named key, fill, rim only when the brief designs light.
 6. **Cameras**: rigs and lenses per shot, `B.bind_cuts`.
