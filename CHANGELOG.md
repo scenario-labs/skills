@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.57.0](https://github.com/scenario-labs/skills/compare/skills-v0.56.0...skills-v0.57.0) (2026-10-17)
+
+
+### Features
+
+* **scenario-blender-2d-animation:** animate platformer shots in Blender ([#238](https://github.com/scenario-labs/skills/issues/238)) ([dc592af](https://github.com/scenario-labs/skills/commit/dc592af7139ffacfe8fdae7dc7efa80f4dd09be3))
+* **scenario-blender:** add the Blender extension skill ([#236](https://github.com/scenario-labs/skills/issues/236)) ([ac81a88](https://github.com/scenario-labs/skills/commit/ac81a88a3e3e325cd34a54937b13e63d03a92314))
+* **scenario-seedance-drafts:** draft cheap takes, review them, complete only the picks ([#244](https://github.com/scenario-labs/skills/issues/244)) ([cd3834f](https://github.com/scenario-labs/skills/commit/cd3834f01932831e0cce414640960603adbd6d37))
+
+
+### Bug Fixes
+
+* **scenario-blender-2d-animation:** tile wide layers without a hard seam ([#248](https://github.com/scenario-labs/skills/issues/248)) ([a840a81](https://github.com/scenario-labs/skills/commit/a840a81e62594cbdebbb6cf4d406211764d93d1b))
+* **scenario-blender:** keep wait_for_job inside the 60-second client limit ([#250](https://github.com/scenario-labs/skills/issues/250)) ([d76be40](https://github.com/scenario-labs/skills/commit/d76be40ffa531da5d29087de902e8afa195878de)), closes [#249](https://github.com/scenario-labs/skills/issues/249)
+* **scenario:** give Team and Enterprise their own custom connector route ([#233](https://github.com/scenario-labs/skills/issues/233)) ([907764d](https://github.com/scenario-labs/skills/commit/907764d4490920a913b60947f9b673359b7a002e))
+* **skills:** save audio downloads under the format Scenario returns ([#234](https://github.com/scenario-labs/skills/issues/234)) ([49ed910](https://github.com/scenario-labs/skills/commit/49ed910541b9ea56da4e8ef5e2df93fa905f7cb7))
+
+
+### Documentation
+
+* gather role and goal installs in INSTALL.md with one --skill each ([#239](https://github.com/scenario-labs/skills/issues/239)) ([39f39d3](https://github.com/scenario-labs/skills/commit/39f39d37865782ccb2b8d6b8820ee2a26d1bde75))
+
 ## [0.56.0](https://github.com/scenario-labs/skills/compare/skills-v0.55.0...skills-v0.56.0) (2026-10-14)
 
 
