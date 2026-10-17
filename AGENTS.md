@@ -376,7 +376,8 @@ hook does not run there.
   `.claude/` agents and commands also set `embeddedLanguageFormatting: "off"`, the one setting that
   stops prettier from folding a frontmatter `description` across lines: it stays on the one line
   `pnpm style` reads and every skill has shipped with. Their fenced code is therefore left as
-  written.
+  written. A merged commit that only reformats, like the one that introduced the wrap, goes in
+  `.git-blame-ignore-revs` so blame skips it.
 - After authoring markdown run `pnpm format` before `pnpm validate`: prettier reflows prose and
   rewrites tables, so `format:check` rejects correct hand-written markdown.
 - Spelling: add legitimate project terms to `project-words.txt`; never disable cspell inline. The
