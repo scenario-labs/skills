@@ -19,7 +19,8 @@ skyboxes, 3D, and custom models, for games, entertainment, and any creative vert
 ## Quick start
 
 - `pnpm install`: once after cloning. It installs the git hooks.
-- `pnpm format && pnpm validate`: before committing. These are the checks CI runs.
+- `pnpm format && pnpm validate`: before committing. `format` rewrites files locally; `validate`
+  runs the checks CI runs, `format:check` included.
 - `pnpm test`: after touching a script. It runs Python suites with the `python3` on your PATH, so a
   suite with a `tests/<name>/requirements.txt` fails on imports unless those packages are installed.
   Run that suite with its packages:
