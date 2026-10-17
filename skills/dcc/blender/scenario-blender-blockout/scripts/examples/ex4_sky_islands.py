@@ -181,8 +181,8 @@ for i, (name, color, h, dy) in enumerate(CAST):
     root = bpy.data.objects[fig]
     fx = next(fc for fc in B.fcurves(root) if fc.data_path == "location" and fc.array_index == 0)
     fz = next(fc for fc in B.fcurves(root) if fc.data_path == "location" and fc.array_index == 2)
-    for kp in fz.keyframe_points:  # ride the sag of the bridge
-        kp.co.y = deck_z(fx.evaluate(kp.co.x))
+    for kp in fz.keyframe_points:  # ride the sag of the bridge, on top of the stride's bob
+        kp.co.y += deck_z(fx.evaluate(kp.co.x))
     fz.update()
     pose(fig, 1, torso=14)  # a forward lean for running
     kids.append(fig)

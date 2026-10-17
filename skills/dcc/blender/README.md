@@ -56,8 +56,10 @@ plugin tool and argument checked against the plugin's `docs/MCP.md`, and a new t
 validated live twice on PR 243: the headless channel and the hosted route on Blender 5.0.1, then the
 plugin's Render Video lane on Blender 5.2.1 with plugin 0.11.0. Those runs changed:
 
-- `K.walk_path`: level feet, and the root's height keyed per frame so the stance sole stays on the
-  ground.
+- `K.walk_path`: planted feet. The legs are solved per frame so each stance foot stays put while the
+  body passes over it (it slid at about body speed before), with level soles and a hip bob. A stride
+  past 0.5 h plants for 0.5 h and slides the rest.
+- The toolkit import drops copies an earlier run left in Blender's Python, which reused a stale kit.
 - `K.figure`: shins end at the ankle, and the rough capsule's base sits on z = 0 (it floated 4 cm).
 - `K.vehicle`: dark red rear blocks.
 - `B.solid_view`: Material by default.

@@ -22,17 +22,17 @@ Video generation: `scenario-blender` (the plugin's quote, generate and place flo
 skill (connection, uploads, jobs) and `scenario-seedance` (reference-video fields).
 
 Toolkit: [`scripts/bx_blockout.py`](scripts/bx_blockout.py):
-`import sys; sys.path.append("<this skill>/scripts"); import bx_blockout as B`, where `<this skill>`
-is the absolute path of the installed folder, since the code runs inside the user's Blender.
-Builders are get-or-create by name, so a call can run again, and they refuse a name the user's own
-work already holds (names are global to the file). An empty audit result is a pass. The module
-docstring shows the call order. [`scripts/bx_kits.py`](scripts/bx_kits.py) (`import bx_kits as K`,
-same rules) adds buildings, stalls, trees, lamps, rocks and vehicles at three fidelity tiers,
-figures that step or glide, crowds, traffic, color schemes and `K.audit_budget`. Four worked scenes,
-simple to expert, with render-pass results: [examples](references/examples.md)
-([harness](scripts/examples/ex_common.py), [1](scripts/examples/ex1_watchmaker.py),
-[2](scripts/examples/ex2_saltflat.py), [3](scripts/examples/ex3_bridge.py),
-[4](scripts/examples/ex4_sky_islands.py)).
+`import sys; sys.path.insert(0, "<this skill>/scripts"); [sys.modules.pop(m, None) for m in ("bx_blockout", "bx_kits")]; import bx_blockout as B`,
+where `<this skill>` is the installed folder's absolute path. The pop drops a copy an earlier run
+left in Blender's one Python. Builders are get-or-create by name, so a call can run again, and they
+refuse a name the user's own work already holds (names are global to the file). An empty audit
+result is a pass. The module docstring shows the call order.
+[`scripts/bx_kits.py`](scripts/bx_kits.py) (`import bx_kits as K`, same rules) adds buildings,
+stalls, trees, lamps, rocks and vehicles at three fidelity tiers, figures that step or glide,
+crowds, traffic, color schemes and `K.audit_budget`. Four worked scenes, simple to expert, with
+render-pass results: [examples](references/examples.md) ([harness](scripts/examples/ex_common.py),
+[1](scripts/examples/ex1_watchmaker.py), [2](scripts/examples/ex2_saltflat.py),
+[3](scripts/examples/ex3_bridge.py), [4](scripts/examples/ex4_sky_islands.py)).
 
 **Which skill.** This one: guides for a video model. Story previs and animatics judged by a director
 and an editor: scenario-blender-previs-storyboard; an approved animatic that must guide a video

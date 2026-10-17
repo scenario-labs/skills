@@ -6,7 +6,8 @@ references/levels.md.
 Runs inside Blender beside bx_blockout, under the same rules: builders are get-or-create
 by name, refuse names the user's own work holds, and tag every datablock they make.
 
-  import sys; sys.path.append("<absolute path of this skill>/scripts")
+  import sys; sys.path.insert(0, "<absolute path of this skill>/scripts")
+  for m in ("bx_blockout", "bx_kits"): sys.modules.pop(m, None)  # Blender keeps old imports
   import bx_blockout as B, bx_kits as K
   pal = K.scheme("category")                                   # role -> color
   K.building("ENV_shop_a", (8, 6, 9), (12, 4, 0), fidelity="detailed", pal=pal, floors=3)
@@ -482,29 +483,26 @@ def _key_rot(obj, frame, x_deg):
     obj.keyframe_insert("rotation_euler", index=0, frame=frame)
 
 
-def _lowest_leg_z(parts):
-    """Lowest shin or foot vertex in the root's space, from the parts' current rotations.
-    Reads matrix_basis up the chain, so it needs no depsgraph update between keys."""
-    mats = {}
-
-    def chain(part):
-        if part not in mats:
-            parent = _JOINTED[part][3]
-            obj = parts[part]
-            up = chain(parent) if parent else Matrix.Identity(4)
-            mats[part] = up @ obj.matrix_parent_inverse @ obj.matrix_basis
-        return mats[part]
-
-    return min((chain(k) @ v.co).z for k in ("shin_L", "shin_R", "foot_L", "foot_R") for v in parts[k].data.vertices)
+def _leg_ik(x, v, lt, ls):
+    """Thigh and shin angles from vertical (radians, positive forward) that put the ankle `x`
+    ahead of and `v` below the hip with the knee forward; out of reach straightens the leg."""
+    d = max(1e-6, min(math.hypot(x, v), (lt + ls) * 0.9999))
+    base = math.atan2(x, v)
+    thigh = base + math.acos(max(-1.0, min(1.0, (lt * lt + d * d - ls * ls) / (2 * lt * d))))
+    shin = base - math.acos(max(-1.0, min(1.0, (ls * ls + d * d - lt * lt) / (2 * ls * d))))
+    return thigh, shin
 
 
 def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
-    """Move a figure's root along `path` [(frame, (x, y)), ...] on the ground (z = 0) and
-    face it along the travel. A jointed figure also gets legs and arms keyed from the
-    distance covered, so every step matches the ground it crosses: no sliding feet whatever
-    the speed. Feet stay level and the root's height is keyed on every frame so the stance
-    sole touches z = 0 (without it, a swung leg sank up to 5 cm). A capsule only glides. A
-    pause is two path points at the same position: the legs come to rest. Returns key counts."""
+    """Move a figure's root along `path` [(frame, (x, y)), ...] and face it along the travel.
+    A jointed figure steps with planted feet: each stance foot stays put on the ground while
+    the body passes over it (legs solved per frame, soles level), the swing foot lifts and
+    lands a stride ahead, and the root bobs as high as the stance leg allows. A stride past
+    0.5 h (a run) plants for 0.5 h and slides the rest. `swing_deg` sets the arm swing. A
+    capsule only glides, keyed every `step` frames; a jointed figure is keyed every frame so
+    its feet hold between keys. A pause is two path points at the same position: the swing
+    foot sets down where it is and the arms come to rest. The root's z keys carry the bob: on
+    raised or uneven ground, add its height to them rather than replace them. Returns key counts."""
     root = bpy.data.objects[fig] if isinstance(fig, str) else fig
     h = root.get("height", 1.75)
     stride = stride or h * 0.42  # one step
@@ -519,56 +517,69 @@ def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
                 return Vector((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, 0.0))
         return Vector((*path[-1][1], 0.0))
 
-    dist, prev, yaw = 0.0, pos(f0), root.rotation_euler.z
-    keys = 0
-    for f in list(range(f0, f1 + 1, step)) + ([f1] if (f1 - f0) % step else []):
+    frames = list(range(f0, f1 + 1, 1 if parts else step))
+    if frames[-1] != f1:
+        frames.append(f1)
+    track, dist, prev, yaw = [], 0.0, pos(f0), root.rotation_euler.z
+    for f in frames:
         cur = pos(f)
-        moved = (cur - prev).length
-        if moved > 1e-4:
-            d = cur - prev
+        d = cur - prev
+        if d.length > 1e-4:
             yaw = math.atan2(d.x, -d.y)
-        dist += moved
+        dist += d.length
         prev = cur
-        phase = 2 * math.pi * dist / (2 * stride)
-        amp = swing_deg if moved > 1e-4 else 0.0
-        root.location = cur
+        track.append([f, cur, yaw, dist, d.length > 1e-4])
+    if len(track) > 1:
+        # The first frame faces and moves like the next one: a yaw jump would drag the planted foot.
+        track[0][2], track[0][4] = track[1][2], track[1][4]
+
+    if parts:
+        hip, knee, ankle = (_JOINTED[k][1][2] * h for k in ("thigh_L", "shin_L", "foot_L"))
+        lt, ls = hip - knee, knee - ankle
+        reach = 0.98 * (lt + ls)
+        # How far the planted foot travels either side of the hip. Past 0.25 h (a run's stride)
+        # the hip would crouch out of reach, so the stance foot slides by the excess instead:
+        # one foot always stays down, which B.audit_ground needs.
+        half = min(stride / 2.0, 0.25 * h)
+        lift_h = 0.05 * h + 0.1 * stride
+        settle = 1.0 if not track[0][4] else 0.0  # 1 = stopped: the swing foot is down
+
+    keys = 0
+    for f, cur, yaw, dist, moving in track:
+        z = 0.0
+        if parts:
+            settle = min(1.0, max(0.0, settle + (-1 if moving else 1) / 6.0))
+            go = 1.0 - settle * settle * (3.0 - 2.0 * settle)
+            feet = {}
+            for side, offset in (("L", 0.0), ("R", 0.5)):
+                u = (dist / (2.0 * stride) + offset) % 1.0
+                if u < 0.5:
+                    x, up, planted = half - 4.0 * half * u, 0.0, True
+                else:
+                    s = 2.0 * u - 1.0
+                    x, up, planted = -half + half * (1.0 - math.cos(math.pi * s)), lift_h * math.sin(math.pi * s), False
+                # Stopped, the feet stay where they are and the swing foot sets down.
+                feet[side] = (x, up * go, planted)
+            worst = max(abs(x) for x, _, p in feet.values() if p)
+            z = math.sqrt(reach * reach - worst * worst) - (lt + ls)
+            legs = {side: _leg_ik(x, hip + z - ankle - up, lt, ls) for side, (x, up, _) in feet.items()}
+            for side, (thigh, shin) in legs.items():
+                _key_rot(parts[f"thigh_{side}"], f, -math.degrees(thigh))
+                _key_rot(parts[f"shin_{side}"], f, -math.degrees(shin - thigh))
+                _key_rot(parts[f"foot_{side}"], f, math.degrees(shin))  # sole level
+                # Each arm swings against its own leg: back while that leg reaches forward.
+                lead = legs[side][0] - legs["R" if side == "L" else "L"][0]
+                _key_rot(parts[f"uparm_{side}"], f, 0.4 * swing_deg / 26.0 * math.degrees(lead) * go)
+                _key_rot(parts[f"forearm_{side}"], f, -swing_deg * 0.5 * go)
+        root.location = (cur.x, cur.y, z)
         root.rotation_euler = (0.0, 0.0, yaw)
         root.keyframe_insert("location", frame=f)
         root.keyframe_insert("rotation_euler", index=2, frame=f)
         keys += 1
-        if not parts:
-            continue
-        s = math.sin(phase)
-        thigh_l, thigh_r = amp * s, -amp * s
-        shin_l, shin_r = amp * 1.1 * max(0.0, -math.cos(phase)), amp * 1.1 * max(0.0, math.cos(phase))
-        _key_rot(parts["thigh_L"], f, thigh_l)
-        _key_rot(parts["thigh_R"], f, thigh_r)
-        _key_rot(parts["shin_L"], f, shin_l)
-        _key_rot(parts["shin_R"], f, shin_r)
-        # Level soles: a toe pointed by the bent swing shin would be the lowest point, and the
-        # lift would plant the swinging foot while the stance foot hangs.
-        _key_rot(parts["foot_L"], f, -(thigh_l + shin_l))
-        _key_rot(parts["foot_R"], f, -(thigh_r + shin_r))
-        _key_rot(parts["uparm_L"], f, -amp * 0.8 * s)
-        _key_rot(parts["uparm_R"], f, amp * 0.8 * s)
-        _key_rot(parts["forearm_L"], f, -amp * 0.5)
-        _key_rot(parts["forearm_R"], f, -amp * 0.5)
     for obj in [root, *parts.values()]:
         for fc in B.fcurves(obj):
             for kp in fc.keyframe_points:
                 kp.interpolation = "LINEAR"
-    if parts:
-        # Every frame, not every key: linear limb angles between keys still dip a foot.
-        legs = {k: parts[k] for k in ("thigh_L", "thigh_R", "shin_L", "shin_R", "foot_L", "foot_R")}
-        angle = {k: next(fc for fc in B.fcurves(o) if fc.data_path == "rotation_euler" and fc.array_index == 0) for k, o in legs.items()}
-        lift = next(fc for fc in B.fcurves(root) if fc.data_path == "location" and fc.array_index == 2)
-        # The legs' whole keyed span, so a second call on the same figure leaves no stale lift.
-        lo, hi = (int(round(x)) for x in angle["thigh_L"].range())
-        for f in range(lo, hi + 1):
-            for k, o in legs.items():
-                o.rotation_euler.x = angle[k].evaluate(f)
-            lift.keyframe_points.insert(f, -_lowest_leg_z(parts), options={"FAST"}).interpolation = "LINEAR"
-        lift.update()
     return {"figure": root.name, "frames": [f0, f1], "keys": keys, "distance_m": round(dist, 2)}
 
 
@@ -596,7 +607,7 @@ def crowd(prefix, count, area, frames, fidelity="rough", pal=None, speed=(1.0, 1
         end = (x + math.sin(yaw) * v * secs, y - math.cos(yaw) * v * secs)
         if _crosses(keep_clear, frames, (x, y), end):
             continue
-        name = f"{prefix}{i:03d}"
+        name = f"{prefix.removeprefix('FIG_')}{i:03d}"  # figure() adds FIG_ itself
         rgb = tint(pal["crowd"], seed * 1000 + i, 0.25)
         root = figure(name, h, (x, y, 0.0), math.degrees(yaw), rgb, fidelity, coll)
         root = bpy.data.objects[root]

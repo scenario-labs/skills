@@ -10,7 +10,8 @@ reuses only datablocks it made itself: a name already taken by the user's own wo
 raises instead of being rebuilt.
 Audits return plain dicts and lists for the agent to read; nothing here renders.
 
-  import sys; sys.path.append("<absolute path of this skill>/scripts")
+  import sys; sys.path.insert(0, "<absolute path of this skill>/scripts")
+  for m in ("bx_blockout", "bx_kits"): sys.modules.pop(m, None)  # Blender keeps old imports
   import bx_blockout as B
   B.guard(expected_file="/abs/shot.blend", scene="BLK_plaza")   # first line of every call
   B.lock_format(fps=24, seconds=8)                              # 1..192, 1920x1080 at 100 %

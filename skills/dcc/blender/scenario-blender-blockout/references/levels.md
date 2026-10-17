@@ -8,7 +8,9 @@ world with crowd, traffic and two to four shots is what makes the render read as
 it held as well as the simple scene in the test below. A brief that names only its heroes and shots
 is silent on density, even when two heroes and two shots also fit the medium row: take advanced. Go
 down only when the brief is genuinely small (one actor, one place, one move); go up to expert when
-it asks for scale, a crowd or a cut sequence. Record the choice in the build plan.
+it asks for scale, a crowd or a cut sequence. Record the choice in the build plan. The brief's own
+length overrides the `seconds` and `shot_s` columns of `K.audit_budget`: a 6 s advanced brief fails
+only that row, and the rest of the budget still holds.
 
 ## Density: how much scene
 
@@ -52,6 +54,8 @@ heroes, extras, shots, each shot's length, the take and the footprint. An empty 
   pays off in medium and close shots, where windows, signs and shop fronts set the rhythm the model
   keeps.
 - **Keep one tier per scene.** A detailed hero among rough proxies reads as the only real object.
+  The exception is a Seedance hero, which stays a capsule in any set (next bullet). Its nose block
+  barely reads in a wide shot, so the sheet gives its facing as its direction of travel.
 - **Figures depend on the video model.** On MiniMax H3 Max 3D to Video (one take per variant, see
   the test at the end), shaped jointed walkers came back as people, gray capsule extras did too, and
   a blue capsule hero in a close shot came back as a blue cylinder for part of the shot. Our
