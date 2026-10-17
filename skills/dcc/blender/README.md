@@ -54,9 +54,13 @@ the sibling-install line in each `SKILL.md`, and paths into the build project ma
 blockout workflow: rewritten for the Scenario Blender Plugin's local Scenario MCP server, every
 plugin tool and argument checked against the plugin's `docs/MCP.md`, and a new toolkit. It was
 validated live twice on PR 243: the headless channel and the hosted route on Blender 5.0.1, then the
-plugin's Render Video lane on Blender 5.2.1 with plugin 0.11.0. Those runs changed `K.walk_path`
-(the root's height now keeps the feet on the ground), `K.vehicle` (dark red rear blocks) and
-`B.solid_view` (Material by default).
+plugin's Render Video lane on Blender 5.2.1 with plugin 0.11.0. Those runs changed:
+
+- `K.walk_path`: level feet, and the root's height keyed per frame so the stance sole stays on the
+  ground.
+- `K.figure`: shins end at the ankle, and the rough capsule's base sits on z = 0 (it floated 4 cm).
+- `K.vehicle`: dark red rear blocks.
+- `B.solid_view`: Material by default.
 
 Paths such as `tests/...` inside the references point to the test evidence on the build machine.
 They are provenance only; the skills do not need them to run.

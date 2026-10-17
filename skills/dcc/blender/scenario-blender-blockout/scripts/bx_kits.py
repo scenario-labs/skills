@@ -418,8 +418,9 @@ _JOINTED = {
     "head": ((0.12, 0.13, 0.14), (0.0, 0.0, 0.86), (0.0, 0.0, 0.07), "torso"),
     "thigh_L": ((0.085, 0.095, 0.25), (0.05, 0.0, 0.49), (0.0, 0.0, -0.125), "pelvis"),
     "thigh_R": ((0.085, 0.095, 0.25), (-0.05, 0.0, 0.49), (0.0, 0.0, -0.125), "pelvis"),
-    "shin_L": ((0.075, 0.085, 0.25), (0.05, 0.0, 0.25), (0.0, 0.0, -0.125), "thigh_L"),
-    "shin_R": ((0.075, 0.085, 0.25), (-0.05, 0.0, 0.25), (0.0, 0.0, -0.125), "thigh_R"),
+    # Shins end at the ankle (0.03), inside the foot: one reaching the sole dips below it when tilted.
+    "shin_L": ((0.075, 0.085, 0.22), (0.05, 0.0, 0.25), (0.0, 0.0, -0.11), "thigh_L"),
+    "shin_R": ((0.075, 0.085, 0.22), (-0.05, 0.0, 0.25), (0.0, 0.0, -0.11), "thigh_R"),
     "foot_L": ((0.075, 0.15, 0.045), (0.05, 0.0, 0.03), (0.0, -0.05, -0.008), "shin_L"),
     "foot_R": ((0.075, 0.15, 0.045), (-0.05, 0.0, 0.03), (0.0, -0.05, -0.008), "shin_R"),
     "uparm_L": ((0.065, 0.075, 0.19), (0.14, 0.0, 0.82), (0.0, 0.0, -0.095), "torso"),
@@ -444,7 +445,7 @@ def figure(name, height=1.75, location=(0.0, 0.0, 0.0), facing_deg=0.0, rgb=B.PA
         r = height * 0.13
         p.add("cylinder", (2 * r, 2 * r, height * 0.62), (0, 0, height * 0.10), rgb, base=True, segments=16)
         p.add("sphere", (2 * r, 2 * r, 2 * r), (0, 0, height * 0.72), rgb, segments=16)
-        p.add("sphere", (2 * r, 2 * r, 1.2 * r), (0, 0, height * 0.10), rgb, segments=16)
+        p.add("sphere", (2 * r, 2 * r, 1.2 * r), (0, 0, 0.6 * r), rgb, segments=16)  # base on z = 0
         p.add("sphere", (height * 0.15, height * 0.16, height * 0.17), (0, 0, height * 0.90), rgb, segments=16)
         p.add("box", (height * 0.04, height * 0.05, height * 0.035), (0, -height * 0.085, height * 0.90), rgb)
         obj = p.to_object(root_name, location, facing_deg, coll, material_name=own)
@@ -501,9 +502,9 @@ def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
     """Move a figure's root along `path` [(frame, (x, y)), ...] on the ground (z = 0) and
     face it along the travel. A jointed figure also gets legs and arms keyed from the
     distance covered, so every step matches the ground it crosses: no sliding feet whatever
-    the speed, and the root's height keyed so the lowest foot touches z = 0 on every key
-    (a swung leg would otherwise sink up to 5 cm). A capsule only glides. A pause is two
-    path points at the same position: the legs come to rest. Returns key counts."""
+    the speed. Feet stay level and the root's height is keyed on every frame so the stance
+    sole touches z = 0 (without it, a swung leg sank up to 5 cm). A capsule only glides. A
+    pause is two path points at the same position: the legs come to rest. Returns key counts."""
     root = bpy.data.objects[fig] if isinstance(fig, str) else fig
     h = root.get("height", 1.75)
     stride = stride or h * 0.42  # one step
@@ -538,10 +539,16 @@ def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
         if not parts:
             continue
         s = math.sin(phase)
-        _key_rot(parts["thigh_L"], f, amp * s)
-        _key_rot(parts["thigh_R"], f, -amp * s)
-        _key_rot(parts["shin_L"], f, amp * 1.1 * max(0.0, -math.cos(phase)))
-        _key_rot(parts["shin_R"], f, amp * 1.1 * max(0.0, math.cos(phase)))
+        thigh_l, thigh_r = amp * s, -amp * s
+        shin_l, shin_r = amp * 1.1 * max(0.0, -math.cos(phase)), amp * 1.1 * max(0.0, math.cos(phase))
+        _key_rot(parts["thigh_L"], f, thigh_l)
+        _key_rot(parts["thigh_R"], f, thigh_r)
+        _key_rot(parts["shin_L"], f, shin_l)
+        _key_rot(parts["shin_R"], f, shin_r)
+        # Level soles: a toe pointed by the bent swing shin would be the lowest point, and the
+        # lift would plant the swinging foot while the stance foot hangs.
+        _key_rot(parts["foot_L"], f, -(thigh_l + shin_l))
+        _key_rot(parts["foot_R"], f, -(thigh_r + shin_r))
         _key_rot(parts["uparm_L"], f, -amp * 0.8 * s)
         _key_rot(parts["uparm_R"], f, amp * 0.8 * s)
         _key_rot(parts["forearm_L"], f, -amp * 0.5)
@@ -552,10 +559,12 @@ def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
                 kp.interpolation = "LINEAR"
     if parts:
         # Every frame, not every key: linear limb angles between keys still dip a foot.
-        legs = {k: parts[k] for k in ("thigh_L", "thigh_R", "shin_L", "shin_R")}
+        legs = {k: parts[k] for k in ("thigh_L", "thigh_R", "shin_L", "shin_R", "foot_L", "foot_R")}
         angle = {k: next(fc for fc in B.fcurves(o) if fc.data_path == "rotation_euler" and fc.array_index == 0) for k, o in legs.items()}
         lift = next(fc for fc in B.fcurves(root) if fc.data_path == "location" and fc.array_index == 2)
-        for f in range(f0, f1 + 1):
+        # The legs' whole keyed span, so a second call on the same figure leaves no stale lift.
+        lo, hi = (int(round(x)) for x in angle["thigh_L"].range())
+        for f in range(lo, hi + 1):
             for k, o in legs.items():
                 o.rotation_euler.x = angle[k].evaluate(f)
             lift.keyframe_points.insert(f, -_lowest_leg_z(parts), options={"FAST"}).interpolation = "LINEAR"

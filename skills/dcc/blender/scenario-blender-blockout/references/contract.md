@@ -163,11 +163,10 @@ measurement, not the setting. `animation_data_clear()` deletes the modifiers wit
 
 ## Vehicles
 
-- Front marked in geometry: emissive or light-gray headlight blocks and a grille at the front, red
-  blocks at the rear. When red is also a figure's identity color, use a dark red for the rear blocks
-  so the two never read as one element: `K.vehicle`'s `rear_rgb` default. Kit materials are shared
-  per color and named after it, and every kit call resets them, so a material edited in place
-  reverts at the next kit call: recolor through `rear_rgb` or `rgb`.
+- Front marked in geometry: emissive or light-gray headlight blocks and a grille at the front, dark
+  red blocks at the rear (`K.vehicle`'s `rear_rgb` default), so they never read as a red hero.
+- Kit materials are shared per color and named after it. A kit call resets the materials of the
+  colors it uses, so an edit in place reverts. Recolor through `rgb` or `rear_rgb`.
 - Wheels: cylinders rotated so the spin axis is one local axis, centered at z = radius. `K.vehicle`
   builds them into the body mesh, which reads right at a distance; a close shot that reads rotation
   needs separate wheel objects with one keyed rotation channel.

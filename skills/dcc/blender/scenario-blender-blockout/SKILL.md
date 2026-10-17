@@ -195,11 +195,11 @@ file choice:
 - **Plugin, Render Video lane**: `B.solid_view()` so the camera viewport shows identity colors,
   `force_solid` false (it turns everything one gray), a timeline length the model accepts.
   `list_models` with `lane` `render_video`, `model_schema`, `render_form` `configure` (`model_id`,
-  `look`, `capture_source` `CAMERA`, `parameters` `{"duration": <clip seconds>}`, which
-  `match_timeline` does not set here up to 0.11.0), `prepare` with `role` `scene`, `inspect` until
-  `ready_to_estimate`, `estimate_cost` and `generate` with that lane and no `parameters`,
-  `wait_for_job` re-called while `delivery_active`, then `prepare_result_application` and
-  `apply_result_application` to bring the clip in. The capture is a silent 1280x720 clip with
+  `look`, `capture_source` `CAMERA`, and `parameters` `{"duration": <clip seconds>}` when the schema
+  has one, since `match_timeline` does not set it here up to 0.11.0). Then `prepare` with `role`
+  `scene`, `inspect` until `ready_to_estimate`, `estimate_cost` and `generate` with that lane and no
+  `parameters`, `wait_for_job` re-called while `delivery_active`, then `prepare_result_application`
+  and `apply_result_application` to bring the clip in. The capture is a silent 1280x720 clip with
   overlays hidden.
 - **Hosted Scenario MCP**, for the full-resolution playblast: upload the playblast as the `scenario`
   skill shows, discover a model that takes a reference video, `model_schema_get`, `model_run` with

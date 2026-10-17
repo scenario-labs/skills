@@ -41,11 +41,11 @@ heroes, extras, shots, each shot's length, the take and the footprint. An empty 
 
 ## Fidelity: how far each proxy is shaped
 
-| Tier     | Set                                                                                  | Figures                                              | Vehicles                                      |
-| -------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------- | --------------------------------------------- |
-| rough    | single boxes, cylinders, faceted crowns                                              | legless capsule with a head and a nose block; glides | one box body, marked front                    |
-| shaped   | plinth, floor bands, roof form, door; stalls with posts and canopy; trunk plus crown | thirteen jointed parts; `K.walk_path` steps them     | cab, wheels, headlights, grille, red rear     |
-| detailed | windows, sills, signs, glass shop fronts, balconies, roof units                      | shaped plus a nose block and a hair cap              | shaped plus finer parts a camera reads at 2 m |
+| Tier     | Set                                                                                  | Figures                                              | Vehicles                                       |
+| -------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------- | ---------------------------------------------- |
+| rough    | single boxes, cylinders, faceted crowns                                              | legless capsule with a head and a nose block; glides | one box body, marked front                     |
+| shaped   | plinth, floor bands, roof form, door; stalls with posts and canopy; trunk plus crown | thirteen jointed parts; `K.walk_path` steps them     | cab, wheels, headlights, grille, dark red rear |
+| detailed | windows, sills, signs, glass shop fronts, balconies, roof units                      | shaped plus a nose block and a hair cap              | shaped plus finer parts a camera reads at 2 m  |
 
 - **Default to shaped.** Silhouette and identifying features (wheel count, a marked front, a roof
   form, a figure's facing) decide what the model renders; surface detail mostly does not. Detailed

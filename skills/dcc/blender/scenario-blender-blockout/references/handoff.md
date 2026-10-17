@@ -127,8 +127,8 @@ user and spent only with their explicit approval of the exact `cu_cost_exact`.
 2. Scene frame range equal to the clip (the capture uses the preview range when enabled, otherwise
    the scene range); pick a length the model accepts. On this lane `settings.match_timeline` ties
    the model's duration to the plugin's camera path, not to the timeline (releases up to 0.11.0,
-   [plugin issue 600](https://github.com/scenario-labs/blender-plugin/issues/600)): the form keeps
-   the model's default `duration`, and a 6 s clip quoted at 5 s.
+   [plugin issue 600](https://github.com/scenario-labs/blender-plugin/issues/600)). The form keeps
+   the model's default `duration`: a 6 s clip was quoted at 5 s.
 3. `list_models` with `lane` `render_video`, then `model_schema` with the chosen `model_id`.
 4. `render_form` (every call takes `lane`) with `lane` `render_video`, `action` `configure`,
    `settings` with `model_id`, `look`, `capture_source` `CAMERA`, `parameters`
