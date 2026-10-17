@@ -225,6 +225,7 @@ for f in $staged_markdown; do
       if (words > limit && touched) printf "S  %s:%d: a %d-word sentence\n", file, start, words
       words = 0
       touched = 0
+      after_etc = 0
     }
     FNR == 1 && $0 == "---" { front = 1; next }
     front { if ($0 == "---") front = 0; next }
@@ -236,7 +237,7 @@ for f in $staged_markdown; do
       line = $0
       gsub(/`[^`]*`/, "code", line)
       gsub(/\]\([^)]*\)/, "]", line)
-      if (check_term && is_added && line ~ /(^|[^A-Za-z0-9_-])[Ww]orkflows?([^A-Za-z0-9_-]|$)/)
+      if (check_term && is_added && tolower(line) ~ /(^|[^a-z0-9_-])workflows?([^a-z0-9_-]|$)/)
         printf "T  %s:%d\n", file, FNR
     }
     /^ *$/ || /^ *#/ || /^ *\|/ || /^ *<!--/ { finish(); next }
@@ -249,10 +250,14 @@ for f in $staged_markdown; do
       n = split(line, word, /[ \t]+/)
       for (i = 1; i <= n; i++) {
         if (word[i] == "") continue
+        # etc. ends a sentence only when the next word does not continue it.
+        if (after_etc && word[i] !~ /^[("*_]*[a-z]/) finish()
+        after_etc = 0
         if (words == 0) start = FNR
         words++
         if (is_added) touched = 1
-        if (word[i] ~ /[.!?][)"*_]*$/ && word[i] !~ /^\(?(e\.g|i\.e|vs)\.$/) finish()
+        if (word[i] ~ /^\(?etc\.[)"*_]*$/) after_etc = 1
+        else if (word[i] ~ /[.!?][)"*_]*$/ && word[i] !~ /^\(?(e\.g|i\.e|vs|cf)\.$/) finish()
       }
     }
     END { finish() }

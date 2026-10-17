@@ -196,6 +196,20 @@ test("reads e.g. as part of a sentence", (t) => {
   assert.ok(style().includes(`${REFERENCE}:1: a 41-word sentence`));
 });
 
+test("reads etc. before a lowercase word as part of a sentence", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, `${words(20)} etc.)\n${words(20)}.\n`);
+  git("add", REFERENCE);
+  assert.ok(style().includes(`${REFERENCE}:1: a 41-word sentence`));
+});
+
+test("ends a sentence at etc. before a capital", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, `${words(30)} etc. Next ${words(30)}.\n`);
+  git("add", REFERENCE);
+  assert.ok(!style().includes(SENTENCE));
+});
+
 test("skips frontmatter, fenced code, and tables for sentences", (t) => {
   const { write, git, style } = repo(t);
   write(
@@ -221,11 +235,11 @@ test("skips frontmatter, fenced code, and tables for sentences", (t) => {
 
 test("names an added workflow outside the workflow skills", (t) => {
   const { write, git, style } = repo(t);
-  write(REFERENCE, "# Notes\n\nFollow this Workflow.\n");
+  write(REFERENCE, "# Notes\n\nFollow this Workflow.\n\n## WORKFLOW\n");
   git("add", REFERENCE);
   const out = style();
   assert.ok(out.includes(TERM), out);
-  assert.ok(out.includes(`  ${REFERENCE}:3\n`), out);
+  assert.ok(out.includes(`  ${REFERENCE}:3\n  ${REFERENCE}:5\n`), out);
 });
 
 test("leaves workflow alone in the workflow skills", (t) => {
