@@ -114,7 +114,7 @@ scenario-blender-rigging.
 | Eye tolerance 0.15 m; drawing breaks past 70 degrees from camera               | audit thresholds                           | [added]                                               |
 | Visible height = subject height x 4 / 2 / 1.15 / 0.8 / 0.6 / 0.4 / 0.25 / 0.12 | ews, wide, full, mws, medium, mcu, cu, ecu | [added]                                               |
 | Distance = visible height x lens / sensor height (20.25 mm at 16:9)            | lens swap at equal size: d2 = d1 x f2 / f1 | [added]                                               |
-| Handheld NOISE 0.010 to 0.018 rad, 18 to 26 frame scale                        | camera rotation                            | blockout skill; peak-to-peak measured 0.66 x strength |
+| Handheld NOISE 0.010 to 0.018 rad, 18 to 26 frame scale                        | camera rotation                            | video guides; measured peak-to-peak = 0.66 x strength |
 
 ## Camera language
 

@@ -264,8 +264,8 @@ Source: Storyboarding in Blender masterclass (Xx68qcqMXS4), mostly wordless time
   hero that no numeric check had flagged.
 - POV cameras just off the line on the camera side, cheated forward and up past foreground
   furniture: S6 finding.
-- Color: grays plus one pop color follows Charge and Renato; the blockout skill's saturated identity
-  palette is for video models, not for directors.
+- Color: grays plus one pop color follows Charge and Renato; the saturated identity palette of
+  render-to-real guides is for video models, not for directors.
 - Cost gates in `audit` (from the S6 blind grade, which flagged an answer that animated every shot
   continuously, lit for mood and used full Rigify rigs): camera moving inside a still shot, keys
   between block starts outside live shots, a non-Workbench engine are problems; lights are a
