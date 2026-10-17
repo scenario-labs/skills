@@ -704,6 +704,8 @@ def movers(scene=None):
             continue
         if _in_figure(o):
             continue
+        if o.parent is not None and _animated(o.parent):
+            continue  # a rider or a carried prop travels with its mover and counts with it
         if _animated(o):
             (extras if o.get("extra") else heroes).append(o.name)
     return heroes, extras
