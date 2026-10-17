@@ -16,10 +16,17 @@ flag the gap.
 
 ## 1. Execution channel
 
-| Channel                                                                                    | Use for                                                                                | Rules                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live GUI Blender (user's session over the MCP bridge)                                      | anything interactive: real sculpt/paint brushes, weight painting, viewport screenshots | One short, idempotent script per call returning a compact result dict. Get-or-create by name. Never touch objects you did not create. Save a stage backup `bpy.ops.wm.save_as_mainfile(filepath=..., copy=True)` after each stage.                                                                                                                                                                                    |
-| Headless helper `blender -b [file] --factory-startup --python-exit-code 1 -P x.py -- args` | renders, audits, batch ops, anything when no bridge is up                              | Use `--factory-startup` so the user's add-ons and preferences stay out of the run (an add-on can call the network or change defaults); the Scenario Blender Plugin's headless server, `blender --background scene.blend --command scenario_blender`, is the exception because it needs the extension loaded. Without `--python-exit-code` a failing script still exits 0. Print a final machine-readable result line. |
+- **Live GUI Blender** (user's session over the MCP bridge), for anything interactive: real
+  sculpt/paint brushes, weight painting, viewport screenshots. One short, idempotent script per call
+  returning a compact result dict. Get-or-create by name. Never touch objects you did not create.
+  Save a stage backup `bpy.ops.wm.save_as_mainfile(filepath=..., copy=True)` after each stage.
+- **Headless helper** `blender -b [file] --factory-startup --python-exit-code 1 -P x.py -- args`,
+  for renders, audits, batch ops, anything when no bridge is up. Use `--factory-startup` so the
+  user's add-ons and preferences stay out of the run (an add-on can call the network or change
+  defaults); the Scenario Blender Plugin's headless server,
+  `blender --background scene.blend --command scenario_blender`, is the exception because it needs
+  the extension loaded. Without `--python-exit-code` a failing script still exits 0. Print a final
+  machine-readable result line.
 
 Never open your own GUI Blender window to test things on the user's machine: windows steal focus and
 pile up. Live work goes through the user's already-running Blender; everything else runs headless,
@@ -52,7 +59,7 @@ optional arguments.
   copy.
 - A timed-out call has an unknown outcome: read the scene again before retrying, never resend it
   blindly.
-- The plugin's tools never save the user's own file. The stage backup in the live row
+- The plugin's tools never save the user's own file. The live channel's stage backup
   (`save_as_mainfile(..., copy=True)` through `execute_python`) writes a separate file and leaves
   the open file and its unsaved state alone: it is also the saved copy that headless work starts
   from. Ask the user to save their own file at milestones; with no one to ask, keep working from the
