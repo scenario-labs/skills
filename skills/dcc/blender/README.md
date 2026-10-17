@@ -15,8 +15,9 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
   `scenario-blender-geometry-nodes`, `scenario-blender-lighting-rendering`,
   `scenario-blender-grease-pencil`, `scenario-blender-hard-surface`, each with a tested
   `bx_<domain>.py`. The fourteenth, `scenario-blender-blockout`, builds camera-locked blockouts that
-  guide a render-to-real video pass through the Scenario Blender Plugin; its `bx_blockout.py` is
-  syntax- and lint-checked here but has not yet been run in Blender.
+  guide a render-to-real video pass through the Scenario Blender Plugin. Its `bx_blockout.py` and
+  `bx_kits.py` have no headless suite here; they ran in Blender 5.2.1 during the live validations
+  under Provenance.
 - Evidence: blind-graded written scenarios, with skills won 7 of 7 against the same model without
   them; execution tests better on retopology and bake + material, on par or better on sculpting
   after refactor, on par on a bouncing ball; all 12 test suites pass headless on Blender 5.2.1.
@@ -53,8 +54,9 @@ the sibling-install line in each `SKILL.md`, and paths into the build project ma
 `scenario-blender-blockout` was written for this repository on 2026-10-16 from the author's own
 blockout workflow: rewritten for the Scenario Blender Plugin's local Scenario MCP server, every
 plugin tool and argument checked against the plugin's `docs/MCP.md`, and a new toolkit. It was
-validated live twice on PR 243: the headless channel and the hosted route on Blender 5.0.1, then the
-plugin's Render Video lane on Blender 5.2.1 with plugin 0.11.0. Those runs changed:
+validated live four times on PR 243: once on the headless channel and the hosted route on Blender
+5.0.1, then three times on the plugin's Render Video lane on Blender 5.2.1 with plugin 0.11.0. Those
+runs changed:
 
 - `K.walk_path`: planted feet. The legs are solved per frame so each stance foot stays put while the
   body passes over it (it slid at about body speed before), with level soles and a hip bob. A stride
