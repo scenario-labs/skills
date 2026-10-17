@@ -20,7 +20,7 @@ Edit mode, references and moderation: `scenario-seedance`. Variations, review, r
 | ------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Upload             | `upload_asset`, `upload_asset_complete`                  | Then `asset_get`: `duration`, `frameRate`, and the `firstFrame` asset id the plate starts from                             |
 | Keep the song      | `model_scenario-audio-extract`, `outputFormat: "wav"`    | Returns inline                                                                                                             |
-| Mute the reference | `model_scenario-video-cut`, `preserveAudio: false`       | Returns inline; probe the download to confirm no audio stream remains                                                      |
+| Mute the reference | `model_scenario-video-cut`, `preserveAudio: false`       | `startTime: 0` and no `endTime` keep the whole clip; returns inline; probe the download to confirm no audio stream remains |
 | Room plate         | Image edit of the reel's `firstFrame` (`scenario-image`) | Optional; see Changing the room, and check it before any video spend                                                       |
 | Recast drafts      | Seedance edit mode, `"draft": true`                      | `referenceVideos: [muted reel]`, `referenceImages` in tag order, `duration: -1`, `generateAudio: false`; see Prompt recipe |
 | Pick and finish    | `scenario-seedance-drafts`                               | Review every take, complete only the picks                                                                                 |
@@ -52,12 +52,12 @@ Outcomes at authoring time, best first:
 
 1. `upload_asset` the reel, `upload_asset_complete`, then `asset_get` it.
 2. `model_run` the audio extractor and the muted cut. Download the cut and confirm it has a video stream only.
-3. `recommend` with `capability="img2img"` and the decor in the user's words; edit the `firstFrame` as above, run the overlay check, and show the user the plate before any video spend.
+3. `recommend` with `capability="img2img"` and the decor in the user's words; edit the `firstFrame` as above, run the overlay check, and show the user the plate before any video spend (unattended: a passed overlay check is the gate, and a failed one stops the run before any draft).
 4. Discover Seedance and `model_schema_get` it. `dry_run` one draft payload and quote N takes per outfit times that price.
-5. Three payloads (the sheet outfit, an outfit image, the reel's own outfit), each sent N times with `"draft": true` and `wait=false`; `jobs_wait` all of them (7 to 8 minutes).
+5. Three payloads (the sheet outfit, an outfit image, the reel's own outfit), each sent N times with `"draft": true` and `wait=false`; `jobs_wait` all of them, re-called with the returned `pending_job_ids` until every row is done (7 to 8 minutes), never a second launch.
 6. Give each draft a music review copy (step 8 recipe at the draft's length), then review per `scenario-seedance-drafts`, adding a timing check: the reel and the draft side by side at four matched timestamps.
 7. Complete the picks with the draft job's own asset ids, never the music copies.
-8. Compose each completion: the video and the extracted song as layers at `startTime: 0`, `durationMode: "custom"` at the completion's `duration`, `canvasMode: "custom"` at its size, `fps` at its frame rate. Measure sync on the download (see Common mistakes), then `asset_download`.
+8. Compose each completion: the video and the extracted song as layers at `startTime: 0`, `durationMode: "custom"` at the completion's `duration` rounded down to the field's 0.1 s step, `canvasMode: "custom"` with numeric `canvasWidth` and `canvasHeight` at its size, `fps` at its frame rate. Then `asset_download` it and measure sync on that file (see Common mistakes).
 
 ## Common mistakes
 
@@ -66,4 +66,4 @@ Outcomes at authoring time, best first:
 - Spending on video before the plate passes the overlay check.
 - Expecting the source's frame rate and exact length, or composing to the source's duration: take both from `asset_get` on the output.
 - Shifting the song to line up with the reel's audio: line it up with the dance instead. At authoring time the extracted track ran 110 ms early and the recast dance 83 ms early, a net offset under one frame, so the track at 0 was right. Measure by cross-correlating the final's audio envelope against the reel's, and its frame-difference motion envelope against the reel's. The compositor moves layers in 0.1 s steps, coarser than such offsets.
-- Re-generating the performer when only the room changes on an approved recast: confirm first which one the user wants kept.
+- Promising to keep an approved performer while changing only the room: every edit re-renders the performer, so a room change means new takes. Say so before spending (unattended: run the new takes from the approved prompt and report it).
