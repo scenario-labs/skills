@@ -162,11 +162,11 @@ for f in $skill_files; do
 done
 
 if [ -n "$fanout_hits" ]; then
-  echo "Notice (not a failure): a skill's context fan-out is approaching the ${reattach_pool}-token re-attach pool Claude Code shares across skills after compaction. Past it, the least recently invoked skills are dropped entirely. Trim the body, or drop a sibling reference the workflow does not need."
+  echo "Notice (not a failure): a skill's context fan-out is approaching the ${reattach_pool}-token re-attach pool Claude Code shares across skills after compaction. Past it, the least recently invoked skills are dropped entirely. Trim the body, or drop a sibling reference the skill does not need."
   printf '%s' "$fanout_hits"
 fi
 
-# Sentence-length table cells. AGENTS.md "Authoring contract" carries the rule
+# Sentence-length table cells. AGENTS.md "Writing" carries the rule
 # and why it is a notice scoped to staged files. A cell is measured rather than
 # a row, because prettier pads every row to the widest cell. CI stages nothing,
 # so this only speaks in the pre-commit hook.
@@ -193,9 +193,84 @@ if [ -n "$staged_markdown" ]; then
     }
   ')
   if [ -n "$table_hits" ]; then
-    echo "Notice (not a failure): a table cell in staged skill markdown runs past ${table_cell_limit} characters. Tables never wrap, so rewrite the rows that need sentences as a list (- **term**: sentence), per AGENTS.md \"Authoring contract\". Cells found:"
+    echo "Notice (not a failure): a table cell in staged skill markdown runs past ${table_cell_limit} characters. Tables never wrap, so rewrite the rows that need sentences as a list (- **term**: sentence), per AGENTS.md \"Writing\". Cells found:"
     printf '%s\n' "$table_hits"
   fi
+fi
+
+# Long sentences and the word "workflow", per AGENTS.md "Writing". Only lines
+# the staged change adds count: prettier rewraps a paragraph around a one-word
+# fix, and old prose is not the author's to answer for. The staged blob is read
+# rather than the working tree, so line numbers match the diff.
+sentence_word_limit=40
+prose_hits=""
+for f in $staged_markdown; do
+  # ",3,4,9," lists the line numbers the staged change adds.
+  added=$(git diff --cached -U0 -- "$f" | awk '
+    /^@@/ {
+      split($3, range, ",")
+      start = substr(range[1], 2)
+      count = (2 in range) ? range[2] : 1
+      for (i = 0; i < count; i++) printf ",%d", start + i
+    }
+    END { print "," }
+  ')
+  # The workflow skills are where the word means what it should.
+  case "$f" in
+    skills/*workflow*/*) check_term=0 ;;
+    *) check_term=1 ;;
+  esac
+  hits=$(git show ":$f" | awk -v file="$f" -v added="$added" -v limit="$sentence_word_limit" -v check_term="$check_term" '
+    function finish() {
+      if (words > limit && touched) printf "S  %s:%d: a %d-word sentence\n", file, start, words
+      words = 0
+      touched = 0
+    }
+    FNR == 1 && $0 == "---" { front = 1; next }
+    front { if ($0 == "---") front = 0; next }
+    /^ *(```|~~~)/ { finish(); fence = !fence; next }
+    fence { next }
+    {
+      is_added = index(added, "," FNR ",") > 0
+      # A code span or a link target is never prose, and a span reads as one word.
+      line = $0
+      gsub(/`[^`]*`/, "code", line)
+      gsub(/\]\([^)]*\)/, "]", line)
+      if (check_term && is_added && line ~ /(^|[^A-Za-z0-9_-])[Ww]orkflows?([^A-Za-z0-9_-]|$)/)
+        printf "T  %s:%d\n", file, FNR
+    }
+    /^ *$/ || /^ *#/ || /^ *\|/ || /^ *<!--/ { finish(); next }
+    {
+      sub(/^ *> */, "", line)
+      if (line ~ /^ *([-*+]|[0-9]+[.)]) /) {
+        finish()
+        sub(/^ *([-*+]|[0-9]+[.)]) +/, "", line)
+      }
+      n = split(line, word, /[ \t]+/)
+      for (i = 1; i <= n; i++) {
+        if (word[i] == "") continue
+        if (words == 0) start = FNR
+        words++
+        if (is_added) touched = 1
+        if (word[i] ~ /[.!?][)"*_]*$/ && word[i] !~ /^\(?(e\.g|i\.e|vs)\.$/) finish()
+      }
+    }
+    END { finish() }
+  ')
+  prose_hits="${prose_hits}${hits}
+"
+done
+sentence_hits=$(printf '%s' "$prose_hits" | sed -n 's/^S//p')
+term_hits=$(printf '%s' "$prose_hits" | sed -n 's/^T//p')
+
+if [ -n "$sentence_hits" ]; then
+  echo "Notice (not a failure): staged skill markdown adds a sentence past ${sentence_word_limit} words. Split it, or make it a list, per AGENTS.md \"Writing\". Sentences found, by their first line:"
+  printf '%s\n' "$sentence_hits"
+fi
+
+if [ -n "$term_hits" ]; then
+  echo 'Notice (not a failure): staged skill markdown adds "workflow" outside the workflow skills. The word names a Scenario workflow (`workflow_run`); for what a skill teaches, say steps or procedure, per AGENTS.md "Writing". Lines found:'
+  printf '%s\n' "$term_hits"
 fi
 
 exit $fail

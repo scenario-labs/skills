@@ -134,3 +134,135 @@ test("only reads skill markdown", (t) => {
   git("add", "docs/notes.md");
   assert.ok(!style().includes(NOTICE));
 });
+
+const SENTENCE =
+  "Notice (not a failure): staged skill markdown adds a sentence";
+const TERM = 'Notice (not a failure): staged skill markdown adds "workflow"';
+const words = (count) =>
+  Array.from({ length: count }, (_, i) => `w${i}`).join(" ");
+// Prettier wraps prose, so a sentence usually spans lines.
+const wrapped = (count) => {
+  const all = words(count).split(" ");
+  return `${all.slice(0, 20).join(" ")}\n${all.slice(20).join(" ")}.`;
+};
+
+test("names an added sentence past 40 words by its first line", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, `# Notes\n\n${wrapped(41)}\n`);
+  git("add", REFERENCE);
+  const out = style();
+  assert.ok(out.includes(SENTENCE), out);
+  assert.ok(out.includes(`${REFERENCE}:3: a 41-word sentence`), out);
+});
+
+test("stays quiet for a sentence of exactly 40 words", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, `${wrapped(40)}\n`);
+  git("add", REFERENCE);
+  assert.ok(!style().includes(SENTENCE));
+});
+
+test("ignores a long sentence on lines the change does not add", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, `${wrapped(60)}\n`);
+  git("add", REFERENCE);
+  git("commit", "-q", "-m", "notes");
+  write(REFERENCE, `${wrapped(60)}\n\nA short new line.\n`);
+  git("add", REFERENCE);
+  assert.ok(!style().includes(SENTENCE));
+});
+
+test("names a long sentence when one of its lines is added", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, `${wrapped(60)}\n`);
+  git("add", REFERENCE);
+  git("commit", "-q", "-m", "notes");
+  write(REFERENCE, `${wrapped(60).replace("w59", "changed")}\n`);
+  git("add", REFERENCE);
+  assert.ok(style().includes(`${REFERENCE}:1: a 60-word sentence`));
+});
+
+test("ends a sentence at each list item", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, `- ${words(25)}\n- ${words(25)}\n1. ${words(25)}\n`);
+  git("add", REFERENCE);
+  assert.ok(!style().includes(SENTENCE));
+});
+
+test("reads e.g. as part of a sentence", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, `${words(20)} e.g. ${words(20)}.\n`);
+  git("add", REFERENCE);
+  assert.ok(style().includes(`${REFERENCE}:1: a 41-word sentence`));
+});
+
+test("skips frontmatter, fenced code, and tables for sentences", (t) => {
+  const { write, git, style } = repo(t);
+  write(
+    "skills/scenario-demo/SKILL.md",
+    [
+      "---",
+      "name: scenario-demo",
+      `description: Use when ${words(50)}.`,
+      "license: MIT",
+      "---",
+      "",
+      "```text",
+      words(50),
+      "```",
+      "",
+      `| ${words(50)} |`,
+      "",
+    ].join("\n"),
+  );
+  git("add", "-A");
+  assert.ok(!style().includes(SENTENCE));
+});
+
+test("names an added workflow outside the workflow skills", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, "# Notes\n\nFollow this Workflow.\n");
+  git("add", REFERENCE);
+  const out = style();
+  assert.ok(out.includes(TERM), out);
+  assert.ok(out.includes(`  ${REFERENCE}:3\n`), out);
+});
+
+test("leaves workflow alone in the workflow skills", (t) => {
+  const { write, git, style } = repo(t);
+  const skill = "skills/scenario-workflows/SKILL.md";
+  write(
+    skill,
+    "---\nname: scenario-workflows\ndescription: Use when testing.\nlicense: MIT\n---\n\nRun a workflow.\n",
+  );
+  git("add", skill);
+  assert.ok(!style().includes(TERM));
+});
+
+test("ignores workflow in code, link targets, and skill names", (t) => {
+  const { write, git, style } = repo(t);
+  write(
+    REFERENCE,
+    [
+      'Call `workflow_run`, or `search` with `target="workflows"`.',
+      "Read [the docs](https://example.com/workflows).",
+      "See scenario-workflows.",
+      "```text",
+      "workflow",
+      "```",
+      "",
+    ].join("\n"),
+  );
+  git("add", REFERENCE);
+  assert.ok(!style().includes(TERM));
+});
+
+test("ignores workflow on lines the change does not add", (t) => {
+  const { write, git, style } = repo(t);
+  write(REFERENCE, "Follow this workflow.\n");
+  git("add", REFERENCE);
+  git("commit", "-q", "-m", "notes");
+  write(REFERENCE, "Follow this workflow.\n\nA new line.\n");
+  git("add", REFERENCE);
+  assert.ok(!style().includes(TERM));
+});

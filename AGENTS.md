@@ -6,12 +6,12 @@ Guidance for AI agents (and humans) working in this repository.
 
 Public Agent Skills for [Scenario](https://scenario.com): procedural knowledge that teaches AI
 coding agents how to create production-ready content (images, video, audio, textures, skyboxes, 3D,
-custom models) through the [Scenario MCP server](https://mcp.scenario.com). The workflows serve
-games, entertainment, and any creative vertical. Skills follow the
-[Agent Skills](https://agentskills.io) format, install with `npx skills add scenario-labs/skills`,
-and are listed on [skills.sh](https://www.skills.sh/scenario-labs/skills). The expert tools are the
-one exception to the MCP focus: teams of skills that drive DCC software and game engines installed
-on the user's machine (see Expert tools).
+custom models) through the [Scenario MCP server](https://mcp.scenario.com). The skills serve games,
+entertainment, and any creative vertical. Skills follow the [Agent Skills](https://agentskills.io)
+format, install with `npx skills add scenario-labs/skills`, and are listed on
+[skills.sh](https://www.skills.sh/scenario-labs/skills). The expert tools are the one exception to
+the MCP focus: teams of skills that drive DCC software and game engines installed on the user's
+machine (see Expert tools).
 
 ## Layout
 
@@ -78,8 +78,7 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
   (`compatibility`, `metadata`, `allowed-tools`) are not used in this repo.
 - `name`: lowercase letters, numbers, and hyphens; must equal the directory name.
 - `description`: third person, starts with "Use when", describes triggering conditions only (never a
-  summary of the skill's workflow), under 500 characters, rich in keywords an agent would search
-  for.
+  summary of the skill's steps), under 500 characters, rich in keywords an agent would search for.
 - Body: 1000 words is the house target; the build fails past 2500 words (`pnpm style`). Structure:
   Overview, Quick reference, one excellent worked example, Common mistakes.
 - Measure before trimming: `awk '/^---$/{c++; next} c>=2' skills/<name>/SKILL.md | wc -w` is the
@@ -111,7 +110,7 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
   actually loads, and after compaction those share the 25,000-token re-attach pool. `pnpm style`
   prints a notice (never a failure, since the total moves when a skill nobody touched grows) once a
   fan-out approaches the pool. Answer it by trimming the body or by dropping a sibling reference the
-  workflow does not need.
+  skill does not need.
 - Ground every tool and parameter claim in the
   [tool reference](https://mcp.scenario.com/docs/tools). Never present a generative model's id as a
   constant: availability differs per team, and the generation a skill names today is superseded
@@ -182,8 +181,8 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
   wherever the SDK is the better tool, whether a maintainer runs it or a skill has an agent run it.
   What the SDK must not become is the route the body teaches: keep the agent's own steps on MCP, and
   have the script's link in SKILL.md say what it does and who runs it, so no agent reads it as the
-  workflow. `pnpm style` prints a notice when skill markdown mentions the SDK; it prompts that
-  judgment call and never fails the build.
+  steps to follow. `pnpm style` prints a notice when skill markdown mentions the SDK; it prompts
+  that judgment call and never fails the build.
 - Cross-reference the `scenario` skill for connection setup instead of repeating it.
 - Every skill that names a sibling skill also carries the sibling-install invitation, byte-identical
   across skills (copy it from any SKILL.md: "If a sibling skill named here is missing from your
@@ -193,28 +192,78 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
   compliance overlays into generated content, by default or as an option. The skills serve
   professionals who own their distribution compliance; the creative pipeline does not make that
   decision for them.
+
+## Writing
+
+These rules cover skill bodies and references, scripts, commit messages, PR text, and replies.
+
+- Lead with the instruction or the fact. No preamble, no restating the question, no closing summary.
+- One fact per sentence, about 20 words. Past 40, split it or make a list.
+- Three or more parallel items make a list. Prefer short bullets to a long sentence.
+- Keep the words that carry a condition: only, unless, never, before, after. Terse is not
+  telegraphic: drop "only when" and an agent applies the rule everywhere.
+- Give a reason only when it prevents a mistake, in one clause. The debate behind a rule goes in the
+  skill's `README.md` or the PR, not the body.
+- Hedge only a fact that changes, like an authoring-time number. State the rest flatly.
+- Use one name per thing, from the glossary below.
+- Say it once, then stop: noise is paid on every future read. Never spend a paragraph where a clause
+  serves, and link to a rule in this file rather than restate it.
+- Before cutting a passage as a duplicate, compare the two item by item. Topic overlap is not
+  content overlap, and nothing tests whether a fact that used to be present still is.
+- A comment records only what the code cannot say: a constraint, a trap that already bit someone, a
+  why not visible in the lines below. Never narrate the next line. A stale comment costs more than a
+  missing one.
+- No em dashes, ever: use a comma, a colon, parentheses, or two sentences.
+- No marketing language.
+- Agent-agnostic wording: assume no specific agent outside clearly labeled setup snippets.
 - American spelling (color, behavior, center, modeling, optimize). cspell's en-US dictionary accepts
-  some British forms, so those are listed as forbidden words, prefixed with `!`, at the top of
-  `project-words.txt`; add a form there when one slips through.
-- Style: no em dashes, ever (use a comma, a colon, parentheses, or two sentences). No marketing
-  language. Agent-agnostic wording: do not assume a specific agent outside clearly labeled setup
-  snippets.
-- Tables hold short lookups: a capability against its lane, a parameter against its range. A table
-  row never wraps (a line break ends the row) and prettier pads every row to the widest cell, so one
-  sentence in a cell turns the whole table into long lines, and widening that cell rewrites every
-  row in the diff. A cell that needs a sentence becomes a list item instead
-  (`- **term**: sentence`). `pnpm style` prints a notice, never a failure, for a cell past 200
-  characters in staged skill markdown, so existing tables are converted when their file is next
-  edited rather than in one sweep.
-- Say it once, then stop. This applies to skill bodies, scripts, commit messages, PR text, and
-  replies alike. A comment earns its place only by recording what the code cannot say: a constraint,
-  a trap that already bit someone, a why that is not visible from the lines below it. Do not narrate
-  what the next line does, restate a rule that already lives in this file (link to it instead), or
-  spend a paragraph where a clause serves. The same discipline governs prose: no preamble, no
-  restating the question, no summary of what you just wrote. Noise is not free, it is paid on every
-  future read, and a comment that drifts out of date costs more than the one that was never written.
-  Before cutting a passage as a duplicate, compare the two item by item: topic overlap is not
-  content overlap, and nothing here tests whether a fact that used to be present still is.
+  some British forms, so those are forbidden words, prefixed with `!`, at the top of
+  `project-words.txt`. Add a form there when one slips through.
+- Tables hold short lookups: a capability against its lane, a parameter against its range. A row
+  never wraps (a line break ends it), and prettier pads every row to the widest cell. So one
+  sentence in a cell makes every line long, and widening it rewrites every row in the diff. A cell
+  that needs a sentence becomes a list item: `- **term**: sentence`.
+
+`pnpm style` prints notices, never failures, for staged skill markdown:
+
+- a table cell past 200 characters, anywhere in a staged file, so old tables convert when next
+  edited;
+- a sentence past 40 words, on added lines only;
+- "workflow" on added lines outside the workflow skills.
+
+Before, one 84-word sentence:
+
+> A reference-audio field is guidance the prompt has to claim: what it conditions (timing and energy
+> on one family, a voice on another) and whether it rides alone or needs an image or video reference
+> beside it are the family skill's contract, but on every member a track passed silently beside a
+> character reference is easily ignored, so the prompt says what the track is for ("the reference
+> audio is her own voice, lip-synced" for speech; the beat the cuts land on for music).
+
+After, the same facts:
+
+- Reference audio is guidance the prompt has to claim.
+- The family skill says what it conditions (timing and energy, or a voice) and whether it needs an
+  image or video reference beside it.
+- On every member, a track passed silently beside a character reference is easily ignored.
+- So the prompt names the track's job: "the reference audio is her own voice, lip-synced" for
+  speech, the beat the cuts land on for music.
+
+### Glossary
+
+| Term          | Means                                                              | Not                              |
+| ------------- | ------------------------------------------------------------------ | -------------------------------- |
+| skill         | A folder holding a `SKILL.md`, installed by the skills CLI         | workflow, recipe, guide, plugin  |
+| sibling skill | Another skill a skill names                                        | dependency (nothing resolves it) |
+| workflow      | A Scenario workflow: a node graph run with `workflow_run`          | a skill, or the steps it teaches |
+| tool          | An MCP tool: `model_run`, `jobs_wait`                              | a tool model                     |
+| tool model    | A `tool`-tagged catalog model, run with `model_run`                | a tool                           |
+| member        | One catalog model within a family or capability                    |                                  |
+| job           | One run of `model_run` or `workflow_run`, awaited with `jobs_wait` | task, request                    |
+| asset         | A file stored in Scenario: an upload or a generated output         | image (when the type varies)     |
+| plugin        | One grouping in `.claude-plugin/marketplace.json`                  | a skill                          |
+
+GitHub Actions files under `.github/workflows/` keep their name. For what a skill teaches, say
+steps, procedure, or pipeline.
 
 ## Expert tools
 
@@ -309,13 +358,13 @@ hook does not run there.
   `.claude-plugin/marketplace.json` from `skills.sh.json` and the skill folders, and stages the copy
   rendered from their staged versions, so unstaged moves and edits never reach the commit), then
   `pnpm validate`, the same checks CI runs as separate steps: `pnpm style` (house style, the body
-  budget, and the context fan-out and table-cell notices), `pnpm format:check` (prettier),
-  `pnpm skill-files` (supporting files next to a SKILL.md are linked and runnable, a skill's own
-  README.md excepted), `pnpm lint:py` (ruff's pyflakes rules over every Python script, configured in
-  `ruff.toml`; the vendored dev skills are excluded), `pnpm groupings` (every skill sits in a
-  `skills.sh.json` grouping, every listed skill exists, and the file satisfies the published
-  skills.sh schema), `pnpm manifest:check` (the plugin marketplace manifest matches
-  `skills.sh.json`), `pnpm readme` (the README Skills section mirrors `skills.sh.json`: one
+  budget, and the context fan-out and table-cell, sentence-length, and wording notices),
+  `pnpm format:check` (prettier), `pnpm skill-files` (supporting files next to a SKILL.md are linked
+  and runnable, a skill's own README.md excepted), `pnpm lint:py` (ruff's pyflakes rules over every
+  Python script, configured in `ruff.toml`; the vendored dev skills are excluded), `pnpm groupings`
+  (every skill sits in a `skills.sh.json` grouping, every listed skill exists, and the file
+  satisfies the published skills.sh schema), `pnpm manifest:check` (the plugin marketplace manifest
+  matches `skills.sh.json`), `pnpm readme` (the README Skills section mirrors `skills.sh.json`: one
   subsection per grouping in the same order with the same title, description, and rows, and every
   skill has exactly one non-stale row, plus the install commands described below),
   `pnpm words:check` (`project-words.txt` is sorted and deduplicated), `pnpm spell` (cspell), and
@@ -511,7 +560,7 @@ model and, when verified, the reasoning effort and speed tier:
 contributing session, not repository defaults or the example above. Omit unknown fields rather than
 guessing; if the model is unavailable, use `Co-authored-by: Codex <noreply@openai.com>`. Preserve
 the human author and existing contributor trailers. Carry these trailers into the final squash
-message so attribution survives the repository's squash workflow.
+message so attribution survives the repository's squash merges.
 
 ## Conventions
 
