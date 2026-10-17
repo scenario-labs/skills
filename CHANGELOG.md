@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.58.0](https://github.com/scenario-labs/skills/compare/skills-v0.57.0...skills-v0.58.0) (2026-10-17)
+
+
+### Features
+
+* **scenario-blender-blockout:** add blockouts for render-to-real video ([#243](https://github.com/scenario-labs/skills/issues/243)) ([7c1a414](https://github.com/scenario-labs/skills/commit/7c1a41405ff8985d7b707fccd6a85620cf6e0543))
+* **scenario-blender-expert:** teach the Scenario Blender Plugin bridge ([#240](https://github.com/scenario-labs/skills/issues/240)) ([c94fc7d](https://github.com/scenario-labs/skills/commit/c94fc7d37a787dc189d453af2b3d21620fb2ebb0))
+* **scenario-reel-recast:** recast a trend reel with your character ([#245](https://github.com/scenario-labs/skills/issues/245)) ([08d5969](https://github.com/scenario-labs/skills/commit/08d59697af012a2f41600aba80d8dcf49a535c68))
+
+
+### Bug Fixes
+
+* **scenario-patina-retexture:** restore the frame rate xfade needs on ffmpeg 7 ([#262](https://github.com/scenario-labs/skills/issues/262)) ([1aaa21e](https://github.com/scenario-labs/skills/commit/1aaa21e00ad4e2031b99fecbdb96569730251c65))
+* **scenario-seedance:** point to draft mode and the drafts skill ([#253](https://github.com/scenario-labs/skills/issues/253)) ([aa4fa1b](https://github.com/scenario-labs/skills/commit/aa4fa1bb22ed46c9fbce8704659f64a7a52d4c8a))
+* **skills:** drop references to an unpublished Blender blockout skill ([#241](https://github.com/scenario-labs/skills/issues/241)) ([236fc59](https://github.com/scenario-labs/skills/commit/236fc59d4cfeaca6abd2e79161ae9a4b44d74fe0))
+
 ## [0.57.0](https://github.com/scenario-labs/skills/compare/skills-v0.56.0...skills-v0.57.0) (2026-10-17)
 
 
