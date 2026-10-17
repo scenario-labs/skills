@@ -57,6 +57,8 @@ images, 10 videos, 10 audio, 4 to 30 seconds, up to 1080p; the 2.0, Fast, and Mi
 caps do, six times across the family for one 4 second 480p job, so `dry_run` the same job on two
 members before a batch.
 
+Several takes to compare, or one to approve before paying for 1080p: `draft: true` (2.5 at authoring time, `resolution` ignored while it is on) renders a 480p take, priced like a plain 480p render, that a separate finisher completes to 1080p without regenerating it. With no seed, it is the only way to ship the exact take that was approved: re-running the payload at 1080p performs it again differently. Variations, review and completion: the `scenario-seedance-drafts` skill.
+
 ## The conditioning rule
 
 In reference mode, frame one anchors to the base state of the reference world, and no prompt wording
