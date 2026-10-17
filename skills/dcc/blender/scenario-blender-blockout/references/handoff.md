@@ -129,7 +129,8 @@ user and spent only with their explicit approval of the exact `cu_cost_exact`.
    the model's duration to the plugin's camera path, not to the timeline (releases up to 0.11.0,
    [plugin issue 600](https://github.com/scenario-labs/blender-plugin/issues/600)). The form keeps
    the model's default `duration`: a 6 s clip was quoted at 5 s.
-3. `list_models` with `lane` `render_video`, then `model_schema` with the chosen `model_id`.
+3. `list_models` with `lane` `render_video`, then `model_schema` with the chosen `model_id`. The
+   list shows curated members first and at most 40; add `query` (such as "3D") to reach the rest.
 4. `render_form` (every call takes `lane`) with `lane` `render_video`, `action` `configure`,
    `settings` with `model_id`, `look`, `capture_source` `CAMERA`, `parameters`
    `{"duration": <clip seconds, rounded up into the model's range>}` when the schema has one,
@@ -139,16 +140,20 @@ user and spent only with their explicit approval of the exact `cu_cost_exact`.
    and the style images by role, with `@video1` and `@image` tags only on models that use them. So
    `look` is one paragraph holding grammar items 2, 3, 5 and 7 (cast, proportion license, exclusion
    tail, style block): no rehearsal header, no tags, no board declaration, references described in
-   words. Style asset ids come from one of two places. The simplest is a Library asset of the team
-   and project the plugin uses, such as a board generated or uploaded there through the hosted
-   Scenario MCP: pass its id as is. A local file goes through the plugin: `upload_reference`
-   (`path`, optional `kind`) accepts only a file the plugin saved in its own folders or one the user
-   chose in Blender this session (a form's Upload button, the Render Video first-frame field, a
-   workflow File field), and refuses any other path with `UploadRefused` before reading it. So ask
-   the user to choose the file in Blender, then call `upload_reference` with that path, then
-   `reference_upload_status` with the returned `context_id` and `reference_id` until `state` is
-   `imported`, and use its `asset_id`. Never repeat an uncertain upload. An empty `look` with
-   `spark_enabled` asks Prompt Spark to write one, with its own price (`estimate_prompt`,
+   words. On a 3D-to-video model (H3 Max), `look` instead holds the replacement map and hero lines
+   from [levels](levels.md), then the style block; the plugin writes the authority clause itself.
+   The plugin's wrapper counts toward the model's prompt limit: a 1,466-character `look` failed
+   `inspect` with "Scene Intent is longer than 2000 characters" and about 800 passed, so trim until
+   `inspect` stops reporting it. Style asset ids come from one of two places. The simplest is a
+   Library asset of the team and project the plugin uses, such as a board generated or uploaded
+   there through the hosted Scenario MCP: pass its id as is. A local file goes through the plugin:
+   `upload_reference` (`path`, optional `kind`) accepts only a file the plugin saved in its own
+   folders or one the user chose in Blender this session (a form's Upload button, the Render Video
+   first-frame field, a workflow File field), and refuses any other path with `UploadRefused` before
+   reading it. So ask the user to choose the file in Blender, then call `upload_reference` with that
+   path, then `reference_upload_status` with the returned `context_id` and `reference_id` until
+   `state` is `imported`, and use its `asset_id`. Never repeat an uncertain upload. An empty `look`
+   with `spark_enabled` asks Prompt Spark to write one, with its own price (`estimate_prompt`,
    `approve_prompt`) and, on this lane, only once a first frame is set; set `spark_enabled` false to
    skip it.
 5. `render_form` `action` `prepare` with `role` `scene` captures and uploads the silent 1280x720

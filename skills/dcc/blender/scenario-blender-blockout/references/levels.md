@@ -98,8 +98,8 @@ flat colors, gray material or primitive shapes of the previs), then the look. Th
 eight takes of the test.
 
 From advanced up, add one line per shot with its time span and camera move. Stay inside the prompt
-limit (2,000 characters on H3 Max at the time of writing): at expert, classes take the words, never
-individuals.
+limit (2,000 characters on H3 Max at the time of writing, the plugin's own wrapper included on its
+Render Video lane): at expert, classes take the words, never individuals.
 
 ## The test behind these numbers
 
