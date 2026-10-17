@@ -120,38 +120,44 @@ rendered into the video. Check heads and faces explicitly.
 Inside the user's Blender, through the plugin's local Scenario MCP server. Prices are shown to the
 user and spent only with their explicit approval of the exact `cu_cost_exact`.
 
-1. `B.solid_view()` (Solid, color type Object): with `capture_source` `CAMERA` the plugin switches a
-   3D viewport to camera view for the capture itself and records it with that viewport's shading,
-   overlays hidden, then restores the view. Keep `settings.force_solid` false; it captures in one
-   gray.
+1. `B.solid_view()` (Solid, color type Material, so every kit color shows; Object paints a kit in
+   its first color only): with `capture_source` `CAMERA` the plugin switches a 3D viewport to camera
+   view for the capture itself and records it with that viewport's shading, overlays hidden, then
+   restores the view. Keep `settings.force_solid` false; it captures in one gray.
 2. Scene frame range equal to the clip (the capture uses the preview range when enabled, otherwise
-   the scene range) and `settings.match_timeline` on, so the model's duration follows the timeline;
-   pick a length the model accepts.
+   the scene range); pick a length the model accepts. On this lane `settings.match_timeline` ties
+   the model's duration to the plugin's camera path, not to the timeline (releases up to 0.11.0,
+   [plugin issue 600](https://github.com/scenario-labs/blender-plugin/issues/600)): the form keeps
+   the model's default `duration`, and a 6 s clip quoted at 5 s.
 3. `list_models` with `lane` `render_video`, then `model_schema` with the chosen `model_id`.
 4. `render_form` (every call takes `lane`) with `lane` `render_video`, `action` `configure`,
-   `settings` with `model_id`, `look`, `capture_source` `CAMERA`, optional `style_assets` (up to 15
-   Scenario asset ids, such as the style board; a model with no style input refuses them). The
-   plugin wraps `look` in its own prompt, which already tells the model to keep the clip's camera,
-   framing, motion, timing and layout, and names the first frame and the style images by role, with
-   `@video1` and `@image` tags only on models that use them. So `look` is one paragraph holding
-   grammar items 2, 3, 5 and 7 (cast, proportion license, exclusion tail, style block): no rehearsal
-   header, no tags, no board declaration, references described in words. Style asset ids come from
-   one of two places. The simplest is a Library asset of the team and project the plugin uses, such
-   as a board generated or uploaded there through the hosted Scenario MCP: pass its id as is. A
-   local file goes through the plugin: `upload_reference` (`path`, optional `kind`) accepts only a
-   file the plugin saved in its own folders or one the user chose in Blender this session (a form's
-   Upload button, the Render Video first-frame field, a workflow File field), and refuses any other
-   path with `UploadRefused` before reading it. So ask the user to choose the file in Blender, then
-   call `upload_reference` with that path, then `reference_upload_status` with the returned
-   `context_id` and `reference_id` until `state` is `imported`, and use its `asset_id`. Never repeat
-   an uncertain upload. An empty `look` with `spark_enabled` asks Prompt Spark to write one, with
-   its own price (`estimate_prompt`, `approve_prompt`) and, on this lane, only once a first frame is
-   set; set `spark_enabled` false to skip it.
+   `settings` with `model_id`, `look`, `capture_source` `CAMERA`, `parameters`
+   `{"duration": <clip seconds, rounded up into the model's range>}` when the schema has one,
+   optional `style_assets` (up to 15 Scenario asset ids, such as the style board; a model with no
+   style input refuses them). The plugin wraps `look` in its own prompt, which already tells the
+   model to keep the clip's camera, framing, motion, timing and layout, and names the first frame
+   and the style images by role, with `@video1` and `@image` tags only on models that use them. So
+   `look` is one paragraph holding grammar items 2, 3, 5 and 7 (cast, proportion license, exclusion
+   tail, style block): no rehearsal header, no tags, no board declaration, references described in
+   words. Style asset ids come from one of two places. The simplest is a Library asset of the team
+   and project the plugin uses, such as a board generated or uploaded there through the hosted
+   Scenario MCP: pass its id as is. A local file goes through the plugin: `upload_reference`
+   (`path`, optional `kind`) accepts only a file the plugin saved in its own folders or one the user
+   chose in Blender this session (a form's Upload button, the Render Video first-frame field, a
+   workflow File field), and refuses any other path with `UploadRefused` before reading it. So ask
+   the user to choose the file in Blender, then call `upload_reference` with that path, then
+   `reference_upload_status` with the returned `context_id` and `reference_id` until `state` is
+   `imported`, and use its `asset_id`. Never repeat an uncertain upload. An empty `look` with
+   `spark_enabled` asks Prompt Spark to write one, with its own price (`estimate_prompt`,
+   `approve_prompt`) and, on this lane, only once a first frame is set; set `spark_enabled` false to
+   skip it.
 5. `render_form` `action` `prepare` with `role` `scene` captures and uploads the silent 1280x720
    clip. For a first frame, `first_frame_path` (same rule as `upload_reference`) and `role`
    `first_frame`; read `first_frame_route`, since some models take the image as a reference instead
    of an opening frame.
-6. `render_form` `action` `inspect` until `ready_to_estimate`.
+6. `render_form` `action` `inspect` until `ready_to_estimate`, and check `parameters.duration`
+   against the clip before quoting. To see the capture, `asset_download` the scene reference's
+   `asset_id` from `inspect` through the hosted Scenario MCP and sweep it like the playblast.
 7. `estimate_cost` with `lane` `render_video` and the `model_id`, no `parameters`; show
    `cu_cost_exact`; after approval `generate` with the same lane and model, `quote_id` and
    `approved_cost`, no `parameters`.
@@ -173,9 +179,10 @@ For the full-resolution playblast from `bx_review.playblast` (cuts follow the bo
    `model_schema_get`.
 3. Build the payload from the schema: the playblast in the reference-video field, the board in the
    reference-image field, prompt tags bound by array order (`@video1` governs camera, motion and
-   layout; `@image1` governs style only), `duration` set to the clip's length, as the plugin's
-   Render Video lane sends it for the same job (`duration: -1` belongs to Seedance's edit prompts,
-   see `scenario-seedance`). Field names and caps per family: `scenario-seedance` for Seedance.
+   layout; `@image1` governs style only), `duration`, when the schema has one, set to the clip's
+   length; a model without the field follows the clip (`duration: -1` belongs to Seedance's edit
+   prompts, see `scenario-seedance`). Field names and caps per family: `scenario-seedance` for
+   Seedance.
 4. `model_run` with `dry_run` true, show the price, run after approval, `jobs_wait`,
    `asset_download`.
 

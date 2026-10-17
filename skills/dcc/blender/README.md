@@ -52,7 +52,11 @@ the sibling-install line in each `SKILL.md`, and paths into the build project ma
 
 `scenario-blender-blockout` was written for this repository on 2026-10-16 from the author's own
 blockout workflow: rewritten for the Scenario Blender Plugin's local Scenario MCP server, every
-plugin tool and argument checked against the plugin's `docs/MCP.md`, and a new toolkit.
+plugin tool and argument checked against the plugin's `docs/MCP.md`, and a new toolkit. It was
+validated live twice on PR 243: the headless channel and the hosted route on Blender 5.0.1, then the
+plugin's Render Video lane on Blender 5.2.1 with plugin 0.11.0. Those runs changed `K.walk_path`
+(the root's height now keeps the feet on the ground), `K.vehicle` (dark red rear blocks) and
+`B.solid_view` (Material by default).
 
 Paths such as `tests/...` inside the references point to the test evidence on the build machine.
 They are provenance only; the skills do not need them to run.

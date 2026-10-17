@@ -47,8 +47,8 @@ with it and keep the widest clear arc.
 ## By eye, every time
 
 - **Identity**: distinct saturated colors visible (object color and material both set, viewport
-  color type Object or Material); an all-white or all-gray playblast is the failure this check
-  exists for.
+  color type Material; Object paints a kit in its first color only); an all-white or all-gray
+  playblast is the failure this check exists for.
 - **Ambiguity sweep**: a vehicle's front marked in geometry; every figure one connected proxy, no
   loose blocks near it; rigid props without organic curves (a bent pole reads as a living thing);
   nothing from another sub-scene at a frame edge; a scale reference when nothing familiar is in

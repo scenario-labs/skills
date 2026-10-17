@@ -47,9 +47,11 @@ Before any call, write down:
   beats pinned to seconds, converted to frames now.
 - **Levels**: density (simple, medium, advanced, expert: footprint, elements, heroes, extras,
   shots), fidelity (rough, shaped, detailed) and color scheme, read off the brief and set apart:
-  [levels](references/levels.md). Where the brief is silent: advanced, shaped, category colors, and
-  say so; drop to simple or medium only when the brief names one actor in one place. Expert means
-  many elements, movers and cuts, never finer blocks.
+  [levels](references/levels.md). Where the brief is silent (naming only heroes and shots is
+  silent): advanced, shaped, category colors, and say so; drop to simple or medium only for one
+  actor in one place. Expert means many elements, movers and cuts, never finer blocks.
+- **Video model**, now: figure fidelity and prompt grammar depend on it (`list_models` on the plugin
+  lane, `recommend` on the hosted route).
 - **Identity colors**: hero red, then blue, green, yellow, purple, cyan.
 - **Deliberate gaps** the video model fills, and **acceptance tests** the brief states: they become
   mandatory audits.
@@ -73,9 +75,9 @@ Four deliverables: the scene, a locked camera timeline, the playblast, the hand-
   red), the set in one `K.scheme` (category hues by default, identity grays, or material colors),
   extras in mid grays, one light, a dark world. `B.paint` and the kits set object color and
   materials; a kit carries several colors, so Solid view needs color type Material
-  (`B.solid_view("MATERIAL")`, the playblast's default). An all-gray playblast has lost identity.
-  Grid or checker texture only where the camera travels and depth must read, declared "replace,
-  never inherit" in the sheet.
+  (`B.solid_view()`'s default and the playblast's). An all-gray playblast has lost identity. Recolor
+  a kit through its arguments: its materials are shared per color. Grid or checker texture only
+  where the camera travels and depth must read, declared "replace, never inherit" in the sheet.
 - **Timeline.** `B.lock_format` before any geometry: integer fps, frames 1 to fps x seconds,
   1920x1080 (2520x1080 for 21:9) at 100 %. One camera per shot, bound to a `CUT_` marker on its
   first frame (`B.bind_cuts`), hard cuts, zero transition frames.
@@ -139,8 +141,9 @@ Back up after every stage; a reset is recovered from the last backup
    3D-to-video model, a rough capsule for a Seedance hero ([levels](references/levels.md)). Travel
    with `K.walk_path` from a table of (frame, position); extras with `K.crowd`.
 4. **Props and vehicles**: literal primitives at true position. Mark a vehicle's front in geometry
-   (light blocks and grille in front, red blocks at the rear); wheels at z = radius with one spin
-   channel. No loose blocks near a figure.
+   (light blocks and grille in front, dark red at the rear); wheels at z = radius, separate with one
+   spin channel only when a close shot reads rotation (kit wheels are body mesh). No loose blocks
+   near a figure.
 5. **Light**: one area light; named key, fill, rim only when the brief designs light.
 6. **Cameras**: rigs and lenses per shot, `B.bind_cuts`.
 7. **Motion polish**: `B.key_rail` and `B.smooth_keys`, keys past cuts, handheld, vehicle travel as
@@ -175,9 +178,10 @@ stay under the call limit.
 
 **Playblast.** Headless, on the latest `B.stage_backup` copy, with scenario-blender-expert's
 `bx_review.playblast(out_path, res_pct=100)`: an H.264 MP4 of the scene camera over the frame range
-in Workbench, cuts following the bound markers. With no shell, the same call through
-`execute_python` blocks Blender while it renders: keep it to short clips, and after a timeout look
-for the file before running it again. Add camera stills at each shot's start, middle and end.
+in Workbench, cuts following the bound markers. Use the session's binary (`bpy.app.binary_path`): an
+older `blender` on PATH refuses the file. With no shell, the same call through `execute_python`
+blocks Blender while it renders: keep it to short clips, and after a timeout look for the file
+before running it again. Add camera stills at each shot's start, middle and end.
 
 **Hand-off sheet**, built from the scene ([template](references/handoff.md)): color legend tied to
 reference images, the cut list from `B.cut_list()` with exact times, which entities are blocked and
@@ -189,12 +193,13 @@ at the quote (`estimate_cost` or `dry_run`), report it, and skip local uploads t
 file choice:
 
 - **Plugin, Render Video lane**: `B.solid_view()` so the camera viewport shows identity colors,
-  `force_solid` false (it turns everything one gray), a timeline length the model accepts with
-  `match_timeline` on. `list_models` with `lane` `render_video`, `model_schema`, `render_form`
-  `configure` (`model_id`, `look`, `capture_source` `CAMERA`), `prepare` with `role` `scene`,
-  `inspect` until `ready_to_estimate`, `estimate_cost` and `generate` with that lane and no
-  `parameters`, `wait_for_job` re-called while `delivery_active`, then `prepare_result_application`
-  and `apply_result_application` to bring the clip in. The capture is a silent 1280x720 clip with
+  `force_solid` false (it turns everything one gray), a timeline length the model accepts.
+  `list_models` with `lane` `render_video`, `model_schema`, `render_form` `configure` (`model_id`,
+  `look`, `capture_source` `CAMERA`, `parameters` `{"duration": <clip seconds>}`, which
+  `match_timeline` does not set here up to 0.11.0), `prepare` with `role` `scene`, `inspect` until
+  `ready_to_estimate`, `estimate_cost` and `generate` with that lane and no `parameters`,
+  `wait_for_job` re-called while `delivery_active`, then `prepare_result_application` and
+  `apply_result_application` to bring the clip in. The capture is a silent 1280x720 clip with
   overlays hidden.
 - **Hosted Scenario MCP**, for the full-resolution playblast: upload the playblast as the `scenario`
   skill shows, discover a model that takes a reference video, `model_schema_get`, `model_run` with

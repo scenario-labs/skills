@@ -5,9 +5,10 @@ expert scene can be rough, a simple one detailed. `K` is `bx_kits`, `B` is `bx_b
 
 **Defaults when the brief is silent: advanced density, shaped fidelity, category colors.** A dressed
 world with crowd, traffic and two to four shots is what makes the render read as a real place, and
-it held as well as the simple scene in the test below. Go down only when the brief is genuinely
-small (one actor, one place, one move); go up to expert when it asks for scale, a crowd or a cut
-sequence. Record the choice in the build plan.
+it held as well as the simple scene in the test below. A brief that names only its heroes and shots
+is silent on density, even when two heroes and two shots also fit the medium row: take advanced. Go
+down only when the brief is genuinely small (one actor, one place, one move); go up to expert when
+it asks for scale, a crowd or a cut sequence. Record the choice in the build plan.
 
 ## Density: how much scene
 

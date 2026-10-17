@@ -18,13 +18,15 @@ by name, refuse names the user's own work holds, and tag every datablock they ma
   van = K.vehicle("PRP_van_02", "van", (-30, 5, 0), facing_deg=-90, pal=pal)
   K.drive(van, [(1, (-30, 5)), (192, (30, 5))]); K.mark_extra(van)  # background traffic
   K.audit_budget("advanced")                                   # [] = the scene meets the level
-  B.solid_view("MATERIAL")                                     # multi-color kits need Material
+  B.solid_view()                                               # Material: kits are multi-color
 
 Fidelity is one of "rough" (boxes, cylinders, legless capsule figures), "shaped" (bevels,
 composed silhouettes, jointed figures that step) or "detailed" (openings, trims, parts a
 camera would read at 2 m).
 A kit is one mesh with one material slot per role color, so a detailed building stays
 one object; Solid view needs color type Material to show more than one color per object.
+Kit materials are shared per color and named after it (MAT_cc0d0d), and every kit call
+resets them: recolor a part through the kit's arguments, never by editing its material.
 """
 
 import math
@@ -71,6 +73,10 @@ SCHEMES = {
         "light": (1.00, 0.86, 0.55), "sign": (0.80, 0.18, 0.12), "crowd": (0.30, 0.28, 0.30),
     },
 }
+
+# Rear blocks of every vehicle. Hero red is B.PALETTE["red"] (0.8, 0.05, 0.05); a rear in that
+# red reads as part of the hero wherever the two meet in frame.
+REAR_RED = (0.32, 0.03, 0.03)
 
 
 def scheme(name="category"):
@@ -259,12 +265,13 @@ def tree(name, location, height=6.0, fidelity="shaped", pal=None, kind="broadlea
     return p.to_object(name, location, 0.0, coll)
 
 
-def vehicle(name, kind="car", location=(0.0, 0.0, 0.0), facing_deg=0.0, fidelity="shaped", rgb=None, pal=None, coll=None):
+def vehicle(name, kind="car", location=(0.0, 0.0, 0.0), facing_deg=0.0, fidelity="shaped", rgb=None, pal=None, coll=None, rear_rgb=REAR_RED):
     """Car, van, bus or scooter facing local -Y, front marked in geometry: pale headlight
-    blocks and a darker grille at the front, red blocks at the rear, so the model cannot
-    drive it backward. Wheels are one mesh here; spin a separate wheel object only for a
-    close shot that reads rotation. rough: body, cabin, wheels. shaped: bevels, glass band,
-    bumpers. detailed: mirrors, seats, wheel hubs, number plates."""
+    blocks and a darker grille at the front, `rear_rgb` blocks at the rear (a dark red that
+    never reads as the red hero), so the model cannot drive it backward. Wheels are one
+    mesh here; spin a separate wheel object only for a close shot that reads rotation.
+    rough: body, cabin, wheels. shaped: bevels, glass band, bumpers. detailed: mirrors,
+    seats, wheel hubs, number plates."""
     pal = pal or scheme("category")
     lvl = _fidelity(fidelity)
     body = rgb or pal["vehicle"]
@@ -291,7 +298,7 @@ def vehicle(name, kind="car", location=(0.0, 0.0, 0.0), facing_deg=0.0, fidelity
     front_z = r * (2.2 if kind == "scooter" else 1.9)
     for side in ((-0.32, 0.32) if kind != "scooter" else (0.0,)):
         p.add("box", (max(0.14, w * 0.18), 0.08, 0.12), (side * w, -l / 2 - 0.03, front_z), pal["light"])
-        p.add("box", (max(0.14, w * 0.18), 0.08, 0.12), (side * w, l / 2 + 0.03, front_z), (0.85, 0.05, 0.05))
+        p.add("box", (max(0.14, w * 0.18), 0.08, 0.12), (side * w, l / 2 + 0.03, front_z), rear_rgb)
     axles = (-l * 0.32, l * 0.32) if kind != "scooter" else (-l * 0.36, l * 0.36)
     sides = (-w / 2 + 0.12, w / 2 - 0.12) if kind != "scooter" else (0.0,)
     for y in axles:
@@ -474,12 +481,29 @@ def _key_rot(obj, frame, x_deg):
     obj.keyframe_insert("rotation_euler", index=0, frame=frame)
 
 
+def _lowest_leg_z(parts):
+    """Lowest shin or foot vertex in the root's space, from the parts' current rotations.
+    Reads matrix_basis up the chain, so it needs no depsgraph update between keys."""
+    mats = {}
+
+    def chain(part):
+        if part not in mats:
+            parent = _JOINTED[part][3]
+            obj = parts[part]
+            up = chain(parent) if parent else Matrix.Identity(4)
+            mats[part] = up @ obj.matrix_parent_inverse @ obj.matrix_basis
+        return mats[part]
+
+    return min((chain(k) @ v.co).z for k in ("shin_L", "shin_R", "foot_L", "foot_R") for v in parts[k].data.vertices)
+
+
 def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
-    """Move a figure's root along `path` [(frame, (x, y)), ...] (z stays at the ground) and
+    """Move a figure's root along `path` [(frame, (x, y)), ...] on the ground (z = 0) and
     face it along the travel. A jointed figure also gets legs and arms keyed from the
     distance covered, so every step matches the ground it crosses: no sliding feet whatever
-    the speed. A capsule only glides. A pause is two path points at the same position: the
-    legs come to rest. Returns key counts."""
+    the speed, and the root's height keyed so the lowest foot touches z = 0 on every key
+    (a swung leg would otherwise sink up to 5 cm). A capsule only glides. A pause is two
+    path points at the same position: the legs come to rest. Returns key counts."""
     root = bpy.data.objects[fig] if isinstance(fig, str) else fig
     h = root.get("height", 1.75)
     stride = stride or h * 0.42  # one step
@@ -526,6 +550,16 @@ def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
         for fc in B.fcurves(obj):
             for kp in fc.keyframe_points:
                 kp.interpolation = "LINEAR"
+    if parts:
+        # Every frame, not every key: linear limb angles between keys still dip a foot.
+        legs = {k: parts[k] for k in ("thigh_L", "thigh_R", "shin_L", "shin_R")}
+        angle = {k: next(fc for fc in B.fcurves(o) if fc.data_path == "rotation_euler" and fc.array_index == 0) for k, o in legs.items()}
+        lift = next(fc for fc in B.fcurves(root) if fc.data_path == "location" and fc.array_index == 2)
+        for f in range(f0, f1 + 1):
+            for k, o in legs.items():
+                o.rotation_euler.x = angle[k].evaluate(f)
+            lift.keyframe_points.insert(f, -_lowest_leg_z(parts), options={"FAST"}).interpolation = "LINEAR"
+        lift.update()
     return {"figure": root.name, "frames": [f0, f1], "keys": keys, "distance_m": round(dist, 2)}
 
 

@@ -25,7 +25,8 @@ Audits return plain dicts and lists for the agent to read; nothing here renders.
 Conventions: meters, Z up, ground at z = 0, figures face local -Y, cameras use a
 36 mm sensor width. Identity colors go on both the object color (Solid shading,
 color type Object, which the plugin's own Blockout also uses) and a material
-(color type Material, Workbench renders), so either view shows them.
+(color type Material, Workbench renders), so either view shows a one-color proxy.
+A bx_kits kit carries several colors on one object and shows them only in Material.
 """
 
 import math
@@ -190,9 +191,10 @@ def paint(obj, rgb, material_name=None):
     return obj
 
 
-def solid_view(color_type="OBJECT"):
+def solid_view(color_type="MATERIAL"):
     """Every 3D viewport to Solid shading with the given color type. The plugin's Render
-    Video capture keeps the viewport's shading, so set this before it captures.
+    Video capture keeps the viewport's shading, so set this before it captures. Material
+    is the default because a kit carries several colors on one object; Object shows one.
     GUI only; returns how many viewports changed."""
     count = 0
     for window in bpy.context.window_manager.windows:
