@@ -1,6 +1,10 @@
 # GUI paths: menus, hotkeys and tool settings (Maya 2027, for a computer-use agent)
 
-Load when operating Maya's interface instead of, or next to, the scripted procedures (weight painting, Shape Editor sculpting, Pose Editor, ML Deformer training). Menu names come from the Maya 2027 Help and the 2027 Skin Tools quick start video; items marked [verify] come from older tutorials. macOS: Ctrl in the Help means Control, Alt means Option (version deltas). Menu set for everything below: Rigging (F3), unless stated. P numbers point to `procedures.md`.
+Load when operating Maya's interface instead of, or next to, the scripted procedures (weight
+painting, Shape Editor sculpting, Pose Editor, ML Deformer training). Menu names come from the Maya
+2027 Help and the 2027 Skin Tools quick start video; items marked [verify] come from older
+tutorials. macOS: Ctrl in the Help means Control, Alt means Option (version deltas). Menu set for
+everything below: Rigging (F3), unless stated. P numbers point to `procedures.md`.
 
 ## Bind, unbind, bind pose (P1, P2)
 
@@ -17,7 +21,9 @@ Load when operating Maya's interface instead of, or next to, the scripted proced
 
 ## Skin Tools window (P4, P5, P6, P7)
 
-Open: Skin > Skin Tools (then **Initialize Skin Layers**), or Skin > Initialize Skin Layers. After initialization Skin > Paint Skin Weights opens Skin Tools. Preference: Preferences > Animation > Rigging > Paint Skin Weights Tool (Classic by default).
+Open: Skin > Skin Tools (then **Initialize Skin Layers**), or Skin > Initialize Skin Layers. After
+initialization Skin > Paint Skin Weights opens Skin Tools. Preference: Preferences > Animation >
+Rigging > Paint Skin Weights Tool (Classic by default).
 
 | Area                        | Use                                                                                                                                                                                                                                                         |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -34,7 +40,9 @@ Open: Skin > Skin Tools (then **Initialize Skin Layers**), or Skin > Initialize 
 | Export and import layers    | Skin Tools export/import of layered data (Help names Export and Import; Jao used Export Layers to JSON and Import Layers with vertex ID transfer) [verify menu location]                                                                                    |
 | Finish                      | Skin > Delete Skin Layers (weights kept); Skin > Reset Default Weights deletes layers and re-initializes                                                                                                                                                    |
 
-Expert order in this window: create a region layer, add its influences, Assign From Closest Joint, Replace intensity 1 to block, pose with the calisthenics animation, Smooth strongly while scrubbing, select Mask, Replace-flood the region, polish the mask with Smooth (Makauskas, Jao, quick start).
+Expert order in this window: create a region layer, add its influences, Assign From Closest Joint,
+Replace intensity 1 to block, pose with the calisthenics animation, Smooth strongly while scrubbing,
+select Mask, Replace-flood the region, polish the mask with Smooth (Makauskas, Jao, quick start).
 
 ## Classic weight tools (only on clusters without layers)
 

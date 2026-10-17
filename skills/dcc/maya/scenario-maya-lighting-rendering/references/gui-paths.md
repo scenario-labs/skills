@@ -1,6 +1,9 @@
 # GUI paths (for a computer-use agent or a human reading along)
 
-Menus and editors for the same procedures as `procedures.md`. Menu paths come from the sources' screens and the saved docs; several videos show Maya 2020 to 2022 UIs, so every path marked [verify] must be confirmed in Maya 2027 before a computer-use agent relies on it. Maya maps Ctrl to Control and Alt to Option on macOS, not Command (version deltas 2.13).
+Menus and editors for the same procedures as `procedures.md`. Menu paths come from the sources'
+screens and the saved docs; several videos show Maya 2020 to 2022 UIs, so every path marked [verify]
+must be confirmed in Maya 2027 before a computer-use agent relies on it. Maya maps Ctrl to Control
+and Alt to Option on macOS, not Command (version deltas 2.13).
 
 ## Lights
 
@@ -77,4 +80,6 @@ Menus and editors for the same procedures as `procedures.md`. Menu paths come fr
 
 ## Compositing side (Nuke, from the sources; not Maya)
 
-Plus-merge light passes: select two, M, operation plus, channels RGB (SARK 00:10:57; BR 01:00:14); D disables a node for before/after (SARK 00:12:30); Alt+K clones a grade so both branches stay linked (SARK 00:14:07). The agent's substitute is `check_sums`, `light_group_sheet` and `grade_to_light`.
+Plus-merge light passes: select two, M, operation plus, channels RGB (SARK 00:10:57; BR 01:00:14); D
+disables a node for before/after (SARK 00:12:30); Alt+K clones a grade so both branches stay linked
+(SARK 00:14:07). The agent's substitute is `check_sums`, `light_group_sheet` and `grade_to_light`.

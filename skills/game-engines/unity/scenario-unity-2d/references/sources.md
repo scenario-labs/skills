@@ -1,6 +1,9 @@
 # Sources (scenario-unity-2d)
 
-Every source distilled into this skill, from `notes/2d/` (notes, docs digest, videos digest, visual digest, extra digest) and `sources/docs/2d__*.md`, plus the version facts in `sources/unity-version-deltas.md`. Credentials as stated in the notes; "unverified" where the notes say so. Timestamps are `[hh:mm:ss]`, `[frame hh:mm:ss]` when the value was read on screen.
+Every source distilled into this skill, from `notes/2d/` (notes, docs digest, videos digest, visual
+digest, extra digest) and `sources/docs/2d__*.md`, plus the version facts in
+`sources/unity-version-deltas.md`. Credentials as stated in the notes; "unverified" where the notes
+say so. Timestamps are `[hh:mm:ss]`, `[frame hh:mm:ss]` when the value was read on screen.
 
 ## Official documentation and Unity material
 
@@ -35,10 +38,35 @@ Every source distilled into this skill, from `notes/2d/` (notes, docs digest, vi
 
 ## Version facts and observations
 
-- `sources/unity-version-deltas.md` sections 1.3 (bundled 2D packages: 2D Animation 13.0.5, PSD Importer 12.0.2, Tilemap Extras 6.0.2, Aseprite 3.0.2, Cinemachine default 2.10.7), 7 (Cinemachine 2 to 3 renames), 9 (2D: Universal 2D template, 3D as 2D, Analyzer, LowLevelPhysics2D renamed PhysicsCore2D in 6.5), 14 (pin Cinemachine 3.1.7; Rigidbody2D renames; legacy input disabled in templates).
-- Observed in this skill's live runs (Unity 6000.3.21f1, 2026-09-24): `archive/tests/unity-2d/live_results.jsonl`; read-only source reads of URP 17.3 (`PixelPerfectCamera.cs` incl. `PixelSnap`, `PixelPerfectCameraInternal.cs`, `Light2D.cs`, `Renderer2DData.cs`, `Renderer2DRendergraph.cs` per-batch passes, `Passes/Utility/LayerUtility.cs` batching rule, `Shadows/ShadowCaster2D.cs`, `Editor/2D/LightBatchingDebugger`), Tilemap Extras 6.0.2 (`RuleTile.cs`, `RuleOverrideTile.cs`, `AutoTile.cs`, `RuleTileTemplateUtility.cs`), 2D Tooling 1.0.3 (`AnalyzerWindow.cs` menu path) and Cinemachine 3.1.7 (`CinemachineVirtualCameraBase.Prioritize`, `CinemachinePositionComposer.Damping`) in the installed editor.
+- `sources/unity-version-deltas.md` sections 1.3 (bundled 2D packages: 2D Animation 13.0.5, PSD
+  Importer 12.0.2, Tilemap Extras 6.0.2, Aseprite 3.0.2, Cinemachine default 2.10.7), 7 (Cinemachine
+  2 to 3 renames), 9 (2D: Universal 2D template, 3D as 2D, Analyzer, LowLevelPhysics2D renamed
+  PhysicsCore2D in 6.5), 14 (pin Cinemachine 3.1.7; Rigidbody2D renames; legacy input disabled in
+  templates).
+- Observed in this skill's live runs (Unity 6000.3.21f1, 2026-09-24):
+  `archive/tests/unity-2d/live_results.jsonl`; read-only source reads of URP 17.3
+  (`PixelPerfectCamera.cs` incl. `PixelSnap`, `PixelPerfectCameraInternal.cs`, `Light2D.cs`,
+  `Renderer2DData.cs`, `Renderer2DRendergraph.cs` per-batch passes, `Passes/Utility/LayerUtility.cs`
+  batching rule, `Shadows/ShadowCaster2D.cs`, `Editor/2D/LightBatchingDebugger`), Tilemap Extras
+  6.0.2 (`RuleTile.cs`, `RuleOverrideTile.cs`, `AutoTile.cs`, `RuleTileTemplateUtility.cs`), 2D
+  Tooling 1.0.3 (`AnalyzerWindow.cs` menu path) and Cinemachine 3.1.7
+  (`CinemachineVirtualCameraBase.Prioritize`, `CinemachinePositionComposer.Damping`) in the
+  installed editor.
 
 ## Revision history
 
 - 2026-09-24 v0.1: first version (P0 to P13), live suite PASS on a fresh clone.
-- 2026-09-24 v0.2 refactor after blind grade Y6 (previous state kept in `skills/_versions/unity-2d v1 2026-09-24/`): added the variable-height method choice (Sustain mode), per-trick forgiveness toggles, the air-friction choice, hazard hitboxes smaller than the art (`Hazard2D`), one-way platforms and trigger-proof casts, asymmetric vertical camera damping with hysteresis (`FallDampingSwitch`, `CinemachineFallDamping`), room swaps on trigger exit (`CinemachineRoomSwap`) and `bounds_hide_secrets`, Rule Override Tile reskins with the Template and AutoTile decision, the measured Use Delaunay Mesh effect and custom physics outlines, the 2D light cost check (`LightJobs.LightCost` with URP's own batch count, `LightFillBench`), the pixel shimmer test over a camera pan (`shimmer_check`, Retro AA vs Point measured), a Profiler frame budget step (P14); fixed the atlas claim (SetPass does not change under the SRP Batcher), the pixel-art atlas compression caveat and the buffer-window boundary gate. Full live suite rerun: every step PASS except P7, whose first light bench asserted large vs small lights and failed on Editor noise; the bench was made interleaved, that pair is now reported, and P5c and P7 reran PASS (36/36).
+- 2026-09-24 v0.2 refactor after blind grade Y6 (previous state kept in
+  `skills/_versions/unity-2d v1 2026-09-24/`): added the variable-height method choice (Sustain
+  mode), per-trick forgiveness toggles, the air-friction choice, hazard hitboxes smaller than the
+  art (`Hazard2D`), one-way platforms and trigger-proof casts, asymmetric vertical camera damping
+  with hysteresis (`FallDampingSwitch`, `CinemachineFallDamping`), room swaps on trigger exit
+  (`CinemachineRoomSwap`) and `bounds_hide_secrets`, Rule Override Tile reskins with the Template
+  and AutoTile decision, the measured Use Delaunay Mesh effect and custom physics outlines, the 2D
+  light cost check (`LightJobs.LightCost` with URP's own batch count, `LightFillBench`), the pixel
+  shimmer test over a camera pan (`shimmer_check`, Retro AA vs Point measured), a Profiler frame
+  budget step (P14); fixed the atlas claim (SetPass does not change under the SRP Batcher), the
+  pixel-art atlas compression caveat and the buffer-window boundary gate. Full live suite rerun:
+  every step PASS except P7, whose first light bench asserted large vs small lights and failed on
+  Editor noise; the bench was made interleaved, that pair is now reported, and P5c and P7 reran PASS
+  (36/36).

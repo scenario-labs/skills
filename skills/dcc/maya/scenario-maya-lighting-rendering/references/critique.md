@@ -1,12 +1,21 @@
 # Critique rubric: judging a lit frame, a render setup and a delivery
 
-Load at every gate. Two halves: the supervisor's frame critique (what `analyze_frame` measures, and what only eyes can judge), and the render-engineering rubric (noise, passes, color, budget). Code screens, the eye decides: never call a frame done from the numbers alone (scenario-maya-expert protocol).
+Load at every gate. Two halves: the supervisor's frame critique (what `analyze_frame` measures, and
+what only eyes can judge), and the render-engineering rubric (noise, passes, color, budget). Code
+screens, the eye decides: never call a frame done from the numbers alone (scenario-maya-expert
+protocol).
 
-**Proportionate notes.** A lead judges the big picture and does not "pixel f#ck" (BR-B ch6 Storytelling on Lego Batman); a 15-frame shot does not deserve a week (BR-B ch8 Do a first pass); Tanzillo labels his late notes "very nitpicky" (TZ-C 00:19:12). Work the list top-down: an early failure (the eye lands on the wrong thing) makes later polish moot.
+**Proportionate notes.** A lead judges the big picture and does not "pixel f#ck" (BR-B ch6
+Storytelling on Lego Batman); a 15-frame shot does not deserve a week (BR-B ch8 Do a first pass);
+Tanzillo labels his late notes "very nitpicky" (TZ-C 00:19:12). Work the list top-down: an early
+failure (the eye lands on the wrong thing) makes later polish moot.
 
 ## A. The frame critique, in the supervisor's order
 
-Merged from Tanzillo's live critique, KT's three goals and Brejon's review order (lighting studio digest). Column "code" names the `analyze_frame` finding id; thresholds live in `mx_light.THRESHOLDS` and are all [added]: calibrate them on an approved frame of the project, then keep them per project.
+Merged from Tanzillo's live critique, KT's three goals and Brejon's review order (lighting studio
+digest). Column "code" names the `analyze_frame` finding id; thresholds live in
+`mx_light.THRESHOLDS` and are all [added]: calibrate them on an approved frame of the project, then
+keep them per project.
 
 | #   | Question                                                                                                                                                                                            | Code (finding id, metric)                                                                                                                                          | Default threshold                                                                                                                    | Look at                                                                    | Typical fix                                                                                                                                            | Triage           |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
@@ -23,27 +32,52 @@ Merged from Tanzillo's live critique, KT's three goals and Brejon's review order
 | 11  | Technical: clipping on the subject, crushed blacks, NaN, broken black materials, comp edges, DOF logic, layers sum to beauty (TZ-C 00:08:38, 00:03:24; BR 00:59:41)?                                | `subject_clipping`, `crushed_blacks`, `nan_inf`, `brightest_pixel`, `layers_sum`                                                                                   | subject clipped < 0.5%; crushed < 5% of the frame; light groups + default within 1% of the beauty                                    | the +2.5 and +5 stop tiles (clipping), the -5 tile (hidden range)          | lower the key or darken the surround; subtle black lift (ARV-C 00:52:51, comp); fix names or RGBA_default for sums                                     | lighting or comp |
 | 12  | Polish: practical cores, broken-up background glows, catchlight shape, bokeh with energy (TZ-C 00:18:07, 00:18:39; BR 00:35:05, 00:55:51)?                                                          | none                                                                                                                                                               | none                                                                                                                                 | 100% crops                                                                 | a hot core, primitive blockers in background rooms, disc sources for round catchlights                                                                 | lighting or comp |
 
-**Notes as a lead writes them:** one line each, in the order above, with the triage (KT 00:47:19: "the key needs to be moved" is lighting, "lift that fill by 10" is comp). `write_report` produces exactly this table in `critique.md`.
+**Notes as a lead writes them:** one line each, in the order above, with the triage (KT 00:47:19:
+"the key needs to be moved" is lighting, "lift that fill by 10" is comp). `write_report` produces
+exactly this table in `critique.md`.
 
 ## B. Product hero shot (scenario M5 and similar)
 
-- **The reflections are the product.** Polished steel shows only what it reflects: each face that must read has a light or a card in its reflection; dark bands (flags) make metal read as metal [added photographic practice]; highlights break and travel across bevels when the camera or a light moves slightly (ARV-C 00:45:05). Check the render at 100% on the case edges and the bezel.
-- **Reference first:** real photographs of the same kind of product and shot, their light placement read from the reflections and rebuilt before any material is judged (ARV-C 00:02:44, 00:36:21).
-- **Soft means large** (JHILL 00:08:26): a key as big as the product or larger; a rim small and hot (JHILL 00:13:47) for the silhouette against the dark background, still at least 0.5 stop under the key on the subject (small and hot is radiance, not total energy).
-- **What must be sharp:** state it (the logo, the dial, the indices) and check `L.dof_plan` on its depth range; a whole watch head at macro distance is usually not holdable, so turn the camera toward perpendicular to the dial or frame wider (a longer lens at the same framing gives the same depth) [added optics].
-- **Skydome:** when the steel reflects the environment, dome resolution at the HDRI width (`dome_resolution_check`); a near-black dome at 1k is fine.
-- **The focal point is the dial or the logo, not the brightest reflection.** `eye_path` must peak on the subject; a hot highlight on a lug that steals the eye is a note.
-- **Dark surroundings, separated subject:** the slate darker than the watch and falling off toward the frame edges (vignette the lighting), the background never pure black unless intended (a low dome, ARV-L 00:11:53); the watch's shadow side still separated from the slate (separation d').
-- **Glass reads as glass:** the crystal shows a controlled reflection and lets the dial through; if a big softbox floods the crystal the dial disappears (move or flag it) [added]. Crystal and leather sampling belong to scenario-maya-lookdev's notes; transmission depth covers the interfaces (settings_lint).
+- **The reflections are the product.** Polished steel shows only what it reflects: each face that
+  must read has a light or a card in its reflection; dark bands (flags) make metal read as metal
+  [added photographic practice]; highlights break and travel across bevels when the camera or a
+  light moves slightly (ARV-C 00:45:05). Check the render at 100% on the case edges and the bezel.
+- **Reference first:** real photographs of the same kind of product and shot, their light placement
+  read from the reflections and rebuilt before any material is judged (ARV-C 00:02:44, 00:36:21).
+- **Soft means large** (JHILL 00:08:26): a key as big as the product or larger; a rim small and hot
+  (JHILL 00:13:47) for the silhouette against the dark background, still at least 0.5 stop under the
+  key on the subject (small and hot is radiance, not total energy).
+- **What must be sharp:** state it (the logo, the dial, the indices) and check `L.dof_plan` on its
+  depth range; a whole watch head at macro distance is usually not holdable, so turn the camera
+  toward perpendicular to the dial or frame wider (a longer lens at the same framing gives the same
+  depth) [added optics].
+- **Skydome:** when the steel reflects the environment, dome resolution at the HDRI width
+  (`dome_resolution_check`); a near-black dome at 1k is fine.
+- **The focal point is the dial or the logo, not the brightest reflection.** `eye_path` must peak on
+  the subject; a hot highlight on a lug that steals the eye is a note.
+- **Dark surroundings, separated subject:** the slate darker than the watch and falling off toward
+  the frame edges (vignette the lighting), the background never pure black unless intended (a low
+  dome, ARV-L 00:11:53); the watch's shadow side still separated from the slate (separation d').
+- **Glass reads as glass:** the crystal shows a controlled reflection and lets the dial through; if
+  a big softbox floods the crystal the dial disappears (move or flag it) [added]. Crystal and
+  leather sampling belong to scenario-maya-lookdev's notes; transmission depth covers the interfaces
+  (settings_lint).
 - **Grounding:** contact shadow under the case and strap; no floating [ARV-C 00:50:54].
-- **Finish:** subtle black lift, light vignette, bloom on specular hits only if the brief wants it; the denoiser must not erase brushing or dial texture (`detail_loss` against a high-sample crop, below about 0.8 means detail loss [added]).
+- **Finish:** subtle black lift, light vignette, bloom on specular hits only if the brief wants it;
+  the denoiser must not erase brushing or dial texture (`detail_loss` against a high-sample crop,
+  below about 0.8 means detail loss [added]).
 
 ## C. Character close-up
 
-- Key upstage from the face axis (scene check `key_upstage` must pass); no wrap within 30 degrees of the lens axis (`fill_lens_axis`); wrap area at least twice the key's (`rig_plan_checks`).
-- Five portrait rules: no harsh shadow, no flat light, no black areas (`face_black`), one shadow direction, face not cut in half (BR-B ch8.5 Introduction).
-- Eye highlight present unless the character is dead or defeated; sharp for anger, bigger and dimmer for thinking; it comes from the set lights, not a dedicated eye light in production (BR-B ch8.5 Eyes lighting).
-- Skin: key-side specular, SSS present but not glowing on an ear opposite the key (TZ-C 00:06:26, 00:07:31).
+- Key upstage from the face axis (scene check `key_upstage` must pass); no wrap within 30 degrees of
+  the lens axis (`fill_lens_axis`); wrap area at least twice the key's (`rig_plan_checks`).
+- Five portrait rules: no harsh shadow, no flat light, no black areas (`face_black`), one shadow
+  direction, face not cut in half (BR-B ch8.5 Introduction).
+- Eye highlight present unless the character is dead or defeated; sharp for anger, bigger and dimmer
+  for thinking; it comes from the set lights, not a dedicated eye light in production (BR-B ch8.5
+  Eyes lighting).
+- Skin: key-side specular, SSS present but not glowing on an ear opposite the key (TZ-C 00:06:26,
+  00:07:31).
 
 ## D. Render engineering
 
@@ -64,7 +98,11 @@ Merged from Tanzillo's live critique, KT's three goals and Brejon's review order
 
 ## E. Severity
 
-- **fail**: the delivery is wrong or misleading (subject clipped, passes do not sum, NaN, output transform baked into EXR, key downstage when the brief asks for a face read, transmission depth below the interfaces).
-- **warn**: a lead would give a note (eye pulled away, dark on dark, no dominant light, crushed blacks, a lone hue).
-- **info**: context to read (warm/cool, brightest pixel, "key not top" under Brejon's definition).
-  A verdict passes with warnings only when each warning is answered in the report (fixed, or kept on purpose with the reason: "areas left dark on purpose", BR 00:42:13).
+- **fail**: the delivery is wrong or misleading (subject clipped, passes do not sum, NaN, output
+  transform baked into EXR, key downstage when the brief asks for a face read, transmission depth
+  below the interfaces).
+- **warn**: a lead would give a note (eye pulled away, dark on dark, no dominant light, crushed
+  blacks, a lone hue).
+- **info**: context to read (warm/cool, brightest pixel, "key not top" under Brejon's definition). A
+  verdict passes with warnings only when each warning is answered in the report (fixed, or kept on
+  purpose with the reason: "areas left dark on purpose", BR 00:42:13).

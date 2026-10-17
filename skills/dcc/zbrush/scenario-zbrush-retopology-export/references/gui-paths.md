@@ -1,8 +1,13 @@
 # GUI paths, hotkeys and gestures (for a human or a computer-use agent)
 
-The same procedures as `procedures.md`, as a person works them in ZBrush 2026.2.1 on macOS. Palette paths read Palette > Sub-palette > Item. Hotkeys come from the sources (recorded on Windows); on macOS the docs' "Ctrl" usually means Command, but Control+W (not Command+W) makes a polygroup and Command+W QUITS ZBrush since 2023.0.1 (version deltas 3.13): never send Command+W. Map any other modifier per shortcut before relying on it [verify].
+The same procedures as `procedures.md`, as a person works them in ZBrush 2026.2.1 on macOS. Palette
+paths read Palette > Sub-palette > Item. Hotkeys come from the sources (recorded on Windows); on
+macOS the docs' "Ctrl" usually means Command, but Control+W (not Command+W) makes a polygroup and
+Command+W QUITS ZBrush since 2023.0.1 (version deltas 3.13): never send Command+W. Map any other
+modifier per shortcut before relying on it [verify].
 
-Item labels checked in the 2026.2.1 resources are marked [uistr] (UI strings) or [cmdxml] (command list); the rest come from the videos and docs.
+Item labels checked in the 2026.2.1 resources are marked [uistr] (UI strings) or [cmdxml] (command
+list); the rest come from the videos and docs.
 
 ## Display and navigation for topology review
 
@@ -40,7 +45,10 @@ Item labels checked in the 2026.2.1 resources are marked [uistr] (UI strings) or
 
 ## ZRemesher (Tool > Geometry > ZRemesher)
 
-Items [cmdxml] [uistr]: ZRemesher, Retry, Legacy (2018), FreezeBorder, FreezeGroups, SmoothGroups (slider next to KeepGroups, default 1), KeepGroups, KeepCreases, DetectEdges, Target Polygons Count (thousands), Half, Same, Double, Adapt, AdaptiveSize (default 50), Curves Strength (default 50), Use Polypaint, ColorDensity, KeepPolypaint.
+Items [cmdxml] [uistr]: ZRemesher, Retry, Legacy (2018), FreezeBorder, FreezeGroups, SmoothGroups
+(slider next to KeepGroups, default 1), KeepGroups, KeepCreases, DetectEdges, Target Polygons Count
+(thousands), Half, Same, Double, Adapt, AdaptiveSize (default 50), Curves Strength (default 50), Use
+Polypaint, ColorDensity, KeepPolypaint.
 
 | Action                                  | GUI or gesture                                                                                                                                                     | Source                               |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
@@ -55,7 +63,11 @@ Items [cmdxml] [uistr]: ZRemesher, Retry, Legacy (2018), FreezeBorder, FreezeGro
 
 ## 2026 Retopo brush (B, R, E) and legacy manual tools
 
-Setup: select Retopo (228 patches on its icon in 2026.1.1), X for symmetry, first click on the model: Yes = new retopo SubTool (dense sculpt), No = convert the current light mesh (a ZRemesher result); Polyframe and Transparency turn on. Brush > Retopology: Adaptive Draw Size, Move by Draw Size, Focal Shift Adjust, Alternate Smooth, Snap Threshold (frame I4 00:14:32). Leave visible exactly the SubTools the new mesh should wrap (Pablo I4nePXDTrhQ 00:08:33).
+Setup: select Retopo (228 patches on its icon in 2026.1.1), X for symmetry, first click on the
+model: Yes = new retopo SubTool (dense sculpt), No = convert the current light mesh (a ZRemesher
+result); Polyframe and Transparency turn on. Brush > Retopology: Adaptive Draw Size, Move by Draw
+Size, Focal Shift Adjust, Alternate Smooth, Snap Threshold (frame I4 00:14:32). Leave visible
+exactly the SubTools the new mesh should wrap (Pablo I4nePXDTrhQ 00:08:33).
 
 | Gesture                                                                                     | Effect                                                                        | Source                  |
 | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------- |
@@ -77,7 +89,10 @@ Setup: select Retopo (228 patches on its icon in 2026.1.1), X for symmetry, firs
 | Shift                                                                                       | Smooth Retopo (at the end, not while building)                                | I4 00:18:42             |
 | Tool > Geometry > Modify Topology > Mirror And Weld                                         | rebuild a clean center line                                                   | I4 00:34:48             |
 
-Checks while working: hide the reference, look for triangles and broken loops (Retopo doc). Legacy routes: Topology brush (B, T, O; no subdivision levels, Draw Size 1 for zero thickness), ZSphere topology (Tool > Topology > Select Topo, about 15,000 points maximum, Clone the target first), ZModeler Topo (Pavlovich n5 00:25:05 to 00:41:14).
+Checks while working: hide the reference, look for triangles and broken loops (Retopo doc). Legacy
+routes: Topology brush (B, T, O; no subdivision levels, Draw Size 1 for zero thickness), ZSphere
+topology (Tool > Topology > Select Topo, about 15,000 points maximum, Clone the target first),
+ZModeler Topo (Pavlovich n5 00:25:05 to 00:41:14).
 
 ## Projection and the subdivision stack
 
@@ -151,7 +166,11 @@ Checks while working: hide the reference, look for triangles and broken loops (R
 
 ## Decimation
 
-Zplugin > Decimation Master [uistr]: Options (Freeze borders, Keep UVs, Use and Keep Polypaint, Polypaint weight), Pre-process Current or All, % of decimation or k Points / k Polys, Decimate Current or All, presets 20 k, 35 k, 75 k, 150 k, 250 k, Custom, Utilities (Delete Caches, Export All SubTools). Keep polygroups: Tool > Geometry > Modify Topology > Unweld Groups Border, Freeze borders on, decimate, Tool > Polygroups > Auto Groups, Modify Topology > WeldPoints (Drust mRfA_WDvvrg).
+Zplugin > Decimation Master [uistr]: Options (Freeze borders, Keep UVs, Use and Keep Polypaint,
+Polypaint weight), Pre-process Current or All, % of decimation or k Points / k Polys, Decimate
+Current or All, presets 20 k, 35 k, 75 k, 150 k, 250 k, Custom, Utilities (Delete Caches, Export All
+SubTools). Keep polygroups: Tool > Geometry > Modify Topology > Unweld Groups Border, Freeze borders
+on, decimate, Tool > Polygroups > Auto Groups, Modify Topology > WeldPoints (Drust mRfA_WDvvrg).
 
 ## Cleanup of scans and generated meshes
 

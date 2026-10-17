@@ -1,6 +1,9 @@
 # Critique rubric: judging Grease Pencil output like a 2D lead
 
-Use at every gate. Each item says what the experts look at, how the agent checks it (code or render), and what failing looks like. Severity: **block** (fix before the next stage), **fix** (fix before delivery), **note** (mention, fix if cheap). Run the code checks first, then open the renders.
+Use at every gate. Each item says what the experts look at, how the agent checks it (code or
+render), and what failing looks like. Severity: **block** (fix before the next stage), **fix** (fix
+before delivery), **note** (mention, fix if cheap). Run the code checks first, then open the
+renders.
 
 ```python
 for ob in gp_objects: print(ob.name, G.verdict(G.report(ob)))
@@ -75,5 +78,7 @@ G.onion("/abs/review/onion.png", f, before=(f - 2,), after=(f + 2,))
 
 ## 7. Delivery evidence
 
-- Verdicts for every GP object, the strip, one full-resolution frame and, for animation, the onion at the busiest frame.
-- State what was not checked (for example LOD transitions, GUI-only operations, onion skin in the viewport).
+- Verdicts for every GP object, the strip, one full-resolution frame and, for animation, the onion
+  at the busiest frame.
+- State what was not checked (for example LOD transitions, GUI-only operations, onion skin in the
+  viewport).

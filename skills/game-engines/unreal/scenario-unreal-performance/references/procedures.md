@@ -1,10 +1,24 @@
 # Procedures (ue_perf and the shared toolkit, full code)
 
-**Status of every Python block below: not yet run in Unreal** (UE 5.8 not installed on 2026-09-24). Each block starts with `# test: <id>` and `# status: ...`. `tests/code/unreal-performance/test_ue_perf_offline.py` extracts every block from this file and parses it (syntax only), and runs the pure functions the blocks call on synthetic captures (stat unit style frames, a CSV-profiler-like file, TraceQuery-like JSONL, a classic ProfileGPU dump, cvar read-back, `obj list`, PSO miss blocks, a snapshothitches folder). That proves the analysis and proof logic, not any UE name, file layout, cvar or flag: those stay [verify] until `job_probe_perf.py` (P0) and a first real capture confirm them.
+**Status of every Python block below: not yet run in Unreal** (UE 5.8 not installed on 2026-09-24).
+Each block starts with `# test: <id>` and `# status: ...`.
+`tests/code/unreal-performance/test_ue_perf_offline.py` extracts every block from this file and
+parses it (syntax only), and runs the pure functions the blocks call on synthetic captures (stat
+unit style frames, a CSV-profiler-like file, TraceQuery-like JSONL, a classic ProfileGPU dump, cvar
+read-back, `obj list`, PSO miss blocks, a snapshothitches folder). That proves the analysis and
+proof logic, not any UE name, file layout, cvar or flag: those stay [verify] until
+`job_probe_perf.py` (P0) and a first real capture confirm them.
 
-Conventions. Agent side is system `python3`. Editor side runs through scenario-unreal-expert's channels: `ue_remote.PythonRemote().exec(code)` (or the MCP server) into a running editor, `ue_run.run_python(uproject, script)` headless. The editor does not tick while a script runs (version deltas, Python "Latent work"): set a view mode in one call and screenshot in the next. A packaged game has no editor Python: it takes launch flags (`-ExecCmds`, `-DPCVars`, `-trace`) and whatever the route's Level Sequence event track issues. Paths are absolute; each session writes a new dated folder.
+Conventions. Agent side is system `python3`. Editor side runs through scenario-unreal-expert's
+channels: `ue_remote.PythonRemote().exec(code)` (or the MCP server) into a running editor,
+`ue_run.run_python(uproject, script)` headless. The editor does not tick while a script runs
+(version deltas, Python "Latent work"): set a view mode in one call and screenshot in the next. A
+packaged game has no editor Python: it takes launch flags (`-ExecCmds`, `-DPCVars`, `-trace`) and
+whatever the route's Level Sequence event track issues. Paths are absolute; each session writes a
+new dated folder.
 
-Source codes: `sources.md` (OZ26, OZ24, W4R, W4S, NORSE, HITCH, ARI22, KEN, FFW, TL, NIA, MOB, AVW, ARG, PSO, SCAL, LVP, INS, STAT, PKG).
+Source codes: `sources.md` (OZ26, OZ24, W4R, W4S, NORSE, HITCH, ARI22, KEN, FFW, TL, NIA, MOB, AVW,
+ARG, PSO, SCAL, LVP, INS, STAT, PKG).
 
 ```python
 # test: P_setup
@@ -37,7 +51,9 @@ def in_editor(code):
 
 ## P0. Probe the tools, the API names and the cvars
 
-Why: every flag, cvar and Python name here comes from talks and docs, not the installed engine; the TraceQuery schema is undocumented (rn58 says only "JSONL to stdout"). Probe once per engine install and write the answers into this section.
+Why: every flag, cvar and Python name here comes from talks and docs, not the installed engine; the
+TraceQuery schema is undocumented (rn58 says only "JSONL to stdout"). Probe once per engine install
+and write the answers into this section.
 
 ```python
 # test: P0_probe
@@ -65,11 +81,15 @@ else:
           "Fallback: CSV profiler for frame series, Insights GUI for timers (gui-paths.md).")
 ```
 
-On the first real JSONL (P7), run `P.schema_probe(jsonl)` and set `time_unit` and `duration_unit` for `P.load_trace`. Record here: TraceQuery path, arguments, record kinds, key names, units; the packaged Mac game's Saved folder; which cvars printed nothing.
+On the first real JSONL (P7), run `P.schema_probe(jsonl)` and set `time_unit` and `duration_unit`
+for `P.load_trace`. Record here: TraceQuery path, arguments, record kinds, key names, units; the
+packaged Mac game's Saved folder; which cvars printed nothing.
 
 ## P1. Frame the gap and write the budget table
 
-Why: milliseconds per stage, decided at project start (OZ26 [00:45:55]; W4R [00:05:17]). 38 fps is 26.3 ms, 9.6 ms over the 60 fps stage. Only sourced numbers are pre-filled; GPU pass budgets are the project's decision.
+Why: milliseconds per stage, decided at project start (OZ26 [00:45:55]; W4R [00:05:17]). 38 fps is
+26.3 ms, 9.6 ms over the 60 fps stage. Only sourced numbers are pre-filled; GPU pass budgets are the
+project's decision.
 
 ```python
 # test: P1_budgets
@@ -88,7 +108,9 @@ for n in b["notes"]:
 
 ## P2. The repeatable route
 
-Why: one fixed path, same cameras, same moments, or nothing compares (NORSE [00:45:47] [00:46:19]; FFW [00:02:52]). `BugIt` prints a `BugItGo` line per view; bookmarks and trace screenshots map timings back to places (KEN slide [00:06:59]; INS).
+Why: one fixed path, same cameras, same moments, or nothing compares (NORSE [00:45:47] [00:46:19];
+FFW [00:02:52]). `BugIt` prints a `BugItGo` line per view; bookmarks and trace screenshots map
+timings back to places (KEN slide [00:06:59]; INS).
 
 ```python
 # test: P2_route
@@ -111,11 +133,16 @@ events = P.route_event_track(route, start_s=3.0)
 json.dump(events, open(os.path.join(OUT, "route_event_track.json"), "w"), indent=1)
 ```
 
-Alternative for packaged runs [verify for 5.8]: the Automated Performance Testing plugin (Experimental in 5.5) runs static-camera and sequence tests from Gauntlet with Insights and CSV output (rn55). GUI path for the event track in `gui-paths.md`.
+Alternative for packaged runs [verify for 5.8]: the Automated Performance Testing plugin
+(Experimental in 5.5) runs static-camera and sequence tests from Gauntlet with Insights and CSV
+output (rn55). GUI path for the event track in `gui-paths.md`.
 
 ## P3. Lean capture runs on the target
 
-Why: cooked build on target hardware, lean capture for the budget, three runs to know the spread; editor numbers are triage (NORSE [00:07:36] [00:41:39]; PKG "Cook By the Book"). The package comes from scenario-unreal-pipeline-automation: Test from a source engine, Development from a Launcher engine (PKG build table).
+Why: cooked build on target hardware, lean capture for the budget, three runs to know the spread;
+editor numbers are triage (NORSE [00:07:36] [00:41:39]; PKG "Cook By the Book"). The package comes
+from scenario-unreal-pipeline-automation: Test from a source engine, Development from a Launcher
+engine (PKG build table).
 
 ```python
 # test: P3_capture
@@ -143,7 +170,9 @@ json.dump(runs, open(os.path.join(OUT, "lean_runs.json"), "w"), indent=1)
 
 ## P4. Classify: which stage is the bound
 
-Why: Frame close to Game, Draw or GPU picks the branch (KEN slide [00:22:58]; STAT); GPU and RHIT follow Frame, so an RHIT verdict needs the trace (STAT); an Epic-level scalability on a 60 fps target is the first finding (OZ26 [00:11:00]).
+Why: Frame close to Game, Draw or GPU picks the branch (KEN slide [00:22:58]; STAT); GPU and RHIT
+follow Frame, so an RHIT verdict needs the trace (STAT); an Epic-level scalability on a 60 fps
+target is the first finding (OZ26 [00:11:00]).
 
 ```python
 # test: P4_classify
@@ -166,7 +195,10 @@ print({k: v for k, v in rb.items() if k.startswith("sg.")})   # any 3 on a 60 fp
 
 ## P5. Config first: device profile, resolution chain, read-back
 
-Why: the day-one 60 fps settings are the cheapest large wins: `sg.*` at 2 plus a selector that activates the profile, the resolution chain, Lumen foliage threshold 0, GTSyncType 2 on Gen9, streaming under the 5 ms default (OZ26 [00:08:56] to [00:16:50] [00:25:25] [00:41:56]). Change group contents in `*Scalability.ini`, choose levels in device profiles (SCAL). One change per measurement.
+Why: the day-one 60 fps settings are the cheapest large wins: `sg.*` at 2 plus a selector that
+activates the profile, the resolution chain, Lumen foliage threshold 0, GTSyncType 2 on Gen9,
+streaming under the 5 ms default (OZ26 [00:08:56] to [00:16:50] [00:25:25] [00:41:56]). Change group
+contents in `*Scalability.ini`, choose levels in device profiles (SCAL). One change per measurement.
 
 ```python
 # test: P5_device_profile
@@ -190,9 +222,13 @@ expected = {"sg.GlobalIlluminationQuality": 2, "sg.ShadowQuality": 2,
 print("read-back mismatches:", P.check_readback(rb, expected))
 ```
 
-Which profile a device boots with is not a text edit: Lyra's local settings logic, the example selector plugin, or the platform selector modules (OZ26 [00:16:50] [00:17:21]); a code task for scenario-unreal-gameplay or a human.
+Which profile a device boots with is not a text edit: Lyra's local settings logic, the example
+selector plugin, or the platform selector modules (OZ26 [00:16:50] [00:17:21]); a code task for
+scenario-unreal-gameplay or a human.
 
-Day-one project defaults in `DefaultEngine.ini`, one key at a time (other keys in the section stay): simple collision by default so queries never hit 2M-triangle Nanite fallbacks, and no overlap checks on streamed-in actors (OZ26 [00:06:52] [00:07:23]; HITCH slide [00:18:56]).
+Day-one project defaults in `DefaultEngine.ini`, one key at a time (other keys in the section stay):
+simple collision by default so queries never hit 2M-triangle Nanite fallbacks, and no overlap checks
+on streamed-in actors (OZ26 [00:06:52] [00:07:23]; HITCH slide [00:18:56]).
 
 ```python
 # test: P5b_engine_ini
@@ -206,11 +242,16 @@ log.add("Use Simple as Complex default + NeverUpdate overlaps", "scenario-unreal
 # rules default_complex_collision and nanite_complex_collision) as change requests.
 ```
 
-Also on day one (not text edits): Nanite fallback settings on every Nanite mesh, because fallbacks feed ray tracing, complex collision, HLOD builds and non-Nanite platforms (OZ26 [00:37:15]); without them complex collision is built from the full Nanite mesh (NORSE [00:38:20]).
+Also on day one (not text edits): Nanite fallback settings on every Nanite mesh, because fallbacks
+feed ray tracing, complex collision, HLOD builds and non-Nanite platforms (OZ26 [00:37:15]); without
+them complex collision is built from the full Nanite mesh (NORSE [00:38:20]).
 
 ## P6. GPU deep pass
 
-Why: attribute pass costs with resolution locked and async compute on the graphics pipe (NORSE [00:44:07] [00:45:12]; KEN [00:20:10]), prove any change with async back on. Lumen is budgeted by delta (OZ24 [00:37:55]); VSM starts at the Nanite VisBuffer (OZ24 [00:47:52]); masked, PDO and WPO Nanite content pays in VisBuffer, shadow depths and custom depth (NORSE [00:53:48]).
+Why: attribute pass costs with resolution locked and async compute on the graphics pipe (NORSE
+[00:44:07] [00:45:12]; KEN [00:20:10]), prove any change with async back on. Lumen is budgeted by
+delta (OZ24 [00:37:55]); VSM starts at the Nanite VisBuffer (OZ24 [00:47:52]); masked, PDO and WPO
+Nanite content pays in VisBuffer, shadow depths and custom depth (NORSE [00:53:48]).
 
 ```python
 # test: P6_gpu
@@ -248,11 +289,21 @@ for name, cmds in views.items():
               "'r.ShaderPrintEnable 0'])\n")             # restore [verify values]
 ```
 
-Reading order (OZ24 decision tree; NORSE triage): the one big number, then many small ones, then numbers where they should not be (Nanite programmable raster in custom depth, Niagara readbacks in Visibility Commands). A bucket over budget becomes a change request for its owner (P8). Look at every view image yourself. A platform GPU profiler on the devkit (PIX, Razor) or Xcode on Apple hardware answers occupancy and bandwidth questions ProfileGPU cannot (NORSE [00:06:29] [00:42:12]; MOB).
+Reading order (OZ24 decision tree; NORSE triage): the one big number, then many small ones, then
+numbers where they should not be (Nanite programmable raster in custom depth, Niagara readbacks in
+Visibility Commands). A bucket over budget becomes a change request for its owner (P8). Look at
+every view image yourself. A platform GPU profiler on the devkit (PIX, Razor) or Xcode on Apple
+hardware answers occupancy and bandwidth questions ProfileGPU cannot (NORSE [00:06:29] [00:42:12];
+MOB).
 
 ## P6b. The suspect trees: feature budgets, Nanite, VSM, async compute
 
-Why: each feature has a budget and an order of levers (OZ24 [00:29:18]: "what's your Nanite budget?"). The trees are written as code so the order is not skipped: Nanite views that locate (Evaluate WPO, Pixel Programmable) before Overdraw, which is a locator and never a verdict (OZ24 [00:31:00] to [00:32:13]); for VSM, chase the larger of static and dynamic invalidations (OZ24 [00:48:59]); async compute is an optimization to A/B per feature, about 1.5 ms overall in the Witcher demo while Lumen reflections back on graphics saved more (W4R [00:20:42] [00:21:48]).
+Why: each feature has a budget and an order of levers (OZ24 [00:29:18]: "what's your Nanite
+budget?"). The trees are written as code so the order is not skipped: Nanite views that locate
+(Evaluate WPO, Pixel Programmable) before Overdraw, which is a locator and never a verdict (OZ24
+[00:31:00] to [00:32:13]); for VSM, chase the larger of static and dynamic invalidations (OZ24
+[00:48:59]); async compute is an optimization to A/B per feature, about 1.5 ms overall in the
+Witcher demo while Lumen reflections back on graphics saved more (W4R [00:20:42] [00:21:48]).
 
 ```python
 # test: P6b_trees
@@ -287,11 +338,23 @@ gpu_median = {"baseline": 17.9, "lumen_reflections_off": 17.1, "global_off": 19.
 print(P.ab_verdict(gpu_median, spread_ms=0.3))     # keep only variants that beat the spread
 ```
 
-Levers the trees point to, with the owner who applies them: WPO disable distance, material max WPO displacement, Displacement Fade on tessellated materials, masked to opaque, PDO removal, Pixel Programmable Distance, shading bins through Custom Primitive Data and MPCs (scenario-unreal-materials; OZ26 [00:37:47] to [00:39:20]; FFW [00:21:43] [00:25:31]); far field occlusion-only, near field about 150 m, foliage RT proxies, lower landscape LOD in RT, staggered dynamic RT updates (scenario-unreal-lighting-rendering and scenario-unreal-world-building; W4R [00:29:30] to [00:32:11]); receiver masks, WPO clipmap LOD bias, 5.8 deferred invalidation budget, SMRT ray counts, ray-traced shadows for local lights that characters cross (scenario-unreal-lighting-rendering; OZ24 [00:46:49]; AVW [00:26:25] [00:31:42]; TL part 2). Foliage density through `foliage.DensityScale` and `grass.DensityScale` driven by `sg.FoliageQuality`, only on non-colliding types with Enable Density Scaling (FFW [00:32:48] [00:33:18]).
+Levers the trees point to, with the owner who applies them: WPO disable distance, material max WPO
+displacement, Displacement Fade on tessellated materials, masked to opaque, PDO removal, Pixel
+Programmable Distance, shading bins through Custom Primitive Data and MPCs
+(scenario-unreal-materials; OZ26 [00:37:47] to [00:39:20]; FFW [00:21:43] [00:25:31]); far field
+occlusion-only, near field about 150 m, foliage RT proxies, lower landscape LOD in RT, staggered
+dynamic RT updates (scenario-unreal-lighting-rendering and scenario-unreal-world-building; W4R
+[00:29:30] to [00:32:11]); receiver masks, WPO clipmap LOD bias, 5.8 deferred invalidation budget,
+SMRT ray counts, ray-traced shadows for local lights that characters cross
+(scenario-unreal-lighting-rendering; OZ24 [00:46:49]; AVW [00:26:25] [00:31:42]; TL part 2). Foliage
+density through `foliage.DensityScale` and `grass.DensityScale` driven by `sg.FoliageQuality`, only
+on non-colliding types with Enable Density Scaling (FFW [00:32:48] [00:33:18]).
 
 ## P7. CPU deep pass from a rich trace
 
-Why: read the worst frame thread by thread, drop the waits, count instances against what is on screen (KEN [00:09:24]; NORSE [00:24:20] [00:25:24]). TraceQuery (5.8) turns a `.utrace` into JSONL, so the agent does not need the Insights GUI.
+Why: read the worst frame thread by thread, drop the waits, count instances against what is on
+screen (KEN [00:09:24]; NORSE [00:24:20] [00:25:24]). TraceQuery (5.8) turns a `.utrace` into JSONL,
+so the agent does not need the Insights GUI.
 
 ```python
 # test: P7_cpu_trace
@@ -318,13 +381,30 @@ sb = P.spawn_bursts(tr)                        # complex spawns per frame (HITCH
 print(sb["flagged"][:5], sb["fix"])
 ```
 
-Crowd levers for scenario-unreal-gameplay and scenario-unreal-animation, in the Witcher 4 order: fewer full-fidelity NPCs (300 to 200 took the game thread to 11.5 ms, W4R [00:16:53]), Mass or Instanced Actors for far agents, significance-based ticks, the Animation Budget Allocator from day one (OZ26 [00:34:48]), MetaHuman LOD1 at most in gameplay (NORSE [00:28:49]). The Allocator is on by default (`a.Budget.Enabled`) but throttles only skeletal mesh components registered with it (Enable Animation Budget node, Auto Register with Budget Allocator); `a.Budget.Debug.Enabled` is its overlay, and Epic's animation docs say to use it instead of URO, not with it (animbp-architecture-performance doc).
+Crowd levers for scenario-unreal-gameplay and scenario-unreal-animation, in the Witcher 4 order:
+fewer full-fidelity NPCs (300 to 200 took the game thread to 11.5 ms, W4R [00:16:53]), Mass or
+Instanced Actors for far agents, significance-based ticks, the Animation Budget Allocator from day
+one (OZ26 [00:34:48]), MetaHuman LOD1 at most in gameplay (NORSE [00:28:49]). The Allocator is on by
+default (`a.Budget.Enabled`) but throttles only skeletal mesh components registered with it (Enable
+Animation Budget node, Auto Register with Budget Allocator); `a.Budget.Debug.Enabled` is its
+overlay, and Epic's animation docs say to use it instead of URO, not with it
+(animbp-architecture-performance doc).
 
-Game-thread waits on animation and movement finalization (about 2 ms at 300 NPCs, about 1 ms at 200 in the Witcher demo) are reclaimable: slot gameplay into the gap or move animation evaluation into the physics gap (W4R [00:16:20] [00:16:53]). Spawns are not incremental like streaming: cap complex spawns per frame (one character per frame on low-end targets), defer skeletal init with the "Tick Animation On Skeletal Mesh Init" project setting and hide the first frame, one pool per actor type (HITCH [00:25:08] to [00:27:26]). When a slow frame matches no signature, instrumentation has run out: run a sampling profiler alongside Insights (Superluminal or PIX on Windows, Instruments Time Profiler on a Mac, the platform tools on consoles; the 5.8 `StackSampling` channel is Windows only) (NORSE [00:17:30] to [00:18:58]; MOB [00:07:05]; INS).
+Game-thread waits on animation and movement finalization (about 2 ms at 300 NPCs, about 1 ms at 200
+in the Witcher demo) are reclaimable: slot gameplay into the gap or move animation evaluation into
+the physics gap (W4R [00:16:20] [00:16:53]). Spawns are not incremental like streaming: cap complex
+spawns per frame (one character per frame on low-end targets), defer skeletal init with the "Tick
+Animation On Skeletal Mesh Init" project setting and hide the first frame, one pool per actor type
+(HITCH [00:25:08] to [00:27:26]). When a slow frame matches no signature, instrumentation has run
+out: run a sampling profiler alongside Insights (Superluminal or PIX on Windows, Instruments Time
+Profiler on a Mac, the platform tools on consoles; the 5.8 `StackSampling` channel is Windows only)
+(NORSE [00:17:30] to [00:18:58]; MOB [00:07:05]; INS).
 
 ## P7b. Streaming: per-cell cost, latency in frames, top-speed traversal
 
-Why: streaming is a budget respected in every frame, and its cost shows as latency as much as ms (W4S [00:04:07] [00:22:13]); the attack order is component count, overlaps, then the Experimental async helpers as A/B only (W4S; HITCH [00:12:30] [00:22:56]).
+Why: streaming is a budget respected in every frame, and its cost shows as latency as much as ms
+(W4S [00:04:07] [00:22:13]); the attack order is component count, overlaps, then the Experimental
+async helpers as A/B only (W4S; HITCH [00:12:30] [00:22:56]).
 
 ```python
 # test: P7b_streaming
@@ -343,11 +423,16 @@ for r in ab:                                     # A/B only while Experimental; 
                                      extra_dpcvars=r["dpcvars"])["command_line"])
 ```
 
-Fixes in order (W4S; HITCH): fewer components (ISM runtime cell transformer, Packed Level Actors, FastGeo after the ISM transformer), `DefaultUpdateOverlapsMethodDuringLevelStreaming=NeverUpdate` (P5b), the Simple Streamable Asset Manager (worth it even without FastGeo, W4S [00:40:11]), then the unified budget and async physics state as A/B (the latter pays only with spare worker cycles, W4S [00:18:16]).
+Fixes in order (W4S; HITCH): fewer components (ISM runtime cell transformer, Packed Level Actors,
+FastGeo after the ISM transformer), `DefaultUpdateOverlapsMethodDuringLevelStreaming=NeverUpdate`
+(P5b), the Simple Streamable Asset Manager (worth it even without FastGeo, W4S [00:40:11]), then the
+unified budget and async physics state as A/B (the latter pays only with spare worker cycles, W4S
+[00:18:16]).
 
 ## P8. Content audits and change requests (Editor Python)
 
-Why: the usual offenders are settings on assets and actors, not cvars (NORSE; FFW; HITCH). The performance agent finds and measures them; the owner applies or approves.
+Why: the usual offenders are settings on assets and actors, not cvars (NORSE; FFW; HITCH). The
+performance agent finds and measures them; the owner applies or approves.
 
 ```python
 # test: P8_audit
@@ -372,13 +457,24 @@ json.dump(by_owner, open(os.path.join(OUT, "change_requests_by_owner.json"), "w"
 # parity screenshots from the same BugItGo views before and after (P10).
 ```
 
-World Partition maps expose only loaded actors to `perf_audit_level`: load the route's region first (scenario-unreal-world-building's region procedure). Content lives in source control; a change request is the unit of review.
+World Partition maps expose only loaded actors to `perf_audit_level`: load the route's region first
+(scenario-unreal-world-building's region procedure). Content lives in source control; a change
+request is the unit of review.
 
-Rules added in the refactor pass: `non_static_mesh` (props left Movable or Stationary; about 1,000 of them caused a 20 percent drop in a shipped 5.3 shooter, ARG [00:11:54]; mobility must be correct both ways, since a Static actor that moves invalidates the Global Distance Field static cache under software Lumen, LVP), `nanite_complex_collision`, `wpo_no_max_displacement` and `tessellation_no_displacement_fade` (OZ26 [00:07:23] [00:37:15] to [00:38:17]; NORSE [00:38:20]). These come back as review-only requests (`set` is None, `action` says what to decide): the owner confirms nothing moves a prop before it goes Static. A `property_unknown` row means the candidate Python name did not exist on the installed engine: fix it from P0.
+Rules added in the refactor pass: `non_static_mesh` (props left Movable or Stationary; about 1,000
+of them caused a 20 percent drop in a shipped 5.3 shooter, ARG [00:11:54]; mobility must be correct
+both ways, since a Static actor that moves invalidates the Global Distance Field static cache under
+software Lumen, LVP), `nanite_complex_collision`, `wpo_no_max_displacement` and
+`tessellation_no_displacement_fade` (OZ26 [00:07:23] [00:37:15] to [00:38:17]; NORSE [00:38:20]).
+These come back as review-only requests (`set` is None, `action` says what to decide): the owner
+confirms nothing moves a prop before it goes Static. A `property_unknown` row means the candidate
+Python name did not exist on the installed engine: fix it from P0.
 
 ## P9. Hitch hunt (cold and warm)
 
-Why: hitches are judged apart from the average (W4R [00:44:11]); `snapshothitches` writes a trace snapshot and a screenshot per hitch (rn58); a warm driver cache hides PSO stutter, so PC, Mac and mobile runs start cold (HITCH [00:35:50]; PSO doc); consoles compile PSOs at cook (PSO blog).
+Why: hitches are judged apart from the average (W4R [00:44:11]); `snapshothitches` writes a trace
+snapshot and a screenshot per hitch (rn58); a warm driver cache hides PSO stutter, so PC, Mac and
+mobile runs start cold (HITCH [00:35:50]; PSO doc); consoles compile PSOs at cook (PSO blog).
 
 ```python
 # test: P9_hitch
@@ -407,9 +503,12 @@ print(P.log_ms_lines(cold_log, r"LogGarbage"))            # GC phases, line form
 # Open every snapshot image: what was on screen (cell boundary, spawn wave, first effect).
 ```
 
-Classification and owner per signature: `ue_perf.HITCH_SIGNATURES` (blocking load, PSO, GC, streaming, spawn, physics, content ticks, RHI). A spike present cold and absent warm is a PSO or first-load candidate [added method].
+Classification and owner per signature: `ue_perf.HITCH_SIGNATURES` (blocking load, PSO, GC,
+streaming, spawn, physics, content ticks, RHI). A spike present cold and absent warm is a PSO or
+first-load candidate [added method].
 
-GPU hitches after camera cuts: the frames after a cut lose occlusion history and overdraw (W4R [00:44:11] [00:44:44]). Put every camera cut of the route on a bookmark, then:
+GPU hitches after camera cuts: the frames after a cut lose occlusion history and overdraw (W4R
+[00:44:11] [00:44:44]). Put every camera cut of the route on a bookmark, then:
 
 ```python
 # test: P9b_camera_cuts
@@ -420,11 +519,18 @@ for c in P.camera_cut_spikes(frames, cuts, target_ms=16.67):
     print(c)                   # spike -> r.Nanite.PrimeHZB (5.7) [verify], Overdraw view on the frame after
 ```
 
-Prevent blocking loads at authoring time, not only in traces: a validator that rejects Load Asset Blocking and Load Class Asset Blocking nodes in gameplay Blueprints (Ari's CommonValidators plugin, github.com/Flassari/CommonValidators, or removing the nodes from the engine), run by scenario-unreal-pipeline-automation through the data validation step [verify the 5.8 Python entry point] (HITCH [00:44:44] [00:45:16]).
+Prevent blocking loads at authoring time, not only in traces: a validator that rejects Load Asset
+Blocking and Load Class Asset Blocking nodes in gameplay Blueprints (Ari's CommonValidators plugin,
+github.com/Flassari/CommonValidators, or removing the nodes from the engine), run by
+scenario-unreal-pipeline-automation through the data validation step [verify the 5.8 Python entry
+point] (HITCH [00:44:44] [00:45:16]).
 
 ## P10. Prove the result and guard it
 
-Why: same route, build and device, several runs, async compute on, dynres locked and as shipped; every frame under the line (NORSE [00:29:51]); VSync-miss share as the budget metric (OZ26 [00:45:55]); visual parity for each trade (ARI22 [00:18:05]); a nightly automated test keeps it (OZ26 [00:47:43]).
+Why: same route, build and device, several runs, async compute on, dynres locked and as shipped;
+every frame under the line (NORSE [00:29:51]); VSync-miss share as the budget metric (OZ26
+[00:45:55]); visual parity for each trade (ARI22 [00:18:05]); a nightly automated test keeps it
+(OZ26 [00:47:43]).
 
 ```python
 # test: P10_proof
@@ -449,11 +555,17 @@ paths = P.write_proof_report(cmp_, os.path.join(OUT, "proof"), title="Market rou
 print(cmp_["verdict"], paths)
 ```
 
-Repeat the after side with dynamic resolution as shipped and report the mean screen percentage (`dynres_mean`). Guard: scenario-unreal-pipeline-automation runs the route nightly (Gauntlet or Automated Performance Testing) and fails the build when `compare_runs` against the last accepted run says `regressed` [added wiring]; 5.8 Horde shows these trends (rn58 pipeline notes).
+Repeat the after side with dynamic resolution as shipped and report the mean screen percentage
+(`dynres_mean`). Guard: scenario-unreal-pipeline-automation runs the route nightly (Gauntlet or
+Automated Performance Testing) and fails the build when `compare_runs` against the last accepted run
+says `regressed` [added wiring]; 5.8 Horde shows these trends (rn58 pipeline notes).
 
 ## P11. Apple hardware: the native "why" and the thermal state
 
-Why: Insights tells where, platform tools tell why (MOB [00:06:00]); Metal System Trace shows shader compiles, drawable waits, GPU performance state and thermals that can invalidate a capture (MOB [00:14:06] [00:15:42] [00:16:44]). Use it when the target is a Mac or iOS device, or to explain a Mac proxy number.
+Why: Insights tells where, platform tools tell why (MOB [00:06:00]); Metal System Trace shows shader
+compiles, drawable waits, GPU performance state and thermals that can invalidate a capture (MOB
+[00:14:06] [00:15:42] [00:16:44]). Use it when the target is a Mac or iOS device, or to explain a
+Mac proxy number.
 
 ```python
 # test: P11_apple

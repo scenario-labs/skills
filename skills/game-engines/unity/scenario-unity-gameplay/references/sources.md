@@ -1,8 +1,13 @@
 # Sources (scenario-unity-gameplay)
 
-Every source behind this skill, with who made it, why it is trusted, what it is best for and the timestamps worth opening. Notes live in `notes/gameplay-systems/` (one per source), digests in `_digest_docs_gameplay-systems.md`, `_digest_videos_gameplay-systems.md`, `_digest_extra_gameplay-systems.md`. Version facts: `sources/unity-version-deltas.md`. Live measurements on this Mac: `archive/tests/unity-gameplay/`.
+Every source behind this skill, with who made it, why it is trusted, what it is best for and the
+timestamps worth opening. Notes live in `notes/gameplay-systems/` (one per source), digests in
+`_digest_docs_gameplay-systems.md`, `_digest_videos_gameplay-systems.md`,
+`_digest_extra_gameplay-systems.md`. Version facts: `sources/unity-version-deltas.md`. Live
+measurements on this Mac: `archive/tests/unity-gameplay/`.
 
-Precedence when sources disagree: what the installed 6000.3.21f1 editor did in our tests, then the 6.3 Manual, then package docs, then videos.
+Precedence when sources disagree: what the installed 6000.3.21f1 editor did in our tests, then the
+6.3 Manual, then package docs, then videos.
 
 ## Official documentation (saved 2026-09-24)
 
@@ -42,12 +47,28 @@ Precedence when sources disagree: what the installed 6000.3.21f1 editor did in o
 | -lGsuCEWkM0 | NGO Client Prediction and Reconciliation, git-amend, 2023 (NGO 1.4)               | Adam Myhre                                                                                                                                           | the only hands-on prediction in NGO; needs the fixes listed in expert-notes                                                                                | [00:08:36] tick counter; [00:16:51] tick interval not deltaTime; [00:22:21] compare same-tick states                                                                                                                                                       |
 | dxwEeYtf0O0 | Multiplayer Services Sessions API, git-amend, 2025                                | Adam Myhre                                                                                                                                           | Sessions replace Lobby + Relay code                                                                                                                        | [00:07:48] migration; [00:11:05] relay vs distributed authority                                                                                                                                                                                            |
 
-Not distilled (listed for completeness): Code Monkey "COMPLETE Unity Multiplayer Tutorial (Netcode for GameObjects)" (3yuBOB3VrCk, 700k views, NGO 1.x API); transcript present, no note written, not used for claims here.
+Not distilled (listed for completeness): Code Monkey "COMPLETE Unity Multiplayer Tutorial (Netcode
+for GameObjects)" (3yuBOB3VrCk, 700k views, NGO 1.x API); transcript present, no note written, not
+used for claims here.
 
 ## Gaps (from the research file)
 
-Spatial audio middleware (FMOD, Wwise), steering and flocking, the Unity Behavior graph package in depth, Netcode for Entities, ragdolls, joints and vehicles are not covered by strong sources. Say so when a brief needs them.
+Spatial audio middleware (FMOD, Wwise), steering and flocking, the Unity Behavior graph package in
+depth, Netcode for Entities, ragdolls, joints and vehicles are not covered by strong sources. Say so
+when a brief needs them.
 
 ## Revision history
 
-- 2026-09-24, v0.2 (refactor after the Y8 blind grade, `tests/grading/Y8_grade.md`): v0.1 kept in `skills/_versions/unity-gameplay v1 2026-09-24/`. Added the 16 "missing from both" expert points where an agent meets them: UpdateHub sorted by type with domain-reload-off hygiene (G11); TransformAccessArray rules, Burst `.Run()` in job waits and `JobWaitMeter` (G12); proximity without triggers, `ProximityBenchmark` and `proximity_gate` (G13); NonAlloc counts, shape sweeps and `SweepProjectile`, `LineOfSightBatch` with `QueryParameters`, `SyncTransforms` and the `autoSyncTransforms` deprecation (G14); carve timing, HeightMesh, bake scoping, Remove Object and `AgentLocomotionSync` (G15); rolloff past Max Distance, `AudioLowPassFilter` muffling and the music-under-spam proxy plus the human listening pass (G16); worst frame, Profile Analyzer and native profilers in the gates. Checked the three flagged claims: NavMesh data and the binary scene (runner-side file header and package source), Time statics not persisting from a job (new control `test_09`), and NGO wording (bundled 2.13.0 docs: no full prediction loop, anticipation exists). New code-audit and scene-audit rules. All new code ran live in 6000.3.21f1.
+- 2026-09-24, v0.2 (refactor after the Y8 blind grade, `tests/grading/Y8_grade.md`): v0.1 kept in
+  `skills/_versions/unity-gameplay v1 2026-09-24/`. Added the 16 "missing from both" expert points
+  where an agent meets them: UpdateHub sorted by type with domain-reload-off hygiene (G11);
+  TransformAccessArray rules, Burst `.Run()` in job waits and `JobWaitMeter` (G12); proximity
+  without triggers, `ProximityBenchmark` and `proximity_gate` (G13); NonAlloc counts, shape sweeps
+  and `SweepProjectile`, `LineOfSightBatch` with `QueryParameters`, `SyncTransforms` and the
+  `autoSyncTransforms` deprecation (G14); carve timing, HeightMesh, bake scoping, Remove Object and
+  `AgentLocomotionSync` (G15); rolloff past Max Distance, `AudioLowPassFilter` muffling and the
+  music-under-spam proxy plus the human listening pass (G16); worst frame, Profile Analyzer and
+  native profilers in the gates. Checked the three flagged claims: NavMesh data and the binary scene
+  (runner-side file header and package source), Time statics not persisting from a job (new control
+  `test_09`), and NGO wording (bundled 2.13.0 docs: no full prediction loop, anticipation exists).
+  New code-audit and scene-audit rules. All new code ran live in 6000.3.21f1.

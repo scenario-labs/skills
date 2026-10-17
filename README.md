@@ -27,24 +27,37 @@
   <br />
 </div>
 
-Agent Skills that teach AI coding agents (Claude Code, Cursor, Codex, Copilot, and 70+ others) how to create production-ready content with [Scenario](https://scenario.com) through the [Scenario MCP server](https://mcp.scenario.com): images, video, audio, textures, skyboxes, 3D assets, and custom-trained models, for games, entertainment, and any creative vertical.
+Agent Skills that teach AI coding agents (Claude Code, Cursor, Codex, Copilot, and 70+ others) how
+to create production-ready content with [Scenario](https://scenario.com) through the
+[Scenario MCP server](https://mcp.scenario.com): images, video, audio, textures, skyboxes, 3D
+assets, and custom-trained models, for games, entertainment, and any creative vertical.
 
-The expert tools at the bottom of the list work differently: teams of skills that drive DCC (digital content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, Unreal Engine, Unity, Godot), distilled from expert tutorials, conference talks, and official documentation. They need the application, not the Scenario MCP server, and each family folder's README records how it was built and how far it was verified.
+The expert tools at the bottom of the list work differently: teams of skills that drive DCC (digital
+content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, Unreal
+Engine, Unity, Godot), distilled from expert tutorials, conference talks, and official
+documentation. They need the application, not the Scenario MCP server, and each family folder's
+README records how it was built and how far it was verified.
 
 Skills follow the [Agent Skills](https://agentskills.io) format.
 
 ## Install
 
-**Everything for Scenario.** Every Scenario skill, without the expert tools: the default for working through the Scenario MCP.
+**Everything for Scenario.** Every Scenario skill, without the expert tools: the default for working
+through the Scenario MCP.
 
 ```bash
 # Every Scenario skill, without the expert tools
 npx skills add scenario-labs/skills --skill scenario scenario-inspiration scenario-image scenario-multi-reference scenario-product-shots scenario-brand-kit scenario-image-editing scenario-text-overlay scenario-storyboards scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-textures scenario-skyboxes scenario-3d scenario-blender scenario-patina-retexture scenario-orbit-views scenario-walkable-room scenario-video scenario-video-editing scenario-seedance-music-video scenario-kinetic-music-video scenario-chatgpt-pet-create scenario-chatgpt-pet-update scenario-seedance-storyboard scenario-seedance-drafts scenario-video-ads scenario-ugc scenario-fan-cam scenario-reel-recast scenario-audio scenario-video-assembly scenario-caption-studio scenario-consistency scenario-identity-library scenario-model-training scenario-asset-analysis scenario-quality-gate scenario-refine-loop scenario-model-comparison scenario-formats scenario-workflows scenario-workflow-authoring scenario-moderation scenario-report scenario-team-admin scenario-admin-analytics scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-ad-variants scenario-thumbnails
 ```
 
-**By role or goal.** [INSTALL.md](INSTALL.md) groups the skills by job, from 2D artist to producer, and by outcome, from game art to ChatGPT pets, with one command each.
+**By role or goal.** [INSTALL.md](INSTALL.md) groups the skills by job, from 2D artist to producer,
+and by outcome, from game art to ChatGPT pets, with one command each.
 
-**Expert tools.** A family installs as one set, since its specialists import the lead skill's scripts: select its "Expert tools" group in the installer menu, or run the command in its family README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md), [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md), [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md)).
+**Expert tools.** A family installs as one set, since its specialists import the lead skill's
+scripts: select its "Expert tools" group in the installer menu, or run the command in its family
+README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md),
+[Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md),
+[Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md)).
 
 **Pick, or install one skill.**
 
@@ -56,7 +69,10 @@ npx skills add scenario-labs/skills
 npx skills add scenario-labs/skills --skill scenario
 ```
 
-The menu's topic groups cannot be selected from the command line: the CLI matches `--skill` against exact skill names only, and a group flag is an open request upstream ([vercel-labs/skills#992](https://github.com/vercel-labs/skills/issues/992)). From a script or CI, run the default command above or a role command from INSTALL.md with `-y`, which skips every prompt.
+The menu's topic groups cannot be selected from the command line: the CLI matches `--skill` against
+exact skill names only, and a group flag is an open request upstream
+([vercel-labs/skills#992](https://github.com/vercel-labs/skills/issues/992)). From a script or CI,
+run the default command above or a role command from INSTALL.md with `-y`, which skips every prompt.
 
 The Scenario skills need the Scenario MCP server connected:
 
@@ -64,14 +80,24 @@ The Scenario skills need the Scenario MCP server connected:
 claude mcp add --transport http scenario https://mcp.scenario.com/mcp
 ```
 
-Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scenario account (OAuth), or use an [API key](https://app.scenario.com/settings/api). Full setup lives in the `scenario` skill.
+Or add `https://mcp.scenario.com/mcp` to any MCP client and sign in with a Scenario account (OAuth),
+or use an [API key](https://app.scenario.com/settings/api). Full setup lives in the `scenario`
+skill.
 
 ## Staying up to date
 
-Installs always fetch the latest copy of each skill from `main`; there is no version pinning. Releases are how changes become visible: every feature, fix, and documentation change merged to `main` lands in the next release, staged by release-please as an open release PR. Merging that PR tags a version, updates `CHANGELOG.md` in this repository, publishes a [GitHub release](https://github.com/scenario-labs/skills/releases), and posts the notes to the [Scenario changelog](https://www.scenario.com/changelog).
+Installs always fetch the latest copy of each skill from `main`; there is no version pinning.
+Releases are how changes become visible: every feature, fix, and documentation change merged to
+`main` lands in the next release, staged by release-please as an open release PR. Merging that PR
+tags a version, updates `CHANGELOG.md` in this repository, publishes a
+[GitHub release](https://github.com/scenario-labs/skills/releases), and posts the notes to the
+[Scenario changelog](https://www.scenario.com/changelog).
 
-- To learn that a skill changed, watch this repository's releases (Watch, then Custom, then Releases on GitHub) or check any of the changelog pages above. An entry scoped to a single skill carries that skill's name; changes spanning several skills appear under broader scopes such as `skills`.
-- To pull the changes, run `npx skills update` where you installed, or re-run your original `npx skills add` command.
+- To learn that a skill changed, watch this repository's releases (Watch, then Custom, then Releases
+  on GitHub) or check any of the changelog pages above. An entry scoped to a single skill carries
+  that skill's name; changes spanning several skills appear under broader scopes such as `skills`.
+- To pull the changes, run `npx skills update` where you installed, or re-run your original
+  `npx skills add` command.
 
 ## Skills
 
@@ -85,7 +111,8 @@ Connect the Scenario MCP server and learn the core generation loop every other s
 
 ### Finding a direction
 
-Turn a blank brief into references, options someone can choose between, and a moodboard the next batch runs from.
+Turn a blank brief into references, options someone can choose between, and a moodboard the next
+batch runs from.
 
 | Skill                                                        | Use it for                                                                                                            |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
@@ -93,7 +120,8 @@ Turn a blank brief into references, options someone can choose between, and a mo
 
 ### Images
 
-Generate and edit images: model choice, sizing, references, masked edits, post-processing tools, and letter-perfect text overlay cards.
+Generate and edit images: model choice, sizing, references, masked edits, post-processing tools, and
+letter-perfect text overlay cards.
 
 | Skill                                                                | Use it for                                                                                                            |
 | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -108,7 +136,8 @@ Generate and edit images: model choice, sizing, references, masked edits, post-p
 
 ### Game art and 3D
 
-Sprites, icons, tilesets, textures, skyboxes, 3D models, and walkable spaces for games, the web, and interactive scenes.
+Sprites, icons, tilesets, textures, skyboxes, 3D models, and walkable spaces for games, the web, and
+interactive scenes.
 
 | Skill                                                                          | Use it for                                                                                                                                                                                                                                                                                        |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -143,7 +172,9 @@ Video generation and editing, music, sound effects, voice, and speech.
 
 ### Socials
 
-Made for social feeds and chat apps: UGC-style creator videos, fan-cam reactions from a photo, trend reels recast with your own character, kinetic-typography lyric videos, and animated ChatGPT and Codex pets, new or updated.
+Made for social feeds and chat apps: UGC-style creator videos, fan-cam reactions from a photo, trend
+reels recast with your own character, kinetic-typography lyric videos, and animated ChatGPT and
+Codex pets, new or updated.
 
 | Skill                                                                        | Use it for                                                                                                                                                               |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -166,7 +197,8 @@ Hold one character, product, or style across a whole set, and train custom model
 
 ### Reviewing and organizing output
 
-Read finished assets back: caption them, extract a style or a control map, check a batch against a brief or the Quality Gate, compare candidate models on one brief, and file the keepers.
+Read finished assets back: caption them, extract a style or a control map, check a batch against a
+brief or the Quality Gate, compare candidate models on one brief, and file the keepers.
 
 | Skill                                                                  | Use it for                                                                                                                                                  |
 | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -177,7 +209,8 @@ Read finished assets back: caption them, extract a style or a control map, check
 
 ### Formats and placements
 
-Ship one approved master, image or video, to every placement: ratios, safe zones, and platform specs from social feeds to shops, storefronts, and print.
+Ship one approved master, image or video, to every placement: ratios, safe zones, and platform specs
+from social feeds to shops, storefronts, and print.
 
 | Skill                                                | Use it for                                                                                                                   |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -185,7 +218,8 @@ Ship one approved master, image or video, to every placement: ratios, safe zones
 
 ### Workflows and apps
 
-Discover, run, build, and publish Scenario workflows (apps), and migrate graphs from Weavy, ComfyUI, or other node editors.
+Discover, run, build, and publish Scenario workflows (apps), and migrate graphs from Weavy, ComfyUI,
+or other node editors.
 
 | Skill                                                                      | Use it for                                                                                                                                               |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -203,7 +237,8 @@ Get past a blocked generation, and turn a stuck session into a reproducible publ
 
 ### Team administration
 
-Govern a team from the agent: which models it can run, who is on it and in which projects, per-member spend caps, API key roles, and who spent what.
+Govern a team from the agent: which models it can run, who is on it and in which projects,
+per-member spend caps, API key roles, and who spent what.
 
 | Skill                                                                | Use it for                                                                                                             |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -212,7 +247,8 @@ Govern a team from the agent: which models it can run, who is on it and in which
 
 ### Image model families
 
-The top image families in depth: generation and editing modes, reference rules, and the caps that differ per member.
+The top image families in depth: generation and editing modes, reference rules, and the caps that
+differ per member.
 
 | Skill                                                                      | Use it for                                                                                                                                                                                                                                           |
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -227,7 +263,8 @@ The top image families in depth: generation and editing modes, reference rules, 
 
 ### Video model families
 
-The top video families in depth: conditioning modes, native audio, editing and extension, and per-member caps and costs.
+The top video families in depth: conditioning modes, native audio, editing and extension, and
+per-member caps and costs.
 
 | Skill                                                                      | Use it for                                                                                                                                                 |
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -244,7 +281,8 @@ The top video families in depth: conditioning modes, native audio, editing and e
 
 ### Audio model families
 
-The top audio families in depth: music, covers and stems, sound effects, speech, dubbing, and video scoring.
+The top audio families in depth: music, covers and stems, sound effects, speech, dubbing, and video
+scoring.
 
 | Skill                                                            | Use it for                                                                                                                              |
 | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -255,7 +293,8 @@ The top audio families in depth: music, covers and stems, sound effects, speech,
 
 ### 3D model families
 
-The top 3D families in depth: mesh generation, retexture and rigging toolchains, portraits, and explorable worlds and splats.
+The top 3D families in depth: mesh generation, retexture and rigging toolchains, portraits, and
+explorable worlds and splats.
 
 | Skill                                                    | Use it for                                                                                                                                                                              |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -266,7 +305,10 @@ The top 3D families in depth: mesh generation, retexture and rigging toolchains,
 
 ### Expert tools: ZBrush
 
-DCC software. A lead and eight specialists that drive Maxon ZBrush 2026 through its agent bridge: sculpting, characters and creatures, stylized work, hard surface, polypaint and renders, posing and 3D print, retopology and export, automation. The bridge was proven live; full live tests of every skill are still pending.
+DCC software. A lead and eight specialists that drive Maxon ZBrush 2026 through its agent bridge:
+sculpting, characters and creatures, stylized work, hard surface, polypaint and renders, posing and
+3D print, retopology and export, automation. The bridge was proven live; full live tests of every
+skill are still pending.
 
 | Skill                                                                                               | Use it for                                                                                                                                                       |
 | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -282,7 +324,9 @@ DCC software. A lead and eight specialists that drive Maxon ZBrush 2026 through 
 
 ### Expert tools: Blender
 
-DCC software. A lead and twelve specialists that drive Blender 5.2 through Python, headless or in a live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs, Geometry Nodes, lighting, Grease Pencil, hard surface. Test suites pass headless on Blender 5.2.1.
+DCC software. A lead and twelve specialists that drive Blender 5.2 through Python, headless or in a
+live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs,
+Geometry Nodes, lighting, Grease Pencil, hard surface. Test suites pass headless on Blender 5.2.1.
 
 | Skill                                                                                                  | Use it for                                                                                                                                                     |
 | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -302,7 +346,9 @@ DCC software. A lead and twelve specialists that drive Blender 5.2 through Pytho
 
 ### Expert tools: Maya
 
-DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through Python, batch or live: modeling, retopology and UVs, rigging, skinning, animation, groom, FX, look dev, Arnold lighting and rendering, pipeline scripting.
+DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through Python, batch or
+live: modeling, retopology and UVs, rigging, skinning, animation, groom, FX, look dev, Arnold
+lighting and rendering, pipeline scripting.
 
 | Skill                                                                                         | Use it for                                                                                                                                                   |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -320,7 +366,9 @@ DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through P
 
 ### Expert tools: Unreal Engine
 
-Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS through Editor Python, headless jobs, and Epic's Unreal MCP server: world building, materials, lighting and rendering, gameplay, animation, cinematics, VFX, pipeline automation, performance.
+Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS through Editor
+Python, headless jobs, and Epic's Unreal MCP server: world building, materials, lighting and
+rendering, gameplay, animation, cinematics, VFX, pipeline automation, performance.
 
 | Skill                                                                                                          | Use it for                                                                                                                                                   |
 | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -337,7 +385,10 @@ Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS t
 
 ### Expert tools: Unity
 
-Game engine. A lead and thirteen specialists that drive Unity 6.3 LTS on macOS through batch mode, a live editor, and command-line builds: architecture, gameplay, 2D, animation, UI, VFX, shaders, rendering and lighting, world building, performance, mobile, Web, pipeline automation. Every procedure was run live in Unity 6.3.
+Game engine. A lead and thirteen specialists that drive Unity 6.3 LTS on macOS through batch mode, a
+live editor, and command-line builds: architecture, gameplay, 2D, animation, UI, VFX, shaders,
+rendering and lighting, world building, performance, mobile, Web, pipeline automation. Every
+procedure was run live in Unity 6.3.
 
 | Skill                                                                                                       | Use it for                                                                                                                                                      |
 | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -358,7 +409,10 @@ Game engine. A lead and thirteen specialists that drive Unity 6.3 LTS on macOS t
 
 ### Expert tools: Godot
 
-Game engine. A lead and thirteen specialists that drive Godot 4.7 on macOS through headless jobs, windowed captures, GUT and gdUnit4 tests, and command-line exports: architecture, gameplay, 2D, 3D worlds, animation, UI, VFX, shaders, rendering and lighting, audio, multiplayer, performance and export, pipeline automation. Every procedure was run live in Godot 4.7.2.
+Game engine. A lead and thirteen specialists that drive Godot 4.7 on macOS through headless jobs,
+windowed captures, GUT and gdUnit4 tests, and command-line exports: architecture, gameplay, 2D, 3D
+worlds, animation, UI, VFX, shaders, rendering and lighting, audio, multiplayer, performance and
+export, pipeline automation. Every procedure was run live in Godot 4.7.2.
 
 | Skill                                                                                                       | Use it for                                                                                                                                                     |
 | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -387,13 +441,23 @@ Once the skills are installed and the MCP server is connected, ask your agent th
 
 ## What is an Agent Skill?
 
-A skill is a `SKILL.md` file with procedural knowledge an agent loads on demand, defined by the open [Agent Skills specification](https://agentskills.io/specification). The `skills` CLI installs these files into 70+ agents, and the ecosystem directory lives at [skills.sh](https://www.skills.sh).
+A skill is a `SKILL.md` file with procedural knowledge an agent loads on demand, defined by the open
+[Agent Skills specification](https://agentskills.io/specification). The `skills` CLI installs these
+files into 70+ agents, and the ecosystem directory lives at [skills.sh](https://www.skills.sh).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow, and [AGENTS.md](AGENTS.md) for the authoring contract, the public-content policy, validation, and the application-testing bar. One-time setup after cloning: `pnpm install` (installs commitlint, cspell, prettier, and the husky git hooks). `pnpm run validate` runs the same content checks CI runs; commit messages and the PR title are linted separately with commitlint. PRs welcome; PR titles follow Conventional Commits since they become the squash commit header on `main`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow, and [AGENTS.md](AGENTS.md) for
+the authoring contract, the public-content policy, validation, and the application-testing bar.
+One-time setup after cloning: `pnpm install` (installs commitlint, cspell, prettier, and the husky
+git hooks). `pnpm run validate` runs the same content checks CI runs; commit messages and the PR
+title are linted separately with commitlint. PRs welcome; PR titles follow Conventional Commits
+since they become the squash commit header on `main`.
 
-Every script shipped with a skill has a test suite in `tests/<name>/`; `pnpm test` runs them all (CI does too). Suites need Python 3.11+ with any `tests/<name>/requirements.txt` dependencies installed, plus ffmpeg on PATH where a suite uses it. Python suites use stdlib `unittest`, TypeScript suites use vitest.
+Every script shipped with a skill has a test suite in `tests/<name>/`; `pnpm test` runs them all (CI
+does too). Suites need Python 3.11+ with any `tests/<name>/requirements.txt` dependencies installed,
+plus ffmpeg on PATH where a suite uses it. Python suites use stdlib `unittest`, TypeScript suites
+use vitest.
 
 ## License
 

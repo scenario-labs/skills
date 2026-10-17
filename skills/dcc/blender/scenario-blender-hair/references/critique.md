@@ -7,7 +7,9 @@ Use this after every stage:
 3. Open the sheet with the image reader.
 4. Mark each line **OK** or **FIX**.
 
-A FIX marked **B** (blocker) stops the next stage. **P** (polish) can wait for the polish pass. Never deliver without a full-density render; the viewport at 4% hides most of these (Thommes `[00:19:32]`).
+A FIX marked **B** (blocker) stops the next stage. **P** (polish) can wait for the polish pass.
+Never deliver without a full-density render; the viewport at 4% hides most of these (Thommes
+`[00:19:32]`).
 
 ## A. Attachment and setup (code)
 
@@ -59,14 +61,18 @@ A FIX marked **B** (blocker) stops the next stage. **P** (polish) can wait for t
 
 **Animals (Schmidbauer)**
 
-- Likeness: landmark regions (ruff, chest, back, tail fan) read as in the reference of the same subspecies and season `[00:03:24]`, `[00:07:36]`. Sev B.
-- Each region has its own character (cheeks clumpy, chest straight), set by masks `[00:28:35]`. Sev P.
+- Likeness: landmark regions (ruff, chest, back, tail fan) read as in the reference of the same
+  subspecies and season `[00:03:24]`, `[00:07:36]`. Sev B.
+- Each region has its own character (cheeks clumpy, chest straight), set by masks `[00:28:35]`. Sev
+  P.
 - Seams between landmark objects: no density jump and no clipping `[00:13:49]`. Sev B.
 
 **Human hairstyle (Bystedt)**
 
-- Wide and thin clump populations overlap, flyaways are few, and art-directed strands are placed `[00:01:43]`. Sev P.
-- Hairline and nape: roots hidden, soft transition (hair cap texture or an extra system) (Bystedt g_ZIOafq4QU `[00:22:28]`, Matsumoto `[00:40:21]`). Sev P.
+- Wide and thin clump populations overlap, flyaways are few, and art-directed strands are placed
+  `[00:01:43]`. Sev P.
+- Hairline and nape: roots hidden, soft transition (hair cap texture or an extra system) (Bystedt
+  g_ZIOafq4QU `[00:22:28]`, Matsumoto `[00:40:21]`). Sev P.
 
 ## F. Shading and light (Cycles or EEVEE render)
 
@@ -105,4 +111,5 @@ A FIX marked **B** (blocker) stops the next stage. **P** (polish) can wait for t
 - Stack: modifier list with key inputs (`H.get_inputs`).
 - `verdict()` output, empty or explained.
 - Review sheets: the rest pose, 2 to 3 poses, and a close-up if hero.
-- What was **not** verified: brush-only steps the user did, Physics-mode dynamics, render time at final resolution.
+- What was **not** verified: brush-only steps the user did, Physics-mode dynamics, render time at
+  final resolution.

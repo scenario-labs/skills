@@ -1,6 +1,8 @@
 # Sources
 
-Per-video notes live in `notes/uv-baking/` (and `notes/retopology/_digest_speedchar_game_character.md` for the SpeedChar production frame). Timestamps are [hh:mm:ss] into the video.
+Per-video notes live in `notes/uv-baking/` (and
+`notes/retopology/_digest_speedchar_game_character.md` for the SpeedChar production frame).
+Timestamps are [hh:mm:ss] into the video.
 
 ## Videos
 
@@ -24,12 +26,26 @@ Per-video notes live in `notes/uv-baking/` (and `notes/retopology/_digest_speedc
 
 ## Web references (read by the distiller)
 
-- Blender Studio, [A UV Unwrapping Guide](https://studio.blender.org/blog/a-uv-unwrapping-guide/) (Julien Kaspar with Simon Thommes, 2024-10-28): more seams rather than fewer for 3D paint and bakes, angle past green means tweak, Live Unwrap is stored in the Scene and breaks on flipped UVs, symmetric maps via the Mirror modifier, secondary UV maps for tiled patterns, fabric-pattern clothing UVs. Its paywalled follow-ups were not read.
-- Blender 5.2 Manual, [Render Baking](https://docs.blender.org/manual/en/latest/render/cycles/baking.html): cage and extrusion, Max Ray Distance, margin types, Clear Image, Bake from Multires, memory note on many high objects.
-- Polycount wiki, [Normal map](http://wiki.polycount.com/wiki/Normal_map) and its Technical Details page (swizzle table: Blender, Maya, Unity, Toolbag Y+; 3ds Max, Unreal, CryEngine, Source Y-), and [Texture Baking](http://wiki.polycount.com/wiki/Texture_Baking): split UVs on every hard edge, offset overlaps exactly 1 UV unit, triangulate before baking and mirror the triangulation, bake 16-bit with anti-aliasing, do not edit UVs after baking.
+- Blender Studio, [A UV Unwrapping Guide](https://studio.blender.org/blog/a-uv-unwrapping-guide/)
+  (Julien Kaspar with Simon Thommes, 2024-10-28): more seams rather than fewer for 3D paint and
+  bakes, angle past green means tweak, Live Unwrap is stored in the Scene and breaks on flipped UVs,
+  symmetric maps via the Mirror modifier, secondary UV maps for tiled patterns, fabric-pattern
+  clothing UVs. Its paywalled follow-ups were not read.
+- Blender 5.2 Manual,
+  [Render Baking](https://docs.blender.org/manual/en/latest/render/cycles/baking.html): cage and
+  extrusion, Max Ray Distance, margin types, Clear Image, Bake from Multires, memory note on many
+  high objects.
+- Polycount wiki, [Normal map](http://wiki.polycount.com/wiki/Normal_map) and its Technical Details
+  page (swizzle table: Blender, Maya, Unity, Toolbag Y+; 3ds Max, Unreal, CryEngine, Source Y-), and
+  [Texture Baking](http://wiki.polycount.com/wiki/Texture_Baking): split UVs on every hard edge,
+  offset overlaps exactly 1 UV unit, triangulate before baking and mirror the triangulation, bake
+  16-bit with anti-aliasing, do not edit UVs after baking.
 
 ## Digests
 
-- `notes/uv-baking/_digest_uv_unwrapping.md` (Lampel, Morren, On Mars 3D, Gambrell, Hernandez, Huge Menace; verification scripts in `archive/tests/uv_unwrapping/`).
-- `notes/uv-baking/_digest_uv_snow_and_baking.md` (Kaspar x3, Ryan King, On Mars 3D bakes, Abbitt, web references; scripts in `archive/tests/uv_snow_and_baking/`).
-- `notes/retopology/_digest_speedchar_game_character.md` (SpeedChar production frame, bake diagnosis).
+- `notes/uv-baking/_digest_uv_unwrapping.md` (Lampel, Morren, On Mars 3D, Gambrell, Hernandez, Huge
+  Menace; verification scripts in `archive/tests/uv_unwrapping/`).
+- `notes/uv-baking/_digest_uv_snow_and_baking.md` (Kaspar x3, Ryan King, On Mars 3D bakes, Abbitt,
+  web references; scripts in `archive/tests/uv_snow_and_baking/`).
+- `notes/retopology/_digest_speedchar_game_character.md` (SpeedChar production frame, bake
+  diagnosis).

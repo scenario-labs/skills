@@ -1,6 +1,7 @@
 # Sources (scenario-godot-pipeline-automation 0.1)
 
-Notes are in `notes/automation-pipeline-tests/` of the research folder. Credentials as stated in the notes ("verified" means checked against the channel or the project).
+Notes are in `notes/automation-pipeline-tests/` of the research folder. Credentials as stated in the
+notes ("verified" means checked against the channel or the project).
 
 | Expert                    | Credential                                                              | Source                                                                                                                        | Best for                                                                                     | Best timestamps                        |
 | ------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------- |

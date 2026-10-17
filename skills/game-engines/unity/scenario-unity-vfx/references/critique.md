@@ -1,6 +1,9 @@
 # Critique rubric: how the VFX agent judges its own effect
 
-Run this after every iteration, on the evidence the procedures produce (stepped captures, overdraw heatmaps, counts, profile CSV). Score each line pass / warn / fail and say which capture or number decided it. An effect is not done while a gameplay line (A) fails, whatever it looks like. Sources in brackets; [added] = this skill's own rule.
+Run this after every iteration, on the evidence the procedures produce (stepped captures, overdraw
+heatmaps, counts, profile CSV). Score each line pass / warn / fail and say which capture or number
+decided it. An effect is not done while a gameplay line (A) fails, whatever it looks like. Sources
+in brackets; [added] = this skill's own rule.
 
 ## A. Gameplay read (Jason Keyser; Nikola Damjanov)
 
@@ -57,9 +60,12 @@ Run this after every iteration, on the evidence the procedures produce (stepped 
 
 ## E. Report honesty
 
-- Every number names its source: measured here (job id), quoted from an expert (who), or a default [added].
-- Say what was not measured: GPU time (Apple Silicon panel has none; editor GPU frame time mostly 0), device fill rate, thermal behavior.
-- Name the unsupported step when the friend-assembly graph authoring was used, and the GUI alternative.
+- Every number names its source: measured here (job id), quoted from an expert (who), or a default
+  [added].
+- Say what was not measured: GPU time (Apple Silicon panel has none; editor GPU frame time mostly
+  0), device fill rate, thermal behavior.
+- Name the unsupported step when the friend-assembly graph authoring was used, and the GUI
+  alternative.
 
 ## F. Mistakes table (full; SKILL.md keeps the most frequent)
 

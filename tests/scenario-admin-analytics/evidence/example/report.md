@@ -58,7 +58,9 @@ Model CU: 40,500.00. Model minus overall CU: +1,500.00 (separate measures).
 ## Coverage and interpretation
 
 - Scope and dates match the MCP request; access is limited to the connected credential.
-- Consumed CU is after discounts. Model CU measures generation activity; the difference from overall consumption is not allocated to models.
+- Consumed CU is after discounts. Model CU measures generation activity; the difference from overall
+  consumption is not allocated to models.
 - CU and job counts measure usage, not productivity, ROI, seat activation, or time saved.
-- Overall and identity consumption cover the original full period. Model filters apply to generation activity only.
+- Overall and identity consumption cover the original full period. Model filters apply to generation
+  activity only.
 - Per-user usage queries reconcile to every model's CU, API-key CU and job count.

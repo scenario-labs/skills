@@ -1,6 +1,10 @@
 # GUI paths: menus, hotkeys, marking menus and tool settings
 
-For a computer-use agent (or a human) doing the same procedures in the Maya 2027 interface. Modeling menu set unless stated. macOS: Ctrl is Control and Alt is Option, not Command (Maya 2027 Help, Fundamentals). Hotkeys come from the Maya 2018 panel on screen in FlippedNormals 9N4rG5qHWgk (frame f_01125) and from the 2027 docs' prose; the 2027 Quad Draw hotkey table was lost from the saved pages, so check the tool panel before relying on a key [verify].
+For a computer-use agent (or a human) doing the same procedures in the Maya 2027 interface. Modeling
+menu set unless stated. macOS: Ctrl is Control and Alt is Option, not Command (Maya 2027 Help,
+Fundamentals). Hotkeys come from the Maya 2018 panel on screen in FlippedNormals 9N4rG5qHWgk (frame
+f_01125) and from the 2027 docs' prose; the 2027 Quad Draw hotkey table was lost from the saved
+pages, so check the tool panel before relying on a key [verify].
 
 ## Retopology
 

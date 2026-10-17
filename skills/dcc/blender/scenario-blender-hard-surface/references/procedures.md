@@ -1,8 +1,8 @@
 # Tested procedures (Blender 5.2.1 LTS, headless)
 
 Every block below ran on the installed Blender 5.2.1 with
-`blender --background --factory-startup --python-exit-code 1 --python <test>`.
-Tests live in `tests/code/blender-hard-surface/`:
+`blender --background --factory-startup --python-exit-code 1 --python <test>`. Tests live in
+`tests/code/blender-hard-surface/`:
 
 | Test                           | What it proves                                                                                             | Result |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------- | ------ |
@@ -22,11 +22,14 @@ sys.path.append("<skills>/scenario-blender-hard-surface/scripts")   # also puts 
 import bx_hardsurface as HS
 ```
 
-World-space meters. Objects are expected at scale 1 (`HS.apply_scale`). Cutters go to a `Cutters` collection, helper objects (normal sources) to `HS_Helpers`. The module never touches objects it was not given.
+World-space meters. Objects are expected at scale 1 (`HS.apply_scale`). Cutters go to a `Cutters`
+collection, helper objects (normal sources) to `HS_Helpers`. The module never touches objects it was
+not given.
 
 ## P1. School A part end to end: sci-fi panel
 
-Verified on 5.2.1, `test_03_parts.py` (Panel_A: verdict empty, 5,676 tris, custom normals, manifold).
+Verified on 5.2.1, `test_03_parts.py` (Panel_A: verdict empty, 5,676 tris, custom normals,
+manifold).
 
 ```python
 import bmesh, bpy
@@ -68,8 +71,11 @@ print(HS.verdict(r))            # [] ; stack: Bevel_design, 12 booleans, Bevel_m
 
 Two variants recorded in the same test, both flagged by the audit:
 
-- the panel line as a 3 mm box running across the design-beveled rim: cut on curvature, and Clamp Overlap ratio 1.90, which narrowed the micro bevel on the whole panel (the closeups show thinner highlights everywhere); 3 mm is also exactly 2x the width, so the crossing and the gap add up;
-- the line rounded with 6 segments per half circle (30-degree facets = the bevel angle limit): `beveled_narrow_facet_edges` 34, clamp 0.45, `clamp_culprits == ["Bool_PanelB_line"]`.
+- the panel line as a 3 mm box running across the design-beveled rim: cut on curvature, and Clamp
+  Overlap ratio 1.90, which narrowed the micro bevel on the whole panel (the closeups show thinner
+  highlights everywhere); 3 mm is also exactly 2x the width, so the crossing and the gap add up;
+- the line rounded with 6 segments per half circle (30-degree facets = the bevel angle limit):
+  `beveled_narrow_facet_edges` 34, clamp 0.45, `clamp_culprits == ["Bool_PanelB_line"]`.
 
 ## P2. Cutter recipes
 
@@ -92,9 +98,14 @@ HS.as_cutter(w, target); HS.add_boolean(target, w)
 piece = HS.slice_boolean(target, HS.make_cutter(target, "BOX", (0.02, 1, 1), (x, 0, 0), add=False))
 ```
 
-`make_cutter` returns a cutter at scale 1, smooth shaded, linked only to `Cutters`, `display_type='WIRE'`, `hide_render=True`, parented to the target with keep-transform, wired with `solver='EXACT'` just after the last boolean and above the micro-bevel tail. Parented cutters follow a moved target (verified). `HS.hide_cutters(target)` hides them in the viewport; booleans keep evaluating (verified).
+`make_cutter` returns a cutter at scale 1, smooth shaded, linked only to `Cutters`,
+`display_type='WIRE'`, `hide_render=True`, parented to the target with keep-transform, wired with
+`solver='EXACT'` just after the last boolean and above the micro-bevel tail. Parented cutters follow
+a moved target (verified). `HS.hide_cutters(target)` hides them in the viewport; booleans keep
+evaluating (verified).
 
-Copies share cutters: `game_version` and `slice_boolean` copies must stay in place (a moved copy lost every cut in test_03). Use `HS.collapse` and move the collapsed mesh.
+Copies share cutters: `game_version` and `slice_boolean` copies must stay in place (a moved copy
+lost every cut in test_03). Use `HS.collapse` and move the collapsed mesh.
 
 ## P3. The stack by hand (no toolkit)
 
@@ -152,7 +163,8 @@ bo.object = cutter; bo.operation = "DIFFERENCE"; bo.solver = "EXACT"
 # stack: Bevel_design, Bool_slot, Bevel_micro, WeightedNormal ; evaluated mesh has custom normals
 ```
 
-Reordering a pinned stack (R2): `modifiers.move` silently refuses moves that involve pinned modifiers.
+Reordering a pinned stack (R2): `modifiers.move` silently refuses moves that involve pinned
+modifiers.
 
 ```python
 t = ob.modifiers.new("Triangulate", "TRIANGULATE"); t.keep_custom_normals = True   # lands above pins
@@ -204,7 +216,8 @@ Measured cases (micro width 0.02 on a 1 x 0.6 x 0.4 block unless noted):
 | groove 2.0 / 2.9 / 3.1 / 4.0 mm wide, micro 1.5 mm                              | 0.47 / 0.05 / 0 / 0 | narrow_gap on 2.0 and 2.9 | flagged / flagged (16 hard edges unbeveled) / clean / clean |
 | 24-segment cylinder, slot rim 0.7 degrees from a facet edge                     | 3.80                |                           | the port elsewhere lost its rim bevel (3.8 mm displacement) |
 
-Clamp Overlap is global: the peak displacement (`worst_at`) is often not at the cause, hence `clamp_culprits`.
+Clamp Overlap is global: the peak displacement (`worst_at`) is often not at the cause, hence
+`clamp_culprits`.
 
 ## P5. Shading audit and triage loop
 
@@ -220,7 +233,10 @@ for line in HS.verdict(r):
 # r["cuts_on_curvature"], r["clamp"], r["clamp_culprits"], r["booleans"], r["cutters"], r["slivers"]
 ```
 
-Measured smear on a slot box: no Harden and no WN 10 flat faces, worst 12.0 degrees; Harden only 0.02; WN only 1.91 (under the 3-degree tolerance); both 0.02. Shade Smooth with no bevel or WN: 12 hard edges smoothed across, 0 after `hard_surface_stack`. A flat-shaded cutter: flat-shaded faces in the result and the cutter named.
+Measured smear on a slot box: no Harden and no WN 10 flat faces, worst 12.0 degrees; Harden only
+0.02; WN only 1.91 (under the 3-degree tolerance); both 0.02. Shade Smooth with no bevel or WN: 12
+hard edges smoothed across, 0 after `hard_surface_stack`. A flat-shaded cutter: flat-shaded faces in
+the result and the cutter named.
 
 ## P6. Non-planar faces (Gambrell case 1)
 
@@ -231,7 +247,9 @@ bad = HS.nonplanar_faces(ob)          # [(face index, deviation in meters)], tol
 left = HS.flatten_faces(ob)           # projects vertices onto face planes, 5 passes; returns max deviation left
 ```
 
-A box with one top corner raised 6 mm: 1 non-planar face (0.0015 m). With Harden and WN the corner normals stayed consistent (smear metric 0), so the measurable gate here is planarity, not the normal check; judge the stretch in a closeup. `flatten_faces` returned 0.0.
+A box with one top corner raised 6 mm: 1 non-planar face (0.0015 m). With Harden and WN the corner
+normals stayed consistent (smear metric 0), so the measurable gate here is planarity, not the normal
+check; judge the stretch in a closeup. `flatten_faces` returned 0.0.
 
 ## P7. Cuts on curved surfaces (Gambrell case 2)
 
@@ -260,7 +278,17 @@ Measured normal error against the true surface (p95, degrees):
 | 24-segment cylinder with design bevel, port | 3.26        | 0.07               | 3.26                |
 | 48-segment cylinder, port                   | 0.61        | 0.07               | 0.61                |
 
-No new smear on flat faces with the toolkit version. The cylinder cuts already looked clean without it in shiny closeups; the sphere got visibly smoother. What failed first (recorded so nobody retries it): scoping by vertex group (EXACT gives cutter-made vertices the target's weights, 1.0 measured, so the port walls took the cylinder normals and shaded wrong); a source cropped around the cut (its border normals made a seam); a whole-object source with sharp borders, and a curved-only source, both let the cap corners on the design-bevel border take the strip normals (2 caps smeared, 7.4 degrees; fixed by also dropping the curved ring that meets a flat face smoothly); a plain smooth source tilted the long side faces of the cylinder by 3.75 degrees where they meet the design-bevel round (fixed by the source's own Weighted Normal, chosen automatically when neighboring face areas differ more than 4x; a sphere keeps plain smoothing, where WN would give back the 2.79-degree error).
+No new smear on flat faces with the toolkit version. The cylinder cuts already looked clean without
+it in shiny closeups; the sphere got visibly smoother. What failed first (recorded so nobody retries
+it): scoping by vertex group (EXACT gives cutter-made vertices the target's weights, 1.0 measured,
+so the port walls took the cylinder normals and shaded wrong); a source cropped around the cut (its
+border normals made a seam); a whole-object source with sharp borders, and a curved-only source,
+both let the cap corners on the design-bevel border take the strip normals (2 caps smeared, 7.4
+degrees; fixed by also dropping the curved ring that meets a flat face smoothly); a plain smooth
+source tilted the long side faces of the cylinder by 3.75 degrees where they meet the design-bevel
+round (fixed by the source's own Weighted Normal, chosen automatically when neighboring face areas
+differ more than 4x; a sphere keeps plain smoothing, where WN would give back the 2.79-degree
+error).
 
 ## P8. Mirror seam butterfly (Gambrell case 3)
 
@@ -273,7 +301,8 @@ HS.mirror_seam_fix(ob)
 
 ## P9. School B: case with a recessed handle
 
-Verified on 5.2.1, `test_03` (Case_B: 14-face cage, 100% quads, 8 valence-3 poles, 4,032 tris at level 2; grip 576).
+Verified on 5.2.1, `test_03` (Case_B: 14-face cage, 100% quads, 8 valence-3 poles, 4,032 tris at
+level 2; grip 576).
 
 ```python
 CB = cube("Case_B", (0.4, 0.25, 0.3), (1.0, 0.6, 0))
@@ -293,11 +322,15 @@ HS.subd_stack(CB, support_width=0.04, levels=2)   # Bevel Weight 2 seg profile 1
 # grip: a separate 12-segment subD cylinder (rileyb3d: dense details as their own object)
 ```
 
-Gotcha: `extrude_face_region` leaves the original face in place: delete it or the cage is non-manifold (checked: 0 non-manifold edges after the delete). The audit flags the 4 inset ring faces as long rectangles (aspect over 2.5): only matters if the cage will be sculpted or subdivided further (PzThree).
+Gotcha: `extrude_face_region` leaves the original face in place: delete it or the cage is
+non-manifold (checked: 0 non-manifold edges after the delete). The audit flags the 4 inset ring
+faces as long rectangles (aspect over 2.5): only matters if the cage will be sculpted or subdivided
+further (PzThree).
 
 ## P10. School B: barrel as a lathe cage
 
-Verified on 5.2.1, `test_03` (Barrel_B: 314 faces, 99.4% quads, 2 flat n-gon caps, verdict empty, 25,728 tris at level 2).
+Verified on 5.2.1, `test_03` (Barrel_B: 314 faces, 99.4% quads, 2 flat n-gon caps, verdict empty,
+25,728 tris at level 2).
 
 ```python
 import math
@@ -331,7 +364,8 @@ HS.subd_stack(BB, support_width=0.02, levels=2)
 
 ## P11. Support loops, creases
 
-Verified on 5.2.1, `test_05` R5, R6; `support_loops` in the module (bmesh bevel, even segments enforced).
+Verified on 5.2.1, `test_05` R5, R6; `support_loops` in the module (bmesh bevel, even segments
+enforced).
 
 ```python
 HS.support_loops(ob, edge_indices, offset=0.005, segments=2)   # destructive holding edges, profile 1.0
@@ -357,11 +391,18 @@ bpy.ops.export_scene.gltf(filepath="/abs/x.glb", export_format="GLB", use_select
                           export_apply=True, export_normals=True)       # select g first
 ```
 
-- Barrel mid-poly: 7,308 tris (render stack) to 3,716 (1-segment micro, 2-segment design); glTF re-import matched 100% of (position, normal) pairs, custom normals present.
-- Planar low poly from booleans (Augusto): collapse a stack without bevels, `DECIMATE` `decimate_type='DISSOLVE'`, `angle_limit=radians(1)`, `delimit={'SHARP','MATERIAL','SEAM'}` (values are a suggestion): 1,268 to 1,260 tris on the panel, manifold, same size. Little to gain on a boolean n-gon mesh; the big savings come from dropping bevel segments.
-- Live segment halving (Ryuu's even segments): panel micro bevel 4 segments 7,266 tris, 2 segments 4,166.
-- SubD high to low (rileyb3d): same object at level 1: 25,728 to 6,432 tris; dissolve non-silhouette loops and bake in scenario-blender-uv-baking.
-- Multires bake, Bevel-shader-node bake and painted 32-bit height (PzThree, Augusto): see scenario-blender-uv-baking; not run here.
+- Barrel mid-poly: 7,308 tris (render stack) to 3,716 (1-segment micro, 2-segment design); glTF
+  re-import matched 100% of (position, normal) pairs, custom normals present.
+- Planar low poly from booleans (Augusto): collapse a stack without bevels, `DECIMATE`
+  `decimate_type='DISSOLVE'`, `angle_limit=radians(1)`, `delimit={'SHARP','MATERIAL','SEAM'}`
+  (values are a suggestion): 1,268 to 1,260 tris on the panel, manifold, same size. Little to gain
+  on a boolean n-gon mesh; the big savings come from dropping bevel segments.
+- Live segment halving (Ryuu's even segments): panel micro bevel 4 segments 7,266 tris, 2 segments
+  4,166.
+- SubD high to low (rileyb3d): same object at level 1: 25,728 to 6,432 tris; dissolve non-silhouette
+  loops and bake in scenario-blender-uv-baking.
+- Multires bake, Bevel-shader-node bake and painted 32-bit height (PzThree, Augusto): see
+  scenario-blender-uv-baking; not run here.
 
 ## P13. PzThree iteration: apply one subdivision level per pass
 
@@ -386,7 +427,10 @@ HS.review([ob], "/abs/out/dir", views=("front", "threequarter", "top", "low"),
 HS.closeup(ob, point, radius, "/abs/out/cut.png", direction=(-0.6, -1, 0.8), mode="shiny", res=480)
 ```
 
-Modes: `matcap` (clay_studio), `normals` (check_normal+y), `wire`, `silhouette` from bx_review, plus `shiny` (metal_carpaint), `reflect` (check_reflection_horizontal), `hsgrey` (hard_surface_gray), `fullmetal`. `review` bakes the evaluated mesh into temporary objects, so the wire row shows the real boolean topology (Exact's split edges across n-gons are normal).
+Modes: `matcap` (clay_studio), `normals` (check_normal+y), `wire`, `silhouette` from bx_review, plus
+`shiny` (metal_carpaint), `reflect` (check_reflection_horizontal), `hsgrey` (hard_surface_gray),
+`fullmetal`. `review` bakes the evaluated mesh into temporary objects, so the wire row shows the
+real boolean topology (Exact's split edges across n-gons are normal).
 
 ## P15. Collapse for rigging or export (du Mont)
 
@@ -403,6 +447,9 @@ Keep the editable original hidden in its own collection (du Mont's "frogbot edit
 
 ## Not run here
 
-- Interactive tools (Bool Tool shortcuts, Add Cube tool on a surface, curve Draw, loop cut and slide): replaced by the calls above; `scene.ray_cast` gives a surface point and normal to place a cutter (digest).
-- `bpy.ops.mesh.extrude_manifold`, `select_similar`, `select_edge_ring_multi`: op ids verified by the distiller, behavior not run.
+- Interactive tools (Bool Tool shortcuts, Add Cube tool on a surface, curve Draw, loop cut and
+  slide): replaced by the calls above; `scene.ray_cast` gives a surface point and normal to place a
+  cutter (digest).
+- `bpy.ops.mesh.extrude_manifold`, `select_similar`, `select_edge_ring_multi`: op ids verified by
+  the distiller, behavior not run.
 - Sculpted damage on multires (PzThree): GUI with bx_gui, see scenario-blender-sculpting.

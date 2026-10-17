@@ -1,14 +1,32 @@
 # Procedures (maya.cmds and mx_light, full code)
 
-**Status of every Python block below: not yet run in Maya** (Maya 2027 not installed on 2026-09-24). Each block starts with `# test: <id>`: `tests/code/maya-lighting-rendering/job_procedures_snippets.py` extracts these exact blocks from this file, runs them in order in one namespace on a prepared scene, and checks their results. A block marked `# soft-block` holds unverified API calls: if it raises, the runner records a soft failure (a name to fix after the probe) instead of a hard one. Deeper tests of the same functions: `job_rig_and_groups.py`, `job_render_aovs_sums.py`, `job_frame_critique.py`, `job_noise_loop.py`, `job_color_setup_batch.py`, and the probe `job_00_probe_lighting.py` (all under `tests/code/maya-lighting-rendering/`, run by `run_all.sh` through scenario-maya-expert's `mx_run.py`). Verified without Maya: the pure layer of `mx_light` (`test_mx_light_offline.py`, 138 checks with python3 + numpy) and the Python logic of every block and job against a fake `maya.cmds` with a toy renderer (`test_jobs_fakemaya.py`); neither proves Maya or Arnold behavior.
+**Status of every Python block below: not yet run in Maya** (Maya 2027 not installed on 2026-09-24).
+Each block starts with `# test: <id>`:
+`tests/code/maya-lighting-rendering/job_procedures_snippets.py` extracts these exact blocks from
+this file, runs them in order in one namespace on a prepared scene, and checks their results. A
+block marked `# soft-block` holds unverified API calls: if it raises, the runner records a soft
+failure (a name to fix after the probe) instead of a hard one. Deeper tests of the same functions:
+`job_rig_and_groups.py`, `job_render_aovs_sums.py`, `job_frame_critique.py`, `job_noise_loop.py`,
+`job_color_setup_batch.py`, and the probe `job_00_probe_lighting.py` (all under
+`tests/code/maya-lighting-rendering/`, run by `run_all.sh` through scenario-maya-expert's
+`mx_run.py`). Verified without Maya: the pure layer of `mx_light` (`test_mx_light_offline.py`, 138
+checks with python3 + numpy) and the Python logic of every block and job against a fake `maya.cmds`
+with a toy renderer (`test_jobs_fakemaya.py`); neither proves Maya or Arnold behavior.
 
-Context the blocks assume (the runner builds it): `WATCH` a product root group (`watch_GRP`, a watch proxy in cm on a slate plane), `CAM` its 100 mm camera, `HEAD` a head proxy turned 45 degrees to screen right with `FACE_FORWARD` its forward vector and `CU_CAM` its camera, `HDRI` a lat-long `.hdr`, `OUT` an output folder. Run inside mayapy through `mx_run.py --plugins mtoa`, or through the GUI bridge.
+Context the blocks assume (the runner builds it): `WATCH` a product root group (`watch_GRP`, a watch
+proxy in cm on a slate plane), `CAM` its 100 mm camera, `HEAD` a head proxy turned 45 degrees to
+screen right with `FACE_FORWARD` its forward vector and `CU_CAM` its camera, `HDRI` a lat-long
+`.hdr`, `OUT` an output folder. Run inside mayapy through `mx_run.py --plugins mtoa`, or through the
+GUI bridge.
 
-Agent-side analysis (`analyze_frame`, `noise_pair`, `check_sums`, sheets) needs numpy. If mayapy lacks numpy (probe answers it), run those calls in the agent's python3 on the files the Maya jobs wrote: `python3 mx_light.py analyze --png ... --exr ... --out ...`.
+Agent-side analysis (`analyze_frame`, `noise_pair`, `check_sums`, sheets) needs numpy. If mayapy
+lacks numpy (probe answers it), run those calls in the agent's python3 on the files the Maya jobs
+wrote: `python3 mx_light.py analyze --png ... --exr ... --out ...`.
 
 ## P0. Session: Arnold, color state, options
 
-Why: Maya 2027 ships MtoA 5.6 (Arnold 7.5); Global Light Sampling replaced per-light samples; the color names changed in 2026.2 (version deltas 2.6, 2.7). Read the state before touching a light.
+Why: Maya 2027 ships MtoA 5.6 (Arnold 7.5); Global Light Sampling replaced per-light samples; the
+color names changed in 2026.2 (version deltas 2.6, 2.7). Read the state before touching a light.
 
 ```python
 # test: P0_session
@@ -27,7 +45,9 @@ print(cmds.about(version=True), mtoa_version, cm["rendering_space"], cm["view"],
 
 ## P1. The shot brief, before any light
 
-Why: "what is the story I am trying to tell?" comes before any button (KT 00:16:50); the target can be a hand or a dial, not a face by default (KT 00:15:49); the continuity contract decides which shot tweaks are free (BR 00:37:17, BR-B ch6 Continuity).
+Why: "what is the story I am trying to tell?" comes before any button (KT 00:16:50); the target can
+be a hand or a dial, not a face by default (KT 00:15:49); the continuity contract decides which shot
+tweaks are free (BR 00:37:17, BR-B ch6 Continuity).
 
 ```python
 # test: P1_brief
@@ -43,7 +63,15 @@ with open(os.path.join(OUT, "brief.json"), "w") as f:
 
 ## P2. Product rig keyed to the product axis
 
-Why: for polished metal the lights are designed as shapes seen in the metal (ARV-C 00:36:21; lookdev digest P9): each softbox sits on the reflected view ray of the plane it must define. Soft means large (JHILL 00:08:26), rims small and hot (JHILL 00:13:47), strips asymmetric unless the art direction is symmetric (BR-B ch6 Planet 51). Energy in stops with intensity 1 (LGT § Exposure), normalize on so size only changes softness (LGT § Normalize). A camera looking down sees the floor reflected in near-vertical planes, so a strip placed by pure reflection would sit under the slate: the planner tilts the target plane up until the whole source clears the floor and says so in `plan["notes"]` [added; found by the offline test]. Every coefficient is a starting point; the measurement loop tunes it.
+Why: for polished metal the lights are designed as shapes seen in the metal (ARV-C 00:36:21; lookdev
+digest P9): each softbox sits on the reflected view ray of the plane it must define. Soft means
+large (JHILL 00:08:26), rims small and hot (JHILL 00:13:47), strips asymmetric unless the art
+direction is symmetric (BR-B ch6 Planet 51). Energy in stops with intensity 1 (LGT § Exposure),
+normalize on so size only changes softness (LGT § Normalize). A camera looking down sees the floor
+reflected in near-vertical planes, so a strip placed by pure reflection would sit under the slate:
+the planner tilts the target plane up until the whole source clears the floor and says so in
+`plan["notes"]` [added; found by the offline test]. Every coefficient is a starting point; the
+measurement loop tunes it.
 
 ```python
 # test: P2_product_rig
@@ -60,7 +88,11 @@ print(sorted(rig["lights"]), rig["flags"], rig["missing"])
 
 ## P3. Character rig keyed to the face axis (upstage key)
 
-Why: the key lights the far side of the face from the camera (BR-B ch8.5 Lighting upstage and downstage); measured from the face, not the lens, or a turned face gets a frontal key. No fill from the lens axis, wrap about twice the key's size, lower, front-ish (BR 00:13:46, 00:26:54, 00:27:59); the rim outlines the face and must not equal the key (BR 00:30:11; BR-B ch6 Balance). For a shot and its reverse, the same rule gives opposite keys (BR 00:09:53).
+Why: the key lights the far side of the face from the camera (BR-B ch8.5 Lighting upstage and
+downstage); measured from the face, not the lens, or a turned face gets a frontal key. No fill from
+the lens axis, wrap about twice the key's size, lower, front-ish (BR 00:13:46, 00:26:54, 00:27:59);
+the rim outlines the face and must not equal the key (BR 00:30:11; BR-B ch6 Balance). For a shot and
+its reverse, the same rule gives opposite keys (BR 00:09:53).
 
 ```python
 # test: P3_character_rig
@@ -79,7 +111,9 @@ cmds.setAttr(crig["group"] + ".visibility", 0)   # one rig per shot file in prod
 
 ## P4. Block on gray, each light alone
 
-Why: test shading on a linear 0.18 gray with a little specular (BR 00:04:21); render each light solo on every shot, then together, "a truly powerful technique" (BR 00:25:14, BR-B ch8 Key lights). Light groups give every solo in one render.
+Why: test shading on a linear 0.18 gray with a little specular (BR 00:04:21); render each light solo
+on every shot, then together, "a truly powerful technique" (BR 00:25:14, BR-B ch8 Key lights). Light
+groups give every solo in one render.
 
 ```python
 # test: P4_grey_block
@@ -95,7 +129,9 @@ print(L.verdict(grey_rep), solo["sheet"])
 
 ## P5. One light by hand (plain maya.cmds)
 
-Why: the same light without the toolkit, for a human reading along or a quick fix: stops not intensity (LGT § Exposure), spread as the softbox grid (ARV-L 00:04:30), a light group string (SARK 00:04:15), placed from the subject outward. Maya lights emit down local -Z.
+Why: the same light without the toolkit, for a human reading along or a quick fix: stops not
+intensity (LGT § Exposure), spread as the softbox grid (ARV-L 00:04:30), a light group string (SARK
+00:04:15), placed from the subject outward. Maya lights emit down local -Z.
 
 ```python
 # test: P5_light_by_hand
@@ -116,7 +152,9 @@ cmds.setAttr(xf + ".scale", 6.0, 3.0, 1.0, type="double3")               # a 12 
 
 ## P5b. A light blocker to vignette the lighting
 
-Why: fade lights toward the frame edges instead of letting one source blast the set (BR-B ch6 Vignetting); shape the falloff with a blocker rather than re-aiming the light (ARV-L 00:14:30). Blockers work on any light, barndoors only on spots (LGT § Light Filters).
+Why: fade lights toward the frame edges instead of letting one source blast the set (BR-B ch6
+Vignetting); shape the falloff with a blocker rather than re-aiming the light (ARV-L 00:14:30).
+Blockers work on any light, barndoors only on spots (LGT § Light Filters).
 
 ```python
 # test: P5b_blocker
@@ -130,7 +168,11 @@ cmds.xform(bx, worldSpace=True, translation=(-20.0, 12.0, -15.0))              #
 
 ## P6. Light groups, AOVs, EXR driver, denoiser
 
-Why: one dict for light-group names so the AOV strings cannot drift: a typo renders an empty pass with no error (SARK 00:07:19); at most 16 light AOVs (AOV § Light Group Example); ask the compositor which AOVs they need (AOV § AOVs for Image Compositing). EXR half for color, merged single-part (noice refuses multipart), Preserve Layer Name, zip. On macOS the denoiser is OIDN, first in the imager chain; `_denoised` keeps the noisy layer next to it (AOV § Imager Denoiser OIDN).
+Why: one dict for light-group names so the AOV strings cannot drift: a typo renders an empty pass
+with no error (SARK 00:07:19); at most 16 light AOVs (AOV § Light Group Example); ask the compositor
+which AOVs they need (AOV § AOVs for Image Compositing). EXR half for color, merged single-part
+(noice refuses multipart), Preserve Layer Name, zip. On macOS the denoiser is OIDN, first in the
+imager chain; `_denoised` keeps the noisy layer next to it (AOV § Imager Denoiser OIDN).
 
 ```python
 # test: P6_groups_aovs_driver
@@ -148,7 +190,10 @@ print(sorted(made), missing, dn, [(f["status"], f["message"]) for f in contract]
 
 ## P7. Render, then critique the frame like a lead
 
-Why: numbers first, then eyes. The critique order is Tanzillo's and Brejon's: story, same world, eye path (squint), value structure back to front, separation, balance, color, face, shaping, motivation, technical, polish (TZ-C 00:11:53, 00:08:38; BR-B ch6; digest critique). The report lists each finding with its fix and whether it is a lighting or a comp note (KT 00:47:19).
+Why: numbers first, then eyes. The critique order is Tanzillo's and Brejon's: story, same world, eye
+path (squint), value structure back to front, separation, balance, color, face, shaping, motivation,
+technical, polish (TZ-C 00:11:53, 00:08:38; BR-B ch6; digest critique). The report lists each
+finding with its fix and whether it is a lighting or a comp note (KT 00:47:19).
 
 ```python
 # test: P7_render_critique
@@ -165,7 +210,10 @@ print(L.verdict(rep), paths["md"], L.check_sums(shot["exr"]).get("light_groups")
 
 ## P8. Noise: find the AOV, raise one sampler
 
-Why: raising the wrong rays costs time without removing noise; AOVs are the most efficient diagnosis (SMP § Removing Noise). Samples are squared and multiplied by AA squared (SMP § Camera (AA)); GLS wants 4 on CPU (SMP § Best setting for light samples); diffuse seen in reflections only cleans with AA. Two renders that differ only by seed give per-AOV noise; the denoiser stays off while measuring.
+Why: raising the wrong rays costs time without removing noise; AOVs are the most efficient diagnosis
+(SMP § Removing Noise). Samples are squared and multiplied by AA squared (SMP § Camera (AA)); GLS
+wants 4 on CPU (SMP § Best setting for light samples); diffuse seen in reflections only cleans with
+AA. Two renders that differ only by seed give per-AOV noise; the denoiser stays off while measuring.
 
 ```python
 # test: P8_noise
@@ -177,11 +225,17 @@ step = L.next_step(noise, L.get_options(), target=0.02)
 print(pair["route"], noise["top"], [(r["aov"], round(r["share"], 2)) for r in noise["ranking"]], step)
 ```
 
-The full loop (`L.noise_loop(render_pair, settings)`) wraps the same calls: render the pair, rank, raise the top sampler one step, re-measure, stop at the target, at a sampler limit (denoiser), on fireflies (the playbook in `L.FIREFLY_PLAYBOOK`), or when a step bought less than 15 percent of that AOV's variance (reverted) [added stopping rule].
+The full loop (`L.noise_loop(render_pair, settings)`) wraps the same calls: render the pair, rank,
+raise the top sampler one step, re-measure, stop at the target, at a sampler limit (denoiser), on
+fireflies (the playbook in `L.FIREFLY_PLAYBOOK`), or when a step bought less than 15 percent of that
+AOV's variance (reverted) [added stopping rule].
 
 ## P9. A comp note back into the light
 
-Why: explore the balance on light groups, then copy it back: "once I am happy with the result, I ALWAYS copy back the values" (BR-B ch8 Final result); the multiplier goes on the light's color, not the grade value itself (BR 01:02:57, 01:03:30). `split` mode puts the neutral part in stops so shot deltas stay readable.
+Why: explore the balance on light groups, then copy it back: "once I am happy with the result, I
+ALWAYS copy back the values" (BR-B ch8 Final result); the multiplier goes on the light's color, not
+the grade value itself (BR 01:02:57, 01:03:30). `split` mode puts the neutral part in stops so shot
+deltas stay readable.
 
 ```python
 # test: P9_grade_back
@@ -195,7 +249,11 @@ print(cur, new)
 
 ## P10. Color: the dome HDRI under ACEScg
 
-Why: Maya 2027's shipped rules tag .hdr and .exr as Raw; under ACEScg a linear-sRGB HDRI tagged Raw is read as ACEScg, which the Arnold ACES page calls incorrect (CM § Define rules; CM § ACES Workflow). Query the name, never hardcode it (version deltas 2.7). Output transform off for EXR (CM § Render color-managed scenes). Texture color spaces on shaders belong to scenario-maya-lookdev's lint.
+Why: Maya 2027's shipped rules tag .hdr and .exr as Raw; under ACEScg a linear-sRGB HDRI tagged Raw
+is read as ACEScg, which the Arnold ACES page calls incorrect (CM § Define rules; CM § ACES
+Workflow). Query the name, never hardcode it (version deltas 2.7). Output transform off for EXR (CM
+§ Render color-managed scenes). Texture color spaces on shaders belong to scenario-maya-lookdev's
+lint.
 
 ```python
 # test: P10_colour
@@ -215,7 +273,11 @@ print(linear[:1], [(f["id"], f["status"]) for f in audit["findings"]])
 
 ## P11. Render Setup layer, template, command line
 
-Why: Render Setup is the system in 2027 (exclusive with legacy layers per session); collections resolve top-down and `*foo*` misses namespaces (`foo::*`); Render Setup nodes are dropped on import or reference, so setups travel as JSON templates applied with `Render -rst` (CM § Render setup best practices; PY § Render Setup). `maya -render` is obsolete: `Render -r arnold` (Maya 2027 Help). Save before rendering from a script.
+Why: Render Setup is the system in 2027 (exclusive with legacy layers per session); collections
+resolve top-down and `*foo*` misses namespaces (`foo::*`); Render Setup nodes are dropped on import
+or reference, so setups travel as JSON templates applied with `Render -rst` (CM § Render setup best
+practices; PY § Render Setup). `maya -render` is obsolete: `Render -r arnold` (Maya 2027 Help). Save
+before rendering from a script.
 
 ```python
 # test: P11_setup_batch
@@ -232,7 +294,9 @@ print(" ".join(cmd))
 
 ## P12. Settings report and render budget
 
-Why: rays per pixel are computed, not guessed (SMP § Camera (AA)); raising AA from 3 to 6 quadruples every secondary ray count; time the test and extrapolate with pixels x AA squared for fixed sampling, then re-time one full frame (Arnold digest P9 [added rule]).
+Why: rays per pixel are computed, not guessed (SMP § Camera (AA)); raising AA from 3 to 6 quadruples
+every secondary ray count; time the test and extrapolate with pixels x AA squared for fixed
+sampling, then re-time one full frame (Arnold digest P9 [added rule]).
 
 ```python
 # test: P12_budget
@@ -247,7 +311,10 @@ print(rs["rays_per_pixel"], est, budget)
 
 ## P13. Master rig referenced into a shot, tweaks under the contract
 
-Why: masters hold the ingredients, shots the recipe; one master per camera axis; allowed shot tweaks are exposure, transform and on/off, sometimes color (BR 00:37:17; BR-B ch8 Start with practical lights). The shot references the master and logs every delta so the continuity cost stays visible [added logging].
+Why: masters hold the ingredients, shots the recipe; one master per camera axis; allowed shot tweaks
+are exposure, transform and on/off, sometimes color (BR 00:37:17; BR-B ch8 Start with practical
+lights). The shot references the master and logs every delta so the continuity cost stays visible
+[added logging].
 
 ```python
 # test: P13_master_shot

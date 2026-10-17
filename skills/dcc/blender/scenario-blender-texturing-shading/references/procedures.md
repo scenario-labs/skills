@@ -1,14 +1,20 @@
 # Tested procedures (Blender 5.2.1)
 
-Every `python` block below was executed on Blender 5.2.1 LTS by `tests/code/blender-texturing-shading/test_procedures_md.py` (headless, `--factory-startup`, fresh file per block). Blocks marked `python gui` need a live window and were run by `test_gui_texture_paint.py` instead. Larger behaviors were verified by the render tests named under each procedure; their contact sheets are in `tests/code/blender-texturing-shading/out/`.
+Every `python` block below was executed on Blender 5.2.1 LTS by
+`tests/code/blender-texturing-shading/test_procedures_md.py` (headless, `--factory-startup`, fresh
+file per block). Blocks marked `python gui` need a live window and were run by
+`test_gui_texture_paint.py` instead. Larger behaviors were verified by the render tests named under
+each procedure; their contact sheets are in `tests/code/blender-texturing-shading/out/`.
 
-Blocks assume two names: `SKILL_SCRIPTS` = `<this skill>/scripts` and `TEX_DIR` = a folder holding a downloaded texture set. Replace them with real paths.
+Blocks assume two names: `SKILL_SCRIPTS` = `<this skill>/scripts` and `TEX_DIR` = a folder holding a
+downloaded texture set. Replace them with real paths.
 
 ---
 
 ## P1. PBR material from a downloaded texture set
 
-Verified on 5.2.1. Test: `test_pbr.py` (ambientCG, Poly Haven and Substance naming, color spaces, glTF export).
+Verified on 5.2.1. Test: `test_pbr.py` (ambientCG, Poly Haven and Substance naming, color spaces,
+glTF export).
 
 ```python
 import sys, bpy
@@ -25,11 +31,21 @@ print(M.audit_material(mat, obj))              # [] when color spaces, UV maps, 
 
 What the builder does, so you can do it by hand when needed:
 
-- Role from the END of the file name (`metal_plate_diff_1k` is base color, not metallic). `_nor_dx` / `NormalDX` sets the Normal Map node `convention = 'DIRECTX'` (5.1+).
-- `orm` / `arm` / `OcclusionRoughnessMetallic`: one Non-Color image, Separate Color R = AO, G = Roughness, B = Metallic.
+- Role from the END of the file name (`metal_plate_diff_1k` is base color, not metallic). `_nor_dx`
+  / `NormalDX` sets the Normal Map node `convention = 'DIRECTX'` (5.1+).
+- `orm` / `arm` / `OcclusionRoughnessMetallic`: one Non-Color image, Separate Color R = AO, G =
+  Roughness, B = Metallic.
 - Gloss maps are inverted into Roughness (`1 - gloss`).
-- Height: bump only when there is no normal map (`height_as='auto'`); Bump Distance = `height_depth` in meters (what 0..1 of the map spans). A normal map plus bump is CHAINED (Normal Map output into the Bump Normal input), never added. `height_as='displacement'` wires true displacement and DROPS the normal map (Price: they encode the same relief; `audit_material` flags materials that use both), sets the height image to Cubic interpolation and `displacement_method = 'BOTH'`.
-- AO: multiplied into base color at factor 1 by default (Price: scanned sets are flash-lit, AO restores the cavity shadow; optional under true displacement). For games use `ao_mode='gltf'`: a `glTF Material Output` group so the exporter writes a separate `occlusionTexture` (verified in the exported JSON); the default multiply still exported `baseColorTexture` (verified). `ao_mode='none'` to skip.
+- Height: bump only when there is no normal map (`height_as='auto'`); Bump Distance = `height_depth`
+  in meters (what 0..1 of the map spans). A normal map plus bump is CHAINED (Normal Map output into
+  the Bump Normal input), never added. `height_as='displacement'` wires true displacement and DROPS
+  the normal map (Price: they encode the same relief; `audit_material` flags materials that use
+  both), sets the height image to Cubic interpolation and `displacement_method = 'BOTH'`.
+- AO: multiplied into base color at factor 1 by default (Price: scanned sets are flash-lit, AO
+  restores the cavity shadow; optional under true displacement). For games use `ao_mode='gltf'`: a
+  `glTF Material Output` group so the exporter writes a separate `occlusionTexture` (verified in the
+  exported JSON); the default multiply still exported `baseColorTexture` (verified).
+  `ao_mode='none'` to skip.
 - Emission map: Emission Strength set to 1 (5.x default is 0).
 
 Color-space fix for an existing material, by role of the socket it feeds:
@@ -52,7 +68,8 @@ for n in nt.nodes:
 print(tex.image.colorspace_settings.name)     # Non-Color
 ```
 
-True displacement with a scanned set (Price's wall), verified in `test_price_masks.py` (normal map dropped, Cubic, BOTH) and the block test:
+True displacement with a scanned set (Price's wall), verified in `test_price_masks.py` (normal map
+dropped, Cubic, BOTH) and the block test:
 
 ```python
 import sys, bpy
@@ -94,7 +111,11 @@ mat.surface_render_method = "DITHERED"                  # EEVEE; old blend_metho
 
 ## P3. Box (triplanar) projection for meshes without usable UVs
 
-Verified on 5.2.1, EEVEE and Cycles render the same. Test: `test_pbr.py` (ico sphere with no UV map). Use for rigid props, rocks, AI-generated meshes before UVs exist. Not for deforming meshes: Object coordinates swim under an armature (UV digest). A tangent-space normal map is interpreted in the UV tangent frame, which box projection does not provide, so the builder drops the normal map and uses the height as bump [added].
+Verified on 5.2.1, EEVEE and Cycles render the same. Test: `test_pbr.py` (ico sphere with no UV
+map). Use for rigid props, rocks, AI-generated meshes before UVs exist. Not for deforming meshes:
+Object coordinates swim under an armature (UV digest). A tangent-space normal map is interpreted in
+the UV tangent frame, which box projection does not provide, so the builder drops the normal map and
+uses the height as bump [added].
 
 ```python
 import sys, bpy
@@ -111,7 +132,8 @@ print([n.projection for n in mat.node_tree.nodes if n.bl_idname == "ShaderNodeTe
 
 ## P4. Wear, dirt and color variation on any material
 
-Verified on 5.2.1. Test: `test_wear.py` (mask sheet Cycles vs EEVEE, preview, value report) and `tests/code/blender-texturing-shading/probes/probe_stochastic.py`.
+Verified on 5.2.1. Test: `test_wear.py` (mask sheet Cycles vs EEVEE, preview, value report) and
+`tests/code/blender-texturing-shading/probes/probe_stochastic.py`.
 
 ```python
 import sys, bpy
@@ -133,14 +155,23 @@ print(sorted(nodes), [s.name for s in nodes["edge_wear"].outputs])
 
 Measured behavior:
 
-- `BX Edge Wear`: Edges = angle between the Bevel-node normal and the shading normal, kept where AO says the surface is open (convex); Wear = Edges plus stretched noise through a threshold (chips); Cavity = 1 - AO; Dirt = Cavity plus noise through a threshold. Radius is world units: 0.04 read well on a 1 m crate, 0.015 gave hairlines.
-- EEVEE: Edges and Wear go to 0 (the Bevel node is Cycles-only), Cavity/Dirt differ (screen-space AO). Grunge and Variation match exactly (mean 0.0442 vs 0.044).
-- Bevel and AO are sampled per render sample: a threshold on them averages to fractional values. Metallic driven through `GREATER_THAN` was 0% fractional at 1 spp and 17 to 18% at 16 and 128 spp. Bake Wear and Dirt to textures (scenario-blender-uv-baking, Emit bake) before thresholding for finals, EEVEE and games.
-- Noise Texture `Fac` clusters around 0.5 (roughly 0.3 to 0.7): stretch it with Map Range before using it as a breakup, or the breakup is invisible.
+- `BX Edge Wear`: Edges = angle between the Bevel-node normal and the shading normal, kept where AO
+  says the surface is open (convex); Wear = Edges plus stretched noise through a threshold (chips);
+  Cavity = 1 - AO; Dirt = Cavity plus noise through a threshold. Radius is world units: 0.04 read
+  well on a 1 m crate, 0.015 gave hairlines.
+- EEVEE: Edges and Wear go to 0 (the Bevel node is Cycles-only), Cavity/Dirt differ (screen-space
+  AO). Grunge and Variation match exactly (mean 0.0442 vs 0.044).
+- Bevel and AO are sampled per render sample: a threshold on them averages to fractional values.
+  Metallic driven through `GREATER_THAN` was 0% fractional at 1 spp and 17 to 18% at 16 and 128 spp.
+  Bake Wear and Dirt to textures (scenario-blender-uv-baking, Emit bake) before thresholding for
+  finals, EEVEE and games.
+- Noise Texture `Fac` clusters around 0.5 (roughly 0.3 to 0.7): stretch it with Map Range before
+  using it as a breakup, or the breakup is invisible.
 
 ## P5. Engine-independent curvature and dirt masks (no Bevel node)
 
-Verified on 5.2.1. Tests: `test_wear.py` (EEVEE and Cycles identical, mean 0.3402 vs 0.3404), `test_uvpaint.py` (rasterized into a texture).
+Verified on 5.2.1. Tests: `test_wear.py` (EEVEE and Cycles identical, mean 0.3402 vs 0.3404),
+`test_uvpaint.py` (rasterized into a texture).
 
 ```python
 import sys, bpy
@@ -164,7 +195,8 @@ obj.data.color_attributes.active_color = a
 print(bpy.ops.paint.vertex_color_dirt(blur_strength=1.0, blur_iterations=1, clean_angle=3.14, dirt_angle=0.0, dirt_only=False, normalize=True))
 ```
 
-Both depend on vertex density (like Pointiness). On a low poly, compute them on the high and bake, or rasterize per texel with `M.vertex_values_to_texels` (P11).
+Both depend on vertex density (like Pointiness). On a low poly, compute them on the high and bake,
+or rasterize per texel with `M.vertex_values_to_texels` (P11).
 
 ## P6. Decal through a dedicated UV map (Kaspar's logo method)
 
@@ -187,11 +219,14 @@ M.add_decal(mat, ball, logo, center=(0, -0.5, 0), normal=(0, -1, 0), up=(0, 0, 1
 print([u.name for u in ball.data.uv_layers])   # ['UVMap', 'decal']
 ```
 
-Faces facing the decal get planar UVs; every other loop is parked outside 0..1 and the image node uses Extension CLIP, so it reads alpha 0 there. For games, a separate decal mesh floating a millimeter above the surface is the usual alternative [added].
+Faces facing the decal get planar UVs; every other loop is parked outside 0..1 and the image node
+uses Extension CLIP, so it reads alpha 0 there. For games, a separate decal mesh floating a
+millimeter above the surface is the usual alternative [added].
 
 ## P7. Stylized skin (Kaspar, Snow #1, #2, #6, translated to Principled v2)
 
-Verified on 5.2.1. Test: `test_skin.py` (EEVEE and Cycles, studio, backlit and roughness-only rigs; two SSS ranges side by side).
+Verified on 5.2.1. Test: `test_skin.py` (EEVEE and Cycles, studio, backlit and roughness-only rigs;
+two SSS ranges side by side).
 
 ```python
 import sys, bpy, numpy as np
@@ -213,16 +248,26 @@ print(p.subsurface_method, sorted(s.name for s in p.inputs if s.is_linked))
 
 Recipe inside the builder (sources in expert-notes.md):
 
-- Base color: start darker, brighten through `col_brighter`, darken through `col_darker`, lips mask removed from both, lips color on top.
-- SSS: Subsurface Weight 1; `col_sss` stays black/white and a Map Range sets Subsurface Scale. Kaspar's v1 values were 0.02 to 0.15. In 5.2 (Random Walk rescaled) 0.02 to 0.15 made the ears of a 0.33 m head glow white-pink and waxy under a backlight; 0.005 to 0.04 gave the red glow he asks for (default, measured). Scale proportionally with the character.
-- Roughness: base 0.68 to 0.72; pores from two Voronoi Smooth F1 textures (scale 100 and 200 on his UVs) mixed by a detail-0 noise, general noise mixed at about 0.2, pore centers glossier, cracks rougher; `col_rough` remapped to 0.72 to 1 (chin, brows); lips glossy (0.45 here; his tongue and teeth 0.4).
+- Base color: start darker, brighten through `col_brighter`, darken through `col_darker`, lips mask
+  removed from both, lips color on top.
+- SSS: Subsurface Weight 1; `col_sss` stays black/white and a Map Range sets Subsurface Scale.
+  Kaspar's v1 values were 0.02 to 0.15. In 5.2 (Random Walk rescaled) 0.02 to 0.15 made the ears of
+  a 0.33 m head glow white-pink and waxy under a backlight; 0.005 to 0.04 gave the red glow he asks
+  for (default, measured). Scale proportionally with the character.
+- Roughness: base 0.68 to 0.72; pores from two Voronoi Smooth F1 textures (scale 100 and 200 on his
+  UVs) mixed by a detail-0 noise, general noise mixed at about 0.2, pore centers glossier, cracks
+  rougher; `col_rough` remapped to 0.72 to 1 (chin, brows); lips glossy (0.45 here; his tongue and
+  teeth 0.4).
 - Specular IOR Level stays 0.5: wetness is roughness.
 
-Backlit SSS check: `M.preview([head, ...], out, rigs=("backlit",))` puts a strong area light straight behind plus one from below (Kaspar's rig). Ears, nostrils, lids, lips and fingers should glow red; forehead, jaw and palm center stay opaque.
+Backlit SSS check: `M.preview([head, ...], out, rigs=("backlit",))` puts a strong area light
+straight behind plus one from below (Kaspar's rig). Ears, nostrils, lids, lips and fingers should
+glow red; forehead, jaw and palm center stay opaque.
 
 ## P8. Procedural eye and cornea
 
-Verified on 5.2.1. Tests: `test_skin.py` (eyes on the head, cornea shadow per engine), `tests/code/blender-texturing-shading/probes/probe_cornea.py` (EEVEE thickness variants).
+Verified on 5.2.1. Tests: `test_skin.py` (eyes on the head, cornea shadow per engine),
+`tests/code/blender-texturing-shading/probes/probe_cornea.py` (EEVEE thickness variants).
 
 ```python
 import sys, bpy
@@ -244,11 +289,17 @@ out = M.output_node(bpy.data.materials["cornea"])
 print(out.inputs["Thickness"].is_linked, bpy.data.materials["cornea"].thickness_mode)   # True SLAB
 ```
 
-Measured: with default thickness EEVEE refracts the shell as a solid glass ball and blows the iris across the eye; Material Output Thickness 0 (SLAB or SPHERE) matches Cycles; `use_raytrace_refraction = False` makes the eye vanish behind a probe reflection. `visible_shadow = False` is honored by both engines (iris region brightness 0.59 to 0.76 in Cycles, 0.53 to 0.67 in EEVEE).
+Measured: with default thickness EEVEE refracts the shell as a solid glass ball and blows the iris
+across the eye; Material Output Thickness 0 (SLAB or SPHERE) matches Cycles;
+`use_raytrace_refraction = False` makes the eye vanish behind a probe reflection.
+`visible_shadow = False` is honored by both engines (iris region brightness 0.59 to 0.76 in Cycles,
+0.53 to 0.67 in EEVEE).
 
 ## P9. Anisotropic hair or brushed metal (Cycles only)
 
-Verified on 5.2.1. Test: `test_skin.py` (aniso sheet): EEVEE renders the same material isotropic in 5.2, Cycles shows the stretched highlight. Kaspar kept a fake-anisotropy node group for EEVEE and a separate Cycles output (Material Output `target`).
+Verified on 5.2.1. Test: `test_skin.py` (aniso sheet): EEVEE renders the same material isotropic in
+5.2, Cycles shows the stretched highlight. Kaspar kept a fake-anisotropy node group for EEVEE and a
+separate Cycles output (Material Output `target`).
 
 ```python
 import bpy
@@ -277,15 +328,39 @@ bpy.context.active_object.data.materials.append(mat)
 
 GUI only, verified in `test_gui_texture_paint.py` (opens a window). Facts from that run:
 
-- Factory 5.2: brush `Paint Hard`, color AND unified color black, `use_unified_color` True, seam bleed 2 px, mode `MATERIAL`.
-- A stroke issued in the same call that set up the object, view or mode painted 162 texels in one run and full coverage (31,395) in another; resampled strokes after a redraw painted about 14,000 every run. Projection painting occludes with the depth buffer of the last viewport draw, so what that draw contained decides the result. `M.gui_redraw()` forces a draw first.
-- Scripted strokes paint one dab per point (the brush's spacing is not applied): 16 points over 740 px left separate dots. `M.gui_texture_stroke()` resamples to 0.25 x brush diameter.
-- Occlude, Backface Culling and Normal falloff off: one stroke painted 9,969 texels on the front AND 9,969 on the back (Kaspar's through-the-clump hair streaks). With defaults: front only.
-- `Blur` is image_brush_type `SOFTEN`; `Fill` floods the whole canvas (1,048,540 of 1,048,576 texels).
-- `paint.add_texture_paint_slot` (via `bx_gui.run`) creates the image node, links Base Color, image sRGB.
-- Vertex-paint strokes through bx_gui were unreliable in the first tests (only strokes near the view center registered). Cause found and fixed in bx_gui on 2026-09-24: the exec path reads stroke `location` in object space and needs the point on the surface; `bx_gui.stroke()` now raycasts each point from the view and converts to object space. Re-verified in a GUI session: a 14-point `VERTEX_PAINT` stroke across an off-origin sphere painted its full width (55 vertices, local x -0.25 to +0.25). The numpy route (P7) stays the headless option and the one to use for exact, procedural masks.
-- From the batch notes (Abbitt, Surfaced Studio, Ryan King): strokes project from the screen, so they stretch on faces angled away and vanish at edges: `set_view` square to the surface first. Erase brushes punch alpha and need an image with alpha; on opaque maps paint the base color back. Texture Slots mode `MATERIAL` paints every channel of every material; `add_texture_paint_slot(type='ROUGHNESS')` sets Non-Color itself, `type='BUMP'` wires a Bump node (batch probes). Face-selection paint mask: `mesh.use_paint_mask = True`; stencil mask image: `image_paint.use_stencil_layer`, `image_paint.stencil_image`. A custom textured brush needs white color, saturation 0, and "Save Changes to Asset". "Cannot paint" checklist: wrong object holds the paint icon, missing UVs, no image slot, an active stencil or mask image, a black brush texture, extreme stroke spacing.
-- Bleed: Kaspar 8 px, Abbitt 12 px (default 2). Island margin 0.01 to 0.05, larger when the texture will be downscaled for a game.
+- Factory 5.2: brush `Paint Hard`, color AND unified color black, `use_unified_color` True, seam
+  bleed 2 px, mode `MATERIAL`.
+- A stroke issued in the same call that set up the object, view or mode painted 162 texels in one
+  run and full coverage (31,395) in another; resampled strokes after a redraw painted about 14,000
+  every run. Projection painting occludes with the depth buffer of the last viewport draw, so what
+  that draw contained decides the result. `M.gui_redraw()` forces a draw first.
+- Scripted strokes paint one dab per point (the brush's spacing is not applied): 16 points over 740
+  px left separate dots. `M.gui_texture_stroke()` resamples to 0.25 x brush diameter.
+- Occlude, Backface Culling and Normal falloff off: one stroke painted 9,969 texels on the front AND
+  9,969 on the back (Kaspar's through-the-clump hair streaks). With defaults: front only.
+- `Blur` is image_brush_type `SOFTEN`; `Fill` floods the whole canvas (1,048,540 of 1,048,576
+  texels).
+- `paint.add_texture_paint_slot` (via `bx_gui.run`) creates the image node, links Base Color, image
+  sRGB.
+- Vertex-paint strokes through bx_gui were unreliable in the first tests (only strokes near the view
+  center registered). Cause found and fixed in bx_gui on 2026-09-24: the exec path reads stroke
+  `location` in object space and needs the point on the surface; `bx_gui.stroke()` now raycasts each
+  point from the view and converts to object space. Re-verified in a GUI session: a 14-point
+  `VERTEX_PAINT` stroke across an off-origin sphere painted its full width (55 vertices, local x
+  -0.25 to +0.25). The numpy route (P7) stays the headless option and the one to use for exact,
+  procedural masks.
+- From the batch notes (Abbitt, Surfaced Studio, Ryan King): strokes project from the screen, so
+  they stretch on faces angled away and vanish at edges: `set_view` square to the surface first.
+  Erase brushes punch alpha and need an image with alpha; on opaque maps paint the base color back.
+  Texture Slots mode `MATERIAL` paints every channel of every material;
+  `add_texture_paint_slot(type='ROUGHNESS')` sets Non-Color itself, `type='BUMP'` wires a Bump node
+  (batch probes). Face-selection paint mask: `mesh.use_paint_mask = True`; stencil mask image:
+  `image_paint.use_stencil_layer`, `image_paint.stencil_image`. A custom textured brush needs white
+  color, saturation 0, and "Save Changes to Asset". "Cannot paint" checklist: wrong object holds the
+  paint icon, missing UVs, no image slot, an active stencil or mask image, a black brush texture,
+  extreme stroke spacing.
+- Bleed: Kaspar 8 px, Abbitt 12 px (default 2). Island margin 0.01 to 0.05, larger when the texture
+  will be downscaled for a game.
 
 ```python gui
 import sys, bpy
@@ -307,7 +382,9 @@ M.save_image(img, "/abs/path/tex_body_color.png")    # images are not saved with
 
 ## P11. Headless painting through UV space
 
-Verified on 5.2.1. Test: `test_uvpaint.py`: strokes crossing UV seams stay continuous on a cube corner and across a sphere's seam (painted_sheet.png); 512 px TexelMaps for a cube and a 64x32 sphere built in 0.36 s.
+Verified on 5.2.1. Test: `test_uvpaint.py`: strokes crossing UV seams stay continuous on a cube
+corner and across a sphere's seam (painted_sheet.png); 512 px TexelMaps for a cube and a 64x32
+sphere built in 0.36 s.
 
 ```python
 import sys, bpy, numpy as np, tempfile, os
@@ -332,11 +409,16 @@ M.save_image(mask, os.path.join(out, "ball_dust.png"))
 print(round(tm.coverage, 3))
 ```
 
-Image value semantics (measured by writing 0.5 and reading the PNG): byte images store values as encoded (0.5 becomes 128 whether sRGB or Non-Color); float images hold linear and a `Linear Rec.709` float saved to PNG is converted to sRGB (0.5 becomes 0.735); a float Non-Color image saved to 16-bit PNG keeps 0.5. Write alpha 1 into maps without real alpha: an RGB PNG save multiplies color by alpha (0.5 with alpha 0.5 saved as 64).
+Image value semantics (measured by writing 0.5 and reading the PNG): byte images store values as
+encoded (0.5 becomes 128 whether sRGB or Non-Color); float images hold linear and a `Linear Rec.709`
+float saved to PNG is converted to sRGB (0.5 becomes 0.735); a float Non-Color image saved to 16-bit
+PNG keeps 0.5. Write alpha 1 into maps without real alpha: an RGB PNG save multiplies color by alpha
+(0.5 with alpha 0.5 saved as 64).
 
 ## P12. Photo texture pattern extraction (Kaspar, Snow #4)
 
-Verified on 5.2.1. Test: `test_uvpaint.py`: low-frequency std 0.129 to 0.018, pattern correlation 0.99.
+Verified on 5.2.1. Test: `test_uvpaint.py`: low-frequency std 0.129 to 0.018, pattern correlation
+0.99.
 
 ```python
 import sys, numpy as np
@@ -355,7 +437,8 @@ Use the result as a Non-Color mask and bump; build color, grunge and wear proced
 
 ## P13. Checks: audit, value report, previews
 
-Verified on 5.2.1. Tests: `test_pbr.py` (a deliberately wrong material raises 8 findings; the good one none), `test_wear.py`, `test_skin.py`.
+Verified on 5.2.1. Tests: `test_pbr.py` (a deliberately wrong material raises 8 findings; the good
+one none), `test_wear.py`, `test_skin.py`.
 
 ```python
 import sys, bpy, tempfile
@@ -374,7 +457,9 @@ sheet = M.preview(mat, tempfile.mkdtemp(), engines=("BLENDER_EEVEE",), rigs=("st
 print(sheet)
 ```
 
-`preview` rigs: `studio` (key, fill, rim on neutral 0.18 gray, no gradient), `backlit` (Kaspar's SSS test), `roughness` (studio with Base Color forced black and SSS off: reads roughness and bump alone). Engines side by side catch EEVEE-only or Cycles-only nodes.
+`preview` rigs: `studio` (key, fill, rim on neutral 0.18 gray, no gradient), `backlit` (Kaspar's SSS
+test), `roughness` (studio with Base Color forced black and SSS off: reads roughness and bump
+alone). Engines side by side catch EEVEE-only or Cycles-only nodes.
 
 ## P14. Camera-ray world for lookdev (Kaspar, Snow #7)
 
@@ -422,11 +507,16 @@ d.expression = v.name
 print(d.is_valid)
 ```
 
-Add the same driven mix on Roughness (to 0.6) and Subsurface Weight (to 0) in every material; `ctrl["clay"] = 1` turns the whole character to clay for the presentation turntable.
+Add the same driven mix on Roughness (to 0.6) and Subsurface Weight (to 0) in every material;
+`ctrl["clay"] = 1` turns the whole character to clay for the presentation turntable.
 
 ## P17. Hand-painted stylized light, procedurally (Grant Abbitt, 5.1 guide)
 
-Verified on 5.2.1. Test: `test_painted_light.py` (unlit and studio rigs, EEVEE and Cycles; albedo top third 0.216 vs bottom third 0.177 linear). Grant paints the light into the albedo for unlit game shaders: lighter top, darker bottom, MULTIPLY in crevices, SCREEN on extremities, judged with no lighting. The node version builds the same structure from masks; bake it (Emit) for the game, then add hand details (cracks, lettering) on top in the GUI or with P11.
+Verified on 5.2.1. Test: `test_painted_light.py` (unlit and studio rigs, EEVEE and Cycles; albedo
+top third 0.216 vs bottom third 0.177 linear). Grant paints the light into the albedo for unlit game
+shaders: lighter top, darker bottom, MULTIPLY in crevices, SCREEN on extremities, judged with no
+lighting. The node version builds the same structure from masks; bake it (Emit) for the game, then
+add hand details (cracks, lettering) on top in the GUI or with P11.
 
 ```python
 import sys, bpy
@@ -445,13 +535,21 @@ M.painted_light(mat, obj=stone, top=1.15, bottom=0.8, crevice=0.45, highlight=0.
 print([n.label for n in mat.node_tree.nodes if n.label])
 ```
 
-Without a curvature attribute the builder falls back to the Bevel/AO group (Cycles only, bake before use in EEVEE or a game). Preview with `M.preview(objs, out, rigs=("unlit", "studio"))`: `unlit` routes Base Color through emission, Grant's "plug the image straight into the output" check.
+Without a curvature attribute the builder falls back to the Bevel/AO group (Cycles only, bake before
+use in EEVEE or a game). Preview with `M.preview(objs, out, rigs=("unlit", "studio"))`: `unlit`
+routes Base Color through emission, Grant's "plug the image straight into the output" check.
 
-GUI brush equivalents he uses (5.1): Fill brush with gradient (`brush.color_type = 'GRADIENT'`, drag bottom to top in front view), Fill in MULTIPLY with black at strength about 0.1 per tap to darken globally, a brush in SCREEN with near-white for edge highlights, MULTIPLY at strength about 0.25 for crevices and cracks, Smear to soften a harsh line.
+GUI brush equivalents he uses (5.1): Fill brush with gradient (`brush.color_type = 'GRADIENT'`, drag
+bottom to top in front view), Fill in MULTIPLY with black at strength about 0.1 per tap to darken
+globally, a brush in SCREEN with near-white for edge highlights, MULTIPLY at strength about 0.25 for
+crevices and cracks, Smear to soften a harsh line.
 
 ## P18. Environment grime from a numpy color-attribute mask plus Color Burn (Price)
 
-Verified on 5.2.1. Test: `test_price_masks.py` (plain soft mask vs burned mask on a brick wall, EEVEE and Cycles; the burned mold concentrates in the grout). Price paints the mask in vertex colors (resolution = vertex count, he subdivides a wall with 20 cuts) because image painting on tiling UVs repeats every stroke. Headless, the mask comes from a rule instead of strokes.
+Verified on 5.2.1. Test: `test_price_masks.py` (plain soft mask vs burned mask on a brick wall,
+EEVEE and Cycles; the burned mold concentrates in the grout). Price paints the mask in vertex colors
+(resolution = vertex count, he subdivides a wall with 20 cuts) because image painting on tiling UVs
+repeats every stroke. Headless, the mask comes from a rule instead of strokes.
 
 ```python
 import sys, bpy, numpy as np
@@ -489,11 +587,16 @@ nt.links.new(mold.outputs[2], p.inputs["Base Color"])
 print(burn.blend_type, attr.attribute_name in wall.data.color_attributes)
 ```
 
-Price's layering rules around it: keep painted values mid-range (burn detail shows only at mid and low mask values); set the effect Mix to MULTIPLY and B's value becomes the opacity; efflorescence is the same group with a flipped ramp in SCREEN; spalling is SUBTRACT on the height before the Displacement node (factor about 0.14) plus brighter color in the same area; wetness is a Mix on roughness toward about 0.35 by the same mask; label each group as you build it.
+Price's layering rules around it: keep painted values mid-range (burn detail shows only at mid and
+low mask values); set the effect Mix to MULTIPLY and B's value becomes the opacity; efflorescence is
+the same group with a flipped ramp in SCREEN; spalling is SUBTRACT on the height before the
+Displacement node (factor about 0.14) plus brighter color in the same area; wetness is a Mix on
+roughness toward about 0.35 by the same mask; label each group as you build it.
 
 ## P19. Physical UV scale for tiling sets (Price)
 
-Verified on 5.2.1 (block test). One UV unit must equal the texture's published tile size in meters on an object with applied scale.
+Verified on 5.2.1 (block test). One UV unit must equal the texture's published tile size in meters
+on an object with applied scale.
 
 ```python
 import bpy, bmesh
@@ -521,4 +624,10 @@ print(round(max(xs) - min(xs), 3))                     # 4.0 tiles across the 10
 
 ## P20. Baking procedural channels (pointer to scenario-blender-uv-baking)
 
-Belongs to scenario-blender-uv-baking. The texturing-side rules: bake at the end for portability (other software, EEVEE load time, game export), not for Cycles speed (Kaspar: Sprite Fright is mostly procedural and unbaked); route each channel through an Emission shader and bake EMIT; 30 samples minimum for anything with high frequencies, never 1 for normals; disable Mask modifier render visibility first; validate by rebuilding the material from the maps and rendering both side by side (`M.preview` on both, or `M.value_report`). In 5.x the target image node must be selected AND active or the bake silently returns CANCELED (UV digest).
+Belongs to scenario-blender-uv-baking. The texturing-side rules: bake at the end for portability
+(other software, EEVEE load time, game export), not for Cycles speed (Kaspar: Sprite Fright is
+mostly procedural and unbaked); route each channel through an Emission shader and bake EMIT; 30
+samples minimum for anything with high frequencies, never 1 for normals; disable Mask modifier
+render visibility first; validate by rebuilding the material from the maps and rendering both side
+by side (`M.preview` on both, or `M.value_report`). In 5.x the target image node must be selected
+AND active or the bake silently returns CANCELED (UV digest).

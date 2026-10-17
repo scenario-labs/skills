@@ -1,6 +1,8 @@
 # Sources: sculpting
 
-27 videos, one note each in `notes/sculpting/` (transcripts in `transcripts/<id>.txt`). Credential as stated in the note. "Best for" says when to open the note; timestamps point at the densest minutes.
+27 videos, one note each in `notes/sculpting/` (transcripts in `transcripts/<id>.txt`). Credential
+as stated in the note. "Best for" says when to open the note; timestamps point at the densest
+minutes.
 
 ## Studio and conference (highest authority)
 
@@ -42,5 +44,9 @@
 ## Other inputs
 
 - `sources/blender-version-deltas.md` (section 3, sculpting): authoritative 5.2 API and UI facts.
-- Distiller test code: `archive/tests/sculpt_courses/`, `archive/tests/sculpt_stylized/`, `archive/tests/sculpt_studio_anatomy/` (numpy brush stand-ins reconciled into `scripts/bx_sculpt.py`; probes for defaults, reprojection and renders).
-- Baseline to beat: `tests/baseline/answers.md` section S2 (textbook plan: SDF/metaball blockout, one voxel ratio, no crash list beyond mesh_filter, no landmark sources, no view-ray placement, no restate-after-remesh).
+- Distiller test code: `archive/tests/sculpt_courses/`, `archive/tests/sculpt_stylized/`,
+  `archive/tests/sculpt_studio_anatomy/` (numpy brush stand-ins reconciled into
+  `scripts/bx_sculpt.py`; probes for defaults, reprojection and renders).
+- Baseline to beat: `tests/baseline/answers.md` section S2 (textbook plan: SDF/metaball blockout,
+  one voxel ratio, no crash list beyond mesh_filter, no landmark sources, no view-ray placement, no
+  restate-after-remesh).

@@ -1,6 +1,10 @@
 # Sources for scenario-unity-shaders
 
-What this skill rests on: the shaders cluster (`sources/research_shaders.json`: 16 videos, 6 docs), its 17 notes and 3 digests in `notes/shaders/`, the saved docs `sources/docs/shaders__*.md`, `sources/unity-version-deltas.md` (sections 2, 5, 13, 14), the installed 6000.3.21f1 packages (URP 17.3, Core RP 17.3, Shader Graph 17.3, read-only), and what ran on this Mac. Timestamps are `[hh:mm:ss]` in the video. Views as of the research date (2026-09-24).
+What this skill rests on: the shaders cluster (`sources/research_shaders.json`: 16 videos, 6 docs),
+its 17 notes and 3 digests in `notes/shaders/`, the saved docs `sources/docs/shaders__*.md`,
+`sources/unity-version-deltas.md` (sections 2, 5, 13, 14), the installed 6000.3.21f1 packages (URP
+17.3, Core RP 17.3, Shader Graph 17.3, read-only), and what ran on this Mac. Timestamps are
+`[hh:mm:ss]` in the video. Views as of the research date (2026-09-24).
 
 ## 1. Observed on this Mac (primary evidence)
 
@@ -61,4 +65,14 @@ What this skill rests on: the shaders cluster (`sources/research_shaders.json`: 
 ## Revision history
 
 - 2026-09-24 v0.1: first version, 55 live checks.
-- 2026-09-24 v0.2 (refactor after the Y4 blind grade, v0.1 kept in `skills/_versions/unity-shaders v1 2026-09-24/`): added the PSO warm-up proof in a development player (P18, `PsoJobs`, `AgentPsoProbe`, one collection per API, marker and log channels), Shader Build Settings by script (P15, `KeywordOverrides`: exclusion works, `dynamic_branch` override ignored for `#if` keywords, `shader_feature` override strips global keywords), post-processing variants per VolumeProfile asset (P16, `PostProcessingAudit`), Shader Graph Alpha Clipping compiled into every pass (P17, `shadergraph_set_target_settings`, `GeneratedCode`), the runtime `shader_feature` toggle lint (P19), shore normal fade and half-precision measurements (P7, P13), the `if()` stage-suffix lint rule; corrected the compute platform claim (compute on GLES 3.1+, none on GLES 3.0 or WebGL 2; GPU Resident Drawer and STP not on GLES) and the 6.3 Log Shader Compilation line format.
+- 2026-09-24 v0.2 (refactor after the Y4 blind grade, v0.1 kept in
+  `skills/_versions/unity-shaders v1 2026-09-24/`): added the PSO warm-up proof in a development
+  player (P18, `PsoJobs`, `AgentPsoProbe`, one collection per API, marker and log channels), Shader
+  Build Settings by script (P15, `KeywordOverrides`: exclusion works, `dynamic_branch` override
+  ignored for `#if` keywords, `shader_feature` override strips global keywords), post-processing
+  variants per VolumeProfile asset (P16, `PostProcessingAudit`), Shader Graph Alpha Clipping
+  compiled into every pass (P17, `shadergraph_set_target_settings`, `GeneratedCode`), the runtime
+  `shader_feature` toggle lint (P19), shore normal fade and half-precision measurements (P7, P13),
+  the `if()` stage-suffix lint rule; corrected the compute platform claim (compute on GLES 3.1+,
+  none on GLES 3.0 or WebGL 2; GPU Resident Drawer and STP not on GLES) and the 6.3 Log Shader
+  Compilation line format.

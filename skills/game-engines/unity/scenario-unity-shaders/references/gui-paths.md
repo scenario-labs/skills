@@ -1,6 +1,9 @@
 # GUI paths for the shading procedures (computer-use agent or human)
 
-Unity 6.3 (6000.3.21f1) on macOS (Cmd for Ctrl). Labels from the installed editor and packages where noted [verified: installed]; verify others before scripting clicks. The scripted route is in `procedures.md`; the GUI is required for what has no scripting surface (wiring Shader Graph nodes, Graph Settings, the Render Graph Viewer and Frame Debugger).
+Unity 6.3 (6000.3.21f1) on macOS (Cmd for Ctrl). Labels from the installed editor and packages where
+noted [verified: installed]; verify others before scripting clicks. The scripted route is in
+`procedures.md`; the GUI is required for what has no scripting surface (wiring Shader Graph nodes,
+Graph Settings, the Render Graph Viewer and Frame Debugger).
 
 ## Shader Graph (visual editor: the agent's gap)
 

@@ -1,6 +1,10 @@
 # scenario-godot-expert: GUI paths
 
-The same tasks as `procedures.md`, done by hand in the Godot 4.7 editor (for a computer-use agent or a human). None of these was clicked through here: the GUI editor takes focus on this Mac, so the headless equivalents in the right column are what ran. On macOS, Cmd replaces Ctrl in editor shortcuts. Menu names follow the 4.7 editor; [verify] marks paths not confirmed in the saved docs or videos.
+The same tasks as `procedures.md`, done by hand in the Godot 4.7 editor (for a computer-use agent or
+a human). None of these was clicked through here: the GUI editor takes focus on this Mac, so the
+headless equivalents in the right column are what ran. On macOS, Cmd replaces Ctrl in editor
+shortcuts. Menu names follow the 4.7 editor; [verify] marks paths not confirmed in the saved docs or
+videos.
 
 | Task                                      | GUI path                                                                                                                                                                                                                                                                         | Headless equivalent (ran)                                                                   |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |

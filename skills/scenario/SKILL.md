@@ -8,19 +8,41 @@ license: MIT
 
 ## Overview
 
-Scenario (scenario.com) generates AI images, video, 3D, and audio across 500+ models plus custom training, all through the core loop below.
+Scenario (scenario.com) generates AI images, video, 3D, and audio across 500+ models plus custom
+training, all through the core loop below.
 
 ## Setup
 
-Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: no credentials pass through the conversation. Client config, API-key setup for headless use, and per-client re-authentication: [references/setup.md](references/setup.md). Never ask an agent to collect, encode, or echo a secret. A connection that authenticated once and fails later is re-authenticated per client (setup reference) before anything else is debugged; `diagnostics_run` names the failing layer (`auth`, `tenant-scope`, `api-unreachable`, or `healthy`).
+Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: no credentials pass
+through the conversation. Client config, API-key setup for headless use, and per-client
+re-authentication: [references/setup.md](references/setup.md). Never ask an agent to collect,
+encode, or echo a secret. A connection that authenticated once and fails later is re-authenticated
+per client (setup reference) before anything else is debugged; `diagnostics_run` names the failing
+layer (`auth`, `tenant-scope`, `api-unreachable`, or `healthy`).
 
-The default toolset is wider than the loop below: `asset_get`, `job_get`, `jobs_list` and `models_list` are called directly too. `?toolsets=full` exposes everything. The catalog tools are the ones outside it (collections, tagging, analysis, training, members, keys): `scenario_tools_search` with the tool name or plain keywords as `query` (it takes only `query` and `limit`) returns the schema and lane, and the matching `scenario_tool_execute_read` / `write` / `delete` runs it with `{name, parameters}`. Every input goes inside `parameters`, `dry_run` and scope ids included (nearly every catalog tool declares scope ids; `plan_generation` takes only `description`), though direct tools take scope, and `model_run` its `dry_run`, at top level. The executor drops a misplaced key without an error: `arguments` surfaces as a false scope error, and a top-level `dry_run` runs the job, billed. The lane is the result's own `permission`, not what the verb sounds like: `asset_download` and `asset_analyze` are both write-class.
+The default toolset is wider than the loop below: `asset_get`, `job_get`, `jobs_list` and
+`models_list` are called directly too. `?toolsets=full` exposes everything. The catalog tools are
+the ones outside it (collections, tagging, analysis, training, members, keys):
+`scenario_tools_search` with the tool name or plain keywords as `query` (it takes only `query` and
+`limit`) returns the schema and lane, and the matching `scenario_tool_execute_read` / `write` /
+`delete` runs it with `{name, parameters}`. Every input goes inside `parameters`, `dry_run` and
+scope ids included (nearly every catalog tool declares scope ids; `plan_generation` takes only
+`description`), though direct tools take scope, and `model_run` its `dry_run`, at top level. The
+executor drops a misplaced key without an error: `arguments` surfaces as a false scope error, and a
+top-level `dry_run` runs the job, billed. The lane is the result's own `permission`, not what the
+verb sounds like: `asset_download` and `asset_analyze` are both write-class.
 
 ## Scope first
 
-Resolve scope first, then pass `team_id` and `project_id` on every later call. `teams_list` returns the teams with their projects; `projects_list` requires a `team_id`, so it cannot come first. Confirm the pair with the user: a guess writes into someone else's project. A non-interactive run takes the pair from its task instructions; when they name none, stop and list the choices.
+Resolve scope first, then pass `team_id` and `project_id` on every later call. `teams_list` returns
+the teams with their projects; `projects_list` requires a `team_id`, so it cannot come first.
+Confirm the pair with the user: a guess writes into someone else's project. A non-interactive run
+takes the pair from its task instructions; when they name none, stop and list the choices.
 
-The server fills scope in only for read-only tools with one candidate remaining; anything else fails rather than guesses, and the error names which half is wrong (see Errors and recovery). Scope errors are the most common failure here, surfacing mid-session on the first call that drops the pair once a second team or project is in play.
+The server fills scope in only for read-only tools with one candidate remaining; anything else fails
+rather than guesses, and the error names which half is wrong (see Errors and recovery). Scope errors
+are the most common failure here, surfacing mid-session on the first call that drops the pair once a
+second team or project is in play.
 
 ## Quick reference
 
@@ -38,25 +60,89 @@ The server fills scope in only for read-only tools with one candidate remaining;
 | Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                                        |
 | Saved preferences | `memory_recall`                          | OAuth only; before generating in a project, again after switching            |
 
-A multi-step request ("product video with voiceover", "concept to 3D") goes to `plan_generation` (catalog-only, read lane): plain words in `description`, ordered steps out, each naming a tool and optional model hint; it runs nothing. Single-step: `recommend`. A stated preference ("always 9:16") goes to catalog `memory_set` with `scope` `project_user_memory` (`user_memory` across projects): it replaces the whole layer, so `memory_get` and merge first, and it runs on the delete lane.
+A multi-step request ("product video with voiceover", "concept to 3D") goes to `plan_generation`
+(catalog-only, read lane): plain words in `description`, ordered steps out, each naming a tool and
+optional model hint; it runs nothing. Single-step: `recommend`. A stated preference ("always 9:16")
+goes to catalog `memory_set` with `scope` `project_user_memory` (`user_memory` across projects): it
+replaces the whole layer, so `memory_get` and merge first, and it runs on the delete lane.
 
 ## Worked example
 
 Generating a stylized game prop image:
 
-1. `recommend` with the user's own words as `prompt` when the need is a capability; `search` with `target="models"`, `query="flux"`, `public=true` when you have a name. `search` ranks by keyword and its `filters` hold no capability key, so a capability-worded query can rank the wrong output type first. For the user's own trained models, omit `public` on `search` (`search` has no private flag); on `recommend` the flag is `include_private_models: true`. Re-discover ids each time: availability differs per team.
-2. `model_schema_get` on the pick: exact field names, types, required flags, defaults, and caps such as the prompt's `max_length` (an overrun is a 400, never a trim). File fields take asset ids even when named `...Url`, and `cost_impact: true` flags what moves the price.
-3. If the schema carries `runs_as` (`"lora"` or `"composition"`), never send that model's own id to `model_run`. Its `run_with.required_arguments` holds the real call: `model_id` there is the base model, and its `parameters` (the `loras` or `modelId` wiring) merge into inputs from the same schema. Sending `required_arguments` alone discards your prompt.
-4. Optional: `prompt_spark` rewrites a thin prompt into an on-model one; pass the discovered id (a LoRA's own, not its base) and the draft `prompt`. Skip deliberate prompts.
-5. `model_run` with `model_id` and schema-conformant `parameters`. If cost matters (the default assumption unless the user says otherwise), price first with `dry_run: true`, a top-level argument beside `model_id`: no job is created and the response's `creativeUnitsCost` is the exact payload's price; a `recommend` cost quote assumes defaults, and the schema's `cost_impact` fields move the real number. Then run: asset_ids come back, or a `job_id` for `jobs_wait`. Its `status` is `in_progress` after a timed-out wait, or with `wait=false` the backend's word at creation (`queued`, `in-progress`, `warming-up`); none is a different state.
-6. `jobs_wait` with `job_ids=[...]` (up to 32); each completed row carries `assetIds` and `cuCost`, so no `job_get` follow-up; on timeout re-call with the returned `pending_job_ids` as `job_ids`. Failed jobs are reimbursed, except xAI generations stopped by moderation.
-7. `asset_display` shows the asset inline; its `format` picks the rendering: `display` (the default) returns an inline image plus links and viewer data; `viewer` returns a lighter payload for a host that renders the interactive widget; `json` and `markdown` return metadata and links. `display` does not disable a host's widget. For PNG files, use `asset_download` with `format: "png"`, one call per asset. `asset_download` returns a file URL (save with `curl -L`, it may redirect). `format` converts images (`png`, `webp`, `jpg`, and `gif` to keep an animated GIF animated: the `png` default flattens it to one frame) and meshes (`glb`, `fbx`, `obj`); omit it for video and audio. When `curl` reports `host_not_allowed` or `CONNECT tunnel failed, response 403` while MCP calls work, check the host's proxy or sandbox egress policy. A CDN 403 alone does not establish the cause; request a fresh download URL before diagnosing it: [Sandbox network access](https://mcp.scenario.com/docs/troubleshooting#sandbox-network-access) names the setting that lifts it, an organization-level allowlist on some hosts that the user may not be able to change. Meanwhile hand over the `app_url` that `asset_display` returns, where the user downloads directly and, for a mesh, picks the 3D export format the app offers, none of which `asset_download` converts to. The signed URL expires: a last resort, never the deliverable.
+1. `recommend` with the user's own words as `prompt` when the need is a capability; `search` with
+   `target="models"`, `query="flux"`, `public=true` when you have a name. `search` ranks by keyword
+   and its `filters` hold no capability key, so a capability-worded query can rank the wrong output
+   type first. For the user's own trained models, omit `public` on `search` (`search` has no private
+   flag); on `recommend` the flag is `include_private_models: true`. Re-discover ids each time:
+   availability differs per team.
+2. `model_schema_get` on the pick: exact field names, types, required flags, defaults, and caps such
+   as the prompt's `max_length` (an overrun is a 400, never a trim). File fields take asset ids even
+   when named `...Url`, and `cost_impact: true` flags what moves the price.
+3. If the schema carries `runs_as` (`"lora"` or `"composition"`), never send that model's own id to
+   `model_run`. Its `run_with.required_arguments` holds the real call: `model_id` there is the base
+   model, and its `parameters` (the `loras` or `modelId` wiring) merge into inputs from the same
+   schema. Sending `required_arguments` alone discards your prompt.
+4. Optional: `prompt_spark` rewrites a thin prompt into an on-model one; pass the discovered id (a
+   LoRA's own, not its base) and the draft `prompt`. Skip deliberate prompts.
+5. `model_run` with `model_id` and schema-conformant `parameters`. If cost matters (the default
+   assumption unless the user says otherwise), price first with `dry_run: true`, a top-level
+   argument beside `model_id`: no job is created and the response's `creativeUnitsCost` is the exact
+   payload's price; a `recommend` cost quote assumes defaults, and the schema's `cost_impact` fields
+   move the real number. Then run: asset_ids come back, or a `job_id` for `jobs_wait`. Its `status`
+   is `in_progress` after a timed-out wait, or with `wait=false` the backend's word at creation
+   (`queued`, `in-progress`, `warming-up`); none is a different state.
+6. `jobs_wait` with `job_ids=[...]` (up to 32); each completed row carries `assetIds` and `cuCost`,
+   so no `job_get` follow-up; on timeout re-call with the returned `pending_job_ids` as `job_ids`.
+   Failed jobs are reimbursed, except xAI generations stopped by moderation.
+7. `asset_display` shows the asset inline; its `format` picks the rendering: `display` (the default)
+   returns an inline image plus links and viewer data; `viewer` returns a lighter payload for a host
+   that renders the interactive widget; `json` and `markdown` return metadata and links. `display`
+   does not disable a host's widget. For PNG files, use `asset_download` with `format: "png"`, one
+   call per asset. `asset_download` returns a file URL (save with `curl -L`, it may redirect).
+   `format` converts images (`png`, `webp`, `jpg`, and `gif` to keep an animated GIF animated: the
+   `png` default flattens it to one frame) and meshes (`glb`, `fbx`, `obj`); omit it for video and
+   audio. When `curl` reports `host_not_allowed` or `CONNECT tunnel failed, response 403` while MCP
+   calls work, check the host's proxy or sandbox egress policy. A CDN 403 alone does not establish
+   the cause; request a fresh download URL before diagnosing it:
+   [Sandbox network access](https://mcp.scenario.com/docs/troubleshooting#sandbox-network-access)
+   names the setting that lifts it, an organization-level allowlist on some hosts that the user may
+   not be able to change. Meanwhile hand over the `app_url` that `asset_display` returns, where the
+   user downloads directly and, for a mesh, picks the 3D export format the app offers, none of which
+   `asset_download` converts to. The signed URL expires: a last resort, never the deliverable.
 
-Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and `kind` (`image`, `audio`, `video`, `3d`), plus exactly one of `file_size` or `data`, since the call fails without either. Prefer `file_size`, the file's exact byte count read from disk, and omit `data`: the reply carries presigned part URLs and `instructions`; PUT each part's raw bytes to its URL with no added headers (a checksum header makes the store answer 403), check every PUT returned 200, then `upload_asset_complete` with the `upload_id`. Inline base64 `data` only under 100KB (that path returns the asset directly, with no complete step); a larger file is rejected naming the cap. Scope rides on both; they take no other fields: no parts list, no etags. The server decodes the file at completion, so `Upload upl_… failed: Corrupt JPEG data`, `premature end of data segment`, `bad Huffman code` or `libpng read error` means the uploaded image could not be decoded: check for a corrupt source, a truncated or re-encoded body, a missing part, or a mismatched `file_size`. Confirm the local file opens, its content type matches, and its byte count is correct, then start over with a fresh `upload_asset` and raw PUTs; never re-complete the same `upload_id`. A phone's HEIC photo uploads as is (`content_type: "image/heic"`), so do not convert it first; `Unhandled image format` lists what `kind: "image"` accepts, so convert a file of any other type locally. A host with no shell cannot PUT parts at all; the user uploads in the web app at app.scenario.com and the agent continues from the asset id.
+Local inputs go up with `upload_asset`: always `file_name`, `content_type`, and `kind` (`image`,
+`audio`, `video`, `3d`), plus exactly one of `file_size` or `data`, since the call fails without
+either. Prefer `file_size`, the file's exact byte count read from disk, and omit `data`: the reply
+carries presigned part URLs and `instructions`; PUT each part's raw bytes to its URL with no added
+headers (a checksum header makes the store answer 403), check every PUT returned 200, then
+`upload_asset_complete` with the `upload_id`. Inline base64 `data` only under 100KB (that path
+returns the asset directly, with no complete step); a larger file is rejected naming the cap. Scope
+rides on both; they take no other fields: no parts list, no etags. The server decodes the file at
+completion, so `Upload upl_… failed: Corrupt JPEG data`, `premature end of data segment`,
+`bad Huffman code` or `libpng read error` means the uploaded image could not be decoded: check for a
+corrupt source, a truncated or re-encoded body, a missing part, or a mismatched `file_size`. Confirm
+the local file opens, its content type matches, and its byte count is correct, then start over with
+a fresh `upload_asset` and raw PUTs; never re-complete the same `upload_id`. A phone's HEIC photo
+uploads as is (`content_type: "image/heic"`), so do not convert it first; `Unhandled image format`
+lists what `kind: "image"` accepts, so convert a file of any other type locally. A host with no
+shell cannot PUT parts at all; the user uploads in the web app at app.scenario.com and the agent
+continues from the asset id.
 
-Filing is part of delivering, not a tidy-up. `collection_create` takes a name and the scope pair only; `asset_ids` sent there is ignored without an error, so adding is always a second call, `collection_add_assets` with `collection_id` and `asset_ids`. It takes any number of ids (it batches them by 49 itself) and skips an id already filed, listing it under `already_present_asset_ids` beside `added_asset_ids`, so re-sending the whole list after a failed batch is safe: the error says how many went in, and the retry adds the rest. Confirm from that reply, since `search` `filters={"collection_ids": [...]}` lags on a fresh write. `asset_add_tags` is additive, one `asset_id` per call, and a tag the asset already carries returns 400 `Duplicated tag`: read `tags` via `assets_get_bulk` first and send only the missing ones.
+Filing is part of delivering, not a tidy-up. `collection_create` takes a name and the scope pair
+only; `asset_ids` sent there is ignored without an error, so adding is always a second call,
+`collection_add_assets` with `collection_id` and `asset_ids`. It takes any number of ids (it batches
+them by 49 itself) and skips an id already filed, listing it under `already_present_asset_ids`
+beside `added_asset_ids`, so re-sending the whole list after a failed batch is safe: the error says
+how many went in, and the retry adds the rest. Confirm from that reply, since `search`
+`filters={"collection_ids": [...]}` lags on a fresh write. `asset_add_tags` is additive, one
+`asset_id` per call, and a tag the asset already carries returns 400 `Duplicated tag`: read `tags`
+via `assets_get_bulk` first and send only the missing ones.
 
-For reusable templates or reference content, follow the [shared asset lifecycle](references/shared-assets.md): resolve existing assets, stage new versions, publish only through a supported operation, and verify public access before recording public IDs. Uploading and filing alone are not publication.
+For reusable templates or reference content, follow the
+[shared asset lifecycle](references/shared-assets.md): resolve existing assets, stage new versions,
+publish only through a supported operation, and verify public access before recording public IDs.
+Uploading and filing alone are not publication.
 
 ## Errors and recovery
 
@@ -82,11 +168,29 @@ For reusable templates or reference content, follow the [shared asset lifecycle]
 
 ## Common mistakes
 
-- Pricing a later step with a placeholder id (`asset_placeholder`): file ids resolve before pricing, so the `dry_run` returns 404 and quotes nothing. Quote it from `recommend`, then `dry_run` once the real asset exists.
-- A bare value where the schema says `array: true`: silently dropped, the run ignoring your reference or LoRA. `asset_get` on the output echoes what the run consumed (`metadata.referenceImages`, `parentId`), the cheapest proof it was not.
-- Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. On `ask_user`, present the options; the user's pick wins (non-interactive: task instructions, else `proceed`). On `proceed`, prefer `specialty.model_id`, else the first `ranked` entry its own text does not mark deprecated, reading `tradeoff` and `explanation` as well as `caveats`, since the flag lands in any of them: the ranking is by measured performance, not by lifecycle, so a deprecated member can top it.
-- Debugging blind: the `diagnose` MCP prompt (or `diagnostics_run` with the scope pair the failure happened under and any `mcpt_` ids seen as `observed_trace_ids`) returns trace ids; `usage` answers credit questions.
-- Guessing a file field's name: 400 `Input image is required` (or `images`, `referenceImages`, `startImage`, `frontImage`, `video`, `model`, each a different model's name for the same idea) means the payload never carried the field the schema's `required` list names, so copy that name verbatim; a URL in a file field reads as missing too, since file fields take asset ids only.
-- Feeding an image field a video, audio, or 3D asset: 400 `Unhandled image format` lists the image types it accepts. `asset_get` reports the asset's `mimeType`; pull a still with the clip's `firstFrame` when the model wants an image.
-- `filters.kind` on `search` with `target="models"`: a 400 `"kind" is not a filterable field`, since `kind` describes assets. Narrow models with `filters.type` (the architecture) or `tags`, or go through `recommend` for a capability.
-- Filtering `models_list` by `type` without `privacy: "public"`: a 400 says so. A private listing narrows by `status` or `modality`, or goes through `search` (private by default).
+- Pricing a later step with a placeholder id (`asset_placeholder`): file ids resolve before pricing,
+  so the `dry_run` returns 404 and quotes nothing. Quote it from `recommend`, then `dry_run` once
+  the real asset exists.
+- A bare value where the schema says `array: true`: silently dropped, the run ignoring your
+  reference or LoRA. `asset_get` on the output echoes what the run consumed
+  (`metadata.referenceImages`, `parentId`), the cheapest proof it was not.
+- Taking `recommend`'s `ranked[0]` blindly: read `next_step.type` first. On `ask_user`, present the
+  options; the user's pick wins (non-interactive: task instructions, else `proceed`). On `proceed`,
+  prefer `specialty.model_id`, else the first `ranked` entry its own text does not mark deprecated,
+  reading `tradeoff` and `explanation` as well as `caveats`, since the flag lands in any of them:
+  the ranking is by measured performance, not by lifecycle, so a deprecated member can top it.
+- Debugging blind: the `diagnose` MCP prompt (or `diagnostics_run` with the scope pair the failure
+  happened under and any `mcpt_` ids seen as `observed_trace_ids`) returns trace ids; `usage`
+  answers credit questions.
+- Guessing a file field's name: 400 `Input image is required` (or `images`, `referenceImages`,
+  `startImage`, `frontImage`, `video`, `model`, each a different model's name for the same idea)
+  means the payload never carried the field the schema's `required` list names, so copy that name
+  verbatim; a URL in a file field reads as missing too, since file fields take asset ids only.
+- Feeding an image field a video, audio, or 3D asset: 400 `Unhandled image format` lists the image
+  types it accepts. `asset_get` reports the asset's `mimeType`; pull a still with the clip's
+  `firstFrame` when the model wants an image.
+- `filters.kind` on `search` with `target="models"`: a 400 `"kind" is not a filterable field`, since
+  `kind` describes assets. Narrow models with `filters.type` (the architecture) or `tags`, or go
+  through `recommend` for a capability.
+- Filtering `models_list` by `type` without `privacy: "public"`: a 400 says so. A private listing
+  narrows by `status` or `modality`, or goes through `search` (private by default).

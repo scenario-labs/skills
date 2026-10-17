@@ -1,6 +1,8 @@
 # Sources (scenario-godot-gameplay)
 
-Notes: `notes/gameplay-systems/` (14 videos, 6 docs, two digests). Credentials as the notes give them; "unverified" means the channel's expertise was not checked beyond its own work. Live results in `references/procedures.md` outrank any source when they disagree.
+Notes: `notes/gameplay-systems/` (14 videos, 6 docs, two digests). Credentials as the notes give
+them; "unverified" means the channel's expertise was not checked beyond its own work. Live results
+in `references/procedures.md` outrank any source when they disagree.
 
 ## Videos
 
@@ -42,4 +44,5 @@ Notes: `notes/gameplay-systems/` (14 videos, 6 docs, two digests). Credentials a
 
 ## Version facts
 
-`sources/godot-version-deltas.md` (authoritative), corrected where live runs disagree: see `tests/OPEN_ISSUES.md`, section scenario-godot-gameplay.
+`sources/godot-version-deltas.md` (authoritative), corrected where live runs disagree: see
+`tests/OPEN_ISSUES.md`, section scenario-godot-gameplay.

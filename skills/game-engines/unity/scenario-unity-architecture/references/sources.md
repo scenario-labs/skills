@@ -1,6 +1,9 @@
 # Sources for scenario-unity-architecture
 
-Notes: `notes/editor-architecture/` (digests `_digest_docs_editor-architecture.md`, `_digest_videos_editor-architecture.md`, `_digest_extra_editor-architecture.md`). Saved docs: `sources/docs/editor-architecture__*.md` and `.tables.md`. Version facts: `sources/unity-version-deltas.md`. Timestamps `[hh:mm:ss]`.
+Notes: `notes/editor-architecture/` (digests `_digest_docs_editor-architecture.md`,
+`_digest_videos_editor-architecture.md`, `_digest_extra_editor-architecture.md`). Saved docs:
+`sources/docs/editor-architecture__*.md` and `.tables.md`. Version facts:
+`sources/unity-version-deltas.md`. Timestamps `[hh:mm:ss]`.
 
 ## 1. Observed on this Mac (primary evidence)
 
@@ -35,4 +38,17 @@ Notes: `notes/editor-architecture/` (digests `_digest_docs_editor-architecture.m
 
 ## Revision history
 
-- 2026-09-24 v0.2 (refactor after the blind grade `tests/grading/Y1_grade.md`; v1 kept in `skills/_versions/unity-architecture v1 2026-09-24/`): added the in-memory SO guard (`ArchPlayMode` `so_guard`, prefab SO test), the event-channel debug plan (`RaiseDebug`, `logRaises`, `EventChannelEditor`, `invoke`), runtime sets, `GameRoot` with `[DefaultExecutionOrder(-1000)]`, `Lifetime` tokens, the development-build threading test, `[SerializeReference]` rename and `[MovedFrom]` tests, override layering, shortcut-aware duplicate checks, the generated-class instance test, the Rebinding UI sample import and `rebind_audit`, nine lint codes, and the ExitingPlayMode exit-hook audit (procedures.md A10 to A15). Sources: the notes already listed (raQ3iHhE_Kk, eXkFPoEp3BA, doc-awaitable-async, doc-script-lifecycle, doc-input-system-1-20, csqVa2Vimao, PJcBJ60C970, mCKeSNdO_S0, tE1qH8OxO2Y) and the Input System 1.20 package source. Corrected: the 2017 UnityEvent allocation claim is now marked as not reproduced (0 B measured), the Rebinding UI sample description matches 1.20, an invented "few hundred objects" threshold was removed from critique.md, and the `Object.Destroy` finding is stated as verified live on 6000.3.21f1.
+- 2026-09-24 v0.2 (refactor after the blind grade `tests/grading/Y1_grade.md`; v1 kept in
+  `skills/_versions/unity-architecture v1 2026-09-24/`): added the in-memory SO guard
+  (`ArchPlayMode` `so_guard`, prefab SO test), the event-channel debug plan (`RaiseDebug`,
+  `logRaises`, `EventChannelEditor`, `invoke`), runtime sets, `GameRoot` with
+  `[DefaultExecutionOrder(-1000)]`, `Lifetime` tokens, the development-build threading test,
+  `[SerializeReference]` rename and `[MovedFrom]` tests, override layering, shortcut-aware duplicate
+  checks, the generated-class instance test, the Rebinding UI sample import and `rebind_audit`, nine
+  lint codes, and the ExitingPlayMode exit-hook audit (procedures.md A10 to A15). Sources: the notes
+  already listed (raQ3iHhE_Kk, eXkFPoEp3BA, doc-awaitable-async, doc-script-lifecycle,
+  doc-input-system-1-20, csqVa2Vimao, PJcBJ60C970, mCKeSNdO_S0, tE1qH8OxO2Y) and the Input System
+  1.20 package source. Corrected: the 2017 UnityEvent allocation claim is now marked as not
+  reproduced (0 B measured), the Rebinding UI sample description matches 1.20, an invented "few
+  hundred objects" threshold was removed from critique.md, and the `Object.Destroy` finding is
+  stated as verified live on 6000.3.21f1.

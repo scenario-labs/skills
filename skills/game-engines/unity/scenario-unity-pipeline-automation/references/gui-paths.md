@@ -1,6 +1,9 @@
 # GUI paths for the pipeline procedures (computer-use agent or human)
 
-Unity 6.3 on macOS (Cmd for Ctrl). Menus were reorganized in 6.1 (Package Manager under Window > Package Management); verify labels on the installed editor before scripting clicks. Every row has a scripted equivalent in `procedures.md`: prefer it; use the GUI path when the user's editor must show the result, or for surfaces with no API.
+Unity 6.3 on macOS (Cmd for Ctrl). Menus were reorganized in 6.1 (Package Manager under Window >
+Package Management); verify labels on the installed editor before scripting clicks. Every row has a
+scripted equivalent in `procedures.md`: prefer it; use the GUI path when the user's editor must show
+the result, or for surfaces with no API.
 
 | Task                                                           | GUI path                                                                                                                                              | Scripted equivalent                                                                                                                                                                        |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

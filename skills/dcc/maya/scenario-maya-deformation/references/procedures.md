@@ -1,7 +1,11 @@
 # Procedures: skinning, Skin Tools, ROM tests, correctives, face, ML data (Maya 2027)
 
-Load when executing a stage of the workflow. Every block states its status and its test.
-**Status (2026-09-24): Maya 2027 is not installed. Every block below is NOT YET RUN IN MAYA** except where it says "ran offline" (pure Python in `mx_skin`, `tests/code/maya-deformation/test_mx_skin_offline.py`, python3). Run all tests with `tests/code/maya-deformation/run_all.sh`; each Maya test is an mx_run job (`python3 <skills>/scenario-maya-expert/scripts/mx_run.py tests/code/maya-deformation/<test>.py`).
+Load when executing a stage of the workflow. Every block states its status and its test. **Status
+(2026-09-24): Maya 2027 is not installed. Every block below is NOT YET RUN IN MAYA** except where it
+says "ran offline" (pure Python in `mx_skin`, `tests/code/maya-deformation/test_mx_skin_offline.py`,
+python3). Run all tests with `tests/code/maya-deformation/run_all.sh`; each Maya test is an mx_run
+job
+(`python3 <skills>/scenario-maya-expert/scripts/mx_run.py tests/code/maya-deformation/<test>.py`).
 
 Setup for every block (inside mayapy or through the scenario-maya-expert bridge):
 
@@ -12,13 +16,15 @@ import maya.cmds as cmds
 import mx_skin as S
 ```
 
-Conventions: weights `W` are a list of `{physical influence index: weight}` per vertex; points are cm, world space; `S.read_weights(sc)["influences"]` gives the index order.
+Conventions: weights `W` are a list of `{physical influence index: weight}` per vertex; points are
+cm, world space; `S.read_weights(sc)["influences"]` gives the index order.
 
 ---
 
 ## P1. Intake: mesh and skeleton gates before any bind
 
-Test: `test_skin_io.py` (precheck part), `test_mx_skin_offline.py` (ray parity and shell volumes ran offline).
+Test: `test_skin_io.py` (precheck part), `test_mx_skin_offline.py` (ray parity and shell volumes ran
+offline).
 
 ```python
 import mx_validate, mx_audit
@@ -29,7 +35,9 @@ pre = S.bind_precheck("body_geo", bind_joints, method="heat")            # joint
 print(pre["problems"])
 ```
 
-Decide the method from `pre`: watertight, single shell, joints inside: `heat`. Multi-piece, non-manifold, open: `geodesic`, only if `joints_outside` and `inward_shells` are empty (Help). Everything is repainted anyway (Jao [00:09:01]), so the method only sets the starting point.
+Decide the method from `pre`: watertight, single shell, joints inside: `heat`. Multi-piece,
+non-manifold, open: `geodesic`, only if `joints_outside` and `inward_shells` are empty (Help).
+Everything is repainted anyway (Jao [00:09:01]), so the method only sets the starting point.
 
 ## P2. Bind with explicit settings
 
@@ -42,10 +50,15 @@ sc = b["skinCluster"]; print(b["notes"], b["settings"])
 b = S.bind("body_geo", bind_joints, method="geodesic", max_influences=8, voxel_resolution=256)
 ```
 
-- Pass `normalizeWeights` explicitly: the command page says post is the default, the UI binds Interactive.
-- `method="geodesic"` runs `geomBind` after `skinCluster(bindMethod=3)`; if `notes` reports a failure in mayapy, bind in the GUI through the bridge or use heat.
-- Must be at the bind pose to bind more objects (Help). Return to it: `cmds.dagPose(root_joint, restore=True, bindPose=True)` [verify], tested soft in `test_skin_io.py`.
-- Do not initialize Skin Tools layers on throwaway test binds (antCGi deformation test): classic tools stay available.
+- Pass `normalizeWeights` explicitly: the command page says post is the default, the UI binds
+  Interactive.
+- `method="geodesic"` runs `geomBind` after `skinCluster(bindMethod=3)`; if `notes` reports a
+  failure in mayapy, bind in the GUI through the bridge or use heat.
+- Must be at the bind pose to bind more objects (Help). Return to it:
+  `cmds.dagPose(root_joint, restore=True, bindPose=True)` [verify], tested soft in
+  `test_skin_io.py`.
+- Do not initialize Skin Tools layers on throwaway test binds (antCGi deformation test): classic
+  tools stay available.
 
 ## P3. Read, write, audit, back up weights
 
@@ -60,13 +73,16 @@ S.export_weights_json("body_geo", "/abs/out/body_weights_v003.json")    # before
 S.write_weights(sc, W)                       # refuses a cluster with Skin Tools layers
 ```
 
-Restore or transfer: `S.import_weights_json(path, "body_geo")` (index mapping when topology matches, closest point otherwise; binds to the named joints if the mesh has no cluster).
+Restore or transfer: `S.import_weights_json(path, "body_geo")` (index mapping when topology matches,
+closest point otherwise; binds to the named joints if the mesh has no cluster).
 
 ## P4. Region blocking without a brush (plain skinCluster)
 
-Status: not yet run in Maya (closest-bone, ramps, masks, compositing ran offline). Test: `test_rom_metrics.py`, `test_skin_io.py`, `test_mx_skin_offline.py`.
+Status: not yet run in Maya (closest-bone, ramps, masks, compositing ran offline). Test:
+`test_rom_metrics.py`, `test_skin_io.py`, `test_mx_skin_offline.py`.
 
-Makauskas's order [00:01:11], Jao's fill-then-mask. The plan below is an example for a biped whose joint names come from scenario-maya-rigging; keep one entry per region, bottom to top.
+Makauskas's order [00:01:11], Jao's fill-then-mask. The plan below is an example for a biped whose
+joint names come from scenario-maya-rigging; keep one entry per region, bottom to top.
 
 ```python
 plan = [
@@ -85,13 +101,19 @@ res = S.block_regions("body_geo", plan)           # composites in memory, writes
 print(res["layers"], S.weights_verdict(res["audit"]))
 ```
 
-- `influences`: 100% to the closest bone segment (Assign from Closest Joint). `chain`: an even twist ramp (Jao). Mask ranges are the art direction; iterate on them, not on per-vertex values [added: parameters above are starting guesses, tune per character].
-- Sparse regions (fingers): few smoothing iterations or restrict `smooth.verts` to the middle loops (Makauskas [00:18:35]); then `S.sharpen_weights`.
-- Must run at the bind pose (the function refuses otherwise). Mirror afterwards (P7) instead of listing the right side.
+- `influences`: 100% to the closest bone segment (Assign from Closest Joint). `chain`: an even twist
+  ramp (Jao). Mask ranges are the art direction; iterate on them, not on per-vertex values [added:
+  parameters above are starting guesses, tune per character].
+- Sparse regions (fingers): few smoothing iterations or restrict `smooth.verts` to the middle loops
+  (Makauskas [00:18:35]); then `S.sharpen_weights`.
+- Must run at the bind pose (the function refuses otherwise). Mirror afterwards (P7) instead of
+  listing the right side.
 
 ## P5. Skin Tools layered path (when the API exists)
 
-API names match the Maya 2027 Developer Help pages "Skin Tools Python API" (namespace `ngSkinTools2.api`, source in `<maya>/runTime/plug-ins/ngSkinTools/scripts/ngSkinTools2`), fetched 2026-09-24. Test: `test_skin_tools.py` (skips cleanly when no module is found).
+API names match the Maya 2027 Developer Help pages "Skin Tools Python API" (namespace
+`ngSkinTools2.api`, source in `<maya>/runTime/plug-ins/ngSkinTools/scripts/ngSkinTools2`), fetched
+2026-09-24. Test: `test_skin_tools.py` (skips cleanly when no module is found).
 
 ```python
 probe = S.skin_tools_probe()                 # plug-ins, node types, commands, modules: read it first
@@ -114,13 +136,21 @@ if S.skin_tools_api():
     print(S.delete_skin_layers(sc))              # before handoff: proves the weights survived, restores if not
 ```
 
-Raw API, as in the 2027 Help: `from ngSkinTools2 import api`; `layers = api.init_layers(sc)`; `layer = layers.add("torso")`; `api.assign_from_closest_joint(sc, layer, influences=[logical indices])`; `s = api.PaintModeSettings(); s.mode = api.PaintMode.smooth; s.iterations = 3; api.flood_weights(target=layer, settings=s)` (acts on the component selection or the whole mesh); `layer.set_weights(api.NamedPaintTarget.MASK, values)`; `api.export_json(sc, file=path)`; `api.import_json(sc, file=path, vertex_transfer_mode=api.VertexTransferMode.vertexId)`.
+Raw API, as in the 2027 Help: `from ngSkinTools2 import api`; `layers = api.init_layers(sc)`;
+`layer = layers.add("torso")`;
+`api.assign_from_closest_joint(sc, layer, influences=[logical indices])`;
+`s = api.PaintModeSettings(); s.mode = api.PaintMode.smooth; s.iterations = 3; api.flood_weights(target=layer, settings=s)`
+(acts on the component selection or the whole mesh);
+`layer.set_weights(api.NamedPaintTarget.MASK, values)`; `api.export_json(sc, file=path)`;
+`api.import_json(sc, file=path, vertex_transfer_mode=api.VertexTransferMode.vertexId)`.
 
-Without the API: P4 gives the same composite, written once; layers then only matter to a human painting in the GUI.
+Without the API: P4 gives the same composite, written once; layers then only matter to a human
+painting in the GUI.
 
 ## P6. Smoothing, sharpening, multi-shell accessories
 
-Status: ran offline (pure Python); the write-back is not yet run in Maya. Tests: `test_mx_skin_offline.py`, `test_mirror_transfer.py` (sleeve).
+Status: ran offline (pure Python); the write-back is not yet run in Maya. Tests:
+`test_mx_skin_offline.py`, `test_mirror_transfer.py` (sleeve).
 
 ```python
 d = S.read_weights(sc); W = d["weights"]
@@ -135,7 +165,10 @@ S.write_weights(sc, W)
 Ws, stats = S.remap_by_closest(S.rest_points("body_geo"), W, S.rest_points("shirt_geo"), k=3)
 ```
 
-Plain Maya smoothing on selected vertices: `cmds.skinCluster(sc, e=True, smoothWeights=0.5, smoothWeightsMaxIterations=2)` (Help; the menu version uses the Skin Tools algorithm in 2027 and errors on multi-layer clusters) [verify behavior of the flag in 2027].
+Plain Maya smoothing on selected vertices:
+`cmds.skinCluster(sc, e=True, smoothWeights=0.5, smoothWeightsMaxIterations=2)` (Help; the menu
+version uses the Skin Tools algorithm in 2027 and errors on multi-layer clusters) [verify behavior
+of the flag in 2027].
 
 ## P7. Mirror
 
@@ -150,7 +183,8 @@ cmds.copySkinWeights(sourceSkin=sc, destinationSkin=sc, mirrorMode="YZ", mirrorI
                      surfaceAssociation="closestPoint", influenceAssociation=["label", "closestJoint"])
 ```
 
-Needs a mesh centered on X and a symmetric bind pose (Help). Blocked while Skin Tools layers exist: use its Mirror tab, Interactive Mirror, or delete layers first.
+Needs a mesh centered on X and a symmetric bind pose (Help). Blocked while Skin Tools layers exist:
+use its Mirror tab, Interactive Mirror, or delete layers first.
 
 ## P8. Copy and transfer (reference head, proxy, updated mesh)
 
@@ -164,7 +198,8 @@ S.copy_skin("hero_geo", "variant_geo", uv_space=("map1", "map1"))               
 S.export_weights_json("body_geo", "/abs/out/body_w.json"); S.import_weights_json("/abs/out/body_w.json", "body_v2_geo", k=4)
 ```
 
-Multi-cluster copies: the UI's Copy Skin Weights Skin Cluster source/target lists; by script pass the cluster names as `sourceSkin` and `destinationSkin`.
+Multi-cluster copies: the UI's Copy Skin Weights Skin Cluster source/target lists; by script pass
+the cluster names as `sourceSkin` and `destinationSkin`.
 
 ## P9. Prune and enforce the engine cap (never through maximumInfluences)
 
@@ -175,7 +210,8 @@ rep = S.prune_and_limit("body_geo", max_influences=4, prune=0.01)
 print(rep["before"]["max_influences_found"], rep["after"]["max_influences_found"], rep["limited_vertices"])
 ```
 
-Then re-run P10: capping moves weight, and the centreline and face are where caps hurt most (Burton [00:51:55]).
+Then re-run P10: capping moves weight, and the centreline and face are where caps hurt most (Burton
+[00:51:55]).
 
 ## P10. Calisthenics ROM and the deformation test (headless)
 
@@ -210,11 +246,14 @@ cmds.delete(snap["group"])
 # Bridge().call("mx_review", "playblast", path="/abs/out/rom", start=1, end=sched["end"], display={"wireframeOnShaded": True})
 ```
 
-Or the headless one-liner: `python3 mx_run.py --scene rig.ma mx_skin.py -- test --mesh body_geo --spec rom.json --json out.json` with `rom.json = {"rom": [[node, attr, value, label], ...], "sections": [...], "relative": true}`.
+Or the headless one-liner:
+`python3 mx_run.py --scene rig.ma mx_skin.py -- test --mesh body_geo --spec rom.json --json out.json`
+with `rom.json = {"rom": [[node, attr, value, label], ...], "sections": [...], "relative": true}`.
 
 ## P11. Correctives: pre, post, pose reader, solve from a sculpt
 
-Status: not yet run in Maya (inversion maths and the reader model ran offline). Test: `test_correctives.py`.
+Status: not yet run in Maya (inversion maths and the reader model ran offline). Test:
+`test_correctives.py`.
 
 Decide before sculpting (Maya 2027 Help, pre- and post-skinning correctives):
 
@@ -225,7 +264,18 @@ Decide before sculpting (Maya 2027 Help, pre- and post-skinning correctives):
 | Post, and one joint owns the fix (elbow crease, knee cap)?                                      | Transform Space target, Transform Name = that joint                                          | "generally faster to compute", corrections stay "within the envelope area of the selected joint"                      |
 | Post, and the fix spans joints or must follow the surface (armpit, shoulder into chest)?        | Tangent Space target                                                                         | uses the local vertex frame, not UVs [cross-joint reading added]                                                      |
 
-Controller-driven joints (bind joints moved by IK/FK constraints, pairBlends or scenario-maya-rigging's offsetParentMatrix blend): `S.joint_drive(joint)` returns `free`, `channels` or `opm`. Pose them through their controls, never by `setAttr` on the joint (connected channels refuse it, constrained ones snap back). Node readers read `dagLocalMatrix` (local TRS times OPM), which `S.corrective_driver` does by default: an OPM-driven joint keeps rotate at 0, so a reader on `.matrix` or `rotate` is stuck on or off [added; offline model in `test_mx_skin_offline.py`, Maya check in `test_correctives.py`]. Pose Editor order for such joints (Help, "Use controller-driven joints with pose space deformations"): Create Pose Interpolator, answer No to neutral poses, right-click > Show Driver Settings, add the controller's driving attributes (Rotate X/Y/Z) to Controllers, then Poses > Add Neutral Poses, then add poses as usual; Euler Twist on when a wrist should twist about the forearm axis. Delete neutral poses made too early and redo them after the controllers.
+Controller-driven joints (bind joints moved by IK/FK constraints, pairBlends or
+scenario-maya-rigging's offsetParentMatrix blend): `S.joint_drive(joint)` returns `free`, `channels`
+or `opm`. Pose them through their controls, never by `setAttr` on the joint (connected channels
+refuse it, constrained ones snap back). Node readers read `dagLocalMatrix` (local TRS times OPM),
+which `S.corrective_driver` does by default: an OPM-driven joint keeps rotate at 0, so a reader on
+`.matrix` or `rotate` is stuck on or off [added; offline model in `test_mx_skin_offline.py`, Maya
+check in `test_correctives.py`]. Pose Editor order for such joints (Help, "Use controller-driven
+joints with pose space deformations"): Create Pose Interpolator, answer No to neutral poses,
+right-click > Show Driver Settings, add the controller's driving attributes (Rotate X/Y/Z) to
+Controllers, then Poses > Add Neutral Poses, then add poses as usual; Euler Twist on when a wrist
+should twist about the forearm axis. Delete neutral poses made too early and redo them after the
+controllers.
 
 ```python
 pre = cmds.blendShape("body_geo", frontOfChain=True, name="body_preFix_BS")[0]    # fixes the mesh, holds in all poses
@@ -244,10 +294,16 @@ drv = S.corrective_driver("L_lowerarm", "%s.weight[%d]" % (pre, sol["index"]), f
 print(drv.get("warning"), drv["plug"], drv["drive"]["kind"])  # 0 at rest; reads dagLocalMatrix
 ```
 
-- The node reader is swing only; for twist-dependent correctives or many poses per joint use the Pose Editor (GUI, `gui-paths.md`), extremes first, Independent for ad hoc poses, Regularization from 0.01 (Help).
-- Tangent space post targets by script: `cmds.blendShape(post, e=True, tangentSpace=True, target=("body_geo", 0, "fix_geo", 1.0))` [verify flag], tested soft. Transform Space has no scripted flag in the saved docs: create it in the Shape Editor (Add Target option box > Type Transform Space > Transform Name) until the probe finds one.
+- The node reader is swing only; for twist-dependent correctives or many poses per joint use the
+  Pose Editor (GUI, `gui-paths.md`), extremes first, Independent for ad hoc poses, Regularization
+  from 0.01 (Help).
+- Tangent space post targets by script:
+  `cmds.blendShape(post, e=True, tangentSpace=True, target=("body_geo", 0, "fix_geo", 1.0))` [verify
+  flag], tested soft. Transform Space has no scripted flag in the saved docs: create it in the Shape
+  Editor (Add Target option box > Type Transform Space > Transform Name) until the probe finds one.
 - Built-in inversion: `cmds.invertShape("body_geo", "sculpt_geo")` [verify], tested soft.
-- Candy wrapper alternative to correctives: `cmds.setAttr(sc + ".skinningMethod", 2)` (weight blended) and paint DQ blend weights where twist collapses (Help); P10 sections measure it.
+- Candy wrapper alternative to correctives: `cmds.setAttr(sc + ".skinningMethod", 2)` (weight
+  blended) and paint DQ blend weights where twist collapses (Help); P10 sections measure it.
 
 ## P12. Paint-free skinning: Delta Mush, then bake to plain weights
 
@@ -260,7 +316,8 @@ cmds.bakeDeformer(srcSkeletonName=root, srcMeshName="body_geo", dstSkeletonName=
                   dstMeshName="body_baked_geo", maxInfluences=4)                  # [verify flags; 2025 added ROM options]
 ```
 
-Then P3 audit and P10 on the baked mesh. Remove the Delta Mush before ML training if it must not be learned (Widup [00:07:55]).
+Then P3 audit and P10 on the baked mesh. Remove the Delta Mush before ML training if it must not be
+learned (Widup [00:07:55]).
 
 ## P13. Two skinClusters on a face (squash under tweaks) and the double transform fix
 
@@ -279,7 +336,8 @@ for n, li in zip(names, logical):                                            # e
     cmds.connectAttr(grp + ".worldInverseMatrix[0]", "%s.bindPreMatrix[%d]" % (tw, li), force=True)
 ```
 
-Gate: with all tweak controls at rest, squash moves tweak regions exactly once (the test measures d, not 2d); no cycle warning. `S.skin_clusters("face_geo")` lists the newest cluster first [verify].
+Gate: with all tweak controls at rest, squash moves tweak regions exactly once (the test measures d,
+not 2d); no cycle warning. `S.skin_clusters("face_geo")` lists the newest cluster first [verify].
 
 ## P14. Lip split generator (antCGi) as arithmetic
 
@@ -305,11 +363,14 @@ bs = cmds.blendShape("head_geo", frontOfChain=True, name="head_BS")[0]
 S.add_split_targets(bs, "head_geo", targets, names)
 ```
 
-Keep the master target in the node, disabled (antCGi: never delete it) so a master edit regenerates the sections. Corner vertices belong to corner shapes only (exclude them from the lip master).
+Keep the master target in the node, disabled (antCGi: never delete it) so a master edit regenerates
+the sections. Corner vertices belong to corner shapes only (exclude them from the lip master).
 
 ## P15. ML Deformer: data and evaluation around the GUI training
 
-Status: not yet run in Maya; creation and training are GUI (Attribute Editor, Control Collector, Export Training Data, Train). Tests: `test_00_probe_deformation.py` (command and node probe), `test_rom_metrics.py` (rom_from_limits, joint_limits).
+Status: not yet run in Maya; creation and training are GUI (Attribute Editor, Control Collector,
+Export Training Data, Train). Tests: `test_00_probe_deformation.py` (command and node probe),
+`test_rom_metrics.py` (rom_from_limits, joint_limits).
 
 ```python
 # 1. remove smoothing you do not want learned (Widup): cmds.delete(delta_mush_node)
@@ -323,8 +384,16 @@ for f in held_out_frames:
 print(S.eval_seconds("body_ml_geo", range(1, 101)))  # compare with the ML Deformer disabled
 ```
 
-Cross talk on the ML result: `S.pose_metrics(rest, posed, topo, W, names, moved=[...])["cross_talk"]` with W from the skinCluster: vertices with no weight on the moved joints must not move.
+Cross talk on the ML result:
+`S.pose_metrics(rest, posed, topo, W, names, moved=[...])["cross_talk"]` with W from the
+skinCluster: vertices with no weight on the moved joints must not move.
 
 ## P16. Game PSD with secondary joints (architecture only, no code shipped)
 
-Rudy's structure: a swing-twist driver per joint, pose fractions remapped between calibrated values to 0..1, and per secondary joint a blend of per-pose transforms, every secondary joint mapped to its LODs. In Maya nodes the first version is `decomposeMatrix` or quaternion nodes for swing-twist, `remapValue` for fractions and `blendMatrix` into the secondary joint's offsetParentMatrix [verify node attributes]; at scale author it in Bifrost from code (Rudy [00:32:44]). Hand the joint list and LOD table to scenario-maya-pipeline-scripting for export. No tested snippet yet: build and test it with scenario-maya-rigging before shipping code.
+Rudy's structure: a swing-twist driver per joint, pose fractions remapped between calibrated values
+to 0..1, and per secondary joint a blend of per-pose transforms, every secondary joint mapped to its
+LODs. In Maya nodes the first version is `decomposeMatrix` or quaternion nodes for swing-twist,
+`remapValue` for fractions and `blendMatrix` into the secondary joint's offsetParentMatrix [verify
+node attributes]; at scale author it in Bifrost from code (Rudy [00:32:44]). Hand the joint list and
+LOD table to scenario-maya-pipeline-scripting for export. No tested snippet yet: build and test it
+with scenario-maya-rigging before shipping code.

@@ -1,13 +1,25 @@
 # Bridge procedures: posing and print prep
 
-Agent-side Python. Every block below is **not yet run in ZBrush**: no ZBrush session was assigned to this skill while it was written, and at 06:11 to 06:15 on 2026-09-24 three `zb_launch.start()` attempts by another session stalled at startup (`tests/code/zbrush-expert/live_logs/*/00_start.json`). What IS verified:
+Agent-side Python. Every block below is **not yet run in ZBrush**: no ZBrush session was assigned to
+this skill while it was written, and at 06:11 to 06:15 on 2026-09-24 three `zb_launch.start()`
+attempts by another session stalled at startup
+(`tests/code/zbrush-expert/live_logs/*/00_start.json`). What IS verified:
 
-- the math and file logic, offline: `tests/code/zbrush-pose-print/test_zb_print.py` (synthetic meshes with known walls, gaps, sections, angles, plus the real v03 ZBrush export) and `test_zb_pose.py` (FK, pivot correction, guards, against a fake `zbrush.commands`); 57 tests pass (`offline_results.json`, 42 in v1, 15 added by the 2026-09-24 refactor);
-- from the lead skill, through the bridge: DynaMesh, Divide, strokes, dialog-free `Tool:Export` OBJ and `Document:Export` PNG (v01 to v03).
+- the math and file logic, offline: `tests/code/zbrush-pose-print/test_zb_print.py` (synthetic
+  meshes with known walls, gaps, sections, angles, plus the real v03 ZBrush export) and
+  `test_zb_pose.py` (FK, pivot correction, guards, against a fake `zbrush.commands`); 57 tests pass
+  (`offline_results.json`, 42 in v1, 15 added by the 2026-09-24 refactor);
+- from the lead skill, through the bridge: DynaMesh, Divide, strokes, dialog-free `Tool:Export` OBJ
+  and `Document:Export` PNG (v01 to v03).
 
-Revised 2026-09-24 after the Z5 blind grade: props and plates stay in the TPose mesh, the transfer has a point-order guard, the clean project and ZPR save are code, the hollow chain is complete, the brief box exists, decimation can be masked. New offline tests pass (see `offline_results.json`); the new live checks are in `live_p05`, `live_p07`, `live_p08`, not yet run in ZBrush.
+Revised 2026-09-24 after the Z5 blind grade: props and plates stay in the TPose mesh, the transfer
+has a point-order guard, the clean project and ZPR save are code, the hollow chain is complete, the
+brief box exists, decimation can be masked. New offline tests pass (see `offline_results.json`); the
+new live checks are in `live_p05`, `live_p07`, `live_p08`, not yet run in ZBrush.
 
-Each procedure names the live test that will settle it. Item paths carry the tags of `scripts/zb_pose.py` (`[strings]` = the label exists in the 2026.2.1 UI resources, `[macro]` = used by a shipped macro, `[log]` = written by ZBrush's Activity log).
+Each procedure names the live test that will settle it. Item paths carry the tags of
+`scripts/zb_pose.py` (`[strings]` = the label exists in the 2026.2.1 UI resources, `[macro]` = used
+by a shipped macro, `[log]` = written by ZBrush's Activity log).
 
 ```python
 # common header for every procedure
@@ -31,11 +43,15 @@ assert len(set(names)) == len(names), "rename at creation: Decimation Master and
 zl.call("zb_ops", "save_ztl", f"{JOB}/hero_rest.ztl")  # -> hero_rest_v001.ztl, never overwrites
 ```
 
-Gate: the inventory is saved with the job; every later check compares against it. Status: not yet run in ZBrush. Test: `live_p01` (inventory runs inside `preflight_tpose`).
+Gate: the inventory is saved with the job; every later check compares against it. Status: not yet
+run in ZBrush. Test: `live_p01` (inventory runs inside `preflight_tpose`).
 
 ## P1. Real-world scale without dialogs
 
-Scale Master Set Scene Scale and 3D Print Hub Update Size Ratios open choice dialogs (doc). The dialog-free route sets what Scale Master stores anyway, the Export Scale (doc: after Unify the real size lives in `Tool:Export:Scale`), so the internal mesh keeps its well-behaved size and every OBJ comes out in millimeters.
+Scale Master Set Scene Scale and 3D Print Hub Update Size Ratios open choice dialogs (doc). The
+dialog-free route sets what Scale Master stores anyway, the Export Scale (doc: after Unify the real
+size lives in `Tool:Export:Scale`), so the internal mesh keeps its well-behaved size and every OBJ
+comes out in millimeters.
 
 ```python
 target = zp.scale_for(1800, "1/6")                    # 300.0 mm; Hasbro PVC: scale_for(h, 12, shrink_pct=4)
@@ -46,9 +62,16 @@ chk = zp.check_scale([p["path"] for p in parts["parts"]], target)
 assert chk["ok"] and chk["scales_consistent"], chk     # 0.5 % [added]; one '#Auto scale' on all parts
 ```
 
-Gate: assembled height within 0.5 %, one export scale on every part. If `scales_consistent` fails, Export Scale is per SubTool: call `set_export_scale` per SubTool with the same factor [verify]. Human route: Zplugin > Scale Master > Set Scene Scale (mm), New Bounding Box Subtool, R on, type the height, Resize Subtool with All (Gaboury). Status: not yet run in ZBrush. Test: `live_p04_scale_export.py`.
+Gate: assembled height within 0.5 %, one export scale on every part. If `scales_consistent` fails,
+Export Scale is per SubTool: call `set_export_scale` per SubTool with the same factor [verify].
+Human route: Zplugin > Scale Master > Set Scene Scale (mm), New Bounding Box Subtool, R on, type the
+height, Resize Subtool with All (Gaboury). Status: not yet run in ZBrush. Test:
+`live_p04_scale_export.py`.
 
-**The brief box, SubTool number one** (Gaboury [00:21:43] [02:04:45]). The height sets the scale; the box is the envelope the client or the package allows (his car: 8 x 6 x 4 in). Every later part is checked against it, and a late size change is one call (the export scale route is what Scale Master's Resize with All plus Unify leaves behind: real size in `Tool:Export:Scale`, doc).
+**The brief box, SubTool number one** (Gaboury [00:21:43] [02:04:45]). The height sets the scale;
+the box is the envelope the client or the package allows (his car: 8 x 6 x 4 in). Every later part
+is checked against it, and a late size change is one call (the export scale route is what Scale
+Master's Resize with All plus Unify leaves behind: real size in `Tool:Export:Scale`, doc).
 
 ```python
 env = zp.envelope([p["path"] for p in parts["parts"]], (220.0, 300.0, 160.0))   # W x H x D from the brief
@@ -61,7 +84,11 @@ rep = zp.print_report(paths, 300.0, envelope_mm=(220.0, 300.0, 160.0))   # "insi
 sc = zb_pose.call("set_export_scale", 200.0)
 ```
 
-Show the box (`set_visible(..., True)`) in one review sheet to see what clips out. A distance the brief names (head height, blade length) is measured like Gaboury's Transpose-line caliper, which snaps to points: `zp.caliper(obj, p, q)["distance_mm"]`. For a human, the caliper is the action line after Scale Master, units in Preferences > Transpose Units (`gui-paths.md`). Status: not yet run in ZBrush. Test: `live_p08` (box size in mm, floor, hide).
+Show the box (`set_visible(..., True)`) in one review sheet to see what clips out. A distance the
+brief names (head height, blade length) is measured like Gaboury's Transpose-line caliper, which
+snaps to points: `zp.caliper(obj, p, q)["distance_mm"]`. For a human, the caliper is the action line
+after Scale Master, units in Preferences > Transpose Units (`gui-paths.md`). Status: not yet run in
+ZBrush. Test: `live_p08` (box size in mm, floor, hide).
 
 ## P2. Transpose Master preflight and round trip
 
@@ -84,14 +111,28 @@ assert back["ok"] and back["order_check"]["same"], back   # order, source tool, 
 
 Rules:
 
-- **Clean project first** (doc Tips): `clean_project` saves a versioned ZTL, opens a default project and loads the tool back, so the pose cannot land on another model when parts of it also exist as separate tools. Opening a ZPR deletes every loaded tool (scenario-zbrush-expert traps), which is why the ZTL is checked on disk before the project opens. The doc names DefaultCube.ZPR; 2026.2.1 ships `Lightbox/Projects/DefaultProject.ZPR` and `Cube.ZPR` instead (local check), `DEFAULT_PROJECT` points at the first [verify equivalent].
-- **Save the ZPR** while the TPose mesh exists (doc Saving/Loading: TM data is saved with the project since 4R6). A ZTL alone does not carry it: a session that ends between TPoseMesh and TPose>SubT without a ZPR loses the way back.
-- **No Gizmo 3D deformers on the TPose mesh** (Bend Arc, Bend Curve, Twist, Taper, any modifier from the Gizmo's deformer list): "the point order can be changed" and SubTools get destroyed on transfer (doc); a reorder keeps the point count, so counting alone does not catch it [added]. Plain rotations, rigs, Deformation sliders are fine [verify in live_p01]. `tpose_to_subtools(..., rest_obj)` compares the face lists of the rest and posed TPose exports and refuses the press when they differ.
-  Status: not yet run in ZBrush. Tests: `live_p01_transpose_master.py`, `live_p08` (clean project, ZPR, order guard); offline: the guard, the save order and the versioning.
+- **Clean project first** (doc Tips): `clean_project` saves a versioned ZTL, opens a default project
+  and loads the tool back, so the pose cannot land on another model when parts of it also exist as
+  separate tools. Opening a ZPR deletes every loaded tool (scenario-zbrush-expert traps), which is
+  why the ZTL is checked on disk before the project opens. The doc names DefaultCube.ZPR; 2026.2.1
+  ships `Lightbox/Projects/DefaultProject.ZPR` and `Cube.ZPR` instead (local check),
+  `DEFAULT_PROJECT` points at the first [verify equivalent].
+- **Save the ZPR** while the TPose mesh exists (doc Saving/Loading: TM data is saved with the
+  project since 4R6). A ZTL alone does not carry it: a session that ends between TPoseMesh and
+  TPose>SubT without a ZPR loses the way back.
+- **No Gizmo 3D deformers on the TPose mesh** (Bend Arc, Bend Curve, Twist, Taper, any modifier from
+  the Gizmo's deformer list): "the point order can be changed" and SubTools get destroyed on
+  transfer (doc); a reorder keeps the point count, so counting alone does not catch it [added].
+  Plain rotations, rigs, Deformation sliders are fine [verify in live_p01].
+  `tpose_to_subtools(..., rest_obj)` compares the face lists of the rest and posed TPose exports and
+  refuses the press when they differ. Status: not yet run in ZBrush. Tests:
+  `live_p01_transpose_master.py`, `live_p08` (clean project, ZPR, order guard); offline: the guard,
+  the save order and the versioning.
 
 ## P3. Route A: numeric external rig (Blender), then back onto the TPose mesh
 
-Munoz Gomez's round trip (Mixamo or Blender, import on a layer at level 1) made exact: bones get numeric angles, the vertex order is checked, not hoped for.
+Munoz Gomez's round trip (Mixamo or Blender, import on a layer at level 1) made exact: bones get
+numeric angles, the vertex order is checked, not hoped for.
 
 ```python
 tp = zb_pose.call("tpose_mesh", True, True, False, timeout=300)
@@ -131,7 +172,21 @@ back = zb_pose.call("tpose_to_subtools", tp["preflight"], rest["path"], timeout=
 assert imp["ok"] and back["ok"]
 ```
 
-Why this route first: it is the only one where every angle is a number and every step is checked. **Props and plates stay in the TPose mesh.** Munoz Gomez keeps them rigid inside it with Auto Groups (one group per loose piece), masks each piece whole and poses the rest [00:15:37] [00:16:14]; the agent's form is `loose_pieces` plus rigid weights to one bone, so the sword follows the whole chain (shoulder, elbow, wrist) and the plates follow their segment (Plouffe groups all plates of a segment with it [00:27:24]). Plouffe's rule forbids deforming primitives, not moving them rigidly [00:33:23]. Pulling a carried prop out and turning it afterwards by one angle about one axis cannot reproduce a raised, bent arm, and `interference == 0` still passes when the prop floats away from the hand; `follows` does not. Intersections between pieces after posing are Munoz Gomez's Move Topological job [00:17:24] (the brush moves only the connected piece under it): in route A, nudge that piece's transform in the plan and re-run; in ZBrush, a synthesized Move Topological stroke from the piece's projected center (P6) [verify], or a human. What stays manual: the pose idea itself (line of action, weight) and the cleanup of P6. Status: not yet run in ZBrush. Tests: the import guard and `same_order` are offline-tested; the round trip is `live_p01` plus a Blender-side run [verify].
+Why this route first: it is the only one where every angle is a number and every step is checked.
+**Props and plates stay in the TPose mesh.** Munoz Gomez keeps them rigid inside it with Auto Groups
+(one group per loose piece), masks each piece whole and poses the rest [00:15:37] [00:16:14]; the
+agent's form is `loose_pieces` plus rigid weights to one bone, so the sword follows the whole chain
+(shoulder, elbow, wrist) and the plates follow their segment (Plouffe groups all plates of a segment
+with it [00:27:24]). Plouffe's rule forbids deforming primitives, not moving them rigidly
+[00:33:23]. Pulling a carried prop out and turning it afterwards by one angle about one axis cannot
+reproduce a raised, bent arm, and `interference == 0` still passes when the prop floats away from
+the hand; `follows` does not. Intersections between pieces after posing are Munoz Gomez's Move
+Topological job [00:17:24] (the brush moves only the connected piece under it): in route A, nudge
+that piece's transform in the plan and re-run; in ZBrush, a synthesized Move Topological stroke from
+the piece's projected center (P6) [verify], or a human. What stays manual: the pose idea itself
+(line of action, weight) and the cleanup of P6. Status: not yet run in ZBrush. Tests: the import
+guard and `same_order` are offline-tested; the round trip is `live_p01` plus a Blender-side run
+[verify].
 
 ## P4. Route B: ZSphere rig built by code
 
@@ -157,7 +212,10 @@ zb_pose.call("zs_pose", [{"joint": 1, "axis": [1, 0, 0], "angle": -30},     # pa
 back = zb_pose.call("tpose_to_subtools", tp["preflight"], timeout=300)
 ```
 
-Pavlovich's rig rules: root at the hips, a very small draw size while placing (API placement makes this moot), a wrist ZSphere or the hand cannot bend, helper ZSpheres off the spine to hold the lats, a tail chain, test every chain before posing, rotations only. Unknown until live_p02: whether the bound mesh follows `set_zsphere` edits, and whether the rig tool shares the mesh's internal space.
+Pavlovich's rig rules: root at the hips, a very small draw size while placing (API placement makes
+this moot), a wrist ZSphere or the hand cannot bend, helper ZSpheres off the spine to hold the lats,
+a tail chain, test every chain before posing, rotations only. Unknown until live_p02: whether the
+bound mesh follows `set_zsphere` edits, and whether the rig tool shares the mesh's internal space.
 
 **B2, Proxy Pose for a DynaMesh without levels** (Pavlovich):
 
@@ -173,11 +231,17 @@ zb_pose.call("adaptive_skin", 1, 0, True)                    # Density 1, DynaMe
 zb_pose.call("proxy_overwrite")                              # picks the only mesh with that order, exits
 ```
 
-Gate for both: export the posed SubTool, `rigid_delta` per segment against the plan, `rigid_pieces` (a ZSphere rig skins every piece it binds, so a plate across a joint can bend: then route A with rigid weights, or keep that plate its own SubTool and carry it with P5), review sheet. Status: not yet run in ZBrush. Test: `live_p02_zsphere_rig.py` (B1); B2 [verify], no test yet.
+Gate for both: export the posed SubTool, `rigid_delta` per segment against the plan, `rigid_pieces`
+(a ZSphere rig skins every piece it binds, so a plate across a joint can bend: then route A with
+rigid weights, or keep that plate its own SubTool and carry it with P5), review sheet. Status: not
+yet run in ZBrush. Test: `live_p02_zsphere_rig.py` (B1); B2 [verify], no test yet.
 
 ## P5. Route C: rigid moves of whole SubTools
 
-For what nothing carries (a base, a display stand, a prop added after posing, a kit part posed on its own). A carried prop or plate belongs in the TPose mesh (P3). When a separate SubTool must follow a posed carrier, it gets the carrier's WHOLE transform, rotation plus translation, measured, never one angle about one axis (Z5 grade error).
+For what nothing carries (a base, a display stand, a prop added after posing, a kit part posed on
+its own). A carried prop or plate belongs in the TPose mesh (P3). When a separate SubTool must
+follow a posed carrier, it gets the carrier's WHOLE transform, rotation plus translation, measured,
+never one angle about one axis (Z5 grade error).
 
 ```python
 # the carrier's transform: the palm group of the body at level 1, before and after the pose
@@ -199,16 +263,35 @@ assert f["ok"], f["residual_mm"]                             # where the hand to
 assert zp.interference(c["path"], f"{JOB}/body_l1_posed.obj")["ok"]   # and not through the hand
 ```
 
-Grip gate (Hasbro [00:19:34]): the fingers close around the handle with no pass-through, checked on a close-up tile; if the kit will be molded, fingers must not touch each other or the thumb in a closed loop. `rotate_subtool(axis, deg, pivot)` stays for one-axis turns about a known pivot (a base, a hinge). Tool > Contact (C1 to C3, 2023.2) can snap a prop to a surface [verify]. Status: not yet run in ZBrush. Tests: `live_p03_rigid_moves.py` (signs, rotation center, pivot, Offset units), `live_p08` (full placement); offline: Euler order, signs, correction.
+Grip gate (Hasbro [00:19:34]): the fingers close around the handle with no pass-through, checked on
+a close-up tile; if the kit will be molded, fingers must not touch each other or the thumb in a
+closed loop. `rotate_subtool(axis, deg, pivot)` stays for one-axis turns about a known pivot (a
+base, a hinge). Tool > Contact (C1 to C3, 2023.2) can snap a prop to a surface [verify]. Status: not
+yet run in ZBrush. Tests: `live_p03_rigid_moves.py` (signs, rotation center, pivot, Offset units),
+`live_p08` (full placement); offline: Euler order, signs, correction.
 
 ## P6. Fix deformation after posing
 
-Measure first, then fix where the numbers point (Munoz Gomez: bent limbs bulge, stretched ones flatten; accept breakage while posing, then re-volume). Order of the fixes:
+Measure first, then fix where the numbers point (Munoz Gomez: bent limbs bulge, stretched ones
+flatten; accept breakage while posing, then re-volume). Order of the fixes:
 
-1. **The seam, while the rest is still protected.** Munoz Gomez smooths and moves the transition BEFORE clearing the mask, then flips the mask and does the other side [00:07:44] [00:08:16]: the rest of the limb is protected while the joint evens out. Agent forms: route A, a Corrective Smooth limited to a vertex group of the joint bands before export (vertex order kept) [added]; in ZBrush with a mask still on (a human's Gizmo pose, or `intersection_mask`), Deformation Smooth or Polish respect the mask, so press them before `mask("clear")`. Gate: `stretch_report` share back near the rest pose at that joint.
-2. **Volumes and folds.** Bulge the compressed side, flatten the stretched one; re-sculpt cloth folds for the new pose (digest P3 step 2): tension lines from the stretched joint, compression folds on the inner bend [added]. Strokes aimed at measured spots, below, for small fixes; big fold redesign goes to a human or scenario-zbrush-character-creature with the spot list.
-3. **Pieces.** Re-place bolts and discs on bent armor instead of bending them (Plouffe); push intersecting pieces apart (Move Topological, below).
-4. **Detail on the pose.** 3D layers blend linearly from neutral to posed, so detail sculpted in the neutral pose can look soft or stretched on the bend: refine it on an extra pose-only layer, symmetry off (Munoz Gomez [00:49:48] [00:50:20]). Every layer is created at the top level (a layer only records there, [00:45:23]).
+1. **The seam, while the rest is still protected.** Munoz Gomez smooths and moves the transition
+   BEFORE clearing the mask, then flips the mask and does the other side [00:07:44] [00:08:16]: the
+   rest of the limb is protected while the joint evens out. Agent forms: route A, a Corrective
+   Smooth limited to a vertex group of the joint bands before export (vertex order kept) [added]; in
+   ZBrush with a mask still on (a human's Gizmo pose, or `intersection_mask`), Deformation Smooth or
+   Polish respect the mask, so press them before `mask("clear")`. Gate: `stretch_report` share back
+   near the rest pose at that joint.
+2. **Volumes and folds.** Bulge the compressed side, flatten the stretched one; re-sculpt cloth
+   folds for the new pose (digest P3 step 2): tension lines from the stretched joint, compression
+   folds on the inner bend [added]. Strokes aimed at measured spots, below, for small fixes; big
+   fold redesign goes to a human or scenario-zbrush-character-creature with the spot list.
+3. **Pieces.** Re-place bolts and discs on bent armor instead of bending them (Plouffe); push
+   intersecting pieces apart (Move Topological, below).
+4. **Detail on the pose.** 3D layers blend linearly from neutral to posed, so detail sculpted in the
+   neutral pose can look soft or stretched on the bend: refine it on an extra pose-only layer,
+   symmetry off (Munoz Gomez [00:49:48] [00:50:20]). Every layer is created at the top level (a
+   layer only records there, [00:45:23]).
 
 ```python
 # level 1 of the same SubTool before TPoseMesh (rest) and after the transfer (posed)
@@ -253,8 +336,16 @@ result = zb_ops.sculpt_stroke(zb_stroke.line((x0, y0), (x0 + 15 * dx / n, y0 + 1
 zl.run(mt.replace("__A__", repr(a_pt)).replace("__B__", repr(b_pt)), ("zb_ops", "zb_stroke"))
 ```
 
-The stroke starts on the piece that went in and pulls it away from the one it entered, in screen space of a fixed view; re-export and re-run `piece_interference` after each nudge. A screen drag moves the piece in the view plane only: pick the view that shows the overlap edge-on.
-The camera projection uses the lead's `zb_stroke.Camera` (front view measured; other views via `fit_convention`). Re-place bolts and discs on bent armor with `append_primitive` and `geometry_set` instead of bending them (Plouffe). Gate: `stretch_report` share near the rest pose, `piece_interference` ok on the TPose export, `rigid_pieces` ok, `interference` 0 for separately printed parts, review sheet with Polyframe on (`Transform:PolyF` [verify]). Status: not yet run in ZBrush. Test: the stroke half is proven by the lead (v02); the layer, Intersection Masker and Move Topological presses are [verify], no test yet.
+The stroke starts on the piece that went in and pulls it away from the one it entered, in screen
+space of a fixed view; re-export and re-run `piece_interference` after each nudge. A screen drag
+moves the piece in the view plane only: pick the view that shows the overlap edge-on. The camera
+projection uses the lead's `zb_stroke.Camera` (front view measured; other views via
+`fit_convention`). Re-place bolts and discs on bent armor with `append_primitive` and `geometry_set`
+instead of bending them (Plouffe). Gate: `stretch_report` share near the rest pose,
+`piece_interference` ok on the TPose export, `rigid_pieces` ok, `interference` 0 for separately
+printed parts, review sheet with Polyframe on (`Transform:PolyF` [verify]). Status: not yet run in
+ZBrush. Test: the stroke half is proven by the lead (v02); the layer, Intersection Masker and Move
+Topological presses are [verify], no test yet.
 
 ## P7. Print breakdown and merge
 
@@ -269,11 +360,17 @@ res = zb_pose.call("make_boolean_mesh", timeout=600)          # new tool, source
 # zl.call("zb_ops", "dynamesh", 512)   # resolution relative to the bbox: detail loss, check deviation
 ```
 
-Gate per part: `is_polymesh3d_solid` in `inventory()`, then the OBJ audit (`zp.print_report` watertight gate), `fits_volume` against the printer. Status: not yet run in ZBrush. Test: `live_p06` covers Make Boolean Mesh.
+Gate per part: `is_polymesh3d_solid` in `inventory()`, then the OBJ audit (`zp.print_report`
+watertight gate), `fits_volume` against the printer. Status: not yet run in ZBrush. Test: `live_p06`
+covers Make Boolean Mesh.
 
 ## P8. Hollow and walls
 
-Gaboury's whole chain [00:57:33] to [01:15:30]: the heavy sculpt is never shelled; a light DynaMesh copy is, its inner wall becomes the cutter, and the detailed part is hollowed by a Live Boolean subtract, so its outside does not move. Drains and vents are cutters too. Hollow only when asked or when the part is big enough to cost resin (doc: hollowing and cutting make a bigger print for the same price); otherwise print solid or hollow in the slicer (Gaboury concedes Cura works [01:19:03]).
+Gaboury's whole chain [00:57:33] to [01:15:30]: the heavy sculpt is never shelled; a light DynaMesh
+copy is, its inner wall becomes the cutter, and the detailed part is hollowed by a Live Boolean
+subtract, so its outside does not move. Drains and vents are cutters too. Hollow only when asked or
+when the part is big enough to cost resin (doc: hollowing and cutting make a bigger print for the
+same price); otherwise print solid or hollow in the slicer (Gaboury concedes Cura works [01:19:03]).
 
 ```python
 part = 0                                                              # the detailed part, untouched
@@ -303,9 +400,25 @@ zb_pose.call("from_thickness", 2.0, 10.0)                            # the visua
 zl.call("zb_ops", "export_canvas", f"{JOB}/torso_thickness.png", overwrite=True)
 ```
 
-**Thicken from the inside** (Hasbro: "Fix it, but don't change it from the outside... inflate it inward" [00:16:46]): a wall under the target is fixed on the cutter, never on the sculpt. Move the inner wall inward: shell the copy again with a higher Thickness (Gaboury went from 4 to 6 [01:10:32]), or shrink the cutter with a negative Deformation Inflate [verify sign], and re-make the boolean; gate `outer_drift` p99 within 0.02 mm [added] and `thickness` p01 at the target. On a solid part with a thin feature (a cape edge, a blade), take the material from where it does not show, the back or the underside (Hasbro takes it from the hidden shoulder ball), and check the front with `outer_drift` on that region.
+**Thicken from the inside** (Hasbro: "Fix it, but don't change it from the outside... inflate it
+inward" [00:16:46]): a wall under the target is fixed on the cutter, never on the sculpt. Move the
+inner wall inward: shell the copy again with a higher Thickness (Gaboury went from 4 to 6
+[01:10:32]), or shrink the cutter with a negative Deformation Inflate [verify sign], and re-make the
+boolean; gate `outer_drift` p99 within 0.02 mm [added] and `thickness` p01 at the target. On a solid
+part with a thin feature (a cape edge, a blade), take the material from where it does not show, the
+back or the underside (Hasbro takes it from the hidden shoulder ball), and check the front with
+`outer_drift` on that region.
 
-The shortcut Gaboury also shows, an insert touching the surface so Create Shell opens a hole [01:05:29], applies when the shell copy itself is printed (a smooth part, no detail to keep); it joins the two walls into one piece, so `keep_inner_shell` refuses it. Live Boolean drops UVs, textures, creases, 3D layers and masks on the result (version deltas, Live Boolean doc): hollow the print copy, never the posed master. Gate: `th["walls"]["p01"]` and `w["walls"]["p01"]` at or above the wall target, `s["sealed_cavities"] == 0` for resin, `dr["ok"]`, vents at every cup that faces the build plate (Gaboury slides a cutter through the Live Boolean like the slicer's layer slider [01:34:49]; the slicer's layer preview is the check). Status: not yet run in ZBrush. Test: `live_p05_shell_thickness.py` (copy, shell, inner shell, subtract, drift); offline: the order of the presses, the split, `outer_drift`.
+The shortcut Gaboury also shows, an insert touching the surface so Create Shell opens a hole
+[01:05:29], applies when the shell copy itself is printed (a smooth part, no detail to keep); it
+joins the two walls into one piece, so `keep_inner_shell` refuses it. Live Boolean drops UVs,
+textures, creases, 3D layers and masks on the result (version deltas, Live Boolean doc): hollow the
+print copy, never the posed master. Gate: `th["walls"]["p01"]` and `w["walls"]["p01"]` at or above
+the wall target, `s["sealed_cavities"] == 0` for resin, `dr["ok"]`, vents at every cup that faces
+the build plate (Gaboury slides a cutter through the Live Boolean like the slicer's layer slider
+[01:34:49]; the slicer's layer preview is the check). Status: not yet run in ZBrush. Test:
+`live_p05_shell_thickness.py` (copy, shell, inner shell, subtract, drift); offline: the order of the
+presses, the split, `outer_drift`.
 
 ## P9. Cut and keys
 
@@ -331,9 +444,23 @@ for key in plan["keys"]:
 # make_boolean_mesh(); one or two operations per hierarchy (Hasbro)
 ```
 
-Cutting: a QCube cutter larger than the model (Gaboury: PolyCube, clearance on every side) in Live Boolean, subtract for one half and intersect for the other; or, when the cut follows a polygroup border, `Groups Split` then `close_holes()` on each part [added]. Retention: Hasbro gives pegs a mushroom head so they cannot pull out; Gaboury slots a snap-joint peg for flex; for glued statues two keys stop a round peg from spinning [added]. Sculpted cutters (a disc carrying projected cloth detail) cannot be sized with sliders: calibrate Inflate per ZTool, `zp.inflate_calibration([(1, gap1), (2, gap2)])`, `zp.inflate_for(0.12, cal)`, where each gap is `zp.clearance(original, inflated)["gap"]["p50"]` (Hasbro measured 0.12 mm at Inflate 2 in his ZTool). Status: not yet run in ZBrush. Test: `live_p06_keys_boolean.py`.
+Cutting: a QCube cutter larger than the model (Gaboury: PolyCube, clearance on every side) in Live
+Boolean, subtract for one half and intersect for the other; or, when the cut follows a polygroup
+border, `Groups Split` then `close_holes()` on each part [added]. Retention: Hasbro gives pegs a
+mushroom head so they cannot pull out; Gaboury slots a snap-joint peg for flex; for glued statues
+two keys stop a round peg from spinning [added]. Sculpted cutters (a disc carrying projected cloth
+detail) cannot be sized with sliders: calibrate Inflate per ZTool,
+`zp.inflate_calibration([(1, gap1), (2, gap2)])`, `zp.inflate_for(0.12, cal)`, where each gap is
+`zp.clearance(original, inflated)["gap"]["p50"]` (Hasbro measured 0.12 mm at Inflate 2 in his
+ZTool). Status: not yet run in ZBrush. Test: `live_p06_keys_boolean.py`.
 
-**If the parts will be molded** (a cast resin kit, a production toy), Hasbro's rules apply on top [00:19:34] [01:24:32]: fingers touching each other or the thumb make a closed loop the mold cannot release; `Tool:Polygroups:Group Front` from the view that faces one mold half shows the parting line (one clean line wanted); `Transform:Draw Draft Analysis` with the camera along the pull shows draft (doc: green and yellow good, red bad; `MaskByDraft` masks the bad faces). Both are presses plus a canvas render (`PATHS["group_front"]`, `PATHS["draft_analysis"]`, [verify]); a direct print needs none of it.
+**If the parts will be molded** (a cast resin kit, a production toy), Hasbro's rules apply on top
+[00:19:34] [01:24:32]: fingers touching each other or the thumb make a closed loop the mold cannot
+release; `Tool:Polygroups:Group Front` from the view that faces one mold half shows the parting line
+(one clean line wanted); `Transform:Draw Draft Analysis` with the camera along the pull shows draft
+(doc: green and yellow good, red bad; `MaskByDraft` masks the bad faces). Both are presses plus a
+canvas render (`PATHS["group_front"]`, `PATHS["draft_analysis"]`, [verify]); a direct print needs
+none of it.
 
 ## P10. Decimate per part
 
@@ -350,7 +477,19 @@ for i, target in budget.items():
     print(i, r["faces_after"], dv["deviation"]["p99"], dv["ok"])
 ```
 
-**Masks steer Decimation Master** (Gaboury masks the regions whose detail matters, face and hands, before decimating [01:30:30]; doc: masked areas keep density, the final count is the same, a partial mask protects partly). The agent cannot paint that mask, so in order of preference: (1) face and hands as their own SubTools with their own budget (doc: decimate SubTools one by one when detail differs); (2) a mask made without strokes before Pre-process, `mask="cavity"` (Mask By Cavity) or `"peaks"` (Mask PeaksAndValleys) [added] [verify that it lands on the detail]; (3) a mask a human or `intersection_mask` left on, `mask="keep"`; (4) a human mask. **Pre-process again after ANY edit**, a mask, a level change, a rename included: Decimation Master ignores what changed after Pre-process and can reuse a stale cache for a same-named tool (doc Troubleshooting), so `decimate_to_faces` always pre-processes and refuses a mask without it. Polygroups are lost after decimation (doc), so group before. Gate: faces within the slicer's budget, `deviation` p99 within tolerance, close-up render against the original (Gaboury: stop one step before faceting; FDM hides more than resin). Status: not yet run in ZBrush. Test: `live_p07_decimate_printhub.py`.
+**Masks steer Decimation Master** (Gaboury masks the regions whose detail matters, face and hands,
+before decimating [01:30:30]; doc: masked areas keep density, the final count is the same, a partial
+mask protects partly). The agent cannot paint that mask, so in order of preference: (1) face and
+hands as their own SubTools with their own budget (doc: decimate SubTools one by one when detail
+differs); (2) a mask made without strokes before Pre-process, `mask="cavity"` (Mask By Cavity) or
+`"peaks"` (Mask PeaksAndValleys) [added] [verify that it lands on the detail]; (3) a mask a human or
+`intersection_mask` left on, `mask="keep"`; (4) a human mask. **Pre-process again after ANY edit**,
+a mask, a level change, a rename included: Decimation Master ignores what changed after Pre-process
+and can reuse a stale cache for a same-named tool (doc Troubleshooting), so `decimate_to_faces`
+always pre-processes and refuses a mask without it. Polygroups are lost after decimation (doc), so
+group before. Gate: faces within the slicer's budget, `deviation` p99 within tolerance, close-up
+render against the original (Gaboury: stop one step before faceting; FDM hides more than resin).
+Status: not yet run in ZBrush. Test: `live_p07_decimate_printhub.py`.
 
 ## P11. Export, package and report
 
@@ -369,10 +508,25 @@ sheet = zb_review.review(f"{JOB}/print/review")["sheet"]       # look at it befo
 zl.call("zb_ops", "save_ztl", f"{JOB}/hero_print.ztl")
 ```
 
-**Test print first** (Gaboury prints a joint in the target resin before the full job [01:53:10]): send one key pair (peg and socket, or a cut-down coupon of the same section; digest P5 gate) and, when the detail floor is in doubt, the most detailed part such as the head [added], before the kit; adjust the clearance from the physical fit. The detail pass happens here too: a review tile rendered at the figure's real size on screen, anything under the process floor (edges 0.5 mm, about 0.2 mm floats away: Hasbro) backfilled, fused or left to paint (Hasbro [00:09:47]; Plouffe: the final viewing distance decides the detail [00:18:51]; Carratala: over-sculpting for the scale is the usual failure).
+**Test print first** (Gaboury prints a joint in the target resin before the full job [01:53:10]):
+send one key pair (peg and socket, or a cut-down coupon of the same section; digest P5 gate) and,
+when the detail floor is in doubt, the most detailed part such as the head [added], before the kit;
+adjust the clearance from the physical fit. The detail pass happens here too: a review tile rendered
+at the figure's real size on screen, anything under the process floor (edges 0.5 mm, about 0.2 mm
+floats away: Hasbro) backfilled, fused or left to paint (Hasbro [00:09:47]; Plouffe: the final
+viewing distance decides the detail [00:18:51]; Carratala: over-sculpting for the scale is the usual
+failure).
 
-The delivery note states: units mm, scale and real height, process assumed, wall and clearance targets, part list with keys, what was measured (`report.json`) and what was only looked at. The 3D Print Hub buttons (`Export to STL`, `Export to 3MF`) are the human route; whether a preset file name suppresses their dialog is live_p07. Status: not yet run in ZBrush. Test: `live_p04` (writers on live exports), `live_p07` (Print Hub press).
+The delivery note states: units mm, scale and real height, process assumed, wall and clearance
+targets, part list with keys, what was measured (`report.json`) and what was only looked at. The 3D
+Print Hub buttons (`Export to STL`, `Export to 3MF`) are the human route; whether a preset file name
+suppresses their dialog is live_p07. Status: not yet run in ZBrush. Test: `live_p04` (writers on
+live exports), `live_p07` (Print Hub press).
 
 ## P12. When a human or a computer-use agent takes over
 
-Gizmo drags with masks, Ctrl-drag topology masks, hand-painted gradient masks, Move Topological and seam smoothing are canvas gestures (the SDK's `press_key` is marked "Does not work, hidden for now" in the installed 2026 stub, and modifier presses with `canvas_click` are reported unreliable, Maxon forum): hand them over with the pose plan, the stretch spots (`stretch_report`) and the review sheet, then re-run the gates of P3 or P6 on the result. Menu paths and hotkeys: `gui-paths.md`.
+Gizmo drags with masks, Ctrl-drag topology masks, hand-painted gradient masks, Move Topological and
+seam smoothing are canvas gestures (the SDK's `press_key` is marked "Does not work, hidden for now"
+in the installed 2026 stub, and modifier presses with `canvas_click` are reported unreliable, Maxon
+forum): hand them over with the pose plan, the stretch spots (`stretch_report`) and the review
+sheet, then re-run the gates of P3 or P6 on the result. Menu paths and hotkeys: `gui-paths.md`.

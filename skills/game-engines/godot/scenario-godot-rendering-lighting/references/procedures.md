@@ -2,9 +2,17 @@
 
 Round 2 (2026-10-02): P15 added after blind grading.
 
-Every procedure runs through the scenario-godot-expert toolkit (`gd_run`, `gd_review`) plus this skill's `scripts/gd_lighting.py` and the GDScript in `scripts/agentkit/rendering/` (copied into `res://addons/agentkit/rendering/` by `gl.install(P)`). The GDScript files ARE the full code: each file starts with a usage header.
+Every procedure runs through the scenario-godot-expert toolkit (`gd_run`, `gd_review`) plus this
+skill's `scripts/gd_lighting.py` and the GDScript in `scripts/agentkit/rendering/` (copied into
+`res://addons/agentkit/rendering/` by `gl.install(P)`). The GDScript files ARE the full code: each
+file starts with a usage header.
 
-Live test for all procedures: `tests/code/godot-rendering-lighting/test_lighting_live.py` (`--only P5,P7`, `--skip-windowed`). It clones Base3D to `tests/projects/godot-rendering-lighting/runs/<stamp>/Light3D`. Evidence (JSON, contact sheets, run log) goes to `tests/live_evidence/godot-rendering-lighting/`. Test jobs: `tests/code/godot-rendering-lighting/jobs/` (probe_api.gd, make_bad_scene.gd, make_features_scene.gd).
+Live test for all procedures: `tests/code/godot-rendering-lighting/test_lighting_live.py`
+(`--only P5,P7`, `--skip-windowed`). It clones Base3D to
+`tests/projects/godot-rendering-lighting/runs/<stamp>/Light3D`. Evidence (JSON, contact sheets, run
+log) goes to `tests/live_evidence/godot-rendering-lighting/`. Test jobs:
+`tests/code/godot-rendering-lighting/jobs/` (probe_api.gd, make_bad_scene.gd,
+make_features_scene.gd).
 
 Windowed runs open a 160x90 window. The capture SubViewport carries the real resolution.
 
@@ -28,11 +36,13 @@ gl.setting_index("rendering/global_illumination/sdfgi/frames_to_converge", 30)  
 import gd_env; gd_env.set_project_setting(P, "rendering/global_illumination/sdfgi/frames_to_converge", "4")  # 25 frames
 ```
 
-Run in Godot 4.7.2 on 2026-10-02: pass. The tables were checked against ProjectSettings defaults in P1 (frames_to_converge "5" means 30 frames).
+Run in Godot 4.7.2 on 2026-10-02: pass. The tables were checked against ProjectSettings defaults in
+P1 (frames_to_converge "5" means 30 frames).
 
 ## P1 Project settings and API facts (headless)
 
-Goal: confirm the renderer and Jolt in an agent-written project.godot, then probe the classes, properties and defaults the skill relies on.
+Goal: confirm the renderer and Jolt in an agent-written project.godot, then probe the classes,
+properties and defaults the skill relies on.
 
 ```python
 cfg = open(f"{P}/project.godot").read()
@@ -48,9 +58,12 @@ Run in Godot 4.7.2 on 2026-10-02: pass. 211 of 213 API names found. The two miss
 
 Defaults on a new resource:
 
-- Environment: tonemap Linear (0), glow blend Screen (1), intensity 0.3, threshold 1.0, sdfgi_bounce_feedback 0.5, cascades 4, max distance 204.8, volumetric fog density 0.05, anisotropy 0.2, length 64.
+- Environment: tonemap Linear (0), glow blend Screen (1), intensity 0.3, threshold 1.0,
+  sdfgi_bounce_feedback 0.5, cascades 4, max distance 204.8, volumetric fog density 0.05, anisotropy
+  0.2, length 64.
 - DirectionalLight3D: bias 0.1, normal bias 2.0, max distance 100, 4 splits, blend splits off.
-- LightmapGI: quality Medium (1), bounces 3, probes subdiv 8, environment Scene, denoiser on, supersampling off.
+- LightmapGI: quality Medium (1), bounces 3, probes subdiv 8, environment Scene, denoiser on,
+  supersampling off.
 
 Project settings:
 
@@ -63,7 +76,8 @@ Evidence: `p1_api_probe.json`.
 
 ## P2 Renderer-aware lighting audit (headless)
 
-`light_audit.gd:audit` walks a scene and returns flags (severity, code, message, nodes) for every target renderer.
+`light_audit.gd:audit` walks a scene and returns flags (severity, code, message, nodes) for every
+target renderer.
 
 ```python
 a = gl.audit(P, "res://level.tscn", ["forward_plus", "mobile"])["result"]
@@ -74,15 +88,19 @@ The flag codes:
 
 - `no_world_environment`, `multiple_world_environments`, `tonemap_linear`;
 - `sdfgi_bounce_feedback_high` (above 0.5), `sdfgi_and_voxelgi`, `sdfgi_beyond_camera_far`;
-- `spot_shadow_wide` (above 89°), `small_omni_shadowed`, `multiple_shadowed_directionals`, `shadow_atlas_full`, `many_pcss_lights` [added: above 4];
-- `clustered_elements`, `area_light_forward_plus`, `lights_per_mesh_mobile`, `lights_per_mesh_gl_compatibility`;
+- `spot_shadow_wide` (above 89°), `small_omni_shadowed`, `multiple_shadowed_directionals`,
+  `shadow_atlas_full`, `many_pcss_lights` [added: above 4];
+- `clustered_elements`, `area_light_forward_plus`, `lights_per_mesh_mobile`,
+  `lights_per_mesh_gl_compatibility`;
 - `dynamic_mesh_under_sdfgi`, `emissive_without_glow`;
-- `voxelgi_no_data`, `lightmapgi_over_8`, `lightmap_no_data`, `lightmap_data_embedded`, `hidden_light_baked`, `static_mesh_without_uv2`;
+- `voxelgi_no_data`, `lightmapgi_over_8`, `lightmap_no_data`, `lightmap_data_embedded`,
+  `hidden_light_baked`, `static_mesh_without_uv2`;
 - `unsupported_on_<renderer>`.
 
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
-- Fixture `make_bad_scene.gd`: 15 flags (5 errors, 8 warnings, 2 infos), all 13 expected codes plus `unsupported_on_mobile`.
+- Fixture `make_bad_scene.gd`: 15 flags (5 errors, 8 warnings, 2 infos), all 13 expected codes plus
+  `unsupported_on_mobile`.
 - `lookdev.tscn`: 0 flags.
 - After the bakes, `voxel.tscn` no longer gets `voxelgi_no_data`.
 
@@ -90,7 +108,8 @@ Run in Godot 4.7.2 on 2026-10-02: pass.
 
 `lookdev.gd:build` writes a calibration scene:
 
-- an Environment with a ProceduralSky, sky ambient, AgX and glow, and a sun at (-50°, 35°, 0) with shadows;
+- an Environment with a ProceduralSky, sky ambient, AgX and glow, and a sun at (-50°, 35°, 0) with
+  shadows;
 - dark, gray, white and mirror spheres, a gray card, an emissive block and a 1.8 m hero capsule;
 - a sealed room at z -7 with a door, a window, a table and a warm lamp;
 - three cameras: Exterior, Spheres and Interior. Every primitive has `add_uv2`.
@@ -102,7 +121,10 @@ c = gl.look_checks(r["result"]["images"][0]); assert c["range_p95_p05"] > 0.25 a
 gl.squint(r["result"]["images"][0])   # open the *_squint.png
 ```
 
-Run in Godot 4.7.2 on 2026-10-02: pass. On the Exterior view: p05 0.32, p50 0.49, p95 0.61, range 0.28, nothing clipped. Sheet `p3_lookdev_sheet.png`, opened: the dark sphere keeps its form and the mirror reflects sky. The room interior reads as bright because sky ambient floods the sealed room in realtime (no occlusion of ambient without GI). This is the reason for P6 and P7.
+Run in Godot 4.7.2 on 2026-10-02: pass. On the Exterior view: p05 0.32, p50 0.49, p95 0.61, range
+0.28, nothing clipped. Sheet `p3_lookdev_sheet.png`, opened: the dark sphere keeps its form and the
+mirror reflects sky. The room interior reads as bright because sky ambient floods the sealed room in
+realtime (no occlusion of ambient without GI). This is the reason for P6 and P7.
 
 ## P4 Renderer parity (windowed, one run per renderer)
 
@@ -114,16 +136,20 @@ r["rows"][1]["warnings"]   # what Mobile ignores
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
 - Scene: `features.tscn` with SDFGI, SSR, SSAO, SSIL and volumetric fog on.
-- Mobile printed 5 WARNING lines, one per unsupported feature ("only available when using the Forward+ renderer"). Compatibility printed 4, because it supports SSAO.
+- Mobile printed 5 WARNING lines, one per unsupported feature ("only available when using the
+  Forward+ renderer"). Compatibility printed 4, because it supports SSAO.
 - Changed fraction against Forward+: Mobile 0.013 to 0.07, Compatibility 0.63 to 0.64.
-- Opened: Mobile matches except that the emissive glow halo is gone. Compatibility is brighter and washed out (mean 0.57 against 0.50).
+- Opened: Mobile matches except that the emissive glow halo is gone. Compatibility is brighter and
+  washed out (mean 0.57 against 0.50).
 - Nothing errors: the loss is visible only in the image and in one warning line per feature.
 
 Evidence: `p4_renderers.json`, `p4_renderers_sheet.png`.
 
 ## P5 Tonemapper sweep (windowed, one run)
 
-`sweep.gd:sweep` renders one view under N variants in one process. It restores the touched properties before each variant unless a variant has `keep`; with `measure` it also records GPU and CPU time. The variant syntax is in the file header.
+`sweep.gd:sweep` renders one view under N variants in one process. It restores the touched
+properties before each variant unless a variant has `keep`; with `measure` it also records GPU and
+CPU time. The variant syntax is in the file header.
 
 ```python
 r = gl.sweep(P, "res://lookdev/lookdev.tscn", gl.tonemap_variants(exposure=1.0), camera="Cameras/Exterior", size=(480, 270), cols=5)
@@ -144,7 +170,8 @@ Opened:
 
 - Reinhard at white 1.0 looks like Linear.
 - Filmic and ACES brighten the mids (p50 about 0.79 and 0.82 against 0.65).
-- AgX has the lowest p95 and keeps the orange emitter orange; Filmic and ACES shift it toward yellow.
+- AgX has the lowest p95 and keeps the orange emitter orange; Filmic and ACES shift it toward
+  yellow.
 
 Exposure has to be retuned per tonemapper. Sheet: `p5_tonemap_sheet.png`.
 
@@ -155,23 +182,28 @@ gl.build_lookdev(P, out="res://lookdev/voxel.tscn")
 gd_run.run_script(P, gl.kit("gi_bake.gd:voxelgi"), {"scene": "res://lookdev/voxel.tscn", "subdiv": 1}, headless=False)
 ```
 
-The job sizes the VoxelGI to the AABB of the static meshes plus a margin, bakes, saves `<scene>_voxelgi.res`, and resaves the scene.
+The job sizes the VoxelGI to the AABB of the static meshes plus a margin, bakes, saves
+`<scene>_voxelgi.res`, and resaves the scene.
 
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
 - Bake time 140 to 169 ms; octree 2.3 MB; size 10.0 x 5.25 x 14.7 m.
-- Headless is refused by the guard. Without the guard, headless printed "Expected Image data size ... got 0 bytes" and saved empty data.
+- Headless is refused by the guard. Without the guard, headless printed "Expected Image data size
+  ... got 0 bytes" and saved empty data.
 - Opened (sheet in P7): VoxelGI adds stronger mirror and floor reflections in the room.
 
 ## P7 LightmapGI bake without a mouse (editor, windowed)
 
-4.7.2 has no `LightmapGI.bake` for scripts. `gi_bake.gd:lightmap` runs inside the editor (`editor=True, headless=False`):
+4.7.2 has no `LightmapGI.bake` for scripts. `gi_bake.gd:lightmap` runs inside the editor
+(`editor=True, headless=False`):
 
 1. it opens the scene and sets the LightmapGI properties;
 2. it pre-saves an empty `LightmapGIData` at `<scene>.lmbake`, so no file dialog opens;
-3. it selects the node, finds the "Bake Lightmaps" toolbar button, emits `pressed` and saves the scene.
+3. it selects the node, finds the "Bake Lightmaps" toolbar button, emits `pressed` and saves the
+   scene.
 
-`prepare` first sets the light bake modes (hybrid: sun Dynamic, other lights Static, hidden lights Disabled) and lists static meshes without UV2.
+`prepare` first sets the light bake modes (hybrid: sun Dynamic, other lights Static, hidden lights
+Disabled) and lists static meshes without UV2.
 
 ```python
 gd_run.run_script(P, gl.kit("gi_bake.gd:prepare"), {"scene": "res://lookdev/baked.tscn", "policy": "hybrid"})
@@ -182,10 +214,14 @@ gd_run.import_project(P)   # the new EXR is imported before a game run captures 
 
 Run in Godot 4.7.2 on 2026-10-02: pass, three times.
 
-- Timing: the bake (button press to done) took 3.6 to 15.4 s at Low quality, and the whole editor run 12 to 20 s (log: "Done baking lightmaps in 00:00:12.88" on the first run). The spread follows machine load: other Godot jobs ran in parallel.
+- Timing: the bake (button press to done) took 3.6 to 15.4 s at Low quality, and the whole editor
+  run 12 to 20 s (log: "Done baking lightmaps in 00:00:12.88" on the first run). The spread follows
+  machine load: other Godot jobs ran in parallel.
 - Output: `baked.exr` (512x512) and `baked.lmbake`; `lightmap_textures` is 1.
-- Interior p50: realtime 0.369, VoxelGI 0.356, lightmap 0.311. Mean luma difference from realtime 0.046, changed fraction 0.47.
-- Opened: the lightmap gives warm bounce from the lamp and a darker, enclosed room, and a UV2 seam shows on the sphere at Low quality (raise quality or texel density for the final bake).
+- Interior p50: realtime 0.369, VoxelGI 0.356, lightmap 0.311. Mean luma difference from realtime
+  0.046, changed fraction 0.47.
+- Opened: the lightmap gives warm bounce from the lamp and a darker, enclosed room, and a UV2 seam
+  shows on the sphere at Low quality (raise quality or texel density for the final bake).
 - Benign errors in a 160x90 editor window (progress dialog, current_window) are ignored by the job.
 - Not run: the human route (select LightmapGI, then Bake Lightmaps), covered in gui-paths.md.
 
@@ -207,7 +243,10 @@ Run in Godot 4.7.2 on 2026-10-02: pass.
 
 ## P9 Effect cost template (windowed, Vulkan)
 
-Profile on `--rendering-driver vulkan`: Metal reports 0 GPU ms in 4.7.2. The test runs a warm-up variant, then each variant in forward and in reverse order, and averages the two (ABBA). A single forward pass was skewed by clock ramp-up and gave fog size 256 cheaper than 64. Variants come from the test (`p9_costs`).
+Profile on `--rendering-driver vulkan`: Metal reports 0 GPU ms in 4.7.2. The test runs a warm-up
+variant, then each variant in forward and in reverse order, and averages the two (ABBA). A single
+forward pass was skewed by clock ramp-up and gave fog size 256 cheaper than 64. Variants come from
+the test (`p9_costs`).
 
 ```python
 gl.sweep(P, scene, variants, size=(1920, 1080), measure=90, driver="vulkan", sheet=False)
@@ -234,8 +273,10 @@ Run in Godot 4.7.2 on 2026-10-02: pass.
 | volumetric fog, size 128 | 3.39         | 2.99         |
 | volumetric fog, size 256 | 4.45         | 3.15         |
 
-- The stable signal: SSIL, SSR and SDFGI are the most expensive, and fog cost rises with volume size. Deltas under about 0.5 ms are noise at this scene size.
-- An earlier session (glow-on base 2.4 ms, `effect_costs_vulkan_1080p.json`) gave SSIL +1.5, SSR +0.9, SDFGI +0.7 (p95 5.2 ms, spiky), fog size 512 +3.9.
+- The stable signal: SSIL, SSR and SDFGI are the most expensive, and fog cost rises with volume
+  size. Deltas under about 0.5 ms are noise at this scene size.
+- An earlier session (glow-on base 2.4 ms, `effect_costs_vulkan_1080p.json`) gave SSIL +1.5, SSR
+  +0.9, SDFGI +0.7 (p95 5.2 ms, spiky), fog size 512 +3.9.
 - Use these only as an order of magnitude and re-measure on the real level.
 
 Evidence: `p9_costs_vulkan_1080p.json`.
@@ -250,15 +291,21 @@ gl.sweep(P, "res://lookdev/lookdev.tscn", v, camera_look=[[-1.5, 1.4, -9.4], [2.
 
 Run in Godot 4.7.2 on 2026-10-02: pass on the numbers, partial on the look.
 
-- p95 by variant: no fog 0.489, anisotropy 0.2 0.499, anisotropy 0.7 0.514, plus sun fog energy 3 0.536. A first session also tried volume size 256 (0.531) and length 16 (0.547, range 0.371). No clipping in any variant.
-- Opened: the fog adds haze and lifts the window light, but **no distinct shafts**. With the sun at (-50°, 35°) no beam enters the window inside this view.
-- Shafts need the sun aimed through an opening that the camera looks across, plus Four Games' anisotropy of about 0.7 and a short length. Test the angle first with the sweep: not yet run with a re-aimed sun.
+- p95 by variant: no fog 0.489, anisotropy 0.2 0.499, anisotropy 0.7 0.514, plus sun fog energy 3
+  0.536. A first session also tried volume size 256 (0.531) and length 16 (0.547, range 0.371). No
+  clipping in any variant.
+- Opened: the fog adds haze and lifts the window light, but **no distinct shafts**. With the sun at
+  (-50°, 35°) no beam enters the window inside this view.
+- Shafts need the sun aimed through an opening that the camera looks across, plus Four Games'
+  anisotropy of about 0.7 and a short length. Test the angle first with the sweep: not yet run with
+  a re-aimed sun.
 
 Sheet: `p10_fog_sheet.png`.
 
 ## P11 Quality tiers for PC and phones (windowed, both renderers)
 
-`graphics_tiers.gd` holds four presets, low, medium, high and ultra [added values]. `apply(tier, viewport, scene_root)`:
+`graphics_tiers.gd` holds four presets, low, medium, high and ultra [added values].
+`apply(tier, viewport, scene_root)`:
 
 - skips the Forward+-only keys on other renderers;
 - turns SSAO off on Mobile;
@@ -281,14 +328,17 @@ Run in Godot 4.7.2 on 2026-10-02: pass.
 | high   | 2.92 to 2.93 (4.1 to 4.3 in an earlier session) | 1.73          | volumetric fog            |
 | ultra  | 3.56 to 3.71 (4.85 earlier)                     | 1.64          | SSIL, SSR, volumetric fog |
 
-Opened: the low tier keeps the mood (fog, glow, AgX). Ultra on Forward+ adds AO contact and reflections.
+Opened: the low tier keeps the mood (fog, glow, AgX). Ultra on Forward+ adds AO contact and
+reflections.
 
 Sheets: `p11_tiers_*_sheet.png`.
 
 ## P12 Compositor post effect (windowed, three renderers)
 
-- `compositor/post_effect.gd` is a `CompositorEffect` that compiles an `RDShaderFile` (GLSL compute) and dispatches it on the color layer at POST_TRANSPARENT.
-- It guards against renderers whose color buffer lacks `TEXTURE_USAGE_STORAGE_BIT`: there it warns once and skips.
+- `compositor/post_effect.gd` is a `CompositorEffect` that compiles an `RDShaderFile` (GLSL compute)
+  and dispatches it on the color layer at POST_TRANSPARENT.
+- It guards against renderers whose color buffer lacks `TEXTURE_USAGE_STORAGE_BIT`: there it warns
+  once and skips.
 - `compositor/grayscale.glsl` is the template.
 - `compositor_tools.gd:attach` adds the effect to a WorldEnvironment or a Camera3D compositor.
 
@@ -300,7 +350,8 @@ gd_run.capture_scene(P, "res://lookdev/post.tscn", out="captures/post.png", came
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
 - Forward+: grayscale (saturation 0.000), opened.
-- Mobile: skipped with one warning (saturation 0.091). Without the guard, the docs pattern logged 172 errors ("needs the TEXTURE_USAGE_STORAGE_BIT"), on both Metal and Vulkan.
+- Mobile: skipped with one warning (saturation 0.091). Without the guard, the docs pattern logged
+  172 errors ("needs the TEXTURE_USAGE_STORAGE_BIT"), on both Metal and Vulkan.
 - Compatibility: the compositor is ignored silently (saturation 0.105, no warning).
 
 Sheet: `p12_compositor_sheet.png`.
@@ -314,9 +365,11 @@ gl.sweep(P, scene, v, renderer="mobile", driver="metal")
 
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
-- FSR1 on Mobile renders pixel-identical to bilinear (max channel difference 0.0) and prints "FSR1 3D scaling is only available when using the Forward+ renderer".
+- FSR1 on Mobile renders pixel-identical to bilinear (max channel difference 0.0) and prints "FSR1
+  3D scaling is only available when using the Forward+ renderer".
 - MetalFX spatial changes the image (max difference 0.35) with no warning.
-- Not yet run: MetalFX temporal and FSR2 on Mobile (left out of the sweep). FSR2 is documented as Forward+ only.
+- Not yet run: MetalFX temporal and FSR2 on Mobile (left out of the sweep). FSR2 is documented as
+  Forward+ only.
 
 ## P14 Parse check
 
@@ -325,11 +378,14 @@ gd_run.check_all(P)                                   # project scripts
 for f in Path(P, "addons/agentkit/rendering").rglob("*.gd"): gd_run.check_only(f, project=P)   # agent_audit skips addons/agentkit/
 ```
 
-Run in Godot 4.7.2 on 2026-10-02: pass. The 3 project job scripts and the 7 kit scripts all parse with 0 errors.
+Run in Godot 4.7.2 on 2026-10-02: pass. The 3 project job scripts and the 7 kit scripts all parse
+with 0 errors.
 
 ## P15 Round-2 facts: defaults, LUT and HDR import (headless)
 
-Jobs: `tests/code/godot-rendering-lighting/jobs/r2_make.gd` (writes a 256x16 LUT strip and two 8x8 EXRs with one bright pixel, plus their `.import` files) and `r2_probe.gd` (reads defaults, loads the imports).
+Jobs: `tests/code/godot-rendering-lighting/jobs/r2_make.gd` (writes a 256x16 LUT strip and two 8x8
+EXRs with one bright pixel, plus their `.import` files) and `r2_probe.gd` (reads defaults, loads the
+imports).
 
 ```bash
 godot --headless --path "$P" --script res://jobs/r2_make.gd
@@ -355,21 +411,37 @@ Repo check for the lightmap unwrap cache (must print nothing):
 grep -n "unwrap_cache" .gitignore
 ```
 
-Run in Godot 4.7.2 on 2026-10-02: pass. Evidence `tests/live_evidence/godot-rendering-lighting/p15_round2_probe.json`.
+Run in Godot 4.7.2 on 2026-10-02: pass. Evidence
+`tests/live_evidence/godot-rendering-lighting/p15_round2_probe.json`.
 
 - LUT: loads as `CompressedTexture3D` 16x16x16 and assigns to `adjustment_color_correction`.
-- `process/hdr_clamp_exposure=true`: a 100000 pixel became 14988; with a 50.0 pixel nothing changed (the clamp only compresses luminance above about 4096, so it removes sun spikes, not mild sparkles). Without the option the pixel stayed 100000.
-- Environment: `ssao_light_affect` 0.0; `sdfgi_y_scale` 1 (75 percent; 50 percent is 0); `sdfgi_max_distance` 204.8; glow blend 1 (Screen), intensity 0.3, levels 1 to 5 = 0, 0.8, 0.4, 0.1, 0 (the 4.6 defaults).
-- LightmapGI: `shadowmask_mode` 0 (None); enum None 0, Replace 1, Overlay 2 (on `LightmapGIData`); `texel_scale` 1.0.
-- Meshes: `gi_mode` default 1 (Static), cast_shadow 1 (On). Lights: `light_bake_mode` default 2 (Dynamic), `light_cull_mask` all layers. Camera3D far 4000.
-- Project settings: `use_debanding` false; `fallback_to_opengl3` true; `lightmapping/denoising/denoiser` 0 (JNLM); positional atlas 4096 with quadrant subdiv indices 2, 2, 3, 4 (4, 4, 16, 64 shadows = 88).
-- glTF import defaults (from an existing `.glb.import`): `meshes/light_baking=1`, `meshes/lightmap_texel_size=0.2`; the importer hint string is "Disabled,Static,Static Lightmaps,Dynamic", so Static Lightmaps is 2.
+- `process/hdr_clamp_exposure=true`: a 100000 pixel became 14988; with a 50.0 pixel nothing changed
+  (the clamp only compresses luminance above about 4096, so it removes sun spikes, not mild
+  sparkles). Without the option the pixel stayed 100000.
+- Environment: `ssao_light_affect` 0.0; `sdfgi_y_scale` 1 (75 percent; 50 percent is 0);
+  `sdfgi_max_distance` 204.8; glow blend 1 (Screen), intensity 0.3, levels 1 to 5 = 0, 0.8, 0.4,
+  0.1, 0 (the 4.6 defaults).
+- LightmapGI: `shadowmask_mode` 0 (None); enum None 0, Replace 1, Overlay 2 (on `LightmapGIData`);
+  `texel_scale` 1.0.
+- Meshes: `gi_mode` default 1 (Static), cast_shadow 1 (On). Lights: `light_bake_mode` default 2
+  (Dynamic), `light_cull_mask` all layers. Camera3D far 4000.
+- Project settings: `use_debanding` false; `fallback_to_opengl3` true;
+  `lightmapping/denoising/denoiser` 0 (JNLM); positional atlas 4096 with quadrant subdiv indices 2,
+  2, 3, 4 (4, 4, 16, 64 shadows = 88).
+- glTF import defaults (from an existing `.glb.import`): `meshes/light_baking=1`,
+  `meshes/lightmap_texel_size=0.2`; the importer hint string is "Disabled,Static,Static
+  Lightmaps,Dynamic", so Static Lightmaps is 2.
 - `AreaLight3D` exists.
-- Not run: the doc claims about Cull Mask shadows, PSSM 5 draws, AreaLight3D cost and Compatibility sRGB shadows (cited as docs in SKILL.md).
+- Not run: the doc claims about Cull Mask shadows, PSSM 5 draws, AreaLight3D cost and Compatibility
+  sRGB shadows (cited as docs in SKILL.md).
 
 ## Not yet run
 
-- **Day and night animation** (Picster 1:01:52): an AnimationPlayer on the sun's parent rotation, light color and energy, sky energy and fog density. Not built in this version.
-- **ReflectionProbe placement** sized from the room AABB: the audit counts probes, but no procedure places them yet.
-- **Shadow bias sweep at a grazing angle** (Workflow stage 6): the sweep supports it (`[["Sun", "shadow_bias", 0.02]]`), but no recorded run exists yet.
-- **Device runs** (iPhone, Android, web) of the tiers: not possible on this Mac without devices or export; handed to scenario-godot-performance-export.
+- **Day and night animation** (Picster 1:01:52): an AnimationPlayer on the sun's parent rotation,
+  light color and energy, sky energy and fog density. Not built in this version.
+- **ReflectionProbe placement** sized from the room AABB: the audit counts probes, but no procedure
+  places them yet.
+- **Shadow bias sweep at a grazing angle** (Workflow stage 6): the sweep supports it
+  (`[["Sun", "shadow_bias", 0.02]]`), but no recorded run exists yet.
+- **Device runs** (iPhone, Android, web) of the tiers: not possible on this Mac without devices or
+  export; handed to scenario-godot-performance-export.

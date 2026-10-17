@@ -1,6 +1,9 @@
 # scenario-godot-expert: critique rubric
 
-How the lead judges its own output, a teammate's handoff, or a plan before it ships. Score each line 0 to 3 (0 missing, 1 claimed without evidence, 2 evidence with gaps, 3 evidence a reader can reproduce). Anything at 0 or 1 on lines A1 to A4 blocks "done". The domain skills add their own critique for taste; this one is about whether the work is real.
+How the lead judges its own output, a teammate's handoff, or a plan before it ships. Score each line
+0 to 3 (0 missing, 1 claimed without evidence, 2 evidence with gaps, 3 evidence a reader can
+reproduce). Anything at 0 or 1 on lines A1 to A4 blocks "done". The domain skills add their own
+critique for taste; this one is about whether the work is real.
 
 ## A. Evidence (blocking)
 
@@ -43,17 +46,24 @@ How the lead judges its own output, a teammate's handoff, or a plan before it sh
 
 ## E. Handoff packet
 
-A packet passes when it carries: project path and channel; the brief in numbers; what was done with each toolkit call; evidence paths (result JSON, contact sheet with flags, CSV with `budget_check`, JUnit totals, export sizes); **Verified** and **Assumed** lists; open issues; the fence (what the receiver may touch). The receiver reproduces one piece of evidence before building on it, and says which.
+A packet passes when it carries: project path and channel; the brief in numbers; what was done with
+each toolkit call; evidence paths (result JSON, contact sheet with flags, CSV with `budget_check`,
+JUnit totals, export sizes); **Verified** and **Assumed** lists; open issues; the fence (what the
+receiver may touch). The receiver reproduces one piece of evidence before building on it, and says
+which.
 
 ## F. Report wording
 
 - Each claim tagged Verified (with the run) or Assumed. "Should work" without a run is Assumed.
 - Simplifications said out loud (a smaller scene, a stand-in asset, Metal vs Vulkan numbers).
-- What could not run, and why (GUI-only step, device, store account), with the GUI path from `gui-paths.md`.
+- What could not run, and why (GUI-only step, device, store account), with the GUI path from
+  `gui-paths.md`.
 
 ## Common failure patterns seen in baseline answers (tests/baseline, 2026-10-02)
 
-- Strong Godot knowledge but no standard runner: no timeout, no concurrency cap, no focus handling for windowed runs, so parallel agents collide or hang.
+- Strong Godot knowledge but no standard runner: no timeout, no concurrency cap, no focus handling
+  for windowed runs, so parallel agents collide or hang.
 - Build output written to `build/` inside the project, which the next export packs.
 - GPU timing read from viewport render time on Metal, which reads 0 on this Mac.
-- "Headless compiles no shaders": compilation is lazy, `get_shader_uniform_list()` forces it in the dummy renderer (deltas section 19).
+- "Headless compiles no shaders": compilation is lazy, `get_shader_uniform_list()` forces it in the
+  dummy renderer (deltas section 19).

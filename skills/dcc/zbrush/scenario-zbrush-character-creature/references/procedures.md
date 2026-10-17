@@ -1,6 +1,14 @@
 # Bridge procedures: realistic characters and creatures (ZBrush 2026.2.1)
 
-Status, stated once for the whole file: **no procedure below has run in ZBrush yet.** Every block is "not yet run in ZBrush". What is proven is the ground they stand on (scenario-zbrush-expert v01 to v03, 2026-09-24): synthesized V02 strokes sculpt, `Document:Export` and `Tool:Export` write files without a dialog, and `set()` on a missing path is silent. The logic of `zb_character` passes 54 offline tests (`tests/code/zbrush-character-creature/test_zb_character.py`, `run_offline.py`), including a round trip through the real bridge server against a fake `zbrush.commands` and, since the 2026-09-24 refactor, the stack, map-request, crack, aiming, region, spike, asymmetry, calibration-dot, SSS-survival and Asset Directory checks. The live tests that will settle each procedure are named in its header; `run_live.sh` runs them in risk order.
+Status, stated once for the whole file: **no procedure below has run in ZBrush yet.** Every block is
+"not yet run in ZBrush". What is proven is the ground they stand on (scenario-zbrush-expert v01 to
+v03, 2026-09-24): synthesized V02 strokes sculpt, `Document:Export` and `Tool:Export` write files
+without a dialog, and `set()` on a missing path is silent. The logic of `zb_character` passes 54
+offline tests (`tests/code/zbrush-character-creature/test_zb_character.py`, `run_offline.py`),
+including a round trip through the real bridge server against a fake `zbrush.commands` and, since
+the 2026-09-24 refactor, the stack, map-request, crack, aiming, region, spike, asymmetry,
+calibration-dot, SSS-survival and Asset Directory checks. The live tests that will settle each
+procedure are named in its header; `run_live.sh` runs them in risk order.
 
 | Live test                     | Settles                                                                                                                                                                                |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -27,15 +35,24 @@ zl.start()                                # or reuse a running bridge session (s
 W, H = zl.run("result = [zbc.get('Document:Width'), zbc.get('Document:Height')]")
 ```
 
-Calls: `zl.call("zb_ops", ...)` for the lead's wrappers, `zc.call(...)` for this toolkit's ZBrush-side functions, `zl.run(code, modules=("zb_ops", "zb_stroke"))` for inline code. Before any stroke, confirm Edit mode (`stamp` calls `zb_ops.ensure_edit`), set symmetry on purpose, and save a versioned ZTL before anything destructive (`zl.call("zb_ops", "save_ztl", path)`).
+Calls: `zl.call("zb_ops", ...)` for the lead's wrappers, `zc.call(...)` for this toolkit's
+ZBrush-side functions, `zl.run(code, modules=("zb_ops", "zb_stroke"))` for inline code. Before any
+stroke, confirm Edit mode (`stamp` calls `zb_ops.ensure_edit`), set symmetry on purpose, and save a
+versioned ZTL before anything destructive (`zl.call("zb_ops", "save_ztl", path)`).
 
-Once per session, `BR = zc.call("brush_check")`: which planned brush resolves to a palette item, to a file to load, or only to a fuzzy name. `Brush:Dam_Standard` does not exist under that name on 2026.2.1 (README); every procedure selects brushes by name through `zb_ops.select_brush` (called by `stamp`), which tries the DamStandard spellings and loads the .ZBP otherwise. Never `zbc.press("Brush:Dam_Standard")` directly: a missing path fails silently.
+Once per session, `BR = zc.call("brush_check")`: which planned brush resolves to a palette item, to
+a file to load, or only to a fuzzy name. `Brush:Dam_Standard` does not exist under that name on
+2026.2.1 (README); every procedure selects brushes by name through `zb_ops.select_brush` (called by
+`stamp`), which tries the DamStandard spellings and loads the .ZBP otherwise. Never
+`zbc.press("Brush:Dam_Standard")` directly: a missing path fails silently.
 
 ---
 
 ## C1. Face review loop (measure, render, compare)
 
-Source: Kingslien checks front, profile, three-quarter and from below, and judges a change on a duplicate beside the original (6wiDxO-ZADg 01:00:06, 01:07:39); Costa reads blurred, from afar and upside down (Lfen-BSwWcE 00:28:50; j5XLtLMN0P8 00:09:18). Test: `live_c04_face_review.py`.
+Source: Kingslien checks front, profile, three-quarter and from below, and judges a change on a
+duplicate beside the original (6wiDxO-ZADg 01:00:06, 01:07:39); Costa reads blurred, from afar and
+upside down (Lfen-BSwWcE 00:28:50; j5XLtLMN0P8 00:09:18). Test: `live_c04_face_review.py`.
 
 ```python
 def face_review(stage, chin_y, prev=None):
@@ -58,11 +75,17 @@ def face_review(stage, chin_y, prev=None):
 r1 = face_review("stage1_masses", chin_y=-0.92)      # chin from a marker (C18) or the profile tile
 ```
 
-Then open the sheet and the three derived images and walk `critique.md` section 1 in order: the first failing step is the fix, because later steps inherit its error (Kingslien 01:37:20). `chin_y` is not the bbox minimum on a bust (the neck is lower). The below view is `view_facing("-Y")` under the unfitted camera convention: check on the tile that the chin faces the camera.
+Then open the sheet and the three derived images and walk `critique.md` section 1 in order: the
+first failing step is the fix, because later steps inherit its error (Kingslien 01:37:20). `chin_y`
+is not the bbox minimum on a bust (the neck is lower). The below view is `view_facing("-Y")` under
+the unfitted camera convention: check on the tile that the chin faces the camera.
 
 ## C2. Mass block-in on a stroke budget (Kingslien)
 
-Source: Move only (Dots, Z Intensity 51, Focal Shift 0), cranium plus face wedge in 13 to 16 moves, undo and redo when a region is touched twice (6wiDxO-ZADg 00:20:29-00:24:47, 00:28:04). Morph target as the undo point, since `merge_undo` is not implemented. Test: `live_c01` (StoreMT, Switch) and `live_c02` (strokes).
+Source: Move only (Dots, Z Intensity 51, Focal Shift 0), cranium plus face wedge in 13 to 16 moves,
+undo and redo when a region is touched twice (6wiDxO-ZADg 00:20:29-00:24:47, 00:28:04). Morph target
+as the undo point, since `merge_undo` is not implemented. Test: `live_c01` (StoreMT, Switch) and
+`live_c02` (strokes).
 
 ```python
 zl.call("zb_ops", "set_symmetry", True, "x")
@@ -83,11 +106,18 @@ if rep["retouched"] or rep["over_budget"]:
 open(f"{OUT}/move_budget.json", "w").write(mb.to_json())
 ```
 
-Next, clay block-in (his RK_BallStylus is a Gumroad brush; the stock stand-in is ClayBuildup at Z 20, Focal Shift -56 [added]), Sculptris Pro only after deleting levels (`zl.call("zb_ops", "del_levels")`). The Sculptris Pro toggle path is [verify] (Stroke > Sculptris Pro). Morph targets break when topology changes, so store again after any Sculptris Pro or DynaMesh step.
+Next, clay block-in (his RK_BallStylus is a Gumroad brush; the stock stand-in is ClayBuildup at Z
+20, Focal Shift -56 [added]), Sculptris Pro only after deleting levels
+(`zl.call("zb_ops", "del_levels")`). The Sculptris Pro toggle path is [verify] (Stroke > Sculptris
+Pro). Morph targets break when topology changes, so store again after any Sculptris Pro or DynaMesh
+step.
 
 ## C3. Separating line from a planned path (form-clue line, then trim)
 
-Source: single lines separate cheek from muzzle, the marionette line, the lip-fiber line, the malar band; a line around the nose wing is drawn, then trimmed (Kingslien 00:43:31, 00:59:02-00:59:34, 01:17:28). No pressure token is proven in V02 strings, so taper comes from segments. Test: `live_c02` (stroke types), scenario-zbrush-expert `live_04` (camera mapping outside the front view).
+Source: single lines separate cheek from muzzle, the marionette line, the lip-fiber line, the malar
+band; a line around the nose wing is drawn, then trimmed (Kingslien 00:43:31, 00:59:02-00:59:34,
+01:17:28). No pressure token is proven in V02 strings, so taper comes from segments. Test:
+`live_c02` (stroke types), scenario-zbrush-expert `live_04` (camera mapping outside the front view).
 
 ```python
 def separation_line(pixels, brush="ClayBuildup", size=(14, 6), z=(22, 8), zsub=True, trim=True):
@@ -112,13 +142,20 @@ def separation_line(pixels, brush="ClayBuildup", size=(14, 6), z=(22, 8), zsub=T
 separation_line(zb_stroke.polyline([(0.46 * W, 0.50 * H), (0.44 * W, 0.56 * H), (0.43 * W, 0.62 * H)], 4))
 ```
 
-Pressure lead for the lead's live_02 [verify]: the SDK's own `examples/_tests/_stroke_fomat.py` carries V03 strings whose first four points have `p` tokens rising C0, F0, FC, FF, then none, which looks like a per-point pressure byte ramping to full. Until that is proven, taper by segments as above.
+Pressure lead for the lead's live_02 [verify]: the SDK's own `examples/_tests/_stroke_fomat.py`
+carries V03 strings whose first four points have `p` tokens rising C0, F0, FC, FF, then none, which
+looks like a per-point pressure byte ramping to full. Until that is proven, taper by segments as
+above.
 
-`front_most_vertex` loops in pure Python; subsample the check on meshes above a few hundred thousand points. Judge the result on a before copy (`zl.call("zb_ops", ...)` Duplicate through `zb_ops.resolve("duplicate")`, then `Tool:Geometry:X Position` to park it beside [macro]).
+`front_most_vertex` loops in pure Python; subsample the check on meshes above a few hundred thousand
+points. Judge the result on a before copy (`zl.call("zb_ops", ...)` Duplicate through
+`zb_ops.resolve("duplicate")`, then `Tool:Geometry:X Position` to park it beside [macro]).
 
 ## C4. Masked move without the Gizmo
 
-Source: Kingslien's masked Move pull on the nose, widen the base, lift the bottom, tuck the nostrils (6wiDxO-ZADg 00:50:21, 01:35:40). Gizmo drags cannot be scripted; masks constrain Deformation sliders (masking doc). Test: `live_c02`.
+Source: Kingslien's masked Move pull on the nose, widen the base, lift the bottom, tuck the nostrils
+(6wiDxO-ZADg 00:50:21, 01:35:40). Gizmo drags cannot be scripted; masks constrain Deformation
+sliders (masking doc). Test: `live_c02`.
 
 ```python
 # A. region polygroup + auto-mask: a Move drag started on the nose only moves the nose group
@@ -146,12 +183,24 @@ Gate: volume change in the expected direction, then the sheet with a before copy
 
 ## C5. Subdivision stack: choose the route first, then the restore point
 
-Source: J Hill splits 3 to 4 regular plus 3 to 4 HD levels, never 6 or 7 regular then 1 or 2 HD, because "you are not able to go below where you started" and smoothing needs lower levels; for games he stops regular work at 20 to 40M, "40 million is high" (HlHoIGE2Ocs 00:10:37-00:13:54). Costa keeps the regular top at 1 to 2M so five 8K maps export in 7.5 minutes, then 3 DivideHD (Lfen-BSwWcE 00:17:53-00:18:58). HD ceiling 1 billion (HD doc). The SDK-only branch and its tiled micro map follow Costa's own last layer (Lfen 01:10:58) and J Hill's real-time advice (00:11:10) [added as the agent default]. Smt off on the first levels for joints (Eaton Ale6SXXbJMM 00:32:36). Test: offline `test_stack_check_two_branches`; scenario-zbrush-expert `live_06` (Divide x4), `live_c01` (StoreMT).
+Source: J Hill splits 3 to 4 regular plus 3 to 4 HD levels, never 6 or 7 regular then 1 or 2 HD,
+because "you are not able to go below where you started" and smoothing needs lower levels; for games
+he stops regular work at 20 to 40M, "40 million is high" (HlHoIGE2Ocs 00:10:37-00:13:54). Costa
+keeps the regular top at 1 to 2M so five 8K maps export in 7.5 minutes, then 3 DivideHD (Lfen-BSwWcE
+00:17:53-00:18:58). HD ceiling 1 billion (HD doc). The SDK-only branch and its tiled micro map
+follow Costa's own last layer (Lfen 01:10:58) and J Hill's real-time advice (00:11:10) [added as the
+agent default]. Smt off on the first levels for joints (Eaton Ale6SXXbJMM 00:32:36). Test: offline
+`test_stack_check_two_branches`; scenario-zbrush-expert `live_06` (Divide x4), `live_c01` (StoreMT).
 
-The route is decided before the first Divide, because a 6-level regular stack cannot take HD afterwards without Del Higher (which throws the upper levels away):
+The route is decided before the first Divide, because a 6-level regular stack cannot take HD
+afterwards without Del Higher (which throws the upper levels away):
 
-- **SDK only** (no computer-use agent): regular levels to about 20 to 25M, no HD. The finest pore and scale grain goes into a tiling micro-displacement map in the renderer, on the handoff to scenario-zbrush-paint-render or scenario-maya-lookdev.
-- **Computer use available:** 3 to 4 regular levels ending at 1 to 2M, then 3 to 4 DivideHD. The DivideHD button is a palette press [verify path `CHAR_PATHS["divide_hd"]`]; entering a region (A over the mesh) is the computer-use step.
+- **SDK only** (no computer-use agent): regular levels to about 20 to 25M, no HD. The finest pore
+  and scale grain goes into a tiling micro-displacement map in the renderer, on the handoff to
+  scenario-zbrush-paint-render or scenario-maya-lookdev.
+- **Computer use available:** 3 to 4 regular levels ending at 1 to 2M, then 3 to 4 DivideHD. The
+  DivideHD button is a palette press [verify path `CHAR_PATHS["divide_hd"]`]; entering a region (A
+  over the mesh) is the computer-use step.
 
 ```python
 st = zl.call("zb_ops", "stats")
@@ -173,11 +222,16 @@ zl.call("zb_ops", "save_ztl", f"{OUT}/creature_stack.ztl")
 json.dump({"plan": plan, "gate": gate}, open(f"{OUT}/stack_plan.json", "w"), indent=1)
 ```
 
-On the HD route, the computer-use agent presses A over the region: store the morph target again on every entry, and expect no layers across entries (J Hill 00:13:54). Aim off the front axis with perspective off (Costa 00:26:05) or front-on slightly forward for a "butterfly" region (J Hill 00:12:49); hide the polygroups you do not need first (Costa 00:26:40). A mesh that already carries 6 or 7 regular levels stays on the SDK-only branch.
+On the HD route, the computer-use agent presses A over the region: store the morph target again on
+every entry, and expect no layers across entries (J Hill 00:13:54). Aim off the front axis with
+perspective off (Costa 00:26:05) or front-on slightly forward for a "butterfly" region (J Hill
+00:12:49); hide the polygroups you do not need first (Costa 00:26:40). A mesh that already carries 6
+or 7 regular levels stays on the SDK-only branch.
 
 ## C6. A layer per frequency, with a ledger
 
-Source: layers only at the top level, intensity 1 as sculpted (3D Layers doc); one layer per detail frequency (character digest). Names cannot be set from Python. Test: `live_c01`.
+Source: layers only at the top level, intensity 1 as sculpted (3D Layers doc); one layer per detail
+frequency (character digest). Names cannot be set from Python. Test: `live_c01`.
 
 ```python
 LEDGER = []
@@ -198,11 +252,19 @@ def layer_seen(tag):
 new_layer("L1 wrinkles")
 ```
 
-If `layer_intensity` raises (no path in this build), store a morph target before the pass and compare with `morph_switch` renders instead (Heavy then dial back, C10).
+If `layer_intensity` raises (no path in this build), store a morph target before the pass and
+compare with `morph_switch` renders instead (Heavy then dial back, C10).
 
 ## C7. Pore or scale bed with Surface Noise
 
-Source: pore scale first and globally, negative strength, Mix Basic Noise 0, preview then Apply; in HD the noise projects from the camera, fix seams and soft zones with the Morph brush (J Hill 00:14:31-00:16:42). Surface Noise doc: Quick 3D Edit on or nothing shows; open NoisePlug with Strength at 0.5 or -0.5 to see the preview, then lower it; vary scale and strength per region with a mask and Magnify by Mask / Strength by Mask; Snake Skin needs Scale Variability and "especially some Amplitude"; UV projection can show seams; SNorm 100 at high scale and strength. NoiseMaker 2.0 (2026.0) rotates, scales and offsets the alpha, so a scale tile can follow each region's flow (deltas 3.2). Test: `live_c03`.
+Source: pore scale first and globally, negative strength, Mix Basic Noise 0, preview then Apply; in
+HD the noise projects from the camera, fix seams and soft zones with the Morph brush (J Hill
+00:14:31-00:16:42). Surface Noise doc: Quick 3D Edit on or nothing shows; open NoisePlug with
+Strength at 0.5 or -0.5 to see the preview, then lower it; vary scale and strength per region with a
+mask and Magnify by Mask / Strength by Mask; Snake Skin needs Scale Variability and "especially some
+Amplitude"; UV projection can show seams; SNorm 100 at high scale and strength. NoiseMaker 2.0
+(2026.0) rotates, scales and offsets the alpha, so a scale tile can follow each region's flow
+(deltas 3.2). Test: `live_c03`.
 
 ```python
 new_layer("L3 pore bed (Surface Noise)")
@@ -231,11 +293,19 @@ for g in ("lid_L", "lid_R", "lips"):                   # polygroup names from th
     zc.call("stamp", [run], brush="Morph", size=30, z_intensity=100, automask_pg=100)
 ```
 
-Gate: close-up under a raking light; no seams; pores gone from lids and lips; the depth histogram is spread (J Hill: not an even depth). Whether the Morph brush accepts synthesized strokes is [verify live_c02-style check]. Mask direction: Mask By Cavity and Mask AO protect the crevices, so a masked Apply or fill lands on the tops; Inverse first to work in the crevices.
+Gate: close-up under a raking light; no seams; pores gone from lids and lips; the depth histogram is
+spread (J Hill: not an even depth). Whether the Morph brush accepts synthesized strokes is [verify
+live_c02-style check]. Mask direction: Mask By Cavity and Mask AO protect the crevices, so a masked
+Apply or fill lands on the tops; Inverse first to work in the crevices.
 
 ## C8. Alpha factory (Henning Sanden)
 
-Source: plane with Smt off at about 1M polys, layer, directional flow, domes then Dam_Standard borders, smooth inside each scale only, GrabDoc at 1024 with perspective off and Actual, MidValue 50 after +50 / -50 dots, test on the model at about 11, 26 and 41 minutes ("very much wasted work if you ... don't test your alpha") (TuRIf92oMCY 00:02:11-00:28:23). The dots must be taller and deeper than anything in the alpha, typed values, not dragged (00:25:09-00:26:15). `recenter_alpha` is the dot-free substitute [added]. Test: `live_c03`; offline `test_dots_check`.
+Source: plane with Smt off at about 1M polys, layer, directional flow, domes then Dam_Standard
+borders, smooth inside each scale only, GrabDoc at 1024 with perspective off and Actual, MidValue 50
+after +50 / -50 dots, test on the model at about 11, 26 and 41 minutes ("very much wasted work if
+you ... don't test your alpha") (TuRIf92oMCY 00:02:11-00:28:23). The dots must be taller and deeper
+than anything in the alpha, typed values, not dragged (00:25:09-00:26:15). `recenter_alpha` is the
+dot-free substitute [added]. Test: `live_c03`; offline `test_dots_check`.
 
 ```python
 CREATURE_ZTL = f"{OUT}/creature_v012.ztl"              # the latest versioned save of the creature
@@ -316,11 +386,21 @@ final = zc.clean_corners(g["file"], f"{OUT}/alphas/scales_dots_v002.tif")
 print(zc.alpha_check(final))                            # must be ok before C9
 ```
 
-Library: copy each finished alpha (never overwrite) into `zc.alpha_library_dir()`, the Asset Directory's `LightBox/Alphas` since 2026.1 (deltas 3.1), so LightBox lists it next session. Offline alternative when strokes are too costly: `zc.save_alpha16(zc.scale_height_tile(1024, 64), path)` (a procedural stand-in; Henning's rules still apply, including the tests on the model).
+Library: copy each finished alpha (never overwrite) into `zc.alpha_library_dir()`, the Asset
+Directory's `LightBox/Alphas` since 2026.1 (deltas 3.1), so LightBox lists it next session. Offline
+alternative when strokes are too costly: `zc.save_alpha16(zc.scale_height_tile(1024, 64), path)` (a
+procedural stand-in; Henning's rules still apply, including the tests on the model).
 
 ## C9. Alpha stamps on the creature, aimed at the region, then unify
 
-Source: DragRect with Focal Shift -100 (full tile) or 0 (faded), MidValue 50, on a fresh layer, flow along the anatomy, hand unify pass mandatory (Henning 00:14:15-00:15:21, 00:27:51-00:29:29; 00:00:34 flow). Orient the view to the region before any stamp, so screen space maps to the surface (realism digest P3 step 3; Kingslien's agent translation); the stamp region comes from the region's polygroup, not from canvas fractions [added method: `aim_at`, `region_on_canvas`]. A close-up hero (Starkie's Nidhogg) gets one stamp per scale on a non-overlapping layout. Test: `live_c02` (DragRect size), `live_c03` (alpha import), scenario-zbrush-expert `live_04` (camera convention); offline `test_region_on_canvas`, `test_aim_at`.
+Source: DragRect with Focal Shift -100 (full tile) or 0 (faded), MidValue 50, on a fresh layer, flow
+along the anatomy, hand unify pass mandatory (Henning 00:14:15-00:15:21, 00:27:51-00:29:29; 00:00:34
+flow). Orient the view to the region before any stamp, so screen space maps to the surface (realism
+digest P3 step 3; Kingslien's agent translation); the stamp region comes from the region's
+polygroup, not from canvas fractions [added method: `aim_at`, `region_on_canvas`]. A close-up hero
+(Starkie's Nidhogg) gets one stamp per scale on a non-overlapping layout. Test: `live_c02` (DragRect
+size), `live_c03` (alpha import), scenario-zbrush-expert `live_04` (camera convention); offline
+`test_region_on_canvas`, `test_aim_at`.
 
 ```python
 def aim_region(group, probe=f"{OUT}/aim_probe.obj"):
@@ -364,13 +444,28 @@ new_layer("L1 hero scales")
 stamp_region(final, "orbit_rim", spacing=28, hero=True)
 ```
 
-Flow angles are in canvas degrees after aiming: read them off the review render of the aimed view (the muscle underneath), and split a region whose flow turns by more than about 30 degrees into two polygroups [added]. Then unify on the hero areas (Henning reserves hand sculpting for them, 00:01:38) with short Standard strokes, because ClayBuildup erases the stamped detail beneath it (FlippedNormals TpS0QdlfHWU 00:07:44), and C11's mid-frequency lift.
+Flow angles are in canvas degrees after aiming: read them off the review render of the aimed view
+(the muscle underneath), and split a region whose flow turns by more than about 30 degrees into two
+polygroups [added]. Then unify on the hero areas (Henning reserves hand sculpting for them,
+00:01:38) with short Standard strokes, because ClayBuildup erases the stamped detail beneath it
+(FlippedNormals TpS0QdlfHWU 00:07:44), and C11's mid-frequency lift.
 
 ## C10. Pores, clogged pores, wrinkles, spray breakup (Costa, J Hill)
 
-Source: pores DragRect Focal Shift -100, one size per zone, alternate drag direction (Costa Lfen-BSwWcE 00:38:27); clogged pores as bumps with DragDot (J Hill 00:22:50); wrinkles connect pores in short segments, never one long line, perpendicular to the circular muscles, Standard + Alpha 39 with a sharp curve (Costa 00:45:41-00:47:26); fine wrinkles follow the compression, circular around the eyes, Standard, Spray, Alpha 60, Z 3 (J Hill 00:17:38-00:18:10, frame 00:08:53); Spray loops then Inflat 1 to 2 (Costa 00:42:21-00:44:37); heavy then dial back (J Hill 00:19:16). Test: `live_c02`.
+Source: pores DragRect Focal Shift -100, one size per zone, alternate drag direction (Costa
+Lfen-BSwWcE 00:38:27); clogged pores as bumps with DragDot (J Hill 00:22:50); wrinkles connect pores
+in short segments, never one long line, perpendicular to the circular muscles, Standard + Alpha 39
+with a sharp curve (Costa 00:45:41-00:47:26); fine wrinkles follow the compression, circular around
+the eyes, Standard, Spray, Alpha 60, Z 3 (J Hill 00:17:38-00:18:10, frame 00:08:53); Spray loops
+then Inflat 1 to 2 (Costa 00:42:21-00:44:37); heavy then dial back (J Hill 00:19:16). Test:
+`live_c02`.
 
-Direction rule, general form [added reading of Costa and J Hill]: skin buckles into lines that lie across the direction it is compressed, which is the direction the muscle fibers pull. Forehead lines are horizontal because the frontalis pulls vertically; crow's feet radiate because the orbicularis closes in circles. On a creature the same rule sets the throat folds (across the neck's bend), the jaw-hinge folds (wrapping the hinge) and the elbow and knee rings. Big wrinkles are sketched by hand first, and alphas only break them into smaller ones (Starkie, "Drake").
+Direction rule, general form [added reading of Costa and J Hill]: skin buckles into lines that lie
+across the direction it is compressed, which is the direction the muscle fibers pull. Forehead lines
+are horizontal because the frontalis pulls vertically; crow's feet radiate because the orbicularis
+closes in circles. On a creature the same rule sets the throat folds (across the neck's bend), the
+jaw-hinge folds (wrapping the hinge) and the elbow and knee rings. Big wrinkles are sketched by hand
+first, and alphas only break them into smaller ones (Starkie, "Drake").
 
 ```python
 PORE_ALPHA = "/abs/alphas/pore_v001.tif"   # a small round, sharp alpha picked by looking at it [added]
@@ -400,11 +495,19 @@ for group, (spacing, px, field_of) in ZONES.items():
     zc.call("stamp", loops, brush="Standard", stroke_type="Spray", alpha=60, size=10, z_intensity=3)
 ```
 
-`MOUTH_PX` is the mouth center on the aimed canvas (project the mouth landmark or the lips polygroup center with `region_on_canvas(...)["center_px"]` in the same view); `NECK_AXIS_DEG` is the neck's long axis on that canvas. Where the wrinkles came out too strong, paint them back with Morph-brush strokes (the morph target holds the pre-wrinkle state). Over this finished layer, further passes use Standard or Elastic (Costa's cloned Elastic on Spray with Alpha 16 for direction, j5XLtLMN0P8 00:52:22), never ClayBuildup, which erases what is under it. The alpha numbers are default alphas (`ZData/Alphas/Alpha 0NN.PSD`); Costa's and J Hill's custom brushes do not ship.
+`MOUTH_PX` is the mouth center on the aimed canvas (project the mouth landmark or the lips polygroup
+center with `region_on_canvas(...)["center_px"]` in the same view); `NECK_AXIS_DEG` is the neck's
+long axis on that canvas. Where the wrinkles came out too strong, paint them back with Morph-brush
+strokes (the morph target holds the pre-wrinkle state). Over this finished layer, further passes use
+Standard or Elastic (Costa's cloned Elastic on Spray with Alpha 16 for direction, j5XLtLMN0P8
+00:52:22), never ClayBuildup, which erases what is under it. The alpha numbers are default alphas
+(`ZData/Alphas/Alpha 0NN.PSD`); Costa's and J Hill's custom brushes do not ship.
 
 ## C11. Breakup without strokes and the mid-frequency lift
 
-Source: Mask By Cavity then a light Inflate pulls bony detail (Lazov AQsmWcXLxk8 00:25:21); mask groups of scales, blur, invert, blur, Inflate some scales out (Henning 00:30:02); beat up the skin at several sizes (J Hill 00:18:10). Test: `live_c02`.
+Source: Mask By Cavity then a light Inflate pulls bony detail (Lazov AQsmWcXLxk8 00:25:21); mask
+groups of scales, blur, invert, blur, Inflate some scales out (Henning 00:30:02); beat up the skin
+at several sizes (J Hill 00:18:10). Test: `live_c02`.
 
 ```python
 zc.call("masked_deform", "Inflate", 2, mask="cavity", blur=1)           # Lazov
@@ -420,13 +523,24 @@ zc.call("stamp", [b[0] for b in beat], brush="Standard", per_stroke=[(b[1], b[2]
 
 ## C12. Asymmetry pass, big forms first
 
-Source: FlippedNormals break symmetry already in the mid-frequency pass (G2o6fdoACIQ 00:06:19); J Hill's last 25 percent moves big forms: nose tip off the Z axis, one ear, the septum, a lip corner, one eye's scale (HlHoIGE2Ocs 00:29:42-00:30:47); asymmetry is "the only way" to likeness (Costa j5XLtLMN0P8 00:35:03); creatures: Store MT, push and pull freely, restore parts with the Morph brush, symmetry off (Lazov AQsmWcXLxk8 00:56:58), "asymmetry is the best thing for a creature" (00:58:04). Magnitudes are [added]. Run it twice: once on the big forms at the end of stage 4 (mid-frequency), once as the last-25-percent pass; scars, broken scales and chipped horns come after, on top. Test: `live_c04` (`mirror_deviation`), `live_c01` (StoreMT); offline `test_asymmetry_report_wants_big_forms`.
+Source: FlippedNormals break symmetry already in the mid-frequency pass (G2o6fdoACIQ 00:06:19); J
+Hill's last 25 percent moves big forms: nose tip off the Z axis, one ear, the septum, a lip corner,
+one eye's scale (HlHoIGE2Ocs 00:29:42-00:30:47); asymmetry is "the only way" to likeness (Costa
+j5XLtLMN0P8 00:35:03); creatures: Store MT, push and pull freely, restore parts with the Morph
+brush, symmetry off (Lazov AQsmWcXLxk8 00:56:58), "asymmetry is the best thing for a creature"
+(00:58:04). Magnitudes are [added]. Run it twice: once on the big forms at the end of stage 4
+(mid-frequency), once as the last-25-percent pass; scars, broken scales and chipped horns come
+after, on top. Test: `live_c04` (`mirror_deviation`), `live_c01` (StoreMT); offline
+`test_asymmetry_report_wants_big_forms`.
 
-Big forms by subject, as polygroups with a box in model units (from landmarks or the polygroup's bbox):
+Big forms by subject, as polygroups with a box in model units (from landmarks or the polygroup's
+bbox):
 
 - human head: nose tip and septum, one ear, one lip corner, one eye (scale), one brow;
-- creature head: skull mass on one side, one orbit rim, the jaw corner, one nostril, one horn's angle or length, one cheek plate;
-- figure: the weight-bearing side of the pelvis and ribcage, one shoulder (a posed figure is asymmetric from the start, Eaton).
+- creature head: skull mass on one side, one orbit rim, the jaw corner, one nostril, one horn's
+  angle or length, one cheek plate;
+- figure: the weight-bearing side of the pelvis and ribcage, one shoulder (a posed figure is
+  asymmetric from the start, Eaton).
 
 ```python
 obj0 = zl.call("zb_ops", "export_obj", f"{OUT}/asym_before.obj", overwrite=True)["path"]
@@ -452,11 +566,16 @@ if not rep["ok"]:
     print(rep["problems"])                              # move more big forms, not more scars
 ```
 
-The review sheet is the judge: the face or creature must still read as the same design, one side subtly different, and a likeness closer to the reference when there is one. Restore anything that went too far with Morph-brush strokes against the stored target (Lazov).
+The review sheet is the judge: the face or creature must still read as the same design, one side
+subtly different, and a likeness closer to the reference when there is one. Restore anything that
+went too far with Morph-brush strokes against the stored target (Lazov).
 
 ## C13. Cloth folds planned from tension points (Grassetti)
 
-Source: tension points marked first; Standard (Z 25) pushes drop folds in, Clay (Z 80) builds ridges and compression rolls, a big Move sags the edge; folds end in folds, are heavier near the tension, and get split after a Divide (gNx4v0WVVHo 00:00:31-00:08:47). Paths from `drop_folds` and friends [added geometry]. Test: `live_c02` (strokes), offline fold tests.
+Source: tension points marked first; Standard (Z 25) pushes drop folds in, Clay (Z 80) builds ridges
+and compression rolls, a big Move sags the edge; folds end in folds, are heavier near the tension,
+and get split after a Divide (gNx4v0WVVHo 00:00:31-00:08:47). Paths from `drop_folds` and friends
+[added geometry]. Test: `live_c02` (strokes), offline fold tests.
 
 ```python
 snap = zl.call("zb_review", "snapshot", f"{OUT}/cloth_canvas.png")      # plane at SDiv 2 to 4, front view
@@ -480,7 +599,9 @@ Measure on an OBJ height field if needed; judge under a raking light, from every
 
 ## C14. Dynamics drape, then a sculpt pass
 
-Source: collision volume of visible SubTools, Recalc after changes, iterations versus gravity for stretch, Firmness for fabric weight, Collision Inflate for the gap (Pavlovich m5O_sBag_iA, F7bcjQAK0Wc, nqoCyOME8Jo; Dynamics doc). Test: `live_c05`.
+Source: collision volume of visible SubTools, Recalc after changes, iterations versus gravity for
+stretch, Firmness for fabric weight, Collision Inflate for the gap (Pavlovich m5O_sBag_iA,
+F7bcjQAK0Wc, nqoCyOME8Jo; Dynamics doc). Test: `live_c05`.
 
 ```python
 subs = zl.call("zb_ops", "subtools")
@@ -497,11 +618,13 @@ if abs(sim["area_change_pct"]) > 5:                    # [added] tolerance
     print("stretch: raise iterations or lower gravity, rerun from the morph target")
 ```
 
-Then sculpt on a layer with C13 strokes: simulation "won't get you a hundred percent there" (Grassetti 00:12:06). Open colliders: close holes on a duplicate (`CHAR_PATHS["close_holes"]`).
+Then sculpt on a layer with C13 strokes: simulation "won't get you a hundred percent there"
+(Grassetti 00:12:06). Open colliders: close holes on a duplicate (`CHAR_PATHS["close_holes"]`).
 
 ## C15. Garment from the body: Mesh Extract
 
-Source: mask or hide the region, Extract, Accept, clear the mask on the source; Thick 0.01 cloth, 0.03 leather (Extract docs). Test: `live_c05`.
+Source: mask or hide the region, Extract, Accept, clear the mask on the source; Thick 0.01 cloth,
+0.03 leather (Extract docs). Test: `live_c05`.
 
 ```python
 # mask the garment region: MaskLasso polygon (C4 C, [verify]) or a feature mask
@@ -511,7 +634,10 @@ zl.call("zb_ops", "mask", "clear")                     # the doc: clear the mask
 
 ## C16. FiberMesh fur
 
-Source: groom or settings, not both; Max Fibers 11 and Segments 6 for creature fur; Fast Preview with PRE Vis 6 to 8; white fibers and a contrasting fill to see gaps (Pablo lgTA_ebLGDw 00:05:47-00:10:04); mask intensity drives density and length; Profile 1 (FiberMesh doc). Test: `live_c05`.
+Source: groom or settings, not both; Max Fibers 11 and Segments 6 for creature fur; Fast Preview
+with PRE Vis 6 to 8; white fibers and a contrasting fill to see gaps (Pablo lgTA_ebLGDw
+00:05:47-00:10:04); mask intensity drives density and length; Profile 1 (FiberMesh doc). Test:
+`live_c05`.
 
 ```python
 zc.call("mask_by", "cavity", blur=50)                  # or a polygroup region mask; blur softens edges
@@ -520,11 +646,20 @@ fm = zc.call("fibermesh_grow", preset="/Applications/Maxon ZBrush 2026/Lightbox/
 zl.call("zb_ops", "mask", "clear")
 ```
 
-Grooming is stroke work with Groom brushes (GroomHairToss and others ship); the programmatic substitute is a simulation with the roots masked by fibers (`mask_by("fibers")`, then C14 with Self Collision 1). Keep topology unchanged until grooming is done: a Divide converts the FiberMesh to a polymesh.
+Grooming is stroke work with Groom brushes (GroomHairToss and others ship); the programmatic
+substitute is a simulation with the roots masked by fibers (`mask_by("fibers")`, then C14 with Self
+Collision 1). Keep topology unchanged until grooming is done: a Divide converts the FiberMesh to a
+polymesh.
 
 ## C17. Horns, spikes and tusks: curves, straight detail, staged cracks
 
-Source: curve IMM with Stretch, curve Resolution 10, Size falloff flipped, Imbed 0 (Pablo TN9ARiC_82w 00:13:24-00:16:43); tube route: detail a straight tube with radial symmetry, odd counts layered 8, 5, 3 ("odd numbers in this case work a lot better"), keep a straight master and duplicate it per variant, decimate to 20 %, then Bend Curve and Taper (00:20:46-00:28:42); cracks on tusks and spikes in stages, main cracks first, small ones last, Clay brushes for a bone and rock feel with hard broken edges (Starkie, "Drake"). Decimation runs on a duplicate, never the master (Decimation doc; `rx.decimate_copy`). Test: `live_c06`; offline `test_crack_tree_stages_large_to_small`.
+Source: curve IMM with Stretch, curve Resolution 10, Size falloff flipped, Imbed 0 (Pablo
+TN9ARiC_82w 00:13:24-00:16:43); tube route: detail a straight tube with radial symmetry, odd counts
+layered 8, 5, 3 ("odd numbers in this case work a lot better"), keep a straight master and duplicate
+it per variant, decimate to 20 %, then Bend Curve and Taper (00:20:46-00:28:42); cracks on tusks and
+spikes in stages, main cracks first, small ones last, Clay brushes for a bone and rock feel with
+hard broken edges (Starkie, "Drake"). Decimation runs on a duplicate, never the master (Decimation
+doc; `rx.decimate_copy`). Test: `live_c06`; offline `test_crack_tree_stages_large_to_small`.
 
 ```python
 # curve route
@@ -550,11 +685,18 @@ d = rx.zcall("decimate_copy", percent=20, timeout=900)                   # a cop
 zl.call("zb_ops", "deform", "Twist", 20, axes=2)                          # then bend, taper, twist the copy
 ```
 
-Taper along a curve tube comes from the brush's Curve Modifiers Size curve, which has no SDK setter: save a tapered curve brush once (Brush > Save As) and select it by name. Decimation Master is a ZScript plugin: a scripted Pre-process ended the calling ZScript in a forum report, so run the copy's decimation as its own bridge call with a timeout [verify]. Orb Cracks do not ship; Dam_Standard, Slash3 and TrimDynamic stand in, selected through `select_brush` (`brush_check` lists what resolves).
+Taper along a curve tube comes from the brush's Curve Modifiers Size curve, which has no SDK setter:
+save a tapered curve brush once (Brush > Save As) and select it by name. Decimation Master is a
+ZScript plugin: a scripted Pre-process ended the calling ZScript in a forum report, so run the
+copy's decimation as its own bridge call with a timeout [verify]. Orb Cracks do not ship;
+Dam_Standard, Slash3 and TrimDynamic stand in, selected through `select_brush` (`brush_check` lists
+what resolves).
 
 ## C18. Landmark markers, eyes and world scale (Costa)
 
-Source: markers for measurement (A4S note [added]); head 229 mm, eyeball 24 mm, IPD 63 mm, eyes 3 to 10 degrees outward (Costa j5XLtLMN0P8 00:38:12). The insertion sequence is the shipped Append Eyes macro. Test: `live_c04`.
+Source: markers for measurement (A4S note [added]); head 229 mm, eyeball 24 mm, IPD 63 mm, eyes 3 to
+10 degrees outward (Costa j5XLtLMN0P8 00:38:12). The insertion sequence is the shipped Append Eyes
+macro. Test: `live_c04`.
 
 ```python
 H_units = 2.0                                          # measured head height in model units
@@ -571,13 +713,31 @@ for i in idx:
 print(zc.eye_report(eyes[0]["center"], eyes[1]["center"], 24 * mm, H_units))
 ```
 
-Rotating a plain sphere outward shows nothing; the divergence check matters once the eye has a modeled cornea or iris (or a painted one, scenario-zbrush-paint-render).
+Rotating a plain sphere outward shows nothing; the divergence check matters once the eye has a
+modeled cornea or iris (or a painted one, scenario-zbrush-paint-render).
 
 ## C19. Reprojection with danger zones protected, then the level walk
 
-Source: FlippedNormals (Zp07GW3rND0): at the highest level, Store MT, then a new Layer, then Project All, "both safety nets" before projecting (00:02:13, 00:02:47); PA Blur lowered; parts that sit close together grab the wrong surface (00:01:41), so keep a polygroup on the inside of the eye, grow it just past the lid, mask by it, then project (00:05:31-00:06:03); step through every level and toggle the layer (00:03:49); armpits, between the fingers, butt and crotch are the usual failures, and their artifacts become hard lines in displacement maps (00:07:10-00:07:43); repair with the Morph brush or a masked local reprojection, never by smoothing (00:06:36, 00:09:27); stop the concept sculpt before micro detail when retopology is coming (00:08:22). Generalized [added]: the danger zones are wherever two surfaces sit close, so a creature adds the gum line, lid folds over the eye, nostril interiors, horn bases, frills and toe webbing.
+Source: FlippedNormals (Zp07GW3rND0): at the highest level, Store MT, then a new Layer, then Project
+All, "both safety nets" before projecting (00:02:13, 00:02:47); PA Blur lowered; parts that sit
+close together grab the wrong surface (00:01:41), so keep a polygroup on the inside of the eye, grow
+it just past the lid, mask by it, then project (00:05:31-00:06:03); step through every level and
+toggle the layer (00:03:49); armpits, between the fingers, butt and crotch are the usual failures,
+and their artifacts become hard lines in displacement maps (00:07:10-00:07:43); repair with the
+Morph brush or a masked local reprojection, never by smoothing (00:06:36, 00:09:27); stop the
+concept sculpt before micro detail when retopology is coming (00:08:22). Generalized [added]: the
+danger zones are wherever two surfaces sit close, so a creature adds the gum line, lid folds over
+the eye, nostril interiors, horn bases, frills and toe webbing.
 
-The toolkit owns the projection: `zb_ops.project_all(checkpoint=..., store_mt=True, layer=True, exclusive=...)` saves a versioned ZTL first, stores the morph target and a new layer at the top level, sets Dist 0.1, and gates the result (point count, volume, a target reaching outside the visible bbox = spikes), with `zb_ops.morph_repair(points)` to paint busted areas back; `rx.project_stack` rebuilds a stack level by level. This procedure adds what is character-specific: the interior masks before, and a per-polygroup spike walk after, because a lid folded into the socket or a lip fused to a tooth stays inside the bbox and passes the lead's gate. Test: offline `test_spike_report`; the projection itself is tested by scenario-zbrush-expert (`live_06`) and scenario-zbrush-retopology-export.
+The toolkit owns the projection:
+`zb_ops.project_all(checkpoint=..., store_mt=True, layer=True, exclusive=...)` saves a versioned ZTL
+first, stores the morph target and a new layer at the top level, sets Dist 0.1, and gates the result
+(point count, volume, a target reaching outside the visible bbox = spikes), with
+`zb_ops.morph_repair(points)` to paint busted areas back; `rx.project_stack` rebuilds a stack level
+by level. This procedure adds what is character-specific: the interior masks before, and a
+per-polygroup spike walk after, because a lid folded into the socket or a lip fused to a tooth stays
+inside the bbox and passes the lead's gate. Test: offline `test_spike_report`; the projection itself
+is tested by scenario-zbrush-expert (`live_06`) and scenario-zbrush-retopology-export.
 
 ```python
 DANGER = ("eye_socket_L", "eye_socket_R", "mouth_bag", "nostril_L", "nostril_R")   # polygroups
@@ -622,11 +782,25 @@ for g in {gr for w in walk.values() for gr in w.get("per_group", {})}:
 zc.call("automask_polygroups", 0)
 ```
 
-Above a few million points per level, OBJ exports get heavy: walk the lower levels, compare the top only against `before`, and read the top level's danger zones on the close-ups. The stroke-free alternative to `morph_repair` is a local reprojection: mask the rest, invert, and Project All again on that region only (FlippedNormals 00:09:27). Never smooth a busted region. Then a sculpting pass to recover what projection lost (00:08:22). Gate: `pr["gate"]` ok with no "safety net missing" warning; `spike_report` ok at every level in every danger-zone group; the close-ups clean; `rx.projection_verdict` within its bbox and volume tolerances.
+Above a few million points per level, OBJ exports get heavy: walk the lower levels, compare the top
+only against `before`, and read the top level's danger zones on the close-ups. The stroke-free
+alternative to `morph_repair` is a local reprojection: mask the rest, invert, and Project All again
+on that region only (FlippedNormals 00:09:27). Never smooth a busted region. Then a sculpting pass
+to recover what projection lost (00:08:22). Gate: `pr["gate"]` ok with no "safety net missing"
+warning; `spike_report` ok at every level in every danger-zone group; the close-ups clean;
+`rx.projection_verdict` within its bbox and volume tolerances.
 
 ## C20. Handoff checks: SSS survival, map request, UDIM round trip
 
-Source: carve deeper than feels right, SSS eats sharpness (FlippedNormals 0PaYUUvgwYM 00:19:49-00:20:22); only the sharp detail survives in the SSS highlights (J Hill 00:34:53); Adaptive identical across maps meant to combine (HD doc); maps compare the chosen level with the top (AskZBrush 2zDAtaQqwh8 00:01:44); MME film values (Costa Lfen-BSwWcE frames 00:20:31-00:23:31: 8192, Border 4, FlipV, SubDiv 2, Adaptive, DPSubPix 4, SmoothUV, Mid 0, 32-bit EXR, 3 Channels off, Scale 1) or the FlippedNormals Arnold preset (Mid 0.5 with Scalar Zero Value 0.5, Adaptive off, DpSubPix 0, UDIM file names with a dot, Merge Maps off with EXR, OBJ Grp off, -ThBTEc8L_M 00:04:43-00:21:09); the external-UV round trip (Costa 00:22:17-00:23:59). Test: offline `test_detail_survival`, `test_map_request_check`.
+Source: carve deeper than feels right, SSS eats sharpness (FlippedNormals 0PaYUUvgwYM
+00:19:49-00:20:22); only the sharp detail survives in the SSS highlights (J Hill 00:34:53); Adaptive
+identical across maps meant to combine (HD doc); maps compare the chosen level with the top
+(AskZBrush 2zDAtaQqwh8 00:01:44); MME film values (Costa Lfen-BSwWcE frames 00:20:31-00:23:31: 8192,
+Border 4, FlipV, SubDiv 2, Adaptive, DPSubPix 4, SmoothUV, Mid 0, 32-bit EXR, 3 Channels off,
+Scale 1) or the FlippedNormals Arnold preset (Mid 0.5 with Scalar Zero Value 0.5, Adaptive off,
+DpSubPix 0, UDIM file names with a dot, Merge Maps off with EXR, OBJ Grp off, -ThBTEc8L_M
+00:04:43-00:21:09); the external-UV round trip (Costa 00:22:17-00:23:59). Test: offline
+`test_detail_survival`, `test_map_request_check`.
 
 ```python
 # 1. SSS survival: the same camera and crop, MatCap Gray against the Redshift SSS render
@@ -643,4 +817,10 @@ chk = zc.map_request_check(req)
 assert chk["ok"], chk["problems"]
 ```
 
-UVs relaid outside ZBrush after sculpting (a UDIM layout from Maya): delete old morph targets, go to the export level, Store MT, Switch, `Tool:Import` the relaid mesh, no Divide ("otherwise you'll ruin everything"), export with Switch MT on (Costa). FlippedNormals found Switch MT did nothing in their build (00:07:09): check the displacement for leaked big forms on a test tile [verify on 2026]. The receiving side (Maya File node UV Tiling Mode UDIM (Mari), Filter off, Catmull-Clark about 3 iterations, Scalar Zero Value = Mid) is in `rx.renderer_plan("arnold")`. For Painter, Substance Bridge (2026.2, Texture palette) sends Low and High directly.
+UVs relaid outside ZBrush after sculpting (a UDIM layout from Maya): delete old morph targets, go to
+the export level, Store MT, Switch, `Tool:Import` the relaid mesh, no Divide ("otherwise you'll ruin
+everything"), export with Switch MT on (Costa). FlippedNormals found Switch MT did nothing in their
+build (00:07:09): check the displacement for leaked big forms on a test tile [verify on 2026]. The
+receiving side (Maya File node UV Tiling Mode UDIM (Mari), Filter off, Catmull-Clark about 3
+iterations, Scalar Zero Value = Mid) is in `rx.renderer_plan("arnold")`. For Painter, Substance
+Bridge (2026.2, Texture palette) sends Low and High directly.

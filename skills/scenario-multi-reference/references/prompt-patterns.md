@@ -1,6 +1,10 @@
 # Kept prompts
 
-Each prompt below produced a kept result. Picture prompts ran on a multi-reference image editor with the cards as `referenceImages` in the numbered order; film prompts ran on an image-to-video model with the picture as first frame, 6 seconds, 720p, sound on. They are as run apart from American spelling, so they say WHO and WHERE (and once STAR and STAGE) for Main subject and Stage. Read each as a pattern for its medium, not a template to fill.
+Each prompt below produced a kept result. Picture prompts ran on a multi-reference image editor with
+the cards as `referenceImages` in the numbered order; film prompts ran on an image-to-video model
+with the picture as first frame, 6 seconds, 720p, sound on. They are as run apart from American
+spelling, so they say WHO and WHERE (and once STAR and STAGE) for Main subject and Stage. Read each
+as a pattern for its medium, not a template to fill.
 
 ## Grumpy toaster (claymation)
 

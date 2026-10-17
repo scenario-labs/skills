@@ -1,6 +1,8 @@
 # Sources behind scenario-maya-retopology-uv
 
-Per-source notes are in the project's `notes/` (never edited to fit this skill); saved documentation in `sources/docs/`; the version map in `sources/maya-version-deltas.md` (sections 2.1 and 2.2). Credentials are as stated in the notes; "unverified" is kept where the note says so.
+Per-source notes are in the project's `notes/` (never edited to fit this skill); saved documentation
+in `sources/docs/`; the version map in `sources/maya-version-deltas.md` (sections 2.1 and 2.2).
+Credentials are as stated in the notes; "unverified" is kept where the note says so.
 
 ## Core sources (notes/uv-retopology/)
 
@@ -27,15 +29,42 @@ Per-source notes are in the project's `notes/` (never edited to fit this skill);
 
 ## Toolkit and project files
 
-- `<skills>/scenario-maya-expert/scripts/mx_run.py`, `mx_audit.py`, `mx_review.py`: the lead's runner, mesh and UV audit, render sheets (this skill builds on them, see their docstrings).
-- `sources/maya-version-deltas.md` sections 2.1 and 2.2: 2027 facts (Unfold3D default, Retopologize, Flow Retopology, Quad Draw, Reduce vs Retopologize, Boolean Volume mode); section 2.3: Skin Tools layer traps, `dgaTension` (2026.3); section 2.5: Arnold `normal_map` MikkTSpace mode (MtoA 5.6.1.1).
-- `sources/docs/scripting-pipeline__whats-new-maya-2026.md`, Dynamic Geometry Attributes: `dgaTension` (stretch and squash against reference geometry, Edge and UV methods, ComponentTagExpression, output to `dgaVisualizer` or a deformer weight list), `dgaDelta`, `dgaVisualizer`, `dgaToArray`.
-- `notes/modeling/_digest_modeling_organic_base_mesh.md` (delta 1, 6, 7, 20, 22 to 26; procedure C; procedure D step 4), `notes/modeling/_digest_modeling_topology_hard_surface.md` (P7 step 5, the shear score), `notes/modeling/_digest_modeling_tools_scene_hygiene.md` (procedure F, silhouettes and bleed-through): the candidate gates behind P19 to P21.
-- Coordination: scenario-maya-deformation owns skinning, ROM files and correctives (its thresholds for collapse and section area are reused here so the two skills read a bend the same way); this skill owns topology diagnosis and the deformation-ready gate.
-- `tests/baseline/answers.md` M2 and `tests/scenarios.md` M2: the unskilled baseline this skill improves on; `tests/grading/M2_grade.md`: the blind grade whose "missing from both" list drove revision 2.
-- Sister skill used for ideas only: `../2026-09-24 Blender Expert Skills/skills/scenario-blender-retopology/SKILL.md` (map first as data, loop budgets, auto-remesh only for static assets); no Blender specifics were carried over.
+- `<skills>/scenario-maya-expert/scripts/mx_run.py`, `mx_audit.py`, `mx_review.py`: the lead's
+  runner, mesh and UV audit, render sheets (this skill builds on them, see their docstrings).
+- `sources/maya-version-deltas.md` sections 2.1 and 2.2: 2027 facts (Unfold3D default, Retopologize,
+  Flow Retopology, Quad Draw, Reduce vs Retopologize, Boolean Volume mode); section 2.3: Skin Tools
+  layer traps, `dgaTension` (2026.3); section 2.5: Arnold `normal_map` MikkTSpace mode (MtoA
+  5.6.1.1).
+- `sources/docs/scripting-pipeline__whats-new-maya-2026.md`, Dynamic Geometry Attributes:
+  `dgaTension` (stretch and squash against reference geometry, Edge and UV methods,
+  ComponentTagExpression, output to `dgaVisualizer` or a deformer weight list), `dgaDelta`,
+  `dgaVisualizer`, `dgaToArray`.
+- `notes/modeling/_digest_modeling_organic_base_mesh.md` (delta 1, 6, 7, 20, 22 to 26; procedure C;
+  procedure D step 4), `notes/modeling/_digest_modeling_topology_hard_surface.md` (P7 step 5, the
+  shear score), `notes/modeling/_digest_modeling_tools_scene_hygiene.md` (procedure F, silhouettes
+  and bleed-through): the candidate gates behind P19 to P21.
+- Coordination: scenario-maya-deformation owns skinning, ROM files and correctives (its thresholds
+  for collapse and section area are reused here so the two skills read a bend the same way); this
+  skill owns topology diagnosis and the deformation-ready gate.
+- `tests/baseline/answers.md` M2 and `tests/scenarios.md` M2: the unskilled baseline this skill
+  improves on; `tests/grading/M2_grade.md`: the blind grade whose "missing from both" list drove
+  revision 2.
+- Sister skill used for ideas only:
+  `../2026-09-24 Blender Expert Skills/skills/scenario-blender-retopology/SKILL.md` (map first as
+  data, loop budgets, auto-remesh only for static assets); no Blender specifics were carried over.
 
 ## Revision history
 
 - 2026-09-24, v1: initial build (snapshot in `skills/_versions/maya-retopology-uv v1 2026-09-24/`).
-- 2026-09-24, v2: refactor after the M2 blind grade. Added the deformation-ready gate (P19: proxy bends and twists, shear score, per-face area ratio, normal flips against the face's own rotation, joint loop and spiral checks, joint loop area against an ideal ring, modeler-vs-rigger verdict, face hinges, swap test, `dgaTension` probe, 2027 test-bind traps), lids over the real eyeballs with a clearance and blink check (P20), high-vs-low silhouette overlap (P21); big-to-small in template fits, neck flow along the sternocleidomastoid, loose garments as their own tubes, the Unfold3D triangulation trap, Boolean Volume and Remesh for broken sources, the tangent basis in the bake package. Fixed: Retopologize was offered for "bodies" and a baseless torso although the experts keep automatic topology off anything that animates; P2 claimed only Retopologize and Unfold3D need a manifold mesh and decimated the raw source (polyReduce on non-manifold input is unverified; it now decimates the prep copy). Offline: 99 pure and 40 fake-Maya checks pass; Maya jobs still not run.
+- 2026-09-24, v2: refactor after the M2 blind grade. Added the deformation-ready gate (P19: proxy
+  bends and twists, shear score, per-face area ratio, normal flips against the face's own rotation,
+  joint loop and spiral checks, joint loop area against an ideal ring, modeler-vs-rigger verdict,
+  face hinges, swap test, `dgaTension` probe, 2027 test-bind traps), lids over the real eyeballs
+  with a clearance and blink check (P20), high-vs-low silhouette overlap (P21); big-to-small in
+  template fits, neck flow along the sternocleidomastoid, loose garments as their own tubes, the
+  Unfold3D triangulation trap, Boolean Volume and Remesh for broken sources, the tangent basis in
+  the bake package. Fixed: Retopologize was offered for "bodies" and a baseless torso although the
+  experts keep automatic topology off anything that animates; P2 claimed only Retopologize and
+  Unfold3D need a manifold mesh and decimated the raw source (polyReduce on non-manifold input is
+  unverified; it now decimates the prep copy). Offline: 99 pure and 40 fake-Maya checks pass; Maya
+  jobs still not run.

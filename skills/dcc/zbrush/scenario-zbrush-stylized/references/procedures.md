@@ -1,8 +1,17 @@
 # scenario-zbrush-stylized procedures (bridge code)
 
-Every procedure runs on the agent side (system python3 with numpy and PIL) and reaches ZBrush through the proven bridge: `zb_stylized.call(func, ...)` for this module's ZBrush-side functions, `zb_launch.call(module, func, ...)` for the scenario-zbrush-expert toolkit. Coordinates are OBJ-export space (+Y up, +Z toward the front camera, measured on the v03 sphere). The SDK curve API takes tool space; `curve_convention.json` (written by live_01) holds the mapping.
+Every procedure runs on the agent side (system python3 with numpy and PIL) and reaches ZBrush
+through the proven bridge: `zb_stylized.call(func, ...)` for this module's ZBrush-side functions,
+`zb_launch.call(module, func, ...)` for the scenario-zbrush-expert toolkit. Coordinates are
+OBJ-export space (+Y up, +Z toward the front camera, measured on the v03 sphere). The SDK curve API
+takes tool space; `curve_convention.json` (written by live_01) holds the mapping.
 
-**Status of everything below: not yet run in ZBrush.** The pure functions (proportions, head taper, silhouettes, curves, planning, reports, toy numbers, DynaMesh factor, the call builder) pass offline: `python3 tests/code/zbrush-stylized/run_offline.py` (43 tests, 2026-09-24 after the round 1 refactor, results in `offline_results.json`). The ZBrush-side functions pass against a fake `zbrush.commands` only; the live tests that will prove them are named per procedure. Only one agent drives ZBrush at a time.
+**Status of everything below: not yet run in ZBrush.** The pure functions (proportions, head taper,
+silhouettes, curves, planning, reports, toy numbers, DynaMesh factor, the call builder) pass
+offline: `python3 tests/code/zbrush-stylized/run_offline.py` (43 tests, 2026-09-24 after the round 1
+refactor, results in `offline_results.json`). The ZBrush-side functions pass against a fake
+`zbrush.commands` only; the live tests that will prove them are named per procedure. Only one agent
+drives ZBrush at a time.
 
 ```python
 # common prelude for every procedure (agent side)
@@ -16,17 +25,25 @@ zl.start()                                    # ZBrush with the bridge (scenario
 
 ## P0. Measure the curve convention once (live_01)
 
-Why: Maxon's lightning example says the tube shows only after a curve is moved "a tiny bit", and curve points live in tool space. Until live_01 has run, `lay_strands` uses the hypothesis `axes [1, 1, 1]`, `apply "nudge"`, `batch True`.
+Why: Maxon's lightning example says the tube shows only after a curve is moved "a tiny bit", and
+curve points live in tool space. Until live_01 has run, `lay_strands` uses the hypothesis
+`axes [1, 1, 1]`, `apply "nudge"`, `batch True`.
 
 ```bash
 tests/code/zbrush-stylized/run_live.sh live_01_curves # writes scripts/curve_convention.json
 ```
 
-It records: which curve and ClayPolish paths exist (`probe_paths`), whether query bboxes equal OBJ bboxes, whether `curves_to_ui` alone builds geometry, which apply (nudge, tap, `create_mesh_from_curves`) and which axis signs put the tube on the planned path, tube radius per Draw Size pixel, which end Curve Modifiers > Size thickens, Brush Modifier 4, one apply for three curves, and whether the insert masks the support mesh. Test: `tests/code/zbrush-stylized/live_01_curves.py`.
+It records: which curve and ClayPolish paths exist (`probe_paths`), whether query bboxes equal OBJ
+bboxes, whether `curves_to_ui` alone builds geometry, which apply (nudge, tap,
+`create_mesh_from_curves`) and which axis signs put the tube on the planned path, tube radius per
+Draw Size pixel, which end Curve Modifiers > Size thickens, Brush Modifier 4, one apply for three
+curves, and whether the insert masks the support mesh. Test:
+`tests/code/zbrush-stylized/live_01_curves.py`.
 
 ## P1. Proportion sheet and landmark checks (Shane Olson, Anatomy For Sculptors)
 
-Build the primitives with scenario-zbrush-sculpting; keep one SubTool per mass and write down which index is which role (renaming needs a text prompt the API cannot fill).
+Build the primitives with scenario-zbrush-sculpting; keep one SubTool per mass and write down which
+index is which role (renaming needs a text prompt the API cannot fill).
 
 ```python
 boxes = zs.call("subtool_boxes")                     # [{index, id, bbox, center, size}]
@@ -42,9 +59,14 @@ body = zs.body_checks({"hip": ..., "knee": ..., "ankle": ..., "fingertip": ...},
 print(zs.split_check("scarf band on the neck", neck_bottom_y, chin_y, scarf_mid_y))
 ```
 
-Gate: `summarize()["ok"]` or every failure turned into a deliberate target with a reason. Perspective off first: `zb_ops.resolve(zs.PATHS["persp"])` tries `Draw:Perspective` first, the installed id (commands.xml has no `Transform:Persp`). Test: `live_03_strands_and_measure.py` part B (boxes), offline `ProportionTest`.
+Gate: `summarize()["ok"]` or every failure turned into a deliberate target with a reason.
+Perspective off first: `zb_ops.resolve(zs.PATHS["persp"])` tries `Draw:Perspective` first, the
+installed id (commands.xml has no `Transform:Persp`). Test: `live_03_strands_and_measure.py` part B
+(boxes), offline `ProportionTest`.
 
-**Head sides (Shane Olson t_gg7MIGSDM 02:00:26 to 02:00:59, 02:11:58).** Seen from the top, the side of the head is not straight: clip the cranium sides so the head planes taper toward the face, then pull the back out and keep each side an arc. Measure on a top render of the cranium alone:
+**Head sides (Shane Olson t_gg7MIGSDM 02:00:26 to 02:00:59, 02:11:58).** Seen from the top, the side
+of the head is not straight: clip the cranium sides so the head planes taper toward the face, then
+pull the back out and keep each side an arc. Measure on a top render of the cranium alone:
 
 ```python
 zl.run(f"zbc.select_subtool({role['cranium']}); zbc.set(zb_ops.resolve(['Transform:Solo']), 1); result = 1",
@@ -55,9 +77,19 @@ ht = zs.head_taper(top["views"][0]["path"], face=FACE_SIDE)   # "top" or "bottom
 print(ht["taper"], ht["arc"], ht["flags"])
 ```
 
-A plain sphere fails the taper (sides parallel); a hard clip passes the taper and fails the arc; the goal passes both. Routes to the taper, all [verify]: Deformation Taper on the cranium SubTool (`zl.call("zb_ops", "deform", "Taper", 30, 4)`, axis bit and sign measured by live_04), or a two-point ClipCurve stroke across each side in the orthographic top view (`zb_ops.select_brush("ClipCurve")`, then `zb_stroke.play` with the two canvas points), then a Move or ClayBuildup pass (scenario-zbrush-sculpting) for the arc. `FACE_SIDE`: which image side the face is on in the top view, recorded by live_04 (zb_stroke's top view convention is [verify live_04 of scenario-zbrush-expert]). Thresholds (taper 0.95, sag 0.01 of depth) are [added]: calibrate on reference heads.
+A plain sphere fails the taper (sides parallel); a hard clip passes the taper and fails the arc; the
+goal passes both. Routes to the taper, all [verify]: Deformation Taper on the cranium SubTool
+(`zl.call("zb_ops", "deform", "Taper", 30, 4)`, axis bit and sign measured by live_04), or a
+two-point ClipCurve stroke across each side in the orthographic top view
+(`zb_ops.select_brush("ClipCurve")`, then `zb_stroke.play` with the two canvas points), then a Move
+or ClayBuildup pass (scenario-zbrush-sculpting) for the arc. `FACE_SIDE`: which image side the face
+is on in the top view, recorded by live_04 (zb_stroke's top view convention is [verify live_04 of
+scenario-zbrush-expert]). Thresholds (taper 0.95, sag 0.01 of depth) are [added]: calibrate on
+reference heads.
 
-**Eyes.** Eyeball spheres first, lids that wrap them, each eye turned a few degrees outward: scenario-zbrush-sculpting P17 (Henning, Costa). Then Shane's canthus rule (`canthus_recess` from the top) and a three-quarter perspective look for the sockets (P9).
+**Eyes.** Eyeball spheres first, lids that wrap them, each eye turned a few degrees outward:
+scenario-zbrush-sculpting P17 (Henning, Costa). Then Shane's canthus rule (`canthus_recess` from the
+top) and a three-quarter perspective look for the sockets (P9).
 
 ## P2. Silhouette and shape-language gates (Rakan Khamash, Cedric Seaut, Guillaume Tiberghien)
 
@@ -75,7 +107,10 @@ print(zs.value_check(front, focus_box=[430, 180, 700, 420]))   # after polypaint
 metal = zb_review.review("/abs/out/stage3_metal", matcap="MatCap Metal01")   # dips (Plouffe)
 ```
 
-Gate (defaults [added], calibrate on references): no flags, straight fraction at most 0.25, no parallel pairs, noise at most 4 per 1000 px, no main break in 0.45 to 0.55, lineup IoU under 0.85, and the agent's own look at the sheet, the annotated contour and the squint. Test: `live_03` part D; offline `SilhouetteTest`.
+Gate (defaults [added], calibrate on references): no flags, straight fraction at most 0.25, no
+parallel pairs, noise at most 4 per 1000 px, no main break in 0.45 to 0.55, lineup IoU under 0.85,
+and the agent's own look at the sheet, the annotated contour and the squint. Test: `live_03` part D;
+offline `SilhouetteTest`.
 
 ## P3. Scalp shell and chunk plan (Pablo Munoz Gomez, Dan Eder)
 
@@ -106,7 +141,9 @@ for shot in cap["views"]:
     zs.overlay_paths(shot["path"], px, shot["path"].replace(".png", "_plan.png"))  # look at it
 ```
 
-The face side of a closed shell is cut with a Move stroke pushing the hairline back from the side view (Pablo [00:10:15]) through `stroke_from_view` with `brush="Move"`. Gate: plan overlays read as the hairstyle, the back is planned too, no parallel neighbors. Test: `live_02_sculpted_hair.py`.
+The face side of a closed shell is cut with a Move stroke pushing the hairline back from the side
+view (Pablo [00:10:15]) through `stroke_from_view` with `brush="Move"`. Gate: plan overlays read as
+the hairstyle, the back is planned too, no parallel neighbors. Test: `live_02_sculpted_hair.py`.
 
 ## P4. Sculpted stylized hair (Pablo Munoz Gomez)
 
@@ -136,7 +173,13 @@ fin = zs.call("finish_hair", res, 2, True,
 zb_review.review("/abs/out/hair_final")                # plus MatCap Metal01 and squint
 ```
 
-Pablo's custom brushes (Surface Blocking, Standard Blocking, Standard Refiner) do not ship; his own substitutes are ClayBuildup or ClayTubes, Standard with more intensity, and Dam_Standard [00:01:43]. Brush sizes and intensities above are starting values [added]; his frame readouts belong to his brushes. Views other than front follow zb_stroke's camera convention [verify live_04 of scenario-zbrush-expert]. Gate: the hair reads at a squint, crevices deep enough to read as strands, calm areas remain, crisp stepped edges after ClayPolish, hairline attachment. Test: `live_02_sculpted_hair.py`.
+Pablo's custom brushes (Surface Blocking, Standard Blocking, Standard Refiner) do not ship; his own
+substitutes are ClayBuildup or ClayTubes, Standard with more intensity, and Dam_Standard [00:01:43].
+Brush sizes and intensities above are starting values [added]; his frame readouts belong to his
+brushes. Views other than front follow zb_stroke's camera convention [verify live_04 of
+scenario-zbrush-expert]. Gate: the hair reads at a squint, crevices deep enough to read as strands,
+calm areas remain, crisp stepped edges after ClayPolish, hairline attachment. Test:
+`live_02_sculpted_hair.py`.
 
 ## P5. Strand hair (Dan Eder), for games and rigged hair
 
@@ -163,9 +206,17 @@ print(rep["strands"], rep["faces_per_strand"], rep["tris_equiv"])        # budge
 zl.run("zbc.press(zb_ops.resolve('mirror_weld')); result = 1", modules=("zb_ops",))  # parted style
 ```
 
-Rules: set Curve Step before the first strand (`curve_step=`), build front to back, never Smooth; to change a strand, regenerate its path and re-lay it [added]. Taper: Curve Modifiers > Size (`taper=True`); which end is thick is measured by live_01 (`thick_end`), and point order picks the root. Dan mirrors with SubTool Master (keeps polygroups); Mirror And Weld is the scripted substitute [verify it keeps groups]. Gate: strands equals the plan count, dummy at most one shell, faces per strand within budget and no thin strands, no gaps or clipping under two MatCaps, parting clean from the top. Test: `live_03_strands_and_measure.py` part A.
+Rules: set Curve Step before the first strand (`curve_step=`), build front to back, never Smooth; to
+change a strand, regenerate its path and re-lay it [added]. Taper: Curve Modifiers > Size
+(`taper=True`); which end is thick is measured by live_01 (`thick_end`), and point order picks the
+root. Dan mirrors with SubTool Master (keeps polygroups); Mirror And Weld is the scripted substitute
+[verify it keeps groups]. Gate: strands equals the plan count, dummy at most one shell, faces per
+strand within budget and no thin strands, no gaps or clipping under two MatCaps, parting clean from
+the top. Test: `live_03_strands_and_measure.py` part A.
 
-Braids (Dan [00:40:19]): crease loops on each plait (ZModeler: GUI only) or use polygroup borders, Stroke > Curve Functions > Frame Mesh (`zs.PATHS["frame_mesh"]`), tube brush, one tap on a curve, lower Brush > Depth Imbed. Not scripted here: every step is [verify].
+Braids (Dan [00:40:19]): crease loops on each plait (ZModeler: GUI only) or use polygroup borders,
+Stroke > Curve Functions > Frame Mesh (`zs.PATHS["frame_mesh"]`), tube brush, one tap on a curve,
+lower Brush > Depth Imbed. Not scripted here: every step is [verify].
 
 ## P6. Scarf tails and straps as curve ribbons (Pavlovich, Rakan)
 
@@ -178,7 +229,11 @@ print(zs.strand_report(tails)["parallel_pairs"])      # tails must not run paral
 zs.call("lay_strands", [t["path"] for t in tails], brush="CurveTube", size=40, sides=0)
 ```
 
-Two tails of different length (0.8 and 0.55) keep the 70/30 idea [added application]. `sides=0` is Curve Flat per Pavlovich (Brush Modifier 0); `sides=4` plus lower Z Intensity is the strap. Folds come from pressure points, not noise (Rakan). Gate: each tail reads S or C in the front view (`classify_polyline` on the projected pixels). Test: covered by live_01 (sides) and live_02 (tubes); no dedicated live test yet.
+Two tails of different length (0.8 and 0.55) keep the 70/30 idea [added application]. `sides=0` is
+Curve Flat per Pavlovich (Brush Modifier 0); `sides=4` plus lower Z Intensity is the strap. Folds
+come from pressure points, not noise (Rakan). Gate: each tail reads S or C in the front view
+(`classify_polyline` on the projected pixels). Test: covered by live_01 (sides) and live_02 (tubes);
+no dedicated live test yet.
 
 ## P7. Toy and collectible numbers (Paul Bennett, Alex Carratala)
 
@@ -189,7 +244,10 @@ print(zs.feature_check({"flyaway strand": (0.012, "wall"), "scarf tail": (0.02, 
                         "trimmed hair edge": (0.007, "edge")}, mmpu))
 ```
 
-Then hand to scenario-zbrush-pose-print: part plan (hair keyed to the head, joints as spheres and discs where anatomy puts them, costume pulled over the joint), the scale factor and the file percentage. Gate: every feature at or above 1 mm (walls) and 0.5 mm (trimmed edges), no closed loops, nothing detailed below what the print size shows. Test: offline `ToyAndDynaMeshTest`.
+Then hand to scenario-zbrush-pose-print: part plan (hair keyed to the head, joints as spheres and
+discs where anatomy puts them, costume pulled over the joint), the scale factor and the file
+percentage. Gate: every feature at or above 1 mm (walls) and 0.5 mm (trimmed edges), no closed
+loops, nothing detailed below what the print size shows. Test: offline `ToyAndDynaMeshTest`.
 
 ## P8. DynaMesh resolution from the finest feature
 
@@ -199,7 +257,9 @@ res = zs.dynamesh_resolution(L, finest_feature=crevice_width, edges_across=4)
 print(zs.dynamesh_edge(L, res))                        # expected mean edge
 ```
 
-The factor 1.083 comes from one measured sample (v03 sphere, 128); live_03 part C measures 256. Pablo reads the picker and goes "a little bit higher" [00:33:52]. Test: offline `test_dynamesh_factor_reproduces_the_fixture`, live `live_03` part C.
+The factor 1.083 comes from one measured sample (v03 sphere, 128); live_03 part C measures 256.
+Pablo reads the picker and goes "a little bit higher" [00:33:52]. Test: offline
+`test_dynamesh_factor_reproduces_the_fixture`, live `live_03` part C.
 
 ## P9. Planes kept through subdivision, and the perspective look (Guillaume Tiberghien, Shane Olson)
 
@@ -215,7 +275,19 @@ look = zl.run(zb_sculpt.persp_snapshot_code("/abs/out/look_34.png", "threequarte
               modules=("zb_ops", "zb_stroke"))                           # perspective on, restored after
 ```
 
-Guillaume builds each part from SubTools, DynaMeshes them together, ZRemeshes for a topology he can sculpt on, and creases his edges "to make sure that when I'll subdivide those things will remain straight" (UthCuDB1IEQ 00:46:42 to 00:47:50). Crease tags protect edges from smoothing when the mesh is subdivided; CreaseLvl sets for how many levels they stay hard; Crease PG creases every polygroup border (Geometry doc). So the order is: DynaMesh, planes, ZRemesher, creases, Divide. A DynaMesh or ZRemesher after creasing rebuilds the topology, so crease again [added]. `max_angle` (Groups By Normals MaxAngle) decides which plane changes become borders: Pavlovich's 90 behaves like Auto Groups on a cylinder, about 48 splits caps from sides (5JM1fb7wnTM 00:02:30); pick it by looking at the PolyFrame groups [added]. ZRemesher Keep Creases uses existing creases to guide the new topology (ZRemesher doc) when a creased mesh is remeshed again. Work the divided stack by level (scenario-zbrush-sculpting P15). `zb_sculpt` is the scenario-zbrush-sculpting module (imported in the prelude); the look render is for appeal and eye sockets only, never measured. Test: `live_04_head_planes.py` (parts B and C); offline `test_crease_planes_order_on_the_base_level`.
+Guillaume builds each part from SubTools, DynaMeshes them together, ZRemeshes for a topology he can
+sculpt on, and creases his edges "to make sure that when I'll subdivide those things will remain
+straight" (UthCuDB1IEQ 00:46:42 to 00:47:50). Crease tags protect edges from smoothing when the mesh
+is subdivided; CreaseLvl sets for how many levels they stay hard; Crease PG creases every polygroup
+border (Geometry doc). So the order is: DynaMesh, planes, ZRemesher, creases, Divide. A DynaMesh or
+ZRemesher after creasing rebuilds the topology, so crease again [added]. `max_angle` (Groups By
+Normals MaxAngle) decides which plane changes become borders: Pavlovich's 90 behaves like Auto
+Groups on a cylinder, about 48 splits caps from sides (5JM1fb7wnTM 00:02:30); pick it by looking at
+the PolyFrame groups [added]. ZRemesher Keep Creases uses existing creases to guide the new topology
+(ZRemesher doc) when a creased mesh is remeshed again. Work the divided stack by level
+(scenario-zbrush-sculpting P15). `zb_sculpt` is the scenario-zbrush-sculpting module (imported in
+the prelude); the look render is for appeal and eye sockets only, never measured. Test:
+`live_04_head_planes.py` (parts B and C); offline `test_crease_planes_order_on_the_base_level`.
 
 ## Function map
 

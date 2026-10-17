@@ -1,6 +1,9 @@
 # Procedures (maya.cmds and mx_anim), with their tests
 
-The pure-Python parts of `mx_anim` (physics, analysis, gates, images, lip timing) **ran offline** with python3 3.14 in `test_mx_anim_offline.py` (101 hard checks passed on 2026-09-24 after the body-mechanics refactor; logs in `tests/code/maya-animation/logs/`). Run `test_00_anim_probe.py` first once Maya is in: it answers every [verify] below.
+The pure-Python parts of `mx_anim` (physics, analysis, gates, images, lip timing) **ran offline**
+with python3 3.14 in `test_mx_anim_offline.py` (101 hard checks passed on 2026-09-24 after the
+body-mechanics refactor; logs in `tests/code/maya-animation/logs/`). Run `test_00_anim_probe.py`
+first once Maya is in: it answers every [verify] below.
 
 Import, in mayapy, a mx_run job or the GUI bridge:
 
@@ -11,37 +14,59 @@ import maya.cmds as cmds
 import mx_anim as A
 ```
 
-Headless job: `python3 <project>/skills/scenario-maya-expert/scripts/mx_run.py --scene shot_v003.ma job.py -- args` (see scenario-maya-expert). GUI: `mx_bridge.Bridge().run(code)`; playblasts only there.
+Headless job:
+`python3 <project>/skills/scenario-maya-expert/scripts/mx_run.py --scene shot_v003.ma job.py -- args`
+(see scenario-maya-expert). GUI: `mx_bridge.Bridge().run(code)`; playblasts only there.
 
 ## P0. mx_anim API (one line each; docstrings carry the details)
 
 Pure (no Maya, offline-tested):
 
-- `gravity_per_frame(fps, unit)` 1.703 cm/frame^2 at 24; `air_frames(rise, drop)`; `solve_jump(y0, y1, frames)`; `parabola_values(t0, t1, y0, y1)`.
-- `motion_report(points, frames, contacts=)` spacing, holds, moves, pops (local outliers), sharp turns, constant spacing; `format_report()`.
-- `ballistic_fit(heights, frames)` g_ratio, apex, hang excess; `landing_catch(heights, frames, contact)` catch, overshoots, `bottom_hold` (frames held at the deepest compression).
-- `contact_spans(heights, frames, ground, offset=)`, `foot_slide()`, `penetration()`; ground may be `[[start, end, height]]`.
-- `foot_pitch(heel, toe)` heel-to-toe pitch per frame (foot roll seen from the joints); `foot_events(spans, frames, heel, ball, tip=)` touch-downs with frames to flat, lift-offs; `peel_angle(ball, toe, takeoff)` degrees between the toe line and the takeoff spot.
-- `curve_diff(before, after, ignore=)` what a keying pass changed (keys, tangent types and angles, sampled curve) outside the spans you meant to edit.
-- `lag_frames(a, b)`, `overlap_report(signals, chain)`, `peak_order(signals, frames)`, `holds()`, `dead_holds()`.
-- `pose_to_pose_tell(key_times)`, `tween_fractions(times, values)`, `extreme_indices()`, `double_beats()`, `overshoots()`, `hold_drift()`, `key_density()`.
-- `transitions()`, `blink_report()`, `jaw_report()`, `mouth_keys(phonemes)`, `audio_envelope(wav)`, `lip_lag(env, jaw)`.
+- `gravity_per_frame(fps, unit)` 1.703 cm/frame^2 at 24; `air_frames(rise, drop)`;
+  `solve_jump(y0, y1, frames)`; `parabola_values(t0, t1, y0, y1)`.
+- `motion_report(points, frames, contacts=)` spacing, holds, moves, pops (local outliers), sharp
+  turns, constant spacing; `format_report()`.
+- `ballistic_fit(heights, frames)` g_ratio, apex, hang excess;
+  `landing_catch(heights, frames, contact)` catch, overshoots, `bottom_hold` (frames held at the
+  deepest compression).
+- `contact_spans(heights, frames, ground, offset=)`, `foot_slide()`, `penetration()`; ground may be
+  `[[start, end, height]]`.
+- `foot_pitch(heel, toe)` heel-to-toe pitch per frame (foot roll seen from the joints);
+  `foot_events(spans, frames, heel, ball, tip=)` touch-downs with frames to flat, lift-offs;
+  `peel_angle(ball, toe, takeoff)` degrees between the toe line and the takeoff spot.
+- `curve_diff(before, after, ignore=)` what a keying pass changed (keys, tangent types and angles,
+  sampled curve) outside the spans you meant to edit.
+- `lag_frames(a, b)`, `overlap_report(signals, chain)`, `peak_order(signals, frames)`, `holds()`,
+  `dead_holds()`.
+- `pose_to_pose_tell(key_times)`, `tween_fractions(times, values)`, `extreme_indices()`,
+  `double_beats()`, `overshoots()`, `hold_drift()`, `key_density()`.
+- `transitions()`, `blink_report()`, `jaw_report()`, `mouth_keys(phonemes)`, `audio_envelope(wav)`,
+  `lip_lag(env, jaw)`.
 - `loop_seam()`, `rotation_flips()`, `cycle_speed()`; `project_point()`, `fit_view()`.
-- `curve_lanes_png(path, curves, keys, spans, marks)`, `tracks_png(path, tracks, frames, size, bones, pose_frames, image=)`, `Canvas`.
+- `curve_lanes_png(path, curves, keys, spans, marks)`,
+  `tracks_png(path, tracks, frames, size, bones, pose_frames, image=)`, `Canvas`.
 - `evaluate_gates(samples, plan)`, `format_gates()`.
 
 Maya:
 
-- keys: `set_key_defaults()`, `restore_key_defaults()`, `key_pose(pose, f, stepped, fill)`, `key_hold()`, `insert_key()`, `share_keys()`, `key_times()`, `plug_keys()`, `subframe_keys()`.
-- curves: `snapshot(nodes, attrs, samples=)`, `restore()`, `stepped_preview()`, `set_tangents()`, `to_spline()`, `break_tangent()`, `weighted_hang()`, `ballistic_keys()`, `cycle()`, `offset_keys()`, `retime()`, `snap_subframes()`, `scale_curve(node, attr, factor, pivot, time=)`, `copy_curve()`, `keep_extremes()`, `euler_filter()`.
-- sampling: `sample_matrices()`, `sample_world()`, `sample_attrs()`, `sample_curves()`, `camera_track()`.
+- keys: `set_key_defaults()`, `restore_key_defaults()`, `key_pose(pose, f, stepped, fill)`,
+  `key_hold()`, `insert_key()`, `share_keys()`, `key_times()`, `plug_keys()`, `subframe_keys()`.
+- curves: `snapshot(nodes, attrs, samples=)`, `restore()`, `stepped_preview()`, `set_tangents()`,
+  `to_spline()`, `break_tangent()`, `weighted_hang()`, `ballistic_keys()`, `cycle()`,
+  `offset_keys()`, `retime()`, `snap_subframes()`, `scale_curve(node, attr, factor, pivot, time=)`,
+  `copy_curve()`, `keep_extremes()`, `euler_filter()`.
+- sampling: `sample_matrices()`, `sample_world()`, `sample_attrs()`, `sample_curves()`,
+  `camera_track()`.
 - helpers: `cog_proxy()`, `proxy_boxes()`, `delete_helpers()`, `store_plan()`, `load_plan()`.
-- layers and mocap: `layer_audit()`, `layer_try()`, `layer_offset()`, `merge_layer()`, `bake_track()`.
-- review: `run_gates(plan)`, `review_images(plan, out)`, `playblast_pack(out, s, e, cameras)` (GUI), `main()` (mx_run CLI).
+- layers and mocap: `layer_audit()`, `layer_try()`, `layer_offset()`, `merge_layer()`,
+  `bake_track()`.
+- review: `run_gates(plan)`, `review_images(plan, out)`, `playblast_pack(out, s, e, cameras)` (GUI),
+  `main()` (mx_run CLI).
 
 ## P1. Shot setup and plan
 
-Tests: `test_00_anim_probe.py` (defaults), `test_sequencer_sound_blur.py` (sound, cameras), `test_sampling_contacts.py` (plan round trip).
+Tests: `test_00_anim_probe.py` (defaults), `test_sequencer_sound_blur.py` (sound, cameras),
+`test_sampling_contacts.py` (plan round trip).
 
 ```python
 cmds.currentUnit(time="film")                                   # 24 fps; games: "ntsc" 30, "ntscf" 60
@@ -63,9 +88,18 @@ plan = {"name": "M4 heavy jump", "range": [1, 72], "fps": 24, "style": "heavy", 
 A.store_plan(plan)                                               # network node mxAnim_plan, string attribute
 ```
 
-Plan fields read by `run_gates`: range, fps, style (heavy, realistic, cartoony, acting), stage (blocking, spline, polish), cog, feet [heel, ball, toe], ground, rest_frame or foot_offsets, air [takeoff, landing], push, crouch (one window or a list: every anticipation that goes down), impacts (every landing, default air[1]), foot_roll (rig plugs; without them the heel-to-toe pitch is read), spine (default chain[0]), chain, track, controls, camera, poses, bones. Map the rig's controls once with `cmds.listAttr(ctrl, keyable=True)`; the foot roll attribute name is rig-specific (the Animation Mentor rig has Foot Roll and Foot Break on the IK foot control, ynXadXE9UjU f_00045). A walk, a hop or a lift uses the same fields: the foot gates run on every touch-down and lift-off in the range.
+Plan fields read by `run_gates`: range, fps, style (heavy, realistic, cartoony, acting), stage
+(blocking, spline, polish), cog, feet [heel, ball, toe], ground, rest_frame or foot_offsets, air
+[takeoff, landing], push, crouch (one window or a list: every anticipation that goes down), impacts
+(every landing, default air[1]), foot_roll (rig plugs; without them the heel-to-toe pitch is read),
+spine (default chain[0]), chain, track, controls, camera, poses, bones. Map the rig's controls once
+with `cmds.listAttr(ctrl, keyable=True)`; the foot roll attribute name is rig-specific (the
+Animation Mentor rig has Foot Roll and Foot Break on the IK foot control, ynXadXE9UjU f_00045). A
+walk, a hop or a lift uses the same fields: the foot gates run on every touch-down and lift-off in
+the range.
 
-**Worked frame plan for M4** (a synthesis [added] built on Camporota's jump anatomy, Wade's resistance beat and Elver's catch; the gates were tuned on it offline):
+**Worked frame plan for M4** (a synthesis [added] built on Camporota's jump anatomy, Wade's
+resistance beat and Elver's catch; the gates were tuned on it offline):
 
 | Frames   | Phase                                                                                                                                                            | Rule                                                                                  |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -99,7 +133,13 @@ print(A.format_gates(pg))
 A.curve_lanes_png("/abs/out/proxy_curves.png", A.sample_curves([root], range(1, 73)), spans=[(33, 45, "air")])
 ```
 
-Cartoony option: fewer frames on takeoff and landing, `cmds.scaleKey(root, time=(24, 33), timeScale=0.75, timePivot=33)`, then `A.snap_subframes([root])`. Heavy: keep the gravity-true air (`A.ballistic_keys(root, "translateY", 33, 45)`). First passes overdo the anticipation (Camporota 00:03:46): after the proxy playblast, dial the crouch depth back without touching the takeoff, `A.scale_curve(root, "translateY", 0.8, pivot=96.0, time=(8, 27))`, re-run the gates (resistance and push_fastest must still pass), compare the two playblasts. Test: `test_keys.py` (range-limited scale_curve).
+Cartoony option: fewer frames on takeoff and landing,
+`cmds.scaleKey(root, time=(24, 33), timeScale=0.75, timePivot=33)`, then `A.snap_subframes([root])`.
+Heavy: keep the gravity-true air (`A.ballistic_keys(root, "translateY", 33, 45)`). First passes
+overdo the anticipation (Camporota 00:03:46): after the proxy playblast, dial the crouch depth back
+without touching the takeoff, `A.scale_curve(root, "translateY", 0.8, pivot=96.0, time=(8, 27))`,
+re-run the gates (resistance and push_fastest must still pass), compare the two playblasts. Test:
+`test_keys.py` (range-limited scale_curve).
 
 ## P3. Stepped blocking with key categories (Neistadt, Newman)
 
@@ -117,11 +157,18 @@ A.restore_key_defaults(prev)
 kt = A.key_times(ctrls)                        # check against the plan's key categories
 ```
 
-Pass order: main keys, anticipations, overshoots and follow-through, breakdowns, holds (GMTet6nd_iM 00:29:08). Crouch and landing poses carry the feet and spine: foot roll keyed on the IK foot control, the chest a frame behind the hips on the way down, the arms hanging (Camporota FA7fPB7qUhE 00:07:55, 00:08:28). Breakdowns favor a neighbor: set the value from `prev + (next - prev) * 0.7` or 0.3, never 0.5 (t-YsIXaPvEg 00:05:07; check with `A.tween_fractions`). Fast sections on ones (`A.key_density(times, speeds, frames)` flags gaps). Insert single keys with `A.insert_key(node, attr, f)`, never a bare `setKeyframe` on a shaped curve.
+Pass order: main keys, anticipations, overshoots and follow-through, breakdowns, holds (GMTet6nd_iM
+00:29:08). Crouch and landing poses carry the feet and spine: foot roll keyed on the IK foot
+control, the chest a frame behind the hips on the way down, the arms hanging (Camporota FA7fPB7qUhE
+00:07:55, 00:08:28). Breakdowns favor a neighbor: set the value from `prev + (next - prev) * 0.7` or
+0.3, never 0.5 (t-YsIXaPvEg 00:05:07; check with `A.tween_fractions`). Fast sections on ones
+(`A.key_density(times, speeds, frames)` flags gaps). Insert single keys with
+`A.insert_key(node, attr, f)`, never a bare `setKeyframe` on a shaped curve.
 
 ## P4. Spline readiness and spline pass 1 (the core)
 
-Tests: `test_keys.py` (snapshot and restore, to_spline through holds, stepped preview, ballistic keys, broken tangent), `test_m4_jump.py` (step 4).
+Tests: `test_keys.py` (snapshot and restore, to_spline through holds, stepped preview, ballistic
+keys, broken tangent), `test_m4_jump.py` (step 4).
 
 ```python
 snap = A.snapshot(ctrls)                                  # the buffer curve, JSON-serializable
@@ -137,7 +184,9 @@ if not res["ok"]:
     A.restore(snap)                                       # back to stepped, add poses (TIBzcsOt2FU 00:07:00)
 ```
 
-**Keys added after splining (breakdowns, contact fixes).** Native Set Key reshapes neighboring curves (Wade TMSpauVphNs 00:01:45; G49wexNmQ-Q 00:06:22). Insert, then prove nothing else moved. Test: `test_keys.py` (insert vs a bare key, a breakdown edit, all soft rows until 2027 answers).
+**Keys added after splining (breakdowns, contact fixes).** Native Set Key reshapes neighboring
+curves (Wade TMSpauVphNs 00:01:45; G49wexNmQ-Q 00:06:22). Insert, then prove nothing else moved.
+Test: `test_keys.py` (insert vs a bare key, a breakdown edit, all soft rows until 2027 answers).
 
 ```python
 fr = [45 + i * 0.25 for i in range(89)]                     # quarter frames 45..67 around the edit
@@ -150,9 +199,15 @@ if not d["ok"]:
     print(d["changed"], d["moved_samples"][:5])             # neighbors moved: lock them (fixed tangents) or restore(before)
 ```
 
-`ignore` is the new key's two segments (previous key to next key); only their interior is ignored, so the neighboring keys must not move. An insert on a weighted curve changes the neighbors' weights to keep the shape: weights are not compared [added].
+`ignore` is the new key's two segments (previous key to next key); only their interior is ignored,
+so the neighboring keys must not move. An insert on a weighted curve changes the neighbors' weights
+to keep the shape: weights are not compared [added].
 
-Tangent choice by stage: blocking step; core auto (2027 Auto Span family [verify token]); holds flat or plateau (Plateau keeps extremes on keys); planted feet flat, linear or clamped with equal values (Clamped fixes cycle slip, Maya 2027 Help); air per-frame keys or a flat apex; hard contact broken; eyes linear; face stepped until its pass. Heavy bodies: never `A.weighted_hang` (it adds hang beyond gravity; light or cartoony only).
+Tangent choice by stage: blocking step; core auto (2027 Auto Span family [verify token]); holds flat
+or plateau (Plateau keeps extremes on keys); planted feet flat, linear or clamped with equal values
+(Clamped fixes cycle slip, Maya 2027 Help); air per-frame keys or a flat apex; hard contact broken;
+eyes linear; face stepped until its pass. Heavy bodies: never `A.weighted_hang` (it adds hang beyond
+gravity; light or cartoony only).
 
 ## P5. Spline pass 2: overlap
 
@@ -168,13 +223,21 @@ print(A.overlap_report(spd, plan["chain"], mode="value"))
 print(A.pose_to_pose_tell(A.key_times(ctrls)))  # shared_fraction high = everything starts and stops together
 ```
 
-Correlated controls (three spine controls) move together first, offsets after (TIBzcsOt2FU 00:16:58). Force chains: `A.peak_order({"pelvis": ..., "shoulder": ..., "wrist": ...}, frames)` must come out core first (ZYKAMCZq2UI 00:07:39).
+Correlated controls (three spine controls) move together first, offsets after (TIBzcsOt2FU
+00:16:58). Force chains: `A.peak_order({"pelvis": ..., "shoulder": ..., "wrist": ...}, frames)` must
+come out core first (ZYKAMCZq2UI 00:07:39).
 
 ## P6. Gates and headless images (the agent's eyes without a viewport)
 
-Tests: `test_sampling_contacts.py`, `test_m4_jump.py` (step 6, CLI). Pure gate logic: `test_mx_anim_offline.py` (M4 good passes all 23 gates; floaty fails ballistic; a sliding foot fails slide_R; no resistance fails resistance; a frozen end warns moving_hold; feet flat in the crouch warn foot_roll; a chest locked to the hips warns spine_drag; a flat foot on the first airborne frame warns peel_off; heels 4 frames to flat warn heel_to_flat; a bounce out of the squash warns impact_hold, each without breaking another gate).
+Tests: `test_sampling_contacts.py`, `test_m4_jump.py` (step 6, CLI). Pure gate logic:
+`test_mx_anim_offline.py` (M4 good passes all 23 gates; floaty fails ballistic; a sliding foot fails
+slide_R; no resistance fails resistance; a frozen end warns moving_hold; feet flat in the crouch
+warn foot_roll; a chest locked to the hips warns spine_drag; a flat foot on the first airborne frame
+warns peel_off; heels 4 frames to flat warn heel_to_flat; a bounce out of the squash warns
+impact_hold, each without breaking another gate).
 
-Body-mechanics gates, for any jump, hop, landing or weight shift (the plan fields decide where they run):
+Body-mechanics gates, for any jump, hop, landing or weight shift (the plan fields decide where they
+run):
 
 | Gate                  | Reads                                                                        | Pass                                                  | Source                         |
 | --------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------ |
@@ -197,7 +260,10 @@ python3 <project>/skills/scenario-maya-expert/scripts/mx_run.py --scene /abs/sho
     <project>/skills/scenario-maya-animation/scripts/mx_anim.py -- --plan /abs/plan.json --out /abs/out/review_v003
 ```
 
-Open both PNGs with the image reader, every time. `tracks.png` draws a dot per frame (gaps are spacing) and gray-to-black stick figures at `plan["poses"]` (an onion skin). Without a camera it falls back to a schematic side view (`fit_view`). A trajectory can be drawn over any playblast frame: `A.tracks_png(out, tracks, frames, (1280, 720), image=frame_png)`.
+Open both PNGs with the image reader, every time. `tracks.png` draws a dot per frame (gaps are
+spacing) and gray-to-black stick figures at `plan["poses"]` (an onion skin). Without a camera it
+falls back to a schematic side view (`fit_view`). A trajectory can be drawn over any playblast
+frame: `A.tracks_png(out, tracks, frames, (1280, 720), image=frame_png)`.
 
 ## P7. GUI review pack (playblasts through the bridge)
 
@@ -215,11 +281,17 @@ result = pack
 """)
 ```
 
-Check the output: 72 PNGs per pass at 1280 x 720 (`mx_review.png_size`), then read them in time order (every 2nd frame for the first-view read, every frame on flagged ranges). The silhouette pass uses `displayLights="none"` [verify value]. Movie with sound for a human: `cmds.playblast(format="avfoundation" or "qt", sound="dlg", ...)` [verify macOS format names with `cmds.playblast(q=True, format=True)`]. Playblast defaults to half size: always pass `percent=100` and an explicit size.
+Check the output: 72 PNGs per pass at 1280 x 720 (`mx_review.png_size`), then read them in time
+order (every 2nd frame for the first-view read, every frame on flagged ranges). The silhouette pass
+uses `displayLights="none"` [verify value]. Movie with sound for a human:
+`cmds.playblast(format="avfoundation" or "qt", sound="dlg", ...)` [verify macOS format names with
+`cmds.playblast(q=True, format=True)`]. Playblast defaults to half size: always pass `percent=100`
+and an explicit size.
 
 ## P8. Walk cycle (Camporota) and game clip QA (Newman, Epic)
 
-Tests: `test_keys.py` (cycle, offsets keep the period), pure seam and speed in `test_mx_anim_offline.py`.
+Tests: `test_keys.py` (cycle, offsets keep the period), pure seam and speed in
+`test_mx_anim_offline.py`.
 
 ```python
 start, step = 1, 12
@@ -232,19 +304,32 @@ A.scale_curve("COG_ctrl", "translateY", 0.6, pivot=rest_y)       # too much boun
 A.offset_keys(["L_forearm_ctrl"], 1); A.offset_keys(["L_hand_ctrl"], 2); A.offset_keys(["head_ctrl"], 1)
 ```
 
-Checks: side shift peaks between pass and up; supporting hip up on pass and up (ynXadXE9UjU 00:11:27); heel to flat in about 1 frame; `A.loop_seam(pose_at(1), pose_at(25))`; for games `A.cycle_speed(root_track, frames)` equals the metric (cm/s), root at the origin on the first frame, in-place clips keep the root still, root motion only on the root and no root Z for walking content (UE 5.8). Bake the loop range before export so infinity becomes keys (`cmds.bakeResults(ctrls, time=(1, 25), simulation=False)` [verify]), then scenario-maya-pipeline-scripting.
+Checks: side shift peaks between pass and up; supporting hip up on pass and up (ynXadXE9UjU
+00:11:27); heel to flat in about 1 frame; `A.loop_seam(pose_at(1), pose_at(25))`; for games
+`A.cycle_speed(root_track, frames)` equals the metric (cm/s), root at the origin on the first frame,
+in-place clips keep the root still, root motion only on the root and no root Z for walking content
+(UE 5.8). Bake the loop range before export so infinity becomes keys
+(`cmds.bakeResults(ctrls, time=(1, 25), simulation=False)` [verify]), then
+scenario-maya-pipeline-scripting.
 
 ## P9. Heavy interaction beat (lift, throw, punch)
 
 Not yet run in Maya (keys as P3; gates pure and offline-tested).
 
-- Plan both numbers: object weight and strength (1 to 5) [added scale]; resistance frames grow with weight minus strength, overcome frames shrink with strength (ZYKAMCZq2UI 00:09:03, mapping [added]).
-- Resistance: contact, then 2+ frames where the object barely moves while the body loads (`A.holds()` on the object track); a tremble on a small additive layer, baked before polish (Elver 00:50:56).
-- Overcome: keys ordered back, shoulders, arms with 1-frame offsets; `A.peak_order()` core first; the object lags the hand in a throw (measure the hand-to-object distance along the motion); a punch leans in, then a short A to B.
+- Plan both numbers: object weight and strength (1 to 5) [added scale]; resistance frames grow with
+  weight minus strength, overcome frames shrink with strength (ZYKAMCZq2UI 00:09:03, mapping
+  [added]).
+- Resistance: contact, then 2+ frames where the object barely moves while the body loads
+  (`A.holds()` on the object track); a tremble on a small additive layer, baked before polish (Elver
+  00:50:56).
+- Overcome: keys ordered back, shoulders, arms with 1-frame offsets; `A.peak_order()` core first;
+  the object lags the hand in a throw (measure the hand-to-object distance along the motion); a
+  punch leans in, then a short A to B.
 
 ## P10. Lip sync passes (Santos, Wade, Lazare) and the face
 
-Tests: `test_sequencer_sound_blur.py` (sound node, muppet pass from `mouth_keys`, `jaw_report`, `lip_lag`), `test_keys.py` (`copy_curve`), pure in `test_mx_anim_offline.py`.
+Tests: `test_sequencer_sound_blur.py` (sound node, muppet pass from `mouth_keys`, `jaw_report`,
+`lip_lag`), `test_keys.py` (`copy_curve`), pure in `test_mx_anim_offline.py`.
 
 ```python
 phon = [("M", 12), ("AA1", 14), ("N", 18), ("IY1", 20), ("P", 26), ("OW1", 28)]   # onsets from a forced aligner [added]
@@ -261,7 +346,13 @@ print(A.lip_lag(env[:48], jv))                        # lag > 0: the mouth is la
 A.copy_curve("L_mouthCorner_ctrl", "translateY", "L_nostril_ctrl", value_scale=0.3, time_offset=1.0)   # connection
 ```
 
-Order: body, mask (eyes, brows), phrase pass, muppet (jaw only), big five (corners TX then TY, never TZ; top and bottom lip for M, B, P, F, V), polish (tongue first, teeth anchored, breath, connection). Global late fix (Lazare): `A.offset_keys(mouth_ctrls, -2)` or move the sound node 2 frames later. Eyes: `A.set_tangents(["eye_aim_ctrl"], "linear", "linear")`, darts of 2 frames between locked holds, checked with `A.transitions()`; blinks with `A.blink_report(lid, frames, closed=..., opened=...)` (closing frames under opening frames, first closing frame under half the travel). Keys stay stacked until the face polish (Santos 00:48:59).
+Order: body, mask (eyes, brows), phrase pass, muppet (jaw only), big five (corners TX then TY, never
+TZ; top and bottom lip for M, B, P, F, V), polish (tongue first, teeth anchored, breath,
+connection). Global late fix (Lazare): `A.offset_keys(mouth_ctrls, -2)` or move the sound node 2
+frames later. Eyes: `A.set_tangents(["eye_aim_ctrl"], "linear", "linear")`, darts of 2 frames
+between locked holds, checked with `A.transitions()`; blinks with
+`A.blink_report(lid, frames, closed=..., opened=...)` (closing frames under opening frames, first
+closing frame under half the travel). Keys stay stacked until the face polish (Santos 00:48:59).
 
 ## P11. Layer protocol and merge (Newman, Elver, doc)
 
@@ -275,7 +366,9 @@ print(A.layer_audit())                                       # layers, mode, mut
 info = A.merge_layer(lyr, 1, 72)                             # bakeResults onto the base layer, smart [verify], Euler filter
 ```
 
-Never block or clean on a layer; merge first (5RmqWjfU80s 00:07:24). An empty Override layer is muted until keyed (doc). Use Additive for offsets and timing, Override plus an IK handle with IK Blend 0, 0, 1 on linear keys to pin a mocap contact (doc: frames 0, 20, 27).
+Never block or clean on a layer; merge first (5RmqWjfU80s 00:07:24). An empty Override layer is
+muted until keyed (doc). Use Additive for offsets and timing, Override plus an IK handle with IK
+Blend 0, 0, 1 on linear keys to pin a mocap contact (doc: frames 0, 20, 27).
 
 ## P12. Mocap re-edit and a prop in the hand
 
@@ -287,11 +380,24 @@ cut = A.keep_extremes("L_elbow_ctrl", "rotateY", 120, 160)   # delete to extreme
 n = A.bake_track("knife_loc", "R_wrist_jnt", grab, release)  # constraint with offset over the held range only, baked
 ```
 
-Guard the performance: compare untouched joints with the raw capture (RMS of world tracks, `A.sample_world`); contacts must not move unless the note asks. Pops: `A.motion_report(track, frames)["spikes"]`, judged by eye before deleting (some wobbles are performance).
+Guard the performance: compare untouched joints with the raw capture (RMS of world tracks,
+`A.sample_world`); contacts must not move unless the note asks. Pops:
+`A.motion_report(track, frames)["spikes"]`, judged by eye before deleting (some wobbles are
+performance).
 
 ## P13. Retarget with HumanIK (outline) and the fallback
 
-Outline only: HumanIK scripting is MEL procedures shipped with `mayaHIK`, names unverified (the probe records `hikCreateCharacter`, `setCharacterObject`, `hikBakeCharacter`). Steps (Maya 2027 Help): definition for source and target, lock them; Character and Source menus; Custom Rig mapping (IK effectors T and R, FK R only, up vectors translation only, offsets zero), saved as XML; Retarget Specific attributes (Match Source off for a bigger target, Knee/Elbow Max Extension 50, Mass Center Compensation 80); bake from the HumanIK Bake menu; mute or delete layers on the Control rig. Fallback for matching skeletons: `parentConstraint(src, ctrl, maintainOffset=True)` per mapped pair from a matched T-pose, `bakeResults(simulation=True)`, delete constraints, `A.euler_filter` (same mechanics as `bake_track`, tested in `test_layers_mocap.py`). QA: stride ratio vs leg-length ratio (tiny steps), no knee or elbow snapping at full extension, hips between the feet, `A.foot_slide` on contacts.
+Outline only: HumanIK scripting is MEL procedures shipped with `mayaHIK`, names unverified (the
+probe records `hikCreateCharacter`, `setCharacterObject`, `hikBakeCharacter`). Steps (Maya 2027
+Help): definition for source and target, lock them; Character and Source menus; Custom Rig mapping
+(IK effectors T and R, FK R only, up vectors translation only, offsets zero), saved as XML; Retarget
+Specific attributes (Match Source off for a bigger target, Knee/Elbow Max Extension 50, Mass Center
+Compensation 80); bake from the HumanIK Bake menu; mute or delete layers on the Control rig.
+Fallback for matching skeletons: `parentConstraint(src, ctrl, maintainOffset=True)` per mapped pair
+from a matched T-pose, `bakeResults(simulation=True)`, delete constraints, `A.euler_filter` (same
+mechanics as `bake_track`, tested in `test_layers_mocap.py`). QA: stride ratio vs leg-length ratio
+(tiny steps), no knee or elbow snapping at full extension, hips between the feet, `A.foot_slide` on
+contacts.
 
 ## P14. Retime a section and snap sub-frames (Elver, Wade)
 
@@ -313,7 +419,10 @@ cmds.file(rename="/abs/out/blur_review_v001.ma"); cmds.file(save=True, type="may
 cmds.shot("shot010", startTime=1, endTime=34, sequenceStartTime=1, sequenceEndTime=34, currentCamera="cam1")  # [verify]
 ```
 
-Look at the blurred frames around fast moves and contacts: two keys on adjacent frames with a big jump blur badly; a half-frame key (`cmds.setKeyframe(ctrl, time=42.5)`) fixes it (00:39:35). Render settings beyond this belong to scenario-maya-lighting-rendering. Sequencer checks: every shot has a camera, cameras locked, shots contiguous per track, scaled shots listed.
+Look at the blurred frames around fast moves and contacts: two keys on adjacent frames with a big
+jump blur badly; a half-frame key (`cmds.setKeyframe(ctrl, time=42.5)`) fixes it (00:39:35). Render
+settings beyond this belong to scenario-maya-lighting-rendering. Sequencer checks: every shot has a
+camera, cameras locked, shots contiguous per track, scaled shots listed.
 
 ## GUI-only techniques and their substitutes
 

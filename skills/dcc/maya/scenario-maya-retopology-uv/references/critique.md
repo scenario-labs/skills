@@ -1,6 +1,9 @@
 # Critique rubric: judge your own retopology, UVs and bake prep
 
-How the source experts judge the work, turned into checks. Run the code first, then open the sheets and walk the visual rows in order. Score each section 0 (fails), 1 (works with visible problems), 2 (clean) and report every 0 or 1 with its cause and the fix you will make. A blocker fails the whole handoff, whatever the other scores. Thresholds marked [added] are this skill's defaults.
+How the source experts judge the work, turned into checks. Run the code first, then open the sheets
+and walk the visual rows in order. Score each section 0 (fails), 1 (works with visible problems), 2
+(clean) and report every 0 or 1 with its cause and the fix you will make. A blocker fails the whole
+handoff, whatever the other scores. Thresholds marked [added] are this skill's defaults.
 
 ## 0. Setup
 
@@ -26,7 +29,8 @@ sheets: mx_review.review([mesh], ..., modes=("wire", "clay"), views=front, side,
 - Padding under the lowest-mip requirement (`uv["padding"]["ok"]`).
 - A face that deforms built by Retopologize without saying so in the report.
 - A `topology` verdict from `deform_test` left unfixed (antCGi x07USYlvu2o [00:11:04] [00:17:37]).
-- A lid vertex or edge midpoint inside the eyeball at rest or on the blink (`lid["fails"]` errors, antCGi [00:15:18]).
+- A lid vertex or edge midpoint inside the eyeball at rest or on the blink (`lid["fails"]` errors,
+  antCGi [00:15:18]).
 
 ## 1. Fit for purpose
 
@@ -131,4 +135,6 @@ sheets: mx_review.review([mesh], ..., modes=("wire", "clay"), views=front, side,
 
 ## Report format
 
-Scores per section, blockers found, the numbers behind each (from `rep`, `dt`, `lid`, `uv`, `ov`), the sheets opened, what the agent did not plan (face loops inherited from the base, parts left for a human Quad Draw pass, a non-neutral source), and the fixes queued before handoff.
+Scores per section, blockers found, the numbers behind each (from `rep`, `dt`, `lid`, `uv`, `ov`),
+the sheets opened, what the agent did not plan (face loops inherited from the base, parts left for a
+human Quad Draw pass, a non-neutral source), and the fixes queued before handoff.

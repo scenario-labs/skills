@@ -1,6 +1,9 @@
 # ZBrush 2026.2.1 traps for an agent
 
-What breaks remembered ZBrush knowledge or agent code on this install, with the fix. Sources: project README (bridge findings 2026-09-24), `sources/zbrush-version-deltas.md` (version facts), the scripting and fundamentals digests, v01..v03 tests. Load when code "does nothing", a call hangs, or a tutorial step does not match the 2026 UI.
+What breaks remembered ZBrush knowledge or agent code on this install, with the fix. Sources:
+project README (bridge findings 2026-09-24), `sources/zbrush-version-deltas.md` (version facts), the
+scripting and fundamentals digests, v01..v03 tests. Load when code "does nothing", a call hangs, or
+a tutorial step does not match the 2026 UI.
 
 ## Automation traps
 
@@ -64,4 +67,6 @@ What breaks remembered ZBrush knowledge or agent code on this install, with the 
 
 ## Version clues when reading a tutorial
 
-Python Scripting sub-palette: 2026.0 or later. Asset Directory and LightBox Maxon/User tabs: 2026.1. Retopo brush with IMM tabs: 2026.1. Redshift: 2023+. SubTool folders: 2019+. Pixologic branding: 2022 or earlier. Full list: `sources/zbrush-version-deltas.md`.
+Python Scripting sub-palette: 2026.0 or later. Asset Directory and LightBox Maxon/User tabs: 2026.1.
+Retopo brush with IMM tabs: 2026.1. Redshift: 2023+. SubTool folders: 2019+. Pixologic branding:
+2022 or earlier. Full list: `sources/zbrush-version-deltas.md`.

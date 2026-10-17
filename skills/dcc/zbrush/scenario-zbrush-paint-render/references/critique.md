@@ -1,13 +1,22 @@
 # Critique: how the experts judge paint, renders and presentation
 
-Use this rubric on every review sheet before moving on and before delivering. Each item says what to look at, the measurable check when there is one (`zb_paint` function), and whose rule it is. Severity: **B** blocker (do not deliver), **M** major (fix in this stage), **m** minor (note it). Thresholds marked [added] are this skill's starting values, to calibrate on live renders.
+Use this rubric on every review sheet before moving on and before delivering. Each item says what to
+look at, the measurable check when there is one (`zb_paint` function), and whose rule it is.
+Severity: **B** blocker (do not deliver), **M** major (fix in this stage), **m** minor (note it).
+Thresholds marked [added] are this skill's starting values, to calibrate on live renders.
 
 ## 0. How to look
 
-- Three looks for color, every time: Flat Color (pure albedo), a neutral material (SkinShade4 or MatCap White01), and the final renderer (BPR or Redshift). Never judge color on a tinted MatCap (FlippedNormals 8iAbH3zSQak 00:10:51; Pablo d03QU-eUaPo 00:44:58). `zp.paint_review(out, look)` with "flat", "skin", "white", "bpr".
-- Views: front, three-quarter, profile, back, top. The back of the head gets the same finish as the face (Pablo 01:39:49).
-- Two scales: 100 percent crop for breakup, noise and edges; a thumbnail (about 256 px) for the read of zones and values, the agent's squint [added method].
-- Stage comparisons side by side, never from memory: stage duplicates or ZTL versions (Pablo 00:55:58) and Render Recall for renders (Pavlovich 040hAJ3-cTw 00:41:10).
+- Three looks for color, every time: Flat Color (pure albedo), a neutral material (SkinShade4 or
+  MatCap White01), and the final renderer (BPR or Redshift). Never judge color on a tinted MatCap
+  (FlippedNormals 8iAbH3zSQak 00:10:51; Pablo d03QU-eUaPo 00:44:58). `zp.paint_review(out, look)`
+  with "flat", "skin", "white", "bpr".
+- Views: front, three-quarter, profile, back, top. The back of the head gets the same finish as the
+  face (Pablo 01:39:49).
+- Two scales: 100 percent crop for breakup, noise and edges; a thumbnail (about 256 px) for the read
+  of zones and values, the agent's squint [added method].
+- Stage comparisons side by side, never from memory: stage duplicates or ZTL versions (Pablo
+  00:55:58) and Render Recall for renders (Pavlovich 040hAJ3-cTw 00:41:10).
 
 ## 1. Skin color, realistic
 
@@ -84,9 +93,12 @@ Use this rubric on every review sheet before moving on and before delivering. Ea
 
 ## 7. Portfolio presentation
 
-- Grayscale form renders separate from color renders (Berger, character digest PcuC8K-bz44 00:06:33). **M**
-- The set: beauty in four views, albedo (Flat) views, a turntable, the ID pass, and a close-up of the face or focal area. **M** [added set]
-- Resolution fits the medium: 1920 x 1080 for screens (Pavlovich), pixels = inches x 300 ppi for print (doc), Pavlovich's 3200 x 2133 postcard. **m**
+- Grayscale form renders separate from color renders (Berger, character digest PcuC8K-bz44
+  00:06:33). **M**
+- The set: beauty in four views, albedo (Flat) views, a turntable, the ID pass, and a close-up of
+  the face or focal area. **M** [added set]
+- Resolution fits the medium: 1920 x 1080 for screens (Pavlovich), pixels = inches x 300 ppi for
+  print (doc), Pavlovich's 3200 x 2133 postcard. **m**
 - The report says what was measured, what was only looked at, and what did not run. **B** (honesty)
 
 ## 8. Test cases from the scenarios (finishing stages)
@@ -95,32 +107,74 @@ Use this rubric on every review sheet before moving on and before delivering. Ea
 
 A strong finishing plan contains:
 
-- Parts as SubTools filled per part (skin, scarf, eyes, hair or hat) with `fill_subtools`; stylized saturation chosen on purpose (Pablo 01:10:30).
-- Skin temperature zones still present on the face, simplified: yellow forehead and brow, red nose, cheeks and ears, a cooler lower third if male (FlippedNormals thirds; Pablo zones), by generated zone image or synthesized strokes, with `skin_zone_checks(style="stylized")`.
-- Eyes with the iris lens fake and a slight divergence (Pablo 01:41:30 to 01:47:03); strongest contrast at the eyes (FlippedNormals 00:18:44).
+- Parts as SubTools filled per part (skin, scarf, eyes, hair or hat) with `fill_subtools`; stylized
+  saturation chosen on purpose (Pablo 01:10:30).
+- Skin temperature zones still present on the face, simplified: yellow forehead and brow, red nose,
+  cheeks and ears, a cooler lower third if male (FlippedNormals thirds; Pablo zones), by generated
+  zone image or synthesized strokes, with `skin_zone_checks(style="stylized")`.
+- Eyes with the iris lens fake and a slight divergence (Pablo 01:41:30 to 01:47:03); strongest
+  contrast at the eyes (FlippedNormals 00:18:44).
 - A grayscale value read of the color render (Guillaume).
-- BPR renders front, three-quarter and profile with perspective on, floor shadow, 1920 x 1080; a scripted turntable; a portfolio sheet with MatCap Gray, albedo and beauty.
+- BPR renders front, three-quarter and profile with perspective on, floor shadow, 1920 x 1080; a
+  scripted turntable; a portfolio sheet with MatCap Gray, albedo and beauty.
 - Honest limits: organic breakup and lip edges are the weak spots without a tablet.
 
 ### Z2 finishing: realistic reptilian creature head for a film close-up
 
 A strong finishing plan contains:
 
-- Color is a lookdev reference: painted at the top level after the sculpt is final, never before adding levels (FlippedNormals 00:08:17).
-- Mask-driven passes: darker scale crevices through the inverted cavity mask, lighter scale tops through the cavity mask itself, which protects the grooves (doc Mask By Cavity: paint the surface of scales without the grooves; `mask_pass(..., invert=False)`), AO plugin undertone on millions of polygons (Pablo 01:37:25), a desaturating wash if realism demands (Pablo 01:31:16), each pass through `mask_pass` at low intensity.
-- Zone logic transferred to the creature: thin tissue (eyelids, gular skin, nostrils) warmer, bony plates lighter and less saturated (FlippedNormals 00:20:50; Pablo zones) [added transfer].
-- Albedo kept clean of painted shadow when the film renderer does ray-traced occlusion and SSS (expert-notes disagreement table).
-- Texture: UVs from scenario-zbrush-retopology-export (UV Master Work on Clone keeps polypaint), `texture_from_polypaint` at the size `recommend_map_size` gives, Flip V, or Multi Map Exporter Texture from Polypaint in the map batch; vertex count checked against map size.
-- Presentation: grayscale approval renders for anatomy (Berger) and color lookdev renders separately; BPR with raking key and rim; passes composited through the Mask pass.
+- Color is a lookdev reference: painted at the top level after the sculpt is final, never before
+  adding levels (FlippedNormals 00:08:17).
+- Mask-driven passes: darker scale crevices through the inverted cavity mask, lighter scale tops
+  through the cavity mask itself, which protects the grooves (doc Mask By Cavity: paint the surface
+  of scales without the grooves; `mask_pass(..., invert=False)`), AO plugin undertone on millions of
+  polygons (Pablo 01:37:25), a desaturating wash if realism demands (Pablo 01:31:16), each pass
+  through `mask_pass` at low intensity.
+- Zone logic transferred to the creature: thin tissue (eyelids, gular skin, nostrils) warmer, bony
+  plates lighter and less saturated (FlippedNormals 00:20:50; Pablo zones) [added transfer].
+- Albedo kept clean of painted shadow when the film renderer does ray-traced occlusion and SSS
+  (expert-notes disagreement table).
+- Texture: UVs from scenario-zbrush-retopology-export (UV Master Work on Clone keeps polypaint),
+  `texture_from_polypaint` at the size `recommend_map_size` gives, Flip V, or Multi Map Exporter
+  Texture from Polypaint in the map batch; vertex count checked against map size.
+- Presentation: grayscale approval renders for anatomy (Berger) and color lookdev renders
+  separately; BPR with raking key and rim; passes composited through the Mask pass.
 
 ## 9. New evaluation prompts for this domain (for the orchestrator's GREEN tests)
 
 ### PR1. Realistic skin polypaint without a tablet
 
-Prompt: "A finished sculpt of a 50-year-old man's head (single SubTool, 4.2 million points, eyes as separate SubTools, no UVs) is open in ZBrush 2026. Polypaint realistic skin without a mouse or tablet, bake a color texture for Substance Painter or Marmoset, and prove that the result is neither uniform beige nor clown makeup. Give the stages, the exact buttons, sliders or SDK calls, the numbers, and the checks you run on renders."
-A strong answer contains: paint at the top level and never add levels afterwards; Rgb on with Zadd and Zsub off; neutral material plus Flat for judging; a zone map by anatomy (yellow bone and fat, red thin tissue, blue hollows and the male lower third) made without strokes (generated zone image and planar projection, or synthesized strokes) then a low-intensity cover; FillObject honoring RGB Intensity and masks; cavity, peaks and valleys or smoothness, and AO plugin passes with Mask Adjust and Inverse; a wash for realism; eyes with the lens fake; UVs on a clone (Work on Clone, Paste UVs) before the bake; a 2K map for about 4M points with Flip V; numeric checks on Flat renders (zone hue order, saturation under the middle of the picker, no clown, speckle, eye contrast) plus looking at the sheets; honest limits (organic breakup, C-key sampling, the Adjust Colors dialog).
+Prompt: "A finished sculpt of a 50-year-old man's head (single SubTool, 4.2 million points, eyes as
+separate SubTools, no UVs) is open in ZBrush 2026. Polypaint realistic skin without a mouse or
+tablet, bake a color texture for Substance Painter or Marmoset, and prove that the result is neither
+uniform beige nor clown makeup. Give the stages, the exact buttons, sliders or SDK calls, the
+numbers, and the checks you run on renders." A strong answer contains: paint at the top level and
+never add levels afterwards; Rgb on with Zadd and Zsub off; neutral material plus Flat for judging;
+a zone map by anatomy (yellow bone and fat, red thin tissue, blue hollows and the male lower third)
+made without strokes (generated zone image and planar projection, or synthesized strokes) then a
+low-intensity cover; FillObject honoring RGB Intensity and masks; cavity, peaks and valleys or
+smoothness, and AO plugin passes with Mask Adjust and Inverse; a wash for realism; eyes with the
+lens fake; UVs on a clone (Work on Clone, Paste UVs) before the bake; a 2K map for about 4M points
+with Flip V; numeric checks on Flat renders (zone hue order, saturation under the middle of the
+picker, no clown, speckle, eye contrast) plus looking at the sheets; honest limits (organic breakup,
+C-key sampling, the Adjust Colors dialog).
 
 ### PR2. Portfolio presentation and turntable on a Mac without Redshift
 
-Prompt: "A painted stylized collectible (body, clothes, scarf, eyes and a base as separate SubTools) must be presented for a portfolio: four beauty views and matching grayscale views at 1920 x 1080, a clown (ID) pass, shadow and AO passes composited over the beauty, and a 10-second turntable MP4. Redshift is not installed on this Mac. Which renderer and settings, how do you script it without a mouse, which traps do you avoid, and what do you check before delivery?"
-A strong answer contains: BPR (Redshift missing, so no Redshift materials or AOVs); perspective on, floor shadows with enough Grid Size, test at small size then final at 1920 x 1080, resizing the document clears the canvas so redraw and re-enter Edit; Document:Export as the dialog-free way to save renders; BPR pass thumbnails may open a save dialog, so a fallback (configuration renders, solo renders per SubTool for the ID pass instead of Ctrl+W on every SubTool); composite in Python with Multiply for shadow and AO through the mask; a scripted turntable with absolute Euler triples (never added degrees) checked for upright frames, assembled with ffmpeg (for example 120 frames at 12 fps for 10 s), because Movie > Turntable cannot be stopped from a script and asks about an existing movie; the gray-view trap (polypaint shows over any MatCap, so gray views need Colorize off on every SubTool, Pavlovich's Shift-click, then restored; SubTools filled in M or MRGB also keep their material); render checks (framing, value span, clipping, noise) and looking at the contact sheet; delivering the paths and what was not verified.
+Prompt: "A painted stylized collectible (body, clothes, scarf, eyes and a base as separate SubTools)
+must be presented for a portfolio: four beauty views and matching grayscale views at 1920 x 1080, a
+clown (ID) pass, shadow and AO passes composited over the beauty, and a 10-second turntable MP4.
+Redshift is not installed on this Mac. Which renderer and settings, how do you script it without a
+mouse, which traps do you avoid, and what do you check before delivery?" A strong answer contains:
+BPR (Redshift missing, so no Redshift materials or AOVs); perspective on, floor shadows with enough
+Grid Size, test at small size then final at 1920 x 1080, resizing the document clears the canvas so
+redraw and re-enter Edit; Document:Export as the dialog-free way to save renders; BPR pass
+thumbnails may open a save dialog, so a fallback (configuration renders, solo renders per SubTool
+for the ID pass instead of Ctrl+W on every SubTool); composite in Python with Multiply for shadow
+and AO through the mask; a scripted turntable with absolute Euler triples (never added degrees)
+checked for upright frames, assembled with ffmpeg (for example 120 frames at 12 fps for 10 s),
+because Movie > Turntable cannot be stopped from a script and asks about an existing movie; the
+gray-view trap (polypaint shows over any MatCap, so gray views need Colorize off on every SubTool,
+Pavlovich's Shift-click, then restored; SubTools filled in M or MRGB also keep their material);
+render checks (framing, value span, clipping, noise) and looking at the contact sheet; delivering
+the paths and what was not verified.

@@ -1,6 +1,11 @@
 # GUI paths, hotkeys and settings (for a computer-use agent or a human)
 
-The same procedures as `procedures.md`, the way the experts do them by hand in ZBrush 2026. Item paths in `Palette:SubPalette:Item` form are what the bridge presses; [xml] marks an id listed in the installed `ZData/ZLang/zcommands/commands.xml` (it lists no brushes or materials, and its ids have no section levels); paths not confirmed on this install are [verify]. macOS: the docs write Ctrl for Command, but Control+W assigns a polygroup while Command+W QUITS ZBrush since 2023.0.1 (never send Cmd+W); treat each modifier mapping as [verify] (version deltas 3.1, 3.13).
+The same procedures as `procedures.md`, the way the experts do them by hand in ZBrush 2026. Item
+paths in `Palette:SubPalette:Item` form are what the bridge presses; [xml] marks an id listed in the
+installed `ZData/ZLang/zcommands/commands.xml` (it lists no brushes or materials, and its ids have
+no section levels); paths not confirmed on this install are [verify]. macOS: the docs write Ctrl for
+Command, but Control+W assigns a polygroup while Command+W QUITS ZBrush since 2023.0.1 (never send
+Cmd+W); treat each modifier mapping as [verify] (version deltas 3.1, 3.13).
 
 ## Canvas, Edit mode and views
 

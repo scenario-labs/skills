@@ -1,6 +1,9 @@
 # GUI paths (for a computer-use agent or a human)
 
-The same procedures as `procedures.md`, by menu. Menu names come from the saved 5.8 docs and the expert notes; items marked [verify] were described in talks or older versions and must be confirmed in the installed editor. Graph editing is the part scripts reach least well: when a scripted link fails (`failed_links`), these are the clicks that replace it.
+The same procedures as `procedures.md`, by menu. Menu names come from the saved 5.8 docs and the
+expert notes; items marked [verify] were described in talks or older versions and must be confirmed
+in the installed editor. Graph editing is the part scripts reach least well: when a scripted link
+fails (`failed_links`), these are the clicks that replace it.
 
 ## Project settings
 

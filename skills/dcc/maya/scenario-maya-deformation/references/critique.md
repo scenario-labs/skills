@@ -1,14 +1,22 @@
 # Critique: how the character TD judges a skin, a corrective or a face
 
-Load before calling any deformation stage done, and when reading a `deformation_test` report or a ROM contact sheet. Numbers first, then eyes (scenario-maya-expert protocol); experts judge in motion, at extremes, one motion at a time (Makauskas [00:04:11] [00:10:36]; Widup [00:27:41]).
+Load before calling any deformation stage done, and when reading a `deformation_test` report or a
+ROM contact sheet. Numbers first, then eyes (scenario-maya-expert protocol); experts judge in
+motion, at extremes, one motion at a time (Makauskas [00:04:11] [00:10:36]; Widup [00:27:41]).
 
 ## 1. Review protocol
 
-1. `S.weights_verdict(S.audit_weights(...))`: no `error:` line. Weights that do not sum to 1 or exceed the cap make every later judgment meaningless.
-2. `S.deformation_test(...)` on the calisthenics: read `verdict`, then the per-pose numbers of the worst poses.
-3. Look at the same poses: `S.pose_snapshots` + `mx_review.review` headless (clay and wire, front and three-quarter), or a playblast in the GUI. Same cameras for every iteration so before and after compare (digest playblast recipe).
-4. Change one thing (a mask range, a twist distribution, a corrective), re-run 2 and 3, keep the change only if the numbers and the images both improve.
-5. Last: pose it like an animator, combining extremes ("weird poses", Makauskas [00:16:14]; "in animator shoes" [00:25:02]).
+1. `S.weights_verdict(S.audit_weights(...))`: no `error:` line. Weights that do not sum to 1 or
+   exceed the cap make every later judgment meaningless.
+2. `S.deformation_test(...)` on the calisthenics: read `verdict`, then the per-pose numbers of the
+   worst poses.
+3. Look at the same poses: `S.pose_snapshots` + `mx_review.review` headless (clay and wire, front
+   and three-quarter), or a playblast in the GUI. Same cameras for every iteration so before and
+   after compare (digest playblast recipe).
+4. Change one thing (a mask range, a twist distribution, a corrective), re-run 2 and 3, keep the
+   change only if the numbers and the images both improve.
+5. Last: pose it like an animator, combining extremes ("weird poses", Makauskas [00:16:14]; "in
+   animator shoes" [00:25:02]).
 
 ## 2. Reading the numbers (and their traps)
 
@@ -25,7 +33,8 @@ Load before calling any deformation stage done, and when reading a `deformation_
 | `unused_influences`                | joints with no weight                                                | Fine for engine skeletons that must keep the joint (game export) and for helper joints; otherwise remove them (speed, Help).                                                                              |
 | heat map: a joint with zero weight | the joint is outside the mesh                                        | The Help says outside joints emit no heat; move the joint inside or weight it by hand.                                                                                                                    |
 
-Thresholds are this toolkit's defaults ([added]); a production can tighten them. Never report a pass on counts alone.
+Thresholds are this toolkit's defaults ([added]); a production can tighten them. Never report a pass
+on counts alone.
 
 ## 3. Region by region: what the experts look at
 
@@ -44,13 +53,29 @@ Thresholds are this toolkit's defaults ([added]); a production can tighten them.
 
 ## 4. Scoring rubric (0 to 3 each)
 
-1. **Weights hygiene:** 0 unnormalized or empty rows; 1 clean sums but tiny weights and over-cap vertices; 2 pruned and capped for the target; 3 plus mirror error < 0.01 and unused influences explained.
-2. **Source soundness:** 0 smoothing hides pivot or topology faults; 1 faults known but unreported; 2 blocked weights looked close to the goal before smoothing (Makauskas [00:08:27]); 3 plus each remaining fault attributed to rig, topology or correctives with evidence (identical weights on two topologies, antCGi x07 [00:16:24]).
-3. **ROM quality:** 0 no ROM test; 1 a ROM with combined motions; 2 one motion per segment, extremes, verdict read and worst poses fixed; 3 plus weird poses, clothing and animator-style play, no unexplained warning.
-4. **Twist and volume:** 0 candy wrapper visible; 1 twist joints present but weighted at the ends; 2 even twist, section area above 0.7 at 90 degrees; 3 plus volume within 10% at elbow, knee and fingers.
-5. **Correctives:** 0 none where the ROM needs them; 1 correctives that show at rest, or readers that cannot see a controller-driven joint; 2 pre or post chosen for the right reason (mesh wrong: pre; one posed result: post, Transform Space when one joint owns it, Tangent Space across joints), 0 at rest and 1 at the pose reached through the controls; 3 plus mirrored, extremes first, drivers inspectable (`S.joint_drive` reported), residual reported.
-6. **Regenerability:** 0 only in the scene; 1 weights exported; 2 plan or layers exported (JSON), master shapes kept; 3 a rebuild from data reproduces the weights (import diff < 1e-4).
-7. **Handoff:** 0 layers still on, source overwritten; 1 layers deleted, no report; 2 `mx_validate(profile="rig")` clean, weights JSON, ROM sheet looked at; 3 plus the list of what was not verified.
+1. **Weights hygiene:** 0 unnormalized or empty rows; 1 clean sums but tiny weights and over-cap
+   vertices; 2 pruned and capped for the target; 3 plus mirror error < 0.01 and unused influences
+   explained.
+2. **Source soundness:** 0 smoothing hides pivot or topology faults; 1 faults known but unreported;
+   2 blocked weights looked close to the goal before smoothing (Makauskas [00:08:27]); 3 plus each
+   remaining fault attributed to rig, topology or correctives with evidence (identical weights on
+   two topologies, antCGi x07 [00:16:24]).
+3. **ROM quality:** 0 no ROM test; 1 a ROM with combined motions; 2 one motion per segment,
+   extremes, verdict read and worst poses fixed; 3 plus weird poses, clothing and animator-style
+   play, no unexplained warning.
+4. **Twist and volume:** 0 candy wrapper visible; 1 twist joints present but weighted at the ends; 2
+   even twist, section area above 0.7 at 90 degrees; 3 plus volume within 10% at elbow, knee and
+   fingers.
+5. **Correctives:** 0 none where the ROM needs them; 1 correctives that show at rest, or readers
+   that cannot see a controller-driven joint; 2 pre or post chosen for the right reason (mesh wrong:
+   pre; one posed result: post, Transform Space when one joint owns it, Tangent Space across
+   joints), 0 at rest and 1 at the pose reached through the controls; 3 plus mirrored, extremes
+   first, drivers inspectable (`S.joint_drive` reported), residual reported.
+6. **Regenerability:** 0 only in the scene; 1 weights exported; 2 plan or layers exported (JSON),
+   master shapes kept; 3 a rebuild from data reproduces the weights (import diff < 1e-4).
+7. **Handoff:** 0 layers still on, source overwritten; 1 layers deleted, no report; 2
+   `mx_validate(profile="rig")` clean, weights JSON, ROM sheet looked at; 3 plus the list of what
+   was not verified.
 
 A stage passes at 2 on every line; a hero asset needs 3 on lines 2 to 5.
 
@@ -58,6 +83,8 @@ A stage passes at 2 on every line; a hero asset needs 3 on lines 2 to 5.
 
 - Did I look at a render or playblast of the worst three poses, or only at numbers?
 - Is any warning explained by a design choice (fold layer, crease) rather than ignored?
-- Would the result survive a mesh update from the modeler (weights and masks regenerable) and a joint move from the rigger?
-- Did I change the cap, the skinning method or the deformer order after the last ROM run? Then run it again.
+- Would the result survive a mesh update from the modeler (weights and masks regenerable) and a
+  joint move from the rigger?
+- Did I change the cap, the skinning method or the deformer order after the last ROM run? Then run
+  it again.
 - Did I state which checks ran headless, which in the GUI, and which not at all?

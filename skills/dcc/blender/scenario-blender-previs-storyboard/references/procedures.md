@@ -1,6 +1,12 @@
 # Tested procedures (Blender 5.2.1)
 
-Every code block below runs, in order, in one namespace: `tests/code/blender-previs-storyboard/test_03_procedures.py` extracts the blocks from this file and executes them verbatim (only the two paths in P0 are substituted). The asserts inside the blocks are the gates. Deeper checks of the same functions: `test_01_s6_end_to_end.py` (scenario S6 built completely, 27 checks), `test_02_api_traps.py` (traps, coverage, hybrids, 27 checks) and `test_04_grading_gates.py` (passepartout, fog, coverage runs, cost gates, Rigify proxies, 22 checks). Run any of them with:
+Every code block below runs, in order, in one namespace:
+`tests/code/blender-previs-storyboard/test_03_procedures.py` extracts the blocks from this file and
+executes them verbatim (only the two paths in P0 are substituted). The asserts inside the blocks are
+the gates. Deeper checks of the same functions: `test_01_s6_end_to_end.py` (scenario S6 built
+completely, 27 checks), `test_02_api_traps.py` (traps, coverage, hybrids, 27 checks) and
+`test_04_grading_gates.py` (passepartout, fog, coverage runs, cost gates, Rigify proxies, 22
+checks). Run any of them with:
 
 ```
 blender --background --factory-startup --python-exit-code 1 --python tests/code/blender-previs-storyboard/<test>.py
@@ -26,7 +32,10 @@ os.makedirs(OUT, exist_ok=True)
 
 ## P1. Beats of information, then shots (Hjalti)
 
-One fact per line; beats you add are marked. Shots group consecutive beats; `shot_list` refuses a missing, duplicated or reordered beat and assigns previs frames on decades (Charge: 10-frame blocks; a live shot's longer block pushes the next start to the next decade). Verified on 5.2.1: test_03 block 1; test_01 sections 1, 4, 5.
+One fact per line; beats you add are marked. Shots group consecutive beats; `shot_list` refuses a
+missing, duplicated or reordered beat and assigns previs frames on decades (Charge: 10-frame blocks;
+a live shot's longer block pushes the next start to the next decade). Verified on 5.2.1: test_03
+block 1; test_01 sections 1, 4, 5.
 
 ```python
 BEATS = ["The shopkeeper has his back to the floor.",
@@ -52,7 +61,10 @@ assert [t["frame"] for t in table] == [10, 20, 30]
 
 ## P2. Scene with the format locked first (Charge)
 
-`setup_scene` sets resolution, fps, Workbench with object colors and outlines, the Standard view transform (grays render as set), AUDIO_SYNC playback (never judge timing on play-every-frame, Hjalti) and makes the scene the window scene. Raw equivalent of the key lines below it. Verified on 5.2.1: test_03 block 2; test_01 section 2.
+`setup_scene` sets resolution, fps, Workbench with object colors and outlines, the Standard view
+transform (grays render as set), AUDIO_SYNC playback (never judge timing on play-every-frame,
+Hjalti) and makes the scene the window scene. Raw equivalent of the key lines below it. Verified on
+5.2.1: test_03 block 2; test_01 section 2.
 
 ```python
 sc = P.setup_scene("01_blend procedures", res=(1920, 1080), fps=24, pct=20)
@@ -67,7 +79,10 @@ assert bpy.context.scene == sc
 
 ## P3. Set pieces and proxy characters
 
-Real scale, origins at the bottom, grays, one pop color (Renato). A mannequin is a root empty at the feet with `height` and `eye_height` custom properties and four pivoted parts that are the only controls previs keys (Hjalti's layout selection set). Verified on 5.2.1: test_03 block 3; test_01 section 2.
+Real scale, origins at the bottom, grays, one pop color (Renato). A mannequin is a root empty at the
+feet with `height` and `eye_height` custom properties and four pivoted parts that are the only
+controls previs keys (Hjalti's layout selection set). Verified on 5.2.1: test_03 block 3; test_01
+section 2.
 
 ```python
 P.prop(sc, "floor", (9.0, 7.5, 0.02), (0, -0.25, -0.02), (0.3, 0.3, 0.3, 1))
@@ -84,7 +99,10 @@ assert abs(keeper["eye_height"] - 0.93 * 1.75) < 1e-6
 
 ## P4. Stepped blocking; key before you cheat (Charge)
 
-Per block: `frame_set` first (holds the previous pose), set only what changes, key every movable. A cheat (the snack at 1.4x for one shot) is just another keyed value. Python keys ignore the new-key interpolation preference, so force CONSTANT through the channelbag. Raw loop shown after the module call. Verified on 5.2.1: test_03 block 4; test_01 section 6; test_02 section 2.
+Per block: `frame_set` first (holds the previous pose), set only what changes, key every movable. A
+cheat (the snack at 1.4x for one shot) is just another keyed value. Python keys ignore the new-key
+interpolation preference, so force CONSTANT through the channelbag. Raw loop shown after the module
+call. Verified on 5.2.1: test_03 block 4; test_01 section 6; test_02 section 2.
 
 ```python
 def block(frame, **poses):
@@ -117,7 +135,15 @@ sc.frame_set(20); assert abs(snack.scale.x - 1.4) < 1e-6
 
 ## P5. One camera per shot, markers bound to cameras
 
-`build_shots` places each camera (default: mean eye height of the subjects; distance = visible height x lens / sensor height, visible height from the size table and the subjects' spread; explicit `loc`/`aim` wins), sets a 36 mm horizontal sensor, an opaque passepartout (Hjalti, Charge: "it will give your brain a more accurate representation of the composition"; viewport display only, renders are unaffected) and clip 0.01 to 200, and binds a marker at the shot's first frame. `P.passepartout(cams_or_scene)` does the same for cameras made any other way, and `audit` flags a shot camera without it. The raw binding and look-at follow. Camera moves that carry meaning are keyed on the camera afterwards. Verified on 5.2.1: test_03 block 5; test_01 section 7; test_02 section 5.
+`build_shots` places each camera (default: mean eye height of the subjects; distance = visible
+height x lens / sensor height, visible height from the size table and the subjects' spread; explicit
+`loc`/`aim` wins), sets a 36 mm horizontal sensor, an opaque passepartout (Hjalti, Charge: "it will
+give your brain a more accurate representation of the composition"; viewport display only, renders
+are unaffected) and clip 0.01 to 200, and binds a marker at the shot's first frame.
+`P.passepartout(cams_or_scene)` does the same for cameras made any other way, and `audit` flags a
+shot camera without it. The raw binding and look-at follow. Camera moves that carry meaning are
+keyed on the camera afterwards. Verified on 5.2.1: test_03 block 5; test_01 section 7; test_02
+section 5.
 
 ```python
 cams = P.build_shots(sc, table, chars)
@@ -144,7 +170,13 @@ sc.frame_set(20); assert sc.camera == cams["sh020"]
 
 ## P6. Measurable gates
 
-`audit` per shot: camera switch at the frame and not before, lens, height class and pitch, main subject's eye line in frame and not blocked (ray cast names the blocker), coverage and measured size, action-line side, screen direction for a journey, block length, two inserts in a row, non-constant keys outside live blocks. Cost and camera gates (P20): opaque passepartout, no camera move inside a still shot, no keys between block starts outside live shots, Workbench engine; light objects come back as `warnings`. Verified on 5.2.1: test_03 block 6; test_01 section 8 (including a regression that re-creates the door and counter occlusions and sees them flagged).
+`audit` per shot: camera switch at the frame and not before, lens, height class and pitch, main
+subject's eye line in frame and not blocked (ray cast names the blocker), coverage and measured
+size, action-line side, screen direction for a journey, block length, two inserts in a row,
+non-constant keys outside live blocks. Cost and camera gates (P20): opaque passepartout, no camera
+move inside a still shot, no keys between block starts outside live shots, Workbench engine; light
+objects come back as `warnings`. Verified on 5.2.1: test_03 block 6; test_01 section 8 (including a
+regression that re-creates the door and counter occlusions and sees them flagged).
 
 ```python
 rep = P.audit(sc, table, chars, line=("robot", "keeper"), stepped=MOV)
@@ -157,7 +189,10 @@ print("warnings:", rep["warnings"])
 
 ## P7. Stills, contact sheet, single frames
 
-`render_stills` renders one Workbench still per shot at its first frame, versioned `<id>_v###.png`, never overwritten; `contact_sheet` stamps each (shot, lens, camera height, size, seconds, intent), adds the last frame of live shots and tiles them. `render_frame` renders any scene at any frame safely (P16). Verified on 5.2.1: test_03 block 7; test_01 section 9.
+`render_stills` renders one Workbench still per shot at its first frame, versioned `<id>_v###.png`,
+never overwritten; `contact_sheet` stamps each (shot, lens, camera height, size, seconds, intent),
+adds the last frame of live shots and tiles them. `render_frame` renders any scene at any frame
+safely (P16). Verified on 5.2.1: test_03 block 7; test_01 section 9.
 
 ```python
 stills = P.render_stills(sc, table, os.path.join(OUT, "stills"))
@@ -169,7 +204,9 @@ assert os.path.exists(sheet) and os.path.exists(one) and set(stills) == {"sh010"
 
 ## P8. Lens A/B at equal subject size (Hjalti)
 
-Non-destructive: renders the shot at each focal length, moving the camera along its view axis so the subject keeps its size (d2 = d1 x f2 / f1 [added]), side by side. Not for shots whose lens or location is keyed. Verified on 5.2.1: test_03 block 8; test_01 section 9.
+Non-destructive: renders the shot at each focal length, moving the camera along its view axis so the
+subject keeps its size (d2 = d1 x f2 / f1 [added]), side by side. Not for shots whose lens or
+location is keyed. Verified on 5.2.1: test_03 block 8; test_01 section 9.
 
 ```python
 ab = P.ab_lens(sc, table[1], (35, 50, 85), os.path.join(OUT, "ab"))
@@ -178,7 +215,9 @@ assert os.path.exists(ab) and cams["sh020"].data.lens == 50
 
 ## P9. Floor plan
 
-Top orthographic render in a temporary scene: camera glyphs with their horizontal field of view and labels (co-located cameras share one label), the action line in red, journeys in green. Verified on 5.2.1: test_03 block 9; test_01 section 9.
+Top orthographic render in a temporary scene: camera glyphs with their horizontal field of view and
+labels (co-located cameras share one label), the action line in red, journeys in green. Verified on
+5.2.1: test_03 block 9; test_01 section 9.
 
 ```python
 fp = P.floor_plan(sc, table, chars, os.path.join(OUT, "floor_plan.png"), line=("robot", "keeper"),
@@ -188,7 +227,13 @@ assert os.path.exists(fp) and "BX_FloorPlan" not in bpy.data.scenes
 
 ## P10. The animatic edit
 
-`animatic` builds `NN_edit` beside `NN_blend`: image strips held `round(dur * fps)` frames (fit to frame), `push` keys a fake dolly-in on a still by multiplying the FIT scale (Charge), `live` shots become scene strips through their camera with the source frame aligned to the cut, sounds go on upper channels, `burn_in` stamps strip name and frame, the edit gets the Standard view transform, and `bx_review.playblast` renders the MP4. The raw VSE calls follow. Verified on 5.2.1: test_03 block 10; test_01 section 10 (MP4 streams and duration by ffprobe, live frame equal to the previs frame, push rendered).
+`animatic` builds `NN_edit` beside `NN_blend`: image strips held `round(dur * fps)` frames (fit to
+frame), `push` keys a fake dolly-in on a still by multiplying the FIT scale (Charge), `live` shots
+become scene strips through their camera with the source frame aligned to the cut, sounds go on
+upper channels, `burn_in` stamps strip name and frame, the edit gets the Standard view transform,
+and `bx_review.playblast` renders the MP4. The raw VSE calls follow. Verified on 5.2.1: test_03
+block 10; test_01 section 10 (MP4 streams and duration by ffprobe, live frame equal to the previs
+frame, push rendered).
 
 ```python
 table[0]["push"] = 1.1
@@ -218,7 +263,10 @@ bpy.data.scenes.remove(e2)
 
 ## P11. Coverage from one action (Story Tools, Pablo Fournier)
 
-One scene strip split with `Strip.split(frame, split_method='SOFT')`, each piece through its own camera; move the camera switch with `move_cut`, shift the action inside a piece with `slip`. Editing the animation updates every angle. Verified on 5.2.1: test_03 block 11; test_02 section 7 (edit frames pixel-identical to the source through the right camera, before and after move and slip).
+One scene strip split with `Strip.split(frame, split_method='SOFT')`, each piece through its own
+camera; move the camera switch with `move_cut`, shift the action inside a piece with `slip`. Editing
+the animation updates every angle. Verified on 5.2.1: test_03 block 11; test_02 section 7 (edit
+frames pixel-identical to the source through the right camera, before and after move and slip).
 
 ```python
 cov_edit = bpy.data.scenes.new("coverage_edit")
@@ -234,7 +282,9 @@ assert (s.right_handle, right.left_handle) == (15, 15)
 
 ## P12. Story Tools wiring for a live session
 
-Sequencer shows the Edit scene (pinned), scrubbing syncs the main window to the shot scene under the playhead, auto-key off in Edit (Pablo: "two kinds of auto keys"). Headless these are plain properties. Verified on 5.2.1: test_03 block 12; test_02 section 12.
+Sequencer shows the Edit scene (pinned), scrubbing syncs the main window to the shot scene under the
+playhead, auto-key off in Edit (Pablo: "two kinds of auto keys"). Headless these are plain
+properties. Verified on 5.2.1: test_03 block 12; test_02 section 12.
 
 ```python
 st = P.story_tools(bpy.data.scenes[ed["edit"]])
@@ -244,7 +294,11 @@ assert ws.sequencer_scene.name == ed["edit"] and ws.use_scene_time_sync and ws.u
 
 ## P13. Camera moves that feel physical (Dillon Gu)
 
-Quick zoom = keyed lens, linear; dolly zoom = lens and distance keyed together so the subject keeps its size (distance proportional to focal length [added]); handheld = NOISE modifiers on rotation. REPLACE (default) centers the noise on the curve, ADD shifts it by about strength/2; measured peak-to-peak about 0.66 x strength at scale 22 over 400 frames. Verified on 5.2.1: test_03 block 13; test_02 section 10.
+Quick zoom = keyed lens, linear; dolly zoom = lens and distance keyed together so the subject keeps
+its size (distance proportional to focal length [added]); handheld = NOISE modifiers on rotation.
+REPLACE (default) centers the noise on the curve, ADD shifts it by about strength/2; measured
+peak-to-peak about 0.66 x strength at scale 22 over 400 frames. Verified on 5.2.1: test_03 block 13;
+test_02 section 10.
 
 ```python
 from bpy_extras.object_utils import world_to_camera_view
@@ -273,7 +327,13 @@ bpy.data.objects.remove(dz)
 
 ## P14. 2D/3D hybrid boards: carriers, glass rig, facing
 
-A Grease Pencil drawing rides a 3D proxy (Spitfire, Renato, Pablo) or a pivot over the subject with the camera ("drawing on glass", BouncyBrain). Flag frames where the carrier turns the flat drawing more than 70 degrees from the camera [added threshold]. Strokes: scenario-blender-grease-pencil; `gp_polyline` is only for guides. Drawing-plane settings for a live session: `ts.gpencil_stroke_placement_view3d = 'ORIGIN'`, `ts.gpencil_sculpt.lock_axis = 'VIEW'` (Spitfire's default). Verified on 5.2.1: test_03 block 14; test_02 section 11 (strokes render headless in Workbench).
+A Grease Pencil drawing rides a 3D proxy (Spitfire, Renato, Pablo) or a pivot over the subject with
+the camera ("drawing on glass", BouncyBrain). Flag frames where the carrier turns the flat drawing
+more than 70 degrees from the camera [added threshold]. Strokes: scenario-blender-grease-pencil;
+`gp_polyline` is only for guides. Drawing-plane settings for a live session:
+`ts.gpencil_stroke_placement_view3d = 'ORIGIN'`, `ts.gpencil_sculpt.lock_axis = 'VIEW'` (Spitfire's
+default). Verified on 5.2.1: test_03 block 14; test_02 section 11 (strokes render headless in
+Workbench).
 
 ```python
 proxy = P.prop(sc, "proxy_plane", (0.6, 0.02, 1.0), (-2.5, 0.0, 0), P.GREY)
@@ -295,7 +355,17 @@ assert gp.parent == pivot and gcam.parent == pivot
 
 ## P15. Depth fog planes (Hjalti, Charge)
 
-A plane with an ARRAY modifier and a translucent object color, placed in depth to separate the backdrop from the characters in unrendered grays (Hjalti: readability, not lighting). `fog_planes` places one in world space; `fog_for_shot` faces the shot camera, starts `behind` meters past the farthest subject (so it can never tint the hero), covers the frame, and keys `hide_render`/`hide_viewport` so it exists only in that shot's block (a keyed cheat). Measured on 5.2.1 Workbench: the fog pulls what is behind it toward its own shaded value, so a light fog lifts a dim backdrop (0.373 to 0.499 display with the characters at 0.374: separation 0.002 to 0.125) but barely changes a mid-gray one (0.529 to 0.533); pick a fog value away from the characters' and check with `values_at`. Verified on 5.2.1: test_03 block 15; test_02 section 9; test_04 section 2 (characters unchanged, other shots unchanged, fog put in front is reported by the audit as the blocker).
+A plane with an ARRAY modifier and a translucent object color, placed in depth to separate the
+backdrop from the characters in unrendered grays (Hjalti: readability, not lighting). `fog_planes`
+places one in world space; `fog_for_shot` faces the shot camera, starts `behind` meters past the
+farthest subject (so it can never tint the hero), covers the frame, and keys
+`hide_render`/`hide_viewport` so it exists only in that shot's block (a keyed cheat). Measured on
+5.2.1 Workbench: the fog pulls what is behind it toward its own shaded value, so a light fog lifts a
+dim backdrop (0.373 to 0.499 display with the characters at 0.374: separation 0.002 to 0.125) but
+barely changes a mid-gray one (0.529 to 0.533); pick a fog value away from the characters' and check
+with `values_at`. Verified on 5.2.1: test_03 block 15; test_02 section 9; test_04 section 2
+(characters unchanged, other shots unchanged, fog put in front is reported by the audit as the
+blocker).
 
 ```python
 fog = P.fog_planes(sc, "FX-fog", (0, 2.0, 0), 8, 3, count=4, spacing=0.4, alpha=0.25)
@@ -345,7 +415,9 @@ assert tmp_edit.sequence_editor_create().strips.new_scene("b6", b6, 1, 1).durati
 
 ## P17. Layout bone subset on a real rig (Selection Sets substitute)
 
-The Selection Sets add-on is not bundled in 5.2.1; a bone collection named `layout` does the job, and scripts key only its bones (Hjalti: fewer bones, fewer misclicks). Verified on 5.2.1: test_03 block 17; test_02 section 8.
+The Selection Sets add-on is not bundled in 5.2.1; a bone collection named `layout` does the job,
+and scripts key only its bones (Hjalti: fewer bones, fewer misclicks). Verified on 5.2.1: test_03
+block 17; test_02 section 8.
 
 ```python
 arm = bpy.data.armatures.new("RIG-proxy")
@@ -368,7 +440,15 @@ assert sorted({fc.data_path.split('"')[1] for fc in P.fcurves(rig)}) == ["chest"
 
 ## P18. Coverage run in the animatic: one scene, several scene strips, retime by moving the cut (Story Tools)
 
-Pablo Fournier's multi-camera trick from one scene [4flnlr39S1U 00:23:03]: a `live` shot followed by `cover=True` shots is one continuous action; `shot_list` starts each cover shot where the previous block ends, `build_shots` binds its marker there, and `animatic` cuts the run as ONE scene strip soft-split at the cuts, each piece through its own camera (edit length must equal the block inside a run). `retime_cut` moves a cut without touching keys and moves the right shot's marker (and the table) with it, so stills, audit and scene playback agree with the edit. Editing the animation updates every angle. Verified on 5.2.1: test_03 block 18; test_04 section 3 (edit frames pixel-identical to the previs frames through the right camera before and after the retime; one key change shows in both angles).
+Pablo Fournier's multi-camera trick from one scene [4flnlr39S1U 00:23:03]: a `live` shot followed by
+`cover=True` shots is one continuous action; `shot_list` starts each cover shot where the previous
+block ends, `build_shots` binds its marker there, and `animatic` cuts the run as ONE scene strip
+soft-split at the cuts, each piece through its own camera (edit length must equal the block inside a
+run). `retime_cut` moves a cut without touching keys and moves the right shot's marker (and the
+table) with it, so stills, audit and scene playback agree with the edit. Editing the animation
+updates every angle. Verified on 5.2.1: test_03 block 18; test_04 section 3 (edit frames
+pixel-identical to the previs frames through the right camera before and after the retime; one key
+change shows in both angles).
 
 ```python
 cv = P.setup_scene("02_blend coverage", pct=10)
@@ -401,7 +481,15 @@ assert P.audit(cv, T2, ch2, stepped=MOV2)["problems"] == []
 
 ## P19. Rigify proxies: enable Rigify first
 
-Rigify ships with Blender but is OFF in a factory startup and under `--factory-startup`: `bpy.ops.object.armature_basic_human_metarig_add` raises "could not be found" until it is enabled (S6 grader flag). `ensure_rigify` enables it (`addon_utils.enable("rigify", default_set=True)`). `rigify_proxy` builds a Basic Human scaled to height with one bone-parented gray box per deform bone (no weights, Charge), deletes the metarig, and adds a `layout` bone collection (torso, chest, head, IK hands and feet [added]) that `key_block` keys and `pose(bones=...)` sets (quaternion controls converted). Mannequins stay the cheaper default; use this only when the brief asks for Rigify rigs. Full rigging: scenario-blender-rigging. Verified on 5.2.1: test_03 block 19; test_04 section 5 (operator missing before, audit and still work with the proxy).
+Rigify ships with Blender but is OFF in a factory startup and under `--factory-startup`:
+`bpy.ops.object.armature_basic_human_metarig_add` raises "could not be found" until it is enabled
+(S6 grader flag). `ensure_rigify` enables it (`addon_utils.enable("rigify", default_set=True)`).
+`rigify_proxy` builds a Basic Human scaled to height with one bone-parented gray box per deform bone
+(no weights, Charge), deletes the metarig, and adds a `layout` bone collection (torso, chest, head,
+IK hands and feet [added]) that `key_block` keys and `pose(bones=...)` sets (quaternion controls
+converted). Mannequins stay the cheaper default; use this only when the brief asks for Rigify rigs.
+Full rigging: scenario-blender-rigging. Verified on 5.2.1: test_03 block 19; test_04 section 5
+(operator missing before, audit and still work with the proxy).
 
 ```python
 import addon_utils
@@ -418,7 +506,13 @@ assert keyed <= set(P.RIGIFY_LAYOUT) and "chest" in keyed and P.stepped_report([
 
 ## P20. Cost and camera gates: what the audit refuses
 
-Previs is the cheapest version that conveys the idea (Hjalti [XZtJ64g5VQQ 00:48:40]): stills, not continuous animation of every shot [00:18:54]; camera moves only when the move is the story [cTx-n4OZXYE 00:04:32]; grays, not mood lighting. `audit` turns these into problems: a camera moving inside a still shot, keys between block starts outside live shots, a render engine other than Workbench; light objects are a warning (Workbench ignores them). Compare against the scene's own baseline so unrelated findings do not mask the new one. Verified on 5.2.1: test_03 block 20; test_04 section 4.
+Previs is the cheapest version that conveys the idea (Hjalti [XZtJ64g5VQQ 00:48:40]): stills, not
+continuous animation of every shot [00:18:54]; camera moves only when the move is the story
+[cTx-n4OZXYE 00:04:32]; grays, not mood lighting. `audit` turns these into problems: a camera moving
+inside a still shot, keys between block starts outside live shots, a render engine other than
+Workbench; light objects are a warning (Workbench ignores them). Compare against the scene's own
+baseline so unrelated findings do not mask the new one. Verified on 5.2.1: test_03 block 20; test_04
+section 4.
 
 ```python
 base = set(P.audit(sc, table, chars, stepped=MOV)["problems"])
@@ -443,7 +537,11 @@ bpy.data.objects.remove(lamp)
 
 ## P21. Storyboarding app template (replaces the open file, run last)
 
-Ships an `Edit` scene (1 to 240, 24 fps) with scene strips of `Shot.001` and `Shot.002`, three shot scenes each with a Grease Pencil object and a 50 mm camera, the Storyboarding workspace on Edit with sync on (pin off there, on in Video Editing), auto-key on in shots and off in Edit. From the command line: `blender --app-template Storyboarding`. Verified on 5.2.1: test_03 block 21; test_02 section 13.
+Ships an `Edit` scene (1 to 240, 24 fps) with scene strips of `Shot.001` and `Shot.002`, three shot
+scenes each with a Grease Pencil object and a 50 mm camera, the Storyboarding workspace on Edit with
+sync on (pin off there, on in Video Editing), auto-key on in shots and off in Edit. From the command
+line: `blender --app-template Storyboarding`. Verified on 5.2.1: test_03 block 21; test_02
+section 13.
 
 ```python
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "procedures.blend"), copy=True)

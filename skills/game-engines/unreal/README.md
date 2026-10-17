@@ -1,6 +1,12 @@
 # Unreal Engine Expert Skills
 
-Agent skills that let Claude (Claude Code) or Codex drive Unreal Engine 5.8 the way the experts in the best tutorials, conference talks and official documentation do. Built on 2026-09-24 with the same method as [Blender Expert Skills](../../dcc/blender/README.md), [Maya Expert Skills](../../dcc/maya/README.md) and [ZBrush Expert Skills](../../dcc/zbrush/README.md): transcripts of top-rated videos, cited expert notes, then skills with tools and review rubrics, graded blind against the same model without them. Start with the lead skill, `scenario-unreal-expert`.
+Agent skills that let Claude (Claude Code) or Codex drive Unreal Engine 5.8 the way the experts in
+the best tutorials, conference talks and official documentation do. Built on 2026-09-24 with the
+same method as [Blender Expert Skills](../../dcc/blender/README.md),
+[Maya Expert Skills](../../dcc/maya/README.md) and
+[ZBrush Expert Skills](../../dcc/zbrush/README.md): transcripts of top-rated videos, cited expert
+notes, then skills with tools and review rubrics, graded blind against the same model without them.
+Start with the lead skill, `scenario-unreal-expert`.
 
 ## Skills
 
@@ -19,13 +25,27 @@ Agent skills that let Claude (Claude Code) or Codex drive Unreal Engine 5.8 the 
 
 ## Status
 
-- 10 skills (the lead `scenario-unreal-expert` and nine specialists) written from 115 expert videos (77 h) and 82 official documentation pages, each with references and an offline-tested `ue_<domain>.py` module. The lead carries the shared toolkit (`ue_env`, `ue_run`, `ue_remote`, `ue_review`, `ue_audit`, `ue_stat`).
-- Blind-graded written scenarios (round 1): 51 % without the skills, 95 % with them (69/135 vs 128/135); all 9 scenarios improved. One grader per scenario: a direction, not a statistic. These scores were measured before the refactor included here; round 2 is planned after the first run in Unreal.
-- Not verified inside Unreal Engine: the engine was not installed when these skills were built (Epic sign-in pending), so nothing has run in the engine. 1,534 offline checks pass across the 10 modules, with system Python and fake `unreal` modules only. Every Unreal API name, cvar and command in the skills is marked "not yet run in Unreal"; C++ builds and the MCP toolsets are untested. Treat the in-engine code paths as unverified until a first live run (`tests/OPEN_ISSUES.md` in the build project).
+- 10 skills (the lead `scenario-unreal-expert` and nine specialists) written from 115 expert videos
+  (77 h) and 82 official documentation pages, each with references and an offline-tested
+  `ue_<domain>.py` module. The lead carries the shared toolkit (`ue_env`, `ue_run`, `ue_remote`,
+  `ue_review`, `ue_audit`, `ue_stat`).
+- Blind-graded written scenarios (round 1): 51 % without the skills, 95 % with them (69/135 vs
+  128/135); all 9 scenarios improved. One grader per scenario: a direction, not a statistic. These
+  scores were measured before the refactor included here; round 2 is planned after the first run in
+  Unreal.
+- Not verified inside Unreal Engine: the engine was not installed when these skills were built (Epic
+  sign-in pending), so nothing has run in the engine. 1,534 offline checks pass across the 10
+  modules, with system Python and fake `unreal` modules only. Every Unreal API name, cvar and
+  command in the skills is marked "not yet run in Unreal"; C++ builds and the MCP toolsets are
+  untested. Treat the in-engine code paths as unverified until a first live run
+  (`tests/OPEN_ISSUES.md` in the build project).
 
 ## Requirements
 
-Unreal Engine 5.8 on macOS Apple Silicon. The lead skill `scenario-unreal-expert` explains the execution channels: Epic's experimental Unreal MCP server, Editor Python in a running editor (Python Remote Execution), headless `UnrealEditor-Cmd -run=pythonscript` jobs, the Remote Control API, console commands, commandlets and UAT. The offline layers of the modules run with system Python 3.
+Unreal Engine 5.8 on macOS Apple Silicon. The lead skill `scenario-unreal-expert` explains the
+execution channels: Epic's experimental Unreal MCP server, Editor Python in a running editor (Python
+Remote Execution), headless `UnrealEditor-Cmd -run=pythonscript` jobs, the Remote Control API,
+console commands, commandlets and UAT. The offline layers of the modules run with system Python 3.
 
 ## Install
 
@@ -33,12 +53,20 @@ Unreal Engine 5.8 on macOS Apple Silicon. The lead skill `scenario-unreal-expert
 npx skills add scenario-labs/skills --skill scenario-unreal-expert scenario-unreal-animation scenario-unreal-cinematics scenario-unreal-gameplay scenario-unreal-lighting-rendering scenario-unreal-materials scenario-unreal-performance scenario-unreal-pipeline-automation scenario-unreal-vfx scenario-unreal-world-building
 ```
 
-The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Unreal Engine" group. Update with `npx skills update`.
+The installer puts the skills side by side, which the specialists need: they import the lead skill's
+`scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the
+"Expert tools: Unreal Engine" group. Update with `npx skills update`.
 
 ## Provenance
 
-Ported from [edemaistre/unreal-expert-skills](https://github.com/edemaistre/unreal-expert-skills/tree/v0.1), built on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this repository's frontmatter (`name`, `description`, `license`), no version line in the skill bodies, the sibling-install line in each `SKILL.md`, and paths into the build project made relative.
+Ported from
+[edemaistre/unreal-expert-skills](https://github.com/edemaistre/unreal-expert-skills/tree/v0.1),
+built on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this
+repository's frontmatter (`name`, `description`, `license`), no version line in the skill bodies,
+the sibling-install line in each `SKILL.md`, and paths into the build project made relative.
 
-Mentions of v0.1, v0.2, v1 or v2 inside the references and code comments name the internal drafts of 2026-09-24.
+Mentions of v0.1, v0.2, v1 or v2 inside the references and code comments name the internal drafts of
+2026-09-24.
 
-Paths such as `tests/code/...`, `notes/...`, `sources/...` inside the skills point to the build project (tests, notes, sources) on the author's machine; they are provenance only.
+Paths such as `tests/code/...`, `notes/...`, `sources/...` inside the skills point to the build
+project (tests, notes, sources) on the author's machine; they are provenance only.

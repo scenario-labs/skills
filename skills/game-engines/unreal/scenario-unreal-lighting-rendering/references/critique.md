@@ -1,6 +1,10 @@
 # Critique rubric: judging a lit level, a render setup and a still
 
-Load at every gate. Code screens, the eye decides: never call a frame done from numbers alone, and never from sight alone (scenario-unreal-expert: in Epic's MCP talk an agent approved an all-white frame). Work each list top-down: an early failure (the camera is not calibrated, the renderer sees a different scene) makes later polish moot. Thresholds marked [added] live in `ue_light.THRESHOLDS`: calibrate them on one approved frame of the project, then keep them per project.
+Load at every gate. Code screens, the eye decides: never call a frame done from numbers alone, and
+never from sight alone (scenario-unreal-expert: in Epic's MCP talk an agent approved an all-white
+frame). Work each list top-down: an early failure (the camera is not calibrated, the renderer sees a
+different scene) makes later polish moot. Thresholds marked [added] live in `ue_light.THRESHOLDS`:
+calibrate them on one approved frame of the project, then keep them per project.
 
 ## A. Setup before judging any image
 
@@ -17,7 +21,8 @@ Load at every gate. Code screens, the eye decides: never call a frame done from 
 
 ## B. The frame, in the lighter's order
 
-Run `frame_report(frame, brief)` on each bookmark; the brief names regions and their roles. Then look at the frame at full size and as a thumbnail.
+Run `frame_report(frame, brief)` on each bookmark; the brief names regions and their roles. Then
+look at the frame at full size and as a thumbnail.
 
 | #   | Question                                                                                                      | Code (finding id)                                                                                     | Default threshold                                                                                           | Look at                                          | Typical fix                                                                                | Source                                                                          |
 | --- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
@@ -32,7 +37,9 @@ Run `frame_report(frame, brief)` on each bookmark; the brief names regions and t
 | B9  | Artifacts: leaks at wall seams, Lumen splotches, MegaLights noise or ghosting in motion, VSM shimmer?         | `red_fraction` on the VSM cache view; `noise_sigma` A/B; P8 dump                                      | VSM red share near 0 with a still camera [added]                                                            | inner corners close up; a scripted camera move   | blocker cubes outside the shell; opening rect; fix stolen samples; kill invalidations      | Faucher 0GYyHDuaPcg [00:11:13]; SIGGRAPH [00:48:40]; VSM doc                    |
 | B10 | Parity: gameplay at the still camera reads as the same place; bright spots bright on every scalability level? | `compare_ground_truth` between setups                                                                 | same verdict on B2 to B5                                                                                    | side-by-side sheet (ue_review `contact_sheet`)   | per-platform overrides as data, not relighting                                             | Argyriou [00:30:14]; Oakley [00:26:05]                                          |
 
-Notes read like a lead writes them: one line each, in the order above, triaged as lighting (move, retune a light), look (PPV, project-wide), content (world-building or materials) or budget (performance).
+Notes read like a lead writes them: one line each, in the order above, triaged as lighting (move,
+retune a light), look (PPV, project-wide), content (world-building or materials) or budget
+(performance).
 
 ## C. Render engineering (the still or a shot)
 
@@ -61,7 +68,10 @@ Notes read like a lead writes them: one line each, in the order above, triaged a
 
 ## Severity
 
-- **fail** blocks the gate (blank frame, NaN, a 5.8 exposure-range warning in the log, no unbound PPV, uncalibrated exposure, mixed samples on the deferred path, HDRIBackdrop in a path-traced frame, a deprecated cvar).
+- **fail** blocks the gate (blank frame, NaN, a 5.8 exposure-range warning in the log, no unbound
+  PPV, uncalibrated exposure, mixed samples on the deferred path, HDRIBackdrop in a path-traced
+  frame, a deprecated cvar).
 - **warn** is fixed or kept with a written reason in the report.
-- **info** is context for the human (moon brightness vs physical, MegaLights shadow counts, overridden Max Path Intensity).
-  Proportionate notes: a 60 fps gameplay pass and a hero still do not deserve the same polish; state which one the note is for.
+- **info** is context for the human (moon brightness vs physical, MegaLights shadow counts,
+  overridden Max Path Intensity). Proportionate notes: a 60 fps gameplay pass and a hero still do
+  not deserve the same polish; state which one the note is for.

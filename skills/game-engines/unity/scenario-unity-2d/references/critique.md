@@ -1,6 +1,10 @@
 # Critique rubric (scenario-unity-2d)
 
-Score every 2D deliverable before calling it done. Each line has a measurable test (job, test or check) and, where the eye decides, what to look at in the capture. A deliverable passes when every "must" line passes; "should" lines need a written reason when they fail. Numbers come from the sources or from this skill's live runs (see `procedures.md`); [added] marks this skill's own thresholds.
+Score every 2D deliverable before calling it done. Each line has a measurable test (job, test or
+check) and, where the eye decides, what to look at in the capture. A deliverable passes when every
+"must" line passes; "should" lines need a written reason when they fail. Numbers come from the
+sources or from this skill's live runs (see `procedures.md`); [added] marks this skill's own
+thresholds.
 
 ## A. Import and assets
 
@@ -95,5 +99,9 @@ Score every 2D deliverable before calling it done. Each line has a measurable te
 
 ## H. Report
 
-- Every step names its Unity call (job name and API), then **Verified** (job ids, counts, measured numbers, contact sheets looked at) and **Assumed** (anything not run, GUI steps, feel verdicts left to a human).
-- Performance: `AgentProfile.PlayModeTimings` + `ut_stat.summarize_csv` budget verdict, light batches and fill from `LightCost`; Editor numbers labeled as iteration numbers, device numbers handed to scenario-unity-performance.
+- Every step names its Unity call (job name and API), then **Verified** (job ids, counts, measured
+  numbers, contact sheets looked at) and **Assumed** (anything not run, GUI steps, feel verdicts
+  left to a human).
+- Performance: `AgentProfile.PlayModeTimings` + `ut_stat.summarize_csv` budget verdict, light
+  batches and fill from `LightCost`; Editor numbers labeled as iteration numbers, device numbers
+  handed to scenario-unity-performance.

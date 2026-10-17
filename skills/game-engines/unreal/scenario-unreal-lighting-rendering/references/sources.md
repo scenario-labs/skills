@@ -1,6 +1,8 @@
 # Sources
 
-Every source behind this skill, with the credential as the notes record it, what it is best for, and the timestamps worth opening. Notes live in `notes/lighting/`, `notes/rendering/`, `notes/post-process/` (plus the three digests); version facts in `sources/unreal-version-deltas.md`.
+Every source behind this skill, with the credential as the notes record it, what it is best for, and
+the timestamps worth opening. Notes live in `notes/lighting/`, `notes/rendering/`,
+`notes/post-process/` (plus the three digests); version facts in `sources/unreal-version-deltas.md`.
 
 | Source                                                                                             | Expert and credential                                                                                                                          | Version     | URL                                                                                                                              | Best for                                                                                                     | Best timestamps                                                                                        |
 | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -30,4 +32,16 @@ Every source behind this skill, with the credential as the notes record it, what
 
 ## Revision history
 
-- 2026-09-24 v2 (refactor after blind grade `tests/grading/U3_grade.md`; v1 kept in `skills/_versions/unreal-lighting-rendering v1 2026-09-24/`): taught the grade's "missing from both" items from the same sources (path tracer doc and Faucher X5zVhc5ahl0 for emissive double counting, albedo and the glass recipe; Campbell BKaAzhMHJZ0 for the Lumen-only emissive boost and local-light VSM invalidation; Lumen doc for Emissive Light Source, Max Lumen Mesh Cards and the 5.8 exposure-range warning; Faucher 0GYyHDuaPcg, 1LfiYtKDsac, BGoaPyfZlYg and 1e6oOiKh91U for glossy direct light, fixture shapes, Scattering Distribution, lighting-channel cheats, the chrome ball first and split room shells; Oakley rX0wZZxpB-U for ambient first and "the promise of more"; MRG doc and Comly for Game Overrides; MegaLights doc for alpha-masked casters) as stance, gates, lint checks in `ue_light.py` with offline tests, procedures P2 to P13b and rubric rows A8, C10, C11; corrected the HDRIBackdrop fix (`r.PathTracing.VisibleLights 2` shows a Sky Light cubemap and does nothing under Reference Atmosphere); performance budgets and profiling left to scenario-unreal-performance.
+- 2026-09-24 v2 (refactor after blind grade `tests/grading/U3_grade.md`; v1 kept in
+  `skills/_versions/unreal-lighting-rendering v1 2026-09-24/`): taught the grade's "missing from
+  both" items from the same sources (path tracer doc and Faucher X5zVhc5ahl0 for emissive double
+  counting, albedo and the glass recipe; Campbell BKaAzhMHJZ0 for the Lumen-only emissive boost and
+  local-light VSM invalidation; Lumen doc for Emissive Light Source, Max Lumen Mesh Cards and the
+  5.8 exposure-range warning; Faucher 0GYyHDuaPcg, 1LfiYtKDsac, BGoaPyfZlYg and 1e6oOiKh91U for
+  glossy direct light, fixture shapes, Scattering Distribution, lighting-channel cheats, the chrome
+  ball first and split room shells; Oakley rX0wZZxpB-U for ambient first and "the promise of more";
+  MRG doc and Comly for Game Overrides; MegaLights doc for alpha-masked casters) as stance, gates,
+  lint checks in `ue_light.py` with offline tests, procedures P2 to P13b and rubric rows A8, C10,
+  C11; corrected the HDRIBackdrop fix (`r.PathTracing.VisibleLights 2` shows a Sky Light cubemap and
+  does nothing under Reference Atmosphere); performance budgets and profiling left to
+  scenario-unreal-performance.

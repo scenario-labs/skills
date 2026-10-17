@@ -1,6 +1,8 @@
 # GUI paths for the same procedures (computer-use agent or human)
 
-Unity 6.3 on macOS (Cmd for Ctrl; Preferences are under Unity > Settings). Menus moved in 6.1 (Package Manager under Window > Package Management): check labels on the installed editor before scripting clicks. Right column: the scripted equivalent this skill ran.
+Unity 6.3 on macOS (Cmd for Ctrl; Preferences are under Unity > Settings). Menus moved in 6.1
+(Package Manager under Window > Package Management): check labels on the installed editor before
+scripting clicks. Right column: the scripted equivalent this skill ran.
 
 | Task                                                | GUI path                                                                                                                                                                                   | Scripted equivalent (procedures.md)                                                                                                                                       |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

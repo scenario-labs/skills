@@ -6,22 +6,45 @@ license: MIT
 
 # Blender rigging
 
-Expert rigging means the rig is specified by bone placement, proven by deformation under stress poses, and shaped around what the animator will actually use. The stance of every source expert: place joints precisely, generate or build the simplest mechanism that works, then pose it, measure it, render it and fix it before calling it done. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Expert rigging means the rig is specified by bone placement, proven by deformation under stress
+poses, and shaped around what the animator will actually use. The stance of every source expert:
+place joints precisely, generate or build the simplest mechanism that works, then pose it, measure
+it, render it and fix it before calling it done. If a sibling skill named here is missing from your
+available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
+unattended, proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 
-Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and GUI). `import sys; sys.path.append("<skills>/scenario-blender-rigging/scripts"); import bx_rig as R`.
+Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and GUI).
+`import sys; sys.path.append("<skills>/scenario-blender-rigging/scripts"); import bx_rig as R`.
 
 ## Stance (the expert delta)
 
-- **Placement is the specification.** Joints sit in the center of the volume they move, not on the anatomical skeleton ("bones simulate bone, muscle and tissue"); knees and elbows get a slight pre-bend because the chain's curvature IS the IK plane; rolls put each hinge on one local axis so the animator uses one curve (CGDive; Demeter: the bend, not the roll, decided where his pole landed).
-- **The metarig is the source, the generated rig is disposable.** Every fix goes into metarig bones, Rigify parameters or a post-generation script; regenerating keeps control names, so weights and animation survive (CGDive, Demeter, Ivan Cappiello).
-- **Automatic weights fail silently.** `parent_set` returns FINISHED while a warning says bone heat failed; measure unweighted vertices and empty deform groups, and fall back to a voxel proxy plus Data Transfer (CGDive; verified). They also leak across the crotch and armpits: strip .L weights from the right half.
-- **Weights are judged in motion, firm beats mushy.** Paint in pose or against a test animation; limit each seam to 2 or 3 bones ("bones fighting for influence"); slight intersection is better than rubbery transitions; rigid parts are assigned at 1.0, never painted (CGDive, Demeter, Dikko).
-- **Everything that deforms together gets weights from the same source,** transferred and applied, so garments cannot drift while animating (Dikko, CGDive).
-- **Export decides the deformation tools.** Four twist bones per segment instead of Preserve Volume; Preserve Volume, Corrective Smooth and B-bones are Blender-only, which is why Rigify segments its DEF bones (CGDive, Ivan).
-- **The animator is the client.** Cut features nobody uses, restrict only what breaks the rig, keep automated bones hand-animatable (constraint plus child, Mix Add, Transformation instead of drivers), stop when fit for purpose (Wayne Dixon, Demeter, CGDive).
-- **Faces are per-character hybrids.** There is no generic stylized face (Demeter); production faces mix joints, ribbons, shape keys and lattices (Rik Schutte).
+- **Placement is the specification.** Joints sit in the center of the volume they move, not on the
+  anatomical skeleton ("bones simulate bone, muscle and tissue"); knees and elbows get a slight
+  pre-bend because the chain's curvature IS the IK plane; rolls put each hinge on one local axis so
+  the animator uses one curve (CGDive; Demeter: the bend, not the roll, decided where his pole
+  landed).
+- **The metarig is the source, the generated rig is disposable.** Every fix goes into metarig bones,
+  Rigify parameters or a post-generation script; regenerating keeps control names, so weights and
+  animation survive (CGDive, Demeter, Ivan Cappiello).
+- **Automatic weights fail silently.** `parent_set` returns FINISHED while a warning says bone heat
+  failed; measure unweighted vertices and empty deform groups, and fall back to a voxel proxy plus
+  Data Transfer (CGDive; verified). They also leak across the crotch and armpits: strip .L weights
+  from the right half.
+- **Weights are judged in motion, firm beats mushy.** Paint in pose or against a test animation;
+  limit each seam to 2 or 3 bones ("bones fighting for influence"); slight intersection is better
+  than rubbery transitions; rigid parts are assigned at 1.0, never painted (CGDive, Demeter, Dikko).
+- **Everything that deforms together gets weights from the same source,** transferred and applied,
+  so garments cannot drift while animating (Dikko, CGDive).
+- **Export decides the deformation tools.** Four twist bones per segment instead of Preserve Volume;
+  Preserve Volume, Corrective Smooth and B-bones are Blender-only, which is why Rigify segments its
+  DEF bones (CGDive, Ivan).
+- **The animator is the client.** Cut features nobody uses, restrict only what breaks the rig, keep
+  automated bones hand-animatable (constraint plus child, Mix Add, Transformation instead of
+  drivers), stop when fit for purpose (Wayne Dixon, Demeter, CGDive).
+- **Faces are per-character hybrids.** There is no generic stylized face (Demeter); production faces
+  mix joints, ribbons, shape keys and lattices (Rik Schutte).
 
 ## Establish first
 
@@ -44,15 +67,45 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
 
 ## Workflow
 
-1. **Model check.** `R.model_check([body, *parts], fix=True)`: transforms applied (shape keys included), feet on Z=0, centered on X, facing -Y, about 1.8 m for an adult human. Apply Mirror modifiers or keep their mirror object. GATE: `model_check(...)["problems"] == []`.
-2. **Landmarks.** `lm = R.landmarks(body, eyes=eyes)`: cross-sections find crotch, hips, ankle, neck, armpit, wrist; eye centers from the eye mesh; nose tip and chin from the face profile. Override any joint with `overrides={...}`. GATE: joint order sane, `lm["notes"]` empty or explained.
-3. **Fit.** Rigify: `meta = R.add_metarig("basic"|"human")`, `R.fit_metarig(meta, lm)` (joints as shared points, pre-bends, hinge rolls, left side symmetrized; hands and face by similarity, coarse). Manual: build the deform skeleton with `new_bone` from the same landmarks. GATE: `R.check_metarig(meta, body) == []` AND `R.placement_sheet([body, eyes], out, arm_obj=meta, views=("front","right","top"))` looked at; zoom the head with `center=`, `size=`.
-4. **Face (Rigify Human).** Fit, then `R.upgrade_face(meta)` (irreversible; eyelid follow Z 0.3, bottom lip 0.9, Overwrite Widget Meshes on). Stylized hero face: bones for jaw, eyes, tongue plus shape keys instead (stage 7).
-5. **Generate or build.** `rig, err = R.generate(meta)`; `err` is the first Rigify error line naming the bone ("Cannot connect chain - bone position is disjoint", "Expected 2 eye corners"): fix the metarig, regenerate. Manual: twist chains, FK/IK layers with settings properties, IK with solved pole angle, foot roll, symmetrize, `mirror_drivers`, `make_def_layer`, `organize`, widgets. GATE (manual): `static_cycles == []`, `cycle_check() == []`, `root_test < 1e-4`, FK and IK coincide at rest, pole error < 1e-3.
-6. **Bind.** `rep = R.bind(rig, body, garments=[shirt, pants], rigid={eyes: None, teeth: "DEF-teeth.T"})`: auto weights, verification, proxy fallback, cross-side strip, garment transfer (applied), rigid islands, clean and normalize, Armature after Mirror and before Subdivision. GATE: `rep["ok"]`, `unweighted == 0`, no non-deform groups; for export `max_influences=4`.
-7. **Range of motion.** `dr = R.deformation_report(rig, [body, *garments], R.RIGIFY_POSES)`, `R.flag_report(dr)`, then `R.pose_sheet(...)` and `R.joint_sheet(...)` close-ups and LOOK at them. GATE: no leaks, no unexplained collapse, renders acceptable at armpit, elbow, wrist twist, groin, knee, collar.
-8. **Fix, in this order.** Placement or roll problems: back to the metarig and regenerate. Weights: targeted data edits (`strip_opposite_side`, `assign_rigid`, `smooth_weights` with a vertex mask, `clean_weights`). Volume at deep bends: corrective shape keys (`volume_restore_targets`, `corrective_from_targets`, `corrective_driver`). Blender-only candy wrapper: `preserve_volume_mask`. Re-run stage 7 after every fix; re-check earlier poses (CGDive).
-9. **Usability and delivery.** Controls visible with In Front off, widgets, side colors, MCH/DEF hidden, at least one Rigify UI row, `rig_ui.py` needs Auto Run in a GUI, switches exactly 0 or 1, rest pose clean, test action removed. Report numbers, renders and what was not verified.
+1. **Model check.** `R.model_check([body, *parts], fix=True)`: transforms applied (shape keys
+   included), feet on Z=0, centered on X, facing -Y, about 1.8 m for an adult human. Apply Mirror
+   modifiers or keep their mirror object. GATE: `model_check(...)["problems"] == []`.
+2. **Landmarks.** `lm = R.landmarks(body, eyes=eyes)`: cross-sections find crotch, hips, ankle,
+   neck, armpit, wrist; eye centers from the eye mesh; nose tip and chin from the face profile.
+   Override any joint with `overrides={...}`. GATE: joint order sane, `lm["notes"]` empty or
+   explained.
+3. **Fit.** Rigify: `meta = R.add_metarig("basic"|"human")`, `R.fit_metarig(meta, lm)` (joints as
+   shared points, pre-bends, hinge rolls, left side symmetrized; hands and face by similarity,
+   coarse). Manual: build the deform skeleton with `new_bone` from the same landmarks. GATE:
+   `R.check_metarig(meta, body) == []` AND
+   `R.placement_sheet([body, eyes], out, arm_obj=meta, views=("front","right","top"))` looked at;
+   zoom the head with `center=`, `size=`.
+4. **Face (Rigify Human).** Fit, then `R.upgrade_face(meta)` (irreversible; eyelid follow Z 0.3,
+   bottom lip 0.9, Overwrite Widget Meshes on). Stylized hero face: bones for jaw, eyes, tongue plus
+   shape keys instead (stage 7).
+5. **Generate or build.** `rig, err = R.generate(meta)`; `err` is the first Rigify error line naming
+   the bone ("Cannot connect chain - bone position is disjoint", "Expected 2 eye corners"): fix the
+   metarig, regenerate. Manual: twist chains, FK/IK layers with settings properties, IK with solved
+   pole angle, foot roll, symmetrize, `mirror_drivers`, `make_def_layer`, `organize`, widgets. GATE
+   (manual): `static_cycles == []`, `cycle_check() == []`, `root_test < 1e-4`, FK and IK coincide at
+   rest, pole error < 1e-3.
+6. **Bind.**
+   `rep = R.bind(rig, body, garments=[shirt, pants], rigid={eyes: None, teeth: "DEF-teeth.T"})`:
+   auto weights, verification, proxy fallback, cross-side strip, garment transfer (applied), rigid
+   islands, clean and normalize, Armature after Mirror and before Subdivision. GATE: `rep["ok"]`,
+   `unweighted == 0`, no non-deform groups; for export `max_influences=4`.
+7. **Range of motion.** `dr = R.deformation_report(rig, [body, *garments], R.RIGIFY_POSES)`,
+   `R.flag_report(dr)`, then `R.pose_sheet(...)` and `R.joint_sheet(...)` close-ups and LOOK at
+   them. GATE: no leaks, no unexplained collapse, renders acceptable at armpit, elbow, wrist twist,
+   groin, knee, collar.
+8. **Fix, in this order.** Placement or roll problems: back to the metarig and regenerate. Weights:
+   targeted data edits (`strip_opposite_side`, `assign_rigid`, `smooth_weights` with a vertex mask,
+   `clean_weights`). Volume at deep bends: corrective shape keys (`volume_restore_targets`,
+   `corrective_from_targets`, `corrective_driver`). Blender-only candy wrapper:
+   `preserve_volume_mask`. Re-run stage 7 after every fix; re-check earlier poses (CGDive).
+9. **Usability and delivery.** Controls visible with In Front off, widgets, side colors, MCH/DEF
+   hidden, at least one Rigify UI row, `rig_ui.py` needs Auto Run in a GUI, switches exactly 0 or 1,
+   rest pose clean, test action removed. Report numbers, renders and what was not verified.
 
 ## Numbers
 
@@ -75,9 +128,18 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
 
 ## Quality gates
 
-Code (all in `bx_rig`): `check_metarig`, `weight_report` (unweighted, empty_major, non_deform_groups, over4, sum_dev, mirror_err), `deformation_report` + `flag_report` (strain, joint volume bands, cross-side leak, new self-intersections via bx_audit), `static_cycles`, `cycle_check`, `root_test`, `twist_angles`, `solve_pole_angle`, `rigid_check`.
+Code (all in `bx_rig`): `check_metarig`, `weight_report` (unweighted, empty_major,
+non_deform_groups, over4, sum_dev, mirror_err), `deformation_report` + `flag_report` (strain, joint
+volume bands, cross-side leak, new self-intersections via bx_audit), `static_cycles`, `cycle_check`,
+`root_test`, `twist_angles`, `solve_pole_angle`, `rigid_check`.
 
-Visual: placement sheet (front, right, top; head zoom) before generating; pose sheet of `RIGIFY_POSES` (front, right, three-quarter); joint close-ups (arm joints front/top/three-quarter, others front/right/three-quarter) at every flagged pose. Look for armpit collapse, pointy or pinched elbows and knees, candy-wrapper wrists, groin and butt volume, collar clipping, garments sliding or intersecting, teeth and eyes lagging, widgets hidden inside the mesh. Numbers passed while a render showed broken arms or crease spikes during testing: always open the render. Rubric: [`references/critique.md`](references/critique.md).
+Visual: placement sheet (front, right, top; head zoom) before generating; pose sheet of
+`RIGIFY_POSES` (front, right, three-quarter); joint close-ups (arm joints front/top/three-quarter,
+others front/right/three-quarter) at every flagged pose. Look for armpit collapse, pointy or pinched
+elbows and knees, candy-wrapper wrists, groin and butt volume, collar clipping, garments sliding or
+intersecting, teeth and eyes lagging, widgets hidden inside the mesh. Numbers passed while a render
+showed broken arms or crease spikes during testing: always open the render. Rubric:
+[`references/critique.md`](references/critique.md).
 
 ## Common mistakes
 
@@ -101,17 +163,29 @@ Visual: placement sheet (front, right, top; head zoom) before generating; pose s
 
 ## Blender 5.2 notes
 
-- Rigify ships disabled on factory startup (`enable_rigify`); the Human metarig still has the legacy face (upgrade it); Overwrite Widget Meshes still defaults off.
-- Bone collections and per-bone colors replace layers and bone groups; `edit_bones.new()` joins no collection; pose selection is `pose.bones[n].select`.
-- `parent_set` appends the Armature modifier last; weight operators (`vertex_group_smooth`, `_clean`) need Weight Paint mode headless; `bx_rig` does clean, normalize and limit on data instead.
-- `shape_key_add` leaves new keys at value 1.0 in 5.2.1: set 0 before driving [verified]. `VertexGroup.remove` with out-of-range indices crashes 5.2.1 [verified].
-- Setting a parent's `tail` moves a connected child's `head`; `EditBone.transform` on a connected group double-moves shared ends [verified]: use `transform_bones`.
-- Python drivers start with keys (0,0),(1,1); remap them (`remap_driver`). Action constraints pick the action slot automatically. Only Insert Available is on by default; `keyframe_insert` from Python is unaffected.
-- Custom shapes: Affect Gizmo (`use_transform_at_custom_shape`), Use As Pivot (`use_transform_around_custom_shape`). 5.2 adds Duplicate and Rename and Add Bone align Axes.
+- Rigify ships disabled on factory startup (`enable_rigify`); the Human metarig still has the legacy
+  face (upgrade it); Overwrite Widget Meshes still defaults off.
+- Bone collections and per-bone colors replace layers and bone groups; `edit_bones.new()` joins no
+  collection; pose selection is `pose.bones[n].select`.
+- `parent_set` appends the Armature modifier last; weight operators (`vertex_group_smooth`,
+  `_clean`) need Weight Paint mode headless; `bx_rig` does clean, normalize and limit on data
+  instead.
+- `shape_key_add` leaves new keys at value 1.0 in 5.2.1: set 0 before driving [verified].
+  `VertexGroup.remove` with out-of-range indices crashes 5.2.1 [verified].
+- Setting a parent's `tail` moves a connected child's `head`; `EditBone.transform` on a connected
+  group double-moves shared ends [verified]: use `transform_bones`.
+- Python drivers start with keys (0,0),(1,1); remap them (`remap_driver`). Action constraints pick
+  the action slot automatically. Only Insert Available is on by default; `keyframe_insert` from
+  Python is unaffected.
+- Custom shapes: Affect Gizmo (`use_transform_at_custom_shape`), Use As Pivot
+  (`use_transform_around_custom_shape`). 5.2 adds Duplicate and Rename and Add Bone align Axes.
 
 ## References
 
-- [`references/procedures.md`](references/procedures.md): full tested code for each stage and the test script behind it; load before writing rig code.
-- [`references/expert-notes.md`](references/expert-notes.md): judgment by expert (placement, Rigify internals, weighting, mechanisms, faces) with timestamps; load when a decision is not covered above.
+- [`references/procedures.md`](references/procedures.md): full tested code for each stage and the
+  test script behind it; load before writing rig code.
+- [`references/expert-notes.md`](references/expert-notes.md): judgment by expert (placement, Rigify
+  internals, weighting, mechanisms, faces) with timestamps; load when a decision is not covered
+  above.
 - `references/critique.md`: the review rubric; load at every gate.
 - [`references/sources.md`](references/sources.md): videos, experts, best timestamps.

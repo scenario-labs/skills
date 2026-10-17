@@ -1,6 +1,10 @@
 # GUI paths, hotkeys and settings: posing and print
 
-For a computer-use agent or a human doing the same procedures by hand. Palette paths as ZBrush shows them; the item path an API call takes is in `scripts/zb_pose.py` `PATHS`. Evidence: [doc] Maxon help, [strings] label present in the 2026.2.1 UI resources, [log] ZBrush Activity log 2026-09-24 on this Mac, [macro] shipped macro, [expert] shown in a source video. On macOS, doc "Ctrl" can mean Command or Control depending on the shortcut [verify each]; Cmd+W quits ZBrush, Control+W groups.
+For a computer-use agent or a human doing the same procedures by hand. Palette paths as ZBrush shows
+them; the item path an API call takes is in `scripts/zb_pose.py` `PATHS`. Evidence: [doc] Maxon
+help, [strings] label present in the 2026.2.1 UI resources, [log] ZBrush Activity log 2026-09-24 on
+this Mac, [macro] shipped macro, [expert] shown in a source video. On macOS, doc "Ctrl" can mean
+Command or Control depending on the shortcut [verify each]; Cmd+W quits ZBrush, Control+W groups.
 
 ## Posing
 

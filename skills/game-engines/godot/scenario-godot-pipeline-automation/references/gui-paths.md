@@ -1,6 +1,7 @@
 # GUI paths (scenario-godot-pipeline-automation 0.1)
 
-The same work through the Godot 4.7 editor, for a computer-use agent or a human. Menu names are from the 4.7 editor; paths not opened in a GUI session here are marked [docs].
+The same work through the Godot 4.7 editor, for a computer-use agent or a human. Menu names are from
+the 4.7 editor; paths not opened in a GUI session here are marked [docs].
 
 | Work                                           | GUI path                                                                                                                                               | Scripted equivalent (this skill)                                     |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |

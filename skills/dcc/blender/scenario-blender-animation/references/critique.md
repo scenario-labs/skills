@@ -1,18 +1,34 @@
 # Critique rubric: how these animators judge a shot
 
-Use at every gate. Each item: what the expert looks at (source), the measurable proxy (bx_anim call), and what to look for in the renders. Measure first, then look; report which items were measured and which were judged by eye.
+Use at every gate. Each item: what the expert looks at (source), the measurable proxy (bx_anim
+call), and what to look for in the renders. Measure first, then look; report which items were
+measured and which were judged by eye.
 
 ## The review pack (render it, then open every image)
 
-1. **Pose strip** of the key poses: `onion_skin(frames=key_poses, spread=300, view=...)` (the agent's version of flipping between poses; Alex Nagy, Hjalti Hjalmarsson flip extremes with arrow keys or markers).
-2. **Shot-camera playblast** at the scene fps with dialogue: `bx_review.playblast` with `ffmpeg.audio_codec='AAC'`; pull a frame sheet with ffmpeg and look at it. Everything is judged from the shot camera when it is locked (Rik Schutte); add front, side and top orbit renders when the camera moves or may be re-framed (Leo Silly-Pelissier, Pierrick Picaut).
-3. **Onion skin with tracks** on root or COG, hands, feet, head or nose: `onion_skin(track=[...])` (Pablo Fournier's arc check).
-4. **Curve plot** of the main controls: `graph_image` (holds flat, eases where planned, face still stepped).
-5. **Numbers**: `format_report(motion_report(...))` per tracked part, in world and in camera pixels (`to_camera(..., res=(w, h))`, `dims=2`), plus `hold_drift`, `overshoots`, `transitions`, `foot_slip`, `lowest_point`, `ballistic_fit`, `limb_extension`, `rotation_flips`, `balance_report`.
-6. **Staging**: `format_staging(staging_report(subject, frames, shadow_frames=[airborne, contact]))` with the shot camera and render size, and two ffmpeg frame sheets from the playblast (every third frame; the frames around the hardest contact).
-7. **Progression**: the stepped blocking, the previous version and the current one side by side (Rik plays blocking, earlier spline and current back to back, hnHemwjznPc [02:40:00]).
+1. **Pose strip** of the key poses: `onion_skin(frames=key_poses, spread=300, view=...)` (the
+   agent's version of flipping between poses; Alex Nagy, Hjalti Hjalmarsson flip extremes with arrow
+   keys or markers).
+2. **Shot-camera playblast** at the scene fps with dialogue: `bx_review.playblast` with
+   `ffmpeg.audio_codec='AAC'`; pull a frame sheet with ffmpeg and look at it. Everything is judged
+   from the shot camera when it is locked (Rik Schutte); add front, side and top orbit renders when
+   the camera moves or may be re-framed (Leo Silly-Pelissier, Pierrick Picaut).
+3. **Onion skin with tracks** on root or COG, hands, feet, head or nose: `onion_skin(track=[...])`
+   (Pablo Fournier's arc check).
+4. **Curve plot** of the main controls: `graph_image` (holds flat, eases where planned, face still
+   stepped).
+5. **Numbers**: `format_report(motion_report(...))` per tracked part, in world and in camera pixels
+   (`to_camera(..., res=(w, h))`, `dims=2`), plus `hold_drift`, `overshoots`, `transitions`,
+   `foot_slip`, `lowest_point`, `ballistic_fit`, `limb_extension`, `rotation_flips`,
+   `balance_report`.
+6. **Staging**: `format_staging(staging_report(subject, frames, shadow_frames=[airborne, contact]))`
+   with the shot camera and render size, and two ffmpeg frame sheets from the playblast (every third
+   frame; the frames around the hardest contact).
+7. **Progression**: the stepped blocking, the previous version and the current one side by side (Rik
+   plays blocking, earlier spline and current back to back, hnHemwjznPc [02:40:00]).
 
-Preview speed: Simplify with max subdivision 0 (Tony Garcia: a production scene went from 5 to 24 fps, fbfODZ8PO4E [00:17:43]); polish review with subdivision back on (Rik).
+Preview speed: Simplify with max subdivision 0 (Tony Garcia: a production scene went from 5 to 24
+fps, fbfODZ8PO4E [00:17:43]); polish review with subdivision back on (Rik).
 
 ## 1. Intent and staging (Block A)
 
@@ -112,11 +128,17 @@ Preview speed: Simplify with max subdivision 0 (Tony Garcia: a production scene 
 
 ## 8. Technical hygiene
 
-- Slot assigned and named after the character (module talk ypWk6ZgQ-iM [00:07:35]); `ad.action_slot is not None`.
-- Before approval all key poses CONSTANT and typed (EXTREME, BREAKDOWN, MOVING_HOLD); key types as a confidence map (Hjalti fbfODZ8PO4E [00:46:30]).
-- No partial key columns on main controls (Rik keys every main control together, sRYVR92FqSw [01:48:55]).
-- No Euler jumps over 180 degrees between keys, no quaternion sign flips between keys (digest checklist): `rotation_flips` empty, `fix_rotation_flips` repairs on keys; quaternion rigs keyed as quaternions.
-- Cycles: Cycles modifiers on all cyclic channels, equal values at the seam, root REPEAT_OFFSET with LINEAR keys (Joey [00:32:39]).
+- Slot assigned and named after the character (module talk ypWk6ZgQ-iM [00:07:35]);
+  `ad.action_slot is not None`.
+- Before approval all key poses CONSTANT and typed (EXTREME, BREAKDOWN, MOVING_HOLD); key types as a
+  confidence map (Hjalti fbfODZ8PO4E [00:46:30]).
+- No partial key columns on main controls (Rik keys every main control together, sRYVR92FqSw
+  [01:48:55]).
+- No Euler jumps over 180 degrees between keys, no quaternion sign flips between keys (digest
+  checklist): `rotation_flips` empty, `fix_rotation_flips` repairs on keys; quaternion rigs keyed as
+  quaternions.
+- Cycles: Cycles modifiers on all cyclic channels, equal values at the seam, root REPEAT_OFFSET with
+  LINEAR keys (Joey [00:32:39]).
 - fps matches the medium (24 unless told otherwise); `use_simplify` on only for previews.
 
 ## Staging thresholds: calibration [added]
@@ -132,7 +154,15 @@ Measured with `staging_report` on the E3 evaluation scenes (heavy ball, 72 frame
 
 ## Severity and phrasing
 
-- Order of importance: intent and staging, then timing, then arcs and weight, then overlap, then polish. Do not polish what is not approved (Rik: "animate drunk and edit sober", jLkc4EgHWj8 [00:27:21]; Pablo: show broken work early, fbfODZ8PO4E [00:47:04]).
-- Write notes the way these animators give them: a frame range, what the audience sees, the principle, the fix. Example: "f10 to f13, hand: sharp turns at 11 and 12 and a pop 11 to 12, reads as a jerk; the swing needs a breakdown through the bottom of its arc at f11 (`breakdown` with the hand favored late)". Rik's vocabulary: floaty, too even, starts and stops, pops, drift, connected, too big, lazy, early, late.
-- When keys fight, delete down to the essentials and look at the clean interpolation before adding more (Rik hnHemwjznPc [01:05:47]).
-- Report honestly: say which checks were measured, which were judged on renders, and what could not be verified (no audio, no reference, GUI-only feel).
+- Order of importance: intent and staging, then timing, then arcs and weight, then overlap, then
+  polish. Do not polish what is not approved (Rik: "animate drunk and edit sober", jLkc4EgHWj8
+  [00:27:21]; Pablo: show broken work early, fbfODZ8PO4E [00:47:04]).
+- Write notes the way these animators give them: a frame range, what the audience sees, the
+  principle, the fix. Example: "f10 to f13, hand: sharp turns at 11 and 12 and a pop 11 to 12, reads
+  as a jerk; the swing needs a breakdown through the bottom of its arc at f11 (`breakdown` with the
+  hand favored late)". Rik's vocabulary: floaty, too even, starts and stops, pops, drift, connected,
+  too big, lazy, early, late.
+- When keys fight, delete down to the essentials and look at the clean interpolation before adding
+  more (Rik hnHemwjznPc [01:05:47]).
+- Report honestly: say which checks were measured, which were judged on renders, and what could not
+  be verified (no audio, no reference, GUI-only feel).

@@ -1,6 +1,8 @@
 # Critique rubric: judging a Geometry Nodes tree, asset or simulation
 
-Use this at every gate. Each line says what the experts look at, how the agent checks it, and what fails. "Code" items run through `bx_gn`; "Look" items need a render opened with the image reader (`G.snapshot`, or `bx_review.review` for realized meshes).
+Use this at every gate. Each line says what the experts look at, how the agent checks it, and what
+fails. "Code" items run through `bx_gn`; "Look" items need a render opened with the image reader
+(`G.snapshot`, or `bx_review.review` for realized meshes).
 
 ## 1. The tree is sound (always)
 
@@ -59,9 +61,17 @@ Use this at every gate. Each line says what the experts look at, how the agent c
 
 ## 6. It looks right (render and open it)
 
-- **Scatter:** density reads natural (no grid, no clumps from correlated seeds), slopes bare where they should be, nothing floating or sunk (Workbench shadows in `G.snapshot` show contact), variation in scale and spin, instance attributes visible in the shader.
-- **Arrays along curves:** even spacing, no flips at curvature changes, links or tiles interlock where intended.
-- **Procedural modeling (repeat, extrude):** silhouette reads, no self-intersection at the base, tapering even; check silhouette and matcap in `bx_review`.
-- **Simulations:** a frame strip (`G.snapshot(..., frames=[...])`) shows the motion you expect then rest; melt, drip, tear and fabric stiffness read naturally; tears asymmetric and reinforced where garments are reinforced (Thommes BCON26).
-- **Attribute-driven shading:** edge masks, wrinkle or stretch maps, temperature glow checked at render resolution, not only in the viewport.
-- **Gizmos:** placement and drag feel can only be judged in a live GUI session (viewport screenshot); headless, verify wiring only and say so.
+- **Scatter:** density reads natural (no grid, no clumps from correlated seeds), slopes bare where
+  they should be, nothing floating or sunk (Workbench shadows in `G.snapshot` show contact),
+  variation in scale and spin, instance attributes visible in the shader.
+- **Arrays along curves:** even spacing, no flips at curvature changes, links or tiles interlock
+  where intended.
+- **Procedural modeling (repeat, extrude):** silhouette reads, no self-intersection at the base,
+  tapering even; check silhouette and matcap in `bx_review`.
+- **Simulations:** a frame strip (`G.snapshot(..., frames=[...])`) shows the motion you expect then
+  rest; melt, drip, tear and fabric stiffness read naturally; tears asymmetric and reinforced where
+  garments are reinforced (Thommes BCON26).
+- **Attribute-driven shading:** edge masks, wrinkle or stretch maps, temperature glow checked at
+  render resolution, not only in the viewport.
+- **Gizmos:** placement and drag feel can only be judged in a live GUI session (viewport
+  screenshot); headless, verify wiring only and say so.

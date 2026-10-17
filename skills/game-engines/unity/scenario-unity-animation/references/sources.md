@@ -1,6 +1,9 @@
 # Sources
 
-Notes with full distillation: `notes/animation-cinematics/` (one per source, plus `_digest_docs_`, `_digest_videos_`, `_digest_visual_animation-cinematics.md`). Version facts: `sources/unity-version-deltas.md` (section 7, section 14 trap 1). Saved docs: `sources/docs/animation-cinematics__*.md`.
+Notes with full distillation: `notes/animation-cinematics/` (one per source, plus `_digest_docs_`,
+`_digest_videos_`, `_digest_visual_animation-cinematics.md`). Version facts:
+`sources/unity-version-deltas.md` (section 7, section 14 trap 1). Saved docs:
+`sources/docs/animation-cinematics__*.md`.
 
 ## 1. Observed on this Mac (primary evidence for the procedures)
 
@@ -58,4 +61,16 @@ Notes with full distillation: `notes/animation-cinematics/` (one per source, plu
 
 ## Revision history
 
-- 2026-09-24, v0.2 (refactor after blind grade Y5; v1 kept in `skills/_versions/unity-animation v1 2026-09-24/`): fixed the claim that an idle "drifts" with Based Upon Original (Based Upon only places the pose; measured 0 m drift for Original and Body Orientation over 30 s, 0.246 m with XZ unbaked); added and live-tested Mixamo download settings (Character Arm Space, 30 fps, no keyframe reduction), roles from file names never take names, the pre-conversion clip duplicate trap (`DuplicateClip`, `AuditClips`, controller check), import-time Avatar Masks, Translation DoF and no reimport in callbacks, the transition interruption probe and snapshot pose, `Animator.gravityWeight` and the mover's vertical source, parameter clamping, idle drift over 30 s, blend hints with measured paths, the Deoccluder (Ignore Tag, Transparent Layers, triggers), occlusion linecast and jitter metrics, camera audits (FreeLook plus Camera Offset plus Deoccluder, procedural camera with an Animator), Timeline priority override and Play-mode handback, `AuditTimeline` (signals, marker receivers), head-rig fade and one-target rule, Optimize Game Objects late, and `ua.scan_csharp` for these traps in project code.
+- 2026-09-24, v0.2 (refactor after blind grade Y5; v1 kept in
+  `skills/_versions/unity-animation v1 2026-09-24/`): fixed the claim that an idle "drifts" with
+  Based Upon Original (Based Upon only places the pose; measured 0 m drift for Original and Body
+  Orientation over 30 s, 0.246 m with XZ unbaked); added and live-tested Mixamo download settings
+  (Character Arm Space, 30 fps, no keyframe reduction), roles from file names never take names, the
+  pre-conversion clip duplicate trap (`DuplicateClip`, `AuditClips`, controller check), import-time
+  Avatar Masks, Translation DoF and no reimport in callbacks, the transition interruption probe and
+  snapshot pose, `Animator.gravityWeight` and the mover's vertical source, parameter clamping, idle
+  drift over 30 s, blend hints with measured paths, the Deoccluder (Ignore Tag, Transparent Layers,
+  triggers), occlusion linecast and jitter metrics, camera audits (FreeLook plus Camera Offset plus
+  Deoccluder, procedural camera with an Animator), Timeline priority override and Play-mode
+  handback, `AuditTimeline` (signals, marker receivers), head-rig fade and one-target rule, Optimize
+  Game Objects late, and `ua.scan_csharp` for these traps in project code.

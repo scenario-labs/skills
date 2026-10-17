@@ -1,14 +1,21 @@
 # ZBrush 2026.2.1 SDK cookbook for an agent
 
-Calls and item paths by task, with the evidence for each. `zbc` = `zbrush.commands`, run on ZBrush's main thread through the bridge (`zb_launch.run` / `zb_launch.call`). Toolkit functions are named after the arrow.
+Calls and item paths by task, with the evidence for each. `zbc` = `zbrush.commands`, run on ZBrush's
+main thread through the bridge (`zb_launch.run` / `zb_launch.call`). Toolkit functions are named
+after the arrow.
 
 Tags:
 
-- `[v01]`, `[v02]`, `[v03]`: ran through the bridge on 2026-09-24 (`tests/code/zbrush-expert/v0N_*`, results in `v0N_result.json`).
-- `[log]`: the path as ZBrush itself wrote it in `~/Library/Preferences/Maxon/ZBrush_03C27D49/Logs/Activity/Activity 2026-09-24-05-20-14.txt`.
-- `[obj]`: measured offline on the v03 OBJ export (`tests/code/zbrush-expert/fixtures/v03_sphere.obj`).
-- `[doc]`: Maxon SDK 2026.1 docs, examples or stub. `[macro]`: a ZScript macro shipped in `ZData/Macros` (2026.2.1).
-- `[cmdxml]`: an id in `ZData/ZLang/zcommands/commands.xml` of the install (2026-06-01); spaces and case are ignored in paths.
+- `[v01]`, `[v02]`, `[v03]`: ran through the bridge on 2026-09-24 (`tests/code/zbrush-expert/v0N_*`,
+  results in `v0N_result.json`).
+- `[log]`: the path as ZBrush itself wrote it in
+  `~/Library/Preferences/Maxon/ZBrush_03C27D49/Logs/Activity/Activity 2026-09-24-05-20-14.txt`.
+- `[obj]`: measured offline on the v03 OBJ export
+  (`tests/code/zbrush-expert/fixtures/v03_sphere.obj`).
+- `[doc]`: Maxon SDK 2026.1 docs, examples or stub. `[macro]`: a ZScript macro shipped in
+  `ZData/Macros` (2026.2.1).
+- `[cmdxml]`: an id in `ZData/ZLang/zcommands/commands.xml` of the install (2026-06-01); spaces and
+  case are ignored in paths.
 - `[verify]`: not confirmed. The live check that will settle it is named as `live_NN`.
 
 ## 0. Session and channel
@@ -27,9 +34,20 @@ Tags:
 | Shared-interpreter hygiene      | every `run`/`call`: snapshot, import by path, `_zb_restore()` puts `sys.path`, `sys.modules`, stdout, stderr, cwd back and pops toolkit modules; the server calls the hook after an error → `zb_launch.hygiene()` (both lists empty), `purge()` | [doc] Style Guide, ex_mod_curve_lightning; offline tests only [verify live_06] |
 | Many steps in one call          | `zbc.freeze(fn)` (progress bars still work), `zbc.show_actions(0)` before presses (not needed for `set`) → `zb_ops.sequence(steps)`, `quiet()`, `frozen(fn)`                                                                                    | [doc] SDK GUI reference; [verify live_06]                                      |
 
-Hygiene rules the prelude enforces (Maxon Style Guide): the script folder is NOT on `sys.path` (so `import my_helper` fails in ZBrush), a folder goes on `sys.path` only for the import, helper modules are popped from `sys.modules` after use, nothing touches `sys`, `math` or `random` (`random.seed = 42` breaks `random.seed` until restart), no `os.chdir`. A stale copy of a requested module found in `sys.modules` is set aside for the call, so edited toolkit code runs from disk; `run(..., full=True)` reports it as `hygiene`. Freeze rules [added]: no plugin press (UV Master, Decimation Master, Multi Map Exporter) and no canvas export inside `freeze`; `freeze()` returns None and its behavior when the payload raises is undocumented, so `frozen()` catches inside and raises after.
+Hygiene rules the prelude enforces (Maxon Style Guide): the script folder is NOT on `sys.path` (so
+`import my_helper` fails in ZBrush), a folder goes on `sys.path` only for the import, helper modules
+are popped from `sys.modules` after use, nothing touches `sys`, `math` or `random`
+(`random.seed = 42` breaks `random.seed` until restart), no `os.chdir`. A stale copy of a requested
+module found in `sys.modules` is set aside for the call, so edited toolkit code runs from disk;
+`run(..., full=True)` reports it as `hygiene`. Freeze rules [added]: no plugin press (UV Master,
+Decimation Master, Multi Map Exporter) and no canvas export inside `freeze`; `freeze()` returns None
+and its behavior when the payload raises is undocumented, so `frozen()` catches inside and raises
+after.
 
-The Activity log canonicalizes group names away: the agent sent `Tool:Geometry:DynaMesh:Resolution` and `Tool:Geometry:DynaMesh:DynaMesh`; ZBrush logged `ISet "Tool:Geometry:Resolution"` and `IPress "Tool:Geometry:DynaMesh"` [log]. Both forms resolve; keep the grouped form in code (it names one item unambiguously).
+The Activity log canonicalizes group names away: the agent sent `Tool:Geometry:DynaMesh:Resolution`
+and `Tool:Geometry:DynaMesh:DynaMesh`; ZBrush logged `ISet "Tool:Geometry:Resolution"` and
+`IPress "Tool:Geometry:DynaMesh"` [log]. Both forms resolve; keep the grouped form in code (it names
+one item unambiguously).
 
 ## 1. Tools and the canvas
 
@@ -43,9 +61,11 @@ zbc.set("Transform:Edit", 1)                    # [v01]; logged as IPress "Trans
 
 → `zb_ops.new_sphere(resolution=128)` (same sequence, plus Layer:Clear [macro] before drawing).
 
-- Edit off + canvas drag stamps another pixol copy (Pablo, Logic Part 1). → `zb_ops.ensure_edit()` before every stroke.
+- Edit off + canvas drag stamps another pixol copy (Pablo, Logic Part 1). → `zb_ops.ensure_edit()`
+  before every stroke.
 - Pressing a Tool while Edit is on swaps the edited tool [verify live_01].
-- Start new tools from `Tool:PolyMesh3D`, never SimpleBrush: switching to a 2.5D brush drops the edited tool (usd-portal) [verify].
+- Start new tools from `Tool:PolyMesh3D`, never SimpleBrush: switching to a 2.5D brush drops the
+  edited tool (usd-portal) [verify].
 
 ## 2. View (the "camera" is the tool transform)
 
@@ -55,9 +75,15 @@ zbc.set_transform(*t)        # restore [doc]; round trip [verify live_01]
 zbc.set_transform(x_rotate=0, y_rotate=90, z_rotate=0)       # keywords [doc]
 ```
 
-- Framing: `scale = min(w, h) / longest_bbox_side * 0.75`, position `(w/2, h/2, 0)` (Maxon turntable example) → `zb_stroke.frame_transform(bbox, w, h, rot)`. Whether the pivot is the bbox center and k = 1 [verify live_03].
-- `Transform:Frame` does not exist [v03]. Candidates: `Transform:Fit` [macro], `Transform:Fit Mesh To View` [doc] [verify live_03].
-- Canonical triples: front `(0,0,0)` (default after drawing; used by the shipped Create Instance Subtool macro), top `(0,90,90)` [doc set_transform example], back `(0,180,180)` [doc turntable key]. Right `(0,90,0)`, left, three-quarter [verify live_03]. MadPony: X flips at 90 and Y beyond ±90 needs Z = 180 (2019 build); set absolute views, never add degrees.
+- Framing: `scale = min(w, h) / longest_bbox_side * 0.75`, position `(w/2, h/2, 0)` (Maxon turntable
+  example) → `zb_stroke.frame_transform(bbox, w, h, rot)`. Whether the pivot is the bbox center and
+  k = 1 [verify live_03].
+- `Transform:Frame` does not exist [v03]. Candidates: `Transform:Fit` [macro],
+  `Transform:Fit Mesh To View` [doc] [verify live_03].
+- Canonical triples: front `(0,0,0)` (default after drawing; used by the shipped Create Instance
+  Subtool macro), top `(0,90,90)` [doc set_transform example], back `(0,180,180)` [doc turntable
+  key]. Right `(0,90,0)`, left, three-quarter [verify live_03]. MadPony: X flips at 90 and Y beyond
+  ±90 needs Z = 180 (2019 build); set absolute views, never add degrees.
 - Keep x, y, z scale equal and positive (MadPony: stretched or flipped model otherwise).
 - Canvas zoom and pan (`get_canvas_zoom`) are the document view, not the camera [doc].
 
@@ -70,16 +96,26 @@ s = zbc.get_last_stroke()                             # [v01] returned the tool-
 zbc.canvas_stroke(s, v_offset=60)                     # replay with offset: 4.184 -> 4.189 [v01]
 ```
 
-→ `zb_stroke.encode(points)` (byte-identical to the v02 string), `zb_stroke.play(points)`, `zb_ops.sculpt_stroke(points, brush=..., size=..., z_intensity=...)`.
+→ `zb_stroke.encode(points)` (byte-identical to the v02 string), `zb_stroke.play(points)`,
+`zb_ops.sculpt_stroke(points, brush=..., size=..., z_intensity=...)`.
 
 - Canvas pixels = pixels of the `Document:Export` PNG, origin top left, y down [v02, v03 canvas].
 - `canvas_click` drags in Edit mode did not sculpt [v01]: never use them to sculpt.
-- Replay transforms: `canvas_stroke(st, None, rotation_deg, h_scale, v_scale, h_offset, v_offset)`; origin = stroke start, canvas space [doc]; rotation on a synthesized stroke [verify live_02].
-- Parse oracle: `zbc.get_stroke_info(st, 0)` count, `(st, 1, i)` x, `(st, 2, i)` y, `(st, 3, i)` pressure [doc]. Use it to probe the format without touching the mesh (live_02).
-- Lower-case `h`/`v` = value/256 (decoded from the Maxon V03 example, `zb_stroke.decode`) [verify live_02]. Pressure token unknown [verify live_02]; substitute Draw:Z Intensity and Draw:Draw Size per stroke.
-- Model point to canvas pixel: `zb_stroke.Camera(zbc.get_transform(), pivot).project(p)`. Front view in OBJ space: `x_px = pos_x + k*s*x`, `y_px = pos_y - k*s*y`, +Z toward the camera; k*s was 207 px per unit on the v01 sphere [obj]. Other rotations: `zb_stroke.fit_convention` over dab samples (live_04), installed as `scripts/camera_convention.json`.
-- `pixol_pick(0, x, y)` color, `(5, ...)` material, `(6..8, ...)` normal; depth (1) is broken; empty canvas reads about 0x303030 [doc] [verify live_03, live_04].
-- Symmetry OFF before a stroke aimed at one side (`zb_ops.set_symmetry(False)`), or the mirrored copy lands too.
+- Replay transforms: `canvas_stroke(st, None, rotation_deg, h_scale, v_scale, h_offset, v_offset)`;
+  origin = stroke start, canvas space [doc]; rotation on a synthesized stroke [verify live_02].
+- Parse oracle: `zbc.get_stroke_info(st, 0)` count, `(st, 1, i)` x, `(st, 2, i)` y, `(st, 3, i)`
+  pressure [doc]. Use it to probe the format without touching the mesh (live_02).
+- Lower-case `h`/`v` = value/256 (decoded from the Maxon V03 example, `zb_stroke.decode`) [verify
+  live_02]. Pressure token unknown [verify live_02]; substitute Draw:Z Intensity and Draw:Draw Size
+  per stroke.
+- Model point to canvas pixel: `zb_stroke.Camera(zbc.get_transform(), pivot).project(p)`. Front view
+  in OBJ space: `x_px = pos_x + k*s*x`, `y_px = pos_y - k*s*y`, +Z toward the camera; k*s was 207 px
+  per unit on the v01 sphere [obj]. Other rotations: `zb_stroke.fit_convention` over dab samples
+  (live_04), installed as `scripts/camera_convention.json`.
+- `pixol_pick(0, x, y)` color, `(5, ...)` material, `(6..8, ...)` normal; depth (1) is broken; empty
+  canvas reads about 0x303030 [doc] [verify live_03, live_04].
+- Symmetry OFF before a stroke aimed at one side (`zb_ops.set_symmetry(False)`), or the mirrored
+  copy lands too.
 
 ## 4. DynaMesh, subdivision, ZRemesher
 
@@ -93,12 +129,17 @@ zbc.set("Tool:Geometry:ZRemesher:Target Polygons Count", 5)        # exists [v03
 zbc.press("Tool:Geometry:ZRemesher:ZRemesher")      # exists [v03]; run [verify live_07]
 ```
 
-→ `zb_ops.dynamesh(res, blur, project, groups)`, `divide(n, smt)`, `del_levels()`, `zremesher(target_k, adaptive, adaptive_size, keep_groups, mode)`.
+→ `zb_ops.dynamesh(res, blur, project, groups)`, `divide(n, smt)`, `del_levels()`,
+`zremesher(target_k, adaptive, adaptive_size, keep_groups, mode)`.
 
-- Re-DynaMesh an active DynaMesh: the wrapper switches the button off then on (the human gesture is Ctrl+drag on empty canvas) [verify live_06].
-- DynaMesh or ZRemesher on a SubTool with levels: the wrapper refuses (ZBrush would raise a modal note) [added].
-- ZRemesher options Half, Same, Double, Adapt, AdaptiveSize, KeepGroups, KeepCreases, Detect Edges: both `Tool:Geometry:ZRemesher:<label>` and `Tool:Geometry:<label>` are tried [verify live_07].
-- Mirror And Weld `Tool:Geometry:Mirror And Weld`, Del Lower/Higher, X/Y/Z Position, XYZ Size [macro] [doc].
+- Re-DynaMesh an active DynaMesh: the wrapper switches the button off then on (the human gesture is
+  Ctrl+drag on empty canvas) [verify live_06].
+- DynaMesh or ZRemesher on a SubTool with levels: the wrapper refuses (ZBrush would raise a modal
+  note) [added].
+- ZRemesher options Half, Same, Double, Adapt, AdaptiveSize, KeepGroups, KeepCreases, Detect Edges:
+  both `Tool:Geometry:ZRemesher:<label>` and `Tool:Geometry:<label>` are tried [verify live_07].
+- Mirror And Weld `Tool:Geometry:Mirror And Weld`, Del Lower/Higher, X/Y/Z Position, XYZ Size
+  [macro] [doc].
 
 ## 5. SubTools and projection
 
@@ -117,30 +158,52 @@ zbc.press("Tool:Geometry:ZRemesher:ZRemesher")      # exists [v03]; run [verify 
 
 Safe Project All, the order `zb_ops.project_all` runs (not yet run in ZBrush):
 
-1. `checkpoint`: versioned ZTL save first; Project All "might crash the program" (cgside MyhwQvkcnwI 00:02:19). None raises; False only right after a save.
-2. `top_level()`, then `store_morph_target()` and `new_layer()` there: "It's important that you do all of this on the highest level" (FlippedNormals Zp07GW3rND0 00:02:13, 00:02:47). One morph target per SubTool, destroyed by any point-count change, so it is stored after the last Divide.
-3. Back to `level` (default: where the SubTool was) for a staged projection from the lowest level up (00:03:17).
-4. Dist set explicitly, 0.1 (Drust nxMYYsyJt3o 00:02:19: the small default causes "90 percent" of artifacts); PA Blur lowered for a clean source (FlippedNormals).
-5. Project All, then the gate: point count kept, target bbox (visible, mode 0) inside the bbox of all visible SubTools before (mode 2) within 2 percent [added], volume ratio 0.5 to 2 [added], watertightness kept.
-6. Repair: `morph_repair(points)` (Morph brush strokes at the top level), `set_layer_intensity(v)`, or mask the busted area, invert and project again (00:09:27). Smoothing does not fix rogue vertices (00:04:27, 00:06:36). A target inside the source: masked Inflate and reproject, or ProjectionShell + Inner + Dist 1 (scenario-zbrush-retopology-export).
+1. `checkpoint`: versioned ZTL save first; Project All "might crash the program" (cgside MyhwQvkcnwI
+   00:02:19). None raises; False only right after a save.
+2. `top_level()`, then `store_morph_target()` and `new_layer()` there: "It's important that you do
+   all of this on the highest level" (FlippedNormals Zp07GW3rND0 00:02:13, 00:02:47). One morph
+   target per SubTool, destroyed by any point-count change, so it is stored after the last Divide.
+3. Back to `level` (default: where the SubTool was) for a staged projection from the lowest level up
+   (00:03:17).
+4. Dist set explicitly, 0.1 (Drust nxMYYsyJt3o 00:02:19: the small default causes "90 percent" of
+   artifacts); PA Blur lowered for a clean source (FlippedNormals).
+5. Project All, then the gate: point count kept, target bbox (visible, mode 0) inside the bbox of
+   all visible SubTools before (mode 2) within 2 percent [added], volume ratio 0.5 to 2 [added],
+   watertightness kept.
+6. Repair: `morph_repair(points)` (Morph brush strokes at the top level), `set_layer_intensity(v)`,
+   or mask the busted area, invert and project again (00:09:27). Smoothing does not fix rogue
+   vertices (00:04:27, 00:06:36). A target inside the source: masked Inflate and reproject, or
+   ProjectionShell + Inner + Dist 1 (scenario-zbrush-retopology-export).
 
 ## 6. Masks, polygroups, deformation
 
-- `Tool:Masking:Clear`, `Inverse` [v03]; `BlurMask`, `SharpenMask`, `Go To Unmasked Center` [macro] → `zb_ops.mask(op)`. Mask data cannot be read [forum].
-- `Tool:Polygroups:Auto Groups` [v03]; `Group Visible` [macro] → `zb_ops.polygroups(op)`. `Tool:Visibility:HidePt/ShowPt/Grow/Shrink` [macro] → `zb_ops.visibility(op)`.
-- `Tool:Deformation:Polish`, `Inflate` exist [v03]; each `set` applies once (Enhance Details macro sets Polish 100) → `zb_ops.polish(v)`, `deform(name, v, axes)`; axis bits x=1, y=2, z=4 with `set_mod` [doc].
+- `Tool:Masking:Clear`, `Inverse` [v03]; `BlurMask`, `SharpenMask`, `Go To Unmasked Center` [macro]
+  → `zb_ops.mask(op)`. Mask data cannot be read [forum].
+- `Tool:Polygroups:Auto Groups` [v03]; `Group Visible` [macro] → `zb_ops.polygroups(op)`.
+  `Tool:Visibility:HidePt/ShowPt/Grow/Shrink` [macro] → `zb_ops.visibility(op)`.
+- `Tool:Deformation:Polish`, `Inflate` exist [v03]; each `set` applies once (Enhance Details macro
+  sets Polish 100) → `zb_ops.polish(v)`, `deform(name, v, axes)`; axis bits x=1, y=2, z=4 with
+  `set_mod` [doc].
 - Morph target checkpoint: `Tool:Morph Target:StoreMT`, `Switch` [macro].
 
 ## 7. UVs and maps
 
-- Native: `Tool:UV Map:Create (Unwrap):Unwrap` [v03] exists, Auto Seams [doc] → `zb_ops.uv_unwrap("native")` [verify live_08].
-- UV Master: `Zplugin:UV Master:Unwrap` [v03] exists; a ZScript plugin press, control return [verify live_08].
-- Check: `query_mesh3d(3)` UV bbox, `(4)` first tile, `(5, id)` next tile [doc]; OBJ `vt` lines (`zb_audit`).
-- Maps by direct call: `create_normal_map(w, h, smooth, sub_poly, border, uv_tile, local_coordinates)`, `create_displacement_map(...)` (UVs and level 1 needed) [doc]. Multi Map Exporter `Zplugin:Multi Map Exporter:Create All Maps` exists [v03].
+- Native: `Tool:UV Map:Create (Unwrap):Unwrap` [v03] exists, Auto Seams [doc] →
+  `zb_ops.uv_unwrap("native")` [verify live_08].
+- UV Master: `Zplugin:UV Master:Unwrap` [v03] exists; a ZScript plugin press, control return [verify
+  live_08].
+- Check: `query_mesh3d(3)` UV bbox, `(4)` first tile, `(5, id)` next tile [doc]; OBJ `vt` lines
+  (`zb_audit`).
+- Maps by direct call:
+  `create_normal_map(w, h, smooth, sub_poly, border, uv_tile, local_coordinates)`,
+  `create_displacement_map(...)` (UVs and level 1 needed) [doc]. Multi Map Exporter
+  `Zplugin:Multi Map Exporter:Create All Maps` exists [v03].
 
 ## 8. Decimation
 
-`Zplugin:Decimation Master:Decimate Current` exists [v03]; `% of decimation`, `Pre-process Current` [verify live_09] → `zb_ops.decimate(percent)`. A ZScript that pressed Decimation Master lost control (ijacobs 2013, cgside 2022); Python [verify live_09].
+`Zplugin:Decimation Master:Decimate Current` exists [v03]; `% of decimation`, `Pre-process Current`
+[verify live_09] → `zb_ops.decimate(percent)`. A ZScript that pressed Decimation Master lost control
+(ijacobs 2013, cgside 2022); Python [verify live_09].
 
 ## 9. Files
 
@@ -150,27 +213,48 @@ zbc.set_next_filename("/abs/mesh.obj");   zbc.press("Tool:Export")       # 0.08 
 zbc.set_next_filename("/abs/head_v003.ztl"); zbc.press("Tool:Save As")   # exists [v03]; dialog-free [verify live_06]
 ```
 
-→ `zb_ops.export_canvas`, `export_obj`, `save_ztl(path, version=True)` (never overwrites, picks `_vNNN`). Every wrapper checks the file on disk and `has_next_filename()` (a preset still pending means a dialog probably opened) [added].
+→ `zb_ops.export_canvas`, `export_obj`, `save_ztl(path, version=True)` (never overwrites, picks
+`_vNNN`). Every wrapper checks the file on disk and `has_next_filename()` (a preset still pending
+means a dialog probably opened) [added].
 
-- OBJ export = active SubTool, tool units, no UVs when there are none; header `#Auto scale 1 / offset 0`; counts and volume equal the bridge values [obj].
-- FBX ExportImport shows an options window that script cannot escape (Maxon forum 2025); USD Format ignores the preset (usd-portal). Use OBJ or `.GoZ` by path.
+- OBJ export = active SubTool, tool units, no UVs when there are none; header
+  `#Auto scale 1 / offset 0`; counts and volume equal the bridge values [obj].
+- FBX ExportImport shows an options window that script cannot escape (Maxon forum 2025); USD Format
+  ignores the preset (usd-portal). Use OBJ or `.GoZ` by path.
 - Relative paths resolve in the ZBrush app folder: always absolute [doc].
 
 ## 10. Measuring (gates)
 
-- `query_mesh3d(0)` points, `(1)` faces: lists, e.g. `[43480.0]` [v03]; `(2, mode)` bbox (0 visible current, 1 full current, 2 visible all, 3 full all) [doc].
-- `get_polymesh3d_volume()` [v01], `get_polymesh3d_area()`, `is_polymesh3d_solid()` [doc] → `zb_ops.stats()`.
-- Gates → `zb_ops.gate(op, before, after)`, returned as `result["gate"]` by `dynamesh`, `zremesher`, `divide`, `del_levels`, `decimate`, `polish`/`deform` and `project_all`. Volume ratio bands in `GATE_BANDS` ([added] start values: DynaMesh 0.5 to 2 and a problem outside, since that is a collapsed or exploded remesh; ZRemesher 0.8 to 1.25; Divide, Decimate 0.9 to 1.1; Polish 0.98 to 1.02 after the sculpting digest's 2 percent start value). Volume is judged only on a mesh that was watertight; a result volume at or below 0 is always a problem; losing watertightness is a warning (python_sdk digest delta 22). `require_gate(r)` raises.
-- Per vertex or per edge: export and run `zb_audit.audit(obj)` (poles, holes, non-manifold, symmetry, winding, scale).
+- `query_mesh3d(0)` points, `(1)` faces: lists, e.g. `[43480.0]` [v03]; `(2, mode)` bbox (0 visible
+  current, 1 full current, 2 visible all, 3 full all) [doc].
+- `get_polymesh3d_volume()` [v01], `get_polymesh3d_area()`, `is_polymesh3d_solid()` [doc] →
+  `zb_ops.stats()`.
+- Gates → `zb_ops.gate(op, before, after)`, returned as `result["gate"]` by `dynamesh`, `zremesher`,
+  `divide`, `del_levels`, `decimate`, `polish`/`deform` and `project_all`. Volume ratio bands in
+  `GATE_BANDS` ([added] start values: DynaMesh 0.5 to 2 and a problem outside, since that is a
+  collapsed or exploded remesh; ZRemesher 0.8 to 1.25; Divide, Decimate 0.9 to 1.1; Polish 0.98 to
+  1.02 after the sculpting digest's 2 percent start value). Volume is judged only on a mesh that was
+  watertight; a result volume at or below 0 is always a problem; losing watertightness is a warning
+  (python_sdk digest delta 22). `require_gate(r)` raises.
+- Per vertex or per edge: export and run `zb_audit.audit(obj)` (poles, holes, non-manifold,
+  symmetry, winding, scale).
 
 ## 11. Brushes, Draw, material
 
-- Found: `Brush:Move`, `Brush:Standard`, `Brush:hPolish`, `Brush:ClayBuildup` [v03]. Not found: `Brush:Dam_Standard` [v03]; the file is `ZData/BrushPresets/DamStandard.ZBP` and the UI label is `Dam_Standard` → `zb_ops.select_brush("Dam_Standard")` tries every spelling, then loads the file with `Brush:Load Brush` [verify live_05].
-- `Draw:Draw Size` 64, `Draw:Z Intensity` 20, `Draw:Zadd` 1 read on a fresh session [v01] → `zb_ops.set_draw()`.
-- Smooth brushes only become the Shift brush and cannot be held from Python (BR doc; press_key broken) [verify live_05]. Smooth with `Tool:Deformation:Polish` or the hPolish brush.
-- Neutral MatCap: `Material:MatCap Gray` (file `ZData/Materials/MatCap/MatCap Gray.ZMT`) [verify live_03]; current: `get_title("Material:Current Material")` [doc manual].
+- Found: `Brush:Move`, `Brush:Standard`, `Brush:hPolish`, `Brush:ClayBuildup` [v03]. Not found:
+  `Brush:Dam_Standard` [v03]; the file is `ZData/BrushPresets/DamStandard.ZBP` and the UI label is
+  `Dam_Standard` → `zb_ops.select_brush("Dam_Standard")` tries every spelling, then loads the file
+  with `Brush:Load Brush` [verify live_05].
+- `Draw:Draw Size` 64, `Draw:Z Intensity` 20, `Draw:Zadd` 1 read on a fresh session [v01] →
+  `zb_ops.set_draw()`.
+- Smooth brushes only become the Shift brush and cannot be held from Python (BR doc; press_key
+  broken) [verify live_05]. Smooth with `Tool:Deformation:Polish` or the hPolish brush.
+- Neutral MatCap: `Material:MatCap Gray` (file `ZData/Materials/MatCap/MatCap Gray.ZMT`) [verify
+  live_03]; current: `get_title("Material:Current Material")` [doc manual].
 - Lazy Mouse `Stroke:Lazy Mouse:LazyMouse`, symmetry `Transform:Activate Symmetry` [v03].
-- PolyFrame `Transform:Pf` (commands.xml id `Transform: Pf`; `Transform:PolyF` is the spoken label, not an id), perspective `Draw:Perspective` [cmdxml] → `zb_ops.PATHS["polyframe"]`, `["persp"]` [verify live_03].
+- PolyFrame `Transform:Pf` (commands.xml id `Transform: Pf`; `Transform:PolyF` is the spoken label,
+  not an id), perspective `Draw:Perspective` [cmdxml] → `zb_ops.PATHS["polyframe"]`, `["persp"]`
+  [verify live_03].
 
 ## 12. Dialog budget: what blocks, and the substitute
 

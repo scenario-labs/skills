@@ -1,6 +1,9 @@
 # Self-critique rubric: stylized characters, hair, collectibles
 
-The agent judges its own output with this rubric at every gate. Each line gives what experts look at, how the agent measures it, and the pass condition. Code thresholds tagged [added] are this skill's defaults: calibrate them on reference silhouettes before trusting a borderline result. A render always gets looked at; a number never replaces the look.
+The agent judges its own output with this rubric at every gate. Each line gives what experts look
+at, how the agent measures it, and the pass condition. Code thresholds tagged [added] are this
+skill's defaults: calibrate them on reference silhouettes before trusting a borderline result. A
+render always gets looked at; a number never replaces the look.
 
 ## 1. Design intent (before geometry)
 
@@ -95,6 +98,7 @@ The agent judges its own output with this rubric at every gate. Each line gives 
 
 ## Honesty checks before reporting
 
-- Which numbers came from code, which from looking at renders, and which steps were not verified in ZBrush.
+- Which numbers came from code, which from looking at renders, and which steps were not verified in
+  ZBrush.
 - Every deliberate break listed with its baseline.
 - Any gate passed only by loosening a threshold is reported as such.

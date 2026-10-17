@@ -1,6 +1,10 @@
 # Critique rubric: judging a capture, a diagnosis, a fix and a proof
 
-Load at every gate. The performance engineer's output is a claim ("the market route now holds 60 fps"); this rubric checks the claim the way the source experts would. Score each line 0 (missing or wrong), 1 (present, weak), 2 (done, with evidence). Work top-down: an early failure (a dishonest capture) makes everything after it moot. Numbers screen, eyes decide: a quality trade is never accepted from metrics alone (scenario-unreal-expert protocol).
+Load at every gate. The performance engineer's output is a claim ("the market route now holds 60
+fps"); this rubric checks the claim the way the source experts would. Score each line 0 (missing or
+wrong), 1 (present, weak), 2 (done, with evidence). Work top-down: an early failure (a dishonest
+capture) makes everything after it moot. Numbers screen, eyes decide: a quality trade is never
+accepted from metrics alone (scenario-unreal-expert protocol).
 
 ## A. The capture (is the evidence honest?)
 
@@ -70,10 +74,26 @@ Load at every gate. The performance engineer's output is a claim ("the market ro
 ## E. The report (does it match reality?)
 
 - States the verdict first, then the gap closed per change with its owner.
-- Lists what was not tested: other hardware, GPUs, drivers, thermals over time, other scenes, cold PSO cache where relevant, console builds when only a Mac ran.
-- Separates measured numbers from source figures (a Witcher 4 PS5 number is context, not this game's result).
+- Lists what was not tested: other hardware, GPUs, drivers, thermals over time, other scenes, cold
+  PSO cache where relevant, console builds when only a Mac ran.
+- Separates measured numbers from source figures (a Witcher 4 PS5 number is context, not this game's
+  result).
 - Marks every UE name, flag and cvar that was not confirmed on the installed engine as [verify].
 
 ## Reviewing an answer to "38 fps to a stable 60" (scenario U9)
 
-A complete answer, in this order: the gap in ms and why fps is the wrong unit; the honest capture (cooked build on the devkit, route, lean and rich captures, dynres lock and async compute for attribution only, dev-noise flags, the Mac being a proxy); classification with `stat unit` then Insights, waits excluded and cross-frame propagation; config-first wins (Epic to High, the 60 fps device profile actually selected, resolution chain with secondary 1440p, Lumen roughness and foliage thresholds, GTSyncType, streaming budgets); GPU suspects with their measurement (Lumen delta, RT instances, pool, update ms, near and far field, VSM depth and projection read by invalidation type with WPO foliage, receiver masks and overlapping lights, the Nanite tree with Overdraw last, translucency After DOF, decals, deep water, DF shadows, Niagara readbacks, async compute A/B per feature); CPU suspects (crowd count and significance, game-thread waits as budget, animation budget, AnimBP redundancy, MetaHuman LODs, collision and overlaps, streaming components and latency, GC by UObject count, blocking loads, spawn bursts); a separate hitch pass (snapshothitches, signatures, camera cuts, a sampling profiler for what Insights cannot explain; no PSO work on a console); proof with repeated runs, percentiles and VSync-miss share, zero hitches, visual parity, and a nightly guard. Missing any of the first three sections is a fail regardless of how good the suspect list is.
+A complete answer, in this order: the gap in ms and why fps is the wrong unit; the honest capture
+(cooked build on the devkit, route, lean and rich captures, dynres lock and async compute for
+attribution only, dev-noise flags, the Mac being a proxy); classification with `stat unit` then
+Insights, waits excluded and cross-frame propagation; config-first wins (Epic to High, the 60 fps
+device profile actually selected, resolution chain with secondary 1440p, Lumen roughness and foliage
+thresholds, GTSyncType, streaming budgets); GPU suspects with their measurement (Lumen delta, RT
+instances, pool, update ms, near and far field, VSM depth and projection read by invalidation type
+with WPO foliage, receiver masks and overlapping lights, the Nanite tree with Overdraw last,
+translucency After DOF, decals, deep water, DF shadows, Niagara readbacks, async compute A/B per
+feature); CPU suspects (crowd count and significance, game-thread waits as budget, animation budget,
+AnimBP redundancy, MetaHuman LODs, collision and overlaps, streaming components and latency, GC by
+UObject count, blocking loads, spawn bursts); a separate hitch pass (snapshothitches, signatures,
+camera cuts, a sampling profiler for what Insights cannot explain; no PSO work on a console); proof
+with repeated runs, percentiles and VSync-miss share, zero hitches, visual parity, and a nightly
+guard. Missing any of the first three sections is a fail regardless of how good the suspect list is.

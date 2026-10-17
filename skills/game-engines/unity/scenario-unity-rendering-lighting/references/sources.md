@@ -1,6 +1,8 @@
 # Sources
 
-Notes (distilled, with frames where listed) live in `notes/rendering-lighting/`; raw docs in `sources/docs/rendering-lighting__*.md`; version facts in `sources/unity-version-deltas.md` (authoritative for 6.3 and 6.4 to 6.6). Ids match `expert-notes.md`.
+Notes (distilled, with frames where listed) live in `notes/rendering-lighting/`; raw docs in
+`sources/docs/rendering-lighting__*.md`; version facts in `sources/unity-version-deltas.md`
+(authoritative for 6.3 and 6.4 to 6.6). Ids match `expert-notes.md`.
 
 ## Videos
 
@@ -33,13 +35,37 @@ Notes (distilled, with frames where listed) live in `notes/rendering-lighting/`;
 
 ## Digests used
 
-`notes/rendering-lighting/_digest_docs_rendering-lighting.md`, `_digest_videos_rendering-lighting.md`, `_digest_visual_rendering-lighting.md` (consensus, disagreements with deciding conditions, ranked expert deltas, candidate checklists and procedures that this skill turned into live jobs).
+`notes/rendering-lighting/_digest_docs_rendering-lighting.md`,
+`_digest_videos_rendering-lighting.md`, `_digest_visual_rendering-lighting.md` (consensus,
+disagreements with deciding conditions, ranked expert deltas, candidate checklists and procedures
+that this skill turned into live jobs).
 
 ## Baseline
 
-`tests/baseline/answers_Y1-Y6.md` Y3 (no skills): strong on tiers and structure, but it advised falling back to the CPU lightmapper on the Mac (unsupported on Apple Silicon), picked light intensities by feel ("1.5 to 2 in URP units": +1.03 EV on the gray card here at 2.0, no tonemapper) without an exposure anchor, gave shadow resolution up to 4096 at 150 m instead of distance first, used Forward+ on mobile (the template and Unite 2025 use Forward), kept the depth texture on for mobile without the After Transparents copy, and had no measured verification (bake report, card EV, clipped share, fresh-process readback).
+`tests/baseline/answers_Y1-Y6.md` Y3 (no skills): strong on tiers and structure, but it advised
+falling back to the CPU lightmapper on the Mac (unsupported on Apple Silicon), picked light
+intensities by feel ("1.5 to 2 in URP units": +1.03 EV on the gray card here at 2.0, no tonemapper)
+without an exposure anchor, gave shadow resolution up to 4096 at 150 m instead of distance first,
+used Forward+ on mobile (the template and Unite 2025 use Forward), kept the depth texture on for
+mobile without the After Transparents copy, and had no measured verification (bake report, card EV,
+clipped share, fresh-process readback).
 
 ## Revision history
 
 - 2026-09-24 v0.1: first version (P1 to P12), 38 of 38 live result rows pass.
-- 2026-09-24 v0.2 refactor after the blind grade Y3 (`tests/grading/Y3_grade.md`; v0.1 kept in `skills/_versions/unity-rendering-lighting v1 2026-09-24/`). Added the stylized craft (palette texture and one shared shader, Simple Lit on the low tier, 1024 soft shadows, Subtractive measured on the interior, audit `style.*` rules); the GPU Resident Drawer chain on the Forward+ PC tier (P2b, `graphics` edits, report rules, 900-cube bench); per-tier post on each URP asset's volume profile with the Unity 6 stack proven, Kawase and Dual bloom, APV Leak Reduction per tier, SSAO settings, one grading mode (P2c); the Render Graph native-pass audit (P14); PSO tracing and progressive warm-up in a development player (P15); the plain command line and the `-nographics` bake refusal (P16); APV Rendering Layer masks written and read back, with the Use Rendering Layers rule (P7 step 4, now run); the Shadowmask 4-light budget and the shaders-that-lose-the-bake rules (audit v2, test 16); thermal and vendor GPU checks handed to scenario-unity-mobile; the baseline's errors as lessons (no CPU lightmapper on Apple Silicon, props keep Contribute GI, custom lighting on the URP Unlit target must sample baked data). Open question answered in Unity: Distance Shadowmask renders on Forward+ exactly as on Forward (P13). Found on the way: the template's two URP assets share one volume profile that carries the Neutral tonemapper, so the v0.1 "no tonemapper" s0 anchor was under Neutral; re-measured.
+- 2026-09-24 v0.2 refactor after the blind grade Y3 (`tests/grading/Y3_grade.md`; v0.1 kept in
+  `skills/_versions/unity-rendering-lighting v1 2026-09-24/`). Added the stylized craft (palette
+  texture and one shared shader, Simple Lit on the low tier, 1024 soft shadows, Subtractive measured
+  on the interior, audit `style.*` rules); the GPU Resident Drawer chain on the Forward+ PC tier
+  (P2b, `graphics` edits, report rules, 900-cube bench); per-tier post on each URP asset's volume
+  profile with the Unity 6 stack proven, Kawase and Dual bloom, APV Leak Reduction per tier, SSAO
+  settings, one grading mode (P2c); the Render Graph native-pass audit (P14); PSO tracing and
+  progressive warm-up in a development player (P15); the plain command line and the `-nographics`
+  bake refusal (P16); APV Rendering Layer masks written and read back, with the Use Rendering Layers
+  rule (P7 step 4, now run); the Shadowmask 4-light budget and the shaders-that-lose-the-bake rules
+  (audit v2, test 16); thermal and vendor GPU checks handed to scenario-unity-mobile; the baseline's
+  errors as lessons (no CPU lightmapper on Apple Silicon, props keep Contribute GI, custom lighting
+  on the URP Unlit target must sample baked data). Open question answered in Unity: Distance
+  Shadowmask renders on Forward+ exactly as on Forward (P13). Found on the way: the template's two
+  URP assets share one volume profile that carries the Neutral tonemapper, so the v0.1 "no
+  tonemapper" s0 anchor was under Neutral; re-measured.

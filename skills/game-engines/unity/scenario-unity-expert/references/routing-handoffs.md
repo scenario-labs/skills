@@ -1,6 +1,7 @@
 # Routing and handoffs (the team of scenario-unity-* skills)
 
-The lead turns a brief into numbers, picks the chain of specialists, and checks every handoff packet. Specialists never receive a vague brief and never hand back a claim without evidence.
+The lead turns a brief into numbers, picks the chain of specialists, and checks every handoff
+packet. Specialists never receive a vague brief and never hand back a claim without evidence.
 
 ## 1. Route by what the brief asks for
 
@@ -20,11 +21,15 @@ The lead turns a brief into numbers, picks the chain of specialists, and checks 
 | Android, iOS, phones, thermal, touch, safe area, signing, Google Play, App Store, ads, IAP                                                                        | scenario-unity-mobile              | scenario-unity-performance, scenario-unity-ui                               |
 | WebGL, Web build, itch.io, compression, server headers, WebGPU, JavaScript interop, portals                                                                       | scenario-unity-web                 | scenario-unity-performance                                                  |
 
-Sister teams: scenario-blender-expert, scenario-maya-expert, scenario-zbrush-expert (content authored outside Unity, 1 unit = 1 m on import, scale checked by `AgentAudit.AuditModel`), scenario-unreal-expert (comparisons only); scenario-3d, scenario-textures, scenario-skyboxes generate meshes, textures and skyboxes that arrive through the import audit.
+Sister teams: scenario-blender-expert, scenario-maya-expert, scenario-zbrush-expert (content
+authored outside Unity, 1 unit = 1 m on import, scale checked by `AgentAudit.AuditModel`),
+scenario-unreal-expert (comparisons only); scenario-3d, scenario-textures, scenario-skyboxes
+generate meshes, textures and skyboxes that arrive through the import audit.
 
 ## 2. Seams: items two owners each assumed the other covered
 
-Blind grading round 1 (`tests/grading/Y*_grade.md`, "missing from both") found expert items that fell between two skills. The lead names ONE owner and the proof in the brief:
+Blind grading round 1 (`tests/grading/Y*_grade.md`, "missing from both") found expert items that
+fell between two skills. The lead names ONE owner and the proof in the brief:
 
 | Item                                                                                                                                                                          | Owner                                                                          | With                                                                  | Proof the lead asks for                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -68,16 +73,23 @@ Open      known issues, owner of each
 Fence     what the receiver must not change (folders, scenes, settings)
 ```
 
-The receiver re-runs the evidence it depends on (one audit, one capture) before building on it: a packet is a claim until reproduced.
+The receiver re-runs the evidence it depends on (one audit, one capture) before building on it: a
+packet is a claim until reproduced.
 
 ## 5. What the lead checks before accepting a packet
 
-1. Envelopes `ok` with job ids; no compile errors; zero new CS0618 warnings; no `grace_kill` left unexplained.
-2. Every PNG in the packet passes `ut_review.image_checks` (no blank, no magenta) and the lead opened the contact sheet.
+1. Envelopes `ok` with job ids; no compile errors; zero new CS0618 warnings; no `grace_kill` left
+   unexplained.
+2. Every PNG in the packet passes `ut_review.image_checks` (no blank, no magenta) and the lead
+   opened the contact sheet.
 3. Numbers against the brief's budgets (`ut_stat.budget_check`, `build_summary(max_mb=...)`).
-4. The Assumed list is honest: GUI-only steps (Shader Graph, VFX Graph, Animator window, UI Builder, Tile Palette painting) are named as such with their substitute or human path.
-5. Agent-built layouts checked for the classic misses: blocked doorways, floating props, grid-perfect clutter (Code Monkey, ppFshgFOgXU [00:10:52]).
-6. Every toolkit call in the packet names the Unity API or command line beneath it (`toolkit-map.md`). Blind graders could not open `scripts/` and judged every wrapper only through the engine call written next to it (`tests/grading/SUMMARY.md`).
+4. The Assumed list is honest: GUI-only steps (Shader Graph, VFX Graph, Animator window, UI Builder,
+   Tile Palette painting) are named as such with their substitute or human path.
+5. Agent-built layouts checked for the classic misses: blocked doorways, floating props,
+   grid-perfect clutter (Code Monkey, ppFshgFOgXU [00:10:52]).
+6. Every toolkit call in the packet names the Unity API or command line beneath it
+   (`toolkit-map.md`). Blind graders could not open `scripts/` and judged every wrapper only through
+   the engine call written next to it (`tests/grading/SUMMARY.md`).
 
 ## 6. Verification habits (every owner; the lead enforces them)
 

@@ -1,6 +1,8 @@
 # Critique rubric: judging a model like the experts
 
-Use at every stage gate, on numbers first (toolkit output), then on the sheets you opened. Each line: what to look at, pass, fail, and what to do. Sources in brackets; [added] is this skill's own threshold.
+Use at every stage gate, on numbers first (toolkit output), then on the sheets you opened. Each
+line: what to look at, pass, fail, and what to do. Sources in brackets; [added] is this skill's own
+threshold.
 
 ## 1. Purpose and budget
 
@@ -92,4 +94,7 @@ Use at every stage gate, on numbers first (toolkit output), then on the sheets y
 
 ## 8. The report
 
-Honest reports list: what was measured (numbers), which sheets were opened and what they showed, what was assumed (budget, camera distance), what is pending for the receiver, and what was not verified (bake, engine import, a real rig). A model is not done before its highlight and review sheets have been looked at.
+Honest reports list: what was measured (numbers), which sheets were opened and what they showed,
+what was assumed (budget, camera distance), what is pending for the receiver, and what was not
+verified (bake, engine import, a real rig). A model is not done before its highlight and review
+sheets have been looked at.

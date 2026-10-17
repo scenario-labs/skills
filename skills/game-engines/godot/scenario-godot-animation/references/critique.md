@@ -1,6 +1,8 @@
 # scenario-godot-animation: critique rubric
 
-How to judge an animation setup (your own, a teammate's or a plan) before it ships. Score each line 0 to 3: 0 missing, 1 claimed without evidence, 2 evidence with gaps, 3 evidence a reader can reproduce (a kit call, a number, a sheet). Any 0 or 1 on A1 to A5 blocks.
+How to judge an animation setup (your own, a teammate's or a plan) before it ships. Score each line
+0 to 3: 0 missing, 1 claimed without evidence, 2 evidence with gaps, 3 evidence a reader can
+reproduce (a kit call, a number, a sheet). Any 0 or 1 on A1 to A5 blocks.
 
 ## A. Evidence (blocking)
 

@@ -1,6 +1,7 @@
 # Critique rubric (scenario-godot-pipeline-automation 0.1)
 
-Score each line 0 (missing), 1 (partly), 2 (done and evidenced). Ship at 2 on every line marked **must**; otherwise report the gap in plain words.
+Score each line 0 (missing), 1 (partly), 2 (done and evidenced). Ship at 2 on every line marked
+**must**; otherwise report the gap in plain words.
 
 ## Batch import
 

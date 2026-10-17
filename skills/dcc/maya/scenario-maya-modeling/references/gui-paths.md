@@ -1,6 +1,10 @@
 # GUI paths: the same work for a computer-use agent or a human
 
-Menus are Maya 2027 (Modeling menu set, F2). macOS: Maya's docs map Ctrl to Control and Alt to Option, not Command (FUND); Mac keyboards often lack Insert, use D for Custom Pivot [added]. Hotkeys listed are Maya defaults unless marked custom. Shift+right-click is the contextual tools marking menu, Ctrl+right-click the selection menu, Ctrl+Shift+right-click the tool settings menu (FlippedNormals zSr8i6yT5Ek [00:00:26]).
+Menus are Maya 2027 (Modeling menu set, F2). macOS: Maya's docs map Ctrl to Control and Alt to
+Option, not Command (FUND); Mac keyboards often lack Insert, use D for Custom Pivot [added]. Hotkeys
+listed are Maya defaults unless marked custom. Shift+right-click is the contextual tools marking
+menu, Ctrl+right-click the selection menu, Ctrl+Shift+right-click the tool settings menu
+(FlippedNormals zSr8i6yT5Ek [00:00:26]).
 
 ## Setup and hygiene
 
@@ -85,4 +89,6 @@ Menus are Maya 2027 (Modeling menu set, F2). macOS: Maya's docs map Ctrl to Cont
 
 ## Export side (hand to scenario-maya-pipeline-scripting)
 
-File > Game Exporter > Model tab, or File > Export Selection > FBX: Smoothing Groups on, Smooth Mesh off, Triangulate off when you triangulated yourself, FBX version set explicitly (Unreal: 2020.2). The full preset belongs to scenario-maya-pipeline-scripting.
+File > Game Exporter > Model tab, or File > Export Selection > FBX: Smoothing Groups on, Smooth Mesh
+off, Triangulate off when you triangulated yourself, FBX version set explicitly (Unreal: 2020.2).
+The full preset belongs to scenario-maya-pipeline-scripting.

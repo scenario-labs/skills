@@ -1,6 +1,11 @@
 # Retopology critique rubric
 
-How the experts judge a retopo, turned into checks an agent runs on itself. Run the code checks first, then render the two review sheets and walk the visual list in order. Score each section 0 (fails), 1 (works with visible problems), 2 (clean), and report every 0 or 1 with its cause. Kaspar's own summary of what matters: "is it clean, is it all quads, does it subdivide well, do you capture all of your forms and details, is it easy to rig ... vertex count has very little to do with that" (Snow Live #4 [00:58:52]).
+How the experts judge a retopo, turned into checks an agent runs on itself. Run the code checks
+first, then render the two review sheets and walk the visual list in order. Score each section 0
+(fails), 1 (works with visible problems), 2 (clean), and report every 0 or 1 with its cause.
+Kaspar's own summary of what matters: "is it clean, is it all quads, does it subdivide well, do you
+capture all of your forms and details, is it easy to rig ... vertex count has very little to do with
+that" (Snow Live #4 [00:58:52]).
 
 ## 0. Setup for the review
 
@@ -87,4 +92,7 @@ Full, tested code: `procedures.md` P10.
 
 ## 7. Honesty of the report
 
-State the method per part (planned, auto, carved, socketed tube), the numbers from sections 1 to 5, the two sheets, and what was not done to expert level (articulation handles, expression creases, pole routing). An auto-remesh sold as "animation-ready" fails this section regardless of its numbers.
+State the method per part (planned, auto, carved, socketed tube), the numbers from sections 1 to 5,
+the two sheets, and what was not done to expert level (articulation handles, expression creases,
+pole routing). An auto-remesh sold as "animation-ready" fails this section regardless of its
+numbers.

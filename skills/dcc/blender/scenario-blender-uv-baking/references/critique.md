@@ -1,6 +1,9 @@
 # Critique rubric: judging UVs and bakes like the experts
 
-Use after every stage. Each line: what the expert looks at, the measurable proxy (`bx_uvbake`), and severity. Severity: **block** = fix before the next stage; **fix** = fix before delivery; **note** = mention, accept if the brief allows. Calibrate: a stage passes with notes; do not dramatize a note into a block.
+Use after every stage. Each line: what the expert looks at, the measurable proxy (`bx_uvbake`), and
+severity. Severity: **block** = fix before the next stage; **fix** = fix before delivery; **note** =
+mention, accept if the brief allows. Calibrate: a stage passes with notes; do not dramatize a note
+into a block.
 
 ## A. Seams
 
@@ -77,10 +80,16 @@ Use after every stage. Each line: what the expert looks at, the measurable proxy
 
 ## G. The visual pass (always, before saying done)
 
-1. `uv_layout_image(obj, path, color="island")` and `color="density"`: islands spaced, no magenta, sensible sizes.
-2. `checker_review([obj], out)`: squares square and even, letters readable, seams where the brief allows.
+1. `uv_layout_image(obj, path, color="island")` and `color="density"`: islands spaced, no magenta,
+   sensible sizes.
+2. `checker_review([obj], out)`: squares square and even, letters readable, seams where the brief
+   allows.
 3. `distortion_review(obj, out, metric="angle")`: red only where unavoidable (corners, poles).
-4. `bake_review(low, [high], maps, out)`: row 3 (low + maps) should read like row 1 (high) under the raking light: same forms, no dark islands, no cracks, no seams, silhouette unchanged (the bake cannot fix silhouette).
-5. Open the normal and AO PNGs themselves: no black islands, no noise speckles, no hard color jumps inside islands.
+4. `bake_review(low, [high], maps, out)`: row 3 (low + maps) should read like row 1 (high) under the
+   raking light: same forms, no dark islands, no cracks, no seams, silhouette unchanged (the bake
+   cannot fix silhouette).
+5. Open the normal and AO PNGs themselves: no black islands, no noise speckles, no hard color jumps
+   inside islands.
 
-Report what was measured, what was looked at, and what was not verified (engine import, compression).
+Report what was measured, what was looked at, and what was not verified (engine import,
+compression).

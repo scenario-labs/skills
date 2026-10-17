@@ -1,7 +1,8 @@
 # Critique rubric: performance work and releases
 
 Score each line 0 (missing), 1 (claimed), 2 (measured or verified). A performance report or a
-release under 80 % of the maximum goes back for another pass. [added: the rubric is this skill's own]
+release under 80 % of the maximum goes back for another pass. [added: the rubric is this skill's
+own]
 
 ## A. Performance report
 

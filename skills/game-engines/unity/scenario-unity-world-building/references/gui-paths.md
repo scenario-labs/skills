@@ -1,6 +1,9 @@
 # GUI paths (Unity 6.3, for a computer-use agent or a human)
 
-The same procedures through windows and menus. Sculpting, painting and foliage brushes are GUI-only work: the scripted route is `TerrainData` (see `procedures.md`). Paths checked against the 6.3 Manual and package docs in `notes/world-3d/`; items marked [verify] were not clicked on this Mac (no GUI session during the tests).
+The same procedures through windows and menus. Sculpting, painting and foliage brushes are GUI-only
+work: the scripted route is `TerrainData` (see `procedures.md`). Paths checked against the 6.3
+Manual and package docs in `notes/world-3d/`; items marked [verify] were not clicked on this Mac (no
+GUI session during the tests).
 
 ## Terrain
 

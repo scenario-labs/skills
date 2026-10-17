@@ -6,23 +6,62 @@ license: MIT
 
 # Godot 2D (developer and artist)
 
-Target: Godot 4.7.2 standard build, macOS, run headless or in small windows through the scenario-godot-expert toolkit.
+Target: Godot 4.7.2 standard build, macOS, run headless or in small windows through the
+scenario-godot-expert toolkit.
 
-Expert level in 2D means feel and pixels are measured, not eyeballed: a jump has a height in tiles and a coyote window in ticks, a camera has a lag in pixels, a pixel-art screen has an integer factor and a fringe count. The agent builds tiles, controllers and cameras in code, proves them with deterministic physics runs and frame read-backs, and only then calls them done. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Expert level in 2D means feel and pixels are measured, not eyeballed: a jump has a height in tiles
+and a coyote window in ticks, a camera has a lag in pixels, a pixel-art screen has an integer factor
+and a fringe count. The agent builds tiles, controllers and cameras in code, proves them with
+deterministic physics runs and frame read-backs, and only then calls them done. If a sibling skill
+named here is missing from your available skills, ask the user to install it
+(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
+flag the gap.
 
-**REQUIRED BACKGROUND:** scenario-godot-expert (channels, review loop, toolkit `gd_env`, `gd_run`, `gd_review`, 4.x traps).
+**REQUIRED BACKGROUND:** scenario-godot-expert (channels, review loop, toolkit `gd_env`, `gd_run`,
+`gd_review`, 4.x traps).
 
 ## Stance (the expert delta)
 
-1. **Feel is numbers you can test.** Solve gravity and take-off speed from jump height and time to apex, and make the height a multiple of the tile size (The Shaggy Dev, Bsy8pknHc0M [00:04:13]). Godot then loses about v·dt/2 of it: 53.5 px for a 56 px design at 60 ticks, measured. The kit adds g·dt/2 and lands 56.25 px [added].
-2. **Forgive in time and space.** Coyote time, jump buffer, corner correction and a jump cut are each a few lines (The Shaggy Dev). Count windows in whole ticks: float timers gave 5 coyote moves for 0.1 s instead of 6 [added, measured].
-3. **Top-down: `move_toward`, not length arithmetic.** Additive acceleration needs `limit_length`; subtracting decel from the length goes negative and vibrates (55 sign flips in 60 ticks, measured). Steering never arrives without a minimum step (BT Plays Games, m71-kZgYXlw [00:07:30], [00:14:08]).
-4. **A camera is designed, not parented.** Lookahead, ignore jumps and re-baseline on landing, damping, shake with an off switch (Mark Brown, GMTK). Damping lags by speed/damping and eats lookahead: 32 px of lookahead gave a 16 px lead at 120 px/s, so state both numbers. Zoom with `Camera2D.zoom` (2 zooms in), never by resizing the viewport (DevWorm, RlSpjIb7TLo [00:08:14]).
-5. **Jitter is a tick-rate problem.** At 144 Hz with 60 physics ticks, physics interpolation gave the ideal 0.289 px RMS for every camera setup. Without it the background stepped 0, 1, 2 px, and Idle camera smoothing made the player wobble 3 px. `Camera2D.process_callback` defaults to Idle: with interpolation off, set `CAMERA2D_PROCESS_PHYSICS` yourself (Chris' Tutorials, 43c-Sm5GMbc [00:28:37]); with it on, Godot forces Physics.
-6. **Pixel-perfect is a stretch decision.** `viewport` + integer locks everything to art pixels, lights included. 640x360 (the docs' base) and 320x180 both integer-scale to 720p, 1080p, 1440p and 4K with no bars, measured; pick by native art size. Ship Exclusive Fullscreen (window mode 4): a 1 px strip drops 640x360 on 4K from 6x to 5x, measured (docs, Multiple resolutions). `canvas_items` gives smooth rotation and sub-pixel motion (Heartbeast prefers it). For locked art with a gliding camera, render a SubViewport at base + 2 px and shift the upscaled image by the remainder (Barry's Dev Hell).
-7. **Tiles are data you can audit.** One TileMapLayer per layer, an external TileSet, terrain mode matched to the tile count, and peering bits checked cell by cell. Paint the land, never the water side (DevWorm, ZutpG0_CYrQ [00:32:47]); in the GUI, paint bits outer ring first, then the center cross (bluuDevGames, CLcFC6ku240 [00:12:28]). Pick a dual grid (16 tiles, display layer offset half a tile) when every corner must round the same (jess::codes, jEWFSv3ivTg [00:02:26]). Then look at a sampler capture, because index checks pass on wrong art [added].
-8. **Generated art is checked before import.** Find the pixel scale and grid phase, snap if off-grid, register every clip on its feet line, and check the key-color fringe under linear filtering [added, with scenario-sprite-pipeline].
-9. **Physics layers are named and single.** One collision layer per object, many masks; name layers by what the checker needs ("bombable"), in `layer_names/2d_physics/layer_N` (Bogner, HFBNd4Z4vXM [00:10:58] to [00:14:17]). A new body starts on layer 1 and mask 1: adding a layer without clearing 1 gives 2 bits, measured.
+1. **Feel is numbers you can test.** Solve gravity and take-off speed from jump height and time to
+   apex, and make the height a multiple of the tile size (The Shaggy Dev, Bsy8pknHc0M [00:04:13]).
+   Godot then loses about v·dt/2 of it: 53.5 px for a 56 px design at 60 ticks, measured. The kit
+   adds g·dt/2 and lands 56.25 px [added].
+2. **Forgive in time and space.** Coyote time, jump buffer, corner correction and a jump cut are
+   each a few lines (The Shaggy Dev). Count windows in whole ticks: float timers gave 5 coyote moves
+   for 0.1 s instead of 6 [added, measured].
+3. **Top-down: `move_toward`, not length arithmetic.** Additive acceleration needs `limit_length`;
+   subtracting decel from the length goes negative and vibrates (55 sign flips in 60 ticks,
+   measured). Steering never arrives without a minimum step (BT Plays Games, m71-kZgYXlw [00:07:30],
+   [00:14:08]).
+4. **A camera is designed, not parented.** Lookahead, ignore jumps and re-baseline on landing,
+   damping, shake with an off switch (Mark Brown, GMTK). Damping lags by speed/damping and eats
+   lookahead: 32 px of lookahead gave a 16 px lead at 120 px/s, so state both numbers. Zoom with
+   `Camera2D.zoom` (2 zooms in), never by resizing the viewport (DevWorm, RlSpjIb7TLo [00:08:14]).
+5. **Jitter is a tick-rate problem.** At 144 Hz with 60 physics ticks, physics interpolation gave
+   the ideal 0.289 px RMS for every camera setup. Without it the background stepped 0, 1, 2 px, and
+   Idle camera smoothing made the player wobble 3 px. `Camera2D.process_callback` defaults to Idle:
+   with interpolation off, set `CAMERA2D_PROCESS_PHYSICS` yourself (Chris' Tutorials, 43c-Sm5GMbc
+   [00:28:37]); with it on, Godot forces Physics.
+6. **Pixel-perfect is a stretch decision.** `viewport` + integer locks everything to art pixels,
+   lights included. 640x360 (the docs' base) and 320x180 both integer-scale to 720p, 1080p, 1440p
+   and 4K with no bars, measured; pick by native art size. Ship Exclusive Fullscreen (window mode
+   4): a 1 px strip drops 640x360 on 4K from 6x to 5x, measured (docs, Multiple resolutions).
+   `canvas_items` gives smooth rotation and sub-pixel motion (Heartbeast prefers it). For locked art
+   with a gliding camera, render a SubViewport at base + 2 px and shift the upscaled image by the
+   remainder (Barry's Dev Hell).
+7. **Tiles are data you can audit.** One TileMapLayer per layer, an external TileSet, terrain mode
+   matched to the tile count, and peering bits checked cell by cell. Paint the land, never the water
+   side (DevWorm, ZutpG0_CYrQ [00:32:47]); in the GUI, paint bits outer ring first, then the center
+   cross (bluuDevGames, CLcFC6ku240 [00:12:28]). Pick a dual grid (16 tiles, display layer offset
+   half a tile) when every corner must round the same (jess::codes, jEWFSv3ivTg [00:02:26]). Then
+   look at a sampler capture, because index checks pass on wrong art [added].
+8. **Generated art is checked before import.** Find the pixel scale and grid phase, snap if
+   off-grid, register every clip on its feet line, and check the key-color fringe under linear
+   filtering [added, with scenario-sprite-pipeline].
+9. **Physics layers are named and single.** One collision layer per object, many masks; name layers
+   by what the checker needs ("bombable"), in `layer_names/2d_physics/layer_N` (Bogner, HFBNd4Z4vXM
+   [00:10:58] to [00:14:17]). A new body starts on layer 1 and mask 1: adding a layer without
+   clearing 1 gives 2 bits, measured.
 
 ## Establish first
 
@@ -38,13 +77,41 @@ Expert level in 2D means feel and pixels are measured, not eyeballed: a jump has
 
 ## Workflow
 
-1. **Project.** `P = gd_env.base_project("2d", ...)`, `gd_2d.install_kit(P)`, `gd_2d.pixel_art_settings(P, ...)`, `gd_run.import_project(P)`. GATE: `stretch_matrix.gd` shows the root picked up base size, mode, integer stretch, Nearest and interpolation; the integer factor and bars for each target window match `gd_2d.integer_scales`.
-2. **Art in.** For each generated image: `detect_pixel_scale`, `pixel_grid_check`, and `snap_to_grid` if the phase or scale is off. Then import, `audit_imports`, and build SpriteFrames from the manifest with [`sprite_frames_builder.gd`](scripts/agentkit/2d/sprite_frames_builder.gd) plus `register()` on each sprite. GATE: audit clean; every clip's lowest ink pixel lands on the same world y; `key_fringe` = 0 on a capture at a non-integer scale.
-3. **Tiles.** [`tileset_builder.gd`](scripts/agentkit/2d/tileset_builder.gd) (tile size first, alpha-derived peering bits, collision, occluders, one-way lips), saved as `.tres`; paint with `set_cells_terrain_connect`. Use [`dual_grid.gd`](scripts/agentkit/2d/dual_grid.gd) when the art is a 16-tile dual set. GATE: `terrain_tools.audit_layer` gives 0 side and 0 corner mismatches; a sampler capture (ring, cross, single cells, inner corners) looks right on a contact sheet.
-4. **Character.** [`platformer_body.gd`](scripts/agentkit/2d/platformer_body.gd) + [`platformer_tuning.gd`](scripts/agentkit/2d/platformer_tuning.gd) Resource, or [`topdown_body.gd`](scripts/agentkit/2d/topdown_body.gd). Brain and body are split so tests drive intents. GATE (`--fixed-fps 60`, one move per `await body.stepped`): apex within 0.5 px of design; coyote and buffer counted in moves; largest gap in tiles; no snag on tile seams; top-down stops at exactly 0 and diagonal speed equals straight speed.
-5. **Camera.** [`follow_camera_2d.gd`](scripts/agentkit/2d/follow_camera_2d.gd) (physics step, limits from the layer's used rect), or `pixel_viewport.gd` for a smooth view over locked pixels. GATE: camera y still during a jump in place; re-baseline after landing; a long fall keeps the player on screen; shake off gives offset 0. In a windowed run at `--fixed-fps 144`, background steps are at most 1 px with interpolation on.
-6. **Lights, sort, parallax.** CanvasModulate + PointLight2D with a radial GradientTexture2D; occluders from tile alpha; y-sorted container with feet origins; Parallax2D per plane. GATE: luma at probe points (lit, shadowed, owner lit vs a no-occluder control); overlap color test behind and in front; parallax shift equals scroll_scale times camera motion; no gap at the lowest zoom; no seam over 90 autoscroll frames.
-7. **Audit and hand over.** `audit_2d.gd:scenes`, `gd_run.check_all`, `kit_compile.gd`, then a contact sheet of the captures (at most 1600 px), opened and looked at. GATE: no warn findings, 0 compile errors, and the sheet shows no broken tiles, fringes or gaps. In a written plan, inline the core code (settings keys, jump maths, controller step, camera) so it runs without the kit; name kit files only as shortcuts.
+1. **Project.** `P = gd_env.base_project("2d", ...)`, `gd_2d.install_kit(P)`,
+   `gd_2d.pixel_art_settings(P, ...)`, `gd_run.import_project(P)`. GATE: `stretch_matrix.gd` shows
+   the root picked up base size, mode, integer stretch, Nearest and interpolation; the integer
+   factor and bars for each target window match `gd_2d.integer_scales`.
+2. **Art in.** For each generated image: `detect_pixel_scale`, `pixel_grid_check`, and
+   `snap_to_grid` if the phase or scale is off. Then import, `audit_imports`, and build SpriteFrames
+   from the manifest with [`sprite_frames_builder.gd`](scripts/agentkit/2d/sprite_frames_builder.gd)
+   plus `register()` on each sprite. GATE: audit clean; every clip's lowest ink pixel lands on the
+   same world y; `key_fringe` = 0 on a capture at a non-integer scale.
+3. **Tiles.** [`tileset_builder.gd`](scripts/agentkit/2d/tileset_builder.gd) (tile size first,
+   alpha-derived peering bits, collision, occluders, one-way lips), saved as `.tres`; paint with
+   `set_cells_terrain_connect`. Use [`dual_grid.gd`](scripts/agentkit/2d/dual_grid.gd) when the art
+   is a 16-tile dual set. GATE: `terrain_tools.audit_layer` gives 0 side and 0 corner mismatches; a
+   sampler capture (ring, cross, single cells, inner corners) looks right on a contact sheet.
+4. **Character.** [`platformer_body.gd`](scripts/agentkit/2d/platformer_body.gd) +
+   [`platformer_tuning.gd`](scripts/agentkit/2d/platformer_tuning.gd) Resource, or
+   [`topdown_body.gd`](scripts/agentkit/2d/topdown_body.gd). Brain and body are split so tests drive
+   intents. GATE (`--fixed-fps 60`, one move per `await body.stepped`): apex within 0.5 px of
+   design; coyote and buffer counted in moves; largest gap in tiles; no snag on tile seams; top-down
+   stops at exactly 0 and diagonal speed equals straight speed.
+5. **Camera.** [`follow_camera_2d.gd`](scripts/agentkit/2d/follow_camera_2d.gd) (physics step,
+   limits from the layer's used rect), or `pixel_viewport.gd` for a smooth view over locked pixels.
+   GATE: camera y still during a jump in place; re-baseline after landing; a long fall keeps the
+   player on screen; shake off gives offset 0. In a windowed run at `--fixed-fps 144`, background
+   steps are at most 1 px with interpolation on.
+6. **Lights, sort, parallax.** CanvasModulate + PointLight2D with a radial GradientTexture2D;
+   occluders from tile alpha; y-sorted container with feet origins; Parallax2D per plane. GATE: luma
+   at probe points (lit, shadowed, owner lit vs a no-occluder control); overlap color test behind
+   and in front; parallax shift equals scroll_scale times camera motion; no gap at the lowest zoom;
+   no seam over 90 autoscroll frames.
+7. **Audit and hand over.** `audit_2d.gd:scenes`, `gd_run.check_all`, `kit_compile.gd`, then a
+   contact sheet of the captures (at most 1600 px), opened and looked at. GATE: no warn findings, 0
+   compile errors, and the sheet shows no broken tiles, fringes or gaps. In a written plan, inline
+   the core code (settings keys, jump maths, controller step, camera) so it runs without the kit;
+   name kit files only as shortcuts.
 
 ## Numbers
 
@@ -68,7 +135,9 @@ Expert level in 2D means feel and pixels are measured, not eyeballed: a jump has
 
 ## Quality gates
 
-Every GATE above, plus a contact sheet of the terrain sampler, dual grid, fringe strip and light captures, opened and judged (rounded corners join the shape, no floating pieces, no magenta edge, shadows from the right side). Rubric: critique.md.
+Every GATE above, plus a contact sheet of the terrain sampler, dual grid, fringe strip and light
+captures, opened and judged (rounded corners join the shape, no floating pieces, no magenta edge,
+shadows from the right side). Rubric: critique.md.
 
 ## Common mistakes
 
@@ -94,21 +163,40 @@ Every GATE above, plus a contact sheet of the terrain sampler, dual grid, fringe
 
 ## Handoffs
 
-- **Receives from** scenario-sprite-pipeline, scenario-game-assets, scenario-sprite-animation: PNG or WebP strips, tilesets and a manifest with `frames`, `w`, `h`, `ground`. Ask for the native pixel size and key color.
+- **Receives from** scenario-sprite-pipeline, scenario-game-assets, scenario-sprite-animation: PNG
+  or WebP strips, tilesets and a manifest with `frames`, `w`, `h`, `ground`. Ask for the native
+  pixel size and key color.
 - **Receives from** scenario-godot-architecture: project layout, autoloads, input action names.
-- **Delivers to** scenario-godot-gameplay: bodies with intent fields and signals `jumped`, `landed`, `stepped`; TileMapLayers for navigation. scenario-godot-animation: SpriteFrames registered on feet.
-- **Delivers to** scenario-godot-vfx, scenario-godot-shaders, scenario-godot-ui (HUD via `pixel_viewport.world_to_screen`), scenario-godot-performance-export, scenario-godot-audio (hooks on `landed`).
+- **Delivers to** scenario-godot-gameplay: bodies with intent fields and signals `jumped`, `landed`,
+  `stepped`; TileMapLayers for navigation. scenario-godot-animation: SpriteFrames registered on
+  feet.
+- **Delivers to** scenario-godot-vfx, scenario-godot-shaders, scenario-godot-ui (HUD via
+  `pixel_viewport.world_to_screen`), scenario-godot-performance-export, scenario-godot-audio (hooks
+  on `landed`).
 - **Escalate to** scenario-godot-expert for channel failures.
 
 ## Godot 4.7 notes
 
-- TileMap and ParallaxBackground/ParallaxLayer are deprecated since 4.3: use TileMapLayer (4-arg `set_cell`) and Parallax2D. Tile physics is chunked by `physics_quadrant_size` since 4.5. One-way direction (`one_way_collision_direction`, default (0, 1)) is new in 4.7 (deltas file).
-- Camera2D: `enabled` plus `make_current()`, `position_smoothing_enabled`, `ignore_rotation`. With interpolation on, a zoom change eases over one tick (2 to 3 frames to reach 2.0, measured).
-- Defaults read in 4.7.2: canvas texture filter Linear, 2D transform snap off, physics interpolation off, CharacterBody2D safe margin 0.08 and floor snap 1 px. Texture import: Lossless, no mipmaps, `fix_alpha_border` on, `detect_3d/compress_to` 1.
-- Several occluder polygons on one occlusion layer of one tile work in 4.7.2 (2, kept after save): the second occlusion layer of the 4.3 video (suzF2Y166eA [00:12:22]) is not needed.
-- Godot 3 names to avoid: `KinematicBody2D`, `YSort`, `Light2D` as a node, `set_cellv`, `world_to_map`, `Camera2D.current`.
+- TileMap and ParallaxBackground/ParallaxLayer are deprecated since 4.3: use TileMapLayer (4-arg
+  `set_cell`) and Parallax2D. Tile physics is chunked by `physics_quadrant_size` since 4.5. One-way
+  direction (`one_way_collision_direction`, default (0, 1)) is new in 4.7 (deltas file).
+- Camera2D: `enabled` plus `make_current()`, `position_smoothing_enabled`, `ignore_rotation`. With
+  interpolation on, a zoom change eases over one tick (2 to 3 frames to reach 2.0, measured).
+- Defaults read in 4.7.2: canvas texture filter Linear, 2D transform snap off, physics interpolation
+  off, CharacterBody2D safe margin 0.08 and floor snap 1 px. Texture import: Lossless, no mipmaps,
+  `fix_alpha_border` on, `detect_3d/compress_to` 1.
+- Several occluder polygons on one occlusion layer of one tile work in 4.7.2 (2, kept after save):
+  the second occlusion layer of the 4.3 video (suzF2Y166eA [00:12:22]) is not needed.
+- Godot 3 names to avoid: `KinematicBody2D`, `YSort`, `Light2D` as a node, `set_cellv`,
+  `world_to_map`, `Camera2D.current`.
 
 ## References
 
-- [`references/procedures.md`](references/procedures.md): procedures with code and live results; [`expert-notes.md`](references/expert-notes.md): principles by source with timestamps; [`critique.md`](references/critique.md): self-check rubric; [`gui-paths.md`](references/gui-paths.md): editor menus; [`sources.md`](references/sources.md): videos and docs.
-- [`scripts/gd_2d.py`](scripts/gd_2d.py): settings, import audit, pixel-grid checks, jump maths, placeholder atlases. [`scripts/agentkit/2d/`](scripts/agentkit/2d/): tileset, terrain, dual grid, bodies, cameras, pixel viewport, sprite frames, parallax, audit, light shader.
+- [`references/procedures.md`](references/procedures.md): procedures with code and live results;
+  [`expert-notes.md`](references/expert-notes.md): principles by source with timestamps;
+  [`critique.md`](references/critique.md): self-check rubric;
+  [`gui-paths.md`](references/gui-paths.md): editor menus; [`sources.md`](references/sources.md):
+  videos and docs.
+- [`scripts/gd_2d.py`](scripts/gd_2d.py): settings, import audit, pixel-grid checks, jump maths,
+  placeholder atlases. [`scripts/agentkit/2d/`](scripts/agentkit/2d/): tileset, terrain, dual grid,
+  bodies, cameras, pixel viewport, sprite frames, parallax, audit, light shader.

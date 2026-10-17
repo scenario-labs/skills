@@ -1,6 +1,9 @@
 # Sources (14 videos)
 
-Per-video notes: `notes/animation/<id> - <title>.md`; batch digests `notes/animation/_digest_animation_talks.md` and `_digest_animation_acting_lives.md`. Distiller API probes: `archive/tests/animation_talks/probe1.py` to `probe10.py`, `archive/tests/anim_acting_probe/`.
+Per-video notes: `notes/animation/<id> - <title>.md`; batch digests
+`notes/animation/_digest_animation_talks.md` and `_digest_animation_acting_lives.md`. Distiller API
+probes: `archive/tests/animation_talks/probe1.py` to `probe10.py`,
+`archive/tests/anim_acting_probe/`.
 
 | Video                                                                                                                                     | Expert and credential                                                                                        | Best for                                                                                                                                  | Best timestamps                                                                                                                              |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -19,4 +22,5 @@ Per-video notes: `notes/animation/<id> - <title>.md`; batch digests `notes/anima
 | [Slot it like it's hot (slotted actions)](https://www.youtube.com/watch?v=ypWk6ZgQ-iM), BCON25, 2025-09-18, 51:37                         | Sybren Stuvel, Christoph Lendenfeld, Nathan Vegdahl, Animation and Rigging module                            | the 5.x action data model, slot naming and assignment, 4.3 to 5.0 features                                                                | [00:03:07] slots, [00:07:35] naming, [00:13:12] no auto-assign                                                                               |
 | [Layered Actions and Other Niceties](https://www.youtube.com/watch?v=TxqnoafBdzg), BCON26, 2026-09-23, 49:00                              | same module developers                                                                                       | what exists in 5.0, 5.1, 5.2 vs 5.3, layers status                                                                                        | [00:04:28] feature list, [00:11:49] layers not exposed                                                                                       |
 
-Known gaps: BCON24 "Animation Critique Session" and BCON25 "Animation Hangout" were never uploaded; Blender Studio's paid Animation Fundamentals course is out of reach (project README).
+Known gaps: BCON24 "Animation Critique Session" and BCON25 "Animation Hangout" were never uploaded;
+Blender Studio's paid Animation Fundamentals course is out of reach (project README).

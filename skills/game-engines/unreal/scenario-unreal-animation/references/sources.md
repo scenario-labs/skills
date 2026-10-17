@@ -1,6 +1,8 @@
 # scenario-unreal-animation: sources
 
-Distilled notes in `notes/animation/`, `notes/characters/`, `notes/rigging/` (plus the two digests). Version facts: `sources/unreal-version-deltas.md` (Animation section; Interchange; Python; macOS). Names uncertain in auto-captions are marked as such.
+Distilled notes in `notes/animation/`, `notes/characters/`, `notes/rigging/` (plus the two digests).
+Version facts: `sources/unreal-version-deltas.md` (Animation section; Interchange; Python; macOS).
+Names uncertain in auto-captions are marked as such.
 
 ## Talks and videos
 
@@ -33,9 +35,24 @@ Distilled notes in `notes/animation/`, `notes/characters/`, `notes/rigging/` (pl
 
 ## Sister skills
 
-- scenario-maya-rigging (`scenario-maya-rigging/SKILL.md`): the export contract (`game_skeleton_check`: one root at the origin, joints only, unique names, influences, FBX 2020.2 by scenario-maya-pipeline-scripting).
-- scenario-unreal-expert: channels, `ue_run`, `ue_review`, `ue_audit`, `ue_stat`, `ue_env`, 5.8 traps.
+- scenario-maya-rigging (`scenario-maya-rigging/SKILL.md`): the export contract
+  (`game_skeleton_check`: one root at the origin, joints only, unique names, influences, FBX 2020.2
+  by scenario-maya-pipeline-scripting).
+- scenario-unreal-expert: channels, `ue_run`, `ue_review`, `ue_audit`, `ue_stat`, `ue_env`, 5.8
+  traps.
 
 ## Revision history
 
-- 2026-09-24, v0.2: refactor after the U5 blind grade (`tests/grading/U5_grade.md`, "missing from both" items 1 to 14 and the errors listed for both answers). Added: movement model first and clips checked against the exported capsule (`capsule_match`), schema, Pose History and mirror table remap (`mannequin_bone_map`, `schema_bone_check`, `schema_facts`), Offset Root Bone modes and steering order (`offset_root_bone_modes`, `procedural_order_check`), foot-pair coverage and capture shapes, Pin Bones for IK helper bones (`ik_bone_pin_plan`, R16), Retarget Output Log and Profile Ops checks (`retarget_log_check`, R17), capsule vs root-motion-driven condition with Mover 5.8, 5.8 `BlueprintGraphEditor` probe, Motion Matching node guards, project-wide import defaults (`import_defaults_plan`), Additive Pose op, traversal tails. Fixed: both Root Motion from Everything and from Montages Only put the AnimGraph on the game thread (`root_motion_mode_check`); GASP 5.4 leg IK has no ground adaptation; sub-ops no longer listed as top-level costly ops; weights nuance; Interchange default stated as [verify]. Offline tests 23 to 30, all passing; nothing run in Unreal yet. Previous state: `skills/_versions/unreal-animation v1 2026-09-24/`.
+- 2026-09-24, v0.2: refactor after the U5 blind grade (`tests/grading/U5_grade.md`, "missing from
+  both" items 1 to 14 and the errors listed for both answers). Added: movement model first and clips
+  checked against the exported capsule (`capsule_match`), schema, Pose History and mirror table
+  remap (`mannequin_bone_map`, `schema_bone_check`, `schema_facts`), Offset Root Bone modes and
+  steering order (`offset_root_bone_modes`, `procedural_order_check`), foot-pair coverage and
+  capture shapes, Pin Bones for IK helper bones (`ik_bone_pin_plan`, R16), Retarget Output Log and
+  Profile Ops checks (`retarget_log_check`, R17), capsule vs root-motion-driven condition with Mover
+  5.8, 5.8 `BlueprintGraphEditor` probe, Motion Matching node guards, project-wide import defaults
+  (`import_defaults_plan`), Additive Pose op, traversal tails. Fixed: both Root Motion from
+  Everything and from Montages Only put the AnimGraph on the game thread (`root_motion_mode_check`);
+  GASP 5.4 leg IK has no ground adaptation; sub-ops no longer listed as top-level costly ops;
+  weights nuance; Interchange default stated as [verify]. Offline tests 23 to 30, all passing;
+  nothing run in Unreal yet. Previous state: `skills/_versions/unreal-animation v1 2026-09-24/`.

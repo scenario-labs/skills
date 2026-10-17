@@ -1,6 +1,9 @@
 # Sources
 
-Distilled notes for every source are in `notes/animation/` (file name = video ID or doc key), with the three digests `_digest_animation_workflow_acting.md`, `_digest_animation_maya_tools.md`, `_digest_animation_body_mechanics.md`. Captions are auto-generated unless stated; frames exist only for the Camporota and Graph Editor videos.
+Distilled notes for every source are in `notes/animation/` (file name = video ID or doc key), with
+the three digests `_digest_animation_workflow_acting.md`, `_digest_animation_maya_tools.md`,
+`_digest_animation_body_mechanics.md`. Captions are auto-generated unless stated; frames exist only
+for the Camporota and Graph Editor videos.
 
 ## Videos
 
@@ -45,9 +48,23 @@ Distilled notes for every source are in `notes/animation/` (file name = video ID
 
 ## Project inputs used for method, not content
 
-- `tests/baseline/answers.md` M4 and `tests/scenarios.md` M4: the unskilled baseline (physics, parabola check and foot drift were already there; resistance, catch, camera-space arcs, layer policy, key categories and spline readiness were missing, and it suggested layers for polish overlap, which Elver rejects).
-- Sister skill `../2026-09-24 Blender Expert Skills/skills/scenario-blender-animation/`: ideas only (measurement loop, onion-skin and curve images, hold pillars); no Blender specifics carried over.
+- `tests/baseline/answers.md` M4 and `tests/scenarios.md` M4: the unskilled baseline (physics,
+  parabola check and foot drift were already there; resistance, catch, camera-space arcs, layer
+  policy, key categories and spline readiness were missing, and it suggested layers for polish
+  overlap, which Elver rejects).
+- Sister skill `../2026-09-24 Blender Expert Skills/skills/scenario-blender-animation/`: ideas only
+  (measurement loop, onion-skin and curve images, hold pillars); no Blender specifics carried over.
 
 ## Revision history
 
-- 2026-09-24, v2 (refactor after blind grade `tests/grading/M4_grade.md`; v1 kept in `skills/_versions/maya-animation v1 2026-09-24/`): added, from FA7fPB7qUhE [00:03:11] [00:03:46] [00:07:55] [00:08:28], ynXadXE9UjU [00:09:26], jzuxAmadcm8 [00:10:32] [00:11:04] [00:13:54] [00:14:29], TMSpauVphNs [00:01:45] [00:02:18] and G49wexNmQ-Q [00:06:22], the foot roll in every crouch, the overdone first anticipation, the spine drag with only the arms dropping, the peel-off vector check, feet flat within 1 to 2 frames of touch-down, insert plus curve diff after splining, and a bigger hold after impacts, as stance, workflow, mistakes, and five new gates in `mx_anim` (`foot_roll`, `spine_drag`, `peel_off_*`, `heel_to_flat_*`, `impact_hold`) plus `curve_diff`, `foot_pitch`, `foot_events`, `peel_angle`, `snapshot(samples=)` and `scale_curve(time=)`, generalized to any jump, hop, landing or weight shift; fixed the stretch that tied Elver's "balloon" line (about bounce) to apex hang (now physics [added]); offline test 101 checks passed.
+- 2026-09-24, v2 (refactor after blind grade `tests/grading/M4_grade.md`; v1 kept in
+  `skills/_versions/maya-animation v1 2026-09-24/`): added, from FA7fPB7qUhE [00:03:11] [00:03:46]
+  [00:07:55] [00:08:28], ynXadXE9UjU [00:09:26], jzuxAmadcm8 [00:10:32] [00:11:04] [00:13:54]
+  [00:14:29], TMSpauVphNs [00:01:45] [00:02:18] and G49wexNmQ-Q [00:06:22], the foot roll in every
+  crouch, the overdone first anticipation, the spine drag with only the arms dropping, the peel-off
+  vector check, feet flat within 1 to 2 frames of touch-down, insert plus curve diff after splining,
+  and a bigger hold after impacts, as stance, workflow, mistakes, and five new gates in `mx_anim`
+  (`foot_roll`, `spine_drag`, `peel_off_*`, `heel_to_flat_*`, `impact_hold`) plus `curve_diff`,
+  `foot_pitch`, `foot_events`, `peel_angle`, `snapshot(samples=)` and `scale_curve(time=)`,
+  generalized to any jump, hop, landing or weight shift; fixed the stretch that tied Elver's
+  "balloon" line (about bounce) to apex hang (now physics [added]); offline test 101 checks passed.

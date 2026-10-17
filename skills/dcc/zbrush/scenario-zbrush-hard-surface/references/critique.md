@@ -3,10 +3,14 @@
 Use at every gate. Inputs: the three sheets from `hs.review_sheets(out_dir, polyframe=True)`:
 
 - **forms:** MatCap Gray, front, right, back, three-quarter, top;
-- **planes:** a metal MatCap (`MatCap Metal01` [verify label]; Pavlovich checks under a green metallic, `Green Metallic` ships), square-on and 30-degree grazing views;
+- **planes:** a metal MatCap (`MatCap Metal01` [verify label]; Pavlovich checks under a green
+  metallic, `Green Metallic` ships), square-on and 30-degree grazing views;
 - **PolyFrame:** front, right, top.
 
-Add the numbers from the calls named in each row. Perspective off for every review (Chervenka). Open each sheet with the image reader and write one line per failed criterion: criterion, where, why, the fix. Severity: **blocker** (fix before the next stage), **fix** (before delivery), **note** (taste, report it).
+Add the numbers from the calls named in each row. Perspective off for every review (Chervenka). Open
+each sheet with the image reader and write one line per failed criterion: criterion, where, why, the
+fix. Severity: **blocker** (fix before the next stage), **fix** (before delivery), **note** (taste,
+report it).
 
 ## A. Does it read as hard surface? (Plouffe's visual language, u75skb32GTo)
 
@@ -66,4 +70,7 @@ Add the numbers from the calls named in each row. Perspective off for every revi
 
 ## How to write the verdict
 
-Three lines at the top: the stage, blockers (with row ids), and what was not checked (for example "no game-camera render"). Then one line per failed row. Do not advance a stage with a blocker open. Plouffe's efficiency rule applies: effort goes to focus areas; a hidden underside at "decent" is a note, not a fix (u75skb32GTo [00:43:23], [01:13:12]).
+Three lines at the top: the stage, blockers (with row ids), and what was not checked (for example
+"no game-camera render"). Then one line per failed row. Do not advance a stage with a blocker open.
+Plouffe's efficiency rule applies: effort goes to focus areas; a hidden underside at "decent" is a
+note, not a fix (u75skb32GTo [00:43:23], [01:13:12]).

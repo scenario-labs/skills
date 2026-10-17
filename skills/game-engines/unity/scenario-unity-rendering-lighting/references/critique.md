@@ -1,6 +1,10 @@
 # Critique rubric (the lighter judges its own frames)
 
-Use after every stage, on the SAME `AgentView_*` bookmarks, with `ut_lighting.stage_review(capture, previous=<last stage review>)` and the contact sheet opened. A stage passes when every measurable line holds and the visual lines were checked by looking. Thresholds marked [added] are this skill's start values for a stylized, display-referred review; tune them per art direction and write the change down.
+Use after every stage, on the SAME `AgentView_*` bookmarks, with
+`ut_lighting.stage_review(capture, previous=<last stage review>)` and the contact sheet opened. A
+stage passes when every measurable line holds and the visual lines were checked by looking.
+Thresholds marked [added] are this skill's start values for a stylized, display-referred review;
+tune them per art direction and write the change down.
 
 ## 1. Frame sanity (every capture)
 
@@ -14,7 +18,9 @@ Use after every stage, on the SAME `AgentView_*` bookmarks, with `ut_lighting.st
 
 ## 2. Exposure and balance (gray cards)
 
-An 18% gray card (linear albedo 0.18, sRGB 0.461) is the lighter's anchor in URP, which has no physical light units or auto exposure in 6.3. Place one square to the sun, one in shade (facing up), one per interior zone.
+An 18% gray card (linear albedo 0.18, sRGB 0.461) is the lighter's anchor in URP, which has no
+physical light units or auto exposure in 6.3. Place one square to the sun, one in shade (facing up),
+one per interior zone.
 
 | Check                       | Measure                                                                                       | Pass                                                       | Source                                           |
 | --------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
@@ -96,4 +102,7 @@ An 18% gray card (linear albedo 0.18, sRGB 0.461) is the lighter's anchor in URP
 
 ## 8. How to write the verdict
 
-One line per stage: what changed (one change), the numbers that moved (card EV, clipped, saturation, bake MB and seconds), what you saw on the sheet, pass or the next fix. Then the two lists from scenario-unity-expert: Verified (job ids, numbers, sheets looked at) and Assumed (thresholds [added], anything not run, device numbers not measured).
+One line per stage: what changed (one change), the numbers that moved (card EV, clipped, saturation,
+bake MB and seconds), what you saw on the sheet, pass or the next fix. Then the two lists from
+scenario-unity-expert: Verified (job ids, numbers, sheets looked at) and Assumed (thresholds
+[added], anything not run, device numbers not measured).

@@ -1,6 +1,7 @@
 # GUI paths for the lead's procedures (for a computer-use agent or a human)
 
-Unity 6.3 menu names on macOS (Cmd for Ctrl). Menus moved in 6.1 (Package Manager under Window > Package Management); verify labels on the installed editor before scripting clicks.
+Unity 6.3 menu names on macOS (Cmd for Ctrl). Menus moved in 6.1 (Package Manager under Window >
+Package Management); verify labels on the installed editor before scripting clicks.
 
 | Task                                                          | GUI path                                                                                | Scripted equivalent                                                                                 |
 | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |

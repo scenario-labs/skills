@@ -1,6 +1,9 @@
 # Sources
 
-Every source the skill draws on: expert, credential, URL, what it is best for, best timestamps. Notes are in the project's `notes/` folders (gameplay-framework, blueprints, ai, ui, cpp); version facts in `sources/unreal-version-deltas.md` and `sources/docs/versions__ue-5.4` to `5.8-release-notes.md`.
+Every source the skill draws on: expert, credential, URL, what it is best for, best timestamps.
+Notes are in the project's `notes/` folders (gameplay-framework, blueprints, ai, ui, cpp); version
+facts in `sources/unreal-version-deltas.md` and `sources/docs/versions__ue-5.4` to
+`5.8-release-notes.md`.
 
 ## Talks and videos
 
@@ -41,4 +44,29 @@ Every source the skill draws on: expert, credential, URL, what it is best for, b
 ## Revision history
 
 - 2026-09-24, v0.1: first version (snapshot in `skills/_versions/unreal-gameplay v1 2026-09-24/`).
-- 2026-09-24, v0.2: refactor after the blind grade `tests/grading/U4_grade.md` ("missing from both" list and the errors in both answers). Added from the notes, generalized beyond the U4 character and enemy: ASC init on server (`PossessedBy`) and owning client (`AcknowledgePossession`, `OnRep_PlayerState`) with the `ASC_CLIENT_INIT_MISSING` lint rule, a scaffolded `AGameplayPlayerController` and the "Can't activate" symptom (GAS doc tranek 4.1.2, 9.1); `PlayMontageAndWait` and cosmetic-only cues surfaced in stance and mistakes (tranek 9.3, GAS doc); GE asset tags and the `AbilitySystem.Fix...` cvar checked by `config_verdict` (Shao 8bi0rnXnRj4 [00:21:43]); `ge_plan_verdict` for cooldown, damage and debug GE plans; `gas_log_triage`; gameplay debugger on the enemy with the MacBook numpad note (Shao [00:24:08], [00:35:38]; tranek 6.2, 6.3); StateTree selection and re-selection semantics, compile gate, tree parameters per enemy and Task Control Flow in `statetree_spec_verdict`, `U4_ENEMY_TREE` and `statetree_outline` (Mononen YEmq4kcblj4 [00:11:22], [00:14:13], [00:16:40], [00:18:19]; BAU digest P4); AI possession wiring (`ai_controller_class` on the controller Blueprint, `auto_possess_ai`) in `ai_setup_verdict` (AI docs, BAU digest P4 step 4); one-way `OnDied` delegate bound by the AI controller, which stops the tree (VMZftEVDuCE [00:19:25]; BP docs); Insights trace plus `rewrite_gate` before any rewrite (GF digest consensus 6; VMZftEVDuCE [00:16:33]); widget Tick by Paint and Hidden vs Collapsed as lint rules (Albert VxX1aah6TZM [00:10:09], [00:12:53]); per-state mapping contexts in `input_verdict` (framework doc); scheduled StateTree ticking check (5.6 notes); repeated BeginPlay lint rule (Shao KBn62trwkLw [00:07:29]); derived dash oracle with the exit coast (`dash_expected_cm`, engine model [added, verify]). Fixed: the GAS isolation step applied the SetByCaller `GE_Damage` from the console (it applies zero); it now uses the fixed-magnitude twin `GE_Damage_Debug`, also in the health-bar scenario (which named a GE no step created). Fixed: the patrol state ran MoveTo and Delay side by side; the wait is now its own state. Fixed: the client ASC init used `OnRep_Controller` against the notes. The authoring-surfaces table moved from SKILL.md to procedures P15. Offline tests: 39 passed; everything in-editor and all C++ still not yet run in Unreal.
+- 2026-09-24, v0.2: refactor after the blind grade `tests/grading/U4_grade.md` ("missing from both"
+  list and the errors in both answers). Added from the notes, generalized beyond the U4 character
+  and enemy: ASC init on server (`PossessedBy`) and owning client (`AcknowledgePossession`,
+  `OnRep_PlayerState`) with the `ASC_CLIENT_INIT_MISSING` lint rule, a scaffolded
+  `AGameplayPlayerController` and the "Can't activate" symptom (GAS doc tranek 4.1.2, 9.1);
+  `PlayMontageAndWait` and cosmetic-only cues surfaced in stance and mistakes (tranek 9.3, GAS doc);
+  GE asset tags and the `AbilitySystem.Fix...` cvar checked by `config_verdict` (Shao 8bi0rnXnRj4
+  [00:21:43]); `ge_plan_verdict` for cooldown, damage and debug GE plans; `gas_log_triage`; gameplay
+  debugger on the enemy with the MacBook numpad note (Shao [00:24:08], [00:35:38]; tranek 6.2, 6.3);
+  StateTree selection and re-selection semantics, compile gate, tree parameters per enemy and Task
+  Control Flow in `statetree_spec_verdict`, `U4_ENEMY_TREE` and `statetree_outline` (Mononen
+  YEmq4kcblj4 [00:11:22], [00:14:13], [00:16:40], [00:18:19]; BAU digest P4); AI possession wiring
+  (`ai_controller_class` on the controller Blueprint, `auto_possess_ai`) in `ai_setup_verdict` (AI
+  docs, BAU digest P4 step 4); one-way `OnDied` delegate bound by the AI controller, which stops the
+  tree (VMZftEVDuCE [00:19:25]; BP docs); Insights trace plus `rewrite_gate` before any rewrite (GF
+  digest consensus 6; VMZftEVDuCE [00:16:33]); widget Tick by Paint and Hidden vs Collapsed as lint
+  rules (Albert VxX1aah6TZM [00:10:09], [00:12:53]); per-state mapping contexts in `input_verdict`
+  (framework doc); scheduled StateTree ticking check (5.6 notes); repeated BeginPlay lint rule (Shao
+  KBn62trwkLw [00:07:29]); derived dash oracle with the exit coast (`dash_expected_cm`, engine model
+  [added, verify]). Fixed: the GAS isolation step applied the SetByCaller `GE_Damage` from the
+  console (it applies zero); it now uses the fixed-magnitude twin `GE_Damage_Debug`, also in the
+  health-bar scenario (which named a GE no step created). Fixed: the patrol state ran MoveTo and
+  Delay side by side; the wait is now its own state. Fixed: the client ASC init used
+  `OnRep_Controller` against the notes. The authoring-surfaces table moved from SKILL.md to
+  procedures P15. Offline tests: 39 passed; everything in-editor and all C++ still not yet run in
+  Unreal.

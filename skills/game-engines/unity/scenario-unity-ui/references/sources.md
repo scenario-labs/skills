@@ -1,6 +1,9 @@
 # Sources
 
-Every source of the scenario-unity-ui skill: who, credential, URL, what it is best for, best timestamps. Notes live in `notes/ui/` of the project (one per source, plus three digests); docs in `sources/docs/ui__*.md`; version facts in `sources/unity-version-deltas.md` (§1.3, §3, §4, §8, §13, §14).
+Every source of the scenario-unity-ui skill: who, credential, URL, what it is best for, best
+timestamps. Notes live in `notes/ui/` of the project (one per source, plus three digests); docs in
+`sources/docs/ui__*.md`; version facts in `sources/unity-version-deltas.md` (§1.3, §3, §4, §8, §13,
+§14).
 
 ## Official Unity documentation (6.3 and uGUI 2.0)
 
@@ -38,17 +41,34 @@ Every source of the scenario-unity-ui skill: who, credential, URL, what it is be
 
 ## Added (not from the cluster, marked [added] where used)
 
-- WCAG 2.x contrast ratio formula and thresholds (4.5:1 body, 3:1 large text): W3C Web Content Accessibility Guidelines.
-- Touch target about 7 mm: Apple Human Interface Guidelines (44 x 44 pt) and Material Design (48 x 48 dp).
+- WCAG 2.x contrast ratio formula and thresholds (4.5:1 body, 3:1 large text): W3C Web Content
+  Accessibility Guidelines.
+- Touch target about 7 mm: Apple Human Interface Guidelines (44 x 44 pt) and Material Design (48 x
+  48 dp).
 - 8 px spacing grid: common product-design practice, used here as the spacing token scale.
-- uGUI and UI Toolkit sort orders interleave for drawing since 2021.2: Unity staff (Antoine) on the Unity Discussions thread "Mixing unity UI (uGUI) and UI Toolkit. Sorting order not working?", 2022-08-05, https://discussions.unity.com/t/mixing-unity-ui-ugui-and-ui-toolkit-sorting-order-not-working/890201 (input order measured here; drawing not observable headless).
+- uGUI and UI Toolkit sort orders interleave for drawing since 2021.2: Unity staff (Antoine) on the
+  Unity Discussions thread "Mixing unity UI (uGUI) and UI Toolkit. Sorting order not working?",
+  2022-08-05,
+  https://discussions.unity.com/t/mixing-unity-ui-ugui-and-ui-toolkit-sorting-order-not-working/890201
+  (input order measured here; drawing not observable headless).
 - The layer table values (HUD 0, menus 10, modal 20, toasts 30) are this skill's convention.
 
 ## Observed on this Mac (Unity 6000.3.21f1, 2026-09-24)
 
-Every **measured** line in `expert-notes.md` and every result in `procedures.md` comes from `tests/code/unity-ui/` (log: `archive/tests/unity-ui/live_results.jsonl`, artifacts and contact sheets in `archive/tests/unity-ui/`).
+Every **measured** line in `expert-notes.md` and every result in `procedures.md` comes from
+`tests/code/unity-ui/` (log: `archive/tests/unity-ui/live_results.jsonl`, artifacts and contact
+sheets in `archive/tests/unity-ui/`).
 
 ## Revision history
 
 - 2026-09-24, v0.1: first version (13 procedures, 15 live checks, 16 offline tests).
-- 2026-09-24, v0.2 (refactor after the blind grade `tests/grading/Y7_grade.md`; v0.1 kept in `skills/_versions/unity-ui v1 2026-09-24/`): added layers and focus across uGUI and UI Toolkit (P14, measured input order and focus handoff), ExplainLayout (P15), UI Toolkit hiding by duration with measured costs (P16), Vertex Budget measured (P17), the UI Toolkit glyph gate separate from TMP plus font parity (P18), property bag generation and PanelChangeLog (P19), the 6.3 UI Test Framework (P20), localized code-filled settings (P21); audit rules for sort ties, World Space canvas count, static stencil masks, center-anchored edge elements and UI atlas settings; shared matrix rows in routing; C# event and query lints; ImportReport rules and hard dependencies. Fixed two errors of v0.1: Match 0 with a landscape reference shrinks portrait to 0.5625 (not "1.5x too big"), and an invalid USS imports as an EMPTY StyleSheet (0 rules), not a usable one.
+- 2026-09-24, v0.2 (refactor after the blind grade `tests/grading/Y7_grade.md`; v0.1 kept in
+  `skills/_versions/unity-ui v1 2026-09-24/`): added layers and focus across uGUI and UI Toolkit
+  (P14, measured input order and focus handoff), ExplainLayout (P15), UI Toolkit hiding by duration
+  with measured costs (P16), Vertex Budget measured (P17), the UI Toolkit glyph gate separate from
+  TMP plus font parity (P18), property bag generation and PanelChangeLog (P19), the 6.3 UI Test
+  Framework (P20), localized code-filled settings (P21); audit rules for sort ties, World Space
+  canvas count, static stencil masks, center-anchored edge elements and UI atlas settings; shared
+  matrix rows in routing; C# event and query lints; ImportReport rules and hard dependencies. Fixed
+  two errors of v0.1: Match 0 with a landscape reference shrinks portrait to 0.5625 (not "1.5x too
+  big"), and an invalid USS imports as an EMPTY StyleSheet (0 rules), not a usable one.

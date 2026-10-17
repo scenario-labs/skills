@@ -1,8 +1,15 @@
 # Procedures: polypaint, texture, render, turntable through the bridge
 
-Every procedure is agent-side Python that drives ZBrush 2026.2.1 through the lead bridge (`zb_launch`) and this skill's module `scripts/zb_paint.py`. Status of every block: **not yet run in ZBrush**. Offline logic tests pass (`python3 tests/code/zbrush-paint-render/run_offline.py`: 36 tests on 2026-09-24). The live test that will verify each block is named under it; run them with `tests/code/zbrush-paint-render/run_live.sh` (p01 first: it records which candidate paths exist, and its JSON updates the tags in `zb_paint.PATHS`).
+Every procedure is agent-side Python that drives ZBrush 2026.2.1 through the lead bridge
+(`zb_launch`) and this skill's module `scripts/zb_paint.py`. Status of every block: **not yet run in
+ZBrush**. Offline logic tests pass (`python3 tests/code/zbrush-paint-render/run_offline.py`: 36
+tests on 2026-09-24). The live test that will verify each block is named under it; run them with
+`tests/code/zbrush-paint-render/run_live.sh` (p01 first: it records which candidate paths exist, and
+its JSON updates the tags in `zb_paint.PATHS`).
 
-What is already proven by the lead (v01 to v03): the bridge, `Document:Export` and `Tool:Export` without a dialog, synthesized strokes that sculpt, `set()` on a missing path being silent. Everything paint-specific below is new.
+What is already proven by the lead (v01 to v03): the bridge, `Document:Export` and `Tool:Export`
+without a dialog, synthesized strokes that sculpt, `set()` on a missing path being silent.
+Everything paint-specific below is new.
 
 ## P0. Session header (used by every procedure)
 
@@ -32,7 +39,9 @@ zp.remote("texture_off")                               # a shown texture hides p
 zl.call("zb_ops", "save_ztl", OUT + "/head_paint.ztl")  # head_paint_v001.ztl, never overwrites
 ```
 
-Gate: top level, points recorded, map side chosen, ZTL v001 on disk. If the texture will be baked and `st["points"]` is under 0.7 of the map's usable pixels (`zp.map_budget`), divide further before painting, never after (FlippedNormals 00:08:50).
+Gate: top level, points recorded, map side chosen, ZTL v001 on disk. If the texture will be baked
+and `st["points"]` is under 0.7 of the map's usable pixels (`zp.map_budget`), divide further before
+painting, never after (FlippedNormals 00:08:50).
 
 ## P2. Paint mode, neutral material, base fill
 
@@ -48,7 +57,8 @@ zp.remote("fill", [196, 150, 128], 100)
 rev = zp.paint_review(OUT + "/p2", look="flat", views=("front", "threequarter"))
 ```
 
-Gate: the Flat front render shows the fill color at the center within about 8 levels per channel (live_p02 measures it). Colorize reads on after the fill (Pavlovich 040hAJ3-cTw 00:10:08).
+Gate: the Flat front render shows the fill color at the center within about 8 levels per channel
+(live_p02 measures it). Colorize reads on after the fill (Pavlovich 040hAJ3-cTw 00:10:08).
 
 ## P3. Zones that are parts (eyes, scarf, teeth, clothes, hard parts)
 
@@ -82,7 +92,10 @@ rep = zp.remote("zone_fill_by_split",
 print(rep["pieces"], rep["groups"])                    # pieces stay hidden in the tool
 ```
 
-Gate: the original shows the zone colors after projection; SubTool count went up by the number of groups; `zl.ping()` answers (Project All is long on dense meshes). Transitions at group borders are soft after projection; that is usually wanted for skin and wrong for hard-surface parts, which should be separate SubTools (P3).
+Gate: the original shows the zone colors after projection; SubTool count went up by the number of
+groups; `zl.ping()` answers (Project All is long on dense meshes). Transitions at group borders are
+soft after projection; that is usually wanted for skin and wrong for hard-surface parts, which
+should be separate SubTools (P3).
 
 ## P5. Anatomical skin zones on one mesh (no groups)
 
@@ -148,7 +161,9 @@ result = len(__STROKES__)
 """.replace("__STROKES__", repr(strokes)))
 ```
 
-Gate (both routes, `stage="zones"`): forehead yellower than midface, midface redder, male lower third bluer, by at least one JND (2.3 in Lab). Visual: the map reads as a clown on purpose (Pablo 01:05:27) and zones sit on the anatomy (bone and fat yellow, thin tissue red, hollows blue).
+Gate (both routes, `stage="zones"`): forehead yellower than midface, midface redder, male lower
+third bluer, by at least one JND (2.3 in Lab). Visual: the map reads as a clown on purpose (Pablo
+01:05:27) and zones sit on the anatomy (bone and fat yellow, thin tissue red, hollows blue).
 
 ## P6. Cover, mask passes, wash
 
@@ -183,7 +198,9 @@ c = zp.remote("paint_views", OUT + "/mask_off", ["front"], "flat")["views"][0]["
 print(zp.mask_coverage(m, c))   # masked share of the subject; 0 means the mask did nothing
 ```
 
-Then `paint_review` with `skin_zone_checks(stage="covered")`: no clown (share of pixels above HSV saturation 0.75 at most 5 percent [added]), realistic mean saturation under 0.5 (Pablo 01:10:30), speckle present.
+Then `paint_review` with `skin_zone_checks(stage="covered")`: no clown (share of pixels above HSV
+saturation 0.75 at most 5 percent [added]), realistic mean saturation under 0.5 (Pablo 01:10:30),
+speckle present.
 
 ## P7. Review and gates at every stage
 
@@ -220,7 +237,10 @@ zl.run("zbc.select_subtool(1); result = zbc.get_active_tool_path()")   # the eye
 zp.remote("polypaint_from_image", img)
 ````
 
-Then rotate the eyes a few degrees apart (Pablo: straight eyes look dead). Gizmo rotation is not scriptable; hand it to scenario-zbrush-sculpting or do it with Tool > Deformation > Rotate on a masked eye [verify]. With Mirror And Weld eyes (one SubTool), paint before mirroring, or paint one and mirror (Mirror And Weld transfers polypaint, projection doc).
+Then rotate the eyes a few degrees apart (Pablo: straight eyes look dead). Gizmo rotation is not
+scriptable; hand it to scenario-zbrush-sculpting or do it with Tool > Deformation > Rotate on a
+masked eye [verify]. With Mirror And Weld eyes (one SubTool), paint before mirroring, or paint one
+and mirror (Mirror And Weld transfers polypaint, projection doc).
 
 ## P9. Deliver the color: texture, vertex color or Painter
 
@@ -241,7 +261,10 @@ obj = zl.call("zb_ops", "export_obj", OUT + "/head_vc.obj")
 print("#MRGB" in open(obj["path"], errors="ignore").read(4_000_000))
 ```
 
-Map rules: side from `recommend_map_size` (about 4M points per 2K), Flip V for other apps (FlippedNormals 00:31:54), texture display off afterwards. Multi Map Exporter's Texture from Polypaint (Map Border high, FlipV) runs in scenario-zbrush-retopology-export's map batch; Texture > Substance Bridge > Send PolyPaint (2026.2) sends it as a fill layer (version deltas 3.7).
+Map rules: side from `recommend_map_size` (about 4M points per 2K), Flip V for other apps
+(FlippedNormals 00:31:54), texture display off afterwards. Multi Map Exporter's Texture from
+Polypaint (Map Border high, FlipV) runs in scenario-zbrush-retopology-export's map batch; Texture >
+Substance Bridge > Send PolyPaint (2026.2) sends it as a fill layer (version deltas 3.7).
 
 ## P10. BPR presentation render
 
@@ -259,7 +282,9 @@ final = zp.remote("bpr_render", OUT + "/bpr_final.png", False, timeout=600)
 print(zp.render_checks(final["path"]))                         # plus noise at full size
 ```
 
-Views: for a portfolio set, render front, three-quarter, profile and back with `zp.remote("paint_views", OUT + "/beauty", views, "bpr")`, which frames every view the same way. For print: pixels = inches x ppi (300 ppi); Pavlovich's 4 x 6 postcard is 3200 x 2133.
+Views: for a portfolio set, render front, three-quarter, profile and back with
+`zp.remote("paint_views", OUT + "/beauty", views, "bpr")`, which frames every view the same way. For
+print: pixels = inches x ppi (300 ppi); Pavlovich's 4 x 6 postcard is 3200 x 2133.
 
 ## P11. Passes and the composite
 
@@ -283,11 +308,14 @@ layers = [{"path": passes[k], "mode": m, "opacity": o, "mask_path": OUT + "/pass
 zp.composite(OUT + "/bpr_final.png", layers, OUT + "/comp.png")   # then look at it next to the beauty
 ```
 
-BPR light passes (Pavlovich 00:14:55): a black Basic material with Specular 84 and one light behind gives a rim pass; build them only after the color is approved, on a saved ZTL, because M or MRGB fills write the material onto the SubTools [added].
+BPR light passes (Pavlovich 00:14:55): a black Basic material with Specular 84 and one light behind
+gives a rim pass; build them only after the color is approved, on a saved ZTL, because M or MRGB
+fills write the material onto the SubTools [added].
 
 ## P12. Redshift branch (only when Redshift is installed)
 
-Live test: none yet (Redshift "uninstalled" in `mx1 product list`, 2026-09-24). Installing it needs Emmanuel's consent.
+Live test: none yet (Redshift "uninstalled" in `mx1 product list`, 2026-09-24). Installing it needs
+Emmanuel's consent.
 
 ```python
 # not yet run in ZBrush
@@ -303,7 +331,8 @@ t = zp.remote("bpr_render", OUT + "/rs_test.png", True, timeout=900)
 # Polypaint material with Use Material Color 0 and a white Base; SSS Weight below 1 (doc Tips)
 ```
 
-Also available once installed: Redshift Baker 360 (`rs_baker360`) to bake the lit look into polypaint for hand-painted bases or color prints (Pavlovich mW4P0T6tR7k); judge it on Flat Color.
+Also available once installed: Redshift Baker 360 (`rs_baker360`) to bake the lit look into
+polypaint for hand-painted bases or color prints (Pavlovich mW4P0T6tR7k); judge it on Flat Color.
 
 ## P13. Turntable
 
@@ -322,11 +351,14 @@ zp.assemble_turntable(frames, OUT + "/turntable.mp4", fps=12)   # review: 36 fra
 zp.assemble_turntable(frames[::2], OUT + "/turntable.gif", fps=6)
 ```
 
-Frame counts and fps are [added] defaults (36 for review, 180 at 30 fps for delivery); Movie > Turntable defaults to 180 frames (Pavlovich FvpG 00:19:56). Check every frame is upright and framed the same (the math framing uses the full bbox, so the model never drifts).
+Frame counts and fps are [added] defaults (36 for review, 180 at 30 fps for delivery); Movie >
+Turntable defaults to 180 frames (Pavlovich FvpG 00:19:56). Check every frame is upright and framed
+the same (the math framing uses the full bbox, so the model never drifts).
 
 ## P14. Portfolio sheet
 
-Live test: covered by the pieces above; sheet assembly offline (`zb_review.contact_sheet` tests in the lead folder).
+Live test: covered by the pieces above; sheet assembly offline (`zb_review.contact_sheet` tests in
+the lead folder).
 
 ```python
 # not yet run in ZBrush
@@ -341,4 +373,5 @@ labels = [f"BPR {v['view']}" for v in beauty] + [f"albedo {v['view']}" for v in 
 zb_review.contact_sheet(paths, labels, OUT + "/portfolio_sheet.png", cols=4, title="Character | paint and render")
 ```
 
-Keep grayscale form renders separate from color (Berger presents grayscale for anatomy approval, character digest). Deliver the sheet, the turntable, the final beauty, the passes and the ZTL path.
+Keep grayscale form renders separate from color (Berger presents grayscale for anatomy approval,
+character digest). Deliver the sheet, the turntable, the final beauty, the passes and the ZTL path.

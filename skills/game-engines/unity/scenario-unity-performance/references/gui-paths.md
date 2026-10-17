@@ -1,6 +1,7 @@
 # GUI paths (scenario-unity-performance)
 
-Windows, menus and settings for the same procedures, for a computer-use agent or a human. Unity 6.3 names; older names in parentheses. Where a scripted path exists it is given in `procedures.md`.
+Windows, menus and settings for the same procedures, for a computer-use agent or a human. Unity 6.3
+names; older names in parentheses. Where a scripted path exists it is given in `procedures.md`.
 
 ## Profiling windows
 
@@ -66,5 +67,9 @@ Windows, menus and settings for the same procedures, for a computer-use agent or
 
 ## Native and GPU tools on this Mac
 
-- Instruments (Xcode 26.6): Time Profiler, Allocations, VM Tracker on a macOS IL2CPP player; `xcrun xctrace record --template 'Time Profiler' --launch -- <player>` [not run here].
-- GPU timing when GPU bound: Xcode GPU frame capture (Debug > Capture GPU Workload on an Xcode-launched player) or Instruments > Metal System Trace; the Unity Frame Debugger has no timings. RenderDoc does not support Metal (Windows or Vulkan only); on Windows: PIX, NVIDIA Nsight, RenderDoc (Game view toolbar button once RenderDoc is loaded).
+- Instruments (Xcode 26.6): Time Profiler, Allocations, VM Tracker on a macOS IL2CPP player;
+  `xcrun xctrace record --template 'Time Profiler' --launch -- <player>` [not run here].
+- GPU timing when GPU bound: Xcode GPU frame capture (Debug > Capture GPU Workload on an
+  Xcode-launched player) or Instruments > Metal System Trace; the Unity Frame Debugger has no
+  timings. RenderDoc does not support Metal (Windows or Vulkan only); on Windows: PIX, NVIDIA
+  Nsight, RenderDoc (Game view toolbar button once RenderDoc is loaded).

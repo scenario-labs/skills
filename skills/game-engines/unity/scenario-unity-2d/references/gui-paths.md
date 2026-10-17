@@ -1,6 +1,8 @@
 # GUI paths (scenario-unity-2d)
 
-Windows, menus and settings for the same procedures, for a human or a computer-use agent. Unity 6.3 (6000.3) labels; [verify] where a label comes from docs of another version and was not seen in this editor.
+Windows, menus and settings for the same procedures, for a human or a computer-use agent. Unity 6.3
+(6000.3) labels; [verify] where a label comes from docs of another version and was not seen in this
+editor.
 
 ## Project and settings
 

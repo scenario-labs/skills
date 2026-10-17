@@ -6,20 +6,44 @@ license: MIT
 
 # Sculpting (heads and characters, Blender 5.2)
 
-Expert sculpting is structure first and surface last: masses blocked with stated planes and corners, proportions locked at low resolution, every stage judged by eye through a long lens, and appeal as the final test, not the mesh numbers. The agent builds blockout and primary forms headless ([`scripts/bx_sculpt.py`](scripts/bx_sculpt.py): smooth-blend `Clay`, plane cuts, numpy brushes) and does client-quality surface work with Blender's real brushes in a live GUI session (`bx_gui`). If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Expert sculpting is structure first and surface last: masses blocked with stated planes and corners,
+proportions locked at low resolution, every stage judged by eye through a long lens, and appeal as
+the final test, not the mesh numbers. The agent builds blockout and primary forms headless
+([`scripts/bx_sculpt.py`](scripts/bx_sculpt.py): smooth-blend `Clay`, plane cuts, numpy brushes) and
+does client-quality surface work with Blender's real brushes in a live GUI session (`bx_gui`). If a
+sibling skill named here is missing from your available skills, ask the user to install it
+(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
+flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 
 ## Stance (the expert delta)
 
-- **Planes are stated, not found.** Thelen cuts plane borders with Draw Sharp and re-cuts them whenever a face "looks off"; Naydenov simplifies into planes, then smooths; Reinhardt uses Scrape, Trim and Line Project for clean cuts. Executable form: give the plane (point + normal) to `Clay` half-space clips or `plane_cut` / `corner_cut`. A `flatten` or `scrape` dab fits its plane to the ball under it, so it follows the ball.
-- **The jaw is a block with a gonial corner, the cheekbone a mass with its own lower plane.** Zarins: the gonial angle is the age and sex dial, steep in adult males; the widest face point is the top of the zygomatic arch. Naydenov: the cheekbone runs from the ear down and forward, only its lower edge shows. Thelen: bone plus tissue, never razor sharp.
-- **Fix mass upstream; planes only restate.** If re-cutting planes does not fix the look, the problem is mass or proportion (Thelen's diagnostic). Measured: plane cuts on a balloon jaw flipped the form metric but rendered as a gem facet; rebuilding the jaw block fixed it.
-- **Low resolution as long as possible.** Abbitt: smoothing is strong only on big polygons; Thelen: lock proportions coarse. Symmetrize after every remesh (Keelan Jon), then a global relax (Kaspar FDscc66fC90 00:11:55).
-- **Indicate small landmarks early** (nostrils, brows, eyes): Yan found a too-wide nose from the nostrils (vB7kPWjBgQI 00:05:11).
-- **Stylize by consistent exaggeration** (Yan: pick it in minute one, make neighbors follow; a long face needs a smaller skull, not a stretch).
-- **A concept head needs its cues.** Thelen: hair makes a male head read better (00:48:58); Naydenov: hair changes the read a lot (00:53:05). An "adventurer" with no hair or costume reads as a bald mannequin.
-- **Asymmetry and expression live on a shape key; the basis stays neutral and symmetric** (Kaspar f-mx-Jfx9lA 00:09:44; Thelen 00:38:27). Expression tests expose proportion errors; fix them in the neutral (Kaspar 00:10:49).
+- **Planes are stated, not found.** Thelen cuts plane borders with Draw Sharp and re-cuts them
+  whenever a face "looks off"; Naydenov simplifies into planes, then smooths; Reinhardt uses Scrape,
+  Trim and Line Project for clean cuts. Executable form: give the plane (point + normal) to `Clay`
+  half-space clips or `plane_cut` / `corner_cut`. A `flatten` or `scrape` dab fits its plane to the
+  ball under it, so it follows the ball.
+- **The jaw is a block with a gonial corner, the cheekbone a mass with its own lower plane.**
+  Zarins: the gonial angle is the age and sex dial, steep in adult males; the widest face point is
+  the top of the zygomatic arch. Naydenov: the cheekbone runs from the ear down and forward, only
+  its lower edge shows. Thelen: bone plus tissue, never razor sharp.
+- **Fix mass upstream; planes only restate.** If re-cutting planes does not fix the look, the
+  problem is mass or proportion (Thelen's diagnostic). Measured: plane cuts on a balloon jaw flipped
+  the form metric but rendered as a gem facet; rebuilding the jaw block fixed it.
+- **Low resolution as long as possible.** Abbitt: smoothing is strong only on big polygons; Thelen:
+  lock proportions coarse. Symmetrize after every remesh (Keelan Jon), then a global relax (Kaspar
+  FDscc66fC90 00:11:55).
+- **Indicate small landmarks early** (nostrils, brows, eyes): Yan found a too-wide nose from the
+  nostrils (vB7kPWjBgQI 00:05:11).
+- **Stylize by consistent exaggeration** (Yan: pick it in minute one, make neighbors follow; a long
+  face needs a smaller skull, not a stretch).
+- **A concept head needs its cues.** Thelen: hair makes a male head read better (00:48:58);
+  Naydenov: hair changes the read a lot (00:53:05). An "adventurer" with no hair or costume reads as
+  a bald mannequin.
+- **Asymmetry and expression live on a shape key; the basis stays neutral and symmetric** (Kaspar
+  f-mx-Jfx9lA 00:09:44; Thelen 00:38:27). Expression tests expose proportion errors; fix them in the
+  neutral (Kaspar 00:10:49).
 
 ## Establish first
 
@@ -35,15 +59,41 @@ Expert sculpting is structure first and surface last: masses blocked with stated
 
 ## Workflow
 
-0. **Design table.** `G = S.head_guides(H)`, a STYLE dict (the one or two exaggerations), the cue list, and the landmark points of the planes: gonion, chin bottom, cheekbone. GATE: written down.
-1. **Blockout (voxel H/40).** Default for heads: `Clay`. Cranium ellipsoid clipped by skull side and front-taper half-spaces; a jaw `sd_round_box` BEHIND the mouth mound, clipped by side, underside and ramus planes through the gonion; a square chin block; cheekbone ellipsoids along the ear-to-cheek line with a lower plane; mouth mound; brow ridges; nose; neck leaning about 15 degrees; ears; frontal box around the eyes. Blend big masses at 0.08 to 0.15 H, clip edges at 0.02 to 0.03 H. Option: `union_remesh` of primitives (rounded_box is a Catmull-Clark blob that reads as a ball: never use it for a jaw). GATE: 1 component; `lower_face_report(head, H)["ball"]` False; silhouette plus 90 mm renders show a jawline and gonial corner in profile and three-quarter; the exaggeration visible.
-2. **Primary forms (H/100 to H/110).** Rebuild the Clay at the finer voxel with landmarks: sockets (sphere 1.1 x eyeball, smaller than the lids), thin shell lids around separate eyeballs (Keelan Jon's lids from the eyeball, amVAlpxHp8k 00:37:05), nose wings tucked in, ear bowls, neck muscles. Hair and costume as separate Clay objects (`to_object(name, symmetric=False)` for anything asymmetric). GATE: profile beats; eyes not marbles or bags; hair frames the face; `stage_report` clean.
-3. **Secondary (H/130 to H/150, `remesh_stage`).** Lines with `crease_line` (mouth, under-lip, lid rim) on surfaces facing the projection; nostrils from below. Restate planes with `corner_cut` / `plane_cut` only where the mass is right and moves stay small. GATE: under 100k faces (Abbitt), no scratches, cracks or rims in 90 mm renders.
-4. **Surface finish (client quality): live GUI.** Real Clay Strips, Scrape, Crease Polish, Smooth 0.2 via `bx_gui` (fixed and verified: strokes raycast onto the mesh and pass object-space locations; `set_view(frame=obj)` first, `view_distance` a few head heights). Headless numpy strokes suit blockout and primary forms, not polish. Multires only on a settled clean base (Henning Cmi0KoFtc-4 00:16:04).
-5. **Expression.** Neutral symmetric basis; `sc = S.Sculptor(head, symmetry_x=False)`, `move_feature` the corner, cheek, lower lid, opposite brow; `S.write_shape_key(head, "Smirk", sc.co)`. Size the corner move to the delivery framing (Numbers). Voxel remesh drops keys: last step.
-6. **Final render.** `S.final_render(objs, path, direction, lens=90, res=1600)` (cavity, framed on real vertices) from front, profile, three-quarter, neutral and expression; open every image.
+0. **Design table.** `G = S.head_guides(H)`, a STYLE dict (the one or two exaggerations), the cue
+   list, and the landmark points of the planes: gonion, chin bottom, cheekbone. GATE: written down.
+1. **Blockout (voxel H/40).** Default for heads: `Clay`. Cranium ellipsoid clipped by skull side and
+   front-taper half-spaces; a jaw `sd_round_box` BEHIND the mouth mound, clipped by side, underside
+   and ramus planes through the gonion; a square chin block; cheekbone ellipsoids along the
+   ear-to-cheek line with a lower plane; mouth mound; brow ridges; nose; neck leaning about 15
+   degrees; ears; frontal box around the eyes. Blend big masses at 0.08 to 0.15 H, clip edges at
+   0.02 to 0.03 H. Option: `union_remesh` of primitives (rounded_box is a Catmull-Clark blob that
+   reads as a ball: never use it for a jaw). GATE: 1 component; `lower_face_report(head, H)["ball"]`
+   False; silhouette plus 90 mm renders show a jawline and gonial corner in profile and
+   three-quarter; the exaggeration visible.
+2. **Primary forms (H/100 to H/110).** Rebuild the Clay at the finer voxel with landmarks: sockets
+   (sphere 1.1 x eyeball, smaller than the lids), thin shell lids around separate eyeballs (Keelan
+   Jon's lids from the eyeball, amVAlpxHp8k 00:37:05), nose wings tucked in, ear bowls, neck
+   muscles. Hair and costume as separate Clay objects (`to_object(name, symmetric=False)` for
+   anything asymmetric). GATE: profile beats; eyes not marbles or bags; hair frames the face;
+   `stage_report` clean.
+3. **Secondary (H/130 to H/150, `remesh_stage`).** Lines with `crease_line` (mouth, under-lip, lid
+   rim) on surfaces facing the projection; nostrils from below. Restate planes with `corner_cut` /
+   `plane_cut` only where the mass is right and moves stay small. GATE: under 100k faces (Abbitt),
+   no scratches, cracks or rims in 90 mm renders.
+4. **Surface finish (client quality): live GUI.** Real Clay Strips, Scrape, Crease Polish, Smooth
+   0.2 via `bx_gui` (fixed and verified: strokes raycast onto the mesh and pass object-space
+   locations; `set_view(frame=obj)` first, `view_distance` a few head heights). Headless numpy
+   strokes suit blockout and primary forms, not polish. Multires only on a settled clean base
+   (Henning Cmi0KoFtc-4 00:16:04).
+5. **Expression.** Neutral symmetric basis; `sc = S.Sculptor(head, symmetry_x=False)`,
+   `move_feature` the corner, cheek, lower lid, opposite brow;
+   `S.write_shape_key(head, "Smirk", sc.co)`. Size the corner move to the delivery framing
+   (Numbers). Voxel remesh drops keys: last step.
+6. **Final render.** `S.final_render(objs, path, direction, lens=90, res=1600)` (cavity, framed on
+   real vertices) from front, profile, three-quarter, neutral and expression; open every image.
 
-Inside every stage: render, name ONE weakest link, fix it, re-render (Yan). A metric that passes while the render looks wrong means the render wins.
+Inside every stage: render, name ONE weakest link, fix it, re-render (Yan). A metric that passes
+while the render looks wrong means the render wins.
 
 ## Numbers
 
@@ -67,8 +117,17 @@ Inside every stage: render, name ONE weakest link, fix it, re-render (Yan). A me
 
 ## Quality gates
 
-- **Measurable:** `S.stage_report(obj, voxel)` (components 1, non_manifold 0, stretch p95/median under 2.5, mirror_max under 1e-4 before asymmetry). `S.lower_face_report(head, H)`: `ball` True means the lower face fits one sphere within 10 % and twice as well as a plane (calibrated: the three E2 balloon jaws 0.057 to 0.082, the baseline 0.18 to 0.20, the v2 example 0.23 to 0.26). `S.profile_rhythm(obj)`: chin out, in, lips out, in, nose out (a nose hanging below the nose base hides the lip beats). `sc.planarity(c, r)` for a stated plane.
-- **Visual (the gate):** `S.long_lens_render` or `final_render` at 85 to 95 mm from front, profile, three-quarter and below, plus `bx_review.review(..., modes=("silhouette", "matcap"))` for the ortho silhouette. Order: silhouette, big planes (cavity off, or `mode="flat"`), below and above, lines, character read at thumbnail size. Rubric: [`references/critique.md`](references/critique.md).
+- **Measurable:** `S.stage_report(obj, voxel)` (components 1, non_manifold 0, stretch p95/median
+  under 2.5, mirror_max under 1e-4 before asymmetry). `S.lower_face_report(head, H)`: `ball` True
+  means the lower face fits one sphere within 10 % and twice as well as a plane (calibrated: the
+  three E2 balloon jaws 0.057 to 0.082, the baseline 0.18 to 0.20, the v2 example 0.23 to 0.26).
+  `S.profile_rhythm(obj)`: chin out, in, lips out, in, nose out (a nose hanging below the nose base
+  hides the lip beats). `sc.planarity(c, r)` for a stated plane.
+- **Visual (the gate):** `S.long_lens_render` or `final_render` at 85 to 95 mm from front, profile,
+  three-quarter and below, plus `bx_review.review(..., modes=("silhouette", "matcap"))` for the
+  ortho silhouette. Order: silhouette, big planes (cavity off, or `mode="flat"`), below and above,
+  lines, character read at thumbnail size. Rubric:
+  [`references/critique.md`](references/critique.md).
 
 ## Common mistakes
 
@@ -98,16 +157,27 @@ Inside every stage: render, name ONE weakest link, fix it, re-render (Yan). A me
 
 ## Blender 5.2 notes
 
-- Headless CRASH (segfault): `sculpt.symmetrize`, `sculpt.mesh_filter`, `paint.mask_flood_fill`, `sculpt.mask_filter`, `sculpt.face_sets_create`, `sculpt.face_sets_init`, `object.voxel_remesh` in Sculpt Mode. Poll fails: `sculpt.brush_stroke`, `sculpt.set_pivot_position`, `sculpt.detail_flood_fill`, trim gestures. Work: `paint_mask_extract`, `brush.asset_activate`, Edit Mode `mesh.symmetrize`, `quadriflow_remesh`, multires ops.
-- OpenVDB ships with Blender 5.2 (`import openvdb`): `FloatGrid.copyFromArray` + `convertToQuads` mesh the Clay.
-- Brushes are Essentials assets; Flatten, Fill, Scrape are one Plane type; `size` is a diameter; Draw Sharp defaults to SUBTRACT. `sculpt_tool` is `sculpt_brush_type`.
-- Voxel remesh output is flat shaded (`shade_smooth()`), keeps attributes (mask included), drops shape keys.
+- Headless CRASH (segfault): `sculpt.symmetrize`, `sculpt.mesh_filter`, `paint.mask_flood_fill`,
+  `sculpt.mask_filter`, `sculpt.face_sets_create`, `sculpt.face_sets_init`, `object.voxel_remesh` in
+  Sculpt Mode. Poll fails: `sculpt.brush_stroke`, `sculpt.set_pivot_position`,
+  `sculpt.detail_flood_fill`, trim gestures. Work: `paint_mask_extract`, `brush.asset_activate`,
+  Edit Mode `mesh.symmetrize`, `quadriflow_remesh`, multires ops.
+- OpenVDB ships with Blender 5.2 (`import openvdb`): `FloatGrid.copyFromArray` + `convertToQuads`
+  mesh the Clay.
+- Brushes are Essentials assets; Flatten, Fill, Scrape are one Plane type; `size` is a diameter;
+  Draw Sharp defaults to SUBTRACT. `sculpt_tool` is `sculpt_brush_type`.
+- Voxel remesh output is flat shaded (`shade_smooth()`), keeps attributes (mask included), drops
+  shape keys.
 - NumPy 2 in Blender: `np.ptp(a)`, not `a.ptp()`.
 
 ## References
 
-- [`references/procedures.md`](references/procedures.md): tested code for every stage (Clay recipe, planes, form check, hair, lids, expression, final render, crash matrix, brush table, GUI recipe); load before writing any sculpt script.
-- [`references/expert-notes.md`](references/expert-notes.md): principles by expert with timestamps; load when designing a character or choosing methods.
+- [`references/procedures.md`](references/procedures.md): tested code for every stage (Clay recipe,
+  planes, form check, hair, lids, expression, final render, crash matrix, brush table, GUI recipe);
+  load before writing any sculpt script.
+- [`references/expert-notes.md`](references/expert-notes.md): principles by expert with timestamps;
+  load when designing a character or choosing methods.
 - `references/critique.md`: stage rubric with blockers; load at every gate.
 - [`references/sources.md`](references/sources.md): the 27 source videos with best timestamps.
-- Example: `tests/code/blender-sculpting/stylized_head_blockout.py` (13 s, renders in `stylized_head/stage_N/`); comparison: `tests/code/blender-sculpting/compare/compare_sheet.png`.
+- Example: `tests/code/blender-sculpting/stylized_head_blockout.py` (13 s, renders in
+  `stylized_head/stage_N/`); comparison: `tests/code/blender-sculpting/compare/compare_sheet.png`.

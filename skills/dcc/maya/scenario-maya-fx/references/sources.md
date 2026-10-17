@@ -1,6 +1,9 @@
 # Sources (scenario-maya-fx)
 
-Per-source notes: `notes/fx/` and `notes/motion-graphics/` (digests `_digest_fx_solvers_ncloth.md`, `_digest_fx_bifrost_bootcamp.md`, `_digest_motion_graphics_mash.md`). Version facts: `sources/maya-version-deltas.md` section 2.8. Captions are automatic for every video; values read from garbled captions are marked [?] in the skill.
+Per-source notes: `notes/fx/` and `notes/motion-graphics/` (digests `_digest_fx_solvers_ncloth.md`,
+`_digest_fx_bifrost_bootcamp.md`, `_digest_motion_graphics_mash.md`). Version facts:
+`sources/maya-version-deltas.md` section 2.8. Captions are automatic for every video; values read
+from garbled captions are marked [?] in the skill.
 
 ## Videos
 
@@ -43,9 +46,21 @@ Per-source notes: `notes/fx/` and `notes/motion-graphics/` (digests `_digest_fx_
 
 ## Toolkit behind the skill
 
-- scenario-maya-expert scripts: `mx_run.py` (headless jobs), `mx_bridge.py` (GUI), `mx_audit.py` (topology report used by the cloth gate), `mx_review.py` (clay review sheets, playblast, PNG and contact-sheet code reused for volumes and sprites).
+- scenario-maya-expert scripts: `mx_run.py` (headless jobs), `mx_bridge.py` (GUI), `mx_audit.py`
+  (topology report used by the cloth gate), `mx_review.py` (clay review sheets, playblast, PNG and
+  contact-sheet code reused for volumes and sprites).
 - `<skills>/scenario-maya-fx/scripts/mx_fx.py`: this skill's module; tests in `tests/code/maya-fx/`.
 
 ## Revision history
 
-- 2026-09-24, v2 (refactor after the blind grade `tests/grading/M6_grade.md`; v1 kept in `skills/_versions/maya-fx v1 2026-09-24/`): added Shell versus Solid emitters, Relative versus Absolute resolution with a voxel estimate, the sim start frame and restart rules with cache and review coverage to the shot end, the 2027 Aero detail tools (sharpening, adaptivity, `post_refine_aero`), nCache limits (mcc 2 GB, positions only), constraint members on the input mesh, and the Timing Output performance gate, from the Stamatelos, Jason (cd3HgvM8sXg), Nordenstam, Bifrost simulation guide and nCloth reference notes; new `mx_fx` checks `sim_range_verdict`, `aero_source_verdict`, `voxel_estimate`, `ncache_verdict`, `constraint_members_verdict`, `timing_verdict` with offline tests; `point_to_surface(cloth=)` rewrites members onto the input mesh; the stance now says SARKAMARI lowered Space Scale to 0.25 in the same pass as 30 / 35; the lighting handoff names the body Alembic.
+- 2026-09-24, v2 (refactor after the blind grade `tests/grading/M6_grade.md`; v1 kept in
+  `skills/_versions/maya-fx v1 2026-09-24/`): added Shell versus Solid emitters, Relative versus
+  Absolute resolution with a voxel estimate, the sim start frame and restart rules with cache and
+  review coverage to the shot end, the 2027 Aero detail tools (sharpening, adaptivity,
+  `post_refine_aero`), nCache limits (mcc 2 GB, positions only), constraint members on the input
+  mesh, and the Timing Output performance gate, from the Stamatelos, Jason (cd3HgvM8sXg),
+  Nordenstam, Bifrost simulation guide and nCloth reference notes; new `mx_fx` checks
+  `sim_range_verdict`, `aero_source_verdict`, `voxel_estimate`, `ncache_verdict`,
+  `constraint_members_verdict`, `timing_verdict` with offline tests; `point_to_surface(cloth=)`
+  rewrites members onto the input mesh; the stance now says SARKAMARI lowered Space Scale to 0.25 in
+  the same pass as 30 / 35; the lighting handoff names the body Alembic.

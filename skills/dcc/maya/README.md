@@ -1,6 +1,10 @@
 # Maya Expert Skills
 
-Agent skills that let Claude (Claude Code) or Codex drive Autodesk Maya the way the experts in the best tutorials, studio talks and official documentation do. Built on 2026-09-24 with the same method as [Blender Expert Skills](../blender/README.md): transcripts of top-rated videos, cited expert notes, then skills with tools and review rubrics, graded blind against the same model without them. Start with the lead skill, `scenario-maya-expert`.
+Agent skills that let Claude (Claude Code) or Codex drive Autodesk Maya the way the experts in the
+best tutorials, studio talks and official documentation do. Built on 2026-09-24 with the same method
+as [Blender Expert Skills](../blender/README.md): transcripts of top-rated videos, cited expert
+notes, then skills with tools and review rubrics, graded blind against the same model without them.
+Start with the lead skill, `scenario-maya-expert`.
 
 ## Skills
 
@@ -20,12 +24,15 @@ Agent skills that let Claude (Claude Code) or Codex drive Autodesk Maya the way 
 
 ## Status
 
-- 11 skills written from 123 expert videos (65 h) and 49 documentation pages, each with references and a tested-offline `mx_<domain>.py` module.
-- Blind-graded written scenarios (round 1): 61 % without the skills, 91 % with them; all 8 scenarios improved.
+- 11 skills written from 123 expert videos (65 h) and 49 documentation pages, each with references
+  and a tested-offline `mx_<domain>.py` module.
+- Blind-graded written scenarios (round 1): 61 % without the skills, 91 % with them; all 8 scenarios
+  improved.
 
 ## Requirements
 
-Maya 2027 (maya.cmds / OpenMaya, `mayapy` for batch). The lead skill `scenario-maya-expert` explains the execution channel (batch `mayapy` or a live Maya over the bridge).
+Maya 2027 (maya.cmds / OpenMaya, `mayapy` for batch). The lead skill `scenario-maya-expert` explains
+the execution channel (batch `mayapy` or a live Maya over the bridge).
 
 ## Install
 
@@ -33,10 +40,17 @@ Maya 2027 (maya.cmds / OpenMaya, `mayapy` for batch). The lead skill `scenario-m
 npx skills add scenario-labs/skills --skill scenario-maya-expert scenario-maya-animation scenario-maya-deformation scenario-maya-fx scenario-maya-groom scenario-maya-lighting-rendering scenario-maya-lookdev scenario-maya-modeling scenario-maya-pipeline-scripting scenario-maya-retopology-uv scenario-maya-rigging
 ```
 
-The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Maya" group. Update with `npx skills update`.
+The installer puts the skills side by side, which the specialists need: they import the lead skill's
+`scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the
+"Expert tools: Maya" group. Update with `npx skills update`.
 
 ## Provenance
 
-Ported from [edemaistre/maya-expert-skills](https://github.com/edemaistre/maya-expert-skills/tree/v0.1), built on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this repository's frontmatter (`name`, `description`, `license`), no version line in the skill bodies, the sibling-install line in each `SKILL.md`, and paths into the build project made relative.
+Ported from
+[edemaistre/maya-expert-skills](https://github.com/edemaistre/maya-expert-skills/tree/v0.1), built
+on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this repository's
+frontmatter (`name`, `description`, `license`), no version line in the skill bodies, the
+sibling-install line in each `SKILL.md`, and paths into the build project made relative.
 
-Paths such as `tests/code/...` or `archive/tests/...` inside the references point to the build project (tests, notes) on the author's machine; they are provenance only.
+Paths such as `tests/code/...` or `archive/tests/...` inside the references point to the build
+project (tests, notes) on the author's machine; they are provenance only.

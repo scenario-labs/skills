@@ -1,6 +1,10 @@
 # Sources
 
-Distilled notes live in `notes/sequencer/`, `notes/cinematography/`, `notes/virtual-production/` (digest: `notes/sequencer/_digest_cinematics_sequencer.md`) and, for the render side, `notes/rendering/` (digest: `_digest_rendering_mrg_pathtracer_post.md`). Version facts: `sources/unreal-version-deltas.md`. Credentials marked "verified" were checked against official session descriptions or Epic staff pages by the research agents; others are self-described.
+Distilled notes live in `notes/sequencer/`, `notes/cinematography/`, `notes/virtual-production/`
+(digest: `notes/sequencer/_digest_cinematics_sequencer.md`) and, for the render side,
+`notes/rendering/` (digest: `_digest_rendering_mrg_pathtracer_post.md`). Version facts:
+`sources/unreal-version-deltas.md`. Credentials marked "verified" were checked against official
+session descriptions or Epic staff pages by the research agents; others are self-described.
 
 ## Talks and videos
 
@@ -39,12 +43,45 @@ Distilled notes live in `notes/sequencer/`, `notes/cinematography/`, `notes/virt
 
 ## Added knowledge (no source; marked [added] in the skill)
 
-- Lens and aperture ranges per shot size, framed-height classes, circle of confusion = diagonal / 1500, thin-lens DOF, the 30-degree rule, the 180-degree bookkeeping (neutral shots and in-shot crossings reset the side), CMX 3600 EDL layout, the ACES-like preview curve (Narkowicz fit): standard cinematography and imaging practice.
-- Toolkit conventions: `_LGT` naming, template variable names, the `{sequence_name}/{sequence_name}.####.exr` layout, keyed lens tracks on spawnable cameras, a temp light keyed on the camera transform instead of an attach track, anim offsets converted to tick resolution, master lighting kept in the level because per-shot renders skip master tracks.
-- Found by the offline tests (2026-09-24): ffmpeg 8.0.1 decodes half EXRs as `gbrpf16le`; converting to `gbrpf32le` clamps values to 0..1 and hides NaN and Inf, so `exr_pixels` reads the native planes.
-- Added in v0.2 (2026-09-24): the 85 mm "long lens" threshold for the Use Field of View for LOD reminder (start of the CU lens range); the longest shot as the proposed lighting master when none is marked; the `lighting.scope` rule (every shot its own scenario); the consequence that meshes the animation track is not bound to do not follow without a leader pose; the reason given for `-notexturestreaming` (every doc example carries the flag, the reason is not stated); the manifest file layout of `cine_render_callbacks.py`; the Level Visibility track for per-shot visibility.
+- Lens and aperture ranges per shot size, framed-height classes, circle of confusion = diagonal /
+  1500, thin-lens DOF, the 30-degree rule, the 180-degree bookkeeping (neutral shots and in-shot
+  crossings reset the side), CMX 3600 EDL layout, the ACES-like preview curve (Narkowicz fit):
+  standard cinematography and imaging practice.
+- Toolkit conventions: `_LGT` naming, template variable names, the
+  `{sequence_name}/{sequence_name}.####.exr` layout, keyed lens tracks on spawnable cameras, a temp
+  light keyed on the camera transform instead of an attach track, anim offsets converted to tick
+  resolution, master lighting kept in the level because per-shot renders skip master tracks.
+- Found by the offline tests (2026-09-24): ffmpeg 8.0.1 decodes half EXRs as `gbrpf16le`; converting
+  to `gbrpf32le` clamps values to 0..1 and hides NaN and Inf, so `exr_pixels` reads the native
+  planes.
+- Added in v0.2 (2026-09-24): the 85 mm "long lens" threshold for the Use Field of View for LOD
+  reminder (start of the CU lens range); the longest shot as the proposed lighting master when none
+  is marked; the `lighting.scope` rule (every shot its own scenario); the consequence that meshes
+  the animation track is not bound to do not follow without a leader pose; the reason given for
+  `-notexturestreaming` (every doc example carries the flag, the reason is not stated); the manifest
+  file layout of `cine_render_callbacks.py`; the Level Visibility track for per-shot visibility.
 
 ## Revision history
 
-- 2026-09-24 v0.1: first version (SKILL.md 2,349 words; offline 165 + fake-unreal 81 + procedure blocks 32 checks). Snapshot: `skills/_versions/unreal-cinematics v1 2026-09-24/` (with its tests in `_tests_code_unreal-cinematics/`).
-- 2026-09-24 v0.2: refactor after the blind grade `tests/grading/U6_grade.md` ("missing from both" items). Added: Resolve interpretation per render mode and the viewport OCIO display (`color_handoff`, `delivery_note`, P11, stance); production record set once and versioned plus CAT 5.8 nested schemas and a level per shot (`check_production`, P2); farm manager, global executor, resume after a crash (`render_orchestration`, `shots_to_render`, P9); possessable overrides snapping back and saved vs unsaved visibility (`audit_sequence` bind.override, P3, mistakes); master lighting method with approval gate (`lighting_masters`, `check_lighting`, `ready_for_final_lighting`, P7b); `ScopedSlowTask` with every transaction (`editor_tool`, retime); `-notexturestreaming` stated where the agent renders; pre-roll boarded in isolation (`board_generator(preroll=True)`); Set Leader Pose Component and the joint budget (`check_characters`); constant-key board, stingers on cuts and the timing lock (`check_music_sync`, `ready_to_animate`, P4 and P5); Use Field of View for LOD on long lenses (`lens.lod`, builder); Execute Script written-file callbacks in Editor Only mode and Flush Disk Writes Per Shot (`scripts/cine_render_callbacks.py`, `latest_manifests`, `check_manifest`, P8, P10); stat and Insights checks on slow shots (P7b, critique 4b). Paraphrases no longer shown as quotes; review bitrate labeled as the video bitrate; Faucher's 15 to 31 range cited next to the odd sample counts. SKILL.md 2,296 words (four mistake rows and three number rows moved to critique.md and procedures.md P1). Offline: 208 pure-layer checks, 98 fake-unreal checks, 41 procedure-block checks, all passing; everything still not yet run in Unreal.
+- 2026-09-24 v0.1: first version (SKILL.md 2,349 words; offline 165 + fake-unreal 81 + procedure
+  blocks 32 checks). Snapshot: `skills/_versions/unreal-cinematics v1 2026-09-24/` (with its tests
+  in `_tests_code_unreal-cinematics/`).
+- 2026-09-24 v0.2: refactor after the blind grade `tests/grading/U6_grade.md` ("missing from both"
+  items). Added: Resolve interpretation per render mode and the viewport OCIO display
+  (`color_handoff`, `delivery_note`, P11, stance); production record set once and versioned plus CAT
+  5.8 nested schemas and a level per shot (`check_production`, P2); farm manager, global executor,
+  resume after a crash (`render_orchestration`, `shots_to_render`, P9); possessable overrides
+  snapping back and saved vs unsaved visibility (`audit_sequence` bind.override, P3, mistakes);
+  master lighting method with approval gate (`lighting_masters`, `check_lighting`,
+  `ready_for_final_lighting`, P7b); `ScopedSlowTask` with every transaction (`editor_tool`, retime);
+  `-notexturestreaming` stated where the agent renders; pre-roll boarded in isolation
+  (`board_generator(preroll=True)`); Set Leader Pose Component and the joint budget
+  (`check_characters`); constant-key board, stingers on cuts and the timing lock
+  (`check_music_sync`, `ready_to_animate`, P4 and P5); Use Field of View for LOD on long lenses
+  (`lens.lod`, builder); Execute Script written-file callbacks in Editor Only mode and Flush Disk
+  Writes Per Shot (`scripts/cine_render_callbacks.py`, `latest_manifests`, `check_manifest`, P8,
+  P10); stat and Insights checks on slow shots (P7b, critique 4b). Paraphrases no longer shown as
+  quotes; review bitrate labeled as the video bitrate; Faucher's 15 to 31 range cited next to the
+  odd sample counts. SKILL.md 2,296 words (four mistake rows and three number rows moved to
+  critique.md and procedures.md P1). Offline: 208 pure-layer checks, 98 fake-unreal checks, 41
+  procedure-block checks, all passing; everything still not yet run in Unreal.

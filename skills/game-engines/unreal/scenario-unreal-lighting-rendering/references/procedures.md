@@ -1,12 +1,31 @@
 # Procedures (Editor Python and ue_light, full code)
 
-**Status of every block: not yet run in Unreal** (UE 5.8 not installed on 2026-09-24). Each block starts with `# test: <id>`. `tests/code/unreal-lighting-rendering/job_procedures_snippets.py` extracts these exact blocks from this file and runs them in order in one namespace: today against a fake `unreal` module (proves the Python logic and the calls into `ue_light`, not engine names), later inside a live editor on a test level it builds (`py "<path>/job_procedures_snippets.py"` in the editor console, or through Epic's MCP server or `ue_remote.PythonRemote().exec`). A block marked `# soft-block` holds calls whose names are unconfirmed: if it raises, the runner records a soft failure (a name to fix after the probe) instead of a hard one. Deeper tests: `test_ue_light_offline.py` (200 checks of the pure layer), `test_editor_layer_fake.py` (65 checks), and the probe `job_00_probe_lighting.py` (runs headless through scenario-unreal-expert's `ue_run.run_python`).
+**Status of every block: not yet run in Unreal** (UE 5.8 not installed on 2026-09-24). Each block
+starts with `# test: <id>`. `tests/code/unreal-lighting-rendering/job_procedures_snippets.py`
+extracts these exact blocks from this file and runs them in order in one namespace: today against a
+fake `unreal` module (proves the Python logic and the calls into `ue_light`, not engine names),
+later inside a live editor on a test level it builds (`py "<path>/job_procedures_snippets.py"` in
+the editor console, or through Epic's MCP server or `ue_remote.PythonRemote().exec`). A block marked
+`# soft-block` holds calls whose names are unconfirmed: if it raises, the runner records a soft
+failure (a name to fix after the probe) instead of a hard one. Deeper tests:
+`test_ue_light_offline.py` (200 checks of the pure layer), `test_editor_layer_fake.py` (65 checks),
+and the probe `job_00_probe_lighting.py` (runs headless through scenario-unreal-expert's
+`ue_run.run_python`).
 
-Context the blocks assume (the runner builds it): `OUT` an output folder; `CAMS` bookmark camera labels (`CAM_Street`, `CAM_BarWide`, `CAM_Counter`); `PENDANTS` list of `(label, location)` of pendant fixture meshes; `CANDLES`, `SHELF` (min, max of the back-bar shelf), `SIGN_FACE` (min, max of the neon sign face), `WINDOW` (min, max of the window opening, inward `+X`), `ROOM_DEPTH` cm; `MEGALIGHTS` bool (project setting, read in P0); `NEW_PROJECT` bool; `SKY_LUMINANCE` cd/m2 measured in P11 (placeholder until then); `R` is scenario-unreal-expert's `ue_review` (a stub in the fake run). Screenshots are latent: in a live editor run each capture step in its own call so a frame renders between commands; the MCP server runs tool calls serially on the game thread.
+Context the blocks assume (the runner builds it): `OUT` an output folder; `CAMS` bookmark camera
+labels (`CAM_Street`, `CAM_BarWide`, `CAM_Counter`); `PENDANTS` list of `(label, location)` of
+pendant fixture meshes; `CANDLES`, `SHELF` (min, max of the back-bar shelf), `SIGN_FACE` (min, max
+of the neon sign face), `WINDOW` (min, max of the window opening, inward `+X`), `ROOM_DEPTH` cm;
+`MEGALIGHTS` bool (project setting, read in P0); `NEW_PROJECT` bool; `SKY_LUMINANCE` cd/m2 measured
+in P11 (placeholder until then); `R` is scenario-unreal-expert's `ue_review` (a stub in the fake
+run). Screenshots are latent: in a live editor run each capture step in its own call so a frame
+renders between commands; the MCP server runs tool calls serially on the game thread.
 
 ## P0. Probe the engine and the project before planning
 
-Why: most names in this skill are unconfirmed on 5.8; the Mac clears the M2+ bars (Nanite, VSM Beta; Lumen HWRT, MegaLights Experimental) and macOS 26.4 for the path tracer (deltas file, "This Mac"). Converted projects keep old renderer settings (deltas file, Lighting).
+Why: most names in this skill are unconfirmed on 5.8; the Mac clears the M2+ bars (Nanite, VSM Beta;
+Lumen HWRT, MegaLights Experimental) and macOS 26.4 for the path tracer (deltas file, "This Mac").
+Converted projects keep old renderer settings (deltas file, Lighting).
 
 ```python
 # test: P0_probe
@@ -30,7 +49,10 @@ MEGALIGHTS = bool(ml) if isinstance(ml, (int, float, bool)) else MEGALIGHTS
 
 ## P1. Project rendering settings (text edit, then restart)
 
-Why: Lumen GI and reflections, VSM, distance fields for software Lumen, Support Hardware Ray Tracing for MegaLights, the path tracer and hit lighting (MegaLights doc; path tracer doc; Lumen doc). Extended luminance range only at project start: switching later breaks every exposure setup (exposure doc). Version before overwrite (project rule).
+Why: Lumen GI and reflections, VSM, distance fields for software Lumen, Support Hardware Ray Tracing
+for MegaLights, the path tracer and hit lighting (MegaLights doc; path tracer doc; Lumen doc).
+Extended luminance range only at project start: switching later breaks every exposure setup
+(exposure doc). Version before overwrite (project rule).
 
 ```python
 # test: P1_project_settings
@@ -52,7 +74,14 @@ print("backup", backup, "; restart the editor, then re-run P0 and read the log f
 
 ## P2. Calibrate the camera (and place the chrome ball) before any light
 
-Why: auto exposure "childproofs" Unreal, a 10 lux and a 100,000 lux sun look the same; Exposure Compensation 0 and Min/Max EV100 clamped to the conditions the player walks between (Gobey nlbJwMoj1Dg [00:02:38] [00:11:40] [00:12:14]). Local Exposure is always set up with Lumen GI; Film settings live only in this project-wide PPV (exposure doc). Viewport exposure must be on Game Settings or screenshots bypass the PPV (Gobey [00:21:56]). The chrome and gray balls go in first, at the subject: the chrome ball shows what the environment reflects before any light exists (Faucher BGoaPyfZlYg [00:01:34]); the chart checks albedo (Gobey [00:07:30]). Low/High Percent stay inside the doc's 70 to 80 and 80 to 95, Speed Up above Speed Down (3 and 1 on Gobey's frame [00:21:52]).
+Why: auto exposure "childproofs" Unreal, a 10 lux and a 100,000 lux sun look the same; Exposure
+Compensation 0 and Min/Max EV100 clamped to the conditions the player walks between (Gobey
+nlbJwMoj1Dg [00:02:38] [00:11:40] [00:12:14]). Local Exposure is always set up with Lumen GI; Film
+settings live only in this project-wide PPV (exposure doc). Viewport exposure must be on Game
+Settings or screenshots bypass the PPV (Gobey [00:21:56]). The chrome and gray balls go in first, at
+the subject: the chrome ball shows what the environment reflects before any light exists (Faucher
+BGoaPyfZlYg [00:01:34]); the chart checks albedo (Gobey [00:07:30]). Low/High Percent stay inside
+the doc's 70 to 80 and 80 to 95, Speed Up above Speed Down (3 and 1 on Gobey's frame [00:21:52]).
 
 ```python
 # test: P2_exposure_first
@@ -69,7 +98,14 @@ for cmd in L.VIEW_MODES["hdr"][0]:        # HDR (Eye Adaptation) meter on; scree
 
 ## P3. Physically based dusk exterior
 
-Why: Sky Atmosphere with a real sun lets the atmosphere make the sky (Epic sky doc: 120,000 lux at zenith, 0.545 degrees); the strong directional stays on deferred plus VSM, out of MegaLights (MegaLights doc, Directional Lights); height fog inscattering black when the atmosphere drives the fog, volumetric fog on (sky doc; Faucher 1LfiYtKDsac [00:11:12]). Scattering Distribution follows the key camera's angle to the light: near 0.9 looking into it, near 0 for shafts seen from the side (Faucher [00:16:06]; sky doc, Common Questions); pass `key_to_light` when the brightest source is a street lamp, not the sun. Steady street lamps take Volumetric Scattering Intensity above 1 for halos in the haze (Faucher [00:13:23]; 0GYyHDuaPcg [00:12:51]); flickering ones stay at 0.
+Why: Sky Atmosphere with a real sun lets the atmosphere make the sky (Epic sky doc: 120,000 lux at
+zenith, 0.545 degrees); the strong directional stays on deferred plus VSM, out of MegaLights
+(MegaLights doc, Directional Lights); height fog inscattering black when the atmosphere drives the
+fog, volumetric fog on (sky doc; Faucher 1LfiYtKDsac [00:11:12]). Scattering Distribution follows
+the key camera's angle to the light: near 0.9 looking into it, near 0 for shafts seen from the side
+(Faucher [00:16:06]; sky doc, Common Questions); pass `key_to_light` when the brightest source is a
+street lamp, not the sun. Steady street lamps take Volumetric Scattering Intensity above 1 for halos
+in the haze (Faucher [00:13:23]; 0GYyHDuaPcg [00:12:51]); flickering ones stay at 0.
 
 ```python
 # test: P3_exterior_rig
@@ -85,7 +121,16 @@ print(sorted(made), rig["lights"][0]["rotation"], "scattering", rig["fog"]["volu
 
 ## P4. Practicals from the fixture table
 
-Why: real lumens and temperatures (Gobey chart: candle 12 lm at 1,900 K, decorative 300 lm, interior 1,000 lm; Argyriou street lamps 2,500 to 10,000 lm); think in fixtures, so mostly spotlights (Argyriou [00:19:37]); every light has a visible fixture and a source shaped like it: Source Radius about the bulb, Source Length for a tube, Source Width and Height for a panel (Faucher 0GYyHDuaPcg [00:15:14] [00:15:47]; `light_lint` checks both halves: `fixture_missing`, `source_shape`, `source_point`); tight attenuation (Argyriou [00:26:32]); merge a row of shelf lights into one rect (MegaLights doc). The radius is the smaller of the 6-stops-under rule and the room depth [added]. Glossy surfaces under these lights (bar top, bottles, wet street) need a direct light they can reflect: Lumen indirect gives them little specular (Faucher [00:10:28]); `frame_report` role `glossy` checks it.
+Why: real lumens and temperatures (Gobey chart: candle 12 lm at 1,900 K, decorative 300 lm, interior
+1,000 lm; Argyriou street lamps 2,500 to 10,000 lm); think in fixtures, so mostly spotlights
+(Argyriou [00:19:37]); every light has a visible fixture and a source shaped like it: Source Radius
+about the bulb, Source Length for a tube, Source Width and Height for a panel (Faucher 0GYyHDuaPcg
+[00:15:14] [00:15:47]; `light_lint` checks both halves: `fixture_missing`, `source_shape`,
+`source_point`); tight attenuation (Argyriou [00:26:32]); merge a row of shelf lights into one rect
+(MegaLights doc). The radius is the smaller of the 6-stops-under rule and the room depth [added].
+Glossy surfaces under these lights (bar top, bottles, wet street) need a direct light they can
+reflect: Lumen indirect gives them little specular (Faucher [00:10:28]); `frame_report` role
+`glossy` checks it.
 
 ```python
 # test: P4_practicals
@@ -114,7 +159,12 @@ print(len(spawned), "practicals")
 
 ## P5. Neon signs and the window opening
 
-Why: emissive is the look, a real light does the lighting; small bright emissive is noisy and screen-space, and 5.6 clamps it harder (`r.Lumen.ScreenProbeGather.MaxRayIntensity` 10) (Faucher 1e6oOiKh91U [00:12:30]; Gobey Q&A [00:37:33]; Lumen doc; deltas file). The light sits in front of the sign, not inside it (MegaLights doc). Set the emissive only after exposure (Gobey [00:02:38]); a flickering sign gets no volumetric scattering (sky doc). A small bright opening needs a rect sized to it (Faucher 0GYyHDuaPcg [00:06:18]).
+Why: emissive is the look, a real light does the lighting; small bright emissive is noisy and
+screen-space, and 5.6 clamps it harder (`r.Lumen.ScreenProbeGather.MaxRayIntensity` 10) (Faucher
+1e6oOiKh91U [00:12:30]; Gobey Q&A [00:37:33]; Lumen doc; deltas file). The light sits in front of
+the sign, not inside it (MegaLights doc). Set the emissive only after exposure (Gobey [00:02:38]); a
+flickering sign gets no volumetric scattering (sky doc). A small bright opening needs a rect sized
+to it (Faucher 0GYyHDuaPcg [00:06:18]).
 
 ```python
 # test: P5_neon_and_opening
@@ -134,7 +184,14 @@ L.spawn_light("rect", win["location"], win["rotation"], label="L_Window_Sky", ta
 print("neon", round(sign["intensity"], 2), "cd; window", win["intensity"], "cd; tube emissive", round(tube_L, 1))
 ```
 
-Emissive by renderer (`emissive_strategy`): in real time a small emissive mesh is culled from the Lumen Scene, so the sign mesh gets Emissive Light Source (Lumen doc, troubleshooting); an optional Lumen-only boost of 5 to 10 times the visible value through a Ray Tracing Quality Switch master adds bounce without blow-out (Campbell BKaAzhMHJZ0 [00:14:09]; Avowed quoted about 1 visible against 5 to 10 in the Lumen scene, read here as a ratio [added]), listed in `cheat_inventory`; fill lights are the fallback when it stays noisy or lacks specular [00:14:42]. The path tracer ignores the Ray Tracing Quality Switch (it takes the Normal input), so the boost does not exist in the still, and the tube plus its rect light double count there (P13).
+Emissive by renderer (`emissive_strategy`): in real time a small emissive mesh is culled from the
+Lumen Scene, so the sign mesh gets Emissive Light Source (Lumen doc, troubleshooting); an optional
+Lumen-only boost of 5 to 10 times the visible value through a Ray Tracing Quality Switch master adds
+bounce without blow-out (Campbell BKaAzhMHJZ0 [00:14:09]; Avowed quoted about 1 visible against 5 to
+10 in the Lumen scene, read here as a ratio [added]), listed in `cheat_inventory`; fill lights are
+the fallback when it stays noisy or lacks specular [00:14:42]. The path tracer ignores the Ray
+Tracing Quality Switch (it takes the Normal input), so the boost does not exist in the still, and
+the tube plus its rect light double count there (P13).
 
 ```python
 # test: P5b_neon_emissive
@@ -151,7 +208,15 @@ print(strategy["why"])
 
 ## P6. Light lint, safe fixes only
 
-Why: the MegaLights noise and cost causes are content (hidden lights, huge bounds, clusters, a sun indoors: SIGGRAPH [00:10:37] [00:16:40]; MegaLights doc); Argyriou's audit list (max draw distance, one shadowed dynamic light per room without MegaLights, Static lights ignored by Lumen, indirect intensity cheats); the fixture rule with source shapes (Faucher 0GYyHDuaPcg [00:15:14] [00:15:47]); local lights on VSM under gameplay, where every character moving through the light invalidates its pages, so ray-traced shadows (the MegaLights default) scale better and give free penumbras (Campbell BKaAzhMHJZ0 [00:26:25] [00:31:42]): keep VSM only with a written `vsm_reason:` tag (dense alpha foliage, content ray tracing cannot represent); still-only cheat lights left active in the gameplay level. Only mechanical fixes are automatic; the rest goes in the report.
+Why: the MegaLights noise and cost causes are content (hidden lights, huge bounds, clusters, a sun
+indoors: SIGGRAPH [00:10:37] [00:16:40]; MegaLights doc); Argyriou's audit list (max draw distance,
+one shadowed dynamic light per room without MegaLights, Static lights ignored by Lumen, indirect
+intensity cheats); the fixture rule with source shapes (Faucher 0GYyHDuaPcg [00:15:14] [00:15:47]);
+local lights on VSM under gameplay, where every character moving through the light invalidates its
+pages, so ray-traced shadows (the MegaLights default) scale better and give free penumbras (Campbell
+BKaAzhMHJZ0 [00:26:25] [00:31:42]): keep VSM only with a written `vsm_reason:` tag (dense alpha
+foliage, content ray tracing cannot represent); still-only cheat lights left active in the gameplay
+level. Only mechanical fixes are automatic; the rest goes in the report.
 
 ```python
 # test: P6_light_lint
@@ -178,7 +243,14 @@ print(len(findings), "findings, fixed:", fixed)
 
 ## P7. Representation views: is the renderer seeing my scene?
 
-Why: most artifacts are proxy mismatches, so compare a representation view with the lit view from the same camera: Lumen Scene and Surface Cache (black = screen traces only, pink = no cards), mesh distance fields for software Lumen (Faucher 1e6oOiKh91U [00:07:21] [00:14:40]; Lumen doc). The chrome and gray probes placed in P2 show what the environment reflects (Faucher BGoaPyfZlYg [00:01:34]); `spawn_calibrator` reuses them. Pink on a room shell usually means one mesh holds the whole room: split walls, floors and ceilings (Faucher [00:06:09] [00:06:42]) or raise Max Lumen Mesh Cards from 12 in the mesh Build Settings (Lumen doc, Surface Cache); `room_shell_lint` finds them (P7b).
+Why: most artifacts are proxy mismatches, so compare a representation view with the lit view from
+the same camera: Lumen Scene and Surface Cache (black = screen traces only, pink = no cards), mesh
+distance fields for software Lumen (Faucher 1e6oOiKh91U [00:07:21] [00:14:40]; Lumen doc). The
+chrome and gray probes placed in P2 show what the environment reflects (Faucher BGoaPyfZlYg
+[00:01:34]); `spawn_calibrator` reuses them. Pink on a room shell usually means one mesh holds the
+whole room: split walls, floors and ceilings (Faucher [00:06:09] [00:06:42]) or raise Max Lumen Mesh
+Cards from 12 in the mesh Build Settings (Lumen doc, Surface Cache); `room_shell_lint` finds them
+(P7b).
 
 ```python
 # test: P7_lumen_views
@@ -207,7 +279,10 @@ for x in shells:
 
 ## P8. MegaLights: noise is stolen samples
 
-Why: hidden lights take up to 20 percent of samples (50 after failed reprojection), a directional up to 50; quality is per-pixel light complexity (SIGGRAPH [00:10:37] [00:16:40] [00:48:40]). Light Complexity names the thieves; the mismatch view with screen traces off shows proxy shadows (MegaLights doc). Probe pixels are mouse-driven: freeze and dump instead.
+Why: hidden lights take up to 20 percent of samples (50 after failed reprojection), a directional up
+to 50; quality is per-pixel light complexity (SIGGRAPH [00:10:37] [00:16:40] [00:48:40]). Light
+Complexity names the thieves; the mismatch view with screen traces off shows proxy shadows
+(MegaLights doc). Probe pixels are mouse-driven: freeze and dump instead.
 
 ```python
 # test: P8_megalights
@@ -228,9 +303,18 @@ for c in L.VIEW_MODES["megalights"][1] + L.VIEW_MODES["megalights_raw_rt_shadows
     L.console(c)
 ```
 
-Fix order from what the dump and the lint say: move lights out of walls, or switch them off with Affects World (never delete); shrink radius, cone and barn doors; fit rect Source Width and Height to the opening; merge clusters; keep the sun out of MegaLights (`r.MegaLights.DirectionalLights 0`, default) or cap `r.MegaLights.DirectionalLightSampleFraction` (5.7+); lower Nanite Fallback Relative Error on mismatching meshes, or move a hero light to VSM (MegaLights doc). Re-capture under a scripted camera move: noise shows in motion.
+Fix order from what the dump and the lint say: move lights out of walls, or switch them off with
+Affects World (never delete); shrink radius, cone and barn doors; fit rect Source Width and Height
+to the opening; merge clusters; keep the sun out of MegaLights (`r.MegaLights.DirectionalLights 0`,
+default) or cap `r.MegaLights.DirectionalLightSampleFraction` (5.7+); lower Nanite Fallback Relative
+Error on mismatching meshes, or move a hero light to VSM (MegaLights doc). Re-capture under a
+scripted camera move: noise shows in motion.
 
-Alpha-masked casters: MegaLights ray tracing ignores masks by default (only screen traces see them), so a grille, a plant or a bead curtain casts a solid shadow once it leaves the screen (MegaLights doc, Alpha Masking; SIGGRAPH [00:26:09]). Order of fixes: model the holes as geometry (scenario-unreal-world-building), `r.MegaLights.HardwareRayTracing.EvaluateMaterialMode 1` at a real cost, or VSM on the one light that must show the pattern.
+Alpha-masked casters: MegaLights ray tracing ignores masks by default (only screen traces see them),
+so a grille, a plant or a bead curtain casts a solid shadow once it leaves the screen (MegaLights
+doc, Alpha Masking; SIGGRAPH [00:26:09]). Order of fixes: model the holes as geometry
+(scenario-unreal-world-building), `r.MegaLights.HardwareRayTracing.EvaluateMaterialMode 1` at a real
+cost, or VSM on the one light that must show the pattern.
 
 ```python
 # test: P8b_masked_casters
@@ -242,7 +326,9 @@ print([(x["id"], x["message"]) for x in L.scene_lint({"megalights": MEGALIGHTS, 
 
 ## P9. VSM cache and cost
 
-Why: VSM cost is invalidation: with a still camera the Cached Page view should be green, static invalidated pages near 0; WPO, Blueprint property writes, inflated bounds and any light rotation invalidate; reduce Source Radius or Angle before SMRT counts (VSM doc).
+Why: VSM cost is invalidation: with a still camera the Cached Page view should be green, static
+invalidated pages near 0; WPO, Blueprint property writes, inflated bounds and any light rotation
+invalidate; reduce Source Radius or Angle before SMRT counts (VSM doc).
 
 ```python
 # test: P9_vsm
@@ -261,7 +347,15 @@ print("VSM invalidated share with a still camera: %.3f (target near 0)" % red)
 
 ## P10. Look: tone mapper, local exposure, grade last
 
-Why: a dark interior under a correct exterior is a tone-mapper problem first; the shadow-lift ladder goes from honest to dishonest (Gobey [00:14:58] [00:15:32]; Faucher 0GYyHDuaPcg [00:08:14] [00:13:42]). Light it before you grade it (Oakley rX0wZZxpB-U [00:10:18]). Check the white-balance direction on a screenshot (exposure doc vs Gobey [00:17:31]). Art-direction order before any grade (Oakley): the ambient first, shape and color transitions in the shadows, from a balanced skylight ([00:07:34]; `shadow_shape`); then the eye's path, a limited hue range with the focal element across the wheel ([00:09:19]; `focal_hue_contrast`); then "the promise of more", light leaving the frame, a side street lit, shafts composed with blockers ([00:08:44]; Faucher 1LfiYtKDsac [00:13:55]), judged by eye on the thumbnail.
+Why: a dark interior under a correct exterior is a tone-mapper problem first; the shadow-lift ladder
+goes from honest to dishonest (Gobey [00:14:58] [00:15:32]; Faucher 0GYyHDuaPcg [00:08:14]
+[00:13:42]). Light it before you grade it (Oakley rX0wZZxpB-U [00:10:18]). Check the white-balance
+direction on a screenshot (exposure doc vs Gobey [00:17:31]). Art-direction order before any grade
+(Oakley): the ambient first, shape and color transitions in the shadows, from a balanced skylight
+([00:07:34]; `shadow_shape`); then the eye's path, a limited hue range with the focal element across
+the wheel ([00:09:19]; `focal_hue_contrast`); then "the promise of more", light leaving the frame, a
+side street lit, shafts composed with blockers ([00:08:44]; Faucher 1LfiYtKDsac [00:13:55]), judged
+by eye on the thumbnail.
 
 ```python
 # test: P10_look
@@ -276,7 +370,15 @@ L.apply_look(ppv, {"white_temp": 5000.0})              # candidate; keep only if
 
 ## P11. Review loop: capture, measure, critique, change one thing
 
-Why: judge through the game's own camera and exposure, at fixed bookmarks, with numbers and eyes (Argyriou [00:08:36]; Oakley's rubric; MCP talk lesson in scenario-unreal-expert: an agent approved an all-white frame). `frame_report` runs offline on the captured files. The log since the capture goes in too: 5.8 prints a warning when exposure leaves the range Lumen's and the Sky Light's cached lighting support (`r.EyeAdaptation.CachedLightingPreExposure`, default 4), and that warning fails the frame (5.8 release notes; Lumen doc, Outdated); its exact text is [verify], so the grep is loose. Glossy regions (wet street, bar top) must hold a highlight (Faucher 0GYyHDuaPcg [00:10:28]). Walk the player path between the conditions (street to bar) with a scripted camera move to judge adaptation, and noise in motion (Gobey [00:19:12]; SIGGRAPH [00:48:40]).
+Why: judge through the game's own camera and exposure, at fixed bookmarks, with numbers and eyes
+(Argyriou [00:08:36]; Oakley's rubric; MCP talk lesson in scenario-unreal-expert: an agent approved
+an all-white frame). `frame_report` runs offline on the captured files. The log since the capture
+goes in too: 5.8 prints a warning when exposure leaves the range Lumen's and the Sky Light's cached
+lighting support (`r.EyeAdaptation.CachedLightingPreExposure`, default 4), and that warning fails
+the frame (5.8 release notes; Lumen doc, Outdated); its exact text is [verify], so the grep is
+loose. Glossy regions (wet street, bar top) must hold a highlight (Faucher 0GYyHDuaPcg [00:10:28]).
+Walk the player path between the conditions (street to bar) with a scripted camera move to judge
+adaptation, and noise in motion (Gobey [00:19:12]; SIGGRAPH [00:48:40]).
 
 ```python
 # test: P11_review_loop
@@ -304,7 +406,10 @@ print(report["verdict"], [(x["id"], x["status"]) for x in report["findings"]])
 
 ## P12. Gameplay budget capture (hand the numbers to scenario-unreal-performance)
 
-Why: measure passes, not FPS; async compute off to isolate, dynamic resolution off, fixed cameras, a no-lights baseline (Argyriou [00:08:36]; Campbell BKaAzhMHJZ0 [00:38:37] [00:39:10]; Lumen, VSM, MegaLights docs). Lumen GI plus reflections at or under 4 ms at 60 fps, 1080p internal on console (Lumen doc). A Mac number is a relative proxy, never the console figure.
+Why: measure passes, not FPS; async compute off to isolate, dynamic resolution off, fixed cameras, a
+no-lights baseline (Argyriou [00:08:36]; Campbell BKaAzhMHJZ0 [00:38:37] [00:39:10]; Lumen, VSM,
+MegaLights docs). Lumen GI plus reflections at or under 4 ms at 60 fps, 1080p internal on console
+(Lumen doc). A Mac number is a relative proxy, never the console figure.
 
 ```python
 # test: P12_budget
@@ -327,13 +432,29 @@ print({c: r["groups"] for c, r in results.items()})
 
 ## P13. The cinematic still: path tracer (or deferred) through Movie Render Graph
 
-Why: path-traced stills are all spatial, 1 temporal; the PPV sample count is ignored by MRG; Max Path Intensity stays default; HDRIBackdrop double counts; Reference Atmosphere for a visible Sky Atmosphere, and then any Sky Light is ignored, so `r.PathTracing.VisibleLights 2` does nothing (it only shows a Sky Light's specified cubemap); glass needs bounces (path tracer doc; Faucher X5zVhc5ahl0 [00:16:47] [00:23:06]). Script variable overrides, never node defaults (scripting doc). The still's exposure lives on the CineCamera as Manual metering with Apply Physical Camera Exposure, so ISO, shutter and aperture count and the gameplay PPV stays intact (exposure doc, Manual Algorithm) [added design]. Mac: path tracing needs macOS 26.4 or later (5.8 notes); this Mac runs 26.5.1.
+Why: path-traced stills are all spatial, 1 temporal; the PPV sample count is ignored by MRG; Max
+Path Intensity stays default; HDRIBackdrop double counts; Reference Atmosphere for a visible Sky
+Atmosphere, and then any Sky Light is ignored, so `r.PathTracing.VisibleLights 2` does nothing (it
+only shows a Sky Light's specified cubemap); glass needs bounces (path tracer doc; Faucher
+X5zVhc5ahl0 [00:16:47] [00:23:06]). Script variable overrides, never node defaults (scripting doc).
+The still's exposure lives on the CineCamera as Manual metering with Apply Physical Camera Exposure,
+so ISO, shutter and aperture count and the gameplay PPV stays intact (exposure doc, Manual
+Algorithm) [added design]. Mac: path tracing needs macOS 26.4 or later (5.8 notes); this Mac runs
+26.5.1.
 
 First the scene audit (P13a), because the path tracer shows what the scene really is:
 
-- **Albedo** is lighting: base color above 0.8 lengthens paths and washes out, near-black makes shadows "incredibly dark" (path tracer doc; Faucher X5zVhc5ahl0 [00:22:24]; Gobey nlbJwMoj1Dg [00:07:30]). Capture the Base Color buffer and run `albedo_check`; corrections go to scenario-unreal-materials.
-- **Emissive plus light double counting**: a tube or bulb with its own real light is counted twice. List pairs with `emissive_fixture_pairs`, A/B with `r.PathTracing.EnableEmissive 0`, then turn off Indirect Emissive in Lighting Components (`still_plan(..., emissive_fixtures=True)`); it is global, so every emissive loses its bounce (path tracer doc, Emissive Materials row, PPV table).
-- **Glass**: Refraction Method Index of Refraction and Lighting Mode Surface ForwardShading, otherwise the path tracer uses transparency, not a bounce, roughness ignored; Thin Translucent only for thin films (path tracer doc; Faucher [00:14:36] [00:15:43]); `glass_lint`.
+- **Albedo** is lighting: base color above 0.8 lengthens paths and washes out, near-black makes
+  shadows "incredibly dark" (path tracer doc; Faucher X5zVhc5ahl0 [00:22:24]; Gobey nlbJwMoj1Dg
+  [00:07:30]). Capture the Base Color buffer and run `albedo_check`; corrections go to
+  scenario-unreal-materials.
+- **Emissive plus light double counting**: a tube or bulb with its own real light is counted twice.
+  List pairs with `emissive_fixture_pairs`, A/B with `r.PathTracing.EnableEmissive 0`, then turn off
+  Indirect Emissive in Lighting Components (`still_plan(..., emissive_fixtures=True)`); it is
+  global, so every emissive loses its bounce (path tracer doc, Emissive Materials row, PPV table).
+- **Glass**: Refraction Method Index of Refraction and Lighting Mode Surface ForwardShading,
+  otherwise the path tracer uses transparency, not a bounce, roughness ignored; Thin Translucent
+  only for thin films (path tracer doc; Faucher [00:14:36] [00:15:43]); `glass_lint`.
 
 ```python
 # test: P13a_scene_audit
@@ -376,11 +497,30 @@ job = L.queue_mrg_still("/Game/Cinematics/LS_BarHero.LS_BarHero", "/Game/Maps/L_
 print("EV100 %.2f" % ev, job)
 ```
 
-After the render (the log shows `UE_LIGHT_MRG_DONE`), offline: `frame_report(exr, {"ev100": ev, "regions": {... "grey_card": ...}}, log_text=L.log_since("still_pt"))` on the linear EXR (gray card within 1/3 stop of intent, no exposure-range warning), then a Lumen deferred layer of the same camera and `compare_ground_truth(lumen_exr, pt_exr, regions)`: regions more than a stop apart are setup problems (Faucher 0GYyHDuaPcg [00:07:43]), except where `cheat_inventory` lists a Lumen-only cheat (indirect boost, Diffuse Color Boost, Lumen-only emissive boost). Judge at 100 percent: denoiser mush on roughness breakup (Faucher X5zVhc5ahl0 [00:06:39]); toggle `r.PathTracing.Denoiser` after convergence to compare without re-accumulating (path tracer doc).
+After the render (the log shows `UE_LIGHT_MRG_DONE`), offline:
+`frame_report(exr, {"ev100": ev, "regions": {... "grey_card": ...}}, log_text=L.log_since("still_pt"))`
+on the linear EXR (gray card within 1/3 stop of intent, no exposure-range warning), then a Lumen
+deferred layer of the same camera and `compare_ground_truth(lumen_exr, pt_exr, regions)`: regions
+more than a stop apart are setup problems (Faucher 0GYyHDuaPcg [00:07:43]), except where
+`cheat_inventory` lists a Lumen-only cheat (indirect boost, Diffuse Color Boost, Lumen-only emissive
+boost). Judge at 100 percent: denoiser mush on roughness breakup (Faucher X5zVhc5ahl0 [00:06:39]);
+toggle `r.PathTracing.Denoiser` after convergence to compare without re-accumulating (path tracer
+doc).
 
-If the rendered frame differs from the viewport, walk `L.RENDER_DIFF_TRIAGE` in order: Global Game Overrides first (it raises quality at render time and, in MRG, acts only while connected: disconnect it to test), then cvar nodes and the job's console variable overrides, Use LODZero and the foliage triangle cap, warm-up, the exposure path, then the renderer's own blind spots (MRG doc, Globals and Game Overrides; Comly demystifying-mrq, CVARS; Faucher fVg5ihB8Wdc [00:03:33]).
+If the rendered frame differs from the viewport, walk `L.RENDER_DIFF_TRIAGE` in order: Global Game
+Overrides first (it raises quality at render time and, in MRG, acts only while connected: disconnect
+it to test), then cvar nodes and the job's console variable overrides, Use LODZero and the foliage
+triangle cap, warm-up, the exposure path, then the renderer's own blind spots (MRG doc, Globals and
+Game Overrides; Comly demystifying-mrq, CVARS; Faucher fVg5ihB8Wdc [00:03:33]).
 
-Still-only cheats (a rim on the hero, a small fill, a faked bounce) are fine for one shot and wrong for the game (Faucher 1LfiYtKDsac [00:25:40]). Isolate each with lighting channels: light on channel 1 only, hero meshes on channels 0 and 1 (Faucher [00:24:02]). Direct light honors channels and MegaLights supports them in 5.8 (deltas file); Lumen GI bounce probably does not [verify], hence Indirect Lighting Intensity 0 [added]; whether the path tracer honors channels is not in the notes [verify with an A/B render with the light hidden]. The light belongs in the shot's Level Sequence as a spawnable (scenario-unreal-cinematics); if spawned in the level for a test, switch Affects World off after the render (`light_lint` flags `still_only_in_gameplay`).
+Still-only cheats (a rim on the hero, a small fill, a faked bounce) are fine for one shot and wrong
+for the game (Faucher 1LfiYtKDsac [00:25:40]). Isolate each with lighting channels: light on channel
+1 only, hero meshes on channels 0 and 1 (Faucher [00:24:02]). Direct light honors channels and
+MegaLights supports them in 5.8 (deltas file); Lumen GI bounce probably does not [verify], hence
+Indirect Lighting Intensity 0 [added]; whether the path tracer honors channels is not in the notes
+[verify with an A/B render with the light hidden]. The light belongs in the shot's Level Sequence as
+a spawnable (scenario-unreal-cinematics); if spawned in the level for a test, switch Affects World
+off after the render (`light_lint` flags `still_only_in_gameplay`).
 
 ```python
 # test: P13b_still_only_rim
@@ -399,11 +539,17 @@ for label, channels in rim["targets"].items():
 print(rim["home"], rim["verify"])
 ```
 
-Deferred alternative when the path tracer is unavailable or too slow: `L.still_plan("deferred", "final", thin_bright=True)` gives 31 spatial samples, AA None, Motion Blur Amount 0, 250 warm-up frames and PPV Lumen quality 4 with hit lighting for reflections; prove warm-up by rendering 125 and 250 and checking `temporal_flicker([a, b])` passes. The draft and preview warm-ups (64, 32) are this skill's shortcuts for layout, not finals [added].
+Deferred alternative when the path tracer is unavailable or too slow:
+`L.still_plan("deferred", "final", thin_bright=True)` gives 31 spatial samples, AA None, Motion Blur
+Amount 0, 250 warm-up frames and PPV Lumen quality 4 with hit lighting for reflections; prove
+warm-up by rendering 125 and 250 and checking `temporal_flicker([a, b])` passes. The draft and
+preview warm-ups (64, 32) are this skill's shortcuts for layout, not finals [added].
 
 ## P14. Handoff manifest
 
-Why: scenario-unreal-cinematics needs the rig, the exposure and the still template; scenario-unreal-performance needs light counts, shadow methods and measured passes; both need the cheat list.
+Why: scenario-unreal-cinematics needs the rig, the exposure and the still template;
+scenario-unreal-performance needs light counts, shadow methods and measured passes; both need the
+cheat list.
 
 ```python
 # test: P14_handoff
@@ -415,8 +561,20 @@ print("manifest", manifest)
 
 ## Without a script: what stays GUI or graph work
 
-- **Material graphs** (the neon master with exposed `EmissiveIntensity` and `LumenEmissiveScale` behind a Ray Tracing Quality Switch for a Lumen-only boost as in Avowed, glass with Index of Refraction and Surface ForwardShading, PathTracingQualitySwitch, cloud volume materials): scenario-unreal-materials authors the masters once; this skill sets instance scalars (`set_mi_scalar`) and checks the glass masters (`glass_lint`).
-- **Movie Render Graph template** `MRG_LightingStill`: authored once by a human or an MCP session with exposed variables `SpatialSamples`, `TemporalSamples`, `WarmUpFrames`, `UsePathTracer`, `DisableToneCurve`, `ReferenceMotionBlur` (Comly: promote pins to variables; one graph, many shots). Engine example to read first: `MovieGraphCreateConfigExample.py` in `/Engine/Plugins/MovieScene/MovieRenderPipeline/Content/Python/`.
+- **Material graphs** (the neon master with exposed `EmissiveIntensity` and `LumenEmissiveScale`
+  behind a Ray Tracing Quality Switch for a Lumen-only boost as in Avowed, glass with Index of
+  Refraction and Surface ForwardShading, PathTracingQualitySwitch, cloud volume materials):
+  scenario-unreal-materials authors the masters once; this skill sets instance scalars
+  (`set_mi_scalar`) and checks the glass masters (`glass_lint`).
+- **Movie Render Graph template** `MRG_LightingStill`: authored once by a human or an MCP session
+  with exposed variables `SpatialSamples`, `TemporalSamples`, `WarmUpFrames`, `UsePathTracer`,
+  `DisableToneCurve`, `ReferenceMotionBlur` (Comly: promote pins to variables; one graph, many
+  shots). Engine example to read first: `MovieGraphCreateConfigExample.py` in
+  `/Engine/Plugins/MovieScene/MovieRenderPipeline/Content/Python/`.
 - **Light Complexity probe pixel** (mouse hover): substitute freeze plus dump (P8).
-- **Viewport exposure menu (Game Settings)**, the backslash calibration chart, the HDR meter numbers: judge through bookmark cameras and linear EXRs (P11, P13); spawn the calibrator mesh instead of the backslash chart.
-- **Day Sequence and Celestial Vault** time-of-day plugins (Experimental): scriptable through Sequencer Python once class names are listed (`[n for n in dir(unreal) if "DaySequence" in n]`); hand to scenario-unreal-cinematics for keyed sequences.
+- **Viewport exposure menu (Game Settings)**, the backslash calibration chart, the HDR meter
+  numbers: judge through bookmark cameras and linear EXRs (P11, P13); spawn the calibrator mesh
+  instead of the backslash chart.
+- **Day Sequence and Celestial Vault** time-of-day plugins (Experimental): scriptable through
+  Sequencer Python once class names are listed (`[n for n in dir(unreal) if "DaySequence" in n]`);
+  hand to scenario-unreal-cinematics for keyed sequences.

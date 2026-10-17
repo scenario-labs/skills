@@ -1,6 +1,9 @@
 # scenario-unreal-animation: self-critique rubric
 
-Use at every gate and before delivery. Score each line 0 (fails), 1 (partly), 2 (meets). A delivery needs no 0 on a line marked **gate** and a written reason for every 1. Measurable lines cite the check that proves them; visual lines cite the frames looked at (paths). Never approve a capture that `ue_review.image_checks` flags as all white or all black.
+Use at every gate and before delivery. Score each line 0 (fails), 1 (partly), 2 (meets). A delivery
+needs no 0 on a line marked **gate** and a written reason for every 1. Measurable lines cite the
+check that proves them; visual lines cite the frames looked at (paths). Never approve a capture that
+`ue_review.image_checks` flags as all white or all black.
 
 ## A. Intake and skeleton
 

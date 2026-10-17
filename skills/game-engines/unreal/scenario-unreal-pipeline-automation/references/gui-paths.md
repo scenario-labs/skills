@@ -1,6 +1,8 @@
 # GUI paths for the same procedures (for a computer-use agent)
 
-Menu paths from the 5.8 doc pages and the notes; labels marked [verify] come from older talks (5.1 to 5.5) or were not stated for 5.8. On macOS, documented Ctrl shortcuts usually map to Cmd [verify]. The code path for each row is in `procedures.md`. Not checked in a running 5.8 editor.
+Menu paths from the 5.8 doc pages and the notes; labels marked [verify] come from older talks (5.1
+to 5.5) or were not stated for 5.8. On macOS, documented Ctrl shortcuts usually map to Cmd [verify].
+The code path for each row is in `procedures.md`. Not checked in a running 5.8 editor.
 
 ## Plugins and project settings
 

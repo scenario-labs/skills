@@ -1,6 +1,9 @@
 # scenario-godot-2d: sources
 
-Notes for every source are in `notes/2d-gameplay/` (digests `_digest_videos_2d-gameplay.md`, `_digest_docs_2d-gameplay.md`). Credentials are as stated in the notes; "unverified" means the channel's claims were not checked. Version facts: `sources/godot-version-deltas.md`. Live evidence: `tests/live_evidence/godot-2d/`.
+Notes for every source are in `notes/2d-gameplay/` (digests `_digest_videos_2d-gameplay.md`,
+`_digest_docs_2d-gameplay.md`). Credentials are as stated in the notes; "unverified" means the
+channel's claims were not checked. Version facts: `sources/godot-version-deltas.md`. Live evidence:
+`tests/live_evidence/godot-2d/`.
 
 ## Videos
 
@@ -37,8 +40,12 @@ Notes for every source are in `notes/2d-gameplay/` (digests `_digest_videos_2d-g
 
 ## Version facts
 
-- `sources/godot-version-deltas.md`, section 6 (2D, TileMapLayer and 2D physics) and the rename tables: TileMapLayer 4.3, Parallax2D 4.3, Camera2D renames and inverted zoom, chunked tile physics 4.5, one-way direction 4.7, 2D physics interpolation 4.3, stretch defaults of a hand-written project.godot.
+- `sources/godot-version-deltas.md`, section 6 (2D, TileMapLayer and 2D physics) and the rename
+  tables: TileMapLayer 4.3, Parallax2D 4.3, Camera2D renames and inverted zoom, chunked tile physics
+  4.5, one-way direction 4.7, 2D physics interpolation 4.3, stretch defaults of a hand-written
+  project.godot.
 
 ## Sister skills
 
-- scenario-sprite-pipeline (manifest contract: `frames`, `w`, `h`, `ground`; keyed sprites), scenario-game-assets, scenario-sprite-animation: where generated sprites and tilesets come from.
+- scenario-sprite-pipeline (manifest contract: `frames`, `w`, `h`, `ground`; keyed sprites),
+  scenario-game-assets, scenario-sprite-animation: where generated sprites and tilesets come from.

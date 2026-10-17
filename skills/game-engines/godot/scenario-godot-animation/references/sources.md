@@ -1,6 +1,8 @@
 # scenario-godot-animation: sources
 
-Credentials as recorded by the research pass ("unverified": the channel was not checked against a public record). Godot versions are those shown in the source. Researched 2026-10-01 to 2026-10-02; notes in `notes/animation/` of the build project. Live checks: Godot 4.7.2.stable on 2026-10-02.
+Credentials as recorded by the research pass ("unverified": the channel was not checked against a
+public record). Godot versions are those shown in the source. Researched 2026-10-01 to 2026-10-02;
+notes in `notes/animation/` of the build project. Live checks: Godot 4.7.2.stable on 2026-10-02.
 
 ## Videos
 
@@ -26,15 +28,28 @@ Credentials as recorded by the research pass ("unverified": the channel was not 
 
 ## Official documentation (retrieved 2026-10-02)
 
-- Introduction to the animation features: https://docs.godotengine.org/en/stable/tutorials/animation/introduction.html
-- Animation track types: https://docs.godotengine.org/en/stable/tutorials/animation/animation_track_types.html
-- Using AnimationTree: https://docs.godotengine.org/en/stable/tutorials/animation/animation_tree.html
-- Import configuration (3D scenes, animation): https://docs.godotengine.org/en/stable/tutorials/assets_pipeline/importing_3d_scenes/import_configuration.html
+- Introduction to the animation features:
+  https://docs.godotengine.org/en/stable/tutorials/animation/introduction.html
+- Animation track types:
+  https://docs.godotengine.org/en/stable/tutorials/animation/animation_track_types.html
+- Using AnimationTree:
+  https://docs.godotengine.org/en/stable/tutorials/animation/animation_tree.html
+- Import configuration (3D scenes, animation):
+  https://docs.godotengine.org/en/stable/tutorials/assets_pipeline/importing_3d_scenes/import_configuration.html
 - SkeletonModifier3D: https://docs.godotengine.org/en/stable/classes/class_skeletonmodifier3d.html
 - Tween: https://docs.godotengine.org/en/stable/classes/class_tween.html
 
 ## Engine source and class reference read for this skill
 
-- Godot 4.7.2 importer source (`editor/import/3d/post_import_plugin_skeleton_renamer.cpp`, `..._rest_fixer.cpp`, `..._track_organizer.cpp`, `resource_importer_scene.cpp`): import option names and the scene importer's loop-hint rule. Copies in `tests/projects/godot-animation/src_ref/`. The GLTFDocument prefix rule was observed live, not read in source.
-- Godot 4.7.2 class XML: TwoBoneIK3D, IterateIK3D, IKModifier3D, RetargetModifier3D, CopyTransformModifier3D, LookAtModifier3D, SkeletonModifier3D, Skeleton3D, AnimationMixer, AnimationTree, AnimationNodeStateMachineTransition, AnimationNodeOneShot, BlendSpace1D/2D, Tween, AwaitTweener, SubtweenTweener, SpringArm3D.
-- Version deltas collected for the Godot skills (`sources/godot-version-deltas.md`): `tween_await` 4.7, `tween_subtween` 4.4, the 4.6 IK family, `_process_modification_with_delta`, Animation markers.
+- Godot 4.7.2 importer source (`editor/import/3d/post_import_plugin_skeleton_renamer.cpp`,
+  `..._rest_fixer.cpp`, `..._track_organizer.cpp`, `resource_importer_scene.cpp`): import option
+  names and the scene importer's loop-hint rule. Copies in
+  `tests/projects/godot-animation/src_ref/`. The GLTFDocument prefix rule was observed live, not
+  read in source.
+- Godot 4.7.2 class XML: TwoBoneIK3D, IterateIK3D, IKModifier3D, RetargetModifier3D,
+  CopyTransformModifier3D, LookAtModifier3D, SkeletonModifier3D, Skeleton3D, AnimationMixer,
+  AnimationTree, AnimationNodeStateMachineTransition, AnimationNodeOneShot, BlendSpace1D/2D, Tween,
+  AwaitTweener, SubtweenTweener, SpringArm3D.
+- Version deltas collected for the Godot skills (`sources/godot-version-deltas.md`): `tween_await`
+  4.7, `tween_subtween` 4.4, the 4.6 IK family, `_process_modification_with_delta`, Animation
+  markers.

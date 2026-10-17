@@ -1,16 +1,23 @@
 # Tested procedures (Blender 5.2.1 LTS, headless)
 
-Every block here was run with `blender --background --factory-startup --python <test>` on 5.2.1. Test scripts (kept, rerun them after any change):
+Every block here was run with `blender --background --factory-startup --python <test>` on 5.2.1.
+Test scripts (kept, rerun them after any change):
 
-- `tests/code/blender-animation/test_bx_anim.py` (58 checks: module, ball, measurement, layers, gravity units, flips)
-- `tests/code/blender-animation/test_rigify_jump.py` (19 checks: generated Rigify human, jump blocking to spline, knee pop, flips, balance, renders)
+- `tests/code/blender-animation/test_bx_anim.py` (58 checks: module, ball, measurement, layers,
+  gravity units, flips)
+- `tests/code/blender-animation/test_rigify_jump.py` (19 checks: generated Rigify human, jump
+  blocking to spline, knee pop, flips, balance, renders)
 - `tests/code/blender-animation/test_procedures.py` (15 checks)
-- `tests/code/blender-animation/test_staging.py` (17 checks: world squash vs the v1 rig, one gravity per shot, projection, staging_report, Workbench light and floor traps, pinwheel aliasing)
-- `tests/code/blender-animation/test_ball_shot.py` (11 checks: a full E3-style ball shot with the staging loop and the review pack)
+- `tests/code/blender-animation/test_staging.py` (17 checks: world squash vs the v1 rig, one gravity
+  per shot, projection, staging_report, Workbench light and floor traps, pinwheel aliasing)
+- `tests/code/blender-animation/test_ball_shot.py` (11 checks: a full E3-style ball shot with the
+  staging loop and the review pack)
 
 Blocks marked "verbatim" are copied from `# --- Pn begin/end` markers in those scripts.
 
-Renders from the last run are in `tests/code/blender-animation/out/` (ball onion skins, curve plots, jump pose strips, playblasts; `out/staging/` shadow probes; `out/ball_shot/` the full shot: playblast, contact sheets, onion skin through the camera, curve plot, .blend).
+Renders from the last run are in `tests/code/blender-animation/out/` (ball onion skins, curve plots,
+jump pose strips, playblasts; `out/staging/` shadow probes; `out/ball_shot/` the full shot:
+playblast, contact sheets, onion skin through the camera, curve plot, .blend).
 
 Import pattern:
 
@@ -56,7 +63,9 @@ import bx_anim as A, bx_review
 | `graph_image(out, idb, bones, data_paths)`                                                                                      | curve plot with key-type colored keys (the agent's Graph Editor)                                                                                                                      |
 | `bouncing_ball(obj, weight, start, end, contacts, height, rebound, travel, first_apex, fit, hold, burst, contact_handles, ...)` | one-object ball animation: one gravity, whole-frame contacts, odd or even flights, world squash, roll = distance / radius                                                             |
 
-Conventions: a key's interpolation governs the segment after it. `key_pose` writes into the channelbag directly (no 3D view, no preferences); on an ADD layer the values are deltas. Never keep a Keyframe reference across an insert on the same F-curve.
+Conventions: a key's interpolation governs the segment after it. `key_pose` writes into the
+channelbag directly (no 3D view, no preferences); on an ADD layer the values are deltas. Never keep
+a Keyframe reference across an insert on the same F-curve.
 
 ---
 
@@ -79,11 +88,14 @@ sc.render.use_stamp_frame = True                     # frame counter on review r
 sc.render.ffmpeg.audio_codec = "AAC"                 # playblast carries the dialogue
 ```
 
-Verified on 5.2.1. A sound-only sequencer does not replace the 3D render; the playblast MP4 had both a video and an AAC audio stream (ffprobe).
+Verified on 5.2.1. A sound-only sequencer does not replace the 3D render; the playblast MP4 had both
+a video and an AAC audio stream (ffprobe).
 
 ## P2 Stepped key-pose blocking on a rig (verbatim, test_rigify_jump.py)
 
-Pose in world terms, compute every pose from the rest pose before keying anything (no compounding, no stale evaluation), then key stepped with key type EXTREME. Forward is -Y for Rigify; `proxies` are the meshes to render, `OUT` an output folder.
+Pose in world terms, compute every pose from the rest pose before keying anything (no compounding,
+no stale evaluation), then key stepped with key type EXTREME. Forward is -Y for Rigify; `proxies`
+are the meshes to render, `OUT` an output folder.
 
 ```python
 X = lambda deg: Euler((math.radians(deg), 0, 0))    # world rotation about X (+ = lean forward)
@@ -114,7 +126,10 @@ A.onion_skin(os.path.join(OUT, "jump_blocking_poses.png"), sorted(POSES), object
              view="right", res=(420, 520), spread=300, highlight=sorted(POSES))   # pose strip
 ```
 
-Verified: world_pose reproduced the offset between the stand and the anticipation exactly after keying; the pose strip is `tests/code/blender-animation/out/jump_blocking_poses.png`. The Rigify rest legs are 99.6% straight, so the stand and settle poses lower the torso 3 cm (soft knees); the first draft raised it 2 to 6 cm and `limb_extension` measured the IK stretch at 1.18.
+Verified: world_pose reproduced the offset between the stand and the anticipation exactly after
+keying; the pose strip is `tests/code/blender-animation/out/jump_blocking_poses.png`. The Rigify
+rest legs are 99.6% straight, so the stand and settle poses lower the torso 3 cm (soft knees); the
+first draft raised it 2 to 6 cm and `limb_extension` measured the IK stretch at 1.18.
 
 ## P3 Blocking+ (verbatim, test_bx_anim.py)
 
@@ -123,9 +138,15 @@ A.breakdown(r2, 5, 1, 9, factor=0.5, factors={"hand": 0.25})   # COG in the midd
 fr = A.ease_inbetweens(ob, 1, 9, [3, 5, 7], mode="slow_in")    # 0.8, 0.96, 0.992 of the way
 ```
 
-`mode="slow_out"` mirrors it (0.008, 0.04, 0.2). Verified: slow_in gave 8.0, 9.6, 9.92 on a 0 to 10 move, slow_out 0.08, 0.4, 2.0; in-betweens stay CONSTANT and are typed BREAKDOWN; the quaternion breakdown is a true slerp (w = cos 22.5 deg at 0.25 of a 180 deg turn).
+`mode="slow_out"` mirrors it (0.008, 0.04, 0.2). Verified: slow_in gave 8.0, 9.6, 9.92 on a 0 to 10
+move, slow_out 0.08, 0.4, 2.0; in-betweens stay CONSTANT and are typed BREAKDOWN; the quaternion
+breakdown is a true slerp (w = cos 22.5 deg at 0.25 of a 180 deg turn).
 
-Handles, measured with `A.overshoots` on keys 0, 4, 4, 0 at frames 1, 9, 17, 25: AUTO_CLAMPED no overshoot; AUTO overshoots the 9 to 17 hold by 1.0 (25%); VECTOR none. That AUTO bulge is what Alex Nagy exploits for a pushed pose or a settle: `A.set_interpolation(obj, frames=(f, f), handle="AUTO")` on the key inside a hold (same call as in the test, per-key range).
+Handles, measured with `A.overshoots` on keys 0, 4, 4, 0 at frames 1, 9, 17, 25: AUTO_CLAMPED no
+overshoot; AUTO overshoots the 9 to 17 hold by 1.0 (25%); VECTOR none. That AUTO bulge is what Alex
+Nagy exploits for a pushed pose or a settle:
+`A.set_interpolation(obj, frames=(f, f), handle="AUTO")` on the key inside a hold (same call as in
+the test, per-key range).
 
 Take-off breakdown on the jump (verbatim, test_rigify_jump.py):
 
@@ -136,7 +157,9 @@ Take-off breakdown on the jump (verbatim, test_rigify_jump.py):
 A.breakdown(rig, 16, 13, 20, factor=0.67, bones=body, factors={"foot_ik.L": 0.6, "foot_ik.R": 0.6})
 ```
 
-Verified: without it the legs stretched to 1.10 over frames 14 to 17 (the torso splines up faster than the flat-handled feet); with it and a VECTOR take-off (P4) the maximum is 0.992 at frame 14 and nothing stretches.
+Verified: without it the legs stretched to 1.10 over frames 14 to 17 (the torso splines up faster
+than the flat-handled feet); with it and a VECTOR take-off (P4) the maximum is 0.992 at frame 14 and
+nothing stretches.
 
 ## P4 Blocking to spline (verbatim, test_rigify_jump.py)
 
@@ -151,11 +174,20 @@ slip = A.foot_slip(rig, "foot_ik.L", [(1, 13), (27, 48)])   # planted: slide and
 face_stepped = all(k.interpolation == "CONSTANT" for fc in A.fcurves(rig, face) for k in fc.keyframe_points)
 ```
 
-With `body` = torso, chest, hips, neck, head, both IK feet, FK upper arms and forearms, and the two `upper_arm_parent` bones (IK_FK switch); face = `jaw_master`. Result: holds [(1, 6), (9, 10), (31, 36), (39, 42)], worst hold drift 0.0, no overshoot, feet slide and lift 0.0 m, face still CONSTANT.
+With `body` = torso, chest, hips, neck, head, both IK feet, FK upper arms and forearms, and the two
+`upper_arm_parent` bones (IK_FK switch); face = `jaw_master`. Result: holds [(1, 6), (9, 10), (31,
+36), (39, 42)], worst hold drift 0.0, no overshoot, feet slide and lift 0.0 m, face still CONSTANT.
 
-Measured: with a pillar on the landing (`interpolate={13, 20}`) the torso's speed at contact was 0.007 m/frame, without it 0.101. Hand breakdowns (the take-off key at 16) stay breakdowns: `fill_key_columns` gives a filled key its column's type, so `auto_holds` never pillars a breakdown column (it did before v2). VECTOR on the foot contact raised the foot's last gap before contact from 0.030 to 0.117 m. On a toy rig (test_bx_anim.py) the naive whole conversion drifted 0.84 of the next move across a hold; pillars kept 0.0 and the move completed in the 3 chosen frames (0, 0.259, 0.741, 1.0).
+Measured: with a pillar on the landing (`interpolate={13, 20}`) the torso's speed at contact was
+0.007 m/frame, without it 0.101. Hand breakdowns (the take-off key at 16) stay breakdowns:
+`fill_key_columns` gives a filled key its column's type, so `auto_holds` never pillars a breakdown
+column (it did before v2). VECTOR on the foot contact raised the foot's last gap before contact from
+0.030 to 0.117 m. On a toy rig (test_bx_anim.py) the naive whole conversion drifted 0.84 of the next
+move across a hold; pillars kept 0.0 and the move completed in the 3 chosen frames (0, 0.259, 0.741,
+1.0).
 
-Subset splining in general: `A.spline(rig, bones=body)` leaves every other channel alone; `A.set_interpolation(rig, "BEZIER", bones=face_bones)` splines the face after lip-sync sign-off.
+Subset splining in general: `A.spline(rig, bones=body)` leaves every other channel alone;
+`A.set_interpolation(rig, "BEZIER", bones=face_bones)` splines the face after lip-sync sign-off.
 
 ## P5 Walk: planted heel and root travel (verbatim, test_procedures.py)
 
@@ -171,7 +203,11 @@ A.key_pose(root, {"location": {1: -step}}, 20, interpolation="LINEAR")
 A.add_cycles(root, mode="REPEAT_OFFSET")
 ```
 
-Foot keys (root space, walking toward -Y): (0, -0.3, 0), (20, +0.3, 0), (30, 0, 0.12), (40, -0.3, 0). Measured world slip in the second cycle's contact: VECTOR 0.0, AUTO_CLAMPED 5.8 cm. The planted foot slides opposite to the travel in root space; the reverse makes the character moonwalk (Rik fixes pasted keys with a Y scale of -1). Head lag: `A.offset_keys(rig, 2, bones=["head"])` with Cycles wraps cleanly (verified: offset of 2 frames evaluated identically one cycle later).
+Foot keys (root space, walking toward -Y): (0, -0.3, 0), (20, +0.3, 0), (30, 0, 0.12), (40, -0.3,
+0). Measured world slip in the second cycle's contact: VECTOR 0.0, AUTO_CLAMPED 5.8 cm. The planted
+foot slides opposite to the travel in root space; the reverse makes the character moonwalk (Rik
+fixes pasted keys with a Y scale of -1). Head lag: `A.offset_keys(rig, 2, bones=["head"])` with
+Cycles wraps cleanly (verified: offset of 2 frames evaluated identically one cycle later).
 
 ## P6 Lip sync, jaw pass from audio (verbatim, test_procedures.py)
 
@@ -190,7 +226,14 @@ for f in peaks["syllables"]:
 A.key_pose(jaw, {"rotation_euler": {0: 0.0}}, max(env) - 2)   # stepped (CONSTANT) until approved
 ```
 
-Verified on a synthetic line with 8 syllables, 3 stressed: syllables [7, 11, 15, 20, 26, 30, 35, 41], accents [11, 26, 41]. The one-frame lead is a starting point [added]: Rik gives no global lead and retimes per phoneme (F, OO, W and closures formed before the sound). Angles are placeholders; use the rig's jaw range. Next passes (Rik): corners (in when the jaw opens, never dead center, slight asymmetry), shapes from a library (P12) on the lower face minus the jaw, accents, tongue (one middle control first), then spline the face. Phoneme timings need an external aligner (for example Rhubarb Lip Sync or Montreal Forced Aligner) [added]; the envelope alone gives rhythm and accents, not phonemes.
+Verified on a synthetic line with 8 syllables, 3 stressed: syllables [7, 11, 15, 20, 26, 30, 35,
+41], accents [11, 26, 41]. The one-frame lead is a starting point [added]: Rik gives no global lead
+and retimes per phoneme (F, OO, W and closures formed before the sound). Angles are placeholders;
+use the rig's jaw range. Next passes (Rik): corners (in when the jaw opens, never dead center,
+slight asymmetry), shapes from a library (P12) on the lower face minus the jaw, accents, tongue (one
+middle control first), then spline the face. Phoneme timings need an external aligner (for example
+Rhubarb Lip Sync or Montreal Forced Aligner) [added]; the envelope alone gives rhythm and accents,
+not phonemes.
 
 ## P7 Facial timing check (verbatim, test_procedures.py)
 
@@ -201,7 +244,8 @@ brows = A.transitions(brow, data_paths=["location"])["location[2]"]
 bad_brows = [t for t in brows if not 3 <= t[2] <= 10]         # brows change over 3 to 10 frames
 ```
 
-Verified: darts [(20, 22, 2), (40, 41, 1)] pass; a 1-frame brow pop is flagged. Same call checks snappy body transitions (2 to 3 frames) and plosive holds (closed for at least 2 frames).
+Verified: darts [(20, 22, 2), (40, 41, 1)] pass; a 1-frame brow pop is flagged. Same call checks
+snappy body transitions (2 to 3 frames) and plosive holds (closed for at least 2 frames).
 
 ## P8 Contact pin with animated influence (verbatim, test_procedures.py)
 
@@ -215,7 +259,8 @@ A.key_pose(rig, {"elbow": {path: 0.5}}, 12, interpolation="BEZIER")
 A.key_pose(rig, {"elbow": {path: 0.0}}, 16, interpolation="BEZIER")  # contact breaks
 ```
 
-Verified: influence 0.5 held, 0 after frame 16, and the elbow returns to its own animation. Rik uses this when manual keys keep fighting the IK pole and stretch.
+Verified: influence 0.5 held, 0 after frame 16, and the elbow returns to its own animation. Rik uses
+this when manual keys keep fighting the IK pole and stretch.
 
 ## P9 Slots when reusing an action (verbatim, test_procedures.py)
 
@@ -228,7 +273,8 @@ if prop.animation_data.action_slot is None:
 # or reuse one on purpose: prop.animation_data.action_slot = act.slots["OBHero"]
 ```
 
-Verified: Blender picks a slot automatically only by name (the ID's name or its last used slot); keep one slot name per character across takes (module talk, BCON25).
+Verified: Blender picks a slot automatically only by name (the ID's name or its last used slot);
+keep one slot name per character across takes (module talk, BCON25).
 
 ## P10 Layering in 5.2 (verbatim, test_bx_anim.py)
 
@@ -240,7 +286,9 @@ A.key_pose(ob, {"location": {0: 0.0}}, 1, interpolation="LINEAR")
 A.key_pose(ob, {"location": {0: 0.5}}, 11, interpolation="LINEAR")   # a delta on top
 ```
 
-Verified: result at frame 11 = (0.5, 0, 2); `lay.layers.new()` raises "An Action may not have more than one layer"; `ob.keyframe_insert` on the ADD layer stored the remapped delta (posed 2.5 over a base of 2.0 stored 0.5).
+Verified: result at frame 11 = (0.5, 0, 2); `lay.layers.new()` raises "An Action may not have more
+than one layer"; `ob.keyframe_insert` on the ADD layer stored the remapped delta (posed 2.5 over a
+base of 2.0 stored 0.5).
 
 ## P11 Pose propagation on dense or baked keys (verbatim, test_procedures.py)
 
@@ -293,7 +341,10 @@ def apply_library_pose(obj, pose, frame, factor=1.0, bones=None, keytype="KEYFRA
 apply_library_pose(face, LIB["F"], 12, factor=0.4, bones=["lip_up", "lip_low"])  # jaw excluded
 ```
 
-Build library poses from an animation default pose, at maximum range, one side at 3/4 then mirrored, hands included, never eyes or the head hinge (Pablo, Rik). Lerping quaternion tuples is fine for small blends; slerp for large ones. `poselib.apply_pose_asset(blend_factor=...)` exists but needs an asset context (not run headless).
+Build library poses from an animation default pose, at maximum range, one side at 3/4 then mirrored,
+hands included, never eyes or the head hinge (Pablo, Rik). Lerping quaternion tuples is fine for
+small blends; slerp for large ones. `poselib.apply_pose_asset(blend_factor=...)` exists but needs an
+asset context (not run headless).
 
 ## P13 Playblast with audio (test_procedures.py)
 
@@ -302,8 +353,10 @@ sc.render.ffmpeg.audio_codec = "AAC"                  # with the P1 sound strip
 mp4 = bx_review.playblast("/abs/out/shot.mp4", res_pct=50)   # Workbench, scene camera
 ```
 
-Light it first so contacts read: `A.playblast_lighting(key_dir=(0, 0, 1))` (P18).
-Verified: ffprobe shows video + audio. Then look at it: `ffmpeg -i shot.mp4 -vf "select='eq(n\,12)+eq(n\,19)',tile=2x1" -frames:v 1 sheet.png` and open the sheet.
+Light it first so contacts read: `A.playblast_lighting(key_dir=(0, 0, 1))` (P18). Verified: ffprobe
+shows video + audio. Then look at it:
+`ffmpeg -i shot.mp4 -vf "select='eq(n\,12)+eq(n\,19)',tile=2x1" -frames:v 1 sheet.png` and open the
+sheet.
 
 ## P14 Rotate about a contact point (verbatim, test_procedures.py)
 
@@ -314,7 +367,8 @@ tilt.x = math.radians(30)
 A.key_pose(rig, A.world_pose(rig, "hand", rotate=tilt, pivot=contact), 10, keytype="EXTREME")
 ```
 
-Verified: the contact moved 1e-7 m while the wrist moved 8 cm. This is Rik's glass-on-the-table pivot (3D cursor as pivot) without a viewport.
+Verified: the contact moved 1e-7 m while the wrist moved 8 cm. This is Rik's glass-on-the-table
+pivot (3D cursor as pivot) without a viewport.
 
 ## P15 Measurement loop (verbatim, test_rigify_jump.py)
 
@@ -346,7 +400,17 @@ arc wobble (curvature flips): f46
 pops: 43->44
 ```
 
-Sharp turns should sit exactly on contacts and hits; wobble inside a flight or a swing means a lumpy arc (here only the settle jiggle after the last contact); the pop into f44 is the last impact handing over to a slow roll, expected; a start-stop inside a move means a missing or misplaced breakdown; "constant spacing" means mechanical motion. On the splined jump the hand showed sharp turns at 8, 11, 12 and 20, a pop at 11 to 12 and a start-stop at 19: the arm swing needs breakdowns through the bottom of its arc (still open in the worked example). `motion_path` returns the same points as `sample_world` (verified for objects and bones, max difference < 1e-5 m). The default hold threshold is 1e-3 x the path extent (3.5 mm on a 3.5 m path): pass `hold_eps` to see a small settle. Camera space: with `to_camera(..., res=(1920, 1080))` the ball's sharp turns are exactly the contacts; with 0..1 coordinates the same path also showed false turns at the apexes f32, f40, f41 (aspect squeeze).
+Sharp turns should sit exactly on contacts and hits; wobble inside a flight or a swing means a lumpy
+arc (here only the settle jiggle after the last contact); the pop into f44 is the last impact
+handing over to a slow roll, expected; a start-stop inside a move means a missing or misplaced
+breakdown; "constant spacing" means mechanical motion. On the splined jump the hand showed sharp
+turns at 8, 11, 12 and 20, a pop at 11 to 12 and a start-stop at 19: the arm swing needs breakdowns
+through the bottom of its arc (still open in the worked example). `motion_path` returns the same
+points as `sample_world` (verified for objects and bones, max difference < 1e-5 m). The default hold
+threshold is 1e-3 x the path extent (3.5 mm on a 3.5 m path): pass `hold_eps` to see a small settle.
+Camera space: with `to_camera(..., res=(1920, 1080))` the ball's sharp turns are exactly the
+contacts; with 0..1 coordinates the same path also showed false turns at the apexes f32, f40, f41
+(aspect squeeze).
 
 ## P16 Bouncing ball on one object (verbatim, test_bx_anim.py)
 
@@ -357,9 +421,20 @@ A.onion_skin(os.path.join(OUT, "ball_onion.png"), range(1, 49), objects=[ball], 
              track=[(ball, None, "head")], highlight=res["contacts"])
 ```
 
-Result: contacts [12, 27, 37, 44], flights 11, 15, 10, 7 frames (odd allowed), real apex heights 1.2, 0.549, 0.239, 0.115 m for 1.2, 0.546, 0.248, 0.113 requested, gravity_ratio 1.19 (fit=True squeezes four bounces into 48 frames; use fit=False for real gravity). Channels, all on the one object: location x, y, z, rotation_euler[1], and the Squash and Aim inputs of the `Squash` GN modifier (`res["paths"]`). Verified: every flight is the analytic parabola of one gravity (residual 4e-7), contact bottoms exactly on the floor (9e-9), the evaluated mesh never below the floor at quarter frames (2e-6), sharp turns exactly at the contacts. `burst=0.6` widened the last pre-contact gap from 0.141 to 0.216 m and the path stayed on the arc (0.0 deviation); `contact_handles='VECTOR'` deviates 0.09 m from a parabola; `weight='light'` vs `'heavy'`: second apex 0.78 vs 0.48 m, contact squash 0.69 vs 0.88.
+Result: contacts [12, 27, 37, 44], flights 11, 15, 10, 7 frames (odd allowed), real apex heights
+1.2, 0.549, 0.239, 0.115 m for 1.2, 0.546, 0.248, 0.113 requested, gravity_ratio 1.19 (fit=True
+squeezes four bounces into 48 frames; use fit=False for real gravity). Channels, all on the one
+object: location x, y, z, rotation_euler[1], and the Squash and Aim inputs of the `Squash` GN
+modifier (`res["paths"]`). Verified: every flight is the analytic parabola of one gravity (residual
+4e-7), contact bottoms exactly on the floor (9e-9), the evaluated mesh never below the floor at
+quarter frames (2e-6), sharp turns exactly at the contacts. `burst=0.6` widened the last pre-contact
+gap from 0.141 to 0.216 m and the path stayed on the arc (0.0 deviation); `contact_handles='VECTOR'`
+deviates 0.09 m from a parabola; `weight='light'` vs `'heavy'`: second apex 0.78 vs 0.48 m, contact
+squash 0.69 vs 0.88.
 
-Measured against the v1 rig (root, aiming squash empty, rolling child; kept in `skills/_versions/blender-animation v1 2026-09-24/`), test_staging.py, E3 inputs (drop 1.03 m, rebound 0.405, heavy, real gravity):
+Measured against the v1 rig (root, aiming squash empty, rolling child; kept in
+`skills/_versions/blender-animation v1 2026-09-24/`), test_staging.py, E3 inputs (drop 1.03 m,
+rebound 0.405, heavy, real gravity):
 
 |                            | v1                                 | v2                                                                 |
 | -------------------------- | ---------------------------------- | ------------------------------------------------------------------ |
@@ -369,7 +444,12 @@ Measured against the v1 rig (root, aiming squash empty, rolling child; kept in `
 | Stretch axis vs velocity   | not aligned with the texture       | 0.03 degrees                                                       |
 | Animated objects           | 3 (root, squash empty, mesh)       | 1                                                                  |
 
-`obj=` animates an existing mesh (radius from its size, verified on a named `ANIM_ball`). The weight mapping (rebound 0.7 to 0.35, squash 0.35 to 0.08, stretch 0.25 to 0.04, friction 0.9 to 0.7) is [added]: the heavy end moved from 0.25 to 0.35 after the E3 run, where 0.25 left a 1.6 cm third hop and about 0.4 read heavy but visible. The BOUNCE easing (two keys) was measured to place its contacts between frames (lowest sampled heights 0.013, 0.013, 0.004), so no squash frame is ever shown.
+`obj=` animates an existing mesh (radius from its size, verified on a named `ANIM_ball`). The weight
+mapping (rebound 0.7 to 0.35, squash 0.35 to 0.08, stretch 0.25 to 0.04, friction 0.9 to 0.7) is
+[added]: the heavy end moved from 0.25 to 0.35 after the E3 run, where 0.25 left a 1.6 cm third hop
+and about 0.4 read heavy but visible. The BOUNCE easing (two keys) was measured to place its
+contacts between frames (lowest sampled heights 0.013, 0.013, 0.004), so no squash frame is ever
+shown.
 
 ## P17 Knee pop, rotation flips, balance (verbatim, test_rigify_jump.py)
 
@@ -379,7 +459,17 @@ flips = A.rotation_flips(rig, bones=body)             # quaternion sign flips, E
 bal = A.balance_report(proxies, frames)               # COG over the support polygon
 ```
 
-Verified on the generated Rigify jump (proxy boxes plus heel-to-toe soles, so the support polygon is the real footprint): legs peak at 0.992 of full length (frame 14, just after take-off), never stretched; fast bends near straight at the push-off, the landing absorb and the recovery are listed for review, not failures; no rotation flips; COG margin +3.9 cm standing and settled, +0.9 cm at the push-off; frames 14 to 26 airborne. Deliberate faults were caught: the torso pushed 0.4 m forward over planted feet gave a margin of -0.15 m; raised 0.25 m it gave an extension of 1.22 (straight and stretched). In test_bx_anim.py a quaternion key stored with the wrong sign was found (sign flip plus 147 degrees per frame turns) and a 350 degree Euler key meant as -10 was found; `fix_rotation_flips` repaired both and kept the pose. Thresholds 0.99 and 20 degrees per frame are [added]; the flip rule and COG-over-support are digest checklist items (Alex Nagy builds COG then feet with the weight over the support foot).
+Verified on the generated Rigify jump (proxy boxes plus heel-to-toe soles, so the support polygon is
+the real footprint): legs peak at 0.992 of full length (frame 14, just after take-off), never
+stretched; fast bends near straight at the push-off, the landing absorb and the recovery are listed
+for review, not failures; no rotation flips; COG margin +3.9 cm standing and settled, +0.9 cm at the
+push-off; frames 14 to 26 airborne. Deliberate faults were caught: the torso pushed 0.4 m forward
+over planted feet gave a margin of -0.15 m; raised 0.25 m it gave an extension of 1.22 (straight and
+stretched). In test_bx_anim.py a quaternion key stored with the wrong sign was found (sign flip plus
+147 degrees per frame turns) and a 350 degree Euler key meant as -10 was found; `fix_rotation_flips`
+repaired both and kept the pose. Thresholds 0.99 and 20 degrees per frame are [added]; the flip rule
+and COG-over-support are digest checklist items (Alex Nagy builds COG then feet with the weight over
+the support foot).
 
 ## P18 A ball shot staged and reviewed (verbatim, test_ball_shot.py)
 
@@ -422,9 +512,27 @@ rep = A.staging_report([ball], frames, shadow_frames=[c1 - 4, c1],
 print(A.format_staging(rep))
 ```
 
-Measured: the E3-like wide camera (50 mm, 6.9 m back, 1.9 m high) gave a subject of 10.4% of frame height, the top 40% empty, the ball fully in frame on frame 1: three flags. The designed camera (frame 3.1 m wide at the ball, rest pose at 68% of the width, 35 mm, 0.75 m high) gave 17.2% median, action over 73% x 55% of the frame, off-screen entry (fully in at f7), end margin 18%, no flags; shadow at f4 visible 104 px below the ball, at the f8 contact visible and touching (gap 0). Real gravity: flights 11, 14, 9, 6, gravity ratio 0.94 on every flight. Camera-pixel sharp turns exactly at the contacts 8, 22, 31, 37. Pinwheel of 8 wedges: 32 degrees per frame at most, under the 45 limit. Looked at: `out/ball_shot/contact_sheet.png` (every third frame), `contact_c1_sheet.png` (f5 to f10: stretch along the fall, squash meeting the shadow at f8, stretch leaving), `onion_camera.png` (clean arcs, squash ellipses at the contacts, spacing opening into each contact, labels not piling up), `playblast.mp4` (72 frames, ffprobe).
+Measured: the E3-like wide camera (50 mm, 6.9 m back, 1.9 m high) gave a subject of 10.4% of frame
+height, the top 40% empty, the ball fully in frame on frame 1: three flags. The designed camera
+(frame 3.1 m wide at the ball, rest pose at 68% of the width, 35 mm, 0.75 m high) gave 17.2% median,
+action over 73% x 55% of the frame, off-screen entry (fully in at f7), end margin 18%, no flags;
+shadow at f4 visible 104 px below the ball, at the f8 contact visible and touching (gap 0). Real
+gravity: flights 11, 14, 9, 6, gravity ratio 0.94 on every flight. Camera-pixel sharp turns exactly
+at the contacts 8, 22, 31, 37. Pinwheel of 8 wedges: 32 degrees per frame at most, under the 45
+limit. Looked at: `out/ball_shot/contact_sheet.png` (every third frame), `contact_c1_sheet.png` (f5
+to f10: stretch along the fall, squash meeting the shadow at f8, stretch leaving),
+`onion_camera.png` (clean arcs, squash ellipses at the contacts, spacing opening into each contact,
+labels not piling up), `playblast.mp4` (72 frames, ffprobe).
 
-Traps measured on the way (test_staging.py): Workbench `display.light_direction` is camera-relative, (0, 0, 1) lit from the camera and hid the shadow completely (0 px against 311 px converted); `matrix_world` read right after setting a camera transform is stale until `view_layer.update()`, so a conversion done too early silently used the identity. MATCAP `clay_studio.exr` kept a light floor at 0.65 to 0.68 luminance from 2 to 30 degrees of camera pitch, STUDIO 0.41 to 0.55. With the converted key, an open floor plane running behind the camera showed no stray shadow (0 px), unlike the E3 run's camera-relative setting that threw a trapezoid; the closed slab stays the default. The pinwheel is assigned per face, so wedge edges are stepped on a 48 x 24 sphere: fine for a playblast, use a UV texture for a render.
+Traps measured on the way (test_staging.py): Workbench `display.light_direction` is camera-relative,
+(0, 0, 1) lit from the camera and hid the shadow completely (0 px against 311 px converted);
+`matrix_world` read right after setting a camera transform is stale until `view_layer.update()`, so
+a conversion done too early silently used the identity. MATCAP `clay_studio.exr` kept a light floor
+at 0.65 to 0.68 luminance from 2 to 30 degrees of camera pitch, STUDIO 0.41 to 0.55. With the
+converted key, an open floor plane running behind the camera showed no stray shadow (0 px), unlike
+the E3 run's camera-relative setting that threw a trapezoid; the closed slab stays the default. The
+pinwheel is assigned per face, so wedge edges are stepped on a 48 x 24 sphere: fine for a playblast,
+use a UV texture for a render.
 
 ## GUI-only techniques and their substitutes
 

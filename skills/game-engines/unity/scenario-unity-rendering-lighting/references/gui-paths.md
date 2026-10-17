@@ -1,6 +1,8 @@
 # GUI paths (computer-use agent or human) for the same procedures
 
-Menu names follow the 6.3 Manual and the notes' frames (Unity 6.0 to 6.3). The live tests ran headless, so no window below was clicked on this Mac: verify a label on first use. Each row names the code path that does the same thing.
+Menu names follow the 6.3 Manual and the notes' frames (Unity 6.0 to 6.3). The live tests ran
+headless, so no window below was clicked on this Mac: verify a label on first use. Each row names
+the code path that does the same thing.
 
 ## Pipeline and tiers (procedure P1, P2)
 

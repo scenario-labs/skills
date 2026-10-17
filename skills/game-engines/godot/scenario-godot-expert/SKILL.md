@@ -6,22 +6,58 @@ license: MIT
 
 # Godot expert (technical director and agent protocol)
 
-Target: Godot 4.7.2.stable (standard build, no C#), macOS Apple Silicon with Metal by default, or Windows with D3D12.
+Target: Godot 4.7.2.stable (standard build, no C#), macOS Apple Silicon with Metal by default, or
+Windows with D3D12.
 
-Expert Godot work is a loop run against evidence: set the budget, build one stage, measure it, look at it, fix it, advance. An agent without a mouse gets there by picking the right channel, passing only on a machine-readable result, and never trusting one signal alone. This skill is that protocol, the shared toolkit every scenario-godot-* skill calls ([`scripts/`](scripts/)), and the map of the team. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Expert Godot work is a loop run against evidence: set the budget, build one stage, measure it, look
+at it, fix it, advance. An agent without a mouse gets there by picking the right channel, passing
+only on a machine-readable result, and never trusting one signal alone. This skill is that protocol,
+the shared toolkit every scenario-godot-* skill calls ([`scripts/`](scripts/)), and the map of the
+team. If a sibling skill named here is missing from your available skills, ask the user to install
+it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
+flag the gap.
 
-**Status (2026-10-02):** every toolkit function below ran in Godot 4.7.2 here (23 live tests, 17 offline, all pass; [`references/procedures.md`](references/procedures.md)).
+**Status (2026-10-02):** every toolkit function below ran in Godot 4.7.2 here (23 live tests, 17
+offline, all pass; [`references/procedures.md`](references/procedures.md)).
 
 ## Stance (the expert delta)
 
-1. **Headless output is the truth; the editor's Output panel is not.** MCP servers that scrape it "report errors for lines no longer on disk", and it does not list every project error (Fennara, 2vSYP7GyA5U [00:02:51, 00:06:20]). PixelLab's agent runs the Godot binary itself and reads the console (THwZYWuOdZI [00:13:45]). Pass on the `AGENT_RESULT` envelope plus a log scan, never on "it exited": a script with a parse error exits 0, with or without `--check-only`, and so does a script path Godot cannot find (version deltas, verified; L6).
-2. **One writer per project.** A GUI editor holding a project keeps its own copy of the open scenes, so its next save can overwrite a headless edit [added]; merged `.tscn` files can fail to parse (Lilith Duncan, CAJ_iIedx_I [00:01:36]). The toolkit refuses a project a GUI Godot has open; work through that editor (MCP) or ask the user to close it. Never close a Godot or Blender process you did not start [added].
-3. **Milliseconds against a budget, on the target.** Measure before optimizing (Dan Does Dev, s2C2RO_WMh0 [00:07:12]); profile on the real device class, thermals included (Ian Bolton, WrjaUNAXYqk [00:09:35]). Headless frame time is loop time, not game cost; windowed frame time on this Mac is pinned to the display refresh; judge `gpu_ms` and `cpu_ms` (observed).
-4. **Look AND check.** Every frame goes through [`gd_review.image_checks`](scripts/gd_review.py) and a contact sheet you open. Headless draws nothing, so captures need a windowed run (observed). After AI asset import, check facing, animation direction, tile seams and camera jitter by eye (PixelLab, THwZYWuOdZI).
-5. **Tests are the contract.** Assert on signals and public results, not internals (Godotneers, CreugthdgJ0 [01:08:36]; Butch Wesley, ImqhHLlPfZg [00:16:59]; Mike Schulze, x6GdTgIAFiU [00:24:19]); bound every await (2 s Godotneers, 5 s Schulze); prove the test bites by emptying the function and watching it go red (Wesley [00:13:40]).
-6. **Design for a mouseless driver.** Split body and brain so a test brain can steer a character (Godotneers [00:18:14]). Headless has no mouse device (Wesley [00:48:33]), yet GUI input still tests headless: `get_viewport().push_input(event, true)` reaches Controls, while `Input.parse_input_event` never reaches a MOUSE_FILTER_STOP Control (scenario-godot-gameplay, scenario-godot-ui, observed); pass `true` so positions are logical, not window pixels. Levels hold a spawn point, not the player (Godotneers [00:56:56]).
-7. **Edits persist only with `owner` and a save.** `add_child` alone is invisible in the Scene dock and lost on save (Godot docs, Running code in the editor); script edits bypass Undo unless routed through `EditorUndoRedoManager` (Queble, nW7YtSSJzbQ [00:04:41]).
-8. **Be honest about visual editors.** VisualShader, AnimationTree, the TileSet and theme editors, and the particle inspector are visual; the agent writes `.gdshader`, `.tres`/`.tscn` text, or builds the resource in code, and names the GUI path for a human. Pick an MCP by feedback fidelity, not tool count (Fennara [00:09:22]).
+1. **Headless output is the truth; the editor's Output panel is not.** MCP servers that scrape it
+   "report errors for lines no longer on disk", and it does not list every project error (Fennara,
+   2vSYP7GyA5U [00:02:51, 00:06:20]). PixelLab's agent runs the Godot binary itself and reads the
+   console (THwZYWuOdZI [00:13:45]). Pass on the `AGENT_RESULT` envelope plus a log scan, never on
+   "it exited": a script with a parse error exits 0, with or without `--check-only`, and so does a
+   script path Godot cannot find (version deltas, verified; L6).
+2. **One writer per project.** A GUI editor holding a project keeps its own copy of the open scenes,
+   so its next save can overwrite a headless edit [added]; merged `.tscn` files can fail to parse
+   (Lilith Duncan, CAJ_iIedx_I [00:01:36]). The toolkit refuses a project a GUI Godot has open; work
+   through that editor (MCP) or ask the user to close it. Never close a Godot or Blender process you
+   did not start [added].
+3. **Milliseconds against a budget, on the target.** Measure before optimizing (Dan Does Dev,
+   s2C2RO_WMh0 [00:07:12]); profile on the real device class, thermals included (Ian Bolton,
+   WrjaUNAXYqk [00:09:35]). Headless frame time is loop time, not game cost; windowed frame time on
+   this Mac is pinned to the display refresh; judge `gpu_ms` and `cpu_ms` (observed).
+4. **Look AND check.** Every frame goes through [`gd_review.image_checks`](scripts/gd_review.py) and
+   a contact sheet you open. Headless draws nothing, so captures need a windowed run (observed).
+   After AI asset import, check facing, animation direction, tile seams and camera jitter by eye
+   (PixelLab, THwZYWuOdZI).
+5. **Tests are the contract.** Assert on signals and public results, not internals (Godotneers,
+   CreugthdgJ0 [01:08:36]; Butch Wesley, ImqhHLlPfZg [00:16:59]; Mike Schulze, x6GdTgIAFiU
+   [00:24:19]); bound every await (2 s Godotneers, 5 s Schulze); prove the test bites by emptying
+   the function and watching it go red (Wesley [00:13:40]).
+6. **Design for a mouseless driver.** Split body and brain so a test brain can steer a character
+   (Godotneers [00:18:14]). Headless has no mouse device (Wesley [00:48:33]), yet GUI input still
+   tests headless: `get_viewport().push_input(event, true)` reaches Controls, while
+   `Input.parse_input_event` never reaches a MOUSE_FILTER_STOP Control (scenario-godot-gameplay,
+   scenario-godot-ui, observed); pass `true` so positions are logical, not window pixels. Levels
+   hold a spawn point, not the player (Godotneers [00:56:56]).
+7. **Edits persist only with `owner` and a save.** `add_child` alone is invisible in the Scene dock
+   and lost on save (Godot docs, Running code in the editor); script edits bypass Undo unless routed
+   through `EditorUndoRedoManager` (Queble, nW7YtSSJzbQ [00:04:41]).
+8. **Be honest about visual editors.** VisualShader, AnimationTree, the TileSet and theme editors,
+   and the particle inspector are visual; the agent writes `.gdshader`, `.tres`/`.tscn` text, or
+   builds the resource in code, and names the GUI path for a human. Pick an MCP by feedback
+   fidelity, not tool count (Fennara [00:09:22]).
 
 ## Execution channels
 
@@ -33,32 +69,59 @@ Expert Godot work is a loop run against evidence: set the budget, build one stag
 | **GUI editor + MCP** (hybridindie `godot-editor-mcp`)                 | the user's open editor: live tree, selection, undoable edits  | stdio probe 0.9 s, 23 tools exposed by default                                            | only when the user has the editor open; project-local `.mcp.json` only ([`gd_live.write_mcp_config`](scripts/gd_live.py)) |
 | **Running game + MCP** (tugcantopaloglu)                              | drive a running game (input, eval)                            | not run here                                                                              | clone, `npm run build`, a game autoload on port 9090                                                                      |
 
-`gd_live.channels(P)` reports what is possible now. Prefer the headless channels; add an MCP for live scene inspection.
+`gd_live.channels(P)` reports what is possible now. Prefer the headless channels; add an MCP for
+live scene inspection.
 
 ## Establish first
 
-Ask once, then run: target platforms and lowest device; frame budget (default 60 fps desktop, 30 fps mobile); 2D or 3D; renderer (Forward+ desktop 3D, Mobile for demanding phones, Compatibility for web and widest reach, after Ray Hayes, KWhVVMpihsc [00:06:03]); art style and pixel art or not; whether the user's editor has the project open; the deliverable. Then `gd_live.channels(P)` and `gd_run.audit(P, "project")`, and write the renderer, physics engine (Jolt for 3D), stretch mode, main scene and autoloads into the plan.
+Ask once, then run: target platforms and lowest device; frame budget (default 60 fps desktop, 30 fps
+mobile); 2D or 3D; renderer (Forward+ desktop 3D, Mobile for demanding phones, Compatibility for web
+and widest reach, after Ray Hayes, KWhVVMpihsc [00:06:03]); art style and pixel art or not; whether
+the user's editor has the project open; the deliverable. Then `gd_live.channels(P)` and
+`gd_run.audit(P, "project")`, and write the renderer, physics engine (Jolt for 3D), stretch mode,
+main scene and autoloads into the plan.
 
 ## Workflow (the expert loop)
 
-1. **Brief in numbers.** Budgets per platform, resolution, scale, style. GATE: every later check has a number to compare with.
-2. **Project.** `gd_env.base_project("3d"|"2d", dest)` (APFS clone, 0.01 s, its own `user://` folder) or `new_project(...)`, which writes the project-manager defaults a hand-written `project.godot` lacks. GATE: `audit(P, "project")` has no flags.
-3. **Baseline.** `check_all(P)`, `audit(P, "scene", scene=...)`, captures from fixed views, a profile if performance matters. GATE: zero parse and script errors; flags fixed or listed; sheet opened.
-4. **Build one stage** with small idempotent jobs (get-or-create, `owner` set, explicit save). Route domain work to its owner (below).
-5. **Measure.** Audit, tests (`run_tests`), `profile_scene` plus [`gd_stat.budget_check`](scripts/gd_stat.py), or the export result. GATE: numbers against the brief.
-6. **Look AND check.** Same views, `image_checks`, contact sheet opened, judged with the domain skill's critique. GATE: no flag that sets `ok` false, the change visible (`compare` changed_fraction above 0).
+1. **Brief in numbers.** Budgets per platform, resolution, scale, style. GATE: every later check has
+   a number to compare with.
+2. **Project.** `gd_env.base_project("3d"|"2d", dest)` (APFS clone, 0.01 s, its own `user://`
+   folder) or `new_project(...)`, which writes the project-manager defaults a hand-written
+   `project.godot` lacks. GATE: `audit(P, "project")` has no flags.
+3. **Baseline.** `check_all(P)`, `audit(P, "scene", scene=...)`, captures from fixed views, a
+   profile if performance matters. GATE: zero parse and script errors; flags fixed or listed; sheet
+   opened.
+4. **Build one stage** with small idempotent jobs (get-or-create, `owner` set, explicit save). Route
+   domain work to its owner (below).
+5. **Measure.** Audit, tests (`run_tests`), `profile_scene` plus
+   [`gd_stat.budget_check`](scripts/gd_stat.py), or the export result. GATE: numbers against the
+   brief.
+6. **Look AND check.** Same views, `image_checks`, contact sheet opened, judged with the domain
+   skill's critique. GATE: no flag that sets `ok` false, the change visible (`compare`
+   changed_fraction above 0).
 7. **Fix before advancing**, one change at a time; `compare` proves parity or gain.
-8. **Deliver with evidence.** Each step with its toolkit call, then **Verified** (what ran, result file, number or frame) and **Assumed** (not run, defaults). Never call a scene, shader, level or build done without numbers and a frame you looked at.
+8. **Deliver with evidence.** Each step with its toolkit call, then **Verified** (what ran, result
+   file, number or frame) and **Assumed** (not run, defaults). Never call a scene, shader, level or
+   build done without numbers and a frame you looked at.
 
 ## Shared toolkit ([`scripts/`](scripts/), the contract for every scenario-godot-* skill)
 
-`import sys; sys.path.insert(0, "<scenario-godot-expert>/scripts")`. System python3, standard library (Pillow optional).
+`import sys; sys.path.insert(0, "<scenario-godot-expert>/scripts")`. System python3, standard
+library (Pillow optional).
 
-Every `gd_env`, `gd_run`, `gd_review`, `gd_stat` and `gd_live` call, with defaults and return values: [`references/procedures.md`](references/procedures.md) section 1. Most used: `gd_env.new_project`, `gd_run.run_script`, `gd_run.capture_scene`, `gd_run.profile_scene`, `gd_run.export`, `gd_review.image_checks`.
+Every `gd_env`, `gd_run`, `gd_review`, `gd_stat` and `gd_live` call, with defaults and return
+values: [`references/procedures.md`](references/procedures.md) section 1. Most used:
+`gd_env.new_project`, `gd_run.run_script`, `gd_run.capture_scene`, `gd_run.profile_scene`,
+`gd_run.export`, `gd_review.image_checks`.
 
-Every `gd_run` run returns `ok`, `error`, `result` (the job's dictionary), `exit_code`, `timed_out`, `parse_errors`, `script_errors`, `shader_errors`, `engine_errors`, `warnings`, `leaks`, `log_path`, `result_path`. Output lands in `<project>/.agent_out/` (carries `.gdignore`). Concurrency: `GD_MAX` (6) Godot processes, `GD_MAX_WINDOWED` (2), one per project, all through `gd_run.godot_slot`; `GodotBusy` when a GUI editor holds the project.
+Every `gd_run` run returns `ok`, `error`, `result` (the job's dictionary), `exit_code`, `timed_out`,
+`parse_errors`, `script_errors`, `shader_errors`, `engine_errors`, `warnings`, `leaks`, `log_path`,
+`result_path`. Output lands in `<project>/.agent_out/` (carries `.gdignore`). Concurrency: `GD_MAX`
+(6) Godot processes, `GD_MAX_WINDOWED` (2), one per project, all through `gd_run.godot_slot`;
+`GodotBusy` when a GUI editor holds the project.
 
-A domain job is a GDScript file in the project (AgentKit, [`scripts/agentkit/`](scripts/agentkit/), is copied to `res://addons/agentkit/`):
+A domain job is a GDScript file in the project (AgentKit, [`scripts/agentkit/`](scripts/agentkit/),
+is copied to `res://addons/agentkit/`):
 
 ```gdscript
 extends "res://addons/agentkit/agent_job.gd"
@@ -68,7 +131,19 @@ func run() -> Dictionary:
 	return {"ok": true, "speed": arg("speed", 4.0)}       # arg() typed by its default
 ```
 
-Or a method on any RefCounted script, `run_script(P, "res://tools/x.gd:build", args)` (it receives the job). Errors logged during the job flip `ok` to false unless `expect_errors` is set. A script error aborts a typed `run() -> Dictionary`, which then returns `{}`: an empty result always fails (`aborted: true`), even with `expect_errors`, so return at least `{"ok": true}`. `export` reports `bytes` for every file it wrote (`main_bytes` for the named one) and treats an iOS `export_project_only` Xcode project as the `artifact`. Captures emulate the project stretch (keep, keep_width, keep_height, expand, ignore, integer scale, scale factor, viewport mode) with black bars, matching the engine on 15 cases (L20); in your own job read a `make_viewport` SubViewport with `agent_capture.grab(vp)`. Helpers: `arg`, `out_path`, `load_scene`, `wait_frames`, `wait_physics_frames`, `wait_seconds`, `note`, `is_headless`, `captured_errors`; libraries [`agent_build.gd`](scripts/agentkit/agent_build.gd) (`save_scene`, presets), [`agent_profile.gd`](scripts/agentkit/agent_profile.gd) (`record`). Domain code goes in `scripts/gd_<domain>.py` and `scripts/agentkit/<domain>/`.
+Or a method on any RefCounted script, `run_script(P, "res://tools/x.gd:build", args)` (it receives
+the job). Errors logged during the job flip `ok` to false unless `expect_errors` is set. A script
+error aborts a typed `run() -> Dictionary`, which then returns `{}`: an empty result always fails
+(`aborted: true`), even with `expect_errors`, so return at least `{"ok": true}`. `export` reports
+`bytes` for every file it wrote (`main_bytes` for the named one) and treats an iOS
+`export_project_only` Xcode project as the `artifact`. Captures emulate the project stretch (keep,
+keep_width, keep_height, expand, ignore, integer scale, scale factor, viewport mode) with black
+bars, matching the engine on 15 cases (L20); in your own job read a `make_viewport` SubViewport with
+`agent_capture.grab(vp)`. Helpers: `arg`, `out_path`, `load_scene`, `wait_frames`,
+`wait_physics_frames`, `wait_seconds`, `note`, `is_headless`, `captured_errors`; libraries
+[`agent_build.gd`](scripts/agentkit/agent_build.gd) (`save_scene`, presets),
+[`agent_profile.gd`](scripts/agentkit/agent_profile.gd) (`record`). Domain code goes in
+`scripts/gd_<domain>.py` and `scripts/agentkit/<domain>/`.
 
 ## Numbers
 
@@ -84,8 +159,12 @@ Or a method on any RefCounted script, `run_script(P, "res://tools/x.gd:build", a
 
 ## Quality gates
 
-- **Measurable:** `ok` true with zero parse, script and shader errors; `check_all` `failed_files == []`; JUnit `failures == 0` and `tests > 0`; audit flags fixed or justified; `budget_check` ok (p95 under target, hitch ratio at most 1%); export exit 0, artifact size recorded, `verify_pack` lists the expected files.
-- **Visual:** every capture passes `image_checks` (`ok` false on all_black, all_white, uniform, transparent) and was opened in a contact sheet; before and after from the same views.
+- **Measurable:** `ok` true with zero parse, script and shader errors; `check_all`
+  `failed_files == []`; JUnit `failures == 0` and `tests > 0`; audit flags fixed or justified;
+  `budget_check` ok (p95 under target, hitch ratio at most 1%); export exit 0, artifact size
+  recorded, `verify_pack` lists the expected files.
+- **Visual:** every capture passes `image_checks` (`ok` false on all_black, all_white, uniform,
+  transparent) and was opened in a contact sheet; before and after from the same views.
 
 ## Common mistakes
 
@@ -121,7 +200,13 @@ Or a method on any RefCounted script, `run_script(P, "res://tools/x.gd:build", a
 | scenario-godot-pipeline-automation | CLI and CI, editor plugins, GUT and gdUnit4, import plugins, GDExtension, MCP workflows                   |
 | scenario-godot-performance-export  | profiler, monitors, stutter, mobile, web, desktop and Steam export, signing                               |
 
-A cross-cutting item has one owner: shader stutter and web threading go to scenario-godot-performance-export, naming the second skill in the brief. Every handoff packet carries: project path and channel, the brief in numbers, what was done with its toolkit calls, evidence (result JSON path, contact sheet and flags, CSV with `budget_check`, JUnit totals, export sizes), Verified, Assumed, open issues, and a fence (what the receiver may touch). The receiver reproduces one piece of evidence before building on it. Sister teams: blender-expert (asset fixes before GLB export), unreal-expert, unity-expert, maya-expert, zbrush-expert.
+A cross-cutting item has one owner: shader stutter and web threading go to
+scenario-godot-performance-export, naming the second skill in the brief. Every handoff packet
+carries: project path and channel, the brief in numbers, what was done with its toolkit calls,
+evidence (result JSON path, contact sheet and flags, CSV with `budget_check`, JUnit totals, export
+sizes), Verified, Assumed, open issues, and a fence (what the receiver may touch). The receiver
+reproduces one piece of evidence before building on it. Sister teams: blender-expert (asset fixes
+before GLB export), unreal-expert, unity-expert, maya-expert, zbrush-expert.
 
 ## Scenario assets into Godot
 
@@ -135,16 +220,26 @@ A cross-cutting item has one owner: shader stutter and web threading go to scena
 | skyboxes, 360 panoramas                    | scenario-skyboxes                                   | scenario-godot-rendering-lighting (sky)                           |
 | music, SFX, ambience, voice                | scenario-audio, scenario-elevenlabs                 | scenario-godot-audio                                              |
 
-Check the asset before import (scenario-quality-gate) and again after it, in a capture from the game camera judged by the receiving skill, which also audits GLB scale, pivot and triangle count.
+Check the asset before import (scenario-quality-gate) and again after it, in a capture from the game
+camera judged by the receiving skill, which also audits GLB scale, pivot and triangle count.
 
 ## Godot 4.7 traps and platform notes
 
-Read [`references/traps.md`](references/traps.md) before the first job: Godot 3 names that pass `--check-only`, `--script` hangs, unknown flags ignored, `-d` waiting on stdin, what headless cannot do (MultiMesh writes, GPUParticles), `ProjectSettings.save()` rewriting `project.godot`, import crashes, deprecated APIs; then the macOS binary, template and `user://` paths, window focus, and Metal profiling; then the Windows paths and the `PYTHONUTF8=1` rule.
+Read [`references/traps.md`](references/traps.md) before the first job: Godot 3 names that pass
+`--check-only`, `--script` hangs, unknown flags ignored, `-d` waiting on stdin, what headless cannot
+do (MultiMesh writes, GPUParticles), `ProjectSettings.save()` rewriting `project.godot`, import
+crashes, deprecated APIs; then the macOS binary, template and `user://` paths, window focus, and
+Metal profiling; then the Windows paths and the `PYTHONUTF8=1` rule.
 
 ## References
 
-- [`references/expert-notes.md`](references/expert-notes.md): expert claims by source with timestamps, and traps observed while building the toolkit.
-- [`references/procedures.md`](references/procedures.md): the toolkit API in full, job-writing rules, and each procedure with its live test and result.
-- [`references/critique.md`](references/critique.md): the rubric for judging an agent's Godot output and a handoff.
-- [`references/gui-paths.md`](references/gui-paths.md): editor menus and settings for the same tasks.
-- [`references/sources.md`](references/sources.md): every source with credentials, URLs and best timestamps.
+- [`references/expert-notes.md`](references/expert-notes.md): expert claims by source with
+  timestamps, and traps observed while building the toolkit.
+- [`references/procedures.md`](references/procedures.md): the toolkit API in full, job-writing
+  rules, and each procedure with its live test and result.
+- [`references/critique.md`](references/critique.md): the rubric for judging an agent's Godot output
+  and a handoff.
+- [`references/gui-paths.md`](references/gui-paths.md): editor menus and settings for the same
+  tasks.
+- [`references/sources.md`](references/sources.md): every source with credentials, URLs and best
+  timestamps.

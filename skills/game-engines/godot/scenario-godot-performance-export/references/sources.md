@@ -1,7 +1,8 @@
 # Sources: performance and release
 
-Notes for each source are in the research folder `notes/performance-export-platforms/` (not shipped).
-Credentials as stated by the source or the channel; "unverified" means not checked further.
+Notes for each source are in the research folder `notes/performance-export-platforms/` (not
+shipped). Credentials as stated by the source or the channel; "unverified" means not checked
+further.
 
 ## Official documentation (retrieved 2026-10-02, stable)
 
@@ -40,5 +41,7 @@ Credentials as stated by the source or the channel; "unverified" means not check
 
 ## Version facts
 
-- `sources/godot-version-deltas.md` in the research folder: web single-threaded default (4.3), physics interpolation (2D 4.3, 3D 4.4), Jolt default (4.6), Android permissions (4.3) and template layout (4.6), shader baker (4.5+).
+- `sources/godot-version-deltas.md` in the research folder: web single-threaded default (4.3),
+  physics interpolation (2D 4.3, 3D 4.4), Jolt default (4.6), Android permissions (4.3) and template
+  layout (4.6), shader baker (4.5+).
 - Live checks on Godot 4.7.2 (2026-10-02): `tests/live_evidence/godot-performance-export/`.

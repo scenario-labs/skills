@@ -1,6 +1,10 @@
 # Sources for scenario-unity-pipeline-automation
 
-Cluster `automation-pipeline`: notes in `notes/automation-pipeline/` (both digests, 14 video notes, 6 doc notes), saved docs in `sources/docs/automation-pipeline__*.md` (+ `.tables.md`), version facts in `sources/unity-version-deltas.md` (sections 3, 4, 11, 14, 15). Timestamps are `[hh:mm:ss]`. Precedence when sources disagree: the installed editor (observed), then the 6.3 Manual, then package docs, then videos.
+Cluster `automation-pipeline`: notes in `notes/automation-pipeline/` (both digests, 14 video notes,
+6 doc notes), saved docs in `sources/docs/automation-pipeline__*.md` (+ `.tables.md`), version facts
+in `sources/unity-version-deltas.md` (sections 3, 4, 11, 14, 15). Timestamps are `[hh:mm:ss]`.
+Precedence when sources disagree: the installed editor (observed), then the 6.3 Manual, then package
+docs, then videos.
 
 ## 1. Observed on this Mac (primary evidence)
 
@@ -51,4 +55,10 @@ Cluster `automation-pipeline`: notes in `notes/automation-pipeline/` (both diges
 
 ## Revision history
 
-- 2026-09-24 v0.2 refactor after the blind grade Y9: added `-consistencyCheck` (P19), AssetDatabase counters and batched `SaveAndReimport` (P20), the same `-buildTarget` on every stage (P21), ordinal Addressables assignment and the hard-reference gate (P22), release defines, clean tree and Unity CLI provenance (P23), LogAssert behavior (P24), the Editor and test asmdef template (P25), Unity Accelerator flags (P26), the public template route for Build Profiles; new `PipelineChecks.cs`, `test_live_checks.py`, offline tests for the CI script; all run in Unity 6000.3.21f1; v1 kept in `skills/_versions/unity-pipeline-automation v1 2026-09-24/`.
+- 2026-09-24 v0.2 refactor after the blind grade Y9: added `-consistencyCheck` (P19), AssetDatabase
+  counters and batched `SaveAndReimport` (P20), the same `-buildTarget` on every stage (P21),
+  ordinal Addressables assignment and the hard-reference gate (P22), release defines, clean tree and
+  Unity CLI provenance (P23), LogAssert behavior (P24), the Editor and test asmdef template (P25),
+  Unity Accelerator flags (P26), the public template route for Build Profiles; new
+  `PipelineChecks.cs`, `test_live_checks.py`, offline tests for the CI script; all run in Unity
+  6000.3.21f1; v1 kept in `skills/_versions/unity-pipeline-automation v1 2026-09-24/`.

@@ -1,6 +1,13 @@
 # Sources behind scenario-unreal-expert
 
-Per-source expert notes live in the project's `notes/` (never edited to fit this skill): `notes/python/`, `notes/editor-tools/` (digest `notes/python/_digest_python_mcp_remote.md`), `notes/pipeline/_digest_pipeline_testing_build.md`, `notes/profiling/_digest_profiling_packaging.md`. Saved documentation pages are in `sources/docs/`; the version map, the Mac feature table and the facts-to-verify checklist are in `sources/unreal-version-deltas.md`. Credentials are as stated in `sources/manifest.json` ("unverified" kept where it says so). Baseline answers without the skills: `tests/baseline/answers.md`.
+Per-source expert notes live in the project's `notes/` (never edited to fit this skill):
+`notes/python/`, `notes/editor-tools/` (digest `notes/python/_digest_python_mcp_remote.md`),
+`notes/pipeline/_digest_pipeline_testing_build.md`,
+`notes/profiling/_digest_profiling_packaging.md`. Saved documentation pages are in `sources/docs/`;
+the version map, the Mac feature table and the facts-to-verify checklist are in
+`sources/unreal-version-deltas.md`. Credentials are as stated in `sources/manifest.json`
+("unverified" kept where it says so). Baseline answers without the skills:
+`tests/baseline/answers.md`.
 
 ## Experts and talks
 
@@ -28,24 +35,63 @@ Per-source expert notes live in the project's `notes/` (never edited to fit this
 
 ## Official documentation (UE 5.8 pages, retrieved 2026-09-24, in `sources/docs/`)
 
-- Scripting the Unreal Editor Using Python (`automation-pipeline__python-scripting-editor.md`): every way to run Python, commandlet vs `-ExecutePythonScript`, paths, the four best practices. Ground truth for the headless modes in `ue_run`.
-- Unreal Python API reference, key classes (`automation-pipeline__python-api-reference-key-classes.md`): subsystems, AssetTools, AssetImportTask, validators, the docstring warnings (force delete, load_level without saving, destination_name ignored).
-- Unreal MCP (`automation-pipeline__unreal-mcp-official.md`): plugins, auto start, flags, cvars, tool search, Python toolsets, limitations.
-- Remote Control API, five pages (`automation-pipeline__remote-control-api.md`): endpoints, access rules, transactions, paths, WebSocket.
-- Community MCP servers, READMEs (`automation-pipeline__mcp-community-servers.md`): transport and safety patterns, Python Remote Execution as a plugin-free path; not Epic.
-- Editor Utilities and Scriptable Tools (`automation-pipeline__editor-utilities-scriptable-tools.md`).
-- Automation tests and Gauntlet (`automation-pipeline__automation-tests-gauntlet.md`): Python tests, latent commands, `take_high_res_screenshot`.
-- UAT BuildCookRun and command line (`automation-pipeline__uat-buildcookrun-commandline.md`); packaging and cooking (`performance-shipping__packaging-cooking-build.md`); chunking, Zen, IoStore (`performance-shipping__chunking-zen-iostore.md`).
-- Profiling fundamentals and stat commands (`performance-shipping__profiling-fundamentals-stat-commands.md`): the stat unit definitions `ue_stat.bound_by` follows; Unreal Insights (`performance-shipping__unreal-insights.md`).
-- MRQ command line and MRG scripting (`cinematics__mrq-command-line-and-mrg-scripting.md`); Movie Render Graph (`lighting-rendering__movie-render-graph.md`).
-- macOS development requirements (`automation-pipeline__macos-development-requirements.md`); Substrate overview (`materials__substrate-overview.md`); naming conventions (`editor-world__naming-conventions-redirectors.md`, Epic prefixes used by `ue_audit`).
-- Other notes cited by the refactor pass: World Partition doc, Using OFPA With Source Control (`notes/world-building/`); naming conventions and redirectors doc (`-autocheckout`); Data Validation doc (5.8 cook validation cvars); exposure doc (5.8 pre-exposure warning); rendering digest (Game Overrides); MRQ command line doc (`-notexturestreaming`, executor reference); Tom Looman's optimization articles, part 2 (World Partition Insights, community); tranek's GAS community guide 6.2 via `sources/unreal-version-deltas.md` (numpad on a MacBook); material updates 5.6 to 5.8 note (Blendable ceiling, Temporal Responsiveness cvar); optimization digest (VSM receiver masks, `r.Nanite.PrimeHZB`).
-- Release notes 5.4 to 5.8 (`versions__ue-5.X-release-notes.md`, `automation-pipeline__ue58-release-notes-pipeline-excerpts.md`): the 5.8 Remote Control allow list, MCP server, TraceQuery, snapshot hitches, MRG Production Ready, BlueprintGraphEditor, batch processor, Python behavior changes.
+- Scripting the Unreal Editor Using Python (`automation-pipeline__python-scripting-editor.md`):
+  every way to run Python, commandlet vs `-ExecutePythonScript`, paths, the four best practices.
+  Ground truth for the headless modes in `ue_run`.
+- Unreal Python API reference, key classes
+  (`automation-pipeline__python-api-reference-key-classes.md`): subsystems, AssetTools,
+  AssetImportTask, validators, the docstring warnings (force delete, load_level without saving,
+  destination_name ignored).
+- Unreal MCP (`automation-pipeline__unreal-mcp-official.md`): plugins, auto start, flags, cvars,
+  tool search, Python toolsets, limitations.
+- Remote Control API, five pages (`automation-pipeline__remote-control-api.md`): endpoints, access
+  rules, transactions, paths, WebSocket.
+- Community MCP servers, READMEs (`automation-pipeline__mcp-community-servers.md`): transport and
+  safety patterns, Python Remote Execution as a plugin-free path; not Epic.
+- Editor Utilities and Scriptable Tools
+  (`automation-pipeline__editor-utilities-scriptable-tools.md`).
+- Automation tests and Gauntlet (`automation-pipeline__automation-tests-gauntlet.md`): Python tests,
+  latent commands, `take_high_res_screenshot`.
+- UAT BuildCookRun and command line (`automation-pipeline__uat-buildcookrun-commandline.md`);
+  packaging and cooking (`performance-shipping__packaging-cooking-build.md`); chunking, Zen, IoStore
+  (`performance-shipping__chunking-zen-iostore.md`).
+- Profiling fundamentals and stat commands
+  (`performance-shipping__profiling-fundamentals-stat-commands.md`): the stat unit definitions
+  `ue_stat.bound_by` follows; Unreal Insights (`performance-shipping__unreal-insights.md`).
+- MRQ command line and MRG scripting (`cinematics__mrq-command-line-and-mrg-scripting.md`); Movie
+  Render Graph (`lighting-rendering__movie-render-graph.md`).
+- macOS development requirements (`automation-pipeline__macos-development-requirements.md`);
+  Substrate overview (`materials__substrate-overview.md`); naming conventions
+  (`editor-world__naming-conventions-redirectors.md`, Epic prefixes used by `ue_audit`).
+- Other notes cited by the refactor pass: World Partition doc, Using OFPA With Source Control
+  (`notes/world-building/`); naming conventions and redirectors doc (`-autocheckout`); Data
+  Validation doc (5.8 cook validation cvars); exposure doc (5.8 pre-exposure warning); rendering
+  digest (Game Overrides); MRQ command line doc (`-notexturestreaming`, executor reference); Tom
+  Looman's optimization articles, part 2 (World Partition Insights, community); tranek's GAS
+  community guide 6.2 via `sources/unreal-version-deltas.md` (numpad on a MacBook); material updates
+  5.6 to 5.8 note (Blendable ceiling, Temporal Responsiveness cvar); optimization digest (VSM
+  receiver masks, `r.Nanite.PrimeHZB`).
+- Release notes 5.4 to 5.8 (`versions__ue-5.X-release-notes.md`,
+  `automation-pipeline__ue58-release-notes-pipeline-excerpts.md`): the 5.8 Remote Control allow
+  list, MCP server, TraceQuery, snapshot hitches, MRG Production Ready, BlueprintGraphEditor, batch
+  processor, Python behavior changes.
 
 ## Project observations
 
-- `ue_env.preflight()` on this Mac, 2026-09-24: Apple M5 Max, macOS 26.5.1, 48 GB, Xcode 26.6 (reported "unlisted" against Epic's 5.8 window). Unreal Engine not installed (`ue_env.find_engine()` returns None).
+- `ue_env.preflight()` on this Mac, 2026-09-24: Apple M5 Max, macOS 26.5.1, 48 GB, Xcode 26.6
+  (reported "unlisted" against Epic's 5.8 window). Unreal Engine not installed
+  (`ue_env.find_engine()` returns None).
 
 ## Revision history
 
-- 2026-09-24, v0.2 refactor after the first blind test (`tests/grading/SUMMARY.md`, `U1_grade.md` to `U9_grade.md`): report protocol (engine call next to every toolkit call, Verified and Assumed lists) in SKILL.md and the new `references/toolkit-map.md`; `ue_run` 0.2 (pass only on the boot's job-id `UE_RESULT` envelope, recorded Asset Registry wait and `wait_for_registry()`, `-ScriptErrorsAreFatal` in editor mode, write-lock check, `strict`), tested in `test_ue_run_protocol_offline.py`; lead items from the "missing from both" lists added to SKILL.md, `ue-5.8-traps.md` and `python-reliability.md` (source control and OFPA submits, generated PCG content, headless source control, `-cookincremental`, cook validation stats, World Partition Insights, sampling profilers, exposure-range warning, Game Overrides, `-notexturestreaming`, farm manager, ScopedSlowTask, raw screenshot loop, MacBook numpad, domain version traps). v0.1 kept in `skills/_versions/unreal-expert v1 2026-09-24/`.
+- 2026-09-24, v0.2 refactor after the first blind test (`tests/grading/SUMMARY.md`, `U1_grade.md` to
+  `U9_grade.md`): report protocol (engine call next to every toolkit call, Verified and Assumed
+  lists) in SKILL.md and the new `references/toolkit-map.md`; `ue_run` 0.2 (pass only on the boot's
+  job-id `UE_RESULT` envelope, recorded Asset Registry wait and `wait_for_registry()`,
+  `-ScriptErrorsAreFatal` in editor mode, write-lock check, `strict`), tested in
+  `test_ue_run_protocol_offline.py`; lead items from the "missing from both" lists added to
+  SKILL.md, `ue-5.8-traps.md` and `python-reliability.md` (source control and OFPA submits,
+  generated PCG content, headless source control, `-cookincremental`, cook validation stats, World
+  Partition Insights, sampling profilers, exposure-range warning, Game Overrides,
+  `-notexturestreaming`, farm manager, ScopedSlowTask, raw screenshot loop, MacBook numpad, domain
+  version traps). v0.1 kept in `skills/_versions/unreal-expert v1 2026-09-24/`.

@@ -1,6 +1,7 @@
 # Inventory and materials manifest
 
-Both files are read and written by the Blender scripts next to this reference. Paths inside `materials.json` are relative to that JSON file.
+Both files are read and written by the Blender scripts next to this reference. Paths inside
+`materials.json` are relative to that JSON file.
 
 ## inventory.json
 
@@ -71,12 +72,29 @@ Written by `inventory.py` next to `Before.blend`. Read it instead of dumping the
 | `roughness_is_smoothness` | `false`                | Inverts the roughness map first; settle it by looking at a known family, see the skill body                                                                                                                                                                                                                                                                                   |
 | `basecolor_mode`          | `"tint"`               | `tint` multiplies the original palette color by the map's luminance variation, keeping the asset's colors; `replace` uses the PATINA basecolor as is                                                                                                                                                                                                                          |
 
-Family names `ceramic`, `enamel`, and `plastic` add a coat layer, `glass` adds coat plus a little transmission at IOR 1.46, and `leaf` adds subsurface. Other names get the plain PBR stack.
+Family names `ceramic`, `enamel`, and `plastic` add a coat layer, `glass` adds coat plus a little
+transmission at IOR 1.46, and `leaf` adds subsurface. Other names get the plain PBR stack.
 
-Validation runs before the scene is touched and lists every problem at once: a manifest that is not a JSON object, an unmapped material, a non-string family name, an undefined family, a missing or unreadable map file, a family missing a role, a range outside 0 to 1, a negative or non-numeric `normal_strength` or `bump_distance`, an override without a non-empty list of non-empty string `prefixes` and a string `family`, and a file used both as a basecolor and as a data map. Both scripts exit 1 with a one-line `inventory failed:` or `apply_materials failed:` message after the traceback on any failure, with or without Blender's `--python-exit-code 1`.
+Validation runs before the scene is touched and lists every problem at once: a manifest that is not
+a JSON object, an unmapped material, a non-string family name, an undefined family, a missing or
+unreadable map file, a family missing a role, a range outside 0 to 1, a negative or non-numeric
+`normal_strength` or `bump_distance`, an override without a non-empty list of non-empty string
+`prefixes` and a string `family`, and a file used both as a basecolor and as a data map. Both
+scripts exit 1 with a one-line `inventory failed:` or `apply_materials failed:` message after the
+traceback on any failure, with or without Blender's `--python-exit-code 1`.
 
 ## Checks before the film
 
-- Self-tile the basecolor of each family as a 2x2 sheet. A visible border means the generation carried tile edges: check that `tileSize` matched the resolution (128 for 1024, 256 for 2048), then regenerate that family with another seed, or crop the interior and re-tile locally before wiring it. The script does not detect borders.
-- Open the output `.blend` once. The planar projection suits architecture; a curved prop, a UV seam, or wood grain running the wrong way is fixed by keeping that object's authored UVs or rotating its projection in Blender.
-- The report sits next to the output with `.blend` replaced by `.materials.json` (`PATINA.blend` gives `PATINA.materials.json`; the script's printed result names it under `report`) and lists the geometry hash before and after, the material variants created, the packed image count (unique map files, so it can be below families times five), and `non_mesh_renderables`; the material count is original materials times families they map to, so 41 materials over 14 families produced 43 variants in one project.
+- Self-tile the basecolor of each family as a 2x2 sheet. A visible border means the generation
+  carried tile edges: check that `tileSize` matched the resolution (128 for 1024, 256 for 2048),
+  then regenerate that family with another seed, or crop the interior and re-tile locally before
+  wiring it. The script does not detect borders.
+- Open the output `.blend` once. The planar projection suits architecture; a curved prop, a UV seam,
+  or wood grain running the wrong way is fixed by keeping that object's authored UVs or rotating its
+  projection in Blender.
+- The report sits next to the output with `.blend` replaced by `.materials.json` (`PATINA.blend`
+  gives `PATINA.materials.json`; the script's printed result names it under `report`) and lists the
+  geometry hash before and after, the material variants created, the packed image count (unique map
+  files, so it can be below families times five), and `non_mesh_renderables`; the material count is
+  original materials times families they map to, so 41 materials over 14 families produced 43
+  variants in one project.

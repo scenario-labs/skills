@@ -1,6 +1,9 @@
 # Critique rubric: judging your own mobile work
 
-Score every deliverable against these checks before calling it done. Each line says what to measure or look at, the pass condition, and the job that produces the evidence. A check you could not run goes to **Assumed** in the report with the reason (no phone connected here: every device check is Assumed until a human runs it).
+Score every deliverable against these checks before calling it done. Each line says what to measure
+or look at, the pass condition, and the job that produces the evidence. A check you could not run
+goes to **Assumed** in the report with the reason (no phone connected here: every device check is
+Assumed until a human runs it).
 
 ## 1. Frame budget and thermals
 
@@ -102,10 +105,14 @@ Score every deliverable against these checks before calling it done. Each line s
 
 ## 8. Hand-over complete
 
-- The M13 checklist is in the report with every step the human owns: soak and `soak_verdict`, native profilers, Android vitals and ANR triage, sandbox purchases, test suite removal, Play Console (internal track first, Play App Signing, ads, advertising ID and Data safety declarations), App Store Connect (archive plan, thinning report, TestFlight).
+- The M13 checklist is in the report with every step the human owns: soak and `soak_verdict`, native
+  profilers, Android vitals and ANR triage, sandbox purchases, test suite removal, Play Console
+  (internal track first, Play App Signing, ads, advertising ID and Data safety declarations), App
+  Store Connect (archive plan, thinning report, TestFlight).
 
 ## 9. Report honesty
 
-- Every step names its Unity call; **Verified** lists job ids and numbers; **Assumed** lists every device, store and account step.
+- Every step names its Unity call; **Verified** lists job ids and numbers; **Assumed** lists every
+  device, store and account step.
 - No number quoted from a video as if measured here; observed numbers carry "observed" and the date.
 - Nothing claims "ships" without the device checks.

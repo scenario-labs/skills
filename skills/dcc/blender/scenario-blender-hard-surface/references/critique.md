@@ -3,11 +3,15 @@
 Run in this order, every shading pass and before delivery:
 
 1. `r = HS.shading_audit(ob); v = HS.verdict(r)`: what code can see.
-2. `HS.review([ob], out, views=("front","threequarter","top","low"), modes=("matcap","hsgrey","reflect","wire"))`: open the sheet.
-3. One `HS.closeup(ob, point, radius, path, mode="shiny")` per cut, per union, per corner where three bevels meet. Radius about 2 to 3 times the feature. Open each.
+2. `HS.review([ob], out, views=("front","threequarter","top","low"), modes=("matcap","hsgrey","reflect","wire"))`:
+   open the sheet.
+3. One `HS.closeup(ob, point, radius, path, mode="shiny")` per cut, per union, per corner where
+   three bevels meet. Radius about 2 to 3 times the feature. Open each.
 4. Score the table below. Report every line that is not a pass, with its number or image.
 
-The verdict and the eye must agree. A clean verdict with an ugly closeup means a defect the code does not measure (write it down); an ugly verdict with a clean closeup means a threshold or a false positive (say which).
+The verdict and the eye must agree. A clean verdict with an ugly closeup means a defect the code
+does not measure (write it down); an ugly verdict with a clean closeup means a threshold or a false
+positive (say which).
 
 ## Rubric
 
@@ -51,13 +55,22 @@ The verdict and the eye must agree. A clean verdict with an ugly closeup means a
 
 ## Design critique (no metric, still required)
 
-- **Big, medium, small** (rileyb3d [00:01:01]): primary silhouette first, secondary cut-ins, tertiary details last. Tertiary detail on a weak primary is a fail.
-- **Detail placement**: clusters where the eye should go, calm areas elsewhere (room for decals or serials), each detail aligned to a neighbor's edge or axis (Ryuu [00:28:37], Gambrell [00:35:21]). Random scatter reads as noise.
-- **Function**: panels, fasteners, vents and joints should suggest how the object is built and moves (du Mont annotating the concept [00:47:13], PzThree [00:54:14]).
-- **Intersections**: a perfect intersection of two parts looks fake; add a collar, grommet or chamfer (du Mont [00:39:36]).
-- **Scale**: detail size follows real size (Augusto [00:24:31]); bevel width follows real size and viewing distance.
-- **Chamfers**: planar shifts that catch light add read; too many identical bevels read as CG (Ryuu [00:33:05]).
+- **Big, medium, small** (rileyb3d [00:01:01]): primary silhouette first, secondary cut-ins,
+  tertiary details last. Tertiary detail on a weak primary is a fail.
+- **Detail placement**: clusters where the eye should go, calm areas elsewhere (room for decals or
+  serials), each detail aligned to a neighbor's edge or axis (Ryuu [00:28:37], Gambrell [00:35:21]).
+  Random scatter reads as noise.
+- **Function**: panels, fasteners, vents and joints should suggest how the object is built and moves
+  (du Mont annotating the concept [00:47:13], PzThree [00:54:14]).
+- **Intersections**: a perfect intersection of two parts looks fake; add a collar, grommet or
+  chamfer (du Mont [00:39:36]).
+- **Scale**: detail size follows real size (Augusto [00:24:31]); bevel width follows real size and
+  viewing distance.
+- **Chamfers**: planar shifts that catch light add read; too many identical bevels read as CG (Ryuu
+  [00:33:05]).
 
 ## Delivery statement
 
-State: school used and why; stack per object; verdict lines left and why; tris per object (render and game); which closeups were looked at; what was not verified (for example: mirror seam fix not reproduced, bake not done).
+State: school used and why; stack per object; verdict lines left and why; tris per object (render
+and game); which closeups were looked at; what was not verified (for example: mirror seam fix not
+reproduced, bake not done).

@@ -1,6 +1,9 @@
 # scenario-godot-shaders sources
 
-Notes are in `notes/shaders/`, the digests in `notes/shaders/_digest_*.md`, and the docs in `sources/docs/shaders__*.md`. The version facts come from `sources/godot-version-deltas.md`. Frame contact sheets in `frames/<id>/sheet_*.jpg` were checked for XjCh2cN3Mfg (noise settings at 00:07:23) and 8EM0cgfbGp8 (Stencil inspector and the alpha-queue error at 00:07:38).
+Notes are in `notes/shaders/`, the digests in `notes/shaders/_digest_*.md`, and the docs in
+`sources/docs/shaders__*.md`. The version facts come from `sources/godot-version-deltas.md`. Frame
+contact sheets in `frames/<id>/sheet_*.jpg` were checked for XjCh2cN3Mfg (noise settings at
+00:07:23) and 8EM0cgfbGp8 (Stencil inspector and the alpha-queue error at 00:07:38).
 
 | Source                                              | Expert, credential                                        | URL                                                                                               | Best for                                        | Best timestamps                                            |
 | --------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |

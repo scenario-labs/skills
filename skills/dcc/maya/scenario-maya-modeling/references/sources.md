@@ -1,6 +1,11 @@
 # Sources behind scenario-maya-modeling
 
-Per-source notes: the project's `notes/modeling/` and `notes/fundamentals/` (plus `notes/rigging/e74KphYwMww` and `notes/pipeline/modeling__game-asset-fbx-export-unreal-maya` for the handoffs). Digests: `notes/modeling/_digest_modeling_topology_hard_surface.md`, `_digest_modeling_tools_scene_hygiene.md`, `_digest_modeling_organic_base_mesh.md`. Version facts: `sources/maya-version-deltas.md` § 2.1, 2.2, 2.12, 2.13. Credentials as the notes state them; "unverified" kept where the manifest could not confirm.
+Per-source notes: the project's `notes/modeling/` and `notes/fundamentals/` (plus
+`notes/rigging/e74KphYwMww` and `notes/pipeline/modeling__game-asset-fbx-export-unreal-maya` for the
+handoffs). Digests: `notes/modeling/_digest_modeling_topology_hard_surface.md`,
+`_digest_modeling_tools_scene_hygiene.md`, `_digest_modeling_organic_base_mesh.md`. Version facts:
+`sources/maya-version-deltas.md` § 2.1, 2.2, 2.12, 2.13. Credentials as the notes state them;
+"unverified" kept where the manifest could not confirm.
 
 ## Experts and videos
 
@@ -20,20 +25,71 @@ Per-source notes: the project's `notes/modeling/` and `notes/fundamentals/` (plu
 
 ## Documentation (retrieved 2026-09-24)
 
-- Maya 2027 Help, polygon modeling (preferences, Multi-Cut, legacy Bevel, Smart Bevel and its 2027.1 and 2027.2 changes, creases and the Crease Set Editor, Smooth Mesh Preview, Edit Edge Flow, extrude, bridge, booleans, topological symmetry): https://help.autodesk.com/cloudhelp/2027/ENU/Maya-Modeling/files/GUID-4A9B7918-06B9-4BDD-80DE-DD6D756B09B3.htm (Smart Bevel Options: GUID-8088912A-A766-4BCD-8E9A-F45FDB9FA09F). Saved: `sources/docs/modeling__maya2027-help-polygon-modeling-tools.md`.
-- Maya 2027 Help, fundamentals (DAG and DG, construction history, freeze and reset, pivots, marking menus, hotkeys, Optimize Scene Size): https://help.autodesk.com/cloudhelp/2027/ENU/Maya-Basics/files/GUID-9C82DAE2-8F19-4F63-BA1A-C28E95DDBE58.htm. Saved: `sources/docs/modeling__maya2027-help-fundamentals-dag-dg-history.md`.
-- Arnold user guide, polygon subdivision settings (Arnold renders the Smooth Mesh Preview state on top of its iterations; iterations quadruple polygons): https://help.autodesk.com/cloudhelp/ENU/AR-Core/files/ac-shapes/ac-polygons/arnold_user_guide_ac_polygons_ac_subdivision_settings_html.html. Saved in `sources/docs/lookdev-lighting__arnold-standard-surface-hair-displacement.md`.
-- Pixar OpenSubdiv, modeling tips and schemes: https://github.com/PixarAnimationStudios/OpenSubdiv/blob/release/documentation/mod_notes.rst. Saved: `sources/docs/modeling__pixar-opensubdiv-modeling-tips.md`.
-- Polycount wiki, Topology, Polygon Count, Normal Map Modeling, Texture Coordinates (CC BY-SA; sections by working game artists): http://wiki.polycount.com/wiki/Topology. Saved: `sources/docs/modeling__polycount-wiki-topology-polycount-normals-uvs.md`. Best sections: Triangle Count vs. Vertex Count; Smoothing Groups & Hard Edges (tangent basis); Polygons Vs. Triangles (check the triangulation in the engine); Contiguous Meshes; Floating Geometry; Edited Vertex Normals; Level of Detail Models; UV Tutorials & Threads (straight shell borders for LODs).
-- Epic Games, FBX Static Mesh Pipeline (pivot at origin, triangulate in the DCC, UCX collision, FBX 2020.2): https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-static-mesh-pipeline-in-unreal-engine. Saved: `sources/docs/modeling__game-asset-fbx-export-unreal-maya.md`.
-- Maya 2027 Help, retopology and UV Toolkit (for the handoff boundary): `sources/docs/modeling__maya2027-help-retopology-quad-draw.md`, `sources/docs/modeling__maya2027-help-uv-toolkit-unfold-layout.md` (§ Prepare a UV mesh step 2: Unfold3D refuses non-manifold and unfolds a triangulated mesh; § Room Space Options: keep 2 px; § Unfold a UV mesh: unselected UVs pinned; § Optimizations).
-- What's New in Maya 2025 to 2027 (Smart Extrude, Shift Extrude, legacy bevel filters, boolean engine, Volume mode, Smart Bevel point releases, FBX user normals): `sources/docs/scripting-pipeline__whats-new-maya-202{5,6,7}.md`.
+- Maya 2027 Help, polygon modeling (preferences, Multi-Cut, legacy Bevel, Smart Bevel and its 2027.1
+  and 2027.2 changes, creases and the Crease Set Editor, Smooth Mesh Preview, Edit Edge Flow,
+  extrude, bridge, booleans, topological symmetry):
+  https://help.autodesk.com/cloudhelp/2027/ENU/Maya-Modeling/files/GUID-4A9B7918-06B9-4BDD-80DE-DD6D756B09B3.htm
+  (Smart Bevel Options: GUID-8088912A-A766-4BCD-8E9A-F45FDB9FA09F). Saved:
+  `sources/docs/modeling__maya2027-help-polygon-modeling-tools.md`.
+- Maya 2027 Help, fundamentals (DAG and DG, construction history, freeze and reset, pivots, marking
+  menus, hotkeys, Optimize Scene Size):
+  https://help.autodesk.com/cloudhelp/2027/ENU/Maya-Basics/files/GUID-9C82DAE2-8F19-4F63-BA1A-C28E95DDBE58.htm.
+  Saved: `sources/docs/modeling__maya2027-help-fundamentals-dag-dg-history.md`.
+- Arnold user guide, polygon subdivision settings (Arnold renders the Smooth Mesh Preview state on
+  top of its iterations; iterations quadruple polygons):
+  https://help.autodesk.com/cloudhelp/ENU/AR-Core/files/ac-shapes/ac-polygons/arnold_user_guide_ac_polygons_ac_subdivision_settings_html.html.
+  Saved in `sources/docs/lookdev-lighting__arnold-standard-surface-hair-displacement.md`.
+- Pixar OpenSubdiv, modeling tips and schemes:
+  https://github.com/PixarAnimationStudios/OpenSubdiv/blob/release/documentation/mod_notes.rst.
+  Saved: `sources/docs/modeling__pixar-opensubdiv-modeling-tips.md`.
+- Polycount wiki, Topology, Polygon Count, Normal Map Modeling, Texture Coordinates (CC BY-SA;
+  sections by working game artists): http://wiki.polycount.com/wiki/Topology. Saved:
+  `sources/docs/modeling__polycount-wiki-topology-polycount-normals-uvs.md`. Best sections: Triangle
+  Count vs. Vertex Count; Smoothing Groups & Hard Edges (tangent basis); Polygons Vs. Triangles
+  (check the triangulation in the engine); Contiguous Meshes; Floating Geometry; Edited Vertex
+  Normals; Level of Detail Models; UV Tutorials & Threads (straight shell borders for LODs).
+- Epic Games, FBX Static Mesh Pipeline (pivot at origin, triangulate in the DCC, UCX collision, FBX
+  2020.2):
+  https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-static-mesh-pipeline-in-unreal-engine.
+  Saved: `sources/docs/modeling__game-asset-fbx-export-unreal-maya.md`.
+- Maya 2027 Help, retopology and UV Toolkit (for the handoff boundary):
+  `sources/docs/modeling__maya2027-help-retopology-quad-draw.md`,
+  `sources/docs/modeling__maya2027-help-uv-toolkit-unfold-layout.md` (§ Prepare a UV mesh step 2:
+  Unfold3D refuses non-manifold and unfolds a triangulated mesh; § Room Space Options: keep 2 px; §
+  Unfold a UV mesh: unselected UVs pinned; § Optimizations).
+- What's New in Maya 2025 to 2027 (Smart Extrude, Shift Extrude, legacy bevel filters, boolean
+  engine, Volume mode, Smart Bevel point releases, FBX user normals):
+  `sources/docs/scripting-pipeline__whats-new-maya-202{5,6,7}.md`.
 
 ## Decisions of this skill not taken from a source ([added])
 
-`MM.weighted_normals` "largest" mode and its 0.5 ratio (chosen to agree with Mario's 2:1 rule); the quad-cap layout with one ring so rim vertices stay valence 4; the engine vertex estimate as unique (vertex, fan, UV, shader) corners; `mirror_merge` near-miss band 0.01 cm and its manual fallback; `highlight_review` stripes (8 bands on a V ramp) and roughness 0.2; the 2% size tolerance; `handoff_report`'s rule that UV lines are pending, not hidden, when the receiver is scenario-maya-retopology-uv; the MA carrier for clean-scene rebuilds of multi-part or UV2 assets. Added in the refactor pass: `cage_report`'s "flat" test (every face touching a triangle within 1 degree of its plane) and its fan-pole definition (interior valence 5 or more, only triangles around it); `triangulated_copy(toward=)`'s criterion (keep the diagonal whose midpoint lies closer to the high); `inverted_shells` by signed volume on closed shells; `cleanup_technical`'s tessellation heuristic (n-gons down while triangles up); `topology_key` as the condition for carrying component ids. Each is documented where it is used and can be overridden.
+`MM.weighted_normals` "largest" mode and its 0.5 ratio (chosen to agree with Mario's 2:1 rule); the
+quad-cap layout with one ring so rim vertices stay valence 4; the engine vertex estimate as unique
+(vertex, fan, UV, shader) corners; `mirror_merge` near-miss band 0.01 cm and its manual fallback;
+`highlight_review` stripes (8 bands on a V ramp) and roughness 0.2; the 2% size tolerance;
+`handoff_report`'s rule that UV lines are pending, not hidden, when the receiver is
+scenario-maya-retopology-uv; the MA carrier for clean-scene rebuilds of multi-part or UV2 assets.
+Added in the refactor pass: `cage_report`'s "flat" test (every face touching a triangle within 1
+degree of its plane) and its fan-pole definition (interior valence 5 or more, only triangles around
+it); `triangulated_copy(toward=)`'s criterion (keep the diagonal whose midpoint lies closer to the
+high); `inverted_shells` by signed volume on closed shells; `cleanup_technical`'s tessellation
+heuristic (n-gons down while triangles up); `topology_key` as the condition for carrying component
+ids. Each is documented where it is used and can be overridden.
 
 ## Revision history
 
 - 2026-09-24, v1: initial build (snapshot in `skills/_versions/maya-modeling v1 2026-09-24/`).
-- 2026-09-24, v2 (refactor after the blind grade `tests/grading/M1_grade.md`): taught the items both graded answers missed, each from its cited note: narrowest-feature density and density vs redirection by camera distance (Mario); the triangle protocol on the cage and triangles ending loops on the low (Mario, On Mars); support loop before the detail on curves; hard edges 0 on a cage, valence census and fan caps (`MM.cage_report`); the Cleanup policy (`MM.cleanup_technical`); preview off at every save; flipped shells beyond two-sided lighting (`MM.inverted_shells`); contiguous low; deliberate triangulation of non-planar quads (`MM.triangulated_copy(toward=)`); On Mars' three budget bands; unique and non-default names as a stated gate; the edge on a round corner's crest; the Unfold3D preconditions, LOD and tangent-basis points at the UV handoff (P17); component lists across stages (`MM.component_record`, `MM.carry_components`, P18). Fixed the skill's own wording: the budget row no longer calls the grenade figure the only sourced number, the 2-segment box-corner rule is now attributed to the legacy bevel and left untested for Smart Bevel, and the Y-up row no longer reads as if the engine were Y up. New code: offline-tested pure functions, Maya job `tests/code/maya-modeling/test_mm_cage.py` (not yet run in Maya).
+- 2026-09-24, v2 (refactor after the blind grade `tests/grading/M1_grade.md`): taught the items both
+  graded answers missed, each from its cited note: narrowest-feature density and density vs
+  redirection by camera distance (Mario); the triangle protocol on the cage and triangles ending
+  loops on the low (Mario, On Mars); support loop before the detail on curves; hard edges 0 on a
+  cage, valence census and fan caps (`MM.cage_report`); the Cleanup policy (`MM.cleanup_technical`);
+  preview off at every save; flipped shells beyond two-sided lighting (`MM.inverted_shells`);
+  contiguous low; deliberate triangulation of non-planar quads (`MM.triangulated_copy(toward=)`); On
+  Mars' three budget bands; unique and non-default names as a stated gate; the edge on a round
+  corner's crest; the Unfold3D preconditions, LOD and tangent-basis points at the UV handoff (P17);
+  component lists across stages (`MM.component_record`, `MM.carry_components`, P18). Fixed the
+  skill's own wording: the budget row no longer calls the grenade figure the only sourced number,
+  the 2-segment box-corner rule is now attributed to the legacy bevel and left untested for Smart
+  Bevel, and the Y-up row no longer reads as if the engine were Y up. New code: offline-tested pure
+  functions, Maya job `tests/code/maya-modeling/test_mm_cage.py` (not yet run in Maya).

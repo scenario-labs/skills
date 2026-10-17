@@ -1,6 +1,8 @@
 # Critique rubric: judge your own effect before you hand it over
 
-Score each line pass, fix or n/a. Anything marked fix blocks delivery unless the reason is written down. Look at contact sheets of at most 1600 px (`gd_review.contact_sheet`, 4 columns of 400 px). Open a single frame at full size only to check a detail.
+Score each line pass, fix or n/a. Anything marked fix blocks delivery unless the reason is written
+down. Look at contact sheets of at most 1600 px (`gd_review.contact_sheet`, 4 columns of 400 px).
+Open a single frame at full size only to check a detail.
 
 ## A. Numbers (no eyes needed)
 
@@ -19,7 +21,8 @@ Score each line pass, fix or n/a. Anything marked fix blocks delivery unless the
 
 ## B. Frames (look at them)
 
-Capture each tier on its own renderer at 0.03, 0.1, 0.2, 0.35, 0.6, 1.0, 1.5 and 2.2 s with `--fixed-fps 60`. Capture the projectile mid-flight and at impact.
+Capture each tier on its own renderer at 0.03, 0.1, 0.2, 0.35, 0.6, 1.0, 1.5 and 2.2 s with
+`--fixed-fps 60`. Capture the projectile mid-flight and at impact.
 
 | #   | Look for                                                                             | Bad sign                                                                                                    |
 | --- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
@@ -38,4 +41,5 @@ Capture each tier on its own renderer at 0.03, 0.1, 0.2, 0.35, 0.6, 1.0, 1.5 and
 
 - Mark what was not run (phone GPU, SDF bake, 2D) and say why.
 - Give numbers with their context: resolution, renderer, driver, camera distance and machine.
-- Effects tuned by eye on one renderer are retuned on the others. Do not claim parity without the frames.
+- Effects tuned by eye on one renderer are retuned on the others. Do not claim parity without the
+  frames.

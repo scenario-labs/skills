@@ -1,6 +1,9 @@
 # Sources (scenario-unity-vfx)
 
-Every source behind the skill, with who the expert is, what the source is best for, and the timestamps worth opening. Distilled notes: `notes/vfx/` of the project (one note per source, three digests). Local copies of the docs: `sources/docs/vfx__*.md` (+ `.tables.md`). Version facts: `sources/unity-version-deltas.md` (sections 6, 12, 13, 14).
+Every source behind the skill, with who the expert is, what the source is best for, and the
+timestamps worth opening. Distilled notes: `notes/vfx/` of the project (one note per source, three
+digests). Local copies of the docs: `sources/docs/vfx__*.md` (+ `.tables.md`). Version facts:
+`sources/unity-version-deltas.md` (sections 6, 12, 13, 14).
 
 ## Videos and talks
 
@@ -37,4 +40,16 @@ Every source behind the skill, with who the expert is, what the source is best f
 
 ## Revision history
 
-- 2026-09-24, v0.2 (refactor after the blind grade `tests/grading/Y4_grade.md`; v0.1 kept in `skills/_versions/unity-vfx v1 2026-09-24/`): added the uber VFX shader with LUT ramps (`VfxUber.shader`, `VfxUber.cs`, YZWKdw03Gls), mesh-first effects with scrolling textures (`VfxMeshes`, `VfxMeshFx`, YZWKdw03Gls [00:28:02]), Custom Data and custom vertex streams (5SosGQwPXdY), importance tiers, brightness ladder, crowd readability and gameplay-stop tails (`VfxTier`, `ut_vfx.importance_ladder`, `crowd_readability`, `effect_verdict`, BOE8osaPzOY), motion lint (linear curves, speed contrast, start burst; YZWKdw03Gls [00:11:47]), random fixed flipbook frames verified from baked UVs (5Mw6NpSEb2o [00:05:58]), distortion order (5SosGQwPXdY [00:23:11]), texture sizing by screen coverage (`ScreenTexel`, KaNDezgsg4M [00:18:38]), scorch plus hot core marks (qh3TEYUN6cA [00:13:42]), VFX Graph hygiene (20WjQIFl85o), per-spawn reseeding; fixed the VFX Graph platform wording (compute; Android high-end URP subset), `Time.captureDeltaTime = 1f / 60f`, and draw-call budgets named per spell level, not device tier. Live tests P14 to P19, P4c, P9b and P9c added; all pass in 6000.3.21f1.
+- 2026-09-24, v0.2 (refactor after the blind grade `tests/grading/Y4_grade.md`; v0.1 kept in
+  `skills/_versions/unity-vfx v1 2026-09-24/`): added the uber VFX shader with LUT ramps
+  (`VfxUber.shader`, `VfxUber.cs`, YZWKdw03Gls), mesh-first effects with scrolling textures
+  (`VfxMeshes`, `VfxMeshFx`, YZWKdw03Gls [00:28:02]), Custom Data and custom vertex streams
+  (5SosGQwPXdY), importance tiers, brightness ladder, crowd readability and gameplay-stop tails
+  (`VfxTier`, `ut_vfx.importance_ladder`, `crowd_readability`, `effect_verdict`, BOE8osaPzOY),
+  motion lint (linear curves, speed contrast, start burst; YZWKdw03Gls [00:11:47]), random fixed
+  flipbook frames verified from baked UVs (5Mw6NpSEb2o [00:05:58]), distortion order (5SosGQwPXdY
+  [00:23:11]), texture sizing by screen coverage (`ScreenTexel`, KaNDezgsg4M [00:18:38]), scorch
+  plus hot core marks (qh3TEYUN6cA [00:13:42]), VFX Graph hygiene (20WjQIFl85o), per-spawn
+  reseeding; fixed the VFX Graph platform wording (compute; Android high-end URP subset),
+  `Time.captureDeltaTime = 1f / 60f`, and draw-call budgets named per spell level, not device tier.
+  Live tests P14 to P19, P4c, P9b and P9c added; all pass in 6000.3.21f1.

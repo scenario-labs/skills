@@ -1,23 +1,41 @@
 # scenario-unreal-vfx critique rubric
 
-The agent judges its own effect with this rubric after every capture pass and before delivery. Every row scores 0 (fails), 1 (partly), 2 (meets). Measurable rows are computed by `scripts/ue_vfx.py` (`score_rubric`, audits, verdicts) and by `tests/code/unreal-vfx/score_captures.py`; judgment rows need the agent to LOOK at the contact sheets and PIE screenshots and write one sentence of reason. Thresholds marked [added] are starting points of this skill, to calibrate on reference captures of the project; the principle behind each row is the expert's.
+The agent judges its own effect with this rubric after every capture pass and before delivery. Every
+row scores 0 (fails), 1 (partly), 2 (meets). Measurable rows are computed by `scripts/ue_vfx.py`
+(`score_rubric`, audits, verdicts) and by `tests/code/unreal-vfx/score_captures.py`; judgment rows
+need the agent to LOOK at the contact sheets and PIE screenshots and write one sentence of reason.
+Thresholds marked [added] are starting points of this skill, to calibrate on reference captures of
+the project; the principle behind each row is the expert's.
 
-Status: the metric functions passed offline on synthetic frames (2026-09-24); none has been calibrated on real Unreal captures yet. v0.2 (same day) made C2, C4 accent, S2 over time, T7 and Q3 measurable and added K9 to K11, D0, D8, D9, P6 and P7 after the U7 blind grade (`tests/grading/U7_grade.md`).
+Status: the metric functions passed offline on synthetic frames (2026-09-24); none has been
+calibrated on real Unreal captures yet. v0.2 (same day) made C2, C4 accent, S2 over time, T7 and Q3
+measurable and added K9 to K11, D0, D8, D9, P6 and P7 after the U7 blind grade
+(`tests/grading/U7_grade.md`).
 
 ## Inputs a review needs
 
-1. A deterministic capture series of the effect at fixed ages (procedure V7) plus clean plates (same camera, component rendering off), from the gameplay camera distance, in a review level with Manual exposure (auto exposure changes values between frames).
-2. The gameplay numbers: event time (hit frame), gameplay window end, damage radius projected to pixels (`UnrealEditorSubsystem.world_to_screen` of the center and of a point at the radius), projectile head and tail screen points, screen velocity.
-3. A crowd capture (N copies plus other effects, procedure V9) and one capture per `sg.EffectsQuality` level (V11).
+1. A deterministic capture series of the effect at fixed ages (procedure V7) plus clean plates (same
+   camera, component rendering off), from the gameplay camera distance, in a review level with
+   Manual exposure (auto exposure changes values between frames).
+2. The gameplay numbers: event time (hit frame), gameplay window end, damage radius projected to
+   pixels (`UnrealEditorSubsystem.world_to_screen` of the center and of a point at the radius),
+   projectile head and tail screen points, screen velocity.
+3. A crowd capture (N copies plus other effects, procedure V9) and one capture per
+   `sg.EffectsQuality` level (V11).
 4. For cost rows: the fixed-scenario numbers (V10) on the target core count.
-5. First, `ue_review.image_checks` on every frame: an all-white or all-black frame invalidates the series (the MCP talk showed an agent approve an all-white frame).
+5. First, `ue_review.image_checks` on every frame: an all-white or all-black frame invalidates the
+   series (the MCP talk showed an agent approve an all-white frame).
 
 ## Delivery rule
 
 - Any 0 in rows G1, G3, V1, V2, T1, T7, K1, K2, K4, K10, D0, D1, P1, P6 blocks delivery.
-- Any other 0 needs either a fix or a written reason accepted by the lead ("stylized game, pure white is the house style" is a valid reason; "looks fine" is not).
-- One change per pass (a User parameter, a Material Instance value, a spawn count), then re-capture and re-score. Keep the before and after sheets side by side (Kiraly's and Xiao Yue's habit: compare on the same scenario).
-- Timing is the pass that gets skipped from fatigue: always ask "can I push the timing harder" (Keyser #5 [00:21:45]).
+- Any other 0 needs either a fix or a written reason accepted by the lead ("stylized game, pure
+  white is the house style" is a valid reason; "looks fine" is not).
+- One change per pass (a User parameter, a Material Instance value, a spawn count), then re-capture
+  and re-score. Keep the before and after sheets side by side (Kiraly's and Xiao Yue's habit:
+  compare on the same scenario).
+- Timing is the pass that gets skipped from fatigue: always ask "can I push the timing harder"
+  (Keyser #5 [00:21:45]).
 
 ## A. Gameplay read
 
@@ -41,7 +59,8 @@ Status: the metric functions passed offline on synthetic frames (2026-09-24); no
 | V6  | Red-on-green or other low-value pairs keep contrast for color-blind players                                      | `cvd_contrast(key, mask, "deuteranopia")` and `"protanopia"` on a capture over the game's real ground (grass, foliage), not the neutral review plate | at least 0.7 [added]; fix by raising the element's value, not lighting the whole effect | Keyser #3 [00:10:54]-[00:12:03]                      |
 | V7  | Effect value range wider than environment and characters, a clear core and a subtle glow that "lights" the scene | judgment on the grayscale sheet; compare `value_bands` of effect and environment masks                                                               | effect range widest                                                                     | Keyser #3 [00:01:36]-[00:05:47]                      |
 
-Accurate grayscale matters: `lstar` uses linear-light Rec. 709 luminance, not a channel average (Keyser #3 [00:13:32]; Firsova warns the Windows grayscale filter exaggerates, [00:13:31]).
+Accurate grayscale matters: `lstar` uses linear-light Rec. 709 luminance, not a channel average
+(Keyser #3 [00:13:32]; Firsova warns the Windows grayscale filter exaggerates, [00:13:31]).
 
 ## C. Color
 
@@ -52,7 +71,9 @@ Accurate grayscale matters: `lstar` uses linear-light Rec. 709 luminance, not a 
 | C3  | Near-white core, most saturated color in the fringe, dark saturated halo                                                                                   | `core_fringe_verdict(radial_profile(key, centre, r, mask=mask))`                                                                                 | fringe saturation above core, core brightest, core under L* 99                                                                              | Keyser #4 [00:12:46]-[00:14:27], [00:19:55]                              |
 | C4  | About 60 / 30 / 10 with the accent near the focal point; palette harmonizes with the caster; semantic colors respected (heal green, poison leaning purple) | `palette_shares(key, mask, k=3)`, `accent_focal_distance(key, mask, focal_px)` plus judgment; iterate with gradient maps                         | shares within 15 points; accent within 10% of the diagonal [added]                                                                          | Firsova [00:14:39]-[00:16:24]; Keyser #4 [00:07:01]; Shishido [00:20:19] |
 
-HDR note [added]: emissive values above 1 bloom and tone-map toward white, so "near white but not quite" is controlled by emissive intensity and bloom, and judged on the tone-mapped screenshot, never on the color-picker value.
+HDR note [added]: emissive values above 1 bloom and tone-map toward white, so "near white but not
+quite" is controlled by emissive intensity and bloom, and judged on the tone-mapped screenshot,
+never on the color-picker value.
 
 ## D. Shape and composition
 
@@ -66,7 +87,8 @@ HDR note [added]: emissive values above 1 bloom and tone-map toward white, so "n
 | S6  | Line of action continues the caster's pose; symmetric weight at the impact, asymmetric in flight   | judgment with the character in frame                                                                    | yes                                                                                                  | Firsova [00:03:59]-[00:07:51]                       |
 | S7  | Style fits the game's three pillars and the prompt's mood                                          | judgment                                                                                                | yes                                                                                                  | Keyser #1 [00:04:44]; Shishido [00:12:42]           |
 
-Firsova's closing question is the last check of every pass: "What am I as a viewer noticing the most, and is it actually what I wanted the viewer to look at at this moment?" [00:18:30].
+Firsova's closing question is the last check of every pass: "What am I as a viewer noticing the
+most, and is it actually what I wanted the viewer to look at at this moment?" [00:18:30].
 
 ## E. Timing and motion
 
@@ -134,4 +156,8 @@ Firsova's closing question is the last check of every pass: "What am I as a view
 
 ## Crosswalk with the digest rubrics
 
-The two Niagara digests number their rubric 1 to 30. Map: 1 = G1, 2 = G2, 3 = G3, 4 = G4, 5 = S3, 6 = S1, 7 = V4, 8 = V2, 9 = C1 and C3, 10 = C4, 11 = S2, 12 = T6, 13 = S4, 14 = S5, 15 = S7, 16 = K6, 17 = K1 to K3, 18 = V1 and V7, 19 = V3, 20 = V5, 21 = V7, 22 = V6, 23 = T1 and T2, 24 = T3, 25 = T4, 26 = T5, 27 = K1 to K3, 28 = K4, 29 = Q1 and Q2, 30 = fluids side-by-side (procedure V12). The destruction digest's checklists map to H and I.
+The two Niagara digests number their rubric 1 to 30. Map: 1 = G1, 2 = G2, 3 = G3, 4 = G4, 5 = S3, 6
+= S1, 7 = V4, 8 = V2, 9 = C1 and C3, 10 = C4, 11 = S2, 12 = T6, 13 = S4, 14 = S5, 15 = S7, 16 = K6,
+17 = K1 to K3, 18 = V1 and V7, 19 = V3, 20 = V5, 21 = V7, 22 = V6, 23 = T1 and T2, 24 = T3, 25 = T4,
+26 = T5, 27 = K1 to K3, 28 = K4, 29 = Q1 and Q2, 30 = fluids side-by-side (procedure V12). The
+destruction digest's checklists map to H and I.

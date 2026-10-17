@@ -1,8 +1,7 @@
 # Overlay payload reference
 
-One JSON object per overlay. The kind is picked by which template field is
-present: `text_template` (text layer) or `html_template` (rich layer),
-never both. Shared fields:
+One JSON object per overlay. The kind is picked by which template field is present: `text_template`
+(text layer) or `html_template` (rich layer), never both. Shared fields:
 
 | Field           | Type             | Rules                                                                                                                                                                        |
 | --------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -12,20 +11,16 @@ never both. Shared fields:
 
 ## Template rules
 
-Templates are Mustache, rendered strictly: a `{{name}}` that has no
-matching variable key fails the render instead of substituting an empty
-string. `{{var}}` HTML-escapes its value; `{{{var}}}` inserts it raw (use
-it in rich layers to inject markup on purpose, and in text layers whenever
-a value contains `&`, `<`, or `>`, which would otherwise render as literal
-entity text). Sections (`{{#list}}...{{/list}}`), inverted sections, and
-comments work as in standard Mustache; variables inside a section resolve
-against the section's own items and are not strict-checked, so a name
-missing inside a section renders empty. Keep strict-checked text at the
-top level.
+Templates are Mustache, rendered strictly: a `{{name}}` that has no matching variable key fails the
+render instead of substituting an empty string. `{{var}}` HTML-escapes its value; `{{{var}}}`
+inserts it raw (use it in rich layers to inject markup on purpose, and in text layers whenever a
+value contains `&`, `<`, or `>`, which would otherwise render as literal entity text). Sections
+(`{{#list}}...{{/list}}`), inverted sections, and comments work as in standard Mustache; variables
+inside a section resolve against the section's own items and are not strict-checked, so a name
+missing inside a section renders empty. Keep strict-checked text at the top level.
 
-Keep every changeable string in `variables` rather than baked into the
-template, so one template reproduces a whole family of localized or
-per-variant cards.
+Keep every changeable string in `variables` rather than baked into the template, so one template
+reproduces a whole family of localized or per-variant cards.
 
 ## Text layer
 
@@ -44,8 +39,8 @@ per-variant cards.
 | `letter_spacing` | number | 0.0       | pixels per glyph gap                                                                                                                                       |
 | `overflow`       | string | `wrap`    | `wrap` (vertical overflow allowed), `clip` (cut at the box), `shrink` (largest size in [4, `size`] that fits the box height; errors when even 4 overflows) |
 
-Exactly one of `font_family` or `font_url`. Text wraps at `bbox.w`; the
-glyphs of the substituted text appear verbatim.
+Exactly one of `font_family` or `font_url`. Text wraps at `bbox.w`; the glyphs of the substituted
+text appear verbatim.
 
 ## Rich layer
 
@@ -56,11 +51,11 @@ glyphs of the substituted text appear verbatim.
 | `device_scale_factor`  | number   | 1.0      | 0.5 to 4.0; output pixels scale by it (2.0 for retina-sharp overlays)  |
 | `allowed_url_prefixes` | [string] | `[]`     | https-only, no `@` or `..`; hosts listed here render without a warning |
 
-The page renders on a transparent background at the canvas size. Google
-Fonts links and `scenario.com` URLs load quietly; any other remote
-reference earns a warning because a self-contained page (assets inlined as
-`data:` URIs) reproduces identically anywhere, offline included. Gradients, text strokes (`-webkit-text-stroke`), shadows,
-flexbox card layouts, and emoji all render.
+The page renders on a transparent background at the canvas size. Google Fonts links and
+`scenario.com` URLs load quietly; any other remote reference earns a warning because a
+self-contained page (assets inlined as `data:` URIs) reproduces identically anywhere, offline
+included. Gradients, text strokes (`-webkit-text-stroke`), shadows, flexbox card layouts, and emoji
+all render.
 
 ## Engines
 
@@ -71,16 +66,14 @@ flexbox card layouts, and emoji all render.
 
 ## Reproducibility
 
-Every output PNG carries its own payload JSON in a `tEXt` chunk with the
-keyword `scenario-text-overlay:payload` (Pillow shows it in `Image.text`),
-so any variant can be regenerated from the file alone by editing
-`variables`. The upload-and-persist flow that stores the same payload on
-the platform is steps 4 and 5 of the SKILL.md quick reference.
+Every output PNG carries its own payload JSON in a `tEXt` chunk with the keyword
+`scenario-text-overlay:payload` (Pillow shows it in `Image.text`), so any variant can be regenerated
+from the file alone by editing `variables`. The upload-and-persist flow that stores the same payload
+on the platform is steps 4 and 5 of the SKILL.md quick reference.
 
 ## Example payload
 
-A text-layer example is the worked example in SKILL.md. Rich layer, a
-gradient headline card:
+A text-layer example is the worked example in SKILL.md. Rich layer, a gradient headline card:
 
 ```json
 {

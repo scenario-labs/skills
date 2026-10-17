@@ -1,6 +1,8 @@
 # GUI paths (for a computer-use agent or a human)
 
-The same procedures as `procedures.md`, through menus. Menu labels come from the tutorials (Maya 2020 to 2022 UIs) and the Maya 2027 help; labels not confirmed in a 2027 source are marked [verify]. On macOS, Maya's docs map Ctrl to Control and Alt to Option, not Command (Maya 2027 help, hotkeys).
+The same procedures as `procedures.md`, through menus. Menu labels come from the tutorials (Maya
+2020 to 2022 UIs) and the Maya 2027 help; labels not confirmed in a 2027 source are marked [verify].
+On macOS, Maya's docs map Ctrl to Control and Alt to Option, not Command (Maya 2027 help, hotkeys).
 
 ## Materials and textures (Maya)
 
@@ -66,4 +68,6 @@ The same procedures as `procedures.md`, through menus. Menu labels come from the
 
 ## Hotkeys worth knowing
 
-5 shaded, 6 textured, 7 use all lights in the viewport; 1 and 3 Smooth Mesh Preview; F frame selected. Ctrl+drag (Control on macOS) in Attribute Editor fields makes a virtual slider (Arvid [cpMBRIWwghg 00:30:44]).
+5 shaded, 6 textured, 7 use all lights in the viewport; 1 and 3 Smooth Mesh Preview; F frame
+selected. Ctrl+drag (Control on macOS) in Attribute Editor fields makes a virtual slider (Arvid
+[cpMBRIWwghg 00:30:44]).

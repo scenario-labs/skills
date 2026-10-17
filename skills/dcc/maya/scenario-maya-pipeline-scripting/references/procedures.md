@@ -1,11 +1,29 @@
 # Procedures: pipeline scripting for Maya 2027
 
-**Status: not yet run in Maya.** Maya 2027 was not installed when this was written (2026-09-24). Nothing below is "verified on Maya 2027.x" yet. What did run: the pure-Python layer of `scripts/mx_pipeline.py` (batch runner through a fake mayapy, FBX command lists, FBX log parsing and lookup, round-trip comparison with normals and axis, Alembic job strings, USD flag sets, weight capping, matrix and naming checks, time unit and reference health, preflight, diffs) with python3, in `tests/code/maya-pipeline-scripting/test_offline_pure.py` and `test_offline_batch.py`; the Maya layer's new checks (E11, E24, E27, `scene_stats`) against a fake Maya in `test_offline_fake_checks.py`; and a syntax compile of every block in this file (`test_offline_snippets_compile.py`). Once Maya is installed: `tests/code/maya-pipeline-scripting/run_all.sh`, then replace each "not yet run" below with the version it ran on.
+**Status: not yet run in Maya.** Maya 2027 was not installed when this was written (2026-09-24).
+Nothing below is "verified on Maya 2027.x" yet. What did run: the pure-Python layer of
+`scripts/mx_pipeline.py` (batch runner through a fake mayapy, FBX command lists, FBX log parsing and
+lookup, round-trip comparison with normals and axis, Alembic job strings, USD flag sets, weight
+capping, matrix and naming checks, time unit and reference health, preflight, diffs) with python3,
+in `tests/code/maya-pipeline-scripting/test_offline_pure.py` and `test_offline_batch.py`; the Maya
+layer's new checks (E11, E24, E27, `scene_stats`) against a fake Maya in
+`test_offline_fake_checks.py`; and a syntax compile of every block in this file
+(`test_offline_snippets_compile.py`). Once Maya is installed:
+`tests/code/maya-pipeline-scripting/run_all.sh`, then replace each "not yet run" below with the
+version it ran on.
 
 Two layers, same as the lead skill:
 
-1. **`scripts/mx_pipeline.py`**: use it whenever a file can be imported (headless through `mx_run`, or in the GUI through `mx_bridge`, whose server puts the scenario-maya-expert scripts on `sys.path`; add this skill's `scripts/` yourself). Import: `import sys; sys.path.insert(0, "<skills>/scenario-maya-pipeline-scripting/scripts"); import mx_pipeline as P` (it adds `scenario-maya-expert/scripts` itself).
-2. **Raw snippets** for when only inline code is possible. Blocks tagged `# snippet:` are executed verbatim, each in a new scene, by `tests/code/maya-pipeline-scripting/test_snippets.py` (it injects `OUT`, an output folder whose path contains spaces, and `SKILL_SCRIPTS`). `# job-snippet:` blocks run as batch jobs; `# plugin:` is loaded by `test_om2_node_plugin.py`; `# gui-snippet:` runs through the bridge in `gui_smoke.py`.
+1. **`scripts/mx_pipeline.py`**: use it whenever a file can be imported (headless through `mx_run`,
+   or in the GUI through `mx_bridge`, whose server puts the scenario-maya-expert scripts on
+   `sys.path`; add this skill's `scripts/` yourself). Import:
+   `import sys; sys.path.insert(0, "<skills>/scenario-maya-pipeline-scripting/scripts"); import mx_pipeline as P`
+   (it adds `scenario-maya-expert/scripts` itself).
+2. **Raw snippets** for when only inline code is possible. Blocks tagged `# snippet:` are executed
+   verbatim, each in a new scene, by `tests/code/maya-pipeline-scripting/test_snippets.py` (it
+   injects `OUT`, an output folder whose path contains spaces, and `SKILL_SCRIPTS`).
+   `# job-snippet:` blocks run as batch jobs; `# plugin:` is loaded by `test_om2_node_plugin.py`;
+   `# gui-snippet:` runs through the bridge in `gui_smoke.py`.
 
 [verify] marks a flag or behavior no saved 2027 page states; [added] marks this skill's own rule.
 
@@ -27,13 +45,33 @@ s = P.batch(scenes, "/abs/jobs/validate_report_job.py", "/abs/out/validate_2026-
 print(s["totals"], s["failed"], s["sources_untouched"])
 ```
 
-Shell: `python3 mx_pipeline.py batch --files /abs/assets --job /abs/job.py --out /abs/out --timeout 900 -- --my-job-flag 1`.
+Shell:
+`python3 mx_pipeline.py batch --files /abs/assets --job /abs/job.py --out /abs/out --timeout 900 -- --my-job-flag 1`.
 
-What the runner guarantees (`test_offline_batch.py` checks each): one child per scene through `mx_run.run_subprocess` (crash, hang or leak costs one file); statuses `pass | fixed | warn | fail | error | crash | timeout | maya_init_failed | no_mayapy`; `reports/<stem>.json`, `logs/<stem>.log`, `summary.json`, `summary.csv`; stems stay unique when two folders hold the same file name; source sha1 before and after (`source_untouched`, a job that writes its source is caught); `save_as` never over the source (mx_run refuses); per-child `MAYA_FBX_LOG_FILENAME` (parallel sessions otherwise collide on the FBX log name, What's New in Maya 2025); every child also gets `MAYA_DISABLE_ADP=1` (analytics off in batch) and `MAYA_BATCH_STDOUT_LOGGING_LEVEL=none` / `MAYA_BATCH_STDERR_LOGGING_LEVEL=warning` from `mx_run.child_environment` (devkit What's New 2022; the stderr level is this toolkit's choice), and `batch(..., maya_log="all")` raises Maya's stderr level when a file fails without a message; `resume` reuses finished reports and re-runs transient failures, a changed source or changed job arguments.
+What the runner guarantees (`test_offline_batch.py` checks each): one child per scene through
+`mx_run.run_subprocess` (crash, hang or leak costs one file); statuses
+`pass | fixed | warn | fail | error | crash | timeout | maya_init_failed | no_mayapy`;
+`reports/<stem>.json`, `logs/<stem>.log`, `summary.json`, `summary.csv`; stems stay unique when two
+folders hold the same file name; source sha1 before and after (`source_untouched`, a job that writes
+its source is caught); `save_as` never over the source (mx_run refuses); per-child
+`MAYA_FBX_LOG_FILENAME` (parallel sessions otherwise collide on the FBX log name, What's New in Maya
+2025); every child also gets `MAYA_DISABLE_ADP=1` (analytics off in batch) and
+`MAYA_BATCH_STDOUT_LOGGING_LEVEL=none` / `MAYA_BATCH_STDERR_LOGGING_LEVEL=warning` from
+`mx_run.child_environment` (devkit What's New 2022; the stderr level is this toolkit's choice), and
+`batch(..., maya_log="all")` raises Maya's stderr level when a file fails without a message;
+`resume` reuses finished reports and re-runs transient failures, a changed source or changed job
+arguments.
 
-Before the first file: `P.preflight(out_dir, scenes)` (or `python3 mx_pipeline.py preflight --out OUT --files DIR`) checks mayapy, that `localhost` and this Mac's host name resolve at once (batch renders hang on localhost resolution: `127.0.0.1 localhost <hostname>` in `/etc/hosts`, Python in Maya 2027, Troubleshoot Maya hangs), free disk, readable scenes, and lists the FBX log folders that exist.
+Before the first file: `P.preflight(out_dir, scenes)` (or
+`python3 mx_pipeline.py preflight --out OUT --files DIR`) checks mayapy, that `localhost` and this
+Mac's host name resolve at once (batch renders hang on localhost resolution:
+`127.0.0.1 localhost <hostname>` in `/etc/hosts`, Python in Maya 2027, Troubleshoot Maya hangs),
+free disk, readable scenes, and lists the FBX log folders that exist.
 
-`isolation="session"` runs `chunk` files per mayapy with `file(new=True, force=True)` between them. FBX settings, optionVars, loaded plug-ins and the undo queue survive a new scene, which is why process isolation is the default. A file that crashes a session and the files after it are re-run in process mode automatically.
+`isolation="session"` runs `chunk` files per mayapy with `file(new=True, force=True)` between them.
+FBX settings, optionVars, loaded plug-ins and the undo queue survive a new scene, which is why
+process isolation is the default. A file that crashes a session and the files after it are re-run in
+process mode automatically.
 
 ### The job contract
 
@@ -60,7 +98,10 @@ def main(argv):
             "scene": cmds.file(q=True, sceneName=True), "stats": P.scene_stats(roots) if roots else None}
 ```
 
-Return keys the runner reads: `status`, `issues` (`severity` error, warning or info), `fixes`, `exports` (`path`, `kind`, `sha1`). Anything else is kept in the report. Env vars `MX_PIPELINE_OUT`, `MX_PIPELINE_STEM`, `MX_PIPELINE_SOURCE` say where to write. A job that fixes something saves with `P.save_version()` (writes `<out>/fixed/<stem>_fixed.ma`, refuses the source path).
+Return keys the runner reads: `status`, `issues` (`severity` error, warning or info), `fixes`,
+`exports` (`path`, `kind`, `sha1`). Anything else is kept in the report. Env vars `MX_PIPELINE_OUT`,
+`MX_PIPELINE_STEM`, `MX_PIPELINE_SOURCE` say where to write. A job that fixes something saves with
+`P.save_version()` (writes `<out>/fixed/<stem>_fixed.ma`, refuses the source path).
 
 ## P2. The builtin validate, fix, export, verify job (scenario M8)
 
@@ -72,18 +113,36 @@ s = P.batch(scenes, P.BUILTIN_EXPORT, "/abs/out/unreal_2026-09-24", plugins=("fb
                       "--rules", '{"name_patterns": {"mesh": ".+_geo$", "joint": ".+_jnt$"}}'])
 ```
 
-Shell: `python3 mx_pipeline.py export --files /abs/assets --out /abs/out --preset unreal_skeletal -- --profile rig`.
+Shell:
+`python3 mx_pipeline.py export --files /abs/assets --out /abs/out --preset unreal_skeletal -- --profile rig`.
 
-Order inside each child (`export_job` in the module): 0. Reference health (`references_report`, `reference_issues`): an unloaded or missing reference, or failed edits, stop the job before any fix (R01 to R03; `--export-on-fail` overrides).
+Order inside each child (`export_job` in the module): 0. Reference health (`references_report`,
+`reference_issues`): an unloaded or missing reference, or failed edits, stop the job before any fix
+(R01 to R03; `--export-on-fail` overrides).
 
-1. Stats of the source (`scene_stats`: counts, per-mesh bounds, normal signatures, locked normals, units, up axis, time unit).
-2. `mx_validate.validate(profile, roots, rules, fix=...)` with the safe fixes `history, smooth_preview, unknown_dead, namespaces` in one call: mx_validate holds the roots by UUID across fixes and returns `roots_after`, and the skinCluster's bind pose is not history (toolkit fixes of 2026-09-24; the job's own workarounds were removed). `unlock_normals` is available but not in the default list.
-3. Optional `--cap-influences N`: only if no weight moves by more than `--cap-max-delta` (0.1) [added]; else reported for scenario-maya-deformation.
-4. If anything was fixed: `save_version()` writes `<out>/fixed/<stem>_fixed.ma`. The source is never written.
+1. Stats of the source (`scene_stats`: counts, per-mesh bounds, normal signatures, locked normals,
+   units, up axis, time unit).
+2. `mx_validate.validate(profile, roots, rules, fix=...)` with the safe fixes
+   `history, smooth_preview, unknown_dead, namespaces` in one call: mx_validate holds the roots by
+   UUID across fixes and returns `roots_after`, and the skinCluster's bind pose is not history
+   (toolkit fixes of 2026-09-24; the job's own workarounds were removed). `unlock_normals` is
+   available but not in the default list.
+3. Optional `--cap-influences N`: only if no weight moves by more than `--cap-max-delta` (0.1)
+   [added]; else reported for scenario-maya-deformation.
+4. If anything was fixed: `save_version()` writes `<out>/fixed/<stem>_fixed.ma`. The source is never
+   written.
 5. Export-time only (never saved): `--triangulate` triangulates unskinned quad meshes.
-6. `check_engine_export` (with `--fps` for E27). Errors stop the export unless `--export-on-fail`; `--downgrade V:file_paths,E12` turns chosen errors into warnings.
-7. `fbx_export` into `<out>/fbx/<stem>.fbx`, settings sidecar next to it; the exporter's log is found and parsed (`fbx_log`, X05: error lines are warnings unless `--fbx-log-strict`, a missing log is a warning); `reports/<stem>.partial.json` is written before verification so a crash there keeps the export record.
-8. `fbx_takes` (FBXRead, no import), `reimport_stats` in a new scene, `compare_stats`: meshes, triangles, faces, UV set count, joint names, overall and per-mesh bounding boxes, normal directions (`--normals-tol`, default 2%), linear unit and up axis must match (X02); vertex count differences, a changed range and normals that came back locked are notes (X06) [verify how FBX re-import splits vertices and whether the new scene's range follows the take].
+6. `check_engine_export` (with `--fps` for E27). Errors stop the export unless `--export-on-fail`;
+   `--downgrade V:file_paths,E12` turns chosen errors into warnings.
+7. `fbx_export` into `<out>/fbx/<stem>.fbx`, settings sidecar next to it; the exporter's log is
+   found and parsed (`fbx_log`, X05: error lines are warnings unless `--fbx-log-strict`, a missing
+   log is a warning); `reports/<stem>.partial.json` is written before verification so a crash there
+   keeps the export record.
+8. `fbx_takes` (FBXRead, no import), `reimport_stats` in a new scene, `compare_stats`: meshes,
+   triangles, faces, UV set count, joint names, overall and per-mesh bounding boxes, normal
+   directions (`--normals-tol`, default 2%), linear unit and up axis must match (X02); vertex count
+   differences, a changed range and normals that came back locked are notes (X06) [verify how FBX
+   re-import splits vertices and whether the new scene's range follows the take].
 9. Status: `fail` if any error, else `fixed` if fixes, else `warn` if warnings, else `pass`.
 
 Do not combine the builtin job with `save_as` (it re-imports into a new scene; `batch` refuses).
@@ -141,9 +200,17 @@ assert os.path.isfile(path), path
 result = {"fbx": path, "settings": effective}
 ```
 
-Before any static export (Epic, FBX Static Mesh Pipeline): the exported origin is the Unreal pivot, so model at the origin (often a corner or the base center for grid snapping); triangulate in Maya with controlled edges; collision meshes `UCX_`, `UBX_`, `USP_`, `UCP_` plus the exact render mesh name plus `_00`, `_01`, in the same file (only the first mesh's custom collision is imported per file); sockets `SOCKET_<mesh>_##` only in single-mesh files; LODs share pivot and space; only Color and Normal maps auto-connect on import. `P.check_engine_export(roots, "unreal", "static")` measures the ones code can measure (E05, E07, E12, E17, E18).
+Before any static export (Epic, FBX Static Mesh Pipeline): the exported origin is the Unreal pivot,
+so model at the origin (often a corner or the base center for grid snapping); triangulate in Maya
+with controlled edges; collision meshes `UCX_`, `UBX_`, `USP_`, `UCP_` plus the exact render mesh
+name plus `_00`, `_01`, in the same file (only the first mesh's custom collision is imported per
+file); sockets `SOCKET_<mesh>_##` only in single-mesh files; LODs share pivot and space; only Color
+and Normal maps auto-connect on import. `P.check_engine_export(roots, "unreal", "static")` measures
+the ones code can measure (E05, E07, E12, E17, E18).
 
-Module version: `P.fbx_export(path, roots, "unreal_static")` does the same plus engine checks first, the query log in `<path>.settings.json`, and selection restore. `P.fbx_commands("unreal_static")` prints the MEL it will run.
+Module version: `P.fbx_export(path, roots, "unreal_static")` does the same plus engine checks first,
+the query log in `<path>.settings.json`, and selection restore. `P.fbx_commands("unreal_static")`
+prints the MEL it will run.
 
 ## P4. Skeletal mesh and animation clips for Unreal and Unity
 
@@ -174,14 +241,30 @@ result = {"files": files, "takes": [P.fbx_takes(f) for f in files]}
 
 Rules behind the presets (sources in `expert-notes.md`):
 
-- Skeletal: one root joint, which is the pivot (Epic); triangulate before binding so the bake and the engine share one triangulation (Polycount; Epic); Unity: at most 4 influences by default, humanoids need at least 15 bones in T-pose with body-part names (Unity manual); joint rotations zero at bind, orientation in `jointOrient` (AdvancedSkeleton); export the deformation skeleton and meshes only, never the control rig (Epic: "At export time, only the skeleton is required").
-- Animation: bake onto the joints (constraint animation does not transfer), `FBXExportInputConnections` off so the rig stays out, Bake Start and End set by command every time (never stored in presets), one clip per file for Unreal, animation-only import needs an existing skeleton in Unreal. The Game Exporter's Save Clips to Single File writes takes; test whether the target Unreal version imports all takes before relying on it [verify].
-- An up-axis change converts root elements only, and animated roots get their curves resampled; put a static dummy root above them, or keep `FBXExportUpAxis y` and let the engine convert (Game Exporter; FBX Export options) [verify each engine's import].
-- The take accumulator persists until `FBXExportSplitAnimationIntoTakes -c` (the doc also spells `-clear`); `Take001` always exists. `fbx_takes()` reads the takes without importing and releases the file with `FBXClose`.
+- Skeletal: one root joint, which is the pivot (Epic); triangulate before binding so the bake and
+  the engine share one triangulation (Polycount; Epic); Unity: at most 4 influences by default,
+  humanoids need at least 15 bones in T-pose with body-part names (Unity manual); joint rotations
+  zero at bind, orientation in `jointOrient` (AdvancedSkeleton); export the deformation skeleton and
+  meshes only, never the control rig (Epic: "At export time, only the skeleton is required").
+- Animation: bake onto the joints (constraint animation does not transfer),
+  `FBXExportInputConnections` off so the rig stays out, Bake Start and End set by command every time
+  (never stored in presets), one clip per file for Unreal, animation-only import needs an existing
+  skeleton in Unreal. The Game Exporter's Save Clips to Single File writes takes; test whether the
+  target Unreal version imports all takes before relying on it [verify].
+- An up-axis change converts root elements only, and animated roots get their curves resampled; put
+  a static dummy root above them, or keep `FBXExportUpAxis y` and let the engine convert (Game
+  Exporter; FBX Export options) [verify each engine's import].
+- The take accumulator persists until `FBXExportSplitAnimationIntoTakes -c` (the doc also spells
+  `-clear`); `Take001` always exists. `fbx_takes()` reads the takes without importing and releases
+  the file with `FBXClose`.
 
-Unity variants: `unity_static`, `unity_skeletal`, `unity_anim`; same options, `ENGINE_RULES["unity"]["max_influences"] = 4`. The doc says to export centimeters so the Unity import scale factor is 1 (its wording mixes meters and centimeters) [verify in Unity].
+Unity variants: `unity_static`, `unity_skeletal`, `unity_anim`; same options,
+`ENGINE_RULES["unity"]["max_influences"] = 4`. The doc says to export centimeters so the Unity
+import scale factor is 1 (its wording mixes meters and centimeters) [verify in Unity].
 
-Over the influence limit: `P.cap_influences(skin, shape, 4, max_delta=0.1, apply=True)` (headless only: an OpenMaya write is not undoable in a GUI; it refuses while Skin Tools layers exist). Bigger changes belong to scenario-maya-deformation, or Skin > Bake Deformers to Skin Weights.
+Over the influence limit: `P.cap_influences(skin, shape, 4, max_delta=0.1, apply=True)` (headless
+only: an OpenMaya write is not undoable in a GUI; it refuses while Skin Tools layers exist). Bigger
+changes belong to scenario-maya-deformation, or Skin > Bake Deformers to Skin Weights.
 
 ## P5. Verify an FBX in a clean scene
 
@@ -198,8 +281,22 @@ check = P.compare_stats(before, after, check_verts=False)  # counts, per-mesh bo
 assert check["ok"], check["diffs"]
 ```
 
-What the comparison catches that counts miss (Maya 2027 Help: the expert's test is that the FBX reimports with identical normals, scale, axis and animation length): smoothing groups lost or doubled (normal directions move bins), a flipped face, an axis conversion (normals and bounds rotate, `up` differs), a unit conversion (bounds scale). `normal_signature` is order-independent because the importer may split and reorder vertices [added]. The log: `FBXExportGenerateLog -v true` is in every preset; the batch names it per child (`MAYA_FBX_LOG_FILENAME=mx_fbx_<stem>`, `MAYA_FBX_LOG_DATETIME_ISO=1`); `P.find_fbx_log` looks in `$MX_FBX_LOG_DIRS`, `$MAYA_APP_DIR/FBX/Logs` and the macOS and Documents folders [verify where the 2027 plug-in writes on macOS, then set `MX_FBX_LOG_DIRS`]. The doc warns the log appends to one file per name: per-child names keep runs apart.
-`reimport_stats` refuses to discard an unsaved scene unless told to. In a batch it runs in the child after the fixed version was saved. Import-side traps (Maya 2027 Help, FBX Troubleshooting): non-deformed geometry imports with locked normals (`FBXImportUnlockNormals -v true` or Mesh Display > Unlock Normals before rigging); namespaces on import need `FBXImportMode -v add`; locked channels block incoming animation in batch unless `FBXImportSetLockedAttribute -v false`; clusters import with wrong pivots unless `FBXImportConvertDeformingNullsToJoint -v false`.
+What the comparison catches that counts miss (Maya 2027 Help: the expert's test is that the FBX
+reimports with identical normals, scale, axis and animation length): smoothing groups lost or
+doubled (normal directions move bins), a flipped face, an axis conversion (normals and bounds
+rotate, `up` differs), a unit conversion (bounds scale). `normal_signature` is order-independent
+because the importer may split and reorder vertices [added]. The log: `FBXExportGenerateLog -v true`
+is in every preset; the batch names it per child (`MAYA_FBX_LOG_FILENAME=mx_fbx_<stem>`,
+`MAYA_FBX_LOG_DATETIME_ISO=1`); `P.find_fbx_log` looks in `$MX_FBX_LOG_DIRS`,
+`$MAYA_APP_DIR/FBX/Logs` and the macOS and Documents folders [verify where the 2027 plug-in writes
+on macOS, then set `MX_FBX_LOG_DIRS`]. The doc warns the log appends to one file per name: per-child
+names keep runs apart. `reimport_stats` refuses to discard an unsaved scene unless told to. In a
+batch it runs in the child after the fixed version was saved. Import-side traps (Maya 2027 Help, FBX
+Troubleshooting): non-deformed geometry imports with locked normals
+(`FBXImportUnlockNormals -v true` or Mesh Display > Unlock Normals before rigging); namespaces on
+import need `FBXImportMode -v add`; locked channels block incoming animation in batch unless
+`FBXImportSetLockedAttribute -v false`; clusters import with wrong pivots unless
+`FBXImportConvertDeformingNullsToJoint -v false`.
 
 ## P6. Alembic caches
 
@@ -234,9 +331,17 @@ assert abs(y - 49.0) < 1e-3, y                    # bottom of the sphere at fram
 result = {"abc": final, "bottom_y_at_24": y}
 ```
 
-Module: `r = P.abc_export(path, roots, 1, 120)` (samples the source at start, middle and end, handles paths with spaces), then `P.abc_verify(path, r["samples"])` in a clean scene: vertex counts constant per frame and bounding boxes equal.
+Module: `r = P.abc_export(path, roots, 1, 120)` (samples the source at start, middle and end,
+handles paths with spaces), then `P.abc_verify(path, r["samples"])` in a clean scene: vertex counts
+constant per frame and bounding boxes equal.
 
-Rules: Ogawa only since 2022 (HDF5 dropped). Alembic carries no shading: `-uvWrite` and `-writeFaceSets` let the cache pick the shading network back up. Only `-frameRange`, `-root` and `-file` appear in the saved 2027 pages; check the rest with `AbcExport -h` [verify]. The groom doc's sample passes `data_format='otawa'`: a typo, write `ogawa`. Export from the composed shot state, never from pre-layout sources: RISE's comp read an Alembic camera while a USD layout layer had moved the real one (8UIW-g1_heg [00:51:46]). Import options (merge onto existing geometry) are not available through File > Open. 2027.2 fixed a UV set order bug on deforming exports (release notes).
+Rules: Ogawa only since 2022 (HDF5 dropped). Alembic carries no shading: `-uvWrite` and
+`-writeFaceSets` let the cache pick the shading network back up. Only `-frameRange`, `-root` and
+`-file` appear in the saved 2027 pages; check the rest with `AbcExport -h` [verify]. The groom doc's
+sample passes `data_format='otawa'`: a typo, write `ogawa`. Export from the composed shot state,
+never from pre-layout sources: RISE's comp read an Alembic camera while a USD layout layer had moved
+the real one (8UIW-g1_heg [00:51:46]). Import options (merge onto existing geometry) are not
+available through File > Open. 2027.2 fixed a UV set order bug on deforming exports (release notes).
 
 ## P7. GPU cache
 
@@ -261,7 +366,9 @@ assert os.path.isfile(path), (written, os.listdir(d))
 result = {"written": written, "node": node}
 ```
 
-One file per object instead: `filePrefix="ddd_", clashOption="nodeName"` (Maya 2027 Help). Time range flags [verify]. Module: `P.gpu_cache_export(roots, dir, name, start, end)`, `P.gpu_cache_load(path)`.
+One file per object instead: `filePrefix="ddd_", clashOption="nodeName"` (Maya 2027 Help). Time
+range flags [verify]. Module: `P.gpu_cache_export(roots, dir, name, start, end)`,
+`P.gpu_cache_load(path)`.
 
 ## P8. USD export with every default trap set
 
@@ -299,18 +406,32 @@ result = {"usd": path, "meters_per_unit": UsdGeom.GetStageMetersPerUnit(stage),
           "up_axis": UsdGeom.GetStageUpAxis(stage)}
 ```
 
-Module: `r = P.usd_export(path, roots, frame_range=(1, 120))` then `r["verify"]` from `P.usd_verify` (default prim, time range, scheme and normals per mesh, primvar names, SkelRoot, up axis and meters per unit, unresolved and absolute asset paths). A static export writes one explicit sample at the current frame (`staticSingleSample`), because `frameRange` defaults to frame 1 whatever the current frame.
+Module: `r = P.usd_export(path, roots, frame_range=(1, 120))` then `r["verify"]` from `P.usd_verify`
+(default prim, time range, scheme and normals per mesh, primvar names, SkelRoot, up axis and meters
+per unit, unresolved and absolute asset paths). A static export writes one explicit sample at the
+current frame (`staticSingleSample`), because `frameRange` defaults to frame 1 whatever the current
+frame.
 
 Rules (maya-usd command readme; USD for Maya 2027 help):
 
 - `map1` is renamed `st` (others `st1`, `st2`) unless `preserveUVSetNames`; decide per consumer.
-- `exportSkels`/`exportSkin` `auto` promotes the rootmost prim holding a skinned mesh to SkelRoot; a skinCluster on a root prim errors: parent the mesh under a group.
+- `exportSkels`/`exportSkin` `auto` promotes the rootmost prim holding a skinned mesh to SkelRoot; a
+  skinCluster on a root prim errors: parent the mesh under a group.
 - Assembly root prims must not contain gprims; tag `USD_kind` yourself for predictable kinds.
-- `-unit` is the favored unit control; `-metersPerUnit` is "evolving" and converts only meshes and transforms.
-- Material export target: MaterialX on new installs since 0.34 while the readme table says UsdPreviewSurface: always pass `convertMaterialsTo`. Translation is lossy: Lambert diffuse 0.8 exports as 1.0, transparency is dropped, Stingray PBS does not translate, Standard Surface loses roughness color, coat color and sheen, node inputs are dropped; UsdPreviewSurface round-trips.
-- Import: `mayaUSDImport(file=..., readAnimData=True)` or no animation comes in; point caches need `useAsAnimationCache=True`.
-- Flags differ between the dev-branch readme and the 0.35 to 0.37 build: `cmds.help("mayaUSDExport")` in the installed Maya [verify]; `-parentScope` is deprecated for `-rootPrim`; long flags only (`-epv` is duplicated in the readme).
-- Heavy shots: per-frame files stitched as value clips, and point data stripped from non-deforming meshes (RISE, 8UIW-g1_heg [00:36:29] to [00:38:10]): `mayaUSDExport(frameRange=(f, f))` per frame, then `pxr.UsdUtils.StitchClips(...)` [added, verify signature].
+- `-unit` is the favored unit control; `-metersPerUnit` is "evolving" and converts only meshes and
+  transforms.
+- Material export target: MaterialX on new installs since 0.34 while the readme table says
+  UsdPreviewSurface: always pass `convertMaterialsTo`. Translation is lossy: Lambert diffuse 0.8
+  exports as 1.0, transparency is dropped, Stingray PBS does not translate, Standard Surface loses
+  roughness color, coat color and sheen, node inputs are dropped; UsdPreviewSurface round-trips.
+- Import: `mayaUSDImport(file=..., readAnimData=True)` or no animation comes in; point caches need
+  `useAsAnimationCache=True`.
+- Flags differ between the dev-branch readme and the 0.35 to 0.37 build:
+  `cmds.help("mayaUSDExport")` in the installed Maya [verify]; `-parentScope` is deprecated for
+  `-rootPrim`; long flags only (`-epv` is duplicated in the readme).
+- Heavy shots: per-frame files stitched as value clips, and point data stripped from non-deforming
+  meshes (RISE, 8UIW-g1_heg [00:36:29] to [00:38:10]): `mayaUSDExport(frameRange=(f, f))` per frame,
+  then `pxr.UsdUtils.StitchClips(...)` [added, verify signature].
 
 ## P9. USD shot layers, edit targets, muting, audits
 
@@ -345,7 +466,12 @@ assert not seq.GetPrimAtPath("/district").attributes
 result = {"root": root.realPath, "sublayers": list(root.subLayerPaths)}
 ```
 
-Module: `P.usd_shot_layers(shot_dir, "sh010", departments=("lighting", "fx", "anim", "layout"), sequence_layer=...)`; `P.mute_own_and_stronger(stage, own_layer)` (RISE: mute your own layer and every stronger one by default); `P.layer_specs(layer)` lists `over` vs `def` specs with their properties (Ep.5: overs are the shot's changes); `P.usd_stage(path)` creates a `mayaUsdProxyShape` on a file and `P.get_stage(shape)` returns the pxr stage [verify both].
+Module:
+`P.usd_shot_layers(shot_dir, "sh010", departments=("lighting", "fx", "anim", "layout"), sequence_layer=...)`;
+`P.mute_own_and_stronger(stage, own_layer)` (RISE: mute your own layer and every stronger one by
+default); `P.layer_specs(layer)` lists `over` vs `def` specs with their properties (Ep.5: overs are
+the shot's changes); `P.usd_stage(path)` creates a `mayaUsdProxyShape` on a file and
+`P.get_stage(shape)` returns the pxr stage [verify both].
 
 Layer editor commands for the GUI session (maya-usd readme) [verify argument placement]:
 
@@ -357,7 +483,14 @@ cmds.mayaUsdLayerEditor(rootLayerId, edit=True, insertSubPath=(0, path))
 MEL: mayaUsdEditAsMaya "|stage|stageShape,/district/cam1";   mayaUsdMergeToUsd "<pulled dag path>";
 ```
 
-Merge Maya Edits to USD writes an `over` on a stronger target and a `def` on a weaker one, clears the session layer, drops construction history, and reuses the last session's merge options: set the target and the options (Animation Data, frame range) every time. Save each dirty `Sdf.Layer` and then the Maya file; never save USD edits into the Maya file for real work (layers over 2 GB are dropped). Relative root-layer paths only take effect once the Maya scene is saved. Resolver config for reproducible batch runs: `ADSK_AR_SEARCH_PATH` or `ADSK_AR_MAPPING_FILE` in the environment before mayapy starts (0.34 listed the resolver as Windows and Linux only; 2027 macOS status [verify]).
+Merge Maya Edits to USD writes an `over` on a stronger target and a `def` on a weaker one, clears
+the session layer, drops construction history, and reuses the last session's merge options: set the
+target and the options (Animation Data, frame range) every time. Save each dirty `Sdf.Layer` and
+then the Maya file; never save USD edits into the Maya file for real work (layers over 2 GB are
+dropped). Relative root-layer paths only take effect once the Maya scene is saved. Resolver config
+for reproducible batch runs: `ADSK_AR_SEARCH_PATH` or `ADSK_AR_MAPPING_FILE` in the environment
+before mayapy starts (0.34 listed the resolver as Windows and Linux only; 2027 macOS status
+[verify]).
 
 ## P10. References and namespaces from a manifest
 
@@ -388,9 +521,21 @@ assert info["loaded"] and not info["failed"]
 result = info
 ```
 
-Module: `P.reference(path, ns)` (refuses a clashing namespace), `P.references_report()` (file, copy number, loaded, exists, namespace, parent, edits, failed edits, foster parents), `P.swap_reference(ref, new_path)` (`file(new_path, loadReference=ref)`, then failed edits), `P.remove_failed_edits(ref)` (unload, `referenceEdit(removeEdits=True)`, reload [verify]), `P.breakdown(manifest)` (missing, extra, stale, unloaded, failed edits: the Borderlands scene breakdown).
+Module: `P.reference(path, ns)` (refuses a clashing namespace), `P.references_report()` (file, copy
+number, loaded, exists, namespace, parent, edits, failed edits, foster parents),
+`P.swap_reference(ref, new_path)` (`file(new_path, loadReference=ref)`, then failed edits),
+`P.remove_failed_edits(ref)` (unload, `referenceEdit(removeEdits=True)`, reload [verify]),
+`P.breakdown(manifest)` (missing, extra, stale, unloaded, failed edits: the Borderlands scene
+breakdown).
 
-Rules (Maya 2027 Help, reference edits; Best practices): edits are replayed by name and DAG path, so never rename or restructure a child file in use (version it, then check `failed_edits` after the swap); create character sets in the rig file; give a child mesh history in the child file if the parent must add polygon history; grouped references can double-transform skinned characters (Inherit Transforms off, or no group); others see your saved child only after they reload; to push parent edits back, import the reference, then export the edited nodes as a new version. Build shots by reference; deliver to engines by baked export. Unloaded references plus parenting create foster parents; exporting with Preserve References off bakes them in.
+Rules (Maya 2027 Help, reference edits; Best practices): edits are replayed by name and DAG path, so
+never rename or restructure a child file in use (version it, then check `failed_edits` after the
+swap); create character sets in the rig file; give a child mesh history in the child file if the
+parent must add polygon history; grouped references can double-transform skinned characters (Inherit
+Transforms off, or no group); others see your saved child only after they reload; to push parent
+edits back, import the reference, then export the edited nodes as a new version. Build shots by
+reference; deliver to engines by baked export. Unloaded references plus parenting create foster
+parents; exporting with Preserve References off bakes them in.
 
 ## P11. Publish diff
 
@@ -401,11 +546,16 @@ d = P.publish_diff(previous_summary_or_manifest, current_summary_or_manifest)
 # {"added": [...] green, "modified": [...] blue, "removed": [...] red, "unchanged": [...]}
 ```
 
-Borderlands published one FBX per character or prop per camera cut (2 characters, 4 props, 14 cuts = 84 files), so any camera range change re-exported everything: the diff tells the engine side what to add, update and remove (lfWkJrkhd2U [00:06:04] [00:24:23]). Keep `summary.json` of each publish as the manifest.
+Borderlands published one FBX per character or prop per camera cut (2 characters, 4 props, 14 cuts =
+84 files), so any camera range change re-exported everything: the diff tells the engine side what to
+add, update and remove (lfWkJrkhd2U [00:06:04] [00:24:23]). Keep `summary.json` of each publish as
+the manifest.
 
 ## P12. OpenMaya 2.0 DG node plug-in
 
-Test: `test_om2_node_plugin.py` (loads this block from this file). The undoable `MPxCommand` pattern, the reload helper (`flushUndo` before `unloadPlugin`) and the OM2 read idioms are in the lead skill (scenario-maya-expert, `references/cmds-reliability.md` P5, P9, P10).
+Test: `test_om2_node_plugin.py` (loads this block from this file). The undoable `MPxCommand`
+pattern, the reload helper (`flushUndo` before `unloadPlugin`) and the OM2 read idioms are in the
+lead skill (scenario-maya-expert, `references/cmds-reliability.md` P5, P9, P10).
 
 ```python
 # plugin: mx_remap_node.py
@@ -464,7 +614,13 @@ def uninitializePlugin(obj):
     om.MFnPlugin(obj).deregisterNode(MxRemap.kId)
 ```
 
-Checklist (API 2.0 help): `maya_useNewAPI` present; `MTypeId` inside `0x00000` to `0x7ffff` and unique in one studio registry [added]; `attributeAffects` for every input to output; never swallow a registration error (the doc's command sample does; re-raise so `loadPlugin` fails visibly); an unregistered ID at load time loses the node's behavior, test by reopening the scene without the plug-in. Python plug-in nodes are Globally Serial by default (Using Parallel Maya 2027): prototype in Python, ship native nodes or C++ for anything a rig evaluates every frame (Fragapane, _0mb4wIZi80 [00:55:10]).
+Checklist (API 2.0 help): `maya_useNewAPI` present; `MTypeId` inside `0x00000` to `0x7ffff` and
+unique in one studio registry [added]; `attributeAffects` for every input to output; never swallow a
+registration error (the doc's command sample does; re-raise so `loadPlugin` fails visibly); an
+unregistered ID at load time loses the node's behavior, test by reopening the scene without the
+plug-in. Python plug-in nodes are Globally Serial by default (Using Parallel Maya 2027): prototype
+in Python, ship native nodes or C++ for anything a rig evaluates every frame (Fragapane, _0mb4wIZi80
+[00:55:10]).
 
 ## P13. Tool UI: PySide6 dockable panel, installed as a module
 
@@ -509,16 +665,29 @@ result = {"control": AgentExportPanel.OBJECT_NAME + "WorkspaceControl",
           "exists": cmds.workspaceControl(AgentExportPanel.OBJECT_NAME + "WorkspaceControl", q=True, exists=True)}
 ```
 
-Rules (Maya 2027 Developer Help, PySide and workspace controls): parent every widget under a Maya widget or garbage collection destroys it; `dockControl` is gone; a restorable control's `uiScript` may only call code importable at the next startup, so ship the tool as a module and declare `requiredPlugin`/`requiredControl`; `QAction`, `QActionGroup`, `QShortcut`, `QFileSystemModel` live in `QtGui`; `QRegExp` is `QRegularExpression`; enums are real Python enums (no int arithmetic); high DPI is always on; `wrapInstance(int(ptr), ...)` from `shiboken6`; guard UI code with `cmds.about(batch=True)`; keep the logic in functions the batch runner can test headless. Maya UI callbacks: callables with `*args`, `functools.partial` in loops (Theodore). The 2027.0 docking-offset bug (MAYA-142238) had a `userSetup.py` workaround and was fixed in 2027.1.
+Rules (Maya 2027 Developer Help, PySide and workspace controls): parent every widget under a Maya
+widget or garbage collection destroys it; `dockControl` is gone; a restorable control's `uiScript`
+may only call code importable at the next startup, so ship the tool as a module and declare
+`requiredPlugin`/`requiredControl`; `QAction`, `QActionGroup`, `QShortcut`, `QFileSystemModel` live
+in `QtGui`; `QRegExp` is `QRegularExpression`; enums are real Python enums (no int arithmetic); high
+DPI is always on; `wrapInstance(int(ptr), ...)` from `shiboken6`; guard UI code with
+`cmds.about(batch=True)`; keep the logic in functions the batch runner can test headless. Maya UI
+callbacks: callables with `*args`, `functools.partial` in loops (Theodore). The 2027.0
+docking-offset bug (MAYA-142238) had a `userSetup.py` workaround and was fixed in 2027.1.
 
-Module file for macOS (Maya 2027 Developer Help, module description files) [verify the `mac` platform token]:
+Module file for macOS (Maya 2027 Developer Help, module description files) [verify the `mac`
+platform token]:
 
 ```text
 + MAYAVERSION:2027 PLATFORM:mac agentTools 1.0 ../agentTools
 PYTHONPATH+:=python
 ```
 
-Folder `agentTools/{scripts,plug-ins,icons,presets,python}`; the `.mod` goes in a folder on `MAYA_MODULE_PATH`; check with `cmds.moduleInfo(listModules=True)` [verify] and `cmds.pluginInfo(q=True, listPlugins=True)`. Modules add search paths only; they run no startup code unless a `userSetup.py` sits in the module's `scripts` (Theodore). Packages without admin rights: `mayapy -m pip install <pkg> --target ~/Library/Preferences/Autodesk/maya/2027/scripts/site-packages`.
+Folder `agentTools/{scripts,plug-ins,icons,presets,python}`; the `.mod` goes in a folder on
+`MAYA_MODULE_PATH`; check with `cmds.moduleInfo(listModules=True)` [verify] and
+`cmds.pluginInfo(q=True, listPlugins=True)`. Modules add search paths only; they run no startup code
+unless a `userSetup.py` sits in the module's `scripts` (Theodore). Packages without admin rights:
+`mayapy -m pip install <pkg> --target ~/Library/Preferences/Autodesk/maya/2027/scripts/site-packages`.
 
 ## P14. Scene performance: census, timing, correctness
 
@@ -544,17 +713,39 @@ eval_fps = 48 / (time.perf_counter() - t0)
 result = {"mode": mode, "evaluators": enabled, "gpu_deformers": gpu_types, "eval_fps_headless": round(eval_fps, 1)}
 ```
 
-Module: `P.perf_census()` (evaluation mode, evaluators, expressions with `getAttr`/`setAttr`/`ls`/`eval`, Python plug-in node counts, driven `frozen`/`nodeState`, per-frame heavy nodes, legacy dynamics, deformed meshes against the GPU vertex threshold); `P.eval_timing(1, 120, ["body_geo"])` times each evaluation mode and compares the probe meshes' world points across modes.
+Module: `P.perf_census()` (evaluation mode, evaluators, expressions with
+`getAttr`/`setAttr`/`ls`/`eval`, Python plug-in node counts, driven `frozen`/`nodeState`, per-frame
+heavy nodes, legacy dynamics, deformed meshes against the GPU vertex threshold);
+`P.eval_timing(1, 120, ["body_geo"])` times each evaluation mode and compares the probe meshes'
+world points across modes.
 
-Order (Using Parallel Maya 2027; Roselle): make it right, then fast: DG, Serial and Parallel must give the same points before any timing matters (Serial is a debugging mode and may be slower than DG); then profile and fix the widest bars; then GPU Override (supported deformers only, meshes above 500 vertices on AMD or 2000 on NVIDIA, `MAYA_OPENCL_DEFORMER_MIN_VERTS` changes it; Apple GPU behavior undocumented [verify]); then Cached Playback, choosing the mode by memory (evaluation cache anywhere, software in system RAM, hardware in VRAM). Headless timings measure evaluation only: say so, and take draw-bound questions (huge sets, viewport fps, the Profiler thread view) to a GUI session through the bridge. Profiler from script: `cmds.profiler(bufferSize=200)`, `sampling=True`, play the range, `sampling=False`, `output=path` [verify flags; the doc gives `profiler -b` and a 20 MB default buffer].
+Order (Using Parallel Maya 2027; Roselle): make it right, then fast: DG, Serial and Parallel must
+give the same points before any timing matters (Serial is a debugging mode and may be slower than
+DG); then profile and fix the widest bars; then GPU Override (supported deformers only, meshes above
+500 vertices on AMD or 2000 on NVIDIA, `MAYA_OPENCL_DEFORMER_MIN_VERTS` changes it; Apple GPU
+behavior undocumented [verify]); then Cached Playback, choosing the mode by memory (evaluation cache
+anywhere, software in system RAM, hardware in VRAM). Headless timings measure evaluation only: say
+so, and take draw-bound questions (huge sets, viewport fps, the Profiler thread view) to a GUI
+session through the bridge. Profiler from script: `cmds.profiler(bufferSize=200)`, `sampling=True`,
+play the range, `sampling=False`, `output=path` [verify flags; the doc gives `profiler -b` and a 20
+MB default buffer].
 
-Fixes that experts apply first: move attribute-only hosts out of limb hierarchies (Campos: about 20 to 17 ms per frame, NfYAaK3wtQs [00:12:51]); replace impure expressions and Python nodes with node networks; never drive `frozen` or visibility from an animatable switch (the evaluation graph rebuilds during playback); remove per-frame topology or UV transfers from rigs (Roselle's rig at 1 to 1.5 fps, rhtERzmAoUM [00:04:46]); key or tag controller attributes so the graph is ready for manipulation (curve manager: `cmds.evaluator(name="curveManager", enable=True)` and `configuration="forceAnimatedCurves=keyed"`, session only). The rig-level fixes belong to scenario-maya-rigging; this skill measures and reports.
+Fixes that experts apply first: move attribute-only hosts out of limb hierarchies (Campos: about 20
+to 17 ms per frame, NfYAaK3wtQs [00:12:51]); replace impure expressions and Python nodes with node
+networks; never drive `frozen` or visibility from an animatable switch (the evaluation graph
+rebuilds during playback); remove per-frame topology or UV transfers from rigs (Roselle's rig at 1
+to 1.5 fps, rhtERzmAoUM [00:04:46]); key or tag controller attributes so the graph is ready for
+manipulation (curve manager: `cmds.evaluator(name="curveManager", enable=True)` and
+`configuration="forceAnimatedCurves=keyed"`, session only). The rig-level fixes belong to
+scenario-maya-rigging; this skill measures and reports.
 
 ## P15. The GUI parts of a pipeline job
 
 Test: `gui_smoke.py`.
 
-Headless first: contact sheets and turntables come from `mx_review.review` (Arnold, no viewport). The GUI session is for what needs Viewport 2.0: playblasts, viewport captures, GPU Override and viewport fps, tool UIs. Through the lead's bridge:
+Headless first: contact sheets and turntables come from `mx_review.review` (Arnold, no viewport).
+The GUI session is for what needs Viewport 2.0: playblasts, viewport captures, GPU Override and
+viewport fps, tool UIs. Through the lead's bridge:
 
 ```python
 import sys
@@ -574,13 +765,20 @@ if not r["ok"] or r["maya_messages"]:
     raise SystemExit("the GUI step reported problems: read them before going on")
 ```
 
-Every record carries `stdout`, `stderr` and `maya_messages` (warnings and errors Maya printed through its command output, captured with `MCommandMessage` [verify in the GUI]), also on a refusal or a timeout (then `stdout` is what the job printed so far). A warning with `ok=True` is still a finding: an agent that does not read the output is blind (chadrik). One call is one undo chunk; the client refuses modal UI and unguarded scene replacement. For many files, a dedicated agent GUI session beats replacing the user's scene. Close the port when done (`mx_bridge_server.stop()`).
+Every record carries `stdout`, `stderr` and `maya_messages` (warnings and errors Maya printed
+through its command output, captured with `MCommandMessage` [verify in the GUI]), also on a refusal
+or a timeout (then `stdout` is what the job printed so far). A warning with `ok=True` is still a
+finding: an agent that does not read the output is blind (chadrik). One call is one undo chunk; the
+client refuses modal UI and unguarded scene replacement. For many files, a dedicated agent GUI
+session beats replacing the user's scene. Close the port when done (`mx_bridge_server.stop()`).
 
 ## P16. Blind spots of a batch: preflight, logs, locked normals, empty meshes, time unit, reference health
 
-Tests: `test_offline_pure.py` and `test_offline_fake_checks.py` (offline, passed), `test_engine_checks.py` and `test_snippets.py` (this block), `test_fbx_export.py`.
+Tests: `test_offline_pure.py` and `test_offline_fake_checks.py` (offline, passed),
+`test_engine_checks.py` and `test_snippets.py` (this block), `test_fbx_export.py`.
 
-The M8 blind grade (2026-09-24) listed what neither answer checked on a 200-character batch. Each has a check in the module and a line in the report:
+The M8 blind grade (2026-09-24) listed what neither answer checked on a 200-character batch. Each
+has a check in the module and a line in the report:
 
 | Blind spot                                                     | Check                                                                               | Where it comes from                                               |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -616,4 +814,7 @@ result = {"locked_before": sum(1 for x in locked if x), "locked_after": sum(1 fo
           "time_unit": cmds.currentUnit(q=True, time=True), "fps": fps}
 ```
 
-After unlocking, shading follows the edges' hard and soft flags: compare an `mx_review` normals sheet before and after, and re-harden by angle (`polySoftEdge`) only if the look changed. On import, `FBXImportUnlockNormals -v true` avoids the lock in the first place (FBX Import MEL commands). Keep deliberate custom normals (weighted normals on a static prop): E11 is only info on static exports.
+After unlocking, shading follows the edges' hard and soft flags: compare an `mx_review` normals
+sheet before and after, and re-harden by angle (`polySoftEdge`) only if the look changed. On import,
+`FBXImportUnlockNormals -v true` avoids the lock in the first place (FBX Import MEL commands). Keep
+deliberate custom normals (weighted normals on a static prop): E11 is only info on static exports.

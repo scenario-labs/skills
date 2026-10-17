@@ -1,6 +1,8 @@
 # Prompt templates
 
-The build's prompts with the subject replaced by slots. Fill every `{slot}` for your own game. Parameter names in this file are the build's schemas' examples: read your picks with `model_schema_get` and use the field names listed there, since they differ between models.
+The build's prompts with the subject replaced by slots. Fill every `{slot}` for your own game.
+Parameter names in this file are the build's schemas' examples: read your picks with
+`model_schema_get` and use the field names listed there, since they differ between models.
 
 ## Slots
 
@@ -30,11 +32,14 @@ The build's prompts with the subject replaced by slots. Fill every `{slot}` for 
 | `{ledge}`         | The platform's material, trim line and what hangs beneath it      | a thick shelf fungus with a pale flat walkable top edge, glowing spores and roots hanging beneath it    |
 | `{props}`         | Three props separated by semicolons                               | a crooked lantern post; a tree stump with a small door; a cluster of glowing mushrooms                  |
 
-Keep the key color off every character: the scripts key strongly magenta pixels to transparency, so no pink or purple cloth, flames or gems on a sprite. Environment layers use real transparency instead and can use any color.
+Keep the key color off every character: the scripts key strongly magenta pixels to transparency, so
+no pink or purple cloth, flames or gems on a sprite. Environment layers use real transparency
+instead and can use any color.
 
 ## 1. Two-pose still (text to image)
 
-One image, two poses of the same character, so the design matches between them. Hero: rest pose and jump. Ground enemy: rest pose and attack wind-up.
+One image, two poses of the same character, so the design matches between them. Hero: rest pose and
+jump. Ground enemy: rest pose and attack wind-up.
 
 ```
 Pixel art game sprite sheet, two poses of the same character side by side, full body, on a perfectly flat solid magenta (#FF00FF) background, no shadows on the ground, no text.
@@ -48,11 +53,17 @@ Right pose: {pose_b}.
 Style: crisp hand-placed pixel art like a modern 16-bit indie action platformer, 1px dark outline, limited palette of about 24 colors, soft top-left lighting, no pink, no purple, no magenta anywhere on the character, each figure about 60% of the image height, both figures the same size, generous empty space around each.
 ```
 
-Settings in the build: 1536x1024 landscape, high quality, opaque background, two outputs to pick from. Keep the take where both poses are on model, the magenta is clean and nothing on the character is pink or purple. Name every pose "facing right": the game mirrors the sprite for the left. `reframe_stills.py` writes the left pose as `<name>_rest.png` and the right pose as `<name>_action.png`.
+Settings in the build: 1536x1024 landscape, high quality, opaque background, two outputs to pick
+from. Keep the take where both poses are on model, the magenta is clean and nothing on the character
+is pink or purple. Name every pose "facing right": the game mirrors the sprite for the left.
+`reframe_stills.py` writes the left pose as `<name>_rest.png` and the right pose as
+`<name>_action.png`.
 
 ## 2. Motion prompts (image to video)
 
-The first frame is the reframed still. A clip prompt is `MOTION + " " + FACING_AND_TAIL`, where the motion sentence starts with `Pixel art game sprite animation` for locomotion and names the character for the rest.
+The first frame is the reframed still. A clip prompt is `MOTION + " " + FACING_AND_TAIL`, where the
+motion sentence starts with `Pixel art game sprite animation` for locomotion and names the character
+for the rest.
 
 ### Facing and tail (appended to every clip)
 
@@ -66,7 +77,8 @@ The first frame is the reframed still. A clip prompt is `MOTION + " " + FACING_A
 front view, three-quarter view, facing the camera, turning around, camera movement, zoom, traveling across the frame, ground shadow, drop shadow, background change, extra characters, blur, 3D render
 ```
 
-Add `, slowing down, stopping, standing still` for a run or walk. For an armed enemy's walk also add `, swinging the weapon, raising the {weapon}, attacking, twirling`.
+Add `, slowing down, stopping, standing still` for a run or walk. For an armed enemy's walk also add
+`, swinging the weapon, raising the {weapon}, attacking, twirling`.
 
 ### Motion sentences
 
@@ -104,13 +116,15 @@ The {who} is airborne in the middle of a jump and performs one fast full forward
 
 ### Armed enemy walk
 
-First frame only. The build's first armed walk swung its weapon mid-stride and could not loop; this wording, with a lower guidance scale, fixed it:
+First frame only. The build's first armed walk swung its weapon mid-stride and could not loop; this
+wording, with a lower guidance scale, fixed it:
 
 ```
 Pixel art game sprite animation, like a treadmill: the {who} immediately starts walking in place and keeps walking for the whole clip, a steady repeating walk cycle: {stride}, {secondary} swaying with each step. {his_cap} arms stay still: {he_lower} keeps the {weapon} held {held} in the same grip for the entire clip and never lifts, swings or twirls it.
 ```
 
-The run, idle and armed-walk sentences are the build's own wording; the attack, lunge, shot, hurt and spin sentences keep the build's opening and closing words, with the middle written as slots.
+The run, idle and armed-walk sentences are the build's own wording; the attack, lunge, shot, hurt
+and spin sentences keep the build's opening and closing words, with the middle written as slots.
 
 ### Clip settings
 
@@ -120,21 +134,34 @@ The run, idle and armed-walk sentences are the build's own wording; the attack, 
 | idle, attacks, lunge, shot, hurt | rest still  | the same still | 3 s      | Comes back to rest, so every action chains into idle         |
 | air spin                         | jump still  | the same still | 3 s      | Stays airborne; the game plays it between rising and falling |
 
-All clips square (1:1), audio off. In the build's schema these were `startImage`, `endImage`, `duration` (the string `"3"`), `aspectRatio`, `generateAudio` and `negativePrompt`; the regenerated enemy walk also set `cfgScale` to 0.7. Discover a clip model that takes a last frame with `recommend` (`capability: "img2video"`, `features: ["endImage"]`), then confirm the field names with `model_schema_get`.
+All clips square (1:1), audio off. In the build's schema these were `startImage`, `endImage`,
+`duration` (the string `"3"`), `aspectRatio`, `generateAudio` and `negativePrompt`; the regenerated
+enemy walk also set `cfgScale` to 0.7. Discover a clip model that takes a last frame with
+`recommend` (`capability: "img2video"`, `features: ["endImage"]`), then confirm the field names with
+`model_schema_get`.
 
 ## 3. Static pose sheet
 
-Text to image with the chosen two-pose still as reference, for poses a clip cannot give cheaply: falling, wall cling, plunge, air dash.
+Text to image with the chosen two-pose still as reference, for poses a clip cannot give cheaply:
+falling, wall cling, plunge, air dash.
 
 ```
 Pixel art game sprite sheet, {n} poses of the same character in one row, full body, pure side profile view facing right, on a perfectly flat solid magenta (#FF00FF) background, no shadows, no text, same character design, palette and pixel style as the reference image, wide empty gaps between the poses. Poses from left to right: {pose_list}.
 ```
 
-This wording is a recommended template in the style of the others, not the build's verbatim prompt. The build's list, in order: falling with the cloak billowing up; clinging to an invisible wall on the right; a feet-first plunge with the weapon pointed straight down; a horizontal air dash with the weapon thrust forward. Settings: reference image = the chosen two-pose still, 1536x1024, high quality, opaque background (the key needs the magenta), two outputs. The poses may still overlap horizontally; `side_sprites.py --poses` splits them by connected components, and `--pose-names` (default `fall,wall,plunge,dash`) names them left to right.
+This wording is a recommended template in the style of the others, not the build's verbatim prompt.
+The build's list, in order: falling with the cloak billowing up; clinging to an invisible wall on
+the right; a feet-first plunge with the weapon pointed straight down; a horizontal air dash with the
+weapon thrust forward. Settings: reference image = the chosen two-pose still, 1536x1024, high
+quality, opaque background (the key needs the magenta), two outputs. The poses may still overlap
+horizontally; `side_sprites.py --poses` splits them by connected components, and `--pose-names`
+(default `fall,wall,plunge,dash`) names them left to right.
 
 ## 4. Environment layer set
 
-Text to image, five images per level, all at high quality in the build. The record gives no output count: request one output each and re-render only a layer that fails its check. Generate level 1 only, look at it in the game, then run the other levels with the same templates and new slots.
+Text to image, five images per level, all at high quality in the build. The record gives no output
+count: request one output each and re-render only a layer that fails its check. Generate level 1
+only, look at it in the game, then run the other levels with the same templates and new slots.
 
 Background (1920x1152, opaque):
 
@@ -156,7 +183,8 @@ Seamless tileable square texture for the solid walls and floors of a 2D {genre},
 
 The render will not tile reliably whatever the prompt says; `process_env.py` cross-fades the edges.
 
-Platform strip (1536x384 requested, transparent background; the build's model returned 1536x512, and `process_env.py` trims to the opaque strip, so either size works):
+Platform strip (1536x384 requested, transparent background; the build's model returned 1536x512, and
+`process_env.py` trims to the opaque strip, so either size works):
 
 ```
 Game asset for a 2D side-scrolling {genre}, richly detailed high-resolution pixel art, on a fully transparent background: one long, thin, perfectly horizontal floating platform seen from the side, spanning the entire width of the image edge to edge. {ledge}. The top edge is perfectly straight and flat. The slab is about one quarter of the image height; everything above and below it is transparent. Orthographic side view, no characters, no text.
@@ -168,4 +196,7 @@ Props (1536x1024, transparent background):
 Three separate decorative props for a 2D side-scrolling {genre}, richly detailed high-resolution pixel art, on a fully transparent background, evenly spaced in one row with wide empty gaps between them so they never touch, each standing on the same invisible ground line, pure side view: {props}. Each prop about 55% of the image height. No ground, no shadows, no characters, no text.
 ```
 
-Sizes and the transparent option are the build's; request the nearest your pick's schema allows (`background: "opaque"` or `"transparent"` was the build schema's field). Give each level its own scene and dominant color, and end every palette "on near-black" so the sprites stay readable on all of them.
+Sizes and the transparent option are the build's; request the nearest your pick's schema allows
+(`background: "opaque"` or `"transparent"` was the build schema's field). Give each level its own
+scene and dominant color, and end every palette "on near-black" so the sprites stay readable on all
+of them.

@@ -1,6 +1,9 @@
 # scenario-unreal-vfx GUI paths (for a computer-use agent or a human)
 
-The same work as `procedures.md`, where it lives in the editor. Menu names come from the 5.8 docs and the talks' frames; items marked [verify] differ between sources or were seen only in older versions. On macOS, doc shortcuts written with Ctrl usually map to Cmd [verify]. After any GUI step, return to script to verify it (contract check, audit, capture).
+The same work as `procedures.md`, where it lives in the editor. Menu names come from the 5.8 docs
+and the talks' frames; items marked [verify] differ between sources or were seen only in older
+versions. On macOS, doc shortcuts written with Ctrl usually map to Cmd [verify]. After any GUI step,
+return to script to verify it (contract check, audit, capture).
 
 ## Niagara: creating and inspecting
 
@@ -20,14 +23,28 @@ The same work as `procedures.md`, where it lives in the editor. Menu names come 
 
 When `contract_verdict` reports a missing control, request exactly this, per parameter:
 
-1. Open the template in the Niagara Editor, Parameters panel, User Parameters section, "+" > type (float, int, LinearColor, Vector, Texture, Material, StaticMesh), name it as in the contract (`User.Radius`).
-2. In the emitter stack, select the module input (for example the ring's Shape Location radius, Spawn Burst Instantaneous count, Scale Color alpha multiplier, Sub UV texture on the Sprite Renderer's material binding), click the input's dropdown and link it to the User parameter.
-3. Set the User parameter's default in the User Parameters panel (asset-level defaults are not in the audited Python API).
+1. Open the template in the Niagara Editor, Parameters panel, User Parameters section, "+" > type
+   (float, int, LinearColor, Vector, Texture, Material, StaticMesh), name it as in the contract
+   (`User.Radius`).
+2. In the emitter stack, select the module input (for example the ring's Shape Location radius,
+   Spawn Burst Instantaneous count, Scale Color alpha multiplier, Sub UV texture on the Sprite
+   Renderer's material binding), click the input's dropdown and link it to the User parameter.
+3. Set the User parameter's default in the User Parameters panel (asset-level defaults are not in
+   the audited Python API).
 4. Save (Ctrl + S). The agent re-runs `contract_verdict` and a capture.
 
-Curves and options to specify in the same request (v0.2, each checked by script afterwards): the head sprite's Sprite Renderer alignment set to velocity aligned plus Scale Sprite Size By Speed for the stretch `strobe_risk` asked for [alignment label verify]; Scale Color alpha going 1 to 0 from about mid-life on smoke and cloud cards, never size-only (`fade_curve_verdict`; Shishido [00:39:23]); Sub UV Animation frame playback fast then slow (`flipbook_playback_verdict`; Trümpler [00:13:08]) [curve option verify]; the flipbook material dividing RGB by A for baked textures.
+Curves and options to specify in the same request (v0.2, each checked by script afterwards): the
+head sprite's Sprite Renderer alignment set to velocity aligned plus Scale Sprite Size By Speed for
+the stretch `strobe_risk` asked for [alignment label verify]; Scale Color alpha going 1 to 0 from
+about mid-life on smoke and cloud cards, never size-only (`fade_curve_verdict`; Shishido
+[00:39:23]); Sub UV Animation frame playback fast then slow (`flipbook_playback_verdict`; Trümpler
+[00:13:08]) [curve option verify]; the flipbook material dividing RGB by A for baked textures.
 
-Typical bindings for the contract: head size to Initialize Particle sprite size; core and fringe colors to Initialize Particle color or a dynamic material parameter; core intensity to a material scalar; trail lifetime to the ribbon emitter's Initialize Particle lifetime; ember rate to Spawn Rate; radius to the ring's shape and the smoke spawn radius; burst counts to Spawn Burst Instantaneous; flipbook texture to the sprite material parameter.
+Typical bindings for the contract: head size to Initialize Particle sprite size; core and fringe
+colors to Initialize Particle color or a dynamic material parameter; core intensity to a material
+scalar; trail lifetime to the ribbon emitter's Initialize Particle lifetime; ember rate to Spawn
+Rate; radius to the ring's shape and the smoke spawn radius; burst counts to Spawn Burst
+Instantaneous; flipbook texture to the sprite material parameter.
 
 ## Scalability and Effect Types
 

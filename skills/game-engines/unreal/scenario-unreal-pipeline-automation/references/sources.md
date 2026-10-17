@@ -1,6 +1,11 @@
 # Sources behind scenario-unreal-pipeline-automation
 
-Per-source notes live in the project's `notes/pipeline/`, `notes/python/`, `notes/editor-tools/` and `notes/editor/` (never edited to fit this skill), with digests `notes/pipeline/_digest_pipeline_testing_build.md` and `notes/python/_digest_python_mcp_remote.md`. Saved documentation is in `sources/docs/`; version facts in `sources/unreal-version-deltas.md` (Python, Interchange, Remote Control and MCP, cooking, macOS sections). Credentials as stated in the notes; spoken names that captions garbled are marked.
+Per-source notes live in the project's `notes/pipeline/`, `notes/python/`, `notes/editor-tools/` and
+`notes/editor/` (never edited to fit this skill), with digests
+`notes/pipeline/_digest_pipeline_testing_build.md` and `notes/python/_digest_python_mcp_remote.md`.
+Saved documentation is in `sources/docs/`; version facts in `sources/unreal-version-deltas.md`
+(Python, Interchange, Remote Control and MCP, cooking, macOS sections). Credentials as stated in the
+notes; spoken names that captions garbled are marked.
 
 ## Talks and videos
 
@@ -49,11 +54,28 @@ Per-source notes live in the project's `notes/pipeline/`, `notes/python/`, `note
 
 ## Sister skills this one reads from
 
-- scenario-maya-pipeline-scripting (`~/.claude/skills/scenario-maya-pipeline-scripting`): the export side (`fbx_export` settings sidecar, `summary.json`, `export_manifest`, `publish_diff`, UCX naming, FBX 2020.2, cm).
-- scenario-zbrush-retopology-export and scenario-blender-uv-baking: OBJ and FBX exports, DirectX normals for Unreal.
-- scenario-unreal-expert: `ue_env`, `ue_run`, `ue_remote`, `ue_audit`, `ue_review` (used, not reimplemented).
+- scenario-maya-pipeline-scripting (`~/.claude/skills/scenario-maya-pipeline-scripting`): the export
+  side (`fbx_export` settings sidecar, `summary.json`, `export_manifest`, `publish_diff`, UCX
+  naming, FBX 2020.2, cm).
+- scenario-zbrush-retopology-export and scenario-blender-uv-baking: OBJ and FBX exports, DirectX
+  normals for Unreal.
+- scenario-unreal-expert: `ue_env`, `ue_run`, `ue_remote`, `ue_audit`, `ue_review` (used, not
+  reimplemented).
 
 ## Revision history
 
-- 2026-09-24, v0.1: first version (snapshot in `skills/_versions/unreal-pipeline-automation v1 2026-09-24/`).
-- 2026-09-24, v0.2: refactor after the blind grade `tests/grading/U8_grade.md`. Added from the notes: reimport reuses the stored pipeline stack, so the plan versions the policy and reimports with the preset (Interchange doc); Interchange's own material instance route and its parameter-mapping caveat, and Vertex Color Import Option Ignore (Interchange doc, pipeline digest); `wait_for_completion()` headless and `-ScriptErrorsAreFatal` with a job verdict instead of exit codes (5.8 batch example, version deltas); source control checkout rule and `-autocheckout` (5.8 notes, Bardoux [00:55:27], naming doc); per-validator cook cost `DataValidation.ReportCookValidationStats` (data validation note); LOD count checked after the LOD group plus screen-size check (pipeline digest); raw engine calls for import, validator, screenshot loop and redirector query (P3b, P5, P7, P8); BuildCookRun line from a Project Launcher profile with `buildcookrun_diff`, cook-only iteration and `-cookincremental` (UAT doc, deltas); duplicate guard on re-runs (naming doc). Corrected: the Xcode content-only statement is now marked as an inference. Scripts and offline tests extended (not yet run in Unreal).
+- 2026-09-24, v0.1: first version (snapshot in
+  `skills/_versions/unreal-pipeline-automation v1 2026-09-24/`).
+- 2026-09-24, v0.2: refactor after the blind grade `tests/grading/U8_grade.md`. Added from the
+  notes: reimport reuses the stored pipeline stack, so the plan versions the policy and reimports
+  with the preset (Interchange doc); Interchange's own material instance route and its
+  parameter-mapping caveat, and Vertex Color Import Option Ignore (Interchange doc, pipeline
+  digest); `wait_for_completion()` headless and `-ScriptErrorsAreFatal` with a job verdict instead
+  of exit codes (5.8 batch example, version deltas); source control checkout rule and
+  `-autocheckout` (5.8 notes, Bardoux [00:55:27], naming doc); per-validator cook cost
+  `DataValidation.ReportCookValidationStats` (data validation note); LOD count checked after the LOD
+  group plus screen-size check (pipeline digest); raw engine calls for import, validator, screenshot
+  loop and redirector query (P3b, P5, P7, P8); BuildCookRun line from a Project Launcher profile
+  with `buildcookrun_diff`, cook-only iteration and `-cookincremental` (UAT doc, deltas); duplicate
+  guard on re-runs (naming doc). Corrected: the Xcode content-only statement is now marked as an
+  inference. Scripts and offline tests extended (not yet run in Unreal).

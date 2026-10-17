@@ -1,13 +1,17 @@
 # scenario-godot-architecture: procedures
 
-Every procedure here ran in Godot 4.7.2.stable.official.ed1daf0bf (standard build, headless, macOS, this Mac) on 2026-10-02.
+Every procedure here ran in Godot 4.7.2.stable.official.ed1daf0bf (standard build, headless, macOS,
+this Mac) on 2026-10-02.
 
-- Live tests: `tests/code/godot-architecture/test_architecture_live.py`, L1 to L11. Options: `--only L6`, and `--skip L9`. L1 is added automatically when a test needs the G1 project.
+- Live tests: `tests/code/godot-architecture/test_architecture_live.py`, L1 to L11. Options:
+  `--only L6`, and `--skip L9`. L1 is added automatically when a test needs the G1 project.
 - GUT tests: `tests/code/godot-architecture/gd/test/*.gd`, run inside the built project by L2.
 - Offline: `tests/code/godot-architecture/test_architecture_offline.py`, 17 checks.
-- Evidence: `tests/live_evidence/godot-architecture/live_<stamp>.json` and `offline_lint.json`. The final full run is named at the end of this file.
+- Evidence: `tests/live_evidence/godot-architecture/live_<stamp>.json` and `offline_lint.json`. The
+  final full run is named at the end of this file.
 
-The complete code is in the skill folder; each procedure names its files and shows the lines that matter.
+The complete code is in the skill folder; each procedure names its files and shows the lines that
+matter.
 
 - `scripts/gd_architecture.py`: runner side, system python3.
 - `scripts/agentkit/architecture/*.gd`: jobs, copied to `res://addons/agentkit/architecture/`.
@@ -49,7 +53,8 @@ signal game_loaded(slot: int)
 - `project.godot` has `3d/physics_engine="Jolt Physics"`;
 - it has `Events="*res://core/events/events.gd"` and `run/main_scene=...`.
 
-Run in Godot 4.7.2 on 2026-10-02: pass. Import, content job, catalog, validation, main scene and input all ran in 4.6 to 6.7 s. Jolt was kept, and the autoload and main scene were present.
+Run in Godot 4.7.2 on 2026-10-02: pass. Import, content job, catalog, validation, main scene and
+input all ran in 4.6 to 6.7 s. Jolt was kept, and the autoload and main scene were present.
 
 ## P2. Main scene skeleton (L1, L4, `test_main.gd`)
 
@@ -58,7 +63,8 @@ A.build_main_scene(P, path="res://core/main/main.tscn", dim="3d", script="res://
                    set_main=True, props={"player_scene": "res://gameplay/player.tscn"})
 ```
 
-`scaffold.gd:main_scene` builds this tree, sets owners through `AgentBuild.save_scene`, then sets `application/run/main_scene` with `ProjectSettings.save()`:
+`scaffold.gd:main_scene` builds this tree, sets owners through `AgentBuild.save_scene`, then sets
+`application/run/main_scene` with `ProjectSettings.save()`:
 
 ```
 Main (Node, script main_game.gd, PROCESS_MODE_ALWAYS)
@@ -112,11 +118,14 @@ GUT (`test_main.gd`, 6 tests):
 - loading twice leaves 1 child, with the player at (10, 1, -4) under EntityRoot;
 - a wrong scene type is refused, the current level is kept, and there are no new orphans;
 - a spawned node survives its shooter;
-- the direct level change in `body_entered` logs "Removing a CollisionObject node during a physics callback is not allowed";
+- the direct level change in `body_entered` logs "Removing a CollisionObject node during a physics
+  callback is not allowed";
 - the deferred `request_level` is clean;
-- with the tree paused for 5 frames, World processes 0 frames, while TransitionLayer and PauseLayer process more than 3.
+- with the tree paused for 5 frames, World processes 0 frames, while TransitionLayer and PauseLayer
+  process more than 3.
 
-Run in Godot 4.7.2 on 2026-10-02: pass (6 of 6). The first version used `as BaseLevel`: GUT reported 6 orphans, and that version was fixed.
+Run in Godot 4.7.2 on 2026-10-02: pass (6 of 6). The first version used `as BaseLevel`: GUT reported
+6 orphans, and that version was fixed.
 
 ## P3. Item definitions, catalog, validation (L1, L9, `test_inventory.gd`)
 
@@ -137,7 +146,11 @@ A.build_catalog(P, root="res://data/items", out="res://data/item_catalog.tres",
 A.validate_resources(P, root="res://data/items", cls="ItemDefinition", required=("display_name",))
 ```
 
-`build_catalog.gd` walks the folder recursively with `ResourceLoader.list_directory`, which skips `.import` and `.uid` files. It keeps the resources whose script `get_global_name()` is `item_class`, sorts them by id, fills the typed `items` list and saves. It then reloads with `CACHE_MODE_IGNORE` and returns `items`, `reloaded`, `ids`, `duplicates` and `ext_resources`. It runs at edit time, as a job or in CI, never in the game.
+`build_catalog.gd` walks the folder recursively with `ResourceLoader.list_directory`, which skips
+`.import` and `.uid` files. It keeps the resources whose script `get_global_name()` is `item_class`,
+sorts them by id, fills the typed `items` list and saves. It then reloads with `CACHE_MODE_IGNORE`
+and returns `items`, `reloaded`, `ids`, `duplicates` and `ext_resources`. It runs at edit time, as a
+job or in CI, never in the game.
 
 `validate_data.gd` reports, for each `.tres`:
 
@@ -147,13 +160,15 @@ A.validate_resources(P, root="res://data/items", cls="ItemDefinition", required=
 
 `ItemCatalog.validate()` checks the same at runtime.
 
-Run in Godot 4.7.2 on 2026-10-02: pass. 3 items (ore, potion, sword) and 5 ext_resources, no duplicates, validation `problems: []`.
+Run in Godot 4.7.2 on 2026-10-02: pass. 3 items (ore, potion, sword) and 5 ext_resources, no
+duplicates, validation `problems: []`.
 
 ## P4. Inventory (`test_inventory.gd`)
 
 `core/inventory/inventory.gd` (RefCounted) has:
 
-- `add(item, amount) -> int`: fills existing stacks, then free slots up to `capacity`, and returns the leftover;
+- `add(item, amount) -> int`: fills existing stacks, then free slots up to `capacity`, and returns
+  the leftover;
 - `remove(id, amount) -> bool`: all or nothing;
 - `count_of`, and `has_all(needs: Dictionary[StringName, int])`, which never mutates its input;
 - `to_save()`, which returns `[{"id", "count"}]`;
@@ -169,7 +184,9 @@ GUT, 6 tests:
 - the save round trip reports an unknown id;
 - `load()` returns the same potion instance the catalog holds, and `duplicate()` is independent.
 
-Run in Godot 4.7.2 on 2026-10-02: pass (6 of 6). Bite test (L3): with the guard `count_of(item_id) < amount` removed, exactly `test_remove_is_all_or_nothing` failed (126 of 129 asserts).
+Run in Godot 4.7.2 on 2026-10-02: pass (6 of 6). Bite test (L3): with the guard
+`count_of(item_id) < amount` removed, exactly `test_remove_is_all_or_nothing` failed (126 of 129
+asserts).
 
 ## P5. Health, hurtbox, hitbox (`test_health.gd`)
 
@@ -181,7 +198,8 @@ Run in Godot 4.7.2 on 2026-10-02: pass (6 of 6). Bite test (L3): with the guard 
 - `Hurtbox3D` (`@tool` Area3D):
   - `@export var health: HealthComponent`, whose setter calls `update_configuration_warnings()`;
   - `take_hit(info)` warns and returns 0 when nothing is wired.
-- `Hitbox3D`: on `area_entered`, it runs `if not (area is Hurtbox3D): return`, then `take_hit` through a typed local.
+- `Hitbox3D`: on `area_entered`, it runs `if not (area is Hurtbox3D): return`, then `take_hit`
+  through a typed local.
 
 GUT, 5 tests:
 
@@ -189,7 +207,8 @@ GUT, 5 tests:
 - `died` is emitted once;
 - an invulnerable component takes 0;
 - an unwired hurtbox gives 1 configuration warning and takes 0;
-- a real Jolt overlap: the hitbox is moved from x=5 to x=0, and `wait_for_signal(h.damaged, 2.0)` leaves health at 75.
+- a real Jolt overlap: the hitbox is moved from x=5 to x=0, and `wait_for_signal(h.damaged, 2.0)`
+  leaves health at 75.
 
 Run in Godot 4.7.2 on 2026-10-02: pass (5 of 5).
 
@@ -220,11 +239,14 @@ static func write(path: String, data: Dictionary) -> Error:
 How `read(path)` works:
 
 - `JSON.new().parse` (no log on corrupt text), then a check that the root is an object;
-- version 2 and later goes through `JSON.to_native`; version 1 is plain JSON and goes through `migrate()`, where `_restore_ints` turns `count`, `level` and `slot` back into ints;
+- version 2 and later goes through `JSON.to_native`; version 1 is plain JSON and goes through
+  `migrate()`, where `_restore_ints` turns `count`, `level` and `slot` back into ints;
 - when the main file is unreadable, it falls back to `.bak` and sets `used_backup`;
 - it never calls `load()`, `str_to_var` or `ConfigFile` on save content.
 
-`collect(tree)` walks the "persist" group (`PersistComponent`: `save_id`, `properties`, and the target's `save_state()`) and returns `{nodes, duplicate_ids}`. `apply(tree, data)` returns the ids it could not find.
+`collect(tree)` walks the "persist" group (`PersistComponent`: `save_id`, `properties`, and the
+target's `save_state()`) and returns `{nodes, duplicate_ids}`. `apply(tree, data)` returns the ids
+it could not find.
 
 GUT, 6 tests:
 
@@ -238,7 +260,8 @@ Run in Godot 4.7.2 on 2026-10-02: pass (6 of 6).
 
 ## P7. Input map and rebinding (L1, `test_input.gd`)
 
-`core/input/input_actions.gd` is the single table: 13 actions, keys by `physical_keycode`, and every event built with `device = -1`.
+`core/input/input_actions.gd` is the single table: 13 actions, keys by `physical_keycode`, and every
+event built with `device = -1`.
 
 ```gdscript
 static func defaults() -> Dictionary:
@@ -260,11 +283,16 @@ static func joy_button(button: JoyButton) -> InputEventJoypadButton:
 r = A.setup_input(P)      # setup_input.gd:apply, then gd_run.audit(P, "project") in r["audit"]
 ```
 
-`setup_input.gd` calls `ProjectSettings.set_setting("input/<action>", {"deadzone": DEADZONE, "events": [...]})` for each action, then `ProjectSettings.save()` and `InputMap.load_from_project_settings()`. Close the GUI editor first. Afterwards, re-read `project.godot`: the save drops the header and every default-valued key.
+`setup_input.gd` calls
+`ProjectSettings.set_setting("input/<action>", {"deadzone": DEADZONE, "events": [...]})` for each
+action, then `ProjectSettings.save()` and `InputMap.load_from_project_settings()`. Close the GUI
+editor first. Afterwards, re-read `project.godot`: the save drops the header and every
+default-valued key.
 
 At runtime, `core/input/input_remap.gd` provides:
 
-- `rebind(action, event)`: removes the event from other non-`ui_` actions, returns them, and replaces the same family (`kbm` or `pad`) on the target;
+- `rebind(action, event)`: removes the event from other non-`ui_` actions, returns them, and
+  replaces the same family (`kbm` or `pad`) on the target;
 - `save_bindings` and `load_bindings`: plain JSON in `user://input_bindings.json`;
 - `reset_to_defaults()`, which calls `InputMap.load_from_project_settings()`;
 - `is_bindable()`, which ignores stick motion under 0.5.
@@ -279,7 +307,8 @@ GUT, 7 tests:
 - `parse_input_event` plus `flush_buffered_events` presses and releases `dodge` headless;
 - a stick at 0.3 is not bindable, and at -0.8 it is.
 
-Run in Godot 4.7.2 on 2026-10-02: pass. L1 found 13 actions with only device -1 in `project.godot`, and GUT ran 7 of 7.
+Run in Godot 4.7.2 on 2026-10-02: pass. L1 found 13 actions with only device -1 in `project.godot`,
+and GUT ran 7 of 7.
 
 ## P8. Scene audit (L4)
 
@@ -301,7 +330,8 @@ It also lists the CanvasLayer layers with their process modes.
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
 - G1: 5 scenes, 0 flags, 4 layers (10 pausable, 20 when_paused, 30 always, 40 always).
-- Bad fixture (`gd/fixture/jobs/make_bad_scene.gd`): all 4 traps flagged: negative scale on Flipped, DeafArea monitoring with mask 0, Hurtbox.health not wired, and its configuration warning.
+- Bad fixture (`gd/fixture/jobs/make_bad_scene.gd`): all 4 traps flagged: negative scale on Flipped,
+  DeafArea monitoring with mask 0, Hurtbox.health not wired, and its configuration warning.
 
 ## P9. Typing gate (L5, L7)
 
@@ -310,17 +340,23 @@ A.typing_gate(P)                                   # DEFAULT_WARNINGS at level 2
 A.typing_gate(P, warnings=A.STRICT_WARNINGS)       # + unsafe_call_argument
 ```
 
-The gate clones the project (`cp -cR`) and sets `debug/gdscript/warnings/<name>=2` in the clone. It then runs `gd_run.check_all` and sorts the "(Warning treated as error.)" lines by rule. Level 1 (warn) prints nothing headless, so it would always pass. The original `project.godot` is never touched.
+The gate clones the project (`cp -cR`) and sets `debug/gdscript/warnings/<name>=2` in the clone. It
+then runs `gd_run.check_all` and sorts the "(Warning treated as error.)" lines by rule. Level 1
+(warn) prints nothing headless, so it would always pass. The original `project.godot` is never
+touched.
 
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
-- Default gate: 0 over 22 files. It first found 4 hits in the GUT tests (`load(...).instantiate()`, a Variant cast, `.size()` on a Variant), which were fixed.
+- Default gate: 0 over 22 files. It first found 4 hits in the GUT tests (`load(...).instantiate()`,
+  a Variant cast, `.size()` on a Variant), which were fixed.
 - Strict gate: 33 `unsafe_call_argument` hits in 8 files.
 - Untyped fixture: flagged (16 untyped_declaration, 8 unsafe_method_access).
 
 ## P10. Trap probes (L6)
 
-The fixture lives in `gd/fixture/` (jobs `probe1` to `probe9`, `res_probe/*.gd`, `warn/untyped.gd`). It runs in a fresh Base3D clone with its own `user://`, and the payload file is moved out of `user://` afterwards. Asserted on `AGENT_RESULT`:
+The fixture lives in `gd/fixture/` (jobs `probe1` to `probe9`, `res_probe/*.gd`, `warn/untyped.gd`).
+It runs in a fresh Base3D clone with its own `user://`, and the payload file is moved out of
+`user://` afterwards. Asserted on `AGENT_RESULT`:
 
 | Check                                                | Result                                                                 |
 | ---------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -357,7 +393,8 @@ A.bench_typing(P, n=2000, reps=5, sort_n=200000)
 
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
-- Bubble sort: in the final run, untyped 124.1 ms and typed 82.5 ms (1.50x). Earlier runs gave 1.46x and 1.48x.
+- Bubble sort: in the final run, untyped 124.1 ms and typed 82.5 ms (1.50x). Earlier runs gave 1.46x
+  and 1.48x.
 - `Array.sort`: 23.5 and 23.5 ms (ratio 1.00).
 - This was the debug editor binary; release templates were not measured.
 
@@ -372,7 +409,9 @@ The test:
 
 - adds a Linux preset;
 - exports a `.pck` (no templates needed);
-- runs `godot --headless --main-pack game.pck --script res://addons/agentkit/agent_job.gd -- ... --agent-call .../pack_probe.gd:listing` under `godot_slot`.
+- runs
+  `godot --headless --main-pack game.pck --script res://addons/agentkit/agent_job.gd -- ... --agent-call .../pack_probe.gd:listing`
+  under `godot_slot`.
 
 Run in Godot 4.7.2 on 2026-10-02: pass.
 
@@ -393,7 +432,8 @@ Rules:
 
 - A01 negative-scale flip; A02 reach-up paths;
 - A03 runtime folder scan (error); A04 `load("user://*.tres")` (error); A05 `str_to_var` (error);
-- A06 `has_method` (info); A07 inner Resource class (error); A08 Resource `_init` without defaults (error);
+- A06 `has_method` (info); A07 inner Resource class (error); A08 Resource `_init` without defaults
+  (error);
 - A09 autoload preloading a scene; A10 stateful event bus;
 - A11 `res://` path case mismatch (error); A12 not snake_case;
 - A13 missing `.uid` (after import); A14 orphan `.uid`; A15 non-empty `.gdignore`;
@@ -401,12 +441,15 @@ Rules:
 
 Run on 2026-10-02: pass.
 
-- Offline: 15 of 15 rules fire on the bad fixture, the good fixture gives 0 findings, and A13 stays silent before import.
+- Offline: 15 of 15 rules fire on the bad fixture, the good fixture gives 0 findings, and A13 stays
+  silent before import.
 - On G1: 0 error findings, and 2 A06 infos in `persist_component.gd`, which are intended.
 
 ## P14. C# vs GDScript live check (L11)
 
-Not yet run. No .NET SDK and no Godot .NET build are installed. The standard 4.7.2 build cannot load C# scripts, and the data volume had 3.0 GiB free on 2026-10-02, too little to fetch both (the .NET build zip alone is 200 MB) next to the other jobs.
+Not yet run. No .NET SDK and no Godot .NET build are installed. The standard 4.7.2 build cannot load
+C# scripts, and the data volume had 3.0 GiB free on 2026-10-02, too little to fetch both (the .NET
+build zip alone is 200 MB) next to the other jobs.
 
 To run it later:
 
@@ -418,7 +461,10 @@ To run it later:
 
 ## P15. Round-2 probes (L12, `gd/fixture/jobs/probe10.gd`, `gd/fixture/r2/`)
 
-Added after the blind grading of G1 (`tests/grading/refactor_godot-architecture.md`). The fixture is copied to `res://r2/`, the job to `res://jobs/`, and `icon.svg` into `res://r2/ignored/` (which holds an empty `.gdignore`). The job compiles two scripts from strings on purpose, so it logs 2 parse errors and returns `ok` false; L12 asserts on the result dictionary instead.
+Added after the blind grading of G1 (`tests/grading/refactor_godot-architecture.md`). The fixture is
+copied to `res://r2/`, the job to `res://jobs/`, and `icon.svg` into `res://r2/ignored/` (which
+holds an empty `.gdignore`). The job compiles two scripts from strings on purpose, so it logs 2
+parse errors and returns `ok` false; L12 asserts on the result dictionary instead.
 
 ```python
 r = gd_run.run_script(P, "res://jobs/probe10.gd")
@@ -465,7 +511,11 @@ static func unmatched_masks(objects: Array) -> Dictionary:
 	return out
 ```
 
-The typing gate on `r2/warn_infer/infer.gd` flagged line 7, `n.position` after `var n := get_node("Child")`: "The property "position" is not present on the inferred type "Node" (but may be present on a subtype)". The typed form `var n: Node2D = get_node("Child")` passed. `return clamp(a, 0.0, 1.0)` in a `-> float` function was not flagged by the default or the strict gate, so the case for `clampf` is speed and Color safety, not the gate.
+The typing gate on `r2/warn_infer/infer.gd` flagged line 7, `n.position` after
+`var n := get_node("Child")`: "The property "position" is not present on the inferred type "Node"
+(but may be present on a subtype)". The typed form `var n: Node2D = get_node("Child")` passed.
+`return clamp(a, 0.0, 1.0)` in a `-> float` function was not flagged by the default or the strict
+gate, so the case for `clampf` is speed and Color safety, not the gate.
 
 Run in Godot 4.7.2 on 2026-10-02: pass (21 of 21 checks in L12).
 
@@ -478,7 +528,8 @@ git check-attr filter -- art/hero.png player.gd.uid # png: lfs; uid: unspecified
 git check-ignore .godot/x.cfg player.gd.uid         # only .godot/x.cfg is ignored
 ```
 
-Run on 2026-10-02 in a scratch repo: pass. `git-lfs` is not installed on this Mac, so only the attribute routing was checked, not an LFS push.
+Run on 2026-10-02 in a scratch repo: pass. `git-lfs` is not installed on this Mac, so only the
+attribute routing was checked, not an LFS push.
 
 ## P17. Windowed capture of a debug UI (`gd/fixture/jobs/build_inv_ui.gd`)
 
@@ -488,13 +539,18 @@ c = gd_run.capture_scene(P, "res://r2/ui/inventory_debug.tscn", out="captures/in
 gd_review.image_checks(c["result"]["images"][0])
 ```
 
-Run in Godot 4.7.2 on 2026-10-02 (`tests/projects/godot-architecture/round2/R2`): pass. 11 frames drawn in 0.17 s; stretch canvas_items, scale 1.11. `image_checks` ok true, with the info flag `low_contrast_centre` (dark list on a dark panel). The image was opened: three rows (Potion x4, Iron ore x12, Sword) in a centered list. Not part of the headless live suite.
+Run in Godot 4.7.2 on 2026-10-02 (`tests/projects/godot-architecture/round2/R2`): pass. 11 frames
+drawn in 0.17 s; stretch canvas_items, scale 1.11. `image_checks` ok true, with the info flag
+`low_contrast_centre` (dark list on a dark panel). The image was opened: three rows (Potion x4, Iron
+ore x12, Sword) in a centered list. Not part of the headless live suite.
 
 ## Final full run
 
-`python3 tests/code/godot-architecture/test_architecture_live.py`, 2026-10-02 22:40, took about 19 s.
+`python3 tests/code/godot-architecture/test_architecture_live.py`, 2026-10-02 22:40, took about 19
+s.
 
 - L1 to L10 and L12 pass; L11 (C#) was not run.
 - GUT: 30 of 30 tests, 129 asserts. Bite: 126 of 129.
 - Offline: 17 of 17 (rerun 22:41).
-- Evidence: `tests/live_evidence/godot-architecture/live_20261002-224039.json`, logs in `logs_20261002-224039/`. The previous full run (21:39, L1 to L11) is `live_20261002-213959.json`.
+- Evidence: `tests/live_evidence/godot-architecture/live_20261002-224039.json`, logs in
+  `logs_20261002-224039/`. The previous full run (21:39, L1 to L11) is `live_20261002-213959.json`.

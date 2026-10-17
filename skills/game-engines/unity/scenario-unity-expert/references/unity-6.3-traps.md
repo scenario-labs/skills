@@ -1,6 +1,13 @@
 # Unity 6.3 traps (6000.3.21f1 on macOS Apple Silicon)
 
-Load before writing code or settings from memory. Three kinds of entries: **observed** by the lead (run on this Mac on 2026-09-24 through `tests/code/unity-expert/`, result in `archive/tests/unity-expert/live_results.jsonl`), **observed by a domain writer** (section 2, each with the skill whose live test found it), and **documented** (from `sources/unity-version-deltas.md`, which cites the 6.3 Manual, upgrade guides and package pages; its section 14 is the full list). Precedence when sources disagree: the installed editor beats the 6.3 Manual, which beats package docs for other versions, which beat videos. Two deltas claims were contradicted live: section 4.
+Load before writing code or settings from memory. Three kinds of entries: **observed** by the lead
+(run on this Mac on 2026-09-24 through `tests/code/unity-expert/`, result in
+`archive/tests/unity-expert/live_results.jsonl`), **observed by a domain writer** (section 2, each
+with the skill whose live test found it), and **documented** (from
+`sources/unity-version-deltas.md`, which cites the 6.3 Manual, upgrade guides and package pages; its
+section 14 is the full list). Precedence when sources disagree: the installed editor beats the 6.3
+Manual, which beats package docs for other versions, which beat videos. Two deltas claims were
+contradicted live: section 4.
 
 ## 1. Observed on this machine (agent-execution traps)
 
@@ -85,8 +92,18 @@ Load before writing code or settings from memory. Three kinds of entries: **obse
 
 ## 5. First-run checklist for a new project or a new machine
 
-1. `ut_env.preflight(P)`: editor found, modules present for the targets, license days left, project not locked.
-2. `ut_run.run_method(P, "AgentKit.AgentJob.Echo", build_target=T)`: pipeline asset, color space, active target, quality level, Enter Play Mode setting, scripting backend, input handler. Write them into the plan. Pin the same target on every later stage (import, tests, build): the first import picks the default platform and build target is an import dependency, so an unpinned stage re-imports textures for another platform (automation docs, `doc-command-line-batchmode-ci`).
-3. `ut_run.run_method(P, "AgentKit.AgentAudit.AuditScene", {"scene": ...})` and `AuditAssets` on the content folders: fix errors before building on top. Project Auditor 1.0.2 (a package in 6.3) is the static baseline when code quality matters.
-4. One capture of the main views with `graphics=True`, `ut_review.review_capture`, and a look at the contact sheet: the baseline every later change is compared with.
-5. Before any build: the scene list (shared or in the profile) is non-empty and points at existing scenes; an empty or broken list is "effectively trying to create a build of nothing" (bF_eUuxGEcA [00:04:02]).
+1. `ut_env.preflight(P)`: editor found, modules present for the targets, license days left, project
+   not locked.
+2. `ut_run.run_method(P, "AgentKit.AgentJob.Echo", build_target=T)`: pipeline asset, color space,
+   active target, quality level, Enter Play Mode setting, scripting backend, input handler. Write
+   them into the plan. Pin the same target on every later stage (import, tests, build): the first
+   import picks the default platform and build target is an import dependency, so an unpinned stage
+   re-imports textures for another platform (automation docs, `doc-command-line-batchmode-ci`).
+3. `ut_run.run_method(P, "AgentKit.AgentAudit.AuditScene", {"scene": ...})` and `AuditAssets` on the
+   content folders: fix errors before building on top. Project Auditor 1.0.2 (a package in 6.3) is
+   the static baseline when code quality matters.
+4. One capture of the main views with `graphics=True`, `ut_review.review_capture`, and a look at the
+   contact sheet: the baseline every later change is compared with.
+5. Before any build: the scene list (shared or in the profile) is non-empty and points at existing
+   scenes; an empty or broken list is "effectively trying to create a build of nothing" (bF_eUuxGEcA
+   [00:04:02]).

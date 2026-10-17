@@ -1,10 +1,11 @@
 # Procedures: scenario-godot-performance-export 0.1
 
-Agent procedures with full code paths (sections 1 to 15 round 1, section 16 round 2). Every procedure was run live in Godot 4.7.2.stable (official,
-macOS arm64, Apple M-series GPU) on 2026-10-02 through the lead toolkit (`gd_env`, `gd_run`,
-`gd_stat`, `gd_review`, AgentKit) plus this skill's `scripts/gd_perf.py` and
-`scripts/agentkit/perf/*.gd`. Tests: `tests/code/godot-performance-export/test_perf_live.py`
-(P1 to P12) and `test_perf_offline.py` (O1 to O6). Evidence: `tests/live_evidence/godot-performance-export/`.
+Agent procedures with full code paths (sections 1 to 15 round 1, section 16 round 2). Every
+procedure was run live in Godot 4.7.2.stable (official, macOS arm64, Apple M-series GPU) on
+2026-10-02 through the lead toolkit (`gd_env`, `gd_run`, `gd_stat`, `gd_review`, AgentKit) plus this
+skill's `scripts/gd_perf.py` and `scripts/agentkit/perf/*.gd`. Tests:
+`tests/code/godot-performance-export/test_perf_live.py` (P1 to P12) and `test_perf_offline.py` (O1
+to O6). Evidence: `tests/live_evidence/godot-performance-export/`.
 
 Setup used by every procedure:
 
@@ -18,9 +19,9 @@ gd_env.set_project_setting(P, "application/config/name", '"PerfLab"')   # own us
 
 Check the agent-written `project.godot` before measuring: `gd_env.read_project(P)` must show
 `physics/3d/physics_engine="Jolt Physics"` for 3D and the renderer you mean to test
-(`rendering/renderer/rendering_method`). Base3D clones carry both (checked 2026-10-02).
-A clone keeps `config/name="Base3D"`: every Base3D clone then shares ONE `user://` folder and one
-shader cache with the other agents' clones, which poisons cold-start measurements. Rename it.
+(`rendering/renderer/rendering_method`). Base3D clones carry both (checked 2026-10-02). A clone
+keeps `config/name="Base3D"`: every Base3D clone then shares ONE `user://` folder and one shader
+cache with the other agents' clones, which poisons cold-start measurements. Rename it.
 
 ---
 
@@ -43,11 +44,12 @@ environment features, ReflectionProbes set to Always. Flags: `unique_materials`,
 `multimesh_candidates`, `per_node_process`, `shadowed_lights`, `no_distance_fade`,
 `dynamic_lights_with_lightmaps`, `transparent_materials`, `label3d`, `no_visibility_range`,
 `no_occluders`, `skinned_offscreen`, `hurtbox_areas`, `probe_update_always`, `costly_environment`,
-`particles`. Thresholds are constants at the top of the file [added: starting points, tune per project].
+`particles`. Thresholds are constants at the top of the file [added: starting points, tune per
+project].
 
-Run in Godot 4.7.2 on 2026-10-02 (P1): pass. Slow city: 2,523 nodes, 2,500 unique materials,
-2,500 `_process` nodes, 16 shadowed omni lights, instantiate 114 to 146 ms; 7 flags (3 high).
-After the fixes: 24 nodes, 0 flags, instantiate 31 ms.
+Run in Godot 4.7.2 on 2026-10-02 (P1): pass. Slow city: 2,523 nodes, 2,500 unique materials, 2,500
+`_process` nodes, 16 shadowed omni lights, instantiate 114 to 146 ms; 7 flags (3 high). After the
+fixes: 24 nodes, 0 flags, instantiate 31 ms.
 
 ## 2. A deliberately slow scene (calibration)
 
@@ -58,11 +60,11 @@ gd_run.run_script(P, "res://addons/agentkit/perf/perf_stress.gd:make_area", {"co
 ```
 
 `make_city`: one shared BoxMesh, a unique StandardMaterial3D per cube (8-color palette), a GDScript
-`_process` per cube (rotate plus a small loop), 16 shadowed OmniLight3D, sky, AgX, shadowed sun.
-It also writes `res://perf_fx/spin_instanced.gdshader`, the MultiMesh replacement (rotation from
-`TIME * INSTANCE_CUSTOM.r`, color from `COLOR` converted sRGB to linear).
-Use it to calibrate a machine and to prove that the measurement pipeline sees a fix. Run in Godot
-4.7.2 on 2026-10-02: pass (P1, P2).
+`_process` per cube (rotate plus a small loop), 16 shadowed OmniLight3D, sky, AgX, shadowed sun. It
+also writes `res://perf_fx/spin_instanced.gdshader`, the MultiMesh replacement (rotation from
+`TIME * INSTANCE_CUSTOM.r`, color from `COLOR` converted sRGB to linear). Use it to calibrate a
+machine and to prove that the measurement pipeline sees a fix. Run in Godot 4.7.2 on 2026-10-02:
+pass (P1, P2).
 
 ## 3. Measured optimization, one change at a time (windowed, Vulkan)
 
@@ -85,14 +87,14 @@ print(gd_perf.compare(runs["city_slow"], runs["city_1_shared"]))
 gd_review.contact_sheet([r["result"]["shot"] for r in runs.values()], "city_before_after.png", cols=2, thumb=640)
 ```
 
-`profile_variant` runs `perf_bench.gd:run_variant` windowed with `--rendering-driver vulkan`
-(Metal reports gpu_ms 0 in 4.7.2), renders the scene into a 1280x720 SubViewport, records the
-lead's CSV (`agent_profile.record`), adds per-viewport render info for the visible and shadow
-passes, and times the scene's `_process` per frame with two sentinel nodes (process_priority
--1e6 and +1e6). Why sentinels: `Performance.TIME_PROCESS` is not a per-frame value. It holds one
-number for about a second (the slowest step of the previous second): the CSV showed the same
-193.19 ms on every row of a scene whose frames took 8.3 ms. Never compare `process_ms` p95 from
-the monitor CSV; use `result.scene_process`.
+`profile_variant` runs `perf_bench.gd:run_variant` windowed with `--rendering-driver vulkan` (Metal
+reports gpu_ms 0 in 4.7.2), renders the scene into a 1280x720 SubViewport, records the lead's CSV
+(`agent_profile.record`), adds per-viewport render info for the visible and shadow passes, and times
+the scene's `_process` per frame with two sentinel nodes (process_priority -1e6 and +1e6). Why
+sentinels: `Performance.TIME_PROCESS` is not a per-frame value. It holds one number for about a
+second (the slowest step of the previous second): the CSV showed the same 193.19 ms on every row of
+a scene whose frames took 8.3 ms. Never compare `process_ms` p95 from the monitor CSV; use
+`result.scene_process`.
 
 `apply_fix` never writes over its input (`out` must differ). Fixes in `perf_fixes.gd`:
 `share_materials`, `multimesh` (one MultiMeshInstance3D per mesh, parent and look; per-instance
@@ -117,10 +119,10 @@ budget cut it (6.6 to 1.7 ms). Classification said so before any fix (procedure 
 Traps found while building this (all fixed in the shipped code):
 
 - A MultiMesh built in a headless job loses its instances: `set_instance_transform`,
-  `set_instance_color` and `set_instance_custom_data` go to the dummy RenderingServer and the
-  saved `.tscn` has `instance_count = 2500` and no buffer (the first "after" capture was an empty
-  floor). Write `MultiMesh.buffer` directly (`perf_fixes._pack`, 20 floats per instance for
-  TRANSFORM_3D + color + custom; layout verified by round trip, error 0.0) (P7).
+  `set_instance_color` and `set_instance_custom_data` go to the dummy RenderingServer and the saved
+  `.tscn` has `instance_count = 2500` and no buffer (the first "after" capture was an empty floor).
+  Write `MultiMesh.buffer` directly (`perf_fixes._pack`, 20 floats per instance for TRANSFORM_3D +
+  color + custom; layout verified by round trip, error 0.0) (P7).
 - Instance colors copied from `StandardMaterial3D.albedo_color` are sRGB. A shader writing
   `ALBEDO = COLOR.rgb` renders pale cubes; convert to linear (shader) or set
   `vertex_color_is_srgb = true` (StandardMaterial3D path).
@@ -128,9 +130,9 @@ Traps found while building this (all fixed in the shipped code):
   distance fade is measured from the camera. Pick `fade_begin` from the real camera distance and
   look at the capture.
 - A vertex-shader animation does not move the instance AABB, so omni and spot shadow maps are not
-  re-rendered every frame the way they are for moving nodes (164 versus 5,055 shadow draws).
-  The shadows of spinning cubes then lag the cubes. Check shadows on a close-up capture when
-  animation moves into a shader.
+  re-rendered every frame the way they are for moving nodes (164 versus 5,055 shadow draws). The
+  shadows of spinning cubes then lag the cubes. Check shadows on a close-up capture when animation
+  moves into a shader.
 
 ## 4. Which side bounds the frame (CPU or GPU, and which kind of GPU cost)
 
@@ -145,9 +147,9 @@ viewport's measured GPU time (docs: frame time is the slower of the two, so opti
 side gains nothing). A 0.5 `scaling_3d_scale` run separates fill-bound (GPU drops more than 30 %
 [added threshold]) from geometry, draw or shadow bound.
 
-Run in Godot 4.7.2 on 2026-10-02 (P3): pass. Slow city: GPU 6.5 ms versus CPU 5.3 ms, GPU change
-at half resolution -2 % to +5 % (noise): geometry and shadow bound, so lowering resolution would
-not have helped, matching procedure 3.
+Run in Godot 4.7.2 on 2026-10-02 (P3): pass. Slow city: GPU 6.5 ms versus CPU 5.3 ms, GPU change at
+half resolution -2 % to +5 % (noise): geometry and shadow bound, so lowering resolution would not
+have helped, matching procedure 3.
 
 ## 5. Staggered polling (headless physics)
 
@@ -157,13 +159,13 @@ for mode in ("sync", "staggered"):
                           {"agents": 600, "mode": mode, "cooldown": 0.1, "rays": 4, "frames": 300})
 ```
 
-600 agents each cast 4 rays every 0.1 s with a disabled RayCast3D and `force_raycast_update()`
-(Dan Does Dev, s2C2RO_WMh0 [00:05:34]). `sync` starts every timer equal; `staggered` gives each a
-random phase. The physics cost per tick is timed by sentinels (process_physics_priority).
+600 agents each cast 4 rays every 0.1 s with a disabled RayCast3D and `force_raycast_update()` (Dan
+Does Dev, s2C2RO_WMh0 [00:05:34]). `sync` starts every timer equal; `staggered` gives each a random
+phase. The physics cost per tick is timed by sentinels (process_physics_priority).
 
-Run in Godot 4.7.2 on 2026-10-02 (P4): pass. Same work (129,600 versus 131,612 ray hits):
-sync max 1.93 ms, p95 0.85 ms, 62 spike frames; staggered max 0.64 ms, p95 0.37 ms, 16 spikes.
-The median rises (0.10 to 0.18 ms) because the work is spread: the expert point is the spikes.
+Run in Godot 4.7.2 on 2026-10-02 (P4): pass. Same work (129,600 versus 131,612 ray hits): sync max
+1.93 ms, p95 0.85 ms, 62 spike frames; staggered max 0.64 ms, p95 0.37 ms, 16 spikes. The median
+rises (0.10 to 0.18 ms) because the work is spread: the expert point is the spikes.
 
 ## 6. Hitches when entering a new area (windowed)
 
@@ -180,14 +182,14 @@ r = gd_run.run_script(P, "res://addons/agentkit/perf/perf_bench.gd:hitch",
 `threaded_instantiate` (load and instantiate in a WorkerThreadPool task, off-tree, then
 `add_child`). It logs per-frame time and pipeline-compilation monitor deltas.
 
-Run in Godot 4.7.2 on 2026-10-02 (P5), worst frame, cold then warm shader cache:
-sync 453 then 176 ms; threaded 340 then 79 ms; threaded load + instantiate 230 then 9.6 ms
-(baseline frame 7.9 ms). The first-ever run in a shared Base3D user folder hit 3,906 ms.
-Pipeline compilations (surface and specialization) appear on the frame the area is first drawn;
-with `threaded_instantiate` they began on the worker before `add_child`. Conclusions: move load
-AND instantiate off the main thread, and ship with a warm pipeline cache (the shader baker
-export option, since 4.5, handoff scenario-godot-shaders; warm-up by drawing new materials once behind a loading screen
-[added]). Single runs: expect ±30 % run to run.
+Run in Godot 4.7.2 on 2026-10-02 (P5), worst frame, cold then warm shader cache: sync 453 then 176
+ms; threaded 340 then 79 ms; threaded load + instantiate 230 then 9.6 ms (baseline frame 7.9 ms).
+The first-ever run in a shared Base3D user folder hit 3,906 ms. Pipeline compilations (surface and
+specialization) appear on the frame the area is first drawn; with `threaded_instantiate` they began
+on the worker before `add_child`. Conclusions: move load AND instantiate off the main thread, and
+ship with a warm pipeline cache (the shader baker export option, since 4.5, handoff
+scenario-godot-shaders; warm-up by drawing new materials once behind a loading screen [added]).
+Single runs: expect ±30 % run to run.
 
 ## 7. Occlusion culling and visibility ranges (windowed)
 
@@ -200,16 +202,16 @@ for st in ({"use_occlusion_culling": False}, {"use_occlusion_culling": True},
 ```
 
 `box_occluders` adds an OccluderInstance3D with a BoxOccluder3D slightly smaller than each large
-static box mesh (Zenva, VBiBZBVxu1s: hand-sized boxes beat a whole-scene bake). Project-wide
-switch: `rendering/occlusion_culling/use_occlusion_culling=true` (default false in 4.7.2); per
-viewport: `Viewport.use_occlusion_culling`.
+static box mesh (Zenva, VBiBZBVxu1s: hand-sized boxes beat a whole-scene bake). Project-wide switch:
+`rendering/occlusion_culling/use_occlusion_culling=true` (default false in 4.7.2); per viewport:
+`Viewport.use_occlusion_culling`.
 
 Run in Godot 4.7.2 on 2026-10-02 (P6): pass. Culling on without occluders: 1,260 objects drawn,
 unchanged. With one box occluder: 1,260 to 90 objects, 15,120 to 1,080 primitives (Forward+ and
-Mobile identical), pixels identical (`compare` identical=True). Compatibility also culls
-(15,120 to 1,080 primitives). Render CPU rose 0.30 to 0.58 ms in this small scene: occlusion costs
-CPU (raster on the CPU), worth it when hidden geometry is heavy. Occluder debug capture looked at
-(the box shows as the white occluder region).
+Mobile identical), pixels identical (`compare` identical=True). Compatibility also culls (15,120 to
+1,080 primitives). Render CPU rose 0.30 to 0.58 ms in this small scene: occlusion costs CPU (raster
+on the CPU), worth it when hidden geometry is heavy. Occluder debug capture looked at (the box shows
+as the white occluder region).
 
 `visibility_range` fix: sets `visibility_range_end` and margin on meshes smaller than `max_size`
 (2,500 nodes set in the city). Run 2026-10-02: pass (apply only; judge pop-in on captures).
@@ -226,15 +228,15 @@ print(r["lines"]["SHIP_BOOT"][0], r["lines"]["PERF_SUMMARY"][0])
 ```
 
 It prints `SHIP_BOOT {platform, feature tags, renderer, driver, adapter}` and, after the window,
-`PERF_SUMMARY {p50, p95, p99, max, hitches, gpu_p95, max_draw_calls, pipelines_compiled,
-warmup_max_ms}` and writes `user://perf/frames_<unix>.csv`. The first 10 frames are reported
-apart (`--perf-warmup N`). On a phone: pass the same user args through the launch command
-[not yet run: no device attached].
+`PERF_SUMMARY {p50, p95, p99, max, hitches, gpu_p95, max_draw_calls, pipelines_compiled, warmup_max_ms}`
+and writes `user://perf/frames_<unix>.csv`. The first 10 frames are reported apart
+(`--perf-warmup N`). On a phone: pass the same user args through the launch command [not yet run: no
+device attached].
 
-Run in Godot 4.7.2 on 2026-10-02 (P8): pass. Exported macOS build, headless: 290 frames,
-p50 6.9 ms, p95 9.5 ms. Windowed (Metal): p50 8.2 ms (120 Hz cap), 8 pipelines compiled, first
-frames up to 576 ms (kept out of the percentiles; before the warm-up split, one 1,008 ms first
-frame counted as a hitch).
+Run in Godot 4.7.2 on 2026-10-02 (P8): pass. Exported macOS build, headless: 290 frames, p50 6.9 ms,
+p95 9.5 ms. Windowed (Metal): p50 8.2 ms (120 Hz cap), 8 pipelines compiled, first frames up to 576
+ms (kept out of the percentiles; before the warm-up split, one 1,008 ms first frame counted as a
+hitch).
 
 ## 9. macOS export, demo build and DLC pack
 
@@ -255,21 +257,21 @@ v = gd_perf.verify_macos("<builds>/Game.zip", "<builds>/Game_x")
 print(gd_perf.pck_listing(next(Path("<builds>/Game_x").rglob("*.pck"))))
 ```
 
-`import_etc2_astc=true` is required (the lead's export reports the fix when missing).
-`ship_boot.gd` (autoload) reads `OS.has_feature("demo")` and mounts the DLC with
-`ProjectSettings.load_resource_pack(path, false)`, then prints `DLC {json}`.
-`verify_macos` unzips with `ditto`, reads Info.plist, `lipo -archs`, `codesign -dv`,
-`codesign --verify --deep --strict`, `spctl -a -vvv -t exec`, entitlements.
+`import_etc2_astc=true` is required (the lead's export reports the fix when missing). `ship_boot.gd`
+(autoload) reads `OS.has_feature("demo")` and mounts the DLC with
+`ProjectSettings.load_resource_pack(path, false)`, then prints `DLC {json}`. `verify_macos` unzips
+with `ditto`, reads Info.plist, `lipo -archs`, `codesign -dv`, `codesign --verify --deep --strict`,
+`spctl -a -vvv -t exec`, entitlements.
 
 Run in Godot 4.7.2 on 2026-10-02 (P8): pass. Universal zip 56.6 MB (executable 161.8 MB
-x86_64+arm64, pck 55 KB), minimum macOS arm64 13.0 / x86_64 11.0, ad-hoc signature, codesign
-verify OK, Gatekeeper "rejected" (expected before Developer ID and notarization), Debugging
-entitlement off. Demo build boots with the `demo` tag and refuses the DLC; full build mounts it
-(`loaded`, `scene_ok`). The base pck holds no `dlc/` file (pck_listing). The DLC pack (12 files)
-also carries `project.binary`, the autoload scripts and `.godot/global_script_class_cache.cfg`:
-hence `replace_files=false`, so an old DLC never overwrites newer base scripts.
-`gd_run.verify_pack` loads `res://dlc/bonus.tscn` from it: pass. `pck_listing` reads pack format 4
-(4.7.2) and matched the files `verify_pack` mounted.
+x86_64+arm64, pck 55 KB), minimum macOS arm64 13.0 / x86_64 11.0, ad-hoc signature, codesign verify
+OK, Gatekeeper "rejected" (expected before Developer ID and notarization), Debugging entitlement
+off. Demo build boots with the `demo` tag and refuses the DLC; full build mounts it (`loaded`,
+`scene_ok`). The base pck holds no `dlc/` file (pck_listing). The DLC pack (12 files) also carries
+`project.binary`, the autoload scripts and `.godot/global_script_class_cache.cfg`: hence
+`replace_files=false`, so an old DLC never overwrites newer base scripts. `gd_run.verify_pack` loads
+`res://dlc/bonus.tscn` from it: pass. `pck_listing` reads pack format 4 (4.7.2) and matched the
+files `verify_pack` mounted.
 
 Signing and notarization (documented, NOT run: no Developer ID here). `gd_perf.notarize_plan()`:
 
@@ -303,9 +305,9 @@ print(gd_perf.size_report("<builds>/web_st")["total_mb"])
 
 `serve` is a local static server with `application/wasm`, `no-store` and optional cross-origin
 isolation headers (localhost is a secure context, so it tests the real header rule). `web_smoke`
-drives headless Chrome through Playwright for Python (`channel="chrome"`), waits for the
-`SHIP_BOOT` console line, and records `crossOriginIsolated`, `SharedArrayBuffer`, WebGL 2, page
-errors and the status notice. `web_bridge.gd` (autoload, no-op off the web) gets
+drives headless Chrome through Playwright for Python (`channel="chrome"`), waits for the `SHIP_BOOT`
+console line, and records `crossOriginIsolated`, `SharedArrayBuffer`, WebGL 2, page errors and the
+status notice. `web_bridge.gd` (autoload, no-op off the web) gets
 `JavaScriptBridge.get_interface("Leaderboard")`, keeps its `create_callback` objects in members,
 chains `getTop(n).then(cb)`, and exposes `window.godotBridge.send` to the page.
 
@@ -318,12 +320,11 @@ Run in Godot 4.7.2 on 2026-10-02 (P9): pass.
 | threaded        | plain     | NO: "Cross-Origin Isolation ... SharedArrayBuffer ... missing" | false               |       |
 | threaded        | COOP/COEP | yes                                                            | true                | 0.5 s |
 
-Renderer `gl_compatibility`, driver `opengl3`, feature tags `web, nothreads` or `threads`.
-Interop: "WEB_BRIDGE top 3 rows" (game called page, promise resolved), page-to-game ack
-"hello from page". Screenshots opened: the 3D test scene renders in WebGL 2. Size: 38.1 MB raw,
-9.7 MB gzip -9, 7.8 MB brotli q9 (wasm 39.5 MB raw, 8.0 MB brotli); the pck is 0.1 MB. itch.io
-does not compress on the fly (web doc): a 20 MB first-load budget holds only if the host serves
-compressed files.
+Renderer `gl_compatibility`, driver `opengl3`, feature tags `web, nothreads` or `threads`. Interop:
+"WEB_BRIDGE top 3 rows" (game called page, promise resolved), page-to-game ack "hello from page".
+Screenshots opened: the 3D test scene renders in WebGL 2. Size: 38.1 MB raw, 9.7 MB gzip -9, 7.8 MB
+brotli q9 (wasm 39.5 MB raw, 8.0 MB brotli); the pck is 0.1 MB. itch.io does not compress on the fly
+(web doc): a 20 MB first-load budget holds only if the host serves compressed files.
 
 PWA workaround (`progressive_web_app/enabled` + `ensure_cross_origin_isolation_headers`, threaded,
 no headers): the service worker installed but the page's automatic reload came before it controlled
@@ -346,18 +347,19 @@ print(r["apk"])
 ```
 
 Credentials go only through `GODOT_ANDROID_KEYSTORE_{DEBUG,RELEASE}_{PATH,USER,PASSWORD}`.
-`export_android` sets `JAVA_HOME`, `ANDROID_HOME` and the private home's variables (`home_env`: HOME on macOS, APPDATA on Windows, HOME and XDG on Linux), and writes the two Android paths into
-the private editor settings: JAVA_HOME and ANDROID_HOME only seed those paths when Godot first
-creates its editor settings file. A private home first used for a macOS or web export kept
+`export_android` sets `JAVA_HOME`, `ANDROID_HOME` and the private home's variables (`home_env`: HOME
+on macOS, APPDATA on Windows, HOME and XDG on Linux), and writes the two Android paths into the
+private editor settings: JAVA_HOME and ANDROID_HOME only seed those paths when Godot first creates
+its editor settings file. A private home first used for a macOS or web export kept
 `java_sdk_path = ""` and the Android export failed ("A valid Java SDK path is required").
 `verify_apk` runs `apksigner verify --print-certs` and `aapt2 dump badging`.
 
-Run in Godot 4.7.2 on 2026-10-02 (P10): pass. SDK and JDK from Unity Hub 6000.3.21f1
-AndroidPlayer (OpenJDK 17, build-tools 36.0.0, platforms 34 to 36, NDK r27, not needed for a
-non-Gradle APK). Debug APK 28.3 MB in 5 s: v2+v3 signed, "CN=Android Debug", debuggable,
-arm64-v8a, minSdk 24, targetSdk 36. Release APK 26.5 MB: signed by the upload key (SHA-256 matched
-the keystore), versionCode 2, not debuggable. No password in `export_presets.cfg`.
-`libgodot_android.so` is 24 MB of the 26.5 MB.
+Run in Godot 4.7.2 on 2026-10-02 (P10): pass. SDK and JDK from Unity Hub 6000.3.21f1 AndroidPlayer
+(OpenJDK 17, build-tools 36.0.0, platforms 34 to 36, NDK r27, not needed for a non-Gradle APK).
+Debug APK 28.3 MB in 5 s: v2+v3 signed, "CN=Android Debug", debuggable, arm64-v8a, minSdk 24,
+targetSdk 36. Release APK 26.5 MB: signed by the upload key (SHA-256 matched the keystore),
+versionCode 2, not debuggable. No password in `export_presets.cfg`. `libgodot_android.so` is 24 MB
+of the 26.5 MB.
 
 Not run: Gradle build and AAB (`gradle_build/use_gradle_build=true`, `export_format=1`; needs the
 Android build template and Gradle downloads), `adb install` and on-device profiling (no device).
@@ -376,12 +378,12 @@ print(gd_perf.xcode_build("<builds>/ios"))      # unsigned, generic iOS destinat
 
 Run in Godot 4.7.2 on 2026-10-02 (P11): Xcode project pass (scheme, bundle id, team, 56 KB pck,
 MoltenVK and game xcframeworks). `gd_run.export` returns ok False here because no `.ipa` exists:
-verify the project folder instead. `xcodebuild` not run: "iOS 26.5 is not installed. Please
-download and install the platform from Xcode > Settings > Components" (Xcode 26.6 without the iOS
-platform). Not run: signing, archive, TestFlight (needs an Apple developer account).
-After installing the platform: `xcodebuild -project Game.xcodeproj -scheme Game -destination
-generic/platform=iOS archive -archivePath Game.xcarchive`, then `-exportArchive` with an
-ExportOptions.plist [added, not run].
+verify the project folder instead. `xcodebuild` not run: "iOS 26.5 is not installed. Please download
+and install the platform from Xcode > Settings > Components" (Xcode 26.6 without the iOS platform).
+Not run: signing, archive, TestFlight (needs an Apple developer account). After installing the
+platform:
+`xcodebuild -project Game.xcodeproj -scheme Game -destination generic/platform=iOS archive -archivePath Game.xcarchive`,
+then `-exportArchive` with an ExportOptions.plist [added, not run].
 
 ## 13. Touch controls on InputMap actions
 
@@ -390,14 +392,13 @@ r = gd_run.run_script(P, "res://addons/agentkit/perf/mobile_touch.gd:check",
                       {"actions": {"jump": [900, 480], "left": [60, 480]}})
 ```
 
-`make_touch_layer` builds a CanvasLayer of TouchScreenButtons whose `action` is the InputMap
-action (WisconsiKnight, uofaDRa7dWM [00:03:21]). Test touches use
-`Viewport.push_input(event, true)`: with window coordinates the 160x90 test window scaled the
-1152x648 viewport by 0.139 and every touch missed. Layout and safe area: scenario-godot-ui.
+`make_touch_layer` builds a CanvasLayer of TouchScreenButtons whose `action` is the InputMap action
+(WisconsiKnight, uofaDRa7dWM [00:03:21]). Test touches use `Viewport.push_input(event, true)`: with
+window coordinates the 160x90 test window scaled the 1152x648 viewport by 0.139 and every touch
+missed. Layout and safe area: scenario-godot-ui.
 
-Run in Godot 4.7.2 on 2026-10-02 (P12): pass, both actions pressed on touch and released, a
-stray touch pressed nothing. Defaults: `emulate_mouse_from_touch` true, `emulate_touch_from_mouse`
-false.
+Run in Godot 4.7.2 on 2026-10-02 (P12): pass, both actions pressed on touch and released, a stray
+touch pressed nothing. Defaults: `emulate_mouse_from_touch` true, `emulate_touch_from_mouse` false.
 
 ## 14. Release audit (offline)
 
@@ -405,14 +406,15 @@ false.
 print(gd_perf.release_audit(S))
 ```
 
-Reads `project.godot`, `export_presets.cfg` and files. Flags: default name, default Godot icon,
-no splash, missing main scene, 3D without Jolt, ETC2/ASTC off with macOS/Android/iOS presets,
-web renderer not Compatibility, secrets in presets, export path inside the project without
-`.gdignore`, tests or agent tooling exported, invalid Android package, AAB without Gradle, APK
-only, invalid bundle id, iOS team id, macOS Debugging entitlement, web threads.
+Reads `project.godot`, `export_presets.cfg` and files. Flags: default name, default Godot icon, no
+splash, missing main scene, 3D without Jolt, ETC2/ASTC off with macOS/Android/iOS presets, web
+renderer not Compatibility, secrets in presets, export path inside the project without `.gdignore`,
+tests or agent tooling exported, invalid Android package, AAB without Gradle, APK only, invalid
+bundle id, iOS team id, macOS Debugging entitlement, web threads.
 
-Run 2026-10-02 (O2): pass. A bad project raised all 14 expected flags; a good one raised none.
-On the ShipTest project it found the default icon, no splash, APK-only presets and agent tooling in presets without the exclude filter.
+Run 2026-10-02 (O2): pass. A bad project raised all 14 expected flags; a good one raised none. On
+the ShipTest project it found the default icon, no splash, APK-only presets and agent tooling in
+presets without the exclude filter.
 
 ## 15. Steam upload files (written, not run)
 
@@ -421,9 +423,9 @@ gd_perf.steam_vdf(app_id, {depot_id: "<builds>/windows"}, "<builds>/steam", desc
 # steamcmd +login <builder-account> +run_app_build "<builds>/steam/app_build_<app_id>.vdf" +quit
 ```
 
-Set builds live on a beta branch first (BluePhoenix, J0GrG-AffCI). GodotSteam needs the module
-or GDExtension build that matches the Godot version. Run 2026-10-02 (O4): VDF files pass; steamcmd
-not run (no Steamworks account).
+Set builds live on a beta branch first (BluePhoenix, J0GrG-AffCI). GodotSteam needs the module or
+GDExtension build that matches the Godot version. Run 2026-10-02 (O4): VDF files pass; steamcmd not
+run (no Steamworks account).
 
 ## 16. Round-2 checks after blind grading (R1 to R4)
 
@@ -446,15 +448,15 @@ Suite `tests/code/godot-performance-export/test_perf_round2.py`, project
 | 400 MeshInstance3D sharing one TextMesh and material                     | 1              | 400          |
 | one shadowed omni over 400 casters: Cube / Dual Paraboloid (shadow pass) | 19 / 2         | 124 / 220    |
 
-Correction to the docs line "transparent objects cannot batch": identical transparent objects
-still instance on Forward+; interleaved materials break the batches after depth sorting. Defaults
-read: `OmniLight3D.omni_shadow_mode` 1 (Cube, also the ClassDB default), `light_bake_mode` 2
-(Dynamic), `fallback_to_opengl3` true, `flush_stdout_on_print` false, physics interpolation off,
-60 ticks. Adapter "Apple M5 Max", `get_video_adapter_type()` 1 (integrated).
+Correction to the docs line "transparent objects cannot batch": identical transparent objects still
+instance on Forward+; interleaved materials break the batches after depth sorting. Defaults read:
+`OmniLight3D.omni_shadow_mode` 1 (Cube, also the ClassDB default), `light_bake_mode` 2 (Dynamic),
+`fallback_to_opengl3` true, `flush_stdout_on_print` false, physics interpolation off, 60 ticks.
+Adapter "Apple M5 Max", `get_video_adapter_type()` 1 (integrated).
 
 Creation of 2,000 MeshInstance3D nodes against 2,000 `RenderingServer.instance_create2` instances
-(warm shader cache): 2.3 against 0.6 ms on Forward+, 4.2 against 0.9 ms on Mobile; creation plus
-the next frame 7.3 against 8.3 ms. The first run in a fresh project took 739 ms for the node case,
+(warm shader cache): 2.3 against 0.6 ms on Forward+, 4.2 against 0.9 ms on Mobile; creation plus the
+next frame 7.3 against 8.3 ms. The first run in a fresh project took 739 ms for the node case,
 almost all pipeline compilation: always measure warm and cold separately.
 
 **R2 CLI.** `godot --help` in 4.7.2 lists `--gpu-index`, `--gpu-profile`, `--disable-vsync`,
@@ -470,8 +472,9 @@ export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$(security find-generic-password
 godot --headless --path . --install-android-build-template --export-release "Android" build/game.aab
 ```
 
-Run as `--install-android-build-template --export-debug "Android" x.apk`: the template install passed; the Gradle AAB build itself, `bundletool build-apks --connected-device`
-and `bundletool get-size total` not run (Gradle download, bundletool not installed, no device).
+Run as `--install-android-build-template --export-debug "Android" x.apk`: the template install
+passed; the Gradle AAB build itself, `bundletool build-apks --connected-device` and
+`bundletool get-size total` not run (Gradle download, bundletool not installed, no device).
 
 **R3 custom monitors (`r2_monitor.gd`, headless and windowed).**
 
@@ -482,17 +485,17 @@ and `bundletool get-size total` not run (Gradle download, bundletool not install
 | lambda capturing a local | no                  | crash, signal 11 (exit -6) |
 | lambda                   | yes                 | 0                          |
 
-In R1 a lambda monitor read 0.0 while the member it should mirror held 0.015 ms: the lambda
-captured the local by value. Also: `Performance.get_custom_monitor` returns Variant, so
+In R1 a lambda monitor read 0.0 while the member it should mirror held 0.015 ms: the lambda captured
+the local by value. Also: `Performance.get_custom_monitor` returns Variant, so
 `var x := Performance.get_custom_monitor(...)` is a parse error under warnings-as-errors; type it.
 
 **R4 engine-only frame logger (SKILL.md snippet, verbatim).** Saved as `bench_logger.gd`, autoload
-`Bench` in `Round2_logger`, run `godot --path Round2_logger --rendering-driver vulkan --resolution
-320x180 --quit-after 90 -- --bench`: prints `BENCH adapter=Apple M5 Max`, writes 90 rows to
-`user://bench.csv` (frame 6.67 ms at the display cap, render CPU 0.048 ms, GPU 0.503 ms, 10 draws).
-GPU and render CPU read 0.000 for the first two frames; the pipeline columns are cumulative
-totals (8 after warm-up), so diff rows to find compile frames. Without `--bench` nothing is
-written: pass.
+`Bench` in `Round2_logger`, run
+`godot --path Round2_logger --rendering-driver vulkan --resolution 320x180 --quit-after 90 -- --bench`:
+prints `BENCH adapter=Apple M5 Max`, writes 90 rows to `user://bench.csv` (frame 6.67 ms at the
+display cap, render CPU 0.048 ms, GPU 0.503 ms, 10 draws). GPU and render CPU read 0.000 for the
+first two frames; the pipeline columns are cumulative totals (8 after warm-up), so diff rows to find
+compile frames. Without `--bench` nothing is written: pass.
 
 Not run in round 2: the 30-minute phone soak with `adb shell dumpsys thermalservice` (no device),
 Streamline and Performance Advisor, a second pck downloaded and mounted on the web, the custom

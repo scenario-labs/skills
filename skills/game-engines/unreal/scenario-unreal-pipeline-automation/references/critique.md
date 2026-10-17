@@ -1,6 +1,10 @@
 # Critique rubric: judging pipeline work like a pipeline TD
 
-Use after every stage and before any delivery. Each row: what the expert looks at, the measurable proxy (`ue_pipeline` as `P`, the lead's `ue_run`, `ue_audit`, `ue_review`), the pass line, the severity. **block** = fix before anything leaves; **fix** = fix before delivery; **note** = report, accept if the brief allows. A run can pass with notes; do not turn a note into a block, and do not hide a block in a note. All in-editor proxies are not yet run in Unreal.
+Use after every stage and before any delivery. Each row: what the expert looks at, the measurable
+proxy (`ue_pipeline` as `P`, the lead's `ue_run`, `ue_audit`, `ue_review`), the pass line, the
+severity. **block** = fix before anything leaves; **fix** = fix before delivery; **note** = report,
+accept if the brief allows. A run can pass with notes; do not turn a note into a block, and do not
+hide a block in a note. All in-editor proxies are not yet run in Unreal.
 
 ## A. Intake and plan
 

@@ -1,6 +1,7 @@
 # scenario-godot-ui: critique rubric
 
-Score each line pass or fail, with the evidence (a number from the AGENT_RESULT or what you saw in a sheet). Do not deliver a UI with a failed blocker.
+Score each line pass or fail, with the evidence (a number from the AGENT_RESULT or what you saw in a
+sheet). Do not deliver a UI with a failed blocker.
 
 ## Blockers (measured)
 
@@ -25,7 +26,8 @@ Score each line pass or fail, with the evidence (a number from the AGENT_RESULT 
 - The focus ring is visible on every control type (Button, OptionButton, slider, tabs).
 - Nothing important sits under the red notch bands; backgrounds do extend under them.
 - Black bars only where the stretch aspect says so; nothing stretched or blurry at 4K.
-- CJK and Arabic glyphs are complete (no tofu boxes); Arabic layout is mirrored; numbers stay readable.
+- CJK and Arabic glyphs are complete (no tofu boxes); Arabic layout is mirrored; numbers stay
+  readable.
 - Pseudolocalized brackets are visible at both ends of each string (nothing clipped).
 - Two or three fonts at most; body text readable at phone size.
 - HUD frames, bars and minimap keep their aspect; the trail bar reads as damage.
@@ -33,14 +35,17 @@ Score each line pass or fail, with the evidence (a number from the AGENT_RESULT 
 ## Judgment calls
 
 - `canvas_items` vs `viewport`: crisp UI and high-res art vs pixel art (docs, Gwizz).
-- `expand` vs `keep_width`: multi-ratio game vs a HUD-first portrait game where the height can grow (docs).
+- `expand` vs `keep_width`: multi-ratio game vs a HUD-first portrait game where the height can grow
+  (docs).
 - Square base vs 16:9 base: phone portrait and landscape in scope or not (docs, measured).
 - CSV vs PO: agent and small team vs translators with gettext tools (jitspoe, Cashew OldDew).
-- `offset_transform` vs wrapper minimum size: decoration vs motion the layout must follow (MrElipteach).
+- `offset_transform` vs wrapper minimum size: decoration vs motion the layout must follow
+  (MrElipteach).
 
 ## Red flags in a proposal
 
-- "Headless root is 64x64, so test in SubViewports." This is wrong in 4.7.2: `root.size` works headless.
+- "Headless root is 64x64, so test in SubViewports." This is wrong in 4.7.2: `root.size` works
+  headless.
 - A base swap at runtime for portrait, when one square base covers both orientations.
 - HUD values updated in `_process`.
 - `theme_override_*` across many scenes instead of a Theme.

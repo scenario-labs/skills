@@ -1,6 +1,10 @@
 # Sources
 
-Every source behind this skill, with the expert, their credential, the link, what it is best for and the timestamps worth rewatching. Notes: `notes/materials/` and `notes/shading/` in the project folder (one note per source plus four digests). Version facts: `sources/unreal-version-deltas.md` (materials and Substrate sections). Credentials as stated in the notes and `sources/manifest.json`; "unverified" where the notes say so.
+Every source behind this skill, with the expert, their credential, the link, what it is best for and
+the timestamps worth rewatching. Notes: `notes/materials/` and `notes/shading/` in the project
+folder (one note per source plus four digests). Version facts: `sources/unreal-version-deltas.md`
+(materials and Substrate sections). Credentials as stated in the notes and `sources/manifest.json`;
+"unverified" where the notes say so.
 
 ## Talks and videos
 
@@ -34,9 +38,23 @@ Every source behind this skill, with the expert, their credential, the link, wha
 
 ## Project files used
 
-- `sources/unreal-version-deltas.md`: materials and Substrate section, conflicts (Substrate default, decals and DBuffer), Python API translations, Mac limits, the facts-to-verify checklist.
-- `tests/baseline/answers.md` (U2) and `tests/scenarios.md`: the generic answer this skill has to beat (instruction budgets, Adaptive framing, gray-metallic wear, switch presets without the texture-gate rule, parent usage flags).
+- `sources/unreal-version-deltas.md`: materials and Substrate section, conflicts (Substrate default,
+  decals and DBuffer), Python API translations, Mac limits, the facts-to-verify checklist.
+- `tests/baseline/answers.md` (U2) and `tests/scenarios.md`: the generic answer this skill has to
+  beat (instruction budgets, Adaptive framing, gray-metallic wear, switch presets without the
+  texture-gate rule, parent usage flags).
 
 ## Revision history
 
-- 2026-09-24, v0.2: refactor after blind grade U2 (v0.1 kept in `skills/_versions/unreal-materials v1 2026-09-24/`). Fixed: the Horizontal Blend mask-cost rule now applies only without parameter blending on Adaptive; Enum-bound scalars dated by the 5.7 release notes (Unreal Fest showed them as 5.8); the invented decal sort-order range removed; Temporal Responsiveness marked experimental with its cvar and the Nanite WPO condition. Added from the notes: Blendable ceiling and Adaptive fallback in the GBuffer decision; independent vs dependent transcendentals and material-function samples (`cost_census`, lint budgets); sampler-type cross-check; Used with Static Mesh off on decal masters; MPC limit; Substrate Shading Model node and Temporal Responsiveness lint; instance value audit (P16); cooked texture memory from `listtextures` (P17); value-clamped ID masks, world-aligned seams, directional blends, cavity specular occlusion, Normalize after making Mips, Alpha-only compression, Decal Response per receiver, quality levels in the permutation count, Window > Substrate panel.
+- 2026-09-24, v0.2: refactor after blind grade U2 (v0.1 kept in
+  `skills/_versions/unreal-materials v1 2026-09-24/`). Fixed: the Horizontal Blend mask-cost rule
+  now applies only without parameter blending on Adaptive; Enum-bound scalars dated by the 5.7
+  release notes (Unreal Fest showed them as 5.8); the invented decal sort-order range removed;
+  Temporal Responsiveness marked experimental with its cvar and the Nanite WPO condition. Added from
+  the notes: Blendable ceiling and Adaptive fallback in the GBuffer decision; independent vs
+  dependent transcendentals and material-function samples (`cost_census`, lint budgets);
+  sampler-type cross-check; Used with Static Mesh off on decal masters; MPC limit; Substrate Shading
+  Model node and Temporal Responsiveness lint; instance value audit (P16); cooked texture memory
+  from `listtextures` (P17); value-clamped ID masks, world-aligned seams, directional blends, cavity
+  specular occlusion, Normalize after making Mips, Alpha-only compression, Decal Response per
+  receiver, quality levels in the permutation count, Window > Substrate panel.

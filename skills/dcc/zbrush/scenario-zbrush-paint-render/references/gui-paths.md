@@ -1,6 +1,10 @@
 # GUI paths, hotkeys and settings (for a computer-use agent or a human)
 
-The same operations as `procedures.md`, as a person does them in the ZBrush 2026.2.1 interface. Tags: [doc] Maxon help; [expert] shown by the named expert; [strings] label present in this build's UI string table (`ZData/ZLang/english/UInterface.zsc`, 2026-09-24); [verify] not confirmed. macOS: docs write Ctrl for Command, but Control+W assigns a polygroup and Command+W quits ZBrush (version deltas 3.13): never press Command+W.
+The same operations as `procedures.md`, as a person does them in the ZBrush 2026.2.1 interface.
+Tags: [doc] Maxon help; [expert] shown by the named expert; [strings] label present in this build's
+UI string table (`ZData/ZLang/english/UInterface.zsc`, 2026-09-24); [verify] not confirmed. macOS:
+docs write Ctrl for Command, but Control+W assigns a polygroup and Command+W quits ZBrush (version
+deltas 3.13): never press Command+W.
 
 ## Paint setup
 
@@ -21,15 +25,25 @@ The same operations as `procedures.md`, as a person does them in the ZBrush 2026
 
 ## Brushes, strokes, alphas for paint
 
-- Standard brush for everything (FlippedNormals "one brush, one alpha, one hotkey" 00:16:00) [expert].
-- Stroke > Color Spray with Alpha 07 or 08 for speckled zones; Alpha 22 at full intensity for veins; doc: Colorized Spray, Draw Size 150 cover, 100 or less zones at RGB about 30, Alpha 25 spatter, Alpha 07 wash at RGB about 10 [expert] [doc].
+- Standard brush for everything (FlippedNormals "one brush, one alpha, one hotkey" 00:16:00)
+  [expert].
+- Stroke > Color Spray with Alpha 07 or 08 for speckled zones; Alpha 22 at full intensity for veins;
+  doc: Colorized Spray, Draw Size 150 cover, 100 or less zones at RGB about 30, Alpha 25 spatter,
+  Alpha 07 wash at RGB about 10 [expert] [doc].
 - Stroke > Modifiers color variance about 0.5 (Pablo 01:34:01, uncertain caption) [verify].
-- Soft custom brush and Color Spray blends; C to sample and paint across instead of blurring (FlippedNormals 00:06:01) [expert].
+- Soft custom brush and Color Spray blends; C to sample and paint across instead of blurring
+  (FlippedNormals 00:06:01) [expert].
 
 ## Symmetry for paint
 
-- Transform > Activate Symmetry, X. For a posed or asymmetric sculpt with symmetric topology: Transform > Use Posable Symmetry; fails after DynaMesh or Sculptris Pro (FlippedNormals 00:03:09 to 00:04:01) [expert].
-- Mirror paint side to side: paint one side; in Undo History Ctrl+click the marker before the paint; Tool > Masking > Mask Changed Points; Flip By Posable Symmetry; Inverse; Tool > Polypaint > Mirror By Posable Symmetry; Ctrl+click the marker again. Without a mask the mirror averages both sides [doc]. The undo-marker step is not scriptable; an agent paints with symmetry before posing instead [added].
+- Transform > Activate Symmetry, X. For a posed or asymmetric sculpt with symmetric topology:
+  Transform > Use Posable Symmetry; fails after DynaMesh or Sculptris Pro (FlippedNormals 00:03:09
+  to 00:04:01) [expert].
+- Mirror paint side to side: paint one side; in Undo History Ctrl+click the marker before the paint;
+  Tool > Masking > Mask Changed Points; Flip By Posable Symmetry; Inverse; Tool > Polypaint > Mirror
+  By Posable Symmetry; Ctrl+click the marker again. Without a mask the mirror averages both sides
+  [doc]. The undo-marker step is not scriptable; an agent paints with symmetry before posing instead
+  [added].
 
 ## Masking for paint passes (Tool > Masking)
 
@@ -45,13 +59,20 @@ The same operations as `procedures.md`, as a person does them in the ZBrush 2026
 | Mask Changed Points, Boost, Dilute, Grow, Shrink, Grow All, Shrink All | buttons                                                                                                                                   | [doc] [strings]                                                             |
 | Canvas gestures                                                        | Ctrl+click canvas inverts; Ctrl+drag on empty canvas clears; Ctrl+click the mesh blurs; View Mask toggles the display (Pablo maps Ctrl+H) | [expert]                                                                    |
 
-Zplugin > Ambient Occlusion (ships since 2021.6): distance, aperture, samples, resolution, OcclusionVolume (include other SubTools), Recalc, Compute, output mask or color (polypaint), smooth [strings]. Pablo: invert, tint through the mask [01:37:25]; Pavlovich: invert, navy, Fill Object [mW4P 00:06:30].
+Zplugin > Ambient Occlusion (ships since 2021.6): distance, aperture, samples, resolution,
+OcclusionVolume (include other SubTools), Recalc, Compute, output mask or color (polypaint), smooth
+[strings]. Pablo: invert, tint through the mask [01:37:25]; Pavlovich: invert, navy, Fill Object
+[mW4P 00:06:30].
 
 ## Spotlight (dial driven: a computer-use path)
 
-- Texture > Import, Add To Spotlight (or double-click a texture in LightBox); Shift+Z toggles Spotlight; Z switches between the dial and painting; Radius above 0 or Z does nothing [doc].
-- Dial: rotate, scale, move, nudge, clone, opacity (does not change the amount painted), fade, pin (repeat the spot under the dial center), restore, fill. Pure black is transparent. Save Spotlight and Load Spotlight store sets [doc].
-- Brush > Samples > Spotlight Projection off uses the images as reference only; MidValue and Alpha Blur sliders since 2023.2 (version deltas 3.2) [doc].
+- Texture > Import, Add To Spotlight (or double-click a texture in LightBox); Shift+Z toggles
+  Spotlight; Z switches between the dial and painting; Radius above 0 or Z does nothing [doc].
+- Dial: rotate, scale, move, nudge, clone, opacity (does not change the amount painted), fade, pin
+  (repeat the spot under the dial center), restore, fill. Pure black is transparent. Save Spotlight
+  and Load Spotlight store sets [doc].
+- Brush > Samples > Spotlight Projection off uses the images as reference only; MidValue and Alpha
+  Blur sliders since 2023.2 (version deltas 3.2) [doc].
 - No texture displayed on the model while painting [doc].
 
 ## Texture and vertex color
@@ -69,10 +90,15 @@ Zplugin > Ambient Occlusion (ships since 2021.6): distance, aperture, samples, r
 
 ## Materials for judging and rendering
 
-- Judge color: SkinShade4, MatCap White01, Flat Color (FlippedNormals 00:10:51; Pablo 00:44:58); Pablo's free Albedo Polypaint matcap is not installed here [expert].
+- Judge color: SkinShade4, MatCap White01, Flat Color (FlippedNormals 00:10:51; Pablo 00:44:58);
+  Pablo's free Albedo Polypaint matcap is not installed here [expert].
 - Form read: MatCap Gray (lead review default).
 - BPR light passes: BasicMaterial, black color, Specular 84 (Pavlovich lEP7 00:15:28) [expert].
-- Redshift materials (shipped in `ZData/Materials/RedshiftMaterials`): Basic, Clay, Plastic, RSPlastic, ShadowCatcher and about 60 more. Material > Modifiers: Use Material Color (0 = polypaint drives color), Is Shadow Catcher, Metalness, Reflect roughness, Reflect IOR, SSS amount, SSS scale, SSS Mode, Emission weight [strings] [doc]. Drag-and-drop crashed in 2025: select, M, Fill Object (Pavlovich FvpG 00:04:25) [expert].
+- Redshift materials (shipped in `ZData/Materials/RedshiftMaterials`): Basic, Clay, Plastic,
+  RSPlastic, ShadowCatcher and about 60 more. Material > Modifiers: Use Material Color (0 =
+  polypaint drives color), Is Shadow Catcher, Metalness, Reflect roughness, Reflect IOR, SSS amount,
+  SSS scale, SSS Mode, Emission weight [strings] [doc]. Drag-and-drop crashed in 2025: select, M,
+  Fill Object (Pavlovich FvpG 00:04:25) [expert].
 
 ## Render
 
@@ -92,18 +118,34 @@ Zplugin > Ambient Occlusion (ships since 2021.6): distance, aperture, samples, r
 
 ## Scene, camera, lights, document
 
-- Perspective P; floor Shift+P; Draw > Elevation (-1 snaps to the lowest SubTool), Grid Size (raise it for shadows), Angle Of View (focal length 50 in Pavlovich's Universal camera) [expert] [strings].
-- Draw > Cameras > Store Cam, Select Camera (repeatable views; the name prompt is a text dialog [verify]) [strings].
-- Light palette: click the light dot to place it, click again to send it behind (rim), tap a bulb to select and again to switch it on; Intensity (keep 0.1 when an HDRI lights the scene), Shadow, color; Redshift Light Properties: Shadow Strength, Shadow Softness, Shadow Samples, Light Distance (1.1 default), Light Range, Intensity Multiplier, Decay Type, Decay Start [expert] [strings].
-- Light > Background: environment texture, Longitude, Latitude, Tilt, Rotate With Object, Exposure, Gamma (2.2 for EXR; a JPEG sets 1), Redshift Exposure (default EXR looks dark: 0.35 to 1), Redshift HDR Shadows [expert] [strings]. LightBox > Texture > Panoramas.
-- Document: Width, Height, Pro off to unlink them, Resize; the canvas clears, redraw the tool and press T (Edit); Zoom to see the frame, Actual for real pixels; Back color swatch [expert].
+- Perspective P; floor Shift+P; Draw > Elevation (-1 snaps to the lowest SubTool), Grid Size (raise
+  it for shadows), Angle Of View (focal length 50 in Pavlovich's Universal camera) [expert]
+  [strings].
+- Draw > Cameras > Store Cam, Select Camera (repeatable views; the name prompt is a text dialog
+  [verify]) [strings].
+- Light palette: click the light dot to place it, click again to send it behind (rim), tap a bulb to
+  select and again to switch it on; Intensity (keep 0.1 when an HDRI lights the scene), Shadow,
+  color; Redshift Light Properties: Shadow Strength, Shadow Softness, Shadow Samples, Light Distance
+  (1.1 default), Light Range, Intensity Multiplier, Decay Type, Decay Start [expert] [strings].
+- Light > Background: environment texture, Longitude, Latitude, Tilt, Rotate With Object, Exposure,
+  Gamma (2.2 for EXR; a JPEG sets 1), Redshift Exposure (default EXR looks dark: 0.35 to 1),
+  Redshift HDR Shadows [expert] [strings]. LightBox > Texture > Panoramas.
+- Document: Width, Height, Pro off to unlink them, Resize; the canvas clears, redraw the tool and
+  press T (Edit); Zoom to see the frame, Actual for real pixels; Back color swatch [expert].
 
 ## Movies and turntables
 
-- Movie > Doc (document only), Large (100 percent), Turntable (Record Turntable), Modifiers: turntable frames (180 default), Overlay Image and Title Image opacity 0; Play Movie; Export with H for highest quality; MP4, MOV on macOS; above 4095 px resized [expert] [doc].
-- A Redshift render first, then Turntable, or it records viewport quality (Pavlovich FvpG 00:19:56). Escape did not stop it (00:21:00). With a movie in memory, Turntable asks "Export Existing" or "New Turntable" [strings].
-- Timeline: Movie > TimeLine Show; click the timeline to key the camera; Ctrl+Shift click the slider renders every frame with Redshift (Pavlovich 040h 01:03:36) [expert].
+- Movie > Doc (document only), Large (100 percent), Turntable (Record Turntable), Modifiers:
+  turntable frames (180 default), Overlay Image and Title Image opacity 0; Play Movie; Export with H
+  for highest quality; MP4, MOV on macOS; above 4095 px resized [expert] [doc].
+- A Redshift render first, then Turntable, or it records viewport quality (Pavlovich FvpG 00:19:56).
+  Escape did not stop it (00:21:00). With a movie in memory, Turntable asks "Export Existing" or
+  "New Turntable" [strings].
+- Timeline: Movie > TimeLine Show; click the timeline to key the camera; Ctrl+Shift click the slider
+  renders every frame with Redshift (Pavlovich 040h 01:03:36) [expert].
 
 ## Hotkeys used here
 
-C pick color; V swap colors; Alt secondary color; Shift+S snapshot; Shift+R render; Ctrl+R region render; Esc stop; P perspective; Shift+P floor; Shift+Z Spotlight on or off; Z Spotlight paint mode; T Edit; comma LightBox; D and Shift+D Dynamic Subdivision on and off [doc] [expert].
+C pick color; V swap colors; Alt secondary color; Shift+S snapshot; Shift+R render; Ctrl+R region
+render; Esc stop; P perspective; Shift+P floor; Shift+Z Spotlight on or off; Z Spotlight paint mode;
+T Edit; comma LightBox; D and Shift+D Dynamic Subdivision on and off [doc] [expert].

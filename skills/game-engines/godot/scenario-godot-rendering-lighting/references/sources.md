@@ -1,6 +1,8 @@
 # Sources (scenario-godot-rendering-lighting 0.1)
 
-Credentials come from the cluster notes; "unverified" means the channel gives no verifiable credential. All videos have transcripts. Frames were read for Brackeys, SeasonalAsh and Picster: 103 contact sheets, scanned on 2026-10-02.
+Credentials come from the cluster notes; "unverified" means the channel gives no verifiable
+credential. All videos have transcripts. Frames were read for Brackeys, SeasonalAsh and Picster: 103
+contact sheets, scanned on 2026-10-02.
 
 | Expert / source                                                               | Credential                                       | URL                                                                                            | Best for                                                                | Best timestamps                                                     |
 | ----------------------------------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -29,4 +31,6 @@ Credentials come from the cluster notes; "unverified" means the channel gives no
 | Godot docs: Volumetric fog and fog volumes                                    | official                                         | https://docs.godotengine.org/en/stable/tutorials/3d/volumetric_fog.html                        | fog settings, FogVolume                                                 |                                                                     |
 | Godot 4.7.2 class reference (ClassDB probe)                                   | engine                                           | `godot --doctool` / in-editor docs                                                             | defaults and enum tables (P1)                                           |                                                                     |
 
-Cluster notes: `notes/rendering-lighting/` (26 files, including both digests). The docs saved under `sources/docs/` for the compositor and volumetric fog were misfiled under ui-ux names; their bodies were used.
+Cluster notes: `notes/rendering-lighting/` (26 files, including both digests). The docs saved under
+`sources/docs/` for the compositor and volumetric fog were misfiled under ui-ux names; their bodies
+were used.

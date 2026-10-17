@@ -1,6 +1,10 @@
 # Critique rubric (scenario-maya-fx)
 
-Judge the cache, never the live solve (SARKAMARI RhAxSgPpZww [00:19:32]). Every item has a measurable side (run it) and a visual side (render or playblast it, open the image, write what you see). An item passes only when both pass or the report states the exception and why (SARKAMARI accepts small artifacts that motion blur hides in camera, [00:37:46]). Bars marked [added] are this skill's defaults; the expert standard is the visual one.
+Judge the cache, never the live solve (SARKAMARI RhAxSgPpZww [00:19:32]). Every item has a
+measurable side (run it) and a visual side (render or playblast it, open the image, write what you
+see). An item passes only when both pass or the report states the exception and why (SARKAMARI
+accepts small artifacts that motion blur hides in camera, [00:37:46]). Bars marked [added] are this
+skill's defaults; the expert standard is the visual one.
 
 ## 0. Before looking at motion
 
@@ -30,7 +34,8 @@ Judge the cache, never the live solve (SARKAMARI RhAxSgPpZww [00:19:32]). Every 
 | Constraint members        | `constraint_members_verdict`                                             | none on the output mesh; no Dependency Graph loop warning                                        | doc, Tips                                          |
 | Cost                      | `timing_verdict` on seconds per frame (nucleus Timing Output in the GUI) | median under the brief's budget; slow frames explained                                           | doc, Timing Output                                 |
 
-Render set: `mx_review.review` clay at the action start, the peak of motion and the last frame, views side, back, threequarter; plus a playblast from the shot camera in the GUI.
+Render set: `mx_review.review` clay at the action start, the peak of motion and the last frame,
+views side, back, threequarter; plus a playblast from the shot camera in the GUI.
 
 ## 2. Smoke, dust, mist (Aero)
 
@@ -49,7 +54,8 @@ Render set: `mx_review.review` clay at the action start, the peak of motion and 
 | Cache              | `file_sequence_report`: every frame, no growth jump | cache reads back in Read mode                                                                                        | graph doc; sim guide                        |
 | Grids              | the file_cache property list                        | only fog density and velocity for render (plus temperature for fire)                                                 | Jason [00:28:35]                            |
 
-Render set: `mx_fx.volume_review` at the source start, two mid frames and the tail, one dim dome from above; playblast of the Bifrost shape in the GUI for timing only.
+Render set: `mx_fx.volume_review` at the source start, two mid frames and the tail, one dim dome
+from above; playblast of the Bifrost shape in the GUI for timing only.
 
 ## 3. Granular and MPM (snow, sand, dirt, MPM cloth)
 
@@ -87,4 +93,6 @@ Render set: `mx_fx.volume_review` at the source start, two mid frames and the ta
 
 ## 6. The report
 
-State: versions of every file delivered; the numbers above with their bars; which renders or playblasts were looked at and what they showed; exceptions accepted and why; what was not verified (every [verify] path used). "Looks fine" without an image path is not a verdict.
+State: versions of every file delivered; the numbers above with their bars; which renders or
+playblasts were looked at and what they showed; exceptions accepted and why; what was not verified
+(every [verify] path used). "Looks fine" without an image path is not a verdict.

@@ -1,6 +1,8 @@
 # Critique rubric: judging a pipeline, a layout, a build, a release
 
-Score each line pass / warn / fail with its evidence (envelope field, NUnit total, layout number, frame you opened). A pipeline is done when every "must" line passes; a warn needs a written reason. Thresholds are this skill's defaults unless the brief sets others.
+Score each line pass / warn / fail with its evidence (envelope field, NUnit total, layout number,
+frame you opened). A pipeline is done when every "must" line passes; a warn needs a written reason.
+Thresholds are this skill's defaults unless the brief sets others.
 
 ## 1. Import rules
 
@@ -61,7 +63,8 @@ Score each line pass / warn / fail with its evidence (envelope field, NUnit tota
 | No group asset created or copied under `Assets/` outside the settings' folder     | yes  | Addressables adopts any imported group into the default settings                                       |
 | No build scene references Addressable content                                     | yes  | `up.hard_references` ok; `AGENT_GATE.hard_references == 0`; shader-only references listed as a warning |
 
-Other layout pitfalls to call out: a few props shared across biomes left in their folder group (loading one biome loads another biome's whole bundle): label them and pack by condition.
+Other layout pitfalls to call out: a few props shared across biomes left in their folder group
+(loading one biome loads another biome's whole bundle): label them and pack by condition.
 
 ## 5. Content build and CI
 
@@ -94,5 +97,8 @@ Other layout pitfalls to call out: a few props shared across biomes left in thei
 
 ## 7. Report
 
-- Each step names its Unity call (toolkit call plus the API or command line behind it), then **Verified** (what ran, job id, numbers, frame) and **Assumed** (not run, `[verify]`, defaults, numbers quoted from a source).
-- Numbers are relative to something: "4.8 MB for the dungeon label (was 12.9 MB with the isolation group)", never "smaller bundles".
+- Each step names its Unity call (toolkit call plus the API or command line behind it), then
+  **Verified** (what ran, job id, numbers, frame) and **Assumed** (not run, `[verify]`, defaults,
+  numbers quoted from a source).
+- Numbers are relative to something: "4.8 MB for the dungeon label (was 12.9 MB with the isolation
+  group)", never "smaller bundles".

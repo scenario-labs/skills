@@ -1,6 +1,10 @@
 # Sources
 
-Fifteen videos, distilled into `notes/lighting/` (one note each) and two digests (`_digest_lighting_color.md`, `_digest_render_composite_composition.md`). Timestamps are `[hh:mm:ss]` into the video. No frame sheets exist for these videos: everything comes from the audio. Expert claims marked "measured" in this skill were re-tested on Blender 5.2.1 (`tests/code/blender-lighting-rendering/`).
+Fifteen videos, distilled into `notes/lighting/` (one note each) and two digests
+(`_digest_lighting_color.md`, `_digest_render_composite_composition.md`). Timestamps are
+`[hh:mm:ss]` into the video. No frame sheets exist for these videos: everything comes from the
+audio. Expert claims marked "measured" in this skill were re-tested on Blender 5.2.1
+(`tests/code/blender-lighting-rendering/`).
 
 ## Lighting design and color
 
@@ -29,8 +33,10 @@ Fifteen videos, distilled into `notes/lighting/` (one note each) and two digests
 
 ## Which source for which question
 
-- "How should this be lit?" Andy (film, characters), Andrew fundamentals (products, single objects), Gleb (portraits in EEVEE).
-- "Why does EEVEE look wrong?" Andrew's EEVEE course, then the measured notes in this skill (world leak, custom distance).
+- "How should this be lit?" Andy (film, characters), Andrew fundamentals (products, single objects),
+  Gleb (portraits in EEVEE).
+- "Why does EEVEE look wrong?" Andrew's EEVEE course, then the measured notes in this skill (world
+  leak, custom distance).
 - "Is the palette working?" Lino. "Is the color pipeline right?" Jacob, Vegdahl for vocabulary.
 - "Is the frame composed?" Andrew's composition talk.
 - "How do I set up passes and comp?" Robin (passes, layers), Pau (5.0 practice), Habib (why).

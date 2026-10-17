@@ -1,6 +1,8 @@
 # Sources
 
-Eight videos, distilled in `notes/geonodes/` (digest `_digest_geonodes.md`). Six are Simon Thommes (Blender Studio technical artist, artist-side member of the Geometry Nodes design team since late 2020); the others are Erindale and Johnny Matthews.
+Eight videos, distilled in `notes/geonodes/` (digest `_digest_geonodes.md`). Six are Simon Thommes
+(Blender Studio technical artist, artist-side member of the Geometry Nodes design team since late
+2020); the others are Erindale and Johnny Matthews.
 
 | Id          | Title                                                                                                   | Expert, credential                                                      | Blender on screen | Best for                                                                                                                                                                                      | Best timestamps                                                                                                                                                                                                                     |
 | ----------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -15,9 +17,15 @@ Eight videos, distilled in `notes/geonodes/` (digest `_digest_geonodes.md`). Six
 
 ## Version caveats
 
-- 3.6 baking lived in the Physics tab; 5.2 bakes from the modifier Bake panel or the Bake node, packed by default (`simulation_nodes_cache_bake`).
+- 3.6 baking lived in the Physics tab; 5.2 bakes from the modifier Bake panel or the Bake node,
+  packed by default (`simulation_nodes_cache_bake`).
 - The anchor-empty world-space trick (BCON23) is replaced by matrix sockets (4.2+).
-- "There is no list node" (Erindale, 2023) is outdated: 5.2 has Lists; Accumulate Field is still the idiomatic per-group tool.
-- Transform Geometry's mode, Resample Curve's mode and similar options are menu input sockets in 5.x.
-- Modal node tools, Modal Timer and Modal Event (end of BCON26) are experimental-build only, absent from 5.2.1.
-- Workshop-only assets (Controller Influence, Smooth Mesh, Aligned Surface Tangent, Birch generator, Erindale Toolkit) are not shipped. Closest 5.2 Essentials: Sphere / Box Selection, Smooth Geometry, Scatter on Surface, Randomize Transforms, Is Edge Loose, Is Edge Boundary.
+- "There is no list node" (Erindale, 2023) is outdated: 5.2 has Lists; Accumulate Field is still the
+  idiomatic per-group tool.
+- Transform Geometry's mode, Resample Curve's mode and similar options are menu input sockets in
+  5.x.
+- Modal node tools, Modal Timer and Modal Event (end of BCON26) are experimental-build only, absent
+  from 5.2.1.
+- Workshop-only assets (Controller Influence, Smooth Mesh, Aligned Surface Tangent, Birch generator,
+  Erindale Toolkit) are not shipped. Closest 5.2 Essentials: Sphere / Box Selection, Smooth
+  Geometry, Scatter on Surface, Randomize Transforms, Is Edge Loose, Is Edge Boundary.

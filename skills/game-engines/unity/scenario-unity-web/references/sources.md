@@ -1,6 +1,10 @@
 # Sources (scenario-unity-web)
 
-Every source behind the skill, with credentials, URL, what it is best for, and the best timestamps. Notes and digests: `notes/web/` (`_digest_docs_web.md`, `_digest_videos_web.md`, `_digest_extra_web.md`). Version facts: `sources/unity-version-deltas.md` § 12 (Web) and § 13 (6.4 to 6.6). Precedence when sources disagree: the installed editor and a live run beat the 6.3 Manual, which beats package docs for other versions, which beat videos.
+Every source behind the skill, with credentials, URL, what it is best for, and the best timestamps.
+Notes and digests: `notes/web/` (`_digest_docs_web.md`, `_digest_videos_web.md`,
+`_digest_extra_web.md`). Version facts: `sources/unity-version-deltas.md` § 12 (Web) and § 13 (6.4
+to 6.6). Precedence when sources disagree: the installed editor and a live run beat the 6.3 Manual,
+which beats package docs for other versions, which beat videos.
 
 ## Official documentation (Unity 6.3 Manual, retrieved 2026-09-24; local copies in `sources/docs/`)
 
@@ -37,23 +41,57 @@ Every source behind the skill, with credentials, URL, what it is best for, and t
 
 ## Live observations (this skill, Unity 6000.3.21f1, Chrome 153 headless, 2026-09-24)
 
-Recorded in `archive/tests/unity-web/live_results.jsonl` by `tests/code/unity-web/test_live_web.py` and `test_live_web_v2.py` (the latter also uses Playwright's WebKit build, the Safari engine but not Safari, for P20); the numbers are in `references/procedures.md` with each procedure. Best for: what the URP template really ships (Brotli, Shorter Build Time, WASM 2023 off, Minimal stripping, IL2CPP OptimizeSpeed, splash on), real gzip vs Brotli sizes and build times, the exact loader errors a misconfigured server produces, which graphics API a WebGPU build runs by origin, what C# threading does in a real browser.
+Recorded in `archive/tests/unity-web/live_results.jsonl` by `tests/code/unity-web/test_live_web.py`
+and `test_live_web_v2.py` (the latter also uses Playwright's WebKit build, the Safari engine but not
+Safari, for P20); the numbers are in `references/procedures.md` with each procedure. Best for: what
+the URP template really ships (Brotli, Shorter Build Time, WASM 2023 off, Minimal stripping, IL2CPP
+OptimizeSpeed, splash on), real gzip vs Brotli sizes and build times, the exact loader errors a
+misconfigured server produces, which graphics API a WebGPU build runs by origin, what C# threading
+does in a real browser.
 
 ## Installed editor (read on disk)
 
-- `/Applications/Unity/Hub/Editor/6000.3.21f1/PlaybackEngines/WebGLSupport/BuildTools/`: `WebGLTemplates/Base/{Default,Minimal,PWA}`, `UnityLoader/UnityLoader.js` (the loader's own error texts for missing `Content-Encoding`, wrong `application/wasm`, double compression), `Emscripten/emscripten/emscripten-version.txt` = `3.1.39-git` (the Manual's table says 3.1.38-unity: rebuild native `.a` plug-ins against the bundled version).
-- `Unity.app/Contents/Resources/Scripting/Managed/UnityEditor.xml`: `PlayerSettings.WebGL.*` members, `WebGLCompressionFormat`, `WebGLExceptionSupport`, `WebGLTextureSubtarget`; `UnityEditor.WebGL.Extensions.dll`: `WasmCodeOptimization` = BuildTimes, RuntimeSpeed, RuntimeSpeedLTO, DiskSize, DiskSizeLTO.
-- `PlaybackEngines/WebGLSupport/Managed/UnityEngine.WebGLModule.dll`: the only assembly defining `WebGLInput` (`captureAllKeyboardInput`, `mobileKeyboardSupport`, `stickyCursorLock`): Web player builds only, hence the `UNITY_WEBGL && !UNITY_EDITOR` guard.
-- `BuildTools/UnityLoader/UnityLoader.js`: `unityInstance.GetMetricsInfo()` (WASM heap total and used, JS heap, fps, moving average, janked frames, load timings) and `ConnectToProfiler`; `UnityCache.js`: Data Caching needs both IndexedDB and the Cache API.
-- `BuildTools/WebGLTemplates/Base/{Default,Minimal}/index.html`: the Diagnostics Overlay wiring (`SHOW_DIAGNOSTICS`) and the dynamic loader-script pattern the AgentWeb template reuses.
-- `UnityEditor.xml`: `PlayerSettings.SetTemplateCustomValue` / `GetTemplateCustomValue`, `PlayerSettings.WebGL.initialMemorySize`, `linearMemoryGrowthStep`, `geometricMemoryGrowthStep`, `memoryGeometricGrowthCap`, `EditorGraphicsSettings.batchRendererGroupShaderStrippingMode`.
-- `Library/EditorUserBuildSettings.asset` (test project): `m_SelectedWebGLSubtarget` and the WebGL `CodeOptimization` value, i.e. per-checkout state (P13).
+- `/Applications/Unity/Hub/Editor/6000.3.21f1/PlaybackEngines/WebGLSupport/BuildTools/`:
+  `WebGLTemplates/Base/{Default,Minimal,PWA}`, `UnityLoader/UnityLoader.js` (the loader's own error
+  texts for missing `Content-Encoding`, wrong `application/wasm`, double compression),
+  `Emscripten/emscripten/emscripten-version.txt` = `3.1.39-git` (the Manual's table says
+  3.1.38-unity: rebuild native `.a` plug-ins against the bundled version).
+- `Unity.app/Contents/Resources/Scripting/Managed/UnityEditor.xml`: `PlayerSettings.WebGL.*`
+  members, `WebGLCompressionFormat`, `WebGLExceptionSupport`, `WebGLTextureSubtarget`;
+  `UnityEditor.WebGL.Extensions.dll`: `WasmCodeOptimization` = BuildTimes, RuntimeSpeed,
+  RuntimeSpeedLTO, DiskSize, DiskSizeLTO.
+- `PlaybackEngines/WebGLSupport/Managed/UnityEngine.WebGLModule.dll`: the only assembly defining
+  `WebGLInput` (`captureAllKeyboardInput`, `mobileKeyboardSupport`, `stickyCursorLock`): Web player
+  builds only, hence the `UNITY_WEBGL && !UNITY_EDITOR` guard.
+- `BuildTools/UnityLoader/UnityLoader.js`: `unityInstance.GetMetricsInfo()` (WASM heap total and
+  used, JS heap, fps, moving average, janked frames, load timings) and `ConnectToProfiler`;
+  `UnityCache.js`: Data Caching needs both IndexedDB and the Cache API.
+- `BuildTools/WebGLTemplates/Base/{Default,Minimal}/index.html`: the Diagnostics Overlay wiring
+  (`SHOW_DIAGNOSTICS`) and the dynamic loader-script pattern the AgentWeb template reuses.
+- `UnityEditor.xml`: `PlayerSettings.SetTemplateCustomValue` / `GetTemplateCustomValue`,
+  `PlayerSettings.WebGL.initialMemorySize`, `linearMemoryGrowthStep`, `geometricMemoryGrowthStep`,
+  `memoryGeometricGrowthCap`, `EditorGraphicsSettings.batchRendererGroupShaderStrippingMode`.
+- `Library/EditorUserBuildSettings.asset` (test project): `m_SelectedWebGLSubtarget` and the WebGL
+  `CodeOptimization` value, i.e. per-checkout state (P13).
 
 ## Official competitor skill
 
-Unity's own agent skills (`github.com/Unity-Technologies/skills`) include `optimize-web` (deltas § 4). Not read for this skill; compare before extending it.
+Unity's own agent skills (`github.com/Unity-Technologies/skills`) include `optimize-web` (deltas §
+4). Not read for this skill; compare before extending it.
 
 ## Revision history
 
 - 2026-09-24 v0.1: first version (12 procedures, 13 live tests).
-- 2026-09-24 v0.2: refactor after blind grade Y12 (v0.1 kept in `skills/_versions/unity-web v1 2026-09-24/`). Taught the points the notes held and v0.1 did not: Safari iframe caching (LIM), `captureAllKeyboardInput` (LIM), no system fonts (GPU WebGL2), measured stack costs (POR, OPT), stripping vs bundles with a generated link.xml (OPT), Library-only Code Optimization and texture subtarget plus EditMode policy tests (OPT), WebAssembly 2023 browser floor and template gate (LIM), preload tags and design the wait (LlE35onVdmQ [00:13:41], [00:14:16]), production error reporting (OPT, INT), heap sizing from `GetMetricsInfo` and the profiling path (LIM, OPT), WebGL 2 lighting and CPU skinning audits (GPU, 3bu4WZUCGYc), scene-list gate (bF_eUuxGEcA [00:04:02]), CDN regions (FYsVftoLBP8 [00:16:12]), dual DXT/ASTC data, DPR cap on phones, full C# bridge code in P3, and the baseline's errors (`targetFrameRate`, small growing heap on phones, WebGPU status by version). 12 new procedures (P13 to P24), 13 new live tests (all pass; the WebKit half of P20 is inconclusive and recorded as such), 7 new offline tests; the 13 v0.1 live tests re-ran on the v0.2 code and passed.
+- 2026-09-24 v0.2: refactor after blind grade Y12 (v0.1 kept in
+  `skills/_versions/unity-web v1 2026-09-24/`). Taught the points the notes held and v0.1 did not:
+  Safari iframe caching (LIM), `captureAllKeyboardInput` (LIM), no system fonts (GPU WebGL2),
+  measured stack costs (POR, OPT), stripping vs bundles with a generated link.xml (OPT),
+  Library-only Code Optimization and texture subtarget plus EditMode policy tests (OPT), WebAssembly
+  2023 browser floor and template gate (LIM), preload tags and design the wait (LlE35onVdmQ
+  [00:13:41], [00:14:16]), production error reporting (OPT, INT), heap sizing from `GetMetricsInfo`
+  and the profiling path (LIM, OPT), WebGL 2 lighting and CPU skinning audits (GPU, 3bu4WZUCGYc),
+  scene-list gate (bF_eUuxGEcA [00:04:02]), CDN regions (FYsVftoLBP8 [00:16:12]), dual DXT/ASTC
+  data, DPR cap on phones, full C# bridge code in P3, and the baseline's errors (`targetFrameRate`,
+  small growing heap on phones, WebGPU status by version). 12 new procedures (P13 to P24), 13 new
+  live tests (all pass; the WebKit half of P20 is inconclusive and recorded as such), 7 new offline
+  tests; the 13 v0.1 live tests re-ran on the v0.2 code and passed.

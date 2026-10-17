@@ -6,22 +6,64 @@ license: MIT
 
 # ZBrush automation (tools and pipeline TD)
 
-An expert ZBrush TD automates with contracts and proof: every file is its own tool, every step is a separate call with a time limit, every output is read back from disk, and a hung plugin costs one file, never the batch. ZBrush has no timeout, no undo control from Python and dialogs that code cannot answer, so the safety lives on the agent side: the runner, the checkpoints, the report. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+An expert ZBrush TD automates with contracts and proof: every file is its own tool, every step is a
+separate call with a time limit, every output is read back from disk, and a hung plugin costs one
+file, never the batch. ZBrush has no timeout, no undo control from Python and dialogs that code
+cannot answer, so the safety lives on the agent side: the runner, the checkpoints, the report. If a
+sibling skill named here is missing from your available skills, ask the user to install it
+(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
+flag the gap.
 
-**REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, zb_launch, zb_ops, zb_audit, review loop, 2026 traps).
+**REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, zb_launch, zb_ops, zb_audit, review loop,
+2026 traps).
 
-**Status (2026-09-24, refactor pass 2):** every ZBrush call here is **not yet run in ZBrush** (no session assigned; the README's startup stall is still open). Offline: 56 tests pass (`tests/code/zbrush-automation/run_offline.py`), including a GoZ reader and writer matching ZBrush's own `ZResources/DXFStar.GoZ` byte for byte. Live suite: `tests/code/zbrush-automation/run_live.sh`.
+**Status (2026-09-24, refactor pass 2):** every ZBrush call here is **not yet run in ZBrush** (no
+session assigned; the README's startup stall is still open). Offline: 56 tests pass
+(`tests/code/zbrush-automation/run_offline.py`), including a GoZ reader and writer matching ZBrush's
+own `ZResources/DXFStar.GoZ` byte for byte. Live suite: `tests/code/zbrush-automation/run_live.sh`.
 
 ## Stance (the expert delta)
 
-- **One file, one tool, one step per call.** "Only one zscript/plugin can be active at a time, so if your zscript calls someting like UV Mapper control passes to UV Mapper and no more commands will run" (marcus_civis, ZBrushCentral 2014); pressing Decimation Master's Pre-process ended ijacobs' script (2013) and forced cgside into a two-run helper (2022, [00:06:56]). So the batch is an agent-side loop (`zb_batch.run_folder`) that sends each step as its own bridge call with its own timeout, pings after a timeout, and restarts ZBrush after a hang. One long in-ZBrush script dies with its first stuck plugin. [added design]
-- **Plugins last, checkpoint first.** cgside saves before ProjectAll "since it might crash the program" [00:02:19]. `zb_ops.project_all` refuses to run without a versioned save and the recipe's project step passes one (`{stem}_preproject.ztl`), even with `save_ztl` off. Decimation Master runs last, after every valuable output is on disk, so a hang there leaves a `partial` file, not a lost one. [added]
-- **Leave the interpreter as found.** ZBrush has one Python for the session and the script folder is not on `sys.path` (Maxon Style Guide). Send code only through `remote_call`/`zb_launch.run`: modules are imported by path, then `sys.path`, `sys.modules`, stdout and the working directory are restored, also after an error. End a batch with `zb_launch.hygiene()` (empty lists).
-- **Dialogs are the automation killer; budget them before running.** A studio dropped ZBrush from its farm over Note dialogs (danvas 2017); "no way to detect whether they succeed or error" (BigRoyNL 2024); "if the export plugin, trigger a popup you are screwed" (m_adam, Maxon 2025). `set_next_filename` feeds built-in buttons only: FBX ExportImport shows options "You cannot escape" (ferdinand, Maxon 2025) and USD Format ignores the preset (usd-portal). Unattended exports are OBJ or `.GoZ` by path; `has_next_filename()` still true after a press means a dialog is probably waiting [added].
-- **Names are identity.** GoZ needs unique names "including between all the loaded Tools" (GoZ docs); Decimation Master caches and UV Master control maps are keyed by the tool name, so a new tool with an old name inherits stale data (plugin docs). Stage each input under a unique, sanitized name before import (`stage_input`); on this Mac's case-insensitive disk `rock.obj` and `Rock.OBJ` are one file [added].
-- **Learn paths from ZBrush, never guess.** Recordings show exact paths and hidden preconditions (Maxon ZScript manual; MadPony DnLlDJxfxHs [00:02:16]); Ctrl+hover shows a path. For an agent the cheapest oracle is ZBrush's own Activity log, which writes every press and set with its canonical path (`zb_batch.ActivityWatch`; proven by the 05:20 log). Then `zb_plugin_ops.probe()` confirms `exists`, range and title.
-- **Record once, apply to all.** Pavlovich replays one recording on every visible SubTool with ZRepeat It [00:37:30]; ZRepeat It is not shipped in 2026.2.1, the Python equivalent is `for_each_subtool`.
-- **Files, not live links, between apps.** GoZ sends the lowest subdivision level (GoZ docs; FlippedNormals [00:04:02]), updates by name, and raises a reprojection prompt when topology changed. An agent hands over `.GoZ` or OBJ files plus a manifest and lets the other app's agent import them.
+- **One file, one tool, one step per call.** "Only one zscript/plugin can be active at a time, so if
+  your zscript calls someting like UV Mapper control passes to UV Mapper and no more commands will
+  run" (marcus_civis, ZBrushCentral 2014); pressing Decimation Master's Pre-process ended ijacobs'
+  script (2013) and forced cgside into a two-run helper (2022, [00:06:56]). So the batch is an
+  agent-side loop (`zb_batch.run_folder`) that sends each step as its own bridge call with its own
+  timeout, pings after a timeout, and restarts ZBrush after a hang. One long in-ZBrush script dies
+  with its first stuck plugin. [added design]
+- **Plugins last, checkpoint first.** cgside saves before ProjectAll "since it might crash the
+  program" [00:02:19]. `zb_ops.project_all` refuses to run without a versioned save and the recipe's
+  project step passes one (`{stem}_preproject.ztl`), even with `save_ztl` off. Decimation Master
+  runs last, after every valuable output is on disk, so a hang there leaves a `partial` file, not a
+  lost one. [added]
+- **Leave the interpreter as found.** ZBrush has one Python for the session and the script folder is
+  not on `sys.path` (Maxon Style Guide). Send code only through `remote_call`/`zb_launch.run`:
+  modules are imported by path, then `sys.path`, `sys.modules`, stdout and the working directory are
+  restored, also after an error. End a batch with `zb_launch.hygiene()` (empty lists).
+- **Dialogs are the automation killer; budget them before running.** A studio dropped ZBrush from
+  its farm over Note dialogs (danvas 2017); "no way to detect whether they succeed or error"
+  (BigRoyNL 2024); "if the export plugin, trigger a popup you are screwed" (m_adam, Maxon 2025).
+  `set_next_filename` feeds built-in buttons only: FBX ExportImport shows options "You cannot
+  escape" (ferdinand, Maxon 2025) and USD Format ignores the preset (usd-portal). Unattended exports
+  are OBJ or `.GoZ` by path; `has_next_filename()` still true after a press means a dialog is
+  probably waiting [added].
+- **Names are identity.** GoZ needs unique names "including between all the loaded Tools" (GoZ
+  docs); Decimation Master caches and UV Master control maps are keyed by the tool name, so a new
+  tool with an old name inherits stale data (plugin docs). Stage each input under a unique,
+  sanitized name before import (`stage_input`); on this Mac's case-insensitive disk `rock.obj` and
+  `Rock.OBJ` are one file [added].
+- **Learn paths from ZBrush, never guess.** Recordings show exact paths and hidden preconditions
+  (Maxon ZScript manual; MadPony DnLlDJxfxHs [00:02:16]); Ctrl+hover shows a path. For an agent the
+  cheapest oracle is ZBrush's own Activity log, which writes every press and set with its canonical
+  path (`zb_batch.ActivityWatch`; proven by the 05:20 log). Then `zb_plugin_ops.probe()` confirms
+  `exists`, range and title.
+- **Record once, apply to all.** Pavlovich replays one recording on every visible SubTool with
+  ZRepeat It [00:37:30]; ZRepeat It is not shipped in 2026.2.1, the Python equivalent is
+  `for_each_subtool`.
+- **Files, not live links, between apps.** GoZ sends the lowest subdivision level (GoZ docs;
+  FlippedNormals [00:04:02]), updates by name, and raises a reprojection prompt when topology
+  changed. An agent hands over `.GoZ` or OBJ files plus a manifest and lets the other app's agent
+  import them.
 
 ## Establish first
 
@@ -37,12 +79,27 @@ An expert ZBrush TD automates with contracts and proof: every file is its own to
 
 ## Workflow
 
-1. **Session and probe.** `zb_launch.start()` or reuse a running bridge; `zb_plugin_ops.probe()` on every path the recipe uses; `memory()`. GATE: ping returns 2026.2, every recipe path exists, plugins present.
-2. **Plan dry.** `zb_batch.plan(files, out, params)` resolves every file's steps, paths and timeouts without ZBrush. GATE: outputs outside the install (read-only since 2026.1), unique stems, no FBX or USD step.
-3. **Pilot one file, watched.** `run_folder([f], out, params)`; open `sheet.png` and the normal map; import the low and map in the target app (scenario-maya-pipeline-scripting or a Blender skill). GATE: file `ok`, step timings recorded, map orientation confirmed in the target app (flip V and green are [verify] until then).
-4. **Run the batch.** Bridge mode by default; `mode="script"` (one `ZBrush -script` process per file) once live_a05 has shown how ZBrush exits. Drop a `STOP` file in the output folder to end between files; rerun to resume (sha1 and recipe hash). GATE: `report.json` written after every file.
-5. **Recover.** For each `failed` or `partial`: read `steps[].outcome` (`error`, `timeout_recovered`, `hang`), the hang evidence (screenshot when the screen is unlocked; ZBrush Notes are drawn in the canvas, only the screenshot shows them), and `batch.blocked`. Fix params or paths, rerun: finished files are skipped. GATE: every non-ok file has a cause in the report.
-6. **Review and deliver.** Open the contact sheet; check `low_audit`, `preview_audit`, `normal_stats`; write the handoff manifest. GATE: numbers pass, sheet looked at, report and manifest delivered.
+1. **Session and probe.** `zb_launch.start()` or reuse a running bridge; `zb_plugin_ops.probe()` on
+   every path the recipe uses; `memory()`. GATE: ping returns 2026.2, every recipe path exists,
+   plugins present.
+2. **Plan dry.** `zb_batch.plan(files, out, params)` resolves every file's steps, paths and timeouts
+   without ZBrush. GATE: outputs outside the install (read-only since 2026.1), unique stems, no FBX
+   or USD step.
+3. **Pilot one file, watched.** `run_folder([f], out, params)`; open `sheet.png` and the normal map;
+   import the low and map in the target app (scenario-maya-pipeline-scripting or a Blender skill).
+   GATE: file `ok`, step timings recorded, map orientation confirmed in the target app (flip V and
+   green are [verify] until then).
+4. **Run the batch.** Bridge mode by default; `mode="script"` (one `ZBrush -script` process per
+   file) once live_a05 has shown how ZBrush exits. Drop a `STOP` file in the output folder to end
+   between files; rerun to resume (sha1 and recipe hash). GATE: `report.json` written after every
+   file.
+5. **Recover.** For each `failed` or `partial`: read `steps[].outcome` (`error`,
+   `timeout_recovered`, `hang`), the hang evidence (screenshot when the screen is unlocked; ZBrush
+   Notes are drawn in the canvas, only the screenshot shows them), and `batch.blocked`. Fix params
+   or paths, rerun: finished files are skipped. GATE: every non-ok file has a cause in the report.
+6. **Review and deliver.** Open the contact sheet; check `low_audit`, `preview_audit`,
+   `normal_stats`; write the handoff manifest. GATE: numbers pass, sheet looked at, report and
+   manifest delivered.
 
 ## Numbers
 
@@ -63,10 +120,19 @@ An expert ZBrush TD automates with contracts and proof: every file is its own to
 
 ## Quality gates
 
-- **Per step (code):** import counts equal the file's (`import_mesh` warnings); DynaMesh `remeshed`; ZRemesher ratio to target 0.5 to 1.5 [added]; UV bbox inside 0..1; Divide ratio 4 per level; every output file exists and is non-empty. Each zb_ops `gate` (volume from `get_polymesh3d_volume`, watertight from `is_polymesh3d_solid`, projection spikes) feeds `check_step`: a collapsed or exploded DynaMesh or a spike fails the file.
-- **Per file (code):** low OBJ passes `zb_audit.verdict(..., "game")` (UVs, no n-gons); low bbox equals the input bbox within 2 % (an OBJ import sets Export Scale: Outgang [00:24:03]) [added tolerance]; normal map at the asked size, not uniform, tangent-like; preview faces near target.
-- **Per batch:** `counts`, `restarts`, `blocked`, `aborted` in `report.json`; `report.csv` for humans.
-- **Visual:** `sheet.png` (one canvas snapshot per file, MatCap Gray): melted thin parts from a low DynaMesh, projection spikes, missing parts. The normal map applied in the target app, lit from the side: seams, upside-down or inverted detail.
+- **Per step (code):** import counts equal the file's (`import_mesh` warnings); DynaMesh `remeshed`;
+  ZRemesher ratio to target 0.5 to 1.5 [added]; UV bbox inside 0..1; Divide ratio 4 per level; every
+  output file exists and is non-empty. Each zb_ops `gate` (volume from `get_polymesh3d_volume`,
+  watertight from `is_polymesh3d_solid`, projection spikes) feeds `check_step`: a collapsed or
+  exploded DynaMesh or a spike fails the file.
+- **Per file (code):** low OBJ passes `zb_audit.verdict(..., "game")` (UVs, no n-gons); low bbox
+  equals the input bbox within 2 % (an OBJ import sets Export Scale: Outgang [00:24:03]) [added
+  tolerance]; normal map at the asked size, not uniform, tangent-like; preview faces near target.
+- **Per batch:** `counts`, `restarts`, `blocked`, `aborted` in `report.json`; `report.csv` for
+  humans.
+- **Visual:** `sheet.png` (one canvas snapshot per file, MatCap Gray): melted thin parts from a low
+  DynaMesh, projection spikes, missing parts. The normal map applied in the target app, lit from the
+  side: seams, upside-down or inverted detail.
 
 ## Common mistakes
 
@@ -85,25 +151,49 @@ An expert ZBrush TD automates with contracts and proof: every file is its own to
 
 ## Handoffs
 
-- **Serves every persona:** batch versions of their procedures (`for_each_subtool`, recipes built with `zb_batch.step`), inventories before GoZ or export, path discovery. Receives their procedure and params; delivers `report.json`, `report.csv`, `sheet.png` and per-file outputs.
-- **From scenario-maya-pipeline-scripting or a Blender skill:** OBJ or `.GoZ` files plus a manifest (names, units, which SubTool each updates). Names are checked with `zb_goz.check_names` before import.
-- **To scenario-maya-pipeline-scripting, scenario-zbrush-retopology-export, scenario-blender-uv-baking:** low OBJ with UVs, tangent normal PNG (flip V and green stated), decimated preview, audit numbers, Export Scale and axis notes.
-- **To a human or computer-use agent:** anything behind a dialog (FBX options, SubTool Rename and New Folder prompts, End Macro save dialog, GoZ app chooser, reprojection prompt).
+- **Serves every persona:** batch versions of their procedures (`for_each_subtool`, recipes built
+  with `zb_batch.step`), inventories before GoZ or export, path discovery. Receives their procedure
+  and params; delivers `report.json`, `report.csv`, `sheet.png` and per-file outputs.
+- **From scenario-maya-pipeline-scripting or a Blender skill:** OBJ or `.GoZ` files plus a manifest
+  (names, units, which SubTool each updates). Names are checked with `zb_goz.check_names` before
+  import.
+- **To scenario-maya-pipeline-scripting, scenario-zbrush-retopology-export,
+  scenario-blender-uv-baking:** low OBJ with UVs, tangent normal PNG (flip V and green stated),
+  decimated preview, audit numbers, Export Scale and axis notes.
+- **To a human or computer-use agent:** anything behind a dialog (FBX options, SubTool Rename and
+  New Folder prompts, End Macro save dialog, GoZ app chooser, reprojection prompt).
 
 ## ZBrush 2026 notes
 
-- Python (2026.0) runs next to ZScript; `press_key` "Does not work" and `merge_undo` is "Not implemented" (2026.1 stub): key-held presses and one-undo sequences need a ZScript macro pressed from Python [verify].
-- Long deterministic sequences: `freeze(fn)` and `show_actions(0)` (SDK GUI reference) through `zb_ops.sequence`, `frozen`, `quiet`, or `for_each_subtool(..., freeze=True)`; never around a plugin press or a canvas export [added].
-- Since 2026.1 the install is read-only: macros, plugins and `Python/init.py` go in the Asset Directory, here `~/Library/Preferences/Maxon/ZBrush_03C27D49/`.
-- ZRepeat It, Turntabler and ZFileUtils are not shipped in 2026.2.1 (listing); no rename API exists (Maxon forum 2026-09).
-- GoZ still reports "version 1.01 - April, 11th 2011"; Maya's GoZ config on this Mac points at a Maya 2017 that is not installed (`zb_goz.app_info`).
-- Relaunches stalled after a `kill -9` at 05:29 (README, cause unknown): a restart after a hang may stall too. The runner then aborts with a resumable report.
+- Python (2026.0) runs next to ZScript; `press_key` "Does not work" and `merge_undo` is "Not
+  implemented" (2026.1 stub): key-held presses and one-undo sequences need a ZScript macro pressed
+  from Python [verify].
+- Long deterministic sequences: `freeze(fn)` and `show_actions(0)` (SDK GUI reference) through
+  `zb_ops.sequence`, `frozen`, `quiet`, or `for_each_subtool(..., freeze=True)`; never around a
+  plugin press or a canvas export [added].
+- Since 2026.1 the install is read-only: macros, plugins and `Python/init.py` go in the Asset
+  Directory, here `~/Library/Preferences/Maxon/ZBrush_03C27D49/`.
+- ZRepeat It, Turntabler and ZFileUtils are not shipped in 2026.2.1 (listing); no rename API exists
+  (Maxon forum 2026-09).
+- GoZ still reports "version 1.01 - April, 11th 2011"; Maya's GoZ config on this Mac points at a
+  Maya 2017 that is not installed (`zb_goz.app_info`).
+- Relaunches stalled after a `kill -9` at 05:29 (README, cause unknown): a restart after a hang may
+  stall too. The runner then aborts with a resumable report.
 
 ## References
 
-- [`references/procedures.md`](references/procedures.md): full code for each procedure (session, probe, import, per-file recipe, folder batch, `-script`, plugins, maps, SubTool loops, names, GoZ, Maya and Blender round trips, macros, file-drop, reports, interpreter hygiene). Load before writing any batch.
-- [`references/expert-notes.md`](references/expert-notes.md): the sources' principles with timestamps, and the choices where they disagree. Load when a design decision is not covered here.
-- [`references/critique.md`](references/critique.md): the rubric for judging a batch, a script or a round trip. Load before reporting.
-- [`references/gui-paths.md`](references/gui-paths.md): the same operations by palette and hotkey, for a human or computer-use agent. Load when a step needs the GUI.
+- [`references/procedures.md`](references/procedures.md): full code for each procedure (session,
+  probe, import, per-file recipe, folder batch, `-script`, plugins, maps, SubTool loops, names, GoZ,
+  Maya and Blender round trips, macros, file-drop, reports, interpreter hygiene). Load before
+  writing any batch.
+- [`references/expert-notes.md`](references/expert-notes.md): the sources' principles with
+  timestamps, and the choices where they disagree. Load when a design decision is not covered here.
+- [`references/critique.md`](references/critique.md): the rubric for judging a batch, a script or a
+  round trip. Load before reporting.
+- [`references/gui-paths.md`](references/gui-paths.md): the same operations by palette and hotkey,
+  for a human or computer-use agent. Load when a step needs the GUI.
 - [`references/sources.md`](references/sources.md): every source with credentials and URLs.
-- [`scripts/zb_batch.py`](scripts/zb_batch.py) (agent side: runner, sessions, reports, `-script`, Activity oracle, ZScript generators), [`scripts/zb_plugin_ops.py`](scripts/zb_plugin_ops.py) (inside ZBrush: per-file steps and plugins), [`scripts/zb_batch_job.py`](scripts/zb_batch_job.py) (`-script` entry), [`scripts/zb_goz.py`](scripts/zb_goz.py) (GoZ files and folder, any Python).
+- [`scripts/zb_batch.py`](scripts/zb_batch.py) (agent side: runner, sessions, reports, `-script`,
+  Activity oracle, ZScript generators), [`scripts/zb_plugin_ops.py`](scripts/zb_plugin_ops.py)
+  (inside ZBrush: per-file steps and plugins), [`scripts/zb_batch_job.py`](scripts/zb_batch_job.py)
+  (`-script` entry), [`scripts/zb_goz.py`](scripts/zb_goz.py) (GoZ files and folder, any Python).

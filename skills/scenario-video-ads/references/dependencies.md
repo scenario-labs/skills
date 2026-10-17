@@ -1,6 +1,8 @@
 # Sibling skill dependencies
 
-`scenario-video-ads` is a director layer: it plans the ad and delegates every mechanical stage to a sibling skill in this repository. Installing only this skill leaves those siblings missing, and each gap removes the procedures its stage depends on.
+`scenario-video-ads` is a director layer: it plans the ad and delegates every mechanical stage to a
+sibling skill in this repository. Installing only this skill leaves those siblings missing, and each
+gap removes the procedures its stage depends on.
 
 | Skill                     | What it carries for this pipeline                                 |
 | ------------------------- | ----------------------------------------------------------------- |
@@ -24,4 +26,5 @@ npx skills add scenario-labs/skills --skill <name>
 npx skills add scenario-labs/skills --skill '*'
 ```
 
-When the user declines an install, or no one is there to answer, state which stage degrades and how (the procedures you would be guessing at) before improvising.
+When the user declines an install, or no one is there to answer, state which stage degrades and how
+(the procedures you would be guessing at) before improvising.

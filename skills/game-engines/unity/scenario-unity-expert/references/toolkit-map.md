@@ -1,19 +1,41 @@
 # Toolkit map: the Unity call behind every `ut_*` function and AgentKit job
 
-Why this file exists: a plan written as `ut_run.run_method(...)` or `AgentCapture.CaptureViews` cannot be checked by a reader who does not have `scripts/`. The Unreal team's first blind test lost executability points for exactly that. Copy the engine call next to each toolkit call, in plans, handoffs and reports.
+Why this file exists: a plan written as `ut_run.run_method(...)` or `AgentCapture.CaptureViews`
+cannot be checked by a reader who does not have `scripts/`. The Unreal team's first blind test lost
+executability points for exactly that. Copy the engine call next to each toolkit call, in plans,
+handoffs and reports.
 
-Status: every row marked **ran** was executed in Unity 6000.3.21f1 on macOS 26.5.1 (Apple Silicon, Metal) on 2026-09-24 through `tests/code/unity-expert/` (results in `archive/tests/unity-expert/live_results.jsonl`). **not run** rows say why. v0.2 (refactor round 1, same day): grace timeout and `scan_log` fix in `ut_run`, explicit null paths in `AgentJob`, 2D-light and per-scene warm-up in `AgentCapture`, a `totalSize` note in `build_summary`; tested by `test_live_fixes.py` and `test_offline.py::TestV02Fixes`. Every v0.1 signature and return value is unchanged.
+Status: every row marked **ran** was executed in Unity 6000.3.21f1 on macOS 26.5.1 (Apple Silicon,
+Metal) on 2026-09-24 through `tests/code/unity-expert/` (results in
+`archive/tests/unity-expert/live_results.jsonl`). **not run** rows say why. v0.2 (refactor round 1,
+same day): grace timeout and `scan_log` fix in `ut_run`, explicit null paths in `AgentJob`, 2D-light
+and per-scene warm-up in `AgentCapture`, a `totalSize` note in `build_summary`; tested by
+`test_live_fixes.py` and `test_offline.py::TestV02Fixes`. Every v0.1 signature and return value is
+unchanged.
 
 ## 1. Report format (every plan, handoff and final report)
 
-1. **Each step names its engine call.** Write the toolkit call, then in parentheses the Unity API, command line or setting it uses. Example:
-   - `ut_run.run_method(P, "AgentKit.AgentCapture.CaptureViews", {...}, graphics=True)` (`Unity -batchmode -quit -projectPath P -executeMethod AgentKit.AgentCapture.CaptureViews -agentJob <dir>`; the job calls `RenderPipeline.SubmitRenderRequest(cam, new RenderPipeline.StandardRequest{destination = rt})`, then `Texture2D.ReadPixels` and `EncodeToPNG`)
-   - `ut_run.run_tests(P, "PlayMode")` (`Unity -batchmode -nographics -projectPath P -runTests -testPlatform PlayMode -testResults <abs>.xml`, no `-quit`)
-   - Settings are written as the property and asset they live in: `UniversalRenderPipelineAsset.shadowDistance = 40` in `Assets/Settings/PC_RPAsset.asset`, never "shorten the shadows".
-2. **Menus are written as paths** for a human or computer-use agent: `File > Build Profiles`, `Window > Analysis > Profiler`.
+1. **Each step names its engine call.** Write the toolkit call, then in parentheses the Unity API,
+   command line or setting it uses. Example:
+   - `ut_run.run_method(P, "AgentKit.AgentCapture.CaptureViews", {...}, graphics=True)`
+     (`Unity -batchmode -quit -projectPath P -executeMethod AgentKit.AgentCapture.CaptureViews -agentJob <dir>`;
+     the job calls
+     `RenderPipeline.SubmitRenderRequest(cam, new RenderPipeline.StandardRequest{destination = rt})`,
+     then `Texture2D.ReadPixels` and `EncodeToPNG`)
+   - `ut_run.run_tests(P, "PlayMode")`
+     (`Unity -batchmode -nographics -projectPath P -runTests -testPlatform PlayMode -testResults <abs>.xml`,
+     no `-quit`)
+   - Settings are written as the property and asset they live in:
+     `UniversalRenderPipelineAsset.shadowDistance = 40` in `Assets/Settings/PC_RPAsset.asset`, never
+     "shorten the shadows".
+2. **Menus are written as paths** for a human or computer-use agent: `File > Build Profiles`,
+   `Window > Analysis > Profiler`.
 3. **End with two lists.**
-   - **Verified**: what ran, on which channel, and the evidence (envelope `ok` with its job id, `image_checks` flags and the contact sheet you looked at, `budget_check` verdict, audit counts, NUnit totals, BuildReport result and size).
-   - **Assumed**: every step not run in Unity, every `[verify]` name, every default taken because the brief was silent, every number quoted from a source and not re-measured.
+   - **Verified**: what ran, on which channel, and the evidence (envelope `ok` with its job id,
+     `image_checks` flags and the contact sheet you looked at, `budget_check` verdict, audit counts,
+     NUnit totals, BuildReport result and size).
+   - **Assumed**: every step not run in Unity, every `[verify]` name, every default taken because
+     the brief was silent, every number quoted from a source and not re-measured.
 4. A step you could not run is written as a plan with its engine call, never as a result.
 
 ## 2. `ut_env` (editor, project, license, lock rule)

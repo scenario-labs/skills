@@ -1,6 +1,10 @@
 # GUI paths, brushes, settings and hotkeys (for a computer-use agent)
 
-The same procedures as `procedures.md`, as a human does them in the ZBrush 2026 interface. Paths are UI menus (Palette > Sub-palette > Item). Hotkeys are the ones the experts use; on macOS "Ctrl" in the docs usually means Command, but Control+W groups and Cmd+W quits ZBrush (2023.0.1 and later): never press Cmd+W. Items marked [verify] were not checked in the 2026.2.1 UI. Settings quoted from video frames are the experts' readouts.
+The same procedures as `procedures.md`, as a human does them in the ZBrush 2026 interface. Paths are
+UI menus (Palette > Sub-palette > Item). Hotkeys are the ones the experts use; on macOS "Ctrl" in
+the docs usually means Command, but Control+W groups and Cmd+W quits ZBrush (2023.0.1 and later):
+never press Cmd+W. Items marked [verify] were not checked in the 2026.2.1 UI. Settings quoted from
+video frames are the experts' readouts.
 
 ## Views and review
 

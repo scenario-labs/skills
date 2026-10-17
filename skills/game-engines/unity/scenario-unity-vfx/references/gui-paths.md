@@ -1,6 +1,9 @@
 # GUI paths: the same VFX work through windows and menus (computer-use agent or human)
 
-Unity 6000.3 on macOS (Preferences live under **Unity > Settings**). Each row names the scripted equivalent in this skill, so a GUI agent and a script agent produce the same asset. Paths checked against the 6.3 Manual, VFX Graph 17.3 manual and the sources' on-screen frames; menu items not seen on screen in 6.3 are marked [verify].
+Unity 6000.3 on macOS (Preferences live under **Unity > Settings**). Each row names the scripted
+equivalent in this skill, so a GUI agent and a script agent produce the same asset. Paths checked
+against the 6.3 Manual, VFX Graph 17.3 manual and the sources' on-screen frames; menu items not seen
+on screen in 6.3 are marked [verify].
 
 ## Particle System (Shuriken)
 
@@ -79,4 +82,11 @@ Unity 6000.3 on macOS (Preferences live under **Unity > Settings**). Each row na
 
 ## Shader Graph particle instancing fix (owned by scenario-unity-shaders, listed so the VFX agent can ask for it)
 
-Blackboard: none. Create Node > Custom Function, Type **String**, body: `#if defined(SCENEPICKINGPASS) || defined(SCENESELECTIONPASS)` / `#pragma multi_compile_instancing` / `#endif` / `#pragma instancing_options procedural:ParticleInstancingSetup` / `Out = In;`. Second Custom Function, Type **File**, pointing at an `.hlsl` that includes `Packages/com.unity.render-pipelines.universal/ShaderLibrary/ParticlesInstancing.hlsl`, function `IncludeInstancingSetup`. Wire both on the vertex position (live connection). Particle color from `unity_ParticleInstanceData[unity_InstanceID]` (Fred Moreau, Posts 2, 3). In 6.6: Graph Settings > Preprocessor Directives instead.
+Blackboard: none. Create Node > Custom Function, Type **String**, body:
+`#if defined(SCENEPICKINGPASS) || defined(SCENESELECTIONPASS)` / `#pragma multi_compile_instancing`
+/ `#endif` / `#pragma instancing_options procedural:ParticleInstancingSetup` / `Out = In;`. Second
+Custom Function, Type **File**, pointing at an `.hlsl` that includes
+`Packages/com.unity.render-pipelines.universal/ShaderLibrary/ParticlesInstancing.hlsl`, function
+`IncludeInstancingSetup`. Wire both on the vertex position (live connection). Particle color from
+`unity_ParticleInstanceData[unity_InstanceID]` (Fred Moreau, Posts 2, 3). In 6.6: Graph Settings >
+Preprocessor Directives instead.

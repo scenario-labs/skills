@@ -1,6 +1,8 @@
 # GUI paths (scenario-godot-rendering-lighting 0.1, Godot 4.7.2 editor)
 
-These are the human or computer-use paths for the same procedures. Inspector section names follow the 4.7 editor. Project Settings paths need the **Advanced Settings** toggle (top right of the Project Settings window) for most rendering keys.
+These are the human or computer-use paths for the same procedures. Inspector section names follow
+the 4.7 editor. Project Settings paths need the **Advanced Settings** toggle (top right of the
+Project Settings window) for most rendering keys.
 
 | Procedure      | Path                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

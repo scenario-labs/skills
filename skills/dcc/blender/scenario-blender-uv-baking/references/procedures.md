@@ -2,8 +2,13 @@
 
 Two layers:
 
-1. **`scripts/bx_uvbake.py`**: the tested module (use it whenever you can import a file; it works headless and in a live session). Pipelines below. Tests: `tests/code/blender-uv-baking/test_uv_primitives.py` (primitives), `test_sheep_uv.py` and `test_sheep_bake.py` (Blender Studio sheep, CC-BY), `test_snippets.py` (this file's snippets).
-2. **Raw bpy snippets** for when only inline code is possible. Every block tagged `# snippet:` is executed verbatim by `tests/code/blender-uv-baking/test_snippets.py` (it parses this file). Each block builds its own demo objects so it runs alone; replace the demo part with your objects.
+1. **`scripts/bx_uvbake.py`**: the tested module (use it whenever you can import a file; it works
+   headless and in a live session). Pipelines below. Tests:
+   `tests/code/blender-uv-baking/test_uv_primitives.py` (primitives), `test_sheep_uv.py` and
+   `test_sheep_bake.py` (Blender Studio sheep, CC-BY), `test_snippets.py` (this file's snippets).
+2. **Raw bpy snippets** for when only inline code is possible. Every block tagged `# snippet:` is
+   executed verbatim by `tests/code/blender-uv-baking/test_snippets.py` (it parses this file). Each
+   block builds its own demo objects so it runs alone; replace the demo part with your objects.
 
 Import pattern:
 
@@ -50,13 +55,21 @@ ub.bake_id(low, [sculpt], out, source="MATERIAL")     # or "OBJECT", or "ATTRIBU
 ub.hookup_maps(low, normal=r["paths"]["NORMAL"], ao=r["paths"]["AO"])
 ```
 
-Results on the sheep (2,596-face retopo, 186k-face sculpt, 2048): `archive/tests/uv_baking_skill/out_sheep_uv/results.json` and `out_sheep_bake/results.json` (renders next to them).
+Results on the sheep (2,596-face retopo, 186k-face sculpt, 2048):
+`archive/tests/uv_baking_skill/out_sheep_uv/results.json` and `out_sheep_bake/results.json` (renders
+next to them).
 
 ## Pipeline C: film character, UDIMs and symmetry
 
-- Tiles per region from the closest shot (Hernandez): head 1001, body 1002, hands 1003 (Kaspar). Per region: `ub.pack(obj, tex_res=4096, faces=region_faces)` (the region alone into 0-1), then `ub.move_to_tile(obj, region_faces, tile)`. Do not rely on `udim_source="CLOSEST_UDIM"` headless: it packed a region sitting in 1002 back into 1001 (verified, test_uv_primitives.py section M). Raw equivalent of the move: snippet `udim_offset`.
-- Symmetric UVs: Mirror modifier with Mirror U + Flip UDIM, center line at u = tile + 0.5 (snippet `mirror_u_flip_udim`).
-- QA: `ub.uv_qa(obj, 4096)` reports per-tile coverage, gap and `faces_crossing_tiles` (must be 0); use `profile="film"` in `uv_verdict`.
+- Tiles per region from the closest shot (Hernandez): head 1001, body 1002, hands 1003 (Kaspar). Per
+  region: `ub.pack(obj, tex_res=4096, faces=region_faces)` (the region alone into 0-1), then
+  `ub.move_to_tile(obj, region_faces, tile)`. Do not rely on `udim_source="CLOSEST_UDIM"` headless:
+  it packed a region sitting in 1002 back into 1001 (verified, test_uv_primitives.py section M). Raw
+  equivalent of the move: snippet `udim_offset`.
+- Symmetric UVs: Mirror modifier with Mirror U + Flip UDIM, center line at u = tile + 0.5 (snippet
+  `mirror_u_flip_udim`).
+- QA: `ub.uv_qa(obj, 4096)` reports per-tile coverage, gap and `faces_crossing_tiles` (must be 0);
+  use `profile="film"` in `uv_verdict`.
 - UDIM bake target: snippet `udim_bake`.
 
 ## Pipeline D: Multires bake (Abbitt; verified on the sheep)
@@ -65,18 +78,32 @@ Results on the sheep (2,596-face retopo, 186k-face sculpt, 2048): `archive/tests
 ub.bake_multires(obj, out, res=2048, types=("NORMALS", "DISPLACEMENT"), base_level=0)
 ```
 
-Before: even base face sizes, UVs on the base, Conform Base if the sculpt moved the silhouette (`bpy.ops.object.multires_base_apply(modifier="Multires", apply_heuristic=False)` is presumably Conform Base; mapping not verified), shade smooth.
+Before: even base face sizes, UVs on the base, Conform Base if the sculpt moved the silhouette
+(`bpy.ops.object.multires_base_apply(modifier="Multires", apply_heuristic=False)` is presumably
+Conform Base; mapping not verified), shade smooth.
 
 ## Pipeline E: bake loop when the first bake is not clean (SpeedChar, automated)
 
-1. Read `r["sanity"][kind]["problems"]` / `["notes"]`, `r["projection"]` (`miss_pct`, `wrong_part_pct`) and `r["adaptive"]["texel_share"]` (which extrusion each texel used).
-2. `ub.map_problem_review(low, r["paths"]["NORMAL"], out)`: renders the low with bad texels painted red (inverted) and blue (missed). Look at where they are.
-3. `ub.sweep_projection(low, highs, out)`: single-pass bakes at 0.35-1.4 x the measured extrusion. If the inverted share moves, the distance is the problem: use the best factor, a cage, or `adaptive=(...)` with more factors. If it does not move (sheep: 7.3-7.8% at every factor), low and high differ there: fit the low (SpeedChar's fitting pass), close holes in the high, give thin parts more low geometry, or bake that part separately.
-4. Neighboring parts projecting into each other (fingers, ears, stacked parts): `ub.explode([[low_a, high_a], [low_b, high_b]])`, bake, `ub.unexplode(...)`; or bake each pair into the same image (snippet `per_pair_bake`).
+1. Read `r["sanity"][kind]["problems"]` / `["notes"]`, `r["projection"]` (`miss_pct`,
+   `wrong_part_pct`) and `r["adaptive"]["texel_share"]` (which extrusion each texel used).
+2. `ub.map_problem_review(low, r["paths"]["NORMAL"], out)`: renders the low with bad texels painted
+   red (inverted) and blue (missed). Look at where they are.
+3. `ub.sweep_projection(low, highs, out)`: single-pass bakes at 0.35-1.4 x the measured extrusion.
+   If the inverted share moves, the distance is the problem: use the best factor, a cage, or
+   `adaptive=(...)` with more factors. If it does not move (sheep: 7.3-7.8% at every factor), low
+   and high differ there: fit the low (SpeedChar's fitting pass), close holes in the high, give thin
+   parts more low geometry, or bake that part separately.
+4. Neighboring parts projecting into each other (fingers, ears, stacked parts):
+   `ub.explode([[low_a, high_a], [low_b, high_b]])`, bake, `ub.unexplode(...)`; or bake each pair
+   into the same image (snippet `per_pair_bake`).
 5. Re-bake only the map being tuned, at 512, then the final resolution.
-6. A hand-shaped cage (snippet `cage_object`) is the manual fallback. `ub.build_cage` (automatic) is EXPERIMENTAL: on the sheep it baked worse (9.5% inverted) than one measured distance (7.3%) and the adaptive bake (2.2%).
+6. A hand-shaped cage (snippet `cage_object`) is the manual fallback. `ub.build_cage` (automatic) is
+   EXPERIMENTAL: on the sheep it baked worse (9.5% inverted) than one measured distance (7.3%) and
+   the adaptive bake (2.2%).
 
-Verified numbers (test_sheep_bake.py): sculpt onto retopo, single pass 7.3% inverted, adaptive 2.2%; retopo's own Multires level 3 as a separate high, single 7.5%, adaptive 1.2%, and the adaptive map matches `bake_multires` (median texel difference 0.011, p95 0.19).
+Verified numbers (test_sheep_bake.py): sculpt onto retopo, single pass 7.3% inverted, adaptive 2.2%;
+retopo's own Multires level 3 as a separate high, single 7.5%, adaptive 1.2%, and the adaptive map
+matches `bake_multires` (median texel difference 0.011, p95 0.19).
 
 ## Raw bpy snippets
 

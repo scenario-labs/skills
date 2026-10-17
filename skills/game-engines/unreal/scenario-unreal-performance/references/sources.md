@@ -1,6 +1,9 @@
 # Sources
 
-Every source this skill draws on, with the code used in the other files. Notes live in `notes/optimization/`, `notes/profiling/`, `notes/packaging/`, `notes/niagara/`, `notes/lighting/` and `notes/rendering/`; saved docs in `sources/docs/`; version facts in `sources/unreal-version-deltas.md` (authoritative for 5.8).
+Every source this skill draws on, with the code used in the other files. Notes live in
+`notes/optimization/`, `notes/profiling/`, `notes/packaging/`, `notes/niagara/`, `notes/lighting/`
+and `notes/rendering/`; saved docs in `sources/docs/`; version facts in
+`sources/unreal-version-deltas.md` (authoritative for 5.8).
 
 ## Talks and videos
 
@@ -37,17 +40,36 @@ Every source this skill draws on, with the code used in the other files. Notes l
 
 ## Digests used
 
-- `notes/optimization/_digest_optimization_60fps.md`: consensus, disagreements, the ranked delta, day-one settings, U9 coverage.
+- `notes/optimization/_digest_optimization_60fps.md`: consensus, disagreements, the ranked delta,
+  day-one settings, U9 coverage.
 - `notes/profiling/_digest_profiling_packaging.md`: capture hygiene, GPU culprits, packaging gate.
-- `notes/profiling/_digest_profiling_insights_hitches_visual.md`: Insights reading method, hitch taxonomy with trace signatures, unattended hitch hunt.
-- `notes/niagara/_digest_niagara_advanced_optimization_visual.md`: Niagara cost audit and fixed-scenario measurement.
-- Baseline answer U9 in `tests/baseline/answers.md` and scenario U9 in `tests/scenarios.md`: the gaps this skill targets (the Launcher build configuration limit, waits and propagation, PSO scoping by platform, one change per measurement with noise, the Mac as proxy, TraceQuery and snapshothitches as the unattended path, `sg.ResolutionQuality` trap).
+- `notes/profiling/_digest_profiling_insights_hitches_visual.md`: Insights reading method, hitch
+  taxonomy with trace signatures, unattended hitch hunt.
+- `notes/niagara/_digest_niagara_advanced_optimization_visual.md`: Niagara cost audit and
+  fixed-scenario measurement.
+- Baseline answer U9 in `tests/baseline/answers.md` and scenario U9 in `tests/scenarios.md`: the
+  gaps this skill targets (the Launcher build configuration limit, waits and propagation, PSO
+  scoping by platform, one change per measurement with noise, the Mac as proxy, TraceQuery and
+  snapshothitches as the unattended path, `sg.ResolutionQuality` trap).
 
 ## Blind grades used for the refactor pass
 
-- `tests/grading/U9_grade.md` (all "missing from both" items, the "present in A only" items, and the errors and imprecisions listed for both answers) and the performance items of `tests/grading/U3_grade.md` "missing from both" (local-light VSM invalidation by moving characters, mobility audit).
+- `tests/grading/U9_grade.md` (all "missing from both" items, the "present in A only" items, and the
+  errors and imprecisions listed for both answers) and the performance items of
+  `tests/grading/U3_grade.md` "missing from both" (local-light VSM invalidation by moving
+  characters, mobility audit).
 
 ## Revision history
 
 - 2026-09-24, v1: first version (snapshot in `skills/_versions/unreal-performance v1 2026-09-24/`).
-- 2026-09-24, refactor pass after the U9 and U3 blind grades: added the suspect trees in code (`feature_budget_check` with the Witcher HWRT scene budgets, `nanite_triage`, `vsm_triage`), per-feature A/B plans for async compute and the Experimental streaming cvars (`ab_plan`, `ab_verdict`), camera-cut and spawn-burst checks, game-thread waits and sampling-profiler advice in `analyze_trace`, day-one `DefaultEngine.ini` keys (Use Simple as Complex, NeverUpdate overlaps) with a key-level ini writer, audit rules for mobility, Nanite collision source, WPO max displacement and Displacement Fade, procedures P5b, P6b, P7b, P9b, critique rows B12 to B16 and C9 to C11, sources AVW, ARG and the anim docs. Fixed: `r.DynamicRes.OperationMode` meaning (2 regardless of GameUserSettings), `stat unit` VRAM limited to discrete GPUs, Animation Budget Allocator usage (registered components, instead of URO, debug cvar is the overlay), `r.Lumen.Visualize 2` marked [verify].
+- 2026-09-24, refactor pass after the U9 and U3 blind grades: added the suspect trees in code
+  (`feature_budget_check` with the Witcher HWRT scene budgets, `nanite_triage`, `vsm_triage`),
+  per-feature A/B plans for async compute and the Experimental streaming cvars (`ab_plan`,
+  `ab_verdict`), camera-cut and spawn-burst checks, game-thread waits and sampling-profiler advice
+  in `analyze_trace`, day-one `DefaultEngine.ini` keys (Use Simple as Complex, NeverUpdate overlaps)
+  with a key-level ini writer, audit rules for mobility, Nanite collision source, WPO max
+  displacement and Displacement Fade, procedures P5b, P6b, P7b, P9b, critique rows B12 to B16 and C9
+  to C11, sources AVW, ARG and the anim docs. Fixed: `r.DynamicRes.OperationMode` meaning (2
+  regardless of GameUserSettings), `stat unit` VRAM limited to discrete GPUs, Animation Budget
+  Allocator usage (registered components, instead of URO, debug cvar is the overlay),
+  `r.Lumen.Visualize 2` marked [verify].

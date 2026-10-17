@@ -1,6 +1,9 @@
 # Sources (24 videos, 2 Blender Studio files)
 
-Per-video notes with full timestamps: `notes/retopology/<id> - <title>.md`; batch digests: `_digest_snow_retopo_a.md`, `_digest_snow_retopo_b.md`, `_digest_speedchar_game_character.md`, `_digest_retopo_theory.md`; calibration: `_calibration_blender_studio_retopo.md`. Frame contact sheets for Kaspar's BCON22 talk: `frames/OLwtul3ngB8/sheet_01.jpg` to `sheet_11.jpg`.
+Per-video notes with full timestamps: `notes/retopology/<id> - <title>.md`; batch digests:
+`_digest_snow_retopo_a.md`, `_digest_snow_retopo_b.md`, `_digest_speedchar_game_character.md`,
+`_digest_retopo_theory.md`; calibration: `_calibration_blender_studio_retopo.md`. Frame contact
+sheets for Kaspar's BCON22 talk: `frames/OLwtul3ngB8/sheet_01.jpg` to `sheet_11.jpg`.
 
 ## Film and animation retopology
 
@@ -44,4 +47,8 @@ Per-video notes with full timestamps: `notes/retopology/<id> - <title>.md`; batc
 
 ## Ground truth files (CC-BY, Blender Studio)
 
-From https://studio.blender.org/blog/live-retopology-at-bcon22/ : `tests/fixtures/retopo_examples.blend` and `retopo_demo.blend` (Rex, Snow, Rain, stylized heads, hand, sheep), measured with bx_audit in `_calibration_blender_studio_retopo.md`. Test fixtures cut from them: `sheep_sculpt.blend` (input) and `sheep_reference_retopo.blend` (Kaspar's retopology of the sheep, used only for numbers).
+From https://studio.blender.org/blog/live-retopology-at-bcon22/ :
+`tests/fixtures/retopo_examples.blend` and `retopo_demo.blend` (Rex, Snow, Rain, stylized heads,
+hand, sheep), measured with bx_audit in `_calibration_blender_studio_retopo.md`. Test fixtures cut
+from them: `sheep_sculpt.blend` (input) and `sheep_reference_retopo.blend` (Kaspar's retopology of
+the sheep, used only for numbers).

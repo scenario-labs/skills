@@ -1,6 +1,8 @@
 # GUI paths (scenario-unity-gameplay): the same procedures for a computer-use agent or a human
 
-Unity 6.3 menu names (6.1 reorganized several menus; Build Settings is File > Build Profiles). Each row names the scripted equivalent used in `procedures.md`, so an agent can switch channel without changing the plan.
+Unity 6.3 menu names (6.1 reorganized several menus; Build Settings is File > Build Profiles). Each
+row names the scripted equivalent used in `procedures.md`, so an agent can switch channel without
+changing the plan.
 
 ## Physics
 

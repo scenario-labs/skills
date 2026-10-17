@@ -1,6 +1,9 @@
 # Gameplay critique rubric (the agent judges its own output with this)
 
-Use it before calling a gameplay feature done and before any handoff. Each row: what to check, how (tool or helper), pass condition, source. Measurable rows come first; judgment rows need a screenshot or a played sequence and a written reason. A row that cannot be checked yet (engine missing, graph not wired) is reported as "not checked" with the reason, never as passed.
+Use it before calling a gameplay feature done and before any handoff. Each row: what to check, how
+(tool or helper), pass condition, source. Measurable rows come first; judgment rows need a
+screenshot or a played sequence and a written reason. A row that cannot be checked yet (engine
+missing, graph not wired) is reported as "not checked" with the reason, never as passed.
 
 ## A. Architecture (read the code and assets)
 

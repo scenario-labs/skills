@@ -3,8 +3,8 @@
 Every procedure below was run on Blender 5.2.1 LTS (build 2026-08-25) with
 `blender --background --factory-startup --python-exit-code 1 --python <test>` unless it says GUI.
 Tests live in `tests/code/blender-hair/` (`run_all.sh` runs all of them). The helpers come from
-`<skills>/scenario-blender-hair/scripts/bx_hair.py`. Each procedure shows the helper call, then the raw
-bpy it wraps, so you can work without the module.
+`<skills>/scenario-blender-hair/scripts/bx_hair.py`. Each procedure shows the helper call, then the
+raw bpy it wraps, so you can work without the module.
 
 ```python
 import sys
@@ -13,20 +13,23 @@ sys.path.append("<project>/skills/scenario-blender-expert/scripts")   # review()
 import bx_hair as H
 ```
 
-Units are meters. Density counts curves per square meter of the surface mesh in its local space: object scale is ignored (verified), so apply scale first.
+Units are meters. Density counts curves per square meter of the surface mesh in its local space:
+object scale is ignored (verified), so apply scale first.
 
 ---
 
 ## P1. Surface prep and UV check
 
-Verified on 5.2.1 by `test_01_groom_headless.py`: a default sphere has 0 overlapping faces, and a stacked grid shows 32 of 32.
+Verified on 5.2.1 by `test_01_groom_headless.py`: a default sphere has 0 overlapping faces, and a
+stacked grid shows 32 of 32.
 
 ```python
 rep = H.uv_report(surface)      # {'uv_maps', 'active', 'uv_outside_0_1', 'overlap_faces', 'faces'}
 assert rep["overlap_faces"] == 0
 ```
 
-Raw equivalent. It needs Object Mode and the surface active. UV sync select must be off, or `uv.select_overlap` selects nothing readable:
+Raw equivalent. It needs Object Mode and the surface active. UV sync select must be off, or
+`uv.select_overlap` selects nothing readable:
 
 ```python
 import bmesh
@@ -41,11 +44,15 @@ bpy.ops.object.mode_set(mode="OBJECT"); ts.use_uv_select_sync = sync
 
 - `uv_outside_0_1 > 0` is fine for UDIMs. Stacking is not (Schmidbauer).
 - Mirrored UV layouts: merge the center seam (UV editor, Merge by Distance) before grooming.
-- For a human hairstyle, grow on a separate hair cap split along the part (see P7). For animals, separate the mouth interior from the fur surface (Edit Mode, Separate, Selection).
+- For a human hairstyle, grow on a separate hair cap split along the part (see P7). For animals,
+  separate the mouth interior from the fur surface (Edit Mode, Separate, Selection).
 
 ## P2. Groom object, even roots, guides as data, attachment
 
-Verified on 5.2.1 by `test_01_groom_headless.py`. It passes 25 checks: Poisson spacing is respected (min nearest neighbor 0.01003 m at spacing 0.01), all roots fall inside the mask, `surface_uv_coordinate` is written, roots sit on the surface with max distance 0.0, and flow_blend 0.5 gives guides at 45° to the normal.
+Verified on 5.2.1 by `test_01_groom_headless.py`. It passes 25 checks: Poisson spacing is respected
+(min nearest neighbor 0.01003 m at spacing 0.01), all roots fall inside the mask,
+`surface_uv_coordinate` is written, roots sit on the surface with max distance 0.0, and flow_blend
+0.5 gives guides at 45° to the normal.
 
 ```python
 hair = H.new_groom(surface, "Hair")        # Empty Hair: parent, surface, UV map, Hair Dynamics
@@ -74,13 +81,18 @@ with bpy.context.temp_override(object=hair, active_object=hair, selected_objects
     bpy.ops.curves.snap_curves_to_surface(attach_mode="NEAREST")   # writes surface_uv_coordinate
 ```
 
-- `hair.matrix_world` equals the surface's matrix after Empty Hair, so hair-local space is surface-local space.
+- `hair.matrix_world` equals the surface's matrix after Empty Hair, so hair-local space is
+  surface-local space.
 - Hair Dynamics' Mode menu accepts `'Animation'` or `'Physics (Experimental)'`, nothing else.
-- Edited the surface mesh in Edit Mode after grooming? The roots float (238 of 238 in the test). `H.snap_to_surface(hair, "DEFORM")` puts them back (0 off-surface afterwards). Use NEAREST after topology changes (Schmidbauer: works about 99% of the time).
+- Edited the surface mesh in Edit Mode after grooming? The roots float (238 of 238 in the test).
+  `H.snap_to_surface(hair, "DEFORM")` puts them back (0 off-surface afterwards). Use NEAREST after
+  topology changes (Schmidbauer: works about 99% of the time).
 
 ## P3. Guide resolution and shaping
 
-Verified on 5.2.1 by `test_01_groom_headless.py`: subdivide takes 2 points to 3, resample gives 15 with the attachment kept, and the helper modifier is applied and removed. Shrinkwrap is verified by `test_04_cards.py`.
+Verified on 5.2.1 by `test_01_groom_headless.py`: subdivide takes 2 points to 3, resample gives 15
+with the attachment kept, and the helper modifier is applied and removed. Shrinkwrap is verified by
+`test_04_cards.py`.
 
 ```python
 H.subdivide_guides(hair, cuts=1)          # Edit Mode curves.subdivide, works headless (EDIT_CURVES)
@@ -90,7 +102,8 @@ sw = H.add_asset(hair, "Shrinkwrap Hair Curves")                # Bystedt's non-
 H.set_inputs(sw, {"Surface": head, "Offset Distance": 0.004, "Above Surface": 0.0})
 ```
 
-Raw resample (what `resample_guides` builds): a GN group with Resample Curve (Count), added as a NODES modifier, moved to index 0 and applied:
+Raw resample (what `resample_guides` builds): a GN group with Resample Curve (Count), added as a
+NODES modifier, moved to index 0 and applied:
 
 ```python
 md = hair.modifiers.new("BX Resample", "NODES"); md.node_group = ng   # Group In -> Resample Curve -> Group Out
@@ -110,7 +123,9 @@ Brush substitutes, none of them strokes:
 
 ## P4. Asset modifiers and inputs
 
-Verified on 5.2.1 by `test_01_groom_headless.py` and `test_02_asset_stack.py`. All 21 listed modifier assets add. The Displace object 'Surface' resolves, unknown names raise with the list of inputs, and evaluation is stale without update_tag (2,510 before the tag, 4,996 after).
+Verified on 5.2.1 by `test_01_groom_headless.py` and `test_02_asset_stack.py`. All 21 listed
+modifier assets add. The Displace object 'Surface' resolves, unknown names raise with the list of
+inputs, and evaluation is stale without update_tag (2,510 before the tag, 4,996 after).
 
 ```python
 md = H.add_asset(hair, "Interpolate Hair Curves")          # lands above the pinned Hair Dynamics
@@ -132,10 +147,15 @@ ev = hair.evaluated_get(bpy.context.evaluated_depsgraph_get()).data
 print(len(ev.curves), len(ev.points))
 ```
 
-- Hair Dynamics comes from `nodes/geometry_nodes_dynamics_assets.blend`. Duplicated modifiers share one node group.
-- Evaluation in `--background` applies Viewport Amount. In the test, 10% gave 249 curves against 2,502 at full density.
-- Reorder with `bpy.ops.object.modifier_move_to_index(modifier=..., index=...)` under the same temp_override.
-- Quick Fur (`bpy.ops.object.quick_fur(density='MEDIUM', length=0.1, radius=0.001)`) builds Set Hair Curve Profile, Interpolate (Follow Surface Normal on), Noise, Frizz and Hair Dynamics, with 12 points per guide. Its density scales with object size: 80,220/m² on a 10 cm sphere.
+- Hair Dynamics comes from `nodes/geometry_nodes_dynamics_assets.blend`. Duplicated modifiers share
+  one node group.
+- Evaluation in `--background` applies Viewport Amount. In the test, 10% gave 249 curves against
+  2,502 at full density.
+- Reorder with `bpy.ops.object.modifier_move_to_index(modifier=..., index=...)` under the same
+  temp_override.
+- Quick Fur (`bpy.ops.object.quick_fur(density='MEDIUM', length=0.1, radius=0.001)`) builds Set Hair
+  Curve Profile, Interpolate (Follow Surface Normal on), Noise, Frizz and Hair Dynamics, with 12
+  points per guide. Its density scales with object size: 80,220/m² on a 10 cm sphere.
 
 Input identifiers, all verified in 5.2.1 (use them when you do not use `H.set_inputs` names):
 
@@ -157,24 +177,30 @@ Input identifiers, all verified in 5.2.1 (use them when you do not use `H.set_in
 
 ## P5. Masks and density maps
 
-Verified on 5.2.1 by `test_01_groom_headless.py`, `test_02_asset_stack.py` and `test_07_density_maps.py`.
+Verified on 5.2.1 by `test_01_groom_headless.py`, `test_02_asset_stack.py` and
+`test_07_density_maps.py`.
 
-**Vertex group as Density Mask.** 796 children with the mask against 2,502 without. The surface group reaches the children as a CURVE-domain attribute, so later assets can read it:
+**Vertex group as Density Mask.** 796 children with the mask against 2,502 without. The surface
+group reaches the children as a CURVE-domain attribute, so later assets can read it:
 
 ```python
 H.set_inputs(interp, {"Density Mask": "attr:density_fur"})
 H.set_inputs(noise, {"Factor": "attr:noise_strength"})   # tip motion 0.042 painted side vs 0.002 unpainted
 ```
 
-**Bystedt's gray density map.** A weight of 0.5 halves the count (1,247 against 2,476). A white stripe at the part on a 0.5 base adds density there only (1,418). Paint the base at 50% so you keep headroom in both directions.
+**Bystedt's gray density map.** A weight of 0.5 halves the count (1,247 against 2,476). A white
+stripe at the part on a 0.5 base adds density there only (1,418). Paint the base at 50% so you keep
+headroom in both directions.
 
-**Mask Texture (5.2).** This is an image in surface UV space that discards children after distribution. Black on U > 0.5 left 1,237 of 2,476, with 0.8% leaking over the border:
+**Mask Texture (5.2).** This is an image in surface UV space that discards children after
+distribution. Black on U > 0.5 left 1,237 of 2,476, with 0.8% leaking over the border:
 
 ```python
 H.set_inputs(interp, {"Mask Texture": bpy.data.images["density_mask"]})
 ```
 
-**Per-curve random masks (Thommes).** This is a small GN modifier placed right after Interpolate that stores a CURVE-domain float:
+**Per-curve random masks (Thommes).** This is a small GN modifier placed right after Interpolate
+that stores a CURVE-domain float:
 
 ```python
 H.random_curve_mask(hair, "frizz_mask", threshold=0.8)            # 82% of curves at 0 in the test
@@ -182,7 +208,9 @@ H.random_curve_mask(hair, "stray_mask", threshold=0.9, hard=True) # 9.5% of curv
 H.set_inputs(frizz, {"Factor": "attr:frizz_mask"})                # masked curves moved 0.0, others 0.6 mm
 ```
 
-The group is Random Value (FLOAT, ID = ID node, Seed) into Map Range (From Min = Threshold), with a Compare (Greater Than) for the hard version. A Switch picks one, and Store Named Attribute (FLOAT, CURVE, Name) writes it.
+The group is Random Value (FLOAT, ID = ID node, Seed) into Map Range (From Min = Threshold), with a
+Compare (Greater Than) for the hard version. A Switch picks one, and Store Named Attribute (FLOAT,
+CURVE, Name) writes it.
 
 **Root-to-tip ramps (Thommes: curl frequency rises toward the tip).**
 
@@ -191,23 +219,32 @@ H.along_curve_attr(hair, "curl_freq", root=1.0, tip=5.0)   # Spline Parameter ->
 H.set_inputs(curl, {"Frequency": "attr:curl_freq"})
 ```
 
-**Full-density preview patch.** In 5.2.1 Thommes' trick (a Mask modifier on the surface, render off) does NOT reduce the children while Interpolate's Resting Surface is on (default). Verified: 2,526 curves with and without the Mask modifier, 538 with Resting Surface off. Use one of these instead:
+**Full-density preview patch.** In 5.2.1 Thommes' trick (a Mask modifier on the surface, render off)
+does NOT reduce the children while Interpolate's Resting Surface is on (default). Verified: 2,526
+curves with and without the Mask modifier, 538 with Resting Surface off. Use one of these instead:
 
 - A temporary patch vertex group as the Density Mask (610 curves) with Viewport Amount 1.
 - Resting Surface off while previewing, then back on.
 
 ## P6. Procedural stacks
 
-**Long fur (Thommes).** Verified on 5.2.1 by `test_02_asset_stack.py`. On a 10 × 10 cm patch, 1M/m² gave 10,021 curves (421 in the viewport at 4%), and a full-density evaluation took 0.44 s.
+**Long fur (Thommes).** Verified on 5.2.1 by `test_02_asset_stack.py`. On a 10 × 10 cm patch, 1M/m²
+gave 10,021 curves (421 in the viewport at 4%), and a full-density evaluation took 0.44 s.
 
 ```python
 mods = H.build_stack(hair, H.FUR_STACK_LONG)   # creates stray_mask / frizz_mask after Interpolate
 H.set_inputs(hair.modifiers["Hair Curves Noise"], {"Factor": "attr:noise_strength"})
 ```
 
-The order is Profile (0.2 mm), then Interpolate (1M, 4%), then the masks, then Noise, Curl, strays Noise (10%, 5 mm), Frizz (negative), Clump (1 mm, 0.1), Clump (4 mm, 0.25, offset 5 mm), Frizz (-0.2, 2 mm, Cumulative off, 20%), Trim (Replace Length off, 5 mm), Rotate (5°) and Hair Dynamics. The preset marks its own guesses [added]: Curl Factor End 0.3, first Frizz Shape -0.5, Clump Shape 0.3. The talk says "much lower" or "negative" without a number there.
+The order is Profile (0.2 mm), then Interpolate (1M, 4%), then the masks, then Noise, Curl, strays
+Noise (10%, 5 mm), Frizz (negative), Clump (1 mm, 0.1), Clump (4 mm, 0.25, offset 5 mm), Frizz
+(-0.2, 2 mm, Cumulative off, 20%), Trim (Replace Length off, 5 mm), Rotate (5°) and Hair Dynamics.
+The preset marks its own guesses [added]: Curl Factor End 0.3, first Frizz Shape -0.5, Clump Shape
+0.3. The talk says "much lower" or "negative" without a number there.
 
-**Human hairstyle, two populations in one tree (Bystedt).** Verified on 5.2.1 by `test_08_populations_pose.py`. Two populations joined gave 632 red and 596 blue curves, and Global Density 0.5 halved the count (1,228 to 646).
+**Human hairstyle, two populations in one tree (Bystedt).** Verified on 5.2.1 by
+`test_08_populations_pose.py`. Two populations joined gave 632 red and 596 blue curves, and Global
+Density 0.5 halved the count (1,228 to 646).
 
 ```python
 # guides: 15 points; guide-level shaping before interpolation
@@ -244,11 +281,18 @@ md = hair.modifiers.new("Hairstyle", "NODES"); md.node_group = ng
 H.move(hair, md, [m.name for m in hair.modifiers].index("Hair Dynamics"))
 ```
 
-- The asset groups must exist locally first. `H.add_asset` on a throwaway curves object appends them, or use `bpy.data.libraries.load`.
-- Read `pop_color` in the shader with an Attribute node to see each population (Bystedt's debug colors).
-- Alternative without a tree: `twin = hair.copy()` shares the Curves data, so both objects use the same guides and each gets its own stack. Verified: the twin evaluated 362 curves.
+- The asset groups must exist locally first. `H.add_asset` on a throwaway curves object appends
+  them, or use `bpy.data.libraries.load`.
+- Read `pop_color` in the shader with an Attribute node to see each population (Bystedt's debug
+  colors).
+- Alternative without a tree: `twin = hair.copy()` shares the Curves data, so both objects use the
+  same guides and each gets its own stack. Verified: the twin evaluated 362 curves.
 
-**Animal regional stack (Schmidbauer).** Verified on 5.2.1 by `test_09_animal_regions.py`. Each masked effect acted inside its painted region and barely outside it. Tip motion inside vs outside: Trim 1.0 mm vs 0.06 mm, Clump 7.3 mm vs 0.4 mm, Frizz 1.2 mm vs 0.09 mm. Tip Spread is a distance in meters: 0.2 threw 3 cm tips 19 cm. Use one curves object per landmark, and give each effect its own vertex group on the shared body mesh:
+**Animal regional stack (Schmidbauer).** Verified on 5.2.1 by `test_09_animal_regions.py`. Each
+masked effect acted inside its painted region and barely outside it. Tip motion inside vs outside:
+Trim 1.0 mm vs 0.06 mm, Clump 7.3 mm vs 0.4 mm, Frizz 1.2 mm vs 0.09 mm. Tip Spread is a distance in
+meters: 0.2 threw 3 cm tips 19 cm. Use one curves object per landmark, and give each effect its own
+vertex group on the shared body mesh:
 
 ```python
 H.set_inputs(H.add_asset(fur, "Interpolate Hair Curves"), {"Density": 200000.0, "Density Mask": "attr:body_fur"})  # density [added]
@@ -257,11 +301,14 @@ H.set_inputs(H.add_asset(fur, "Clump Hair Curves"), {"Factor": "attr:clump", "Ti
 H.set_inputs(H.add_asset(fur, "Frizz Hair Curves"), {"Factor": "attr:frizz", "Distance": 0.001})
 ```
 
-The distances in that block are [added] starting points for a cat-size animal; the talk gives no numbers for them. Tune them in renders.
+The distances in that block are [added] starting points for a cat-size animal; the talk gives no
+numbers for them. Tune them in renders.
 
 ## P7. Part and hairline (Bystedt)
 
-Verified on 5.2.1 by `test_05_parting.py`. The cap splits into 2 islands. With Part by Mesh Islands off, 21% of children near the part crossed it; with it on, 0%. The parting lift raised mid-strand height near the part from 9.6 mm to 13.7 mm.
+Verified on 5.2.1 by `test_05_parting.py`. The cap splits into 2 islands. With Part by Mesh Islands
+off, 21% of children near the part crossed it; with it on, 0%. The parting lift raised mid-strand
+height near the part from 9.6 mm to 13.7 mm.
 
 ```python
 import bmesh
@@ -279,12 +326,16 @@ H.set_inputs(disp, {"Surface Normal": True, "Surface": cap, "Surface Normal Dist
 ```
 
 - Keep guides off the part line itself; the test dropped roots within 4 mm of it.
-- The render still shows scalp at the part (Bystedt: "at the center line it's very hard to get enough coverage"). Add density there: a white stripe in the density map (P5).
-- Not scripted here: Bystedt's root snap onto the part line, where roots within a distance move onto the line. As a GN sketch: Object Info of the line mesh, Geometry Proximity with target Edges, Set Position on root points mixed by a factor. Not run.
+- The render still shows scalp at the part (Bystedt: "at the center line it's very hard to get
+  enough coverage"). Add density there: a white stripe in the density map (P5).
+- Not scripted here: Bystedt's root snap onto the part line, where roots within a distance move onto
+  the line. As a GN sketch: Object Info of the line mesh, Geometry Proximity with target Edges, Set
+  Position on root points mixed by a factor. Not run.
 
 ## P8. Shading, render settings, review
 
-Verified on 5.2.1 by `test_03_shading_render.py` on 37,648 curves. Render times were 4.4 s for Cycles at 24 samples and 384 px on CPU, and 1.3 to 2.3 s for EEVEE.
+Verified on 5.2.1 by `test_03_shading_render.py` on 37,648 curves. Render times were 4.4 s for
+Cycles at 24 samples and 384 px on CPU, and 1.3 to 2.3 s for EEVEE.
 
 ```python
 m = H.hair_material("Fur", "CYCLES", melanin=(0.85, 0.45), uv_noise=0.3)   # Principled Hair (Chiang, melanin)
@@ -296,13 +347,19 @@ sheet = H.review([surface, hair], "/abs/out", engine="CYCLES", views=("front", "
 
 Raw material graph:
 
-- Curves Info (`ShaderNodeHairInfo`) Intercept goes to a Mix (RGBA, root color to tip color) or to a Map Range for melanin.
+- Curves Info (`ShaderNodeHairInfo`) Intercept goes to a Mix (RGBA, root color to tip color) or to a
+  Map Range for melanin.
 - Curves Info Random goes to a Map Range for roughness 0.25 to 0.4.
-- Cycles: `ShaderNodeBsdfHairPrincipled` with `parametrization='MELANIN'` or `'COLOR'`. EEVEE: `ShaderNodeBsdfPrincipled` Base Color.
-- Surface-mapped variation (Thommes): Attribute `surface_uv_coordinate` into a Noise Texture, blended with Mix Soft Light.
-- Mix node sockets must be addressed by identifier (`A_Color`, `B_Color`, `Result_Color`, `Factor_Float`). `inputs["A"]` returns the hidden float socket.
+- Cycles: `ShaderNodeBsdfHairPrincipled` with `parametrization='MELANIN'` or `'COLOR'`. EEVEE:
+  `ShaderNodeBsdfPrincipled` Base Color.
+- Surface-mapped variation (Thommes): Attribute `surface_uv_coordinate` into a Noise Texture,
+  blended with Mix Soft Light.
+- Mix node sockets must be addressed by identifier (`A_Color`, `B_Color`, `Result_Color`,
+  `Factor_Float`). `inputs["A"]` returns the hidden float socket.
 
-Measured center luminance for the same groom: 0.255 for Principled Hair in Cycles, 0.092 for Principled Hair in EEVEE, and 0.498 for Principled BSDF in EEVEE. So use Principled BSDF with explicit colors under EEVEE. The review rig:
+Measured center luminance for the same groom: 0.255 for Principled Hair in Cycles, 0.092 for
+Principled Hair in EEVEE, and 0.498 for Principled BSDF in EEVEE. So use Principled BSDF with
+explicit colors under EEVEE. The review rig:
 
 - A warm area fill from the top, a small side key and a cool rim.
 - A world of RGB (0.03, 0.04, 0.06).
@@ -311,14 +368,17 @@ Measured center luminance for the same groom: 0.255 for Principled Hair in Cycle
 
 ## P9. Pose check (Schmidbauer)
 
-Verified on 5.2.1 by `test_01_groom_headless.py` and `test_08_populations_pose.py`. With a shape key, roots followed at a mean radius of 0.1558 against 0.156 expected. With Hair Dynamics disabled they stayed at 0.1199. On an armature-posed frame, roots stayed on the deformed cap within 1.7e-8.
+Verified on 5.2.1 by `test_01_groom_headless.py` and `test_08_populations_pose.py`. With a shape
+key, roots followed at a mean radius of 0.1558 against 0.156 expected. With Hair Dynamics disabled
+they stayed at 0.1199. On an armature-posed frame, roots stayed on the deformed cap within 1.7e-8.
 
 ```python
 scene.frame_set(10)                                   # a keyed extreme pose
 sheet = H.review([body, fur], out, engine="EEVEE", views=("right",), frame=10)   # review renders that frame
 ```
 
-Check 2 or 3 extreme poses from the same camera, looking for bald spots, stretching gaps and clipping. Keep Hair Dynamics (Animation) last in the stack.
+Check 2 or 3 extreme poses from the same camera, looking for bald spots, stretching gaps and
+clipping. Keep Hair Dynamics (Animation) last in the stack.
 
 ## P10. Hair cards and tubes for games (Bystedt, Matsumoto)
 
@@ -348,26 +408,37 @@ bpy.ops.export_scene.gltf(filepath="/abs/cards.glb", use_selection=True, export_
 What `cards_group()` builds ('BX Hair Cards'), in order:
 
 1. Resample Curve (count).
-2. Set Curve Normal with Mode `Free` and Normal from Sample Nearest Surface of the surface normals, so the card lies on the scalp (Bystedt).
+2. Set Curve Normal with Mode `Free` and Normal from Sample Nearest Surface of the surface normals,
+   so the card lies on the scalp (Bystedt).
 3. Capture Attribute of Spline Parameter on the curve (V).
-4. The profile: an arc of angle Bend centered on +X and shifted so its apex sits on the curve, or a flat Spiral for tubes (resolution 6, 1 rotation, height 0, start radius = end radius; Matsumoto). A Switch picks one, and a Capture of Spline Parameter on the profile gives U.
+4. The profile: an arc of angle Bend centered on +X and shifted so its apex sits on the curve, or a
+   flat Spiral for tubes (resolution 6, 1 rotation, height 0, start radius = end radius; Matsumoto).
+   A Switch picks one, and a Capture of Spline Parameter on the profile gives U.
 5. Curve to Mesh, with Scale = root-to-tip taper (the 4.5+ Scale input).
 6. Store Named Attribute FLOAT2, CORNER, `UVMap` = (U × 0.5 for cards or × 1 for tubes, V).
 7. Set Shade Smooth, then Set Material.
-8. Set Position of the V < 1e-4 row onto Geometry Proximity (Faces) of the surface. This runs last (Matsumoto).
+8. Set Position of the V < 1e-4 row onto Geometry Proximity (Faces) of the surface. This runs last
+   (Matsumoto).
 
 5.2 gotchas met while building it:
 
 - Capture Attribute has a Selection input, so address items by name.
 - Arc Resolution counts points (segments + 1).
 - `obj.evaluated_geometry().mesh` is freed when the GeometrySet is not kept in a variable.
-- A stored FLOAT2 CORNER attribute named `UVMap` works directly in the material UV Map node and survives conversion, so no extra output attribute is needed.
+- A stored FLOAT2 CORNER attribute named `UVMap` works directly in the material UV Map node and
+  survives conversion, so no extra output attribute is needed.
 
-Not scripted (expert features to add when needed): Bystedt's snap-if-inside push-out, normal transfer from the head, color and UV transfer from the scalp at the card root, card variants instanced per curve, and 1 subdivision per 20 cm (set `resample` from the length instead). Also not scripted: Matsumoto's strand-plate bake (orthographic camera over a groomed plane; passes normal, depth, AO, position, alpha; depth remapped). Render it with the same review tools, but it has no test here.
+Not scripted (expert features to add when needed): Bystedt's snap-if-inside push-out, normal
+transfer from the head, color and UV transfer from the scalp at the card root, card variants
+instanced per curve, and 1 subdivision per 20 cm (set `resample` from the length instead). Also not
+scripted: Matsumoto's strand-plate bake (orthographic camera over a groomed plane; passes normal,
+depth, AO, position, alpha; depth remapped). Render it with the same review tools, but it has no
+test here.
 
 ## P11. Live session: brush setup and hand-off (GUI)
 
-GUI only. Verified by `test_06_gui_curves_sculpt.py`, run as `blender --factory-startup --python ...` with a window and 7 checks.
+GUI only. Verified by `test_06_gui_curves_sculpt.py`, run as
+`blender --factory-startup --python ...` with a window and 7 checks.
 
 ```python
 import bx_gui as G
@@ -382,4 +453,8 @@ bpy.context.scene.tool_settings.curves_sculpt.use_symmetry_x = True
 # now ask the user to stroke; G.stroke("SCULPT_CURVES", ...) returns {'PASS_THROUGH'} and changes nothing
 ```
 
-In 5.2.1 `sculpt_curves.brush_stroke` has no exec: the console logs "Invalid operator call". `INVOKE_DEFAULT` returns RUNNING_MODAL and waits for a real mouse. `--enable-event-simulate` with `Window.event_simulate` produced no strokes either, for curves or for mesh sculpt, so strokes need a person. What does work from code in that mode is `sculpt_curves.select_random`, `select_grow` and every Object-Mode procedure above.
+In 5.2.1 `sculpt_curves.brush_stroke` has no exec: the console logs "Invalid operator call".
+`INVOKE_DEFAULT` returns RUNNING_MODAL and waits for a real mouse. `--enable-event-simulate` with
+`Window.event_simulate` produced no strokes either, for curves or for mesh sculpt, so strokes need a
+person. What does work from code in that mode is `sculpt_curves.select_random`, `select_grow` and
+every Object-Mode procedure above.

@@ -1,6 +1,8 @@
 # scenario-godot-shaders GUI paths (Godot 4.7 editor)
 
-These are for a computer-use agent or a human. Each line names the procedure it mirrors. Menu names follow the 4.7 editor. They were not driven by a GUI agent here: the editor was not opened, because the procedures run without it.
+These are for a computer-use agent or a human. Each line names the procedure it mirrors. Menu names
+follow the 4.7 editor. They were not driven by a GUI agent here: the editor was not opened, because
+the procedures run without it.
 
 | Task                         | GUI path                                                                                                                                                                                                                  | Scripted equivalent                                                     |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |

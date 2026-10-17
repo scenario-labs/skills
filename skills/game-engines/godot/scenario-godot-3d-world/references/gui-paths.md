@@ -1,6 +1,7 @@
 # scenario-godot-3d-world GUI paths and code substitutes (Godot 4.7.2)
 
-An agent cannot drag gizmos or paint in the viewport. Each row gives the human path in the editor and the substitute this skill runs in code.
+An agent cannot drag gizmos or paint in the viewport. Each row gives the human path in the editor
+and the substitute this skill runs in code.
 
 | Task                                        | Editor path (human)                                                                                                                 | Code substitute (agent)                                                                                                                |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |

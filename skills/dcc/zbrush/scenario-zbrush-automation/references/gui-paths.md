@@ -1,6 +1,9 @@
 # scenario-zbrush-automation GUI paths (for a human or a computer-use agent)
 
-The same operations as procedures.md, by palette, button and hotkey, ZBrush 2026.2.1 on macOS. Item paths in code are the same labels joined by `:`. Labels marked [verify] are from docs or older builds; confirm with Ctrl+hover (the path shows at the bottom of the popup, Maxon ZScript manual) or the Activity log.
+The same operations as procedures.md, by palette, button and hotkey, ZBrush 2026.2.1 on macOS. Item
+paths in code are the same labels joined by `:`. Labels marked [verify] are from docs or older
+builds; confirm with Ctrl+hover (the path shows at the bottom of the popup, Maxon ZScript manual) or
+the Activity log.
 
 ## Scripting and macros
 
@@ -68,4 +71,8 @@ The same operations as procedures.md, by palette, button and hotkey, ZBrush 2026
 
 ## Human hand-off list (what the agent cannot click)
 
-FBX export and import options; SubTool Rename and New Folder prompts; End Macro save dialog; GoZ app chooser on the first press; GoZ reprojection prompt; Delete and Merge Down confirmations without a key macro; Scale Master and 3D Print Hub size dialogs; Change Location of the Asset Directory. For each, the agent screenshots first (when the screen is unlocked), names the button, and states what the click will do.
+FBX export and import options; SubTool Rename and New Folder prompts; End Macro save dialog; GoZ app
+chooser on the first press; GoZ reprojection prompt; Delete and Merge Down confirmations without a
+key macro; Scale Master and 3D Print Hub size dialogs; Change Location of the Asset Directory. For
+each, the agent screenshots first (when the screen is unlocked), names the button, and states what
+the click will do.

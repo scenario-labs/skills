@@ -1,6 +1,9 @@
 # Sources for scenario-unity-expert
 
-What the lead skill rests on: the automation-pipeline cluster (channels, batch mode, CLI, tests, builds), the version deltas, the digests of all 13 clusters (routing and cross-domain traps), and what was observed live on this Mac. Notes live in `notes/<cluster>/`; saved docs in `sources/docs/`. Timestamps are `[hh:mm:ss]` in the video.
+What the lead skill rests on: the automation-pipeline cluster (channels, batch mode, CLI, tests,
+builds), the version deltas, the digests of all 13 clusters (routing and cross-domain traps), and
+what was observed live on this Mac. Notes live in `notes/<cluster>/`; saved docs in `sources/docs/`.
+Timestamps are `[hh:mm:ss]` in the video.
 
 ## 1. Observed on this Mac (primary evidence for the toolkit)
 
@@ -34,7 +37,8 @@ What the lead skill rests on: the automation-pipeline cluster (channels, batch m
 
 ## 3. Cross-cluster digests used for routing and traps
 
-Each cluster has `notes/<cluster>/_digest_docs_<cluster>.md` and `_digest_videos_<cluster>.md`. The lead uses them to route briefs and to name the traps that cut across domains:
+Each cluster has `notes/<cluster>/_digest_docs_<cluster>.md` and `_digest_videos_<cluster>.md`. The
+lead uses them to route briefs and to name the traps that cut across domains:
 
 | Cluster (owner skill)                                    | Traps the lead repeats at handoff time                                                                                                                                                      |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -55,7 +59,14 @@ Each cluster has `notes/<cluster>/_digest_docs_<cluster>.md` and `_digest_videos
 
 ## 5. Official Unity agent skills (read before writing on the same topic)
 
-`github.com/Unity-Technologies/skills` (31 skills on 2026-09-24): unity-cli, new-unity-project, unity-package-management, migrate-birp-to-urp, validate-urp-render-graph-renderer-feature, urp-postprocessing, shader-graph-create-custom-node, ui-ugui, ui-uitk, optimize-web, implement-in-app-purchases, levelplay-unity-integration, physics-3d-collision, initialize-ai-navigation, 2d-pixel-perfect, tilemap-_, sprite-_, manage-sprite-atlas, localization, audio-setup-mixers, optimize-audio, optimize-text-mesh-pro, setup-multiplayer-services, setup-vivox-voice-chat, build-live-game, generate-editor-search-query, ui-imgui, ui. Bundled for Claude Code and Codex in `github.com/Unity-Technologies/unity-agent-plugin`.
+`github.com/Unity-Technologies/skills` (31 skills on 2026-09-24): unity-cli, new-unity-project,
+unity-package-management, migrate-birp-to-urp, validate-urp-render-graph-renderer-feature,
+urp-postprocessing, shader-graph-create-custom-node, ui-ugui, ui-uitk, optimize-web,
+implement-in-app-purchases, levelplay-unity-integration, physics-3d-collision,
+initialize-ai-navigation, 2d-pixel-perfect, tilemap-_, sprite-_, manage-sprite-atlas, localization,
+audio-setup-mixers, optimize-audio, optimize-text-mesh-pro, setup-multiplayer-services,
+setup-vivox-voice-chat, build-live-game, generate-editor-search-query, ui-imgui, ui. Bundled for
+Claude Code and Codex in `github.com/Unity-Technologies/unity-agent-plugin`.
 
 ## 6. Refactor round 1 (2026-09-24): blind grading and the domain writers' live tests
 
@@ -71,5 +82,12 @@ Each cluster has `notes/<cluster>/_digest_docs_<cluster>.md` and `_digest_videos
 
 ## Revision history
 
-- 2026-09-24, v0.1: first version, every toolkit function run live (snapshot `skills/_versions/unity-expert v1 2026-09-24/`).
-- 2026-09-24, v0.2 (refactor round 1 after blind grading): toolkit fixes from `tests/OPEN_ISSUES.md` (ut_run grace timeout ending a hung editor by PID, `scan_log` no longer reads AGENT_RESULT lines as ASMDEF errors, `AgentJob.TryList/TryDict/ListOrNull/DictOrNull` with `List`/`Dict` unchanged, AgentCapture 2D-light and per-scene warm-up, `build_summary` totalSize note), each tested live; traps file corrected where live tests contradicted the deltas (OnDisable on Destroy, Cinemachine version) and extended with the writers' cross-cutting traps; seams and verification habits added to routing; SKILL.md 2,332 words.
+- 2026-09-24, v0.1: first version, every toolkit function run live (snapshot
+  `skills/_versions/unity-expert v1 2026-09-24/`).
+- 2026-09-24, v0.2 (refactor round 1 after blind grading): toolkit fixes from `tests/OPEN_ISSUES.md`
+  (ut_run grace timeout ending a hung editor by PID, `scan_log` no longer reads AGENT_RESULT lines
+  as ASMDEF errors, `AgentJob.TryList/TryDict/ListOrNull/DictOrNull` with `List`/`Dict` unchanged,
+  AgentCapture 2D-light and per-scene warm-up, `build_summary` totalSize note), each tested live;
+  traps file corrected where live tests contradicted the deltas (OnDisable on Destroy, Cinemachine
+  version) and extended with the writers' cross-cutting traps; seams and verification habits added
+  to routing; SKILL.md 2,332 words.

@@ -1,8 +1,9 @@
 # Geometry Nodes procedures (tested on Blender 5.2.1 LTS)
 
 Every code block in this file ran headless on Blender 5.2.1 LTS on 2026-09-24 with
-`blender --background --factory-startup --python-exit-code 1 --python <test>`. Raw-bpy blocks A to H are
-copied from the test that asserts them; recipe blocks are the exact source of `scripts/bx_gn.py`.
+`blender --background --factory-startup --python-exit-code 1 --python <test>`. Raw-bpy blocks A to H
+are copied from the test that asserts them; recipe blocks are the exact source of
+`scripts/bx_gn.py`.
 
 | Test script (tests/code/blender-geometry-nodes/) | Covers                                                                                                                                         | Result |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
@@ -12,21 +13,52 @@ copied from the test that asserts them; recipe blocks are the exact source of `s
 | `test_03_simulation.py`                          | particle drop simulation, cache, frame jump, calculate_to_frame, bake, rotated host, naive vs captured update, frame strip                     | 13/13  |
 | `test_04_physics_assets.py`                      | Cloth Dynamics + Collider bundle, Custom Force closure, Custom Effector stages, Extra Sim Attributes                                           | 11/11  |
 
-Renders written by the tests (open them when you rerun): `archive/tests/geonodes/skill_out/recipe_scatter.png`,
-`recipe_chain.png`, `recipe_growth.png`, `growth_review/review_sheet.png`, `recipe_particles.png`, `physics_cloth.png`.
+Renders written by the tests (open them when you rerun):
+`archive/tests/geonodes/skill_out/recipe_scatter.png`, `recipe_chain.png`, `recipe_growth.png`,
+`growth_review/review_sheet.png`, `recipe_particles.png`, `physics_cloth.png`.
 
 ## 0. Build rules for 5.2 (raw bpy)
 
-1. `tree = bpy.data.node_groups.new(name, 'GeometryNodeTree')`; add `NodeGroupInput` / `NodeGroupOutput` yourself. `tree.is_modifier` defaults False but assigning the tree to a Nodes modifier works; `is_modifier = True` + `tree.asset_mark()` only to publish it [verified].
-2. Interface: `tree.interface.new_socket(name, description="", in_out='INPUT'|'OUTPUT', socket_type='NodeSocketFloat', parent=panel)`, `new_panel(name, default_closed=True)`, `clear()`. Item props: `default_value`, `min_value`, `max_value`, `subtype` ('FACTOR', 'ANGLE', 'DISTANCE'), `dimensions` (2D vectors), `attribute_domain` (outputs), `default_attribute_name`, `hide_value`, `hide_in_modifier`, `force_non_field`, `structure_type`. `NodeSocketFloatFactor` is not a valid socket_type: use subtype [verified].
-3. `tree.links.new(a, b)` returns None, silently, when a socket belongs to another tree [verified]. Assert the return value.
-4. Set node properties (`data_type`, `domain`, `operation`, `mode`, `input_type`) BEFORE touching sockets: they decide which sockets exist. Menus are sockets: `inputs['Mode'].default_value = 'Matrix'` (Transform Geometry), `'Length'` (Resample Curve).
-5. Name lookup: 5.2.1 returns the available socket for Mix `inputs['A']` (A_Vector when data_type is VECTOR) [verified], but duplicate enabled names return the first: Cloth Dynamics has `Gravity` bool (Socket_5) and vector (Socket_3); Custom Effector has `Stage` menu (Socket_1) and string (Socket_2). Use identifiers. Math inputs are `Value`, `Value_001`, `Value_002` (use indices). Capture Attribute items are named by you but identified `Value` / `Attribute` (`_001` ...). Points node output is named `Points`, identified `Geometry`.
-6. Zones: `zi.pair_with_output(zo)` for Simulation, Repeat, For Each Geometry Element, Closure. Items: `state_items`, `repeat_items`, `input_items` / `main_items` / `generation_items` (+ `.domain`), closure `input_items` / `output_items`, Evaluate Closure `input_items` / `output_items`, Combine Bundle `bundle_items`, Capture Attribute `capture_items`. Types: FLOAT, INT, BOOLEAN, VECTOR, RGBA, ROTATION, MATRIX, STRING, GEOMETRY, BUNDLE, CLOSURE.
-7. Zone membership is decided by links: a node is inside only when it connects into the zone output (Thommes 4.3 video 00:12:35).
-8. Modifier inputs: `getattr(md.properties.inputs, item.identifier).value = v`, attribute mode `.type = 'ATTRIBUTE'; .attribute_name = "x"`; outputs `md.properties.outputs.<id>.attribute_name`. THEN `obj.update_tag()`: setting `.value` alone does not re-evaluate in 5.2.1 [verified].
-9. Read results: `gs = obj.evaluated_get(bpy.context.evaluated_depsgraph_get()).evaluated_geometry()`; keep `gs` referenced while reading `.mesh`, `.curves`, `.pointcloud`, `.instances_pointcloud()` (attributes `instance_transform`, `.reference_index`, plus every point attribute carried onto the instances), `.instance_references()`, `.name`. The instance point cloud's `position` attribute reads zeros: use `instance_transform` [verified].
-10. Compare bpy structs with `==`, never `is`: every attribute access returns a new Python wrapper (`md.node_group is md.node_group` can be False) [verified in a layout test].
+1. `tree = bpy.data.node_groups.new(name, 'GeometryNodeTree')`; add `NodeGroupInput` /
+   `NodeGroupOutput` yourself. `tree.is_modifier` defaults False but assigning the tree to a Nodes
+   modifier works; `is_modifier = True` + `tree.asset_mark()` only to publish it [verified].
+2. Interface:
+   `tree.interface.new_socket(name, description="", in_out='INPUT'|'OUTPUT', socket_type='NodeSocketFloat', parent=panel)`,
+   `new_panel(name, default_closed=True)`, `clear()`. Item props: `default_value`, `min_value`,
+   `max_value`, `subtype` ('FACTOR', 'ANGLE', 'DISTANCE'), `dimensions` (2D vectors),
+   `attribute_domain` (outputs), `default_attribute_name`, `hide_value`, `hide_in_modifier`,
+   `force_non_field`, `structure_type`. `NodeSocketFloatFactor` is not a valid socket_type: use
+   subtype [verified].
+3. `tree.links.new(a, b)` returns None, silently, when a socket belongs to another tree [verified].
+   Assert the return value.
+4. Set node properties (`data_type`, `domain`, `operation`, `mode`, `input_type`) BEFORE touching
+   sockets: they decide which sockets exist. Menus are sockets:
+   `inputs['Mode'].default_value = 'Matrix'` (Transform Geometry), `'Length'` (Resample Curve).
+5. Name lookup: 5.2.1 returns the available socket for Mix `inputs['A']` (A_Vector when data_type is
+   VECTOR) [verified], but duplicate enabled names return the first: Cloth Dynamics has `Gravity`
+   bool (Socket_5) and vector (Socket_3); Custom Effector has `Stage` menu (Socket_1) and string
+   (Socket_2). Use identifiers. Math inputs are `Value`, `Value_001`, `Value_002` (use indices).
+   Capture Attribute items are named by you but identified `Value` / `Attribute` (`_001` ...).
+   Points node output is named `Points`, identified `Geometry`.
+6. Zones: `zi.pair_with_output(zo)` for Simulation, Repeat, For Each Geometry Element, Closure.
+   Items: `state_items`, `repeat_items`, `input_items` / `main_items` / `generation_items` (+
+   `.domain`), closure `input_items` / `output_items`, Evaluate Closure `input_items` /
+   `output_items`, Combine Bundle `bundle_items`, Capture Attribute `capture_items`. Types: FLOAT,
+   INT, BOOLEAN, VECTOR, RGBA, ROTATION, MATRIX, STRING, GEOMETRY, BUNDLE, CLOSURE.
+7. Zone membership is decided by links: a node is inside only when it connects into the zone output
+   (Thommes 4.3 video 00:12:35).
+8. Modifier inputs: `getattr(md.properties.inputs, item.identifier).value = v`, attribute mode
+   `.type = 'ATTRIBUTE'; .attribute_name = "x"`; outputs
+   `md.properties.outputs.<id>.attribute_name`. THEN `obj.update_tag()`: setting `.value` alone does
+   not re-evaluate in 5.2.1 [verified].
+9. Read results:
+   `gs = obj.evaluated_get(bpy.context.evaluated_depsgraph_get()).evaluated_geometry()`; keep `gs`
+   referenced while reading `.mesh`, `.curves`, `.pointcloud`, `.instances_pointcloud()` (attributes
+   `instance_transform`, `.reference_index`, plus every point attribute carried onto the instances),
+   `.instance_references()`, `.name`. The instance point cloud's `position` attribute reads zeros:
+   use `instance_transform` [verified].
+10. Compare bpy structs with `==`, never `is`: every attribute access returns a new Python wrapper
+    (`md.node_group is md.node_group` can be False) [verified in a layout test].
 
 ## 1. bx_gn quick reference
 
@@ -57,8 +89,12 @@ G.material("Name", (r, g, b)); G.snapshot([objs], "/abs/out.png", views=("threeq
 
 ## Procedure A: attribute pipeline to the shader (Thommes BCON22 00:09:19)
 
-Edge Angle (Signed) x Scale stored on EDGE as `edge_mask`; the shader reads it with an Attribute node. Rest-state variant: a GN modifier BEFORE the deformer stores Face Area as `rest_face_area` (store to freeze); one AFTER divides the current Face Area by it (ratio < 1 compressed, > 1 stretched). Alternative to Store Named Attribute: a float group output with `attribute_domain = 'EDGE'` named through `G.set_output_attribute` (test_01).
-Verified on 5.2.1: `test_00_verified_procedures.py` block A (helpers first, used by A to H).
+Edge Angle (Signed) x Scale stored on EDGE as `edge_mask`; the shader reads it with an Attribute
+node. Rest-state variant: a GN modifier BEFORE the deformer stores Face Area as `rest_face_area`
+(store to freeze); one AFTER divides the current Face Area by it (ratio < 1 compressed, > 1
+stretched). Alternative to Store Named Attribute: a float group output with
+`attribute_domain = 'EDGE'` named through `G.set_output_attribute` (test_01). Verified on 5.2.1:
+`test_00_verified_procedures.py` block A (helpers first, used by A to H).
 
 ```python
 import bpy, math
@@ -117,8 +153,11 @@ print("A ok: edge_mask on EDGE =", round(a.data[0].value, 4))
 
 ## Procedure B: custom simulation with a float state (Thommes BCON23 00:11:12 to 00:16:11)
 
-State item Temperature; the value into the Simulation Input is read on the first frame only; wire input to output or it resets; expose the controller Object; step every frame. For irreversible memory add a second state combined with Math MAXIMUM of previous and current (00:25:54); multiply rates by Delta Time for frame-rate independence.
-Verified on 5.2.1: block B (300 K min, 1635 K max after 30 frames).
+State item Temperature; the value into the Simulation Input is read on the first frame only; wire
+input to output or it resets; expose the controller Object; step every frame. For irreversible
+memory add a second state combined with Math MAXIMUM of previous and current (00:25:54); multiply
+rates by Delta Time for frame-rate independence. Verified on 5.2.1: block B (300 K min, 1635 K max
+after 30 frames).
 
 ```python
 # ---- B. simulation zone with a float state (heating)
@@ -159,8 +198,10 @@ scene.frame_set(1)
 
 ## Procedure C: iterative topology operation with a repeat zone (Erindale 00:47:08)
 
-Evaluate on Domain POINT > EDGE > POINT, Ceil, captured each iteration. Counts 1, 5, 13, 25 for 0 to 3 steps on an interior vertex. The builder version is in test_01 (same counts). `primitive_grid_add(x_subdivisions=21)` gives 22 x 22 vertices in 5.2.1: compute the center index from the real count.
-Verified on 5.2.1: block C.
+Evaluate on Domain POINT > EDGE > POINT, Ceil, captured each iteration. Counts 1, 5, 13, 25 for 0 to
+3 steps on an interior vertex. The builder version is in test_01 (same counts).
+`primitive_grid_add(x_subdivisions=21)` gives 22 x 22 vertices in 5.2.1: compute the center index
+from the real count. Verified on 5.2.1: block C.
 
 ```python
 # ---- C. repeat zone (expand a selection over topology)
@@ -197,7 +238,10 @@ print("C ok: selected verts per step", counts)
 
 ## Procedure D: per-element generator with for-each (Thommes BCON24 00:28:54)
 
-Field outside, single value inside; zone Index as the Random Value ID (the implicit ID field gives a red link that `md.node_warnings` does not report: `G.check` lists it in `invalid_links`, test_01). Generated geometry socket `Generation_0`; generated attributes need `item.domain` matching the output (INSTANCE after Geometry to Instance). Prefer a field-based rewrite when performance matters.
+Field outside, single value inside; zone Index as the Random Value ID (the implicit ID field gives a
+red link that `md.node_warnings` does not report: `G.check` lists it in `invalid_links`, test_01).
+Generated geometry socket `Generation_0`; generated attributes need `item.domain` matching the
+output (INSTANCE after Geometry to Instance). Prefer a field-based rewrite when performance matters.
 Verified on 5.2.1: block D.
 
 ```python
@@ -227,8 +271,10 @@ print("D ok: 9 cubes, geometry name", e.evaluated_geometry().name)
 
 ## Procedure E: closure passed into a group (Johnny Matthews 00:07:57)
 
-Evaluate Closure inside the group, Closure zone outside, both signatures created explicitly with the same item names. A mismatch evaluates to 0 and reports `ERROR: Closure does not have output: "fx"` in `md.node_warnings`. Index Switch / Menu Switch with `data_type = 'CLOSURE'` chooses among closures.
-Verified on 5.2.1: block E; builder version in test_01.
+Evaluate Closure inside the group, Closure zone outside, both signatures created explicitly with the
+same item names. A mismatch evaluates to 0 and reports `ERROR: Closure does not have output: "fx"`
+in `md.node_warnings`. Index Switch / Menu Switch with `data_type = 'CLOSURE'` chooses among
+closures. Verified on 5.2.1: block E; builder version in test_01.
 
 ```python
 # ---- E. closure passed into a group (declarative pattern)
@@ -265,8 +311,10 @@ print("E ok: closure evaluated inside group; mismatch reported in md.node_warnin
 
 ## Procedure F: transform stacking with matrices (Matrix video 00:08:08 to 00:13:56)
 
-Box origin at its bottom; Accumulate Field TRANSFORM on INSTANCE, Trailing (excludes self) into Separate/Combine Transform with Instance Scale; each box sits exactly on the heights below. Randomize the STEP transform (rotation, XY offset) for a lean that propagates.
-Verified on 5.2.1: block F (z_i = sum of heights below within 1e-4).
+Box origin at its bottom; Accumulate Field TRANSFORM on INSTANCE, Trailing (excludes self) into
+Separate/Combine Transform with Instance Scale; each box sits exactly on the heights below.
+Randomize the STEP transform (rotation, XY offset) for a lean that propagates. Verified on 5.2.1:
+block F (z_i = sum of heights below within 1e-4).
 
 ```python
 # ---- F. matrix stacking (Accumulate Field on transforms)
@@ -304,8 +352,10 @@ print("F ok: each box sits on the sum of the heights below it")
 
 ## Procedure G: gizmo-ready asset (Thommes BCON24 00:11:26, 4.3 video 00:03:20)
 
-Gizmo Value linked from the same scaled value used for its Position, through the FIRST input of the math node; gizmo Transform output joined into the geometry; artist-facing gizmos drive Group Input sockets. A gizmo on a non-invertible source (Random Value) evaluates to `link.is_valid == False`. Dragging is GUI only.
-Verified on 5.2.1: block G (wiring only).
+Gizmo Value linked from the same scaled value used for its Position, through the FIRST input of the
+math node; gizmo Transform output joined into the geometry; artist-facing gizmos drive Group Input
+sockets. A gizmo on a non-invertible source (Random Value) evaluates to `link.is_valid == False`.
+Dragging is GUI only. Verified on 5.2.1: block G (wiring only).
 
 ```python
 # ---- G. gizmo wiring (value must be invertible back to a source)
@@ -330,8 +380,11 @@ print("G ok: gizmo on group input valid; gizmo on non-invertible source flagged 
 
 ## Procedure H: 5.2 cloth with collider and custom force (Thommes BCON26 00:01:43 to 00:08:30)
 
-Append the dynamics assets (local copies), vertex group `Group` (the default Pin Group attribute), collider object in its own collection with the Collider asset as its modifier, wrapper tree: Cloth Dynamics group node, Named Attribute into Pin Group, collection into Effectors Collection, Custom Force in a named Combine Bundle entry into Effectors. The builder version with a Custom Force closure is Procedure N.
-Verified on 5.2.1: block H (no vertex inside the sphere after 30 frames).
+Append the dynamics assets (local copies), vertex group `Group` (the default Pin Group attribute),
+collider object in its own collection with the Collider asset as its modifier, wrapper tree: Cloth
+Dynamics group node, Named Attribute into Pin Group, collection into Effectors Collection, Custom
+Force in a named Combine Bundle entry into Effectors. The builder version with a Custom Force
+closure is Procedure N. Verified on 5.2.1: block H (no vertex inside the sphere after 30 frames).
 
 ```python
 # ---- H. 5.2 physics: Cloth Dynamics asset + Collider + Custom Force bundle
@@ -381,11 +434,22 @@ rep = G.check(md); assert rep["ok"], rep
 G.set_inputs(md, {"Height": "attr:lift"})                   # vertex group drives a field input
 ```
 
-What test_01 asserts beyond this: every alias in `NODE_IDS` instantiates (79); ambiguous names raise with identifiers; cross-tree links raise; raw `.value` without `update_tag()` leaves the result unchanged; `md["Socket_1"] = v` raises TypeError; the for-each implicit-ID red link is flagged and fixed by the zone Index; a closure name mismatch is an ERROR warning; a hard-referenced Object Info object is reported; `b.join` keeps list order (raw Blender reversed it); layout puts the output rightmost with no overlap; world bbox includes instances while the evaluated `bound_box` does not; `md.execution_time` is 0.0 headless; a float group output becomes a named EDGE attribute; Essentials lists Scatter on Surface and Array; a rebuilt tree keeps its pointer; two Random Value nodes with the same Seed correlate at 1.0; `is_modifier` + `asset_mark()` publish.
+What test_01 asserts beyond this: every alias in `NODE_IDS` instantiates (79); ambiguous names raise
+with identifiers; cross-tree links raise; raw `.value` without `update_tag()` leaves the result
+unchanged; `md["Socket_1"] = v` raises TypeError; the for-each implicit-ID red link is flagged and
+fixed by the zone Index; a closure name mismatch is an ERROR warning; a hard-referenced Object Info
+object is reported; `b.join` keeps list order (raw Blender reversed it); layout puts the output
+rightmost with no overlap; world bbox includes instances while the evaluated `bound_box` does not;
+`md.execution_time` is 0.0 headless; a float group output becomes a named EDGE attribute; Essentials
+lists Scatter on Surface and Array; a rebuilt tree keeps its pointer; two Random Value nodes with
+the same Seed correlate at 1.0; `is_modifier` + `asset_mark()` publish.
 
 ## Procedure J: scatter on a surface (test_02; Erindale 00:35:19 normal selection, Thommes BCON23 00:31:30 local space)
 
-Density x mask (attribute or vertex group via `attr:`), slope limit against WORLD up (Compare, Vector, Direction, LESS_EQUAL, Angle), upright (Align Rotation to Vector Z to world up) or normal-aligned rotation, random spin around the local Z, random scale, pick among an Object and the children of a Collection, per-instance `scatter_rand` for shaders, instances kept unless Realize.
+Density x mask (attribute or vertex group via `attr:`), slope limit against WORLD up (Compare,
+Vector, Direction, LESS_EQUAL, Angle), upright (Align Rotation to Vector Z to world up) or
+normal-aligned rotation, random spin around the local Z, random scale, pick among an Object and the
+children of a Collection, per-instance `scatter_rand` for shaders, instances kept unless Realize.
 
 ```python
 def _world_up_local(b):
@@ -448,7 +512,11 @@ def scatter_tree(name="BX Scatter"):
     return b.done()
 ```
 
-Usage and gates (test_02): terrain 10 x 10 m with hills, density 12, `Density Mask = "attr:density"` (weight 0 at -X to 1 at +X), Max Slope 30 degrees. Measured: 159 instances for 158.1 expected; steepest host face under an instance 29.97 degrees; upright Z dot world Z > 0.9999; aligned Z dot face normal 1.0; scale inside [0.7, 1.3]; mask split 5 left vs 58 right; 3 instance references; flipped terrain gives 0 (world-space test).
+Usage and gates (test_02): terrain 10 x 10 m with hills, density 12, `Density Mask = "attr:density"`
+(weight 0 at -X to 1 at +X), Max Slope 30 degrees. Measured: 159 instances for 158.1 expected;
+steepest host face under an instance 29.97 degrees; upright Z dot world Z > 0.9999; aligned Z dot
+face normal 1.0; scale inside [0.7, 1.3]; mask split 5 left vs 58 right; 3 instance references;
+flipped terrain gives 0 (world-space test).
 
 ```python
 md = G.attach(terrain, G.scatter_tree(), inputs={"Instance": rock, "Instances": plants, "Density": 12.0,
@@ -458,7 +526,9 @@ md = G.attach(terrain, G.scatter_tree(), inputs={"Instance": rock, "Instances": 
 
 ## Procedure K: array along a curve, a chain (test_02; Thommes BCON22 00:23:07 resample for even spacing)
 
-Curve to Points in Length mode gives even spacing plus Tangent and Normal; two Align Rotation to Vector nodes (X to tangent, then Z to normal pivoting on X) make the frame explicit; an alternating roll around the tangent (Index floored-modulo 2 x angle) turns torus links into a chain.
+Curve to Points in Length mode gives even spacing plus Tangent and Normal; two Align Rotation to
+Vector nodes (X to tangent, then Z to normal pivoting on X) make the frame explicit; an alternating
+roll around the tangent (Index floored-modulo 2 x angle) turns torus links into a chain.
 
 ```python
 def curve_array_tree(name="BX Curve Array"):
@@ -497,11 +567,15 @@ def curve_array_tree(name="BX Curve Array"):
     return b.done()
 ```
 
-Measured on a Bezier circle of radius 2 (length 12.566) with spacing 0.44 and twist 90 degrees: 29 links; max radius error 0.004; instance X dot tangent 1.0; consecutive Z axes perpendicular (dot 0.0); Keep Curve adds the curves component; Realize gives 29 x 320 vertices.
+Measured on a Bezier circle of radius 2 (length 12.566) with spacing 0.44 and twist 90 degrees: 29
+links; max radius error 0.004; instance X dot tangent 1.0; consecutive Z axes perpendicular (dot
+0.0); Keep Curve adds the curves component; Realize gives 29 x 320 vertices.
 
 ## Procedure L: repeat-zone growth (test_02; Thommes BCON24 00:29:26 repeat = serial chain of the same operation)
 
-Random faces (Random Value BOOLEAN, Probability) extrude individually along normalize(Normal + Upward), the Top selection and a shrinking Step are carried as repeat items, tips are scaled by Taper, then Subdivision Surface and smooth shading.
+Random faces (Random Value BOOLEAN, Probability) extrude individually along normalize(Normal +
+Upward), the Top selection and a shrinking Step are carried as repeat items, tips are scaled by
+Taper, then Subdivision Surface and smooth shading.
 
 ```python
 def growth_tree(name="BX Growth"):
@@ -538,11 +612,19 @@ def growth_tree(name="BX Growth"):
     return b.done()
 ```
 
-Measured on an icosphere (80 triangles): faces 80, 143, 206, 269, 332 for 0 to 4 iterations (21 selected triangles x 3 side quads per iteration); max radius 1.0, 1.279, 1.507, 1.692, 1.841 under the geometric-series bound 1.886; 6 iterations at level 1: 1,752 faces, 0 non-manifold, 0 flipped (`bx_audit.audit(obj, evaluated=True)`), 0.025 s. Visual note: neighboring faces extruded individually start from a shared edge, so clusters form stars at the base; lower Probability if that reads wrong.
+Measured on an icosphere (80 triangles): faces 80, 143, 206, 269, 332 for 0 to 4 iterations (21
+selected triangles x 3 side quads per iteration); max radius 1.0, 1.279, 1.507, 1.692, 1.841 under
+the geometric-series bound 1.886; 6 iterations at level 1: 1,752 faces, 0 non-manifold, 0 flipped
+(`bx_audit.audit(obj, evaluated=True)`), 0.025 s. Visual note: neighboring faces extruded
+individually start from a shared edge, so clusters form stars at the base; lower Probability if that
+reads wrong.
 
 ## Procedure M: simulation zone, particle drop (test_03; Thommes BCON23 00:06:09 zone mechanics, BCON26 00:28:12 append order)
 
-The state starts empty (nothing into the Simulation Input geometry); each step appends new points AFTER the existing ones (`b.join([state, new])`) with a `pid`; semi-implicit Euler in world space (Self Object matrices); ground contact with restitution and friction; position and velocity captured together; icosphere instances outside the zone (instances carry `pid` and `velocity`).
+The state starts empty (nothing into the Simulation Input geometry); each step appends new points
+AFTER the existing ones (`b.join([state, new])`) with a `pid`; semi-implicit Euler in world space
+(Self Object matrices); ground contact with restitution and friction; position and velocity captured
+together; icosphere instances outside the zone (instances carry `pid` and `velocity`).
 
 ```python
 def particle_drop_tree(name="BX Particle Drop"):
@@ -626,14 +708,22 @@ def particle_drop_tree(name="BX Particle Drop"):
 
 Stepping facts measured in 5.2.1 (test_03):
 
-- The first frame already runs the zone body: 12 points at frame 1 for Rate 12; count = Rate x min(frame, Emit Frames).
-- Nothing below ground + radius at any frame (min 0.06 for radius 0.06); pid prefix identical frame to frame (append-only); mean speed 3.87 at frame 25, 0.19 at 60; all resting by frame 80.
+- The first frame already runs the zone body: 12 points at frame 1 for Rate 12; count = Rate x
+  min(frame, Emit Frames).
+- Nothing below ground + radius at any frame (min 0.06 for radius 0.06); pid prefix identical frame
+  to frame (append-only); mean speed 3.87 at frame 25, 0.19 at 60; all resting by frame 80.
 - Stepping fills a memory cache: `frame_set(15)` after stepping to 80 replays frame 15 exactly.
-- A jump past the cache computes ONE step: stepping to 10 then `frame_set(40)` gives the 120 frame-10 points one step lower (mean z 2.65 to 2.55) instead of 240 mostly landed points.
-- `bpy.ops.object.simulation_nodes_cache_calculate_to_frame(selected=True)` returns `{'PASS_THROUGH'}` headless and computes nothing (frame 45 afterwards = one step from frame 1). Use `G.step`.
-- `G.bake(obj)` returns FINISHED (`md.bake_target == 'PACKED'`); afterwards a direct jump to frame 50 equals the stepped frame 50.
+- A jump past the cache computes ONE step: stepping to 10 then `frame_set(40)` gives the 120
+  frame-10 points one step lower (mean z 2.65 to 2.55) instead of 240 mostly landed points.
+- `bpy.ops.object.simulation_nodes_cache_calculate_to_frame(selected=True)` returns
+  `{'PASS_THROUGH'}` headless and computes nothing (frame 45 afterwards = one step from frame 1).
+  Use `G.step`.
+- `G.bake(obj)` returns FINISHED (`md.bake_target == 'PACKED'`); afterwards a direct jump to frame
+  50 equals the stepped frame 50.
 - A host rotated 90 degrees about X still drops along world -Z and lands at world z = radius.
-- Why one Capture Attribute: the same tree rewired naively (Store velocity, then Set Position reading it) reads the NEW velocity and double-counts gravity in flight: mean z 2.875 instead of 2.923 at frame 5.
+- Why one Capture Attribute: the same tree rewired naively (Store velocity, then Set Position
+  reading it) reads the NEW velocity and double-counts gravity in flight: mean z 2.875 instead of
+  2.923 at frame 5.
 
 ```python
 md = G.attach(ground, G.particle_drop_tree(), inputs={"Rate": 12, "Emit Frames": 20, "Radius": 0.06,
@@ -645,7 +735,10 @@ G.snapshot([ground], "/abs/out/particles.png", frames=[4, 12, 24, 60])
 
 ## Procedure N: 5.2 physics assets from the builder (test_04; Thommes BCON26)
 
-Custom Force closure signature: inputs Geometry (GEOMETRY), To World Transform (MATRIX); outputs Geometry, Selection (BOOLEAN), Force (VECTOR). Custom Effector Geometry Effector closure: inputs Geometry, To World Transform; output Geometry. Stage menu items: Default, Pre-Simulation, Pre-Solve, Post-Solve, Custom (read from the 5.2.1 assets).
+Custom Force closure signature: inputs Geometry (GEOMETRY), To World Transform (MATRIX); outputs
+Geometry, Selection (BOOLEAN), Force (VECTOR). Custom Effector Geometry Effector closure: inputs
+Geometry, To World Transform; output Geometry. Stage menu items: Default, Pre-Simulation, Pre-Solve,
+Post-Solve, Custom (read from the 5.2.1 assets).
 
 ```python
 def cloth_tree(name, lift=None):
@@ -695,7 +788,9 @@ def ager(name, extra, stage, x):
     return ob, G.attach(ob, b.done())
 ```
 
-Measured (test_04): cloth over the sphere, 0 vertices inside after 30 frames, pinned row drift 0.5 mm; an upward 6.0 closure force leaves the cloth's lowest point at z 0.33 instead of -0.37. Extra Sim Attributes, `age += 1` per step in a Custom Effector closure, 10 frames:
+Measured (test_04): cloth over the sphere, 0 vertices inside after 30 frames, pinned row drift 0.5
+mm; an upward 6.0 closure force leaves the cloth's lowest point at z 0.33 instead of -0.37. Extra
+Sim Attributes, `age += 1` per step in a Custom Effector closure, 10 frames:
 
 | Extra Sim Attributes | Stage          | age after frames 1..10                                     |
 | -------------------- | -------------- | ---------------------------------------------------------- |
@@ -704,7 +799,9 @@ Measured (test_04): cloth over the sphere, 0 vertices inside after 30 frames, pi
 | "age"                | Pre-Solve      | 1, 2, ..., 10 (once per frame with the default 5 substeps) |
 | "age"                | Pre-Simulation | 1, 1, 1, ... (runs on the first frame only)                |
 
-Not re-tested here: sewing by editing the local Edge Length Constraint (Custom Length on Is Edge Loose, 1 s ramp), tearing thresholds, Hair Dynamics on curves spawned mid-simulation. The ordering rule they need is the one Procedure M verifies with `pid`.
+Not re-tested here: sewing by editing the local Edge Length Constraint (Custom Length on Is Edge
+Loose, 1 s ramp), tearing thresholds, Hair Dynamics on curves spawned mid-simulation. The ordering
+rule they need is the one Procedure M verifies with `pid`.
 
 ## Procedure O: robustness probes (any tree)
 
@@ -720,4 +817,17 @@ print(G.time_eval(obj))
 
 ## Node identifiers (verified to instantiate in 5.2.1)
 
-`bx_gn.NODE_IDS` lists the aliases; bare names resolve by prefix (`SetPosition` -> `GeometryNodeSetPosition`). Irregular ones worth remembering: Math `ShaderNodeMath`, Vector Math `ShaderNodeVectorMath`, Map Range `ShaderNodeMapRange`, Mix `ShaderNodeMix`, Combine/Separate XYZ `ShaderNodeCombineXYZ` / `ShaderNodeSeparateXYZ`, Value `ShaderNodeValue`, Noise `ShaderNodeTexNoise`, Compare `FunctionNodeCompare`, Random Value `FunctionNodeRandomValue`, Integer Math `FunctionNodeIntegerMath`, Align Rotation to Vector `FunctionNodeAlignRotationToVector`, Rotate Rotation `FunctionNodeRotateRotation`, Multiply Matrices `FunctionNodeMatrixMultiply`, Evaluate on Domain `GeometryNodeFieldOnDomain`, Evaluate at Index `GeometryNodeFieldAtIndex`, Transform Geometry `GeometryNodeTransform`, Curve Tangent `GeometryNodeInputTangent`, Bounding Box `GeometryNodeBoundBox`, Geometry Proximity `GeometryNodeProximity`, Get List Item `GeometryNodeListGetItem`, zones `GeometryNodeSimulationInput/Output`, `GeometryNodeRepeatInput/Output`, `GeometryNodeForeachGeometryElementInput/Output`, `NodeClosureInput/Output`, `NodeEvaluateClosure`, `NodeCombineBundle`, `NodeSeparateBundle`, physics `GeometryNodeXPBDSolver`, gizmos `GeometryNodeGizmoLinear/Dial/Transform`.
+`bx_gn.NODE_IDS` lists the aliases; bare names resolve by prefix (`SetPosition` ->
+`GeometryNodeSetPosition`). Irregular ones worth remembering: Math `ShaderNodeMath`, Vector Math
+`ShaderNodeVectorMath`, Map Range `ShaderNodeMapRange`, Mix `ShaderNodeMix`, Combine/Separate XYZ
+`ShaderNodeCombineXYZ` / `ShaderNodeSeparateXYZ`, Value `ShaderNodeValue`, Noise
+`ShaderNodeTexNoise`, Compare `FunctionNodeCompare`, Random Value `FunctionNodeRandomValue`, Integer
+Math `FunctionNodeIntegerMath`, Align Rotation to Vector `FunctionNodeAlignRotationToVector`, Rotate
+Rotation `FunctionNodeRotateRotation`, Multiply Matrices `FunctionNodeMatrixMultiply`, Evaluate on
+Domain `GeometryNodeFieldOnDomain`, Evaluate at Index `GeometryNodeFieldAtIndex`, Transform Geometry
+`GeometryNodeTransform`, Curve Tangent `GeometryNodeInputTangent`, Bounding Box
+`GeometryNodeBoundBox`, Geometry Proximity `GeometryNodeProximity`, Get List Item
+`GeometryNodeListGetItem`, zones `GeometryNodeSimulationInput/Output`,
+`GeometryNodeRepeatInput/Output`, `GeometryNodeForeachGeometryElementInput/Output`,
+`NodeClosureInput/Output`, `NodeEvaluateClosure`, `NodeCombineBundle`, `NodeSeparateBundle`, physics
+`GeometryNodeXPBDSolver`, gizmos `GeometryNodeGizmoLinear/Dial/Transform`.

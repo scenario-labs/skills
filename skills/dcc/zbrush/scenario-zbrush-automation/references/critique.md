@@ -1,6 +1,8 @@
 # scenario-zbrush-automation critique rubric
 
-What a pipeline TD checks before calling a batch, a script or a round trip done. Score each line pass, fix or fail; any fail blocks delivery. Sources are in expert-notes.md; `[added]` lines are this skill's own standards.
+What a pipeline TD checks before calling a batch, a script or a round trip done. Score each line
+pass, fix or fail; any fail blocks delivery. Sources are in expert-notes.md; `[added]` lines are
+this skill's own standards.
 
 ## A. Design of the job
 
@@ -67,4 +69,5 @@ What a pipeline TD checks before calling a batch, a script or a round trip done.
 - A normal map exported in world space for an engine.
 - Outputs written over earlier outputs without a `.bak` or a new version.
 - A "verified" label on code that did not run in ZBrush.
-- A Project All without a checkpoint ZTL saved just before it, or projection spikes smoothed instead of morphed back.
+- A Project All without a checkpoint ZTL saved just before it, or projection spikes smoothed instead
+  of morphed back.

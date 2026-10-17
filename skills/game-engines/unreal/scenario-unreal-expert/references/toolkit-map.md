@@ -1,19 +1,38 @@
 # Toolkit map: the engine call behind every `ue_*` function
 
-Why this file exists: in the first blind test (2026-09-24, `tests/grading/U1_grade.md` to `U9_grade.md`) four of nine graders took the executability point off the skilled answer (U1, U3, U4, U8) and the other five flagged the same dependency as a caveat or a condition of their score: steps written as `ue_run.run_python(...)`, `ue_review.screenshot(...)` or `L.spawn_light(...)` could not be checked by a reader without `scripts/`. A plan is only as checkable as its least explained call. This table is what you copy next to each call.
+Why this file exists: in the first blind test (2026-09-24, `tests/grading/U1_grade.md` to
+`U9_grade.md`) four of nine graders took the executability point off the skilled answer (U1, U3, U4,
+U8) and the other five flagged the same dependency as a caveat or a condition of their score: steps
+written as `ue_run.run_python(...)`, `ue_review.screenshot(...)` or `L.spawn_light(...)` could not
+be checked by a reader without `scripts/`. A plan is only as checkable as its least explained call.
+This table is what you copy next to each call.
 
-Status: every in-engine row is **not yet run in Unreal** (UE 5.8 not installed on 2026-09-24); the offline rows ran in `tests/code/unreal-expert/`. `[verify]` = name or flag to confirm with the probe job (`tests/code/unreal-expert/jobs/job_00_probe.py`).
+Status: every in-engine row is **not yet run in Unreal** (UE 5.8 not installed on 2026-09-24); the
+offline rows ran in `tests/code/unreal-expert/`. `[verify]` = name or flag to confirm with the probe
+job (`tests/code/unreal-expert/jobs/job_00_probe.py`).
 
 ## 1. Report format (every plan, handoff and final report)
 
-1. **Each step names its engine call.** Write the toolkit call, then in parentheses the Unreal API, command line, console command or cvar it runs, from the tables below. Domain helpers (`ue_light`, `ue_world`, `ue_cine`...) follow the same rule: name the `unreal.*` class and method, the property path, or the cvar they set. Example:
-   - `ue_run.run_python(up, "audit_job.py", args=["/Game/Props"])` (`UnrealEditor-Cmd <uproject> -run=pythonscript -script=<boot.py>`; the job calls `EditorAssetSubsystem.load_asset` per asset)
-   - `ue_review.screenshot(p, 1920, 1080)` (`unreal.AutomationLibrary.take_high_res_screenshot(1920, 1080, p)`, fallback console `HighResShot 1920x1080 filename="p"`)
-   - `set r.Lumen.Reflections.MaxRoughnessToTrace 0.3` written as the cvar itself, never "tighten reflections".
-2. **Raw console commands and cvars appear literally**, with where they are set: console, `-DPCVars=` at launch, a device profile, or `Config/DefaultEngine.ini` section and key.
+1. **Each step names its engine call.** Write the toolkit call, then in parentheses the Unreal API,
+   command line, console command or cvar it runs, from the tables below. Domain helpers (`ue_light`,
+   `ue_world`, `ue_cine`...) follow the same rule: name the `unreal.*` class and method, the
+   property path, or the cvar they set. Example:
+   - `ue_run.run_python(up, "audit_job.py", args=["/Game/Props"])`
+     (`UnrealEditor-Cmd <uproject> -run=pythonscript -script=<boot.py>`; the job calls
+     `EditorAssetSubsystem.load_asset` per asset)
+   - `ue_review.screenshot(p, 1920, 1080)`
+     (`unreal.AutomationLibrary.take_high_res_screenshot(1920, 1080, p)`, fallback console
+     `HighResShot 1920x1080 filename="p"`)
+   - `set r.Lumen.Reflections.MaxRoughnessToTrace 0.3` written as the cvar itself, never "tighten
+     reflections".
+2. **Raw console commands and cvars appear literally**, with where they are set: console,
+   `-DPCVars=` at launch, a device profile, or `Config/DefaultEngine.ini` section and key.
 3. **End with two lists.**
-   - **Verified**: what ran, on which channel, and the number, log line or frame that proves it (`ue_run` envelope `ok` with `reported_by`, `image_checks` flags, `budget_check` verdict, audit verdict).
-   - **Assumed**: every step not run in Unreal, every `[verify]` name, every default taken because the brief was silent, every number from a source that was not re-measured here.
+   - **Verified**: what ran, on which channel, and the number, log line or frame that proves it
+     (`ue_run` envelope `ok` with `reported_by`, `image_checks` flags, `budget_check` verdict, audit
+     verdict).
+   - **Assumed**: every step not run in Unreal, every `[verify]` name, every default taken because
+     the brief was silent, every number from a source that was not re-measured here.
 4. A step you could not run is written as a plan with its engine call, never as a result.
 
 ## 2. `ue_run` (process layer and job protocol)

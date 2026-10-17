@@ -6,24 +6,53 @@ license: MIT
 
 # Previs, layout and storyboarding
 
-Expert previs conveys an idea well enough to be judged, as cheaply as possible: one fact per beat, every shot designed for what the audience must feel, timing found in the edit from stills. The camera is the audience's body; where it stands, how high and through which lens decides the emotion, so every non-neutral choice needs a stated reason. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Expert previs conveys an idea well enough to be judged, as cheaply as possible: one fact per beat,
+every shot designed for what the audience must feel, timing found in the edit from stills. The
+camera is the audience's body; where it stands, how high and through which lens decides the emotion,
+so every non-neutral choice needs a stated reason. If a sibling skill named here is missing from
+your available skills, ask the user to install it
+(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
+flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 
-Toolkit: [`scripts/bx_previs.py`](scripts/bx_previs.py) (tested on 5.2.1): `import sys; sys.path += ["<this skill>/scripts", "<scenario-blender-expert>/scripts"]; import bx_previs as P`.
+Toolkit: [`scripts/bx_previs.py`](scripts/bx_previs.py) (tested on 5.2.1):
+`import sys; sys.path += ["<this skill>/scripts", "<scenario-blender-expert>/scripts"]; import bx_previs as P`.
 
-**Which skill.** This one: story previs and animatics judged by a director and an editor. **text-image-to-blender-blockout** instead when the playblast guides a render-to-real video model (Seedance): saturated color identities, no lens jump on a cut, eased moves, a hand-off sheet; an approved animatic that must become a video guide is rebuilt there. Shared: metric Z-up, roots at the feet, one camera per shot bound to a marker, `to_track_quat('-Z','Y')` look-at. Strokes: scenario-blender-grease-pencil. Animation after layout: scenario-blender-animation. Real rigs: scenario-blender-rigging.
+**Which skill.** This one: story previs and animatics judged by a director and an editor.
+**text-image-to-blender-blockout** instead when the playblast guides a render-to-real video model
+(Seedance): saturated color identities, no lens jump on a cut, eased moves, a hand-off sheet; an
+approved animatic that must become a video guide is rebuilt there. Shared: metric Z-up, roots at the
+feet, one camera per shot bound to a marker, `to_track_quat('-Z','Y')` look-at. Strokes:
+scenario-blender-grease-pencil. Animation after layout: scenario-blender-animation. Real rigs:
+scenario-blender-rigging.
 
 ## Stance (the expert delta)
 
-- **Hjalti Hjalmarsson: write the beats-of-information list before any shot.** One fact per line, because a viewer takes in one thing at a time. Group consecutive beats into shots; a new treatment re-orders the same facts. A missing beat means the idea never gets a fair test.
-- **Hjalti: theater first, then cinematic; shots cost time.** A locked-off version judges the acting; the same beats told in shots ran about 2x (up to 3x) because every cut must be read (13/22/25 s vs 47/40 s). The oversimplified version is always too short and hides logistics (a character cannot cross the room in 10 frames).
-- **Charge recipe (Hjalti): treat every frame as a storyboard drawing.** 10 frames per shot, keys CONSTANT, an A/B alternative on the next frame, the winner on the decade frame, stills exported with versioned names, timing done in a separate edit.
-- **Hjalti: when in doubt, eye height; lock the lens early by A/B.** Two characters: split their eye heights. Low or high is a statement. Poses built for one lens do not survive a lens change.
-- **Dillon Gu: composition and focal length are separate decisions, and cuts can kill a mood.** The audience stands where the camera is. Leaving the space removes the danger; two inanimate inserts in a row lower tension.
-- **Cheat for the camera, but key before you cheat** (Hjalti, Charge, Renato Roldan). Resize, float, swap props per shot; in a shared timeline an unkeyed cheat breaks the earlier shots.
-- **Previs is the cheapest version that still conveys the idea** (Hjalti, Charge). Animate only shots whose camera move is the storytelling; everything else is one still, push-ins faked on the still in the edit. Grays in Workbench, no mood lighting, mannequins before rigs. `P.audit` refuses a camera moving inside a still shot, keys between block starts and a non-Workbench engine.
-- **After each cut the eye must find one thing** (Hjalti). Restage a character in front of a competing subject; keep the angle that preserves the emotion (he refused a side cut that turned Rex into a silhouette).
+- **Hjalti Hjalmarsson: write the beats-of-information list before any shot.** One fact per line,
+  because a viewer takes in one thing at a time. Group consecutive beats into shots; a new treatment
+  re-orders the same facts. A missing beat means the idea never gets a fair test.
+- **Hjalti: theater first, then cinematic; shots cost time.** A locked-off version judges the
+  acting; the same beats told in shots ran about 2x (up to 3x) because every cut must be read
+  (13/22/25 s vs 47/40 s). The oversimplified version is always too short and hides logistics (a
+  character cannot cross the room in 10 frames).
+- **Charge recipe (Hjalti): treat every frame as a storyboard drawing.** 10 frames per shot, keys
+  CONSTANT, an A/B alternative on the next frame, the winner on the decade frame, stills exported
+  with versioned names, timing done in a separate edit.
+- **Hjalti: when in doubt, eye height; lock the lens early by A/B.** Two characters: split their eye
+  heights. Low or high is a statement. Poses built for one lens do not survive a lens change.
+- **Dillon Gu: composition and focal length are separate decisions, and cuts can kill a mood.** The
+  audience stands where the camera is. Leaving the space removes the danger; two inanimate inserts
+  in a row lower tension.
+- **Cheat for the camera, but key before you cheat** (Hjalti, Charge, Renato Roldan). Resize, float,
+  swap props per shot; in a shared timeline an unkeyed cheat breaks the earlier shots.
+- **Previs is the cheapest version that still conveys the idea** (Hjalti, Charge). Animate only
+  shots whose camera move is the storytelling; everything else is one still, push-ins faked on the
+  still in the edit. Grays in Workbench, no mood lighting, mannequins before rigs. `P.audit` refuses
+  a camera moving inside a still shot, keys between block starts and a non-Workbench engine.
+- **After each cut the eye must find one thing** (Hjalti). Restage a character in front of a
+  competing subject; keep the angle that preserves the emotion (he refused a side cut that turned
+  Rex into a silhouette).
 
 ## Establish first
 
@@ -39,15 +68,36 @@ Toolkit: [`scripts/bx_previs.py`](scripts/bx_previs.py) (tested on 5.2.1): `impo
 
 ## Workflow
 
-1. **Script to beats.** Asset list, then numbered beats, one fact each; mark every beat you add. GATE: `P.shot_list(BEATS, SHOTS)` raises on a missing, duplicated or reordered beat.
-2. **Set and proxies.** `P.setup_scene` (format, Workbench, grays, Standard view transform); `P.prop` for real-scale set pieces; `P.mannequin` for characters (root at the feet with `eye_height`, four pivot controls as the layout subset). Grays, one pop color for the hero (Renato: red). GATE: scale reads next to a door (2.1 m) and counter (1.0 m).
-3. **Theater pass.** One locked-off camera (`cam` shared, `fit="all"`, 35 mm, mean eye height) framing the action's extremes; one block per beat group. GATE: in the `P.audit` rows every subject's `head_in` and `feet_in` is true at every block; theater edit timed.
-4. **Cinematic plan.** List several openings, re-order beats, group them into shots with `intent`, `size`, `lens`, `height`, `dur`. `P.floor_plan` with the action line and journey paths before judging cameras. GATE: one side of the line; journeys follow the direction rule.
-5. **Blocking.** For each block: `sc.frame_set(f)` (holds the previous pose), set only what changes, `P.key_block(all_movables, f)`; cheats go through the same keys; then `P.make_stepped`. GATE: `P.stepped_report == {}`; the cheat check at neighboring shots.
-6. **Cameras.** `P.build_shots` places each camera from size, lens and eye height (or explicit `loc`/`aim`), sets an opaque passepartout (Charge: see only the composition; `P.passepartout(sc)` for other cameras) and binds a marker at its first frame. `P.ab_lens` on key shots before posing further. GATE: `P.audit(...)["problems"] == []`.
-7. **Look.** `P.contact_sheet` and open it. Characters merging with a dim set: `P.fog_for_shot(sc, t, chars)` (Hjalti: depth fog for readability, not lighting; behind the subjects, keyed to that shot), `P.values_at` hero vs backdrop. GATE: the visual list under Quality gates (in S6 only the pictures caught the occlusions and the cut-off wide).
-8. **Edit.** `P.render_stills`, then `P.animatic` (image strips held `dur` seconds, `push` on stills, `live` shots as scene strips, sounds, `burn_in`). One continuous action from several angles (Pablo, Story Tools): a `live` shot plus `cover=True` shots become one scene strip soft-split per camera; retime with `P.retime_cut` (the marker follows), never by moving keys. GATE: runtime within budget; frames pulled from the MP4 match the cut list.
-9. **Iterate** in a new scene pair (`02_blend`/`02_edit`) and new version numbers; nothing overwritten.
+1. **Script to beats.** Asset list, then numbered beats, one fact each; mark every beat you add.
+   GATE: `P.shot_list(BEATS, SHOTS)` raises on a missing, duplicated or reordered beat.
+2. **Set and proxies.** `P.setup_scene` (format, Workbench, grays, Standard view transform);
+   `P.prop` for real-scale set pieces; `P.mannequin` for characters (root at the feet with
+   `eye_height`, four pivot controls as the layout subset). Grays, one pop color for the hero
+   (Renato: red). GATE: scale reads next to a door (2.1 m) and counter (1.0 m).
+3. **Theater pass.** One locked-off camera (`cam` shared, `fit="all"`, 35 mm, mean eye height)
+   framing the action's extremes; one block per beat group. GATE: in the `P.audit` rows every
+   subject's `head_in` and `feet_in` is true at every block; theater edit timed.
+4. **Cinematic plan.** List several openings, re-order beats, group them into shots with `intent`,
+   `size`, `lens`, `height`, `dur`. `P.floor_plan` with the action line and journey paths before
+   judging cameras. GATE: one side of the line; journeys follow the direction rule.
+5. **Blocking.** For each block: `sc.frame_set(f)` (holds the previous pose), set only what changes,
+   `P.key_block(all_movables, f)`; cheats go through the same keys; then `P.make_stepped`. GATE:
+   `P.stepped_report == {}`; the cheat check at neighboring shots.
+6. **Cameras.** `P.build_shots` places each camera from size, lens and eye height (or explicit
+   `loc`/`aim`), sets an opaque passepartout (Charge: see only the composition; `P.passepartout(sc)`
+   for other cameras) and binds a marker at its first frame. `P.ab_lens` on key shots before posing
+   further. GATE: `P.audit(...)["problems"] == []`.
+7. **Look.** `P.contact_sheet` and open it. Characters merging with a dim set:
+   `P.fog_for_shot(sc, t, chars)` (Hjalti: depth fog for readability, not lighting; behind the
+   subjects, keyed to that shot), `P.values_at` hero vs backdrop. GATE: the visual list under
+   Quality gates (in S6 only the pictures caught the occlusions and the cut-off wide).
+8. **Edit.** `P.render_stills`, then `P.animatic` (image strips held `dur` seconds, `push` on
+   stills, `live` shots as scene strips, sounds, `burn_in`). One continuous action from several
+   angles (Pablo, Story Tools): a `live` shot plus `cover=True` shots become one scene strip
+   soft-split per camera; retime with `P.retime_cut` (the marker follows), never by moving keys.
+   GATE: runtime within budget; frames pulled from the MP4 match the cut list.
+9. **Iterate** in a new scene pair (`02_blend`/`02_edit`) and new version numbers; nothing
+   overwritten.
 
 ## Numbers
 
@@ -80,13 +130,27 @@ Toolkit: [`scripts/bx_previs.py`](scripts/bx_previs.py) (tested on 5.2.1): `impo
 | Tilt or move ending on a detail                                                 | that detail becomes the subject                                   | Hjalti                   |
 | Faceless framing, longer shots, significant object at the edge carried by sound | routine                                                           | Dillon                   |
 
-**Moves that feel physical** (Dillon): handheld noise when a watcher or a groggy body holds the camera, a camera operator's quick zoom, the camera dropping with the character's shoulders, less motion for laziness, more for urgency; a product shot is the stillest shot. Hjalti pulls focus across a handoff (`dof.focus_object`). **Cuts:** one side of the action line; an over-the-shoulder uses the shoulder the camera already occupies, and a jump cut can mean elided routine time (Dillon); a POV sits just off the line on the camera side [added, S6].
+**Moves that feel physical** (Dillon): handheld noise when a watcher or a groggy body holds the
+camera, a camera operator's quick zoom, the camera dropping with the character's shoulders, less
+motion for laziness, more for urgency; a product shot is the stillest shot. Hjalti pulls focus
+across a handoff (`dof.focus_object`). **Cuts:** one side of the action line; an over-the-shoulder
+uses the shoulder the camera already occupies, and a jump cut can mean elided routine time (Dillon);
+a POV sits just off the line on the camera side [added, S6].
 
 ## Quality gates
 
-**Measurable:** `P.audit(sc, table, chars, line=(a, b), travel={name: "right"}, stepped=movables)`: marker switch at each shot frame and not one frame before, main subject's eye line in frame and not blocked (ray cast names the blocker, fog included), measured vs intended size, height class with an intent for every non-eye camera, one side of the action line (POV and `cross` exempt), screen direction per journey, block length, two inserts in a row, non-constant keys outside live blocks, opaque passepartout, cost gates; `warnings` lists lights. Plus the edit runtime, `ffprobe` streams and duration, and for live shots an edit frame rendered against the previs frame.
+**Measurable:** `P.audit(sc, table, chars, line=(a, b), travel={name: "right"}, stepped=movables)`:
+marker switch at each shot frame and not one frame before, main subject's eye line in frame and not
+blocked (ray cast names the blocker, fog included), measured vs intended size, height class with an
+intent for every non-eye camera, one side of the action line (POV and `cross` exempt), screen
+direction per journey, block length, two inserts in a row, non-constant keys outside live blocks,
+opaque passepartout, cost gates; `warnings` lists lights. Plus the edit runtime, `ffprobe` streams
+and duration, and for live shots an edit frame rendered against the previs frame.
 
-**Visual** (open each image): contact sheet (every beat visible, one focal point per shot, hero readable, cheats and occluders invisible, pose readable from this camera), floor plan (camera side, journeys), A/B sheet (isolation vs context), frames pulled from the MP4 (order, burn-ins, push, live-shot content). Comic timing and sound stay a human call (Hjalti).
+**Visual** (open each image): contact sheet (every beat visible, one focal point per shot, hero
+readable, cheats and occluders invisible, pose readable from this camera), floor plan (camera side,
+journeys), A/B sheet (isolation vs context), frames pulled from the MP4 (order, burn-ins, push,
+live-shot content). Comic timing and sound stay a human call (Hjalti).
 
 ## Common mistakes
 
@@ -105,18 +169,31 @@ Toolkit: [`scripts/bx_previs.py`](scripts/bx_previs.py) (tested on 5.2.1): `impo
 
 ## Blender 5.2 notes
 
-- `bpy.ops.render.opengl` fails in `--background`; use Workbench `render.render` (headless) or a camera-locked viewport in a live session.
-- `keyframe_insert()` ignores the new-key interpolation preference (keys stay BEZIER) though "Only Insert Available" is on: call `P.make_stepped`.
-- `frame_set` on a scene that is not the window scene leaves transforms stale, and a `write_still` render of such a scene uses the window scene's frame: `P.activate`, `P.render_frame`.
-- VSE: `strips`, `left_handle`/`right_handle`, `content_start`; `SceneStrip.frame_start` and `frame_final_*` warn (removal in 6.0). `Strip.split(frame, split_method='SOFT')` splits from data. New scenes default to AgX: set the edit scene to the source view transform.
+- `bpy.ops.render.opengl` fails in `--background`; use Workbench `render.render` (headless) or a
+  camera-locked viewport in a live session.
+- `keyframe_insert()` ignores the new-key interpolation preference (keys stay BEZIER) though "Only
+  Insert Available" is on: call `P.make_stepped`.
+- `frame_set` on a scene that is not the window scene leaves transforms stale, and a `write_still`
+  render of such a scene uses the window scene's frame: `P.activate`, `P.render_frame`.
+- VSE: `strips`, `left_handle`/`right_handle`, `content_start`; `SceneStrip.frame_start` and
+  `frame_final_*` warn (removal in 6.0). `Strip.split(frame, split_method='SOFT')` splits from data.
+  New scenes default to AgX: set the edit scene to the source view transform.
 - `marker.camera = cam` binds headless; `bpy.ops.marker.camera_bind` needs a timeline context.
-- Rigify is off under `--factory-startup`: `bpy.ops.object.armature_basic_human_metarig_add` raises "could not be found" until `P.ensure_rigify()`.
-- Selection Sets, Storypencil and Grease Pencil Tools are not bundled; use a bone collection `layout`. The Storyboarding app template ships an Edit scene with sync on and auto-key off in Edit (pin off in its Storyboarding workspace).
+- Rigify is off under `--factory-startup`: `bpy.ops.object.armature_basic_human_metarig_add` raises
+  "could not be found" until `P.ensure_rigify()`.
+- Selection Sets, Storypencil and Grease Pencil Tools are not bundled; use a bone collection
+  `layout`. The Storyboarding app template ships an Edit scene with sync on and auto-key off in Edit
+  (pin off in its Storyboarding workspace).
 - GP v3 strokes render in a headless Workbench still.
 
 ## References
 
-- [`references/procedures.md`](references/procedures.md): tested code for every stage (with and without the module) and the trap tests; load before writing code.
-- [`references/expert-notes.md`](references/expert-notes.md): each expert's principles, disagreements and deciding conditions, with timestamps; load when choosing a treatment, lens or cut.
-- [`references/critique.md`](references/critique.md): the review rubric and the S6 findings; load at every Look gate.
-- [`references/sources.md`](references/sources.md): the seven source videos, what each is best for, best timestamps.
+- [`references/procedures.md`](references/procedures.md): tested code for every stage (with and
+  without the module) and the trap tests; load before writing code.
+- [`references/expert-notes.md`](references/expert-notes.md): each expert's principles,
+  disagreements and deciding conditions, with timestamps; load when choosing a treatment, lens or
+  cut.
+- [`references/critique.md`](references/critique.md): the review rubric and the S6 findings; load at
+  every Look gate.
+- [`references/sources.md`](references/sources.md): the seven source videos, what each is best for,
+  best timestamps.

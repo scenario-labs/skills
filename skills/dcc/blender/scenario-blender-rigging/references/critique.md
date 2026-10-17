@@ -1,6 +1,10 @@
 # Critique rubric: scenario-blender-rigging
 
-Run at every gate. Severity: **blocker** (rig unusable or silently wrong: fix before anything else), **major** (an animator or a lead would send it back), **minor** (polish; note it in the report). Numbers come from `bx_rig`; visual items need the named render opened with the image reader. Thresholds marked [added] are the skill author's calibration on the test mannequin and Snow, not expert numbers.
+Run at every gate. Severity: **blocker** (rig unusable or silently wrong: fix before anything else),
+**major** (an animator or a lead would send it back), **minor** (polish; note it in the report).
+Numbers come from `bx_rig`; visual items need the named render opened with the image reader.
+Thresholds marked [added] are the skill author's calibration on the test mannequin and Snow, not
+expert numbers.
 
 ## A. Model and placement (before generating or binding)
 
@@ -45,7 +49,10 @@ Run at every gate. Severity: **blocker** (rig unusable or silently wrong: fix be
 
 ## D. Deformation (numbers guide, renders decide)
 
-Run `deformation_report` + `flag_report` on `RIGIFY_POSES` (or the rig's own library), then `pose_sheet` and `joint_sheet` at every flagged pose. Joint band ratios below are [added] calibrations: linear skinning on a clean mesh measured 0.47 (arm down, shoulder), 0.68 (elbow 120), 0.73 (knee 120).
+Run `deformation_report` + `flag_report` on `RIGIFY_POSES` (or the rig's own library), then
+`pose_sheet` and `joint_sheet` at every flagged pose. Joint band ratios below are [added]
+calibrations: linear skinning on a clean mesh measured 0.47 (arm down, shoulder), 0.68 (elbow 120),
+0.73 (knee 120).
 
 | Pose                           | Look for (render)                                                 | Numbers                                  | Severity if bad         | Expert          |
 | ------------------------------ | ----------------------------------------------------------------- | ---------------------------------------- | ----------------------- | --------------- |
@@ -61,7 +68,8 @@ Run `deformation_report` + `flag_report` on `RIGIFY_POSES` (or the rig's own lib
 | Blink, smile                   | lid zigzag, creepy smile, lower lid over-following                |                                          | major                   | CGDive          |
 | Fist (Human)                   | knuckles misaligned, thumb through the palm                       |                                          | major                   | Demeter         |
 
-Firm is acceptable: slight intersection with firm deformation beats rubbery weights (CGDive). A pose outside the anatomical range is not a failure (CGDive: test the shoulder within about 20 to 30 deg).
+Firm is acceptable: slight intersection with firm deformation beats rubbery weights (CGDive). A pose
+outside the anatomical range is not a failure (CGDive: test the shoulder within about 20 to 30 deg).
 
 ## E. Correctives and faces
 
@@ -77,6 +85,9 @@ Firm is acceptable: slight intersection with firm deformation beats rubbery weig
 
 ## F. Report honesty
 
-- State the route taken (auto weights or proxy, and why), the numbers from `weight_report` and `flag_report`, and link the placement, pose and joint sheets.
-- Say what was coarse or unverified: face fit from similarity, fingers not individually fitted, poses outside the tested library, GUI-only checks (rig UI panel with Auto Run, real brush painting).
+- State the route taken (auto weights or proxy, and why), the numbers from `weight_report` and
+  `flag_report`, and link the placement, pose and joint sheets.
+- Say what was coarse or unverified: face fit from similarity, fingers not individually fitted,
+  poses outside the tested library, GUI-only checks (rig UI panel with Auto Run, real brush
+  painting).
 - Never call a rig done without having opened a pose sheet and the joint close-ups.

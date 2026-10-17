@@ -1,6 +1,8 @@
 # scenario-godot-ui: GUI paths (Godot 4.7.2 editor)
 
-The same steps for a computer-use agent or a human. The code substitute is listed first; it is what the agent runs headless. Not run through the GUI in this session: these paths come from the sources and the 4.7.2 property names, verified to exist through ClassDB and ProjectSettings.
+The same steps for a computer-use agent or a human. The code substitute is listed first; it is what
+the agent runs headless. Not run through the GUI in this session: these paths come from the sources
+and the 4.7.2 property names, verified to exist through ClassDB and ProjectSettings.
 
 | Task                                   | Code substitute                                                                                         | Editor path                                                                                                                                                                                                    |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

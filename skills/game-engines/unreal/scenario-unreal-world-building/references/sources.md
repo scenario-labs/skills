@@ -1,6 +1,13 @@
 # Sources behind scenario-unreal-world-building
 
-Per-source notes: the project's `notes/world-building/`, `notes/pcg/`, `notes/editor/` and the terrain notes in `notes/materials/`. Digests: `notes/world-building/_digest_world_building_open_worlds.md`, `notes/world-building/_digest_pcg_open_world_visual.md`, `notes/materials/_digest_materials_terrain_rvt_layering.md`. Version facts: `sources/unreal-version-deltas.md` (World Partition and levels, PCG, Landscape foliage and water, Nanite, macOS) and the release-note excerpts `sources/docs/versions__ue-5.4-release-notes.md` to `5.8`. Credentials as the notes state them; names marked [?] were garbled in captions.
+Per-source notes: the project's `notes/world-building/`, `notes/pcg/`, `notes/editor/` and the
+terrain notes in `notes/materials/`. Digests:
+`notes/world-building/_digest_world_building_open_worlds.md`,
+`notes/world-building/_digest_pcg_open_world_visual.md`,
+`notes/materials/_digest_materials_terrain_rvt_layering.md`. Version facts:
+`sources/unreal-version-deltas.md` (World Partition and levels, PCG, Landscape foliage and water,
+Nanite, macOS) and the release-note excerpts `sources/docs/versions__ue-5.4-release-notes.md` to
+`5.8`. Credentials as the notes state them; names marked [?] were garbled in captions.
 
 ## Experts and videos
 
@@ -40,4 +47,16 @@ Per-source notes: the project's `notes/world-building/`, `notes/pcg/`, `notes/ed
 
 ## Revision history
 
-- 2026-09-24, v0.2 refactor after the U1 blind grade (`tests/grading/U1_grade.md`) and the GREEN heightmap bug (`tests/OPEN_ISSUES.md`): Z scale and actor Z now derived from the exported height range with a 0-clipped-pixel gate (the v1 P3 settings clipped 123,356 pixels at Z 100); added from the cited notes: Nanite construction audit, PCG Data Layer and HLOD Layer inheritance, terrain specular, triplanar and anti-tiling, GPU grass mask from grass maps, Warn on Data Missing Attribute, Distance bank thinning and understory Difference, PCG generation sources at teleports, placeholder entries, recursive village paths and spline grammar fences, feet on displaced terrain and per-layer displacement centers, HLOD coloration and proxy settings, Asset User Data and tick aggregation, world-rule validators, generated PCG actors out of changelists, informed Nanite Foliage numbers, minimap virtual texture support, OFPA submits from the editor; corrected: displacement center per layer (1 on vertical rock), no distance culling or draw distance on Nanite (ring handover [verify]), Python remote call path. v0.1 kept in `skills/_versions/unreal-world-building v1 2026-09-24/`.
+- 2026-09-24, v0.2 refactor after the U1 blind grade (`tests/grading/U1_grade.md`) and the GREEN
+  heightmap bug (`tests/OPEN_ISSUES.md`): Z scale and actor Z now derived from the exported height
+  range with a 0-clipped-pixel gate (the v1 P3 settings clipped 123,356 pixels at Z 100); added from
+  the cited notes: Nanite construction audit, PCG Data Layer and HLOD Layer inheritance, terrain
+  specular, triplanar and anti-tiling, GPU grass mask from grass maps, Warn on Data Missing
+  Attribute, Distance bank thinning and understory Difference, PCG generation sources at teleports,
+  placeholder entries, recursive village paths and spline grammar fences, feet on displaced terrain
+  and per-layer displacement centers, HLOD coloration and proxy settings, Asset User Data and tick
+  aggregation, world-rule validators, generated PCG actors out of changelists, informed Nanite
+  Foliage numbers, minimap virtual texture support, OFPA submits from the editor; corrected:
+  displacement center per layer (1 on vertical rock), no distance culling or draw distance on Nanite
+  (ring handover [verify]), Python remote call path. v0.1 kept in
+  `skills/_versions/unreal-world-building v1 2026-09-24/`.

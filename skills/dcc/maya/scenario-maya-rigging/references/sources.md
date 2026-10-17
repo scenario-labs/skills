@@ -1,6 +1,11 @@
 # Sources: scenario-maya-rigging
 
-Load when a claim needs its origin, when choosing what to re-watch, or when judging how current a technique is. Per-source notes: the project's `notes/rigging/` (never edited to fit this skill); digests `_digest_rigging_foundations.md` and `_digest_rigging_systems_performance.md`; saved docs in `sources/docs/rigging__*.md`; version map `sources/maya-version-deltas.md` (section 2.3). Credentials as verified in `sources/manifest.json` ("unverified" kept where it says so). Only transcripts and notes were used; none of the videos were watched by this skill's author.
+Load when a claim needs its origin, when choosing what to re-watch, or when judging how current a
+technique is. Per-source notes: the project's `notes/rigging/` (never edited to fit this skill);
+digests `_digest_rigging_foundations.md` and `_digest_rigging_systems_performance.md`; saved docs in
+`sources/docs/rigging__*.md`; version map `sources/maya-version-deltas.md` (section 2.3).
+Credentials as verified in `sources/manifest.json` ("unverified" kept where it says so). Only
+transcripts and notes were used; none of the videos were watched by this skill's author.
 
 ## Experts and talks
 
@@ -27,17 +32,59 @@ Load when a claim needs its origin, when choosing what to re-watch, or when judg
 
 ## Official documentation (retrieved 2026-09-24)
 
-- Maya 2027 Help, skeletons, joint orientation, mirroring, IK solvers, IK/FK blending, joint node, `cmds.joint`, `cmds.ikHandle`: https://help.autodesk.com/cloudhelp/2027/ENU/Maya-CharacterAnimation/files/GUID-5A8BB621-96E0-4CE8-9792-085EC8F07164.htm (local `sources/docs/rigging__skeletons-joint-orient-ik.md`). Ground truth for the joint matrix, the `-orientJoint` trap, solver list and sharing, spline IK tips.
-- Maya 2027 Help, constraints, Offset Parent Matrix, matrix utility nodes, UV Pin, Proximity Pin, Control menu: https://help.autodesk.com/cloudhelp/2027/ENU/Maya-Basics/files/GUID-8AE22982-B840-4E7B-A098-B4D15D01CCE4.htm and https://help.autodesk.com/cloudhelp/2027/ENU/Maya-Tech-Docs/Nodes/blendMatrix.html (local `rigging__matrix-constraints-controllers.md`). Ground truth for OPM composition, ordered blends, parentMatrix, controller tags.
-- Maya 2027 Help, Quick Rig and HumanIK: https://help.autodesk.com/cloudhelp/2027/ENU/Maya-CharacterAnimation/files/GUID-DC29C982-D04F-4C20-9DBA-4BBB33E027EF.htm; mGear 4 workflow: https://mgear4.readthedocs.io/en/latest/official-unofficial-workflow.html and https://mgear4.readthedocs.io/en/latest/shifterUserDocumentation.html (local `rigging__autorig-quickrig-humanik-mgear.md`).
-- Engines: Unreal FBX Skeletal Mesh and Animation pipelines, https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-skeletal-mesh-pipeline-in-unreal-engine and https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-animation-pipeline-in-unreal-engine; Unity, https://docs.unity3d.com/Manual/UsingHumanoidChars.html and https://docs.unity3d.com/Manual/FBXImporter-Rig.html; Maya Game Exporter, https://help.autodesk.com/cloudhelp/2027/ENU/Maya-ManagingScenes/files/GUID-31148EE5-CAA8-48F2-9E51-3C9712EE8A14.htm (local `rigging__game-engine-export.md`).
-- Autodesk, "Using Parallel Maya", 2027 edition: https://damassets.autodesk.net/content/dam/autodesk/www/html/using-parallel-maya/2027/UsingParallelMaya.html (local `rigging__using-parallel-maya-2027.md`). Ground truth for evaluation modes, scheduling types, invalidation, GPU Override rules, the Profiler.
-- Version deltas (What's New 2025 to 2027, devkit notes): `sources/maya-version-deltas.md`, section 2.3 and section 3.
+- Maya 2027 Help, skeletons, joint orientation, mirroring, IK solvers, IK/FK blending, joint node,
+  `cmds.joint`, `cmds.ikHandle`:
+  https://help.autodesk.com/cloudhelp/2027/ENU/Maya-CharacterAnimation/files/GUID-5A8BB621-96E0-4CE8-9792-085EC8F07164.htm
+  (local `sources/docs/rigging__skeletons-joint-orient-ik.md`). Ground truth for the joint matrix,
+  the `-orientJoint` trap, solver list and sharing, spline IK tips.
+- Maya 2027 Help, constraints, Offset Parent Matrix, matrix utility nodes, UV Pin, Proximity Pin,
+  Control menu:
+  https://help.autodesk.com/cloudhelp/2027/ENU/Maya-Basics/files/GUID-8AE22982-B840-4E7B-A098-B4D15D01CCE4.htm
+  and https://help.autodesk.com/cloudhelp/2027/ENU/Maya-Tech-Docs/Nodes/blendMatrix.html (local
+  `rigging__matrix-constraints-controllers.md`). Ground truth for OPM composition, ordered blends,
+  parentMatrix, controller tags.
+- Maya 2027 Help, Quick Rig and HumanIK:
+  https://help.autodesk.com/cloudhelp/2027/ENU/Maya-CharacterAnimation/files/GUID-DC29C982-D04F-4C20-9DBA-4BBB33E027EF.htm;
+  mGear 4 workflow: https://mgear4.readthedocs.io/en/latest/official-unofficial-workflow.html and
+  https://mgear4.readthedocs.io/en/latest/shifterUserDocumentation.html (local
+  `rigging__autorig-quickrig-humanik-mgear.md`).
+- Engines: Unreal FBX Skeletal Mesh and Animation pipelines,
+  https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-skeletal-mesh-pipeline-in-unreal-engine
+  and
+  https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-animation-pipeline-in-unreal-engine;
+  Unity, https://docs.unity3d.com/Manual/UsingHumanoidChars.html and
+  https://docs.unity3d.com/Manual/FBXImporter-Rig.html; Maya Game Exporter,
+  https://help.autodesk.com/cloudhelp/2027/ENU/Maya-ManagingScenes/files/GUID-31148EE5-CAA8-48F2-9E51-3C9712EE8A14.htm
+  (local `rigging__game-engine-export.md`).
+- Autodesk, "Using Parallel Maya", 2027 edition:
+  https://damassets.autodesk.net/content/dam/autodesk/www/html/using-parallel-maya/2027/UsingParallelMaya.html
+  (local `rigging__using-parallel-maya-2027.md`). Ground truth for evaluation modes, scheduling
+  types, invalidation, GPU Override rules, the Profiler.
+- Version deltas (What's New 2025 to 2027, devkit notes): `sources/maya-version-deltas.md`, section
+  2.3 and section 3.
 
 ## Where the baseline answer (no skill) was already right
 
-The unskilled Opus answer to scenario M3 (`tests/baseline/answers.md`) already had joints at pivots, pre-bends, X down the bone, a projected pole formula, a separate bind skeleton, offsetParentMatrix controls, a range-of-motion clip and common failure fixes. What this skill adds from the sources: computing orientation because Orient Joint silently skips rotated joints; the zero-drift and zero-pop gates as numbers; spaces through offsets, never targets; the reverse foot network with its break; lockdown against "key all"; stretch normalized by root scaleY; the precision test; the performance structure (curves, Python nodes, frozen, hosts, correctness across modes); mirror behavior vs orientation per region; the auto-rigger decision by camera distance and rig count; the 2026 node renames; and tested-when-installed code for all of it.
+The unskilled Opus answer to scenario M3 (`tests/baseline/answers.md`) already had joints at pivots,
+pre-bends, X down the bone, a projected pole formula, a separate bind skeleton, offsetParentMatrix
+controls, a range-of-motion clip and common failure fixes. What this skill adds from the sources:
+computing orientation because Orient Joint silently skips rotated joints; the zero-drift and
+zero-pop gates as numbers; spaces through offsets, never targets; the reverse foot network with its
+break; lockdown against "key all"; stretch normalized by root scaleY; the precision test; the
+performance structure (curves, Python nodes, frozen, hosts, correctness across modes); mirror
+behavior vs orientation per region; the auto-rigger decision by camera distance and rig count; the
+2026 node renames; and tested-when-installed code for all of it.
 
 ## Revision history
 
-- 2026-09-24, v2: refactor after the M3 blind grade (`tests/grading/M3_grade.md`; v1 kept in `skills/_versions/maya-rigging v1 2026-09-24/`). Taught from the cited notes: rigs need animated curves and graph prepopulation to parallelize, per-character IK solvers, the OPM composition rule, blendMatrix as an ordered stack against the parentMatrix node, GPU Override eligibility, plus twist placement, the digit curl axis, world-oriented head and feet, antCGi's matching helpers and the bind pose as data. Fixed: "IK bends sideways" (wrong way or backwards), the Quick Rig mocap attribution, the scope of the Shortest fix (constraint blends only), the mGear 2027 caveat, the hardcoded 'yup' secondary axis on a leg in P4. New `mx_rig` code: `opm_audit`, `blend_sweep_test`, `curve_census`, `evaluator_state`, `prepare_eval_graph`, `gpu_override_census`, shared solvers in `rig_check`, the `orient_with_cmds` guard; offline test 68 of 68 checks passing; Maya tests extended, not yet run.
+- 2026-09-24, v2: refactor after the M3 blind grade (`tests/grading/M3_grade.md`; v1 kept in
+  `skills/_versions/maya-rigging v1 2026-09-24/`). Taught from the cited notes: rigs need animated
+  curves and graph prepopulation to parallelize, per-character IK solvers, the OPM composition rule,
+  blendMatrix as an ordered stack against the parentMatrix node, GPU Override eligibility, plus
+  twist placement, the digit curl axis, world-oriented head and feet, antCGi's matching helpers and
+  the bind pose as data. Fixed: "IK bends sideways" (wrong way or backwards), the Quick Rig mocap
+  attribution, the scope of the Shortest fix (constraint blends only), the mGear 2027 caveat, the
+  hardcoded 'yup' secondary axis on a leg in P4. New `mx_rig` code: `opm_audit`, `blend_sweep_test`,
+  `curve_census`, `evaluator_state`, `prepare_eval_graph`, `gpu_override_census`, shared solvers in
+  `rig_check`, the `orient_with_cmds` guard; offline test 68 of 68 checks passing; Maya tests
+  extended, not yet run.

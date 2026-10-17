@@ -1,12 +1,19 @@
 # Procedures: Grease Pencil v3 in Blender 5.2 (tested)
 
-Every block below ran on Blender 5.2.1 LTS (`blender --background --factory-startup`) unless marked GUI only. Raw-bpy blocks P1 to P8 are copied verbatim from `tests/code/blender-grease-pencil/test_procedures.py` (between `# >>> Pn` and `# <<< Pn`), which asserts their results. bx_gp recipes are exercised by `test_bx_gp_2d.py`, `test_bx_gp_25d.py` and, in a live session, `test_gui_draw.py`. Outputs of the last runs: `archive/tests/grease_pencil_skill/`.
+Every block below ran on Blender 5.2.1 LTS (`blender --background --factory-startup`) unless marked
+GUI only. Raw-bpy blocks P1 to P8 are copied verbatim from
+`tests/code/blender-grease-pencil/test_procedures.py` (between `# >>> Pn` and `# <<< Pn`), which
+asserts their results. bx_gp recipes are exercised by `test_bx_gp_2d.py`, `test_bx_gp_25d.py` and,
+in a live session, `test_gui_draw.py`. Outputs of the last runs:
+`archive/tests/grease_pencil_skill/`.
 
-Conventions: drawing plane XZ, camera at -Y looking +Y, meters, `radius` = half line width, material colors scene-linear (bx_gp accepts sRGB hex).
+Conventions: drawing plane XZ, camera at -Y looking +Y, meters, `radius` = half line width, material
+colors scene-linear (bx_gp accepts sRGB hex).
 
 ## P1. Data model from scratch: object, layers, materials, strokes, fill with a hole
 
-Verified on 5.2.1: `test_procedures.py` P1 (and pixel-checked in P2: hole shows the background, ring shows linear 0.6 as sRGB 0.80).
+Verified on 5.2.1: `test_procedures.py` P1 (and pixel-checked in P2: hole shows the background, ring
+shows linear 0.6 as sRGB 0.80).
 
 ```python
 import bpy, math
@@ -56,7 +63,11 @@ s.cyclic = True
 d.tag_positions_changed()
 ```
 
-Notes: attributes appear lazily (`position`, `curve_type` at creation; `radius`, `opacity`, `cyclic`, `fill_id` when first written). Never call `drawing.attributes.new("radius", ...)` on a drawing that already has strokes without filling the old points: they get radius 0 and vanish (use `bx_gp.add_strokes`, which fills defaults first). Default radius while the attribute is absent: 0.01.
+Notes: attributes appear lazily (`position`, `curve_type` at creation; `radius`, `opacity`,
+`cyclic`, `fill_id` when first written). Never call `drawing.attributes.new("radius", ...)` on a
+drawing that already has strokes without filling the old points: they get radius 0 and vanish (use
+`bx_gp.add_strokes`, which fills defaults first). Default radius while the attribute is absent:
+0.01.
 
 ## P2. Stage, lighting and render settings
 
@@ -81,11 +92,15 @@ sc.grease_pencil_settings.aa_samples = 8              # GP anti-aliasing (defaul
 sc.render.filepath = "//doodle.png"
 ```
 
-Lighting facts [verified]: with `use_lights=True`, a layer is lit by lamps plus an ambient equal to `World.color` (the world's viewport color), not the Background node; the default 0.05 renders a flat palette at about 25 % value. A sun on a flat drawing only scales value; a point light gives a gradient. EEVEE, Cycles and Workbench render unlit GP with identical colors.
+Lighting facts [verified]: with `use_lights=True`, a layer is lit by lamps plus an ambient equal to
+`World.color` (the world's viewport color), not the Background node; the default 0.05 renders a flat
+palette at about 25 % value. A sun on a flat drawing only scales value; a point light gives a
+gradient. EEVEE, Cycles and Workbench render unlit GP with identical colors.
 
 ## P3. Timing: blank, additive, instanced and empty keys, native interpolation
 
-Verified on 5.2.1: `test_procedures.py` P3 (keys `[1, 3, 5, 7, 9, 17, 21]`, 3 to 7 BREAKDOWN, frame 17 shares frame 1's drawing, 21 empty).
+Verified on 5.2.1: `test_procedures.py` P3 (keys `[1, 3, 5, 7, 9, 17, 21]`, 3 to 7 BREAKDOWN, frame
+17 shares frame 1's drawing, 21 empty).
 
 ```python
 L = gp.layers["Lines"]
@@ -107,11 +122,15 @@ keys = [(f.frame_number, f.keyframe_type, len(f.drawing.strokes), f.drawing.user
         for f in sorted(L.frames, key=lambda f: f.frame_number)]
 ```
 
-Notes: `interpolate_sequence` fills only the segment around the current frame (verified with keys 1, 9, 17: from frame 1 only 3, 5, 7 were made). `frames.new` or `frames.copy` onto an existing frame raises. `layer.get_frame_at(n)` is the key exposed at n. Removing the source of an instance keeps the drawing alive in the instance.
+Notes: `interpolate_sequence` fills only the segment around the current frame (verified with keys 1,
+9, 17: from frame 1 only 3, 5, 7 were made). `frames.new` or `frames.copy` onto an existing frame
+raises. `layer.get_frame_at(n)` is the key exposed at n. Removing the source of an instance keeps
+the drawing alive in the instance.
 
 ## P4. Masked Multiply shadow layer (Grant Abbitt) and layer groups
 
-Verified on 5.2.1: `test_procedures.py` P4; the mask clipping was checked by render in `test_bx_gp_2d.py` (`frame_01.png`: the shadow ellipse drawn past the body is clipped to it).
+Verified on 5.2.1: `test_procedures.py` P4; the mask clipping was checked by render in
+`test_bx_gp_2d.py` (`frame_01.png`: the shadow ellipse drawn past the body is clipped to it).
 
 ```python
 shadow = gp.layers.new("Shadow")                      # new layers go on top ...
@@ -129,7 +148,9 @@ stack = [l.name for l in gp.layers]                   # bottom -> top
 
 ## P5. Modifiers are regular object modifiers
 
-Verified on 5.2.1: `test_procedures.py` P5. Other types: `GREASE_PENCIL_` + `COLOR TINT OPACITY TIME TEXTURE ARRAY LENGTH MIRROR MULTIPLY SIMPLIFY SUBDIV ENVELOPE OUTLINE HOOK OFFSET SMOOTH LATTICE DASH ARMATURE SHRINKWRAP VERTEX_WEIGHT_PROXIMITY VERTEX_WEIGHT_ANGLE`, plus `LINEART` [enum verified].
+Verified on 5.2.1: `test_procedures.py` P5. Other types: `GREASE_PENCIL_` +
+`COLOR TINT OPACITY TIME TEXTURE ARRAY LENGTH MIRROR MULTIPLY SIMPLIFY SUBDIV ENVELOPE OUTLINE HOOK OFFSET SMOOTH LATTICE DASH ARMATURE SHRINKWRAP VERTEX_WEIGHT_PROXIMITY VERTEX_WEIGHT_ANGLE`,
+plus `LINEART` [enum verified].
 
 ```python
 noise = ob.modifiers.new("Wobble", 'GREASE_PENCIL_NOISE')
@@ -157,11 +178,15 @@ bpy.ops.object.lineart_bake_strokes()                 # modifier output -> edita
 baked = {l.name: [f.frame_number for f in l.frames] for l in la_ob.data.layers}
 ```
 
-Notes [verified]: the generated points get radius = modifier radius / 2, so the modifier radius is the line width (to match a drawn stroke of radius r use 2r). Objects hidden from render are ignored. Layers made by this operator are lit (`use_lights=True`): set False for colored flat lines. The bake covers the whole scene frame range. After baking, the modifier is still listed.
+Notes [verified]: the generated points get radius = modifier radius / 2, so the modifier radius is
+the line width (to match a drawn stroke of radius r use 2r). Objects hidden from render are ignored.
+Layers made by this operator are lit (`use_lights=True`): set False for colored flat lines. The bake
+covers the whole scene frame range. After baking, the modifier is still listed.
 
 ## P7. Procedural strokes with a fill from Geometry Nodes, baked to editable layers (Weigl's bridge)
 
-Verified on 5.2.1: `test_procedures.py` P7 (one layer `Layer`, `fill_id` 1, radius 0.03 carried over); render of the same graph in `archive/tests/grease_pencil/probe4c_render.png` (distiller).
+Verified on 5.2.1: `test_procedures.py` P7 (one layer `Layer`, `fill_id` 1, radius 0.03 carried
+over); render of the same graph in `archive/tests/grease_pencil/probe4c_render.png` (distiller).
 
 ```python
 gp = bpy.data.grease_pencils.new("Proc")
@@ -203,11 +228,14 @@ for L in gp.layers:
     L.use_lights = False
 ```
 
-Other GP nodes [verified ids]: `GeometryNodeGreasePencilToCurves` (Layers as Instances), `GeometryNodeMergeLayers`, `GeometryNodeSetGreasePencilColor` (mode STROKE or FILL), `GeometryNodeSetGreasePencilDepth`, `GeometryNodeSetGreasePencilSoftness`.
+Other GP nodes [verified ids]: `GeometryNodeGreasePencilToCurves` (Layers as Instances),
+`GeometryNodeMergeLayers`, `GeometryNodeSetGreasePencilColor` (mode STROKE or FILL),
+`GeometryNodeSetGreasePencilDepth`, `GeometryNodeSetGreasePencilSoftness`.
 
 ## P8. Layer parented to an object, layer transforms
 
-Verified on 5.2.1: `test_procedures.py` P8 (properties set and read back; the evaluated effect on points was not asserted).
+Verified on 5.2.1: `test_procedures.py` P8 (properties set and read back; the evaluated effect on
+points was not asserted).
 
 ```python
 hand = bpy.data.objects.new("HandCtrl", None)         # an empty, a bone owner, any object
@@ -220,17 +248,22 @@ bpy.context.view_layer.update()
 lay.translation = (0.0, 0.0, 0.5)                     # layers also carry their own transform
 ```
 
-Use: several parts inside ONE GP object that must still move separately (they can then mask each other, which separate objects cannot). Tom Viguier's cutout uses separate objects instead because depth order must animate.
+Use: several parts inside ONE GP object that must still move separately (they can then mask each
+other, which separate objects cannot). Tom Viguier's cutout uses separate objects instead because
+depth order must animate.
 
 ---
 
 ## bx_gp recipes
 
-R1 runs as is: `test_procedures.py` extracts it from this file and executes it. R2 to R7 are excerpts of the named test scripts, where the full context (objects they act on) lives.
+R1 runs as is: `test_procedures.py` extracts it from this file and executes it. R2 to R7 are
+excerpts of the named test scripts, where the full context (objects they act on) lives.
 
 ### R1. Part-based cutout character (Tom Viguier's architecture)
 
-Verified on 5.2.1: this block is executed by `test_procedures.py` (R1); the full character with face, blink, mouth, donut and animation is `test_bx_gp_2d.py` (renders `2d/frame_01.png`, `2d/strip_1_to_23.png`).
+Verified on 5.2.1: this block is executed by `test_procedures.py` (R1); the full character with
+face, blink, mouth, donut and animation is `test_bx_gp_2d.py` (renders `2d/frame_01.png`,
+`2d/strip_1_to_23.png`).
 
 ```python
 import math, sys
@@ -263,11 +296,14 @@ for f, deg in ((1, 0), (9, -38), (24, 0)):
 print(G.draw_order([body, arm, feet]))                       # front -> back
 ```
 
-Front/behind changes: key the object's location along the camera axis, or `G.push_depth(ob, delta)` which also compensates scale under a perspective camera (verified: silhouette unchanged, order flipped, `test_bx_gp_25d.py`).
+Front/behind changes: key the object's location along the camera axis, or `G.push_depth(ob, delta)`
+which also compensates scale under a perspective camera (verified: silhouette unchanged, order
+flipped, `test_bx_gp_25d.py`).
 
 ### R2. Frame-by-frame with holds, instances, cycles and a blink
 
-Verified on 5.2.1: `test_bx_gp_2d.py` (blink on Face/Fills at 15, open again at 17 as an instance; FX cycle).
+Verified on 5.2.1: `test_bx_gp_2d.py` (blink on Face/Fills at 15, open again at 17 as an instance;
+FX cycle).
 
 ```python
 d_open = G.key(face, "Fills", 1)            # draw open eyes
@@ -280,7 +316,8 @@ print(G.exposures(face, "Fills"))           # [(frame, type, n_strokes, user_cou
 
 ### R3. In-betweens with Tom's rule and the animator's spacing
 
-Verified on 5.2.1: `test_bx_gp_2d.py` (native 1 -> 9 on twos; eased 9 -> 17 gives t = 0.156, 0.5, 0.844; the 17 -> 21 pair is refused, then clipped).
+Verified on 5.2.1: `test_bx_gp_2d.py` (native 1 -> 9 on twos; eased 9 -> 17 gives t = 0.156, 0.5,
+0.844; the 17 -> 21 pair is refused, then clipped).
 
 ```python
 print(G.match(dA, dB))                                       # copy / sculpted / different + reason
@@ -290,11 +327,14 @@ G.inbetween(face, "Mouth", 9, 17, frames=(11, 13, 15), spacing=[0.1, 0.35, 0.8])
 G.inbetween(face, "Mouth", 17, 21, frames=(19,), clip=True)  # different drawings: nearest key instead
 ```
 
-To make two drawings interpolable, draw both from the same control structure and `G.resample(points, n)` each stroke to the same count, in the same stroke order and materials.
+To make two drawings interpolable, draw both from the same control structure and
+`G.resample(points, n)` each stroke to the same count, in the same stroke order and materials.
 
 ### R4. Headless sculpt and eraser substitutes
 
-Verified on 5.2.1: `test_bx_gp_25d.py` (smooth cut roughness 0.072 to 0.001; `set_uniform_thickness(thickness=0.03)` gave radius 0.015; grab moved 23 points; dissolve 61 -> 58 points, still one stroke).
+Verified on 5.2.1: `test_bx_gp_25d.py` (smooth cut roughness 0.072 to 0.001;
+`set_uniform_thickness(thickness=0.03)` gave radius 0.015; grab moved 23 points; dissolve 61 -> 58
+points, still one stroke).
 
 ```python
 G.edit_op(ob, "stroke_smooth", iterations=10, factor=1.0)
@@ -305,7 +345,9 @@ G.dissolve(d, stroke_index=0, point_indices=[20, 21, 22])    # keeps the stroke 
 
 ### R5. Live session only: trim, box erase, reproject
 
-GUI only, not run headless. Verified in a live 5.2.1 GUI by `test_gui_draw.py`: Trim cut the overshoot at the crossing (bbox x max 1.0 -> 0.6), box erase removed 7 points, reproject SURFACE put a circle on a sphere (y -0.79 to -0.80, expected -0.80).
+GUI only, not run headless. Verified in a live 5.2.1 GUI by `test_gui_draw.py`: Trim cut the
+overshoot at the crossing (bbox x max 1.0 -> 0.6), box erase removed 7 points, reproject SURFACE put
+a circle on a sphere (y -0.79 to -0.80, expected -0.80).
 
 ```python
 G.gui_trim(ob, lasso=[(0.7, 0, 3.15), (1.15, 0, 3.15), (1.15, 0, 2.85), (0.7, 0, 2.85)])
@@ -313,11 +355,16 @@ G.gui_erase_box(ob, (0.5, 0, 2.0), (0.7, 0, 2.3))
 G.gui_reproject(ob, "SURFACE", frame_points=[(-1.2, 0, -4.2), (1.2, 0, -1.8)])
 ```
 
-Not possible (verified GUI): `grease_pencil.brush_stroke` / `sculpt_paint` with a stroke list log "Invalid operator call" (no exec) and draw nothing; replayed mouse events through `Window.event_simulate` (Blender launched with `--enable-event-simulate`) drew nothing either, batched or one event per 30 ms.
+Not possible (verified GUI): `grease_pencil.brush_stroke` / `sculpt_paint` with a stroke list log
+"Invalid operator call" (no exec) and draw nothing; replayed mouse events through
+`Window.event_simulate` (Blender launched with `--enable-event-simulate`) drew nothing either,
+batched or one event per 30 ms.
 
 ### R6. 2.5D: Line Art in pixels, strokes on a mesh, relight, depth
 
-Verified on 5.2.1: `test_bx_gp_25d.py` (render `25d/sheet_25d.png`; 134 of 260 hatch strokes kept, 703 missed points and 28 occluder-captured points rejected; projected points 1.099 to 1.109 from the center of a 1.1 sphere).
+Verified on 5.2.1: `test_bx_gp_25d.py` (render `25d/sheet_25d.png`; 134 of 260 hatch strokes kept,
+703 missed points and 28 occluder-captured points rejected; projected points 1.099 to 1.109 from the
+center of a 1.1 sphere).
 
 ```python
 px = G.px_size()
@@ -331,7 +378,8 @@ G.push_depth(disc, 1.0, persp_cam)                           # further back, sam
 
 ### R7. Review renders
 
-Verified on 5.2.1: `test_bx_gp_2d.py` (`2d/strip_1_to_23.png`, `2d/onion_f5.png`, `2d/lighting_sheet.png`).
+Verified on 5.2.1: `test_bx_gp_2d.py` (`2d/strip_1_to_23.png`, `2d/onion_f5.png`,
+`2d/lighting_sheet.png`).
 
 ```python
 G.render_frame("/abs/f001.png", 1)                           # full res: line quality, gaps, palette

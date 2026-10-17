@@ -1,6 +1,9 @@
 # GUI paths (computer-use agent or human): the same mobile procedures through menus
 
-Unity 6.3 (6000.3) on macOS. Menus are written as paths. Each row names the scripted equivalent in this skill so a GUI step can be checked afterwards with a job. Old tutorials say File > Build Settings: in 6.3 it is **File > Build Profiles**; Unity > Preferences is **Unity > Settings** on macOS.
+Unity 6.3 (6000.3) on macOS. Menus are written as paths. Each row names the scripted equivalent in
+this skill so a GUI step can be checked afterwards with a job. Old tutorials say File > Build
+Settings: in 6.3 it is **File > Build Profiles**; Unity > Preferences is **Unity > Settings** on
+macOS.
 
 ## Platform and build
 

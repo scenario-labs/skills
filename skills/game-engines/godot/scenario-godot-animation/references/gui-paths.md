@@ -1,6 +1,9 @@
 # scenario-godot-animation: GUI paths
 
-The same tasks as `procedures.md`, done by hand in the Godot 4.7 editor, for a computer-use agent or a human. None was clicked through here: the GUI editor takes focus on this Mac, so every headless equivalent was run instead (see the procedure). Paths come from the Godot docs and the videos cited; [verify] marks menu wording not seen on screen.
+The same tasks as `procedures.md`, done by hand in the Godot 4.7 editor, for a computer-use agent or
+a human. None was clicked through here: the GUI editor takes focus on this Mac, so every headless
+equivalent was run instead (see the procedure). Paths come from the Godot docs and the videos cited;
+[verify] marks menu wording not seen on screen.
 
 | Task                                               | GUI path                                                                                                                                                                                                                                                    | Headless equivalent (ran)                                                                                                |
 | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |

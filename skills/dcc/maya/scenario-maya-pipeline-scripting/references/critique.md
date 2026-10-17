@@ -1,6 +1,10 @@
 # Critique rubric: judging pipeline work like a pipeline TD
 
-Use after every stage and before any delivery. Each row: what the expert looks at, the measurable proxy (`mx_pipeline`, `mx_validate`, `mx_audit` or a snippet), the pass line, the severity. Severity: **block** = fix before anything leaves; **fix** = fix before delivery; **note** = report, accept if the brief allows. Calibrate: a run can pass with notes; do not turn a note into a block, and do not hide a block in a note. All proxies are not yet run in Maya.
+Use after every stage and before any delivery. Each row: what the expert looks at, the measurable
+proxy (`mx_pipeline`, `mx_validate`, `mx_audit` or a snippet), the pass line, the severity.
+Severity: **block** = fix before anything leaves; **fix** = fix before delivery; **note** = report,
+accept if the brief allows. Calibrate: a run can pass with notes; do not turn a note into a block,
+and do not hide a block in a note. All proxies are not yet run in Maya.
 
 ## A. The batch run
 

@@ -1,6 +1,9 @@
 # scenario-unreal-vfx sources
 
-Every source behind this skill: expert, credential, URL, what it is best for, best timestamps. Distilled notes: `notes/niagara/`, `notes/destruction/`, `notes/physics/` (one per source, plus three digests). Version facts: `sources/unreal-version-deltas.md` (Niagara and Chaos sections). Speaker names marked [?] come from garbled auto-captions and are unverified.
+Every source behind this skill: expert, credential, URL, what it is best for, best timestamps.
+Distilled notes: `notes/niagara/`, `notes/destruction/`, `notes/physics/` (one per source, plus
+three digests). Version facts: `sources/unreal-version-deltas.md` (Niagara and Chaos sections).
+Speaker names marked [?] come from garbled auto-captions and are unverified.
 
 ## Niagara: cost, scalability, simulation
 
@@ -41,15 +44,32 @@ Every source behind this skill: expert, credential, URL, what it is best for, be
 
 ## Version and platform facts
 
-- `sources/unreal-version-deltas.md`: Niagara section (lightweight emitters Experimental 5.4, Beta 5.5; Data Channels Production Ready 5.5; Minimal template; Heterogeneous Volumes; Python limits) and Chaos section (Destruction Production Ready 5.4; default Dataflow template and `GetCurrentTransforms` in 5.8; deprecated GC properties).
-- `sources/docs/versions__ue-5.7-release-notes.md` and `versions__ue-5.8-release-notes.md`: Niagara Editor Preview Actor, emitter merging for Python in commandlets, Chaos Reset State and leaf sub-trace (5.7); `r.HeterogeneousVolumes.Allow`, tag migration, per-component caching in Sequencer, runtime Dataflow evaluation (5.8).
-- `sources/docs/automation-pipeline__unreal-mcp-official.md`: toolset authoring in Python for Epic's MCP server (used by procedure V14).
+- `sources/unreal-version-deltas.md`: Niagara section (lightweight emitters Experimental 5.4, Beta
+  5.5; Data Channels Production Ready 5.5; Minimal template; Heterogeneous Volumes; Python limits)
+  and Chaos section (Destruction Production Ready 5.4; default Dataflow template and
+  `GetCurrentTransforms` in 5.8; deprecated GC properties).
+- `sources/docs/versions__ue-5.7-release-notes.md` and `versions__ue-5.8-release-notes.md`: Niagara
+  Editor Preview Actor, emitter merging for Python in commandlets, Chaos Reset State and leaf
+  sub-trace (5.7); `r.HeterogeneousVolumes.Allow`, tag migration, per-component caching in
+  Sequencer, runtime Dataflow evaluation (5.8).
+- `sources/docs/automation-pipeline__unreal-mcp-official.md`: toolset authoring in Python for Epic's
+  MCP server (used by procedure V14).
 
 ## Test material
 
-- Scenario U7 and the rubric: `tests/scenarios.md`. Baseline answer without the skill: `tests/baseline/answers.md` (section U7). Blind grade of the with-skill and no-skill answers: `tests/grading/U7_grade.md` (drove v0.2).
+- Scenario U7 and the rubric: `tests/scenarios.md`. Baseline answer without the skill:
+  `tests/baseline/answers.md` (section U7). Blind grade of the with-skill and no-skill answers:
+  `tests/grading/U7_grade.md` (drove v0.2).
 - Code tests: `tests/code/unreal-vfx/` (offline test, capture scorer, in-editor jobs).
 
 ## Revision history
 
-- 2026-09-24 v0.2: refactor after the U7 blind grade (`tests/grading/U7_grade.md`): taught the 17 missed expert points (Effect Type distance culling and cull proxies, budget oscillation, anti-strobing, build-up and cause order, Cluster Crumbling and removal multiplier, additive blowout, popcorning fades, size classes and 60 / 30 / 10 accent, saturation under values, premultiplied flipbooks and playback, texture import, interior bake, watertight sources, Chaos break events, disable vs sleep, color-blind check, wind-up on the cast animation) in SKILL.md, procedures V1b, V15, V16, D0, D8 and the rubric, with offline checks in `scripts/ue_vfx.py` 0.2; fixed the per-emitter Effect Type table and the damage-model inconsistency in D1; v0.1 kept in `skills/_versions/unreal-vfx v1 2026-09-24/`.
+- 2026-09-24 v0.2: refactor after the U7 blind grade (`tests/grading/U7_grade.md`): taught the 17
+  missed expert points (Effect Type distance culling and cull proxies, budget oscillation,
+  anti-strobing, build-up and cause order, Cluster Crumbling and removal multiplier, additive
+  blowout, popcorning fades, size classes and 60 / 30 / 10 accent, saturation under values,
+  premultiplied flipbooks and playback, texture import, interior bake, watertight sources, Chaos
+  break events, disable vs sleep, color-blind check, wind-up on the cast animation) in SKILL.md,
+  procedures V1b, V15, V16, D0, D8 and the rubric, with offline checks in `scripts/ue_vfx.py` 0.2;
+  fixed the per-emitter Effect Type table and the damage-model inconsistency in D1; v0.1 kept in
+  `skills/_versions/unreal-vfx v1 2026-09-24/`.

@@ -1,6 +1,9 @@
 # Sources behind scenario-maya-deformation
 
-Load when a claim needs its origin, when choosing which source to re-watch, or when checking how current a technique is. Notes per source live in `notes/deformation/` (and the cited rigging and modeling notes); none of the videos were watched by this skill's author beyond their transcripts and notes.
+Load when a claim needs its origin, when choosing which source to re-watch, or when checking how
+current a technique is. Notes per source live in `notes/deformation/` (and the cited rigging and
+modeling notes); none of the videos were watched by this skill's author beyond their transcripts and
+notes.
 
 ## Videos
 
@@ -39,4 +42,12 @@ Load when a claim needs its origin, when choosing which source to re-watch, or w
 
 ## Revision history
 
-- 2026-09-24, v2: refactor after the M3 blind grade (`tests/grading/M3_grade.md`; v1 kept in `skills/_versions/maya-deformation v1 2026-09-24/`). Taught from `deformation__blendshapes-psd-deformers`: PSD on controller-driven joints (no neutral poses at creation, controller attributes in Driver Settings, then Add Neutral Poses; Euler Twist for wrists; pose through the controls) and the pre vs post, Transform vs Tangent Space choice (stance, workflow stage 7, mistakes, P11 decision table, critique line 5). `corrective_driver` now reads `dagLocalMatrix`, so bind joints driven through offsetParentMatrix fire their correctives; new `joint_drive` and `reader_weight`; offline test 60 of 60 checks passing; Maya tests extended, not yet run.
+- 2026-09-24, v2: refactor after the M3 blind grade (`tests/grading/M3_grade.md`; v1 kept in
+  `skills/_versions/maya-deformation v1 2026-09-24/`). Taught from
+  `deformation__blendshapes-psd-deformers`: PSD on controller-driven joints (no neutral poses at
+  creation, controller attributes in Driver Settings, then Add Neutral Poses; Euler Twist for
+  wrists; pose through the controls) and the pre vs post, Transform vs Tangent Space choice (stance,
+  workflow stage 7, mistakes, P11 decision table, critique line 5). `corrective_driver` now reads
+  `dagLocalMatrix`, so bind joints driven through offsetParentMatrix fire their correctives; new
+  `joint_drive` and `reader_weight`; offline test 60 of 60 checks passing; Maya tests extended, not
+  yet run.

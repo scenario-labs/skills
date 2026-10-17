@@ -1,6 +1,7 @@
 # scenario-godot-expert: sources
 
-Credentials as recorded by the research pass ("unverified" means the channel was not checked against a public record). Godot versions are those shown in the source. Researched 2026-10-01 to 2026-10-02.
+Credentials as recorded by the research pass ("unverified" means the channel was not checked against
+a public record). Godot versions are those shown in the source. Researched 2026-10-01 to 2026-10-02.
 
 ## Videos and talks (automation, pipeline and tests cluster)
 
@@ -53,4 +54,5 @@ Credentials as recorded by the research pass ("unverified" means the channel was
 
 ## Revision history
 
-- 0.1 (2026-10-02): first release. Toolkit built and live-tested in Godot 4.7.2 (19 live tests, 15 offline).
+- 0.1 (2026-10-02): first release. Toolkit built and live-tested in Godot 4.7.2 (19 live tests, 15
+  offline).

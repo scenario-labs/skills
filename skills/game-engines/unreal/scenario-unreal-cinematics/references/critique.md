@@ -1,6 +1,10 @@
 # Critique rubric (the agent judges its own cinematic)
 
-Judge in this order, at each gate. Every line names the code check that measures it (ue_cine unless stated) and the visual question that the number cannot answer. Severity: **fail** blocks the next stage; **warn** needs a fix or a written answer in the plan or report; **info** is recorded. Never approve a frame on sight alone: in Epic's MCP talk an agent approved an all-white frame (scenario-unreal-expert, ue_review). Numbers first, then look.
+Judge in this order, at each gate. Every line names the code check that measures it (ue_cine unless
+stated) and the visual question that the number cannot answer. Severity: **fail** blocks the next
+stage; **warn** needs a fix or a written answer in the plan or report; **info** is recorded. Never
+approve a frame on sight alone: in Epic's MCP talk an agent approved an all-white frame
+(scenario-unreal-expert, ue_review). Numbers first, then look.
 
 ## 1. The plan (before building)
 
@@ -40,20 +44,28 @@ Judge in this order, at each gate. Every line names the code check that measures
 
 ## 3. The board (first, middle, last frame per shot)
 
-Measured: `ue_review.image_checks` per PNG (all_white, all_black, clipped, crushed); `board.json` "written" true for every frame, including the isolated pre-roll frames (`preroll=True`). Gate: `ready_to_animate` (fail without audio or without `timing_locked`; repeats stinger offsets).
-Look at the sheet, shot by shot:
+Measured: `ue_review.image_checks` per PNG (all_white, all_black, clipped, crushed); `board.json`
+"written" true for every frame, including the isolated pre-roll frames (`preroll=True`). Gate:
+`ready_to_animate` (fail without audio or without `timing_locked`; repeats stinger offsets). Look at
+the sheet, shot by shot:
 
-- Composition: horizon level unless motivated, headroom, lead room in the direction of the look or move, the subject where the eye lands first.
-- Lens reads as intended (a wide establishing, a compressed close-up); no wide-angle distortion on a face unless chosen.
+- Composition: horizon level unless motivated, headroom, lead room in the direction of the look or
+  move, the subject where the eye lands first.
+- Lens reads as intended (a wide establishing, a compressed close-up); no wide-angle distortion on a
+  face unless chosen.
 - Continuity: eyelines match across the cut; screen sides and direction as in the plan.
-- The cut plays with the music: stingers on cuts, lengths feel right (JT [00:04:55]). If not, retime now, before animating.
-- Pre-roll frames (read from the shot alone): the character already in motion, cloth and hair already moving, never the previous shot.
+- The cut plays with the music: stingers on cuts, lengths feel right (JT [00:04:55]). If not, retime
+  now, before animating.
+- Pre-roll frames (read from the shot alone): the character already in motion, cloth and hair
+  already moving, never the previous shot.
 
 ## 4. Performance and camera
 
-- Keyed focus distance equals the subject distance on keyed frames (compare `shot_geometry` focus with the Manual Focus Distance keys).
+- Keyed focus distance equals the subject distance on keyed frames (compare `shot_geometry` focus
+  with the Manual Focus Distance keys).
 - No pops at animation section boundaries or constraint switches (compensate keys; cons doc).
-- Camera moves eased, reframes on an offset layer, shake weighted per moment (E7C1xbpEA_Q [00:05:03] [00:06:21]).
+- Camera moves eased, reframes on an offset layer, shake weighted per moment (E7C1xbpEA_Q [00:05:03]
+  [00:06:21]).
 - Stepped (on twos) parts have motion blur disabled (Glitch [00:14:20]).
 
 ## 4b. Lighting
@@ -99,16 +111,24 @@ Look at the sheet, shot by shot:
 
 ## 7. The look (visual, after the numbers)
 
-- First frames of every shot: particles already active, cloth settled, no temporal sparkles (tips doc).
+- First frames of every shot: particles already active, cloth settled, no temporal sparkles (tips
+  doc).
 - Every cut: the right shot on the first frame, no flash of the previous one.
-- DOF edges on hair, fences and foreground occluders at 100 percent (Accumulation DOF where it fails).
-- Motion blur on the fastest action: smooth arcs, no stepping (raise temporal samples; Blur [00:40:05]); ghost trails on particles (double frame rate trick; Faucher fVg5ihB8Wdc [00:07:59]).
-- Lighting and color against the approved master shots (Glitch [00:32:05]), through the same OCIO view as the grade; one stop darker than the default viewport is expected for linear output (Faucher [00:09:39]).
+- DOF edges on hair, fences and foreground occluders at 100 percent (Accumulation DOF where it
+  fails).
+- Motion blur on the fastest action: smooth arcs, no stepping (raise temporal samples; Blur
+  [00:40:05]); ghost trails on particles (double frame rate trick; Faucher fVg5ihB8Wdc [00:07:59]).
+- Lighting and color against the approved master shots (Glitch [00:32:05]), through the same OCIO
+  view as the grade; one stop darker than the default viewport is expected for linear output
+  (Faucher [00:09:39]).
 - The review movie with sound, start to end, before calling it done.
 
 ## 7b. Delivery
 
-- `delivery_note` written: rate, EDL, per-shot files and frames (end exclusive), and the Resolve interpretation of the render mode (tone curve on: sRGB (Linear) to sRGB Texture; off: Linear sRGB to sRGB; ACEScg: ACEScg to sRGB; WF 2Q3CybANHKE [00:08:30] [00:09:05]). Missing: fail, the colorist sees dark frames with odd colors (WF [00:07:24]).
+- `delivery_note` written: rate, EDL, per-shot files and frames (end exclusive), and the Resolve
+  interpretation of the render mode (tone curve on: sRGB (Linear) to sRGB Texture; off: Linear sRGB
+  to sRGB; ACEScg: ACEScg to sRGB; WF 2Q3CybANHKE [00:08:30] [00:09:05]). Missing: fail, the
+  colorist sees dark frames with odd colors (WF [00:07:24]).
 
 ## Common mistakes (moved from SKILL.md in v0.2)
 
@@ -121,8 +141,13 @@ Look at the sheet, shot by shot:
 
 ## 8. Notes and rounds
 
-Classify each note technical or creative; fix technical ones without a creative round; at most three creative rounds, then a live session in the engine (Glitch [00:32:37] [00:33:40]). "It's not done until the director says it's done" [00:32:37]. Every fix renders into a new version folder.
+Classify each note technical or creative; fix technical ones without a creative round; at most three
+creative rounds, then a live session in the engine (Glitch [00:32:37] [00:33:40]). "It's not done
+until the director says it's done" [00:32:37]. Every fix renders into a new version folder.
 
 ## Report
 
-Write a JSON report with: plan hash and summary, build report (assets, soft failures), audit findings, board manifest and image checks, render settings audit, frame checks per shot, luminance continuity, the list of what was only looked at and not measured, and what is not verified (every [verify] call used). Report reality: if a check was skipped (no ffmpeg, no graph), say so.
+Write a JSON report with: plan hash and summary, build report (assets, soft failures), audit
+findings, board manifest and image checks, render settings audit, frame checks per shot, luminance
+continuity, the list of what was only looked at and not measured, and what is not verified (every
+[verify] call used). Report reality: if a check was skipped (no ffmpeg, no graph), say so.

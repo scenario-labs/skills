@@ -1,24 +1,39 @@
 # Critique rubric: how these animators judge a shot
 
-Use at every gate. Supervisors judge what reads on first viewing (Lazare, m8YPvVtfLhw [00:13:36]), so the agent looks first and measures second, then reports which items were measured and which were judged by eye.
+Use at every gate. Supervisors judge what reads on first viewing (Lazare, m8YPvVtfLhw [00:13:36]),
+so the agent looks first and measures second, then reports which items were measured and which were
+judged by eye.
 
 ## 1. The review pack (render it, then open every image)
 
-1. **Time-ordered frames through the shot camera.** GUI: `A.playblast_pack(out, s, e, cameras=("shotCam",))`, plus the stepped-preview pass in blocking. Headless: `tracks.png` from `A.review_images(plan, out)`. Read every 2nd frame for the whole shot, then every frame on flagged ranges.
-2. **Silhouette pass** (no lights, black shapes; Camporota FA7fPB7qUhE [00:06:07], Elver jzuxAmadcm8 [01:03:43]).
-3. **Stacked curve lanes** `curves.png` (Wade TMSpauVphNs [00:03:55]): holds flat but not dead, eases where planned, face still stepped in body passes.
-4. **Numbers**: `A.format_gates(A.run_gates(plan))`, plus `A.format_report(A.motion_report(track, frames))` on COG, head, hands, feet, in world and in camera pixels.
+1. **Time-ordered frames through the shot camera.** GUI:
+   `A.playblast_pack(out, s, e, cameras=("shotCam",))`, plus the stepped-preview pass in blocking.
+   Headless: `tracks.png` from `A.review_images(plan, out)`. Read every 2nd frame for the whole
+   shot, then every frame on flagged ranges.
+2. **Silhouette pass** (no lights, black shapes; Camporota FA7fPB7qUhE [00:06:07], Elver jzuxAmadcm8
+   [01:03:43]).
+3. **Stacked curve lanes** `curves.png` (Wade TMSpauVphNs [00:03:55]): holds flat but not dead,
+   eases where planned, face still stepped in body passes.
+4. **Numbers**: `A.format_gates(A.run_gates(plan))`, plus
+   `A.format_report(A.motion_report(track, frames))` on COG, head, hands, feet, in world and in
+   camera pixels.
 5. **Close-ups** for faces: frames on tentpoles and ruled sounds (M, B, P, F, V, L, T, D).
-6. **Progression**: the previous version and this one side by side (never overwrite a playblast folder; version it).
-7. **Rendered read** before final polish: motion-blurred low-resolution frames around fast moves (Elver [00:27:19]).
+6. **Progression**: the previous version and this one side by side (never overwrite a playblast
+   folder; version it).
+7. **Rendered read** before final polish: motion-blurred low-resolution frames around fast moves
+   (Elver [00:27:19]).
 
 ## 2. First-view read (write it before any metric)
 
-Write three lines from the time-ordered frames alone: what happens, where the eye goes on each beat, how many beats read. Then compare with the plan's intent sentence and beat count. A mismatch is an Intent note and outranks everything below it (Newman 7r_Czt3-SKE [00:05:23]). "I caught it on the second or third viewing" means restage, not more animation (Lazare [00:13:36]).
+Write three lines from the time-ordered frames alone: what happens, where the eye goes on each beat,
+how many beats read. Then compare with the plan's intent sentence and beat count. A mismatch is an
+Intent note and outranks everything below it (Newman 7r_Czt3-SKE [00:05:23]). "I caught it on the
+second or third viewing" means restage, not more animation (Lazare [00:13:36]).
 
 ## 3. The rubric, in supervisor order
 
-Each row: what the expert looks at, the source, the measurable proxy, what to look for in the images.
+Each row: what the expert looks at, the source, the measurable proxy, what to look for in the
+images.
 
 **Intent and staging**
 
@@ -107,18 +122,27 @@ Each row: what the expert looks at, the source, the measurable proxy, what to lo
 | Game feel is judged in engine       | Newman [00:07:20]           | `cycle_speed` vs metrics, loop seam, root rules | mark done, implement, expect revisions |
 | Plate integration, CFX follow-up    | Elver [00:44:28] [00:54:19] | gross interpenetration count [added]            | sits in the plate; cloth can simulate  |
 
-**Technical hygiene (always)**
-Layers merged at polish (gate `layers`); no sub-frame keys (gate `subframes`); no rotation flips (`rotation_flips`, Euler filter); scripted keys left their neighbors alone (`curve_diff(before, after, ignore)` ok; Wade TMSpauVphNs [00:02:18]); face stepped until its pass; helpers deleted (`delete_helpers`); scene fps equals the plan (gate `fps`).
+**Technical hygiene (always)** Layers merged at polish (gate `layers`); no sub-frame keys (gate
+`subframes`); no rotation flips (`rotation_flips`, Euler filter); scripted keys left their neighbors
+alone (`curve_diff(before, after, ignore)` ok; Wade TMSpauVphNs [00:02:18]); face stepped until its
+pass; helpers deleted (`delete_helpers`); scene fps equals the plan (gate `fps`).
 
 ## 4. What done means per stage
 
-- **Blocking:** every key category present; stepped pass tells the story; silhouettes read; no Intent notes left.
-- **Spline:** no mush (readiness passed), all mechanics gates pass, overshoots only where planned, face still stepped if it has its own pass.
-- **Polish:** every gate passes; the top-ranked notes fixed; blurred render looked at; the final playblast looked at frame by frame on contacts and fast moves.
+- **Blocking:** every key category present; stepped pass tells the story; silhouettes read; no
+  Intent notes left.
+- **Spline:** no mush (readiness passed), all mechanics gates pass, overshoots only where planned,
+  face still stepped if it has its own pass.
+- **Polish:** every gate passes; the top-ranked notes fixed; blurred render looked at; the final
+  playblast looked at frame by frame on contacts and fast moves.
 
 ## 5. Writing notes (and reading human ones)
 
-Format each note: bucket (Intent, Mechanics, Performance, Integration), frame range, what reads, the concrete change, priority. Start with what works (Lazare [00:01:13]). Keep it about the work, never the person (Newman [00:04:33]). Rank and fix only the top items per iteration (Elver [00:03:49]). Store every human note in the project's notes file by character and action, and read it before similar work (Newman [00:11:50]).
+Format each note: bucket (Intent, Mechanics, Performance, Integration), frame range, what reads, the
+concrete change, priority. Start with what works (Lazare [00:01:13]). Keep it about the work, never
+the person (Newman [00:04:33]). Rank and fix only the top items per iteration (Elver [00:03:49]).
+Store every human note in the project's notes file by character and action, and read it before
+similar work (Newman [00:11:50]).
 
 Director lingo, both ways (Newman [00:09:43] to [00:10:49]):
 
@@ -133,4 +157,12 @@ Director lingo, both ways (Newman [00:09:43] to [00:10:49]):
 
 ## 6. Calibration of the [added] thresholds
 
-Tuned offline on a synthetic M4 jump (`tests/code/maya-animation/_m4_motion.py`): a physically consistent version passes all 23 gates; half gravity fails `ballistic` (g_ratio 0.50); a 0.5 cm/frame planted slide fails `slide_R`; a crouch with no beat fails `resistance`; a frozen ending warns `moving_hold`; flat feet in the crouch warn `foot_roll`; a chest locked to the hips warns `spine_drag`; a flat foot on the first airborne frame (90 degrees) warns `peel_off_*`; heels taking 4 frames warn `heel_to_flat_*`; a bounce out of the lowest frame (hold 1) warns `impact_hold`. The foot, spine and hold gates are warnings: they flag a detail to look at, the playblast decides. They are starting values for a human-scale rig in cm at 24 fps: scale them with the rig and the style, and record any change in the plan.
+Tuned offline on a synthetic M4 jump (`tests/code/maya-animation/_m4_motion.py`): a physically
+consistent version passes all 23 gates; half gravity fails `ballistic` (g_ratio 0.50); a 0.5
+cm/frame planted slide fails `slide_R`; a crouch with no beat fails `resistance`; a frozen ending
+warns `moving_hold`; flat feet in the crouch warn `foot_roll`; a chest locked to the hips warns
+`spine_drag`; a flat foot on the first airborne frame (90 degrees) warns `peel_off_*`; heels taking
+4 frames warn `heel_to_flat_*`; a bounce out of the lowest frame (hold 1) warns `impact_hold`. The
+foot, spine and hold gates are warnings: they flag a detail to look at, the playblast decides. They
+are starting values for a human-scale rig in cm at 24 fps: scale them with the rig and the style,
+and record any change in the plan.

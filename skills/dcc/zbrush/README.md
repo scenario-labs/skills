@@ -1,6 +1,10 @@
 # ZBrush Expert Skills
 
-Agent skills that let Claude (Claude Code) or Codex drive Maxon ZBrush the way the experts in the best tutorials, studio talks and official documentation do. Built on 2026-09-24 with the same method as [Blender Expert Skills](../blender/README.md): transcripts of top-rated videos, cited expert notes, then skills with tools and review rubrics, graded blind against the same model without them. Start with the lead skill, `scenario-zbrush-expert`.
+Agent skills that let Claude (Claude Code) or Codex drive Maxon ZBrush the way the experts in the
+best tutorials, studio talks and official documentation do. Built on 2026-09-24 with the same method
+as [Blender Expert Skills](../blender/README.md): transcripts of top-rated videos, cited expert
+notes, then skills with tools and review rubrics, graded blind against the same model without them.
+Start with the lead skill, `scenario-zbrush-expert`.
 
 ## Skills
 
@@ -18,13 +22,18 @@ Agent skills that let Claude (Claude Code) or Codex drive Maxon ZBrush the way t
 
 ## Status
 
-- 9 skills written from 150 expert videos (61 h) and 54 documentation pages, each with references and a `zb_<domain>.py` module.
-- Blind-graded written scenarios (round 1): 43 % without the skills, 91 % with them; all 7 scenarios improved.
-- The agent bridge into ZBrush was proven live (scripted strokes that sculpt, dialog-free exports). Full live tests of every skill were blocked by a ZBrush startup stall; see `tests/OPEN_ISSUES.md` in the build project.
+- 9 skills written from 150 expert videos (61 h) and 54 documentation pages, each with references
+  and a `zb_<domain>.py` module.
+- Blind-graded written scenarios (round 1): 43 % without the skills, 91 % with them; all 7 scenarios
+  improved.
+- The agent bridge into ZBrush was proven live (scripted strokes that sculpt, dialog-free exports).
+  Full live tests of every skill were blocked by a ZBrush startup stall; see `tests/OPEN_ISSUES.md`
+  in the build project.
 
 ## Requirements
 
-ZBrush 2026 (2026.2) with the agent bridge described in the lead skill `scenario-zbrush-expert` (launch, strokes, review renders, dialog-free export).
+ZBrush 2026 (2026.2) with the agent bridge described in the lead skill `scenario-zbrush-expert`
+(launch, strokes, review renders, dialog-free export).
 
 ## Install
 
@@ -32,10 +41,17 @@ ZBrush 2026 (2026.2) with the agent bridge described in the lead skill `scenario
 npx skills add scenario-labs/skills --skill scenario-zbrush-expert scenario-zbrush-automation scenario-zbrush-character-creature scenario-zbrush-hard-surface scenario-zbrush-paint-render scenario-zbrush-pose-print scenario-zbrush-retopology-export scenario-zbrush-sculpting scenario-zbrush-stylized
 ```
 
-The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: ZBrush" group. Update with `npx skills update`.
+The installer puts the skills side by side, which the specialists need: they import the lead skill's
+`scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the
+"Expert tools: ZBrush" group. Update with `npx skills update`.
 
 ## Provenance
 
-Ported from [edemaistre/zbrush-expert-skills](https://github.com/edemaistre/zbrush-expert-skills/tree/v0.1), built on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this repository's frontmatter (`name`, `description`, `license`), no version line in the skill bodies, the sibling-install line in each `SKILL.md`, and paths into the build project made relative.
+Ported from
+[edemaistre/zbrush-expert-skills](https://github.com/edemaistre/zbrush-expert-skills/tree/v0.1),
+built on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this
+repository's frontmatter (`name`, `description`, `license`), no version line in the skill bodies,
+the sibling-install line in each `SKILL.md`, and paths into the build project made relative.
 
-Paths such as `tests/code/...` or `archive/tests/...` inside the references point to the build project (tests, notes) on the author's machine; they are provenance only.
+Paths such as `tests/code/...` or `archive/tests/...` inside the references point to the build
+project (tests, notes) on the author's machine; they are provenance only.

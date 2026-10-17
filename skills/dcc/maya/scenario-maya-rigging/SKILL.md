@@ -6,22 +6,56 @@ license: MIT
 
 # Maya rigging
 
-Expert rigging means every value is explained and every behavior measured: joints at real pivots with computed orientation, controls at zero with their placement in offsetParentMatrix, IK/FK and space switches that move nothing, and a rig that survives scale, distance, several characters per shot and an animator keying everything. The rig is the output of a build script and data. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Expert rigging means every value is explained and every behavior measured: joints at real pivots
+with computed orientation, controls at zero with their placement in offsetParentMatrix, IK/FK and
+space switches that move nothing, and a rig that survives scale, distance, several characters per
+shot and an animator keying everything. The rig is the output of a build script and data. If a
+sibling skill named here is missing from your available skills, ask the user to install it
+(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
+flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 
-Module [`scripts/mx_rig.py`](scripts/mx_rig.py) (`sys.path.insert(0, "<skills>/scenario-maya-rigging/scripts"); import mx_rig as R`): not yet run in Maya; its pure math passed offline (`test_rig_offline.py`). With Maya installed, run `tests/code/maya-rigging/run_all.sh` and fix what `test_rig_probe` contradicts.
+Module [`scripts/mx_rig.py`](scripts/mx_rig.py)
+(`sys.path.insert(0, "<skills>/scenario-maya-rigging/scripts"); import mx_rig as R`): not yet run in
+Maya; its pure math passed offline (`test_rig_offline.py`). With Maya installed, run
+`tests/code/maya-rigging/run_all.sh` and fix what `test_rig_probe` contradicts.
 
 ## Stance (the expert delta)
 
-- **Clean values, one place for each.** Rotations zero at rest, orientation in jointOrient (or nowhere: Fragapane), control placement in offsetParentMatrix (antCGi; Maya Learning Channel). OPM composes, `world = local * OPM * dagParentWorld` (2027 transform node): feed `.matrix` for a relative drive, or multiply a `worldMatrix` by the DAG parent's `worldInverseMatrix`, then zero translate, rotate and jointOrient or they apply twice (Maya Learning Channel; antCGi's leg rotating backwards).
-- **Compute, never eyeball.** `-orientJoint` silently skips joints with rotations or no child (2027 cmds.joint); a secondary world axis along the bone is ill-defined (antCGi's toes). `R.joint_chain` computes jointOrient from positions; a pole on the chain plane adds zero drift (`R.pole_vector_position`) [added].
-- **The animator defines done.** Zero pop switching IK/FK at neutral, only the active mode visible, everything else locked because animators "select hierarchy and key all", limits at breaking points, behavior mirroring on limbs, same orientation on eyes and face (antCGi).
-- **Matrices before constraint stacks, and know the blend.** OPM, blendMatrix and pickMatrix keep channels free (Maya Learning Channel cut 20 joints from one hand). blendMatrix is an ordered stack, each target overriding the ones before (equal thirds: 1, 1/2, 1/3); parentMatrix (2025) normalizes and stores per-target offsets (2027 Help). Spaces blend offset targets, never the space itself, or the IK flips (antCGi).
-- **The built rig is disposable.** Guides, build script, serialized weights and settings; fixes go back into the data (Miquel Campos, mGear: "we serialize everything and we build clean every single time"; Bungie). Metadata and joint labels, not names, identify chains (Bungie). A skinCluster reads only influence world matrices and bindPreMatrix: reset the bind pose, never rebuild joints for it (Fragapane).
-- **Structure decides speed.** The Evaluation Graph leaves static curves out and rebuilds at the first differing key; without curves a rig "is going to be paralyzed terribly" (Fragapane; Using Parallel Maya 2027). Split components so cheap global work finishes early, even by duplicating cheap math (Fragapane); no Python nodes, scene-querying expressions or driven `frozen`; hosts out of the limbs (Miquel Campos); DG, Serial and Parallel agree before optimizing.
-- **Test at the extremes.** Scale 1.24 and 1.6 (antCGi), a million units away and upside down (Fragapane), three referenced characters, a quick bind while building (antCGi).
-- **Deformation skeleton apart from the control rig.** Engines see joints, skin and blendshapes only: one root at the origin, engine names, a joint budget (antCGi, Unreal and Unity docs, Bungie).
+- **Clean values, one place for each.** Rotations zero at rest, orientation in jointOrient (or
+  nowhere: Fragapane), control placement in offsetParentMatrix (antCGi; Maya Learning Channel). OPM
+  composes, `world = local * OPM * dagParentWorld` (2027 transform node): feed `.matrix` for a
+  relative drive, or multiply a `worldMatrix` by the DAG parent's `worldInverseMatrix`, then zero
+  translate, rotate and jointOrient or they apply twice (Maya Learning Channel; antCGi's leg
+  rotating backwards).
+- **Compute, never eyeball.** `-orientJoint` silently skips joints with rotations or no child (2027
+  cmds.joint); a secondary world axis along the bone is ill-defined (antCGi's toes). `R.joint_chain`
+  computes jointOrient from positions; a pole on the chain plane adds zero drift
+  (`R.pole_vector_position`) [added].
+- **The animator defines done.** Zero pop switching IK/FK at neutral, only the active mode visible,
+  everything else locked because animators "select hierarchy and key all", limits at breaking
+  points, behavior mirroring on limbs, same orientation on eyes and face (antCGi).
+- **Matrices before constraint stacks, and know the blend.** OPM, blendMatrix and pickMatrix keep
+  channels free (Maya Learning Channel cut 20 joints from one hand). blendMatrix is an ordered
+  stack, each target overriding the ones before (equal thirds: 1, 1/2, 1/3); parentMatrix (2025)
+  normalizes and stores per-target offsets (2027 Help). Spaces blend offset targets, never the space
+  itself, or the IK flips (antCGi).
+- **The built rig is disposable.** Guides, build script, serialized weights and settings; fixes go
+  back into the data (Miquel Campos, mGear: "we serialize everything and we build clean every single
+  time"; Bungie). Metadata and joint labels, not names, identify chains (Bungie). A skinCluster
+  reads only influence world matrices and bindPreMatrix: reset the bind pose, never rebuild joints
+  for it (Fragapane).
+- **Structure decides speed.** The Evaluation Graph leaves static curves out and rebuilds at the
+  first differing key; without curves a rig "is going to be paralyzed terribly" (Fragapane; Using
+  Parallel Maya 2027). Split components so cheap global work finishes early, even by duplicating
+  cheap math (Fragapane); no Python nodes, scene-querying expressions or driven `frozen`; hosts out
+  of the limbs (Miquel Campos); DG, Serial and Parallel agree before optimizing.
+- **Test at the extremes.** Scale 1.24 and 1.6 (antCGi), a million units away and upside down
+  (Fragapane), three referenced characters, a quick bind while building (antCGi).
+- **Deformation skeleton apart from the control rig.** Engines see joints, skin and blendshapes
+  only: one root at the origin, engine names, a joint budget (antCGi, Unreal and Unity docs,
+  Bungie).
 
 ## Establish first
 
@@ -42,16 +76,55 @@ Module [`scripts/mx_rig.py`](scripts/mx_rig.py) (`sys.path.insert(0, "<skills>/s
 
 ## Workflow
 
-1. **Gate the model.** `mx_validate.validate(profile="model")` clean; cm; height to spec (about 180); feet at y = 0; centered on X; frozen; eyes dead ahead; loops at knuckles, elbows, knees; mouth bag for a face (antCGi). Send problems back as a list; never edit a client model unasked. GATE: no fail; wire sheet looked at.
-2. **Place joints** at pivots on edge loops: spine joint under the rib cage (antCGi), wrist decoupled from the palm (Fragapane), elbows pre-bent back, knees forward; the first upper-arm and thigh twist joint stays at the top with the shoulder or hip, mid twist joints are placed by position so they keep the parent's orientation (antCGi). GATE: `R.chain_plane` does not raise on any limb; joints over wireframe looked at.
-3. **Build and orient.** `R.joint_chain(spec, parent, up="plane")` for limbs, `up=(0, 0, 1), up_axis="y"` for spine and neck, `world=[...]` for root, cog, head, eyes and feet (antCGi: animators, engine foot placement), `end_aim=` for clavicles; existing skeletons: `R.orient_with_cmds` ('zup' for legs and spine). `R.mirror_chain`: behavior for limbs, orientation for eyes and face; rotate orders on controls (`R.rotate_order(twist, main)`; Fragapane); `R.set_preferred_angles(root)`. GATE: `R.rig_check(joints=bind)` clean; mirror within 1e-3 cm; all digits curl on one axis and sign, thumb fixed, so one attribute makes a fist (antCGi).
-4. **Hand the bind skeleton to scenario-maya-deformation** (it binds while you build controls): joints only, one hierarchy, labels, `rig_check` JSON.
-5. **Control rig.** `R.ikfk_limb(bind[:3], name, rig_parent, ctrl_parent, own_solver=char + "_ikRPsolver")`: handles of a type share one solver node, so several characters in a scene conflict (Fragapane: "can make a mess"; 2027 Help). Legs: `extra=[ball, toe], orient_end=False`, then `R.reverse_foot` with `R.foot_pivots_from_mesh`; spine P9; `R.space_switch(ctrl, [None, cog, chest], names=[...])`; `R.ikfk_match(meta, to="fk"|"ik", key=True)` uses stored offsets (antCGi instead adds a pole locator under the FK elbow and an ankle locator oriented like the IK foot). GATE: `R.neutral_switch_test` and pole drift below 1e-3; `R.space_test` as expected; FK and IK posed apart, `R.blend_sweep_test` finds no flip; roll sweep plants heel, ball, toe in turn; no shared-solver error; controls at zero.
-6. **Scale and stretch.** Root scale only on groups that do not inherit it; stretch base lengths times root scaleY; IK spine joints under a world-pivot scale group, as segmentScaleCompensate blocks scale (antCGi). GATE: `R.scale_test` at 1.24 and 1.6, neutral and stretched, below 1e-3 cm.
-7. **Lock down.** `R.lockdown`; FK hinges keep their bend axis; limits; controller tags; selection sets. GATE: `R.lockdown_audit` and `R.opm_audit(rig)` empty; the rig still works.
-8. **Performance.** Key first (`R.rom_keys`, two different values per used attribute): a keyless rig profiles fast and lies. `R.eval_census(rig)`, `R.eval_ab(bind, meshes, frames)`; `R.prepare_eval_graph(root=rig)` tags every control (with the animator's Preferences > Settings > Animation > Include controllers in evaluation graph, first keys stop rebuilding the graph) and turns on the curve manager for the session. `R.gpu_override_census(meshes)`, then the GUI Evaluation HUD must show a non-zero k count, else `deformerEvaluator -meshes` says why. Profile DG, Serial, Parallel and GPU Override with 1 and 3 referenced characters; keep dated profiles (Miquel Campos). GATE: no census error; modes agree within 1e-5; each dense mesh on the GPU or its reason written.
-9. **Review.** `R.rom_keys`, then `mx_review.playblast` (GUI) or `R.pose_review` (headless); `R.precision_test` at shot distances; [`references/critique.md`](references/critique.md). GATE: frames looked at; elbows, knees, shoulders, wrists, feet read right.
-10. **Deliver.** New version, `validate(profile="rig")` clean, test JSON, playblast, what was not verified.
+1. **Gate the model.** `mx_validate.validate(profile="model")` clean; cm; height to spec (about
+   180); feet at y = 0; centered on X; frozen; eyes dead ahead; loops at knuckles, elbows, knees;
+   mouth bag for a face (antCGi). Send problems back as a list; never edit a client model unasked.
+   GATE: no fail; wire sheet looked at.
+2. **Place joints** at pivots on edge loops: spine joint under the rib cage (antCGi), wrist
+   decoupled from the palm (Fragapane), elbows pre-bent back, knees forward; the first upper-arm and
+   thigh twist joint stays at the top with the shoulder or hip, mid twist joints are placed by
+   position so they keep the parent's orientation (antCGi). GATE: `R.chain_plane` does not raise on
+   any limb; joints over wireframe looked at.
+3. **Build and orient.** `R.joint_chain(spec, parent, up="plane")` for limbs,
+   `up=(0, 0, 1), up_axis="y"` for spine and neck, `world=[...]` for root, cog, head, eyes and feet
+   (antCGi: animators, engine foot placement), `end_aim=` for clavicles; existing skeletons:
+   `R.orient_with_cmds` ('zup' for legs and spine). `R.mirror_chain`: behavior for limbs,
+   orientation for eyes and face; rotate orders on controls (`R.rotate_order(twist, main)`;
+   Fragapane); `R.set_preferred_angles(root)`. GATE: `R.rig_check(joints=bind)` clean; mirror within
+   1e-3 cm; all digits curl on one axis and sign, thumb fixed, so one attribute makes a fist
+   (antCGi).
+4. **Hand the bind skeleton to scenario-maya-deformation** (it binds while you build controls):
+   joints only, one hierarchy, labels, `rig_check` JSON.
+5. **Control rig.**
+   `R.ikfk_limb(bind[:3], name, rig_parent, ctrl_parent, own_solver=char + "_ikRPsolver")`: handles
+   of a type share one solver node, so several characters in a scene conflict (Fragapane: "can make
+   a mess"; 2027 Help). Legs: `extra=[ball, toe], orient_end=False`, then `R.reverse_foot` with
+   `R.foot_pivots_from_mesh`; spine P9; `R.space_switch(ctrl, [None, cog, chest], names=[...])`;
+   `R.ikfk_match(meta, to="fk"|"ik", key=True)` uses stored offsets (antCGi instead adds a pole
+   locator under the FK elbow and an ankle locator oriented like the IK foot). GATE:
+   `R.neutral_switch_test` and pole drift below 1e-3; `R.space_test` as expected; FK and IK posed
+   apart, `R.blend_sweep_test` finds no flip; roll sweep plants heel, ball, toe in turn; no
+   shared-solver error; controls at zero.
+6. **Scale and stretch.** Root scale only on groups that do not inherit it; stretch base lengths
+   times root scaleY; IK spine joints under a world-pivot scale group, as segmentScaleCompensate
+   blocks scale (antCGi). GATE: `R.scale_test` at 1.24 and 1.6, neutral and stretched, below 1e-3
+   cm.
+7. **Lock down.** `R.lockdown`; FK hinges keep their bend axis; limits; controller tags; selection
+   sets. GATE: `R.lockdown_audit` and `R.opm_audit(rig)` empty; the rig still works.
+8. **Performance.** Key first (`R.rom_keys`, two different values per used attribute): a keyless rig
+   profiles fast and lies. `R.eval_census(rig)`, `R.eval_ab(bind, meshes, frames)`;
+   `R.prepare_eval_graph(root=rig)` tags every control (with the animator's Preferences > Settings >
+   Animation > Include controllers in evaluation graph, first keys stop rebuilding the graph) and
+   turns on the curve manager for the session. `R.gpu_override_census(meshes)`, then the GUI
+   Evaluation HUD must show a non-zero k count, else `deformerEvaluator -meshes` says why. Profile
+   DG, Serial, Parallel and GPU Override with 1 and 3 referenced characters; keep dated profiles
+   (Miquel Campos). GATE: no census error; modes agree within 1e-5; each dense mesh on the GPU or
+   its reason written.
+9. **Review.** `R.rom_keys`, then `mx_review.playblast` (GUI) or `R.pose_review` (headless);
+   `R.precision_test` at shot distances; [`references/critique.md`](references/critique.md). GATE:
+   frames looked at; elbows, knees, shoulders, wrists, feet read right.
+10. **Deliver.** New version, `validate(profile="rig")` clean, test JSON, playblast, what was not
+    verified.
 
 ## Numbers
 
@@ -70,9 +143,14 @@ Module [`scripts/mx_rig.py`](scripts/mx_rig.py) (`sys.path.insert(0, "<skills>/s
 
 ## Quality gates
 
-Code (`mx_rig`): `rig_check` (rest rotations, orientation, controls, poles, shared solvers, OPM doubling, evaluation census, lockdown), `neutral_switch_test`, `blend_sweep_test`, `space_test`, `scale_test`, `precision_test`, `eval_ab`, `gpu_override_census`, `game_skeleton_check`; scenario-maya-expert's `validate(profile="rig")`.
+Code (`mx_rig`): `rig_check` (rest rotations, orientation, controls, poles, shared solvers, OPM
+doubling, evaluation census, lockdown), `neutral_switch_test`, `blend_sweep_test`, `space_test`,
+`scale_test`, `precision_test`, `eval_ab`, `gpu_override_census`, `game_skeleton_check`;
+scenario-maya-expert's `validate(profile="rig")`.
 
-Visual: placement over wireframe front and side; ROM playblast of every control axis, front, side and three-quarter; foot roll scrubbed; scaled rig in an extreme pose. Look for knee pop, elbow flips, candy-wrapper wrists, collapsing shoulders, sliding feet.
+Visual: placement over wireframe front and side; ROM playblast of every control axis, front, side
+and three-quarter; foot roll scrubbed; scaled rig in an extreme pose. Look for knee pop, elbow
+flips, candy-wrapper wrists, collapsing shoulders, sliding feet.
 
 ## Common mistakes
 
@@ -96,24 +174,38 @@ Visual: placement over wireframe front and side; ROM playblast of every control 
 
 ## Handoffs
 
-- **Receives** from scenario-maya-modeling or scenario-maya-retopology-uv: a mesh passing `validate(profile="model")`, cm, Y-up, facing +Z, feet at y = 0, centered, frozen, symmetric, pre-bent limbs, eyes forward.
-- **Delivers to scenario-maya-deformation:** the bind skeleton (joints only, one root, oriented, rotations zero, labels), `rig_check` JSON, and whether bind joints blend by constraint or through OPM (its pose readers depend on it); receives weights as data and correctives to reconnect.
-- **Delivers to scenario-maya-animation:** the rig to reference, controls at zero and tagged, `validate(profile="rig")` clean, switch list, ROM playblast, known limits.
-- **Game rigs to scenario-maya-pipeline-scripting:** `game_skeleton_check` clean, bind blends by constraint unless an OPM export was proven; they export the FBX.
+- **Receives** from scenario-maya-modeling or scenario-maya-retopology-uv: a mesh passing
+  `validate(profile="model")`, cm, Y-up, facing +Z, feet at y = 0, centered, frozen, symmetric,
+  pre-bent limbs, eyes forward.
+- **Delivers to scenario-maya-deformation:** the bind skeleton (joints only, one root, oriented,
+  rotations zero, labels), `rig_check` JSON, and whether bind joints blend by constraint or through
+  OPM (its pose readers depend on it); receives weights as data and correctives to reconnect.
+- **Delivers to scenario-maya-animation:** the rig to reference, controls at zero and tagged,
+  `validate(profile="rig")` clean, switch list, ROM playblast, known limits.
+- **Game rigs to scenario-maya-pipeline-scripting:** `game_skeleton_check` clean, bind blends by
+  constraint unless an OPM export was proven; they export the FBX.
 
 ## Maya 2027 notes
 
-- 2026 renames: `addDL`, `multiplyDL`, `pointMatrixMultDL`; plain math names create unitless nodes; condition, multiplyDivide, reverse, blendMatrix unchanged.
-- parentMatrix (2025) has Snap and Initialize Target Offset; `axisFromMatrix` replaces the per-axis nodes.
+- 2026 renames: `addDL`, `multiplyDL`, `pointMatrixMultDL`; plain math names create unitless nodes;
+  condition, multiplyDivide, reverse, blendMatrix unchanged.
+- parentMatrix (2025) has Snap and Initialize Target Offset; `axisFromMatrix` replaces the per-axis
+  nodes.
 - Orient Joint: negative primary axes fixed in 2027.1; Auto orient secondary axis since 2025.
-- `ikHandle` lists only RP, SC and spline; load spring and 2-bone solvers first. FBIK forces Serial: use HumanIK.
-- GPU Override: 2027.2 known issue, a crash when scrubbing with it on (disable it or the invisibility evaluator); the paper covers OpenCL on AMD and NVIDIA only, so read the HUD on Apple GPUs [verify]. Evaluator settings are per session, not saved in the scene.
-- Skin Tools layers block classic weight tools until deleted (scenario-maya-deformation). PySide6 only; PyMEL is not bundled.
+- `ikHandle` lists only RP, SC and spline; load spring and 2-bone solvers first. FBIK forces Serial:
+  use HumanIK.
+- GPU Override: 2027.2 known issue, a crash when scrubbing with it on (disable it or the
+  invisibility evaluator); the paper covers OpenCL on AMD and NVIDIA only, so read the HUD on Apple
+  GPUs [verify]. Evaluator settings are per session, not saved in the scene.
+- Skin Tools layers block classic weight tools until deleted (scenario-maya-deformation). PySide6
+  only; PyMEL is not bundled.
 
 ## References
 
-- [`references/procedures.md`](references/procedures.md): code per stage and its test; before writing rig code.
-- [`references/expert-notes.md`](references/expert-notes.md): judgment by expert, disagreements; when a decision is not covered here.
+- [`references/procedures.md`](references/procedures.md): code per stage and its test; before
+  writing rig code.
+- [`references/expert-notes.md`](references/expert-notes.md): judgment by expert, disagreements;
+  when a decision is not covered here.
 - `references/critique.md`: the rubric; at every gate.
 - [`references/gui-paths.md`](references/gui-paths.md): menus, Profiler, HUD; when driving the GUI.
 - [`references/sources.md`](references/sources.md): sources, URLs, timestamps.

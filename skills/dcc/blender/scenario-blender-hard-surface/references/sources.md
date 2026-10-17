@@ -1,6 +1,9 @@
 # Sources
 
-Nine videos, transcribed and distilled (notes in `notes/hard-surface/`, digest `_digest_hard_surface.md`). No frame sheets existed for this batch: visual details come from speech. Several videos use paid add-ons (HardOps, BoxCutter, MESHmachine, UV Packmaster, Fluent, SimpleBake, KIT OPS); only their stock-reproducible ideas are kept.
+Nine videos, transcribed and distilled (notes in `notes/hard-surface/`, digest
+`_digest_hard_surface.md`). No frame sheets existed for this batch: visual details come from speech.
+Several videos use paid add-ons (HardOps, BoxCutter, MESHmachine, UV Packmaster, Fluent, SimpleBake,
+KIT OPS); only their stock-reproducible ideas are kept.
 
 | Video                                                                                                            | Expert and credential                                                                              | Date, length, Blender                 | Best for                                                                                                                          | Best timestamps                                                                                                                                                                                                    |
 | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -16,6 +19,9 @@ Nine videos, transcribed and distilled (notes in `notes/hard-surface/`, digest `
 
 ## Version translation
 
-- All 2021 to 2022 videos use Auto Smooth (removed in 4.1) and the "Fast" solver (renamed Float in 5.0; Manifold added in 4.5); du Mont (2026) is current.
-- Bool Tool, LoopTools, F2, Extra Objects are extensions since 4.2; LoopTools Circle, Flatten and Space are built in since 5.2.
-- Authoritative list: `sources/blender-version-deltas.md` and scenario-blender-expert `references/blender-5.2-deltas.md`.
+- All 2021 to 2022 videos use Auto Smooth (removed in 4.1) and the "Fast" solver (renamed Float in
+  5.0; Manifold added in 4.5); du Mont (2026) is current.
+- Bool Tool, LoopTools, F2, Extra Objects are extensions since 4.2; LoopTools Circle, Flatten and
+  Space are built in since 5.2.
+- Authoritative list: `sources/blender-version-deltas.md` and scenario-blender-expert
+  `references/blender-5.2-deltas.md`.

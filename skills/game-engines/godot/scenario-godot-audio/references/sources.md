@@ -1,6 +1,9 @@
 # scenario-godot-audio sources
 
-Notes for every source are in `notes/audio/` (digests: `_digest_videos_audio.md`, `_digest_docs_audio.md`). Credentials marked (unverified) are as stated by the channel. Version facts come from `sources/godot-version-deltas.md` section 12, re-checked live on 4.7.2 (see `procedures.md`).
+Notes for every source are in `notes/audio/` (digests: `_digest_videos_audio.md`,
+`_digest_docs_audio.md`). Credentials marked (unverified) are as stated by the channel. Version
+facts come from `sources/godot-version-deltas.md` section 12, re-checked live on 4.7.2 (see
+`procedures.md`).
 
 ## Videos
 

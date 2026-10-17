@@ -1,6 +1,7 @@
 # Sources behind scenario-maya-lookdev
 
-Videos: auto captions, no frames (settings shown only on screen are lost). Notes in `notes/lookdev/` unless stated. Short keys used in `mx_shade.py` in brackets.
+Videos: auto captions, no frames (settings shown only on screen are lost). Notes in `notes/lookdev/`
+unless stated. Short keys used in `mx_shade.py` in brackets.
 
 ## Videos
 
@@ -29,9 +30,26 @@ Videos: auto captions, no frames (settings shown only on screen are lost). Notes
 
 ## Digests used
 
-`notes/lookdev/_digest_lookdev_arnold_materials.md` (consensus, disagreements, cheat sheet, candidate procedures), `notes/lighting-rendering/_digest_rendering_arnold_color.md` (color management), `notes/groom/_digest_groom_production_render_export.md` (Standard Hair). Baseline comparison: `tests/baseline/answers.md` M5 (shading part: aiStandardSurface, white specular color on steel, no color-space trap, no lookdev rig; this skill targets those gaps).
+`notes/lookdev/_digest_lookdev_arnold_materials.md` (consensus, disagreements, cheat sheet,
+candidate procedures), `notes/lighting-rendering/_digest_rendering_arnold_color.md` (color
+management), `notes/groom/_digest_groom_production_render_export.md` (Standard Hair). Baseline
+comparison: `tests/baseline/answers.md` M5 (shading part: aiStandardSurface, white specular color on
+steel, no color-space trap, no lookdev rig; this skill targets those gaps).
 
 ## Revision history
 
-- 2026-09-24, v1: initial build (snapshot in `skills/_versions/maya-lookdev v1 2026-09-24/`; test code snapshot in `archive/tests/maya-lookdev/tests-code v1 2026-09-24/`).
-- 2026-09-24, v2 (refactor after the blind grade `tests/grading/M5_grade.md`): Dielectric Priority where transmissive media touch or overlap (OPBR § Dielectric Priority: higher wins, glass 3, inclusions 2, liquid 1; lint `dielectric_priority` on overlapping bounding boxes, `bbox` added to `extract`); smudge and fingerprint roughness on polished metal and glass (OPBR § Specular Roughness; ARVID 00:25:11 to 00:27:22; new `smudge_roughness`, lint `polished_no_smudge` from the node types upstream of roughness); pre-baked TX before heavy assets and batches (RAYC 00:13:04, ARV-T 00:14:44; lint `no_tx`, one line per scene); per-object masks through `mtoa_constant_` user data named for product parts (ARVID 00:23:04); judging a hero material under the reference's light placement (ARVID 00:02:44, 00:36:21); the dispersion conflict between digest P9 and the OpenPBR checklist settled by geometry (flat parallel faces show no fringe, faceted gems and close bevels do) [added optics], in Numbers, the preset note, the lint message and the expert-notes disagreements. Offline checks 115 to 122; fake-Maya jobs cover `smudge_roughness` (scan and procedural) and a planted dielectric overlap (not yet run in Maya).
+- 2026-09-24, v1: initial build (snapshot in `skills/_versions/maya-lookdev v1 2026-09-24/`; test
+  code snapshot in `archive/tests/maya-lookdev/tests-code v1 2026-09-24/`).
+- 2026-09-24, v2 (refactor after the blind grade `tests/grading/M5_grade.md`): Dielectric Priority
+  where transmissive media touch or overlap (OPBR § Dielectric Priority: higher wins, glass 3,
+  inclusions 2, liquid 1; lint `dielectric_priority` on overlapping bounding boxes, `bbox` added to
+  `extract`); smudge and fingerprint roughness on polished metal and glass (OPBR § Specular
+  Roughness; ARVID 00:25:11 to 00:27:22; new `smudge_roughness`, lint `polished_no_smudge` from the
+  node types upstream of roughness); pre-baked TX before heavy assets and batches (RAYC 00:13:04,
+  ARV-T 00:14:44; lint `no_tx`, one line per scene); per-object masks through `mtoa_constant_` user
+  data named for product parts (ARVID 00:23:04); judging a hero material under the reference's light
+  placement (ARVID 00:02:44, 00:36:21); the dispersion conflict between digest P9 and the OpenPBR
+  checklist settled by geometry (flat parallel faces show no fringe, faceted gems and close bevels
+  do) [added optics], in Numbers, the preset note, the lint message and the expert-notes
+  disagreements. Offline checks 115 to 122; fake-Maya jobs cover `smudge_roughness` (scan and
+  procedural) and a planted dielectric overlap (not yet run in Maya).

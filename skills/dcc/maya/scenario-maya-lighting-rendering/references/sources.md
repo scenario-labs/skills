@@ -1,6 +1,10 @@
 # Sources
 
-Every source behind this skill, its author's credential, what it is best for, and its best timestamps. Distilled notes: `notes/lighting-rendering/` (two digests and eleven notes) and `notes/lookdev/` for the product-shot lessons. Version facts: `sources/maya-version-deltas.md` sections 0, 1, 2.6, 2.7, 2.13, 3, 4. Keys are the ones used in SKILL.md, the references and `mx_light.py`.
+Every source behind this skill, its author's credential, what it is best for, and its best
+timestamps. Distilled notes: `notes/lighting-rendering/` (two digests and eleven notes) and
+`notes/lookdev/` for the product-shot lessons. Version facts: `sources/maya-version-deltas.md`
+sections 0, 1, 2.6, 2.7, 2.13, 3, 4. Keys are the ones used in SKILL.md, the references and
+`mx_light.py`.
 
 | Key    | Source                                                                                                                                                                                                                                                                                                                                           | Author and credential                                                                                                  | Best for                                                                                                                                                                               | Best timestamps                                                                                                                     |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -22,9 +26,32 @@ Every source behind this skill, its author's credential, what it is best for, an
 | PY     | Python in Maya 2027, command-line render pages, `sources/docs/scripting-pipeline__python-in-maya-2027.md`                                                                                                                                                                                                                                        | Autodesk Maya documentation                                                                                            | `Render` flags, `-rst/-rsp/-rsa`, batch hangs on macOS localhost, save before rendering from a script                                                                                  | § Render from the command line, § Render Setup                                                                                      |
 | DELTAS | `sources/maya-version-deltas.md` (this project)                                                                                                                                                                                                                                                                                                  | built from the saved What's New pages                                                                                  | MtoA 5.6.x in 2027, GLS and sampling mode, OIDN default, no OptiX or GPU on macOS, emission excluded from per-group indirect since 7.3, 2026.2 color renames, Render Setup exclusivity | sections 0.1, 2.6, 2.7, 2.13, 3, 4                                                                                                  |
 
-Digests used: `notes/lighting-rendering/_digest_lighting_studio_principles.md` (critique order, ranked expert delta, rig placement code P2, image metrics P4) and `notes/lighting-rendering/_digest_rendering_arnold_color.md` (sampling model, noise map, AOV and color procedures), `notes/lookdev/_digest_lookdev_arnold_materials.md` (P9 product hero shot).
+Digests used: `notes/lighting-rendering/_digest_lighting_studio_principles.md` (critique order,
+ranked expert delta, rig placement code P2, image metrics P4) and
+`notes/lighting-rendering/_digest_rendering_arnold_color.md` (sampling model, noise map, AOV and
+color procedures), `notes/lookdev/_digest_lookdev_arnold_materials.md` (P9 product hero shot).
 
 ## Revision history
 
-- 2026-09-24, v1: initial build (snapshot in `skills/_versions/maya-lighting-rendering v1 2026-09-24/`; test code snapshot in `archive/tests/maya-lighting-rendering/tests-code v1 2026-09-24/`).
-- 2026-09-24, v2 (refactor after the blind grade `tests/grading/M5_grade.md`): reference first as a stance, an Establish-first row and a stage-1 critique finding (`reference` warns without `brief["references"]`, else compares L* and value groups with the reference) from ARV-C 00:02:44 00:36:21, BR 00:08:13, TZ-C 00:02:20, ARV-L 00:01:11; depth of field from LGT § Aperture Size (`dof_zone`, `dof_plan`, `view_depth_range`, `f_number_to_aperture`, CLI `dof`, circle of confusion 1/1200 of frame width [added]), fixing the graded answer's claim that f/11 holds a watch head at 36 cm; skydome resolution against the HDRI width when polished surfaces reflect it (`dome_resolution_check`, `image_width`, wired into `scene_checks`) from LGT § Resolution and ARV-T 00:07:54; OIDN forces a box filter and denoises full frames (`denoiser_box_filter`, `denoiser_region` in `settings_lint`) from AOV § Imager Denoiser OIDN; Arnold GPU and OptiX absent on macOS stated in Establish first and failed by `settings_lint` (`gpu_on_macos`); pre-baked TX for batch (`autotx_on`, `use_existing_tx_off`) from ARV-T 00:14:44; license handling corrected to the sources (abort by default since Arnold 7.3, WN25's override variable marked [verify], `render_env(final=True)`, `kick_cmd(final=True)`, `licence_check_cmd`); `rim_equals_key` made signed so a rim above the key warns (BR-B ch6 Balance, JHILL 00:13:47); mistake rows for light groups on bounce cards or emissive planes (AOV § Syntax, O is object emission), per-light samples under GLS (SMP § Limitations), aperture from habit and a low dome under chrome. Offline checks 118 to 138; `job_rig_and_groups.py` now also runs `render_settings_report` (fake Maya only; not yet run in Maya).
+- 2026-09-24, v1: initial build (snapshot in
+  `skills/_versions/maya-lighting-rendering v1 2026-09-24/`; test code snapshot in
+  `archive/tests/maya-lighting-rendering/tests-code v1 2026-09-24/`).
+- 2026-09-24, v2 (refactor after the blind grade `tests/grading/M5_grade.md`): reference first as a
+  stance, an Establish-first row and a stage-1 critique finding (`reference` warns without
+  `brief["references"]`, else compares L* and value groups with the reference) from ARV-C 00:02:44
+  00:36:21, BR 00:08:13, TZ-C 00:02:20, ARV-L 00:01:11; depth of field from LGT § Aperture Size
+  (`dof_zone`, `dof_plan`, `view_depth_range`, `f_number_to_aperture`, CLI `dof`, circle of
+  confusion 1/1200 of frame width [added]), fixing the graded answer's claim that f/11 holds a watch
+  head at 36 cm; skydome resolution against the HDRI width when polished surfaces reflect it
+  (`dome_resolution_check`, `image_width`, wired into `scene_checks`) from LGT § Resolution and
+  ARV-T 00:07:54; OIDN forces a box filter and denoises full frames (`denoiser_box_filter`,
+  `denoiser_region` in `settings_lint`) from AOV § Imager Denoiser OIDN; Arnold GPU and OptiX absent
+  on macOS stated in Establish first and failed by `settings_lint` (`gpu_on_macos`); pre-baked TX
+  for batch (`autotx_on`, `use_existing_tx_off`) from ARV-T 00:14:44; license handling corrected to
+  the sources (abort by default since Arnold 7.3, WN25's override variable marked [verify],
+  `render_env(final=True)`, `kick_cmd(final=True)`, `licence_check_cmd`); `rim_equals_key` made
+  signed so a rim above the key warns (BR-B ch6 Balance, JHILL 00:13:47); mistake rows for light
+  groups on bounce cards or emissive planes (AOV § Syntax, O is object emission), per-light samples
+  under GLS (SMP § Limitations), aperture from habit and a low dome under chrome. Offline checks 118
+  to 138; `job_rig_and_groups.py` now also runs `render_settings_report` (fake Maya only; not yet
+  run in Maya).

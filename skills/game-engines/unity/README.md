@@ -1,6 +1,11 @@
 # Unity Expert Skills
 
-Agent skills that let Claude (Claude Code) or Codex drive Unity 6.3 LTS the way the experts in the best tutorials, conference talks and official documentation do. Built on 2026-09-24 with the same method as [Blender Expert Skills](../../dcc/blender/README.md): transcripts of top-rated videos, cited expert notes, then skills with tools and review rubrics, graded blind against the same model without them. Every procedure was also run live in Unity. Start with the lead skill, `scenario-unity-expert`.
+Agent skills that let Claude (Claude Code) or Codex drive Unity 6.3 LTS the way the experts in the
+best tutorials, conference talks and official documentation do. Built on 2026-09-24 with the same
+method as [Blender Expert Skills](../../dcc/blender/README.md): transcripts of top-rated videos,
+cited expert notes, then skills with tools and review rubrics, graded blind against the same model
+without them. Every procedure was also run live in Unity. Start with the lead skill,
+`scenario-unity-expert`.
 
 ## Skills
 
@@ -23,18 +28,36 @@ Agent skills that let Claude (Claude Code) or Codex drive Unity 6.3 LTS the way 
 
 ## Status
 
-- 14 skills (the lead `scenario-unity-expert`, which carries the shared Python toolkit `ut_*` and the C# AgentKit, plus 13 specialists) written from 203 expert videos (84 h) and 76 documentation pages, each with references, a `ut_<domain>.py` module and C# editor or runtime code.
-- Verified live: every procedure was run in Unity 6000.3.21f1 on macOS (Apple Silicon), 447 live tests and checks across the 14 skills: batch mode, a live editor bridge, the Unity CLI, captures that were looked at, EditMode and PlayMode tests, a development player, and macOS, Web, signed Android AAB and iOS Xcode export builds, with Web builds loaded in headless Chrome. Each skill's `references/procedures.md` records the result of every procedure.
-- Blind-graded written scenarios (round 1, 12 production briefs): 63 % without the skills (113/180), 97 % with them (174/180); all 12 scenarios improved. One grader per scenario, so read it as a direction, not a statistic. The grades measure written plans, not finished games, and were taken before a refactor round that fed every gap back into the skills; the refactored skills were not re-graded.
-- Not run: installs on phones, store uploads, Apple signing (Xcode lacked the iOS platform component), real purchases and ads, Safari, GitHub Actions on a runner, Unity Accelerator, windowed GPU captures. Each skill lists what it could not run.
+- 14 skills (the lead `scenario-unity-expert`, which carries the shared Python toolkit `ut_*` and
+  the C# AgentKit, plus 13 specialists) written from 203 expert videos (84 h) and 76 documentation
+  pages, each with references, a `ut_<domain>.py` module and C# editor or runtime code.
+- Verified live: every procedure was run in Unity 6000.3.21f1 on macOS (Apple Silicon), 447 live
+  tests and checks across the 14 skills: batch mode, a live editor bridge, the Unity CLI, captures
+  that were looked at, EditMode and PlayMode tests, a development player, and macOS, Web, signed
+  Android AAB and iOS Xcode export builds, with Web builds loaded in headless Chrome. Each skill's
+  `references/procedures.md` records the result of every procedure.
+- Blind-graded written scenarios (round 1, 12 production briefs): 63 % without the skills (113/180),
+  97 % with them (174/180); all 12 scenarios improved. One grader per scenario, so read it as a
+  direction, not a statistic. The grades measure written plans, not finished games, and were taken
+  before a refactor round that fed every gap back into the skills; the refactored skills were not
+  re-graded.
+- Not run: installs on phones, store uploads, Apple signing (Xcode lacked the iOS platform
+  component), real purchases and ads, Safari, GitHub Actions on a runner, Unity Accelerator,
+  windowed GPU captures. Each skill lists what it could not run.
 
 ## Requirements
 
-- Unity 6.3 LTS (6000.3.x; tested on 6000.3.21f1), installed through Unity Hub under `/Applications/Unity/Hub/Editor`. Tested on macOS (Apple Silicon) only.
-- A signed-in Unity Hub for batch mode: a Personal license activates only by signing in, and must go online every 30 days. Without it, batch runs exit with "Access token is unavailable".
-- Python 3.9+ (system `python3`) for the runner-side toolkit; the core uses the standard library. Optional: Pillow and numpy (faster image checks, drawing helpers), Playwright with an installed Chrome (Web browser checks), the Android and iOS Build Support modules and Xcode (mobile builds).
+- Unity 6.3 LTS (6000.3.x; tested on 6000.3.21f1), installed through Unity Hub under
+  `/Applications/Unity/Hub/Editor`. Tested on macOS (Apple Silicon) only.
+- A signed-in Unity Hub for batch mode: a Personal license activates only by signing in, and must go
+  online every 30 days. Without it, batch runs exit with "Access token is unavailable".
+- Python 3.9+ (system `python3`) for the runner-side toolkit; the core uses the standard library.
+  Optional: Pillow and numpy (faster image checks, drawing helpers), Playwright with an installed
+  Chrome (Web browser checks), the Android and iOS Build Support modules and Xcode (mobile builds).
 
-The lead skill `scenario-unity-expert` explains the execution channels: batch mode with `-executeMethod` jobs, a running editor over the Unity CLI, the Test Framework and command-line builds.
+The lead skill `scenario-unity-expert` explains the execution channels: batch mode with
+`-executeMethod` jobs, a running editor over the Unity CLI, the Test Framework and command-line
+builds.
 
 ## Install
 
@@ -42,12 +65,23 @@ The lead skill `scenario-unity-expert` explains the execution channels: batch mo
 npx skills add scenario-labs/skills --skill scenario-unity-expert scenario-unity-2d scenario-unity-animation scenario-unity-architecture scenario-unity-gameplay scenario-unity-mobile scenario-unity-performance scenario-unity-pipeline-automation scenario-unity-rendering-lighting scenario-unity-shaders scenario-unity-ui scenario-unity-vfx scenario-unity-web scenario-unity-world-building
 ```
 
-The installer puts the skills side by side, which the specialists need: they import the lead skill's `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Unity" group. Update with `npx skills update`.
+The installer puts the skills side by side, which the specialists need: they import the lead skill's
+`scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the
+"Expert tools: Unity" group. Update with `npx skills update`.
 
 ## Provenance
 
-Ported from [edemaistre/unity-expert-skills](https://github.com/edemaistre/unity-expert-skills/tree/v0.1), built on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this repository's frontmatter (`name`, `description`, `license`), no version line in the skill bodies, the sibling-install line in each `SKILL.md`, and paths into the build project made relative.
+Ported from
+[edemaistre/unity-expert-skills](https://github.com/edemaistre/unity-expert-skills/tree/v0.1), built
+on 2026-09-24, with these changes: the `scenario-` prefix on every skill name, this repository's
+frontmatter (`name`, `description`, `license`), no version line in the skill bodies, the
+sibling-install line in each `SKILL.md`, and paths into the build project made relative.
 
-Inside references, code comments and revision notes, "v0.1" and "v0.2" name the two internal build rounds (first build, then the refactor after blind grading); both are included here. The C# AgentKit's `Version` constants, reported as `agentkit` in job results, are internal protocol markers.
+Inside references, code comments and revision notes, "v0.1" and "v0.2" name the two internal build
+rounds (first build, then the refactor after blind grading); both are included here. The C#
+AgentKit's `Version` constants, reported as `agentkit` in job results, are internal protocol
+markers.
 
-Paths such as `tests/code/...`, `tests/projects/...` or `archive/tests/...` inside the skills point to the build project (tests, live evidence) on the author's machine; they are provenance only and are not part of this repo.
+Paths such as `tests/code/...`, `tests/projects/...` or `archive/tests/...` inside the skills point
+to the build project (tests, live evidence) on the author's machine; they are provenance only and
+are not part of this repo.

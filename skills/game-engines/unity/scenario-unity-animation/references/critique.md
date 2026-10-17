@@ -1,6 +1,8 @@
 # Critique rubric (judge your own animation work before calling it done)
 
-Score every stage. A stage passes only when every measurable line passes and every visual line was checked on a contact sheet you opened. Write the result into the handoff as Verified (with numbers and sheet paths) or Assumed.
+Score every stage. A stage passes only when every measurable line passes and every visual line was
+checked on a contact sheet you opened. Write the result into the handoff as Verified (with numbers
+and sheet paths) or Assumed.
 
 ## 1. Import
 
@@ -88,4 +90,5 @@ Score every stage. A stage passes only when every measurable line passes and eve
 
 - **Pass**: all measurable lines pass and the sheets were opened.
 - **Warn**: a line fails with a stated reason the user accepted (for example a stylized snap).
-- **Fail**: any error finding, a T-pose or bind pose on a sheet, a head or hand off target, a camera flip or swing through the target, a missing marker, an idle that drifts.
+- **Fail**: any error finding, a T-pose or bind pose on a sheet, a head or hand off target, a camera
+  flip or swing through the target, a missing marker, an idle that drifts.

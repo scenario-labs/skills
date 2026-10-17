@@ -1,6 +1,7 @@
 # Sources
 
-Notes for every source are in `notes/vfx-particles/`. Credentials are as stated in the notes. "Unverified" means the channel's claims about its author were not checked.
+Notes for every source are in `notes/vfx-particles/`. Credentials are as stated in the notes.
+"Unverified" means the channel's claims about its author were not checked.
 
 | Source                                    | Who                                                                    | URL                                                                                            | Best for                                                                   | Best timestamps                                                                |
 | ----------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
@@ -33,4 +34,5 @@ Notes for every source are in `notes/vfx-particles/`. Credentials are as stated 
 ## Live evidence
 
 - `tests/live_evidence/godot-vfx/live_<stamp>.json`: all V1 to V12 results.
-- Contact sheets per renderer and tier, overdraw sheets, the CPU-twin sheet, the sub-emitter dot images, and `fit_aabb_<stamp>.json`.
+- Contact sheets per renderer and tier, overdraw sheets, the CPU-twin sheet, the sub-emitter dot
+  images, and `fit_aabb_<stamp>.json`.

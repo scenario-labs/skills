@@ -6,20 +6,51 @@ license: MIT
 
 # Maya modeling (hard surface, organic, props)
 
-Expert modeling is purposeful topology: every loop exists for the silhouette, a highlight, a bake, a UV seam or a joint, and the model arrives downstream with nothing the next person has to clean. The agent works big to small, measures each stage with the toolkit, and looks at a metal highlight render before believing a surface. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap.
+Expert modeling is purposeful topology: every loop exists for the silhouette, a highlight, a bake, a
+UV seam or a joint, and the model arrives downstream with nothing the next person has to clean. The
+agent works big to small, measures each stage with the toolkit, and looks at a metal highlight
+render before believing a surface. If a sibling skill named here is missing from your available
+skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
+unattended, proceed from tool schemas and flag the gap.
 
-**REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps). Toolkit: [`scripts/mx_modeling.py`](scripts/mx_modeling.py) (`sys.path[:0] = ["<skills>/scenario-maya-modeling/scripts", "<skills>/scenario-maya-expert/scripts"]; import mx_modeling as MM`), used with `mx_audit`, `mx_validate`, `mx_review`, `mx_run`. **Not yet run in Maya:** its pure-Python layer passed offline tests; every Maya call is pending `tests/code/maya-modeling/run_all.sh`.
+**REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
+Toolkit: [`scripts/mx_modeling.py`](scripts/mx_modeling.py)
+(`sys.path[:0] = ["<skills>/scenario-maya-modeling/scripts", "<skills>/scenario-maya-expert/scripts"]; import mx_modeling as MM`),
+used with `mx_audit`, `mx_validate`, `mx_review`, `mx_run`. **Not yet run in Maya:** its pure-Python
+layer passed offline tests; every Maya call is pending `tests/code/maya-modeling/run_all.sh`.
 
 ## Stance (the expert delta)
 
-- **Purpose first, then density.** A still from CAD or booleans can skip clean topology; games, animation and close-ups cannot (Mario Elementza [00:00:32]). Minimum density is the narrowest feature, "the shortest distance between the two edges" [00:17:19]; then camera distance decides: low density needs redirected edges and pinches slightly (background), high density needs none (hero close-up) [01:09:20] [01:39:46]. Vertex count is the real cost: UV seams, hard edges and materials split vertices; a hard edge on a UV seam is free (Polycount).
-- **Clean uncut form, then cut.** On flats, offset before cutting: the offset ring becomes the support loop; on curved parts, cut the support loop before the detail (Mario [00:16:13] [00:38:16] [01:19:49]).
-- **Even grid, never double; loops are the proof.** Neighbor quads under 2:1 (Mario [00:08:31]); a breaking loop is an unsolved area, a loop that stops dead is a hidden double extrude [00:18:57] [00:39:22].
-- **Triangles: remove, solve, reinstate; n-gons never.** On a cage, take triangles out, solve the rest, put one back only where the metal test holds; flats forgive, curves and deforming areas do not (Mario [00:20:36] [00:29:59]; Jessica Dru Johnson [01:12:33]). On a game low, triangles end loops locally (On Mars [00:10:29]). Cleanup fixes only lamina, non-manifold and zero-length geometry; n-gons by hand (FlippedNormals ToWRH4IXF7A [00:11:15] [00:11:50]).
-- **Cylinders in quarters, quad caps, ring loops only** (Mario [00:57:43] [01:12:04] [01:14:16]; Pixar OpenSubdiv: no high-valence fans).
-- **The destination picks the edge-holding method,** and subdivision lives in one place: Arnold renders Smooth Mesh Preview's state on top of its own iterations, so every save goes out with preview off (Arnold subdivision doc; FlippedNormals [00:24:00]). Creases are lost on export (antCGi RlNnp4qQIrU [00:28:12]).
-- **Deformation topology is the modeler's job.** One control plus two support loops per joint (Jessica [01:15:51]), isolation loops bound controls [01:14:11], no pole on a deforming surface (antCGi QW8w15J00Ok [00:09:58]); prove a fix by bending two topologies with identical settings (antCGi x07USYlvu2o [00:16:24]).
-- **Hygiene is a delivery contract.** Rebuild beats repair, unique short names, render stats at defaults; two-sided lighting hides flipped faces (FlippedNormals [00:08:31] [00:18:16] [00:02:35] [00:20:47]).
+- **Purpose first, then density.** A still from CAD or booleans can skip clean topology; games,
+  animation and close-ups cannot (Mario Elementza [00:00:32]). Minimum density is the narrowest
+  feature, "the shortest distance between the two edges" [00:17:19]; then camera distance decides:
+  low density needs redirected edges and pinches slightly (background), high density needs none
+  (hero close-up) [01:09:20] [01:39:46]. Vertex count is the real cost: UV seams, hard edges and
+  materials split vertices; a hard edge on a UV seam is free (Polycount).
+- **Clean uncut form, then cut.** On flats, offset before cutting: the offset ring becomes the
+  support loop; on curved parts, cut the support loop before the detail (Mario [00:16:13] [00:38:16]
+  [01:19:49]).
+- **Even grid, never double; loops are the proof.** Neighbor quads under 2:1 (Mario [00:08:31]); a
+  breaking loop is an unsolved area, a loop that stops dead is a hidden double extrude [00:18:57]
+  [00:39:22].
+- **Triangles: remove, solve, reinstate; n-gons never.** On a cage, take triangles out, solve the
+  rest, put one back only where the metal test holds; flats forgive, curves and deforming areas do
+  not (Mario [00:20:36] [00:29:59]; Jessica Dru Johnson [01:12:33]). On a game low, triangles end
+  loops locally (On Mars [00:10:29]). Cleanup fixes only lamina, non-manifold and zero-length
+  geometry; n-gons by hand (FlippedNormals ToWRH4IXF7A [00:11:15] [00:11:50]).
+- **Cylinders in quarters, quad caps, ring loops only** (Mario [00:57:43] [01:12:04] [01:14:16];
+  Pixar OpenSubdiv: no high-valence fans).
+- **The destination picks the edge-holding method,** and subdivision lives in one place: Arnold
+  renders Smooth Mesh Preview's state on top of its own iterations, so every save goes out with
+  preview off (Arnold subdivision doc; FlippedNormals [00:24:00]). Creases are lost on export
+  (antCGi RlNnp4qQIrU [00:28:12]).
+- **Deformation topology is the modeler's job.** One control plus two support loops per joint
+  (Jessica [01:15:51]), isolation loops bound controls [01:14:11], no pole on a deforming surface
+  (antCGi QW8w15J00Ok [00:09:58]); prove a fix by bending two topologies with identical settings
+  (antCGi x07USYlvu2o [00:16:24]).
+- **Hygiene is a delivery contract.** Rebuild beats repair, unique short names, render stats at
+  defaults; two-sided lighting hides flipped faces (FlippedNormals [00:08:31] [00:18:16] [00:02:35]
+  [00:20:47]).
 
 ## Establish first
 
@@ -35,21 +66,58 @@ Expert modeling is purposeful topology: every loop exists for the silhouette, a 
 
 ## Workflow
 
-Every stage is a headless `mx_run` job that saves a new version with preview off; the GUI bridge is for playblasts and interactive tools (substitutes in [`references/procedures.md`](references/procedures.md)). Component lists cross stages only through `MM.component_record` and `MM.carry_components`, never by name or by an index read before a topology edit (P18).
+Every stage is a headless `mx_run` job that saves a new version with preview off; the GUI bridge is
+for playblasts and interactive tools (substitutes in
+[`references/procedures.md`](references/procedures.md)). Component lists cross stages only through
+`MM.component_record` and `MM.carry_components`, never by name or by an index read before a topology
+edit (P18).
 
-1. **Session and brief.** `cmds.about(version=True)` (Smart Bevel changed in 2027.1 and 2027.2), units cm, Y up, brief in numbers (P1). GATE: assumptions written.
-2. **Blockout at real size.** Primitives named at creation, stand on the grid, pivot per convention, freeze, delete history (P2). GATE: `mx_audit` frozen, no `default_name` or `duplicate_short_name`, dimensions within 2% [added]; silhouette and clay sheets compared to reference.
-3. **Primary form, clean grid.** Write down the narrowest feature (groove, recess wall, gap) and its width: the grid near it takes that spacing, the rest balances to it; decide density or redirection per corner from the camera distance. Close the biggest quads, balance, stress-test by adding loops (Mario [00:10:11]); curves with Edit Edge Flow (antCGi [00:16:04]). GATE: `MM.balance(m)["edges_over_limit"] == 0` before support loops; `MM.cage_report(m)`: n-gons 0, every curved triangle removed or proven by the highlight review; loops continuous on the wire sheet.
-4. **Secondary forms.** `MM.extrude(faces, offset_cm=...)` then recess (P3; refuses the empty extrude); openings from one quad; cylinders with `MM.cylinder_sides_for` and `MM.build_quad_cylinder` (P4), support loops cut before the opening; or `polyCBoolOp` on manifold meshes, then Smart Bevel (P5). GATE: zero-length edges, coincident pairs, non-manifold all 0.
+1. **Session and brief.** `cmds.about(version=True)` (Smart Bevel changed in 2027.1 and 2027.2),
+   units cm, Y up, brief in numbers (P1). GATE: assumptions written.
+2. **Blockout at real size.** Primitives named at creation, stand on the grid, pivot per convention,
+   freeze, delete history (P2). GATE: `mx_audit` frozen, no `default_name` or
+   `duplicate_short_name`, dimensions within 2% [added]; silhouette and clay sheets compared to
+   reference.
+3. **Primary form, clean grid.** Write down the narrowest feature (groove, recess wall, gap) and its
+   width: the grid near it takes that spacing, the rest balances to it; decide density or
+   redirection per corner from the camera distance. Close the biggest quads, balance, stress-test by
+   adding loops (Mario [00:10:11]); curves with Edit Edge Flow (antCGi [00:16:04]). GATE:
+   `MM.balance(m)["edges_over_limit"] == 0` before support loops; `MM.cage_report(m)`: n-gons 0,
+   every curved triangle removed or proven by the highlight review; loops continuous on the wire
+   sheet.
+4. **Secondary forms.** `MM.extrude(faces, offset_cm=...)` then recess (P3; refuses the empty
+   extrude); openings from one quad; cylinders with `MM.cylinder_sides_for` and
+   `MM.build_quad_cylinder` (P4), support loops cut before the opening; or `polyCBoolOp` on manifold
+   meshes, then Smart Bevel (P5). GATE: zero-length edges, coincident pairs, non-manifold all 0.
 5. **Edge holding, per destination:**
-   - SubD hero or bake high, portable: support loops (offset rings, beveled-cube corner routing, Mario [00:44:24]).
-   - SubD staying in Maya, Arnold or USD: creases, one method, values at or below render levels (`MM.crease`, `MM.crease_report`, P6).
-   - Game low: chamfers with `MM.bevel` (Smart Bevel after booleans, legacy Fractional on clean quads) plus `MM.weighted_normals`, or hard edges on UV seams and a baked normal map (Polycount).
-   - Still only from CAD or booleans: Smart Bevel, no retopology.
-     GATE: `MM.cage_report(cage)["ready_to_smooth"]` (hard edges 0, since a faceted patch is a hard edge, Mario [01:28:38]; no fan caps; 6+ poles justified); `MM.highlight_review(..., subdiv=n)` stripes continuous across every cut; bevel `problems` empty; `crease_report` clean.
-6. **Game low and bake prep** (P10). `MM.smooth_copy` the high; duplicate the cage and reach the low only by deleting edges (`MM.flat_edges` off the silhouette, loops ended with triangles); radius edges on round corners, evenly spaced, one on the crest (On Mars [00:12:50] [00:26:34]); parts touching the body welded in or their hidden faces deleted (Polycount: contiguous low); `MM.shrink_wrap`; `MM.set_hard_by_angle(low, 45)`; `MM.triangulated_copy(low, toward=high)` for bake and export. GATE: `MM.deviation` recorded, silhouettes overlap, tris in budget, engine vertices reported, each separate shell (`polyEvaluate(shell=True)`) justified, `diagonals_wrong_after == 0`.
-7. **Characters: deformation check** (P13). Loops across wrist and ankle, lids and lips with matching counts, mouth-corner loop under the cheek, neutral face (antCGi; Jessica [01:00:30]). GATE: `MM.bend_test` shows no flips and no regression against the previous topology; `restored` true.
-8. **Hygiene and handoff** (P14, P15). `MM.cleanup_technical`, `MM.inverted_shells`, `MM.handoff_report(roots, out, to=...)`, `mx_validate.validate(profile="model", fix=SAFE_FIXES + ("render_stats",))`, report again, save a new version. GATE: report `ok`; cleanup `ok`; 0 inverted shells; preview off; pending items named; sheets opened.
+   - SubD hero or bake high, portable: support loops (offset rings, beveled-cube corner routing,
+     Mario [00:44:24]).
+   - SubD staying in Maya, Arnold or USD: creases, one method, values at or below render levels
+     (`MM.crease`, `MM.crease_report`, P6).
+   - Game low: chamfers with `MM.bevel` (Smart Bevel after booleans, legacy Fractional on clean
+     quads) plus `MM.weighted_normals`, or hard edges on UV seams and a baked normal map
+     (Polycount).
+   - Still only from CAD or booleans: Smart Bevel, no retopology. GATE:
+     `MM.cage_report(cage)["ready_to_smooth"]` (hard edges 0, since a faceted patch is a hard edge,
+     Mario [01:28:38]; no fan caps; 6+ poles justified); `MM.highlight_review(..., subdiv=n)`
+     stripes continuous across every cut; bevel `problems` empty; `crease_report` clean.
+6. **Game low and bake prep** (P10). `MM.smooth_copy` the high; duplicate the cage and reach the low
+   only by deleting edges (`MM.flat_edges` off the silhouette, loops ended with triangles); radius
+   edges on round corners, evenly spaced, one on the crest (On Mars [00:12:50] [00:26:34]); parts
+   touching the body welded in or their hidden faces deleted (Polycount: contiguous low);
+   `MM.shrink_wrap`; `MM.set_hard_by_angle(low, 45)`; `MM.triangulated_copy(low, toward=high)` for
+   bake and export. GATE: `MM.deviation` recorded, silhouettes overlap, tris in budget, engine
+   vertices reported, each separate shell (`polyEvaluate(shell=True)`) justified,
+   `diagonals_wrong_after == 0`.
+7. **Characters: deformation check** (P13). Loops across wrist and ankle, lids and lips with
+   matching counts, mouth-corner loop under the cheek, neutral face (antCGi; Jessica [01:00:30]).
+   GATE: `MM.bend_test` shows no flips and no regression against the previous topology; `restored`
+   true.
+8. **Hygiene and handoff** (P14, P15). `MM.cleanup_technical`, `MM.inverted_shells`,
+   `MM.handoff_report(roots, out, to=...)`,
+   `mx_validate.validate(profile="model", fix=SAFE_FIXES + ("render_stats",))`, report again, save a
+   new version. GATE: report `ok`; cleanup `ok`; 0 inverted shells; preview off; pending items
+   named; sheets opened.
 
 ## Numbers
 
@@ -72,8 +140,15 @@ Every stage is a headless `mx_run` job that saves a new version with preview off
 
 ## Quality gates
 
-Measurable, per mesh: `mx_audit.verdict(mx_audit.audit(m, texture_size=2048), "game" | "film" | "subd", max_tris=budget)` has no `error`, plus the `MM` checks named in each GATE; scene: `mx_validate.validate(profile="model")` no `fail`; together: `MM.handoff_report`.
-Visual, opened every time: `mx_review.review` sheet (silhouette vs reference, clay, wire loops, normals); `MM.highlight_review` with `focus=` closeups on every cut (kinks, dark streaks, wobbles are pinching, Mario frames 00:12:45, 01:38:42); high and low silhouettes side by side; in a GUI session, two-sided lighting off or backface culling. Judge with [`references/critique.md`](references/critique.md).
+Measurable, per mesh:
+`mx_audit.verdict(mx_audit.audit(m, texture_size=2048), "game" | "film" | "subd", max_tris=budget)`
+has no `error`, plus the `MM` checks named in each GATE; scene:
+`mx_validate.validate(profile="model")` no `fail`; together: `MM.handoff_report`. Visual, opened
+every time: `mx_review.review` sheet (silhouette vs reference, clay, wire loops, normals);
+`MM.highlight_review` with `focus=` closeups on every cut (kinks, dark streaks, wobbles are
+pinching, Mario frames 00:12:45, 01:38:42); high and low silhouettes side by side; in a GUI session,
+two-sided lighting off or backface culling. Judge with
+[`references/critique.md`](references/critique.md).
 
 ## Common mistakes
 
@@ -98,25 +173,45 @@ Visual, opened every time: `mx_review.review` sheet (silhouette vs reference, cl
 
 ## Handoffs
 
-- **Receives** the brief from scenario-maya-expert; sculpts from scenario-zbrush-expert (check scale, ZBrush has no units; orientation; locked normals); generated meshes from scenario-3d (reference or bake high only).
-- **Delivers to scenario-maya-retopology-uv** (UVs, bake prep): a new version `<asset>_model_v###.ma`, `<asset>_GRP` with `_geo` meshes (engine names such as `SM_` and `UCX_` for games), the cage, `<asset>_high` with floaters separate and `castsShadows` off for AO (Polycount), the low if built, `handoff_<to>.json` with UVs pending, the hard-edge list for UV cuts, and the sheets looked at. Manifold after triangulation too: Unfold3D refuses non-manifold meshes and unfolds a triangulated copy (P17).
-- **Delivers to scenario-maya-rigging** (deformation-ready): `to="rigging"` clean (X symmetry, no locked normals, no history), grounded and centered, eyes separate and looking ahead, symmetric parts combined, `bend_test` numbers (antCGi e74K checklist).
-- **Delivers to scenario-maya-lookdev** (film SubD): subdivision set in one place, crease sets named with values, preview off. FBX export goes to scenario-maya-pipeline-scripting.
+- **Receives** the brief from scenario-maya-expert; sculpts from scenario-zbrush-expert (check
+  scale, ZBrush has no units; orientation; locked normals); generated meshes from scenario-3d
+  (reference or bake high only).
+- **Delivers to scenario-maya-retopology-uv** (UVs, bake prep): a new version
+  `<asset>_model_v###.ma`, `<asset>_GRP` with `_geo` meshes (engine names such as `SM_` and `UCX_`
+  for games), the cage, `<asset>_high` with floaters separate and `castsShadows` off for AO
+  (Polycount), the low if built, `handoff_<to>.json` with UVs pending, the hard-edge list for UV
+  cuts, and the sheets looked at. Manifold after triangulation too: Unfold3D refuses non-manifold
+  meshes and unfolds a triangulated copy (P17).
+- **Delivers to scenario-maya-rigging** (deformation-ready): `to="rigging"` clean (X symmetry, no
+  locked normals, no history), grounded and centered, eyes separate and looking ahead, symmetric
+  parts combined, `bend_test` numbers (antCGi e74K checklist).
+- **Delivers to scenario-maya-lookdev** (film SubD): subdivision set in one place, crease sets named
+  with values, preview off. FBX export goes to scenario-maya-pipeline-scripting.
 
 ## Maya 2027 notes
 
-- Smart Bevel (`polySmartBevel`, 2027): world-unit Width, Depth profile, Filter default Selected Edges; output differs 2027.0, .1, .2; flags unknown until probed (`MM.bevel` records `attr_map`). Its box-corner behavior is untested: the 2-segment rule comes from the legacy bevel, so read the `problems` census. Old bevel is "legacy bevel", with Filter attributes and intersection-only bevels on booleans since 2025.
-- Shift+drag is "Shift Extrude" (2025); Smart Extrude stitches overlapping faces, Edit Mesh > Extrude does not. Booleans: `polyBoolean` (2023), 3ds Max engine (2025.3), Volume mode (2026).
-- Smooth Mesh Preview is OpenSubdiv Catmull-Clark; Crease Tool and Crease Sets are exclusive per component.
+- Smart Bevel (`polySmartBevel`, 2027): world-unit Width, Depth profile, Filter default Selected
+  Edges; output differs 2027.0, .1, .2; flags unknown until probed (`MM.bevel` records `attr_map`).
+  Its box-corner behavior is untested: the 2-segment rule comes from the legacy bevel, so read the
+  `problems` census. Old bevel is "legacy bevel", with Filter attributes and intersection-only
+  bevels on booleans since 2025.
+- Shift+drag is "Shift Extrude" (2025); Smart Extrude stitches overlapping faces, Edit Mesh >
+  Extrude does not. Booleans: `polyBoolean` (2023), 3ds Max engine (2025.3), Volume mode (2026).
+- Smooth Mesh Preview is OpenSubdiv Catmull-Clark; Crease Tool and Crease Sets are exclusive per
+  component.
 - New scenes default to OpenPBR Surface; the highlight review uses aiStandardSurface.
 - Reduce is decimation, not retopology; Quad Draw is interactive only.
-- FBX import can bring user normals (2027); imported normals may arrive locked (Mesh Display > Unlock Normals).
+- FBX import can bring user normals (2027); imported normals may arrive locked (Mesh Display >
+  Unlock Normals).
 - macOS keys: Ctrl is Control, Alt is Option.
 
 ## References
 
-- `references/procedures.md`: full code P1 to P18 with test paths. Load before writing any modeling code.
+- `references/procedures.md`: full code P1 to P18 with test paths. Load before writing any modeling
+  code.
 - `references/critique.md`: the judging rubric. Load at every gate and before reporting.
-- [`references/expert-notes.md`](references/expert-notes.md): each expert's reasoning, timestamps, disagreements. Load for an unfamiliar asset type or a judgment call.
-- [`references/gui-paths.md`](references/gui-paths.md): menus and hotkeys for a GUI or computer-use session.
+- [`references/expert-notes.md`](references/expert-notes.md): each expert's reasoning, timestamps,
+  disagreements. Load for an unfamiliar asset type or a judgment call.
+- [`references/gui-paths.md`](references/gui-paths.md): menus and hotkeys for a GUI or computer-use
+  session.
 - [`references/sources.md`](references/sources.md): sources, credentials, best timestamps.

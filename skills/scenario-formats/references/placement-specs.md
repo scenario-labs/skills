@@ -1,6 +1,10 @@
 # Placement specs
 
-Authoring-time values (2026). Platform UI and store requirements churn: treat every row as the default, confirm contractual deliverables against the platform's current published spec, and read safe zones as approximate. The workflow around these numbers is SKILL.md's ladder and order of operations: aim generative work at the row's ratio, land exact pixels with a resize, then verify by measurement.
+Authoring-time values (2026). Platform UI and store requirements churn: treat every row as the
+default, confirm contractual deliverables against the platform's current published spec, and read
+safe zones as approximate. The workflow around these numbers is SKILL.md's ladder and order of
+operations: aim generative work at the row's ratio, land exact pixels with a resize, then verify by
+measurement.
 
 ## Social
 
@@ -23,7 +27,10 @@ Authoring-time values (2026). Platform UI and store requirements churn: treat ev
 
 ## The 9:16 safe zone
 
-Platform UI eats the edges of stories, reels, and TikTok. Keep the subject, all text, and any mark inside the central band: clear roughly the top 14 percent, the bottom 35 percent, and 6 to 13 percent per side (as of 2026, the same band `scenario-video-ads` composes video masters to). One composition inside that band passes every 9:16 placement.
+Platform UI eats the edges of stories, reels, and TikTok. Keep the subject, all text, and any mark
+inside the central band: clear roughly the top 14 percent, the bottom 35 percent, and 6 to 13
+percent per side (as of 2026, the same band `scenario-video-ads` composes video masters to). One
+composition inside that band passes every 9:16 placement.
 
 ## Screen, cinema, and hero
 
@@ -70,7 +77,11 @@ Platform UI eats the edges of stories, reels, and TikTok. Keep the subject, all 
 | Shopify product      | 1:1   | 2048x2048       |                                                                     |
 | Google Shopping feed | 1:1   | 800x800 or more | Apparel minimum 250x250                                             |
 
-Marketplace main images are policy surfaces, not creative ones: Amazon wants the product on pure white (RGB 255, 255, 255) filling about 85 percent of the frame with no text, logos, or watermarks, and the other marketplaces run close variants. The text-free master doctrine pays off here: the master is the main image, and lettered or lifestyle derivatives fill the secondary slots and social placements.
+Marketplace main images are policy surfaces, not creative ones: Amazon wants the product on pure
+white (RGB 255, 255, 255) filling about 85 percent of the frame with no text, logos, or watermarks,
+and the other marketplaces run close variants. The text-free master doctrine pays off here: the
+master is the main image, and lettered or lifestyle derivatives fill the secondary slots and social
+placements.
 
 ## Streaming and community
 
@@ -103,7 +114,8 @@ Marketplace main images are policy surfaces, not creative ones: Amazon wants the
 | Billboard        | 970x250        |                                                                  |
 | Email header     | 1200x400 class | Emails render near 600 wide; deliver 2x for high-density screens |
 
-Banners are far ratios on tiny canvases: recompose natively (the ladder's last rung) rather than reframing, and letter at final size with `scenario-text-overlay`.
+Banners are far ratios on tiny canvases: recompose natively (the ladder's last rung) rather than
+reframing, and letter at final size with `scenario-text-overlay`.
 
 ## Print
 
@@ -115,4 +127,7 @@ Banners are far ratios on tiny canvases: recompose natively (the ladder's last r
 | US letter              | 8.5x11 in  | 2550x3300         |       |
 | Movie one-sheet poster | 27x40 in   | 8100x12000        |       |
 
-Add 3 mm of bleed per edge (0.125 in on US trims) and keep text 5 mm inside the trim. 300 dpi targets exceed native generation sizes: generate the master at the largest clean size, upscale to the print target (find the upscaler with `recommend`, the need in the user's own words), and only then letter.
+Add 3 mm of bleed per edge (0.125 in on US trims) and keep text 5 mm inside the trim. 300 dpi
+targets exceed native generation sizes: generate the master at the largest clean size, upscale to
+the print target (find the upscaler with `recommend`, the need in the user's own words), and only
+then letter.

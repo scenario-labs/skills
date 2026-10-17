@@ -1,6 +1,9 @@
 # Critique rubric: judging a world like the experts
 
-Use at every stage gate: numbers first (toolkit output), then the captures you opened. Each line: what to look at, pass, fail and what to do. Sources in brackets; [added] marks this skill's own threshold. A capture that `ue_review.image_checks` flags as all white or all black is not evidence; retake it.
+Use at every stage gate: numbers first (toolkit output), then the captures you opened. Each line:
+what to look at, pass, fail and what to do. Sources in brackets; [added] marks this skill's own
+threshold. A capture that `ue_review.image_checks` flags as all white or all black is not evidence;
+retake it.
 
 ## 1. Plan and tiers
 

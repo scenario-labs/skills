@@ -1,6 +1,7 @@
 # scenario-godot-ui: sources
 
-Notes: `notes/ui-ux/` (one per source plus `_digest_videos_ui-ux.md` and `_digest_docs_ui-ux.md`). Credentials as stated by the notes; "unverified" means not checked beyond the channel.
+Notes: `notes/ui-ux/` (one per source plus `_digest_videos_ui-ux.md` and `_digest_docs_ui-ux.md`).
+Credentials as stated by the notes; "unverified" means not checked beyond the channel.
 
 | Source                             | Who, credential                                              | URL                                                                                  | Best for                                                     | Best timestamps                                  |
 | ---------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------ |

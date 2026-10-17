@@ -1,17 +1,25 @@
 # Critique rubric: realistic characters and creatures
 
-Use at every gate. Each row says what to measure in code, what to judge on which render, and how to fix it. Metrics marked [added] are this skill's own translation of an expert rule and are not calibrated: compare a stage with the previous stage, a before copy or a reference head exported the same way, and let the renders decide. Severity: **blocker** (fix before the next stage: later stages inherit it), **major** (fix in this stage), **minor** (note it, fix when passing by).
+Use at every gate. Each row says what to measure in code, what to judge on which render, and how to
+fix it. Metrics marked [added] are this skill's own translation of an expert rule and are not
+calibrated: compare a stage with the previous stage, a before copy or a reference head exported the
+same way, and let the renders decide. Severity: **blocker** (fix before the next stage: later stages
+inherit it), **major** (fix in this stage), **minor** (note it, fix when passing by).
 
 Standard renders:
 
-- The review sheet: `zb_review.review`, MatCap Gray, with front, right (profile), `view_facing("-Y")` (below), three-quarter and back.
+- The review sheet: `zb_review.review`, MatCap Gray, with front, right (profile),
+  `view_facing("-Y")` (below), three-quarter and back.
 - A raking-light close-up per region.
 - `blurred`, `thumbnail` (128 px) and `upside_down` copies of the front view.
-- For skin: the three-light SSS render from scenario-zbrush-paint-render (portrait key, from below, flat front: Costa j5XLtLMN0P8 00:19:51, 00:31:12).
+- For skin: the three-light SSS render from scenario-zbrush-paint-render (portrait key, from below,
+  flat front: Costa j5XLtLMN0P8 00:19:51, 00:31:12).
 
 ## 1. The face, in Kingslien's order (6wiDxO-ZADg)
 
-Walk the steps in order and stop at the first failure: "almost everything that's right or wrong in this face is also right or wrong back in the beginning" (01:37:20). Ears are not in his order: he names them only as a premature detail (00:31:33).
+Walk the steps in order and stop at the first failure: "almost everything that's right or wrong in
+this face is also right or wrong back in the beginning" (01:37:20). Ears are not in his order: he
+names them only as a premature detail (00:31:33).
 
 | #   | Step                                                       | Measure                                                                  | Judge on                                                                                                                       | Fix (procedure)                                                                                                                                   | Severity |
 | --- | ---------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
@@ -34,13 +42,14 @@ Walk the steps in order and stop at the first failure: "almost everything that's
 | 17  | Nasolabial area and nostrils (01:33:42-01:36:13)           | nostrils inside the alar crease in the front silhouette [added]          | three-quarter: planes delimited from both sides, a trough kept; nostrils tucked under                                          | plane strokes from both borders, then a low blend                                                                                                 | major    |
 | 18  | Process (00:20:29)                                         | `MoveBudget.report`: no retouched region, within budget                  | the stroke log                                                                                                                 | undo to the stage's morph target and replan                                                                                                       | major    |
 
-Canon ratios, from Anatomy For Sculptors, feed step 1. Check them with `head_ratio_check` on landmarks from `profile_landmarks` or markers:
+Canon ratios, from Anatomy For Sculptors, feed step 1. Check them with `head_ratio_check` on
+landmarks from `profile_landmarks` or markers:
 
 - crown to hairline 1/6 H;
 - then three equal thirds;
 - the lower third split in three;
-- eyes at 1/2 H.
-  Tolerance is plus or minus 5 percent of H [added]. Stylized heads: record which ratio is broken on purpose (`deliberate=`).
+- eyes at 1/2 H. Tolerance is plus or minus 5 percent of H [added]. Stylized heads: record which
+  ratio is broken on purpose (`deliberate=`).
 
 ## 2. Costa's form evaluation (j5XLtLMN0P8 00:04:44)
 
@@ -104,8 +113,12 @@ Run it after every secondary stage and at delivery. It is visual; the derived im
 
 ## 5. Bodies (Eaton Ale6SXXbJMM; Anatomy For Sculptors)
 
-- **Force chain.** Only the muscles in the force chain are tense; the antagonists are soft. A generalist's "super bodybuilder deltoid" is the error (00:13:39-00:15:29). Judge on a three-quarter back render.
-- **Landmarks first.** Sternum, clavicle, acromion, spine of the scapula, C7, iliac crest, ASIS, PSIS, deltoid insertion (00:35:59-00:44:08). They read as depressions on a muscular body and as bumps on a lean one (A4S).
+- **Force chain.** Only the muscles in the force chain are tense; the antagonists are soft. A
+  generalist's "super bodybuilder deltoid" is the error (00:13:39-00:15:29). Judge on a
+  three-quarter back render.
+- **Landmarks first.** Sternum, clavicle, acromion, spine of the scapula, C7, iliac crest, ASIS,
+  PSIS, deltoid insertion (00:35:59-00:44:08). They read as depressions on a muscular body and as
+  bumps on a lean one (A4S).
 - **Scapula.** About 30 degrees of rotation at 90 degrees of humerus elevation (`scapula_check`).
 - **Straight active muscles.** They run point to point; check from under the armpit (00:54:07).
 - **A4S ratios:**
@@ -131,20 +144,24 @@ Run it after every secondary stage and at delivery. It is visual; the derived im
 ## 7. Fur and hair (Pablo lgTA_ebLGDw; FiberMesh doc; Pavlovich QCcDTuDT2HM)
 
 - **Coverage.** With a contrasting fill (Color > FillObject on the fibers) there are no gaps.
-- **Roots.** No floating fibers and no cushion gap around the scalp; roots are pinned with Mask By Fibers before any simulation.
+- **Roots.** No floating fibers and no cushion gap around the scalp; roots are pinned with Mask By
+  Fibers before any simulation.
 - **Groom.** It reads as intentional, with clumps and partings that read as a hairstyle.
 - **Still a FiberMesh.** FiberUV enabled means grooming is still possible.
 - **Polycount.** Within budget; Profile 1 unless exporting.
 
 ## 8. Game readiness (Rakan Khamash, Blizzard, FRZtVXpAokc)
 
-- **"Say it or don't".** At `thumbnail` size, the character reads from the back of the room (00:02:16, 00:05:00).
+- **"Say it or don't".** At `thumbnail` size, the character reads from the back of the room
+  (00:02:16, 00:05:00).
 - **Curves and lines.** S and C curves; no parallel lines; no noisy curves (00:06:07).
 - **70/30.** Main breaks sit away from the middle; `split_ratio` flags 0.45 to 0.55 [added band].
 - **Rest areas.** Rest areas exist, and details push the character's intent (00:08:53-00:10:32).
 - **Blockout.** It is 90 to 95 percent of the low poly (00:21:37).
-- **Loops and floaters.** Straps sit on loops; floaters stay separate; the face topology matches the shared template (vertex count equal before projecting).
-- **Budget.** About 16k for a hero including hair variants (unit not stated in the audio; the research manifest reads it as triangles).
+- **Loops and floaters.** Straps sit on loops; floaters stay separate; the face topology matches the
+  shared template (vertex count equal before projecting).
+- **Budget.** About 16k for a hero including hair variants (unit not stated in the audio; the
+  research manifest reads it as triangles).
 
 ## 9. Stack and projection (J Hill HlHoIGE2Ocs; Costa Lfen-BSwWcE; FlippedNormals Zp07GW3rND0)
 

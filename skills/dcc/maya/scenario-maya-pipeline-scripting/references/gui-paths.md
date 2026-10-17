@@ -1,6 +1,9 @@
 # GUI paths for the same procedures (for a computer-use agent)
 
-Menu paths from the Maya 2027 Help pages saved in the project and the notes; hotkeys only where a source states them. On macOS, Maya's docs map Ctrl to Control and Alt to Option, not Command. Not checked in a running Maya 2027: labels marked [verify] come from older pages or notes. The code path for each row is in `procedures.md`.
+Menu paths from the Maya 2027 Help pages saved in the project and the notes; hotkeys only where a
+source states them. On macOS, Maya's docs map Ctrl to Control and Alt to Option, not Command. Not
+checked in a running Maya 2027: labels marked [verify] come from older pages or notes. The code path
+for each row is in `procedures.md`.
 
 ## Projects, files, references, namespaces
 

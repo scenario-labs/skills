@@ -1,17 +1,20 @@
 # scenario-godot-shaders critique rubric
 
-Use this rubric before calling a shader deliverable done. Score each line pass, fail or n/a. One fail in "Blocking" means the deliverable is not done.
+Use this rubric before calling a shader deliverable done. Score each line pass, fail or n/a. One
+fail in "Blocking" means the deliverable is not done.
 
 ## Blocking
 
 1. **Compiles per target renderer.**
    - `compile_matrix` is ok for every renderer the brief names.
-   - `draw_check` (windowed) shows zero shader and engine errors, so stencil and fog problems surface.
+   - `draw_check` (windowed) shows zero shader and engine errors, so stencil and fog problems
+     surface.
 2. **Lint is clean.**
    - No `error` findings.
    - Each `warn` is fixed or justified in one line (uninitialized local, `canvas_color`, `light =`).
 3. **Looked at.**
-   - A contact sheet of the parameter sweep was opened. The description of the look comes from that sheet, not from the code.
+   - A contact sheet of the parameter sweep was opened. The description of the look comes from that
+     sheet, not from the code.
    - Every claim ("foam ring at every shore", "edge glows") points to a shot.
 4. **Right pass.**
    - The deliverable says whether the material is opaque, alpha-scissor or transparent, and why.
@@ -47,9 +50,11 @@ Use this rubric before calling a shader deliverable done. Score each line pass, 
    - Screen and depth reads are justified; a LITE tier exists when mobile is a target.
 10. **Renderer parity.**
     - Captures from every target renderer sit side by side.
-    - The known differences are written down (Compatibility renders brighter and more saturated with the same Environment).
+    - The known differences are written down (Compatibility renders brighter and more saturated with
+      the same Environment).
 11. **Animation path.**
-    - The parameter is animated through `instance_shader_parameters/<name>` or `shader_parameter/<name>`.
+    - The parameter is animated through `instance_shader_parameters/<name>` or
+      `shader_parameter/<name>`.
     - Material uniforms are set once before tweening (an unset value reads null).
 12. **Ship path.**
     - The export preset has `shader_baker/enabled=true`.
@@ -58,10 +63,14 @@ Use this rubric before calling a shader deliverable done. Score each line pass, 
 
 ## Red flags in a draft (from the no-skill baseline and the first passes here)
 
-- "Headless runs compile no shaders" is false: headless compiles and reports language errors per renderer. Only some backend checks need a window.
-- A LITE tier that bakes water depth into vertex colors, without measuring first. Here the depth-texture LITE cost only +0 to 0.15 ms over the baseline at 1080p, so measure before adding a bake step.
+- "Headless runs compile no shaders" is false: headless compiles and reports language errors per
+  renderer. Only some backend checks need a window.
+- A LITE tier that bakes water depth into vertex colors, without measuring first. Here the
+  depth-texture LITE cost only +0 to 0.15 ms over the baseline at 1080p, so measure before adding a
+  bake step.
 - One `height` or `bounds` uniform on a material shared by different meshes.
 - A post effect "tested" only in Compatibility: the pre-4.3 quad works there and fails in Forward+.
 - A sprite effect that multiplies `texture(TEXTURE, UV)` by `COLOR`.
-- A claim that a missing global "fails to compile" or "reads zero": in 4.7.2 it compiles at runtime and reads another global's value.
+- A claim that a missing global "fails to compile" or "reads zero": in 4.7.2 it compiles at runtime
+  and reads another global's value.
 - No contact sheet, or a sheet built from frame counts to show motion (TIME is wall time).

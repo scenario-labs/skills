@@ -1,10 +1,15 @@
 # Sources
 
-Per-video notes live in the project's `notes/texturing/`; digests `_digest_snow_shading.md` and `_digest_texturing_pbr_painting.md`. The batch digest states that none of its experts gives albedo ranges, calls roughness the most important map, shows box projection or bakes procedurals; those parts of this skill are [added] or measured. URLs are `https://www.youtube.com/watch?v=<id>`.
+Per-video notes live in the project's `notes/texturing/`; digests `_digest_snow_shading.md` and
+`_digest_texturing_pbr_painting.md`. The batch digest states that none of its experts gives albedo
+ranges, calls roughness the most important map, shows box projection or bakes procedurals; those
+parts of this skill are [added] or measured. URLs are `https://www.youtube.com/watch?v=<id>`.
 
 ## Julien Kaspar, Blender Studio: "Snow" stylized character shading lives (2021)
 
-Credential: character artist at Blender Studio (Spring, Sprite Fright), author of the Stylized Character Workflow course and the free Rain rig. Blender 3.0 alpha on screen (Principled v1, EEVEE Legacy): values need the 5.2 translations in `expert-notes.md`. Auto captions, no frames.
+Credential: character artist at Blender Studio (Spring, Sprite Fright), author of the Stylized
+Character Workflow course and the free Rain rig. Blender 3.0 alpha on screen (Principled v1, EEVEE
+Legacy): values need the 5.2 translations in `expert-notes.md`. Auto captions, no frames.
 
 | #   | Id / URL                                                   | Length | Best for                                                                                | Best timestamps                                                                                                                   |
 | --- | ---------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -35,6 +40,10 @@ Credential: character artist at Blender Studio (Spring, Sprite Fright), author o
 
 ## Non-video references
 
-- Blender 5.2 release notes (cached in `archive/tests/version-deltas/rn/5.2/`): Random Walk SSS rescaling (rendering.md, cycles.md), Principled Thin Wall.
-- `sources/blender-version-deltas.md` sections 4, 8, 9, 10, 12 (texture paint, baking, materials, EEVEE, color management).
-- Albedo ranges (dielectric about sRGB 30 to 240, metal reflectance 180 to 255): common PBR guidance (Adobe Substance PBR guide), cited as [added], not re-verified against the guide in this build and not stated by any source video.
+- Blender 5.2 release notes (cached in `archive/tests/version-deltas/rn/5.2/`): Random Walk SSS
+  rescaling (rendering.md, cycles.md), Principled Thin Wall.
+- `sources/blender-version-deltas.md` sections 4, 8, 9, 10, 12 (texture paint, baking, materials,
+  EEVEE, color management).
+- Albedo ranges (dielectric about sRGB 30 to 240, metal reflectance 180 to 255): common PBR guidance
+  (Adobe Substance PBR guide), cited as [added], not re-verified against the guide in this build and
+  not stated by any source video.

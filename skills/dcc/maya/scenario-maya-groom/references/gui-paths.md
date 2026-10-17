@@ -1,6 +1,9 @@
 # GUI paths (Maya 2027): menus, editors, brushes, hotkeys
 
-For a computer-use agent, or to tell Emmanuel what to click. Recipes no longer need a click: the bridge reads each menu item's and button's command string (procedures.md P0). Sources: Maya 2027 help, XGen Interactive Grooming (tools, modifiers, caching, hotkeys); the expert notes for workflow tips. On macOS the help's "Ctrl" means Control, not Command (maya-version-deltas § 2.13).
+For a computer-use agent, or to tell Emmanuel what to click. Recipes no longer need a click: the
+bridge reads each menu item's and button's command string (procedures.md P0). Sources: Maya 2027
+help, XGen Interactive Grooming (tools, modifiers, caching, hotkeys); the expert notes for workflow
+tips. On macOS the help's "Ctrl" means Control, not Command (maya-version-deltas § 2.13).
 
 ## Workspace and editors
 
@@ -64,7 +67,8 @@ A groom tool must be active for these hotkeys (2027 help § hotkeys).
 | Size / strength                   | B + drag / M + drag; Ctrl + MMB drag from 0 | N toggles the tool mode                                                                                |
 | Tool marking menu                 | Shift + RMB                                 |                                                                                                        |
 
-Remove one rogue stray (Giovannini [00:16:31] to [00:18:14]): Add Modifier > Sculpt > edit, Freeze that hair, Cut with Invert Frozen from the right-click marking menu.
+Remove one rogue stray (Giovannini [00:16:31] to [00:18:14]): Add Modifier > Sculpt > edit, Freeze
+that hair, Cut with Invert Frozen from the right-click marking menu.
 
 ## Caches
 

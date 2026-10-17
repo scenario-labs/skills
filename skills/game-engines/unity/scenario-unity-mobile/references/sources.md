@@ -1,6 +1,9 @@
 # Sources (scenario-unity-mobile)
 
-Distilled notes live in `notes/mobile/` (project root); saved docs in `sources/docs/mobile__*.md`; version facts in `sources/unity-version-deltas.md` (authoritative for 6.3 and 6.4 to 6.6). Precedence when sources disagree: the installed editor (6000.3.21f1, observed) beats the 6.3 Manual, which beats package docs for other versions, which beat videos.
+Distilled notes live in `notes/mobile/` (project root); saved docs in `sources/docs/mobile__*.md`;
+version facts in `sources/unity-version-deltas.md` (authoritative for 6.3 and 6.4 to 6.6).
+Precedence when sources disagree: the installed editor (6000.3.21f1, observed) beats the 6.3 Manual,
+which beats package docs for other versions, which beat videos.
 
 ## Official documentation
 
@@ -37,11 +40,39 @@ Distilled notes live in `notes/mobile/` (project root); saved docs in `sources/d
 
 ## Observed on this Mac (Unity 6000.3.21f1, macOS 26.5.1, Xcode 26.6), 2026-09-24
 
-`tests/code/unity-mobile/` runs every procedure; results appended to `archive/tests/unity-mobile/live_results.jsonl`. Engine facts read from the installed packages: URP 17.3 `DeferredLights.cs` (framebuffer fetch only with Native RenderPass), Input System 1.20 `OnScreenStick.cs` (movementRange is a radius), Adaptive Performance 6.0.0 `package.json` (core feature since 6.3, package = samples), Android module tools (OpenJDK keytool and jarsigner, `bundletool-all-1.17.2.jar`, SDK platforms 34 to 36, build-tools 36.0.0).
+`tests/code/unity-mobile/` runs every procedure; results appended to
+`archive/tests/unity-mobile/live_results.jsonl`. Engine facts read from the installed packages: URP
+17.3 `DeferredLights.cs` (framebuffer fetch only with Native RenderPass), Input System 1.20
+`OnScreenStick.cs` (movementRange is a radius), Adaptive Performance 6.0.0 `package.json` (core
+feature since 6.3, package = samples), Android module tools (OpenJDK keytool and jarsigner,
+`bundletool-all-1.17.2.jar`, SDK platforms 34 to 36, build-tools 36.0.0).
 
-Added in v0.2 (same day): IAP 5.4.3 and LevelPlay 9.5.1 sources in the isolated clone `tests/projects/unity-mobile/_pkgcheck/Library/PackageCache/` (`CrossPlatformValidator` constructors, `IOrderInfo.Apple.jwsRepresentation`, `ProductMetadata.localizedPriceString`, `LevelPlayPrivacySettings`, `[Obsolete] LevelPlay.SetConsent`, `LevelPlayAndroidManifestProcessor : IPostGenerateGradleAndroidProject` adding AD_ID, settings under `Assets/LevelPlay/Resources`, menu `Ads Mediation > Developer Settings > LevelPlay Mediation Settings`); the editor's `UnityEngine.AndroidJNIModule.xml` and `UnityEngine.AdaptivePerformanceModule.xml` API documentation (`ApplicationExitInfoProvider`, `DiagnosticsReporting.CallReportFullyDrawn`, `PerformanceBottleneck`, `FrameTimingManager`); the Android module's `UnityEditor.Android.Extensions.dll` read with the bundled `monodis` (`AndroidProjectFilesModifierContext.SetData`, `AndroidProjectFiles.GetData`); `xcodebuild -help` on Xcode 26.6 (ExportOptions `method` names, `thinning`); `sources/docs/automation-pipeline__command-line-batchmode-ci.md` § Target switching limitations in batch mode (6.3 Manual).
+Added in v0.2 (same day): IAP 5.4.3 and LevelPlay 9.5.1 sources in the isolated clone
+`tests/projects/unity-mobile/_pkgcheck/Library/PackageCache/` (`CrossPlatformValidator`
+constructors, `IOrderInfo.Apple.jwsRepresentation`, `ProductMetadata.localizedPriceString`,
+`LevelPlayPrivacySettings`, `[Obsolete] LevelPlay.SetConsent`,
+`LevelPlayAndroidManifestProcessor : IPostGenerateGradleAndroidProject` adding AD_ID, settings under
+`Assets/LevelPlay/Resources`, menu
+`Ads Mediation > Developer Settings > LevelPlay Mediation Settings`); the editor's
+`UnityEngine.AndroidJNIModule.xml` and `UnityEngine.AdaptivePerformanceModule.xml` API documentation
+(`ApplicationExitInfoProvider`, `DiagnosticsReporting.CallReportFullyDrawn`,
+`PerformanceBottleneck`, `FrameTimingManager`); the Android module's
+`UnityEditor.Android.Extensions.dll` read with the bundled `monodis`
+(`AndroidProjectFilesModifierContext.SetData`, `AndroidProjectFiles.GetData`); `xcodebuild -help` on
+Xcode 26.6 (ExportOptions `method` names, `thinning`);
+`sources/docs/automation-pipeline__command-line-batchmode-ci.md` § Target switching limitations in
+batch mode (6.3 Manual).
 
 ## Revision history
 
 - 2026-09-24, v0.1: first version, live tests M1 to M10.
-- 2026-09-24, v0.2 (refactor after the Y11 blind grade, previous state in `skills/_versions/unity-mobile v1 2026-09-24/`): added audio, mesh and startup audits, import rules (`MobileImportRules`), bottleneck-aware thermal policy with synthetic-event PlayMode test and per-asset render scale tracking, `DeviceSoakLogger` + `soak_verdict`, Android exit and startup diagnostics, receipt validation, localized price, StoreKit 2 jws hook, consent and pacing gates, LevelPlay privacy flags, AAB and Xcode store gates (debuggable, 16 KB pages, AD_ID, SKAdNetworkItems, ATS, SDK manifests), `package_check`, the iOS archive and App Thinning plan, 8 new `code_scan` rules, procedures M11 to M13 (assets, Android diagnostics and ANR triage, device and store hand-over); corrected the batch-mode claim ("a switch does nothing" became "target-switching APIs don't take effect inside a batch script", 6.3 Manual).
+- 2026-09-24, v0.2 (refactor after the Y11 blind grade, previous state in
+  `skills/_versions/unity-mobile v1 2026-09-24/`): added audio, mesh and startup audits, import
+  rules (`MobileImportRules`), bottleneck-aware thermal policy with synthetic-event PlayMode test
+  and per-asset render scale tracking, `DeviceSoakLogger` + `soak_verdict`, Android exit and startup
+  diagnostics, receipt validation, localized price, StoreKit 2 jws hook, consent and pacing gates,
+  LevelPlay privacy flags, AAB and Xcode store gates (debuggable, 16 KB pages, AD_ID,
+  SKAdNetworkItems, ATS, SDK manifests), `package_check`, the iOS archive and App Thinning plan, 8
+  new `code_scan` rules, procedures M11 to M13 (assets, Android diagnostics and ANR triage, device
+  and store hand-over); corrected the batch-mode claim ("a switch does nothing" became
+  "target-switching APIs don't take effect inside a batch script", 6.3 Manual).

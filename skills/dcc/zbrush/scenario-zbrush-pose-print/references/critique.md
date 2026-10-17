@@ -1,6 +1,9 @@
 # Critique rubric: pose and print parts
 
-Use at every gate. Score each line pass, fix, or not applicable, and write the evidence next to it (a number from `zb_print` or `zb_pose`, or the review sheet and the tile you judged). A line without evidence is not a pass. Views: scenario-zbrush-expert `zb_review.review` (front, right, back, three-quarter, top) with MatCap Gray; add Polyframe for joints and flat color for silhouettes.
+Use at every gate. Score each line pass, fix, or not applicable, and write the evidence next to it
+(a number from `zb_print` or `zb_pose`, or the review sheet and the tile you judged). A line without
+evidence is not a pass. Views: scenario-zbrush-expert `zb_review.review` (front, right, back,
+three-quarter, top) with MatCap Gray; add Polyframe for joints and flat color for silhouettes.
 
 ## 1. The pose (what Plouffe, Pavlovich and Munoz Gomez look at)
 

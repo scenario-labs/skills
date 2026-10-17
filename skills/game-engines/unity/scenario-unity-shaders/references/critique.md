@@ -1,6 +1,8 @@
 # Critique rubric: judge a shader, a renderer feature or a variant plan before calling it done
 
-Score each line 0 (missing), 1 (claimed), 2 (measured), 3 (measured and looked at). A deliverable ships at 2 or more on every line that applies; any 0 on a "must" line blocks it. Write the score with its evidence (job id, number, contact sheet path) in the handoff packet.
+Score each line 0 (missing), 1 (claimed), 2 (measured), 3 (measured and looked at). A deliverable
+ships at 2 or more on every line that applies; any 0 on a "must" line blocks it. Write the score
+with its evidence (job id, number, contact sheet path) in the handoff packet.
 
 ## A. Correctness (must)
 
@@ -54,10 +56,14 @@ Score each line 0 (missing), 1 (claimed), 2 (measured), 3 (measured and looked a
 
 - "Looks right in the Scene view" with no capture, or a capture nobody opened.
 - An optimization justified by instruction count.
-- A `.shader` with `CGPROGRAM`, `UnityCG.cginc`, `_FORWARD_PLUS`, `SHADOWS_SCREEN`, `ComputeScreenPos`, or a DepthNormals pass returning `n * 0.5 + 0.5`.
+- A `.shader` with `CGPROGRAM`, `UnityCG.cginc`, `_FORWARD_PLUS`, `SHADOWS_SCREEN`,
+  `ComputeScreenPos`, or a DepthNormals pass returning `n * 0.5 + 0.5`.
 - A custom light loop without the directional pre-loop.
-- A renderer feature using `Execute`, `OnCameraSetup`, `cmd.Blit` (pre-Render-Graph API: does not run in 6.3).
+- A renderer feature using `Execute`, `OnCameraSetup`, `cmd.Blit` (pre-Render-Graph API: does not
+  run in 6.3).
 - Variant counts quoted from the Inspector as if they were the build's.
-- A Shader Graph Boolean keyword presented as the way to turn Alpha Clipping off (it cannot: `#define _ALPHATEST_ON 1` in every pass).
-- "PSO warm-up added" with no cold and warm player runs, or one collection reused across graphics APIs.
+- A Shader Graph Boolean keyword presented as the way to turn Alpha Clipping off (it cannot:
+  `#define _ALPHATEST_ON 1` in every pass).
+- "PSO warm-up added" with no cold and warm player runs, or one collection reused across graphics
+  APIs.
 - `EnableKeyword` on a `shader_feature` keyword in gameplay code (the dissolve "on hit" pattern).

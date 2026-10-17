@@ -1,12 +1,25 @@
 # Procedures (maya.cmds and mx_shade, full code)
 
-**Status of every block below: not yet run in Maya** (Maya 2027 not installed on 2026-09-24). Each block starts with `# test: <id>`: `tests/code/maya-lookdev/job_procedures_snippets.py` extracts these exact blocks from this file and runs them in order, in one namespace, in a fresh scene, then checks their results. Deeper tests of the same functions: `job_texture_set_material.py`, `job_displacement.py`, `job_presets_and_special.py`, `job_lookdev_scene_render.py`, `job_lint_planted.py` (all under `tests/code/maya-lookdev/`, run by `run_all.sh` through scenario-maya-expert's `mx_run.py`). Already verified without Maya: `mx_shade`'s pure-Python layer (`test_mx_shade_offline.py`, 122 checks) and the Python logic of every block and job against a fake `maya.cmds` (`test_jobs_fakemaya.py`); neither proves Maya behavior. When a probe result contradicts a name here, fix `mx_shade`'s tables and this file together.
+**Status of every block below: not yet run in Maya** (Maya 2027 not installed on 2026-09-24). Each
+block starts with `# test: <id>`: `tests/code/maya-lookdev/job_procedures_snippets.py` extracts
+these exact blocks from this file and runs them in order, in one namespace, in a fresh scene, then
+checks their results. Deeper tests of the same functions: `job_texture_set_material.py`,
+`job_displacement.py`, `job_presets_and_special.py`, `job_lookdev_scene_render.py`,
+`job_lint_planted.py` (all under `tests/code/maya-lookdev/`, run by `run_all.sh` through
+scenario-maya-expert's `mx_run.py`). Already verified without Maya: `mx_shade`'s pure-Python layer
+(`test_mx_shade_offline.py`, 122 checks) and the Python logic of every block and job against a fake
+`maya.cmds` (`test_jobs_fakemaya.py`); neither proves Maya behavior. When a probe result contradicts
+a name here, fix `mx_shade`'s tables and this file together.
 
-Context the blocks assume: `TEX` is a folder holding a Painter-style set named `case` (`case_BaseColor.1001.png`, `case_Roughness.1001.png`, `case_Metalness.1001.png`, `case_Normal.1001.png`, `case_Height.1001.png`, same for 1002), `OUT` an output folder, `HDRI` a lat-long `.hdr`. Run inside mayapy through `mx_run.py --plugins mtoa`, or through the GUI bridge.
+Context the blocks assume: `TEX` is a folder holding a Painter-style set named `case`
+(`case_BaseColor.1001.png`, `case_Roughness.1001.png`, `case_Metalness.1001.png`,
+`case_Normal.1001.png`, `case_Height.1001.png`, same for 1002), `OUT` an output folder, `HDRI` a
+lat-long `.hdr`. Run inside mayapy through `mx_run.py --plugins mtoa`, or through the GUI bridge.
 
 ## P0. Session: Arnold, color spaces, names
 
-Why: color-space names changed in 2026.2 and differ between configs; hardcoding "sRGB" or "Utility - Raw" breaks (version deltas 2.7). Query once, use the names.
+Why: color-space names changed in 2026.2 and differ between configs; hardcoding "sRGB" or "Utility -
+Raw" breaks (version deltas 2.7). Query once, use the names.
 
 ```python
 # test: P0_session
@@ -24,7 +37,9 @@ print(cmds.about(version=True), mtoa_version, cm["rendering_space"], SRGB, LINEA
 
 ## P1. A file node by hand: color space after the path, rules ignored, UDIM, grayscale plug
 
-Why: the rules fire when the path is set, so the space goes after it; Ignore Color Space File Rules keeps Reapply Rules from resetting it (Maya 2027 help). Grayscale maps: outColorR (Raycast [vPHhVrxxThU 00:19:46]) or outAlpha with Alpha Is Luminance on (Sarkamari [ZtEiVa3MPLg 00:20:17]).
+Why: the rules fire when the path is set, so the space goes after it; Ignore Color Space File Rules
+keeps Reapply Rules from resetting it (Maya 2027 help). Grayscale maps: outColorR (Raycast
+[vPHhVrxxThU 00:19:46]) or outAlpha with Alpha Is Luminance on (Sarkamari [ZtEiVa3MPLg 00:20:17]).
 
 ```python
 # test: P1_file_node
@@ -59,7 +74,11 @@ cmds.connectAttr(rough + ".outColorR", manual + ".specularRoughness", force=True
 
 ## P2. Normal map routes by hand (aiNormalMap, and Raycast's normal plus height)
 
-Why: a tangent-space normal never goes into a plain bump or straight into the shader. aiNormalMap is the default (Sarkamari [ZtEiVa3MPLg 00:21:10]); to keep normal and height at separate strengths, feed aiNormalMap into the hidden normalCamera of a bump2d that takes the height (Raycast [vPHhVrxxThU 00:23:40]). DirectX maps invert Y. Maya 2027.1 adds a MIKKTSpace mode (`tangentSpaceType` [verify], What's New 2027).
+Why: a tangent-space normal never goes into a plain bump or straight into the shader. aiNormalMap is
+the default (Sarkamari [ZtEiVa3MPLg 00:21:10]); to keep normal and height at separate strengths,
+feed aiNormalMap into the hidden normalCamera of a bump2d that takes the height (Raycast
+[vPHhVrxxThU 00:23:40]). DirectX maps invert Y. Maya 2027.1 adds a MIKKTSpace mode
+(`tangentSpaceType` [verify], What's New 2027).
 
 ```python
 # test: P2_normal_routes
@@ -77,11 +96,14 @@ cmds.connectAttr(nm + ".outValue", bmp + ".normalCamera", force=True)    # hidde
 cmds.connectAttr(bmp + ".outNormal", manual + ".normalCamera", force=True)  # OpenPBR normal input [verify]
 ```
 
-bump2d-only route (J Hill [mpk6IurOWbs 00:24:31]): file `outAlpha` into `bumpValue`, `bumpInterp` 1 (Tangent Space Normals), Arnold `aiFlipG` 1 only for DirectX maps, `outNormal` into the shader normal; this is `sh.build_material(..., normal_mode="bump2d")`.
+bump2d-only route (J Hill [mpk6IurOWbs 00:24:31]): file `outAlpha` into `bumpValue`, `bumpInterp` 1
+(Tangent Space Normals), Arnold `aiFlipG` 1 only for DirectX maps, `outNormal` into the shader
+normal; this is `sh.build_material(..., normal_mode="bump2d")`.
 
 ## P3. A material from a texture set (mx_shade)
 
-Why: the per-map contract applied the same way every time (Sarkamari's table, J Hill's two questions, Raycast's outColorR fix), with names that lighting can read.
+Why: the per-map contract applied the same way every time (Sarkamari's table, J Hill's two
+questions, Raycast's outColorR fix), with names that lighting can read.
 
 ```python
 # test: P3_build_material
@@ -97,11 +119,17 @@ print(rep["notes"])
 print(sh.verdict(sh.lint_scene())["lines"])
 ```
 
-Options: `shader_type="aiStandardSurface"` (Painter AiStandard exports, legacy scenes); `normal_mode="bump2d"` or `"hybrid"`; `tangent_space="mikk"` (2027.1+, A/B on a bevel [verify]); `ao="multiply"` only to match Painter or a real-time look; `height_mode="displacement"` plus `displacement={"scale": s, "zero": z}`; `prefer_tx=True` loads sibling .tx files and keeps the color role of their source.
+Options: `shader_type="aiStandardSurface"` (Painter AiStandard exports, legacy scenes);
+`normal_mode="bump2d"` or `"hybrid"`; `tangent_space="mikk"` (2027.1+, A/B on a bevel [verify]);
+`ao="multiply"` only to match Painter or a real-time look; `height_mode="displacement"` plus
+`displacement={"scale": s, "zero": z}`; `prefer_tx=True` loads sibling .tx files and keeps the color
+role of their source.
 
 ## P4. Displacement
 
-Why: shader gives the final displacement, padding contains it (Arnold doc); zero value matches the bake (J Hill [mpk6IurOWbs 00:26:59]); never stack Smooth Mesh Preview on Arnold subdivision; each iteration is 4x the polygons.
+Why: shader gives the final displacement, padding contains it (Arnold doc); zero value matches the
+bake (J Hill [mpk6IurOWbs 00:26:59]); never stack Smooth Mesh Preview on Arnold subdivision; each
+iteration is 4x the polygons.
 
 ```python
 # test: P4_displacement
@@ -118,11 +146,16 @@ print(drep["zero"], drep["zero_reason"], drep["padding"], drep["shapes"])
 print(cmds.getAttr(shp + ".aiSubdivIterations"), cmds.getAttr(shp + ".aiDispPadding"))
 ```
 
-Finals: iterations 3 to 4 (J Hill). Float EXR bakes: `zero=0.0`, and pass `value_range` measured from the map so the padding is right. Micro detail on top (J Hill): `aiCellNoise` alligator, amplitude 0.003 to 0.004, added with `aiComposite` (plus) before the displacementShader, masked with a second `aiComposite` (multiply).
+Finals: iterations 3 to 4 (J Hill). Float EXR bakes: `zero=0.0`, and pass `value_range` measured
+from the map so the padding is right. Micro detail on top (J Hill): `aiCellNoise` alligator,
+amplitude 0.003 to 0.004, added with `aiComposite` (plus) before the displacementShader, masked with
+a second `aiComposite` (multiply).
 
 ## P5. Presets, metals and color conversion
 
-Why: F0 and F82 come from the Arnold table in linear sRGB; Maya swatches hold rendering-space numbers, so under ACEScg they are converted (OCIO when importable, else the Rec.709 to AP1 matrix) [added consequence]. Standard Surface metals use their own table.
+Why: F0 and F82 come from the Arnold table in linear sRGB; Maya swatches hold rendering-space
+numbers, so under ACEScg they are converted (OCIO when importable, else the Rec.709 to AP1 matrix)
+[added consequence]. Standard Surface metals use their own table.
 
 ```python
 # test: P5_presets
@@ -140,7 +173,11 @@ print(crep["transmission_depth"])                 # thinnest bounding-box side: 
 sh.assign(crystal_sg, [crystal_geo])
 ```
 
-Presets (`sh.PRESETS`, each with its source and its [added] keys): `metal_<name>` for the twelve table metals, `steel_polished`, `steel_brushed` (needs rotation, UVs, smooth tangents, 1 iteration), `mirror_chrome_ball`, `grey_ball`, `chart_diffuse`, `glass_clear`, `glass_tinted`, `sapphire_crystal`, `diamond`, `water`, `skin`, `skin_oil_coat`, `leather`, `rubber`, `stone`. Hair: `sh.HAIR_PRESETS` with `sh.HAIR_BASE`.
+Presets (`sh.PRESETS`, each with its source and its [added] keys): `metal_<name>` for the twelve
+table metals, `steel_polished`, `steel_brushed` (needs rotation, UVs, smooth tangents, 1 iteration),
+`mirror_chrome_ball`, `grey_ball`, `chart_diffuse`, `glass_clear`, `glass_tinted`,
+`sapphire_crystal`, `diamond`, `water`, `skin`, `skin_oil_coat`, `leather`, `rubber`, `stone`. Hair:
+`sh.HAIR_PRESETS` with `sh.HAIR_BASE`.
 
 ## P6. Skin (J Hill in one shader)
 
@@ -154,7 +191,11 @@ srep = sh.skin("skin", meshes=[head], color_file=col, radius_mm=1.0, oil_mask_fr
 print(srep["set"], srep["notes"])
 ```
 
-It sets subsurface 1, radius scale (1, 0.35, 0.2) (not color-converted: it is per-channel distance), radius 1 mm in scene units, IOR 1.4, the color map into subsurface color, and coat weight from the inverted, crunched roughness with coat roughness 0.1. Judge with a backlit ear, the nose and the eyelid corners, at higher SSS samples on a crop. Teeth and gums share an `interior_set` string user data (2027.1; `sss_setname` still read).
+It sets subsurface 1, radius scale (1, 0.35, 0.2) (not color-converted: it is per-channel distance),
+radius 1 mm in scene units, IOR 1.4, the color map into subsurface color, and coat weight from the
+inverted, crunched roughness with coat roughness 0.1. Judge with a backlit ear, the nose and the
+eyelid corners, at higher SSS samples on a crop. Teeth and gums share an `interior_set` string user
+data (2027.1; `sss_setname` still read).
 
 ## P7. Breakup toolkit (Arvid)
 
@@ -173,7 +214,10 @@ mask = sh.user_mask([side], "sideMask", 1, 0)                         # mtoa_con
 print(rb, fine["out"], mask)
 ```
 
-Chained bumps go coarse to fine, each bump's output into the next bump's normal (Arvid [cpMBRIWwghg 00:08:34]). Put the mask reader into an aiMultiply with any pattern to restrict it to tagged objects. Brushed metal: a rotation map from procedurals into specular rotation (Standard Surface) or a tangent (OpenPBR `geometry_tangent` [verify]), with the file's mipmap bias about -8.
+Chained bumps go coarse to fine, each bump's output into the next bump's normal (Arvid [cpMBRIWwghg
+00:08:34]). Put the mask reader into an aiMultiply with any pattern to restrict it to tagged
+objects. Brushed metal: a rotation map from procedurals into specular rotation (Standard Surface) or
+a tangent (OpenPBR `geometry_tangent` [verify]), with the file's mipmap bias about -8.
 
 ## P8. Car paint, one layer at a time
 
@@ -190,7 +234,8 @@ if "aiCarPaint" in (cmds.allNodeTypes() or []):
     print(prep["waviness"])                           # 4 noises (3, 25, 80, 200) -> aiLayerFloat -> aiBump2d -> coat normal
 ```
 
-Flake scale is judged from a close-up camera against a close-up photo (Arvid); check after the denoiser that flakes survive.
+Flake scale is judged from a close-up camera against a close-up photo (Arvid); check after the
+denoiser that flakes survive.
 
 ## P9. Standard Hair
 
@@ -202,7 +247,9 @@ htex = sh.hair_shader("hairTextured", base_color_file=col)    # texture into bas
 print(hrep["set"], hrep.get("scattering_mode"), htex["set"])
 ```
 
-Assign with `targets=[description_shape]` (XGen Interactive Groom assigns `hairPhysicalShader` by default). Blond: raise `extraDepth` on the shader before touching global depth, then specular or AA samples (Arnold Standard Hair doc).
+Assign with `targets=[description_shape]` (XGen Interactive Groom assigns `hairPhysicalShader` by
+default). Blond: raise `extraDepth` on the shader before touching global depth, then specular or AA
+samples (Arnold Standard Hair doc).
 
 ## P10. Lookdev scene, turntable and review renders
 
@@ -216,7 +263,10 @@ turn = sh.render_frames([1, 5, 9, 13], OUT + "/turn", width=320, height=180, col
 print(turn["frames"], turn["sheet"], turn["seconds"])
 ```
 
-Frames 1 to N spin the asset, N+1 to 2N the HDRI. `render_frames` restores every render setting it touched and turns the output transform on only for these PNGs (EXR for comp stays off, Maya 2027 help). Pass `hdri=None` for the procedural studio stand-in [added]; for a Painter transfer use the HDRI Painter displayed and its focal length.
+Frames 1 to N spin the asset, N+1 to 2N the HDRI. `render_frames` restores every render setting it
+touched and turns the output transform on only for these PNGs (EXR for comp stays off, Maya 2027
+help). Pass `hdri=None` for the procedural studio stand-in [added]; for a Painter transfer use the
+HDRI Painter displayed and its focal length.
 
 ## P11. Porting a Standard Surface shader to OpenPBR
 
@@ -233,7 +283,9 @@ sh.set_values(legacy_pbr, ported, convert=False)
 print(ported, pnotes)
 ```
 
-After the MtoA menu conversion ("Convert All Standard Surface to OpenPBR Surface"), run the lint: thin film above 1 micrometer, emission off by 1000x and white F82 on metals are the usual leftovers, and MTOA-2560 leaves shaders inside networks unconverted.
+After the MtoA menu conversion ("Convert All Standard Surface to OpenPBR Surface"), run the lint:
+thin film above 1 micrometer, emission off by 1000x and white F82 on metals are the usual leftovers,
+and MTOA-2560 leaves shaders inside networks unconverted.
 
 ## P12. Lint and handoff
 
@@ -248,7 +300,8 @@ for line in v["lines"]:
 handoff = sh.handoff_report(OUT + "/handoff.json")
 ```
 
-The rule list and what each one protects is in `critique.md`. `hero=["case_MTL"]` adds the uniform-roughness check to named hero shaders.
+The rule list and what each one protects is in `critique.md`. `hero=["case_MTL"]` adds the
+uniform-roughness check to named hero shaders.
 
 ## P13. Turntable keys by hand (the contract behind lookdev_scene)
 
@@ -265,4 +318,7 @@ cmds.playbackOptions(minTime=1, maxTime=N)
 
 ## Headless renders outside mx_shade
 
-`render_frames` uses `arnoldRender -b` per frame, as scenario-maya-expert's `mx_review` does [verify flags]. For sequences use `Render -r arnold` or `kick` (scenario-maya-lighting-rendering). Without an Arnold license the command line watermarks; `ARNOLD_FORCE_ABORT_ON_LICENSE_FAIL=0` keeps it from aborting (What's New 2025).
+`render_frames` uses `arnoldRender -b` per frame, as scenario-maya-expert's `mx_review` does [verify
+flags]. For sequences use `Render -r arnold` or `kick` (scenario-maya-lighting-rendering). Without
+an Arnold license the command line watermarks; `ARNOLD_FORCE_ABORT_ON_LICENSE_FAIL=0` keeps it from
+aborting (What's New 2025).

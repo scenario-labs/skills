@@ -8,13 +8,27 @@ license: MIT
 
 ## Overview
 
-For ordered independent edits of an existing clip, use `scenario-ad-variants`; this skill starts new creative.
+For ordered independent edits of an existing clip, use `scenario-ad-variants`; this skill starts new
+creative.
 
-This skill is the director layer: it turns one product shot and a brief into a finished ad, delegating mechanics to the sibling skills it names per stage. Connection and the core loop: see the `scenario` skill in this repo. If a sibling skill named here is missing from your available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and flag the gap. The full sibling map and install commands: [references/dependencies.md](references/dependencies.md).
+This skill is the director layer: it turns one product shot and a brief into a finished ad,
+delegating mechanics to the sibling skills it names per stage. Connection and the core loop: see the
+`scenario` skill in this repo. If a sibling skill named here is missing from your available skills,
+ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
+proceed from tool schemas and flag the gap. The full sibling map and install commands:
+[references/dependencies.md](references/dependencies.md).
 
-Two rules bind every stage, because they carry the ad's credibility. The product is never generated: every product shot starts from the uploaded photo, as a first frame or composited into an approved still. Text is never generated: logos, taglines, prices, and legal lines are overlaid in assembly on text-free plates.
+Two rules bind every stage, because they carry the ad's credibility. The product is never generated:
+every product shot starts from the uploaded photo, as a first frame or composited into an approved
+still. Text is never generated: logos, taglines, prices, and legal lines are overlaid in assembly on
+text-free plates.
 
-Ask the brief once, then run without stopping. The one approval that matters sits between the priced storyboard and generation: video is the expensive stage, so the user signs off on the budget table first. The concept page and the stills are cheaper checkpoints: show them when someone can answer. In a run where nobody can, continue: the brief's spend ceiling stands in for the sign-off, so generate video only while the priced board fits it, and the fidelity gate stands in for still approval.
+Ask the brief once, then run without stopping. The one approval that matters sits between the priced
+storyboard and generation: video is the expensive stage, so the user signs off on the budget table
+first. The concept page and the stills are cheaper checkpoints: show them when someone can answer.
+In a run where nobody can, continue: the brief's spend ceiling stands in for the sign-off, so
+generate video only while the priced board fits it, and the fidelity gate stands in for still
+approval.
 
 ## Quick reference
 
@@ -32,22 +46,38 @@ Ask the brief once, then run without stopping. The one approval that matters sit
 
 ## Worked example: a perfume ad, 9:16, 20 seconds
 
-1. Brief once: awareness, twist creativity, 20s for Reels and TikTok, ceiling in CU. Upload the product shot, then build the fidelity checklist from it with `asset_analyze`, instructing it to inventory label text, cap geometry, and glass tint: every later check reuses it (`asset_describe` returns a style line, not this inventory).
-2. Concept names its anchor: open inside the gala-and-gown cliche, break it on beat three. Show the page to the user.
-3. Storyboard 7 panels at 2 to 4 seconds each, hero shot designed first, 3 hook variants, 2 inserts as cut cover. `dry_run` every planned run, multiply by retry floors, present the budget table.
-4. Stills at 9:16: composite the real bottle into styled plates with an image-edit model, baseline-plus-delta prompts. Each still is approved before animating, by the user or by the fidelity checklist when nobody can answer: image money is cheap, video money is not.
-5. Animate each approved still: `model_schema_get` first, prompt movement first ("slow push-in over 4 seconds, the bottle rests fixed in place"), `generateAudio: false` when the schema lists it.
-6. Gate every clip: frame-extract, then one `asset_analyze` call against the checklist. Label drift fails the clip; regenerate from the same still, never from the drifted output.
-7. Music at a stated BPM so cuts land on bars; compose the timeline, `scenario-text-overlay` renders the tagline card into the safe zone; caption the master.
+1. Brief once: awareness, twist creativity, 20s for Reels and TikTok, ceiling in CU. Upload the
+   product shot, then build the fidelity checklist from it with `asset_analyze`, instructing it to
+   inventory label text, cap geometry, and glass tint: every later check reuses it (`asset_describe`
+   returns a style line, not this inventory).
+2. Concept names its anchor: open inside the gala-and-gown cliche, break it on beat three. Show the
+   page to the user.
+3. Storyboard 7 panels at 2 to 4 seconds each, hero shot designed first, 3 hook variants, 2 inserts
+   as cut cover. `dry_run` every planned run, multiply by retry floors, present the budget table.
+4. Stills at 9:16: composite the real bottle into styled plates with an image-edit model,
+   baseline-plus-delta prompts. Each still is approved before animating, by the user or by the
+   fidelity checklist when nobody can answer: image money is cheap, video money is not.
+5. Animate each approved still: `model_schema_get` first, prompt movement first ("slow push-in over
+   4 seconds, the bottle rests fixed in place"), `generateAudio: false` when the schema lists it.
+6. Gate every clip: frame-extract, then one `asset_analyze` call against the checklist. Label drift
+   fails the clip; regenerate from the same still, never from the drifted output.
+7. Music at a stated BPM so cuts land on bars; compose the timeline, `scenario-text-overlay` renders
+   the tagline card into the safe zone; caption the master.
 8. Pre-flight per delivery.md, then report spend from `usage` against the approved board.
 
 ## Common mistakes
 
-- Reaching for local ffmpeg or a desktop editor for the cut: assembly is `model_run` on Scenario tool models (see `scenario-video-assembly`).
-- Letting the video model render a label, logo, tagline, or price: generated type drifts frame to frame; composite text in post.
-- One long clip at the schema's maximum duration: generate 3 to 5 second product shots and 5 to 10 second coverage, then cut to rhythm in assembly.
+- Reaching for local ffmpeg or a desktop editor for the cut: assembly is `model_run` on Scenario
+  tool models (see `scenario-video-assembly`).
+- Letting the video model render a label, logo, tagline, or price: generated type drifts frame to
+  frame; composite text in post.
+- One long clip at the schema's maximum duration: generate 3 to 5 second product shots and 5 to 10
+  second coverage, then cut to rhythm in assembly.
 - Judging fidelity by watching a clip once: drift hides between glances; run the frame-extract gate.
-- Leaving the schema's audio toggle (`generateAudio`, where offered) at its default: the soundtrack is built in assembly, so clips with baked-in audio fight the bed.
+- Leaving the schema's audio toggle (`generateAudio`, where offered) at its default: the soundtrack
+  is built in assembly, so clips with baked-in audio fight the bed.
 - Cropping a 16:9 master to 9:16: each ratio is its own composition, decided at the storyboard.
-- Two objectives in one brief: brand and performance in the same asset serves neither; make two cuts from one board instead.
-- Shipping without the pre-flight: a sensual perfume cut or a wrong-length CTV file dies in ad review, not in generation.
+- Two objectives in one brief: brand and performance in the same asset serves neither; make two cuts
+  from one board instead.
+- Shipping without the pre-flight: a sensual perfume cut or a wrong-length CTV file dies in ad
+  review, not in generation.

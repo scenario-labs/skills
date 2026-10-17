@@ -1,6 +1,8 @@
 # scenario-godot-architecture: sources
 
-Credentials come from the cluster notes. "Unverified" means the note could not confirm the person's track record beyond the channel itself. Version facts come from `sources/godot-version-deltas.md` (authoritative for 4.7.2). Live corrections are in `expert-notes.md`.
+Credentials come from the cluster notes. "Unverified" means the note could not confirm the person's
+track record beyond the channel itself. Version facts come from `sources/godot-version-deltas.md`
+(authoritative for 4.7.2). Live corrections are in `expert-notes.md`.
 
 ## Videos
 
@@ -24,7 +26,9 @@ Credentials come from the cluster notes. "Unverified" means the note could not c
 | BatteryAcidDev            | developer educator (unverified)                  | https://www.youtube.com/watch?v=c3Jf-av_5NE (2024-02-01) | Git branching and LFS for Godot                                                       | 00:00:27 baseline commit, 00:02:40 LFS, 00:10:23 branches, 00:22:52 upgrades                                          |
 | Jacob Foxe                | Godot educator (unverified)                      | https://www.youtube.com/watch?v=8VC_QGpZEXk (2025-01-16) | style guide walk-through                                                              | 00:04:10 naming, 00:05:51 typing, 00:09:23 trailing commas, 00:17:01 parentheses                                      |
 
-Listed in the research file without a cluster note, so not used: Firebelley Games, "How to Build Godot Editor Tools Like a Pro" (VyTys5oCdN8). Editor tooling belongs to scenario-godot-pipeline-automation.
+Listed in the research file without a cluster note, so not used: Firebelley Games, "How to Build
+Godot Editor Tools Like a Pro" (VyTys5oCdN8). Editor tooling belongs to
+scenario-godot-pipeline-automation.
 
 ## Official documentation (retrieved 2026-10-02, docs.godotengine.org/en/stable)
 
@@ -39,5 +43,7 @@ Listed in the research file without a cluster note, so not used: Firebelley Game
 
 ## Internal
 
-- `sources/godot-version-deltas.md`: device ids (4.7), `store_*` returns bool (4.4), deep duplication (4.5), typed dictionaries (4.4), `.uid` (4.4), Jolt defaults, `class_name` after `--import`, C# platforms.
+- `sources/godot-version-deltas.md`: device ids (4.7), `store_*` returns bool (4.4), deep
+  duplication (4.5), typed dictionaries (4.4), `.uid` (4.4), Jolt defaults, `class_name` after
+  `--import`, C# platforms.
 - Live evidence: `tests/live_evidence/godot-architecture/` (live runs, offline lint).

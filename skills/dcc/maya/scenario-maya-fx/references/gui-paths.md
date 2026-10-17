@@ -1,11 +1,16 @@
 # GUI paths (scenario-maya-fx)
 
-The human path for each procedure, for a computer-use agent or to find the command behind a menu. Menu names follow the sources and the 2027 Help; hotkeys are the ones the experts use on screen or the docs list. [added] marks items not shown in the sources.
+The human path for each procedure, for a computer-use agent or to find the command behind a menu.
+Menu names follow the sources and the 2027 Help; hotkeys are the ones the experts use on screen or
+the docs list. [added] marks items not shown in the sources.
 
 ## Finding the script behind any action
 
-- Script Editor > History > Echo All Commands, perform the action once, copy the echoed MEL or Python, turn Echo off [added]. Script Editor > Help on MEL command, or `help <command>`, lists flags.
-- Attribute names: Attribute Editor, right-click a field > the attribute name shows in the Channel Box with Channels > Channel Names > Long [added].
+- Script Editor > History > Echo All Commands, perform the action once, copy the echoed MEL or
+  Python, turn Echo off [added]. Script Editor > Help on MEL command, or `help <command>`, lists
+  flags.
+- Attribute names: Attribute Editor, right-click a field > the attribute name shows in the Channel
+  Box with Channels > Channel Names > Long [added].
 
 ## Nucleus and nCloth (FX menu set)
 

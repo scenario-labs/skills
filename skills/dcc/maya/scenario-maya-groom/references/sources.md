@@ -1,6 +1,9 @@
 # Sources behind scenario-maya-groom
 
-Per-source notes: `notes/groom/` (digests `_digest_groom_fundamentals.md` and `_digest_groom_production_render_export.md`, plus one note per source). Saved documentation: `sources/docs/`. Version facts: `sources/maya-version-deltas.md` (§ 2.8, 2.9, 2.11, 2.13, 4). Credentials are as stated in the notes; "unverified" is kept where the manifest says so.
+Per-source notes: `notes/groom/` (digests `_digest_groom_fundamentals.md` and
+`_digest_groom_production_render_export.md`, plus one note per source). Saved documentation:
+`sources/docs/`. Version facts: `sources/maya-version-deltas.md` (§ 2.8, 2.9, 2.11, 2.13, 4).
+Credentials are as stated in the notes; "unverified" is kept where the manifest says so.
 
 ## Experts
 
@@ -30,8 +33,29 @@ Per-source notes: `notes/groom/` (digests `_digest_groom_fundamentals.md` and `_
 
 ## Shared toolkit used (scenario-maya-expert)
 
-`mx_run.py` (headless jobs, plug-in order), `mx_bridge.py` (GUI), `mx_audit.py` (scalp gate), `mx_review.py` (camera math, PNG IO, contact sheets, the restorable Arnold review session that `mx_groom.review` extends), `mx_validate.py` (model profile before grooming).
+`mx_run.py` (headless jobs, plug-in order), `mx_bridge.py` (GUI), `mx_audit.py` (scalp gate),
+`mx_review.py` (camera math, PNG IO, contact sheets, the restorable Arnold review session that
+`mx_groom.review` extends), `mx_validate.py` (model profile before grooming).
 
 ## Revision history
 
-- 2026-09-24, v2 refactor after the blind grade `tests/grading/M7_grade.md` (v1 kept in `skills/_versions/maya-groom v1 2026-09-24/`, the v1 tests in `archive/tests/maya-groom/tests-code v1 2026-09-24/`). Added the eight "missing from both" items the grade ranked first, from the notes in `notes/groom/`: mask decides triangle or square (Fernandez 05, 07), mask versus tightness with the one-clump test (06), which noise level breaks what (07), stray clumps as holes in the primary's mask (03), clump profile shapes and flow-or-clump ownership (02), same silhouette different texture (07), noise frequency variety and fray (05), length breakup at the small-clump level and extend criss-crossing (08); plus Hadi's duplicated modifiers, Map Subdivision Level and Seed fixes, viewport anti-aliasing, Transparency Depth and opacity in the cost sweep, Freeze and Guide region maps for parts, and a peach-fuzz decision. Code: guides actually wired into the groom (`create_description`, `wire_guides`, `guide_inputs`, `connect_curves`, `wiring_verdict`), recipes by querying menu items and buttons through the GUI bridge (`menu_items`, `menu_recipe`, `button_recipe`, `recipe_source`) instead of a person clicking, `gate` so every measurement is asserted, `clump_follow`, `breakup_report`, `noise_frequency`, `patches`, `partition`, `profile_ramp`, `viewport_aa`, a clump-noise-at-roots lint, and procedures P5b and P16 (the whole job as one script). Corrected: only Curve to Spline and Spline Cache disable the modifiers below them, not the Guide modifier; Curve to Spline on a description makes one hair per curve; region maps belong to the Guide modifier; the default `hairPhysicalShader` row now states the fact (Ai Kd Ind defaults to 0) instead of a look. Offline test re-run and passed; every Maya call still not yet run in Maya.
+- 2026-09-24, v2 refactor after the blind grade `tests/grading/M7_grade.md` (v1 kept in
+  `skills/_versions/maya-groom v1 2026-09-24/`, the v1 tests in
+  `archive/tests/maya-groom/tests-code v1 2026-09-24/`). Added the eight "missing from both" items
+  the grade ranked first, from the notes in `notes/groom/`: mask decides triangle or square
+  (Fernandez 05, 07), mask versus tightness with the one-clump test (06), which noise level breaks
+  what (07), stray clumps as holes in the primary's mask (03), clump profile shapes and
+  flow-or-clump ownership (02), same silhouette different texture (07), noise frequency variety and
+  fray (05), length breakup at the small-clump level and extend criss-crossing (08); plus Hadi's
+  duplicated modifiers, Map Subdivision Level and Seed fixes, viewport anti-aliasing, Transparency
+  Depth and opacity in the cost sweep, Freeze and Guide region maps for parts, and a peach-fuzz
+  decision. Code: guides actually wired into the groom (`create_description`, `wire_guides`,
+  `guide_inputs`, `connect_curves`, `wiring_verdict`), recipes by querying menu items and buttons
+  through the GUI bridge (`menu_items`, `menu_recipe`, `button_recipe`, `recipe_source`) instead of
+  a person clicking, `gate` so every measurement is asserted, `clump_follow`, `breakup_report`,
+  `noise_frequency`, `patches`, `partition`, `profile_ramp`, `viewport_aa`, a clump-noise-at-roots
+  lint, and procedures P5b and P16 (the whole job as one script). Corrected: only Curve to Spline
+  and Spline Cache disable the modifiers below them, not the Guide modifier; Curve to Spline on a
+  description makes one hair per curve; region maps belong to the Guide modifier; the default
+  `hairPhysicalShader` row now states the fact (Ai Kd Ind defaults to 0) instead of a look. Offline
+  test re-run and passed; every Maya call still not yet run in Maya.

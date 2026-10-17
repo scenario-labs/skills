@@ -1,6 +1,7 @@
 # scenario-godot-multiplayer sources
 
-Notes for each source: `notes/multiplayer-networking/`. Credentials as stated in the videos (unverified unless the channel is official). Retrieved 2026-10-02.
+Notes for each source: `notes/multiplayer-networking/`. Credentials as stated in the videos
+(unverified unless the channel is official). Retrieved 2026-10-02.
 
 ## Videos
 
@@ -36,6 +37,9 @@ Notes for each source: `notes/multiplayer-networking/`. Credentials as stated in
 
 ## Other
 
-- `sources/godot-version-deltas.md` section 13 (networking): 4.3 protocol change, 4.5 `get_node_rpc_config`, 4.6 `StreamPeerSocket`, 4.7.2 spawner fix.
-- Godot 4.7.2 source, `main/main.cpp`: the `dedicated_server` feature forces the headless display and dummy audio drivers.
-- ENet: `ENetPacketPeer.throttle_configure` and `PEER_PACKET_THROTTLE` (Godot class reference) for the throttle observation in procedures P8.
+- `sources/godot-version-deltas.md` section 13 (networking): 4.3 protocol change, 4.5
+  `get_node_rpc_config`, 4.6 `StreamPeerSocket`, 4.7.2 spawner fix.
+- Godot 4.7.2 source, `main/main.cpp`: the `dedicated_server` feature forces the headless display
+  and dummy audio drivers.
+- ENet: `ENetPacketPeer.throttle_configure` and `PEER_PACKET_THROTTLE` (Godot class reference) for
+  the throttle observation in procedures P8.

@@ -1,6 +1,9 @@
 # Sources for scenario-unity-world-building
 
-What this skill rests on: the world-3d cluster (5 docs, 13 videos distilled in `notes/world-3d/`, four digests: docs, videos, visual, extra), the version deltas, and what ran on this Mac. Timestamps are `[hh:mm:ss]` in the video; `frame` = visible on screen only. View counts from `sources/research_world-3d.json` (retrieved 2026-09-24).
+What this skill rests on: the world-3d cluster (5 docs, 13 videos distilled in `notes/world-3d/`,
+four digests: docs, videos, visual, extra), the version deltas, and what ran on this Mac. Timestamps
+are `[hh:mm:ss]` in the video; `frame` = visible on screen only. View counts from
+`sources/research_world-3d.json` (retrieved 2026-09-24).
 
 ## 1. Observed on this Mac (primary evidence)
 
@@ -45,9 +48,29 @@ What this skill rests on: the world-3d cluster (5 docs, 13 videos distilled in `
 
 ## 4. Picked but not distilled (transcripts only, not used)
 
-UGuruz, "How to Make Beautiful Terrain in Unity 2020" (ddy12WHqt-M, 3.5M views); Brackeys, "Making your first level in Unity with ProBuilder" (YtzIXCKr8Wo, 1.0M views); "50 Game Camera Mistakes", GDC 2015 (C7307qRmlMI, 527k views). No notes exist for them in `notes/world-3d/`, so nothing here cites them.
+UGuruz, "How to Make Beautiful Terrain in Unity 2020" (ddy12WHqt-M, 3.5M views); Brackeys, "Making
+your first level in Unity with ProBuilder" (YtzIXCKr8Wo, 1.0M views); "50 Game Camera Mistakes", GDC
+2015 (C7307qRmlMI, 527k views). No notes exist for them in `notes/world-3d/`, so nothing here cites
+them.
 
 ## Revision history
 
 - 2026-09-24, v0.1: first release (13 live tests, 10 procedures run).
-- 2026-09-24, v0.2 (refactor after the Y2 blind grade, `tests/grading/Y2_grade.md`; v0.1 kept in `skills/_versions/unity-world-building v1 2026-09-24/`): added the island's edge and guidance ladder (coast sectors, walk-back flood fill, empty arcs, false peaks, `fill_coast`); streaming measured in a development Player (Integrate marker against the priority budget, hitches, memory counters, Memory Profiler snapshots) and the "stream at all" scene report; door leaves, roofs, upper floors and overlapping surfaces in a kit NavMesh gate with Build Height Mesh; the gym (doors against the capsule and the camera boom, ramps, steps, stairs, jump links; `gym_is_stale`); the PolyShape re-entry trap; every Toolbox-excluded terrain setting plus reflection probe, tree light probe and ringing options; instanced-detail color and lighting findings; Firewatch detail-budget rules in the critique; `mark_generated` (skip-worktree); `compare_runs` (Profile Analyzer style, ~200 frames); pop captures at the detail, LOD and cull distances; merged proxies for unloaded chunks; the Start-scan double-load test; compound house prefabs; handoffs for APV Baking Sets, occlusion, GPU Resident Drawer and import rules. Fixed in the skill's own content: the kit bulk replace lost every replaced wall's placement (unrecorded overrides; audit now checks slots and perimeter), the clutter scatter split two rooms for a 0.5 m agent (now keeps door zones clear and every floor connected), `treeDistance` on LOD Group trees confirmed ignored with a decisive capture test, the mobile budget wording (65 % of the 33.3 ms frame), `FrameTimingManager` per-system costs listed as a mistake.
+- 2026-09-24, v0.2 (refactor after the Y2 blind grade, `tests/grading/Y2_grade.md`; v0.1 kept in
+  `skills/_versions/unity-world-building v1 2026-09-24/`): added the island's edge and guidance
+  ladder (coast sectors, walk-back flood fill, empty arcs, false peaks, `fill_coast`); streaming
+  measured in a development Player (Integrate marker against the priority budget, hitches, memory
+  counters, Memory Profiler snapshots) and the "stream at all" scene report; door leaves, roofs,
+  upper floors and overlapping surfaces in a kit NavMesh gate with Build Height Mesh; the gym (doors
+  against the capsule and the camera boom, ramps, steps, stairs, jump links; `gym_is_stale`); the
+  PolyShape re-entry trap; every Toolbox-excluded terrain setting plus reflection probe, tree light
+  probe and ringing options; instanced-detail color and lighting findings; Firewatch detail-budget
+  rules in the critique; `mark_generated` (skip-worktree); `compare_runs` (Profile Analyzer style,
+  ~200 frames); pop captures at the detail, LOD and cull distances; merged proxies for unloaded
+  chunks; the Start-scan double-load test; compound house prefabs; handoffs for APV Baking Sets,
+  occlusion, GPU Resident Drawer and import rules. Fixed in the skill's own content: the kit bulk
+  replace lost every replaced wall's placement (unrecorded overrides; audit now checks slots and
+  perimeter), the clutter scatter split two rooms for a 0.5 m agent (now keeps door zones clear and
+  every floor connected), `treeDistance` on LOD Group trees confirmed ignored with a decisive
+  capture test, the mobile budget wording (65 % of the 33.3 ms frame), `FrameTimingManager`
+  per-system costs listed as a mistake.

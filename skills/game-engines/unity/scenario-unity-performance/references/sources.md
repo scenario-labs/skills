@@ -1,6 +1,11 @@
 # Sources (scenario-unity-performance)
 
-Every claim in this skill traces to one of these, or to a live run on this Mac (Unity 6000.3.21f1, macOS 26.5.1, Apple M5 Max, 2026-09-24; results in `archive/tests/unity-performance/live_results.jsonl`, marked **[observed]**). Distilled notes: `notes/performance-shipping/` (one note per source, digests `_digest_docs_*`, `_digest_videos_*`, `_digest_visual_*`, `_digest_extra_*`). Precedence when sources disagree: the installed editor, then the 6.3 Manual, then package docs, then e-books, then videos (`sources/unity-version-deltas.md`).
+Every claim in this skill traces to one of these, or to a live run on this Mac (Unity 6000.3.21f1,
+macOS 26.5.1, Apple M5 Max, 2026-09-24; results in
+`archive/tests/unity-performance/live_results.jsonl`, marked **[observed]**). Distilled notes:
+`notes/performance-shipping/` (one note per source, digests `_digest_docs_*`, `_digest_videos_*`,
+`_digest_visual_*`, `_digest_extra_*`). Precedence when sources disagree: the installed editor, then
+the 6.3 Manual, then package docs, then e-books, then videos (`sources/unity-version-deltas.md`).
 
 ## Videos
 
@@ -35,12 +40,49 @@ Every claim in this skill traces to one of these, or to a live run on this Mac (
 
 ## Observed on this Mac (source code read, live runs)
 
-- URP 17.3 `UniversalRenderPipelineAsset.IsGPUResidentDrawerSupportedBySRP`: GRD is disabled for the whole asset if any renderer in its Renderer List is not Forward+ or Deferred+. Core RP 17.3 `GPUResidentDrawer.Validator`: requires `EditorGraphicsSettings.batchRendererGroupShaderStrippingMode == KeepAll`; Edit mode only with "allow in edit mode"; `DisallowGPUDrivenRendering` is an internal class.
-- Template defaults (URP 3D template in 6000.3.21f1): BRG variants KeepIfEntitiesGraphics, static batching on for macOS, PC renderer Forward+, Mobile renderer Forward, Graphics Jobs off, Frame Timing Stats off, Incremental GC on.
-- Live measurements: `tests/code/unity-performance/test_live_perf.py`, results `archive/tests/unity-performance/live_results.jsonl`, outputs `archive/tests/unity-performance/out/` (CSVs, captures analysis JSON, contact sheet `player_sheet.png`). Read the latest line per test name: a stale failing line (`gc.editor_slow_vs_fixed`) is retired by a marker row, never deleted (procedures.md P5).
-- v0.2 facts read from the installed editor (6000.3.21f1): `PlayerSettings.GetGraphicsJobsForPlatform` / `GetGraphicsJobModeForPlatform` are internal; engine defaults in the URP 3D template read Windows on/Split, Android off/Native, macOS and iOS off/Native (`m_BuildTargetGraphicsJobs: []`). `UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerUtility` (SetEnabled, count, GetFrameEvents, GetFrameEventInfoName, GetFrameEventData, GetBatchBreakCauseStrings) is internal. `ProfilerCounterValue<T>` lives in `com.unity.profiling.core` 1.0.3, not in the engine. Project Auditor 1.0.2, Performance Testing 3.5.0, Profiling Core 1.0.3, Memory Profiler 1.1.12, Profile Analyzer 1.4.0 and Addressables 2.9.1 ship as preinstalled tarballs in `Unity.app/Contents/Resources/PackageManager/Editor/` and resolve by name. Recorder names used by PerfProbe v0.2: `Physics.Simulate`, `Physics.BakePhysXCollisionMeshData`, `Loading.ReadObject`, `Texture Memory`, `Mesh Memory`, `Gfx Used Memory`.
-- Native GPU timing on this Mac: Xcode 26.6 `xcrun xctrace record --template 'Metal System Trace'` runs headless against the player, and `xctrace export --xpath ... table[@schema="metal-gpu-intervals"]` gives Vertex, Fragment and Compute intervals per frame and per labeled pass (`ut_perf.metal_trace`, `metal_gpu_frames`). The trace contains every GPU client on the machine: filter by process.
+- URP 17.3 `UniversalRenderPipelineAsset.IsGPUResidentDrawerSupportedBySRP`: GRD is disabled for the
+  whole asset if any renderer in its Renderer List is not Forward+ or Deferred+. Core RP 17.3
+  `GPUResidentDrawer.Validator`: requires
+  `EditorGraphicsSettings.batchRendererGroupShaderStrippingMode == KeepAll`; Edit mode only with
+  "allow in edit mode"; `DisallowGPUDrivenRendering` is an internal class.
+- Template defaults (URP 3D template in 6000.3.21f1): BRG variants KeepIfEntitiesGraphics, static
+  batching on for macOS, PC renderer Forward+, Mobile renderer Forward, Graphics Jobs off, Frame
+  Timing Stats off, Incremental GC on.
+- Live measurements: `tests/code/unity-performance/test_live_perf.py`, results
+  `archive/tests/unity-performance/live_results.jsonl`, outputs
+  `archive/tests/unity-performance/out/` (CSVs, captures analysis JSON, contact sheet
+  `player_sheet.png`). Read the latest line per test name: a stale failing line
+  (`gc.editor_slow_vs_fixed`) is retired by a marker row, never deleted (procedures.md P5).
+- v0.2 facts read from the installed editor (6000.3.21f1):
+  `PlayerSettings.GetGraphicsJobsForPlatform` / `GetGraphicsJobModeForPlatform` are internal; engine
+  defaults in the URP 3D template read Windows on/Split, Android off/Native, macOS and iOS
+  off/Native (`m_BuildTargetGraphicsJobs: []`).
+  `UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerUtility` (SetEnabled, count,
+  GetFrameEvents, GetFrameEventInfoName, GetFrameEventData, GetBatchBreakCauseStrings) is internal.
+  `ProfilerCounterValue<T>` lives in `com.unity.profiling.core` 1.0.3, not in the engine. Project
+  Auditor 1.0.2, Performance Testing 3.5.0, Profiling Core 1.0.3, Memory Profiler 1.1.12, Profile
+  Analyzer 1.4.0 and Addressables 2.9.1 ship as preinstalled tarballs in
+  `Unity.app/Contents/Resources/PackageManager/Editor/` and resolve by name. Recorder names used by
+  PerfProbe v0.2: `Physics.Simulate`, `Physics.BakePhysXCollisionMeshData`, `Loading.ReadObject`,
+  `Texture Memory`, `Mesh Memory`, `Gfx Used Memory`.
+- Native GPU timing on this Mac: Xcode 26.6 `xcrun xctrace record --template 'Metal System Trace'`
+  runs headless against the player, and
+  `xctrace export --xpath ... table[@schema="metal-gpu-intervals"]` gives Vertex, Fragment and
+  Compute intervals per frame and per labeled pass (`ut_perf.metal_trace`, `metal_gpu_frames`). The
+  trace contains every GPU client on the machine: filter by process.
 
 ## Revision history
 
-- 2026-09-24 v0.2 refactor after the Y10 blind grade (`tests/grading/Y10_grade.md`); v0.1 kept in `skills/_versions/unity-performance v1 2026-09-24/`. Added from the notes: GRD coverage per renderer and the Frame Debugger check (batch editors cannot run it, observed), realistic GRD gains, Split graphics jobs as the DX12/Vulkan default, markers and counters for spike attribution, physics catch-up, MeshCollider cooking, logging cost, memory and VRAM budget with render textures, triangle density and quad overdraw, native GPU timing (Metal System Trace, headless), Rendering Debugger Display Stats, dynamic resolution, shader variant log to SVC and stripping, Project Auditor baseline with frequency triage, audio load types, duplicated bundle dependencies, Build Profiles shared settings, Performance Testing per commit, time-based benchmark paths. Fixed: the "Graphics Jobs off in the template" claim (true for Metal and Android only), the `-buildTarget` name note, the 6.3 player marker names, the stale `gc.editor_slow_vs_fixed` log line (retired, not deleted). New code: PerfFrameDebug.cs, PerfAudit.cs, PerfShaderVariantReport, PerfProbe v0.2, ut_perf v0.2; procedures P12 to P18, each run live in 6000.3.21f1.
+- 2026-09-24 v0.2 refactor after the Y10 blind grade (`tests/grading/Y10_grade.md`); v0.1 kept in
+  `skills/_versions/unity-performance v1 2026-09-24/`. Added from the notes: GRD coverage per
+  renderer and the Frame Debugger check (batch editors cannot run it, observed), realistic GRD
+  gains, Split graphics jobs as the DX12/Vulkan default, markers and counters for spike attribution,
+  physics catch-up, MeshCollider cooking, logging cost, memory and VRAM budget with render textures,
+  triangle density and quad overdraw, native GPU timing (Metal System Trace, headless), Rendering
+  Debugger Display Stats, dynamic resolution, shader variant log to SVC and stripping, Project
+  Auditor baseline with frequency triage, audio load types, duplicated bundle dependencies, Build
+  Profiles shared settings, Performance Testing per commit, time-based benchmark paths. Fixed: the
+  "Graphics Jobs off in the template" claim (true for Metal and Android only), the `-buildTarget`
+  name note, the 6.3 player marker names, the stale `gc.editor_slow_vs_fixed` log line (retired, not
+  deleted). New code: PerfFrameDebug.cs, PerfAudit.cs, PerfShaderVariantReport, PerfProbe v0.2,
+  ut_perf v0.2; procedures P12 to P18, each run live in 6000.3.21f1.

@@ -1,8 +1,14 @@
 # Groom critique rubric
 
-Use at every gate. Viewport captures only after `G.viewport_aa(True)` (FlippedNormals [00:13:07]; Fernandez 02 [00:04:03]). Numbers first, then eyes: run `G.lint()` and `G.measure_abc(cache)["verdict"]` (or `G.measure_curves` for guides), then open `G.review(...)` sheets and close-up tiles with the image reader. Fernandez judges a groom in three levels, in this order: **flow, clumps, per strand** [CEk0IQ6dk3A 00:01:09]. Fix a higher level before judging a lower one.
+Use at every gate. Viewport captures only after `G.viewport_aa(True)` (FlippedNormals [00:13:07];
+Fernandez 02 [00:04:03]). Numbers first, then eyes: run `G.lint()` and
+`G.measure_abc(cache)["verdict"]` (or `G.measure_curves` for guides), then open `G.review(...)`
+sheets and close-up tiles with the image reader. Fernandez judges a groom in three levels, in this
+order: **flow, clumps, per strand** [CEk0IQ6dk3A 00:01:09]. Fix a higher level before judging a
+lower one.
 
-Thresholds marked [added] are this skill's defaults for turning an expert rule into a pass or fail; the rule itself is attributed. Where no measure exists, the check is visual only.
+Thresholds marked [added] are this skill's defaults for turning an expert rule into a pass or fail;
+the rule itself is attributed. Where no measure exists, the check is visual only.
 
 ## 1. Flow (macro, set on the guides)
 
@@ -99,4 +105,5 @@ Thresholds marked [added] are this skill's defaults for turning an expert rule i
 2. Beauty threequarter and close-ups: flow, then clumps, then tips.
 3. Backlit: strays, halo, flyaways; too many or none.
 4. Coverage: showthrough % against the reference's part and crown.
-5. Write what fails as a change to the stack or the flow sheet, not as a brush stroke, then re-measure.
+5. Write what fails as a change to the stack or the flow sheet, not as a brush stroke, then
+   re-measure.
