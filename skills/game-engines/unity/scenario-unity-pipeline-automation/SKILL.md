@@ -168,14 +168,14 @@ this Mac against a 200-FBX Blender drop: `tests/code/unity-pipeline-automation/`
 | tests in a test asmdef calling code in Assembly-CSharp-Editor                        | CS0103, every batch job aborts                     | pipeline code in its own Editor asmdef                       |
 | `-quit` with Accelerator, no wait flag; server unreachable                           | uploads lost; job passes silently                  | `-cacheServerWaitForUploadCompletion`; check `cache server=` |
 | release from a dirty tree                                                            | provenance `dirty: true`, the CLI still builds     | clean tree, `RELEASE=1`, gitignore Addressables' `link.xml`  |
-| Blender default FBX export                                                           | root rotated 90 degrees, scale 100                 | FBX All + Apply Transform (scenario-blender-expert)          |
+| Blender default FBX export                                                           | root rotated 90 degrees, scale 100                 | FBX All + Apply Transform (scenario-blender-export)          |
 | duplicate name resolved by order                                                     | the wrong asset silently wins                      | reject every copy, ask                                       |
 | Addressables settings created inside a job                                           | the next run rewrites the settings file once       | set the two provider types after `GetSettings(true)`         |
 | `-quit` with `-runTests`; relative `--output-path`                                   | no XML; build outside the project                  | omit `-quit`; absolute path                                  |
 
 ## Handoffs
 
-- **Receives:** FBX and textures with export settings from scenario-blender-expert,
+- **Receives:** FBX and textures with export settings from scenario-blender-export,
   scenario-maya-expert, scenario-3d, scenario-textures; code layout and asmdefs from
   scenario-unity-architecture; which props load together from scenario-unity-world-building.
 - **Delivers:** to scenario-unity-performance the build report, bundle sizes, per-label loads; to

@@ -324,16 +324,17 @@ skill are still pending.
 
 ### Expert tools: Blender
 
-DCC software. A lead and thirteen specialists that drive Blender 5.2 through Python, headless or in
+DCC software. A lead and fourteen specialists that drive Blender 5.2 through Python, headless or in
 a live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs,
-blockouts for render-to-real video, Geometry Nodes, lighting, Grease Pencil, hard surface. Twelve
-test suites pass headless on Blender 5.2.1.
+blockouts for render-to-real video, Geometry Nodes, lighting, Grease Pencil, hard surface, export to
+game engines. Twelve test suites pass headless on Blender 5.2.1.
 
 | Skill                                                                                                  | Use it for                                                                                                                                                     |
 | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [scenario-blender-expert](skills/dcc/blender/scenario-blender-expert/SKILL.md)                         | Blender lead: Python headless or through a live MCP bridge, the expert review loop, the shared review and mesh-audit toolkit, Blender 5.2 API traps            |
 | [scenario-blender-animation](skills/dcc/blender/scenario-blender-animation/SKILL.md)                   | Blender animation: cycles, jumps, acting and lip sync, stepped blocking to spline and polish, timing and spacing, graph editor, slotted actions and NLA        |
 | [scenario-blender-blockout](skills/dcc/blender/scenario-blender-blockout/SKILL.md)                     | Blockouts that guide render-to-real video: color-coded proxies at metric scale, cameras locked to the timeline, framing audits, playblast and hand-off sheet   |
+| [scenario-blender-export](skills/dcc/blender/scenario-blender-export/SKILL.md)                         | Exports for game engines: FBX, GLB, USDZ and STL presets for Unity, Unreal, Godot, Roblox, three.js, round-trip checks, LODs, collision, batch                 |
 | [scenario-blender-geometry-nodes](skills/dcc/blender/scenario-blender-geometry-nodes/SKILL.md)         | Geometry Nodes: procedural modeling, scattering, curves and loops, simulation zones, 5.2 physics, closures and bundles, node-group assets                      |
 | [scenario-blender-grease-pencil](skills/dcc/blender/scenario-blender-grease-pencil/SKILL.md)           | Grease Pencil in Blender 5.x: 2D and 2.5D illustration, frame-by-frame and cutout animation, fills, interpolation, Line Art, strokes on meshes                 |
 | [scenario-blender-hair](skills/dcc/blender/scenario-blender-hair/SKILL.md)                             | Hair and fur with hair curves: hairstyles, animal fur, Essentials hair nodes, density masks and partings, hair cards and mesh hair for games                   |

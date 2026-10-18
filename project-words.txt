@@ -675,6 +675,7 @@ Saby
 Santo
 Sarkamari
 Sarkamari's
+Scalings
 Scammell
 Scenarians
 Schmitz
@@ -762,6 +763,7 @@ UPROJECT
 UPROPERTY
 URPS
 USDCMD
+USDZ
 UVCS
 UVDOC
 UXML
@@ -796,6 +798,7 @@ Vylocity
 WASD
 WCAG
 WGSL
+WWDC
 Wahaha
 Walvoord
 Warnecke

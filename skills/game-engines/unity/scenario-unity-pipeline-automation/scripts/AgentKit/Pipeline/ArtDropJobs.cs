@@ -612,7 +612,7 @@ namespace AgentKit.Pipeline
                 if (c.error != null) f.Add("error", "pipeline.size", path, c.error, "re-export with FBX All scaling (Blender) / correct units");
                 foreach (var w in c.warnings)
                     f.Add("warn", w.Contains("vertices") ? "pipeline.vertex_budget" : w.StartsWith("rotation") ? "pipeline.rotation" : w.StartsWith("scale") ? "pipeline.transform_scale" : "pipeline.pivot", path, w,
-                          w.StartsWith("rotation") || w.StartsWith("scale") ? "re-export (scenario-blender-expert): Apply Scalings FBX All + Apply Transform" : null);
+                          w.StartsWith("rotation") || w.StartsWith("scale") ? "re-export (scenario-blender-export): Apply Scalings FBX All + Apply Transform" : null);
             }
             return new Dictionary<string, object>
             {

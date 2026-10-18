@@ -123,8 +123,8 @@ Never report a level, material, shot or build as done without numbers and a fram
 profile with no error, stat or trace numbers when performance matters, the frames the sender looked
 at with their `image_checks`, each toolkit call with its engine call, and the Verified and Assumed
 lists. Units are centimeters, Z-up [added]. Sister teams: scenario-maya-expert (1 unit = 1 cm, Y-up
-in Maya), scenario-zbrush-expert, scenario-blender-expert; scenario-3d for generated meshes to
-finish.
+in Maya), scenario-zbrush-expert, scenario-blender-expert (FBX through scenario-blender-export);
+scenario-3d for generated meshes to finish.
 
 ## 4. Shared toolkit (`scripts/`, in-engine parts not yet run in Unreal)
 

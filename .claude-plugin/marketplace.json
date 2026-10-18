@@ -232,13 +232,14 @@
     },
     {
       "name": "18.-expert-tools-blender",
-      "description": "DCC software. A lead and thirteen specialists that drive Blender 5.2 through Python, headless or in a live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs, blockouts for render-to-real video, Geometry Nodes, lighting, Grease Pencil, hard surface. Twelve test suites pass headless on Blender 5.2.1.",
+      "description": "DCC software. A lead and fourteen specialists that drive Blender 5.2 through Python, headless or in a live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs, blockouts for render-to-real video, Geometry Nodes, lighting, Grease Pencil, hard surface, export to game engines. Twelve test suites pass headless on Blender 5.2.1.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/dcc/blender/scenario-blender-expert",
         "./skills/dcc/blender/scenario-blender-animation",
         "./skills/dcc/blender/scenario-blender-blockout",
+        "./skills/dcc/blender/scenario-blender-export",
         "./skills/dcc/blender/scenario-blender-geometry-nodes",
         "./skills/dcc/blender/scenario-blender-grease-pencil",
         "./skills/dcc/blender/scenario-blender-hair",

@@ -26,10 +26,10 @@ carries each tool's full guidance. Local names are verb-first (`list_models`, `j
 never interchangeable with the hosted server's (`models_list`, `model_run`, `jobs_wait`). Training,
 collection rename or deletion, workflow authoring and usage stay on mcp.scenario.com: see the
 `scenario` skill, and connect both servers when a task needs both. Modeling, sculpting, rigging or
-shading through bpy is the `scenario-blender-expert` skill's work. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+shading through bpy is the `scenario-blender-expert` skill's work; exporting for an engine is
+`scenario-blender-export`'s. If a sibling skill named here is missing from your available skills,
+ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
+proceed from tool schemas and flag the gap.
 
 ## Setup
 

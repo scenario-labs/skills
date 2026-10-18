@@ -181,7 +181,8 @@ scenario-unreal-performance.
 
 - **Receives** from scenario-maya-rigging, scenario-maya-animation, scenario-blender-rigging,
   scenario-blender-animation through scenario-unreal-pipeline-automation: FBX 2020.2, cm, one root
-  at the origin, joints only, one clip per file, `game_skeleton_check` JSON.
+  at the origin, joints only, one clip per file, `game_skeleton_check` JSON. Blender files come from
+  scenario-blender-export's `unreal_skeletal` preset.
 - **Delivers to scenario-maya-animation or scenario-blender-animation:** exported capsule
   trajectory, speed, acceleration and braking per direction, stop spec, chest tolerance, clip list
   with both feet.

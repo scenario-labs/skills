@@ -1,0 +1,145 @@
+"""Exports fixtures with every bx_export preset inside Blender, re-imports them, writes JSON.
+
+Run by test_live_export.py:
+  blender -b --factory-startup --python-exit-code 1 -P export_cases.py -- <export scripts> <out.json> <tmp dir>
+"""
+
+import json
+import math
+import os
+import sys
+import zipfile
+
+import bmesh
+import bpy
+
+SCRIPTS, OUT, TMP = sys.argv[sys.argv.index("--") + 1:][:3]
+sys.path.insert(0, SCRIPTS)
+import bx_export as bxe  # noqa: E402
+
+STATIC = ("unity", "unreal", "print", "usd", "usdz", "gltf")
+RIGGED = ("unity_skeletal", "unreal_skeletal", "roblox", "godot", "web")
+
+
+def mesh(name, build):
+    me = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    bm.loops.layers.uv.new("UVMap")
+    build(bm)
+    bm.to_mesh(me)
+    bm.free()
+    me.materials.append(bpy.data.materials.new("M_" + name))
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(ob)
+    return ob
+
+
+def crate():
+    """A 1.0 x 0.7 x 0.6 m box resting on the ground."""
+    def build(bm):
+        bmesh.ops.create_cube(bm, size=1.0, calc_uvs=True)
+        bmesh.ops.scale(bm, vec=(1.0, 0.7, 0.6), verts=bm.verts)
+        bmesh.ops.translate(bm, vec=(0, 0, 0.3), verts=bm.verts)
+    return mesh("Crate", build)
+
+
+def character():
+    """A 2 m capsule skinned to a three-bone chain, with a shape key and one action."""
+    def build(bm):
+        bmesh.ops.create_cone(bm, segments=12, radius1=0.25, radius2=0.25, depth=2.0,
+                              cap_ends=True, calc_uvs=True)
+        bmesh.ops.translate(bm, vec=(0, 0, 1.0), verts=bm.verts)
+        bmesh.ops.subdivide_edges(bm, edges=[e for e in bm.edges if abs(e.verts[0].co.z - e.verts[1].co.z) > 1],
+                                  cuts=7, use_grid_fill=False)
+    body = mesh("Body", build)
+    arm = bpy.data.armatures.new("Rig")
+    rig = bpy.data.objects.new("Rig", arm)
+    bpy.context.scene.collection.objects.link(rig)
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.object.mode_set(mode="EDIT")
+    parent = None
+    for i, (name, z0, z1) in enumerate((("Hips", 0.0, 0.8), ("Spine", 0.8, 1.5), ("Head", 1.5, 2.0))):
+        b = arm.edit_bones.new(name)
+        b.head, b.tail, b.parent = (0, 0, z0), (0, 0, z1), parent
+        b.use_connect = parent is not None
+        parent = b
+    bpy.ops.object.mode_set(mode="OBJECT")
+    for name, lo, hi in (("Hips", -1, 0.8), ("Spine", 0.8, 1.5), ("Head", 1.5, 3)):
+        vg = body.vertex_groups.new(name=name)
+        vg.add([v.index for v in body.data.vertices if lo <= v.co.z < hi], 1.0, "REPLACE")
+    body.modifiers.new("Armature", "ARMATURE").object = rig
+    body.parent = rig
+    body.shape_key_add(name="Basis")
+    key = body.shape_key_add(name="jawOpen")
+    for v in key.data:
+        if v.co.z > 1.8:
+            v.co.x *= 1.3
+    pb = rig.pose.bones["Spine"]
+    for frame, angle in ((1, 0.0), (12, 0.6), (24, 0.0)):
+        pb.rotation_mode = "XYZ"
+        pb.rotation_euler = (angle, 0, 0)
+        pb.keyframe_insert("rotation_euler", frame=frame)
+    rig.animation_data.action.name = "Wave"
+    return body, rig
+
+
+def scene():
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    c = crate()
+    body, rig = character()
+    rig.location.x = 2.0
+    return c, body, rig
+
+
+cases = {"exports": {}}
+scene()
+before = {"static": bxe.inspect_scene(["Crate"]), "rigged": bxe.inspect_scene(["Rig", "Body"])}
+files = {}
+for preset in STATIC + RIGGED:
+    ext = bxe.PRESETS[preset][0]
+    path = os.path.join(TMP, preset + ext)
+    objs = ["Crate"] if preset in STATIC else ["Rig", "Body"]
+    cases["exports"][preset] = bxe.export(path, preset, objs)
+    files[preset] = path
+
+# round_trip() itself: a background Blender, the open scene untouched.
+rt = bxe.round_trip(files["godot"], ["Rig", "Body"], preset="godot")
+cases["round_trip_godot"] = {"pass": rt["pass"], "diffs": rt["diffs"],
+                             "scene_kept": "Crate" in bpy.data.objects}
+
+# LODs and collision, exported together for Unity and Unreal.
+bxe.lods("Crate", ratios=(0.5, 0.25))
+cases["lods"] = bxe.inspect_scene([o for o in bpy.data.objects if o.name.startswith("Crate_LOD")])
+lod_fbx = os.path.join(TMP, "lods.fbx")
+bxe.export(lod_fbx, "unity", ["Crate", "Crate_LOD0", "Crate_LOD1", "Crate_LOD2"])
+scene()
+cases["collision_unreal"] = bxe.collision("Crate", "unreal")
+cases["collision_godot"] = bxe.collision("Crate", "godot")
+cases["collision_unity"] = bxe.collision("Crate", "unity")
+ucx_fbx = os.path.join(TMP, "ucx.fbx")
+bxe.export(ucx_fbx, "unreal", ["Crate", "UCX_Crate_00"])
+
+cases["roundtrip"] = {}
+for preset, path in files.items():
+    after = bxe.inspect_file(path)
+    kind = "static" if preset in STATIC else "rigged"
+    cases["roundtrip"][preset] = {
+        "diffs": bxe.compare(before[kind], after, bxe.CARRIES[preset], scale=bxe.SCALE.get(preset, 1.0)),
+        "after": after,
+    }
+cases["lods_file"] = sorted(bxe.inspect_file(lod_fbx)["objects"])
+cases["ucx_file"] = sorted(bxe.inspect_file(ucx_fbx)["objects"])
+cases["glb_godot"] = bxe.glb_summary(files["godot"])
+cases["glb_web"] = bxe.glb_summary(files["web"])
+cases["usdz_members"] = zipfile.ZipFile(files["usdz"]).namelist()
+
+# batch(): a folder holding the static GLB, gated and converted for Godot.
+src = os.path.join(TMP, "batch_in")
+os.makedirs(src)
+os.replace(files["gltf"], os.path.join(src, "crate.glb"))
+cases["batch"] = bxe.batch(src, os.path.join(TMP, "batch_out"), "godot")
+cases["spine_angle_deg"] = round(math.degrees(0.6), 1)
+
+with open(OUT, "w") as f:
+    json.dump(cases, f, indent=1)
+print("EXPORT CASES", len(cases))

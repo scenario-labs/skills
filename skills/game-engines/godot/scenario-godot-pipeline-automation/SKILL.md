@@ -198,12 +198,12 @@ Thumbnail, pack, CI and time-factor numbers are in procedures.md.
 
 ## Handoffs
 
-- Receives GLB, textures and audio with a manifest (blender-expert, `scenario-*`), budgets
+- Receives GLB, textures and audio with a manifest (scenario-blender-export, `scenario-*`), budgets
   (scenario-godot-performance-export), scene conventions (scenario-godot-architecture,
   scenario-godot-3d-world, which owns how a prop looks and plays).
 - Delivers audited props, a showroom and contact sheets to scenario-godot-3d-world; suites and CI to
   everyone; presets to scenario-godot-performance-export (signing, stores). Sends decimation to
-  blender-expert, material fixes to scenario-godot-rendering-lighting.
+  scenario-blender-expert, material fixes to scenario-godot-rendering-lighting.
 
 ## Godot 4.7 notes
 

@@ -6,7 +6,7 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
 
 ## Status
 
-- 14 skills. Thirteen are distilled from about 200 expert videos (Blender Studio, Blender Conference
+- 15 skills. Thirteen are distilled from about 200 expert videos (Blender Studio, Blender Conference
   2019 to 2026, top instructors): `scenario-blender-expert` (router: execution channel, expert loop,
   review sheets `bx_review`, mesh audit `bx_audit`, live brushes `bx_gui`, Blender 5 API traps, bpy
   reliability) and `scenario-blender-sculpting`, `scenario-blender-retopology`,
@@ -17,7 +17,8 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
   `bx_<domain>.py`. The fourteenth, `scenario-blender-blockout`, builds camera-locked blockouts that
   guide a render-to-real video pass through the Scenario Blender Plugin. Its `bx_blockout.py` and
   `bx_kits.py` have no headless suite here; they ran in Blender 5.2.1 during the live validations
-  under Provenance.
+  under Provenance. The fifteenth, `scenario-blender-export`, writes engine-ready FBX, GLB, USD and
+  STL files from presets and re-imports each file to check it.
 - Evidence: blind-graded written scenarios, with skills won 7 of 7 against the same model without
   them; execution tests better on retopology and bake + material, on par or better on sculpting
   after refactor, on par on a bouncing ball; all 12 test suites pass headless on Blender 5.2.1.
@@ -36,7 +37,7 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
 ## Install
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario-blender-expert scenario-blender-animation scenario-blender-blockout scenario-blender-geometry-nodes scenario-blender-grease-pencil scenario-blender-hair scenario-blender-hard-surface scenario-blender-lighting-rendering scenario-blender-previs-storyboard scenario-blender-retopology scenario-blender-rigging scenario-blender-sculpting scenario-blender-texturing-shading scenario-blender-uv-baking
+npx skills add scenario-labs/skills --skill scenario-blender-expert scenario-blender-animation scenario-blender-blockout scenario-blender-export scenario-blender-geometry-nodes scenario-blender-grease-pencil scenario-blender-hair scenario-blender-hard-surface scenario-blender-lighting-rendering scenario-blender-previs-storyboard scenario-blender-retopology scenario-blender-rigging scenario-blender-sculpting scenario-blender-texturing-shading scenario-blender-uv-baking
 ```
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's
@@ -84,6 +85,12 @@ independent of the set's fidelity, and `walk_path` a capsule gait (a step bob, a
 and props). Example 4 was rebuilt in each style and rendered through Seedance 2.5, MiniMax H3 Max 3D
 to Video and LTX 2.3 Render to Real; the findings are in the skill's `references/cast.md`. A figure
 built without `style` or `fidelity` is now a capsule (it was a jointed figure).
+
+`scenario-blender-export` was written for this repository on 2026-10-18. Its live suite,
+`tests/scenario-blender-expert/test_live_export.py`, exports a crate and a skinned, animated
+character with every preset and re-imports each file in Blender 5.2.1. The same files were imported
+into Unity 6000.3.21f1 (batch mode) and Godot 4.7.2 (headless); the results are in the skill's
+`references/engines.md`. The `unreal` and `roblox` presets were not imported into those engines.
 
 Paths such as `tests/...` inside the references point to the test evidence on the build machine.
 They are provenance only; the skills do not need them to run.
