@@ -36,7 +36,8 @@ drive, remap_driver, fk_ik_switch, mirror_drivers, make_def_layer, widget, set_s
 organize, root_test, static_cycles, cycle_check.
 Correctives and faces: skin_jacobian, corrective_from_targets, volume_restore_targets,
 smooth_field, corrective_driver, mirror_shape_key, split_shape_lr, face_control,
-drive_shape. Mechanical: rigid_check, key_action, action_drive, preserve_volume_mask.
+drive_shape, SHAPE_SETS (ARKit 52, visemes), shape_set, shape_report. Mechanical:
+rigid_check, key_action, action_drive, preserve_volume_mask.
 Test character: mannequin.
 
 Verified on Blender 5.2.1 LTS by tests/code/blender-rigging/*.py.
@@ -2910,6 +2911,98 @@ def drive_shape(obj, key_name, rig, bone, channel="LOC_Y", travel=1.0, sign=1.0)
     kb = obj.data.shape_keys.key_blocks[key_name]
     s = "-" if sign < 0 else ""
     return drive(kb, "value", rig, expr=f"{s}var/{travel}", bone=bone, ttype=channel)
+
+
+# Engines and capture apps find face shapes by exact name. Lists checked 2026-10-18:
+# Apple ARFaceAnchor.BlendShapeLocation (52) and Meta Lipsync visemes (15).
+ARKIT_52 = (
+    "browDownLeft", "browDownRight", "browInnerUp", "browOuterUpLeft", "browOuterUpRight",
+    "cheekPuff", "cheekSquintLeft", "cheekSquintRight",
+    "eyeBlinkLeft", "eyeBlinkRight", "eyeLookDownLeft", "eyeLookDownRight", "eyeLookInLeft",
+    "eyeLookInRight", "eyeLookOutLeft", "eyeLookOutRight", "eyeLookUpLeft", "eyeLookUpRight",
+    "eyeSquintLeft", "eyeSquintRight", "eyeWideLeft", "eyeWideRight",
+    "jawForward", "jawLeft", "jawOpen", "jawRight",
+    "mouthClose", "mouthDimpleLeft", "mouthDimpleRight", "mouthFrownLeft", "mouthFrownRight",
+    "mouthFunnel", "mouthLeft", "mouthLowerDownLeft", "mouthLowerDownRight", "mouthPressLeft",
+    "mouthPressRight", "mouthPucker", "mouthRight", "mouthRollLower", "mouthRollUpper",
+    "mouthShrugLower", "mouthShrugUpper", "mouthSmileLeft", "mouthSmileRight",
+    "mouthStretchLeft", "mouthStretchRight", "mouthUpperUpLeft", "mouthUpperUpRight",
+    "noseSneerLeft", "noseSneerRight", "tongueOut",
+)
+VISEMES_15 = ("sil", "PP", "FF", "TH", "DD", "kk", "CH", "SS", "nn", "RR", "aa", "E", "I", "O", "U")
+SHAPE_SETS = {"arkit": ARKIT_52, "visemes": VISEMES_15}
+
+
+def shape_set(obj, kind="arkit", rename=None):
+    """Give a mesh every key of a set ("arkit" or "visemes"). rename={"JawOpen": "jawOpen"}
+    renames existing keys first. Missing keys are added at value 0 as copies of the Basis
+    (shape_key_add alone leaves value 1.0): sculpt each, then shape_report lists the ones
+    still empty. Returns the names created."""
+    if obj.data.shape_keys is None:
+        obj.shape_key_add(name="Basis", from_mix=False)
+    kbs = obj.data.shape_keys.key_blocks
+    for old, new in (rename or {}).items():
+        if old in kbs and new not in kbs:
+            kbs[old].name = new
+    created = []
+    for name in SHAPE_SETS[kind]:
+        if name not in kbs:
+            obj.shape_key_add(name=name, from_mix=False).value = 0.0
+            created.append(name)
+    return created
+
+
+def shape_report(obj, kind="arkit", eps=None):
+    """Keys of a set that are missing, named with the wrong case, still empty (no vertex
+    moves more than eps), or on the wrong side. left_is: the side the *Left keys move,
+    by the moved vertices' position, or by their direction for centered keys (jawLeft).
+    Blender's character left is +X, the side ARKit's face space calls the face's own
+    left. side_conflicts: keys that disagree with left_is. Zero-offset keys survive FBX
+    and glTF export, so a file can carry all 52 names and still not animate."""
+    names = SHAPE_SETS[kind]
+    keys = obj.data.shape_keys
+    kbs = {kb.name: kb for kb in keys.key_blocks[1:]} if keys else {}
+    n = len(obj.data.vertices)
+    base = np.empty(n * 3)
+    (keys.key_blocks[0].data if keys else obj.data.vertices).foreach_get("co", base)
+    base = base.reshape(-1, 3)
+    width = float(np.ptp(base[:, 0])) or 1.0
+    eps = eps or 1e-4 * float(np.ptp(base, axis=0).max() or 1.0)
+    lower = {k.lower(): k for k in kbs}
+    missing, wrong_case, empty, side = [], {}, [], {}
+    for name in names:
+        kb = kbs.get(name)
+        if kb is None:
+            if name.lower() in lower:
+                wrong_case[lower[name.lower()]] = name
+            else:
+                missing.append(name)
+            continue
+        co = np.empty(n * 3)
+        kb.data.foreach_get("co", co)
+        off = co.reshape(-1, 3) - base
+        d = np.linalg.norm(off, axis=1)
+        if d.max() < eps:
+            empty.append(name)
+            continue
+        cx = float((base[:, 0] * d).sum() / d.sum())
+        sign = np.sign(cx) if abs(cx) > 0.05 * width else np.sign(float((off[:, 0] * d).sum()))
+        if sign:
+            side[name] = float(sign)
+    lefts = [v for k, v in side.items() if k.endswith("Left")]
+    left_is = (1.0 if sum(lefts) >= 0 else -1.0) if lefts else None
+    conflicts = []
+    for name in names:
+        if name in side and name.endswith("Left") and side[name] != left_is:
+            conflicts.append(name)
+        if name in side and name.endswith("Right") and side[name] == left_is:
+            conflicts.append(name)
+    return {
+        "kind": kind, "expected": len(names), "present": len(names) - len(missing) - len(wrong_case),
+        "missing": missing, "wrong_case": wrong_case, "empty": empty,
+        "left_is": {1.0: "+X", -1.0: "-X"}.get(left_is), "side_conflicts": conflicts,
+        "extra": sorted(k for k in kbs if k not in names and k not in wrong_case),
+    }
 
 
 # ----------------------------------------------------------------------------------

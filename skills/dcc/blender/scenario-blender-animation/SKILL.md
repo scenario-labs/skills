@@ -104,7 +104,9 @@ images, one-object `bouncing_ball`; API in procedures.md, tested on 5.2.1) and
 7. **Face and lip sync, stepped** (P6, P7): jaw rhythm, corners (never dead center), shapes from a
    pose library on the lower face minus the jaw, accents and asymmetry in small doses, tongue last,
    then spline the face. Eyes dart in 1 to 2 frames and lead the head; brows 3 to 10 frames (Rik).
-   GATE: `transitions` meets those counts; accents clearly fewer than syllables.
+   Keys an engine or capture app reads by name (ARKit, visemes): scenario-blender-rigging's
+   `shape_report` before keying. GATE: `transitions` meets those counts; accents clearly fewer than
+   syllables.
 8. **Polish.** `foot_slip` under 1 mm, `lowest_point` for penetration, `rotation_flips` empty
    (`fix_rotation_flips`), `limb_extension` under 0.99 wherever the leg should stay bent, smears 1
    frame (Pablo), burst spacing only now (Raymond), subdivision on. GATE: critique.md rubric passes

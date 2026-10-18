@@ -1,6 +1,6 @@
 ---
 name: scenario-blender-rigging
-description: 'Use when rigging a character, creature or prop in Blender through Python: "rig this character", Rigify metarig fitting or generation errors, automatic weights or "Bone Heat Weighting failed", weight painting fixes, clothes that do not follow, IK/FK switch, foot roll, twist bones, drivers and custom properties, corrective shape keys, a stylized face rig, a mechanical or hard-surface rig, or testing how a rig deforms.'
+description: 'Use when rigging a character, creature or prop in Blender through Python: "rig this character", Rigify metarig fitting or generation errors, automatic weights or "Bone Heat Weighting failed", weight painting fixes, clothes that do not follow, IK/FK switch, foot roll, twist bones, drivers and custom properties, corrective shape keys, a stylized face rig, ARKit 52 blend shapes or viseme shape keys for face capture, lip sync or a game engine, a mechanical or hard-surface rig, or testing how a rig deforms.'
 license: MIT
 ---
 
@@ -141,6 +141,27 @@ intersecting, teeth and eyes lagging, widgets hidden inside the mesh. Numbers pa
 showed broken arms or crease spikes during testing: always open the render. Rubric:
 [`references/critique.md`](references/critique.md).
 
+## Face shapes for engines and capture
+
+Face capture apps, engines and lip-sync tools find shape keys by exact name. A key named with the
+wrong case (`JawOpen`) or still equal to the Basis animates nothing. Both survive FBX and glTF
+export [verified], so the file looks complete.
+
+- `R.SHAPE_SETS`: `"arkit"` (Apple's 52 names) and `"visemes"` (Meta Lipsync's 15, `sil` to `U`).
+  Lists, sources and Roblox's 50 FACS poses:
+  [`references/face-shapes.md`](references/face-shapes.md).
+- `R.shape_set(face, "arkit", rename={"JawOpen": "jawOpen"})` renames, then adds each missing key at
+  value 0 as a copy of the Basis, and returns the names it created.
+- Sculpt the Left keys, then build each Right with `R.mirror_shape_key(face, n, n[:-4] + "Right")`
+  for every `n` in `R.ARKIT_52` ending in `Left`.
+- Before export, `R.shape_report(face, "arkit")`. GATE: `missing`, `wrong_case`, `empty` and
+  `side_conflicts` empty, `left_is == "+X"`.
+- Sides: Apple's pages say "left eye" without saying whose, and its face coordinate space puts +X on
+  the face's own left. Build Left keys on the character's left (+X, the `.L` side) and check one
+  capture take before sculpting the whole set.
+- Roblox dynamic heads take joint poses, one per frame from frame 1 with the neutral face on frame
+  0, not shape keys.
+
 ## Common mistakes
 
 | Mistake                                             | What it looks like                        | Fix                                     |
@@ -160,6 +181,7 @@ showed broken arms or crease spikes during testing: always open the render. Rubr
 | Re-parenting a connected bone                       | head jumps to the new parent's tail       | `reparent` clears use_connect first     |
 | Symmetrize expected to copy drivers; `.L.001` names | right side dead                           | `mirror_drivers`; `side_of`             |
 | IK/FK left at 0.86                                  | mixed, unreadable deformation             | exactly 0 or 1                          |
+| ARKit key misspelled or left at the Basis           | capture app or engine moves nothing       | `shape_set`, then `shape_report`        |
 
 ## Blender 5.2 notes
 
@@ -188,4 +210,6 @@ showed broken arms or crease spikes during testing: always open the render. Rubr
   internals, weighting, mechanisms, faces) with timestamps; load when a decision is not covered
   above.
 - `references/critique.md`: the review rubric; load at every gate.
+- [`references/face-shapes.md`](references/face-shapes.md): ARKit, viseme and Roblox FACS names with
+  their sources; load when naming face shapes for an engine or capture app.
 - [`references/sources.md`](references/sources.md): videos, experts, best timestamps.
