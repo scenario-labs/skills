@@ -16,14 +16,22 @@ Measured in Unity 6000.3.21f1, batch mode:
   - Blender's Apply Transform (`bake_space_transform=True`): no change on the armature.
 - `Name_LOD0..2` meshes under one parent: Unity added an LOD Group with 3 levels on import.
 - An `unreal` FBX in Unity reads as file scale 0.01, node scale 100.
+- Textures embedded in a `unity` FBX: the default import (Use Embedded Materials) shows the model
+  untextured. Extract Textures into the model's folder, and the material gets its base color.
+  - Two generated chests imported from GLB: 2048 x 2048 base color in Unity after extraction.
+  - Before `export()` named packed images with their extension, extraction wrote `Image_0` with no
+    extension, Unity never imported it, and the chest stayed untextured with no warning.
 
 Documentation
 ([FBX Model tab](https://docs.unity3d.com/6000.0/Documentation/Manual/FBXImporter-Model.html),
+[Materials tab](https://docs.unity3d.com/6000.3/Documentation/Manual/FBXImporter-Materials.html),
 [LOD meshes](https://docs.unity3d.com/6000.0/Documentation/Manual/importing-lod-meshes.html)):
 
 - Convert Units converts the file's scaling to Unity's; Bake Axis Conversion bakes the axis
   conversion into the asset data.
 - Import BlendShapes; Blend Shape Normals: Import, Calculate, or None.
+- Extract Textures writes the textures embedded in the model file into the project; Search Textures
+  Globally (off by default) looks past the model's folder.
 - LODs: name meshes `Name_LOD0` (most detailed), `_LOD1`, `_LOD2`. Grouped and named this way, the
   FBX import creates the LOD Group.
 

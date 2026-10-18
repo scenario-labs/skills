@@ -153,6 +153,30 @@ bpy.ops.render.render(write_still=True)
 bpy.data.objects.remove(cam)
 cases["after_render"] = bxe.export(os.path.join(TMP, "after_render.glb"), "godot", ["Crate"])["bytes"]
 
+# A packed image with no path, as a glTF import leaves it: the FBX must name it with an
+# extension, and the scene must keep its own path.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+mat = crate().data.materials[0]
+if mat.node_tree is None:
+    mat.use_nodes = True
+gen = bpy.data.images.new("gen", 8, 8)
+gen.filepath_raw, gen.file_format = os.path.join(TMP, "gen.png"), "PNG"
+gen.save()
+img = bpy.data.images.load(os.path.join(TMP, "gen.png"))
+img.pack()
+img.filepath_raw, img.name = "", "Image_0"
+tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
+tex.image = img
+bsdf = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+mat.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+bxe.export(os.path.join(TMP, "packed.fbx"), "unity", ["Crate"])
+data, rel, i = open(os.path.join(TMP, "packed.fbx"), "rb").read(), set(), 0
+while (i := data.find(b"RelativeFilenameS", i)) >= 0:
+    n = int.from_bytes(data[i + 17:i + 21], "little")
+    rel.add(data[i + 21:i + 21 + n].decode())
+    i += 21 + n
+cases["packed_fbx"] = {"relative": sorted(rel), "filepath_after": img.filepath_raw}
+
 cases["spine_angle_deg"] = round(math.degrees(0.6), 1)
 
 with open(OUT, "w") as f:

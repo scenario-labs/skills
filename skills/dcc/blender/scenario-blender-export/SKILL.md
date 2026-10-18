@@ -150,6 +150,9 @@ the parts selected) for a single static prop, then gate again.
 - The `web` preset for Godot, or any compressed GLB for a loader without its decoder. Check
   `extensions_required` first.
 - FBX textures left as external paths: the presets copy and embed them (`path_mode="COPY"`,
-  `embed_textures=True`), so the file travels alone.
+  `embed_textures=True`), so the file travels alone. `export()` gives packed images without an
+  extension (as a GLB import leaves them) a `.jpg` or `.png` name first.
+- A textured FBX that shows untextured in Unity: the default import keeps embedded textures inside
+  the file. Extract Textures (Materials tab) into the model's folder assigns them.
 - An STL at Blender scale: a 10 cm part prints at 0.1 mm.
 - LODs exported without a look: decimation can collapse thin parts.

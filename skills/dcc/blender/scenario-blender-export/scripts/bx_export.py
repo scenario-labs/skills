@@ -101,6 +101,23 @@ def _objects(objects):
     return [bpy.data.objects[o] if isinstance(o, str) else o for o in objects]
 
 
+IMAGE_EXT = {"JPEG": ".jpg", "PNG": ".png", "TARGA": ".tga", "TARGA_RAW": ".tga", "TIFF": ".tif",
+             "WEBP": ".webp", "BMP": ".bmp", "OPEN_EXR": ".exr", "HDR": ".hdr"}
+
+
+def _name_packed_images():
+    """glTF imports pack images with no path, named like "Image_0", and the FBX exporter
+    names embedded media after them. Unity's Extract Textures then writes files without an
+    extension and never imports them, so the model stays untextured. Returns what to restore."""
+    named = []
+    for img in bpy.data.images:
+        if img.packed_file is not None and not os.path.splitext(img.filepath or img.name)[1]:
+            named.append((img, img.filepath_raw))
+            img.filepath_raw = ("//textures/" + bpy.path.clean_name(img.name)
+                                + IMAGE_EXT.get(img.file_format, ".png"))
+    return named
+
+
 def export(path, preset, objects=None, **overrides):
     """Export `objects` (default: every visible object) with a preset. Children and the
     armature of a skinned mesh are not added for you: pass them. Returns a dict."""
@@ -118,9 +135,12 @@ def export(path, preset, objects=None, **overrides):
     view.objects.active = objs[0] if objs else None
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     args = dict(kw, **overrides)
+    named = _name_packed_images() if ext == ".fbx" and args.get("embed_textures") else []
     try:
         _op(op)(filepath=path, **args)
     finally:
+        for img, old in named:
+            img.filepath_raw = old
         for o in view.objects:
             o.select_set(o in keep[0])
         view.objects.active = keep[1]

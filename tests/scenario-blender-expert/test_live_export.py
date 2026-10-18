@@ -108,6 +108,13 @@ class Presets(unittest.TestCase):
     def test_export_after_a_render_and_a_removed_object(self):
         self.assertGreater(self.c["after_render"], 0)
 
+    def test_fbx_names_packed_images_with_their_extension(self):
+        r = self.c["packed_fbx"]
+        self.assertTrue(r["relative"], "no texture in the FBX")
+        for name in r["relative"]:
+            self.assertTrue(name.endswith("Image_0.png"), r["relative"])
+        self.assertEqual(r["filepath_after"], "")
+
     def test_presets_write_the_documented_settings(self):
         s = self.c["exports"]["unity"]["settings"]
         self.assertEqual(s["apply_scale_options"], "FBX_SCALE_ALL")
