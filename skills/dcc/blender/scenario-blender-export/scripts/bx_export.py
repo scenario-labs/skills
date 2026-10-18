@@ -109,6 +109,9 @@ def export(path, preset, objects=None, **overrides):
         raise ValueError(f"preset {preset!r} writes {ext} files")
     objs = _objects(objects)
     view = bpy.context.view_layer
+    # An object removed after a render stays in view.objects as None until the next
+    # update (Blender 5.2.1), and select_get() on it raises.
+    view.update()
     keep = ([o for o in view.objects if o.select_get()], view.objects.active)
     for o in view.objects:
         o.select_set(o in objs)

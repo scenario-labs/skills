@@ -105,6 +105,9 @@ class Presets(unittest.TestCase):
         self.assertGreater(r["export"], 0)
         self.assertEqual(r["diffs"], [])
 
+    def test_export_after_a_render_and_a_removed_object(self):
+        self.assertGreater(self.c["after_render"], 0)
+
     def test_presets_write_the_documented_settings(self):
         s = self.c["exports"]["unity"]["settings"]
         self.assertEqual(s["apply_scale_options"], "FBX_SCALE_ALL")

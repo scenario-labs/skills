@@ -138,6 +138,21 @@ src = os.path.join(TMP, "batch_in")
 os.makedirs(src)
 os.replace(files["gltf"], os.path.join(src, "crate.glb"))
 cases["batch"] = bxe.batch(src, os.path.join(TMP, "batch_out"), "godot")
+# A review render, then its camera removed: the view layer keeps a None entry
+# until its next update, and export() must still work.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+crate()
+cam = bpy.data.objects.new("ReviewCam", bpy.data.cameras.new("ReviewCam"))
+sc = bpy.context.scene
+sc.collection.objects.link(cam)
+sc.camera = cam
+sc.render.engine = "BLENDER_WORKBENCH"
+sc.render.resolution_x = sc.render.resolution_y = 32
+sc.render.filepath = os.path.join(TMP, "review.png")
+bpy.ops.render.render(write_still=True)
+bpy.data.objects.remove(cam)
+cases["after_render"] = bxe.export(os.path.join(TMP, "after_render.glb"), "godot", ["Crate"])["bytes"]
+
 cases["spine_angle_deg"] = round(math.degrees(0.6), 1)
 
 with open(OUT, "w") as f:
