@@ -26,26 +26,15 @@ Toolkit: [`scripts/bx_export.py`](scripts/bx_export.py). Per-engine facts with t
 | Unreal Engine, character | `unreal_skeletal` | FBX                 | one root bone                              |
 | Godot 4                  | `godot`           | GLB                 | import defaults; Generate LODs in the dock |
 | Roblox                   | `roblox`          | FBX                 | 20,000 triangles per mesh                  |
-| three.js and the web     | `web`             | GLB, meshopt, WebP  | `MeshoptDecoder` on the loader             |
+| three.js and the web     | `web`             | GLB, meshopt, WebP  | `MeshoptDecoder`; not for Godot            |
 | any glTF reader          | `gltf`            | GLB                 |                                            |
 | USD pipelines            | `usd`             | USDC                |                                            |
 | Apple AR Quick Look      | `usdz`            | USDZ, 2048 textures |                                            |
 | 3D printing              | `print`           | STL in millimeters  | slicer reads millimeters                   |
 
-Measured on 2026-10-18 with Blender 5.2.1, Unity 6000.3 and Godot 4.7.2:
-
-- `unity`: a static mesh imports at scale 1, rotation 0. Meshes named by `lods()` get an LOD Group
-  automatically.
-- `unity_skeletal`: scale 1, clip and blend shapes kept, the head's path within 4 mm of Blender's,
-  the character facing +Z. The armature node imports with a 270 degree X rotation (its first bone
-  90): leave it. Unity's Bake Axis Conversion turns the character to face -Z, and Blender's Apply
-  Transform (`bake_space_transform`, documented as broken with armatures) does not remove the
-  rotation.
-- `godot`: scale 1, rotation 0, bones, blend shapes and clips kept.
-- `web` does not load in Godot 4.7 ("Buffer 1 has no data": it does not decode the compressed
-  buffer). Use `godot`.
-- `unreal`, `unreal_skeletal` and `roblox` follow Epic's and Roblox's documentation and pass the
-  Blender round trip; they were not imported into those engines here.
+The Unity and Godot presets were imported into Unity 6000.3 and Godot 4.7.2 and measured; `unreal`,
+`unreal_skeletal` and `roblox` follow Epic's and Roblox's documentation and pass the Blender round
+trip only. The measurements live in [`references/engines.md`](references/engines.md).
 
 ## Procedure
 
@@ -62,8 +51,8 @@ Measured on 2026-10-18 with Blender 5.2.1, Unity 6000.3 and Godot 4.7.2:
 5. **glTF contents:** `bxe.glb_summary(path)` lists `extensions_required`, morph targets, skins,
    clips and image types without Blender. A loader refuses a file that requires an extension it
    lacks.
-6. **Engine check:** import into the engine and look, with the engine family's pipeline-automation
-   skill.
+6. **Engine check:** import into the engine and look, with `scenario-unity-pipeline-automation`,
+   `scenario-unreal-pipeline-automation` or `scenario-godot-pipeline-automation`.
 
 ## Scale, axes and units
 
@@ -84,9 +73,11 @@ Measured on 2026-10-18 with Blender 5.2.1, Unity 6000.3 and Godot 4.7.2:
   multiple roots. The importer only supports one root per mesh."
 - `add_leaf_bones` is off in every preset. Left on, each chain gains an extra end bone that breaks
   retargeting.
-- FBX presets bake every action (`bake_anim_use_all_actions`), one clip per action. Unity names each
-  clip `Armature|Action` (measured: `Rig|Wave`), so name actions as the clips should read. glTF
-  exports each action as an animation under its own name.
+- `unity_skeletal` and `unreal_skeletal` bake every action (`bake_anim_use_all_actions`), one clip
+  per action. Unity names each clip `Armature|Action` (measured: `Rig|Wave`), so name actions as the
+  clips should read. glTF exports each action as an animation under its own name.
+- `roblox` exports no animation. For an animated file, pass `bake_anim=True` to `export()` and to
+  `round_trip()`, which then compares the actions too.
 - Shape keys travel in FBX (blend shapes), glTF (morph targets, names in `extras.targetNames`) and
   USD. Building ARKit or viseme sets is `scenario-blender-rigging`'s work.
 - Roblox: at most 4 influences per vertex, bones frozen (scale 1, rotation 0), root at the origin
@@ -96,11 +87,13 @@ Measured on 2026-10-18 with Blender 5.2.1, Unity 6000.3 and Godot 4.7.2:
 ## LODs and collision
 
 - `bxe.lods(obj, ratios=(0.5, 0.25))` renames the mesh `Name_LOD0` and adds decimated `Name_LOD1..n`
-  under an empty called `Name`. Unity builds the LOD Group from those names. Godot generates LODs at
+  under an empty called `Name`, which takes the mesh's place under its parent. Static meshes only:
+  it refuses a skinned mesh. Unity builds the LOD Group from those names. Godot generates LODs at
   import (Generate LODs). Unreal imports LODs with "Import LODs" on, all LODs sharing one pivot.
 - `bxe.collision(obj, engine, shape)` adds a collision mesh named for the importer:
   - Unreal: `UCX_Name_00` (convex hull) or `UBX_Name_00` (box), exported in the same FBX.
-  - Godot: `Name-convcolonly` (convex) or `Name-colonly` (the mesh as a static body).
+  - Godot: `Name-convcolonly` for `convex` (one hull) and `box` (the bounds, a box collider), or
+    `Name-colonly` for `mesh` (the mesh as a trimesh, static bodies only).
   - Unity and Roblox: returns None. Colliders are set in the editor.
 - Decimation can wreck UV seams and silhouettes. Review every LOD with `bx_review` before export.
 

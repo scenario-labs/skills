@@ -29,7 +29,7 @@ import tempfile
 
 try:
     import bpy
-    from mathutils import Vector
+    from mathutils import Matrix, Vector
 except ImportError:  # glb_summary() runs in plain Python
     bpy = None
 
@@ -224,9 +224,10 @@ def compare(before, after, carries=("armature", "actions", "shape_keys"), tol=0.
     return diffs
 
 
-def round_trip(path, objects=None, preset=None):
+def round_trip(path, objects=None, preset=None, **overrides):
     """Re-import an exported file in a background Blender (the open scene is untouched)
-    and compare it with `objects` in this scene. Returns {"pass", "diffs", "before", "after"}."""
+    and compare it with `objects` in this scene. overrides: the ones given to export(), so
+    bake_anim=True on roblox also compares actions. Returns {"pass", "diffs", "before", "after"}."""
     before = inspect_scene(objects)
     with tempfile.TemporaryDirectory() as tmp:
         out = os.path.join(tmp, "inspect.json")
@@ -237,8 +238,10 @@ def round_trip(path, objects=None, preset=None):
             raise RuntimeError(run.stdout[-2000:] + run.stderr[-2000:])
         with open(out) as f:
             after = json.load(f)
-    diffs = compare(before, after, CARRIES.get(preset, ("armature", "actions", "shape_keys")),
-                    scale=SCALE.get(preset, 1.0))
+    carries = set(CARRIES.get(preset, ("armature", "actions", "shape_keys")))
+    if overrides.get("bake_anim"):
+        carries.add("actions")
+    diffs = compare(before, after, carries, scale=SCALE.get(preset, 1.0))
     return {"pass": not diffs, "diffs": diffs, "before": before, "after": after}
 
 
@@ -281,14 +284,26 @@ def glb_summary(path):
 
 def lods(obj, ratios=(0.5, 0.25)):
     """Decimated copies named for Unity's LOD import (Name_LOD0 is the original), grouped
-    under an empty called Name. Godot builds LODs at import; Unreal in the Static Mesh Editor."""
+    under an empty called Name that takes the mesh's place under its parent. Static meshes
+    only. Godot builds LODs at import; Unreal in the Static Mesh Editor."""
     obj = bpy.data.objects[obj] if isinstance(obj, str) else obj
+    if obj.parent_type == "ARMATURE" or any(m.type == "ARMATURE" for m in obj.modifiers):
+        raise ValueError(f"{obj.name} is skinned: lods() makes static copies, which would lose the skinning")
     name, col = obj.name, obj.users_collection[0]
+    bpy.context.view_layer.update()
+    world = obj.matrix_world.copy()
+    # The group takes the mesh's place in the hierarchy; the mesh keeps its world placement.
     group = bpy.data.objects.new(name + "_LODGroup", None)
     col.objects.link(group)
-    group.matrix_world = obj.matrix_world.copy()
+    group.parent, group.parent_type = obj.parent, obj.parent_type
+    if obj.parent_type == "BONE":
+        group.parent_bone = obj.parent_bone
+    group.matrix_world = world
+    bpy.context.view_layer.update()
     obj.name = f"{name}_LOD0"
-    obj.parent, obj.matrix_parent_inverse = group, group.matrix_world.inverted()
+    obj.parent = group
+    obj.matrix_parent_inverse = Matrix.Identity(4)
+    obj.matrix_world = world
     group.name = name
     out = {obj.name: sum(len(p.vertices) - 2 for p in obj.data.polygons)}
     for i, r in enumerate(ratios, 1):
@@ -301,14 +316,16 @@ def lods(obj, ratios=(0.5, 0.25)):
         bpy.data.objects.remove(tmp)
         lod = bpy.data.objects.new(f"{name}_LOD{i}", me)
         col.objects.link(lod)
-        lod.parent, lod.matrix_world = group, obj.matrix_world.copy()
+        lod.parent, lod.matrix_world = group, world
         out[lod.name] = sum(len(p.vertices) - 2 for p in me.polygons)
     return {"group": group.name, "tris": out}
 
 
 def collision(obj, engine, shape="convex"):
-    """A collision mesh named for the engine's importer: Unreal UCX_ (convex) or UBX_ (box),
-    Godot -convcolonly or -colonly. Unity and Roblox set colliders in the editor: None."""
+    """A collision mesh named for the engine's importer: Unreal UCX_ (convex) or UBX_ (box);
+    Godot -convcolonly (convex, or the bounding box for "box": Godot 4.7 builds one convex
+    shape from its 8 corners) or -colonly ("mesh": a trimesh, static bodies only). Unity and
+    Roblox set colliders in the editor: None."""
     import bmesh
     obj = bpy.data.objects[obj] if isinstance(obj, str) else obj
     names = {("unreal", "convex"): f"UCX_{obj.name}_00", ("unreal", "box"): f"UBX_{obj.name}_00",

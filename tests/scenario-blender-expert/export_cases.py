@@ -12,6 +12,7 @@ import zipfile
 
 import bmesh
 import bpy
+from mathutils import Vector
 
 SCRIPTS, OUT, TMP = sys.argv[sys.argv.index("--") + 1:][:3]
 sys.path.insert(0, SCRIPTS)
@@ -107,6 +108,20 @@ rt = bxe.round_trip(files["godot"], ["Rig", "Body"], preset="godot")
 cases["round_trip_godot"] = {"pass": rt["pass"], "diffs": rt["diffs"],
                              "scene_kept": "Crate" in bpy.data.objects}
 
+# Roblox exports no animation unless asked: with bake_anim=True the clip travels, and
+# round_trip() given the same override compares actions.
+anim_fbx = os.path.join(TMP, "roblox_anim.fbx")
+bxe.export(anim_fbx, "roblox", ["Rig", "Body"], bake_anim=True)
+rt = bxe.round_trip(anim_fbx, ["Rig", "Body"], preset="roblox", bake_anim=True)
+cases["roblox_anim"] = {"pass": rt["pass"], "diffs": rt["diffs"], "actions": rt["after"]["actions"]}
+rt = bxe.round_trip(files["roblox"], ["Rig", "Body"], preset="roblox", bake_anim=True)
+cases["roblox_no_anim"] = {"pass": rt["pass"], "diffs": rt["diffs"]}
+try:
+    bxe.lods("Body")
+    cases["lods_skinned"] = "made"
+except ValueError as exc:
+    cases["lods_skinned"] = str(exc)
+
 # LODs and collision, exported together for Unity and Unreal.
 bxe.lods("Crate", ratios=(0.5, 0.25))
 cases["lods"] = bxe.inspect_scene([o for o in bpy.data.objects if o.name.startswith("Crate_LOD")])
@@ -118,6 +133,10 @@ cases["collision_godot"] = bxe.collision("Crate", "godot")
 cases["collision_unity"] = bxe.collision("Crate", "unity")
 ucx_fbx = os.path.join(TMP, "ucx.fbx")
 bxe.export(ucx_fbx, "unreal", ["Crate", "UCX_Crate_00"])
+scene()
+cases["collision_godot_box"] = bxe.collision("Crate", "godot", "box")
+scene()
+cases["collision_godot_mesh"] = bxe.collision("Crate", "godot", "mesh")
 
 cases["roundtrip"] = {}
 for preset, path in files.items():
@@ -152,6 +171,25 @@ sc.render.filepath = os.path.join(TMP, "review.png")
 bpy.ops.render.render(write_still=True)
 bpy.data.objects.remove(cam)
 cases["after_render"] = bxe.export(os.path.join(TMP, "after_render.glb"), "godot", ["Crate"])["bytes"]
+
+# lods() on a mesh under a moved, turned parent: every LOD keeps the mesh's world place, and
+# the group takes the mesh's place under the parent.
+def world_center(ob):
+    return [round(sum((ob.matrix_world @ Vector(c))[k] for c in ob.bound_box) / 8, 4) for k in range(3)]
+
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+c = crate()
+base = bpy.data.objects.new("Base", None)
+bpy.context.scene.collection.objects.link(base)
+base.location, base.rotation_euler = (3, 1, 0), (0, 0, 0.5)
+c.parent = base
+bpy.context.view_layer.update()
+start = world_center(c)
+r = bxe.lods("Crate", ratios=(0.5,))
+bpy.context.view_layer.update()
+cases["lods_parented"] = {"start": start, "group_parent": bpy.data.objects[r["group"]].parent.name,
+                          "centers": {n: world_center(bpy.data.objects[n]) for n in r["tris"]}}
 
 # A packed image with no path, as a glTF import leaves it: the FBX must name it with an
 # extension, and the scene must keep its own path.

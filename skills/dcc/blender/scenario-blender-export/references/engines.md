@@ -61,7 +61,13 @@ Measured in Godot 4.7.2, headless import:
 - `godot` (GLB): root and every node at scale 1, rotation 0; Skeleton3D with 3 bones, 1 blend shape,
   AnimationPlayer with `Wave`; the 2 m character is 2 m on Y.
 - `web` (GLB with `EXT_meshopt_compression` required) fails: "glTF: Buffer 1 has no data and cannot
-  be loaded".
+  be loaded". Godot does not decode the compressed buffer: use `godot`.
+- Collision objects from `collision()`, one GLB:
+  - the `box` shape, `-convcolonly`: StaticBody3D with a ConvexPolygonShape3D of 8 points, a box;
+  - an L-shaped mesh, `-convcolonly`: one ConvexPolygonShape3D of 10 points, its hull, not a
+    decomposition;
+  - `-colonly`: StaticBody3D with a ConcavePolygonShape3D (trimesh);
+  - a Cube empty named `-colonly` arrives as a plain Node3D through GLB: no BoxShape3D.
 
 Documentation:
 
@@ -78,7 +84,7 @@ Documentation:
 | `-noimp`             | node or animation removed                              |
 | `-col`, `-convcol`   | mesh kept, static collision child (trimesh or convex)  |
 | `-colonly`           | mesh removed, StaticBody3D with the trimesh shape      |
-| `-convcolonly`       | mesh removed, StaticBody3D with a convex decomposition |
+| `-convcolonly`       | mesh removed, StaticBody3D with one convex shape       |
 | `-occ`, `-occonly`   | Occluder3D, mesh kept or removed                       |
 | `-navmesh`           | navigation mesh, original removed                      |
 | `-rigid`             | RigidBody3D                                            |

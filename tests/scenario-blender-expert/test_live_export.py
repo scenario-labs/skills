@@ -83,6 +83,20 @@ class Presets(unittest.TestCase):
         self.assertIn("EXT_meshopt_compression", w["extensions_used"])
         self.assertLess(w["bytes"], g["bytes"])
 
+    def test_lods_keep_a_parented_mesh_in_place(self):
+        r = self.c["lods_parented"]
+        self.assertEqual(r["group_parent"], "Base")
+        for name, center in r["centers"].items():
+            for k in range(3):
+                self.assertAlmostEqual(center[k], r["start"][k], places=3, msg=name)
+        self.assertIn("skinned", self.c["lods_skinned"])
+
+    def test_roblox_animation_on_request(self):
+        self.assertTrue(self.c["roblox_anim"]["pass"], self.c["roblox_anim"]["diffs"])
+        self.assertTrue(self.c["roblox_anim"]["actions"])
+        self.assertFalse(self.c["roblox_no_anim"]["pass"])
+        self.assertTrue(any("action" in d for d in self.c["roblox_no_anim"]["diffs"]))
+
     def test_lods_use_unity_names(self):
         tris = {k: v["tris"] for k, v in self.c["lods"]["objects"].items()}
         self.assertEqual(sorted(tris), ["Crate_LOD0", "Crate_LOD1", "Crate_LOD2"])
@@ -93,6 +107,10 @@ class Presets(unittest.TestCase):
     def test_collision_names(self):
         self.assertEqual(self.c["collision_unreal"]["object"], "UCX_Crate_00")
         self.assertEqual(self.c["collision_godot"]["object"], "Crate-convcolonly")
+        # Godot 4.7 builds one convex shape from the box's 8 corners: a box collider.
+        self.assertEqual(self.c["collision_godot_box"]["object"], "Crate-convcolonly")
+        self.assertEqual(self.c["collision_godot_box"]["faces"], 6)
+        self.assertEqual(self.c["collision_godot_mesh"]["object"], "Crate-colonly")
         self.assertIsNone(self.c["collision_unity"])
         self.assertEqual(self.c["ucx_file"], ["Crate", "UCX_Crate_00"])
 
