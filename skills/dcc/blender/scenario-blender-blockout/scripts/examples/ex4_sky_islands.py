@@ -1,5 +1,6 @@
 """Example 4, Sky Islands: fast, five characters, wide exterior, stylized fantasy. Expert
-density, shaped fidelity, category colors.
+density, shaped fidelity, category colors, featured capsule cast. The last argument picks
+another cast style for an A/B (references/cast.md): capsule, featured, jointed, mannequin.
 
 Brief: "12 s, 24 fps, stylized animated feature. Five young adventurers sprint across a
 rope-and-plank bridge between two floating islands while a giant sky whale carrying a
@@ -12,7 +13,10 @@ import os
 import random
 import sys
 
+from mathutils import Matrix, Vector
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ex_common  # noqa: E402
 from ex_common import B, K, bpy, finish, pose, start, sun  # noqa: E402
 
 FPS, SECS = 24, 12
@@ -20,6 +24,8 @@ END = FPS * SECS
 C = start(FPS, SECS, world_rgb=(0.46, 0.58, 0.74))
 pal = K.scheme("category")
 fid = "shaped"
+STYLE = ex_common.CAST or "featured"
+CAPSULES = STYLE in ("capsule", "featured")
 GRASS, CLOUD = pal["vegetation"], (0.93, 0.93, 0.95)
 rng = random.Random(21)
 
@@ -152,12 +158,13 @@ for k in range(60):
     o.keyframe_insert("location", frame=END + 12)
     K.mark_extra(o)
 vill = K.crowd("BG_villager_", 20, (24, 36, -6, 10), (1, END + 12), fid, pal, seed=5, walking=False, headings=(-80, -90, -100),
-               heights=(1.2, 1.85), coll=C["fig"])
-for k, v in enumerate(vill[:8]):  # some wave
+               heights=(1.2, 1.85), coll=C["fig"], style=STYLE, features=("arms",) if STYLE == "featured" else ())
+arm = "arm" if STYLE == "featured" else "uparm"  # a plain capsule has no arm to wave
+for k, v in enumerate(vill[:8] if STYLE != "capsule" else []):  # some wave
     side = "R" if k % 2 else "L"
     for f in range(1, END + 13, 10):
         up = -150 + (15 if (f // 10 + k) % 2 else -15)
-        pose(v, f, **{f"uparm_{side}": (up, 0, 0)})
+        pose(v, f, **{f"{arm}_{side}": (up, 0, 0)})
 for k in range(3):
     ab = K.Parts()
     ab.add("sphere", (14, 5, 5), (0, 0, 0), pal["fabric"], segments=16)
@@ -168,14 +175,17 @@ for k in range(3):
     o.keyframe_insert("location", frame=END + 12)
     K.mark_extra(o)
 
-# -- the five runners, leader first, at 3.4 m/s, on the deck's height as they cross
-CAST = (("leader_red", "red", 1.55, 0.0), ("backpack_blue", "blue", 1.50, 0.35), ("slingshot_green", "green", 1.42, -0.35),
-        ("raincoat_yellow", "yellow", 1.18, 0.3), ("staff_purple", "purple", 1.78, -0.3))
+# -- the five runners, leader first, at 3.4 m/s, on the deck's height as they cross. Featured
+# capsules carry what tells each one apart; the model invents their running.
+CAST = (("leader_red", "red", 1.55, 0.0, ("goggles", "scarf")), ("backpack_blue", "blue", 1.50, 0.35, ("hair", "backpack")),
+        ("slingshot_green", "green", 1.42, -0.35, ("hood", "cape")), ("raincoat_yellow", "yellow", 1.18, 0.3, ("hood", "coat")),
+        ("staff_purple", "purple", 1.78, -0.3, ("hair", "coat", "staff")))
 SPEED = 3.4
 kids = []
-for i, (name, color, h, dy) in enumerate(CAST):
+for i, (name, color, h, dy, feats) in enumerate(CAST):
     x0 = -19.0 - i * 1.7
-    fig = K.figure(name, h, (x0, dy, 0), facing_deg=90.0, rgb=B.PALETTE[color], fidelity=fid, coll=C["fig"])
+    fig = K.figure(name, h, (x0, dy, 0), facing_deg=90.0, rgb=B.PALETTE[color], coll=C["fig"], style=STYLE,
+                   features=feats if STYLE == "featured" else ())
     x1 = x0 + SPEED * (END + 12 - 8) / FPS
     K.walk_path(fig, [(1, (x0, dy)), (8, (x0, dy)), (END + 12, (x1, dy))], stride=h * 0.72, swing_deg=38)
     root = bpy.data.objects[fig]
@@ -184,11 +194,25 @@ for i, (name, color, h, dy) in enumerate(CAST):
     for kp in fz.keyframe_points:  # ride the sag of the bridge, on top of the stride's bob
         kp.co.y += deck_z(fx.evaluate(kp.co.x))
     fz.update()
-    pose(fig, 1, torso=14)  # a forward lean for running
+    if CAPSULES:
+        root.rotation_euler.x = math.radians(7)  # a forward lean for running (walk_path keys only the yaw)
+    else:
+        pose(fig, 1, torso=14)
     kids.append(fig)
-staff = K.Parts()
-staff.add("box", (0.04, 0.04, 1.7), (0, 0, 0), pal["trunk"])
-staff.to_object("PRP_staff", (0, -0.03, -0.1 * 1.78), 0.0, C["prp"], parent=bpy.data.objects["FIG_staff_purple_forearm_R"])
+if STYLE == "jointed":
+    staff = K.Parts()
+    staff.add("box", (0.04, 0.04, 1.7), (0, 0, 0), pal["trunk"])
+    staff.to_object("PRP_staff", (0, -0.03, -0.1 * 1.78), 0.0, C["prp"], parent=bpy.data.objects["FIG_staff_purple_forearm_R"])
+elif STYLE == "mannequin":  # bone-parented: set the world matrix after parenting, Blender solves the offset
+    staff = K.Parts()
+    staff.add("box", (0.04, 0.04, 1.7), (0, 0, 0), pal["trunk"])
+    o = staff.to_object("PRP_staff", (0, 0, 0), 0.0, C["prp"])
+    rig = bpy.data.objects["FIG_staff_purple"]
+    bpy.context.scene.frame_set(1)
+    hand = rig.matrix_world @ rig.pose.bones["forearm_R"].tail
+    o.parent, o.parent_type, o.parent_bone = rig, "BONE", "forearm_R"
+    bpy.context.view_layer.update()
+    o.matrix_world = Matrix.Translation(hand + Vector((0, 0, 0.1)))
 
 sun((40, 0, 120), 3.0)
 

@@ -43,25 +43,25 @@ heroes, extras, shots, each shot's length, the take and the footprint. An empty 
 
 ## Fidelity: how far each proxy is shaped
 
-| Tier     | Set                                                                                  | Figures                                              | Vehicles                                       |
-| -------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------- | ---------------------------------------------- |
-| rough    | single boxes, cylinders, faceted crowns                                              | legless capsule with a head and a nose block; glides | one box body, marked front                     |
-| shaped   | plinth, floor bands, roof form, door; stalls with posts and canopy; trunk plus crown | thirteen jointed parts; `K.walk_path` steps them     | cab, wheels, headlights, grille, dark red rear |
-| detailed | windows, sills, signs, glass shop fronts, balconies, roof units                      | shaped plus a nose block and a hair cap              | shaped plus finer parts a camera reads at 2 m  |
+| Tier     | Set                                                                                  | Figures                                            | Vehicles                                       |
+| -------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------- |
+| rough    | single boxes, cylinders, faceted crowns                                              | `capsule` by default (cast style, [cast](cast.md)) | one box body, marked front                     |
+| shaped   | plinth, floor bands, roof form, door; stalls with posts and canopy; trunk plus crown | `jointed` by default: thirteen parts that step     | cab, wheels, headlights, grille, dark red rear |
+| detailed | windows, sills, signs, glass shop fronts, balconies, roof units                      | `jointed` plus a nose block and a hair cap         | shaped plus finer parts a camera reads at 2 m  |
 
 - **Default to shaped.** Silhouette and identifying features (wheel count, a marked front, a roof
   form, a figure's facing) decide what the model renders; surface detail mostly does not. Detailed
   pays off in medium and close shots, where windows, signs and shop fronts set the rhythm the model
   keeps.
 - **Keep one tier per scene.** A detailed hero among rough proxies reads as the only real object.
-  The exception is a Seedance hero, which stays a capsule in any set (next bullet). Its nose block
-  barely reads in a wide shot, so the sheet gives its facing as its direction of travel.
-- **Figures depend on the video model.** On MiniMax H3 Max 3D to Video (one take per variant, see
-  the test at the end), shaped jointed walkers came back as people, gray capsule extras did too, and
-  a blue capsule hero in a close shot came back as a blue cylinder for part of the shot. Our
-  Seedance film work found the reverse for a rigged walk loop (copied as sliding feet), and a
-  legless capsule let the model invent the walk. So: shaped figures for a 3D-to-video model,
-  capsules for Seedance heroes, and check every hero in its closest shot.
+  Figures are the exception: their cast style is a separate dial (next bullet), and a capsule or a
+  featured capsule fits any set tier. A capsule's facing barely reads in a wide shot, so the sheet
+  gives it as its direction of travel.
+- **Figures depend on the video model.** The cast style (`capsule`, `featured`, `jointed`,
+  `mannequin`) is chosen per character and per model, independent of the set's fidelity: a stand-in
+  with limbs hands the model a gait it copies, one without lets it invent the motion. Without
+  `style`, `fidelity` keeps its old mapping (rough: capsule; shaped, detailed: jointed). Options,
+  per-model results and prompt clauses: [cast](cast.md).
 - **Past detailed**, when a detail must stay identical across many shots (a signature vehicle, a
   building facade): generate the asset as 3D through Scenario (`scenario-blender`'s 3D lane), place
   it at the proxy's position, height and facing, and keep filming it in the scheme's colors.

@@ -93,8 +93,9 @@ In call order:
 extension saved; any other path is refused, so capture the scene instead or ask the user to pick the
 file. Render Image and Render Video take no raw parameters: `render_form` with
 `action: "configure"`, then `action: "prepare"` captures and uploads the scene, then `estimate_cost`
-and `generate` with `parameters` omitted. A panorama goes into the World through
-`prepare_result_application` with `purpose: "world"`.
+and `generate` with `parameters` omitted. The model copies the capture's motion, limbs included: for
+characters that must walk or run naturally, block them as capsules (scenario-blender-blockout). A
+panorama goes into the World through `prepare_result_application` with `purpose: "world"`.
 
 ## Worked example: viewport to a mesh at the 3D cursor
 

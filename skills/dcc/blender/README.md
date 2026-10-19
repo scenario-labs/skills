@@ -76,5 +76,11 @@ The delivery gate in `bx_audit.py` was written for this repository on 2026-10-18
 repository's QA check catches deliverability defects (floating parts, z-fighting, inside-out parts,
 unapplied scale) that `audit` did not grade. No code was copied.
 
+On 2026-10-19 `K.figure` gained a cast style (`capsule`, `featured`, `jointed`, `mannequin`),
+independent of the set's fidelity, and `walk_path` a capsule gait (a step bob, a sway, swinging arms
+and props). Example 4 was rebuilt in each style and rendered through Seedance 2.5, MiniMax H3 Max 3D
+to Video and LTX 2.3 Render to Real; the findings are in the skill's `references/cast.md`. A figure
+built without `style` or `fidelity` is now a capsule (it was a jointed figure).
+
 Paths such as `tests/...` inside the references point to the test evidence on the build machine.
 They are provenance only; the skills do not need them to run.

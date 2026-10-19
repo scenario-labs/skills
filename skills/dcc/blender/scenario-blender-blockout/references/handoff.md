@@ -23,6 +23,12 @@ Format: <fps> fps, <W>x<H>, frames 1..<end> (<seconds> s). Playblast: <file>. St
 | ---- | ---------- | ------ | ----- | ----- | -------- | -------- | ------------ |
 | 1    | CAM_01_... | 1-87   | 0.000 | 3.625 | 3.625 s  | 28-28 mm | slow push-in |
 
+## Cast (from K.cast())
+
+| Figure  | Style    | Color | Height | Features       | Becomes          |
+| ------- | -------- | ----- | ------ | -------------- | ---------------- |
+| FIG_red | featured | red   | 1.55 m | goggles, scarf | <role>, the lead |
+
 ## Entities
 
 - Blocked as proxies: <list, with what each mass is: "the boxes on the bench are luggage">.
@@ -68,7 +74,8 @@ what each proxy stands for takes the replacement-map grammar in [levels](levels.
    path, timing and ground contact and give the real object its true proportions."
 4. **No geometry words** about the video's contents after the header: no box, cone, sphere, proxy,
    dummy, mannequin, blockout. Real object names stay allowed when they describe the finished scene
-   (a traffic cone, a boxing ring).
+   (a traffic cone, a boxing ring). One exception: a capsule cast gets one stand-in clause saying
+   the capsules only mark position, height, pace and heading, and a gait clause ([cast](cast.md)).
 5. **Short exclusion tail.** "No blocky placeholder geometry, no mannequin figures, no untextured
    surfaces."
 6. **Style from a board.** Declare it: "The reference image is a style board of four separate

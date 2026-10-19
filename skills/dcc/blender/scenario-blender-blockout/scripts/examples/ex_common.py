@@ -1,6 +1,6 @@
 """Shared setup and finish for the example scenes in references/examples.md.
 
-blender -b --factory-startup --python ex1_watchmaker.py -- <out dir> [stills|playblast|both]
+blender -b --factory-startup --python ex1_watchmaker.py -- <out dir> [stills|playblast|both] [cast style]
 
 Writes <tag>_stats.json (budget, cut list, audits), stills at the first, middle and last frame of
 each shot, a Workbench playblast and the .blend into <out dir>. Needs scenario-blender-expert
@@ -17,6 +17,7 @@ argv = sys.argv[sys.argv.index("--") + 1:]
 SK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # this skill's scripts/
 OUT = argv[0]
 MODE = argv[1] if len(argv) > 1 else "stills"
+CAST = argv[2] if len(argv) > 2 else None  # a K.CAST style for the scenes that offer one
 sys.path.append(SK)
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(SK)), "scenario-blender-expert", "scripts"))
 import bx_blockout as B  # noqa: E402
@@ -47,13 +48,8 @@ def sun(rot_deg=(50, 0, 30), energy=3.0):
 
 
 def pose(obj_name, frame, **parts_deg):
-    """Key jointed-figure part rotations at a frame, degrees: a number is the X axis (negative swings a
-    hanging limb forward and tips an upright part back), a tuple is (x, y, z)."""
-    for part, deg in parts_deg.items():
-        o = bpy.data.objects[f"{obj_name}_{part}"]
-        xyz = deg if isinstance(deg, (tuple, list)) else (deg, 0.0, 0.0)
-        o.rotation_euler = [math.radians(a) for a in xyz]
-        o.keyframe_insert("rotation_euler", frame=frame)
+    """K.pose: key joint rotations at a frame, in degrees."""
+    return K.pose(obj_name, frame, **parts_deg)
 
 
 def smooth_all(names):

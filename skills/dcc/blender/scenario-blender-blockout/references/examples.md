@@ -8,9 +8,10 @@ audits and writes stats, stills, a playblast and the `.blend`:
 blender -b --factory-startup --python scripts/examples/ex1_watchmaker.py -- /tmp/ex_out both
 ```
 
-The last argument is `stills`, `playblast`, `both` or `none` (audits and stats only). Shared setup
-and finish live in [`ex_common.py`](../scripts/examples/ex_common.py). Read the script closest to
-the brief before building: the patterns carry over, the numbers do not.
+The second argument is `stills`, `playblast`, `both` or `none` (audits and stats only); example 4
+takes a third, the cast style (`capsule`, `featured`, `jointed`, `mannequin`). Shared setup and
+finish live in [`ex_common.py`](../scripts/examples/ex_common.py). Read the script closest to the
+brief before building: the patterns carry over, the numbers do not.
 
 | #   | Scene                                                 | Pace   | Cast        | Space    | Look      | Density  | Elements | Shots |
 | --- | ----------------------------------------------------- | ------ | ----------- | -------- | --------- | -------- | -------- | ----- |
@@ -20,7 +21,9 @@ the brief before building: the patterns carry over, the numbers do not.
 | 4   | [Sky islands](../scripts/examples/ex4_sky_islands.py) | fast   | 5 + 1 whale | wide     | stylized  | expert   | 517      | 4     |
 
 All four use shaped fidelity and category colors, and pass `K.audit_budget`, `B.audit_frames`,
-`B.audit_cuts`, framing and occlusion with no finding.
+`B.audit_cuts`, framing and occlusion with no finding. Examples 1 to 3 keep jointed figures, whose
+seated and gesturing poses need limbs; example 4 blocks its runners as featured capsules
+([cast](cast.md)), and passes the same audits in every cast style.
 
 ## 1. Watchmaker: still, one character, interior
 
@@ -80,8 +83,10 @@ floating islands while a giant sky whale with a village on its back glides benea
   windmill with turning blades (extra) and 12 far islands.
 - The bridge deck follows a catenary `deck_z(x)` with a 0.8 m sag; planks every 0.45 m, posts,
   lanterns and rope segments.
-- The five runners use the identity palette and distinct heights (1.18 to 1.78 m) so the model can
-  tell them apart; the tallest carries a staff prop. Stride is 0.72 x height.
+- The five runners are featured capsules in the identity palette at distinct heights (1.18 to 1.78
+  m), two or three features each: goggles and scarf (the leader), hair and backpack, hood and cape,
+  hood and coat (the smallest), hair, coat and staff (the tallest). Capsules lean 7 degrees forward;
+  jointed runners and mannequins pose the torso instead. Stride is 0.72 x height.
 - Each runner's z curve is set from `deck_z` after the walk is keyed, so feet stay on the sag.
 - Extras: 60 birds, 20 villagers (8 waving), 3 airships, 40 clouds.
 - Shots: wide establish at 28 mm, side tracking at 35 mm, a camera backing away ahead of the leader
@@ -115,6 +120,10 @@ What held and what broke:
   islands) and has no slot for cast sheets, so identities come from the first frame only. At about a
   seventh of the price it is the right choice for look tests and iteration; the final pass goes to
   Seedance or H3.
+
+These passes used jointed figures. Rebuilt with featured capsules, the same scene came back running
+naturally on Seedance where the jointed runners had kept a stiff, walk-like stride; the cast-style
+test and its per-model results are in [cast](cast.md).
 
 Seedance prompt shape used (the H3 version replaces the tags with "reference image 1, 2, 3"):
 

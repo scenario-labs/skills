@@ -16,7 +16,9 @@ unattended, proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 Shot planning, cameras and animatics belong to scenario-blender-previs-storyboard; building the rig
-to scenario-blender-rigging.
+to scenario-blender-rigging. A clip that guides a render-to-real video model belongs to
+scenario-blender-blockout: the model copies keyed limbs as they are, so its cast styles often hand
+it a limbless stand-in and let it animate the gait.
 
 Toolkit: [`scripts/bx_anim.py`](scripts/bx_anim.py) (keying, blocking-to-spline, curve checks,
 measurement, staging, playblast light, knee-pop, flip and balance checks, onion-skin and curve

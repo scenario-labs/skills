@@ -38,10 +38,12 @@ Mode follows from the inputs (names from the live schema):
 Reference parameters are arrays even for one asset. Prompt tags bind by array order: `@image1` is
 `referenceImages[0]`, likewise `@video1` and `@audio1`, and the prompt says what each tag governs
 and what it leaves alone ("@image1 defines the bottle and label, nothing of the set"), for video and
-audio tags as much as for images. No seed, mask, or camera parameter exists: camera moves live in
-the prompt, one dominant move and one action per shot. Several actions go as timecoded beats ("0-2s
-... 2-4s ..."), one per beat, the last ending inside `duration`, the shot named as one continuous
-take.
+audio tags as much as for images. A 3D blockout playblast as `@video1` passes on every limb that
+moves in it, so a stepped or rigged walk comes back stiff or sliding; legless capsule stand-ins,
+with a sentence saying they only mark position, height and pace, let the model invent the gait. No
+seed, mask, or camera parameter exists: camera moves live in the prompt, one dominant move and one
+action per shot. Several actions go as timecoded beats ("0-2s ... 2-4s ..."), one per beat, the last
+ending inside `duration`, the shot named as one continuous take.
 
 A reference track the prompt does not claim is easily ignored, a generated voice line most of all,
 so bind it to a role in words: "@audio1 is her own voice; she speaks it to camera, lips in sync" for

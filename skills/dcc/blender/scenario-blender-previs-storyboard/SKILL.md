@@ -23,10 +23,10 @@ Toolkit: [`scripts/bx_previs.py`](scripts/bx_previs.py) (tested on 5.2.1):
 scope: a playblast that guides a render-to-real video model (Seedance). It follows other rules
 (saturated color identities, no lens jump on a cut, eased moves, a hand-off sheet) that the workflow
 and `P.audit` below do not apply or check, so do not hand a director's animatic to a video model as
-is: rebuild it to those rules outside this workflow. Shared: metric Z-up, roots at the feet, one
-camera per shot bound to a marker, `to_track_quat('-Z','Y')` look-at. Strokes:
-scenario-blender-grease-pencil. Animation after layout: scenario-blender-animation. Real rigs:
-scenario-blender-rigging.
+is: rebuild it with scenario-blender-blockout, where characters usually become colored capsules the
+video model animates itself. Shared: metric Z-up, roots at the feet, one camera per shot bound to a
+marker, `to_track_quat('-Z','Y')` look-at. Strokes: scenario-blender-grease-pencil. Animation after
+layout: scenario-blender-animation. Real rigs: scenario-blender-rigging.
 
 ## Stance (the expert delta)
 

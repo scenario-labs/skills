@@ -1,7 +1,7 @@
 """
-bx_kits: shaped and detailed proxies, color schemes, walking figures, crowds and traffic
-for a bx_blockout scene. The levels these serve (density, fidelity, color) are in
-references/levels.md.
+bx_kits: shaped and detailed proxies, color schemes, figures in four cast styles, crowds
+and traffic for a bx_blockout scene. The levels these serve (density, fidelity, color) are
+in references/levels.md; the cast styles in references/cast.md.
 
 Runs inside Blender beside bx_blockout, under the same rules: builders are get-or-create
 by name, refuse names the user's own work holds, and tag every datablock they make.
@@ -13,17 +13,17 @@ by name, refuse names the user's own work holds, and tag every datablock they ma
   K.building("ENV_shop_a", (8, 6, 9), (12, 4, 0), fidelity="detailed", pal=pal, floors=3)
   K.tree("ENV_tree_01", (4, -3, 0), height=6, fidelity="shaped", pal=pal)
   K.vehicle("PRP_car_01", "car", (0, 10, 0), facing_deg=180, fidelity="shaped", rgb=pal["vehicle"])
-  hero = K.figure("red", 1.75, (0, 20, 0), facing_deg=0, fidelity="shaped")
-  K.walk_path(hero, [(1, (0, 20)), (120, (0, 8))])             # travel with legs that step
+  hero = K.figure("red", 1.75, (0, 20, 0), style="featured", features=("hair", "backpack"))
+  K.walk_path(hero, [(1, (0, 20)), (120, (0, 8))])             # glides with a step bob
   K.crowd("BG", 24, area=(-6, 6, 0, 40), frames=(1, 192), fidelity="rough", pal=pal)
   van = K.vehicle("PRP_van_02", "van", (-30, 5, 0), facing_deg=-90, pal=pal)
   K.drive(van, [(1, (-30, 5)), (192, (30, 5))]); K.mark_extra(van)  # background traffic
   K.audit_budget("advanced")                                   # [] = the scene meets the level
   B.solid_view()                                               # Material: kits are multi-color
 
-Fidelity is one of "rough" (boxes, cylinders, legless capsule figures), "shaped" (bevels,
-composed silhouettes, jointed figures that step) or "detailed" (openings, trims, parts a
-camera would read at 2 m).
+Fidelity is one of "rough" (boxes, cylinders), "shaped" (bevels, composed silhouettes) or
+"detailed" (openings, trims, parts a camera would read at 2 m). Figures take a cast style
+instead (CAST: capsule, featured, jointed, mannequin), set apart from the set's fidelity.
 A kit is one mesh with one material slot per role color, so a detailed building stays
 one object; Solid view needs color type Material to show more than one color per object.
 Kit materials are shared per color and named after it (MAT_cc0d0d), and every kit call
@@ -117,19 +117,30 @@ class Parts:
             self.colors.append(rgb)
         return self.colors.index(rgb)
 
-    def add(self, kind, size, center, rgb, rot=(0.0, 0.0, 0.0), base=False, bevel=0.0, segments=12):
-        """kind: box, cylinder, cone, sphere, ico, wedge (a ramp rising along +Y)."""
+    def add(self, kind, size, center, rgb, rot=(0.0, 0.0, 0.0), base=False, bevel=0.0, segments=12, taper=1.0):
+        """kind: box, cylinder, cone, sphere, ico, wedge (a ramp rising along +Y), capsule (a
+        cylinder with round ends, sx wide and sz tall). taper scales a cylinder's top radius."""
         sx, sy, sz = size
         cx, cy, cz = center
         if base:
             cz += sz / 2.0
-        mat = Matrix.Translation((cx, cy, cz)) @ Euler(rot).to_matrix().to_4x4() @ Matrix.Diagonal((sx, sy, sz, 1.0))
+        place = Matrix.Translation((cx, cy, cz)) @ Euler(rot).to_matrix().to_4x4()
+        mat = place @ Matrix.Diagonal((sx, sy, sz, 1.0))
         before = set(self.bm.verts)
         if kind == "box":
             bmesh.ops.create_cube(self.bm, size=1.0, matrix=mat)
         elif kind in ("cylinder", "cone"):
             bmesh.ops.create_cone(self.bm, cap_ends=True, segments=segments, radius1=0.5,
-                                  radius2=0.5 if kind == "cylinder" else 0.0, depth=1.0, matrix=mat)
+                                  radius2=0.5 * taper if kind == "cylinder" else 0.0, depth=1.0, matrix=mat)
+        elif kind == "capsule":
+            # An odd ring count leaves no ring on the equator, so the stretch makes straight sides.
+            bmesh.ops.create_uvsphere(self.bm, u_segments=segments, v_segments=(segments // 2) | 1, radius=0.5,
+                                      matrix=Matrix.Diagonal((sx, sy, sx, 1.0)))
+            made = [v for v in self.bm.verts if v not in before]
+            half = max(0.0, sz - sx) / 2.0
+            for v in made:
+                v.co.z += half if v.co.z > 0.0 else -half
+            bmesh.ops.transform(self.bm, matrix=place, verts=made)
         elif kind == "sphere":
             bmesh.ops.create_uvsphere(self.bm, u_segments=segments, v_segments=max(6, segments // 2), radius=0.5, matrix=mat)
         elif kind == "ico":
@@ -409,10 +420,17 @@ def scatter_points(count, area, seed=0, min_dist=1.0, avoid=()):
     return pts
 
 
-# -- figures that walk ------------------------------------------------------------------------
+# -- figures ----------------------------------------------------------------------------------
+# The cast style decides what the video model copies from a figure (references/cast.md):
+#   capsule    a colored capsule with a ball head, no limbs: the model invents body and gait
+#   featured   a capsule plus signature features (hair, hood, backpack, a held lantern...)
+#   jointed    thirteen rigid parts that walk_path steps: the model copies the limbs
+#   mannequin  a gray mannequin skinned to an armature, fixed proportions: limbs copied
+CAST = ("capsule", "featured", "jointed", "mannequin")
+
 # Joint pivots and part boxes as fractions of the height. Each limb part's origin sits on
 # its joint, so rotating the part swings it like a limb. (size x, y, z), pivot, offset of
-# the box center from the pivot.
+# the box center from the pivot. The mannequin's bones start at the same pivots.
 _JOINTED = {
     "pelvis": ((0.20, 0.11, 0.09), (0.0, 0.0, 0.50), (0.0, 0.0, 0.0), None),
     "torso": ((0.22, 0.12, 0.30), (0.0, 0.0, 0.54), (0.0, 0.0, 0.15), "pelvis"),
@@ -429,53 +447,358 @@ _JOINTED = {
     "forearm_L": ((0.06, 0.07, 0.19), (0.14, 0.0, 0.63), (0.0, 0.0, -0.095), "uparm_L"),
     "forearm_R": ((0.06, 0.07, 0.19), (-0.14, 0.0, 0.63), (0.0, 0.0, -0.095), "uparm_R"),
 }
+_BONE_TAILS = {
+    "pelvis": (0.0, 0.0, 0.54), "torso": (0.0, 0.0, 0.84), "head": (0.0, 0.0, 1.0),
+    "thigh_L": (0.05, 0.0, 0.25), "thigh_R": (-0.05, 0.0, 0.25),
+    "shin_L": (0.05, 0.0, 0.03), "shin_R": (-0.05, 0.0, 0.03),
+    "foot_L": (0.05, -0.11, 0.01), "foot_R": (-0.05, -0.11, 0.01),
+    "uparm_L": (0.14, 0.0, 0.63), "uparm_R": (-0.14, 0.0, 0.63),
+    "forearm_L": (0.14, 0.0, 0.44), "forearm_R": (-0.14, 0.0, 0.44),
+}
+
+# The capsule of the stand-in that let Seedance invent a natural walk in our film work: body
+# radius, body top and head radius as fractions of the height.
+_CAP_R, _CAP_TOP, _HEAD_R = 0.115, 0.875, 0.068
+MANNEQUIN_GRAY, JOINT_GRAY = (0.62, 0.62, 0.64), (0.30, 0.30, 0.32)
+_HAIR, _DARK, _LEATHER = (0.14, 0.09, 0.06), (0.09, 0.09, 0.10), (0.40, 0.27, 0.16)
+_WOOD, _STEEL, _BRASS, _GLOW = (0.42, 0.32, 0.24), (0.56, 0.60, 0.64), (0.50, 0.36, 0.14), (1.0, 0.86, 0.55)
 
 
-def figure(name, height=1.75, location=(0.0, 0.0, 0.0), facing_deg=0.0, rgb=B.PALETTE["red"], fidelity="shaped", coll=None):
-    """A figure for the chosen fidelity. rough: a legless capsule with a head and a nose
-    block for facing, one object; it glides and the video model invents the gait (our film
-    work found this safer than any rigged walk, which the model copied as sliding feet).
-    shaped: thirteen jointed parts that `walk_path` steps. detailed: shaped plus a nose
-    block and a hair cap, for medium shots where head turns matter. The figure's color is
-    on its own material, MAT_FIG_<name>, so it can be recolored alone. Returns the root name."""
-    lvl = _fidelity(fidelity)
-    root_name = f"FIG_{name}"
-    own = f"MAT_{root_name}"
-    if lvl == 0:
-        p = Parts()
-        r = height * 0.13
-        p.add("cylinder", (2 * r, 2 * r, height * 0.62), (0, 0, height * 0.10), rgb, base=True, segments=16)
-        p.add("sphere", (2 * r, 2 * r, 2 * r), (0, 0, height * 0.72), rgb, segments=16)
-        p.add("sphere", (2 * r, 2 * r, 1.2 * r), (0, 0, 0.6 * r), rgb, segments=16)  # base on z = 0
-        p.add("sphere", (height * 0.15, height * 0.16, height * 0.17), (0, 0, height * 0.90), rgb, segments=16)
-        p.add("box", (height * 0.04, height * 0.05, height * 0.035), (0, -height * 0.085, height * 0.90), rgb)
-        obj = p.to_object(root_name, location, facing_deg, coll, material_name=own)
-        obj["height"] = height
-        obj["capsule"] = True
-        return obj.name
+def _shade(rgb, k=0.6):
+    return tuple(c * k for c in rgb)
+
+
+def _f_hair(p, h, c):
+    rh, zc = _HEAD_R * h, h - _HEAD_R * h
+    p.add("sphere", (2.15 * rh, 2.1 * rh, 1.9 * rh), (0, 0.35 * rh, zc + 0.3 * rh), c, segments=16)
+
+
+def _f_long_hair(p, h, c):
+    _f_hair(p, h, c)
+    rh = _HEAD_R * h
+    p.add("box", (1.8 * rh, 0.5 * rh, 0.17 * h), (0, _CAP_R * h * 0.75, h - 0.16 * h), c)
+
+
+def _f_hood(p, h, c):
+    rh, zc, r = _HEAD_R * h, h - _HEAD_R * h, _CAP_R * h
+    p.add("sphere", (2.6 * rh, 2.6 * rh, 2.6 * rh), (0, 0.6 * rh, zc + 0.15 * rh), c, segments=16)
+    p.add("cylinder", (2.1 * r, 2.1 * r, 0.07 * h), (0, 0, _CAP_TOP * h - 0.06 * h), c, base=True, segments=16, taper=0.75)
+
+
+def _f_hat(p, h, c):
+    rh, zc = _HEAD_R * h, h - _HEAD_R * h
+    p.add("cylinder", (3.4 * rh, 3.4 * rh, 0.012 * h), (0, 0, zc + 0.45 * rh), c, segments=20)
+    p.add("cylinder", (2.0 * rh, 2.0 * rh, 1.0 * rh), (0, 0, zc + 0.45 * rh), c, base=True, segments=16, taper=0.92)
+
+
+def _f_helmet(p, h, c):
+    rh, zc = _HEAD_R * h, h - _HEAD_R * h
+    p.add("sphere", (2.3 * rh, 2.35 * rh, 2.2 * rh), (0, 0.12 * rh, zc + 0.22 * rh), c, segments=16)
+
+
+def _f_goggles(p, h, c):
+    rh, zc = _HEAD_R * h, h - _HEAD_R * h
+    p.add("cylinder", (2.12 * rh, 2.12 * rh, 0.25 * rh), (0, 0, zc + 0.38 * rh), c, segments=16)
+    for s in (1, -1):  # two lenses on the forehead, half sunk into the head
+        p.add("cylinder", (0.6 * rh, 0.6 * rh, 0.3 * rh), (s * 0.38 * rh, -0.86 * rh, zc + 0.38 * rh), c, rot=(math.pi / 2, 0, 0), segments=12)
+
+
+def _f_nose(p, h, c):
+    rh, zc = _HEAD_R * h, h - _HEAD_R * h
+    p.add("box", (0.6 * rh, 0.7 * rh, 0.5 * rh), (0, -0.95 * rh, zc - 0.05 * rh), c)
+
+
+def _f_scarf(p, h, c):
+    p.add("cylinder", (0.17 * h, 0.17 * h, 0.045 * h), (0, 0, 0.845 * h), c, segments=16)
+    p.add("box", (0.07 * h, 0.02 * h, 0.24 * h), (-0.04 * h, 0.09 * h, 0.73 * h), c, rot=(0.17, 0, 0))
+
+
+def _f_backpack(p, h, c):
+    r = _CAP_R * h
+    p.add("box", (1.55 * r, 0.9 * r, 0.27 * h), (0, 1.38 * r, 0.66 * h), c)
+
+
+def _f_cape(p, h, c):
+    r = _CAP_R * h
+    p.add("box", (2.0 * r, 0.025 * h, 0.66 * h), (0, r + 0.012 * h, 0.50 * h), c, rot=(0.10, 0, 0))
+
+
+def _f_coat(p, h, c):
+    r = _CAP_R * h
+    p.add("cylinder", (2.8 * r, 2.8 * r, 0.56 * h), (0, 0, 0.03 * h), c, base=True, segments=20, taper=0.75)
+
+
+def _f_skirt(p, h, c):
+    r = _CAP_R * h
+    p.add("cylinder", (2.9 * r, 2.9 * r, 0.24 * h), (0, 0, 0.30 * h), c, base=True, segments=20, taper=0.72)
+
+
+def _f_belt(p, h, c):
+    r = _CAP_R * h
+    p.add("cylinder", (2.08 * r, 2.08 * r, 0.035 * h), (0, 0, 0.50 * h), c, segments=20)
+
+
+def _f_ears(p, h, c):
+    rh, zc = _HEAD_R * h, h - _HEAD_R * h
+    for s in (1, -1):
+        p.add("cone", (0.55 * rh, 0.3 * rh, 1.0 * rh), (s * 0.55 * rh, 0.1 * rh, zc + 0.95 * rh), c, rot=(0, s * 0.3, 0), segments=8)
+
+
+def _f_tail(p, h, c):
+    r = _CAP_R * h
+    p.add("cylinder", (0.07 * h, 0.07 * h, 0.38 * h), (0, r + 0.16 * h, 0.36 * h), c, rot=(-1.0, 0, 0), segments=10, taper=0.3)
+
+
+def _f_bag(p, h, c):
+    r = _CAP_R * h
+    p.add("box", (0.42 * r, 0.55 * r, 0.10 * h), (1.2 * r, -0.15 * r, 0.46 * h), c)
+
+
+def _f_sword(p, h, c):
+    r = _CAP_R * h
+    p.add("box", (0.012 * h, 0.035 * h, 0.40 * h), (r + 0.03 * h, 0.03 * h, 0.38 * h), c, rot=(0.45, 0, 0))
+    p.add("box", (0.02 * h, 0.09 * h, 0.015 * h), (r + 0.03 * h, -0.05 * h, 0.555 * h), _DARK, rot=(0.45, 0, 0))
+
+
+# Features merged into the capsule mesh: name -> (builder, default color; "shade" is a darker
+# shade of the figure's color, "body" its color).
+_WORN = {
+    "hair": (_f_hair, _HAIR), "long_hair": (_f_long_hair, _HAIR), "hood": (_f_hood, "shade"),
+    "hat": (_f_hat, (0.20, 0.15, 0.11)), "helmet": (_f_helmet, _STEEL), "goggles": (_f_goggles, _DARK),
+    "nose": (_f_nose, "shade"), "scarf": (_f_scarf, "shade"), "backpack": (_f_backpack, "shade"),
+    "cape": (_f_cape, "shade"), "coat": (_f_coat, "shade"), "skirt": (_f_skirt, "shade"),
+    "belt": (_f_belt, _LEATHER), "ears": (_f_ears, "body"), "tail": (_f_tail, "body"),
+    "bag": (_f_bag, _LEATHER), "sword": (_f_sword, _STEEL),
+}
+# Features built as child objects so walk_path can swing them and pose can key them.
+_HELD = {"arms": "body", "lantern": _BRASS, "staff": _WOOD, "shield": _WOOD}
+FEATURES = tuple(_WORN) + tuple(_HELD)
+
+
+def _feature_color(feature, rgb, colors):
+    c = (colors or {}).get(feature) or _WORN.get(feature, (None, _HELD.get(feature)))[1]
+    return rgb if c == "body" else _shade(rgb) if c == "shade" else c
+
+
+def _capsule(root_name, h, rgb, features, colors, location, facing_deg, coll):
+    unknown = [f for f in features if f not in FEATURES]
+    if unknown:
+        raise ValueError(f"unknown features {unknown}; choose from {FEATURES}")
+    p = Parts()
+    p.add("capsule", (2 * _CAP_R * h, 2 * _CAP_R * h, _CAP_TOP * h), (0, 0, 0), rgb, base=True, segments=20)
+    p.add("sphere", (2 * _HEAD_R * h,) * 3, (0, 0, h - _HEAD_R * h), rgb, segments=16)
+    for f in features:
+        if f in _WORN:
+            _WORN[f][0](p, h, _feature_color(f, rgb, colors))
+    root = p.to_object(root_name, location, facing_deg, coll, material_name=f"MAT_{root_name}")
+    made = set()
+    r = _CAP_R * h
+    hand = {}
+    if "arms" in features:
+        c = _feature_color("arms", rgb, colors)
+        for side, s in (("L", 1.0), ("R", -1.0)):
+            a = Parts()
+            a.add("capsule", (0.07 * h, 0.07 * h, 0.42 * h), (0, 0, -0.18 * h), c, segments=12)
+            arm = a.to_object(f"{root_name}_arm_{side}", (s * (r + 0.03 * h), 0, 0.80 * h), 0.0, coll, parent=root)
+            arm.rotation_mode, arm["swing_arm"] = "XYZ", s
+            hand[side] = (arm, (0.0, -0.01 * h, -0.38 * h))
+            made.add(arm.name)
+    side_hand = {"R": (root, (-(r + 0.03 * h), -0.05 * h, 0.44 * h)), "L": (root, (r + 0.03 * h, -0.05 * h, 0.44 * h))}
+    for f in ("lantern", "staff", "shield"):
+        if f not in features:
+            continue
+        c = _feature_color(f, rgb, colors)
+        parent, at = hand.get("L" if f == "shield" else "R") or side_hand["L" if f == "shield" else "R"]
+        q = Parts()
+        if f == "lantern":
+            q.add("box", (0.008 * h, 0.008 * h, 0.05 * h), (0, 0, -0.025 * h), c)
+            q.add("cylinder", (0.075 * h, 0.075 * h, 0.015 * h), (0, 0, -0.055 * h), c, segments=12)
+            q.add("cylinder", (0.065 * h, 0.065 * h, 0.085 * h), (0, 0, -0.105 * h), _GLOW, segments=12)
+            q.add("cylinder", (0.08 * h, 0.08 * h, 0.015 * h), (0, 0, -0.155 * h), c, segments=12)
+            swing = 9.0
+        elif f == "staff":
+            hand_z = 0.80 * h - 0.38 * h if "arms" in features else 0.44 * h
+            q.add("cylinder", (0.026 * h, 0.026 * h, 1.08 * h), (0, 0, 0.55 * h - hand_z), c, segments=8)
+            q.add("sphere", (0.05 * h, 0.05 * h, 0.05 * h), (0, 0, 1.09 * h - hand_z), c, segments=10)
+            swing = 4.0
+        else:
+            q.add("cylinder", (0.30 * h, 0.30 * h, 0.025 * h), (0.02 * h, 0, 0), c, rot=(0, math.pi / 2, 0), segments=20)
+            swing = 3.0
+        prop = q.to_object(f"{root_name}_{f}", at, 0.0, coll, parent=parent)
+        prop.rotation_mode, prop["swing_deg"] = "XYZ", swing
+        made.add(prop.name)
+    for child in list(root.children_recursive):  # features dropped on a rebuild
+        if child.name not in made and child.get(B.TAG):
+            bpy.data.objects.remove(child)
+    root["capsule"] = True
+    root["features"] = ",".join(features)
+    return root
+
+
+def _mannequin(root_name, h, rgb, location, facing_deg, coll):
+    """A gray artist's mannequin: ellipsoid segments and dark ball joints in one mesh, each part
+    weighted fully to its bone (rigid skinning) on an armature whose bones start at the
+    _JOINTED pivots, with every bone's X axis along the figure's X, so a positive X rotation
+    swings a hanging limb back, as on a jointed figure. The torso carries `rgb` (None: gray)."""
     existing = bpy.data.objects.get(root_name)
-    root = B._own(existing, lambda: bpy.data.objects.new(root_name, None))
-    if existing is None:
-        root.empty_display_type, root.empty_display_size = "PLAIN_AXES", height * 0.3
+    if existing is not None:
+        B._own(existing, None)
+        if existing.type != "ARMATURE":
+            raise ValueError(f"{root_name!r} is a {existing.type}: a figure keeps its style, use another name")
+        root = existing
+    else:
+        arm = B._own(None, lambda: bpy.data.armatures.new(root_name))
+        root = B._own(None, lambda: bpy.data.objects.new(root_name, arm))
         (coll or bpy.context.scene.collection).objects.link(root)
-    made = {}
-    for part, (size, pivot, offset, parent) in _JOINTED.items():
-        p = Parts()
-        p.add("box", [height * s for s in size], [height * o for o in offset], rgb, bevel=0.008 if lvl == 2 else 0.0)
-        if lvl == 2 and part == "head":
-            p.add("box", (height * 0.03, height * 0.04, height * 0.03), (0, -height * 0.075, height * 0.065), rgb)
-            p.add("box", (height * 0.13, height * 0.14, height * 0.04), (0, height * 0.005, height * 0.14), (0.12, 0.10, 0.09))
-        par = made.get(parent, root)
-        pivot_world = Vector([height * c for c in pivot])
-        par_pivot = Vector([height * c for c in _JOINTED[parent][1]]) if parent else Vector((0, 0, 0))
-        obj = p.to_object(f"{root_name}_{part}", pivot_world - par_pivot, 0.0, coll, parent=par, material_name=own)
-        obj.rotation_mode = "XYZ"
-        made[part] = obj
+    root.data.display_type = "STICK"
+    vl = bpy.context.view_layer
+    was_active = vl.objects.active
+    if bpy.context.object is not None and bpy.context.object.mode != "OBJECT":
+        bpy.ops.object.mode_set(mode="OBJECT")
+    vl.objects.active = root
+    bpy.ops.object.mode_set(mode="EDIT")
+    bones = root.data.edit_bones
+    for b in list(bones):
+        bones.remove(b)
+    for name, (_size, pivot, _offset, parent) in _JOINTED.items():
+        b = bones.new(name)
+        b.head = Vector(pivot) * h
+        b.tail = Vector(_BONE_TAILS[name]) * h
+        y = (b.tail - b.head).normalized()
+        b.align_roll(Vector((1.0, 0.0, 0.0)).cross(y))  # bone Z = X cross Y keeps bone X on the figure's X
+        if parent:
+            b.parent = bones[parent]
+    bpy.ops.object.mode_set(mode="OBJECT")
+    vl.objects.active = was_active
+    for pb in root.pose.bones:
+        pb.rotation_mode = "XYZ"
+
+    body_rgb = rgb or MANNEQUIN_GRAY
+    p, groups = Parts(), {}
+
+    def part(bone, kind, size, center, c):
+        before = set(p.bm.verts)
+        p.add(kind, [h * s for s in size], [h * v for v in center], c, segments=14)
+        groups.setdefault(bone, []).extend(v for v in p.bm.verts if v not in before)
+
+    part("pelvis", "sphere", (0.20, 0.13, 0.13), (0, 0, 0.505), body_rgb)
+    part("torso", "sphere", (0.18, 0.115, 0.21), (0, 0, 0.615), body_rgb)
+    part("torso", "sphere", (0.235, 0.135, 0.21), (0, 0, 0.735), body_rgb)
+    part("torso", "cylinder", (0.045, 0.045, 0.06), (0, 0, 0.855), MANNEQUIN_GRAY)
+    part("head", "sphere", (0.11, 0.125, 0.14), (0, -0.005, 0.925), MANNEQUIN_GRAY)
+    for side, s in (("L", 1.0), ("R", -1.0)):
+        x = 0.05 * s
+        part(f"thigh_{side}", "sphere", (0.08, 0.08, 0.08), (x, 0, 0.49), JOINT_GRAY)
+        part(f"thigh_{side}", "sphere", (0.085, 0.09, 0.25), (x, 0, 0.37), MANNEQUIN_GRAY)
+        part(f"shin_{side}", "sphere", (0.062, 0.062, 0.062), (x, 0, 0.25), JOINT_GRAY)
+        part(f"shin_{side}", "sphere", (0.068, 0.072, 0.22), (x, 0, 0.14), MANNEQUIN_GRAY)
+        part(f"foot_{side}", "sphere", (0.05, 0.05, 0.05), (x, 0, 0.035), JOINT_GRAY)
+        part(f"foot_{side}", "sphere", (0.07, 0.16, 0.05), (x, -0.04, 0.025), MANNEQUIN_GRAY)
+        x = 0.14 * s
+        part(f"uparm_{side}", "sphere", (0.07, 0.07, 0.07), (x, 0, 0.82), JOINT_GRAY)
+        part(f"uparm_{side}", "sphere", (0.062, 0.066, 0.19), (x, 0, 0.725), MANNEQUIN_GRAY)
+        part(f"forearm_{side}", "sphere", (0.052, 0.052, 0.052), (x, 0, 0.63), JOINT_GRAY)
+        part(f"forearm_{side}", "sphere", (0.052, 0.056, 0.18), (x, 0, 0.54), MANNEQUIN_GRAY)
+        part(f"forearm_{side}", "sphere", (0.045, 0.06, 0.085), (x, -0.005, 0.40), MANNEQUIN_GRAY)
+    p.bm.verts.index_update()
+    weights = {b: [v.index for v in vs] for b, vs in groups.items()}
+    body = p.to_object(f"{root_name}_body", (0.0, 0.0, 0.0), 0.0, coll, parent=root, material_name=f"MAT_{root_name}")
+    body.vertex_groups.clear()
+    for b, ids in weights.items():
+        body.vertex_groups.new(name=b).add(ids, 1.0, "REPLACE")
+    mod = body.modifiers.get("Armature") or body.modifiers.new("Armature", "ARMATURE")
+    mod.object = root
     root.location = location
     root.rotation_euler = (0.0, 0.0, math.radians(facing_deg))
+    root["rigged"] = True
+    return root
+
+
+def figure(name, height=1.75, location=(0.0, 0.0, 0.0), facing_deg=0.0, rgb=B.PALETTE["red"], fidelity=None, coll=None,
+           *, style=None, features=(), colors=None):
+    """A figure in one of the CAST styles, root at the feet, facing local -Y (facing_deg 0
+    faces -Y, 90 faces +X). Returns the root name.
+    capsule: one object, the stand-in the video model replaces whole; walk_path bobs it.
+    featured: a capsule plus `features` from FEATURES (wearables merged into the capsule;
+    arms, lantern, staff and shield as child objects that swing and pose); `colors` maps a
+    feature to an RGB. jointed: thirteen rigid parts that walk_path steps (fidelity
+    "detailed" adds a nose block and a hair cap). mannequin: a gray armature-rigged mannequin
+    with `rgb` on its torso (rgb=None: all gray). Without `style`, a legacy `fidelity` picks
+    rough -> capsule, shaped or detailed -> jointed; with neither, capsule. The figure's
+    first color sits on its own material, MAT_FIG_<name>, so it can be recolored alone."""
+    if style is None:
+        style = "capsule" if fidelity in (None, "rough") else "jointed"
+    if style not in CAST:
+        raise ValueError(f"style must be one of {CAST}")
+    if features and style != "featured":
+        raise ValueError("features need style='featured'")
+    root_name = f"FIG_{name}"
+    own = f"MAT_{root_name}"
+    lvl = _fidelity(fidelity) if fidelity else 1
+    old = bpy.data.objects.get(root_name)
+    if old is not None:
+        was = old.get("figure") or ("jointed" if old.get("jointed") else "capsule")
+        if {was, style} != {"capsule", "featured"} and was != style:
+            raise ValueError(f"{root_name} is a {was} figure; a figure keeps its style, so give the {style} another name")
+    if style in ("capsule", "featured"):
+        root = _capsule(root_name, height, rgb, tuple(features), colors, location, facing_deg, coll)
+    elif style == "mannequin":
+        root = _mannequin(root_name, height, rgb, location, facing_deg, coll)
+    else:
+        existing = bpy.data.objects.get(root_name)
+        root = B._own(existing, lambda: bpy.data.objects.new(root_name, None))
+        if existing is None:
+            root.empty_display_type, root.empty_display_size = "PLAIN_AXES", height * 0.3
+            (coll or bpy.context.scene.collection).objects.link(root)
+        made = {}
+        for part, (size, pivot, offset, parent) in _JOINTED.items():
+            p = Parts()
+            p.add("box", [height * s for s in size], [height * o for o in offset], rgb, bevel=0.008 if lvl == 2 else 0.0)
+            if lvl == 2 and part == "head":
+                p.add("box", (height * 0.03, height * 0.04, height * 0.03), (0, -height * 0.075, height * 0.065), rgb)
+                p.add("box", (height * 0.13, height * 0.14, height * 0.04), (0, height * 0.005, height * 0.14), (0.12, 0.10, 0.09))
+            par = made.get(parent, root)
+            pivot_world = Vector([height * c for c in pivot])
+            par_pivot = Vector([height * c for c in _JOINTED[parent][1]]) if parent else Vector((0, 0, 0))
+            obj = p.to_object(f"{root_name}_{part}", pivot_world - par_pivot, 0.0, coll, parent=par, material_name=own)
+            obj.rotation_mode = "XYZ"
+            made[part] = obj
+        root.location = location
+        root.rotation_euler = (0.0, 0.0, math.radians(facing_deg))
+        root["jointed"] = True
     root["height"] = height
-    root["jointed"] = True
+    root["figure"] = style
+    if rgb is not None:
+        root["color"] = next((k for k, v in B.PALETTE.items() if all(abs(a - b) < 1e-3 for a, b in zip(v, rgb))), "")
     return root.name
+
+
+def _joints(root):
+    """Joint name -> what pose and walk_path key: part objects (jointed), pose bones
+    (mannequin), or a featured capsule's arm_L, arm_R and held props."""
+    if root.get("jointed"):
+        return {k: bpy.data.objects[f"{root.name}_{k}"] for k in _JOINTED}
+    if root.get("rigged"):
+        return {k: root.pose.bones[k] for k in _JOINTED}
+    pre = root.name + "_"
+    return {c.name[len(pre):]: c for c in root.children_recursive if c.name.startswith(pre)}
+
+
+def pose(fig, frame, **joints_deg):
+    """Key joint rotations at a frame, in degrees: a number is the X axis (negative swings a
+    hanging limb forward and tips an upright part back), a tuple is (x, y, z). Joints are a
+    jointed figure's parts, a mannequin's bones (same names) or a featured capsule's arm_L,
+    arm_R, lantern, staff and shield. Returns the joints keyed."""
+    root = bpy.data.objects[fig] if isinstance(fig, str) else fig
+    joints = _joints(root)
+    for part, deg in joints_deg.items():
+        if part not in joints:
+            raise KeyError(f"{root.name} has no joint {part!r}; it has {sorted(joints)}")
+        target = joints[part]
+        xyz = deg if isinstance(deg, (tuple, list)) else (deg, 0.0, 0.0)
+        target.rotation_euler = [math.radians(a) for a in xyz]
+        target.keyframe_insert("rotation_euler", frame=frame)
+    return sorted(joints_deg)
 
 
 def _key_rot(obj, frame, x_deg):
@@ -493,20 +816,30 @@ def _leg_ik(x, v, lt, ls):
     return thigh, shin
 
 
-def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
+def _gait(v):
+    """0 standing to 1 walking, from speed in m/s: the step bob fades in by 0.6 m/s."""
+    u = min(1.0, max(0.0, v / 0.12))
+    return u * u * (3.0 - 2.0 * u) * (0.45 + 0.55 * min(1.0, v / 0.6))
+
+
+def walk_path(fig, path, stride=None, swing_deg=26.0, step=1, bob=True, scene=None):
     """Move a figure's root along `path` [(frame, (x, y)), ...] and face it along the travel.
-    A jointed figure steps with planted feet: each stance foot stays put on the ground while
-    the body passes over it (legs solved per frame, soles level), the swing foot lifts and
-    lands a stride ahead, and the root bobs as high as the stance leg allows. A stride past
-    0.5 h (a run) plants for 0.5 h and slides the rest. `swing_deg` sets the arm swing. A
-    capsule only glides, keyed every `step` frames; a jointed figure is keyed every frame so
-    its feet hold between keys. A pause is two path points at the same position: the swing
-    foot sets down where it is and the arms come to rest. The root's z keys carry the bob: on
-    raised or uneven ground, add its height to them rather than replace them. Returns key counts."""
+    `stride` is one step (default 0.42 x height; about 0.7 for a run). A capsule glides
+    with one bob per step and a small sway per stride (bob=False turns both off; a capsule
+    that only glides was rendered sliding), its arms swing and its held props sway, keyed
+    every `step` frames. A jointed figure or a mannequin steps with planted feet, keyed every
+    frame: each stance foot stays put while the body passes over it (legs solved per frame,
+    soles level), the swing foot lifts and lands a stride ahead, and the root bobs as high as
+    the stance leg allows. A stride past 0.5 h (a run) plants for 0.5 h and slides the rest.
+    `swing_deg` sets a jointed arm swing. A pause is two path points at the same position. The
+    root's z keys carry the bob: on raised or uneven ground, add its height to them rather than
+    replace them. Returns key counts."""
     root = bpy.data.objects[fig] if isinstance(fig, str) else fig
     h = root.get("height", 1.75)
     stride = stride or h * 0.42  # one step
-    parts = {k: bpy.data.objects[f"{root.name}_{k}"] for k in _JOINTED} if root.get("jointed") else {}
+    joints = _joints(root)
+    legs = bool(root.get("jointed") or root.get("rigged"))
+    fps = (scene or bpy.context.scene).render.fps
     path = sorted(path)
     f0, f1 = path[0][0], path[-1][0]
 
@@ -517,23 +850,24 @@ def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
                 return Vector((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, 0.0))
         return Vector((*path[-1][1], 0.0))
 
-    frames = list(range(f0, f1 + 1, 1 if parts else step))
+    frames = list(range(f0, f1 + 1, 1 if legs else max(1, step)))
     if frames[-1] != f1:
         frames.append(f1)
-    track, dist, prev, yaw = [], 0.0, pos(f0), root.rotation_euler.z
+    track, dist, prev, prev_f, yaw = [], 0.0, pos(f0), f0, root.rotation_euler.z
     for f in frames:
         cur = pos(f)
         d = cur - prev
         if d.length > 1e-4:
             yaw = math.atan2(d.x, -d.y)
         dist += d.length
-        prev = cur
-        track.append([f, cur, yaw, dist, d.length > 1e-4])
+        speed = d.length * fps / max(1, f - prev_f)
+        prev, prev_f = cur, f
+        track.append([f, cur, yaw, dist, d.length > 1e-4, speed])
     if len(track) > 1:
         # The first frame faces and moves like the next one: a yaw jump would drag the planted foot.
-        track[0][2], track[0][4] = track[1][2], track[1][4]
+        track[0][2], track[0][4], track[0][5] = track[1][2], track[1][4], track[1][5]
 
-    if parts:
+    if legs:
         hip, knee, ankle = (_JOINTED[k][1][2] * h for k in ("thigh_L", "shin_L", "foot_L"))
         lt, ls = hip - knee, knee - ankle
         reach = 0.98 * (lt + ls)
@@ -545,9 +879,9 @@ def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
         settle = 1.0 if not track[0][4] else 0.0  # 1 = stopped: the swing foot is down
 
     keys = 0
-    for f, cur, yaw, dist, moving in track:
+    for f, cur, yaw, dist, moving, speed in track:
         z = 0.0
-        if parts:
+        if legs:
             settle = min(1.0, max(0.0, settle + (-1 if moving else 1) / 6.0))
             go = 1.0 - settle * settle * (3.0 - 2.0 * settle)
             feet = {}
@@ -562,32 +896,54 @@ def walk_path(fig, path, stride=None, swing_deg=26.0, step=2, scene=None):
                 feet[side] = (x, up * go, planted)
             worst = max(abs(x) for x, _, p in feet.values() if p)
             z = math.sqrt(reach * reach - worst * worst) - (lt + ls)
-            legs = {side: _leg_ik(x, hip + z - ankle - up, lt, ls) for side, (x, up, _) in feet.items()}
-            for side, (thigh, shin) in legs.items():
-                _key_rot(parts[f"thigh_{side}"], f, -math.degrees(thigh))
-                _key_rot(parts[f"shin_{side}"], f, -math.degrees(shin - thigh))
-                _key_rot(parts[f"foot_{side}"], f, math.degrees(shin))  # sole level
+            legs_ik = {side: _leg_ik(x, hip + z - ankle - up, lt, ls) for side, (x, up, _) in feet.items()}
+            for side, (thigh, shin) in legs_ik.items():
+                _key_rot(joints[f"thigh_{side}"], f, -math.degrees(thigh))
+                _key_rot(joints[f"shin_{side}"], f, -math.degrees(shin - thigh))
+                _key_rot(joints[f"foot_{side}"], f, math.degrees(shin))  # sole level
                 # Each arm swings against its own leg: back while that leg reaches forward.
-                lead = legs[side][0] - legs["R" if side == "L" else "L"][0]
-                _key_rot(parts[f"uparm_{side}"], f, 0.4 * swing_deg / 26.0 * math.degrees(lead) * go)
-                _key_rot(parts[f"forearm_{side}"], f, -swing_deg * 0.5 * go)
+                lead = legs_ik[side][0] - legs_ik["R" if side == "L" else "L"][0]
+                _key_rot(joints[f"uparm_{side}"], f, 0.4 * swing_deg / 26.0 * math.degrees(lead) * go)
+                _key_rot(joints[f"forearm_{side}"], f, -swing_deg * 0.5 * go)
+        else:
+            k, run = _gait(speed), min(1.0, max(0.0, (speed - 1.6) / 2.0))
+            phase = dist / stride  # steps taken: lowest at each contact, highest passing over
+            if bob:
+                z = h * (0.017 + 0.02 * run) * k * (0.5 - 0.5 * math.cos(2.0 * math.pi * phase))
+                cur = cur + Vector((math.cos(yaw), math.sin(yaw), 0.0)) * (0.008 * h * k * math.sin(math.pi * phase))
+            for joint in joints.values():
+                if "swing_arm" in joint:
+                    _key_rot(joint, f, -joint["swing_arm"] * (16.0 + 24.0 * run) * k * math.sin(math.pi * phase))
+                elif "swing_deg" in joint:
+                    _key_rot(joint, f, joint["swing_deg"] * k * math.sin(math.pi * phase - 0.6))
         root.location = (cur.x, cur.y, z)
         root.rotation_euler = (0.0, 0.0, yaw)
         root.keyframe_insert("location", frame=f)
         root.keyframe_insert("rotation_euler", index=2, frame=f)
         keys += 1
-    for obj in [root, *parts.values()]:
+    for obj in [root, *(j for j in joints.values() if isinstance(j, bpy.types.Object))]:
         for fc in B.fcurves(obj):
             for kp in fc.keyframe_points:
                 kp.interpolation = "LINEAR"
     return {"figure": root.name, "frames": [f0, f1], "keys": keys, "distance_m": round(dist, 2)}
 
 
-def crowd(prefix, count, area, frames, fidelity="rough", pal=None, speed=(1.0, 1.5), heights=(1.6, 1.9), seed=0, avoid=(), coll=None, walking=None, headings=None, keep_clear=()):
+def cast(scene=None):
+    """One row per figure root for the hand-off sheet's cast clause: name, style, color,
+    height, features, and whether it is an extra."""
+    sc = scene or bpy.context.scene
+    return [{"figure": o.name, "style": o["figure"], "color": o.get("color", ""), "height_m": round(o.get("height", 0.0), 2),
+             "features": [f for f in o.get("features", "").split(",") if f], "extra": bool(o.get("extra"))}
+            for o in sc.objects if o.get(B.TAG) and o.get("figure")]
+
+
+def crowd(prefix, count, area, frames, fidelity="rough", pal=None, speed=(1.0, 1.5), heights=(1.6, 1.9), seed=0, avoid=(), coll=None, walking=None, headings=None, keep_clear=(), style=None, features=()):
     """Background walkers crossing `area` (xmin, xmax, ymin, ymax) over `frames` (start,
     end), each on a straight line at its own speed, in the scheme's crowd color with a
-    value tint per person. Rough walkers are gliding capsules, shaped and detailed ones
-    step. walking=False makes a standing crowd. headings: yaw choices in degrees
+    value tint per person. `style` picks the cast style (and `features` a featured
+    capsule's); without it, rough walkers are capsules and shaped or detailed ones jointed
+    figures that step.
+    walking=False makes a standing crowd. headings: yaw choices in degrees
     (0 walks toward -Y, 180 toward +Y) to keep walkers along a street; None is random.
     keep_clear: [(frame_a, frame_b, (xmin, xmax, ymin, ymax)), ...] zones no walker may
     enter during those frames, such as the sight line between a camera and its subject;
@@ -609,12 +965,12 @@ def crowd(prefix, count, area, frames, fidelity="rough", pal=None, speed=(1.0, 1
             continue
         name = f"{prefix.removeprefix('FIG_')}{i:03d}"  # figure() adds FIG_ itself
         rgb = tint(pal["crowd"], seed * 1000 + i, 0.25)
-        root = figure(name, h, (x, y, 0.0), math.degrees(yaw), rgb, fidelity, coll)
+        root = figure(name, h, (x, y, 0.0), math.degrees(yaw), rgb, None if style else fidelity, coll, style=style, features=features)
         root = bpy.data.objects[root]
         root["extra"] = True
         roots.append(root.name)
         if walking:
-            walk_path(root, [(frames[0], (x, y)), (frames[1], end)], step=3)
+            walk_path(root, [(frames[0], (x, y)), (frames[1], end)], step=2)
     return roots
 
 
@@ -683,26 +1039,27 @@ def _animated(obj):
     ad = obj.animation_data
     if ad and ad.action:
         return True
-    # A figure whose root stands still but whose limbs gesture still performs.
-    return bool(obj.get("jointed")) and any(c.animation_data and c.animation_data.action for c in obj.children_recursive)
+    # A figure whose root stands still but whose limbs or arms gesture still performs.
+    return bool(obj.get("figure") or obj.get("jointed")) and any(c.animation_data and c.animation_data.action for c in obj.children_recursive)
 
 
 def _in_figure(obj):
-    """True for a limb of a jointed figure, at any depth."""
+    """True for a part of a figure at any depth: a jointed limb, a mannequin's mesh, a
+    featured capsule's arm or held prop."""
     p = obj.parent
     while p is not None:
-        if p.get("jointed"):
+        if p.get("figure") or p.get("jointed"):
             return True
         p = p.parent
     return False
 
 
 def elements(scene=None):
-    """Scene elements as a viewer counts them: every tagged mesh, with a jointed figure
-    counted once (its root) and not once per limb."""
+    """Scene elements as a viewer counts them: every tagged mesh, with a figure counted once
+    (its root) and not once per limb, arm or held prop."""
     sc = scene or bpy.context.scene
     return [o.name for o in sc.objects if o.get(B.TAG) and o.visible_get() and not _in_figure(o)
-            and (o.type == "MESH" or o.get("jointed"))]
+            and (o.type == "MESH" or o.get("figure") or o.get("jointed"))]
 
 
 def movers(scene=None):
