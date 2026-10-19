@@ -177,7 +177,7 @@ collaboration.
   instances; publish from Studio after modifying them.
 - Server restarts ([projects/update-games](https://create.roblox.com/docs/projects/update-games),
   Open Cloud `:restartServers`): restart only servers on outdated versions unless your update
-  workflow is independent of place version; bleed-off lets players leave within 1 to 60 minutes;
+  process is independent of place version; bleed-off lets players leave within 1 to 60 minutes;
   restart when the player data format changes.
 - API keys ([cloud/auth/api-keys](https://create.roblox.com/docs/cloud/auth/api-keys)): least
   privilege; a key unused or not updated for 60 days auto-expires even without an expiry date;

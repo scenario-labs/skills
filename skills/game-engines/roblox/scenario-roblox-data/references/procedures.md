@@ -744,7 +744,7 @@ Keys a template cannot reach:
 - A trade history that names players goes inside each player's profile or under a per-player key
   such as `TradeHistory_{UserId}` [added].
 - Data that cannot follow a static pattern needs the right-to-erasure webhook and a custom deletion
-  workflow (best practices doc).
+  process (best practices doc).
 - Call `AddUserId` on every profile so its key carries the player's UserId (ProfileStore docs).
 
 Storage: the limit is 500 MB plus 1 MB per lifetime user, measured on compressed latest versions; do

@@ -29,7 +29,13 @@ function repo(t) {
     copyFileSync(join(scripts, file), join(root, "scripts", file));
   }
   // The em-dash rule greps these paths and fails when one is missing.
-  for (const dir of ["docs", ".github", ".claude/commands", ".claude/agents"]) {
+  for (const dir of [
+    "docs",
+    "tests",
+    ".github",
+    ".claude/commands",
+    ".claude/agents",
+  ]) {
     mkdirSync(join(root, dir), { recursive: true });
   }
   for (const file of [

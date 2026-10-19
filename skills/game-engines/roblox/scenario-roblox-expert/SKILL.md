@@ -88,7 +88,7 @@ Ask once, then run:
 Then `rbx_env.doctor()` and an `Audit.all(game)` of the starting place. Write the budget, sync tool,
 data model plan and owners into the plan.
 
-## Workflow (the expert loop)
+## The expert loop
 
 1. **Brief in numbers.** Budgets per device, players, memory, art style. GATE: every later check has
    a number.
@@ -222,7 +222,7 @@ replies), process hazards, Rojo and Script Sync traps, and live corrections to t
 
 - [`references/procedures.md`](references/procedures.md): the toolkit API in full, chunk rules, and
   each procedure with its tests and results.
-- [`references/traps.md`](references/traps.md): current-Roblox traps, MCP and file workflow traps,
+- [`references/traps.md`](references/traps.md): current-Roblox traps, MCP and file pipeline traps,
   live corrections.
 - [`references/expert-notes.md`](references/expert-notes.md): expert claims by source with
   timestamps.

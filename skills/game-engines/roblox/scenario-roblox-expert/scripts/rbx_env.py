@@ -28,6 +28,7 @@ import contextlib
 import fcntl
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -152,7 +153,6 @@ def new_place(dir: str | Path, name: str | None = None, template: str = "basepla
 def machine_load() -> dict:
     """GPU utilization, GPU memory and RAM in use, in percent (macOS). GPU memory is IOAccelerator
     "Alloc system memory" against 75 % of RAM; RAM in use is active + wired + compressed."""
-    import re
     out: dict = {"gpu_util": None, "gpu_mem": None, "ram": None}
     r = subprocess.run(["ioreg", "-r", "-d", "1", "-c", "IOAccelerator"], capture_output=True, text=True).stdout
     util = [float(x) for x in re.findall(r'"Device Utilization %"=(\d+)', r)]
@@ -174,8 +174,9 @@ def machine_load() -> dict:
 def place_windows() -> int:
     """Number of place windows open in Studio (one child process per local place)."""
     # Anchored on the executable path: an unanchored pattern also matched agents' shells quoting it.
-    r = subprocess.run(["pgrep", "-f", "^/Applications/RobloxStudio.app/Contents/MacOS/RobloxStudio -localPlaceFile"],
-                       capture_output=True, text=True)
+    # Built from APP, the app open_place launches, so an RBX_STUDIO_APP override is counted too.
+    exe = re.sub(r"([.^$*+?()\[\]{}|\\])", r"\\\1", str(APP / "Contents" / "MacOS" / "RobloxStudio"))
+    r = subprocess.run(["pgrep", "-f", f"^{exe} -localPlaceFile"], capture_output=True, text=True)
     return len(r.stdout.split())
 
 

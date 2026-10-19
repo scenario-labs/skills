@@ -637,6 +637,7 @@ Poki
 Poliigon
 Pollitt
 Popen
+Poppler
 Prefs
 Previs
 Prismatica
@@ -1102,6 +1103,7 @@ outpainting
 outsourcers
 pano
 pcall
+pdftoppm
 pheomelanin
 pixol
 pixols

@@ -75,7 +75,7 @@ ProfileStore, in Lune and in Studio.
   (right to be forgotten).
 - The token is case-sensitive; a blank scope means "global"; the user id must sit in the store name,
   key or scope (right to be forgotten).
-- Data that templates cannot match needs the right-to-erasure webhook and a custom deletion workflow
+- Data that templates cannot match needs the right-to-erasure webhook and a custom deletion process
   (best practices).
 - `IsPaidItemTradingAllowed` false: block trading of items the player purchased with in-experience
   currency or Robux (paid random items; PolicyService reference).

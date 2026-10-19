@@ -65,7 +65,8 @@ annotate_em_dashes() {
 grep_status=0
 # CODE_OF_CONDUCT.md is excluded on purpose: it is the published Contributor
 # Covenant text kept byte-identical to its source, like the vendored dev skills.
-em_dash_hits=$(grep -rn --include='*.md' -e '—' skills README.md INSTALL.md AGENTS.md CONTRIBUTING.md SECURITY.md docs .github .claude/commands .claude/agents) || grep_status=$?
+# tests/ is searched for the evidence READMEs that skills link as review records.
+em_dash_hits=$(grep -rn --include='*.md' -e '—' skills README.md INSTALL.md AGENTS.md CONTRIBUTING.md SECURITY.md docs tests .github .claude/commands .claude/agents) || grep_status=$?
 if [ "$grep_status" -eq 0 ]; then
   echo 'Em dashes are forbidden (house style). Each hit below is path:line:column (column counts from 1) with the offending em dash (U+2014) wrapped in >>> <<<; a leading "- " list bullet is an ASCII hyphen, never the match.'
   annotate_em_dashes "$em_dash_hits"

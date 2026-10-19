@@ -874,7 +874,7 @@ base at version 41: exit 1 with the message above and no merged file; no `baseVe
 `--live-versions`: exit 0, "not checked"; a key without access (403): `place_versions` exit 1.
 Against the real endpoint: not yet run (no key), so its paging fields rest on the reference schema.
 
-## P16. Team workflow: builders, scripters, pipeline
+## P16. Team process: builders, scripters, pipeline
 
 Goal: people edit in parallel without overwriting each other, and only reviewed code and a checked
 map reach players.
@@ -918,7 +918,7 @@ The official harness tutorial ignores place files in Git (its `.gitignore` exclu
 committed base place is a deliberate exception for option B: keep it in Git LFS and out of review
 diffs.
 
-Test: none for the human workflow itself. The merge on pull requests is O21 plus the `static` job in
+Test: none for the human process itself. The merge on pull requests is O21 plus the `static` job in
 O8.
 
 ## P17. `rojo serve` in a team

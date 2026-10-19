@@ -94,7 +94,7 @@ viewport that stopped drawing (see `references/procedures.md`).
 - Map size, StreamingEnabled, and which models must always exist on clients.
 - One mood sentence per zone and two or three reference images.
 - Asset sources: Scenario meshes, textures and skyboxes, or Roblox materials only.
-- File workflow: Rojo or Studio only. Several settings are file-only (Current Roblox notes).
+- File pipeline: Rojo or Studio only. Several settings are file-only (Current Roblox notes).
 
 Defaults: Realistic with PrioritizeLightingQuality, graybox grid variant at StudsPerTile 8, doors 10
 by 10, the `day_fantasy` look aimed for the spawn view.

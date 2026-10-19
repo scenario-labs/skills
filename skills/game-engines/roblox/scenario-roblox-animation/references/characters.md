@@ -581,8 +581,8 @@ of the shipped rig (`AnimAudit` rule `editor-metadata`).
 
 ## 6. Character and NPC cost
 
-What belongs to animation; scenario-roblox-performance owns profiling, budgets and the MicroProfiler
-workflow.
+What belongs to animation; scenario-roblox-performance owns profiling, budgets and MicroProfiler
+captures.
 
 | Fact                                                                                                                                                | Source                                                                                                                                                            | What to do                                                                                     |
 | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |

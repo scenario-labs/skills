@@ -1,4 +1,4 @@
-# Traps: current Roblox, Studio MCP, and the file workflow
+# Traps: current Roblox, Studio MCP, and the file pipeline
 
 Read this before the first job. Version facts come from Roblox announcements and the API reference
 (October 2026). "Observed" means a live test in Studio 0.743 on 2026-10-18 (test ids in
