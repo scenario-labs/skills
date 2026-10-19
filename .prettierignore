@@ -26,3 +26,6 @@ CODE_OF_CONDUCT.md
 # Godot files the Godot expert tools copy into a project (a GitHub Actions
 # workflow and CI script template), kept as they were run in Godot
 skills/game-engines/godot/*/scripts/
+# Roblox files the Roblox Studio expert tools copy into a project (Rojo model
+# and place JSON, a GitHub Actions template), kept as they were built and run
+skills/game-engines/roblox/*/scripts/

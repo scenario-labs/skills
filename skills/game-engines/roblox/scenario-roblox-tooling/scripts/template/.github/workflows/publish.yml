@@ -1,0 +1,81 @@
+name: publish
+
+# Release job: builds the code, merges it into each place's base place (places.json), checks, then
+# uploads every place as Saved and promotes all of them to Published. Only this job publishes.
+# Needs: secret ROBLOX_PUBLISH_API_KEY in the protected "production" environment, with the scopes
+# universe-places:write (uploads, production experience), universe:write (restart_servers only) and
+# universe.place:read (stale base check, builders' experience, only when places.json has "buildPlace").
+# Ids live in places.json, base places in assets/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      restart_servers:
+        description: "Restart outdated servers after publishing (10-minute bleed-off)"
+        type: boolean
+        default: false
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+env:
+  ROKIT_URL: https://github.com/rojo-rbx/rokit/releases/download/v1.2.0/rokit-1.2.0-linux-x86_64.zip
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Install the toolchain pinned in rokit.toml
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/rokit.zip" "$ROKIT_URL"
+          unzip -q "$RUNNER_TEMP/rokit.zip" -d "$RUNNER_TEMP/rokit"
+          "$RUNNER_TEMP/rokit/rokit" install --no-trust-check
+          echo "$HOME/.rokit/bin" >> "$GITHUB_PATH"
+      - name: Check the API key and the scopes this run uses (auto-expires after 60 days unused)
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_PUBLISH_API_KEY }}
+          RESTART: ${{ github.event_name == 'workflow_dispatch' && inputs.restart_servers }}
+        run: |
+          args=(--require-scope universe-places:write)
+          if [ "$RESTART" = "true" ]; then args+=(--require-scope universe:write); fi
+          if jq -e 'any(.places[]; .buildPlace)' places.json > /dev/null; then
+            args+=(--require-scope universe.place:read)
+          fi
+          lune run tools/check_key "${args[@]}"
+      - run: wally install
+      - name: Build the code, refuse stale base places, merge, ShipCheck
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_PUBLISH_API_KEY }}
+        run: |
+          mkdir -p build
+          lune run tools/place_versions --manifest places.json --out build/live_versions.json
+          rojo build ship.project.json -o build/ship.rbxl
+          lune run tools/merge_place --manifest places.json --live-versions build/live_versions.json
+      - name: Hand the merged places to a person (exit 2 = publish that place from Studio)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: merged-places
+          path: build/*.rbxl
+      - name: Saved versions of every place, then Published
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_PUBLISH_API_KEY }}
+          ROBLOX_PUBLISH_LIVE: "1"
+        run: lune run tools/publish --manifest places.json --published
+      - name: Restart outdated servers
+        if: github.event_name == 'workflow_dispatch' && inputs.restart_servers
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_PUBLISH_API_KEY }}
+          ROBLOX_RESTART_LIVE: "1"
+        run: lune run tools/restart_servers --universe "$(jq -r '.universe' places.json)" --bleed-off-minutes 10

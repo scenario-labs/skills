@@ -172,6 +172,9 @@ ADPCM
 APFS
 ARGB
 ARNOL
+ARPD
+ARPPU
+ARPU
 ARVID
 ASIS
 ASTC
@@ -193,6 +196,7 @@ Animationsinstitut
 Anims
 Antro
 Antropus
+Apenyo
 Archivo
 Argyriou
 Argyriou's
@@ -215,13 +219,16 @@ BPTC
 BSDF
 Balatro
 Bammes
+Banerjee
 Bardoux
+Baszucki
 Biava
 Binormals
 Bkgrd
 Blargis
 Blekoh
 Blit
+Blox
 Boccuzzi
 Boehm
 Bogner
@@ -263,6 +270,7 @@ Colyseus
 Comly
 Comly's
 Continisio
+Corazza
 Coulthard
 Creauctopus
 Crigz
@@ -276,6 +284,7 @@ DIRECTX
 DLSS
 DNEG
 DONTNOD
+DSPAV
 DSUB
 DWAA
 DWAB
@@ -288,6 +297,7 @@ Demucs
 Denoiser
 Denoisers
 Deoccluder
+Develuper
 Dikko
 Dombrova
 Dondelinger
@@ -306,6 +316,7 @@ EEVEE
 EMEA
 ENOSPC
 Eder
+Einstellungen
 Ekren
 Elad
 Elementza
@@ -378,6 +389,7 @@ HSPR
 HWRT
 Habib
 Hadi
+Hamorei
 Harmonix
 Helan
 Henning
@@ -397,6 +409,7 @@ Hübschmann
 ILPP
 IMGUI
 Icaza
+Ignatyev
 Ilett
 Illari
 Imager
@@ -411,17 +424,23 @@ Interp
 JHILL
 JNLM
 Jarek
+Jezixa
 Jixie
 Julan
 Juli
 KAEL
+Kaiwala
+Kaner
 Kang
 Karimi
 Karto
+Karun
 Kaspar
 Kaspar's
 Katatikarn
+Kats
 Kawase
+Kbps
 Keeble
 Keelan
 Kerstin
@@ -455,6 +474,8 @@ Lampel's
 Lauf
 Lazare
 Lazov
+Leitnick
+Lemonsie
 Lendenfeld
 Lerp
 Lerping
@@ -464,6 +485,7 @@ Lfoot
 Lombardo
 Lookdev
 Loomis
+Ludius
 Luftrausers
 Lukky
 Lulkowski
@@ -513,6 +535,7 @@ Moana
 MonoBehaviour
 MonoBehaviours
 Mononen
+Monzter
 Moraru
 Morren
 Morten
@@ -521,6 +544,8 @@ Mundfish
 Murch's
 Murzak
 Myhre
+Mykaiju
+Myzta
 NFOR
 NGSP
 NPOT
@@ -535,6 +560,8 @@ Narukawa
 Nasolabial
 Nayar
 Naydenov
+Neeler
+Neill
 Neistadt
 Nemati
 NetworkBehaviour
@@ -545,9 +572,11 @@ Nijman
 Nikola
 Nikolay
 Nima
+Nisky
 Noara
 Nobbs
 Noland
+Noob
 Noobs
 Nostaria
 Nostdahl
@@ -557,6 +586,8 @@ Nsight
 Nunk
 O'Didily
 OCIO
+OCUZ
+OCUZKJJR
 OFPA
 OIDN
 OIIO
@@ -578,6 +609,7 @@ Oskar
 Oyvind
 Oztalay
 Oztalay's
+Ozzi
 PBAKE
 PRNG
 PROJEKT
@@ -591,11 +623,13 @@ Pavlovich's
 Peformanceand
 Pelissier
 Persp
+Petrella
 Picaut
 Piktiv
 Pixezy
 Pixologic
 PlayableBehaviour
+Playz
 Plouffe
 Plouffe's
 Pointiness
@@ -612,6 +646,7 @@ Psolver
 Ptex
 Purkeypile
 Pyblish
+QPTR
 Queble
 Quixel
 Québec
@@ -621,6 +656,7 @@ RETO
 RHIT
 RISO
 RRGGBB
+RTBF
 RTGI
 RTPC
 Raffaele
@@ -649,12 +685,18 @@ Retopologizing
 Retopology
 Returnal
 Reza
+Ricey
 Rigify
 Rigify's
+Robux
+Rojo
+Rokit
 Roldan
 Rollerdrome
+Roox
 Roselle
 Roselle's
+Rthro
 Ruud
 Ryse
 Ryuu
@@ -711,11 +753,15 @@ Stampfli
 Starkie
 Starkie's
 Staso
+Stef
+Stewiepfing
 Stratton
 Strobing
 Stéphane
 Subdivs
 Subnautica
+Sujoy
+Suphi
 Swierad
 Sybren
 Sybren's
@@ -778,6 +824,7 @@ Unquarantine
 Unsharp
 Unweld
 Upgrader
+Urellity
 VRML
 Valheim
 Vazgriz
@@ -815,6 +862,7 @@ Worley
 Wuerttemberg
 Wwise
 XGIG
+XLCZ
 XPBD
 Xerath
 Xfade
@@ -829,7 +877,9 @@ Zadd
 Zarins
 Zbrush
 Zenva
+Zonito
 Zplugin
+Zstd
 Zsub
 aabb
 abarichello
@@ -894,8 +944,11 @@ denoiser
 denoisers
 denoises
 denoising
+deopt
+deoptimize
 depsgraph
 derkork
+derpmonster
 desaturate
 desaturated
 desaturates
@@ -904,6 +957,7 @@ desaturation
 destructibles
 desync
 desynchronized
+devforum
 diegetic
 differenced
 directionals
@@ -915,6 +969,7 @@ dynamesh
 dynres
 dyntopo
 edemaistre
+elttob
 emissives
 equirect
 equirectangular
@@ -940,6 +995,7 @@ gozbruh
 gprims
 greeble
 greebles
+grilme
 gular
 hailuo
 hasattr
@@ -968,9 +1024,12 @@ iridesce
 jitspoe
 jobified
 jonze
+jsdotlua
 jslib
 kabuto
 kaiju
+kampfkarren
+kbps
 kenzo
 kling
 krea
@@ -1004,6 +1063,7 @@ mazlov
 mcpt
 mikk
 misaligns
+mispredict
 misregistration
 mixamo
 mlsd
@@ -1041,9 +1101,11 @@ oris
 outpainting
 outsourcers
 pano
+pcall
 pheomelanin
 pixol
 pixols
+pluggnsb
 pocacola
 polies
 portra
@@ -1057,6 +1119,7 @@ pyflakes
 pymel
 ramus
 rasterizer
+rasterizes
 rcedit
 rebake
 rebakes
@@ -1083,6 +1146,7 @@ reparented
 reparenting
 repath
 repointing
+repoints
 repost
 reproject
 reprojected
@@ -1094,6 +1158,7 @@ resaved
 resculpt
 resculpted
 resculpts
+resimulation
 resymmetrize
 retarget
 retargetable
@@ -1132,6 +1197,7 @@ sdfgi
 shengshu
 shfmt
 shiboken
+sleitnick
 slerp
 smin
 spammy
@@ -1143,6 +1209,7 @@ steamcmd
 sternocleidomastoid
 strobing
 strokey
+stylua
 subd
 surfel
 swiftc
@@ -1178,9 +1245,11 @@ ugui
 uistr
 uitk
 ukiyo
+unanchors
 unbeveled
 unblended
 unbuilt
+unbuyable
 uncited
 unconfigured
 uncreased
@@ -1188,6 +1257,7 @@ uncreases
 uncrop
 uncullable
 undeformed
+undisconnected
 undisplaced
 unfetched
 unfindable
@@ -1204,6 +1274,7 @@ unmarking
 unmelts
 unmirrored
 unoccluded
+unorm
 unpaced
 unparent
 unparented
@@ -1214,7 +1285,9 @@ unpublishing
 unpulled
 unquantized
 unregistration
+unreviewed
 unshadowed
+unshiny
 unskinned
 unsmoothed
 unsquash
@@ -1233,6 +1306,7 @@ unweld
 unwired
 upgrader
 upscales
+upvalue
 ustwo
 utrace
 uxml
@@ -1240,6 +1314,7 @@ vace
 veed
 vellus
 venv
+veraktt
 verts
 vidu
 virtualizes
@@ -1263,6 +1338,7 @@ xctrace
 xfade
 xgen
 xhigh
+xpcall
 xxxhdpi
 zbrush
 zmodeler
@@ -1270,5 +1346,6 @@ zremesh
 zremesher
 zscript
 zscripts
+zstd
 Émile
 Ωμέγα

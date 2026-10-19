@@ -1,0 +1,99 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ROKIT_URL: https://github.com/rojo-rbx/rokit/releases/download/v1.2.0/rokit-1.2.0-linux-x86_64.zip
+  LUAU_DEFS_URL: https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/1.70.1/scripts/globalTypes.d.luau
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Install the toolchain pinned in rokit.toml
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/rokit.zip" "$ROKIT_URL"
+          unzip -q "$RUNNER_TEMP/rokit.zip" -d "$RUNNER_TEMP/rokit"
+          "$RUNNER_TEMP/rokit/rokit" install --no-trust-check
+          echo "$HOME/.rokit/bin" >> "$GITHUB_PATH"
+      - run: wally install
+      - run: rojo sourcemap default.project.json -o sourcemap.json --include-non-scripts
+      - run: curl -sSfL -o globalTypes.d.luau "$LUAU_DEFS_URL"
+      - name: Type check, old solver (luau-lsp default)
+        run: luau-lsp analyze --platform=roblox --definitions:@roblox=globalTypes.d.luau --sourcemap sourcemap.json --ignore "Packages/**" src tools/testkit
+      - name: Type check, new solver (Studio's default for nonstrict scripts)
+        run: luau-lsp analyze --flag:LuauSolverV2=true --platform=roblox --definitions:@roblox=globalTypes.d.luau --sourcemap sourcemap.json --ignore "Packages/**" src tools/testkit
+      - name: Lint
+        run: selene src tools
+      - name: Format
+        run: stylua --check src tools
+      - name: Unit tests (Lune)
+        run: lune run tools/test src
+      - name: Release build and ship check
+        run: |
+          mkdir -p build
+          rojo build ship.project.json -o build/ship.rbxl
+          lune run tools/ship_check build/ship.rbxl --require ReplicatedStorage.Packages
+      - name: Merge into each base place (exit 2 = that place goes out from Studio)
+        run: lune run tools/merge_place --manifest places.json || test $? -eq 2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ship-places
+          path: build/*.rbxl
+
+  engine:
+    needs: static
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: test-universe
+    concurrency:
+      group: engine-tests
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the toolchain pinned in rokit.toml
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/rokit.zip" "$ROKIT_URL"
+          unzip -q "$RUNNER_TEMP/rokit.zip" -d "$RUNNER_TEMP/rokit"
+          "$RUNNER_TEMP/rokit/rokit" install --no-trust-check
+          echo "$HOME/.rokit/bin" >> "$GITHUB_PATH"
+      - run: wally install
+      # ROBLOX_TEST_API_KEY scopes, test experience only: universe-places:write (the Saved upload below)
+      # and universe.place.luau-execution-session:write (the Luau Execution task and its logs).
+      - name: Check the API key before using it (auto-expires after 60 days unused)
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_TEST_API_KEY }}
+        run: >
+          lune run tools/check_key --require-scope universe-places:write
+          --require-scope universe.place.luau-execution-session:write
+      - name: Upload the dev build to the test place as a Saved version
+        id: upload
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_TEST_API_KEY }}
+        run: |
+          mkdir -p build
+          rojo build default.project.json -o build/dev.rbxl
+          lune run tools/publish --universe "${{ vars.TEST_UNIVERSE_ID }}" --place "${{ vars.TEST_PLACE_ID }}" --file build/dev.rbxl | tee build/upload.log
+          echo "version=$(tail -n 1 build/upload.log | jq -r '.saved.place')" >> "$GITHUB_OUTPUT"
+      - name: Engine tests through Open Cloud Luau Execution
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_TEST_API_KEY }}
+        run: >
+          lune run tools/cloud_luau --universe "${{ vars.TEST_UNIVERSE_ID }}" --place "${{ vars.TEST_PLACE_ID }}"
+          --version "${{ steps.upload.outputs.version }}" --expect-tests --retries 8
+          --script 'return require(game:GetService("ServerStorage").TestKit.EngineTests)()'

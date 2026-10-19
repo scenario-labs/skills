@@ -1,0 +1,13 @@
+Packages/
+DevPackages/
+build/
+sourcemap.json
+globalTypes*.d.luau
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+.env
+# Builders' base places are committed on purpose (merge_place, P15); Git LFS suits large ones.
+!assets/*.rbxl
+!assets/*.rbxlx

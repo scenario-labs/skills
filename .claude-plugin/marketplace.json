@@ -334,6 +334,28 @@
         "./skills/game-engines/godot/scenario-godot-ui",
         "./skills/game-engines/godot/scenario-godot-vfx"
       ]
+    },
+    {
+      "name": "23.-expert-tools-roblox-studio",
+      "description": "Game engine. A lead and thirteen specialists that drive Roblox Studio on macOS through its built-in MCP server, playtests driven by code, offline Luau checks, and Rojo builds: architecture, Luau, networking and security, data, tooling, environment, VFX and audio, UI, animation, gameplay, assets and avatar items, performance, monetization. Every procedure was run live in Roblox Studio 0.743.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/game-engines/roblox/scenario-roblox-expert",
+        "./skills/game-engines/roblox/scenario-roblox-animation",
+        "./skills/game-engines/roblox/scenario-roblox-architecture",
+        "./skills/game-engines/roblox/scenario-roblox-assets",
+        "./skills/game-engines/roblox/scenario-roblox-data",
+        "./skills/game-engines/roblox/scenario-roblox-environment",
+        "./skills/game-engines/roblox/scenario-roblox-gameplay",
+        "./skills/game-engines/roblox/scenario-roblox-luau",
+        "./skills/game-engines/roblox/scenario-roblox-monetization",
+        "./skills/game-engines/roblox/scenario-roblox-networking",
+        "./skills/game-engines/roblox/scenario-roblox-performance",
+        "./skills/game-engines/roblox/scenario-roblox-tooling",
+        "./skills/game-engines/roblox/scenario-roblox-ui",
+        "./skills/game-engines/roblox/scenario-roblox-vfx-audio"
+      ]
     }
   ]
 }

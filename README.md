@@ -34,9 +34,9 @@ assets, and custom-trained models, for games, entertainment, and any creative ve
 
 The expert tools at the bottom of the list work differently: teams of skills that drive DCC (digital
 content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, Unreal
-Engine, Unity, Godot), distilled from expert tutorials, conference talks, and official
-documentation. They need the application, not the Scenario MCP server, and each family folder's
-README records how it was built and how far it was verified.
+Engine, Unity, Godot, Roblox Studio), distilled from expert tutorials, conference talks, and
+official documentation. They need the application, not the Scenario MCP server, and each family
+folder's README records how it was built and how far it was verified.
 
 Skills follow the [Agent Skills](https://agentskills.io) format.
 
@@ -57,7 +57,8 @@ and by outcome, from game art to ChatGPT pets, with one command each.
 scripts: select its "Expert tools" group in the installer menu, or run the command in its family
 README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md),
 [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md),
-[Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md)).
+[Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md),
+[Roblox Studio](skills/game-engines/roblox/README.md)).
 
 **Pick, or install one skill.**
 
@@ -434,6 +435,30 @@ export, pipeline automation. Every procedure was run live in Godot 4.7.2.
 | [scenario-godot-shaders](skills/game-engines/godot/scenario-godot-shaders/SKILL.md)                         | Godot shaders: .gdshader spatial, canvas_item, particles, and sky code, VisualShader in code, toon water, dissolve, outlines, stencil, post-processing         |
 | [scenario-godot-ui](skills/game-engines/godot/scenario-godot-ui/SKILL.md)                                   | Godot game UI: main menu, settings, HUD and health bars, Control layout, containers and anchors, themes, scaling to any screen, gamepad focus, localization    |
 | [scenario-godot-vfx](skills/game-engines/godot/scenario-godot-vfx/SKILL.md)                                 | Godot VFX and game feel: GPUParticles explosions, fireballs with trails, impacts, sparks and smoke, hit stop, screen shake, particle cost on phones            |
+
+### Expert tools: Roblox Studio
+
+Game engine. A lead and thirteen specialists that drive Roblox Studio on macOS through its built-in
+MCP server, playtests driven by code, offline Luau checks, and Rojo builds: architecture, Luau,
+networking and security, data, tooling, environment, VFX and audio, UI, animation, gameplay, assets
+and avatar items, performance, monetization. Every procedure was run live in Roblox Studio 0.743.
+
+| Skill                                                                                            | Use it for                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-roblox-expert](skills/game-engines/roblox/scenario-roblox-expert/SKILL.md)             | Roblox lead: Studio's built-in MCP server, Luau run in Edit and in playtests, simulated input and captures, two-solver type checks, Rojo, RunScript, Open Cloud                          |
+| [scenario-roblox-animation](skills/game-engines/roblox/scenario-roblox-animation/SKILL.md)       | Roblox animation: priorities and blending, events and markers, Blender and FBX imports, custom and creature rigs, IKControl, FaceControls, Animate replacements, NPC animators           |
+| [scenario-roblox-architecture](skills/game-engines/roblox/scenario-roblox-architecture/SKILL.md) | Roblox code structure: where scripts go, RunContext, module loaders, services and controllers, signals and attributes, CollectionService tags, cleanup, Rojo layout                      |
+| [scenario-roblox-assets](skills/game-engines/roblox/scenario-roblox-assets/SKILL.md)             | Roblox 3D assets and avatar items: Blender, GLB, and FBX imports, AI-generated meshes, scale in studs, triangle and texture budgets, PBR SurfaceAppearance, UGC validation               |
+| [scenario-roblox-data](skills/game-engines/roblox/scenario-roblox-data/SKILL.md)                 | Roblox player data: DataStores and UpdateAsync, session locking with ProfileStore, schema migration, receipts granted once, trading, leaderboards, MemoryStore, teleports                |
+| [scenario-roblox-environment](skills/game-engines/roblox/scenario-roblox-environment/SKILL.md)   | Roblox maps and lighting: graybox, terrain, parts vs unions, collision fidelity, MaterialVariants, Lighting and Atmosphere moods, foliage scatter, streaming, level of detail            |
+| [scenario-roblox-gameplay](skills/game-engines/roblox/scenario-roblox-gameplay/SKILL.md)         | Roblox gameplay: NPC AI and pathfinding, hundreds of enemies, hitboxes and melee combos, raycasts and projectiles, knockback, physics movers, vehicles, round loops                      |
+| [scenario-roblox-luau](skills/game-engines/roblox/scenario-roblox-luau/SKILL.md)                 | Roblox Luau: task library and deferred events, --!strict and the new type solver, typed classes, memory leaks, Parallel Luau with Actors, --!native, buffers                             |
+| [scenario-roblox-monetization](skills/game-engines/roblox/scenario-roblox-monetization/SKILL.md) | Roblox monetization and live ops: Developer Products and passes, subscriptions, receipts granted once, loot odds and PolicyService, rewarded video, analytics funnels, A/B tests         |
+| [scenario-roblox-networking](skills/game-engines/roblox/scenario-roblox-networking/SKILL.md)     | Roblox networking and security: remote design and server validation, rate limits, speed, fly, and hitbox exploits, network ownership, Server Authority, bandwidth                        |
+| [scenario-roblox-performance](skills/game-engines/roblox/scenario-roblox-performance/SKILL.md)   | Roblox performance: mobile FPS and frame spikes, server heartbeat, physics and network load, memory leaks, MicroProfiler and Script Profiler, streaming, budgets, releases and rollbacks |
+| [scenario-roblox-tooling](skills/game-engines/roblox/scenario-roblox-tooling/SKILL.md)           | Roblox team tooling: Rojo and Script Sync, Wally, Rokit, luau-lsp, Selene, StyLua, Lune and in-engine tests, GitHub Actions CI, Open Cloud publishing and Luau Execution                 |
+| [scenario-roblox-ui](skills/game-engines/roblox/scenario-roblox-ui/SKILL.md)                     | Roblox game UI and input: HUD, menus, shop grids, scaling from phone to TV, safe areas, layouts and StyleSheets, gamepad navigation, the Input Action System, localization               |
+| [scenario-roblox-vfx-audio](skills/game-engines/roblox/scenario-roblox-vfx-audio/SKILL.md)       | Roblox VFX and audio: particles, beams, trails, flipbooks, hit and explosion effects, the Audio API with wires and emitters, 3D sound, music and ducking, footsteps                      |
 
 ## Example prompts
 
