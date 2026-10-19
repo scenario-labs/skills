@@ -10,6 +10,7 @@ import sys
 
 import bmesh
 import bpy
+from mathutils import Vector
 
 SCRIPTS, OUT, TMP = sys.argv[sys.argv.index("--") + 1:][:3]
 sys.path.insert(0, SCRIPTS)
@@ -86,6 +87,30 @@ bm.free()
 bare = bpy.data.objects.new("Bare", me)
 bpy.context.scene.collection.objects.link(bare)
 out["bare"] = R.shape_report(bare)
+
+# A head on a T-pose bar 1.8 m wide: blinks that drift 0.2 mm along +X on both sides
+# still read by the side they sit on, not by that drift.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+me = bpy.data.meshes.new("Body")
+bm = bmesh.new()
+bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, radius=0.1)
+head = len(bm.verts)
+arms = bmesh.ops.create_cube(bm, size=1.0)["verts"]
+bmesh.ops.scale(bm, vec=(1.8, 0.1, 0.1), verts=arms)
+bmesh.ops.translate(bm, vec=(0, 0, -0.25), verts=arms)
+bm.to_mesh(me)
+bm.free()
+body = bpy.data.objects.new("Body", me)
+bpy.context.scene.collection.objects.link(body)
+body.shape_key_add(name="Basis", from_mix=False)
+for name, pick, move in (("eyeBlinkLeft", lambda c: c.x > 0.03 and c.z > 0.03, (0.0002, 0, -0.01)),
+                         ("eyeBlinkRight", lambda c: c.x < -0.03 and c.z > 0.03, (0.0002, 0, -0.01)),
+                         ("jawLeft", lambda c: c.z < -0.05, (0.01, 0, 0))):
+    kb = body.shape_key_add(name=name, from_mix=False)
+    for v, d in zip(list(me.vertices)[:head], kb.data):
+        if pick(v.co):
+            d.co = v.co + Vector(move)
+out["body"] = R.shape_report(body)
 
 with open(OUT, "w") as f:
     json.dump(out, f, indent=1)

@@ -2954,8 +2954,10 @@ def shape_set(obj, kind="arkit", rename=None):
 
 def shape_report(obj, kind="arkit", eps=None):
     """Keys of a set that are missing, named with the wrong case, still empty (no vertex
-    moves more than eps), or on the wrong side. left_is: the side the *Left keys move,
-    by the moved vertices' position, or by their direction for centered keys (jawLeft).
+    moves more than eps), or on the wrong side. left_is: the side the *Left keys move, by
+    the side holding 80% of the motion, or by their direction along X for centered keys
+    (jawLeft). A key that moves neither way has no side, so on a whole body the arms'
+    span never decides it.
     Blender's character left is +X, the side ARKit's face space calls the face's own
     left. side_conflicts: keys that disagree with left_is. Zero-offset keys survive FBX
     and glTF export, so a file can carry all 52 names and still not animate."""
@@ -2966,8 +2968,8 @@ def shape_report(obj, kind="arkit", eps=None):
     base = np.empty(n * 3)
     (keys.key_blocks[0].data if keys else obj.data.vertices).foreach_get("co", base)
     base = base.reshape(-1, 3)
-    width = float(np.ptp(base[:, 0])) or 1.0
-    eps = eps or 1e-4 * float(np.ptp(base, axis=0).max() or 1.0)
+    size = float(np.ptp(base, axis=0).max() or 1.0)
+    eps = eps or 1e-4 * size
     lower = {k.lower(): k for k in kbs}
     missing, wrong_case, empty, side = [], {}, [], {}
     for name in names:
@@ -2985,10 +2987,15 @@ def shape_report(obj, kind="arkit", eps=None):
         if d.max() < eps:
             empty.append(name)
             continue
-        cx = float((base[:, 0] * d).sum() / d.sum())
-        sign = np.sign(cx) if abs(cx) > 0.05 * width else np.sign(float((off[:, 0] * d).sum()))
+        w, x = d[d >= eps], base[d >= eps, 0]
+        plus, minus = float(w[x > 1e-3 * size].sum()), float(w[x < -1e-3 * size].sum())
+        if plus + minus and max(plus, minus) >= 0.8 * (plus + minus):
+            sign = 1.0 if plus > minus else -1.0
+        else:
+            mx = float((off[d >= eps, 0] * w).sum() / w.sum())
+            sign = float(np.sign(mx)) if abs(mx) >= 0.1 * float((w * w).sum() / w.sum()) else 0.0
         if sign:
-            side[name] = float(sign)
+            side[name] = sign
     lefts = [v for k, v in side.items() if k.endswith("Left")]
     left_is = (1.0 if sum(lefts) >= 0 else -1.0) if lefts else None
     conflicts = []

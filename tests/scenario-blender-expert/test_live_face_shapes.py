@@ -70,6 +70,11 @@ class FaceShapes(unittest.TestCase):
         self.assertEqual(r["left_is"], "+X")
         self.assertEqual(r["side_conflicts"], ["mouthSmileLeft"])
 
+    def test_sides_on_a_whole_body(self):
+        r = self.r["body"]
+        self.assertEqual(r["left_is"], "+X")
+        self.assertEqual(r["side_conflicts"], [])
+
     def test_visemes(self):
         self.assertEqual(self.r["visemes_created"], ["sil", "PP", "FF", "TH", "DD", "kk", "CH", "SS",
                                                      "nn", "RR", "aa", "E", "I", "O", "U"])
