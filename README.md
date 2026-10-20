@@ -33,9 +33,10 @@ to create production-ready content with [Scenario](https://scenario.com) through
 assets, and custom-trained models, for games, entertainment, and any creative vertical.
 
 The expert tools at the bottom of the list work differently: teams of skills that drive DCC (digital
-content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, Unreal
-Engine, Unity, Godot), distilled from expert tutorials, conference talks, and official
-documentation. They need the application, not the Scenario MCP server, and each family folder's
+content creation) software and game engines installed on your machine (ZBrush, Blender, Maya,
+Photoshop, Unreal Engine, Unity, Godot), distilled from expert tutorials, conference talks, and
+official documentation. Most need only the application; the Photoshop family and the Blender
+blockout skill also use the Scenario MCP server for their generative steps. Each family folder's
 README records how it was built and how far it was verified.
 
 Skills follow the [Agent Skills](https://agentskills.io) format.
@@ -57,7 +58,8 @@ and by outcome, from game art to ChatGPT pets, with one command each.
 scripts: select its "Expert tools" group in the installer menu, or run the command in its family
 README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md),
 [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md),
-[Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md)).
+[Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md),
+[Photoshop](skills/dcc/photoshop/README.md)).
 
 **Pick, or install one skill.**
 
@@ -432,6 +434,23 @@ export, pipeline automation. Every procedure was run live in Godot 4.7.2.
 | [scenario-godot-shaders](skills/game-engines/godot/scenario-godot-shaders/SKILL.md)                         | Godot shaders: .gdshader spatial, canvas_item, particles, and sky code, VisualShader in code, toon water, dissolve, outlines, stencil, post-processing         |
 | [scenario-godot-ui](skills/game-engines/godot/scenario-godot-ui/SKILL.md)                                   | Godot game UI: main menu, settings, HUD and health bars, Control layout, containers and anchors, themes, scaling to any screen, gamepad focus, localization    |
 | [scenario-godot-vfx](skills/game-engines/godot/scenario-godot-vfx/SKILL.md)                                 | Godot VFX and game feel: GPUParticles explosions, fireballs with trails, impacts, sparks and smoke, hit stop, screen shake, particle cost on phones            |
+
+### Expert tools: Photoshop
+
+DCC software. A lead and six specialists that drive Adobe Photoshop 2026 on macOS through
+ExtendScript and Action Manager jobs, with Scenario models for the generative steps: selection edits
+and expand, upscale and restore, compositing and skin, key art and store capsules, product mockups,
+game textures and UI. Each toolkit has a live test suite run in Photoshop 27.11.
+
+| Skill                                                                                                  | Use it for                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-photoshop-expert](skills/dcc/photoshop/scenario-photoshop-expert/SKILL.md)                   | Photoshop lead: ExtendScript and Action Manager jobs, one History state per edit, Scenario round trip as layers, pixel gates, PSD audits      |
+| [scenario-photoshop-compositing](skills/dcc/photoshop/scenario-photoshop-compositing/SKILL.md)         | Photoshop compositing: cutouts and halos, Blend If and channel masks, contact and cast shadows, tone and grain match, skin after AI edits     |
+| [scenario-photoshop-game-art](skills/dcc/photoshop/scenario-photoshop-game-art/SKILL.md)               | Photoshop game art: seamless textures with tile checks, seam repair, PBR maps, channel packing to TGA, power-of-two export, 9-slice UI        |
+| [scenario-photoshop-generative-edit](skills/dcc/photoshop/scenario-photoshop-generative-edit/SKILL.md) | Photoshop selection edits with Scenario: inpaint, replace, remove, expand, tiles, masked placement with nothing changed outside               |
+| [scenario-photoshop-key-art](skills/dcc/photoshop/scenario-photoshop-key-art/SKILL.md)                 | Photoshop key art: thumbnails, store capsules, ads and posters at channel sizes, live type that fits, unsafe zones, size-capped export        |
+| [scenario-photoshop-mockups](skills/dcc/photoshop/scenario-photoshop-mockups/SKILL.md)                 | Photoshop mockups: smart-object placeholders fitted to four corners, design swaps, lighting and Displace from the product photo, batch export |
+| [scenario-photoshop-upscale-restore](skills/dcc/photoshop/scenario-photoshop-upscale-restore/SKILL.md) | Photoshop upscale and restore: candidate stacks against Preserve Details, identity and detail gates, aligned restores and colorize            |
 
 ## Example prompts
 

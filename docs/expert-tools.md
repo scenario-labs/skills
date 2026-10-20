@@ -10,6 +10,8 @@ than the MCP server:
 - The MCP rules (MCP as the surface, `recommend` discovery, model ids) do not apply. The rest does,
   including the frontmatter, the 2500-word cap, house style, public content only, and the
   sibling-install sentence.
+- A family or skill that calls Scenario models (Photoshop, the Blender blockout skill) follows the
+  Scenario MCP rules for those steps.
 - Descriptions follow the spec's 1024-character cap, not the 500-character target. Bodies run near
   the cap, not the 1000-word target. Both are the author's choice, kept until a live run shows what
   to trim.
@@ -34,6 +36,9 @@ than the MCP server:
     toolkit's lock probe, process-table parsing, and signal handling in `pnpm test`.
     `.github/workflows/unity.yml` runs it on macOS, the OS the toolkit targets, whenever a Unity
     script changes.
+  - Photoshop's `tests/scenario-photoshop-expert/test_ps_offline.py` needs no application either: it
+    runs the job guard, the ExtendScript checks (reserved words, chained ternaries) and the
+    toolkits' pure helpers (History gates and recovery, colorway math, tiles) in `pnpm test`.
 - A link to a subfolder (`scripts/AgentKit/`, never `scripts/` itself) covers the files under it:
   these skills ship code trees an agent copies into a project whole.
 - cspell skips code, fenced and inline, and YouTube video ids. Prose is checked as everywhere else

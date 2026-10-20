@@ -267,6 +267,19 @@
         "scenario-godot-ui",
         "scenario-godot-vfx"
       ]
+    },
+    {
+      "title": "Expert tools: Photoshop",
+      "description": "DCC software. A lead and six specialists that drive Adobe Photoshop 2026 on macOS through ExtendScript and Action Manager jobs, with Scenario models for the generative steps: selection edits and expand, upscale and restore, compositing and skin, key art and store capsules, product mockups, game textures and UI. Each toolkit has a live test suite run in Photoshop 27.11.",
+      "skills": [
+        "scenario-photoshop-expert",
+        "scenario-photoshop-compositing",
+        "scenario-photoshop-game-art",
+        "scenario-photoshop-generative-edit",
+        "scenario-photoshop-key-art",
+        "scenario-photoshop-mockups",
+        "scenario-photoshop-upscale-restore"
+      ]
     }
   ]
 }
