@@ -105,7 +105,7 @@ Four deliverables: the scene, a locked camera timeline, the playblast, the hand-
   `B.audit_handheld` against the budget in the contract; `animation_data_clear()` removes the
   modifiers, so re-add them after rekeying.
 
-## 3. Channel: the Scenario Blender Plugin
+## 3. Channel: the plugin or headless
 
 The live channel is the plugin's local Scenario MCP server, `scenario-blender` (the guide at
 [blender.scenario.com](https://blender.scenario.com/) calls the plugin Scenario for Blender). Tool
@@ -114,11 +114,13 @@ first: `execute_python` stays off until the user enables **Allow connected agent
 `PermissionError` means ask), and a call stops after 120 s, so send one stage piece per call and run
 `B.stage_backup(label)` after each stage.
 
-**Where the plugin's own tools fit** (details in [plugin](references/plugin.md)): its paid
-**Blockout** (`estimate_blockout`, `approve_blockout`, then the user's **Build plan** button) suits
-Stage 2 for a generic set and makes no figures, cameras or identity colors; **`camera_path`** keys
-one camera around a static center for a single shot, never a tracking or multi-shot sequence (those
-use `B.rail_camera`); **Render Video** is the video pass, section 6.
+**The plugin's own tools** ([plugin](references/plugin.md)): its paid **Blockout** suits a generic
+Stage 2 set, with no figures, cameras or identity colors; **`camera_path`** keys one shot around a
+static center, never tracking or multi-shot (`B.rail_camera`); **Render Video** is the video pass.
+
+**Headless**, with no plugin: run each stage as a script through scenario-blender-expert's headless
+helper, saving the `.blend` as its backup. Copy the
+[examples harness](scripts/examples/ex_common.py). `B.guard` and the 120 s limit are plugin-only.
 
 ## 4. Build order
 
@@ -126,7 +128,8 @@ Back up after every stage; a reset is recovered from the last backup
 ([contract](references/contract.md)). Every `execute_python` call starts with
 `B.guard(expected_file=..., scene=...)`: queued calls land in whatever file is open.
 
-0. **Probe**, read-only: `scene_summary`, `datablocks_summary`. Other work present: new scene.
+0. **Probe**, read-only: `scene_summary`, `datablocks_summary` (headless: `bpy.data`). Other work
+   present: new scene.
 1. **Format and scaffolding**: `B.make_scene`, `B.lock_format`, `B.collection` tree, `B.park`, dark
    world.
 2. **Set**: kits at the chosen fidelity (`K.building`, `K.stall`, `K.tree`) or thick boxes (`B.box`)
