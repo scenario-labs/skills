@@ -64,11 +64,12 @@ Sequence for "make a 3D treasure chest prop".
    arrays, polycount targets, PBR toggles, topology). A game-ready asset takes 10k to 50k triangles,
    set through the member's face field; its default is not game-ready. Read the field's range first:
    `min` and `max`, or its description when they are absent. At authoring time:
-   - Tripo (`faceLimit`) and Meshy (`targetPolycount`, with `shouldRemesh` on) reached both ends. At
-     10k, an eight-legged creature kept every leg and claw, and a chest its padlock and handles.
-     Meshy's Smart Topology members capped lower, at 15k or 30k.
-   - Hunyuan 3D (`faceCount`, from 40k) and Trellis (`decimationTarget`, from 100k) start above the
-     range: generate, then remesh down (Refining meshes).
+   - Tripo (`faceLimit`) and Meshy (`targetPolycount`, set where `scenario-meshy` says) reached both
+     ends. At 10k, an eight-legged creature kept every leg and claw, and a chest its padlock and
+     handles. Meshy's Smart Topology members capped lower, at 15k or 30k.
+   - Hunyuan 3D (`faceCount`, from 40k) covers only the top of the range, and Trellis
+     (`decimationTarget`, from 100k) starts above it. For a target under the floor, generate, then
+     remesh down (Refining meshes).
 4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `dry_run=true` to price it. Then
    run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`);
    a dry run creates no job. Re-call `jobs_wait` with the returned `pending_job_ids` if it times
