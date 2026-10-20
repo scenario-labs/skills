@@ -133,6 +133,29 @@ class Presets(unittest.TestCase):
             self.assertTrue(name.endswith("Image_0.png"), r["relative"])
         self.assertEqual(r["filepath_after"], "")
 
+    def test_fbx_embeds_an_image_never_saved(self):
+        r = self.c["generated_fbx"]
+        self.assertEqual(r["packed"], ["baked_albedo"])
+        self.assertGreater(r["png_bytes"], 0)
+        self.assertEqual((r["source_after"], r["name_after"]), ("GENERATED", "baked_albedo"))
+        self.assertTrue(r["node_kept"])
+        self.assertEqual(r["images_after"], ["baked_albedo"])
+
+    def test_roblox_leaves_control_bones_out(self):
+        r = self.c["roblox_ctrl"]
+        self.assertTrue(r["pass"], r["diffs"])
+        self.assertEqual(r["roots"], ["Hips"])
+        self.assertTrue(any("root bones" in d for d in self.c["roblox_two_roots"]), self.c["roblox_two_roots"])
+
+    def test_round_trip_counts_stored_actions(self):
+        self.assertEqual(self.c["roblox_ctrl"]["before_actions"], ["Idle", "Wave"])
+        r = self.c["skeletal_ctrl"]
+        self.assertTrue(r["pass"], r["diffs"])
+        for clip in ("Idle", "Wave"):
+            self.assertTrue(any(clip in a for a in r["actions"]), r["actions"])
+        r = self.c["skeletal_active_only"]  # one take named for the scene: counted, not named
+        self.assertTrue(r["pass"], r["diffs"])
+
     def test_presets_write_the_documented_settings(self):
         s = self.c["exports"]["unity"]["settings"]
         self.assertEqual(s["apply_scale_options"], "FBX_SCALE_ALL")
@@ -141,6 +164,7 @@ class Presets(unittest.TestCase):
         self.assertEqual(s["apply_scale_options"], "FBX_SCALE_UNITS")
         self.assertEqual(s["path_mode"], "COPY")
         self.assertTrue(s["embed_textures"])
+        self.assertTrue(s["use_armature_deform_only"])
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
-"""Checks bx_export.glb_summary() with system Python on a GLB built byte by byte.
+"""Checks bx_export.glb_summary() on a GLB built byte by byte, and compare() on
+inspections written by hand.
 
-glb_summary() reads a .glb without Blender, so this suite runs in the repository's
-script-tests job.
+Neither needs Blender, so this suite runs in the repository's script-tests job.
 """
 
 import json
@@ -75,6 +75,33 @@ class GlbSummary(unittest.TestCase):
                 self.assertTrue(ext.startswith("."))
                 self.assertIn(op.split(".")[0], ("export_scene", "wm"))
                 self.assertIn(name, bx_export.CARRIES)
+
+
+
+RIG = {"type": "ARMATURE", "scale": [1.0, 1.0, 1.0], "bones": 5, "deform_bones": 4, "roots": ["Root"]}
+
+
+class Compare(unittest.TestCase):
+    def scene(self, actions, **rig):
+        return {"objects": {"Rig": dict(RIG, **rig)}, "actions": actions}
+
+    def test_a_lost_clip_is_named(self):
+        diffs = bx_export.compare(self.scene(["Idle", "Walk"]), self.scene(["Rig|Rig|Walk"], bones=4),
+                                  deform_only=True)
+        self.assertEqual(diffs, ["actions lost: ['Idle']"])
+
+    def test_a_scene_take_is_counted(self):
+        before, after = self.scene(["Walk"]), self.scene(["Rig|Scene"], bones=4)
+        self.assertEqual(bx_export.compare(before, after, deform_only=True, clip_names=False), [])
+
+    def test_deform_only_expects_the_deforming_bones(self):
+        before, after = self.scene([]), self.scene([], bones=4)
+        self.assertEqual(bx_export.compare(before, after, deform_only=True), [])
+        self.assertEqual(bx_export.compare(before, after), ["Rig: 5 bones became 4"])
+
+    def test_a_second_root_is_a_difference(self):
+        diffs = bx_export.compare(self.scene([]), self.scene([], roots=["Root", "Ctrl_Look"]))
+        self.assertEqual(diffs, ["Rig: 2 root bones ['Root', 'Ctrl_Look'], engines want one"])
 
 
 if __name__ == "__main__":

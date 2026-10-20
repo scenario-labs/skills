@@ -46,8 +46,9 @@ trip only. The measurements live in [`references/engines.md`](references/engines
    preset, such as `bake_anim=True` on `roblox` for an animated file. The result records the
    settings used.
 4. **Round-trip:** `bxe.round_trip(path, objects, preset=...)` re-imports the file in a background
-   Blender, leaving the open scene alone. It compares size (1 mm), triangles, bones, armature scale,
-   shape keys and actions, then lists every difference. Fix each one, or say why it is expected.
+   Blender, leaving the open scene alone. It compares size (1 mm), triangles, deforming bones, root
+   bones (one expected), armature scale, shape keys and every action stored for the objects, by
+   name. Then it lists every difference. Fix each one, or say why it is expected.
 5. **glTF contents:** `bxe.glb_summary(path)` lists `extensions_required`, morph targets, skins,
    clips and image types without Blender. A loader refuses a file that requires an extension it
    lacks.
@@ -89,7 +90,8 @@ trip only. The measurements live in [`references/engines.md`](references/engines
 - `bxe.lods(obj, ratios=(0.5, 0.25))` renames the mesh `Name_LOD0` and adds decimated `Name_LOD1..n`
   under an empty called `Name`, which takes the mesh's place under its parent. Static meshes only:
   it refuses a skinned mesh. Unity builds the LOD Group from those names. Godot generates LODs at
-  import (Generate LODs). Unreal imports LODs with "Import LODs" on, all LODs sharing one pivot.
+  import (Generate LODs). Unreal documents "Import LODs", all LODs sharing one pivot. The group
+  exports as a plain FBX Null, and Unreal's import of it is unmeasured.
 - `bxe.collision(obj, engine, shape)` adds a collision mesh named for the importer:
   - Unreal: `UCX_Name_00` (convex hull) or `UBX_Name_00` (box), exported in the same FBX.
   - Godot: `Name-convcolonly` for `convex` (one hull) and `box` (the bounds, a box collider), or
@@ -144,7 +146,8 @@ the parts selected) for a single static prop, then gate again.
   `extensions_required` first.
 - FBX textures left as external paths: the presets copy and embed them (`path_mode="COPY"`,
   `embed_textures=True`), so the file travels alone. `export()` gives packed images without an
-  extension (as a GLB import leaves them) a `.jpg` or `.png` name first.
+  extension (as a GLB import leaves them) a `.jpg` or `.png` name first. An image never saved (a new
+  bake target) or edited since travels as a packed copy of its pixels (`packed_unsaved_images`).
 - A textured FBX that shows untextured in Unity: the default import keeps embedded textures inside
   the file. Extract Textures (Materials tab) into the model's folder assigns them.
 - An STL at Blender scale: a 10 cm part prints at 0.1 mm.

@@ -215,6 +215,61 @@ while (i := data.find(b"RelativeFilenameS", i)) >= 0:
     i += 21 + n
 cases["packed_fbx"] = {"relative": sorted(rel), "filepath_after": img.filepath_raw}
 
+# An image made in Blender and never saved (a new bake target): the FBX must still embed
+# it, and the scene must keep the image as it was.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+mat = crate().data.materials[0]
+if mat.node_tree is None:
+    mat.use_nodes = True
+gen = bpy.data.images.new("baked_albedo", 16, 16)
+gen.generated_type = "UV_GRID"
+tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
+tex.image = gen
+bsdf = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+mat.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+r = bxe.export(os.path.join(TMP, "generated.fbx"), "unity", ["Crate"])
+cases["generated_fbx"] = {
+    "packed": r["packed_unsaved_images"],
+    "png_bytes": open(os.path.join(TMP, "generated.fbx"), "rb").read().count(b"\x89PNG"),
+    "source_after": gen.source, "name_after": gen.name, "node_kept": tex.image == gen,
+    "images_after": sorted(i.name for i in bpy.data.images),
+}
+
+# A control bone outside the deform hierarchy and a second, stored action.
+scene()
+rig = bpy.data.objects["Rig"]
+bpy.context.view_layer.objects.active = rig
+bpy.ops.object.mode_set(mode="EDIT")
+ctrl = rig.data.edit_bones.new("Ctrl_Look")
+ctrl.head, ctrl.tail, ctrl.use_deform = (0, -1, 1.8), (0, -1.3, 1.8), False
+bpy.ops.object.mode_set(mode="OBJECT")
+wave = rig.animation_data.action
+rig.animation_data.action = None
+pb = rig.pose.bones["Head"]
+for frame, angle in ((1, 0.0), (24, 0.2)):
+    pb.rotation_euler = (angle, 0, 0)
+    pb.keyframe_insert("rotation_euler", frame=frame)
+idle = rig.animation_data.action
+idle.name, idle.use_fake_user = "Idle", True
+rig.animation_data.action = wave
+roblox_fbx = os.path.join(TMP, "roblox_ctrl.fbx")
+bxe.export(roblox_fbx, "roblox", ["Rig", "Body"], bake_anim=True)
+rt = bxe.round_trip(roblox_fbx, ["Rig", "Body"], preset="roblox", bake_anim=True)
+cases["roblox_ctrl"] = {"pass": rt["pass"], "diffs": rt["diffs"], "roots": rt["after"]["objects"]["Rig"]["roots"],
+                        "before_actions": rt["before"]["actions"]}
+two_roots = os.path.join(TMP, "roblox_two_roots.fbx")
+bxe.export(two_roots, "roblox", ["Rig", "Body"], use_armature_deform_only=False)
+cases["roblox_two_roots"] = bxe.round_trip(two_roots, ["Rig", "Body"], preset="roblox",
+                                           use_armature_deform_only=False)["diffs"]
+skel = os.path.join(TMP, "skeletal_ctrl.fbx")
+bxe.export(skel, "unity_skeletal", ["Rig", "Body"])
+rt = bxe.round_trip(skel, ["Rig", "Body"], preset="unity_skeletal")
+cases["skeletal_ctrl"] = {"pass": rt["pass"], "diffs": rt["diffs"], "actions": rt["after"]["actions"]}
+active_only = os.path.join(TMP, "skeletal_active_only.fbx")
+bxe.export(active_only, "unity_skeletal", ["Rig", "Body"], bake_anim_use_all_actions=False)
+rt = bxe.round_trip(active_only, ["Rig", "Body"], preset="unity_skeletal", bake_anim_use_all_actions=False)
+cases["skeletal_active_only"] = {"pass": rt["pass"], "diffs": rt["diffs"]}
+
 cases["spine_angle_deg"] = round(math.degrees(0.6), 1)
 
 with open(OUT, "w") as f:

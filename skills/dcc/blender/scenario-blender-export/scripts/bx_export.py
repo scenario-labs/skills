@@ -61,7 +61,7 @@ PRESETS = {
     # Roblox Creator Hub export requirements: FBX Unit Scale, Copy + embed textures, no leaf bones.
     "roblox": (".fbx", "export_scene.fbx", dict(
         _FBX, apply_scale_options="FBX_SCALE_UNITS", object_types={"ARMATURE", "MESH"},
-        bake_anim=False)),
+        use_armature_deform_only=True, bake_anim=False)),
     "godot": (".glb", "export_scene.gltf", dict(_GLB)),
     "gltf": (".glb", "export_scene.gltf", dict(_GLB)),
     # three.js reads EXT_meshopt_compression through MeshoptDecoder and WebP natively.
@@ -118,6 +118,49 @@ def _name_packed_images():
     return named
 
 
+def _image_nodes(tree, seen):
+    for n in tree.nodes:
+        if n.type == "TEX_IMAGE" and n.image:
+            yield n
+        elif n.type == "GROUP" and n.node_tree and n.node_tree not in seen:
+            seen.add(n.node_tree)
+            yield from _image_nodes(n.node_tree, seen)
+
+
+def _pack_unsaved_images(objs, tmp):
+    """The FBX exporter embeds a file's bytes, so an image made in Blender and never saved
+    (GENERATED, a new bake target) or edited since (is_dirty) is missing or stale in the file,
+    and pack() leaves a GENERATED image unpacked (Blender 5.2.1). Swaps in a packed copy of the
+    current pixels under the same name; returns what to restore."""
+    swaps, copies, seen = [], {}, set()
+    mats = {s.material for o in objs if o.type == "MESH" for s in o.material_slots if s.material}
+    for mat in mats:
+        if not mat.node_tree:
+            continue
+        for n in _image_nodes(mat.node_tree, seen):
+            img = n.image
+            if img.packed_file is not None or not (img.source == "GENERATED" or img.is_dirty):
+                continue
+            if img not in copies:
+                w, h = img.size
+                px = [0.0] * (w * h * 4)
+                img.pixels.foreach_get(px)
+                name = img.name
+                img.name = name + ".bx_original"
+                cp = bpy.data.images.new(name, w, h, alpha=True)
+                cp.pixels.foreach_set(px)
+                cp.colorspace_settings.name = img.colorspace_settings.name
+                cp.alpha_mode = img.alpha_mode
+                cp.filepath_raw = os.path.join(tmp, bpy.path.clean_name(name) + ".png")
+                cp.file_format = "PNG"
+                cp.save()
+                cp.pack()
+                copies[img] = cp
+            swaps.append((n, img))
+            n.image = copies[img]
+    return swaps, copies
+
+
 def export(path, preset, objects=None, **overrides):
     """Export `objects` (default: every visible object) with a preset. Children and the
     armature of a skinned mesh are not added for you: pass them. Returns a dict."""
@@ -135,23 +178,37 @@ def export(path, preset, objects=None, **overrides):
     view.objects.active = objs[0] if objs else None
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     args = dict(kw, **overrides)
-    named = _name_packed_images() if ext == ".fbx" and args.get("embed_textures") else []
+    embed = ext == ".fbx" and args.get("embed_textures")
+    tmp = tempfile.TemporaryDirectory() if embed else None
+    swaps, copies = _pack_unsaved_images(objs, tmp.name) if embed else ([], {})
+    named = _name_packed_images() if embed else []
     try:
         _op(op)(filepath=path, **args)
     finally:
         for img, old in named:
             img.filepath_raw = old
+        for n, img in swaps:
+            n.image = img
+        for img, cp in copies.items():
+            name = cp.name
+            bpy.data.images.remove(cp)
+            img.name = name
+        if tmp:
+            tmp.cleanup()
         for o in view.objects:
             o.select_set(o in keep[0])
         view.objects.active = keep[1]
     return {"path": path, "preset": preset, "bytes": os.path.getsize(path),
             "objects": [o.name for o in objs],
+            "packed_unsaved_images": sorted(img.name for img in copies),
             "settings": {k: sorted(v) if isinstance(v, set) else v for k, v in args.items()}}
 
 
-def inspect_scene(objects=None):
+def inspect_scene(objects=None, all_actions=False):
     """What an engine would receive, measured in Blender: world size, scale, triangles,
-    shape keys, bones and actions per object."""
+    shape keys, bones and actions per object. all_actions: with `objects`, also count the
+    actions stored for them (a slot named for the object), which FBX bake_anim_use_all_actions
+    and the glTF exporter write as clips."""
     bpy.context.view_layer.update()
     dg = bpy.context.evaluated_depsgraph_get()
     objs = _objects(objects)
@@ -164,6 +221,12 @@ def inspect_scene(objects=None):
                 if ad:
                     actions |= {ad.action.name} if ad.action else set()
                     actions |= {s.action.name for t in ad.nla_tracks for s in t.strips if s.action}
+        if all_actions:
+            ids = {"OB" + o.name for o in objs}
+            ids |= {"KE" + o.data.shape_keys.name for o in objs
+                    if o.type == "MESH" and o.data.shape_keys}
+            actions |= {a.name for a in bpy.data.actions
+                        if any(s.identifier in ids for s in getattr(a, "slots", ()))}
     out = {"objects": {}, "actions": sorted(actions)}
     for o in objs:
         info = {"type": o.type, "scale": [round(s, 4) for s in o.matrix_world.to_scale()]}
@@ -177,6 +240,7 @@ def inspect_scene(objects=None):
             info["shape_keys"] = [k.name for k in keys.key_blocks[1:]] if keys else []
         elif o.type == "ARMATURE":
             info["bones"] = len(o.data.bones)
+            info["deform_bones"] = sum(b.use_deform for b in o.data.bones)
             info["roots"] = [b.name for b in o.data.bones if b.parent is None]
         out["objects"][o.name] = info
     return out
@@ -191,9 +255,12 @@ def inspect_file(path):
     return r
 
 
-def compare(before, after, carries=("armature", "actions", "shape_keys"), tol=0.001, scale=1.0):
+def compare(before, after, carries=("armature", "actions", "shape_keys"), tol=0.001, scale=1.0,
+            deform_only=False, clip_names=True):
     """Differences between two inspections, matched by object name. Empty when they agree.
-    scale: what the preset multiplies sizes by (SCALE), so a millimeter STL compares clean."""
+    scale: what the preset multiplies sizes by (SCALE), so a millimeter STL compares clean.
+    deform_only: the export left non-deforming bones out (use_armature_deform_only).
+    clip_names: match clips by name; False when the FBX holds one take named for the scene."""
     diffs = []
     ab = after["objects"]
     for name, b in before["objects"].items():
@@ -215,11 +282,19 @@ def compare(before, after, carries=("armature", "actions", "shape_keys"), tol=0.
             if "shape_keys" in carries and set(b["shape_keys"]) - set(a["shape_keys"]):
                 diffs.append(f"{name}: lost shape keys {sorted(set(b['shape_keys']) - set(a['shape_keys']))}")
         else:
-            if a["bones"] != b["bones"]:
-                diffs.append(f"{name}: {b['bones']} bones became {a['bones']}")
+            want = b.get("deform_bones", b["bones"]) if deform_only else b["bones"]
+            if a["bones"] != want:
+                diffs.append(f"{name}: {want} bones became {a['bones']}")
+            if len(a.get("roots", ())) > 1:
+                diffs.append(f"{name}: {len(a['roots'])} root bones {a['roots']}, engines want one")
             if any(abs(s - 1.0) > 1e-3 for s in a["scale"]):
                 diffs.append(f"{name}: armature scale {a['scale']} after the round trip")
-    if "actions" in carries and len(after["actions"]) < len(before["actions"]):
+    if "actions" in carries and clip_names:
+        # Importers rename clips (FBX: "Rig|Rig|Walk"), so match the source name inside.
+        lost = [n for n in before["actions"] if not any(n in m for m in after["actions"])]
+        if lost:
+            diffs.append(f"actions lost: {lost}")
+    elif "actions" in carries and len(after["actions"]) < len(before["actions"]):
         diffs.append(f"actions: {len(before['actions'])} became {len(after['actions'])}")
     return diffs
 
@@ -228,7 +303,12 @@ def round_trip(path, objects=None, preset=None, **overrides):
     """Re-import an exported file in a background Blender (the open scene is untouched)
     and compare it with `objects` in this scene. overrides: the ones given to export(), so
     bake_anim=True on roblox also compares actions. Returns {"pass", "diffs", "before", "after"}."""
-    before = inspect_scene(objects)
+    carries = set(CARRIES.get(preset, ("armature", "actions", "shape_keys")))
+    if overrides.get("bake_anim"):
+        carries.add("actions")
+    args = dict(PRESETS[preset][2], **overrides) if preset else dict(overrides)
+    all_actions = args.get("bake_anim_use_all_actions", True)
+    before = inspect_scene(objects, all_actions=all_actions)
     with tempfile.TemporaryDirectory() as tmp:
         out = os.path.join(tmp, "inspect.json")
         run = subprocess.run([bpy.app.binary_path, "-b", "--factory-startup", "--python-exit-code", "1",
@@ -238,10 +318,8 @@ def round_trip(path, objects=None, preset=None, **overrides):
             raise RuntimeError(run.stdout[-2000:] + run.stderr[-2000:])
         with open(out) as f:
             after = json.load(f)
-    carries = set(CARRIES.get(preset, ("armature", "actions", "shape_keys")))
-    if overrides.get("bake_anim"):
-        carries.add("actions")
-    diffs = compare(before, after, carries, scale=SCALE.get(preset, 1.0))
+    diffs = compare(before, after, carries, scale=SCALE.get(preset, 1.0),
+                    deform_only=args.get("use_armature_deform_only", False), clip_names=all_actions)
     return {"pass": not diffs, "diffs": diffs, "before": before, "after": after}
 
 
@@ -285,7 +363,8 @@ def glb_summary(path):
 def lods(obj, ratios=(0.5, 0.25)):
     """Decimated copies named for Unity's LOD import (Name_LOD0 is the original), grouped
     under an empty called Name that takes the mesh's place under its parent. Static meshes
-    only. Godot builds LODs at import; Unreal in the Static Mesh Editor."""
+    only. Godot builds LODs at import. The group exports as a plain FBX Null (no LodGroup), and
+    Unreal's "Import LODs" on it is unmeasured."""
     obj = bpy.data.objects[obj] if isinstance(obj, str) else obj
     if obj.parent_type == "ARMATURE" or any(m.type == "ARMATURE" for m in obj.modifiers):
         raise ValueError(f"{obj.name} is skinned: lods() makes static copies, which would lose the skinning")
@@ -379,7 +458,8 @@ def batch(src, dst, preset, profile="game", gate=True):
             before = inspect_scene()
             out = os.path.join(dst, stem + ext)
             r["export"] = export(out, preset)["bytes"]
-            r["diffs"] = compare(before, inspect_file(out), CARRIES[preset], scale=SCALE.get(preset, 1.0))
+            r["diffs"] = compare(before, inspect_file(out), CARRIES[preset], scale=SCALE.get(preset, 1.0),
+                                 deform_only=PRESETS[preset][2].get("use_armature_deform_only", False))
         except Exception as exc:  # one bad file must not stop the folder
             r["failed"] = f"{type(exc).__name__}: {exc}"
     with open(os.path.join(dst, "report.json"), "w") as f:
