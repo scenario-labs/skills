@@ -12,9 +12,11 @@ from unittest import mock
 FAMILY = pathlib.Path(__file__).parents[2] / "skills/game-engines/roblox"
 sys.path.insert(0, str(FAMILY / "scenario-roblox-expert/scripts"))
 sys.path.insert(0, str(FAMILY / "scenario-roblox-tooling/scripts"))
+sys.path.insert(0, str(FAMILY / "scenario-roblox-networking/scripts"))
 
 import rbx_env  # noqa: E402
 import rbx_mcp  # noqa: E402
+import rbx_net  # noqa: E402
 import rbx_play  # noqa: E402
 import rbx_tooling  # noqa: E402
 
@@ -103,6 +105,18 @@ class MergePlace(unittest.TestCase):
             (pathlib.Path(root) / "tools/merge_place.luau").write_text("")
             _report, seen = self.run_merge(root)
         self.assertEqual(seen["cmd"][:3], ["lune", "run", "tools/merge_place"])
+
+
+class VendorKit(unittest.TestCase):
+    def test_copies_netkit_into_the_repository_with_paths_inside_it(self):
+        with tempfile.TemporaryDirectory() as root:
+            tree = rbx_net.vendor_kit(root, dest="src/server/NetKit")
+            for name, node in tree.items():
+                if name == "$className":
+                    continue
+                self.assertEqual(node["$path"], f"src/server/NetKit/{name}.luau")
+                self.assertTrue((pathlib.Path(root) / node["$path"]).is_file(), name)
+            self.assertIn("Net", tree)
 
 
 class PlaytestKit(unittest.TestCase):

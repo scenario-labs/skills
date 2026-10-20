@@ -73,8 +73,9 @@ traps).
 Run each stage through the toolkit; full code and test results are in
 [procedures.md](references/procedures.md). Status: 24 live tests pass in Studio 0.743 (arena rerun
 and Server Authority place on 2026-10-19). Keep `NetKit` (`Guard`, `RateLimit`, `Suspicion`, `Net`,
-`HitCheck`, `MoveGuard`) as ModuleScripts under one server folder; `rbx_net.kit_tree(project_dir)`
-gives the Rojo fragment.
+`HitCheck`, `MoveGuard`) as ModuleScripts under one server folder. `rbx_net.kit_tree(project_dir)`
+gives the Rojo fragment for a test place; in a user's repository, `rbx_net.vendor_kit(repo, dest)`
+copies the modules in and returns paths inside it.
 
 1. **Audit.** Goal: a list of every remote, handler and interactive instance with findings. How:
    `rbx_net.audit_place(place)` offline (Lune), then
@@ -96,13 +97,15 @@ gives the Rojo fragment.
    studs, a client teleport 0, local WalkSpeed 80 then W 32.0.
 5. **Ownership and surfaces.** Goal: no client-owned part decides an outcome. How:
    `SetNetworkOwner(nil)` on unanchored pickups, NPC roots and prompt parents; `Net.prompt`
-   re-checks distance, state and rate; distance checks in `MouseClick` and `Touched`. GATE: a client
-   CFrame write moves nothing on the server.
+   re-checks distance, state and rate; a distance check in `MouseClick`; `Net.touch` for `Touched`
+   pickups (toucher, `CanTouch`, distance, MoveGuard reach, shared limiter). GATE: a client CFrame
+   write moves nothing on the server.
 6. **Exploit tests from the Client.** Goal: proof, not intent. How: in a `Playtest`,
    `rbx_net.fuzz(pt, path, gap=...)`, a same-frame spam, a honeypot fire, then `rbx_net.net_log(pt)`
    in the Server data model. Include a deliberately vulnerable remote as a negative control. GATE:
    balances and health unchanged, `ok_<Remote>` equals the valid-case count, no server script error,
-   the negative control pays out.
+   the negative control pays out. A `Touched` pickup has no remote: use `exploit_case` with a client
+   teleport onto the part, then a `Net.touch` part and a bare `Touched` part side by side (P6).
 7. **Detection and consequences.** Goal: high-confidence signals, delayed action. How:
    `Net.init({enforce = ..., enforceDelay = {20, 90}})`, `Net.honeypot`, `Net.serverOnly`. GATE: one
    honeypot fire reaches `enforce` with a scheduled delay; a flood alone stays below `restrict`.

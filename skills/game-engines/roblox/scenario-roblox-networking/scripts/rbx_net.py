@@ -2,12 +2,13 @@
 """Network security harness for Roblox places: audits, exploit tests, latency, payload probes.
 
 Built on the scenario-roblox-expert toolkit (rbx_mcp, rbx_run, rbx_play). Studio only for the
-live helpers; `audit_place` and `kit_tree` run offline.
+live helpers; `audit_place`, `kit_tree` and `vendor_kit` run offline.
 
     import sys; sys.path[:0] = ["<skills>/scenario-roblox-expert/scripts", "<skills>/scenario-roblox-networking/scripts"]
     import rbx_net
     rbx_net.audit_place("arena.rbxl")                       # offline, Lune: findings + Server Authority settings
     src = {"ServerScriptService": {"NetKit": rbx_net.kit_tree(project_dir)}}   # for rbx_env.new_place(src=...)
+    tree = rbx_net.vendor_kit(user_repo, "src/server/NetKit")  # a user's repository: copies, in-repo paths
     r = rbx_net.run(studio, "return NetAudit.run(game, Audit)", kit=["NetAudit"], lead_kit=["Audit"])
     with Playtest(studio) as pt:
         rbx_net.fuzz(pt, "ReplicatedStorage.Remotes.Buy")    # every hostile payload, from the Client
@@ -19,11 +20,13 @@ locals into an rbx_run chunk with `kit=[...]`; Net.luau needs sibling ModuleScri
 CLI:
   rbx_net.py audit <place.rbxl> [--warn]     offline audit (Lune)
   rbx_net.py tree <project_dir>              Rojo fragment for the NetKit folder
+  rbx_net.py vendor <project_dir> [--dest D] copy NetKit into the project (default src/NetKit), print its fragment
 """
 from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -63,6 +66,17 @@ def kit_tree(project_dir: str | Path, modules=PLACE_KIT) -> dict:
     """Rojo tree fragment {Name: {"$path": ...}} for a NetKit Folder, paths relative to project_dir."""
     rel = os.path.relpath(KIT_DIR, Path(project_dir).resolve())
     return {"$className": "Folder", **{m: {"$path": f"{rel}/{m}.luau"} for m in modules}}
+
+
+def vendor_kit(project_dir: str | Path, dest: str = "src/NetKit", modules=PLACE_KIT) -> dict:
+    """Copy NetKit into <project_dir>/<dest> and return its Rojo fragment, paths inside the project.
+
+    kit_tree points into the installed skills folder: fine for a test place, broken in a user's repository."""
+    out = Path(project_dir).resolve() / dest
+    out.mkdir(parents=True, exist_ok=True)
+    for m in modules:
+        shutil.copyfile(KIT_DIR / f"{m}.luau", out / f"{m}.luau")
+    return {"$className": "Folder", **{m: {"$path": f"{Path(dest).as_posix()}/{m}.luau"} for m in modules}}
 
 
 def audit_place(place: str | Path, warn_only: bool = False) -> dict:
@@ -177,15 +191,17 @@ return refused"""
 def _main(argv: list[str]) -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["audit", "tree"])
+    ap.add_argument("cmd", choices=["audit", "tree", "vendor"])
     ap.add_argument("path")
     ap.add_argument("--warn", action="store_true")
+    ap.add_argument("--dest", default="src/NetKit")
     a = ap.parse_args(argv)
     if a.cmd == "audit":
         r = audit_place(a.path, a.warn)
         print(json.dumps(r, indent=1))
         return 1 if r["tally"].get("error", 0) else 0
-    print(json.dumps(kit_tree(a.path), indent=1))
+    tree = vendor_kit(a.path, a.dest) if a.cmd == "vendor" else kit_tree(a.path)
+    print(json.dumps(tree, indent=1))
     return 0
 
 

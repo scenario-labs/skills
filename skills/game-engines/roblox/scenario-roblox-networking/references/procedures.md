@@ -27,6 +27,7 @@ import rbx_env, rbx_net
 from rbx_play import Playtest
 
 # NetKit into a Rojo place: src = {"ServerScriptService": {"NetKit": rbx_net.kit_tree(place_dir)}}
+# In a user's repository, copy it in instead: rbx_net.vendor_kit(repo, "src/server/NetKit")
 with rbx_env.place_slot():
     s = rbx_env.open_place("places/arena/arena.rbxl")   # opened once, reused, never closed by the agent
 ```
@@ -354,6 +355,9 @@ Defaults: allowed speed is the server's `Humanoid.WalkSpeed` plus a margin of 5 
 XZ only, with a leaky bucket of 6 studs (leak 0.5 per second) and a rise cap of 60 studs/s; sampling
 every 0.25 s; dead and seated characters are skipped.
 
+`enforce = false` logs without moving the character, and the next sample is measured from where it
+stands, so one teleport flags once (offline Lune test).
+
 Result: run in Studio 0.743 on 2026-10-18: pass.
 
 - Honest 30-stud walk: 0 flags.
@@ -389,8 +393,7 @@ Rules for the rest of the surface:
 
 - ClickDetector: the server runs no checks; check distance and state in `MouseClick`.
 - DragDetector: only `Enabled` and `PermissionPolicy` apply; validate drag results on the server.
-- `Touched` pickups: the client's physics reports the touch; add a server distance check against a
-  server-owned or trusted position.
+- `Touched` pickups: the client's physics reports the touch. Use `Net.touch` (below).
 
 Result: run in Studio 0.743 on 2026-10-18: pass.
 
@@ -520,6 +523,48 @@ end
 Bound the motion itself with `MinDragTranslation` and `MaxDragTranslation`, or with
 `AddConstraintFunction` on the server (DragDetector reference). The 4-stud allowance during a drag
 is a judgment call for latency [added].
+
+### Touched pickups
+
+```luau
+local guard = MoveGuard.start({ interval = 0.25, onFlag = onMoveFlag })
+local pickups = RateLimit.new(5, 1) -- one limiter for every coin [added]
+for _, coin in workspace.Coins:GetChildren() do
+	Net.touch(coin, {
+		maxDistance = 8, -- from the server's HumanoidRootPart position [added]
+		guard = guard,
+		limiter = pickups,
+		handler = function(player: Player, part: BasePart)
+			part.CanTouch = false -- taken: later touches are dropped
+			part.Transparency = 1
+			task.delay(10, function()
+				part.Transparency, part.CanTouch = 0, true
+			end)
+		end,
+	})
+end
+```
+
+In order, `Net.touch` drops a touch that:
+
+1. comes from no player character;
+2. hits a part whose `CanTouch` is false, or comes from a dead character (`state_touch_<part>`);
+3. comes from a root farther than `maxDistance` (`distance_touch_<part>`, flagged);
+4. comes from a root farther from MoveGuard's last trusted position than the guard's own speed model
+   allows since that sample (`teleport_touch_<part>`, flagged). This closes the teleport-then-touch
+   race before MoveGuard's next sample;
+5. is over the shared limiter (`rate_touch_<part>`).
+
+Then it counts `ok_touch_<part>` and calls the handler.
+
+Exploit test, with `exploit_case` in one playtest: teleport the client's character onto a guarded
+part, then onto a part with a bare `Touched` handler as the negative control. Whether a client
+`CFrame` write of an anchored, server-owned part fires `Touched` on the server is not tested here.
+
+Result: offline only (Lune 0.11.0, fake Players and parts). Two limbs on one coin pay once; a touch
+50 studs out, a teleport 100 studs out 0.1 s after the guard's sample and a dead character pay
+nothing; a walk in since the sample pays; a shared limiter of 2 stops the third coin. Not yet run in
+Studio.
 
 ## P7. Honeypots, suspicion and delayed enforcement [P7]
 

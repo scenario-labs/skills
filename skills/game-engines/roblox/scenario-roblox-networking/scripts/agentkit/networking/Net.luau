@@ -9,6 +9,7 @@
 --   Net.honeypot(Remotes.AdminGiveCoins)          -- never fired by the real client
 --   Net.serverOnly(Remotes.Effects)               -- server-to-client only: a client fire is a signal
 --   Net.prompt(workspace.Shop.Prompt, { maxDistance = 12, handler = openShop })
+--   Net.touch(workspace.Coins.Coin1, { maxDistance = 8, guard = moveGuard, handler = collect })
 --
 -- Requires sibling ModuleScripts Guard, RateLimit and Suspicion (same folder).
 
@@ -271,6 +272,62 @@ function Net.prompt(prompt: ProximityPrompt, spec: PromptSpec)
 		end
 		Net.count("ok_" .. name)
 		spec.handler(player)
+	end)
+end
+
+export type TouchSpec = {
+	maxDistance: number, -- studs from the server's HumanoidRootPart position to the part
+	limiter: RateLimit.RateLimit?, -- shared by every part of one pickup kind; counts accepted pickups
+	-- MoveGuard.start's guard: the root must also be reachable from its last trusted position.
+	guard: { tracks: { [any]: { pos: Vector3, at: number } }, margin: number, burst: number }?,
+	handler: (player: Player, part: BasePart) -> (),
+}
+
+-- Touched pickup: the touch comes from the client's physics, so re-check who touched, the part's
+-- state, and distance here. The handler takes the part by setting CanTouch false; later touches
+-- (other limbs, queued events) are dropped until it sets CanTouch true again.
+function Net.touch(part: BasePart, spec: TouchSpec)
+	local name = "touch_" .. part.Name
+	local limiter = spec.limiter
+	if limiter and not table.find(limiters, limiter) then
+		table.insert(limiters, limiter) -- forgets leaving players, like the others
+	end
+	part.Touched:Connect(function(hit: BasePart)
+		local char = hit:FindFirstAncestorOfClass("Model")
+		local player = char and Players:GetPlayerFromCharacter(char)
+		if not (char and player) then
+			return -- not a character: no count, props touch all the time
+		end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not (part.CanTouch and hum and hum.Health > 0 and root and root:IsA("BasePart")) then
+			Net.count("state_" .. name)
+			return
+		end
+		if (root.Position - part.Position).Magnitude > spec.maxDistance then
+			Net.count("distance_" .. name)
+			Net.flag(player, 1, "distance_" .. name)
+			return
+		end
+		local guard = spec.guard
+		local track = guard and guard.tracks[player]
+		if guard and track then
+			-- MoveGuard samples every interval: a teleport onto the part can touch before the next
+			-- sample, so bound the move since then with the guard's own speed model.
+			local reach = (hum.WalkSpeed + guard.margin) * math.max(os.clock() - track.at, 0.01) + guard.burst
+			local moved = Vector3.new(root.Position.X - track.pos.X, 0, root.Position.Z - track.pos.Z).Magnitude
+			if moved > reach then
+				Net.count("teleport_" .. name)
+				Net.flag(player, 1, "teleport_" .. name)
+				return
+			end
+		end
+		if limiter and not limiter:allow(player.UserId) then
+			Net.count("rate_" .. name)
+			return
+		end
+		Net.count("ok_" .. name)
+		spec.handler(player, part)
 	end)
 end
 

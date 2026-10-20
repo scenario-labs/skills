@@ -139,6 +139,10 @@ function MoveGuard.start(opts: StartOptions?): MoveGuard
 					local dist = (root.Position - trusted).Magnitude
 					if o.enforce ~= false then
 						char:PivotTo(CFrame.new(trusted) * root.CFrame.Rotation)
+					else
+						-- The character stays put, so measure from where it is: otherwise one teleport
+						-- flags again on every later sample.
+						guard:reset(player, root.Position, now)
 					end
 					local onFlag = o.onFlag
 					if onFlag then
