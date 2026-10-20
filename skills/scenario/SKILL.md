@@ -169,7 +169,7 @@ Uploading and filing alone are not publication.
 
 ## Errors and recovery
 
-- **`context_missing`**: nothing resolved. `teams_list`, then `projects_list`.
+- **`context_missing`**: nothing resolved. `teams_list`, `projects_list` if necessary.
 - **`context_ambiguous`**: several fit. Present the options; the user picks (unattended: the task
   names the pair, else stop and list).
 - **403 Forbidden**: usually wrong scope, not missing; re-check the id pair. A private asset input
