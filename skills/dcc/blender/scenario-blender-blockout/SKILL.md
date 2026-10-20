@@ -62,7 +62,9 @@ Before any call, write down:
   characters must stay apart or carry the story's object; a rigged gray mannequin only when the
   blockout must own limb motion. Tell the user the style chosen, what it costs in control, and that
   the others can be A/B tested on a short window.
-- **Identity colors**: hero red, then blue, green, yellow, purple, cyan.
+- **Identity colors**: a hero takes the color the brief puts on them ("yellow raincoat": yellow), as
+  the nearest `B.PALETTE` color, and red when the brief names none. Other heroes take the next free
+  color: red, blue, green, yellow, purple, cyan.
 - **Deliberate gaps** the video model fills, and **acceptance tests** the brief states: they become
   mandatory audits.
 
@@ -81,9 +83,9 @@ Four deliverables: the scene, a locked camera timeline, the playblast, the hand-
   (`B.make_scene`) and touch nothing existing; every object must trace to one of your stages.
 - **Scale.** Meters, Z up, ground at z = 0, figure roots at the feet. The model keeps every mass
   where it is at its size, mistakes included. Nothing familiar for scale: add a `REF_` figure.
-- **Color separates masses and names identities.** One saturated color per hero (`B.PALETTE`, hero
-  red), the set in one `K.scheme` (category hues by default, identity grays, or material colors),
-  extras in mid grays, one light, a dark world. `B.paint` and the kits set object color and
+- **Color separates masses and names identities.** One saturated color per hero (`B.PALETTE`, see
+  identity colors), the set in one `K.scheme` (category hues by default, identity grays, or material
+  colors), extras in mid grays, one light, a dark world. `B.paint` and the kits set object color and
   materials; a kit carries several colors, so Solid view needs color type Material
   (`B.solid_view()`'s default and the playblast's). An all-gray playblast has lost identity. Recolor
   a kit through its arguments: its materials are shared per color. Grid or checker texture only
@@ -184,11 +186,13 @@ older `blender` on PATH refuses the file. With no shell, the same call through `
 blocks Blender while it renders: keep it to short clips, and after a timeout look for the file
 before running it again. Add camera stills at each shot's start, middle and end.
 
-**Hand-off sheet**, built from the scene ([template](references/handoff.md)): color legend tied to
-reference images, `K.cast()` rows, the cut list from `B.cut_list()` with exact times, which entities
-are blocked and which exist only in words, every artifact with its timecode, each motion state in
-words ("creeps", "stands still"), and tie-break clauses ("if text and video disagree about motion,
-the video wins").
+**Hand-off sheet**, built from the scene ([template](references/handoff.md)):
+
+- color legend tied to reference images, and to the garment when the brief gave the color;
+- `K.cast()` rows and the cut list from `B.cut_list()` with exact times;
+- which entities are blocked and which exist only in words;
+- every artifact with its timecode, each motion state in words ("creeps", "stands still");
+- tie-break clauses ("if text and video disagree about motion, the video wins").
 
 **Video pass**, always through Scenario, after the user approves the exact price. Unattended, stop
 at the quote (`estimate_cost` or `dry_run`), report it, and skip local uploads that need the user's
