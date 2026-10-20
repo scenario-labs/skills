@@ -1,6 +1,6 @@
 """Shared setup and finish for the example scenes in references/examples.md.
 
-blender -b --factory-startup --python ex1_watchmaker.py -- <out dir> [stills|playblast|both] [cast style]
+blender -b --factory-startup --python-exit-code 1 --python ex1_watchmaker.py -- <out dir> [stills|playblast|both] [cast style]
 
 Writes <tag>_stats.json (budget, cut list, audits), stills at the first, middle and last frame of
 each shot, a Workbench playblast and the .blend into <out dir>. Needs scenario-blender-expert
@@ -27,6 +27,7 @@ os.makedirs(OUT, exist_ok=True)
 
 
 def start(fps, seconds, world_rgb=(0.03, 0.03, 0.04)):
+    # Clears the factory scene only. On a file that holds other work, B.park and B.make_scene instead.
     for o in list(bpy.data.objects):
         bpy.data.objects.remove(o)
     B.lock_format(fps, seconds, (1920, 1080))
