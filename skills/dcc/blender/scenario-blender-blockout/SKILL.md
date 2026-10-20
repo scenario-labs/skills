@@ -62,9 +62,9 @@ Before any call, write down:
   characters must stay apart or carry the story's object; a rigged gray mannequin only when the
   blockout must own limb motion. Tell the user the style chosen, what it costs in control, and that
   the others can be A/B tested on a short window.
-- **Identity colors**: a hero takes the color the brief puts on them ("yellow raincoat": yellow), as
-  the nearest `B.PALETTE` color, and red when the brief names none. Other heroes take the next free
-  color: red, blue, green, yellow, purple, cyan.
+- **Identity colors**: a hero takes the brief's color for them ("yellow raincoat": yellow) as the
+  nearest `B.PALETTE` color, else the next free one: red, blue, green, yellow, purple, cyan. Two
+  heroes in one color: [contract](references/contract.md).
 - **Deliberate gaps** the video model fills, and **acceptance tests** the brief states: they become
   mandatory audits.
 
