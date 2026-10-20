@@ -13,7 +13,9 @@ The test every new or changed skill passes before merging. `/skills:validate <na
    agent must not execute tools, browse, or consult anything beyond the provided documents, and must
    flag uncertainty instead of guessing.
 3. Pick a task that forces the skill's non-obvious facts (upload flow, job-wait re-calls, dry runs,
-   launch semantics), not one answerable with generic MCP intuition.
+   launch semantics), not one answerable with generic MCP intuition. Known case: for `scenario-3d`,
+   price a six-legged creature batch from one concept, rig included before its mesh exists. It
+   caught a top-down concept and an unanswered `ask_user`.
 4. Grade the plan against the [tool reference](https://mcp.scenario.com/docs/tools), fetched fresh
    rather than recalled:
    - Every tool and parameter named in the plan exists. One invented name is a fail.
