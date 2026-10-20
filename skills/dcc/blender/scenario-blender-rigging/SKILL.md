@@ -151,11 +151,14 @@ export [verified], so the file looks complete.
   Lists, sources and Roblox's 50 FACS poses:
   [`references/face-shapes.md`](references/face-shapes.md).
 - `R.shape_set(face, "arkit", rename={"JawOpen": "jawOpen"})` renames, then adds each missing key at
-  value 0 as a copy of the Basis, and returns the names it created.
+  value 0 as a copy of the Basis, and returns the names it created. Existing keys keep their value:
+  set every key to 0 before export, or the face deforms at rest.
 - Sculpt the Left keys, then build each Right with `R.mirror_shape_key(face, n, n[:-4] + "Right")`
   for every `n` in `R.ARKIT_52` ending in `Left`.
-- Before export, `R.shape_report(face, "arkit")`. GATE: `missing`, `wrong_case`, `empty` and
-  `side_conflicts` empty, `left_is == "+X"`.
+- Before export, `R.shape_report(face, "arkit")`. GATE: `missing`, `wrong_case` and `side_conflicts`
+  empty, `left_is == "+X"`.
+- `empty` is the list of keys still to sculpt: report it when delivering placeholders, empty it for
+  a final head. The `sil` viseme is the neutral face, so it always stays in `empty`.
 - Sides: Apple's pages say "left eye" without saying whose, and its face coordinate space puts +X on
   the face's own left. Build Left keys on the character's left (+X, the `.L` side) and check one
   capture take before sculpting the whole set.
