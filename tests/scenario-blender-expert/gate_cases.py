@@ -233,6 +233,17 @@ ob.modifiers.new("UV", "NODES").node_group = ng
 cases["nodes_uv"] = gate(["NodesUV"])
 cases["nodes_uv_base"] = bx_audit.deliverable(["NodesUV"], evaluated=False)
 
+# The image texture sits two node groups deep: the material's top level holds only a group node.
+empty()
+ob = box("Grouped", (1, 1, 1), (0, 0, 0.5), uv=False)
+ob.active_material.use_nodes = True
+inner = bpy.data.node_groups.new("InnerTex", "ShaderNodeTree")
+inner.nodes.new("ShaderNodeTexImage")
+outer = bpy.data.node_groups.new("OuterTex", "ShaderNodeTree")
+outer.nodes.new("ShaderNodeGroup").node_tree = inner
+ob.active_material.node_tree.nodes.new("ShaderNodeGroup").node_tree = outer
+cases["grouped_texture_no_uv"] = gate(["Grouped"])
+
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
 print("GATE CASES", len(cases))

@@ -409,6 +409,16 @@ def _scale_owner(o):
     return o if unit(src) else src
 
 
+def _samples_image(tree, seen=None):
+    """True when a node tree, or a node group nested in it, holds an Image Texture node."""
+    seen = seen if seen is not None else set()
+    if tree is None or tree.as_pointer() in seen:
+        return False
+    seen.add(tree.as_pointer())
+    return any(nd.type == "TEX_IMAGE" or (nd.type == "GROUP" and _samples_image(nd.node_tree, seen))
+               for nd in tree.nodes)
+
+
 def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=True):
     """Gate the parts of ONE asset before export or handoff.
 
@@ -509,8 +519,7 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
         mats = ([s.material for s in o.evaluated_get(bpy.context.evaluated_depsgraph_get()).material_slots]
                 if evaluated else [s.material for s in o.material_slots])
         if not bm.loops.layers.uv:
-            textured = any(m and m.node_tree and any(nd.type == "TEX_IMAGE" for nd in m.node_tree.nodes)
-                           for m in mats)
+            textured = any(m and _samples_image(m.node_tree) for m in mats)
             if textured:
                 flag("no_uv", [n], f"{n}: no UV map, and a material samples an image texture")
             else:

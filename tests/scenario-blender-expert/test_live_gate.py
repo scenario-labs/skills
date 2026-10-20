@@ -149,6 +149,10 @@ class DeliveryGate(unittest.TestCase):
         r = self.verdict("textured_no_uv")
         self.assertEqual(r["errors"], ["Painted: no UV map, and a material samples an image texture"])
 
+    def test_texture_inside_a_node_group_needs_uvs(self):
+        r = self.verdict("grouped_texture_no_uv")
+        self.assertEqual(r["errors"], ["Grouped: no UV map, and a material samples an image texture"])
+
 
 if __name__ == "__main__":
     unittest.main()
