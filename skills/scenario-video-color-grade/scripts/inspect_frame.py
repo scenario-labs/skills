@@ -68,14 +68,20 @@ def cmd_key(a):
     tiles = []
     for fr in (a.frame or [0]):
         rgb, W, H = load(a.src, fr)
-        w, (h, s, v) = spatial.object_weight(rgb, W, H, sel)
-        raw = spatial.key_weight(h, s, v, sel, H)
-        m = ndimage.binary_closing(raw.reshape(H, W) > spatial.KEY_THRESHOLD, iterations=2)
-        lab, n = ndimage.label(m)
-        sizes = ndimage.sum(m, lab, range(1, n + 1)) if n else []
-        print(f"frame {fr}: blobs (px, cx, cy) =",
-              [(int(sizes[i]),) + tuple(int(c) for c in ndimage.center_of_mass(m, lab, i + 1)[::-1])
-               for i in np.argsort(sizes)[::-1][:8]], f"(min_area={sel.get('min_area', 1500)})")
+        if sel.get("masks"):
+            masks = {p: media.mask_at(Path(p) if Path(p).is_absolute() else grade.BASE_DIR / p, fr, W, H)
+                     for p in spatial.mask_paths(looks[a.look])}
+            w, _ = spatial.mask_weight(rgb, W, H, sel, masks)
+            print(f"frame {fr}: the masks keep {(w > 0.5).mean():.1%} of the frame")
+        else:
+            w, (h, s, v) = spatial.object_weight(rgb, W, H, sel)
+            raw = spatial.key_weight(h, s, v, sel, H)
+            m = ndimage.binary_closing(raw.reshape(H, W) > spatial.KEY_THRESHOLD, iterations=2)
+            lab, n = ndimage.label(m)
+            sizes = ndimage.sum(m, lab, range(1, n + 1)) if n else []
+            print(f"frame {fr}: blobs (px, cx, cy) =",
+                  [(int(sizes[i]),) + tuple(int(c) for c in ndimage.center_of_mass(m, lab, i + 1)[::-1])
+                   for i in np.argsort(sizes)[::-1][:8]], f"(min_area={sel.get('min_area', 1500)})")
         vis = rgb.reshape(H, W, 3) * 0.35 + w.reshape(H, W, 1) * np.array([1, 0.1, 0.1]) * 0.65
         tiles.append(np.asarray(Image.fromarray((np.clip(vis, 0, 1) * 255).astype(np.uint8)).resize((960, round(960 * H / W)))))
     Image.fromarray(np.concatenate(tiles, 0)).save(a.out, quality=90)

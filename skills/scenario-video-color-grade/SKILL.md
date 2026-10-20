@@ -27,8 +27,8 @@ Scenario. Paths below are relative to this skill's folder.
 
 ## Two routes: a Scenario preset, or your own recipe
 
-Scenario's 3D Color LUT tool models apply one of about 150 presets (`lutStyle`) at an opacity
-(`lutIntensity`, 0 to 1): film-stock emulations, log-to-Rec.709 conversions for the common camera
+Scenario's 3D Color LUT tool models apply one preset (`lutStyle`, about 150 at authoring time) at an
+opacity (`lutIntensity`): film-stock emulations, log-to-Rec.709 conversions for the common camera
 log formats, print-film conversions, and creative looks. `model_scenario-postprocessing-lut` grades
 images and `model_scenario-postprocessing-lut-video` grades video. Both ids are fixed: each is
 Scenario's single deterministic tool for the operation, so discovery would only re-derive it. The

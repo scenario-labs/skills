@@ -91,10 +91,15 @@ def main():
     # mask videos used by selective looks (paths relative to the looks file)
     resolve = lambda p: Path(p) if Path(p).is_absolute() else grade.BASE_DIR / p
     for k, look in list(looks.items()):
-        missing = [p for p in spatial.mask_paths(look) if not resolve(p).exists()]
-        if missing:
-            print(f"skipping {k}: mask {missing[0]} not found (segment the object first)")
+        for p in spatial.mask_paths(look):
+            if not resolve(p).exists():
+                print(f"skipping {k}: mask {p} not found (segment the object first)")
+            elif (n := media.probe(resolve(p))["frames"]) != info["frames"]:
+                print(f"skipping {k}: mask {p} has {n} frames, the source {info['frames']} (segment this exact clip)")
+            else:
+                continue
             looks.pop(k)
+            break
     mpaths = sorted({p for look in looks.values() for p in spatial.mask_paths(look)})
 
     # ---- stills: an image, or one frame of a video ----

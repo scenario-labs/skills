@@ -76,6 +76,13 @@ class ScriptTests(unittest.TestCase):
         self.assertIn("skipping 03_masked: mask masks/box.mp4 not found", out)
         self.assertEqual([p.name for p in (self.dir / "r").glob("*.mp4")], ["00_ungraded.mp4"])
 
+    def test_render_skips_a_look_whose_mask_has_another_length(self):
+        helpers.make_mask(self.dir / "masks/box.mp4", seconds=0.5)
+        out = self.run_ok("render_looks.py", "clip.mp4", "--looks", "looks.json", "--out", "r", "--only",
+                          "00_ungraded,03_masked")
+        self.assertIn("skipping 03_masked: mask masks/box.mp4 has 12 frames, the source 24", out)
+        self.assertEqual([p.name for p in (self.dir / "r").glob("*.mp4")], ["00_ungraded.mp4"])
+
     def test_outputs_are_never_overwritten_without_force(self):
         self.run_ok("render_looks.py", "clip.mp4", "--looks", "looks.json", "--out", "r", "--only", "00_ungraded")
         again = helpers.run("render_looks.py", "clip.mp4", "--looks", "looks.json", "--out", "r", cwd=self.dir)
@@ -103,6 +110,8 @@ class ScriptTests(unittest.TestCase):
         self.assertIn("frame 12: blobs", out)
         with Image.open(self.dir / "key.jpg") as sheet:
             self.assertEqual(sheet.size, (960, 1080))
+        out = self.run_ok("inspect_frame.py", "key", "clip.mp4", "looks.json", "03_masked", "mask.jpg", "--frame", "4")
+        self.assertRegex(out, r"frame 4: the masks keep \d+\.\d% of the frame")
 
     def reel(self, *extra):
         self.run_ok("render_looks.py", "clip.mp4", "--looks", "looks.json", "--out", "renders",

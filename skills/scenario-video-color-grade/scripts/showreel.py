@@ -337,11 +337,14 @@ def main():
 
     dur = g / fps
     if a.music:
+        # No -shortest: audio a hair shorter than the video makes it drop the last frame. The music is
+        # trimmed after loudnorm, padded and rounded up, so it always covers every video frame.
+        end = math.ceil(dur * 1000) / 1000
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(silent), "-stream_loop", "-1", "-i", a.music,
-                        "-filter_complex", f"[1:a]atrim=0:{dur:.3f},afade=t=in:d=0.6,afade=t=out:st={max(dur - 3, 0):.3f}:d=3,"
-                                           "loudnorm=I=-18:TP=-1.5:LRA=11[a]",
+                        "-filter_complex", f"[1:a]atrim=0:{end:.3f},afade=t=in:d=0.6,afade=t=out:st={max(dur - 3, 0):.3f}:d=3,"
+                                           f"loudnorm=I=-18:TP=-1.5:LRA=11,aresample=48000,apad,atrim=0:{end:.3f}[a]",
                         "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
-                        "-movflags", "+faststart", "-shortest", a.out], check=True)
+                        "-movflags", "+faststart", a.out], check=True)
         silent.unlink()
     else:
         silent.rename(a.out)
