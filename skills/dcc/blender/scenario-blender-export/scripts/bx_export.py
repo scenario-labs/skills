@@ -437,31 +437,32 @@ def ground(objects=None, height=None, width=None):
 
 
 def _source(sock):
-    """What feeds a Principled input: ("const", value), ("image", image, channel, factor), or
-    ("node", type) for anything extra_maps() cannot read (a ramp, a math chain)."""
+    """What feeds a Principled input: kind "const" (value), "image" (image, channel, factor), or
+    "node" (type) for anything extra_maps() cannot read, such as a ramp or a math chain."""
     factor = 1.0
     while sock.is_linked:
         lk = sock.links[0]
         n = lk.from_node
         if n.type == "TEX_IMAGE" and n.image:
-            return ("image", n.image, 3 if lk.from_socket.name == "Alpha" else 0, factor)
+            return {"kind": "image", "image": n.image, "channel": 3 if lk.from_socket.name == "Alpha" else 0,
+                    "factor": factor}
         if n.type == "SEPARATE_COLOR" and n.mode == "RGB" and n.inputs[0].is_linked:
             up = n.inputs[0].links[0].from_node
             if up.type == "TEX_IMAGE" and up.image:
-                return ("image", up.image, ("Red", "Green", "Blue").index(lk.from_socket.name), factor)
+                return {"kind": "image", "image": up.image,
+                        "channel": ("Red", "Green", "Blue").index(lk.from_socket.name), "factor": factor}
         if n.type == "MATH" and n.operation == "MULTIPLY" and n.inputs[0].is_linked != n.inputs[1].is_linked:
             sock, const = (n.inputs[0], n.inputs[1]) if n.inputs[0].is_linked else (n.inputs[1], n.inputs[0])
             factor *= const.default_value
             continue
-        return ("node", n.type)
-    return ("const", sock.default_value)
+        return {"kind": "node", "type": n.type}
+    return {"kind": "const", "value": sock.default_value}
 
 
 def _plane(src, w, h, np):
-    if src[0] == "const":
-        return np.full(w * h, src[1], np.float32)
-    _, img, ch, factor = src
-    tmp = None
+    if src["kind"] == "const":
+        return np.full(w * h, src["value"], np.float32)
+    img, tmp = src["image"], None
     if tuple(img.size) != (w, h):
         img = tmp = img.copy()
         img.scale(w, h)
@@ -469,7 +470,7 @@ def _plane(src, w, h, np):
     img.pixels.foreach_get(px)
     if tmp:
         bpy.data.images.remove(tmp)
-    return np.clip(px[ch::4] * factor, 0.0, 1.0)
+    return np.clip(px[src["channel"]::4] * src["factor"], 0.0, 1.0)
 
 
 def _write_png(path, w, h, planes, np):
@@ -505,14 +506,15 @@ def extra_maps(objects, out_dir, engine="unity"):
             out["skipped"][mat.name] = "no Principled BSDF"
             continue
         src = {k: _source(bsdf.inputs[k]) for k in ("Metallic", "Roughness")}
-        odd = [f"{k} comes through a {s[1]} node" for k, s in src.items() if s[0] == "node"]
+        odd = [f"{k} comes through a {s['type']} node" for k, s in src.items() if s["kind"] == "node"]
         if odd:
             out["skipped"][mat.name] = "; ".join(odd) + ": bake it to an image first"
             continue
-        if all(s[0] == "const" for s in src.values()):
+        if all(s["kind"] == "const" for s in src.values()):
             out["skipped"][mat.name] = "no image map: type the values into the engine material"
             continue
-        w, h = max((tuple(s[1].size) for s in src.values() if s[0] == "image"), key=lambda wh: wh[0] * wh[1])
+        w, h = max((tuple(s["image"].size) for s in src.values() if s["kind"] == "image"),
+                   key=lambda wh: wh[0] * wh[1])
         metal, rough = _plane(src["Metallic"], w, h, np), _plane(src["Roughness"], w, h, np)
         stem = os.path.join(out_dir, bpy.path.clean_name(mat.name))
         if engine == "unity":
