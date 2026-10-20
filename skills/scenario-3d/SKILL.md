@@ -70,9 +70,11 @@ Sequence for "make a 3D treasure chest prop".
    quote it from `recommend`, then re-price with `dry_run` on the real asset before launching. Never
    `dry_run` it with a placeholder id: file ids resolve before plan access is checked, so it returns
    404 and proves nothing.
-5. `asset_display` the output `asset_id`, then `asset_download` with `format: "glb"` and
-   `curl -L -o chest.glb "<url>"`. `format` converts to `glb`, `fbx`, or `obj`; omitted, it returns
-   the stored original, a Blender file for the LLM-based members. Ask for `fbx` for a Unity project
+5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
+   Omit `format` when `asset_get` shows `properties.format` `glb`: it returns the stored original
+   byte for byte. `format` converts to `glb`, `fbx`, or `obj`; pass `glb` for the LLM-based members,
+   which store a Blender file. On a stored GLB, `format: "glb"` re-exports it: at authoring time the
+   same textures and triangles, smaller indices, a different file. Ask for `fbx` for a Unity project
    without a glTF importer, and keep the GLB too: at authoring time the FBX embedded only two
    images, so it may miss PBR maps.
 
