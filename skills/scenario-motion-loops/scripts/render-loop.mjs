@@ -94,7 +94,7 @@ function probe(file) {
       "v:0",
       "-count_frames",
       "-show_entries",
-      "stream=width,height,r_frame_rate,nb_read_frames,pix_fmt,color_range,color_space:format=duration,bit_rate",
+      "stream=width,height,r_frame_rate,nb_read_frames,pix_fmt,color_range,color_space,color_primaries,color_transfer:format=duration,bit_rate",
       "-of",
       "json",
       file,
@@ -168,11 +168,20 @@ function qa(file) {
   const sorted = [...around].sort((a, b) => a - b);
   const typical = sorted[Math.floor(sorted.length / 2)];
   const dup = typical > 1 && steps[5] < 0.2 * typical;
-  const verdict = jump ? "CHECK SEAM" : dup ? "DUPLICATE FRAME?" : "ok";
+  // A player guesses the colors of a file without all three BT.709 tags, and guesses vary.
+  const tags = [s.color_space, s.color_primaries, s.color_transfer];
+  const tagged = tags.every((v) => v === "bt709");
+  const verdict = jump
+    ? "CHECK SEAM"
+    : dup
+      ? "DUPLICATE FRAME?"
+      : tagged
+        ? "ok"
+        : "UNTAGGED COLOR";
   console.log(
     `${path.basename(file)}: ${s.width}x${s.height} ${s.r_frame_rate} fps, ${n} frames, ` +
       `${Number(f.duration).toFixed(2)} s, ${(Number(f.bit_rate) / 1e6).toFixed(1)} Mbps, ` +
-      `${s.pix_fmt} ${s.color_space || "?"}/${s.color_range || "?"}; loop point steps ` +
+      `${s.pix_fmt} ${tags.map((v) => v || "?").join("/")}/${s.color_range || "?"}; loop point steps ` +
       `${seamPair.map((v) => v.toFixed(2)).join(", ")} vs up to ${ref.toFixed(2)} around it -> ${verdict}`,
   );
   return verdict === "ok";
@@ -453,7 +462,9 @@ try {
         "-i",
         "-",
         "-vf",
-        "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p",
+        // The -color_* flags below alone leave primaries and transfer untagged: the filtered
+        // frames carry "unspecified", and the encoder keeps the frames' values.
+        "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p,setparams=colorspace=bt709:color_primaries=bt709:color_trc=bt709:range=tv",
         "-c:v",
         "libx264",
         "-preset",

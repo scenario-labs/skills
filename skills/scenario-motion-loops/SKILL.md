@@ -52,6 +52,8 @@ node scripts/render-loop.mjs --qa loop.mp4 composite.mp4   # seam and format che
   designed to sit at the loop point.
 - Defaults, the settings the 80 loops shipped with: 24 fps, 8 motion-blur sub-frames over a 180
   degree shutter, 2x supersampling, H.264 High, CRF 16, 4:2:0, BT.709 limited range, faststart.
+- A full 1080p render took about 6 minutes at authoring time (about 1.3 s per frame). Run it with a
+  long timeout, or in the background.
 
 Rules every tile follows:
 
@@ -64,6 +66,9 @@ Rules every tile follows:
   thumbnail size.
 - **Colors**: only from `P` (`bg`, `fg`, `fg2`, `mid`, `accent`, `paper`, `ink`). Rebrand by
   changing `BRAND`; fix contrast by changing tone (dark, accent, light), never by adding a color.
+- **Multi-hue loops**: a rainbow or hue sweep is the one exception. Compute hues as
+  `hsl(${360 * M.phase(t, 12)}, ...)` with a period dividing 12, and keep its settings in `BRAND` so
+  it still rebrands from one place.
 - **Easing**: from `M.ease`, with anticipation, overshoot and holds. Constant speed only for scrolls
   and streams.
 
@@ -104,7 +109,8 @@ and optionally a version where the mascot waves.
    `mascot-loop.html`.
 
 3. **Inspect the cut-out.** View the PNG at 100% over the loop's background color. Halos at the
-   outline show on dark tones: regenerate rather than hide them.
+   outline show on dark tones: regenerate rather than hide them. A background remover's schema often
+   has an edge or threshold setting: raise it on the re-run.
 
 4. **Composite in the canvas and render.**
 
@@ -128,7 +134,7 @@ and optionally a version where the mascot waves.
 
    ```bash
    ffmpeg -stream_loop -1 -i loop-plain.mp4 -c:v libvpx-vp9 -i shot.webm \
-     -filter_complex "[1:v]fps=24,scale=-2:720[s];[0:v][s]overlay=(W-w)/2:(H-h)/2:shortest=1,format=yuv420p" \
+     -filter_complex "[1:v]fps=24,scale=-2:720[s];[0:v][s]overlay=(W-w)/2:(H-h)/2:shortest=1,format=yuv420p,setparams=colorspace=bt709:color_primaries=bt709:color_trc=bt709:range=tv" \
      -c:v libx264 -crf 16 -preset slow -colorspace bt709 -color_primaries bt709 -color_trc bt709 \
      -color_range tv -movflags +faststart -an composite.mp4
    ```
@@ -159,6 +165,9 @@ and optionally a version where the mascot waves.
   unaffected.
 - **Chasing bitrate.** On flat color the file looks small, but the encoder adds almost no loss. The
   real loss is 4:2:0 chroma on thin saturated lines: check with `--psnr` and thicken those lines.
+- **Color flags without `setparams`.** `-colorspace`, `-color_primaries` and `-color_trc` alone left
+  primaries and transfer untagged on ffmpeg 7. End the filter chain with `setparams`, as both
+  commands here do. `--qa` reports `UNTAGGED COLOR` otherwise.
 - **Losing the alpha of a VP9 shot.** ffmpeg's built-in VP9 decoder ignores alpha and the shot
   arrives in a black box. Put `-c:v libvpx-vp9` before `-i shot.webm`. ffprobe reports such a file
   as `yuv420p` with `alpha_mode=1`; it still has alpha.

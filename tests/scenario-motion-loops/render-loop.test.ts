@@ -30,7 +30,7 @@ const run = (args: string[], cwd = tmp) => {
 
 // A gray sine pattern scrolling `speed` cycles per second, two cycles across the frame, encoded the
 // way the script encodes. At 0.5 cycles per second a 48-frame clip at 24 fps closes exactly.
-function clip(name: string, speed: number, frames: number) {
+function clip(name: string, speed: number, frames: number, tagged = true) {
   const file = path.join(tmp, name);
   const r = spawnSync(
     "ffmpeg",
@@ -40,7 +40,10 @@ function clip(name: string, speed: number, frames: number) {
       "-f",
       "lavfi",
       "-i",
-      `color=c=gray:s=320x180:r=24,format=gray,geq=lum='128+90*sin(2*PI*(2*X/W-${speed}*T))'`,
+      `color=c=gray:s=320x180:r=24,format=gray,geq=lum='128+90*sin(2*PI*(2*X/W-${speed}*T))'` +
+        (tagged
+          ? ",format=yuv420p,setparams=colorspace=bt709:color_primaries=bt709:color_trc=bt709:range=tv"
+          : ""),
       "-frames:v",
       String(frames),
       "-pix_fmt",
@@ -115,6 +118,12 @@ describe("render-loop.mjs --qa", () => {
     expect(r.code).toBe(1);
   }, 30000);
 
+  it("flags a clip without BT.709 primaries and transfer tags", () => {
+    const r = run(["--qa", clip("untagged.mp4", 0.5, 48, false)]);
+    expect(r.out).toMatch(/UNTAGGED COLOR/);
+    expect(r.code).toBe(1);
+  }, 30000);
+
   it("flags a last frame that repeats the first", () => {
     const r = run(["--qa", clip("duplicate.mp4", 0.5, 49)]);
     expect(r.out).toMatch(/DUPLICATE FRAME\?/);
@@ -186,7 +195,7 @@ describe.skipIf(!withPlaywright)("render-loop.mjs with a browser", () => {
       "--out",
       out,
     ]);
-    expect(r.out).toMatch(/288 frames.*-> ok/s);
+    expect(r.out).toMatch(/288 frames.*bt709\/bt709\/bt709\/tv.*-> ok/s);
     expect(r.code).toBe(0);
   }, 300000);
 });

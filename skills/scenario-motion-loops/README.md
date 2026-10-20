@@ -33,4 +33,11 @@ this repository on 2026-10-20.
   `Math.random`, a full 288-frame render passing its own file check) runs only with
   `MOTION_LOOPS_PLAYWRIGHT_DIR` set, since CI installs no browser. It passed locally on 2026-10-20
   with Google Chrome (`MOTION_LOOPS_CHANNEL=chrome`) and ffmpeg 7.1.
-- No application test yet.
+- Live application test on 2026-10-20 (separate process, 5.5 CU over two background-removal runs): a
+  rainbow loop with the Scenario wordmark cut out on Scenario. Passed with notes. It found:
+  - the MP4 tagged only the BT.709 matrix: primaries and transfer read `unknown` on ffmpeg 7.1. The
+    encode and the composite command now end their filter chains with `setparams`, and `--qa`
+    reports `UNTAGGED COLOR`;
+  - "never add a color" left a rainbow request to a guess, so the body now allows a computed hue
+    sweep on a period dividing 12;
+  - the halo advice named no knob, and the render time was unknown in advance. One clause each.
