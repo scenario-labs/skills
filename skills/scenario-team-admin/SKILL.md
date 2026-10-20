@@ -1,6 +1,6 @@
 ---
 name: scenario-team-admin
-description: "Use when administering a Scenario team from an agent through MCP: restricting which models a team or project can run (model access control, allowlist, blocklist), inviting or removing team and project members, changing roles, capping a member's Creative Unit spend, auditing API keys and their roles or scopes, or attributing consumption per user or model. Keywords: governance, model control, consumption cap, spend limit, API key hygiene, team admin, enterprise."
+description: "Use when administering a Scenario team from an agent through MCP: restricting which models a team or project can run (model access control, allowlist, blocklist), inviting or removing team and project members, changing roles, capping a member's Creative Unit spend, creating or deleting projects, auditing API keys and their roles or scopes, or attributing consumption per user or model. Keywords: governance, model control, consumption cap, spend limit, API key hygiene, team admin, enterprise."
 license: MIT
 ---
 
@@ -24,17 +24,18 @@ flag the gap.
 
 ## Quick reference
 
-| Task                 | Tool                                                               | Lane                 | Notes                                                                                |
-| -------------------- | ------------------------------------------------------------------ | -------------------- | ------------------------------------------------------------------------------------ |
-| Read model access    | `model_access_get`                                                 | read                 | Mode plus the team's active list; `project_id` adds that project's list alongside it |
-| Change model access  | `model_access_update`                                              | write                | `level` `team` or `project`; exactly one of `add_models`, `remove_models`            |
-| Team roster          | `team_members_list`                                                | read                 | Members and pending invitations                                                      |
-| Invite               | `team_members_add`                                                 | write                | 1 to 32 `emails`, `role`, optional `project_ids` joined on acceptance                |
-| Roles and spend caps | `team_members_update`                                              | write                | `member_ids` 1 to 32; `role` and/or `max_consumption`                                |
-| Remove from the team | `team_members_remove`                                              | delete               | Also withdraws invitations; access ends immediately                                  |
-| Project roster       | `project_members_list`, `_add`, `_update`, `_remove`               | read, write, delete  | Roles `admin` (Owner), `editor` (Contributor), `reader` (Viewer)                     |
-| API keys             | `api_keys_list`, `api_key_get`, `api_key_update`, `api_key_delete` | read, write, delete  | Project scope; `api_key_create` returns the portal link and nothing else             |
-| Who spent what       | `usage`                                                            | read (default tools) | Per-user and per-model consumption in the default response                           |
+| Task                 | Tool                                                                | Lane                       | Notes                                                                                |
+| -------------------- | ------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------ |
+| Read model access    | `model_access_get`                                                  | read                       | Mode plus the team's active list; `project_id` adds that project's list alongside it |
+| Change model access  | `model_access_update`                                               | write                      | `level` `team` or `project`; exactly one of `add_models`, `remove_models`            |
+| Team roster          | `team_members_list`                                                 | read                       | Members and pending invitations                                                      |
+| Invite               | `team_members_add`                                                  | write                      | 1 to 32 `emails`, `role`, optional `project_ids` joined on acceptance                |
+| Roles and spend caps | `team_members_update`                                               | write                      | `member_ids` 1 to 32; `role` and/or `max_consumption`                                |
+| Remove from the team | `team_members_remove`                                               | delete                     | Also withdraws invitations; access ends immediately                                  |
+| Project roster       | `project_members_list`, `_add`, `_update`, `_remove`                | read, write, delete        | Roles `admin` (Owner), `editor` (Contributor), `reader` (Viewer)                     |
+| API keys             | `api_keys_list`, `api_key_get`, `api_key_update`, `api_key_delete`  | read, write, delete        | Project scope; `api_key_create` returns the portal link and nothing else             |
+| Projects             | `project_get`, `project_create`, `project_update`, `project_delete` | read, write, write, delete | Create needs a team admin over OAuth and counts against the plan's project limit     |
+| Who spent what       | `usage`                                                             | read (default tools)       | Per-user and per-model consumption in the default response                           |
 
 ## Model access: read the mode before editing
 
@@ -102,6 +103,33 @@ conversation (the `scenario` skill's rule on secrets holds here). `api_key_delet
 admin, and refuses the key the current session is authenticated with: list, confirm the exact key
 with the user, then delete; unattended, delete only a key the task instructions name and exactly one
 key matches.
+
+## Projects
+
+`projects_list` (default toolset) finds what exists; create only when nothing matches.
+`project_create` takes `team_id`, `name`, and `privacy_mode`; a description needs a follow-up
+`project_update`. It needs a human team admin over OAuth (API keys are refused) and counts against
+the plan's project limit, which refuses the call once reached: report the limit, never delete a
+project to make room. Pass the returned `project.id` as `project_id` from then on. In a team with no
+projects, the API first creates a default project, which stays even when the call is refused: check
+`projects_list` afterwards and offer to rename it with `project_update` rather than keep two
+(unattended: report it, change nothing).
+
+- **Privacy.** `privacy_mode: true`, on `project_create` or `project_update`, limits non-admin
+  members to the assets and models they created; project and team admins still see everything.
+  Turning it off shows every member everything: confirm with the user first; unattended, only when
+  the task instructions say so.
+- **Rename.** `project_update` changes only the fields passed: `name`, `description` (up to 2,000
+  characters), `privacy_mode`, `avatar_asset_id`. Access, model lists, and credit caps live in the
+  tools above or the web app.
+- **Delete.** `project_delete` runs on the delete lane, is irreversible, and takes the project's
+  models, generation records, API keys, and memory with it. Confirm the name and id from
+  `project_get` first. It takes the target as `project_id`, and is refused while anyone but the
+  caller holds a role on the project or a key is attached: report who remains and ask, and never
+  remove a member or delete a key to unblock it without a separate confirmation of each. The creator
+  joins as Admin by default (`auto_join`), which blocks a delete by anyone else. Unattended, delete
+  only a project the task instructions name, when exactly one matches, and report a refusal and
+  stop.
 
 ## Who spent what
 

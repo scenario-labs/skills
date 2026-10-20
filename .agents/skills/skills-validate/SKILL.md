@@ -149,9 +149,10 @@ context you found before acting on it.
 
 Assemble the report with the template below. This repository is public: only publicly shareable
 language (see AGENTS.md), never a signed asset URL, which is a credential in itself, and never the
-team or project the run used. Assets travel as ids and local filenames. GitHub has no API for
-comment attachments, so images reach the thread only when a human drags them into the comment's edit
-box.
+team or project the run used. Assets travel as ids and local filenames. A run whose files never
+passed through Scenario (an expert tool working on local files) drops the Asset id, Job id and Model
+id columns and says the files were made locally. GitHub has no API for comment attachments, so
+images reach the thread only when a human drags them into the comment's edit box.
 
 **In a PR context**, post it as a PR comment (`gh pr comment <n> --body-file` or the GitHub MCP
 `add_issue_comment`), ending with the attribution line, and print the comment URL. `--no-post`
