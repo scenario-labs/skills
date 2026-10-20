@@ -76,6 +76,17 @@ def _parse(out: str) -> list[dict]:
     return rows
 
 
+def analyzer_rows(r: subprocess.CompletedProcess, files: list[str]) -> list[dict]:
+    """Findings of one luau-lsp run. A nonzero exit with no finding (bad flag, bad sourcemap, crash) is an
+    error carrying the output: otherwise code that was never analyzed would pass."""
+    out = r.stdout + "\n" + r.stderr
+    rows = _parse(out)
+    if r.returncode != 0 and not any(x["level"] == "error" for x in rows):
+        rows.append({"file": ",".join(files), "line": 0, "col": 0, "kind": "analyzer", "level": "error",
+                     "msg": f"luau-lsp exited {r.returncode}: {out.strip()[-1500:]}"})
+    return rows
+
+
 def check(paths: list[str | Path] | None = None, code: str | None = None, sourcemap: str | None = None,
           selene: bool = False, stylua: bool = False, timeout: int = 300, solver: str = "both") -> dict:
     """Type-check and lint Luau files (or a code string). Returns ok, errors, warnings, tools.
@@ -101,7 +112,7 @@ def check(paths: list[str | Path] | None = None, code: str | None = None, source
     for sv in passes:
         flags = ["--flag:LuauSolverV2=true"] if sv == "new" else []
         r = subprocess.run(cmd + flags + files, capture_output=True, text=True, timeout=timeout)
-        for x in _parse(r.stdout + "\n" + r.stderr):
+        for x in analyzer_rows(r, files):
             x["solver"] = sv
             rows.append(x)
     tools = {f"luau-lsp ({'+'.join(passes)} solver)": "ran"}

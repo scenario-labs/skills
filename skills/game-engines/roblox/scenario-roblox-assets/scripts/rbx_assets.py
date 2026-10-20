@@ -387,9 +387,28 @@ def blender_prep(spec: dict, blender: str = "blender", wait: float = 900, timeou
 
 # ---------------------------------------------------------------- payloads for EditableMesh / EditableImage
 
+def _zstd_stored(raw: bytes) -> bytes:
+    """One zstd frame of stored (uncompressed) blocks, which any zstd decoder reads."""
+    # Single segment (no window descriptor), 8-byte content size, no checksum; blocks of at most 128 KiB.
+    out = bytearray(struct.pack("<IB", 0xFD2FB528, 0xE0) + struct.pack("<Q", len(raw)))
+    step = 128 * 1024
+    starts = range(0, len(raw), step) or [0]
+    for i in starts:
+        block = raw[i:i + step]
+        last = i + step >= len(raw)
+        out += (len(block) << 3 | int(last)).to_bytes(3, "little")  # block type 0: raw
+        out += block
+    return bytes(out)
+
+
 def _zb64(raw: bytes) -> str:
-    """zstd + base64: decoded in Studio by EncodingService (Base64Decode, DecompressBuffer Zstd)."""
-    from compression import zstd  # Python 3.14+
+    """zstd + base64: decoded in Studio by EncodingService (Base64Decode, DecompressBuffer Zstd).
+
+    compression.zstd is Python 3.14+; older Pythons send the same frame format uncompressed (larger)."""
+    try:
+        from compression import zstd
+    except ImportError:
+        return base64.b64encode(_zstd_stored(raw)).decode("ascii")
     return base64.b64encode(zstd.compress(raw, 9)).decode("ascii")
 
 

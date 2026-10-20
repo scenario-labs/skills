@@ -159,7 +159,7 @@ def typecheck(files: list[str | Path], sourcemap: str | Path | None = None,
             cmd += ["--sourcemap", str(sourcemap)]
         r = subprocess.run(cmd + paths, capture_output=True, text=True, timeout=timeout)
         seen, rows = set(), []
-        for x in rbx_check._parse(r.stdout + "\n" + r.stderr):
+        for x in rbx_check.analyzer_rows(r, paths):
             k = (x["file"], x["line"], x["col"], x["msg"])
             if k not in seen:  # a module's errors can be printed again for each file that requires it
                 seen.add(k)

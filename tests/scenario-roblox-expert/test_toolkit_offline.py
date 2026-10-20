@@ -3,6 +3,7 @@
 No Studio runs here: a fake replaces the StudioMCP proxy and lists the windows a test sets.
 """
 
+import base64
 import pathlib
 import sys
 import tempfile
@@ -14,7 +15,12 @@ sys.path.insert(0, str(FAMILY / "scenario-roblox-expert/scripts"))
 sys.path.insert(0, str(FAMILY / "scenario-roblox-tooling/scripts"))
 sys.path.insert(0, str(FAMILY / "scenario-roblox-networking/scripts"))
 sys.path.insert(0, str(FAMILY / "scenario-roblox-luau/scripts"))
+sys.path.insert(0, str(FAMILY / "scenario-roblox-assets/scripts"))
+sys.path.insert(0, str(FAMILY / "scenario-roblox-architecture/scripts"))
 
+import rbx_architecture  # noqa: E402
+import rbx_assets  # noqa: E402
+import rbx_check  # noqa: E402
 import rbx_env  # noqa: E402
 import rbx_luau  # noqa: E402
 import rbx_mcp  # noqa: E402
@@ -127,6 +133,52 @@ class Sourcemap(unittest.TestCase):
         with mock.patch("rbx_luau.subprocess.run", lambda cmd, **_k: seen.append(cmd) or mock.Mock(returncode=0)):
             rbx_luau.sourcemap(tempfile.gettempdir())
         self.assertIn("--include-non-scripts", seen[0])
+
+
+class Payloads(unittest.TestCase):
+    """Studio decodes payloads with DecompressBuffer Zstd, and compression.zstd is Python 3.14+ only."""
+
+    SIZES = (0, 1, 131072, 131073, 300000)
+
+    def test_stored_frame_decodes_with_a_real_zstd_decoder(self):
+        try:
+            from compression import zstd
+        except ImportError:
+            self.skipTest("compression.zstd needs Python 3.14")
+        for n in self.SIZES:
+            raw = bytes(i % 251 for i in range(n))
+            self.assertEqual(zstd.decompress(rbx_assets._zstd_stored(raw)), raw, n)
+
+    def test_payloads_pack_without_compression_zstd(self):
+        with mock.patch.dict(sys.modules, {"compression": None}):
+            b = rbx_assets._zb64(b"roblox" * 1000)
+        self.assertTrue(base64.b64decode(b).startswith(b"\x28\xb5\x2f\xfd"))
+
+
+class Analyzer(unittest.TestCase):
+    """An analyzer that fails without printing findings must not pass the check."""
+
+    def run_check(self, returncode, out):
+        fake = mock.Mock(returncode=returncode, stdout=out, stderr="")
+        with tempfile.NamedTemporaryFile(suffix=".luau") as f, \
+                mock.patch("rbx_check.subprocess.run", return_value=fake), \
+                mock.patch("rbx_check.luau_lsp", return_value="luau-lsp"), \
+                mock.patch("rbx_check.definitions", return_value="defs.d.luau"):
+            return rbx_check.check([f.name]), rbx_architecture.typecheck([f.name])
+
+    def test_crash_with_no_findings_fails(self):
+        for r in self.run_check(1, "error: unknown flag --platform=roblox\n"):
+            self.assertFalse(r["ok"])
+            self.assertIn("unknown flag", r["errors"][0]["msg"])
+
+    def test_findings_are_not_doubled_by_the_exit_code(self):
+        line = "a.luau(3,5): TypeError: Type 'number' could not be converted into 'string'\n"
+        for r in self.run_check(1, line):
+            self.assertEqual(len(r["errors"]), 2)  # one per solver, no extra exit-code row
+
+    def test_clean_run_passes(self):
+        for r in self.run_check(0, ""):
+            self.assertTrue(r["ok"])
 
 
 class PlaytestKit(unittest.TestCase):
