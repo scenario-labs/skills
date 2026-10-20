@@ -168,6 +168,10 @@ class DeliveryGate(unittest.TestCase):
         self.assertEqual(r["errors"], ["Welded: no faces after modifiers; nothing would export"])
         self.assertEqual(r["per_object"]["Base"]["errors"], [])
 
+    def test_part_smaller_than_the_weld_still_has_faces(self):
+        r = self.verdict("speck_under_the_weld")
+        self.assertFalse(any("no faces" in e for e in r["errors"]), r["errors"])
+
 
 if __name__ == "__main__":
     unittest.main()

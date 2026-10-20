@@ -258,6 +258,11 @@ cases["emptied_by_modifier"] = gate(["Welded"])
 cases["emptied_base"] = bx_audit.deliverable(["Welded"], evaluated=False)
 box("Base", (1, 1, 1), (0, 0, 0.5))
 cases["emptied_beside_a_part"] = gate(["Welded", "Base"])
+# A part under the audit weld (1e-6 of the asset's diagonal) still exports its faces.
+empty()
+box("Base", (1, 1, 1), (0, 0, 0.5))
+box("Speck", (1e-6, 1e-6, 1e-6), (0, 0, 1.0))
+cases["speck_under_the_weld"] = gate(["Base", "Speck"])
 
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
