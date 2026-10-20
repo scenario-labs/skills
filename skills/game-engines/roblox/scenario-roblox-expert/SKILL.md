@@ -92,15 +92,18 @@ data model plan and owners into the plan.
 
 1. **Brief in numbers.** Budgets per device, players, memory, art style. GATE: every later check has
    a number.
-2. **Place.** `new_place` then `open_place` inside `place_slot`, once. `new_place` overwrites
-   `<dir>/default.project.json`: `dir` is a new folder of your own, never the user's project. For an
-   existing game, merge a copy of the user's saved place with the code build
-   (scenario-roblox-tooling P15, `merge_place`, which runs in any repository) and open the merge,
-   never the user's file. Edit a worktree or copy of their sources: their `rojo serve` syncs `src/`
-   into their window. GATE: `open_places()` lists it; `Audit` tally has no error.
+2. **Place.** `new_place` then `open_place` inside `place_slot`, once. GATE: `open_places()` lists
+   it; `Audit` tally has no error.
+   - `new_place` overwrites `<dir>/default.project.json`: `dir` is a new folder of your own, never
+     the user's project.
+   - Existing game: ask the user to save first, since edits in their open window are not on disk.
+     Merge a copy of the saved place with the code build (scenario-roblox-tooling P15,
+     `merge_place`, any repository) and open the merge, never the user's file.
+   - Edit a worktree or copy of their sources: their `rojo serve` syncs `src/` into their window.
 3. **Baseline.** `Audit`, `Spec` tests that fail first, captures from fixed cameras, `Stats.frames`
    in a playtest. GATE: numbers recorded, sheet opened.
 4. **Build one stage** with idempotent chunks or files; route domain work to its owner (below).
+   Adding instances to the open place: procedures.md P2.
 5. **Measure.** `rbx_check` 0 errors, `Spec` all green, `Audit` clean, `Stats.frames` on Server and
    Client within the frame gate: p95 at most 1.2 x the frame budget (20 ms at 60 fps) and worst at
    most 2 x (33.3 ms). Heartbeat steps jitter around the vsync interval, so a healthy 60 fps place

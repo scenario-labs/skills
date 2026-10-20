@@ -20,21 +20,26 @@ also works).
 
 ### rbx_env.py: places, readiness, concurrency
 
-| Function                                                           | Returns                                                                                                                                                                                                                                        |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `doctor()`                                                         | dict of tool versions and readiness (keys listed below the table)                                                                                                                                                                              |
-| `new_place(dir, name=None, template="baseplate", src=None)`        | `Path` of `<dir>/<name>.rbxl`, built by Rojo from `<dir>/default.project.json`, which it overwrites: `dir` is the agent's own folder                                                                                                           |
-| `open_place(path, timeout=180)`                                    | an open `rbx_mcp.Studio` bound to that window; reuses the window when the place is already open, else calls `wait_for_gpu()` first                                                                                                             |
-| `open_places()`                                                    | list of `{id, name}` that the MCP server sees; changes nothing                                                                                                                                                                                 |
-| `machine_load()`                                                   | `{gpu_util, gpu_mem, ram}` in percent (macOS `ioreg`, `vm_stat`)                                                                                                                                                                               |
-| `wait_for_gpu(limit=85, ram_limit=75, max_places=4, timeout=3600)` | the last `machine_load()` plus `places` once GPU utilization and GPU memory are at most `limit`, RAM at most `ram_limit` and fewer than `max_places` place windows are open machine-wide (`RBX_GPU_MAX` and `RBX_MAX_PLACES` set the defaults) |
-| `place_windows()`                                                  | number of place windows open machine-wide (one `RobloxStudio -localPlaceFile` process each)                                                                                                                                                    |
-| `place_slot(timeout=3600)`                                         | context manager yielding a slot index; at most `RBX_MAX` (default 3) holders machine-wide                                                                                                                                                      |
-| `close_place(path)`                                                | `bool`; ORCHESTRATOR ONLY: returns False unless `RBX_ALLOW_CLOSE=1`                                                                                                                                                                            |
+| Function                                                           | Returns                                                                                                                            |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `doctor()`                                                         | dict of tool versions and readiness (keys listed below the table)                                                                  |
+| `new_place(dir, name=None, template="baseplate", src=None)`        | `Path` of `<dir>/<name>.rbxl`, built by Rojo from `<dir>/default.project.json`                                                     |
+| `open_place(path, timeout=180)`                                    | an open `rbx_mcp.Studio` bound to that window; reuses the window when the place is already open, else calls `wait_for_gpu()` first |
+| `open_places()`                                                    | list of `{id, name}` that the MCP server sees; changes nothing                                                                     |
+| `machine_load()`                                                   | `{gpu_util, gpu_mem, ram}` in percent (macOS `ioreg`, `vm_stat`)                                                                   |
+| `wait_for_gpu(limit=85, ram_limit=75, max_places=4, timeout=3600)` | the last `machine_load()` plus `places`, once the machine has headroom (below)                                                     |
+| `place_windows()`                                                  | number of place windows open machine-wide (one `RobloxStudio -localPlaceFile` process each)                                        |
+| `place_slot(timeout=3600)`                                         | context manager yielding a slot index; at most `RBX_MAX` (default 3) holders machine-wide                                          |
+| `close_place(path)`                                                | `bool`; ORCHESTRATOR ONLY: returns False unless `RBX_ALLOW_CLOSE=1`                                                                |
 
 - `doctor()` keys: `studio_app`, `studio_mcp_binary`, `studio_version`, `rojo`, `luau`, `lune`,
   `selene`, `stylua`, `luau-lsp`, `studio_running`, `studios` (list of `{id, name}`), `mcp_tools`
   (int), and `mcp_error` or `hint` when the server sees no place.
+- `wait_for_gpu` returns once GPU utilization and GPU memory are at most `limit`, RAM at most
+  `ram_limit`, and fewer than `max_places` place windows are open machine-wide. `RBX_GPU_MAX` and
+  `RBX_MAX_PLACES` set the defaults.
+- `new_place` overwrites `<dir>/default.project.json`: `dir` is the agent's own folder, never the
+  user's project.
 - Templates: `"baseplate"` (512 x 20 x 512 grass baseplate with its top at y 0, SpawnLocation,
   `Technology` Future so Studio loads `LightingStyle` Realistic with `PrioritizeLightingQuality`
   true, `StreamingEnabled` false) and `"empty"` (services only).
@@ -194,6 +199,13 @@ with rbx_env.place_slot() as slot:
 
 - Open the place once and keep it open; reruns reuse the window. Never rebuild a `.rbxl` that Studio
   holds open: change it in the session or ask the orchestrator for a fresh window.
+- Files and an open place stay in step this way:
+  - build the place with every instance the feature adds, scripts as stubs, so the red run fails on
+    behavior;
+  - push later script edits with scenario-roblox-architecture's `sync_sources`, which updates
+    existing scripts only and lists the rest as `missing`;
+  - add a new instance with an idempotent Edit chunk that sets the same properties as its file, then
+    check the file builds the same with Lune.
 - Leaving the `with` block ends your proxy only; the window stays open.
 - Tests: O4, O13, L2, L3, L3b. Results: first open 18.3 s (orchestrator: 9.9 s); rebind 0.01 s; slot
   waits held 3 processes to `RBX_MAX` 2 (O13).

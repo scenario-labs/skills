@@ -561,10 +561,13 @@ Exploit test, with `exploit_case` in one playtest: teleport the client's charact
 part, then onto a part with a bare `Touched` handler as the negative control. Whether a client
 `CFrame` write of an anchored, server-owned part fires `Touched` on the server is not tested here.
 
-Result: offline only (Lune 0.11.0, fake Players and parts). Two limbs on one coin pay once; a touch
-50 studs out, a teleport 100 studs out 0.1 s after the guard's sample and a dead character pay
-nothing; a walk in since the sample pays; a shared limiter of 2 stops the third coin. Not yet run in
-Studio.
+Result: offline only (Lune 0.11.0, fake Players and parts). Not yet run in Studio.
+
+- Two limbs on one coin pay once.
+- A touch 50 studs out, a teleport 100 studs out 0.1 s after the guard's sample, and a dead
+  character pay nothing.
+- A walk in since the sample pays.
+- A shared limiter of 2 stops the third coin.
 
 ## P7. Honeypots, suspicion and delayed enforcement [P7]
 

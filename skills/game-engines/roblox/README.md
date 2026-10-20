@@ -67,6 +67,15 @@ lead skill, `scenario-roblox-expert`.
   configs on a published experience, live DataStores (the data layer ran against a simulated
   multi-server backend), multi-client tests (each MCP playtest is one client), Team Create, phones,
   consoles and VR, and Windows. Each skill lists what it could not run.
+- Changed after the live runs, after three plan-only validation runs, and verified offline only:
+  - window binding by exact name;
+  - `Playtest.server` and `.client` taking `kit=`;
+  - `merge_place` in a repository the tooling skill did not scaffold (end to end with Lune 0.11.0
+    and Rojo 7.7.1);
+  - `Net.touch` and MoveGuard's log-only tracking (Lune, fake engine services);
+  - `rbx_net.vendor_kit`.
+- Their suites are in `tests/scenario-roblox-expert/`. The Lune ones skip where Lune is not
+  installed, as in CI.
 
 ## In Studio
 

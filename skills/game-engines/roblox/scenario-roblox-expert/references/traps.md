@@ -94,6 +94,13 @@ procedures.md).
 - Rojo 7.7.1 drops `"Position": [x, y, z]` on a Part with exit 0 and leaves it at the origin
   (observed). Write `"CFrame": [x, y, z, 1, 0, 0, 0, 1, 0, 0, 0, 1]`; `rbx_env.new_place` converts
   `Position` for you.
+- Rojo 7.7.1 applies these forms in a project's `$properties` and a `.model.json`'s `properties`
+  (built, then read back with Lune 0.11.0):
+  - an enum by item name, `"Shape": "Cylinder"`;
+  - `"Color": [1, 0.78, 0.15]`, three floats from 0 to 1;
+  - `"Tags": ["Coin"]`.
+- Attributes go in `$attributes` or `attributes`. Lune's `deserializePlace` reads both back
+  (`GetTags`, `GetAttribute`), so check them offline before Studio.
 - Studio derives `LightingStyle` and `PrioritizeLightingQuality` from the file's `Technology` when
   it loads a place (observed: a file with only the new pair opened as Soft and false). Write
   `Technology` in the file.

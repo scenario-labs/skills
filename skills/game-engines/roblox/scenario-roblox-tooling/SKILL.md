@@ -83,7 +83,8 @@ Full code, tests and results: [procedures.md](references/procedures.md). Runner 
    ShipCheck. luau-lsp 1.70.1 runs the old solver unless given `--flag:LuauSolverV2=true`, while
    Studio uses the new one for nonstrict scripts, so the gate runs both (P2). GATE: every step exits
    0, then each planted fault (type, solver-only, lint, format, failing spec, test in release) fails
-   exactly its steps.
+   exactly its steps. The gate needs this skill's scaffold (`tools/`, `ship.project.json`); in
+   another repository, gate with the lead's `rbx_check` and `lint_project`.
 3. **Engine tests in Studio.** Build a dev place and open it once with `rbx_env.open_place` inside
    `rbx_env.place_slot()` (binding: the lead's procedures). Then `rbx_tooling.check_target(s)`
    checks through `list_roblox_studios` that one window is bound and holds a test place (P18);

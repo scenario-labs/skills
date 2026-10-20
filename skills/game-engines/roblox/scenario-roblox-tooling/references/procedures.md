@@ -781,7 +781,8 @@ python3 scripts/rbx_tooling.py merge places.json <repo >--manifest
 A repository this skill did not scaffold has no `tools/merge_place.luau`. There,
 `T.merge_place(repo, base=..., code=..., out=..., project="default.project.json")` runs the
 template's script with its ShipCheck from a temporary folder; every path still resolves against
-`repo` (offline test).
+`repo`. Result (Lune 0.11.0, Rojo 7.7.1, a repository with no `tools/`): exit 0, the base place's
+map and the repository's script both in the merged place.
 
 [merge_place.luau](../scripts/template/tools/merge_place.luau) reads the project file to know what
 the repository owns:
