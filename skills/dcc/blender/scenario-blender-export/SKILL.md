@@ -1,6 +1,6 @@
 ---
 name: scenario-blender-export
-description: "Use when exporting a model, character or animation from Blender to a game engine, the web or a 3D printer: FBX, glTF/GLB, USD/USDZ or STL for Unity, Unreal Engine, Godot, Roblox, three.js or Apple AR Quick Look. Also when an export arrives at the wrong scale (100x, 0.01), rotated 90 degrees, facing backwards, with extra leaf bones, without its animation, blend shapes or textures; when making LODs or collision meshes (UCX_, -colonly) for an engine; when converting a folder of models in batch; or when checking an exported file by re-importing it."
+description: "Use when exporting a model, character or animation from Blender to a game engine, the web or a 3D printer: FBX, glTF/GLB, USD/USDZ or STL for Unity, Unreal Engine, Godot, Roblox, three.js or Apple AR Quick Look. Also when an export arrives at the wrong scale (100x, 0.01), rotated 90 degrees, facing backwards, with extra leaf bones, without its animation, blend shapes or textures; when an FBX loses its metallic or roughness map; when a generated model needs its real size and its pivot on the floor; when making LODs or collision meshes (UCX_, -colonly) for an engine; when converting a folder of models in batch; or when checking an exported file by re-importing it."
 license: MIT
 ---
 
@@ -40,20 +40,34 @@ trip only. The measurements live in [`references/engines.md`](references/engines
 
 1. **Gate.** Run `bx_audit.deliverable(parts, profile)` from `scenario-blender-expert` and fix every
    error. Scale left on an object travels into the engine as the node's transform.
-2. **Pick the preset** from the table. Pass every object the file needs: a skinned mesh AND its
+   - Open borders and edges shared by three or more faces have no automatic fix. On a generated
+     chest, hole filling closed 4 of 24 borders and added a back-to-back face.
+   - Rebuild the surface with `scenario-blender-retopology`, bake the original's maps onto it, then
+     gate again.
+   - Without a rebuild, report the file as blocked for that profile (`roblox` requires watertight
+     meshes). Never deliver it as ready.
+2. **Size and pivot.** A generated mesh arrives at an arbitrary size with its origin at its center,
+   so it sinks into the floor. `bxe.ground(parts, width=0.9)` (or `height=`, in meters) bakes the
+   transforms, puts the center of the base at the origin and scales to the real size. Ask for the
+   size when the brief does not give it. Static meshes only.
+3. **Pick the preset** from the table. Pass every object the file needs: a skinned mesh AND its
    armature, LOD meshes and their group, collision meshes beside their render mesh.
-3. **Export:** `bxe.export(path, preset, objects, **overrides)`. Any exporter keyword overrides the
+4. **Export:** `bxe.export(path, preset, objects, **overrides)`. Any exporter keyword overrides the
    preset, such as `bake_anim=True` on `roblox` for an animated file. The result records the
    settings used.
-4. **Round-trip:** `bxe.round_trip(path, objects, preset=...)` re-imports the file in a background
+5. **Round-trip:** `bxe.round_trip(path, objects, preset=...)` re-imports the file in a background
    Blender, leaving the open scene alone. It compares size (1 mm), triangles, deforming bones, root
-   bones (one expected), armature scale, shape keys and every action stored for the objects, by
-   name. Then it lists every difference. Fix each one, or say why it is expected.
-5. **glTF contents:** `bxe.glb_summary(path)` lists `extensions_required`, morph targets, skins,
+   bones (one expected), armature scale, shape keys, every action stored for the objects, and the
+   image maps on each material (base color, metallic, roughness, normal, emission). Then it lists
+   every difference. Fix each one, or say why it is expected.
+6. **glTF contents:** `bxe.glb_summary(path)` lists `extensions_required`, morph targets, skins,
    clips and image types without Blender. A loader refuses a file that requires an extension it
    lacks.
-6. **Engine check:** import into the engine and look, with `scenario-unity-pipeline-automation`,
-   `scenario-unreal-pipeline-automation` or `scenario-godot-pipeline-automation`.
+7. **Engine check:** import into the engine and look. For Godot, the
+   [headless check](references/engines.md#headless-check) prints each node's rotation and scale,
+   each mesh's size and floor height, and the maps each material received. Full flows:
+   `scenario-unity-pipeline-automation`, `scenario-unreal-pipeline-automation`,
+   `scenario-godot-pipeline-automation`.
 
 ## Scale, axes and units
 
@@ -61,7 +75,10 @@ trip only. The measurements live in [`references/engines.md`](references/engines
   (`export_yup`). FBX stores its axes as metadata; the presets write -Z forward, Y up.
 - Keep `scene.unit_settings.scale_length` at 1.0. Any other value rescales every export.
 - Apply object scale before export: `obj.data.transform(Matrix.Diagonal(obj.scale).to_4x4())`, then
-  `obj.scale = (1, 1, 1)`, so the engine node imports at scale 1.
+  `obj.scale = (1, 1, 1)`, so the engine node imports at scale 1. `bxe.ground()` does it for every
+  mesh at once.
+- Engines read 1 unit as 1 meter and place an object by its origin. A prop's origin belongs at the
+  center of its base, so it stands on the floor where it is placed (step 2).
 - FBX scale: `unity` writes `FBX_SCALE_ALL` (Unity reads file scale 1). `unreal` keeps
   `FBX_SCALE_NONE` (Unity reads it as file scale 0.01, a centimeter file). `roblox` uses
   `FBX_SCALE_UNITS`, as Roblox's export requirements ask.
@@ -125,9 +142,12 @@ bpy.ops.import_scene.gltf(filepath="/abs/in/robot.glb")
 parts = [o.name for o in bpy.context.scene.objects if o.type == "MESH"]
 gate = bx_audit.deliverable(parts, profile="game")
 print(gate["errors"])            # fix each one, then gate again until "pass" is True
+bxe.ground(parts, height=1.2)    # the robot's real height in meters, base center at the origin
 
 bxe.export("/abs/out/robot.fbx", "unity", parts)
-print(bxe.round_trip("/abs/out/robot.fbx", parts, preset="unity")["diffs"])   # []
+print(bxe.round_trip("/abs/out/robot.fbx", parts, preset="unity")["diffs"])
+# ["Robot: material Body lost its Metallic, Roughness maps"]: write them for the engine
+print(bxe.extra_maps(parts, "/abs/out", "unity")["written"])
 bxe.export("/abs/out/robot.glb", "godot", parts)
 print(bxe.glb_summary("/abs/out/robot.glb")["extensions_required"])            # []
 ```
@@ -151,5 +171,15 @@ the parts selected) for a single static prop, then gate again.
   bake target) or edited since travels as a packed copy of its pixels (`packed_unsaved_images`).
 - A textured FBX that shows untextured in Unity: the default import keeps embedded textures inside
   the file. Extract Textures (Materials tab) into the model's folder assigns them.
+- Trusting an FBX made from a glTF import for metal and roughness. The glTF importer routes one
+  packed image through Separate Color, and the FBX exporter drops both maps: the file re-imports
+  with Metallic 0 and Roughness 0.5. Base color, normal and emission travel. `round_trip()` reports
+  the loss. `bxe.extra_maps(parts, out_dir, engine)` writes the two maps as files to assign:
+  - Unity: `<material>_MetallicSmoothness.png` in the Metallic Map slot (Standard or URP Lit),
+    Smoothness Source on Metallic Alpha, sRGB unchecked. Unity's FBX import assigned only the base
+    color, even from a file carrying both maps (measured).
+  - Roblox and Unreal: `<material>_Metallic.png` and `<material>_Roughness.png`, 8-bit grayscale. On
+    Roblox, set them as MetalnessMap and RoughnessMap of a SurfaceAppearance.
+  - Godot: deliver the `godot` GLB, which keeps every map.
 - An STL at Blender scale: a 10 cm part prints at 0.1 mm.
 - LODs exported without a look: decimation can collapse thin parts.

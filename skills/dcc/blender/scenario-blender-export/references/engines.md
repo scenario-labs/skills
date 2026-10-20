@@ -1,8 +1,8 @@
 # Engine facts for Blender exports
 
 Each fact names its source. "Measured" means exported from Blender 5.2.1 with `bx_export.py` and
-imported into the engine on 2026-10-18. Vendor pages were read on 2026-10-18: check them again
-before relying on a number in a new engine version.
+imported into the engine on 2026-10-18, or on the date given. Vendor pages were read on 2026-10-18
+and 2026-10-20: check them again before relying on a number in a new engine version.
 
 ## Unity 6
 
@@ -21,6 +21,10 @@ Measured in Unity 6000.3.21f1, batch mode:
   - Two generated chests imported from GLB: 2048 x 2048 base color in Unity after extraction.
   - Before `export()` named packed images with their extension, extraction wrote `Image_0` with no
     extension, Unity never imported it, and the chest stayed untextured with no warning.
+- Metallic and roughness (2026-10-20): an FBX whose two images link straight to the Principled
+  inputs, imported with Extract Textures, gave a Standard material with the base color texture only,
+  Metallic 0.00, Smoothness 0.50. Unity does not assign those maps from an FBX: assign the
+  `extra_maps()` file by hand.
 
 Documentation
 ([FBX Model tab](https://docs.unity3d.com/6000.0/Documentation/Manual/FBXImporter-Model.html),
@@ -34,6 +38,14 @@ Documentation
   Globally (off by default) looks past the model's folder.
 - LODs: name meshes `Name_LOD0` (most detailed), `_LOD1`, `_LOD2`. Grouped and named this way, the
   FBX import creates the LOD Group.
+- [Metallic mode](https://docs.unity3d.com/6000.0/Documentation/Manual/StandardShaderMaterialParameterMetallic.html)
+  (Standard): the Metallic texture holds "Red channel: Metallic values" and "Alpha channel:
+  Smoothness values".
+  [URP Lit](https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@17.0/manual/lit-shader.html):
+  Smoothness source Metallic Alpha "Uses the alpha channel from the Metallic Map texture".
+- [Texture import](https://docs.unity3d.com/6000.0/Documentation/Manual/texture-type-default.html),
+  sRGB (Color Texture): "Disable this property if the texture stores information that you need the
+  exact value for."
 
 ## Unreal Engine 5
 
@@ -95,6 +107,49 @@ Documentation:
 - [Import configuration](https://docs.godotengine.org/en/stable/tutorials/assets_pipeline/importing_3d_scenes/import_configuration.html):
   Generate LODs, in the Meshes section, builds lower-detail variants for distance.
 
+### Headless check
+
+Measured on Godot 4.7.2 with a generated chest after `ground(width=0.9)`: rotation 0, scale 1, size
+0.9 x 0.84 x 0.76, floor 0.000, all four maps present. A folder holding the GLB, this `check.gd` and
+a `project.godot` containing `config_version=5`:
+
+```bash
+godot --headless --path /abs/proj --import # imports the GLB, then quits
+godot --headless --path /abs/proj -s check.gd
+```
+
+```gdscript
+extends SceneTree
+
+# Loads every .glb at the project root; prints each node's rotation and scale, each mesh's
+# world size and floor height, and the textures its materials received.
+func _init() -> void:
+	for f in DirAccess.get_files_at("res://"):
+		if f.ends_with(".glb"):
+			print("== ", f)
+			var root: Node = load("res://" + f).instantiate()
+			_walk(root, Transform3D.IDENTITY)
+			root.free()
+	quit()
+
+func _walk(n: Node, xf: Transform3D) -> void:
+	if n is Node3D:
+		xf = xf * n.transform
+		print("%s rot=%s scale=%s" % [n.name, n.rotation_degrees, n.scale])
+	if n is MeshInstance3D:
+		var box: AABB = xf * n.get_aabb()
+		print("  size=%s floor=%.3f" % [box.size, box.position.y])
+		for s in n.mesh.get_surface_count():
+			var m := n.mesh.surface_get_material(s) as BaseMaterial3D
+			if m:
+				print("  albedo=%s normal=%s metallic=%s roughness=%s cull=%d" % [m.albedo_texture != null,
+					m.normal_texture != null, m.metallic_texture != null, m.roughness_texture != null, m.cull_mode])
+	for c in n.get_children():
+		_walk(c, xf)
+```
+
+`cull=2` is `CULL_DISABLED`: the material is double-sided, as generated GLBs often are.
+
 ## Roblox
 
 Not imported into Roblox Studio by this skill's tests. From the Creator Hub:
@@ -109,7 +164,12 @@ Not imported into Roblox Studio by this skill's tests. From the Creator Hub:
   FBX: Path Mode Copy with Embed Textures, Apply Scalings "FBX Unit Scale", Add Leaf Bones off, Bake
   Animation off unless the file carries animation.
 - [Texture specifications](https://create.roblox.com/docs/art/modeling/texture-specifications):
-  albedo, normal, roughness, metalness and emissive mask; OpenGL tangent-space normal maps only.
+  albedo, normal, roughness, metalness and emissive mask; OpenGL tangent-space normal maps only;
+  metalness and roughness "Single Channel Grayscale (8-bit)". PBR textures go on a SurfaceAppearance
+  added to the mesh in Studio.
+- [SurfaceAppearance](https://create.roblox.com/docs/reference/engine/classes/SurfaceAppearance):
+  ColorMap, MetalnessMap, NormalMap, RoughnessMap. The pages read here do not say whether the 3D
+  Importer takes metalness and roughness from an FBX: set them on the SurfaceAppearance.
 - [R15 characters](https://create.roblox.com/docs/art/characters/specifications): 15 meshes named
   with `_Geo` (Head_Geo, UpperTorso_Geo, LeftUpperArm_Geo, and so on); triangle budgets DynamicHead
   4,000, torso 1,750, each arm and each leg 1,248, total 10,742.
@@ -145,3 +205,8 @@ through Blender's USDZ Texture Downsampling.
   writes a USDZ package; UDIM textures cannot go in one.
 - Measured in 5.2.1: the STL importer names its object after the file, so `round_trip` matches a
   lone mesh to the file's only mesh, whatever its name.
+- Measured in 5.2.1 (2026-10-20), FBX and material maps: base color, normal (through a Normal Map
+  node) and emission travel. Metallic and roughness travel only when an image links straight to the
+  input. The glTF importer's layout, one image through Separate Color (green to roughness, blue to
+  metallic), loses both: a generated chest re-imported with Metallic 0 and Roughness 0.5. The
+  `godot` and `gltf` GLBs keep all five.

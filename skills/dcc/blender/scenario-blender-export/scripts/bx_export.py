@@ -3,8 +3,10 @@ bx_export: engine-ready exports from Blender 5.2, checked by re-importing them.
 
   import sys; sys.path.append("<skills>/scenario-blender-export/scripts"); import bx_export as bxe
 
+  bxe.ground(["Crate"], width=0.9)                                # base center at the origin, real size
   bxe.export("/abs/out/Crate.fbx", "unity", objects=["Crate"])   # preset, then operator overrides
   bxe.round_trip("/abs/out/Crate.fbx", objects=["Crate"])         # re-import in a background Blender
+  bxe.extra_maps(["Crate"], "/abs/out", "unity")                  # metallic/roughness maps an FBX drops
   bxe.glb_summary("/abs/out/crate.glb")                           # no Blender needed
   bxe.lods("Crate", ratios=(0.5, 0.25))                           # Crate_LOD0..2 under an empty
   bxe.collision("Crate", "unreal")                                # UCX_Crate_00; "godot": Crate-convcolonly
@@ -73,14 +75,17 @@ PRESETS = {
     "print": (".stl", "wm.stl_export", dict(export_selected_objects=True, apply_modifiers=True,
                                              global_scale=1000.0)),
 }
-# Which presets carry armatures, actions and shape keys through the file.
+# Which presets carry armatures, actions, shape keys and image maps through the file.
 CARRIES = {
-    "unity": set(), "unreal": set(), "roblox": {"armature", "shape_keys"}, "print": set(),
-    "unity_skeletal": {"armature", "actions", "shape_keys"},
-    "unreal_skeletal": {"armature", "actions", "shape_keys"},
-    "godot": {"armature", "actions", "shape_keys"}, "gltf": {"armature", "actions", "shape_keys"},
-    "web": {"armature", "actions", "shape_keys"}, "usd": {"shape_keys"}, "usdz": {"shape_keys"},
+    "unity": {"maps"}, "unreal": {"maps"}, "roblox": {"armature", "shape_keys", "maps"}, "print": set(),
+    "unity_skeletal": {"armature", "actions", "shape_keys", "maps"},
+    "unreal_skeletal": {"armature", "actions", "shape_keys", "maps"},
+    "godot": {"armature", "actions", "shape_keys", "maps"},
+    "gltf": {"armature", "actions", "shape_keys", "maps"},
+    "web": {"armature", "actions", "shape_keys", "maps"}, "usd": {"shape_keys"}, "usdz": {"shape_keys"},
 }
+# Principled BSDF inputs whose image maps inspect_scene() lists and compare() checks.
+MAP_INPUTS = ("Base Color", "Metallic", "Roughness", "Normal", "Emission Color")
 # Presets that rescale on the way out: STL in millimeters.
 SCALE = {"print": 1000.0}
 IMPORTERS = {
@@ -161,6 +166,36 @@ def _pack_unsaved_images(objs, tmp):
     return swaps, copies
 
 
+def _fed_by_image(sock):
+    stack, seen = [lk.from_node for lk in sock.links], set()
+    while stack:
+        n = stack.pop()
+        if n in seen:
+            continue
+        seen.add(n)
+        if n.type == "TEX_IMAGE" and n.image:
+            return True
+        if n.type == "GROUP" and n.node_tree and next(_image_nodes(n.node_tree, set()), None):
+            return True
+        stack.extend(lk.from_node for i in n.inputs for lk in i.links)
+    return False
+
+
+def _principled(mat):
+    tree = mat.node_tree if mat else None
+    return next((n for n in tree.nodes if n.type == "BSDF_PRINCIPLED"), None) if tree else None
+
+
+def _maps(obj):
+    """{material: the MAP_INPUTS an image feeds, directly or through other nodes}."""
+    out = {}
+    for s in obj.material_slots:
+        bsdf = _principled(s.material)
+        if bsdf:
+            out[s.material.name] = [k for k in MAP_INPUTS if k in bsdf.inputs and _fed_by_image(bsdf.inputs[k])]
+    return out
+
+
 def export(path, preset, objects=None, **overrides):
     """Export `objects` (default: every visible object) with a preset. Children and the
     armature of a skinned mesh are not added for you: pass them. Returns a dict."""
@@ -206,9 +241,9 @@ def export(path, preset, objects=None, **overrides):
 
 def inspect_scene(objects=None, all_actions=False):
     """What an engine would receive, measured in Blender: world size, scale, triangles,
-    shape keys, bones and actions per object. all_actions: with `objects`, also count the
-    actions stored for them (a slot named for the object), which FBX bake_anim_use_all_actions
-    and the glTF exporter write as clips."""
+    shape keys, image maps per material, bones and actions per object. all_actions: with
+    `objects`, also count the actions stored for them (a slot named for the object), which FBX
+    bake_anim_use_all_actions and the glTF exporter write as clips."""
     bpy.context.view_layer.update()
     dg = bpy.context.evaluated_depsgraph_get()
     objs = _objects(objects)
@@ -238,6 +273,7 @@ def inspect_scene(objects=None, all_actions=False):
             o.evaluated_get(dg).to_mesh_clear()
             keys = o.data.shape_keys
             info["shape_keys"] = [k.name for k in keys.key_blocks[1:]] if keys else []
+            info["maps"] = _maps(o)
         elif o.type == "ARMATURE":
             info["bones"] = len(o.data.bones)
             info["deform_bones"] = sum(b.use_deform for b in o.data.bones)
@@ -281,6 +317,12 @@ def compare(before, after, carries=("armature", "actions", "shape_keys"), tol=0.
                 diffs.append(f"{name}: {b['tris']} triangles became {a['tris']}")
             if "shape_keys" in carries and set(b["shape_keys"]) - set(a["shape_keys"]):
                 diffs.append(f"{name}: lost shape keys {sorted(set(b['shape_keys']) - set(a['shape_keys']))}")
+            am = a.get("maps", {})
+            for mat, socks in b.get("maps", {}).items() if "maps" in carries else ():
+                got = am.get(mat) or next((v for k, v in am.items() if k.split(".")[0] == mat), [])
+                lost = [k for k in socks if k not in got]
+                if lost:
+                    diffs.append(f"{name}: material {mat} lost its {', '.join(lost)} map{'s' * (len(lost) > 1)}")
         else:
             want = b.get("deform_bones", b["bones"]) if deform_only else b["bones"]
             if a["bones"] != want:
@@ -358,6 +400,128 @@ def glb_summary(path):
         "materials": len(g.get("materials", [])),
         "images": [i.get("mimeType", os.path.splitext(i.get("uri", ""))[1]) for i in g.get("images", [])],
     }
+
+
+def ground(objects=None, height=None, width=None):
+    """Bake each mesh's transform into its data, then move the meshes together so the center
+    of their base sits at the origin, scaled to a real size: height (Z) or width (the longer
+    horizontal side), in meters. Each mesh comes out unparented with an identity transform:
+    the engine imports scale 1 with the pivot on the floor. Static meshes only."""
+    if height and width:
+        raise ValueError("give height or width, not both")
+    objs = [o for o in _objects(objects) if o.type == "MESH"]
+    for o in objs:
+        if o.parent_type == "ARMATURE" or any(m.type == "ARMATURE" for m in o.modifiers):
+            raise ValueError(f"{o.name} is skinned: ground() would move it off its armature")
+    bpy.context.view_layer.update()
+    worlds = {o: o.matrix_world.copy() for o in objs}
+    for o, w in worlds.items():
+        if o.data.users > 1:
+            o.data = o.data.copy()
+        o.parent = None
+        o.data.transform(w, shape_keys=True)
+        if w.determinant() < 0:  # a mirrored object: transform() keeps the winding
+            o.data.flip_normals()
+        o.matrix_world = Matrix.Identity(4)
+    bpy.context.view_layer.update()
+    pts = [Vector(c) for o in objs for c in o.bound_box]
+    lo = Vector([min(p[k] for p in pts) for k in range(3)])
+    hi = Vector([max(p[k] for p in pts) for k in range(3)])
+    size = hi - lo
+    s = height / size.z if height else width / max(size.x, size.y) if width else 1.0
+    m = Matrix.Scale(s, 4) @ Matrix.Translation(-Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z)))
+    for o in objs:
+        o.data.transform(m, shape_keys=True)
+    bpy.context.view_layer.update()
+    return {"objects": [o.name for o in objs], "scale": round(s, 6), "size": [round(v * s, 4) for v in size]}
+
+
+def _source(sock):
+    """What feeds a Principled input: ("const", value), ("image", image, channel, factor), or
+    ("node", type) for anything extra_maps() cannot read (a ramp, a math chain)."""
+    factor = 1.0
+    while sock.is_linked:
+        lk = sock.links[0]
+        n = lk.from_node
+        if n.type == "TEX_IMAGE" and n.image:
+            return ("image", n.image, 3 if lk.from_socket.name == "Alpha" else 0, factor)
+        if n.type == "SEPARATE_COLOR" and n.mode == "RGB" and n.inputs[0].is_linked:
+            up = n.inputs[0].links[0].from_node
+            if up.type == "TEX_IMAGE" and up.image:
+                return ("image", up.image, ("Red", "Green", "Blue").index(lk.from_socket.name), factor)
+        if n.type == "MATH" and n.operation == "MULTIPLY" and n.inputs[0].is_linked != n.inputs[1].is_linked:
+            sock, const = (n.inputs[0], n.inputs[1]) if n.inputs[0].is_linked else (n.inputs[1], n.inputs[0])
+            factor *= const.default_value
+            continue
+        return ("node", n.type)
+    return ("const", sock.default_value)
+
+
+def _plane(src, w, h, np):
+    if src[0] == "const":
+        return np.full(w * h, src[1], np.float32)
+    _, img, ch, factor = src
+    tmp = None
+    if tuple(img.size) != (w, h):
+        img = tmp = img.copy()
+        img.scale(w, h)
+    px = np.empty(w * h * 4, np.float32)
+    img.pixels.foreach_get(px)
+    if tmp:
+        bpy.data.images.remove(tmp)
+    return np.clip(px[ch::4] * factor, 0.0, 1.0)
+
+
+def _write_png(path, w, h, planes, np):
+    """8-bit PNG of the raw values, no color management: one plane is grayscale, four RGBA."""
+    import zlib
+    px = np.stack(planes, axis=1).reshape(h, w, len(planes))[::-1]  # Blender rows run bottom up
+    px = np.round(np.clip(px, 0.0, 1.0) * 255).astype(np.uint8)
+    raw = b"".join(b"\x00" + row.tobytes() for row in px)
+
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+    head = struct.pack(">IIBBBBB", w, h, 8, 0 if len(planes) == 1 else 6, 0, 0, 0)
+    with open(path, "wb") as f:
+        f.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", head) + chunk(b"IDAT", zlib.compress(raw, 6))
+                + chunk(b"IEND", b""))
+    return path
+
+
+def extra_maps(objects, out_dir, engine="unity"):
+    """Metallic and roughness as files to assign in the engine. An FBX keeps those maps only
+    when an image links straight to the input, and a glTF import routes one packed image
+    through Separate Color, so the FBX loses them. engine "unity":
+    <material>_MetallicSmoothness.png, metallic in RGB and smoothness (1 - roughness) in alpha.
+    Any other engine: <material>_Metallic.png and <material>_Roughness.png, 8-bit grayscale.
+    Values are written raw (linear). Returns {"written": {material: [paths]}, "skipped": {material: reason}}."""
+    import numpy as np
+    os.makedirs(out_dir, exist_ok=True)
+    out = {"written": {}, "skipped": {}}
+    mats = {s.material for o in _objects(objects) if o.type == "MESH" for s in o.material_slots if s.material}
+    for mat in sorted(mats, key=lambda m: m.name):
+        bsdf = _principled(mat)
+        if bsdf is None:
+            out["skipped"][mat.name] = "no Principled BSDF"
+            continue
+        src = {k: _source(bsdf.inputs[k]) for k in ("Metallic", "Roughness")}
+        odd = [f"{k} comes through a {s[1]} node" for k, s in src.items() if s[0] == "node"]
+        if odd:
+            out["skipped"][mat.name] = "; ".join(odd) + ": bake it to an image first"
+            continue
+        if all(s[0] == "const" for s in src.values()):
+            out["skipped"][mat.name] = "no image map: type the values into the engine material"
+            continue
+        w, h = max((tuple(s[1].size) for s in src.values() if s[0] == "image"), key=lambda wh: wh[0] * wh[1])
+        metal, rough = _plane(src["Metallic"], w, h, np), _plane(src["Roughness"], w, h, np)
+        stem = os.path.join(out_dir, bpy.path.clean_name(mat.name))
+        if engine == "unity":
+            paths = [_write_png(stem + "_MetallicSmoothness.png", w, h, (metal, metal, metal, 1.0 - rough), np)]
+        else:
+            paths = [_write_png(stem + "_Metallic.png", w, h, (metal,), np),
+                     _write_png(stem + "_Roughness.png", w, h, (rough,), np)]
+        out["written"][mat.name] = paths
+    return out
 
 
 def lods(obj, ratios=(0.5, 0.25)):
