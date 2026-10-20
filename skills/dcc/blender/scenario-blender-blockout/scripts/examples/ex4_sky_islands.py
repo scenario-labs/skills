@@ -16,15 +16,14 @@ import sys
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import ex_common  # noqa: E402
-from ex_common import B, K, bpy, finish, pose, start, sun  # noqa: E402
+from ex_common import CAST as CAST_ARG, B, K, bpy, finish, pose, start, sun  # noqa: E402
 
 FPS, SECS = 24, 12
 END = FPS * SECS
 C = start(FPS, SECS, world_rgb=(0.46, 0.58, 0.74))
 pal = K.scheme("category")
 fid = "shaped"
-STYLE = ex_common.CAST or "featured"
+STYLE = CAST_ARG or "featured"  # aliased: CAST below is this scene's character list
 CAPSULES = STYLE in ("capsule", "featured")
 GRASS, CLOUD = pal["vegetation"], (0.93, 0.93, 0.95)
 rng = random.Random(21)
