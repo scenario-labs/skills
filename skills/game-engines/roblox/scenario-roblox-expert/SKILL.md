@@ -95,9 +95,9 @@ data model plan and owners into the plan.
 2. **Place.** `new_place` then `open_place` inside `place_slot`, once. `new_place` overwrites
    `<dir>/default.project.json`: `dir` is a new folder of your own, never the user's project. For an
    existing game, merge a copy of the user's saved place with the code build
-   (scenario-roblox-tooling P15, `merge_place`) and open the merge, never the user's file. Edit a
-   worktree or copy of their sources: their `rojo serve` syncs `src/` into their window. GATE:
-   `open_places()` lists it; `Audit` tally has no error.
+   (scenario-roblox-tooling P15, `merge_place`, which runs in any repository) and open the merge,
+   never the user's file. Edit a worktree or copy of their sources: their `rojo serve` syncs `src/`
+   into their window. GATE: `open_places()` lists it; `Audit` tally has no error.
 3. **Baseline.** `Audit`, `Spec` tests that fail first, captures from fixed cameras, `Stats.frames`
    in a playtest. GATE: numbers recorded, sheet opened.
 4. **Build one stage** with idempotent chunks or files; route domain work to its owner (below).

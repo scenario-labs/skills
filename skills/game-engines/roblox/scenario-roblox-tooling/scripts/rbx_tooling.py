@@ -29,6 +29,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -319,14 +320,22 @@ def merge_place(root: str | Path, base: str | None = None, code: str = "build/sh
 
     Returns {exit, places: [report per place]}. exit 2: the base holds content the publish API does
     not update, so a person publishes the merged file from Studio. live_versions: JSON from
-    tools/place_versions; a base older than its build place's newest version is refused (exit 1)."""
+    tools/place_versions; a base older than its build place's newest version is refused (exit 1).
+    A root that scaffold() did not create runs the template's script, with its ShipCheck, from a
+    temporary folder; paths still resolve against root."""
     root = Path(root).resolve()
     if manifest:
         args = ["--manifest", manifest] + (["--live-versions", live_versions] if live_versions else [])
     else:
         args = ["--code", code, "--out", out, "--project", project] + (["--base", base] if base else [])
-    r = subprocess.run(["lune", "run", "tools/merge_place", *args], cwd=root, capture_output=True, text=True,
-                       timeout=600)
+    with tempfile.TemporaryDirectory() as tmp:
+        script = "tools/merge_place"
+        if not (root / "tools" / "merge_place.luau").exists():
+            kit = Path(tmp) / "tools" / "testkit"
+            kit.mkdir(parents=True)
+            shutil.copyfile(KIT / "ShipCheck.luau", kit / "ShipCheck.luau")
+            script = str(shutil.copyfile(TEMPLATE / "tools" / "merge_place.luau", kit.parent / "merge_place.luau"))
+        r = subprocess.run(["lune", "run", script, *args], cwd=root, capture_output=True, text=True, timeout=600)
     places = [json.loads(ln) for ln in r.stdout.splitlines() if ln.startswith("{")]
     return {"exit": r.returncode, "places": places, "stderr": r.stderr[-2000:],
             "messages": [ln for ln in r.stdout.splitlines() if ln and not ln.startswith("{")]}
