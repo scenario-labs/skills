@@ -137,7 +137,7 @@ class LookTests(unittest.TestCase):
         f = grade.finish_filter({"vignette": "PI/5", "grain": 6, "halation": {"threshold": 0.5}})
         self.assertEqual(len(f), 3)
         self.assertIn("curves=all='0/0 0.5/0 1/1'", f[0])
-        self.assertEqual(f[1:], ["vignette=angle=PI/5:mode=forward", "noise=alls=6:allf=t"])
+        self.assertEqual(f[1:], ["vignette=angle=PI/5:mode=forward", "format=yuv444p,noise=c0s=6:c0f=t"])
 
     def test_every_shipped_look_bakes(self):
         """The library and the example set only use known ops with valid arguments."""

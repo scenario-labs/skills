@@ -50,7 +50,8 @@ Running a preset:
 
 1. `model_schema_get` on both ids and read `lutStyle`'s allowed values; never guess them. Shortlist
    only values the video tool lists too.
-2. Try two or three presets on one still with the image tool.
+2. Try two or three presets on one still with the image tool. Names do not say which input a preset
+   expects, so compare similar ones (two print emulations of one stock) side by side.
 3. `upload_asset` the clip, price it with `model_run` and `dry_run=true`, run the pick, `jobs_wait`,
    then `asset_download`.
 4. `ffprobe` the result: at authoring time the video tool could return MPEG-4 Part 2. Re-encode for

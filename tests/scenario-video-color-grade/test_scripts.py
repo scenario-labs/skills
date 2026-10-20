@@ -56,6 +56,13 @@ class ScriptTests(unittest.TestCase):
         corner = masked[2, 2]
         self.assertLessEqual(corner.max() - corner.min(), 2)  # outside the mask: black and white
 
+    def test_grain_leaves_black_and_white_gray(self):
+        looks = {"bw": {"name": "BW", "ops": [{"op": "mono"}], "grain": 10}}
+        (self.dir / "bw.json").write_text(json.dumps(looks))
+        self.run_ok("render_looks.py", "clip.mp4", "--looks", "bw.json", "--out", "s", "--frame", "3")
+        px = np.asarray(Image.open(self.dir / "s/bw.png").convert("RGB")).astype(int)
+        self.assertLessEqual((px.max(2) - px.min(2)).max(), 3)
+
     def test_video_render_keeps_frame_count_and_audio(self):
         Image.new("RGB", (40, 30), (230, 140, 60)).save(self.dir / "ref.png")
         self.run_ok("match.py", "clip.mp4", "ref.png", "match/reference.json")

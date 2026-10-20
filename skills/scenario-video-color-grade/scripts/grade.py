@@ -283,7 +283,8 @@ def finish_filter(look):
     if look.get("vignette"):
         f.append(f"vignette=angle={look['vignette']}:mode=forward")
     if look.get("grain"):
-        f.append(f"noise=alls={look['grain']}:allf=t")
+        # Luma only: noise on RGB or chroma planes puts colored specks on black-and-white looks.
+        f.append(f"format=yuv444p,noise=c0s={look['grain']}:c0f=t")
     return f
 
 
