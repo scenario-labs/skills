@@ -49,7 +49,7 @@ node scripts/render-loop.mjs --qa loop.mp4 composite.mp4   # seam and format che
   with the frame at 0 s. It also compares the step across the loop point with the motion around it
   and at every cycle boundary.
 - A render refuses to encode unless the check prints `PASS`. `--ignore-seam` is only for a cut
-  designed to sit at the loop point.
+  designed to sit at the loop point; it waives the seam verdict of both checks.
 - Defaults, the settings the 80 loops shipped with: 24 fps, 8 motion-blur sub-frames over a 180
   degree shutter, 2x supersampling, H.264 High, CRF 16, 4:2:0, BT.709 limited range, faststart.
 - A full 1080p render took about 6 minutes at authoring time (about 1.3 s per frame). Run it with a
@@ -104,7 +104,8 @@ and optionally a version where the mascot waves.
 
    Without a file, use `"capability": "txt2img"` and describe the mascot. Prefer a member whose
    `model_schema_get` schema offers a transparent background. Otherwise remove the background
-   afterwards per `scenario-image-editing`. Price with `dry_run`, wait for the user's go, run, then
+   afterwards per `scenario-image-editing`. Price with `dry_run` and wait for the user's go.
+   Unattended, run only within a budget the task states; otherwise stop and report the price. Then
    `asset_download` with `"format": "png"` and `curl -L -o subject.png "<url>"` into the folder of
    `mascot-loop.html`.
 

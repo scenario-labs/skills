@@ -28,7 +28,7 @@ Options:
   --params <query>   extra page parameters, e.g. "tone=light&overlay=subject.png"
   --psnr <seconds>   after encoding, compare that frame with its lossless render
   --channel <name>   browser channel, e.g. "chrome" for an installed Google Chrome
-  --ignore-seam      encode even if the loop seam check fails (a designed cut at the loop point)
+  --ignore-seam      pass a seam jump in both checks (a cut designed to sit at the loop point)
   --force            overwrite existing output files
   -h, --help         show this help
 
@@ -171,20 +171,25 @@ function qa(file) {
   // A player guesses the colors of a file without all three BT.709 tags, and guesses vary.
   const tags = [s.color_space, s.color_primaries, s.color_transfer];
   const tagged = tags.every((v) => v === "bt709");
-  const verdict = jump
-    ? "CHECK SEAM"
-    : dup
-      ? "DUPLICATE FRAME?"
-      : tagged
-        ? "ok"
-        : "UNTAGGED COLOR";
+  // --ignore-seam covers a cut designed to sit at the loop point, here as in the page check.
+  const ignored = jump && opt["ignore-seam"];
+  const verdict =
+    jump && !ignored
+      ? "CHECK SEAM"
+      : dup
+        ? "DUPLICATE FRAME?"
+        : !tagged
+          ? "UNTAGGED COLOR"
+          : ignored
+            ? "ok (seam jump ignored)"
+            : "ok";
   console.log(
     `${path.basename(file)}: ${s.width}x${s.height} ${s.r_frame_rate} fps, ${n} frames, ` +
       `${Number(f.duration).toFixed(2)} s, ${(Number(f.bit_rate) / 1e6).toFixed(1)} Mbps, ` +
       `${s.pix_fmt} ${tags.map((v) => v || "?").join("/")}/${s.color_range || "?"}; loop point steps ` +
       `${seamPair.map((v) => v.toFixed(2)).join(", ")} vs up to ${ref.toFixed(2)} around it -> ${verdict}`,
   );
-  return verdict === "ok";
+  return verdict.startsWith("ok");
 }
 
 if (opt.qa) {

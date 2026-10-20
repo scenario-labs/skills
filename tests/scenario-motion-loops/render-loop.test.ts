@@ -118,6 +118,26 @@ describe("render-loop.mjs --qa", () => {
     expect(r.code).toBe(1);
   }, 30000);
 
+  it("passes a jump at the loop point with --ignore-seam", () => {
+    const r = run([
+      "--qa",
+      "--ignore-seam",
+      clip("designed-cut.mp4", 1 / 3, 48),
+    ]);
+    expect(r.out).toMatch(/ok \(seam jump ignored\)/);
+    expect(r.code).toBe(0);
+  }, 30000);
+
+  it("still flags untagged color with --ignore-seam", () => {
+    const r = run([
+      "--qa",
+      "--ignore-seam",
+      clip("designed-cut-untagged.mp4", 1 / 3, 48, false),
+    ]);
+    expect(r.out).toMatch(/UNTAGGED COLOR/);
+    expect(r.code).toBe(1);
+  }, 30000);
+
   it("flags a clip without BT.709 primaries and transfer tags", () => {
     const r = run(["--qa", clip("untagged.mp4", 0.5, 48, false)]);
     expect(r.out).toMatch(/UNTAGGED COLOR/);
