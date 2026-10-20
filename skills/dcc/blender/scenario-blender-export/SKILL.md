@@ -109,7 +109,8 @@ blender -b --factory-startup --python-exit-code 1 -P bx_export.py -- \
 For every model in the folder (GLB, glTF, FBX, OBJ, USD, STL, PLY): import into an empty scene, run
 the delivery gate, export with the preset, re-import and compare. It writes `/abs/out/report.json`
 with each file's gate errors, size and round-trip differences. One failing file never stops the
-folder: it gets a `failed` entry. Open the report before calling the batch done.
+folder: it gets a `failed` entry. Two inputs sharing a name keep their format in the output name
+(`hero_fbx.glb`, `hero_glb.glb`). Open the report before calling the batch done.
 
 ## Worked example: a generated GLB to Unity and Godot
 

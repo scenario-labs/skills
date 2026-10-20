@@ -443,11 +443,13 @@ def batch(src, dst, preset, profile="game", gate=True):
     ext = PRESETS[preset][0]
     os.makedirs(dst, exist_ok=True)
     report = {"preset": preset, "profile": profile, "files": {}}
-    for fn in sorted(os.listdir(src)):
+    models = [fn for fn in sorted(os.listdir(src)) if os.path.splitext(fn)[1].lower() in IMPORTERS]
+    stems = [os.path.splitext(fn)[0] for fn in models]
+    for fn in models:
         stem, e = os.path.splitext(fn)
-        if e.lower() not in IMPORTERS:
-            continue
-        r = report["files"][fn] = {}
+        # hero.fbx and hero.glb would both write hero<ext>: keep the source format in the name.
+        name = stem + ext if stems.count(stem) == 1 else f"{stem}_{e[1:].lower()}{ext}"
+        r = report["files"][fn] = {"out": name}
         try:
             bpy.ops.wm.read_factory_settings(use_empty=True)
             _op(IMPORTERS[e.lower()])(filepath=os.path.join(src, fn))
@@ -456,7 +458,7 @@ def batch(src, dst, preset, profile="game", gate=True):
                 g = bx_audit.deliverable(meshes, profile=profile)
                 r["gate"] = {"pass": g["pass"], "errors": g["errors"], "warnings": len(g["warnings"])}
             before = inspect_scene()
-            out = os.path.join(dst, stem + ext)
+            out = os.path.join(dst, name)
             r["export"] = export(out, preset)["bytes"]
             r["diffs"] = compare(before, inspect_file(out), CARRIES[preset], scale=SCALE.get(preset, 1.0),
                                  deform_only=PRESETS[preset][2].get("use_armature_deform_only", False))

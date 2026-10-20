@@ -7,6 +7,7 @@ Run by test_live_export.py:
 import json
 import math
 import os
+import shutil
 import sys
 import zipfile
 
@@ -157,6 +158,9 @@ src = os.path.join(TMP, "batch_in")
 os.makedirs(src)
 os.replace(files["gltf"], os.path.join(src, "crate.glb"))
 cases["batch"] = bxe.batch(src, os.path.join(TMP, "batch_out"), "godot")
+shutil.copy(files["unity"], os.path.join(src, "crate.fbx"))
+cases["batch_shared_stem"] = bxe.batch(src, os.path.join(TMP, "batch_out2"), "godot")
+cases["batch_shared_stem_files"] = sorted(os.listdir(os.path.join(TMP, "batch_out2")))
 # A review render, then its camera removed: the view layer keeps a None entry
 # until its next update, and export() must still work.
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -208,7 +212,8 @@ tex.image = img
 bsdf = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
 mat.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
 bxe.export(os.path.join(TMP, "packed.fbx"), "unity", ["Crate"])
-data, rel, i = open(os.path.join(TMP, "packed.fbx"), "rb").read(), set(), 0
+with open(os.path.join(TMP, "packed.fbx"), "rb") as f:
+    data, rel, i = f.read(), set(), 0
 while (i := data.find(b"RelativeFilenameS", i)) >= 0:
     n = int.from_bytes(data[i + 17:i + 21], "little")
     rel.add(data[i + 21:i + 21 + n].decode())
@@ -228,9 +233,11 @@ tex.image = gen
 bsdf = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
 mat.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
 r = bxe.export(os.path.join(TMP, "generated.fbx"), "unity", ["Crate"])
+with open(os.path.join(TMP, "generated.fbx"), "rb") as f:
+    png_bytes = f.read().count(b"\x89PNG")
 cases["generated_fbx"] = {
     "packed": r["packed_unsaved_images"],
-    "png_bytes": open(os.path.join(TMP, "generated.fbx"), "rb").read().count(b"\x89PNG"),
+    "png_bytes": png_bytes,
     "source_after": gen.source, "name_after": gen.name, "node_kept": tex.image == gen,
     "images_after": sorted(i.name for i in bpy.data.images),
 }

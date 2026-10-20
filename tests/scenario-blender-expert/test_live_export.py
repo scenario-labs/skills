@@ -122,6 +122,13 @@ class Presets(unittest.TestCase):
         self.assertTrue(r["gate"]["pass"], r["gate"]["errors"])
         self.assertGreater(r["export"], 0)
         self.assertEqual(r["diffs"], [])
+        self.assertEqual(r["out"], "crate.glb")
+
+    def test_batch_keeps_inputs_that_share_a_stem(self):
+        files = self.c["batch_shared_stem"]["files"]
+        self.assertEqual({k: v["out"] for k, v in files.items()},
+                         {"crate.fbx": "crate_fbx.glb", "crate.glb": "crate_glb.glb"})
+        self.assertEqual(self.c["batch_shared_stem_files"], ["crate_fbx.glb", "crate_glb.glb", "report.json"])
 
     def test_export_after_a_render_and_a_removed_object(self):
         self.assertGreater(self.c["after_render"], 0)
