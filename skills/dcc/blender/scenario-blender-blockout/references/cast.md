@@ -109,8 +109,9 @@ two shots, 4 to 6 s) twice: once with `featured` capsules and once with `jointed
 mannequins, same references, same prompt except the stand-in clause. Keep the same speed: a legged
 runner plants at most 0.5 x height per step, so it takes shorter, quicker steps than a capsule at a
 run stride. Use the model's draft or lowest resolution when it has one. Tell the user what each
-style costs in control (gait and gestures from the blockout versus from the model), that the legged
-variant's cadence differs too, and which one won on this model, and offer the other as an option.
+style costs in control (gait and gestures from the blockout versus from the model) and that the
+legged variant's cadence differs too. Then say which one won on this model, and offer the other as
+an option.
 
 ## Results (Sky Islands, October 2026)
 
