@@ -8,10 +8,9 @@ license: MIT
 
 ## Overview
 
-Scenario runs text-to-3D, image-to-3D, and 3D-to-3D models behind the same MCP generation loop used
-for images. The most reliable pipeline generates a concept image first, then feeds it to an
-image-to-3D model; direct text-to-3D exists (`txt23d`) but image-to-3D has the larger catalog and
-more art direction control. Per-family contracts: `scenario-meshy`, `scenario-rodin`,
+Scenario runs text-to-3D, image-to-3D, and 3D-to-3D models through the same MCP loop as images.
+Generate a concept image first, then run image-to-3D: it has a larger catalog and more art direction
+than text-to-3D (`txt23d`). Per-family contracts: `scenario-meshy`, `scenario-rodin`,
 `scenario-sparc3d`. Walkable scenes and Gaussian splats: `scenario-3d-worlds`. PBR retexture of a
 finished mesh or scene: `scenario-patina-retexture`. Inside Blender, through the Scenario for
 Blender extension: `scenario-blender`. Connection and the core loop: the `scenario` skill. If a
@@ -32,187 +31,195 @@ flag the gap.
 
 ## Worked example: concept image to game-ready mesh
 
-A realistic sequence for "make a 3D treasure chest prop". Before step 1, run the `recommend` call
-for every later step (step 2, plus any rig or retexture): it is the plan check, and an entry marked
-`requires_plan_upgrade` fails with a 403 naming the plan (`ModelAccessRestrictedError`) only after
-the steps before it were paid, so settle the upgrade or pick another member first.
+Sequence for "make a 3D treasure chest prop".
 
-Price a batch per asset from one real concept: `dry_run` each candidate on it (later legs per step
-4), times the count. At authoring time one LLM-based member quoted 1,300 CU at its default effort, a
-single-image Tripo generator 45; past the plan's credits each job's wait grows with its cost.
+- **Plan check.** Before step 1, run `recommend` for every later step (step 2, plus any rig or
+  retexture). An entry marked `requires_plan_upgrade` fails with a 403
+  (`ModelAccessRestrictedError`) only after earlier steps were paid: settle the upgrade or pick
+  another member first.
+- **Batch price.** Price per asset from one real concept: `dry_run` each candidate on it (later legs
+  per step 4), times the count. At authoring time one LLM-based member quoted 1,300 CU at its
+  default effort, a single-image Tripo generator 45. Past the plan's credits, each job's wait grows
+  with its cost.
 
 1. Generate the concept: pick a text-to-image model via `recommend` with the user's own words as
-   `prompt`, then `model_schema_get` and `model_run` with a prompt describing a single centered
-   subject on a plain background. If the user has a reference, `upload_asset` it (plus
-   `upload_asset_complete` when multipart) and pass that asset ID instead.
-2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
-   the Hunyuan 3D, Meshy, Tripo, and Trellis families, and Scenario's own LLM-based 3D generation,
-   GPT-6 Astra 3D, and Claude Opus 5.5 3D (the cheaper of the two at authoring time; compare both
-   with `dry_run`), which reconstruct one object from 1 to 8 photos or renders into an editable mesh
-   with named parts and per-part PBR materials. Their builds suit props and hard-surface subjects,
-   not characters or creatures, and need those images (a prompt alone returned 400 at authoring
-   time). The price rises with `buildEffort` from `standard` to `high` (the default) to `maximum`.
-   `faceBudget` caps the delivered triangle count at export (10k to 50k for a game-ready asset; the
-   default keeps fine detail and is not that). To change the result, edit it (see Refining meshes).
-3. `model_schema_get` on the chosen model. 3D schemas vary widely: single image vs multi-view
-   arrays, polycount targets, PBR toggles, topology choices.
-4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `wait=false` (`dry_run=true`
-   first), then `jobs_wait` with `job_ids=["<job_id>"]` (re-call it with the returned
-   `pending_job_ids` as `job_ids` if it times out). A downstream step (rig, retexture) has no
-   payload to `dry_run` until its input mesh exists: quote it from `recommend` as an estimate, then
-   re-price it with `dry_run` on the real asset before launching. Never `dry_run` it with a
-   placeholder id: file ids resolve before plan access is checked, so the call returns 404 and
-   proves neither price nor access.
-5. `asset_display` with the output `asset_id` to preview, then `asset_download` with `format: "glb"`
-   and `curl -L -o chest.glb "<url>"` for engine import. `asset_download` converts a mesh when
-   `format` is `glb`, `fbx`, or `obj`; omitted, it returns the stored original, a Blender file for
-   the LLM-based members. Ask for `fbx` for a Unity project without a glTF importer, and keep the
-   GLB too: at authoring time the FBX embedded only two images, so it may not carry every PBR map.
+   `prompt`, then `model_schema_get` and `model_run`. Prompt a single centered subject on a plain
+   background. Show a creature at eye level, from the side or three-quarters, every leg visible:
+   top-down hides leg undersides and body height. If the user has a reference, `upload_asset` it
+   (plus `upload_asset_complete` when multipart) and pass that asset ID instead.
+2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. If it answers
+   `ask_user` about existing concepts, step 1 made them. Live members include the Hunyuan 3D, Meshy,
+   Tripo, and Trellis families, and Scenario's own LLM-based 3D generation, GPT-6 Astra 3D, and
+   Claude Opus 5.5 3D (the cheaper at authoring time; compare both with `dry_run`).
+   - They reconstruct one object from 1 to 8 photos or renders into an editable mesh with named
+     parts and per-part PBR materials.
+   - They suit props and hard-surface subjects, not characters or creatures, and need those images
+     (a prompt alone returned 400 at authoring time).
+   - Price rises with `buildEffort`: `standard`, `high` (the default), `maximum`.
+   - `faceBudget` caps the exported triangle count (10k to 50k for a game-ready asset; the default
+     is not game-ready).
+   - To change the result, edit it (see Refining meshes).
+3. `model_schema_get` on the chosen model: 3D schemas vary widely (single image or multi-view
+   arrays, polycount targets, PBR toggles, topology).
+4. `model_run` with `parameters={"image": "asset_xxx", ...}`, `wait=false`, and `dry_run=true`
+   first, then `jobs_wait` with `job_ids=["<job_id>"]`. Re-call it with the returned
+   `pending_job_ids` if it times out. A downstream step (rig, retexture) has no payload to `dry_run`
+   until its input mesh exists: quote it from `recommend`, then re-price with `dry_run` on the real
+   asset before launching. Never `dry_run` it with a placeholder id: file ids resolve before plan
+   access is checked, so it returns 404 and proves nothing.
+5. `asset_display` the output `asset_id`, then `asset_download` with `format: "glb"` and
+   `curl -L -o chest.glb "<url>"`. `format` converts to `glb`, `fbx`, or `obj`; omitted, it returns
+   the stored original, a Blender file for the LLM-based members. Ask for `fbx` for a Unity project
+   without a glTF importer, and keep the GLB too: at authoring time the FBX embedded only two
+   images, so it may miss PBR maps.
 
-Multi-view models accept several images of one subject from different angles; the count and fields
-vary per model, so take both from `model_schema_get`. Side fields follow the subject: on the Tripo
-multi-view members at authoring time, `leftImage` is the character's own left (nose toward frame
-left) and `rightImage` the mirror. A sheet labeled by the viewer's side has them reversed, and a
-swapped pair can fuse front and back into one shell.
+Multi-view models take several images of one subject; read the count and fields off
+`model_schema_get`. Side fields follow the subject: on the Tripo multi-view members at authoring
+time, `leftImage` was the character's own left (nose toward frame left), `rightImage` the mirror. A
+sheet labeled by the viewer's side reverses them, and a swapped pair can fuse front and back into
+one shell.
 
 ## Texture and lighting controls
 
-Several image-to-3D families split texture from geometry, and each dial is one `model_schema_get`
-away, so read them before promising a look. Authoring-time examples from the Tripo members:
+Several image-to-3D families split texture from geometry. Read each dial in `model_schema_get`
+before promising a look. Authoring-time examples from the Tripo members:
 
-- `texture: false` returns a bare mesh with no texture and is a `cost_impact` field, the cheap path
-  when the user will texture in a DCC. `textureQuality` also moves the price, and a texture version
-  picker, left empty, keeps the provider's default.
-- `delight` strips lighting and shadows baked into the reference image so the mesh lights correctly
-  in the user's engine. It defaulted to on; turn it off only when painted shading is the art style.
-  The export stays a lit material either way, so for no engine relighting at all the user sets an
-  unlit shader on import.
-- The `pbr` flag's description said PBR on, its default, ignores the texture parameters. A texture
-  setting the user asked for is honored only with `pbr: false` there, so read that description on
-  the chosen member and say which one won.
-- Geometry and texture take separate seeds (`seed`, `textureSeed`): hold `seed` and the image fixed
-  and vary `textureSeed` alone for texture variants on one shape.
-- `autoSize` scales the output to real-world meters and defaulted to off: set it to `true` for a
-  real-scale engine import, or the mesh keeps its native size. `dimensions` still reads the
-  unit-normalized mesh (longest side 1.0), as the meters sit in the GLB's node scale: no proof it
-  failed.
+- `texture: false` returns a bare mesh and is a `cost_impact` field: the cheap path when the user
+  textures in a DCC. `textureQuality` also moves the price; an empty texture version picker keeps
+  the provider's default.
+- `delight` strips lighting baked into the reference so the mesh relights in the engine. It
+  defaulted to on; turn it off only when painted shading is the art style. The export stays a lit
+  material either way: for no relighting at all, the user sets an unlit shader on import.
+- `pbr`, on by default, ignored the texture parameters per its description. A requested texture
+  setting holds only with `pbr: false` there: read that description on the chosen member and say
+  which won.
+- Geometry and texture take separate seeds (`seed`, `textureSeed`): hold `seed` and the image, vary
+  `textureSeed` for texture variants on one shape.
+- `autoSize` scales the output to real-world meters and defaulted to off: set `true` for a
+  real-scale import. `dimensions` still reads the unit-normalized mesh (longest side 1.0), since the
+  meters sit in the GLB's node scale: not a failure.
 
 ## Inspecting results
 
 Hosts without MCP Apps get the `app_url` link instead of the viewer. The viewer's capture button
-calls `capture_3d_view`, an app-only tool: it uploads the current camera view as a new image asset
-and posts the `asset_id` back into the conversation. Reuse it as a generation reference or a
-similarity `search` image. Never call `capture_3d_view` yourself; it requires PNG canvas data only
-the viewer has.
+calls `capture_3d_view`, an app-only tool: it uploads the current view as an image asset and posts
+its `asset_id` into the conversation. Reuse it as a generation reference or a similarity `search`
+image. Never call `capture_3d_view` yourself: it needs PNG canvas data only the viewer has.
 
 ## Refining meshes
 
-3D-to-3D utilities cover retexturing, remeshing, UV unwrapping, and part segmentation: `recommend`
-with `capability="3d23d"` plus the operation in the user's own words. Most take the source
-`asset_id` in a `kind: "3d"` file field, usually named `model` (also `mesh`, `file3d`, `sceneFile`);
-400 `Input model is required` or `Provide a reference image or a 3D model` means the mesh went in
-under another name (an image field, or a URL), never that the tool wants something else.
+3D-to-3D utilities retexture, remesh, UV-unwrap, and segment parts: `recommend` with
+`capability="3d23d"` plus the operation in the user's own words. Most take the source `asset_id` in
+a `kind: "3d"` file field, usually `model` (also `mesh`, `file3d`, `sceneFile`). A 400
+`Input model is required` or `Provide a reference image or a 3D model` means the mesh went in under
+another name (an image field, or a URL).
 
-The LLM-based members of step 2 also edit an existing mesh, prop or character: `sceneFile` takes its
-`asset_id` (any 3D model, returned in the same format), `images` stays empty, `prompt` states the
-change, and `buildEffort` fits the change, not the object (`standard` for a recolor, `high` or
-`maximum` to add or reshape parts). GPT-6 Astra 3D's description also claimed Mixamo-named rigs,
-ARKit face shapes, animation loops, UV re-unwraps, and modular kits, so it competes in those
-`recommend` calls. At authoring time `recommend` priced no edit, but the price followed
-`buildEffort`, not the mesh, so a `dry_run` on any mesh in the project quotes it before the first
-paid step. A recolor kept every part name and the face count; a reshape is uncapped (`faceBudget` is
-ignored) and took a 4,817-triangle cat to 788,954 triangles, so plan a remesh before an engine. A
-replaced material keeps its old name; only added parts get new ones. The edit is generated: compare
-what the prompt did not name against the source.
+The LLM-based members of step 2 also edit an existing mesh, prop or character:
 
-Splitting a finished mesh into parts is a contested lane, so it stays a `recommend` pick: at
-authoring time several vendors offered mesh segmentation with a granularity control, one combined
-the split with a PBR retexture, and image-to-parts members build the parts from the picture instead.
-A convincing mesh is not a game-ready one: part separation, joint placement, materials, and
-animation are each their own pass, and polygon caps differ by topology on the members that offer
-both (a quad cap sat well under the triangle cap on one), so read the slider's `max` off the schema
-instead of promising a count. A named provider feature is a valid `search` target, but an empty
-result or one member's enum does not prove a capability absent platform-wide: `recommend` the unmet
-need (a hinged prop), inspect the returned schemas, and report it unverified if none exposes it,
-never inventing a call from the provider's site.
+- `sceneFile` takes its `asset_id` (any 3D model, returned in the same format), `images` stays
+  empty, `prompt` states the change.
+- `buildEffort` fits the change, not the object: `standard` for a recolor, `high` or `maximum` to
+  add or reshape parts.
+- Price follows `buildEffort`, not the mesh, and `recommend` priced no edit at authoring time: a
+  `dry_run` on any project mesh quotes it.
+- A recolor kept every part name and the face count. A reshape is uncapped (`faceBudget` ignored):
+  it took a 4,817-triangle cat to 788,954, so plan a remesh before an engine.
+- A replaced material keeps its old name; only added parts get new ones. The edit is generated:
+  check what the prompt did not name against the source.
+- GPT-6 Astra 3D's description also claimed Mixamo-named rigs, ARKit face shapes, animation loops,
+  UV re-unwraps, and modular kits, so it competes in those `recommend` calls.
+
+Splitting a finished mesh into parts is a contested lane, so it stays a `recommend` pick. At
+authoring time several vendors offered segmentation with a granularity control, one combined it with
+a PBR retexture, and image-to-parts members built parts from the picture instead. A convincing mesh
+is not a game-ready one: part separation, joints, materials, and animation are each their own pass.
+Polygon caps differ by topology (a quad cap sat well under the triangle cap on one member): read the
+slider's `max` instead of promising a count. A named provider feature is a valid `search` target,
+but an empty result or one member's enum does not prove a capability absent platform-wide.
+`recommend` the unmet need (a hinged prop), inspect the returned schemas, and report it unverified
+if none exposes it. Never invent a call from the provider's site.
 
 ## A staged chain toward game-ready
 
-One image-to-3D run bakes its texture onto UVs the generator chose, so a mesh headed for an engine
-usually goes further run by run, each output's `asset_id` feeding the next tool's `kind: "3d"`
-field: geometry first (a multi-view member when several angles of the subject exist, with
-`texture: false` where the schema offers it, since texture comes later, and `pbr: false` beside it
-on members whose `pbr` default ignores the texture settings), then a UV unwrap, then a retexture on
-the unwrapped mesh from a prompt, an image, or a style reference, then the rig last, on the topology
-that ships. Read each retexture schema for a setting that rebuilds UVs, which would discard the
-unwrap, and for the same `pbr` default: at authoring time the Tripo texturing member defaulted to
-PBR, which ignores its texture options. When a schema says nothing about UVs, prefer a member with
-an explicit keep-existing-UVs setting. Each step after the first is a `3d23d` `recommend` pick (see
-Refining meshes) and its own billed run, so `dry_run` it on the real input before launching. Read
-input caps before chaining: one unwrapper at authoring time took meshes up to 30,000 faces, so set
-the generator's face limit under it where the schema has one (the Tripo multi-view member exposed
-`faceLimit` and a `smartLowPoly` topology switch), or remesh down first. Check each output with
-`asset_display` before feeding it on, or, where the host shows no viewer, read face count, UVs, and
-`dimensions` off `asset_get` and compare them step to step, and look at the record's thumbnail
-asset, which can lag the job by seconds (`hasUVs` only proves UVs exist, not that the layout is
-clean; an unwrapper's "albedo" PNG may be a preview, not the atlas): faces that render dark or
-inside out are flipped normals, which a later step inherits, and scale and pivot can shift between
-steps, even within one vendor's chain (`autoSize` above), so confirm both in a DCC before the rig.
-When a step returns sibling formats (a GLB beside an OBJ), feed the GLB onward unless the next
-schema asks for another or the mesh is quads, which stay in FBX (see Rigging and animation); when
-none is a GLB, feed the OBJ or FBX when the next schema lists it (a `dry_run` may price a call
-without checking the file format, so the real run is what confirms it), else convert with
-`asset_download` `format`. Fixing normals, origin, or naming by hand is DCC work, not an MCP call
-(the `scenario-blender-expert` skill drives Blender; it installs locally, never over MCP, so
-`skill_get` cannot fetch it).
+One image-to-3D run bakes its texture onto UVs the generator chose. A mesh headed for an engine
+usually goes further, each output's `asset_id` feeding the next tool's `kind: "3d"` field:
+
+1. Geometry: a multi-view member when several angles exist, with `texture: false` where offered, and
+   `pbr: false` beside it where `pbr` overrides the texture settings.
+2. UV unwrap.
+3. Retexture the unwrapped mesh from a prompt, an image, or a style reference.
+4. Rig last, on the topology that ships.
+
+Each step after the first is a `3d23d` `recommend` pick and its own billed run: `dry_run` it on the
+real input before launching. Along the chain:
+
+- **Retexture schemas.** Avoid a setting that rebuilds UVs, which discards the unwrap. Check the
+  same `pbr` default (the Tripo texturing member defaulted to PBR at authoring time). When a schema
+  is silent on UVs, prefer a member with an explicit keep-existing-UVs setting.
+- **Input caps.** One unwrapper took meshes up to 30,000 faces at authoring time: set the
+  generator's face limit under it (the Tripo multi-view member exposed `faceLimit` and
+  `smartLowPoly`), or remesh down first.
+- **Checks between steps.** `asset_display` each output. Without a viewer, compare face count, UVs,
+  and `dimensions` from `asset_get` step to step, plus the thumbnail asset, which can lag the job by
+  seconds. `hasUVs` proves UVs exist, not a clean layout; an unwrapper's "albedo" PNG may be a
+  preview, not the atlas.
+- **Inherited defects.** Faces rendering dark or inside out are flipped normals, which later steps
+  inherit. Scale and pivot can shift between steps, even within one vendor (`autoSize` above):
+  confirm both in a DCC before the rig.
+- **Sibling formats.** Feed the GLB onward unless the next schema asks otherwise or the mesh is
+  quads, which stay in FBX. With no GLB, feed the OBJ or FBX the next schema lists (a `dry_run` may
+  skip the format check, so the real run confirms it), else convert with `asset_download` `format`.
+
+Fixing normals, origin, or naming by hand is DCC work, not an MCP call. The
+`scenario-blender-expert` skill drives Blender; it installs locally, so `skill_get` cannot fetch it.
 
 ## Rigging and animation
 
-Rigging is a separate `3d23d` step on a finished mesh, not a generator flag: `recommend` with that
+Rigging is a separate `3d23d` step on a finished mesh, not a generator flag: `recommend` that
 capability plus the rigging need in the user's own words.
 
-Body plan picks the model. Humanoid models take the mesh plus at most a front-facing hint or an
-approximate height, and infer a biped skeleton. Non-biped work goes to a model exposing `rigType`,
-whose values cover `quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, and `aquatic`. A static
-prop has no body plan to rig: if `recommend` answers `ask_user`, part segmentation is the nearer
-step.
+Body plan picks the model. Humanoid riggers take the mesh plus at most a front-facing hint or an
+approximate height, and infer a biped skeleton. Non-bipeds go to a model exposing `rigType`:
+`quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, `aquatic`. A static prop has no body plan:
+if `recommend` answers `ask_user`, part segmentation is the nearer step.
 
-A character headed for a rig is built for it from the concept on. Generate the concept in a T- or
-A-pose (full body, front view, arms clear of the torso, plain background), since riggers infer
-joints from the pose. When the user wants quads, pick an image-to-3D member whose schema offers quad
-topology and set it, because the default is triangles: a `quad` switch with a lower face cap on the
-Tripo P2 and 3.1 members at authoring time, while `scenario-rodin` and `scenario-meshy` name their
-families' own controls. Quad output arrives as FBX, and glTF stores triangles only: converting it
-with `asset_download` `format: "glb"`, or feeding it to a step that accepts GLB alone, triangulates
-it again. Keep the FBX, rig it with a member whose file field lists FBX, and check the face type of
-every output in a DCC before promising quads. A rig that comes back as GLB is triangulated: deliver
-the quad FBX beside it and say so.
+A character headed for a rig starts from a T- or A-pose concept (full body, front view, arms clear
+of the torso, plain background): riggers infer joints from the pose. For quads:
+
+- Pick an image-to-3D member whose schema offers quad topology and set it; the default is triangles.
+  At authoring time the Tripo P2 and 3.1 members had a `quad` switch with a lower face cap;
+  `scenario-rodin` and `scenario-meshy` name their families' controls.
+- Quad output arrives as FBX. glTF stores triangles only, so `format: "glb"` or a GLB-only step
+  triangulates it.
+- Keep the FBX, rig it with a member whose file field lists FBX, and check each output's face type
+  in a DCC before promising quads. A rig returned as GLB is triangulated: deliver the quad FBX
+  beside it and say so.
 
 Three schema details decide whether the output is usable:
 
-- **Formats.** Rigging models accept GLB, often OBJ, FBX, or STL, and expose no output-format field:
-  the rig comes back as GLB or FBX, mostly unannounced, so expect a DCC pass when the engine needs
-  the other.
+- **Formats.** Riggers accept GLB, often OBJ, FBX, or STL, and expose no output-format field. The
+  rig comes back as GLB or FBX, mostly unannounced: expect a DCC pass when the engine needs the
+  other.
 - **Size ceiling.** A file `max_size` is rare (one humanoid rigger capped at 30 MB): check the
-  schema before decimating a large mesh.
-- **Animation versus rig.** Where a rigger exposes `animation` it retargets a preset clip, and its
-  `allowed_values` are rig-type prefixed (`quadruped:walk`), so read them rather than guess. By
-  default only the retarget file comes back: set `includeRiggedModel` to keep the plain rigged mesh
-  too (the two come back as separate assets with identical `metadata`, so `asset_get` tells them
-  apart: the retarget has `properties.hasAnimations` true and an `animationFrameCount`, the plain
-  rig false and null, and their order is not guaranteed).
+  schema before decimating.
+- **Animation versus rig.** Where a rigger exposes `animation`, it retargets a preset clip; its
+  `allowed_values` are rig-type prefixed (`quadruped:walk`), so read them. By default only the
+  retarget file comes back: set `includeRiggedModel` to keep the plain rig too. The two arrive as
+  separate assets with identical `metadata`, in no set order. `asset_get` tells them apart: the
+  retarget has `properties.hasAnimations` true and an `animationFrameCount`, the plain rig false and
+  null.
 
 When only motion is wanted, motion-transfer video models animate a still character image with no
-skeleton at all: see `scenario-video`. Video-to-motion models that auto-rig an uploaded mesh are the
-one place an `outputFormat` enum picks the engine target.
+skeleton: see `scenario-video`. Video-to-motion models that auto-rig an uploaded mesh are the one
+place an `outputFormat` enum picks the engine target.
 
 ## Common mistakes
 
-- Running `model_run` without `model_schema_get`: 3D model parameters differ far more between models
-  than image models do.
+- Running `model_run` without `model_schema_get`: 3D parameters differ far more between models than
+  image parameters do.
 - Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor).
-  Re-discover each session, `recommend` for the need or `search` for a name.
-- Promising a named skeleton, an influence count, or bones for wings and extra limbs that the chosen
-  member does not document: pick the closest body plan, then finish the rest in a DCC.
-- Sending a biped to a `rigType` model: the enum has no biped value, because humanoids have their
-  own rigging models.
+  Re-discover each session: `recommend` for a need, `search` for a name.
+- Promising a named skeleton, an influence count, or bones for wings and extra limbs the chosen
+  member does not document: pick the closest body plan, then finish in a DCC.
+- Sending a biped to a `rigType` model: the enum has no biped value; humanoids have their own
+  riggers.
