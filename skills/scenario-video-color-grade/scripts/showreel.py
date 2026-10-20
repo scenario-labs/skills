@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Showreel: every look on the clip, a typed "menu" overlay, wipes, a final grid and an end card.
+"""Showreel: every look on the clip, a typed "menu" overlay, wipes, a final grid and an optional end card.
 
   python3 showreel.py --renders DIR --looks looks.json --source 00_ungraded --out reel.mp4
-                      [--order k1,k2,...] [--music track.mp3] [--logo logo.png] [--credit "Made with"]
-                      [--no-endcard] [--header "COLOR GRADE"] [--size 1920x1080]
+                      [--order k1,k2,...] [--music track.mp3] [--logo logo.png] [--credit "Made by Studio"]
+                      [--header "COLOR GRADE"] [--size 1920x1080]
                       [--intro 3] [--seg 3] [--grid 7] [--end 4]
 
 The clip keeps playing underneath (global time is shared by every look, so a wipe between
@@ -191,7 +191,7 @@ def endcard(W, H, n, logo_path, credit):
             l.putalpha(l.getchannel("A").point(lambda v: int(v * t)))
             card.alpha_composite(l, (lx, ly))
             ly += logo.height
-        if credit:   # credit ABOVE the logo ("Made with" + logo; don't repeat the brand name)
+        if credit:   # credit ABOVE the logo
             top = (H // 2 - logo.height // 2 - 30) if logo else H // 2
             ImageDraw.Draw(card).text((cx, top - int(44 * min(W, H) / 1080)), credit, font=cf,
                                       fill=(170, 170, 178, int(255 * ease((i - 6) / 24))), anchor="ms")
@@ -209,8 +209,7 @@ def main():
     ap.add_argument("--order", default="")
     ap.add_argument("--music", default=None)
     ap.add_argument("--logo", default=None, help="white logo PNG for the end card")
-    ap.add_argument("--credit", default="Made with")
-    ap.add_argument("--no-endcard", action="store_true")
+    ap.add_argument("--credit", default="", help="end card text; the reel has an end card only with --credit or --logo")
     ap.add_argument("--header", default="COLOR GRADE")
     ap.add_argument("--source-label", default="Ungraded source")
     ap.add_argument("--source-settings", default="original footage")
@@ -223,6 +222,10 @@ def main():
     a = ap.parse_args()
     if Path(a.out).exists() and not a.force:
         ap.error(f"refusing to overwrite {a.out} (pass --force)")
+    if a.logo and not Path(a.logo).exists():
+        ap.error(f"logo not found: {a.logo}")
+    logo = a.logo
+    endcard_on = bool(logo or a.credit)
 
     renders = Path(a.renders)
     looks = grade.load_looks(a.looks)
@@ -315,7 +318,7 @@ def main():
             if pa > 0:
                 paste(fr, P.draw("compare all looks", f"{total} grades · same clip · same frame", total, total, f,
                                  appear=pa, applied=f >= 20), P.PX, P.PY)
-            fo = ease((f - (GRID - 14)) / 14) if not a.no_endcard else 0
+            fo = ease((f - (GRID - 14)) / 14) if endcard_on else 0
             if fo > 0:
                 fr = (fr * (1 - fo) + bg * fo).astype(np.uint8)
             out(fr)
@@ -325,10 +328,8 @@ def main():
     if cur:
         cur.close()
 
-    if not a.no_endcard:
-        logo = a.logo if a.logo and Path(a.logo).exists() else None
-        credit = a.credit if logo or a.credit != "Made with" else "Made with Scenario"
-        for fr in endcard(W, H, END, logo, credit):
+    if endcard_on:
+        for fr in endcard(W, H, END, logo, a.credit):
             out(fr)
             g += 1
     enc.stdin.close()

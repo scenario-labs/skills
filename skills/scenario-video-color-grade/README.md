@@ -23,7 +23,9 @@ brought to the repository's authoring contract.
 - `showreel.py`: the intro panel's slide-in offset was not scaled with the frame, so below about
   720p the panel ran past the bottom edge and `paste` crashed. The offset now scales, and `paste`
   clips to the frame.
-- `showreel.py` no longer defaults `--logo` to a bundled logo file the ZIP never shipped.
+- `showreel.py` no longer brands reels: the ZIP closed every reel on a "Made with Scenario" end card
+  unless `--no-endcard` was passed. The end card now appears only with the user's own `--credit` or
+  `--logo`, and the default to a logo file the ZIP never shipped is gone.
 - British spellings and a model name in a docstring were removed.
 
 ## Verification

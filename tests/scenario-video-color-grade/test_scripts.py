@@ -104,18 +104,24 @@ class ScriptTests(unittest.TestCase):
         with Image.open(self.dir / "key.jpg") as sheet:
             self.assertEqual(sheet.size, (960, 1080))
 
-    def test_showreel_plays_every_look_then_grid_and_end_card(self):
+    def reel(self, *extra):
         self.run_ok("render_looks.py", "clip.mp4", "--looks", "looks.json", "--out", "renders",
                     "--only", "00_ungraded,01_warm,02_relit")
+        return self.run_ok("showreel.py", "--renders", "renders", "--looks", "looks.json", "--out", "reel.mp4",
+                           "--size", "320x180", "--intro", "1", "--seg", "1", "--grid", "1", "--end", "1", *extra)
+
+    def test_showreel_plays_every_look_then_the_grid_unbranded(self):
         helpers.make_clip(self.dir / "music.m4a", seconds=1)
-        out = self.run_ok("showreel.py", "--renders", "renders", "--looks", "looks.json", "--out", "reel.mp4",
-                          "--size", "320x180", "--intro", "1", "--seg", "1", "--grid", "1", "--end", "1",
-                          "--music", "music.m4a")
+        out = self.reel("--music", "music.m4a")
         self.assertIn("look 2/2 Relit", out)
         reel = self.dir / "reel.mp4"
-        self.assertEqual(helpers.frame_count(reel), 24 * 5)
+        self.assertEqual(helpers.frame_count(reel), 24 * 4)  # intro, two looks, grid: no end card
         info = helpers.load("media").probe(reel)
         self.assertEqual((info["w"], info["h"], info["audio"]), (320, 180, True))
+
+    def test_showreel_end_card_only_with_the_users_credit(self):
+        self.reel("--credit", "Made by Test Studio")
+        self.assertEqual(helpers.frame_count(self.dir / "reel.mp4"), 24 * 5)
 
 
 if __name__ == "__main__":

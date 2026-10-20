@@ -67,7 +67,7 @@ Running a preset:
 - [match.py](scripts/match.py): measures a reference image for the `match` op, a Reinhard transfer
   in CIE Lab.
 - [showreel.py](scripts/showreel.py): a reel of every look, with a typed name panel, wipes on one
-  continuous clip, a grid finale, an end card, and optional music.
+  continuous clip, a grid finale, and an optional end card and music.
 - [grade.py](scripts/grade.py), [spatial.py](scripts/spatial.py), [media.py](scripts/media.py): the
   color ops and LUT writer, relight and keying, ffmpeg I/O. The scripts above import them.
 - [looks_library.json](assets/looks_library.json): 20 tuned starting looks, including keyed black
@@ -115,8 +115,8 @@ Running a preset:
 8. **Reel (optional)**:
    `python3 scripts/showreel.py --renders renders --looks looks.json --source 00_ungraded --out reel.mp4 --order k1,k2 --music track.mp3`.
    Put a dramatic look (duotone, noir) second or third, and prefer a clip that loops cleanly. The
-   reel normalizes music to about -18 LUFS. `--logo` (a white transparent PNG) and `--credit` set
-   the end card; `--no-endcard` drops it.
+   reel normalizes music to about -18 LUFS. The reel carries no branding by default. Add an end card
+   only when the user asks, with their own `--credit` text or `--logo` (a white transparent PNG).
 9. **Deliver** the renders, `renders/luts/*.cube` (in Premiere: Lumetri, Creative, Look), the grid,
    and the reel. Name the looks with spatial parts: their LUT alone is only the color, so an editor
    needs a mask too.
