@@ -65,6 +65,8 @@ screen ([handoff](handoff.md), tested limits).
   scaled by speed, and its arms and held props swing; `bob=False` turns that off, but a capsule that
   only glides was rendered sliding. A jointed figure or a mannequin plants each stance foot; a
   stride past 0.5 x height slides the stance foot by the excess, and the model copies that slide.
+- `B.audit_ground` reports the capsule bob as off the ground (up to 3.7 % of the height at a run).
+  Audit capsules in their own call with `tolerance=0.04 * height` of the tallest.
 - A runner's lean: tip a capsule root forward with `root.rotation_euler.x` (about 7 degrees); pose a
   jointed torso or a mannequin's `torso` bone with `K.pose`.
 - `K.pose(fig, frame, **joints_deg)` keys gestures: jointed parts, mannequin bones (same names) or a
@@ -82,7 +84,7 @@ carries, for a capsule or featured cast:
    which way they move. They are real people with natural human motion." With features, add: "The
    few small shapes on some capsules (goggles, a scarf, a hood) only say which one it is." This is
    the one place the prompt names a proxy shape: it says what the shape is not.
-2. **Mapping and order**: "red capsule in front = the leader girl with goggles and a long red scarf;
+2. **Mapping and order**: "the red one in front = the leader girl with goggles and a long red scarf;
    blue = ...", tallest and smallest named, running order stated.
 3. **Gait clause** for every shot where a character travels close enough to see: "They walk (or run)
    naturally at the pace the capsules move: heel then toe, each foot planted before the other lifts,
@@ -104,10 +106,11 @@ in one model is a reason to switch that character's style for that model, not to
 
 Before a long or expensive pass with a model not listed above, render the same short window (one or
 two shots, 4 to 6 s) twice: once with `featured` capsules and once with `jointed` figures or
-mannequins, same references, same prompt except the stand-in clause. Use the model's draft or lowest
-resolution when it has one. Tell the user what each style costs in control (gait and gestures from
-the blockout versus from the model) and which one won on this model, and offer the other as an
-option.
+mannequins, same references, same prompt except the stand-in clause. Keep the same speed: a legged
+runner plants at most 0.5 x height per step, so it takes shorter, quicker steps than a capsule at a
+run stride. Use the model's draft or lowest resolution when it has one. Tell the user what each
+style costs in control (gait and gestures from the blockout versus from the model), that the legged
+variant's cadence differs too, and which one won on this model, and offer the other as an option.
 
 ## Results (Sky Islands, October 2026)
 
