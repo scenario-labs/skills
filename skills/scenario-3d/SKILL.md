@@ -62,8 +62,8 @@ Sequence for "make a 3D treasure chest prop".
    - change a result by editing it (see Refining meshes).
 3. `model_schema_get` on the chosen model: 3D schemas vary widely (single image or multi-view
    arrays, polycount targets, PBR toggles, topology). A game-ready asset takes 10k to 50k triangles,
-   set through the member's face field; its default is not game-ready. Read the field's `min` and
-   `max` first. At authoring time:
+   set through the member's face field; its default is not game-ready. Read the field's range first:
+   `min` and `max`, or its description when they are absent. At authoring time:
    - Tripo (`faceLimit`) and Meshy (`targetPolycount`, with `shouldRemesh` on) reached both ends. At
      10k, an eight-legged creature kept every leg and claw, and a chest its padlock and handles.
      Meshy's Smart Topology members capped lower, at 15k or 30k.
