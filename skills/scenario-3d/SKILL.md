@@ -58,11 +58,17 @@ Sequence for "make a 3D treasure chest prop".
    - suit props and hard-surface subjects, not characters or creatures, and need those images (a
      prompt alone returned 400 at authoring time);
    - price by `buildEffort`: `standard`, `high` (the default), `maximum`;
-   - cap the exported triangle count with `faceBudget` (10k to 50k for a game-ready asset; the
-     default is not game-ready);
+   - cap the exported triangle count with `faceBudget` (the game range in step 3);
    - change a result by editing it (see Refining meshes).
 3. `model_schema_get` on the chosen model: 3D schemas vary widely (single image or multi-view
-   arrays, polycount targets, PBR toggles, topology).
+   arrays, polycount targets, PBR toggles, topology). A game-ready asset takes 10k to 50k triangles,
+   set through the member's face field; its default is not game-ready. Read the field's `min` and
+   `max` first. At authoring time:
+   - Tripo (`faceLimit`) and Meshy (`targetPolycount`, with `shouldRemesh` on) reached both ends. At
+     10k, an eight-legged creature kept every leg and claw, and a chest its padlock and handles.
+     Meshy's Smart Topology members capped lower, at 15k or 30k.
+   - Hunyuan 3D (`faceCount`, from 40k) and Trellis (`decimationTarget`, from 100k) start above the
+     range: generate, then remesh down (Refining meshes).
 4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `dry_run=true` to price it. Then
    run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`);
    a dry run creates no job. Re-call `jobs_wait` with the returned `pending_job_ids` if it times
