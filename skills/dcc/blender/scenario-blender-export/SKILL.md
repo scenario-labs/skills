@@ -49,7 +49,8 @@ trip only. The measurements live in [`references/engines.md`](references/engines
 2. **Size and pivot.** A generated mesh arrives at an arbitrary size with its origin at its center,
    so it sinks into the floor. `bxe.ground(parts, width=0.9)` (or `height=`, in meters) bakes the
    transforms, puts the center of the base at the origin and scales to the real size. Ask for the
-   size when the brief does not give it. Static meshes only.
+   size when the brief does not give it; unattended, pick a plausible one and state it as an
+   assumption. Static meshes only.
 3. **Pick the preset** from the table. Pass every object the file needs: a skinned mesh AND its
    armature, LOD meshes and their group, collision meshes beside their render mesh.
 4. **Export:** `bxe.export(path, preset, objects, **overrides)`. Any exporter keyword overrides the
