@@ -120,12 +120,13 @@ static center, never tracking or multi-shot (`B.rail_camera`); **Render Video** 
 
 **Headless**, with no plugin: run each stage as a script through scenario-blender-expert's headless
 helper, saving the `.blend` as its backup. Copy the
-[examples harness](scripts/examples/ex_common.py). `B.guard` and the 120 s limit are plugin-only.
+[examples harness](scripts/examples/ex_common.py). The 120 s limit is plugin-only; `B.guard` still
+opens every stage.
 
 ## 4. Build order
 
 Back up after every stage; a reset is recovered from the last backup
-([contract](references/contract.md)). Every `execute_python` call starts with
+([contract](references/contract.md)). Every call or stage script starts with
 `B.guard(expected_file=..., scene=...)`: queued calls land in whatever file is open.
 
 0. **Probe**, read-only: `scene_summary`, `datablocks_summary` (headless: `bpy.data`). Other work
