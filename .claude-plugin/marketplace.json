@@ -63,12 +63,13 @@
     },
     {
       "name": "05.-video-and-audio",
-      "description": "Video generation and editing, music, sound effects, voice, and speech.",
+      "description": "Video generation, editing, and color grading, music, sound effects, voice, and speech.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/scenario-video",
         "./skills/scenario-video-editing",
+        "./skills/scenario-video-color-grade",
         "./skills/scenario-seedance-music-video",
         "./skills/scenario-seedance-storyboard",
         "./skills/scenario-seedance-drafts",
