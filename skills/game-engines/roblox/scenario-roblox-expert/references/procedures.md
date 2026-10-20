@@ -23,7 +23,7 @@ also works).
 | Function                                                           | Returns                                                                                                                                                                                                                                        |
 | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `doctor()`                                                         | dict of tool versions and readiness (keys listed below the table)                                                                                                                                                                              |
-| `new_place(dir, name=None, template="baseplate", src=None)`        | `Path` of `<dir>/<name>.rbxl`, built by Rojo from `<dir>/default.project.json`                                                                                                                                                                 |
+| `new_place(dir, name=None, template="baseplate", src=None)`        | `Path` of `<dir>/<name>.rbxl`, built by Rojo from `<dir>/default.project.json`, which it overwrites: `dir` is the agent's own folder                                                                                                           |
 | `open_place(path, timeout=180)`                                    | an open `rbx_mcp.Studio` bound to that window; reuses the window when the place is already open, else calls `wait_for_gpu()` first                                                                                                             |
 | `open_places()`                                                    | list of `{id, name}` that the MCP server sees; changes nothing                                                                                                                                                                                 |
 | `machine_load()`                                                   | `{gpu_util, gpu_mem, ram}` in percent (macOS `ioreg`, `vm_stat`)                                                                                                                                                                               |
@@ -48,16 +48,20 @@ also works).
 `Studio(studio=None, place=None, timeout=120.0)`, a context manager around one `StudioMCP` stdio
 proxy.
 
-| Method                                 | Returns                                                                                                                               |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `.studios()`                           | list of `{id, name}` from `list_roblox_studios`                                                                                       |
-| `.bind()`                              | the `studio_id` string: exact name or file stem first, then substring; raises `MCPError` when ambiguous or absent; retries about 12 s |
-| `.call(tool, args, timeout=None)`      | the raw MCP result dict (`content`, `isError`); fills `studio_id`; retries "No Roblox Studio instances are connected" for 45 s        |
-| `.raw_call(tool, args, timeout=None)`  | the same without `studio_id` or retry                                                                                                 |
-| `.tools()`                             | list of tool dicts with `name`, `description`, `inputSchema` (empty until a Studio connects)                                          |
-| `.luau(code, dm="Edit", timeout=None)` | the tool's text; raises `MCPError` on `isError`                                                                                       |
-| `.capture(out, extra=None)`            | `Path` of a PNG; `extra` takes `camera_position` and `look_at_position` as `[x, y, z]`                                                |
-| `Studio.text(result)`                  | the text parts of a result joined                                                                                                     |
+| Method                                 | Returns                                                                                                                        |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `.studios()`                           | list of `{id, name}` from `list_roblox_studios`                                                                                |
+| `.bind()`                              | the `studio_id` string; raises `MCPError` when ambiguous or absent; retries about 12 s                                         |
+| `.call(tool, args, timeout=None)`      | the raw MCP result dict (`content`, `isError`); fills `studio_id`; retries "No Roblox Studio instances are connected" for 45 s |
+| `.raw_call(tool, args, timeout=None)`  | the same without `studio_id` or retry                                                                                          |
+| `.tools()`                             | list of tool dicts with `name`, `description`, `inputSchema` (empty until a Studio connects)                                   |
+| `.luau(code, dm="Edit", timeout=None)` | the tool's text; raises `MCPError` on `isError`                                                                                |
+| `.capture(out, extra=None)`            | `Path` of a PNG; `extra` takes `camera_position` and `look_at_position` as `[x, y, z]`                                         |
+| `Studio.text(result)`                  | the text parts of a result joined                                                                                              |
+
+- `place=` binds only a window whose name or file stem equals it, so an agent's `Obby.rbxl` never
+  binds the user's "MyObby" window (offline test).
+- `studio=`, the `--studio` flag, also accepts a substring of the name.
 
 CLI:
 `rbx_mcp.py tools | studios | state | console | play start|stop | capture out.png | call <tool> '<json>' | luau --dm Edit --code '...'`,
@@ -91,7 +95,7 @@ Server and Client data models (and the character), stop on exit even after an ex
 
 | Method                                                 | Returns                                                                                              |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `.server(code)`, `.client(code)`                       | `rbx_run` dict                                                                                       |
+| `.server(code, kit=())`, `.client(code, kit=())`       | `rbx_run` dict; `kit` inlines AgentKit modules as in `run`                                           |
 | `.wait_for(code, dm="Server", timeout=30, every=0.5)`  | the first truthy `rbx_run` dict; raises `TimeoutError`                                               |
 | `.press(key, hold=0.0)`                                | tool text; `keyPress`, or `keyDown`, `wait` (`wait_time_ms`), `keyUp`                                |
 | `.walk_to([x, y, z], speed=None)`                      | tool text (`character_navigation` with `x`, `y`, `z`, `speed_multiplier`)                            |

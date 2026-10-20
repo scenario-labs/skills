@@ -1090,6 +1090,7 @@ nperf
 numpad
 numpy
 nunit
+obby
 occluder
 occluders
 octree

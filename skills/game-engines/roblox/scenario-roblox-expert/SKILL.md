@@ -92,8 +92,12 @@ data model plan and owners into the plan.
 
 1. **Brief in numbers.** Budgets per device, players, memory, art style. GATE: every later check has
    a number.
-2. **Place.** `new_place` then `open_place` inside `place_slot`, once. GATE: `open_places()` lists
-   it; `Audit` tally has no error.
+2. **Place.** `new_place` then `open_place` inside `place_slot`, once. `new_place` overwrites
+   `<dir>/default.project.json`: `dir` is a new folder of your own, never the user's project. For an
+   existing game, merge a copy of the user's saved place with the code build
+   (scenario-roblox-tooling P15, `merge_place`) and open the merge, never the user's file. Edit a
+   worktree or copy of their sources: their `rojo serve` syncs `src/` into their window. GATE:
+   `open_places()` lists it; `Audit` tally has no error.
 3. **Baseline.** `Audit`, `Spec` tests that fail first, captures from fixed cameras, `Stats.frames`
    in a playtest. GATE: numbers recorded, sheet opened.
 4. **Build one stage** with idempotent chunks or files; route domain work to its owner (below).
@@ -115,15 +119,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1].parent / "scenario-roblox-expert" / "scripts"))
 ```
 
-| Module                            | Main calls                                                                                                                                            | Returns                                                            |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `rbx_env`                         | `doctor()`, `new_place(dir, name, template, src)`, `open_place(path)`, `open_places()`, `place_slot()`, `machine_load()`, `wait_for_gpu()`            | dict; `Path`; bound `Studio`; `[{id, name}]`; slot index; percents |
-| [`rbx_mcp`](scripts/rbx_mcp.py)   | `Studio(place=...)`: `.call(tool, args)`, `.luau(code, dm)`, `.capture(png, extra)`, `.studios()`, `.tools()`                                         | MCP result dict; text; `Path`                                      |
-| `rbx_run`                         | `run(studio, code, dm="Edit", kit=[...])`, `run_headless(place, code, kit)`                                                                           | `{ok, result, error, output}`                                      |
-| [`rbx_play`](scripts/rbx_play.py) | `Playtest(studio)`: `.server`, `.client`, `.wait_for`, `.press(key, hold)`, `.walk_to([x, y, z])`, `.keys`, `.mouse`, `.console`, `.capture`, `.mode` | `rbx_run` dicts; tool text                                         |
-| `rbx_check`                       | `check(paths, code, sourcemap, selene, stylua, solver="both")`                                                                                        | `{ok, errors, warnings, tools}`, findings tagged old or new solver |
-| `rbx_review`                      | `image_checks(png)`, `compare(a, b)`, `contact_sheet(pngs, out)`                                                                                      | flags and `ok`; `changed_fraction`; path                           |
-| [AgentKit](scripts/agentkit/)     | `Audit.all(game)`, `Stats.snapshot()`, `Stats.frames(s)`, `Stats.diff`, `Spec.new()`                                                                  | findings and tally; numbers; `{passed, failed, total}`             |
+| Module                            | Main calls                                                                                                                                                                  | Returns                                                            |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `rbx_env`                         | `doctor()`, `new_place(dir, name, template, src)`, `open_place(path)`, `open_places()`, `place_slot()`, `machine_load()`, `wait_for_gpu()`                                  | dict; `Path`; bound `Studio`; `[{id, name}]`; slot index; percents |
+| [`rbx_mcp`](scripts/rbx_mcp.py)   | `Studio(place=...)`: `.call(tool, args)`, `.luau(code, dm)`, `.capture(png, extra)`, `.studios()`, `.tools()`                                                               | MCP result dict; text; `Path`                                      |
+| `rbx_run`                         | `run(studio, code, dm="Edit", kit=[...])`, `run_headless(place, code, kit)`                                                                                                 | `{ok, result, error, output}`                                      |
+| [`rbx_play`](scripts/rbx_play.py) | `Playtest(studio)`: `.server(code, kit)`, `.client(code, kit)`, `.wait_for`, `.press(key, hold)`, `.walk_to([x, y, z])`, `.keys`, `.mouse`, `.console`, `.capture`, `.mode` | `rbx_run` dicts; tool text                                         |
+| `rbx_check`                       | `check(paths, code, sourcemap, selene, stylua, solver="both")`                                                                                                              | `{ok, errors, warnings, tools}`, findings tagged old or new solver |
+| `rbx_review`                      | `image_checks(png)`, `compare(a, b)`, `contact_sheet(pngs, out)`                                                                                                            | flags and `ok`; `changed_fraction`; path                           |
+| [AgentKit](scripts/agentkit/)     | `Audit.all(game)`, `Stats.snapshot()`, `Stats.frames(s)`, `Stats.diff`, `Spec.new()`                                                                                        | findings and tally; numbers; `{passed, failed, total}`             |
 
 Full signatures, return shapes and tool arguments:
 [`references/procedures.md`](references/procedures.md) section 1. Domain code goes in each sibling's

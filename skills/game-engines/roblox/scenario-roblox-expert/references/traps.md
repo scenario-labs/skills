@@ -97,6 +97,8 @@ procedures.md).
 - Studio derives `LightingStyle` and `PrioritizeLightingQuality` from the file's `Technology` when
   it loads a place (observed: a file with only the new pair opened as Soft and false). Write
   `Technology` in the file.
+- The user's `rojo serve` syncs every edit under their project into their open window. Edit a git
+  worktree or a copy of their files, never their `src/`, and build your own place from it.
 - `$ignoreUnknownInstances` defaults to false under `$path`: live sync deletes Studio-only children
   such as RemoteEvents (Rojo docs; Distracted Games, Zhl_NAPMztY [00:44:28]).
 - Rojo cannot live-sync Terrain, CSG, `MeshPart.MeshId` or `HttpService.HttpEnabled` (Rojo sync

@@ -48,6 +48,9 @@ class Studio:
 
     def __init__(self, studio: str | None = None, place: str | None = None, timeout: float = 120.0):
         self.want = studio or place
+        # place= matches whole names only: a substring would bind the agent's "Obby.rbxl" to the
+        # user's open "MyObby" window. The substring fallback is for the hand-typed --studio flag.
+        self.loose = place is None
         self.timeout = timeout
         self.proc: subprocess.Popen | None = None
         self.studio_id: str | None = None
@@ -149,8 +152,7 @@ class Studio:
         found: list[dict] = []
         for _ in range(8):
             found = self.studios()
-            w = str(self.want).lower() if self.want else None
-            if found and (not w or any(w in str(v).lower() for s in found for v in s.values())):
+            if found and (not self.want or self._match(found)):
                 break
             time.sleep(1.5)
         if not found:
@@ -158,13 +160,7 @@ class Studio:
                            "'Enable Studio as MCP server'")
         pick = None
         if self.want:
-            w = str(self.want).lower()
-            # A local place may be listed as "arena" or "arena.rbxl": accept the file stem too.
-            stem = w.rsplit(".", 1)[0] if w.endswith((".rbxl", ".rbxlx")) else w
-            rows = [(s, [str(v).lower() for v in s.values()]) for s in found]
-            exact = [s for s, fields in rows if any(f in (w, stem) or f.rsplit(".", 1)[0] == stem for f in fields)]
-            loose = [s for s, fields in rows if any(w in f or (stem != w and stem in f) for f in fields)]
-            pick = (exact or loose or [None])[0]
+            pick = self._match(found)
             if pick is None:
                 raise MCPError(f"no Studio matches {self.want!r}: {found}")
         elif len(found) == 1:
@@ -173,6 +169,15 @@ class Studio:
             raise MCPError(f"{len(found)} Studios open, pass --studio <id or place name>: {found}")
         self.studio_id = str(pick.get("studio_id") or pick.get("studioId") or pick.get("id"))
         return self.studio_id
+
+    def _match(self, found: list[dict]) -> dict | None:
+        w = str(self.want).lower()
+        # A local place may be listed as "arena" or "arena.rbxl": accept the file stem too.
+        stem = w.rsplit(".", 1)[0] if w.endswith((".rbxl", ".rbxlx")) else w
+        rows = [(s, [str(v).lower() for v in s.values()]) for s in found]
+        exact = [s for s, fields in rows if any(f in (w, stem) or f.rsplit(".", 1)[0] == stem for f in fields)]
+        loose = [s for s, fields in rows if any(w in f or (stem != w and stem in f) for f in fields)] if self.loose else []
+        return (exact or loose or [None])[0]
 
     def call(self, name: str, args: dict | None = None, timeout: float | None = None) -> dict:
         a = dict(args or {})

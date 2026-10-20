@@ -137,11 +137,11 @@ class Playtest:
             pass  # already stopped, or Studio unreachable: get_studio_state tells
 
     # -- code ------------------------------------------------------------------
-    def server(self, code: str, timeout: float | None = None) -> dict:
-        return run(self.s, code, "Server", timeout)
+    def server(self, code: str, timeout: float | None = None, kit: list[str] | tuple[str, ...] = ()) -> dict:
+        return run(self.s, code, "Server", timeout, kit)
 
-    def client(self, code: str, timeout: float | None = None) -> dict:
-        return run(self.s, code, "Client", timeout)
+    def client(self, code: str, timeout: float | None = None, kit: list[str] | tuple[str, ...] = ()) -> dict:
+        return run(self.s, code, "Client", timeout, kit)
 
     def wait_for(self, code: str, dm: str = "Server", timeout: float = 30.0, every: float = 0.5) -> dict:
         """Poll `code` until it returns a truthy result. Raises TimeoutError with the last result."""
