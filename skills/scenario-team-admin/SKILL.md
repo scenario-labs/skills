@@ -107,12 +107,13 @@ key matches.
 ## Projects
 
 `projects_list` (default toolset) finds what exists; create only when nothing matches.
-`project_create` takes `team_id` and `name`, needs a human team admin over OAuth (API keys are
-refused), and counts against the plan's project limit, which refuses the call once reached: report
-the limit, never delete a project to make room. Pass the returned `project.id` as `project_id` from
-then on. In a team with no projects, the API first creates a default project, which stays even when
-the call is refused: check `projects_list` afterwards and offer to rename it with `project_update`
-rather than keep two (unattended: report it, change nothing).
+`project_create` takes `team_id`, `name`, and `privacy_mode`; a description needs a follow-up
+`project_update`. It needs a human team admin over OAuth (API keys are refused) and counts against
+the plan's project limit, which refuses the call once reached: report the limit, never delete a
+project to make room. Pass the returned `project.id` as `project_id` from then on. In a team with no
+projects, the API first creates a default project, which stays even when the call is refused: check
+`projects_list` afterwards and offer to rename it with `project_update` rather than keep two
+(unattended: report it, change nothing).
 
 - **Privacy.** `privacy_mode: true`, on `project_create` or `project_update`, limits non-admin
   members to the assets and models they created; project and team admins still see everything.
@@ -125,9 +126,10 @@ rather than keep two (unattended: report it, change nothing).
   models, generation records, API keys, and memory with it. Confirm the name and id from
   `project_get` first. It takes the target as `project_id`, and is refused while anyone but the
   caller holds a role on the project or a key is attached: report who remains and ask, and never
-  remove a member or delete a key to unblock it without a separate confirmation of each. Unattended,
-  delete only a project the task instructions name, when exactly one matches, and report a refusal
-  and stop.
+  remove a member or delete a key to unblock it without a separate confirmation of each. The creator
+  joins as Admin by default (`auto_join`), which blocks a delete by anyone else. Unattended, delete
+  only a project the task instructions name, when exactly one matches, and report a refusal and
+  stop.
 
 ## Who spent what
 
