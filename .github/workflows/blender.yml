@@ -1,0 +1,51 @@
+name: Blender delivery gate
+
+# Runs tests/scenario-blender-expert/test_live_gate.py against a real Blender.
+# The gate is pure bpy and bmesh with no per-OS branch, so Linux alone covers it.
+# Only Blender script changes trigger it: the download costs a minute, and docs
+# changes cannot break the gate.
+on:
+  pull_request:
+    paths:
+      - "skills/dcc/blender/*/scripts/**"
+      - "tests/scenario-blender-expert/**"
+      - ".github/workflows/blender.yml"
+  push:
+    branches: [main]
+    paths:
+      - "skills/dcc/blender/*/scripts/**"
+      - "tests/scenario-blender-expert/**"
+      - ".github/workflows/blender.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Blender on ubuntu-latest
+    runs-on: ubuntu-latest
+    env:
+      BLENDER_SERIES: "5.2"
+      BLENDER_RELEASE: 5.2.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Blender
+        run: |
+          asset="blender-${BLENDER_RELEASE}-linux-x64.tar.xz"
+          base="https://download.blender.org/release/Blender${BLENDER_SERIES}"
+          curl -fsSL -o "$asset" "$base/$asset"
+          curl -fsSL -o sums.txt "$base/blender-${BLENDER_RELEASE}.sha256"
+          grep "  ${asset}\$" sums.txt | sha256sum -c -
+          # Background mode still links the X11 and GL libraries the runner image lacks.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libgl1 libegl1 > /dev/null
+          tar -xJf "$asset" -C "$RUNNER_TEMP"
+          blender="$RUNNER_TEMP/blender-${BLENDER_RELEASE}-linux-x64/blender"
+          # The suite skips when it finds no Blender, so prove this one starts.
+          "$blender" -b --factory-startup --version
+          echo "BLENDER=$blender" >> "$GITHUB_ENV"
+      - name: Delivery gate tests
+        run: python3 -B -m unittest discover -s tests/scenario-blender-expert -p test_live_gate.py -v

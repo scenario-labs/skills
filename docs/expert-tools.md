@@ -18,10 +18,13 @@ than the MCP server:
   - One suite per family, `tests/scenario-<app>-expert/` (the same file in each), imports every
     script with system Python and checks that each skill name a script uses to find the lead's
     `scripts/` exists. `pnpm skill-files` still parses every Python script.
-  - Godot is the exception that runs the application: its toolkit branches per OS (locks, the
-    process table, copies). `tests/scenario-godot-expert/test_toolkit_live.py` runs against a real
-    Godot on Linux, macOS, and Windows in `.github/workflows/godot.yml` whenever a Godot script
-    changes. Without Godot installed its live tests skip; its lock and GUI-check tests still run in
+  - Blender's `tests/scenario-blender-expert/test_live_gate.py` runs the delivery gate in a real
+    Blender against planted defects. `.github/workflows/blender.yml` runs it on Linux whenever a
+    Blender script changes; the gate has no per-OS branch. Without Blender installed it skips.
+  - Godot also runs the application, on every OS: its toolkit branches per OS (locks, the process
+    table, copies). `tests/scenario-godot-expert/test_toolkit_live.py` runs against a real Godot on
+    Linux, macOS, and Windows in `.github/workflows/godot.yml` whenever a Godot script changes.
+    Without Godot installed its live tests skip; its lock and GUI-check tests still run in
     `pnpm test`.
   - Unity's `tests/scenario-unity-expert/test_toolkit_offline.py` needs no application: it runs the
     toolkit's lock probe, process-table parsing, and signal handling in `pnpm test`.
