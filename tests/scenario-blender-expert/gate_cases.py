@@ -244,6 +244,21 @@ outer.nodes.new("ShaderNodeGroup").node_tree = inner
 ob.active_material.node_tree.nodes.new("ShaderNodeGroup").node_tree = outer
 cases["grouped_texture_no_uv"] = gate(["Grouped"])
 
+# No faces to export: a mesh that starts empty, and a box a Weld modifier collapses to a point.
+empty()
+me = bpy.data.meshes.new("Void")
+me.materials.append(bpy.data.materials.new("M_Void"))
+bpy.context.scene.collection.objects.link(bpy.data.objects.new("Void", me))
+cases["no_faces"] = gate(["Void"])
+cases["no_faces_render"] = gate(["Void"], "render")
+empty()
+ob = box("Welded", (1, 1, 1), (0, 0, 0.5))
+ob.modifiers.new("Collapse", "WELD").merge_threshold = 10.0
+cases["emptied_by_modifier"] = gate(["Welded"])
+cases["emptied_base"] = bx_audit.deliverable(["Welded"], evaluated=False)
+box("Base", (1, 1, 1), (0, 0, 0.5))
+cases["emptied_beside_a_part"] = gate(["Welded", "Base"])
+
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
 print("GATE CASES", len(cases))

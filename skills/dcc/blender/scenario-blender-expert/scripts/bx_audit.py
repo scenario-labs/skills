@@ -281,6 +281,7 @@ def verdict(r, deforming=True):
 # on the object. Severity per target profile: "error" fails the gate, "warn" is reported.
 PROFILES = ("game", "render", "print", "roblox")
 GATE = {  # check:        game     render   print    roblox
+    "no_faces":         ("error", "error", "error", "error"),
     "negative_scale":   ("error", "error", "error", "error"),
     "unapplied_scale":  ("error", "warn",  "warn",  "error"),
     "inside_out":       ("error", "error", "error", "error"),
@@ -474,6 +475,10 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
         elif any(abs(s - 1.0) > 1e-3 for s in scale):
             flag("unapplied_scale", [n], f"{n}: unapplied scale {[round(s, 3) for s in scale]}{where}")
         bm, double, b2b, zero = _welded(o, evaluated, weld)
+        if not bm.faces:
+            flag("no_faces", [n], f"{n}: no faces{' after modifiers' if evaluated else ''}; nothing would export")
+            bm.free()
+            continue
         isl = _islands(bm, 1.0 if det >= 0 else -1.0)
         tris = sum(len(f.verts) - 2 for f in bm.faces)
         out["per_object"][n].update(tris=tris, parts=len(isl))

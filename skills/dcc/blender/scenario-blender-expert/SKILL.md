@@ -129,8 +129,8 @@ textures).
   `blender -b f.blend --python bx_audit.py -- --object Name [--high Sculpt] [--json out.json]`.
 - `bx_audit.deliverable(objs, profile="game")`: the delivery gate. `audit` grades topology; this
   grades what an engine, renderer or slicer receives, across the parts of ONE asset:
-  - errors in every profile: floating parts and fragments, closed parts inside out, negative scale;
-    z-fighting between parts everywhere but `print`;
+  - errors in every profile: a mesh with no faces after modifiers, floating parts and fragments,
+    closed parts inside out, negative scale; z-fighting between parts everywhere but `print`;
   - by profile (`game`, `render`, `print`, `roblox`): unapplied scale, faces pointing into a part
     (an error from 0.1% of its surface, a warning below except for `print`), duplicate faces, no UV
     map under an image texture, open borders for `print` and `roblox`, any gap between parts for

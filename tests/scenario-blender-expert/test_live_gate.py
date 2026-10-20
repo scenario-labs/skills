@@ -153,6 +153,21 @@ class DeliveryGate(unittest.TestCase):
         r = self.verdict("grouped_texture_no_uv")
         self.assertEqual(r["errors"], ["Grouped: no UV map, and a material samples an image texture"])
 
+    def test_mesh_with_no_faces_fails_every_profile(self):
+        for name in ("no_faces", "no_faces_render"):
+            with self.subTest(case=name):
+                r = self.verdict(name)
+                self.assertEqual(r["errors"], ["Void: no faces after modifiers; nothing would export"])
+                self.assertEqual(r["warnings"], [])
+
+    def test_modifier_that_empties_the_mesh_fails(self):
+        r = self.verdict("emptied_by_modifier")
+        self.assertEqual(r["errors"], ["Welded: no faces after modifiers; nothing would export"])
+        self.assertTrue(self.verdict("emptied_base")["pass"])
+        r = self.verdict("emptied_beside_a_part")
+        self.assertEqual(r["errors"], ["Welded: no faces after modifiers; nothing would export"])
+        self.assertEqual(r["per_object"]["Base"]["errors"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
