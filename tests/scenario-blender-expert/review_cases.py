@@ -40,7 +40,9 @@ bpy.context.scene.collection.objects.link(box)
 cases = {}
 for culling in (False, True):
     out = os.path.join(TMP, "culled" if culling else "plain")
-    sheet = bx_review.review([box], out, views=("front", "right"), modes=("matcap",), res=96, culling=culling)
+    # The culled pass takes the name, as bx_audit.deliverable() does.
+    sheet = bx_review.review(["Box"] if culling else [box], out, views=("front", "right"), modes=("matcap",),
+                             res=96, culling=culling)
     cases["culled" if culling else "plain"] = {
         "sheet": os.path.exists(sheet),
         "front": magenta_share(os.path.join(out, "matcap_front.png")),

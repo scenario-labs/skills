@@ -232,12 +232,14 @@ def _tile(paths, rows, cols, out, labels):
 def review(objs, out_dir, views=("front", "right", "threequarter", "back"),
            modes=("silhouette", "matcap", "wire"), res=800, margin=1.12, focus=None, culling=False):
     """Render modes x views and return the contact sheet path (rows = modes, cols = views).
+    objs: objects or their names.
     culling: hide back faces, as game engines draw them, on a magenta background, so faces
     pointing inward show as holes. Compare with a sheet rendered without it.
     focus: close-up framing instead of the whole object: ((x, y, z), radius) in world
     space, e.g. focus=(eye_center, 0.06) to inspect eye loops. The rest of the mesh stays
     in the render (no cropping, no temporary copies); the camera just frames that sphere."""
-    objs = [o for o in objs if o is not None]
+    # Names too, as bx_audit takes them: an agent passing the gate's list here hit a TypeError.
+    objs = [bpy.data.objects[o] if isinstance(o, str) else o for o in objs if o is not None]
     os.makedirs(out_dir, exist_ok=True)
     sc, cam, world = _setup_scene(objs, res)
     wires = _make_wires(sc, objs) if "wire" in modes else []
