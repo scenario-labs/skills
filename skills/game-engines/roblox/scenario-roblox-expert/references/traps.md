@@ -96,7 +96,7 @@ procedures.md).
   `Position` for you.
 - Rojo 7.7.1 applies these forms in a project's `$properties` and a `.model.json`'s `properties`
   (built, then read back with Lune 0.11.0):
-  - an enum by item name, `"Shape": "Cylinder"`;
+  - an enum by item name, `"Shape": "Cylinder"`, `"Material": "SmoothPlastic"`;
   - `"Color": [1, 0.78, 0.15]`, three floats from 0 to 1;
   - `"Tags": ["Coin"]`.
 - Attributes go in `$attributes` or `attributes`. Lune's `deserializePlace` reads both back

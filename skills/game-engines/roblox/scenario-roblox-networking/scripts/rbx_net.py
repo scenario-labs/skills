@@ -8,7 +8,7 @@ live helpers; `audit_place`, `kit_tree` and `vendor_kit` run offline.
     import rbx_net
     rbx_net.audit_place("arena.rbxl")                       # offline, Lune: findings + Server Authority settings
     src = {"ServerScriptService": {"NetKit": rbx_net.kit_tree(project_dir)}}   # for rbx_env.new_place(src=...)
-    tree = rbx_net.vendor_kit(user_repo, "src/server/NetKit")  # a user's repository: copies, in-repo paths
+    tree = rbx_net.vendor_kit(user_repo, "src/server/NetKit")  # a user's repository: copies, in-repo paths (default dest src/NetKit)
     r = rbx_net.run(studio, "return NetAudit.run(game, Audit)", kit=["NetAudit"], lead_kit=["Audit"])
     with Playtest(studio) as pt:
         rbx_net.fuzz(pt, "ReplicatedStorage.Remotes.Buy")    # every hostile payload, from the Client

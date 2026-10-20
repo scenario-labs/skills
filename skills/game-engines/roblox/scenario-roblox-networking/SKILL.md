@@ -91,10 +91,11 @@ copies the modules in and returns paths inside it.
    shots rejected; valid shots hit.
 4. **Movement.** Goal: speed and teleport hacks neutralized without false positives. How: Server
    Authority (Rojo writes the settings, stage P11), or `MoveGuard.start` with
-   `MoveGuard.grace(player, s)` before every server teleport. GATE: honest walk 0 flags; client
-   teleport and local WalkSpeed changes rubber-banded (live: WalkSpeed 80 for 2.5 s netted 12.6
-   studs on the server). Under Server Authority, live: W held 2 s moved the server character 32.4
-   studs, a client teleport 0, local WalkSpeed 80 then W 32.0.
+   `MoveGuard.grace(player, s)` before every server teleport; `enforce = false` only logs, then
+   measures from where the character stands. GATE: honest walk 0 flags; client teleport and local
+   WalkSpeed changes rubber-banded (live: WalkSpeed 80 for 2.5 s netted 12.6 studs on the server).
+   Under Server Authority, live: W held 2 s moved the server character 32.4 studs, a client teleport
+   0, local WalkSpeed 80 then W 32.0.
 5. **Ownership and surfaces.** Goal: no client-owned part decides an outcome. How:
    `SetNetworkOwner(nil)` on unanchored pickups, NPC roots and prompt parents; `Net.prompt`
    re-checks distance, state and rate; a distance check in `MouseClick`; `Net.touch` for `Touched`

@@ -365,8 +365,9 @@ r = check(["src"], sourcemap="sourcemap.json", selene=True, stylua=True)
 assert r["ok"], r["errors"][:5]
 ```
 
-- Make the sourcemap with `rojo sourcemap default.project.json -o sourcemap.json` so `script.Parent`
-  paths resolve.
+- Make the sourcemap with
+  `rojo sourcemap default.project.json -o sourcemap.json --include-non-scripts` so `script.Parent`
+  paths and paths through Folders and remotes resolve.
 - Tests: O10. Results: a bad snippet gives at least 3 errors; every Luau snippet in this skill
   passes with 0 errors (`tests/live_evidence/scenario-roblox-expert/snippet_checks.json`).
 

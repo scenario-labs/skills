@@ -74,7 +74,10 @@ def typecheck(paths, sourcemap: str | None = None, timeout: int = 300) -> dict:
 def sourcemap(project_dir: str | Path) -> str:
     d = Path(project_dir).resolve()
     out = d / "sourcemap.json"
-    r = subprocess.run(["rojo", "sourcemap", str(d), "-o", str(out)], capture_output=True, text=True, timeout=120)
+    # --include-non-scripts: without it Folders and remotes are missing, and the new solver reports
+    # unknown keys on every path through them (scenario-roblox-tooling P2).
+    r = subprocess.run(["rojo", "sourcemap", str(d), "-o", str(out), "--include-non-scripts"],
+                       capture_output=True, text=True, timeout=120)
     if r.returncode != 0:
         raise RuntimeError(f"rojo sourcemap failed: {r.stderr or r.stdout}")
     return str(out)

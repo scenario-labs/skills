@@ -13,8 +13,10 @@ FAMILY = pathlib.Path(__file__).parents[2] / "skills/game-engines/roblox"
 sys.path.insert(0, str(FAMILY / "scenario-roblox-expert/scripts"))
 sys.path.insert(0, str(FAMILY / "scenario-roblox-tooling/scripts"))
 sys.path.insert(0, str(FAMILY / "scenario-roblox-networking/scripts"))
+sys.path.insert(0, str(FAMILY / "scenario-roblox-luau/scripts"))
 
 import rbx_env  # noqa: E402
+import rbx_luau  # noqa: E402
 import rbx_mcp  # noqa: E402
 import rbx_net  # noqa: E402
 import rbx_play  # noqa: E402
@@ -117,6 +119,14 @@ class VendorKit(unittest.TestCase):
                 self.assertEqual(node["$path"], f"src/server/NetKit/{name}.luau")
                 self.assertTrue((pathlib.Path(root) / node["$path"]).is_file(), name)
             self.assertIn("Net", tree)
+
+
+class Sourcemap(unittest.TestCase):
+    def test_luau_sourcemap_includes_non_scripts(self):
+        seen = []
+        with mock.patch("rbx_luau.subprocess.run", lambda cmd, **_k: seen.append(cmd) or mock.Mock(returncode=0)):
+            rbx_luau.sourcemap(tempfile.gettempdir())
+        self.assertIn("--include-non-scripts", seen[0])
 
 
 class PlaytestKit(unittest.TestCase):
