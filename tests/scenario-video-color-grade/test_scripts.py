@@ -119,6 +119,9 @@ class ScriptTests(unittest.TestCase):
             self.assertEqual(sheet.size, (960, 1080))
         out = self.run_ok("inspect_frame.py", "key", "clip.mp4", "looks.json", "03_masked", "mask.jpg", "--frame", "4")
         self.assertRegex(out, r"frame 4: the masks keep \d+\.\d% of the frame")
+        with Image.open(self.dir / "mask.jpg") as sheet:
+            px = np.asarray(sheet.convert("RGB")).astype(int)
+        self.assertLessEqual((px[:40, -200:].max(2) - px[:40, -200:].min(2)).max(), 6)  # outside the mask: gray
 
     def reel(self, *extra):
         self.run_ok("render_looks.py", "clip.mp4", "--looks", "looks.json", "--out", "renders",

@@ -2,14 +2,14 @@
 """Inspection tools for tuning looks by measurement instead of guesswork.
 
   python3 inspect_frame.py grid   <video|image> <out.jpg> [--frame N] [--step 100]
-      Frame with a labeled pixel grid, to read coordinates of objects (jacket, face, sky...).
+      Full-resolution frame with a labeled pixel grid, to read coordinates for `sample`.
 
   python3 inspect_frame.py sample <video|image> [--frame N] x0,y0,x1,y1[:name] ...
       Hue / saturation / brightness percentiles (p10/50/90) of each rectangle (full-res pixels).
       Use it to find what separates the thing you want to key from skin, sky, etc.
 
   python3 inspect_frame.py key    <video|image> <looks.json> <look_key> <out.jpg> [--frame N ...]
-      Red overlay of what a look's "selective" key keeps on one or more frames, plus blob sizes.
+      Red overlay on a gray frame of what a look's "selective" key or masks keep, plus blob sizes.
       Check faces, lips, hands and the ground are NOT red before rendering the video.
 """
 import argparse
@@ -82,7 +82,9 @@ def cmd_key(a):
             print(f"frame {fr}: blobs (px, cx, cy) =",
                   [(int(sizes[i]),) + tuple(int(c) for c in ndimage.center_of_mass(m, lab, i + 1)[::-1])
                    for i in np.argsort(sizes)[::-1][:8]], f"(min_area={sel.get('min_area', 1500)})")
-        vis = rgb.reshape(H, W, 3) * 0.35 + w.reshape(H, W, 1) * np.array([1, 0.1, 0.1]) * 0.65
+        # Gray base: on the source's own colors, red lips look kept even where the key drops them.
+        gray = (rgb @ grade.LUMA).reshape(H, W, 1)
+        vis = gray * 0.35 + w.reshape(H, W, 1) * np.array([1, 0.1, 0.1]) * 0.65
         tiles.append(np.asarray(Image.fromarray((np.clip(vis, 0, 1) * 255).astype(np.uint8)).resize((960, round(960 * H / W)))))
     Image.fromarray(np.concatenate(tiles, 0)).save(a.out, quality=90)
     print("wrote", a.out)

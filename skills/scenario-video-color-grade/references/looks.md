@@ -25,6 +25,7 @@ reduce contrast and saturation amounts by about a third.
 | 17_relight_night_lamp | Relight: Night Lamp | day-for-night with a warm pool of light on the subject                                                     |
 | 18_relight_spotlight  | Relight: Spotlight  | lit subject, darker surroundings                                                                           |
 | 19_relight_overcast   | Relight: Overcast   | soft, cooler, flatter daylight                                                                             |
+| 20_day_for_night      | Day for Night       | color only: −1.4 stops, strong cool balance, warm and green tones muted, whites capped at 0.9              |
 
 ## Writing new looks
 

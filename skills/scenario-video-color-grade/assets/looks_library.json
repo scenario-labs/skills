@@ -667,5 +667,51 @@
         "white": 0.97
       }
     ]
+  },
+  "20_day_for_night": {
+    "name": "Day for Night",
+    "settings": "exposure −1.4 · cool −40 · warm and green muted",
+    "ops": [
+      {
+        "op": "exposure",
+        "stops": -1.4
+      },
+      {
+        "op": "hue_shift",
+        "center": 25,
+        "width": 40,
+        "sat": 0.5,
+        "val": 0.85
+      },
+      {
+        "op": "hue_shift",
+        "center": 100,
+        "width": 80,
+        "sat": 0.5,
+        "val": 0.8
+      },
+      {
+        "op": "white_balance",
+        "temp": -0.4,
+        "tint": 0.02
+      },
+      {
+        "op": "saturation",
+        "amount": 0.6
+      },
+      {
+        "op": "contrast",
+        "amount": 0.3
+      },
+      {
+        "op": "split_tone",
+        "shadows": [-0.01, 0.0, 0.03]
+      },
+      {
+        "op": "levels",
+        "white": 0.9
+      }
+    ],
+    "vignette": "PI/4"
   }
 }

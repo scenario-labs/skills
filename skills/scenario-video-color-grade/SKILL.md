@@ -71,8 +71,8 @@ Running a preset:
   continuous clip, a grid finale, and an optional end card and music.
 - [grade.py](scripts/grade.py), [spatial.py](scripts/spatial.py), [media.py](scripts/media.py): the
   color ops and LUT writer, relight and keying, ffmpeg I/O. The scripts above import them.
-- [looks_library.json](assets/looks_library.json): 20 tuned starting looks, including keyed black
-  and white, a reference match, and four relight presets.
+- [looks_library.json](assets/looks_library.json): 21 tuned starting looks, including day-for-night,
+  keyed black and white, a reference match, and four relight presets.
 - [looks.json](examples/looks.json): twelve tuned looks, with mask-based black and white plus one
   color and a reference match that needs `match.py` first.
 - [ops.md](references/ops.md), [looks.md](references/looks.md), [keying.md](references/keying.md),
@@ -95,10 +95,11 @@ Running a preset:
    open `grid.jpg`. Check that every look differs from the source, none clips or turns skin orange,
    and skin stays believable outside the stylized looks. Iterate here: a still takes seconds, a
    render minutes. Test two frames on a moving clip.
-4. **Keyed looks: measure, then preview.** `inspect_frame.py grid` for coordinates, `sample` on the
-   object and what shares its color (skin, lips, ground), then `key ... --frame 10 90 160` for the
-   overlay. The separating dimension is often brightness or saturation, not hue. For an exact
-   result, use object masks (worked example).
+4. **Keyed looks: measure, then preview.** `inspect_frame.py grid` for full-resolution coordinates
+   (the still-test `grid.jpg` tiles are downscaled), `sample` on the object and what shares its
+   color (skin, lips, ground), then `key ... --frame 10 90 160` for the overlay: red on a gray frame
+   marks what is kept. The separating dimension is often brightness or saturation, not hue. For an
+   exact result, use object masks (worked example).
 5. **Relight** at 0.3 to 1 stop, from the side that already holds the highlights. It changes light
    character, never geometry or cast shadows: tell the user so.
 6. **Match a reference** with
