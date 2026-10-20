@@ -99,7 +99,7 @@ npx skills add scenario-labs/skills --skill scenario scenario-moderation scenari
 
 ### Video Producer
 
-Trailers and clips, storyboarded, generated, cut, graded, and captioned. 35 skills.
+Trailers and clips, storyboarded, generated, cut, graded, and captioned. 36 skills.
 
 - **Cinematic Trailers** (`scenario-video`, `scenario-storyboards`, `scenario-video-assembly`). Try:
   "Storyboard a 30-second trailer from this script, generate the shots, and cut them to music."
@@ -107,6 +107,8 @@ Trailers and clips, storyboarded, generated, cut, graded, and captioned. 35 skil
   word-by-word captions to this video and export 9:16, 1:1, and 16:9 versions."
 - **Lyric Videos** (`scenario-kinetic-music-video`). Try: "Turn this song into a vertical
   kinetic-typography lyric video."
+- **Brand Motion Loops** (`scenario-motion-loops`). Try: "Make a seamless 12-second background loop
+  in our brand blue with our mascot floating over it."
 - **Takes Before Finals** (`scenario-seedance-drafts`). Try: "Draft five takes of this shot cheaply,
   review them, and finish only the best one at 1080p."
 - **Trend Reel Recasts** (`scenario-reel-recast`). Try: "Recreate this trending dance reel with our
@@ -116,7 +118,7 @@ Trailers and clips, storyboarded, generated, cut, graded, and captioned. 35 skil
   them."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-video scenario-storyboards scenario-video-assembly scenario-caption-studio scenario-formats scenario-image scenario-image-editing scenario-text-overlay scenario-video-editing scenario-video-color-grade scenario-audio scenario-seedance-music-video scenario-seedance-storyboard scenario-seedance-drafts scenario-reel-recast scenario-video-ads scenario-consistency scenario-asset-analysis scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-ad-variants scenario-thumbnails scenario-kinetic-music-video scenario-ace-step
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-video scenario-storyboards scenario-video-assembly scenario-caption-studio scenario-formats scenario-image scenario-image-editing scenario-text-overlay scenario-video-editing scenario-video-color-grade scenario-audio scenario-seedance-music-video scenario-seedance-storyboard scenario-seedance-drafts scenario-reel-recast scenario-video-ads scenario-consistency scenario-asset-analysis scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-ad-variants scenario-thumbnails scenario-kinetic-music-video scenario-ace-step scenario-motion-loops
 ```
 
 ### Marketing Artist
@@ -199,10 +201,10 @@ npx skills add scenario-labs/skills --skill scenario scenario-product-shots scen
 ### Video, music video, and audio
 
 Video made, edited, and scored, from a single clip to a whole-song music video, with voice, music,
-and sound effects. 27 skills.
+and sound effects. 28 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-video scenario-video-editing scenario-video-color-grade scenario-audio scenario-video-assembly scenario-image-editing scenario-text-overlay scenario-seedance-music-video scenario-seedance-drafts scenario-reel-recast scenario-image scenario-kinetic-music-video scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo
+npx skills add scenario-labs/skills --skill scenario scenario-video scenario-video-editing scenario-video-color-grade scenario-audio scenario-video-assembly scenario-image-editing scenario-text-overlay scenario-seedance-music-video scenario-seedance-drafts scenario-reel-recast scenario-image scenario-kinetic-music-video scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo scenario-motion-loops
 ```
 
 ### Consistent characters and custom models

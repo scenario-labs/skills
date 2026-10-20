@@ -63,7 +63,7 @@
     },
     {
       "name": "05.-video-and-audio",
-      "description": "Video generation, editing, and color grading, music, sound effects, voice, and speech.",
+      "description": "Video generation, editing, and color grading, seamless motion loops, music, sound effects, voice, and speech.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -77,6 +77,7 @@
         "./skills/scenario-ad-variants",
         "./skills/scenario-audio",
         "./skills/scenario-video-assembly",
+        "./skills/scenario-motion-loops",
         "./skills/scenario-caption-studio"
       ]
     },
