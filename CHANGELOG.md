@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.59.0](https://github.com/scenario-labs/skills/compare/skills-v0.58.0...skills-v0.59.0) (2026-10-20)
+
+
+### Features
+
+* **scenario-blender-blockout:** add cast styles for character stand-ins ([#276](https://github.com/scenario-labs/skills/issues/276)) ([4c20188](https://github.com/scenario-labs/skills/commit/4c20188bd712983070cd7dc2b5ea28e9afcb96be))
+* **scenario-blender-expert:** gate assets before export or handoff ([#269](https://github.com/scenario-labs/skills/issues/269)) ([8615d6b](https://github.com/scenario-labs/skills/commit/8615d6bd281d84af3d59b51623da6a4a5ae66701))
+* **scenario-blender-export:** export Blender assets for game engines ([#270](https://github.com/scenario-labs/skills/issues/270)) ([020ff0b](https://github.com/scenario-labs/skills/commit/020ff0b51fe44455806c80997450f942e8db4c2e))
+* **scenario-blender-rigging:** add ARKit and viseme shape-key sets ([#271](https://github.com/scenario-labs/skills/issues/271)) ([054cf6e](https://github.com/scenario-labs/skills/commit/054cf6e4862a0274cf50f35bf6d92189d641e789))
+* **scenario-team-admin:** create, update, and delete projects ([#268](https://github.com/scenario-labs/skills/issues/268)) ([cf206e6](https://github.com/scenario-labs/skills/commit/cf206e66f9273c72dc5960069d5cca8280f38599))
+* **scenario-video-color-grade:** grade footage with code-written LUTs ([#277](https://github.com/scenario-labs/skills/issues/277)) ([f0adb5b](https://github.com/scenario-labs/skills/commit/f0adb5b5ebc1fc8f7e333554d2aeb767c5558d6b))
+* **skills:** add Roblox Studio expert tools ([#274](https://github.com/scenario-labs/skills/issues/274)) ([7d0a5d1](https://github.com/scenario-labs/skills/commit/7d0a5d1d413c3666327820d716a57788dbb5e5de))
+
+
+### Bug Fixes
+
+* **scenario-3d:** map multi-view side images from the subject's own left ([#266](https://github.com/scenario-labs/skills/issues/266)) ([0dc56b4](https://github.com/scenario-labs/skills/commit/0dc56b47be182f9e991e902d7c4f0d715132f584))
+* **scenario-3d:** price a 3D batch from one real concept ([#267](https://github.com/scenario-labs/skills/issues/267)) ([dd507b9](https://github.com/scenario-labs/skills/commit/dd507b95a5d0ba59b0e47624496e7f73240d4469))
+* **scenario-3d:** show creature concepts side-on and trim the body ([#280](https://github.com/scenario-labs/skills/issues/280)) ([8112eef](https://github.com/scenario-labs/skills/commit/8112eefea2c34bd4afc5cdacd77daad60d0e4775))
+* **scenario:** copy a private asset from another project with asset_copy ([#265](https://github.com/scenario-labs/skills/issues/265)) ([47d0795](https://github.com/scenario-labs/skills/commit/47d079566b1e87ae249a57f2b105af6100ef93d1))
+* **scenario:** stop a batch at the Relax-mode "wait N seconds" 429 ([#264](https://github.com/scenario-labs/skills/issues/264)) ([2068423](https://github.com/scenario-labs/skills/commit/2068423c01f14d507ed7f81ebd9d945daf1db444))
+* **scenario:** tighten the skill body and keep asset_copy to one team ([#279](https://github.com/scenario-labs/skills/issues/279)) ([c64908a](https://github.com/scenario-labs/skills/commit/c64908adb3e9bcc3989c3bd786c0436930d57e7c))
+
+
+### Documentation
+
+* **docs:** name the scenario-3d creature batch as a known test case ([#290](https://github.com/scenario-labs/skills/issues/290)) ([d4b07c0](https://github.com/scenario-labs/skills/commit/d4b07c032a8f30f965a2986f6b01187637f18710))
+
 ## [0.58.0](https://github.com/scenario-labs/skills/compare/skills-v0.57.0...skills-v0.58.0) (2026-10-17)
 
 
