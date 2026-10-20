@@ -36,7 +36,8 @@ Sequence for "make a 3D treasure chest prop".
 - **Plan check.** Before step 1, run `recommend` for every later step (step 2, plus any rig or
   retexture). An entry marked `requires_plan_upgrade` fails with a 403
   (`ModelAccessRestrictedError`) only after earlier steps were paid: settle the upgrade or pick
-  another member first.
+  another member first. If the `img23d` call answers `ask_user` about existing concepts, take the
+  concept-image branch: step 1 makes them.
 - **Batch price.** Price per asset from one real concept: `dry_run` each candidate on it (later legs
   per step 4), times the count. At authoring time one LLM-based member quoted 1,300 CU at its
   default effort, a single-image Tripo generator 45. Past the plan's credits, each job's wait grows
@@ -44,29 +45,31 @@ Sequence for "make a 3D treasure chest prop".
 
 1. Generate the concept: pick a text-to-image model via `recommend` with the user's own words as
    `prompt`, then `model_schema_get` and `model_run`. Prompt a single centered subject on a plain
-   background. Show a creature at eye level, from the side or three-quarters, every leg visible:
-   top-down hides leg undersides and body height. If the user has a reference, `upload_asset` it
+   background. Show a non-biped creature at eye level, from the side or three-quarters, every leg
+   visible and clear of the body: top-down hides leg undersides and body height. A biped headed for
+   a rig takes the pose in Rigging and animation. If the user has a reference, `upload_asset` it
    (plus `upload_asset_complete` when multipart) and pass that asset ID instead.
-2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. If it answers
-   `ask_user` about existing concepts, step 1 made them. Live members include the Hunyuan 3D, Meshy,
-   Tripo, and Trellis families, and Scenario's own LLM-based 3D generation, GPT-6 Astra 3D, and
-   Claude Opus 5.5 3D (the cheaper at authoring time; compare both with `dry_run`).
-   - They reconstruct one object from 1 to 8 photos or renders into an editable mesh with named
-     parts and per-part PBR materials.
-   - They suit props and hard-surface subjects, not characters or creatures, and need those images
-     (a prompt alone returned 400 at authoring time).
-   - Price rises with `buildEffort`: `standard`, `high` (the default), `maximum`.
-   - `faceBudget` caps the exported triangle count (10k to 50k for a game-ready asset; the default
-     is not game-ready).
-   - To change the result, edit it (see Refining meshes).
+2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
+   the Hunyuan 3D, Meshy, Tripo, and Trellis families, and Scenario's own LLM-based 3D generation:
+   GPT-6 Astra 3D and Claude Opus 5.5 3D (the cheaper at authoring time; compare both with
+   `dry_run`). Those two LLM-based members alone:
+   - reconstruct one object from 1 to 8 photos or renders into an editable mesh with named parts and
+     per-part PBR materials;
+   - suit props and hard-surface subjects, not characters or creatures, and need those images (a
+     prompt alone returned 400 at authoring time);
+   - price by `buildEffort`: `standard`, `high` (the default), `maximum`;
+   - cap the exported triangle count with `faceBudget` (10k to 50k for a game-ready asset; the
+     default is not game-ready);
+   - change a result by editing it (see Refining meshes).
 3. `model_schema_get` on the chosen model: 3D schemas vary widely (single image or multi-view
    arrays, polycount targets, PBR toggles, topology).
-4. `model_run` with `parameters={"image": "asset_xxx", ...}`, `wait=false`, and `dry_run=true`
-   first, then `jobs_wait` with `job_ids=["<job_id>"]`. Re-call it with the returned
-   `pending_job_ids` if it times out. A downstream step (rig, retexture) has no payload to `dry_run`
-   until its input mesh exists: quote it from `recommend`, then re-price with `dry_run` on the real
-   asset before launching. Never `dry_run` it with a placeholder id: file ids resolve before plan
-   access is checked, so it returns 404 and proves nothing.
+4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `dry_run=true` to price it. Then
+   run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`);
+   a dry run creates no job. Re-call `jobs_wait` with the returned `pending_job_ids` if it times
+   out. A downstream step (rig, retexture) has no payload to `dry_run` until its input mesh exists:
+   quote it from `recommend`, then re-price with `dry_run` on the real asset before launching. Never
+   `dry_run` it with a placeholder id: file ids resolve before plan access is checked, so it returns
+   404 and proves nothing.
 5. `asset_display` the output `asset_id`, then `asset_download` with `format: "glb"` and
    `curl -L -o chest.glb "<url>"`. `format` converts to `glb`, `fbx`, or `obj`; omitted, it returns
    the stored original, a Blender file for the LLM-based members. Ask for `fbx` for a Unity project
@@ -183,8 +186,9 @@ approximate height, and infer a biped skeleton. Non-bipeds go to a model exposin
 `quadruped`, `hexapod`, `octopod`, `avian`, `serpentine`, `aquatic`. A static prop has no body plan:
 if `recommend` answers `ask_user`, part segmentation is the nearer step.
 
-A character headed for a rig starts from a T- or A-pose concept (full body, front view, arms clear
-of the torso, plain background): riggers infer joints from the pose. For quads:
+A biped headed for a rig starts from a T- or A-pose concept (full body, front view, arms clear of
+the torso, plain background): riggers infer joints from the pose. A non-biped keeps step 1's view.
+For quads:
 
 - Pick an image-to-3D member whose schema offers quad topology and set it; the default is triangles.
   At authoring time the Tripo P2 and 3.1 members had a `quad` switch with a lower face cap;
