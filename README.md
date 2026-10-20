@@ -441,7 +441,7 @@ export, pipeline automation. Every procedure was run live in Godot 4.7.2.
 Game engine. A lead and thirteen specialists that drive Roblox Studio on macOS through its built-in
 MCP server, playtests driven by code, offline Luau checks, and Rojo builds: architecture, Luau,
 networking and security, data, tooling, environment, VFX and audio, UI, animation, gameplay, assets
-and avatar items, performance, monetization. Every procedure was run live in Roblox Studio 0.743.
+and avatar items, performance, monetization. Procedures were run live in Roblox Studio 0.743.
 
 | Skill                                                                                            | Use it for                                                                                                                                                                               |
 | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
