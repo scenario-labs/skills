@@ -466,6 +466,11 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
     for o in meshes:
         n = o.name
         out["per_object"][n] = {"tris": 0, "parts": 0, "errors": [], "warnings": []}
+        bm, faces, double, b2b, zero = _welded(o, evaluated, weld)
+        if not faces:
+            flag("no_faces", [n], f"{n}: no faces{' after modifiers' if evaluated else ''}; nothing would export")
+            bm.free()
+            continue
         det = o.matrix_world.determinant()
         scale = o.matrix_world.to_scale()
         src = _scale_owner(o)
@@ -475,12 +480,7 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
                                         "then recalculate normals")
         elif any(abs(s - 1.0) > 1e-3 for s in scale):
             flag("unapplied_scale", [n], f"{n}: unapplied scale {[round(s, 3) for s in scale]}{where}")
-        bm, faces, double, b2b, zero = _welded(o, evaluated, weld)
-        if not faces:
-            flag("no_faces", [n], f"{n}: no faces{' after modifiers' if evaluated else ''}; nothing would export")
-            bm.free()
-            continue
-        isl = _islands(bm, 1.0 if det >= 0 else -1.0)
+        isl =_islands(bm, 1.0 if det >= 0 else -1.0)
         tris = sum(len(f.verts) - 2 for f in bm.faces)
         out["per_object"][n].update(tris=tris, parts=len(isl))
         if double:

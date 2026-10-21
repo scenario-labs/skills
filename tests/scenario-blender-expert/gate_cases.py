@@ -258,6 +258,11 @@ cases["emptied_by_modifier"] = gate(["Welded"])
 cases["emptied_base"] = bx_audit.deliverable(["Welded"], evaluated=False)
 box("Base", (1, 1, 1), (0, 0, 0.5))
 cases["emptied_beside_a_part"] = gate(["Welded", "Base"])
+# Scale on an object that exports nothing raises no transform finding beside no_faces.
+empty()
+for name, scale in (("Mirrored", (-1, 1, 1)), ("Scaled", (2, 2, 2))):
+    box(name, (1, 1, 1), (0, 0, 0.5), scale=scale).modifiers.new("Collapse", "WELD").merge_threshold = 10.0
+    cases["emptied_" + name.lower()] = gate([name])
 # A part under the audit weld (1e-6 of the asset's diagonal) still exports its faces.
 empty()
 box("Base", (1, 1, 1), (0, 0, 0.5))
