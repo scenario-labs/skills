@@ -149,6 +149,32 @@ class DeliveryGate(unittest.TestCase):
         r = self.verdict("textured_no_uv")
         self.assertEqual(r["errors"], ["Painted: no UV map, and a material samples an image texture"])
 
+    def test_mesh_with_no_faces_fails_every_profile(self):
+        for name in ("no_faces", "no_faces_render"):
+            with self.subTest(case=name):
+                r = self.verdict(name)
+                self.assertEqual(r["errors"], ["Void: no faces after modifiers; nothing would export"])
+                self.assertEqual(r["warnings"], [])
+
+    def test_modifier_that_empties_the_mesh_fails(self):
+        r = self.verdict("emptied_by_modifier")
+        self.assertEqual(r["errors"], ["Welded: no faces after modifiers; nothing would export"])
+        self.assertTrue(self.verdict("emptied_base")["pass"])
+        r = self.verdict("emptied_beside_a_part")
+        self.assertEqual(r["errors"], ["Welded: no faces after modifiers; nothing would export"])
+        self.assertEqual(r["per_object"]["Base"]["errors"], [])
+
+    def test_mesh_with_no_faces_skips_the_scale_checks(self):
+        for name in ("Mirrored", "Scaled"):
+            with self.subTest(case=name):
+                r = self.verdict("emptied_" + name.lower())
+                self.assertEqual(r["errors"], [f"{name}: no faces after modifiers; nothing would export"])
+                self.assertEqual(r["warnings"], [])
+
+    def test_part_smaller_than_the_weld_still_has_faces(self):
+        r = self.verdict("speck_under_the_weld")
+        self.assertFalse(any("no faces" in e for e in r["errors"]), r["errors"])
+
 
 if __name__ == "__main__":
     unittest.main()

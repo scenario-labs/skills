@@ -281,6 +281,7 @@ def verdict(r, deforming=True):
 # on the object. Severity per target profile: "error" fails the gate, "warn" is reported.
 PROFILES = ("game", "render", "print", "roblox")
 GATE = {  # check:        game     render   print    roblox
+    "no_faces":         ("error", "error", "error", "error"),
     "negative_scale":   ("error", "error", "error", "error"),
     "unapplied_scale":  ("error", "warn",  "warn",  "error"),
     "inside_out":       ("error", "error", "error", "error"),
@@ -314,8 +315,9 @@ def _n(k, noun):
 
 def _welded(obj, evaluated, weld):
     """World-space bmesh welded at `weld`, so UV-seam splits (every glTF import) do not
-    read as holes or separate parts. Exact double faces are counted before the weld."""
+    read as holes or separate parts. Faces and exact double faces are counted before the weld."""
     bm = _bm_from(obj, evaluated)
+    faces = len(bm.faces)
     seen, double, b2b = {}, 0, 0
     for f in bm.faces:
         key = frozenset(tuple(round(c / weld) for c in v.co) for v in f.verts)
@@ -332,7 +334,7 @@ def _welded(obj, evaluated, weld):
     bm.verts.ensure_lookup_table()
     bm.faces.ensure_lookup_table()
     bm.normal_update()
-    return bm, double, b2b, zero
+    return bm, faces, double, b2b, zero
 
 
 def _islands(bm, flip):
@@ -454,6 +456,11 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
     for o in meshes:
         n = o.name
         out["per_object"][n] = {"tris": 0, "parts": 0, "errors": [], "warnings": []}
+        bm, faces, double, b2b, zero = _welded(o, evaluated, weld)
+        if not faces:
+            flag("no_faces", [n], f"{n}: no faces{' after modifiers' if evaluated else ''}; nothing would export")
+            bm.free()
+            continue
         det = o.matrix_world.determinant()
         scale = o.matrix_world.to_scale()
         src = _scale_owner(o)
@@ -463,8 +470,7 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
                                         "then recalculate normals")
         elif any(abs(s - 1.0) > 1e-3 for s in scale):
             flag("unapplied_scale", [n], f"{n}: unapplied scale {[round(s, 3) for s in scale]}{where}")
-        bm, double, b2b, zero = _welded(o, evaluated, weld)
-        isl = _islands(bm, 1.0 if det >= 0 else -1.0)
+        isl =_islands(bm, 1.0 if det >= 0 else -1.0)
         tris = sum(len(f.verts) - 2 for f in bm.faces)
         out["per_object"][n].update(tris=tris, parts=len(isl))
         if double:
