@@ -4,6 +4,7 @@ omit =
     skills/dcc/*
     skills/game-engines/*
 parallel = true
+relative_files = true
 patch = subprocess
 data_file = coverage/.coverage
 

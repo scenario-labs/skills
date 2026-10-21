@@ -228,6 +228,15 @@ test("COVERAGE=1 combines the Python data and writes the report", (t) => {
     ["-m", "coverage", "combine", "--rcfile=.coveragerc", "-q"],
     ["-m", "coverage", "report", "--rcfile=.coveragerc"],
     ["-m", "coverage", "report", "--rcfile=.coveragerc", "--format=markdown"],
+    [
+      "-m",
+      "coverage",
+      "xml",
+      "--rcfile=.coveragerc",
+      "-q",
+      "-o",
+      "coverage/python.xml",
+    ],
   ]);
   assert.ok(existsSync(join(root, "coverage/report.md")));
 });
@@ -247,6 +256,19 @@ test("a failing coverage report fails the runner", (t) => {
   assert.equal(result.status, 1);
 });
 
+// The one vitest call COVERAGE=1 makes for the given suites and skills.
+const VITEST_COVERAGE = (suites, skills) => [
+  "exec",
+  "vitest",
+  "run",
+  ...suites,
+  "--coverage",
+  ...skills.map((skill) => `--coverage.include=skills/${skill}/**`),
+  "--coverage.reporter=text",
+  "--coverage.reporter=cobertura",
+  "--coverage.reportsDirectory=coverage/vitest",
+];
+
 test("COVERAGE=1 measures a core skill's TypeScript with vitest", (t) => {
   const { result, pnpmCalls, output } = run(t, {
     uv: 0,
@@ -255,17 +277,35 @@ test("COVERAGE=1 measures a core skill's TypeScript with vitest", (t) => {
     files: { [`${SUITE}demo.test.ts`]: "" },
   });
   assert.equal(result.status, 0, output);
+  assert.deepEqual(pnpmCalls, [VITEST_COVERAGE([SUITE], [NAME])]);
+});
+
+test("COVERAGE=1 runs every core TypeScript suite in one vitest call", (t) => {
+  const OTHER = "scenario-other";
+  const { result, pnpmCalls, output } = run(t, {
+    uv: 0,
+    pnpm: 0,
+    coverage: true,
+    files: {
+      [`${SUITE}demo.test.ts`]: "",
+      [`skills/${OTHER}/SKILL.md`]: "",
+      [`tests/${OTHER}/other.test.ts`]: "",
+    },
+  });
+  assert.equal(result.status, 0, output);
   assert.deepEqual(pnpmCalls, [
-    [
-      "exec",
-      "vitest",
-      "run",
-      SUITE,
-      "--coverage",
-      `--coverage.include=skills/${NAME}/**`,
-      `--coverage.reportsDirectory=coverage/vitest/${NAME}`,
-    ],
+    VITEST_COVERAGE([SUITE, `tests/${OTHER}/`], [NAME, OTHER]),
   ]);
+});
+
+test("a failing vitest coverage run fails the runner", (t) => {
+  const { result } = run(t, {
+    uv: 0,
+    pnpm: 1,
+    coverage: true,
+    files: { [`${SUITE}demo.test.ts`]: "" },
+  });
+  assert.equal(result.status, 1);
 });
 
 test("without COVERAGE, vitest runs without coverage", (t) => {

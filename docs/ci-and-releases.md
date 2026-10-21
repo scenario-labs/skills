@@ -50,6 +50,11 @@ which commit types release and which files release-please owns.
   - Coverage spans core skills only (`.coveragerc`). Expert-tool scripts mostly run inside their
     host application, which coverage.py cannot follow.
   - It reports without a threshold, so a drop never fails CI.
+- `upload-coverage` sends both Cobertura reports to GitHub code coverage (part of Code Quality),
+  which shows each PR's percentage against `main`.
+  - It needs code coverage enabled in the repository's Code Quality settings.
+  - Fork PRs skip it: their token cannot hold `code-quality: write`.
+  - Separate labels (`code-coverage/python`, `code-coverage/vitest`) keep the two reports apart.
 - Dependabot (`.github/dependabot.yml`) proposes one grouped `ci(deps)` PR a week, for releases at
   least seven days old. It skips release-please-action, which moves by hand together with the
   `release-please` pin in `package.json`.
