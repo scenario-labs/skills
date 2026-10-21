@@ -1,2 +1,2 @@
-Pillow>=11,<13
+Pillow>=13,<14
 numpy>=1.24

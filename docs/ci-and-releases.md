@@ -55,6 +55,12 @@ which commit types release and which files release-please owns.
   - It needs code coverage enabled in the repository's Code Quality settings.
   - Fork PRs skip it: their token cannot hold `code-quality: write`.
   - Separate labels (`code-coverage/python`, `code-coverage/vitest`) keep the two reports apart.
-- Dependabot (`.github/dependabot.yml`) proposes one grouped `ci(deps)` PR a week, for releases at
-  least seven days old. It skips release-please-action, which moves by hand together with the
-  `release-please` pin in `package.json`.
+- Dependabot (`.github/dependabot.yml`) proposes one grouped PR a week per ecosystem, for releases
+  at least seven days old:
+  - `ci(deps)` for GitHub Actions;
+  - `chore(deps)` for the npm dev tooling in `pnpm-lock.yaml`;
+  - `chore(deps)` for the test suites' `tests/*/requirements.txt`. It raises the floors too, since
+    advisory scanners such as OpenSSF Scorecard read a requirement's lower bound, not the version CI
+    installs.
+  - It skips release-please-action and the `release-please` CLI, which move by hand together: the
+    `package.json` pin must stay the version the action bundles.

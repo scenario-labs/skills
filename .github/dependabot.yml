@@ -16,3 +16,33 @@ updates:
     commit-message:
       prefix: ci
       include: scope
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      npm:
+        patterns: ["*"]
+    ignore:
+      # Must stay the version release-please-action bundles (see above).
+      - dependency-name: release-please
+    commit-message:
+      prefix: chore
+      include: scope
+  - package-ecosystem: pip
+    directories: ["/tests/*"]
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    # Raises the floors too: advisory scanners read a requirement's lower bound, not the version
+    # CI installs.
+    versioning-strategy: increase
+    groups:
+      pip:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore
+      include: scope

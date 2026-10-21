@@ -1,5 +1,5 @@
 numpy>=1.24
 soundfile>=0.12
-pillow>=10
-opencv-python-headless>=4.8
+pillow>=13
+opencv-python-headless>=4.8.1.78
 scipy>=1.10
