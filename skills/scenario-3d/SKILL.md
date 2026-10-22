@@ -94,8 +94,7 @@ Sequence for "make a 3D treasure chest prop".
 **Prompt-only build.** The two LLM-based members also build from text alone (`txt23d`). When the
 user wants no concept to approve, skip step 1 and run steps 3 to 5 on either member with
 `images: []` and `prompt` describing the object. Name the parts the user needs in `prompt`: a
-chest's `lid`, `body`, and `padlock` came back as those node names. A `standard` build took about 15
-minutes at authoring time.
+chest's `lid`, `body`, and `padlock` came back as those node names.
 
 Multi-view models take several images of one subject; read the count and fields off
 `model_schema_get`. Side fields follow the subject: on the Tripo multi-view members at authoring
