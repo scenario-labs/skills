@@ -37,7 +37,7 @@ Sequence for "make a 3D treasure chest prop".
   retexture). An entry marked `requires_plan_upgrade` fails with a 403
   (`ModelAccessRestrictedError`) only after earlier steps were paid: settle the upgrade or pick
   another member first. If the `img23d` call answers `ask_user` about existing concepts, take the
-  concept-image branch: step 1 makes them.
+  concept-image branch unless the user asked for a prompt-only build: step 1 makes them.
 - **Batch price.** Price per asset from one real concept: `dry_run` each candidate on it (later legs
   per step 4), times the count. At authoring time one LLM-based member quoted 1,300 CU at its
   default effort, a single-image Tripo generator 45. Past the plan's credits, each job's wait grows
@@ -80,13 +80,14 @@ Sequence for "make a 3D treasure chest prop".
      (`decimationTarget`, from 100k) starts above it. Remesh only for a target under the member's
      floor.
 
-4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `dry_run=true` to price it. Then
-   run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`);
-   a dry run creates no job. Re-call `jobs_wait` with the returned `pending_job_ids` if it times
-   out. A downstream step (rig, retexture) has no payload to `dry_run` until its input mesh exists:
-   quote it from `recommend`, then re-price with `dry_run` on the real asset before launching. Never
-   `dry_run` it with a placeholder id: file ids resolve before plan access is checked, so it returns
-   404 and proves nothing.
+4. `model_run` with `parameters={"image": "asset_xxx", ...}` (field names from step 3; `images: []`
+   on the prompt-only route) and `dry_run=true` to price it. Then run it for real with `wait=false`
+   and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`); a dry run creates no job. Re-call
+   `jobs_wait` with the returned `pending_job_ids` if it times out. A downstream step (rig,
+   retexture) has no payload to `dry_run` until its input mesh exists: quote it from `recommend`,
+   then re-price with `dry_run` on the real asset before launching. Never `dry_run` it with a
+   placeholder id: file ids resolve before plan access is checked, so it returns 404 and proves
+   nothing.
 5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
    Omit `format` when `asset_get` shows `properties.format` `glb`: it returns the stored original
    byte for byte. `format` converts to `glb`, `fbx`, or `obj`; pass `glb` for the LLM-based members,
