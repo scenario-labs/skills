@@ -33,15 +33,23 @@ the timestamps worth opening. Notes live in `notes/lighting/`, `notes/rendering/
 ## Revision history
 
 - 2026-09-24 v2 (refactor after blind grade `tests/grading/U3_grade.md`; v1 kept in
-  `skills/_versions/unreal-lighting-rendering v1 2026-09-24/`): taught the grade's "missing from
-  both" items from the same sources (path tracer doc and Faucher X5zVhc5ahl0 for emissive double
-  counting, albedo and the glass recipe; Campbell BKaAzhMHJZ0 for the Lumen-only emissive boost and
-  local-light VSM invalidation; Lumen doc for Emissive Light Source, Max Lumen Mesh Cards and the
-  5.8 exposure-range warning; Faucher 0GYyHDuaPcg, 1LfiYtKDsac, BGoaPyfZlYg and 1e6oOiKh91U for
-  glossy direct light, fixture shapes, Scattering Distribution, lighting-channel cheats, the chrome
-  ball first and split room shells; Oakley rX0wZZxpB-U for ambient first and "the promise of more";
-  MRG doc and Comly for Game Overrides; MegaLights doc for alpha-masked casters) as stance, gates,
-  lint checks in `ue_light.py` with offline tests, procedures P2 to P13b and rubric rows A8, C10,
-  C11; corrected the HDRIBackdrop fix (`r.PathTracing.VisibleLights 2` shows a Sky Light cubemap and
-  does nothing under Reference Atmosphere); performance budgets and profiling left to
+  `skills/_versions/scenario-unreal-lighting-rendering v1 2026-09-24/`): taught the grade's "missing
+  from both" items from the same sources (path tracer doc and Faucher X5zVhc5ahl0 for emissive
+  double counting, albedo and the glass recipe; Campbell BKaAzhMHJZ0 for the Lumen-only emissive
+  boost and local-light VSM invalidation; Lumen doc for Emissive Light Source, Max Lumen Mesh Cards
+  and the 5.8 exposure-range warning; Faucher 0GYyHDuaPcg, 1LfiYtKDsac, BGoaPyfZlYg and 1e6oOiKh91U
+  for glossy direct light, fixture shapes, Scattering Distribution, lighting-channel cheats, the
+  chrome ball first and split room shells; Oakley rX0wZZxpB-U for ambient first and "the promise of
+  more"; MRG doc and Comly for Game Overrides; MegaLights doc for alpha-masked casters) as stance,
+  gates, lint checks in `ue_light.py` with offline tests, procedures P2 to P13b and rubric rows A8,
+  C10, C11; corrected the HDRIBackdrop fix (`r.PathTracing.VisibleLights 2` shows a Sky Light
+  cubemap and does nothing under Reference Atmosphere); performance budgets and profiling left to
   scenario-unreal-performance.
+
+## Verification status (2026-10-21, run on 5.8.3)
+
+Ran: the MCP recipes (`tests/code/unreal-lighting-rendering/live_mcp_recipes.py`, 8 of 8);
+procedures P0 to P14 in an offscreen editor (21 blocks, 0 hard failures); the exposure, sun
+transmittance, sky orientation and pre-tonemap meter measurements; 310 offline checks. **[not yet
+run]**: an MRG render end to end, path tracer lighting channels, MegaLights views with local lights,
+a real generated panorama's energy.

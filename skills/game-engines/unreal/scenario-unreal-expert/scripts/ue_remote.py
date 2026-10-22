@@ -38,7 +38,7 @@ Epic's MCP listener reads the same key, so that change likely exposes MCP too [a
 inference, verify with loopback_only(8000) after any change].
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1
 
 import json
 import os
@@ -248,8 +248,41 @@ PROTOCOL_VERSION = 1
 PROTOCOL_MAGIC = "ue_py"
 DEFAULT_GROUP = ("239.0.0.1", 6766)      # multicast discovery  [verify defaults on 5.8]
 DEFAULT_COMMAND = ("127.0.0.1", 6776)    # our TCP listener the editor connects back to
-DEFAULT_BIND = "127.0.0.1"
+# Epic's default is 127.0.0.1. On macOS an editor socket bound to 127.0.0.1 never receives datagrams sent
+# to the group address, so no editor is ever found (checked live on 5.8.3, macOS 26.5, 2026-10-21): the
+# editor setting "Multicast Bind Address" and this client must both be 0.0.0.0 there (TTL 0 keeps the
+# traffic on this machine). ue_env.enable_remote_execution writes the editor side.
+DEFAULT_BIND = "0.0.0.0" if sys.platform == "darwin" else "127.0.0.1"
 EXEC_FILE, EXEC_STATEMENT, EVAL_STATEMENT = "ExecuteFile", "ExecuteStatement", "EvaluateStatement"
+
+
+def multicast_self_test(group=DEFAULT_GROUP, bind=DEFAULT_BIND, wait=1.5):
+    """Can this process receive its own UDP multicast datagram on `group` with this bind address?
+    A basic check of the host side only: it says nothing about the editor, whose own socket binds to the
+    editor setting "Multicast Bind Address" (see DEFAULT_BIND). Passes on macOS 26.5 with 0.0.0.0 and
+    with 127.0.0.1, so a pass does not prove discovery works. Returns {"ok": bool, "detail": str}."""
+    s = r = None
+    try:
+        r = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        r.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if hasattr(socket, "SO_REUSEPORT"):
+            r.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        r.bind(("", group[1]))
+        r.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(group[0]) + socket.inet_aton(bind))
+        r.settimeout(wait)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(bind))
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
+        s.sendto(b"ue_py_selftest", group)
+        data, _ = r.recvfrom(64)
+        return {"ok": data == b"ue_py_selftest", "detail": "received own datagram"}
+    except (OSError, socket.timeout) as exc:
+        return {"ok": False, "detail": "no multicast loopback on %s:%d (%s)" % (group[0], group[1], exc)}
+    finally:
+        for x in (s, r):
+            if x:
+                x.close()
 
 
 def rx_message(type_, source, dest=None, data=None):
@@ -368,6 +401,16 @@ class PythonRemote(object):
         except Exception:
             return None
 
+    def _epic_rx(self):
+        """Epic's RemoteExecution built from this object's group, bind address and command endpoint
+        (multicast TTL 0, host only). Its own defaults bind 127.0.0.1, which finds nothing on macOS."""
+        cfg = self._epic.RemoteExecutionConfig()
+        cfg.multicast_group_endpoint = tuple(self.group)
+        cfg.multicast_bind_address = self.bind
+        cfg.multicast_ttl = 0
+        cfg.command_endpoint = tuple(self.command_ep)
+        return self._epic.RemoteExecution(cfg)
+
     # ----- discovery
     def _udp_socket(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -395,7 +438,7 @@ class PythonRemote(object):
         if self._epic is None:
             self._epic = self._try_epic() or False
         if self._epic:
-            rx = self._epic.RemoteExecution()
+            rx = self._epic_rx()
             rx.start()
             t = time.time()
             while time.time() - t < wait:
@@ -437,7 +480,7 @@ class PythonRemote(object):
         if self._epic is None:
             self._epic = self._try_epic() or False
         if self._epic:
-            self._rx = self._epic.RemoteExecution()
+            self._rx = self._epic_rx()
             self._rx.start()
             t = time.time()
             while not self._rx.remote_nodes and time.time() - t < max(wait, 5.0):
@@ -485,11 +528,17 @@ class PythonRemote(object):
             time.sleep(1.0)
 
     def _no_node_hint(self):
-        return ("no Unreal Editor answered on %s:%d: enable Project Settings > Plugins > Python >"
-                " Enable Remote Execution (restart not required [verify]); keep the multicast"
-                " bind address on 127.0.0.1; the editor must be open%s" % (
-                    self.group[0], self.group[1],
-                    (" on project '%s'" % self.project) if self.project else ""))
+        mc = multicast_self_test(self.group, self.bind)
+        return ("no Unreal Editor answered on %s:%d (client bind %s). Check: the editor is open%s; Python"
+                " Remote Execution is on (ue_env.enable_remote_execution(project) writes bRemoteExecution,"
+                " bind address and TTL 0 to Config/DefaultEngine.ini, then restart the editor); the editor's"
+                " Multicast Bind Address equals this client's bind (on macOS both must be 0.0.0.0, the"
+                " default 127.0.0.1 is never reached by multicast pings there); group and port match the"
+                " editor settings. Host multicast self-test: %s (%s). Without a restart, use the MCP python"
+                " toolset (ue_env.install_python_toolset, restart too) or a headless commandlet."
+                % (self.group[0], self.group[1], self.bind,
+                   (" on project '%s'" % self.project) if self.project else "",
+                   "ok" if mc["ok"] else "FAILED", mc["detail"]))
 
     def _recv_json(self):
         buf, t = b"", time.time()

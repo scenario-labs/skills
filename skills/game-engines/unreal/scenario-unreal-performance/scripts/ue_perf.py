@@ -2,14 +2,21 @@
 """
 ue_perf: the scenario-unreal-performance skill's toolkit (UE 5.8, agent on macOS Apple Silicon).
 
-STATUS: not yet run in Unreal (UE 5.8 not installed on this Mac on 2026-09-24).
-The pure layers (A plans and A/B plans, B frames and diagnosis, C trace analysis, C2
-suspect trees, D log parsers, E config writers, F proof) ran offline with system python3 on synthetic captures in
-tests/code/unreal-performance/test_ue_perf_offline.py. Layer G (in-editor, needs the
-`unreal` module) is untested; every UE name in it is [verify].
+STATUS (v0.2, 2026-10-21): run on UE 5.8.3 (macOS, Apple Silicon). Real CSV profiler files
+from -game offscreen captures went through load_frames, diagnose_bound, csv_counters,
+csv_breakdown and csv_step_table; real .utrace files (a lean trace and snapshothitches
+snapshots) went through insights_export, load_insights_events and analyze_trace; layer G
+(perf_audit_level, perf_audit_assets, texture_facts, change_requests) ran in a commandlet on
+a built heavy level. Offline tests: tests/code/unreal-performance/test_ue_perf_offline.py;
+live tests: tests/code/unreal-performance/live_*.py. Still not run: packaged-build captures,
+ProfileGPU log parsing (parse_profilegpu), memreport and obj list parsers, RouteRunner,
+apply_change_requests(apply=True). The machine was shared and loaded: timings are noisy,
+read ratios and counters.
 
 Shared toolkit (<skills>/scenario-unreal-expert/scripts, owned by the lead): ue_stat parses stat unit
-logs, CSV profiler files and TraceQuery JSONL and owns budget_check(frames, target_ms);
+logs, CSV profiler files and TraceQuery JSONL and owns budget_check(frames, target_ms).
+The 5.8.3 launcher build ships no TraceQuery binary: read .utrace files with the Insights
+command line (insights_export, load_insights_events below);
 ue_review takes screenshots and runs image_checks; ue_audit audits assets; ue_run runs
 headless jobs; ue_remote reaches a running editor; ue_env finds the engine (its dict has
 "trace_query" and "insights" paths). ue_perf never re-parses a UE file format when ue_stat
@@ -27,7 +34,10 @@ Library use (python3, agent side):
   P.budget_table("console", 60)                 # per-thread and sourced feature budgets
   P.capture_plan("gpu", platform="console", build="Test", tracefile="/abs/gpu.utrace")
   d = P.diagnose_bound(P.load_frames("/abs/unit.csv"), target_ms=16.67)
-  t = P.analyze_trace(P.load_trace("/abs/trace.jsonl"), target_ms=16.67)
+  P.csv_step_table([("before", "/abs/before.csv"), ("after", "/abs/after.csv")], tail=250)
+  x = P.insights_export(P.insights_binary("/Users/Shared/Epic Games/UE_5.8"), "/abs/t.utrace",
+                       "/abs/out")
+  t = P.analyze_trace(P.load_insights_events(x["outputs"]["events"]), target_ms=16.67)
   g = P.gpu_pass_table(open("/abs/Game.log").read())
   c = P.compare_runs(before_runs, after_runs, target_ms=16.67)
   P.write_proof_report(c, "/abs/out", changes=P.ChangeLog("/abs/changes.jsonl").entries())
@@ -41,7 +51,9 @@ Shell:
   python3 ue_perf.py budgets --platform console --fps 60
   python3 ue_perf.py plan --purpose hitch --platform mac --build Test --tracefile /abs/h.utrace
   python3 ue_perf.py diagnose --frames unit.csv [--target 16.67] [--vsync]
-  python3 ue_perf.py trace --jsonl trace.jsonl [--target 16.67] [--out dir]
+  python3 ue_perf.py trace --utrace /abs/t.utrace [--out dir]   (Insights CLI export first)
+  python3 ue_perf.py trace --events events.csv | --jsonl trace.jsonl [--target 16.67]
+  python3 ue_perf.py steps --csv before=/abs/b.csv after=/abs/a.csv [--tail 250]
   python3 ue_perf.py schema --jsonl trace.jsonl
   python3 ue_perf.py gpu --log Game.log
   python3 ue_perf.py resolution --output 2160 --secondary 1440 --min 800 --max 1080
@@ -61,7 +73,7 @@ ARG Argyriou lighting at scale. [added] = this skill's own addition.
 
 from __future__ import annotations
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor pass)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; live runs on UE 5.8.3)
 
 import bisect
 import csv
@@ -94,8 +106,9 @@ def toolkit(name):
 
 # ue_stat (the lead's module, v0.1): parse_csv_profile(path) + csv_frames(parsed) for CSV
 # profiler files, parse_stat_unit(text or path) for stat unit text, parse_jsonl(path) for
-# TraceQuery records, budget_check(frames, target_ms). Checked against its source on
-# 2026-09-24; both modules are not yet run on real engine output.
+# TraceQuery records, budget_check(frames, target_ms). parse_csv_profile ran on real 5.8.3
+# CSV files (2026-10-21, after a fix for the 5.8.3 layout); parse_jsonl has no real input
+# (no TraceQuery in the launcher build).
 def _ue_stat_frames(path):
     st = toolkit("ue_stat")
     if st is None:
@@ -140,7 +153,8 @@ PLATFORMS = {
             "Epic scalability is the 30 fps level, High (2) the 60 fps level (OZ26 [00:11:00]; LVP).",
             "No runtime PSO hitches: one GPU, shaders compiled at cook (PSO blog).",
             "Profile with dynamic resolution locked, for example 75 percent (NORSE [00:44:40]).",
-            "r.GTSyncType 2 on Gen9 consoles (OZ26 [00:09:27]) [verify].",
+            "r.GTSyncType 2 on Gen9 consoles (OZ26 [00:09:27]); the cvar exists in 5.8.3, "
+            "default 0 (SearchCVars, 2026-10-21).",
             "Deploying to a devkit needs the platform SDK and a source build (PKG): this Mac "
             "cannot; captures come from CI or a person at the devkit [added].",
         ],
@@ -319,7 +333,8 @@ def _fmt_dpcvars(d):
 
 def capture_plan(purpose="budget", platform="console", build="Test", tracefile=None,
                  dynres_lock=None, attribution=False, headroom=True, cold=None, cores=None,
-                 csv_profile=False, extra_dpcvars=None, extra_exec=None, gc_log=False):
+                 csv_profile=False, extra_dpcvars=None, extra_exec=None, gc_log=False,
+                 csv_frames=None, gpu_csv_stats=None, trace=True):
     """Launch arguments for one capture, plus the hygiene record to attach to the run.
 
     purpose: a TRACE_RECIPES key. platform: a PLATFORMS key. build: Test or Development
@@ -328,7 +343,11 @@ def capture_plan(purpose="budget", platform="console", build="Test", tracefile=N
     compute onto the graphics pipe (r.RDG.AsyncCompute=0) to read true per-pass costs; never
     for the final proof (NORSE [00:45:12]; LVP). headroom=True turns VSync and frame caps off
     for measurement (TL part 3). cold=True clears the PSO driver cache (PC, Mac, mobile).
-    Every flag is [verify] on 5.8."""
+    csv_frames=N adds a boot CSV capture of N frames that exits the run when done; trace=False
+    leaves the Insights trace out (a CSV-only run).
+    Ran on 5.8.3 (Mac, editor binary with -game, offscreen, 2026-10-21): -csvCaptureFrames,
+    -ExitAfterCsvProfiling, -DPCVars, -trace/-tracefile and r.DynamicRes.TestScreenPercentage
+    (name). Not yet run: DEV_NOISE_FLAGS, -clearPSODriverCache, -corelimit, -statnamedevents."""
     if purpose not in TRACE_RECIPES:
         raise ValueError("unknown purpose %r (choose from %s)" % (purpose, sorted(TRACE_RECIPES)))
     if platform not in PLATFORMS:
@@ -353,12 +372,12 @@ def capture_plan(purpose="budget", platform="console", build="Test", tracefile=N
         channels = "default,memory_light"
         notes.append("Mac: MemAlloc and Callstack are not listed for Mac; memory_light gives "
                      "allocations and tags without callstacks (INS; rn55) [verify].")
-    args = ["-trace=" + channels]
-    if tracefile:
+    args = ["-trace=" + channels] if trace else []
+    if tracefile and trace:
         if not os.path.isabs(tracefile):
             problems.append("tracefile must be an absolute path")
         args.append("-tracefile=" + tracefile)
-    if r["named_events"]:
+    if r["named_events"] and trace:
         args.append("-statnamedevents")
     if build in ("Development", "Test"):
         args += DEV_NOISE_FLAGS
@@ -370,26 +389,47 @@ def capture_plan(purpose="budget", platform="console", build="Test", tracefile=N
     if dynres_lock:
         dp["r.DynamicRes.TestScreenPercentage"] = dynres_lock
         notes.append("Dynamic resolution locked at %s%% so cost shows in ms, not in buffer "
-                     "size (NORSE [00:44:40]) [verify cvar spelling]." % dynres_lock)
+                     "size (NORSE [00:44:40])." % dynres_lock)
     if attribution:
         dp["r.RDG.AsyncCompute"] = 0
         notes.append("Async compute off: per-pass attribution only, re-measure with it on "
                      "for any proof (NORSE [00:45:12]; LVP).")
-        if purpose in ("gpu", "why"):
-            dp["r.RHISetGPUCaptureOptions"] = 1
+    if gpu_csv_stats is None:
+        gpu_csv_stats = bool(csv_frames or csv_profile) and purpose in ("gpu", "why", "budget")
+    if gpu_csv_stats:
+        dp["r.GPUCsvStatsEnabled"] = 1
+        notes.append("r.GPUCsvStatsEnabled=1 adds GPU/<pass> columns to the CSV (default 0; "
+                     "run on 5.8.3) [added].")
     if extra_dpcvars:
         dp.update(extra_dpcvars)
     if dp:
         args.append('-DPCVars=' + _fmt_dpcvars(dp))
     exec_cmds = []
+    if attribution and purpose in ("gpu", "why"):
+        # a console command, not a cvar (RHI.cpp, 5.8.3): it cannot go in -DPCVars
+        exec_cmds.append("r.RHISetGPUCaptureOptions 1")
     if purpose == "hitch":
         exec_cmds += ["stat default", "snapshothitches -start"]
-        notes.append("snapshothitches needs a stat group active and writes a trace snapshot "
-                     "plus a screenshot per hitch to Saved/Profiling/Hitches (rn58).")
+        notes.append("snapshothitches needs a stat group active (rn58): `stat default` or "
+                     "`stat game` worked, `stat unit` alone gave no snapshot (run on 5.8.3). A "
+                     "frame counts when its game or render thread time exceeds "
+                     "t.HitchFrameTimeThreshold (default 60 ms); each hitch writes "
+                     "Frame-<N>.utrace (the trace tail, about 4.5 MB) and Frame-<N>.png under "
+                     "Saved/Profiling/Hitches/<instance id>/, then 10 frames are skipped. With the "
+                     "editor binary and -game on a Mac the folder is the engine's per-user "
+                     "Saved, not the project's.")
+    if csv_frames:
+        args += ["-csvCaptureFrames=%d" % int(csv_frames), "-ExitAfterCsvProfiling"]
+        notes.append("Boot CSV capture of %d frames, then exit; skip the first frames (level "
+                     "load) when reading it." % int(csv_frames))
     if csv_profile:
         exec_cmds.append("csvprofile start")
-        notes.append("CSV profiler output under Saved/Profiling/CSV [verify]; stop with "
-                     "`csvprofile stop` before exit.")
+        notes.append("Stop with `csvprofile stop` before exit.")
+    if csv_frames or csv_profile:
+        notes.append("The log line 'Writing CSV to file :' names the .csv. With the launcher "
+                     "editor binary and -game on a Mac it was under the engine's per-user "
+                     "Saved/Profiling/CSV, not the project's (run on 5.8.3); csv_path_from_log() "
+                     "reads it.")
     if extra_exec:
         exec_cmds += list(extra_exec)
     if exec_cmds:
@@ -411,7 +451,8 @@ def capture_plan(purpose="budget", platform="console", build="Test", tracefile=N
         notes.append("GC phases and UObject count in the log; verbose logging costs time "
                      "itself (NORSE [00:15:18] [00:15:51]).")
     hygiene = {"purpose": purpose, "build": build, "platform": platform,
-               "channels": channels, "named_events": bool(r["named_events"]),
+               "channels": channels if trace else "none",
+               "named_events": bool(r["named_events"]) and bool(trace),
                "dynres": ("locked %s" % dynres_lock) if dynres_lock else "as shipped",
                "async_compute": "off" if attribution else "on",
                "vsync": "off" if headroom else "on", "pso_cache": "cold" if cold else "warm"}
@@ -441,7 +482,10 @@ def packaged_binary(app_path):
     return os.path.join(app_path, "Contents", "MacOS", name)
 
 
-# Console sequences per stage: (command, what to read). All [verify] on 5.8.
+# Console sequences per stage: (command, what to read). Cvar names were checked with
+# EditorAppToolset.SearchCVars on 5.8.3 (2026-10-21); console commands, stat groups and
+# view mode names against the 5.8.3 source where noted. On-screen output was not read (the
+# live runs had no window).
 STAT_SEQUENCES = {
     "triage": [("stat fps", "fps and ms"),
                ("stat unit", "Frame, Game, Draw, GPU, RHIT, DynRes; 5.8 adds VRAM used and budget "
@@ -455,23 +499,29 @@ STAT_SEQUENCES = {
             ("stat gpu", "per pass, live"),
             ("ProfileGPU", "one frame to the log; 5.8 includes graphics pipe waits (TL part 2)"),
             ("r.RDG.AsyncCompute 1", "restore before any proof")],
-    "lumen_delta": [("r.DynamicGlobalIlluminationMethod 0", "Lumen GI off"),
+    # Restore what was printed, not 1: a project without Lumen (the 5.8.3 Blank base had GI 0,
+    # reflections 2) would be switched on. lumen_delta_sequence(gi, refl) writes the restore.
+    "lumen_delta": [("r.DynamicGlobalIlluminationMethod", "print: value to restore (1 = Lumen)"),
+                    ("r.ReflectionMethod", "print: value to restore (1 = Lumen)"),
+                    ("r.DynamicGlobalIlluminationMethod 0", "Lumen GI off"),
                     ("r.ReflectionMethod 0", "Lumen reflections off: frame should be about 4 ms "
-                     "faster at 60 fps if on budget (OZ24 [00:37:55])"),
-                    ("r.DynamicGlobalIlluminationMethod 1", "restore"),
-                    ("r.ReflectionMethod 1", "restore")],
+                     "faster at 60 fps if on budget (OZ24 [00:37:55])")],
     "lumen_views": [("r.Lumen.Visualize 2", "Performance Overview: pixels tracing dedicated "
-                     "reflection rays (OZ24 [00:39:00]; 5.4 notes) [verify mode number]")],
+                     "reflection rays (OZ24 [00:39:00]; 5.4 notes); mode 2 is Performance "
+                     "Overview in the 5.8.3 source")],
     "ray_tracing": [("stat SceneRendering", "Ray tracing active instances under about 100,000 (LVP)"),
-                    ("r.RayTracing.Culling.Radius", "print: near-field radius; about 150 m in the "
-                     "Witcher demo (W4R [00:29:30]) [verify units]"),
+                    ("r.RayTracing.Culling.Radius", "print: centimetres, 5.8.3 default 30000 "
+                     "(300 m), culls instances behind the camera beyond it; about 150 m in the "
+                     "Witcher demo (W4R [00:29:30])"),
                     ("r.LumenScene.FarField", "print: static far-field TLAS (5.6 notes)"),
                     ("r.LumenScene.FarField.OcclusionOnly", "print: 1 = occlusion-only far field, "
                      "about 50 percent faster (5.6 notes via W4R)")],
-    "vsm": [("r.ShaderPrintEnable 1", "on-screen stats (OZ24 [00:48:59])"),
-            ("r.Shadow.Virtual.ShowStats 2", "pages, non-Nanite geometry, static vs dynamic "
-             "invalidations: chase the bigger one; spelling vs r.Shadow.Virtual.Stats conflicts "
-             "in the docs [verify]"),
+    # 5.8.3: r.ShaderPrintEnable is gone (r.ShaderPrint); r.Shadow.Virtual.ShowStats is
+    # deprecated and typing it fires an ensure with a callstack (about 5 s stall in a run):
+    # use r.Shadow.Virtual.Stats.Visible (SearchCVars, 2026-10-21).
+    "vsm": [("r.ShaderPrint 1", "on-screen shader print (OZ24 [00:48:59]; renamed in 5.8.3)"),
+            ("r.Shadow.Virtual.Stats.Visible 1", "pages, non-Nanite geometry, static vs dynamic "
+             "invalidations: chase the bigger one (OZ24 [00:48:59]; replaces ShowStats)"),
             ("r.Shadow.Virtual.UseReceiverMaskDirectional", "print: default on for directional "
              "lights since 5.7 (W4R [00:37:50]; rn57)"),
             ("r.Shadow.Virtual.Clipmap.WPODisableDistance.LodBias", "print: half a long shadow "
@@ -483,32 +533,35 @@ STAT_SEQUENCES = {
     "vsm_cache_view": [("ShowFlag.VisualizeVirtualShadowMap 1", "VSM visualization"),
                        ("r.Shadow.Virtual.Visualize cache", "red = invalidated pages; camera still")],
     # Oztalay's Nanite decision tree, in order (OZ24 [00:29:18] to [00:36:46]); run nanite_triage()
-    # on the numbers. View mode names after r.Nanite.Visualize are [verify] on 5.8.
-    "nanite": [("r.Nanite.ShowMeshDrawEvents 1", "split fixed-function and programmable raster "
-                "bins in ProfileGPU; needed only up to 5.4 (OZ24 [00:29:52])"),
+    # on the numbers. Mode names Overview, EvaluateWPO, PixelProgrammable and Overdraw are in
+    # the 5.8.3 mode list; r.Nanite.ShowMeshDrawEvents (needed up to 5.4, OZ24 [00:29:52]) no
+    # longer exists in 5.8.3.
+    "nanite": [
                ("ProfileGPU", "Nanite VisBuffer and base pass against their budgets (OZ24 [00:29:18])"),
                ("r.Nanite.Visualize EvaluateWPO", "vertex-programmable content (OZ24 [00:31:00]; "
-                "FFW [00:16:14]) [verify mode name and colours]"),
+                "FFW [00:16:14]); colours not yet read on screen"),
                ("r.Nanite.Visualize PixelProgrammable", "masked, PDO, dynamic displacement "
-                "(OZ24 [00:31:34]) [verify mode name]"),
+                "(OZ24 [00:31:34])"),
                ("r.Nanite.Visualize.PixelProgrammableVisMode 1", "split masked from PDO "
-                "(FFW [00:18:38]) [verify values]"),
+                "(FFW [00:18:38]); 5.8.3 values 0 all, 1 masked, 2 PDO, 3 dynamic displacement"),
                ("NaniteStats", "helper lanes near zero; shading bins total minus empty = draw "
-                "calls (W4R [00:28:20]; OZ24 [00:36:14])"),
-               ("r.Nanite.Visualize Overdraw", "last, as a locator only (OZ24 [00:32:13]) "
-                "[verify mode name]"),
-               ("r.Nanite.Visualize 0", "restore [verify]")],
+                "calls (W4R [00:28:20]; OZ24 [00:36:14]); command present in the 5.8.3 source"),
+               ("r.Nanite.Visualize Overdraw", "last, as a locator only (OZ24 [00:32:13])"),
+               ("r.Nanite.Visualize 0", "restore: a name that is not a mode leaves none active "
+                "(NaniteVisualizationData.cpp, 5.8.3); not yet run on screen")],
     # Async compute is an optimization to A/B per feature (W4R [00:20:42] [00:21:48]); the
-    # per-feature cvars come from the Lumen performance doc (LVP) and W4R's agent notes [verify].
+    # per-feature cvars come from the Lumen performance doc (LVP) and W4R's agent notes; all
+    # six exist in 5.8.3 (SearchCVars).
     "async_ab": [("r.RDG.AsyncCompute", "print: global switch; 0 only to attribute passes"),
                  ("r.Lumen.AsyncCompute", "print"), ("r.LumenScene.Lighting.AsyncCompute", "print"),
                  ("r.Lumen.DiffuseIndirect.AsyncCompute", "print"),
                  ("r.Lumen.Reflections.AsyncCompute", "print: moving reflections back to graphics "
                   "saved time in the Witcher demo (W4R [00:21:48])"),
-                 ("r.SkinCache.AsyncCompute", "print [verify]")],
-    "camera_cut": [("r.Nanite.PrimeHZB", "print: 5.7 experimental HZB priming after cuts [verify]"),
+                 ("r.SkinCache.AsyncCompute", "print")],
+    "camera_cut": [("r.Nanite.PrimeHZB", "print: HZB priming after cuts (5.7); 5.8.3 values 0 "
+                    "off (default), 1 only when no HZB exists, 2 always"),
                    ("r.Nanite.Visualize Overdraw", "screenshot the frame after the cut "
-                    "(W4R [00:44:44] [00:45:16]) [verify mode name]")],
+                    "(W4R [00:44:44] [00:45:16])")],
     "foliage": [("sg.FoliageQuality", "print: drives the density cvars below (FFW [00:33:18])"),
                 ("foliage.DensityScale", "print: only foliage types with Enable Density Scaling, "
                  "non-colliding types only (FFW [00:32:48] [00:35:58])"),
@@ -523,11 +576,14 @@ STAT_SEQUENCES = {
     # ABA: a.Budget.Enabled is on by default and throttles only skeletal mesh components that
     # are registered with the budgeter (Enable Animation Budget node, Auto Register); Epic's
     # anim docs say use it instead of URO (animbp-architecture-performance doc).
+    # a.Budget.* exist only with the Animation Budget Allocator plugin enabled: SearchCVars on a
+    # 5.8.3 Blank project found neither name.
     "animation": [("a.Budget.Enabled", "print: on by default; does nothing without budgeted "
-                   "components (anim docs)"),
+                   "components (anim docs); needs the Animation Budget Allocator plugin"),
                   ("a.Budget.Debug.Enabled 1", "ABA debug overlay, not the switch (anim docs)")],
     "niagara": [("stat NiagaraOverview", "GT Concurrent, GT, RT totals (NIA [00:04:41])"),
-                ("fx.Niagara.Debug.Hud Enabled=1 OverviewEnabled=1", "debug HUD, GPU compute")],
+                ("fx.Niagara.Debug.Hud Enabled=1 OverviewEnabled=1", "debug HUD, GPU compute; "
+                 "a console command in 5.8.3, so SearchCVars does not list it")],
     "streaming": [("stat levels", "level states and load times (STAT)"),
                   ("stat streaming", "texture pool vs required (OZ24 [00:06:55])"),
                   ("s.UseUnifiedTimeBudgetForStreaming", "print: 5.6 Experimental, off by "
@@ -537,8 +593,11 @@ STAT_SEQUENCES = {
     "hitch": [("stat default", "a stat group must be active (rn58)"),
               ("snapshothitches -start", "trace snapshot + screenshot per hitch"),
               ("snapshothitches -stop", "at the end of the route")],
-    "pso": [("stat PSOPrecache", "Missed and Too late near zero (PSO doc)")],
-    "memory": [("memreport -full", "text snapshot for diffs [verify output folder]")],
+    # PSO precache validation (stat group and r.PSOPrecache.Validation) is compiled out of editor
+    # builds in 5.8.3 (PSO_PRECACHING_VALIDATE needs !WITH_EDITOR): packaged builds only.
+    "pso": [("stat PSOPrecache", "Missed and Too late near zero (PSO doc); packaged builds")],
+    "memory": [("memreport -full", "text snapshot for diffs; written under "
+                "Saved/Profiling/MemReports/ (5.8.3 source)")],
     "scalability_readback": [(n, "prints value and LastSetBy (SCAL)") for n in (
         "sg.ViewDistanceQuality", "sg.ShadowQuality", "sg.GlobalIlluminationQuality",
         "sg.ReflectionQuality", "sg.EffectsQuality", "sg.FoliageQuality",
@@ -554,12 +613,37 @@ def stat_sequence(stage):
     return [c for c, _ in STAT_SEQUENCES[stage]]
 
 
+def lumen_delta_sequence(gi_before, reflections_before):
+    """The lumen_delta stage with restore commands for the values printed first (never a
+    hard-coded 1: that would switch Lumen on in a project that had it off)."""
+    return ["r.DynamicGlobalIlluminationMethod 0", "r.ReflectionMethod 0",
+            "r.DynamicGlobalIlluminationMethod %s" % gi_before,
+            "r.ReflectionMethod %s" % reflections_before]
+
+
+_CSV_LOG_RE = re.compile(r"Writing CSV to file\s*:\s*(.+?\.csv(?:\.gz)?)\s*$", re.M)
+
+
+def csv_path_from_log(log_text, binary_dir=None):
+    """The CSV profiler file named in a run log ('Writing CSV to file : <path>', 5.8.3). The
+    path can be relative to the binary's folder (Engine/Binaries/Mac for the editor binary):
+    pass binary_dir to resolve it. Returns the last one, or None."""
+    found = _CSV_LOG_RE.findall(log_text or "")
+    if not found:
+        return None
+    p = found[-1].strip().strip('"')
+    if binary_dir and not os.path.isabs(p):
+        p = os.path.normpath(os.path.join(binary_dir, p))
+    return p
+
+
 # ---------------------------------------------------------------- A/B plans (one variant a run)
 # Async compute is an optimization to A/B per content, not a switch: about 1.5 ms saved overall
 # in the Witcher 4 demo, yet moving Lumen reflections back to graphics saved more, because a
 # queue with nothing to overlap only adds cost (W4R [00:20:42] [00:21:48] [00:22:21]; LVP says
 # run all of Lumen async when Screen Probe Gather cannot overlap reflections). Cvar names from
-# LVP and W4R's agent notes [verify on 5.8]. Baseline = the engine's current state.
+# LVP and W4R's agent notes; all exist in 5.8.3 (SearchCVars). Baseline = the engine's current
+# state.
 ASYNC_AB_VARIANTS = {
     "global_off": {"r.RDG.AsyncCompute": 0},
     "lumen_all_off": {"r.Lumen.AsyncCompute": 0},
@@ -571,7 +655,8 @@ ASYNC_AB_VARIANTS = {
 
 # Experimental 5.6 streaming helpers: off by default, A/B only, never the shipped fix while
 # Experimental (HITCH [00:12:30] [00:22:56]); async physics state pays only when workers have
-# spare cycles (W4S [00:18:16]). Names from the 5.6 release notes via W4S [verify on 5.8].
+# spare cycles (W4S [00:18:16]). Names from the 5.6 release notes via W4S; all exist in 5.8.3,
+# default off (SearchCVars, 2026-10-21).
 STREAMING_AB_VARIANTS = {
     "unified_budget": {"s.UseUnifiedTimeBudgetForStreaming": 1},
     "async_physics_state": {"p.Chaos.EnableAsyncInitBody": 1,
@@ -758,6 +843,73 @@ def load_frames(path):
     return normalize_frames(list(csv.DictReader(io.StringIO(text))))
 
 
+# CSV profiler counters that explain a change better than frame time on a noisy machine (all
+# present in a 5.8.3 -game capture on a Mac, 2026-10-21). GPU/<pass> columns appear only with
+# r.GPUCsvStatsEnabled=1 (default 0). RHI/DrawCalls, RHI/PrimitivesDrawn and DrawCall/* read 0
+# on Metal in that run, even with GPU CSV stats on: count primitives with GPUSceneInstanceCount.
+CSV_COUNTERS = ("FrameTime", "GameThreadTime", "RenderThreadTime", "RHIThreadTime", "GPUTime",
+                "GPUSceneInstanceCount", "LightCount/All", "LightCount/UpdatedShadowMaps",
+                "TextureStreaming/NonStreamingMips", "TextureStreaming/StreamingPool",
+                "MemoryFreeMB", "RHI/DrawCalls", "RHI/PrimitivesDrawn")
+CSV_BREAKDOWN_PREFIXES = ("GPU/", "Exclusive/RenderThread/", "Exclusive/GameThread/")
+
+
+def _csv_parsed(path_or_parsed):
+    if isinstance(path_or_parsed, dict) and "rows" in path_or_parsed:
+        return path_or_parsed
+    st = toolkit("ue_stat")
+    if st is None:
+        raise RuntimeError("ue_stat (<skills>/scenario-unreal-expert/scripts) is needed for CSV profiler files")
+    return st.parse_csv_profile(path_or_parsed)
+
+
+def _median(vals):
+    vals = sorted(v for v in vals if isinstance(v, (int, float)))
+    if not vals:
+        return None
+    m = len(vals) // 2
+    return vals[m] if len(vals) % 2 else (vals[m - 1] + vals[m]) / 2.0
+
+
+def csv_counters(path_or_parsed, columns=CSV_COUNTERS, tail=None):
+    """Median of each CSV profiler column over the last `tail` frames (all when None);
+    None for a column the file lacks. Skip boot frames with tail (the first frames after a
+    -csvCaptureFrames boot capture include level load)."""
+    p = _csv_parsed(path_or_parsed)
+    rows = p["rows"][-tail:] if tail else p["rows"]
+    return {c: (round(_median(r.get(c) for r in rows), 3)
+                if c in p["columns"] else None) for c in columns}
+
+
+def csv_breakdown(path_or_parsed, prefixes=CSV_BREAKDOWN_PREFIXES, tail=None, n=15, min_ms=0.15):
+    """The n largest per-frame medians among columns starting with `prefixes` (GPU passes,
+    render and game thread exclusive scopes, including EventWait/* waits)."""
+    p = _csv_parsed(path_or_parsed)
+    rows = p["rows"][-tail:] if tail else p["rows"]
+    out = []
+    for c in p["columns"]:
+        if c.startswith(tuple(prefixes)):
+            m = _median(r.get(c) for r in rows)
+            if m is not None and m >= min_ms:
+                out.append((c, round(m, 3)))
+    out.sort(key=lambda x: -x[1])
+    return out[:n]
+
+
+def csv_step_table(steps, columns=CSV_COUNTERS, tail=None):
+    """[(label, csv path or parsed)] to rows of csv_counters plus each step's ratio to the
+    first step, for a before/after table built from counters and ratios."""
+    rows, base = [], None
+    for label, src in steps:
+        c = csv_counters(src, columns, tail)
+        if base is None:
+            base = c
+        ratio = {k: (round(v / base[k], 3) if isinstance(v, (int, float)) and base.get(k)
+                     else None) for k, v in c.items()}
+        rows.append({"label": label, "values": c, "ratio_to_first": ratio})
+    return rows
+
+
 def percentile(values, q):
     """Linear-interpolated percentile (q in 0..100) of a list of numbers; None when empty."""
     vals = sorted(v for v in values if v is not None)
@@ -870,6 +1022,14 @@ def diagnose_bound(frames, target_ms=16.67, vsync=None, context=None):
                            and bound in ("gpu", "rhit")):
         res["caveats"].append("GPU and RHIT follow Frame and can look alike in stat unit: "
                               "confirm on the RHI and GPU tracks in Insights (STAT; KEN)")
+    if (bound == "draw" and "gpu" in meds and meds["gpu"] > target_ms
+            and meds["gpu"] >= 0.85 * meds["draw"]):
+        res["caveats"].append(
+            "render thread and GPU within 15%% (%.1f vs %.1f ms): the render thread can be "
+            "waiting on the GPU or on its own tasks. Read the CSV columns Exclusive/RenderThread/* "
+            "and Exclusive/RenderThread/EventWait/* (or an Insights trace) before calling it "
+            "render-bound; on a 5.8.3 Mac run the 42 ms render thread was 26 ms of "
+            "EventWait/Shadows while GPU/ShadowDepths took 32 ms [added]" % (meds["draw"], meds["gpu"]))
     if res["also_over"]:
         res["caveats"].append("more than one stage over budget: each needs its own 16.6 ms "
                               "(W4R [00:05:17]); fix the bound first, then re-classify")
@@ -1180,6 +1340,125 @@ def schema_probe(path, n=200):
             "keys": {k: {"count": v["count"], "types": sorted(v["types"]),
                          "example": v["example"], "maps_to": alias_of.get(k)}
                      for k, v in keys.items()}}
+
+
+# --------------------------------------------------------------- Unreal Insights CLI exports
+# Run on 5.8.3 (2026-10-21): the launcher build ships UnrealInsights but no TraceQuery binary,
+# so .utrace files are read by Insights itself with no window (-NoUI -AutoQuit) and its
+# TimingInsights.Export* console commands, several per run through a response file
+# (-ExecOnAnalysisCompleteCmd="@=<file>", one command per line). A .csv output name gives
+# comma-separated text, anything else tab-separated. Times are in seconds. A 10.8 MB trace of
+# 500 frames exported 219,068 GameThread and RenderThread events in under a second.
+INSIGHTS_EVENT_COLUMNS = ("ThreadName", "TimerName", "StartTime", "EndTime", "Duration", "Depth")
+INSIGHTS_FRAME_TIMER = "FEngineLoop::Tick"  # GameThread depth 0, one per game frame (5.8.3)
+
+
+def insights_binary(engine_dir):
+    """Path of the Unreal Insights executable inside an engine install (Mac app bundle, or
+    the Windows/Linux binary)."""
+    base = os.path.join(engine_dir, "Engine", "Binaries")
+    for p in (os.path.join(base, "Mac", "UnrealInsights.app", "Contents", "MacOS",
+                           "UnrealInsights"),
+              os.path.join(base, "Win64", "UnrealInsights.exe"),
+              os.path.join(base, "Linux", "UnrealInsights")):
+        if os.path.isfile(p):
+            return p
+    return None
+
+
+def insights_export_plan(utrace, out_dir, threads=("GameThread", "RenderThread"),
+                         columns=INSIGHTS_EVENT_COLUMNS, statistics=True, counters=True):
+    """Response-file text, argument list and output paths for one silent Insights export of
+    a .utrace: threads list, timing events of `threads`, optional per-timer statistics and
+    counter list. Run with insights_export(), or pass `args` to the Insights binary."""
+    out = {"threads": os.path.join(out_dir, "threads.csv"),
+           "events": os.path.join(out_dir, "events.csv")}
+    lines = ["TimingInsights.ExportThreads " + out["threads"],
+             "TimingInsights.ExportTimingEvents %s -columns=%s -threads=%s"
+             % (out["events"], ",".join(columns), ",".join(threads))]
+    if statistics:
+        out["timers"] = os.path.join(out_dir, "timer_stats.csv")
+        lines.append("TimingInsights.ExportTimerStatistics %s -threads=%s"
+                     % (out["timers"], ",".join(threads)))
+    if counters:
+        out["counters"] = os.path.join(out_dir, "counters.csv")
+        lines.append("TimingInsights.ExportCounters " + out["counters"])
+    rsp = os.path.join(out_dir, "insights_export.rsp")
+    log = os.path.join(out_dir, "insights_export.log")
+    args = ['-OpenTraceFile=%s' % utrace, '-ABSLOG=%s' % log, "-AutoQuit", "-NoUI",
+            '-ExecOnAnalysisCompleteCmd=@=%s' % rsp, "-log"]
+    return {"rsp": rsp, "rsp_text": "\n".join(lines) + "\n", "args": args, "log": log,
+            "outputs": out}
+
+
+def insights_export(insights_bin, utrace, out_dir, timeout_s=900, **kw):
+    """Run insights_export_plan() with no window and wait (agent side). Returns the plan with
+    "rc" and "exported" (the 'Exported N ...' log lines)."""
+    import subprocess
+    os.makedirs(out_dir, exist_ok=True)
+    plan = insights_export_plan(utrace, out_dir, **kw)
+    with open(plan["rsp"], "w") as f:
+        f.write(plan["rsp_text"])
+    p = subprocess.run([insights_bin] + plan["args"], stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL, timeout=timeout_s)
+    plan["rc"] = p.returncode
+    try:
+        with open(plan["log"], "r", encoding="utf-8", errors="replace") as f:
+            plan["exported"] = [ln.split("]", 2)[-1].strip() for ln in f if "Exported " in ln]
+    except OSError:
+        plan["exported"] = []
+    return plan
+
+
+def _delimited_rows(path):
+    import csv
+    with open(path, "r", encoding="utf-8", errors="replace", newline="") as f:
+        head = f.readline()
+        f.seek(0)
+        delim = "\t" if head.count("\t") > head.count(",") else ","
+        for row in csv.DictReader(f, delimiter=delim):
+            yield row
+
+
+def load_insights_events(path, frame_timer=INSIGHTS_FRAME_TIMER, frame_thread="GameThread"):
+    """Insights ExportTimingEvents output (columns INSIGHTS_EVENT_COLUMNS, seconds) to the
+    same {"timers", "frames", "bookmarks", "counters"} shape as normalize_trace(), so
+    analyze_trace() reads it. Game frames are the depth-0 `frame_timer` scopes on
+    `frame_thread`."""
+    timers, frames = [], []
+    for r in _delimited_rows(path):
+        name = r.get("TimerName") or r.get("Timer") or ""
+        thread = r.get("ThreadName") or r.get("Thread") or "GameThread"
+        start, end = _num(r.get("StartTime")), _num(r.get("EndTime"))
+        dur = _num(r.get("Duration"))
+        if dur is None and start is not None and end is not None:
+            dur = end - start
+        depth = _num(r.get("Depth"))
+        depth = int(depth) if depth is not None else None
+        if name == frame_timer and thread == frame_thread and depth in (0, None):
+            frames.append({"index": len(frames), "start": start, "end": end,
+                           "ms": (dur or 0.0) * 1000.0, "type": "game"})
+        timers.append({"name": name, "thread": thread, "kind": thread_kind(thread),
+                       "frame": None, "start": start, "end": end,
+                       "ms": (dur or 0.0) * 1000.0, "depth": depth, "excl": None})
+    _assign_frames(timers, frames, [])
+    return {"timers": timers, "frames": frames, "bookmarks": [], "counters": []}
+
+
+def load_timer_statistics(path):
+    """Insights ExportTimerStatistics output to rows {name, count, incl_ms, excl_ms, incl_max_ms,
+    incl_avg_ms, incl_med_ms}, sorted by inclusive total. Columns on 5.8.3: Name, Count,
+    C.Avg, Incl, I.Min, I.Max, I.Avg, I.Med, Excl, E.Min, E.Max, E.Avg, E.Med (seconds)."""
+    rows = []
+    for r in _delimited_rows(path):
+        def ms(k):
+            v = _num(r.get(k))
+            return v * 1000.0 if v is not None else None
+        rows.append({"name": r.get("Name"), "count": int(_num(r.get("Count")) or 0),
+                     "incl_ms": ms("Incl"), "excl_ms": ms("Excl"), "incl_max_ms": ms("I.Max"),
+                     "incl_avg_ms": ms("I.Avg"), "incl_med_ms": ms("I.Med")})
+    rows.sort(key=lambda x: -(x["incl_ms"] or 0.0))
+    return rows
 
 
 def _exclusive_times(tlist):
@@ -2054,8 +2333,9 @@ def parse_pso_misses(text):
 
 
 def hitch_snapshots(folder):
-    """Files written by `snapshothitches` under Saved/Profiling/Hitches/<process>/, grouped by
-    stem: [{"stem", "trace", "image", "files"}] sorted by name (rn58) [verify naming]."""
+    """Files written by `snapshothitches` under Saved/Profiling/Hitches/<instance id>/, grouped
+    by stem: [{"stem", "trace", "image", "files"}] sorted by name. Run on 5.8.3: Frame-<N>.utrace
+    plus Frame-<N>.png per hitch; read each trace with insights_export()."""
     groups = {}
     if not folder or not os.path.isdir(folder):
         return []
@@ -2546,9 +2826,11 @@ def write_proof_report(comparison, out_dir, title="Performance proof", notes=Non
 
 
 # =========================================================================== G. in-editor
-# Everything below needs the `unreal` module (editor Python). NOT YET RUN IN UNREAL: every
-# class, property and enum name is [verify]; the probe job
-# tests/code/unreal-performance/job_probe_perf.py checks them first.
+# Everything below needs the `unreal` module (editor Python). Run on 5.8.3 (2026-10-21) in a
+# commandlet through ue_run: perf_audit_level, perf_audit_assets, texture_facts and
+# change_requests on a built heavy level (tests/code/unreal-performance/live/); every class,
+# property and enum name they read passed job_probe_perf.py. Not yet run: console(),
+# console_many(), cvar() in PIE, apply_change_requests(apply=True), RouteRunner.
 def _u():
     import unreal  # noqa: F401  (editor only)
     return unreal
@@ -2679,7 +2961,7 @@ def _assets_of(class_path, root="/Game"):
 
 
 def perf_audit_assets(root="/Game"):
-    """Asset settings with a known frame cost (all names [verify]):
+    """Asset settings with a known frame cost (names run on 5.8.3):
       translucent_after_dof: translucency renders after DOF at full output resolution even
         under dynamic resolution (NORSE [00:48:38] [00:49:03])
       default_complex_collision: CTF_USE_DEFAULT keeps per-poly collision from LOD0 or the
@@ -2694,9 +2976,11 @@ def perf_audit_assets(root="/Game"):
         Nanite cluster bounds stay conservative (OZ26 [00:37:47]; W4R [00:23:59])
       tessellation_no_displacement_fade: tessellated materials without Displacement Fade
         (OZ26 [00:38:17])
-    Property names below are candidates [verify]; a row "property_unknown" names the ones the
-    installed engine did not expose, so the probe (P0) can fix them. Generic rules (naming,
-    Nanite on, LODs) belong to ue_audit.audit_assets."""
+      texture_oversized, texture_uncompressed, texture_no_mips, texture_never_streamed: from
+        texture_facts(); a 4096 px uncompressed, unmipped, never-streamed texture added 64 MB
+        of non-streaming memory in a 5.8.3 run, and the lead's ue_audit did not flag it
+    A row "property_unknown" names a property the installed engine did not expose. Generic
+    rules (naming, Nanite on, LODs) belong to ue_audit.audit_assets."""
     u = _u()
     rows = []
     for ad in _assets_of("/Script/Engine.Material", root):
@@ -2751,6 +3035,96 @@ def perf_audit_assets(root="/Game"):
         ns = ad.get_asset()
         if ns.get_editor_property("effect_type") is None:
             rows.append({"rule": "niagara_no_effect_type", "asset": str(ad.package_name)})
+    for t in texture_facts(root):
+        for f in t["findings"]:
+            rows.append({"rule": f, "asset": t["asset"], "size": [t["width"], t["height"]],
+                         "compression": t["compression"], "mip_gen": t["mip_gen"],
+                         "est_bytes": t.get("est_bytes")})
+    return rows
+
+
+# Bytes per pixel of the top mip by compression setting on desktop (BC formats; Mac uses BC
+# like PC). Engine knowledge of the pixel formats behind each setting [added]; estimates, read
+# the real size in the texture editor or `ListTextures` when it matters.
+TEXTURE_BPP = {"TC_DEFAULT": 0.5, "TC_NORMALMAP": 1.0, "TC_MASKS": 0.5, "TC_GRAYSCALE": 1.0,
+               "TC_DISPLACEMENTMAP": 1.0, "TC_VECTOR_DISPLACEMENTMAP": 4.0, "TC_HDR": 8.0,
+               "TC_EDITOR_ICON": 4.0, "TC_ALPHA": 0.5, "TC_DISTANCE_FIELD_FONT": 1.0,
+               "TC_HDR_COMPRESSED": 1.0, "TC_BC7": 1.0, "TC_HALF_FLOAT": 2.0,
+               "TC_LQ": 2.0, "TC_SINGLE_FLOAT": 4.0, "TC_HDR_F32": 16.0}
+UNCOMPRESSED = ("TC_VECTOR_DISPLACEMENTMAP", "TC_HDR", "TC_EDITOR_ICON", "TC_HDR_F32",
+                "TC_SINGLE_FLOAT", "TC_HALF_FLOAT")
+
+
+def _enum_tail(v):
+    s = str(v)
+    m = re.search(r"\.([A-Z0-9_]+):", s) or re.search(r"([A-Z][A-Z0-9_]+)", s)
+    return m.group(1) if m else s
+
+
+def texture_estimate(width, height, compression, mips=True, has_alpha=False):
+    """Estimated resident bytes of a 2D texture: top mip times bytes per pixel, times 4/3 with
+    a mip chain. TC_DEFAULT with alpha is DXT5 (1 byte per pixel)."""
+    bpp = TEXTURE_BPP.get(compression, 4.0)
+    if compression == "TC_DEFAULT" and has_alpha:
+        bpp = 1.0
+    b = width * height * bpp
+    return int(b * 4 / 3 if mips else b)
+
+
+def texture_findings(t, max_size=2048):
+    """Rules for one texture_facts() row: oversized (largest side over max_size, the project's
+    choice; 2048 is a common game default [added]), uncompressed format, no mips (no
+    streaming and aliasing at distance), never_stream on a large texture."""
+    out = []
+    side = max(t.get("width") or 0, t.get("height") or 0)
+    if side > max_size and not t.get("max_texture_size"):
+        out.append("texture_oversized")
+    if t.get("compression") in UNCOMPRESSED and t.get("lod_group") not in ("TEXTUREGROUP_UI",):
+        out.append("texture_uncompressed")
+    if t.get("mip_gen") == "TMGS_NO_MIPMAPS" and t.get("lod_group") not in ("TEXTUREGROUP_UI",):
+        out.append("texture_no_mips")
+    if t.get("never_stream") and side > 512:
+        out.append("texture_never_streamed")
+    return out
+
+
+def texture_facts(root="/Game", max_size=2048):
+    """Per Texture2D under root: size, compression, mip generation, streaming, LOD group, max
+    texture size, estimated bytes and findings (texture_findings). Run on 5.8.3: the property
+    names below exist on Texture2D (compression_settings, mip_gen_settings, never_stream,
+    lod_group, srgb, max_texture_size; blueprint_get_size_x/y)."""
+    rows = []
+    for ad in _assets_of("/Script/Engine.Texture2D", root):
+        t = ad.get_asset()
+        r = {"asset": str(ad.package_name)}
+        try:
+            r["width"], r["height"] = t.blueprint_get_size_x(), t.blueprint_get_size_y()
+        except Exception:
+            r["width"] = r["height"] = None
+        try:  # size after max texture size and LOD bias (the source size above ignores both)
+            bs = t.blueprint_get_built_texture_size()
+            r["built_size"] = [int(bs.x), int(bs.y)]
+        except Exception:
+            r["built_size"] = None
+        for key, prop in (("compression", "compression_settings"), ("mip_gen", "mip_gen_settings"),
+                          ("lod_group", "lod_group")):
+            _, v = _first_prop(t, (prop,))
+            r[key] = _enum_tail(v) if v is not None else None
+        for key, prop in (("never_stream", "never_stream"), ("srgb", "srgb"),
+                          ("max_texture_size", "max_texture_size")):
+            r[key] = _first_prop(t, (prop,))[1]
+        _, alpha = _first_prop(t, ("compression_no_alpha",))
+        if r["width"]:
+            w, h = r["width"], r["height"]
+            if r["max_texture_size"]:
+                f = max(w, h) / float(r["max_texture_size"])
+                if f > 1:
+                    w, h = int(w / f), int(h / f)
+            r["est_bytes"] = texture_estimate(w, h, r["compression"],
+                                              mips=r["mip_gen"] != "TMGS_NO_MIPMAPS",
+                                              has_alpha=alpha is False)
+        r["findings"] = texture_findings(r, max_size)
+        rows.append(r)
     return rows
 
 
@@ -2796,6 +3170,14 @@ REVIEW_ONLY = {
                                 "(OZ26 [00:37:47])"),
     "tessellation_no_displacement_fade": ("scenario-unreal-materials", "enable Displacement Fade "
                                           "(OZ26 [00:38:17])"),
+    "texture_oversized": ("scenario-unreal-pipeline-automation", "Max Texture Size or a smaller source; "
+                          "check the texture still reads at its largest on-screen size [added]"),
+    "texture_uncompressed": ("scenario-unreal-pipeline-automation", "a compressed setting (Default, "
+                             "Normalmap, Masks) unless the texture needs exact values [added]"),
+    "texture_no_mips": ("scenario-unreal-pipeline-automation", "mips from the texture group, so the "
+                        "texture can stream and does not alias at distance [added]"),
+    "texture_never_streamed": ("scenario-unreal-pipeline-automation", "allow streaming unless it is UI "
+                               "or must stay resident [added]"),
     "shadowed_local_light": ("scenario-unreal-lighting-rendering", "tighter radius, shadows off where "
                              "invisible, ray-traced shadows where characters move "
                              "(ARI22 [00:17:33]; AVW [00:26:25])"),
@@ -2918,7 +3300,11 @@ def _main(argv):
     d.add_argument("--target", type=float, default=16.67)
     d.add_argument("--vsync", action="store_true")
     t = sub.add_parser("trace")
-    t.add_argument("--jsonl", required=True)
+    src = t.add_mutually_exclusive_group(required=True)
+    src.add_argument("--jsonl")
+    src.add_argument("--events", help="Insights ExportTimingEvents .csv")
+    src.add_argument("--utrace", help=".utrace: exported first with the Insights command line")
+    t.add_argument("--engine", default="/Users/Shared/Epic Games/UE_5.8")
     t.add_argument("--target", type=float, default=16.67)
     t.add_argument("--time-unit", default="s")
     t.add_argument("--duration-unit", default="ms")
@@ -2938,6 +3324,9 @@ def _main(argv):
     rp.add_argument("--target", type=float, default=16.67)
     rp.add_argument("--changes")
     rp.add_argument("--out", required=True)
+    stp = sub.add_parser("steps")
+    stp.add_argument("--csv", nargs="+", required=True, help="label=path.csv, in order")
+    stp.add_argument("--tail", type=int)
     ck = sub.add_parser("check")
     ck.add_argument("--measured", required=True)
     ck.add_argument("--fps", type=int, default=60)
@@ -2951,7 +3340,18 @@ def _main(argv):
         elif a.cmd == "diagnose":
             out = diagnose_bound(load_frames(a.frames), a.target, vsync=a.vsync)
         elif a.cmd == "trace":
-            an = analyze_trace(load_trace(a.jsonl, a.time_unit, a.duration_unit), a.target)
+            if a.jsonl:
+                tr = load_trace(a.jsonl, a.time_unit, a.duration_unit)
+            elif a.events:
+                tr = load_insights_events(a.events)
+            else:
+                ib = insights_binary(a.engine)
+                if not ib:
+                    raise OSError("no Unreal Insights binary under %s" % a.engine)
+                x = insights_export(ib, os.path.abspath(a.utrace), os.path.abspath(
+                    a.out or os.path.splitext(a.utrace)[0] + "_export"))
+                tr = load_insights_events(x["outputs"]["events"])
+            an = analyze_trace(tr, a.target)
             if a.out:
                 os.makedirs(a.out, exist_ok=True)
                 with open(os.path.join(a.out, "trace_report.md"), "w", encoding="utf-8") as f:
@@ -2975,6 +3375,10 @@ def _main(argv):
             out["verdict"] = c["verdict"]
             print(json.dumps(out, indent=1, default=str))
             return 0 if c["verdict"] == "stable_at_target" else 2
+        elif a.cmd == "steps":
+            pairs = [tuple(x.split("=", 1)) if "=" in x else (os.path.basename(x), x)
+                     for x in a.csv]
+            out = csv_step_table(pairs, tail=a.tail)
         elif a.cmd == "check":
             with open(a.measured, "r", encoding="utf-8") as f:
                 m = json.load(f)

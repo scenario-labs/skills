@@ -1,15 +1,13 @@
 # Procedures: scenario-unreal-world-building (Editor Python, commandlets, ue_world)
 
-**Status of every Unreal call below: not yet run in Unreal** (UE 5.8 was not installed when this was
-written, 2026-09-24). "In editor" lines read **pending** until the first run replaces them with the
-engine version from the job result. What did run: the offline layer of `scripts/ue_world.py`
-(landscape sizing, Z scale fit and clipping gate, PNG16 and r16 writers, valley generator, terrain
-material contract, World Partition, Data Layer, HLOD, PCG component, graph and grass checks, village
-paths, Nanite construction and tessellation, kit, region, world-rule and spec checks, handoff
-sheets, builder arguments, CLI) and the in-editor plumbing against a fake `unreal` module, in
-`tests/code/unreal-world-building/test_world_offline.py` with python3 3.14 (passed 2026-09-24,
-refactor pass). Names marked [verify] are listed in `W.API_CANDIDATES`; `W.probe()` records which
-exist, and every editor function records misses in `W.MISSING` instead of guessing silently.
+**Status (2026-10-21, run on 5.8.3):** ran in an offscreen 5.8.3 editor through
+`tests/code/unreal-world-building/live_mcp_recipes.py` (9 of 9 recipes, the last in a second editor
+with PCGPrimitives): P2 (template map, `world_facts`, the grid read), P5 (Data Layer asset,
+instance, actor assignment), P6 (HLOD layers with layer types, `set_streaming`), P7b (instancing,
+layout and count audit, all of it), `dump_pcg_graph` from P9, `nav_ready`, and the existence of
+every Python name the procedures cite. Blocks marked **[not yet run]** have not run in the engine
+yet; their offline layer passed `test_world_offline.py`. MCP recipes with the JSON that worked:
+`mcp-world-building.md`.
 
 Rules from scenario-unreal-expert apply to all of it: one job per stage, results as `UE_RESULT`
 JSON, never point a saving commandlet at a project an open editor has loaded, save a new map version
@@ -33,29 +31,30 @@ UPROJECT = "/Users/Shared/UEProjects/Valley/Valley.uproject"  # a path without s
 - Live editor: Epic's MCP server first, else Python remote execution. `PythonRemote.call` only
   imports from scenario-unreal-expert's scripts folder, so pass this skill's folder:
   `rx = ue_remote.PythonRemote(); rx.open(); rx.exec(ue_remote.call_code("ue_world", "world_facts", scripts_dir=SKILLS + "/scenario-unreal-world-building/scripts"))`.
-  Test: `TestBuilders`, `TestInEditorFake`. In editor: pending.
+  Test: `TestBuilders`, `TestInEditorFake`. In editor: [not yet run].
 
 **Engine calls behind the toolkit.** A written plan names these next to each `W.*` step, so a reader
-without the toolkit can still execute it (all not yet run in Unreal; [verify] names are probed).
+without the toolkit can still execute it (names checked on 5.8.3 by the runner's name probe unless
+marked).
 
-| Toolkit call                                   | Engine call or command line                                                                                                                                                                                                                                                                                          |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `new_open_world_map`                           | `LevelEditorSubsystem.new_level_from_template(path, template)` or `new_level(path, is_partitioned_world=True)`, then `save_current_level()` (Python reference)                                                                                                                                                       |
-| `world_facts`, `landscape_facts`               | `UnrealEditorSubsystem.get_editor_world()`, World Settings `world_partition` > `runtime_hash` [verify]; `EditorActorSubsystem.get_all_level_actors()`, `LandscapeProxy.get_components_by_class(LandscapeComponent)`, `get_actor_location()`                                                                          |
-| `console(cmd)`                                 | `SystemLibrary.execute_console_command(world, cmd)`                                                                                                                                                                                                                                                                  |
-| `create_data_layer_asset`, `assign_data_layer` | `AssetToolsHelpers.get_asset_tools().create_asset(name, folder, DataLayerAsset, DataLayerFactory())` [verify]; `DataLayerEditorSubsystem.create_data_layer_instance(params)`, `add_actors_to_data_layer(actors, instance)` [verify]                                                                                  |
-| `create_hlod_layer`                            | `create_asset(name, folder, HLODLayer, HLODLayerFactory())`, `set_editor_property("layer_type", ...)`, `("parent_layer", ...)` [verify]                                                                                                                                                                              |
-| `set_streaming`                                | actor `set_editor_property("hlod_layer" / "runtime_grid" / "is_spatially_loaded", value)` [verify]                                                                                                                                                                                                                   |
-| `batch_nanite`                                 | `EditorAssetLibrary.list_assets`, `load_asset`, `StaticMesh.get_editor_property("nanite_settings")`, `set_editor_property("enabled", True)`, `save_loaded_asset`                                                                                                                                                     |
-| `spawn_pcg_volume`, `set_graph_params`         | `EditorActorSubsystem.spawn_actor_from_class(PCGVolume, location)`, `get_component_by_class(PCGComponent)`, `set_graph(gi)`, `set_editor_property("generation_trigger", PCGComponentGenerationTrigger.GENERATE_ON_DEMAND)`, `generate(True)`; `PCGGraphParametersHelpers.set_double_parameter(gi, name, v)` [verify] |
-| `dump_pcg_graph`                               | `PCGGraph.get_nodes()`, `node.get_settings()`, `settings.get_editor_property(...)` [verify]                                                                                                                                                                                                                          |
-| `region_batch`                                 | `WorldPartitionBlueprintLibrary.get_intersecting_actor_descs(box)`, `load_actors(guids)`, `LevelEditorSubsystem.save_all_dirty_levels()`, `unload_actors(guids)` [verify]                                                                                                                                            |
-| `tour`                                         | `UnrealEditorSubsystem.set_level_viewport_camera_info(loc, rot)` [verify], `AutomationLibrary.take_high_res_screenshot(w, h, path)` or `HighResShot`                                                                                                                                                                 |
-| `register_world_validator`                     | `@unreal.uclass()` subclass of `EditorValidatorBase` with `k2_can_validate_asset` / `k2_validate_loaded_asset`, `EditorValidatorSubsystem.add_validator(v)` [verify]                                                                                                                                                 |
-| `landscape_builder_args`                       | `UnrealEditor-Cmd <uproject> <Map> -run=WorldPartitionBuilderCommandlet -Builder=WorldPartitionLandscapeBuilder -AllowCommandletRendering` (5.7)                                                                                                                                                                     |
-| `pcg_builder_args`                             | `... -run=WorldPartitionBuilderCommandlet -Unattended -AllowCommandletRendering -Builder=PCGWorldPartitionBuilder -IncludeGraphNames=PCG_Forest;PCG_Rocks` (5.4 form)                                                                                                                                                |
-| `hlod_builder_args`                            | `... -run=WorldPartitionBuilderCommandlet -Builder=WorldPartitionHLODsBuilder -AllowCommandletRendering [-SetupHLODs / -BuildHLODs]` (WP doc)                                                                                                                                                                        |
-| `convert_args`                                 | `... -run=WorldPartitionConvertCommandlet <Map>.umap -AllowCommandletRendering -ReportOnly`, then `-ConversionSuffix`                                                                                                                                                                                                |
+| Toolkit call                                   | Engine call or command line                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `new_open_world_map`                           | `LevelEditorSubsystem.new_level_from_template(path, template)` or `new_level(path, is_partitioned_world=True)`, then `save_current_level()` (Python reference)                                                                                                                                                                                                   |
+| `world_facts`, `landscape_facts`               | `UnrealEditorSubsystem.get_editor_world()`, World Settings `world_partition` (runtime_hash is not readable from Python on 5.8.3; the RuntimeHashSet object path is returned and read with MCP `ObjectTools.get_properties`); `EditorActorSubsystem.get_all_level_actors()`, `LandscapeProxy.get_components_by_class(LandscapeComponent)`, `get_actor_location()` |
+| `console(cmd)`                                 | `SystemLibrary.execute_console_command(world, cmd)`                                                                                                                                                                                                                                                                                                              |
+| `create_data_layer_asset`, `assign_data_layer` | `AssetToolsHelpers.get_asset_tools().create_asset(name, folder, DataLayerAsset, DataLayerFactory())` (run on 5.8.3); `DataLayerEditorSubsystem.create_data_layer_instance(params)`, `add_actors_to_data_layer(actors, instance)` (run on 5.8.3)                                                                                                                  |
+| `create_hlod_layer`                            | `create_asset(name, folder, HLODLayer, HLODLayerFactory())`, `set_editor_property("layer_type", HLODLayerType.INSTANCING / MESH_MERGE / MESH_SIMPLIFY / MESH_APPROXIMATE)` (run on 5.8.3), `("parent_layer", ...)` [not yet run]                                                                                                                                 |
+| `set_streaming`                                | actor `set_editor_property("hlod_layer" / "runtime_grid" / "is_spatially_loaded", value)` (hlod_layer and is_spatially_loaded run on 5.8.3)                                                                                                                                                                                                                      |
+| `batch_nanite`                                 | `EditorAssetLibrary.list_assets`, `load_asset`, `StaticMesh.get_editor_property("nanite_settings")`, `set_editor_property("enabled", True)`, `save_loaded_asset`                                                                                                                                                                                                 |
+| `spawn_pcg_volume`, `set_graph_params`         | `EditorActorSubsystem.spawn_actor_from_class(PCGVolume, location)`, `get_component_by_class(PCGComponent)`, `set_graph(gi)`, `set_editor_property("generation_trigger", PCGComponentGenerationTrigger.GENERATE_ON_DEMAND)`, `generate(True)`; `PCGGraphParametersHelpers.set_double_parameter(gi, name, v)` (names exist on 5.8.3; [not yet run])                |
+| `dump_pcg_graph`                               | `PCGGraph.nodes` property (no `get_nodes()` on 5.8.3), `node.get_settings()`, `settings.get_editor_property(...)` (run on 5.8.3)                                                                                                                                                                                                                                 |
+| `region_batch`                                 | `WorldPartitionBlueprintLibrary.get_intersecting_actor_descs(box)`, `load_actors(guids)`, `LevelEditorSubsystem.save_all_dirty_levels()`, `unload_actors(guids)` (names exist on 5.8.3; the loop [not yet run])                                                                                                                                                  |
+| `tour`                                         | `UnrealEditorSubsystem.set_level_viewport_camera_info(loc, rot)` (exists on 5.8.3), `AutomationLibrary.take_high_res_screenshot(w, h, path)` or `HighResShot`                                                                                                                                                                                                    |
+| `register_world_validator`                     | `@unreal.uclass()` subclass of `EditorValidatorBase` with `k2_can_validate_asset` / `k2_validate_loaded_asset`, `EditorValidatorSubsystem.add_validator(v)` (exists on 5.8.3; [not yet run])                                                                                                                                                                     |
+| `landscape_builder_args`                       | `UnrealEditor-Cmd <uproject> <Map> -run=WorldPartitionBuilderCommandlet -Builder=WorldPartitionLandscapeBuilder -AllowCommandletRendering` (5.7)                                                                                                                                                                                                                 |
+| `pcg_builder_args`                             | `... -run=WorldPartitionBuilderCommandlet -Unattended -AllowCommandletRendering -Builder=PCGWorldPartitionBuilder -IncludeGraphNames=PCG_Forest;PCG_Rocks` (5.4 form)                                                                                                                                                                                            |
+| `hlod_builder_args`                            | `... -run=WorldPartitionBuilderCommandlet -Builder=WorldPartitionHLODsBuilder -AllowCommandletRendering [-SetupHLODs / -BuildHLODs]` (WP doc)                                                                                                                                                                                                                    |
+| `convert_args`                                 | `... -run=WorldPartitionConvertCommandlet <Map>.umap -AllowCommandletRendering -ReportOnly`, then `-ConversionSuffix`                                                                                                                                                                                                                                            |
 
 ## P1. World spec, probe, brief
 
@@ -79,7 +78,7 @@ editor (probe): pending.
 # job_map.py, run with mode="editor"
 import ue_world as W
 def main(args):
-    print(W.template_candidates())               # the Open World template path is [verify]
+    print(W.template_candidates())               # 5.8.3: /Engine/Maps/Templates/OpenWorld.OpenWorld
     out = W.new_open_world_map(args["map"], args.get("template"))
     out["facts"] = W.world_facts()
     out["findings"] = W.wp_facts_check(out["facts"])
@@ -99,7 +98,9 @@ name, args = W.convert_args("/Game/Maps/L_Old.umap", report_only=False)   # writ
 
 GATE: `wp_facts_check` returns no error; one grid; PIE screenshot with
 `wp.Runtime.ToggleDrawRuntimeHash2D` (P13). Test: `TestWorldPartition.test_facts`,
-`TestBuilders.test_args` (passed). In editor: pending.
+`TestBuilders.test_args` (passed). In editor: ran on 5.8.3 (template map, 138 loaded actors,
+`world_facts`; MainGrid RuntimePartitionLHGrid cell 25,200 cm, range 76,800 cm read through MCP).
+Conversion: [not yet run].
 
 ## P3. Landscape plan and heightmap (offline)
 
@@ -113,7 +114,7 @@ gate = W.heightmap_clip_gate(hm)                                     # [] requir
 assert not gate, gate
 json.dump({"z_scale": hm["z_scale"], "actor_z_cm": hm["actor_z_cm"], "min_m": hm["height_min_m"],
            "max_m": hm["height_max_m"]}, open("/abs/out/HM_Valley.import.json", "w"))
-json.dump(v["river_points_m"], open("/abs/out/river_points.json", "w"))   # world meters, unaffected by the actor Z
+json.dump(v["river_points_m"], open("/abs/out/river_points.json", "w"))   # world metres, unaffected by the actor Z
 ```
 
 **Why the fit.** Z scale and actor Z come from the real height range, never from a declared relief.
@@ -128,22 +129,23 @@ actor Z, so world heights, river points and later placement stay in world meters
 own range: `fit_heightmap_z(dcc_min_m, dcc_max_m, headroom=0)`, and
 `heightmap_clip_gate(res, values)` counts samples stuck at 0 or 65535. The generator is a blockout
 [added]; a DCC heightmap (World Machine, Gaea) replaces it when art direction exists. For RAW:
-`raw=True` writes r16 plus the JSON sidecar the importer reads (key `bbp` as the doc prints it
-[verify]). Spec level: give `terrain.height_min_m`, `height_max_m`, `actor_z_cm`; `check_world_spec`
+`raw=True` writes r16 plus the JSON sidecar the importer reads (key `bbp` as the doc prints it; [not
+yet run]). Spec level: give `terrain.height_min_m`, `height_max_m`, `actor_z_cm`; `check_world_spec`
 errors with `landscape.heightmap_clips` and prints the fitted values. CLI:
 `python3 ue_world.py plan-landscape --size-m 2000`; `python3 ue_world.py heightmap out.png` (fits Z,
 exits 1 when the gate fails). Test: `TestLandscape`, `TestHeightmapFit` (reproduces 123,356 clipped
-at Z 100 and 0 after the fit; passed). In editor: import pending.
+at Z 100 and 0 after the fit; passed). In editor: import [not yet run].
 
 ## P4. Landscape creation, material, edit layers, river, build
 
 1. **Create.** Landscape mode > Manage > New > Import from File with the plan's numbers (Section
    Size 63x63 quads, Sections Per Component 2x2, Number of Components 16 x 16, Overall Resolution
    2017, Location Z = `actor_z_cm`, Scale 100, 100, `z_scale` from `HM_Valley.import.json`), because
-   no documented Python call creates a landscape with this layout. If the MCP toolset or `W.probe()`
-   shows a landscape creation tool, use it [verify]. Scripted re-import later:
-   `landscape.landscape_import_heightmap_from_render_target(rt, False)` [verify] (landscape note
-   candidates).
+   no documented Python call creates a landscape with this layout. The 5.8.3 MCP catalog has no
+   landscape tool (checked against the catalog), so this step stays manual or goes through a project
+   tool. Scripted re-import later:
+   `landscape.landscape_import_heightmap_from_render_target(rt, False)` [not yet run] (landscape
+   note candidates).
 2. **Check.**
 
 ```python
@@ -159,8 +161,9 @@ def main(args):
 ```
 
 3. **Edit layers** (doc hierarchy): Base, Sculpt Details, Paint, Splines, Patches. 5.8 exposes edit
-   layers and names to Blueprint, so Python likely follows [verify]; patches can target a layer by
-   name through the LandscapePatchComponent function added in 5.8.
+   layers and names to Blueprint, so Python likely follows (`unreal.LandscapeEditLayer` exists on
+   5.8.3; editing through it [not yet run]); patches can target a layer by name through the
+   LandscapePatchComponent function added in 5.8.
 4. **Material.** `W.assign_landscape_material(landscape_actor, "/Game/Env/Landscape/MI_Valley")`
    with the instance from scenario-unreal-materials, then:
 
@@ -187,14 +190,14 @@ are added explicitly, "Add" or "Populate from materials"). 5. **River.** Hand-pl
 ```python
 import unreal
 eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-river = eas.spawn_actor_from_class(unreal.WaterBodyRiver, unreal.Vector(0, 0, 0))        # class name [verify]
+river = eas.spawn_actor_from_class(unreal.WaterBodyRiver, unreal.Vector(0, 0, 0))        # class exists on 5.8.3
 spline = river.get_component_by_class(unreal.SplineComponent)
 pts = [unreal.Vector(x * 100, y * 100, z * 100) for x, y, z in river_points]
-spline.set_spline_points(pts, unreal.SplineCoordinateSpace.WORLD)                       # [verify]
+spline.set_spline_points(pts, unreal.SplineCoordinateSpace.WORLD)                       # exists on 5.8.3; block [not yet run]
 ```
 
-Width, depth and velocity per point live in the water spline metadata [verify]. Rivers carve the
-landscape only with edit layers, and water brushes force a global merge (5.6 notes), so edit the
+Width, depth and velocity per point live in the water spline metadata [not yet run]. Rivers carve
+the landscape only with edit layers, and water brushes force a global merge (5.6 notes), so edit the
 river before heavy painting. Without the Water plugin: a spline on the Splines edit layer carves the
 bed, the surface is a spline mesh (scenario-unreal-vfx owns water shading). 6. **Build.**
 `ue_run.run_commandlet(UPROJECT, *W.landscape_builder_args("/Game/Maps/L_Valley"))`. Force a merge
@@ -202,7 +205,7 @@ in a live editor with `W.console("landscape.ForceLayersFullUpdate")`. GATE: comp
 Location Z equal the plan; Layer Debug view screenshot (View > Landscape Visualizers); mannequin
 shots at 2, 10, 100 m (tiling); cliff close-up (no stretching); grass in sun (no plastic sheen); no
 black spots. Test: `TestLandscape.test_landscape_material`,
-`TestMaterialTessNanite.test_material_contract` (passed). In editor: pending.
+`TestMaterialTessNanite.test_material_contract` (passed). In editor: [not yet run].
 
 ## P5. Data Layers
 
@@ -220,8 +223,8 @@ Assign: `W.assign_data_layer(actors, asset)` (creates the instance in the world 
 layers only for gameplay state (quests, destruction states); check with
 `W.data_layer_check(layers)`. Make Current Data Layer before scripted spawns so new actors
 auto-assign (doc). PCG actors on a Data Layer and HLOD Layer pass both to what they spawn (PCG doc).
-Test: `TestWorldPartition.test_data_layers` (passed). In editor: pending (factory names [verify];
-GUI fallback in gui-paths).
+Test: `TestWorldPartition.test_data_layers` (passed). In editor: ran on 5.8.3 (DataLayerFactory,
+DataLayerType RUNTIME, instance created, actor added).
 
 ## P6. HLOD layers and streaming sources
 
@@ -249,26 +252,28 @@ leaves), then the `wp.Runtime.HLOD 0/1` A/B (P13). Streaming sources: add a Worl
 Streaming Source component where the game teleports, wait for Is Streaming Completed, then disable
 it (doc; Deiter [00:16:39]). Runtime PCG needs its own PCG Generation Source at the target (P10).
 Test: `TestWorldPartition.test_hlod_plan`, `test_hlod_actors`,
-`TestWorldRules.test_changelist_and_settings` (passed). In editor: pending.
+`TestWorldRules.test_changelist_and_settings` (passed). In editor: ran on 5.8.3 (Instancing and
+Merged Mesh layers, layer_type read back MESH_MERGE; `set_streaming` hlod_layer and
+is_spatially_loaded False). Streaming sources [not yet run].
 
 ## P7. Village: kits, Level Instances, assemblies
 
 1. Audit the kit from scenario-unreal-pipeline-automation:
 
 ```python
-bmin, bmax = mesh_bounds_cm   # from ue_audit or StaticMesh bounds [verify]
+bmin, bmax = mesh_bounds_cm   # from ue_audit or StaticMesh bounds [not yet run]
 W.kit_piece_check("SM_Wall_Plain", bmin, bmax, footprint_cm=(400, 400, 300), tiling_edges=("+x", "-x"), min_inset_cm=1)
 W.door_width_check({"SM_Wall_Door": 120}, standards_cm=[120, 240])   # the project's two standards
 ```
 
 Footprint and door values are the project's (the talk fixes the rule, not the numbers). 2. Houses:
 gameplay content in Level Instances, static dressing in Packed Level Actors (Deiter [00:30:59]).
-Programmatic creation through `unreal.LevelInstanceSubsystem` is [verify]; probe it, else the GUI
-step (select > right-click > Level > Create ...; pivot Center Min Z). Copy the map to `versions/`
-before any Break. 3. Assemblies for yard clutter: spawn a cluster, tag it from a fixed vocabulary,
-make a Level Instance, export a PCG Data Asset (native exporter since 5.4; Python entry point
-unknown, GUI: right-click > asset action), then Load PCG Data Asset > Copy Points > Attribute Filter
-on the tag > Static Mesh Spawner (Oztalay [00:15:00]-[00:17:12]).
+`unreal.LevelInstanceSubsystem` is absent from 5.8.3 Python (`PackedLevelActor` exists), so use the
+GUI step (select > right-click > Level > Create ...; pivot Center Min Z). Copy the map to
+`versions/` before any Break. 3. Assemblies for yard clutter: spawn a cluster, tag it from a fixed
+vocabulary, make a Level Instance, export a PCG Data Asset (native exporter since 5.4; Python entry
+point unknown, GUI: right-click > asset action), then Load PCG Data Asset > Copy Points > Attribute
+Filter on the tag > Static Mesh Spawner (Oztalay [00:15:00]-[00:17:12]).
 
 ```python
 VOCAB = ["ASM", "STL", "Clutter", "ClutterLow", "ClutterMed", "ClutterHigh", "Pick1", "Pick2", "RandScale", "HLOD", "CULL", "intensity"]
@@ -295,15 +300,38 @@ Hand-placed splines are fine for a few houses: decide what stays manual (Oztalay
 straight, gate) and a grammar string as a graph parameter, e.g.
 `W.grammar_string("End", {"Straight": 3, "Gate": 1}, "End")` checked by `W.grammar_check` (Oztalay
 [00:18:51]; Epic PCG team j3ke6MmcaeY [00:10:31], syntax `[ ]`, `{A:w, B}`, `*`, `+`; weight syntax
-[verify]). 90-degree corners need extra handling [00:15:14]. 6. **Gameplay on scenery** (harvestable
-plants, interactive props): static meshes with Asset User Data read in the order component, root
-component, root mesh, not thousands of Blueprints; aggregate ticks for any type with more than 10 to
-15 instances (Dark [00:23:04] [00:27:49]); `W.world_rules_check(W.world_census(), VOCAB)` flags both
-(P14). The data classes are C++ (hand to scenario-unreal-gameplay). GATE: no kit errors; village
-screenshots show no z-fighting, repetition not obvious from the main paths; paths join the nearest
-path, not all the road. Test: `TestNaniteTiersKits.test_kit`, `TestPCG.test_tags_and_grammar`,
+[not yet run]). 90-degree corners need extra handling [00:15:14]. 6. **Gameplay on scenery**
+(harvestable plants, interactive props): static meshes with Asset User Data read in the order
+component, root component, root mesh, not thousands of Blueprints; aggregate ticks for any type with
+more than 10 to 15 instances (Dark [00:23:04] [00:27:49]);
+`W.world_rules_check(W.world_census(), VOCAB)` flags both (P14). The data classes are C++ (hand to
+scenario-unreal-gameplay). GATE: no kit errors; village screenshots show no z-fighting, repetition
+not obvious from the main paths; paths join the nearest path, not all the road. Test:
+`TestNaniteTiersKits.test_kit`, `TestPCG.test_tags_and_grammar`,
 `TestPCGRefactor.test_village_paths`, `TestInEditorFake.test_tags_region_probe_tour` (passed). In
-editor: pending.
+editor: [not yet run].
+
+## P7b. Repeated geometry and the count audit (run on 5.8.3)
+
+Plan the numbers on the host, build one instanced component, read the level back, compare. MCP form:
+`mcp-world-building.md` W1 to W3 (one `execute_tool_script` call each). Python form:
+
+```python
+import unreal, ue_world as W
+pts = W.ring_layout(12, 1000.0, (0, 0, 150))                 # or line_layout(n, start, end), wall_with_gate(...)
+eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+a = eas.spawn_actor_from_class(unreal.Actor, unreal.Vector(0, 0, 0))
+a.set_actor_label("Colonnade")
+W.add_instanced_mesh(a, "/Engine/BasicShapes/Cylinder.Cylinder", [{"location": p, "scale": (0.6, 0.6, 3.0)} for p in pts])
+got = list(W.instance_positions(a).values())[0]
+issues = W.position_audit(pts, got, 1.0, "pillars") + W.count_audit({"instances:Colonnade": 12}, W.level_counts(["Colonnade"]))
+```
+
+GATE: `issues == []`. A count alone is not the audit: through MCP a growing `PerInstanceSMData`
+write reports 12 instances with one at the origin (W1). Walls: `wall_with_gate` gives the segments;
+check spans and the gap from component location and scale, not actor bounds. Test:
+`TestLayoutAuditV02`, `TestMcpReferenceScripts` (passed). In editor: ran on 5.8.3
+(`live_mcp_recipes.py` w1 to w5).
 
 ## P8. Nanite and tessellation
 
@@ -354,7 +382,7 @@ few hundred to 1,000 bones driven by Dynamic Wind instead of WPO, with tighter b
 plus canopy blockers three or four trees deep [00:35:17]. GATE: no translucent Nanite mesh;
 construction check clean or waived; Overdraw and Triangles views (P13) over the canopy; a character
 walking on displaced ground and rocks (feet neither sink nor float). Test: `TestNaniteTiersKits`,
-`TestMaterialTessNanite`, `TestInEditorFake.test_nanite_batch` (passed). In editor: pending.
+`TestMaterialTessNanite`, `TestInEditorFake.test_nanite_batch` (passed). In editor: [not yet run].
 
 ## P9. Baked PCG: forest and rocks
 
@@ -369,14 +397,14 @@ walking on displaced ground and rocks (feet neither sink nor float). Test: `Test
    (Oztalay frames 00:10:47, 00:11:58, 00:14:55; node reference). Prefer Branch over Select (Select
    does not cull), Density Filter over Attribute Filter where it fits, collision off for clutter.
    Lint the template once it exists:
-   `W.pcg_graph_lint(W.dump_pcg_graph(graph)["nodes"], role="forest")` (dump accessors [verify];
-   else write the node dict from a graph screenshot). It flags a layer-weight filter with Warn on
-   Data Missing Attribute off (a renamed layer then empties the forest silently, Oztalay frame
-   00:10:47 [00:32:26]), no Distance node for bank and edge thinning (node reference: Distance is
-   the tool for trees "too close to a stream"), understory not differenced against tree locations
-   (frame 00:14:55), Select where Branch should cull, superseded Distance to Density, costly Mesh or
-   Volume Samplers, clutter spawned with collision, trunks and boulders spawned without it (spawner
-   collision is off by default, j3ke6MmcaeY [00:17:30]).
+   `W.pcg_graph_lint(W.dump_pcg_graph(graph)["nodes"], role="forest")` (dump accessors ran on 5.8.3:
+   node titles; settings keys only when set; else write the node dict from a graph screenshot). It
+   flags a layer-weight filter with Warn on Data Missing Attribute off (a renamed layer then empties
+   the forest silently, Oztalay frame 00:10:47 [00:32:26]), no Distance node for bank and edge
+   thinning (node reference: Distance is the tool for trees "too close to a stream"), understory not
+   differenced against tree locations (frame 00:14:55), Select where Branch should cull, superseded
+   Distance to Density, costly Mesh or Volume Samplers, clutter spawned with collision, trunks and
+   boulders spawned without it (spawner collision is off by default, j3ke6MmcaeY [00:17:30]).
 2. **Instances and volumes, on their layers first:** PCG output inherits the PCG actor's Data Layer
    and HLOD Layer (PCG overview, World Partition Support), so a forest volume without them bakes
    thousands of trees outside the HLOD plan.
@@ -409,7 +437,7 @@ or village; banks thinned; nothing on curated compositions; after the HLOD build
 visible in Hierarchical LOD Coloration. Test: `TestPCG`,
 `TestPCGRefactor.test_inheritance_and_teleports`, `test_graph_lint`,
 `TestInEditorFake.test_spawn_pcg`, `test_params`, `test_dump_graph_and_lint` (passed). In editor:
-pending.
+[not yet run].
 
 ## P10. Runtime grass
 
@@ -440,27 +468,29 @@ W.runtime_grass_check({"mask_source": "grass_maps", "grass_types_have_meshes": F
 **Nanite grass and the ring handover:** the talk hands rings over with min and max draw distances;
 those do not apply to Nanite instances (Nanite doc; Looman), so with Nanite grass the ring edges are
 each grid's generation radius, `W.grass_rings(nanite=True)`, and the handover is checked frame by
-frame on the first run [verify]. Component:
+frame on the first run [not yet run]. Component:
 `W.spawn_pcg_volume(gi_grass, center, size, trigger="AtRuntime", generate=False)`. PCG World Actor
-(select it in the Outliner; property names [verify]): Treat Editor Viewport as Generation Source on,
-Enable World Partition Generation Sources on, landscape cache on. Budget:
+(select it in the Outliner; 5.8.3 Python names: treat_editor_viewport_as_generation_source,
+enable_world_partition_generation_sources, partition_grid_size): Treat Editor Viewport as Generation
+Source on, Enable World Partition Generation Sources on, landscape cache on. Budget:
 `W.console("pcg.FrameTime 2")` style per area, with `pcg.RuntimeGeneration.NumGeneratingComponents`
 as the concurrency cap. FastGeo option: PCG FastGeo Interop plugin plus
 `pcg.RuntimeGeneration.ISM.ComponentlessPrimitives 1` (Experimental). **Teleports:** latency is
 worse after a teleport than along a continuous path (icIFFlOyob4 [00:36:44]). Place a PCG Generation
-Source component (class [verify], rn54) at the target before the teleport, alongside the World
-Partition Streaming Source (P6), wait for both, and cap concurrent generation with
-`pcg.RuntimeGeneration.NumGeneratingComponents`. `W.pcg_component_check(..., teleports=True)` warns
-while no generation source is planned; CDPR had not used generation sources much in production yet,
-so measure the result. Transfers: dump nodes as `{id: {"title", "gpu", "grid", "skip_readback"}}`
-and edges (graph node access from Python is [verify]; else read the yellow arrows on a graph
-screenshot) and run `W.find_gpu_transfers(nodes, edges)`. Latency:
+Source component (no `unreal.PCGGenerationSourceComponent` on 5.8.3; class name [not yet run], rn54)
+at the target before the teleport, alongside the World Partition Streaming Source (P6), wait for
+both, and cap concurrent generation with `pcg.RuntimeGeneration.NumGeneratingComponents`.
+`W.pcg_component_check(..., teleports=True)` warns while no generation source is planned; CDPR had
+not used generation sources much in production yet, so measure the result. Transfers: dump nodes as
+`{id: {"title", "gpu", "grid", "skip_readback"}}` and edges (graph nodes read from Python on 5.8.3
+through `nodes`; else read the yellow arrows on a graph screenshot) and run
+`W.find_gpu_transfers(nodes, edges)`. Latency:
 `W.generation_lead_check(camera_speed_mps, 256, cull_distance_m, measured_latency_s, build="Test")`,
 latency read from a Test build video, frame by frame, with the generation debug draw. For Nanite
 grass, `cull_distance_m` is the distance at which a newly generated cell becomes noticeable (inside
 the recolored edge), since Nanite ignores cull distances [added]. Test: `TestPCG.test_rings`,
 `test_grids`, `test_gpu_transfers`, `test_latency`, `TestPCGRefactor.test_runtime_grass`,
-`test_inheritance_and_teleports` (passed). In editor: pending.
+`test_inheritance_and_teleports` (passed). In editor: [not yet run].
 
 ## P11. Headless builds
 
@@ -475,15 +505,15 @@ for name, args in W.build_pipeline(MAP, pcg_graphs=["PCG_Forest", "PCG_Rocks"], 
 
 Order: `WorldPartitionLandscapeBuilder` (grass maps, physical materials, Nanite, 5.7),
 `PCGWorldPartitionBuilder -IncludeGraphNames=...` (5.4 form; the 5.8 PCG Builder commandlet and PCG
-Builder Volume are [verify]), `WorldPartitionHLODsBuilder` (HLODs after generated content). A
+Builder Volume are [not yet run]), `WorldPartitionHLODsBuilder` (HLODs after generated content). A
 minimap (`minimap=True`) builds but displays only with Project Settings > Rendering > Enable virtual
 texture support (WP doc); `W.project_settings_check` flags it, and RVT blending needs the same
 setting (Sensei [00:47:11]). Submitting the results: OFPA changelists are validated and submitted
 from inside the editor (View Changelists), since partial submits leave dangling references (WP doc;
 source control doc). Split HLOD steps with `W.hlod_builder_args(MAP, "setup")` then `"build"`;
 `-DeleteHLODs` needs `allow_delete=True`. Close the editor on this project first (write locks). Map
-argument position after `-run=` is [verify]. In-editor region builds: Build HLOD for Selection or
-Region, or `BuildHLODForActors` / `BuildHLODForVolume` from an Editor Utility (5.8). GATE: exit 0
+argument position after `-run=` is [not yet run]. In-editor region builds: Build HLOD for Selection
+or Region, or `BuildHLODForActors` / `BuildHLODForVolume` from an Editor Utility (5.8). GATE: exit 0
 for each step, no fatal lines, HLOD actors per layer counted in a census. Test:
 `TestBuilders.test_args` (passed). In Unreal: pending.
 
@@ -507,7 +537,7 @@ Dry run first (actor counts per tile). Tiles come from `W.region_tiles` in serpe
 map version first; log every changed actor; re-run the validators after. When a job needs the whole
 world or C++, write a `UWorldPartitionBuilder` subclass and run it through
 `WorldPartitionBuilderCommandlet` (WP doc). Test: `TestRegionsSpec.test_tiles`,
-`TestInEditorFake.test_tags_region_probe_tour` (passed). In editor: pending.
+`TestInEditorFake.test_tags_region_probe_tour` (passed). In editor: [not yet run].
 
 ## P13. Review tour, stats, handoffs
 
@@ -522,9 +552,9 @@ def main(args):
 Named viewpoints for the valley: village square, river bank, forest edge, ridge overlook, plus
 quadrants and an overview (Dark [00:23:36]; viewpoint list [added]). Passes from `W.REVIEW_CONSOLE`:
 `frame` (stat unit, stat gpu), `streaming` in PIE, `hlod_off` / `hlod_on`, `hlod_coloration`
-(Hierarchical LOD Coloration; command [verify], GUI path in gui-paths), `nanite_overdraw`,
-`nanite_triangles` (mode names [verify]). Add the terrain captures: cliff close-up, grass in direct
-sun, a character on displaced rock. Every capture goes through `ue_review.image_checks(path)`
+(Hierarchical LOD Coloration; command [not yet run], GUI path in gui-paths), `nanite_overdraw`,
+`nanite_triangles` (mode names [not yet run]). Add the terrain captures: cliff close-up, grass in
+direct sun, a character on displaced rock. Every capture goes through `ue_review.image_checks(path)`
 (all-white or all-black flag) before it is looked at. PIE for streaming:
 `LevelEditorSubsystem.editor_request_begin_play()` / `editor_request_end_play()` (doc). Numbers:
 `stat unit` per viewpoint, PCG subsystem time from an Insights trace of a Test build (parse with
@@ -539,7 +569,7 @@ json.dump(W.lighting_handoff(spec, "/Game/Maps/L_Valley", vps), open("handoff/li
 
 GATE: critique rubric passes; every claim in the report has its capture or number. Test:
 `TestRegionsSpec.test_viewpoints`, `test_handoffs`, `TestInEditorFake.test_tags_region_probe_tour`
-(passed). In editor: pending.
+(passed). In editor: [not yet run].
 
 ## P14. World rules as validators and a census
 
@@ -567,4 +597,21 @@ and the headless `-run=DataValidation` run, this one delivers the world rules. C
 spawning cannot be read from Python; flag it from a code review or a component count before and
 after a rerun [added]. GATE: no `error` findings; warnings answered or handed to
 scenario-unreal-gameplay (tick aggregation, Asset User Data classes in C++). Test: `TestWorldRules`,
-`TestInEditorFake.test_census_and_validator` (passed). In editor: pending.
+`TestInEditorFake.test_census_and_validator` (passed). In editor: [not yet run].
+
+## Handoffs (moved from SKILL.md in v0.2)
+
+- **Receives from scenario-unreal-pipeline-automation:** meshes passed by `ue_audit`, standard kit
+  pieces, DCC heightmaps with their height range; construction failures go back (and to
+  scenario-maya-expert, scenario-blender-expert).
+- **Receives from scenario-unreal-materials:** the landscape instance and layer list (blend types,
+  steep layer, anti-tiling), RVTs with bounds, grass type names, the rock RVT blend, opaque foliage.
+  Specular is theirs; the world artist reports sheen from the sun capture.
+- **Delivers to scenario-unreal-lighting-rendering:** the map, World Bookmarks or `tour_viewpoints`,
+  `W.lighting_handoff` (template lights, GPU-only roles outside the Lumen scene, HLOD far-field and
+  distance-field flags, Data Layer states).
+- **Delivers to scenario-unreal-performance:** `W.budget_sheet` and the tour path.
+- **Also:** scenario-unreal-gameplay (streaming and generation sources, Asset User Data, tick
+  aggregation); scenario-unreal-pipeline-automation (world rules for its validators);
+  scenario-unreal-cinematics (`pcg.FrameTime` pauses, icIFFlOyob4 [00:28:51]); scenario-unreal-vfx
+  (water shading).

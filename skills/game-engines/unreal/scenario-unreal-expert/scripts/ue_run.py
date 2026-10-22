@@ -71,7 +71,7 @@ log_path, log (scan_log summary: errors, warnings, python_errors, fatal, summary
 log_tail. ok is True only if this job's boot reported ok and the run did not time out.
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24); refactor pass: job-bound UE_RESULT,
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24); refactor pass: job-bound UE_RESULT,
 #                      registry wait recorded, -ScriptErrorsAreFatal, write-lock check, strict
 
 import inspect
@@ -260,11 +260,14 @@ def stage_job(script, args=None, map=None, mode="commandlet", wait_registry=True
     return d
 
 
-COMMON_FLAGS = ("-unattended", "-nosplash", "-stdout", "-FullStdOutLogOutput")
+# -nosound: an agent run never makes noise. Modes that start the full editor (editor, latent, launch_editor)
+# add -RenderOffscreen unless window=True: live check on 5.8.3 macOS, no window and no focus steal, while a
+# plain launch opens a window over whatever the person is doing.
+COMMON_FLAGS = ("-unattended", "-nosplash", "-nosound", "-stdout", "-FullStdOutLogOutput")
 
 
 def build_python_command(engine, uproject, boot_path, map=None, mode="commandlet",
-                         render=False, extra=(), log_path=None, script_errors_fatal=True):
+                         render=False, extra=(), log_path=None, script_errors_fatal=True, window=False):
     """argv list for one Python job (no shell). Pure: tested offline.
 
     The .uproject path may contain spaces (separate argv element; UE's Mac launcher
@@ -274,6 +277,7 @@ def build_python_command(engine, uproject, boot_path, map=None, mode="commandlet
     as errors "to match the commandlet behavior" and the flag makes them fatal)."""
     if " " in boot_path:
         raise ValueError("boot path must not contain spaces: %s" % boot_path)
+    uproject = os.path.abspath(uproject)  # a relative path resolves against Engine/Binaries/Mac (run on 5.8.3)
     if mode == "commandlet":
         cmd = [engine["editor_cmd"], uproject, "-run=pythonscript", "-script=" + boot_path]
         if render:
@@ -289,6 +293,8 @@ def build_python_command(engine, uproject, boot_path, map=None, mode="commandlet
     else:
         raise ValueError("mode must be commandlet, editor or latent: %r" % mode)
     cmd += list(COMMON_FLAGS)
+    if mode in ("editor", "latent") and not window:
+        cmd.append("-RenderOffscreen")
     if log_path:
         cmd.append("-abslog=" + log_path)  # [verify] flag name on 5.8 Mac
     cmd += list(extra)
@@ -297,7 +303,7 @@ def build_python_command(engine, uproject, boot_path, map=None, mode="commandlet
 
 def build_commandlet_command(engine, uproject, name, args=(), log_path=None, extra=()):
     """argv for `UnrealEditor-Cmd <uproject> -run=<name> <args>`. Pure: tested offline."""
-    cmd = [engine["editor_cmd"], uproject, "-run=" + name] + list(args) + list(COMMON_FLAGS)
+    cmd = [engine["editor_cmd"], os.path.abspath(uproject), "-run=" + name] + list(args) + list(COMMON_FLAGS)
     if log_path:
         cmd.append("-abslog=" + log_path)
     return cmd + list(extra)
@@ -342,9 +348,19 @@ LOCK_MESSAGE = ("an Unreal Editor process has this project open (pid %s): it kee
                 "ue_remote.PythonRemote), close it, or run read-only")
 
 
+def _same_name_elsewhere(name, cmd):
+    """True when cmd names this .uproject by a bare, relative or ~ path (it may be the same project
+    opened another way). False when every mention is a different absolute path: arena runs each
+    open their own Arena.uproject and must not block each other."""
+    for m in re.finditer(r"(\S*)" + re.escape(name or "") + r"(?!\S)", cmd):
+        if not (m.group(1) + name).startswith("/"):
+            return True
+    return False
+
+
 def parse_ps(text, uproject):
     """Rows of `ps -axo pid=,command=` output that run UnrealEditor or UnrealEditor-Cmd on
-    this project (its absolute .uproject path, or the .uproject file name). Pure: tested
+    this project (its absolute .uproject path, or its file name behind a relative or ~ path). Pure: tested
     offline. Returns [{"pid", "command", "commandlet"}]."""
     target = os.path.abspath(uproject) if uproject else None
     name = os.path.basename(uproject) if uproject else None
@@ -356,7 +372,7 @@ def parse_ps(text, uproject):
         pid, cmd = int(m.group(1)), m.group(2)
         if not _EDITOR_RE.search(cmd):
             continue
-        if target and target not in cmd and not (name and name in cmd):
+        if target and target not in cmd and not _same_name_elsewhere(name, cmd):
             continue
         rows.append({"pid": pid, "command": cmd[:300], "commandlet": "-run=" in cmd.lower()})
     return rows
@@ -528,7 +544,7 @@ def _collect(job_dir, log_path, exit_code, seconds, timed_out, cmd, job_id=None,
 def run_python(uproject, script, args=None, map=None, timeout=1800, mode="commandlet",
                engine=None, render=False, extra=(), wait_registry=True, env=None,
                echo=False, warmup_ticks=60, job_dir=None, dry_run=False, strict=False,
-               lock_check="warn", script_errors_fatal=True):
+               lock_check="warn", script_errors_fatal=True, window=False):
     """Run a Python job in Unreal and return the result envelope (see module doc).
 
     Headless by default (mode="commandlet"). Use mode="latent" for jobs that need editor
@@ -551,7 +567,7 @@ def run_python(uproject, script, args=None, map=None, timeout=1800, mode="comman
     log_path = os.path.join(d, "ue.log")
     cmd = build_python_command(eng, uproject, os.path.join(d, "boot.py"), map=map, mode=mode,
                                render=render, extra=extra, log_path=log_path,
-                               script_errors_fatal=script_errors_fatal)
+                               script_errors_fatal=script_errors_fatal, window=window)
     if dry_run:
         return {"ok": True, "dry_run": True, "command": cmd, "job_dir": d, "job_id": job_id}
     until = os.path.join(d, "result.json") if mode == "latent" else None
@@ -620,15 +636,26 @@ def run_uat(args, timeout=7200, engine=None, env=None, echo=False, job_dir=None)
             "log_tail": text.splitlines()[-60:]}
 
 
-def launch_editor(uproject, map=None, mcp_port=None, engine=None, extra=(), log_path=None):
-    """Start a GUI editor this process owns (for MCP, Remote Control or PythonRemote).
+def launch_editor(uproject, map=None, mcp_port=None, engine=None, extra=(), log_path=None, mode="headless"):
+    """Start an editor this process owns (for MCP, Remote Control or PythonRemote).
 
-    mcp_port adds -ModelContextProtocolStartServer -ModelContextProtocolPort=N (Unreal MCP
-    doc), so no preference toggle is needed; the Unreal MCP and toolset plugins must be
-    enabled in the .uproject (ue_env.enable_plugins). Returns a handle for stop_editor.
+    mode "headless" (default): UnrealEditor-Cmd with -nullrhi, no window, no rendering (checked on
+    5.8.3: the MCP server runs, about 30 s to listen); "offscreen": the full editor with -RenderOffscreen
+    (rendering, screenshots, no window, no focus steal); "window": a normal editor window, only when the
+    person asked to see it. mcp_port adds -ModelContextProtocolStartServer -ModelContextProtocolPort=N
+    (Unreal MCP doc), so no preference toggle is needed; the Unreal MCP and toolset plugins must be
+    enabled in the .uproject (ue_env.enable_plugins). Use a NEW port per launch: a port freed by a
+    killed editor can refuse to bind again. Returns a handle for stop_editor.
     Do not launch a second editor on a project that is already open."""
     eng = _find_engine(engine)
-    cmd = [eng["editor"], uproject] + ([map] if map else [])
+    if mode not in ("headless", "offscreen", "window"):
+        raise ValueError("mode must be headless, offscreen or window: %r" % mode)
+    cmd = [eng["editor_cmd"] if mode == "headless" else eng["editor"], uproject] + ([map] if map else [])
+    cmd += ["-nosound"]
+    if mode == "headless":
+        cmd += ["-nullrhi", "-unattended", "-nosplash", "-nopause"]
+    elif mode == "offscreen":
+        cmd += ["-RenderOffscreen", "-unattended", "-nosplash", "-nopause"]
     if mcp_port:
         cmd += ["-ModelContextProtocolStartServer", "-ModelContextProtocolPort=%d" % int(mcp_port)]
     if log_path:
@@ -642,7 +669,7 @@ def launch_editor(uproject, map=None, mcp_port=None, engine=None, extra=(), log_
 
 def stop_editor(handle, timeout=60.0):
     """Stop an editor started by launch_editor: SIGTERM to its group (UE requests a normal
-    exit on SIGTERM [verify]), SIGKILL only after `timeout`. Prefer quitting from inside
+    exit on SIGTERM, run on 5.8.3), SIGKILL only after `timeout`. Prefer quitting from inside
     first (PythonRemote: unreal.SystemLibrary.quit_editor()). Unsaved work is the caller's
     responsibility: save before stopping."""
     proc = handle.get("process")

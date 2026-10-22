@@ -64,8 +64,8 @@ session descriptions or Epic staff pages by the research agents; others are self
 ## Revision history
 
 - 2026-09-24 v0.1: first version (SKILL.md 2,349 words; offline 165 + fake-unreal 81 + procedure
-  blocks 32 checks). Snapshot: `skills/_versions/unreal-cinematics v1 2026-09-24/` (with its tests
-  in `_tests_code_unreal-cinematics/`).
+  blocks 32 checks). Snapshot: `skills/_versions/scenario-unreal-cinematics v1 2026-09-24/` (with
+  its tests in `_tests_code_unreal-cinematics/`).
 - 2026-09-24 v0.2: refactor after the blind grade `tests/grading/U6_grade.md` ("missing from both"
   items). Added: Resolve interpretation per render mode and the viewport OCIO display
   (`color_handoff`, `delivery_note`, P11, stance); production record set once and versioned plus CAT
@@ -85,3 +85,23 @@ session descriptions or Epic staff pages by the research agents; others are self
   odd sample counts. SKILL.md 2,296 words (four mistake rows and three number rows moved to
   critique.md and procedures.md P1). Offline: 208 pure-layer checks, 98 fake-unreal checks, 41
   procedure-block checks, all passing; everything still not yet run in Unreal.
+- 2026-10-21 v0.2 (release numbering; the 2026-09-24 entries above were internal drafts of v0.1):
+  first live run on Unreal 5.8.3 (macOS). Probe, build (synthetic cast, audit pass), template graph
+  authoring, boards and a one-shot EXR render ran through `ue_run`;
+  `tests/code/unreal-cinematics/live_mcp_recipes.py` ran six Sequencer recipes over Epic's Unreal
+  MCP (headless). Fixed from the runs: spawnables through the sequence's own
+  `add_spawnable_from_class`, channel names with an index suffix, the orphan owner possessable when
+  binding a component, Guid comparison by `to_string()`, duplicate tracks, graph snapshot of named
+  branches and override flags, EXR node class `MovieGraphImageSequenceOutputNode_EXR`. Added
+  `references/mcp-cinematics.md` (signatures, JSON, recipes, the half-path cause and call order),
+  `create_render_graph`, `test_ue_cine_v02.py` (51 checks). Counts: offline 209, fake-unreal 98,
+  v0.2 51, procedure blocks 41, all pass. Facts read from the engine install: default filmback
+  preset (BaseEngine.ini), the toolset skill registrations.
+
+## Verification status (2026-10-21, Unreal 5.8.3, macOS)
+
+Probe, `build_from_plan` (audit pass), template graph authoring (commandlet), boards and one shot
+rendered to EXR and PNG (latent offscreen), and `live_mcp_recipes.py` (6 recipes, headless) ran and
+pass; offline and fake-unreal tests pass. **Not yet run:** `cine_render_callbacks.py` (Execute
+Script), command-line renders, Accumulation DOF, audio tracks, real character animation, ProRes,
+OCIO 2.5 view names; `procedures.md` marks each block.

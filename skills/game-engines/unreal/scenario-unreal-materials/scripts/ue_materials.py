@@ -2,14 +2,17 @@
 ue_materials: master materials, instances, Substrate, textures and shader-permutation audits
 for the scenario-unreal-materials skill (UE 5.8 on macOS, Apple Silicon).
 
-STATUS: NOT YET RUN IN UNREAL (UE 5.8 not installed on 2026-09-24).
+STATUS (2026-10-21): run on UE 5.8.3 for the in-editor layer used by the MCP recipes, the
+builders (build_kit_surface legacy and Substrate, build_glass, build_screen, build_decal grime and
+normal) with compile_check in a rendering process, and procedures P0 to P8, P11 to P14, P16
+(tests/code/unreal-materials/live_*.py, run_procedure_snippets.py). [not yet run]: the landscape
+and RVT helpers (setup_landscape_rvt), GPU timing and the review board.
 - Sections 1 to 8 are pure Python (stdlib only, Python 3.11 compatible, so they also run inside
-  the editor). They ran offline with system python3:
+  the editor). They run offline with system python3:
   tests/code/unreal-materials/test_ue_materials_offline.py.
-- Section 9 (the in-editor layer, needs `import unreal`) ran only against a fake `unreal` module
-  (tests/code/unreal-materials/fake_unreal.py, test_editor_layer_fake.py). That proves the Python
-  logic, never UE behaviour. Every class, property, enum and pin name in CANDIDATES is a first
-  guess with fallbacks: run probe() in a live 5.8 editor first and correct the tables from its JSON.
+- Section 9 (the in-editor layer, needs `import unreal`) also runs against a fake `unreal` module
+  (tests/code/unreal-materials/fake_unreal.py, test_editor_layer_fake.py) for the Python logic.
+  CANDIDATES keeps fallbacks for names that may move between versions; probe() dumps the real ones.
 
 Library use:
   import ue_materials as um
@@ -36,7 +39,7 @@ UE_RESULT line), ue_remote (live editor), ue_review (screenshot, render_still, i
 ue_audit (generic asset audit and verdict), ue_stat (stat, CSV and trace parsers, budget_check).
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor after blind grade U2)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24; includes the refactor after blind grade U2)
 
 import json
 import math
@@ -1835,8 +1838,8 @@ def check_rvt_writers(writers):
 
 
 # =========================================================================== 9. in-editor layer (needs `import unreal`)
-# First-guess names with fallbacks. probe() prints what the installed engine has; fix these tables
-# from its JSON. None of this has run in Unreal yet.
+# Names with fallbacks. probe() prints what the installed engine has. Checked against 5.8.3 on
+# 2026-10-21: every first candidate below exists except the ones noted in the comments.
 CANDIDATES = {
     "expr": {
         "tex": ["MaterialExpressionTextureSampleParameter2D"],
@@ -1923,8 +1926,10 @@ CANDIDATES = {
         "update_material_instance", "set_material_instance_parent", "get_expressions", "get_material_expressions",
         "rename_material_parameter_group",
     ],
+    # r.Substrate.MaxClosureCount does not exist in 5.8.3; ClosuresPerPixel and ProjectClosuresPerPixel do
     "cvars": ["r.Substrate", "r.Substrate.ProjectGBufferFormat", "r.Substrate.BytesPerPixel",
-              "r.Substrate.MaxClosureCount", "r.Material.UseShaderCompilationParameters",
+              "r.Substrate.ClosuresPerPixel", "r.Substrate.ProjectClosuresPerPixel",
+              "r.Material.UseShaderCompilationParameters", "r.VirtualTextures",
               "r.Material.StripUnusedDefaultTextures", "r.SkinCache.CompileShaders", "r.SkinCache.Allow",
               "slate.MaterialShaderMode", "r.VT.MaxUploadsPerFrame", "r.DBuffer",
               "r.InstancedStaticMeshes.UseInstancedStaticMeshVertexFactory",
@@ -2003,6 +2008,23 @@ def _get(obj, names, default=None):
         except Exception:
             continue
     return default
+
+
+def _load(path):
+    """unreal.load_asset, then EditorAssetLibrary.load_asset. In a headless commandlet the asset
+    registry can miss /Engine content ("could not be found in the Asset Registry") while
+    unreal.load_asset still loads it (run on 5.8.3)."""
+    u = _u()
+    for fn in (getattr(u, "load_asset", None), getattr(getattr(u, "EditorAssetLibrary", None), "load_asset", None)):
+        if fn is None:
+            continue
+        try:
+            obj = fn(path)
+        except Exception:
+            obj = None
+        if obj is not None:
+            return obj
+    return None
 
 
 def _name(obj):
@@ -2135,7 +2157,9 @@ def apply_texture_fix(tex, fix, dry_run=True):
     enums = {"compression_settings": "TextureCompressionSettings", "lod_group": "TextureGroup",
              "mip_gen_settings": "TextureMipGenSettings"}
     changes = []
-    for prop, val in fix.items():
+    # compression first: leaving TC_Normalmap resets sRGB, so an sRGB set before it is lost
+    # (run on 5.8.3 through ObjectTools.set_properties)
+    for prop, val in sorted(fix.items(), key=lambda kv: kv[0] != "compression_settings"):
         old = _get(tex, prop)
         new = val
         if prop in enums:
@@ -2202,11 +2226,89 @@ def import_textures(files, dest, role_overrides=None, apply_policy=True):
 
 
 # ---------------------------------------------------------------- graph building
+# Engine textures whose compression matches each sampler type (read on 5.8.3). A texture parameter
+# whose default does not match its sampler type fails to compile in a rendering editor.
+SAMPLER_DEFAULT_TEXTURE = {
+    "SAMPLERTYPE_NORMAL": "/Engine/EngineMaterials/FlatNormal",                 # TC_NORMALMAP
+    "SAMPLERTYPE_MASKS": "/Engine/EngineMaterials/DefaultDiffuse_TC_Masks",     # TC_MASKS, sRGB off
+    "SAMPLERTYPE_GRAYSCALE": "/Engine/EngineMaterials/BaseFlattenGrayscaleMap",  # TC_GRAYSCALE, linear
+    "SAMPLERTYPE_LINEAR_GRAYSCALE": "/Engine/EngineMaterials/BaseFlattenGrayscaleMap",
+    "SAMPLERTYPE_LINEAR_COLOR": "/Engine/EngineMaterials/BaseFlattenLinearColor",  # TC_DEFAULT, sRGB off
+}
+
+
+def default_texture_for(sampler):
+    """Engine texture to use as a parameter default for `sampler` (None: keep the engine default,
+    which is a Color texture). unreal.load_asset, not the registry: a headless commandlet's registry
+    can miss /Engine content (run on 5.8.3)."""
+    p = SAMPLER_DEFAULT_TEXTURE.get(str(sampler).split(".")[-1].split(":")[0].strip("<> "))
+    return _load(p) if p else None
+
+
+def editor_log_path():
+    """The running editor's log file (-abslog= when given, else Saved/Logs/<Project>.log)."""
+    u = _u()
+    try:
+        import re
+        m = re.search(r'-abslog=(?:"([^"]+)"|(\S+))', str(u.SystemLibrary.get_command_line()), re.I)
+        if m:
+            return m.group(1) or m.group(2)
+    except Exception:
+        pass
+    try:
+        return os.path.join(u.Paths.project_log_dir(), u.SystemLibrary.get_game_name() + ".log")
+    except Exception:
+        return None
+
+
+def compile_check(material, log_path=None):
+    """Recompile and report whether the material compiled for the editor's shader platform.
+
+    Needs a RENDERING editor (offscreen or windowed): under -nullrhi or in a plain commandlet no shader
+    is compiled, so a broken graph passes silently and statistics read 0 (run on 5.8.3). A commandlet
+    started with -AllowCommandletRendering (ue_run.run_python(..., render=True)) counts as rendering. Errors are
+    the log lines this recompile wrote ('Failed to compile Material <path>' and the reason under
+    it; the recompile is synchronous). Statistics count the surface base pass only: a decal,
+    post-process or UI material reads 0 instructions when it compiled fine, so for those `ok`
+    rests on the log. Returns {"ok", "stats", "errors", "rendering"}."""
+    u = _u()
+    MEL = u.MaterialEditingLibrary
+    log_path = log_path or editor_log_path()
+    start = os.path.getsize(log_path) if log_path and os.path.isfile(log_path) else None
+    MEL.recompile_material(material)
+    st = MEL.get_statistics(material)
+    stats = {k: int(_get(st, k, 0) or 0) for k in ("num_pixel_shader_instructions", "num_vertex_shader_instructions",
+                                                   "num_samplers", "num_pixel_texture_samples")}
+    errors = []
+    if start is not None:
+        with open(log_path, errors="replace") as fh:
+            fh.seek(start)
+            lines = fh.read().splitlines()
+        name = _path(material)
+        for i, line in enumerate(lines):
+            if "Failed to compile Material" in line and name in line:
+                errors.append(" | ".join(x.strip() for x in lines[i:i + 3] if x.strip()))
+            elif ": error:" in line or "error X" in line:
+                errors.append(line.strip())
+    rendering = True
+    try:
+        cmd = str(u.SystemLibrary.get_command_line()).lower()
+        rendering = "-nullrhi" not in cmd and ("-run=" not in cmd or "-allowcommandletrendering" in cmd)
+    except Exception:
+        pass
+    domain = str(_get(material, "material_domain", ""))
+    surface = "SURFACE" in domain.upper() or not domain
+    ok = not errors and stats["num_samplers"] >= 0 and (stats["num_pixel_shader_instructions"] > 0 or not surface)
+    return {"ok": ok and rendering, "stats": stats, "errors": errors, "rendering": rendering}
+
+
 class Graph(object):
     """Small builder over MaterialEditingLibrary with name fallbacks and a log of failed links.
     g = Graph(material); n = g.node('mul', x, y); g.link(a, 'R', n, 'A'); g.out(n, '', 'MP_BASE_COLOR')."""
 
     def __init__(self, material):
+        if material is None:  # building on None crashed a 5.8.3 editor: fail in Python instead
+            raise ValueError("Graph(None): the material was not created or loaded")
         self.m = material
         self.MEL = _mel()
         self.failed = []
@@ -2240,6 +2342,11 @@ class Graph(object):
         return e
 
     def texture(self, name, x, y, sampler="SAMPLERTYPE_COLOR", group="", texture=None, priority=0):
+        """Texture parameter. With no texture, the engine default for the sampler type is assigned:
+        a Normal or Masks sampler left on /Engine/EngineResources/DefaultTexture (a Color texture)
+        fails to compile ("Sampler type is Normal, should be Color"), run on 5.8.3."""
+        if texture is None:
+            texture = default_texture_for(sampler)
         e = self.node("tex", x, y, parameter_name=name)
         st = _enum_value("MaterialSamplerType", [sampler])
         if st is not None:
@@ -2307,14 +2414,30 @@ class Graph(object):
         return {"material": _path(self.m), "nodes": len(self.nodes), "failed_links": self.failed}
 
 
+def create_asset(path, cls, factory, overwrite=False):
+    """AssetTools.create_asset with 5.8's overwrite_existing. Without it, an existing asset makes an
+    unattended editor refuse ("CanCreateAsset cannot ask the user") and return None; building a graph
+    on that None crashed a 5.8.3 editor. Raises instead of returning None (run on 5.8.3)."""
+    u = _u()
+    exists = u.EditorAssetLibrary.does_asset_exist(path)
+    if exists and not overwrite:
+        raise RuntimeError("%s exists: duplicate it to a versioned name or pass overwrite=True after versioning" % path)
+    folder, name = path.rsplit("/", 1)
+    tools = u.AssetToolsHelpers.get_asset_tools()
+    try:
+        obj = tools.create_asset(name, folder, cls, factory, overwrite_existing=bool(exists))
+    except TypeError:  # before 5.8
+        obj = tools.create_asset(name, folder, cls, factory)
+    if obj is None:
+        raise RuntimeError("create_asset returned None for %s (exists=%s)" % (path, exists))
+    return obj
+
+
 def new_material(path, overwrite=False):
     """Create an empty Material at /Game/.../Name. Refuses to overwrite an existing asset unless
     overwrite (then the caller has versioned it)."""
     u = _u()
-    if u.EditorAssetLibrary.does_asset_exist(path) and not overwrite:
-        raise RuntimeError("%s exists: duplicate it to a versioned name or pass overwrite=True after versioning" % path)
-    folder, name = path.rsplit("/", 1)
-    return u.AssetToolsHelpers.get_asset_tools().create_asset(name, folder, u.Material, u.MaterialFactoryNew())
+    return create_asset(path, u.Material, u.MaterialFactoryNew(), overwrite)
 
 
 def project_uses_substrate():
@@ -2336,7 +2459,7 @@ def build_kit_surface(path, substrate=None, overwrite=False, textures=None):
     Blending on the wear mask (one closure everywhere, Morgan [SqPaL8HS_Lw 00:37:35], so the mask's
     sharpness is an artistic choice, not a cost lever); dirt lerps albedo/F0/roughness before the slab;
     Specular = 0.5 x (1 - cavity) under UseWear (specular occlusion). Legacy: the same masks drive
-    lerps into the root pins. NOT YET RUN IN UNREAL."""
+    lerps into the root pins. Run on 5.8.3 (compile_check in a rendering process)."""
     if substrate is None:
         substrate = bool(project_uses_substrate())
     m = new_material(path, overwrite=overwrite)
@@ -2407,13 +2530,10 @@ def build_kit_surface(path, substrate=None, overwrite=False, textures=None):
     g.link(duv, "", det, "UVs")
     blend_n, fn_asset = None, None
     for p in ("/Engine/Functions/Engine_MaterialFunctions02/Utility/BlendAngleCorrectedNormals.BlendAngleCorrectedNormals",):
-        try:
-            fn_asset = _u().EditorAssetLibrary.load_asset(p)
-        except Exception:
-            fn_asset = None
+        fn_asset = _load(p)  # unreal.load_asset first: the commandlet registry misses /Engine functions
         if fn_asset:
             break
-    if fn_asset:  # [verify] path; without it the detail normal replaces nothing
+    if fn_asset:  # path checked on 5.8.3; without it the detail normal replaces nothing
         blend_n = g.node("fn", X + 400, 1800)
         _set(blend_n, ["material_function", "function"], fn_asset)
         g.link(nrm, "RGB", blend_n, "BaseNormal")
@@ -2508,7 +2628,7 @@ def build_glass(path, flat=True, tinted=True, overwrite=False):
     Offset for flat panes, IOR from F0 for enclosed shapes), slab Sub-Surface Type Simple Volume,
     Transmittance-To-MFP (colour + thickness 0.02), F0 0.04 (IOR 1.5), roughness 0.05 with a smudge
     lift. Frosted needs the project setting 'Substrate translucent material rough refraction'.
-    NOT YET RUN IN UNREAL."""
+    Run on 5.8.3 (compile_check in a rendering process)."""
     u = _u()
     m = new_material(path, overwrite=overwrite)
     bm = _enum_value("BlendMode", "BLEND_TRANSLUCENT_COLORED_TRANSMITTANCE" if tinted else "BLEND_TRANSLUCENT_GREY_TRANSMITTANCE")
@@ -2548,18 +2668,24 @@ def build_glass(path, flat=True, tinted=True, overwrite=False):
 def build_screen(path, overwrite=False):
     """Emissive screen: Substrate Unlit BSDF is enough for a bare screen; this master keeps a glossy
     cover (slab, roughness 0.15) with Emissive = Content x Intensity x On, per-screen values through
-    Custom Primitive Data (0 On, 1 IntensityScale) so one MI serves every screen [added design].
+    Custom Primitive Data (0 ScreenOff, 1 IntensityOffset; neutral at 0) so one MI serves every screen.
     Scrolling text smearing under TSR: the experimental Temporal Responsiveness node, masked to the
     text region, with r.Velocity.TemporalResponsiveness.Supported=1 and, on Nanite meshes, a small
     WPO (5.7, mat-upd); not built here (class name [verify] with probe()). The content math (scanlines,
     flicker) stays independent of the Content sample so it hides in the fetch latency (Tech Art Aid
-    [y0QASid1v8w 00:46:03]). NOT YET RUN IN UNREAL."""
+    [y0QASid1v8w 00:46:03]). Run on 5.8.3 (compile_check in a rendering process)."""
     m = new_material(path, overwrite=overwrite)
     g = Graph(m)
     content = g.texture("Content", -900, 0, "SAMPLERTYPE_COLOR", "Screen", None, 0)
     inten = g.scalar("EmissiveIntensity", 10.0, -900, 200, "Screen", 1)
-    on = g.scalar("On", 1.0, -900, 300, "Screen", 2, cpd_index=0)
-    iscale = g.scalar("IntensityScale", 1.0, -900, 400, "Screen", 3, cpd_index=1)
+    # Custom Primitive Data: a component that never set an index reads 0 there, not the parameter
+    # default (run on 5.8.3: a CPD "On" scalar left every screen dark until set). So both CPD
+    # values are offsets whose neutral value is 0: ScreenOff (1 turns it off), IntensityOffset.
+    off = g.scalar("ScreenOff", 0.0, -900, 300, "Screen", 2, cpd_index=0)
+    on = g.node("oneminus", -700, 300)
+    g.link(off, "", on, "")
+    ioff = g.scalar("IntensityOffset", 0.0, -900, 400, "Screen", 3, cpd_index=1)
+    iscale = g.op("add", ioff, g.const(1.0, -900, 500), -700, 450)
     e1 = g.op("mul", content, inten, -600, 100, a_out="RGB")
     e2 = g.op("mul", e1, on, -400, 150)
     e3 = g.op("mul", e2, iscale, -200, 200)
@@ -2583,17 +2709,19 @@ def build_decal(path, kind="grime", overwrite=False, mesh_decal=False):
     Translucent (Grey Transmittance) or Alpha Composite (Substrate overview, Extras); the outputs
     connected decide what the DBuffer writes (decal_channels() reads them back for the receivers'
     Decal Response). Used with Static Mesh off unless mesh_decal (Nadro [wobQ8ZKQpbc 00:18:38];
-    the mesh-decal exception is [added]). NOT YET RUN IN UNREAL."""
+    the mesh-decal exception is [added]). Run on 5.8.3 (compile_check in a rendering process)."""
     m = new_material(path, overwrite=overwrite)
     _set(m, "automatically_set_usage_in_editor", False)
     if not mesh_decal:
         _set(m, "used_with_static_mesh", False)
-    dom = _enum_value("MaterialDomain", ["MD_DEFERRED_DECAL"])
-    if dom is not None:
-        _set(m, "material_domain", dom)
+    # blend mode BEFORE domain: each set compiles, and Deferred Decal with Opaque logs a compile
+    # error ("can only use the Blend Modes Translucent, AlphaComposite or Modulate"), run on 5.8.3
     bm = _enum_value("BlendMode", "BLEND_TRANSLUCENT_GREY_TRANSMITTANCE")
     if bm is not None:
         _set(m, "blend_mode", bm)
+    dom = _enum_value("MaterialDomain", ["MD_DEFERRED_DECAL"])
+    if dom is not None:
+        _set(m, "material_domain", dom)
     g = Graph(m)
     op = g.texture("Opacity", -900, 300, "SAMPLERTYPE_MASKS", "Decal", None, 1)
     opa = g.scalar("OpacityScale", 1.0, -900, 500, "Decal", 2)
@@ -2638,21 +2766,24 @@ def make_instance(parent, path, scalars=None, vectors=None, textures=None, switc
     MEL = u.MaterialEditingLibrary
     if switches and not allow_static:
         raise ValueError("static switches on %s: set them on an approved preset parent instead (allow_static=True for presets)" % path)
-    if u.EditorAssetLibrary.does_asset_exist(path) and not overwrite:
-        raise RuntimeError("%s exists (version it before overwriting)" % path)
-    folder, name = path.rsplit("/", 1)
-    mi = u.AssetToolsHelpers.get_asset_tools().create_asset(name, folder, u.MaterialInstanceConstant,
-                                                            u.MaterialInstanceConstantFactoryNew())
+    mi = create_asset(path, u.MaterialInstanceConstant, u.MaterialInstanceConstantFactoryNew(), overwrite)
     MEL.set_material_instance_parent(mi, parent)
+    missed = []  # the setters return False for a name the parent does not expose (no exception)
     for k, v in (scalars or {}).items():
-        MEL.set_material_instance_scalar_parameter_value(mi, k, float(v))
+        if MEL.set_material_instance_scalar_parameter_value(mi, k, float(v)) is False:
+            missed.append(k)
     for k, v in (vectors or {}).items():
-        MEL.set_material_instance_vector_parameter_value(mi, k, u.LinearColor(*[float(c) for c in (list(v) + [1.0])[:4]]))
+        if MEL.set_material_instance_vector_parameter_value(mi, k, u.LinearColor(*[float(c) for c in (list(v) + [1.0])[:4]])) is False:
+            missed.append(k)
     for k, v in (textures or {}).items():
-        tex = u.EditorAssetLibrary.load_asset(v) if isinstance(v, str) else v
-        MEL.set_material_instance_texture_parameter_value(mi, k, tex)
+        tex = u.load_asset(v) if isinstance(v, str) else v
+        if MEL.set_material_instance_texture_parameter_value(mi, k, tex) is False:
+            missed.append(k)
     for k, v in (switches or {}).items():
-        MEL.set_material_instance_static_switch_parameter_value(mi, k, bool(v))
+        if MEL.set_material_instance_static_switch_parameter_value(mi, k, bool(v)) is False:
+            missed.append(k)
+    if missed:
+        log("make_instance %s: parameters not on the parent: %s" % (path, missed))
     MEL.update_material_instance(mi)
     u.EditorAssetLibrary.save_loaded_asset(mi)
     return mi
@@ -3042,7 +3173,7 @@ def setup_landscape_rvt(landscape, rvt_path, material_type="BASE_COLOR_NORMAL_SP
     """Create an RVT asset, a volume fitted to the landscape, and register the landscape as a writer
     (sort priority -1, Num LODs 0). Material wiring (RVT Output + Sample in the landscape material)
     is a separate graph step. Names [verify]; the volume's Set Bounds button has no known Python
-    call, so bounds come from the landscape's bounds. NOT YET RUN IN UNREAL."""
+    call, so bounds come from the landscape's bounds. [not yet run]."""
     u = _u()
     if u.EditorAssetLibrary.does_asset_exist(rvt_path) and not overwrite:
         rvt = u.EditorAssetLibrary.load_asset(rvt_path)

@@ -2,7 +2,8 @@
 
 Distilled from `notes/materials/` and `notes/shading/` (all notes and the four digests). Timestamps
 are `[video_id hh:mm:ss]`; doc sections are named. `[added]` marks reasoning of this skill's author;
-`[verify]` marks what the installed 5.8 must confirm. Credentials and URLs: `sources.md`.
+`[verify]` marks what the installed 5.8 must confirm; items checked on 5.8.3 (2026-10-21) say "run
+on 5.8.3". Credentials and URLs: `sources.md`.
 
 ## Jon Lauf and Jason Nadro (Epic: Fortnite Technical Art Director, Cosmetics; UE Rendering Architecture Lead), "Systemic Shader Reduction", Unreal Fest 2026, UE 5.8 [wobQ8ZKQpbc]
 
@@ -29,10 +30,10 @@ are `[video_id hh:mm:ss]`; doc sections are named. `[added]` marks reasoning of 
   float3 of 1s and 0s) then saturate for several [00:42:35]; it was the biggest recommendation in
   Fortnite's Experiments panel ("801, 25%") [screen 00:18:02].
 - **Parents carry the fewest usage flags; instances opt in** through 5.8 Usage Flag Overrides
-  [00:16:23, 00:44:18] [verify: not in the saved release notes]. Turn off Project Settings >
-  Rendering > Materials "Automatically set Material usage flags in editor default": it silently
-  added flags when a material was dropped on a mesh [00:31:10]. Duplicated parents inherit every
-  flag they ever had [00:30:05].
+  [00:16:23, 00:44:18] (`MaterialEditingLibrary.set_material_usage_override` exists in 5.8.3, run on
+  5.8.3). Turn off Project Settings > Rendering > Materials "Automatically set Material usage flags
+  in editor default": it silently added flags when a material was dropped on a mesh [00:31:10].
+  Duplicated parents inherit every flag they ever had [00:30:05].
 - **Trim flags without regressions.** Derive each MI's flags from its referencers (Niagara System
   two levels up, Static Mesh with Nanite on, Skeletal Mesh with clothing assets), override them to
   true on the MIs (release branch), then clear the parent (main branch, QA runway); simply turning
@@ -314,3 +315,39 @@ are `[video_id hh:mm:ss]`; doc sections are named. `[added]` marks reasoning of 
 | Specular on toon assets          | VTA: 0 (camera highlights break bands); Pitchfork: 0.5                                             | Post-process toon: 0; Toon BSDF: 0.5 with the Specular Ramp                                                                         |
 | One RVT or several               | PrismaticaDev: pack per domain; separate small RVT for frequently updated data                     | Update frequency vs fixed sampling cost                                                                                             |
 | Vertex-stage RVT sampling        | PrismaticaDev: interpolate the height lookup; RVT doc: "extreme caution"                           | Only where the same pages are sampled per pixel anyway [added]                                                                      |
+
+## Moved from SKILL.md v0.1 (kept, not re-verified unless marked)
+
+Further mistakes:
+
+| Mistake                                                           | What it looks like                   | Fix                                                          |
+| ----------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------ |
+| Sharpening masks "for cost" under parameter blending or Blendable | harsher look, no gain                | `mask_cost` applies only without them                        |
+| Blendable "for the weaker platform"                               | SM6 platforms lose Adaptive features | Adaptive falls back per platform                             |
+| Substrate Shading Model node added by hand                        | conversion path in a new graph       | Slab, or Metalness helper into a Slab                        |
+| Sampler type left after recompression                             | compile errors                       | Fixup Mismatched Samplers (5.7)                              |
+| Mips disabled to fix blur; normals not normalized after mips      | shimmer, flat distant panels         | keep mips; normalize, or composite roughness                 |
+| Temporal Responsiveness without its cvar                          | text still smears                    | cvar (0 by default, run on 5.8.3), mask, small WPO on Nanite |
+
+Version notes:
+
+- 5.7: HSPR tag (its 5.8.3 behavior is in SKILL.md, run on 5.8.3), MPC overrides, Material Diff,
+  Fixup Mismatched Samplers, experimental Temporal Responsiveness; the Vector Parameter RGBA pin
+  shifts scripted pin indices. Enum-bound scalars are in the 5.7 release notes; Unreal Fest
+  presented them as 5.8.
+- 5.8: removes SheenQuality. The validation database and the Experiments panel were shown at Unreal
+  Fest and are absent from the saved notes [verify: not checked in 5.8.3, no API found for them].
+  Usage Flag Overrides: `MaterialEditingLibrary.set_material_usage_override` and
+  `has_material_usage_override` exist in 5.8.3 (run on 5.8.3).
+- `MaterialEditingLibrary.get_used_textures` and `get_material_used_textures` both exist in 5.8.3
+  and return the same sampled textures in a rendering process; both return an empty list in a plain
+  commandlet or a `-nullrhi` editor (run on 5.8.3), so they verify nothing headless.
+- Virtual textures: the project setting has been on by default since 5.6 (release notes); textures
+  imported in 5.8.3 still land with Virtual Texture Streaming off (run on 5.8.3), so VT is a
+  per-texture opt-in.
+- Reconciliation with Epic's in-editor MaterialBasics skill (read through
+  `ToolsetRegistry.AgentSkillToolset`, 2026-10-21): same decision order (reuse, instance, then
+  author) and parameter grouping, so this skill points to it. It counts static switches as 2^n
+  shaders; on 5.8.3 an instance forks only when it overrides a switch (asset tag
+  `HasStaticPermutationResource`), so the count is the unique static sets in use, at most 2^n. It
+  does not cover compile proof, sampler default textures, texture flags, Substrate, budgets or cost.

@@ -20,10 +20,14 @@ Two layers in one file:
    (Interchange first, legacy FbxImportUI fallback), root motion flags, curve stripping,
    IK Rig and IK Retargeter creation, batch retarget, Pose Search duplication and tagging,
    AnimBP flags and compile scan, montage blend-out, budget console, MetaHuman build,
-   Sequencer bake, Control Rig creation, review sequence.
-   STATUS: NOT YET RUN IN UNREAL (engine not installed on 2026-09-24). Names marked [verify]
-   are resolved at run time by trying candidates; misses are logged in MISSES and
-   job_00_anim_probe.py records the real names.
+   Sequencer bake, Control Rig creation, review sequence; v0.2 adds create_keyed_sequence (hand keys
+   through the AnimationDataController) and create_montage.
+   STATUS (v0.2, 2026-10-21): run on UE 5.8.3 by tests/code/unreal-animation/live_mcp_recipes.py and the
+   job_*.py jobs: probe, facts, imports, IK Rig, retargeter, batch retarget, root motion, curve strip,
+   Pose Search tag, AnimBP settings and compile scan, Control Rig from mesh, review sequence, keyed
+   sequence, montage. Not run: metahuman_build (plugin absent), set_database, schema_facts (no Game
+   Animation Sample), bake_to_anim_sequence with a working rig evaluation (see its docstring).
+   Names that missed on 5.8.3 were fixed; probe() still lists the rest.
 
 Shared toolkit (<skills>/scenario-unreal-expert/scripts, written by the lead agent): ue_run.run_python and
 ue_run.result for headless jobs, ue_review.screenshot / render_still / image_checks for
@@ -45,7 +49,7 @@ import shutil
 import time
 from typing import List
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor after the U5 blind grade)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; in-editor layer run on UE 5.8.3)
 
 # =============================================================================================
 # 1. OFFLINE LAYER: constants (each with its source)
@@ -292,7 +296,7 @@ def transfer_method(source, target, copy_pose_threshold=0.9):
 
 _KW = {
     "pelvis": re.compile(r"pelvis|^hips?$|hips|^cog$|bip\d*$", re.I),
-    "spine": re.compile(r"spine|chest|torso|back", re.I),
+    "spine": re.compile(r"spine|chest|torso|back|abdo", re.I),
     "neck": re.compile(r"neck", re.I),
     "head": re.compile(r"^head$|head(?!_?(end|top|tip|nub))", re.I),
     "clavicle": re.compile(r"clavicle|collar|shoulder|scapula", re.I),
@@ -331,7 +335,8 @@ def biped_chain_plan(bones, parents):
     """Heuristic IK Rig chain plan for a biped from bone names and parents.
 
     Uses the 5.8 template layout (release notes): LeftLeg thigh to ankle, LeftFoot ball to toe;
-    IK goals stay on the leg chains at the ankle. Chain names follow IK_Mannequin [verify].
+    IK goals stay on the leg chains at the ankle. Chain names follow the 5.8.3 auto template (29 chains on
+    SKM_Manny_Simple: Spine, Neck, Head, LeftClavicle, LeftArm, LeftLeg, LeftFoot, fingers, metacarpals).
     Returns {"pelvis", "chains": [{name, start, end, goal}], "unresolved": [...]}. It is a
     fallback for custom names (Maya L_hip_jnt, Mixamo LeftUpLeg) when the auto template fails;
     check the result with chain_map_check and in the IK Rig viewport.
@@ -356,13 +361,20 @@ def biped_chain_plan(bones, parents):
     necks = sorted(_find(center, "neck"), key=lambda b: _depth(parents, b))
     heads = sorted(_find(center, "head"), key=lambda b: _depth(parents, b))
     if spines:
-        add("Spine", spines[0], spines[-1])
+        end = spines[-1]
+        top = parents.get(necks[0]) if necks else None
+        if top and top != end and spines[0] in ancestors(parents, top) and end in ancestors(parents, top):
+            end = top   # chest bone with a non-spine name between the last spine and the neck
+        add("Spine", spines[0], end)
     else:
         unresolved.append("Spine")
     if necks:
         add("Neck", necks[0], necks[-1])
     else:
         unresolved.append("Neck")
+    if not heads and necks:
+        # a head that is a leaf named like an end bone (HeadEnd in Epic's FbxEditorAutomation sample, run on 5.8.3)
+        heads = [c for c in children_map(parents).get(necks[-1], []) if "head" in short_name(c).lower()]
     if heads:
         add("Head", heads[0], heads[0])
     else:
@@ -377,6 +389,12 @@ def biped_chain_plan(bones, parents):
         if cl:
             add(word + "Clavicle", cl[0], cl[0])
         else:
+            unresolved.append(word + "Clavicle")
+        if cl and not ua and any(_KW["lowerarm"].search(short_name(c)) for c in children_map(parents).get(cl[0], [])):
+            # "Shoulder" directly above the elbow is the upper arm, not a clavicle (run on 5.8.3 sample skeleton)
+            unresolved.remove(word + "Clavicle") if word + "Clavicle" in unresolved else None
+            chains[:] = [c for c in chains if c["name"] != word + "Clavicle"]
+            ua, cl = [cl[0]], []
             unresolved.append(word + "Clavicle")
         arm_start = next((u for u in ua if not cl or cl[0] in ancestors(parents, u)), ua[0] if ua else None)
         hand = next((h for h in hd if arm_start and arm_start in ancestors(parents, h)), None)
@@ -1851,7 +1869,7 @@ def fbik_foot_defaults(mannequin_like=True):
 
 
 # =============================================================================================
-# 15. IN-EDITOR LAYER (NOT YET RUN IN UNREAL)
+# 15. IN-EDITOR LAYER (run on UE 5.8.3 unless a docstring says otherwise)
 # =============================================================================================
 
 MISSES: List[str] = []
@@ -1973,29 +1991,29 @@ def save(obj_or_path):
 # Names the skill marks [verify]; probe() reports which exist.
 PROBE = {
     "IKRigDefinition": [], "IKRigController": ["get_controller", "set_skeletal_mesh", "apply_auto_generated_retarget_definition",
-                                               "apply_auto_fbik", "set_pelvis", "set_retarget_root", "get_pelvis",
+                                               "apply_auto_fbik", "set_retarget_root",
                                                "get_retarget_root", "add_retarget_chain", "get_retarget_chains",
                                                "add_new_goal", "add_solver", "connect_goal_to_solver", "set_root_bone"],
     "IKRetargeter": [], "IKRetargeterController": ["get_controller", "set_ik_rig", "set_preview_mesh", "add_default_ops",
                                                    "auto_map_chains", "create_retarget_pose", "auto_align_all_bones",
-                                                   "snap_character_to_ground", "set_current_retarget_pose",
-                                                   "get_num_retarget_ops", "get_retarget_op_at_index", "add_retarget_op",
+                                                   "set_current_retarget_pose",
+                                                   "get_num_retarget_ops", "get_op_name", "get_op_controller", "add_retarget_op",
                                                    "move_retarget_op_in_stack", "set_retarget_op_enabled",
                                                    "get_retarget_op_enabled", "duplicate_retarget_override_set"],
     "IKRetargetBatchOperation": ["run_batch_retarget", "duplicate_and_retarget"],
     "IKRetargetBatchOperationInputs": [],
-    "IKRigDefinitionFactory": [], "IKRetargetFactory": [], "IKRetargeterFactory": [],
-    "AnimationLibrary": ["get_num_frames", "get_frame_rate", "get_sequence_length", "get_animation_track_names",
+    "IKRigDefinitionFactory": [], "IKRetargetFactory": [],
+    "AnimationLibrary": ["get_num_frames", "get_sequence_length", "get_animation_track_names",
                          "get_animation_curve_names", "get_float_keys", "remove_curve", "does_curve_exist",
                          "add_animation_notify_state_event", "add_animation_notify_track", "is_root_motion_enabled",
                          "set_root_motion_enabled", "find_bone_path_to_root", "get_bone_pose_for_frame"],
     "AnimPoseExtensions": ["get_anim_pose_at_frame", "get_anim_pose_at_time", "get_bone_pose", "get_bone_names",
-                           "get_ref_pose", "get_ref_bone_pose"],
+                           "get_reference_pose", "get_ref_bone_pose"],
     "AnimPoseEvaluationOptions": [], "AnimPoseSpaces": [], "RawCurveTrackTypes": [],
     "PoseSearchDatabase": [], "PoseSearchSchema": [], "PoseSearchDatabaseFactory": [], "PoseSearchSchemaFactory": [],
     "PoseSearchMode": [], "PoseSearchDatabaseSequence": [], "PoseSearchDatabaseAnimationAsset": [],
     "AnimNotifyState_PoseSearchBlockTransition": [], "AnimNotifyState_PoseSearchExcludeFromDatabase": [],
-    "AnimNotifyState_PoseSearchOverrideContinuingPoseCostBias": [], "AnimNotifyState_PoseSearchOverrideBaseCostBias": [],
+    "AnimNotifyState_PoseSearchOverrideContinuingPoseCostBias": [],
     "AnimNotifyState_PoseSearchBranchIn": [],
     "SkeletalMeshEditorSubsystem": ["get_lod_count", "regenerate_lod", "get_num_verts"],
     "SkeletonModifier": ["set_skeletal_mesh", "get_all_bone_names", "get_parent_name", "commit_skeleton_to_skeletal_mesh"],
@@ -2045,8 +2063,9 @@ def probe():
 # ----------------------------------------------------------------------------- facts
 
 def _bone_names_and_parents(mesh):
-    """Bone names and parents of a skeletal mesh by the first route that works [verify]:
-    SkeletonModifier (5.4+), else AnimPose reference pose names (parents unknown)."""
+    """Bone names and parents of a skeletal mesh by the first route that works: SkeletonModifier (run on
+    5.8.3; it reads the MESH's reference skeleton, 89 bones on SKM_Manny_Simple, where the Skeleton asset and
+    SkeletalMeshTools.get_bone_names give 161), else AnimPose reference pose names (parents unknown)."""
     u = _u()
     if _has(u, "SkeletonModifier"):
         try:
@@ -2061,14 +2080,14 @@ def _bone_names_and_parents(mesh):
         except Exception as exc:  # noqa: BLE001
             MISSES.append("SkeletonModifier route failed: %s" % exc)
     skel = _get(mesh, ["skeleton"])
-    pose = _call(u.AnimPoseExtensions, ["get_ref_pose"], skel)
+    pose = _call(u.AnimPoseExtensions, ["get_reference_pose"], skel)
     names = [str(n) for n in _call(u.AnimPoseExtensions, ["get_bone_names"], pose)]
     return names, {}, "AnimPoseExtensions (no parents)"
 
 
 def skeletal_mesh_facts(mesh_or_path):
-    """Facts for import_audit and transfer_method. Influences per vertex need SkinWeightModifier
-    [verify]; when absent, max_influences is None and the check falls back to the GUI (Skeletal Mesh
+    """Facts for import_audit and transfer_method. Influences per vertex come from SkinWeightModifier
+    (run on 5.8.3: 8 on SKM_Manny_Simple, 2 on Epic's AnimatedCharacter.fbx); when absent, max_influences is None and the check falls back to the GUI (Skeletal Mesh
     editor vertex inspection, Biava [00:02:30])."""
     u = _u()
     mesh = load(mesh_or_path)
@@ -2095,7 +2114,7 @@ def skeletal_mesh_facts(mesh_or_path):
     except Exception:
         facts["height_cm"] = None
     try:
-        pose = u.AnimPoseExtensions.get_ref_pose(skel)
+        pose = u.AnimPoseExtensions.get_reference_pose(skel)
         root = [n for n in names if not parents or parents.get(n) is None][0]
         t = u.AnimPoseExtensions.get_ref_bone_pose(pose, root, u.AnimPoseSpaces.WORLD)
         facts["root_location"] = [t.translation.x, t.translation.y, t.translation.z]
@@ -2124,7 +2143,8 @@ def skeletal_mesh_facts(mesh_or_path):
 def anim_clip_facts(seq_or_path, bones=("root", "pelvis", "foot_l", "foot_r", "ball_l", "ball_r", "spine_05"),
                     sample=True, zero_check=True):
     """Facts for anim_content_audit, root_motion_check and foot_contact_metrics. Bone positions are
-    component-space ('WORLD' in AnimPose terms) per frame, root motion kept on the root [verify].
+    component-space ('WORLD' in AnimPose terms) per frame, root motion kept on the root (run on 5.8.3: a
+    retargeted death clip's hips travel 126 cm while planted feet stay near z 1 cm).
     Never sample positions with AnimationLibrary.get_bone_pose_for_frame / _for_time: they return a
     parent-relative (bone-space) transform, so foot heights and slides would be wrong [added, verify]."""
     u = _u()
@@ -2133,13 +2153,16 @@ def anim_clip_facts(seq_or_path, bones=("root", "pelvis", "foot_l", "foot_r", "b
     f = {"name": seq.get_name(), "path": seq.get_path_name()}
     skel = _get(seq, ["skeleton"])
     f["skeleton"] = skel.get_path_name() if skel else None
+    # Run on 5.8.3: get_num_frames counts frame intervals (a 1.1 s clip at 30 fps gives 33; it has 34 keys),
+    # and the rate lives on the data model (AnimationLibrary has no get_frame_rate).
     f["frames"] = int(_call(lib, ["get_num_frames"], seq))
+    f["keys"] = f["frames"] + 1
     try:
-        fr = _call(lib, ["get_frame_rate"], seq)
-        f["fps"] = float(fr.numerator) / float(fr.denominator) if hasattr(fr, "numerator") else float(fr)
+        fr = _get(seq, ["data_model_interface"]).get_frame_rate()
+        f["fps"] = float(fr.numerator) / float(fr.denominator)
     except Exception:
         length = float(_call(lib, ["get_sequence_length"], seq))
-        f["fps"] = (f["frames"] - 1) / length if length > 0 else None
+        f["fps"] = f["frames"] / length if length > 0 else None
     f["tracks"] = [str(t) for t in _call(lib, ["get_animation_track_names"], seq)]
     curves = {}
     try:
@@ -2164,7 +2187,7 @@ def anim_clip_facts(seq_or_path, bones=("root", "pelvis", "foot_l", "foot_r", "b
         _set(opts, ["extract_root_motion"], False)
         samples = {b: [] for b in bones}
         present = None
-        for i in range(f["frames"]):
+        for i in range(f["keys"]):
             pose = _call(u.AnimPoseExtensions, ["get_anim_pose_at_frame"], seq, i, opts)
             if present is None:
                 present = set(str(n) for n in u.AnimPoseExtensions.get_bone_names(pose))
@@ -2208,8 +2231,8 @@ def _set_path(obj, dotted, value):
 
 def configure_character_pipeline(pipe, skeleton=None, only_animations=False, sample_rate=None,
                                  create_physics=True, morphs=True, zero_curves_off=True):
-    """Interchange generic assets pipeline options for characters (5.8 Interchange import reference names;
-    Python paths [verify])."""
+    """Interchange generic assets pipeline options for characters. Python paths run on 5.8.3 (the 30 Hz
+    flag is use30_hz_to_bake_bone_animation)."""
     rows = [
         ("common_skeletal_meshes_and_animations_properties.import_only_animations", bool(only_animations)),
         ("mesh_pipeline.import_skeletal_meshes", not only_animations),
@@ -2223,9 +2246,12 @@ def configure_character_pipeline(pipe, skeleton=None, only_animations=False, sam
     if skeleton is not None:
         rows.append(("common_skeletal_meshes_and_animations_properties.skeleton", load(skeleton)))
     if sample_rate is None:
-        rows.append(("animation_pipeline.use30hz_to_bake_bone_animation", True))
+        # keep the source rate: 30 Hz (or a custom rate) refuses clips that are not frame-aligned at that rate;
+        # custom rate 0 = "find the best sample rate" (run on 5.8.3, a 24 fps clip of 4.958 s)
+        rows.append(("animation_pipeline.use30_hz_to_bake_bone_animation", False))
+        rows.append(("animation_pipeline.custom_bone_animation_sample_rate", 0))
     else:
-        rows.append(("animation_pipeline.use30hz_to_bake_bone_animation", False))
+        rows.append(("animation_pipeline.use30_hz_to_bake_bone_animation", False))
         rows.append(("animation_pipeline.custom_bone_animation_sample_rate", int(sample_rate)))
     done = {path: _set_path(pipe, path, val) for path, val in rows}
     return done
@@ -2260,6 +2286,38 @@ def _legacy_fbx_options(skeleton=None, only_animations=False, sample_rate=None, 
     return o
 
 
+def _log_size():
+    try:
+        return os.path.getsize(_log_file())
+    except Exception:
+        return 0
+
+
+def _import_errors(path, since=0):
+    """Interchange errors about this source file written to the editor log after byte offset `since`.
+    Run on 5.8.3: a refused import returns an empty list to Python with no exception; the reason is only in
+    the log (LogInterchangeEngine: Error). In an offscreen editor the line reached the file late, so the log
+    is flushed (console `FlushLog`) and read again for up to `wait_s`."""
+    import time
+    base = os.path.basename(path)
+    found, t0 = [], time.time()
+    while True:
+        try:
+            _u().SystemLibrary.execute_console_command(None, "FlushLog")
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            with open(_log_file(), errors="ignore") as fh:
+                fh.seek(since)
+                lines = fh.readlines()
+        except Exception as exc:  # noqa: BLE001
+            return ["log not readable: %s" % exc]
+        found = [ln.strip()[:400] for ln in lines if "Error" in ln and base in ln]
+        if found or time.time() - t0 > 3.0:
+            return found
+        time.sleep(0.25)
+
+
 def _import_one(path, dest, pipe=None, legacy_options=None, use_interchange=True):
     u = _u()
     if use_interchange and _has(u, "InterchangeManager") and pipe is not None:
@@ -2285,7 +2343,8 @@ def _import_one(path, dest, pipe=None, legacy_options=None, use_interchange=True
 def import_character(fbx, dest, skeleton=None, create_physics=True, morphs=True, use_interchange=True,
                      pipeline_path="/Game/_Agent/Pipelines/PL_Character"):
     """Import a skeletal mesh FBX with explicit options (never the dialog's remembered ones).
-    skeleton=None creates <Mesh>_Skeleton; pass the shared skeleton to reuse it. NOT YET RUN."""
+    skeleton=None creates <Mesh>_Skeleton; pass the shared skeleton to reuse it. Run on 5.8.3 (Interchange
+    route; it also imports the file's materials and its animation)."""
     pipe = None
     if use_interchange:
         try:
@@ -2296,14 +2355,22 @@ def import_character(fbx, dest, skeleton=None, create_physics=True, morphs=True,
             MISSES.append("interchange pipeline: %s" % exc)
             pipe = None
     legacy = None if pipe is not None else _legacy_fbx_options(skeleton, False, None, create_physics, morphs)
+    mark = _log_size()
     objs, route = _import_one(fbx, dest, pipe, legacy, use_interchange and pipe is not None)
-    return {"route": route, "objects": [o.get_path_name() for o in objs], "misses": list(MISSES)}
+    rep = {"route": route, "objects": [o.get_path_name() for o in objs], "misses": list(MISSES)}
+    if not objs:
+        rep["errors"] = _import_errors(fbx, mark)
+    return rep
 
 
 def import_animations(files, dest, skeleton, sample_rate=None, use_interchange=True,
                       pipeline_path="/Game/_Agent/Pipelines/PL_AnimOnly"):
     """Animation-only imports against an existing skeleton (mandatory: FBX animation pipeline). One clip per
-    file from Maya. Checks each result's skeleton. NOT YET RUN."""
+    file from Maya. Checks each result's skeleton. Run on 5.8.3: with sample_rate set, Interchange refuses a
+    clip whose length is not a whole number of frames at that rate ("Animation length 4.958 is not
+    compatible with import frame-rate 30 fps") and imports nothing; sample_rate=None keeps the source rate.
+    A file whose bones are not in the skeleton raises "Unable to retrieve bone index for track". An empty
+    result carries the log's errors."""
     skel = load(skeleton)
     pipe = None
     if use_interchange:
@@ -2317,7 +2384,10 @@ def import_animations(files, dest, skeleton, sample_rate=None, use_interchange=T
     legacy = None if pipe is not None else _legacy_fbx_options(skel, True, sample_rate)
     out = []
     for f in files:
+        mark = _log_size()
         objs, route = _import_one(f, dest, pipe, legacy, use_interchange and pipe is not None)
+        if not objs:
+            out.append({"file": f, "asset": None, "route": route, "errors": _import_errors(f, mark)})
         for o in objs:
             s = _get(o, ["skeleton"])
             out.append({"file": f, "asset": o.get_path_name(), "route": route,
@@ -2370,7 +2440,9 @@ def strip_curves(seq_or_path, patterns=(MAYA_HELPER_CURVE_RE.pattern,), remove_a
 
 def create_ik_rig(mesh, path, plan=None):
     """IK Rig for a skeletal mesh: auto template and auto FBIK first; plan (from biped_chain_plan) as the
-    manual fallback. NOT YET RUN, names [verify]."""
+    manual fallback. Run on 5.8.3: on a skeleton the template does not recognise, both auto calls return
+    without error and leave zero chains, so the chain count decides, and the plan is built from the mesh
+    when none is given."""
     u = _u()
     mesh = load(mesh)
     rig = _create_asset(path, "IKRigDefinition", ["IKRigDefinitionFactory"])
@@ -2381,32 +2453,37 @@ def create_ik_rig(mesh, path, plan=None):
         try:
             _call(c, ["apply_auto_generated_retarget_definition"])
             _call(c, ["apply_auto_fbik"])
-            report["auto"] = True
+            report["auto"] = len(list(c.get_retarget_chains())) > 0
         except Exception as exc:  # noqa: BLE001
             report["auto_error"] = str(exc)
     if plan is not None or not report["auto"]:
         if plan is None:
-            raise RuntimeError("auto template failed; build a plan with biped_chain_plan(bones, parents)")
+            f = skeletal_mesh_facts(mesh)
+            plan = biped_chain_plan(f["bones"], f["parents"])
+            report["plan_from_mesh"] = True
         if plan.get("pelvis"):
-            _call(c, ["set_pelvis", "set_retarget_root"], plan["pelvis"])
+            _call(c, ["set_retarget_root"], plan["pelvis"])
         for ch in plan["chains"]:
             _call(c, ["add_retarget_chain"], ch["name"], ch["start"], ch["end"], ch.get("goal") or "")
         report["chains"] = [ch["name"] for ch in plan["chains"]]
+        report["unresolved"] = plan.get("unresolved", [])
     save(rig)
     return report
 
 
 def ik_rig_facts(rig):
-    """Chains (name, start, end, goal) and pelvis for chain_map_check [verify getters]."""
+    """Chains (name, start, end, goal) and pelvis for chain_map_check. Run on 5.8.3: chains are BoneChain
+    structs whose start_bone and end_bone are BoneReference structs (read .bone_name)."""
     u = _u()
     rig = load(rig)
     c = u.IKRigController.get_controller(rig)
     chains = []
     for ch in _call(c, ["get_retarget_chains"]):
-        chains.append({"name": str(_get(ch, ["chain_name", "name"])), "start": str(_get(ch, ["start_bone"])),
-                       "end": str(_get(ch, ["end_bone"])), "goal": str(_get(ch, ["ik_goal_name", "goal"]) or "") or None})
+        goal = str(_get(ch, ["ik_goal_name", "goal"]) or "")
+        chains.append({"name": str(_get(ch, ["chain_name", "name"])), "start": _bone_name(_get(ch, ["start_bone"])),
+                       "end": _bone_name(_get(ch, ["end_bone"])), "goal": None if goal in ("", "None") else goal})
     try:
-        pel = str(_call(c, ["get_pelvis", "get_retarget_root"]))
+        pel = str(_call(c, ["get_retarget_root"]))
     except Exception:
         pel = None
     return {"pelvis": pel, "chains": chains}
@@ -2417,14 +2494,14 @@ def create_retargeter(path, source_rig, target_rig, source_mesh=None, target_mes
     """Retargeter from a template (duplicate, swap target rig and mesh: the retargeter adapts by name
     matching, retargeting doc) or from scratch (default ops, exact chain map, new named pose, auto
     align). Op settings the controller cannot reach are set once in the GUI on the template.
-    NOT YET RUN, names [verify]."""
+    Run on 5.8.3 (IKRetargetFactory; the 5.8.3 controller has no snap-to-ground call)."""
     u = _u()
     if template:
         rtg = _eas().duplicate_asset(template, path)
         if rtg is None:
             raise RuntimeError("duplicate failed: %s -> %s" % (template, path))
     else:
-        rtg = _create_asset(path, "IKRetargeter", ["IKRetargetFactory", "IKRetargeterFactory"])
+        rtg = _create_asset(path, "IKRetargeter", ["IKRetargetFactory"])
     c = u.IKRetargeterController.get_controller(rtg)
     S, T = u.RetargetSourceOrTarget.SOURCE, u.RetargetSourceOrTarget.TARGET
     _call(c, ["set_ik_rig"], S, load(source_rig))
@@ -2438,8 +2515,7 @@ def create_retargeter(path, source_rig, target_rig, source_mesh=None, target_mes
         for label, names, args in (("default_ops", ["add_default_ops"], ()),
                                    ("map_chains", ["auto_map_chains"], (u.AutoMapChainType.EXACT, True)),
                                    ("pose", ["create_retarget_pose"], (pose_name, T)),
-                                   ("align", ["auto_align_all_bones"], (T,)),
-                                   ("ground", ["snap_character_to_ground"], (T,))):
+                                   ("align", ["auto_align_all_bones"], (T,))):
             try:
                 _call(c, names, *args)
                 steps[label] = True
@@ -2452,16 +2528,17 @@ def create_retargeter(path, source_rig, target_rig, source_mesh=None, target_mes
 
 
 def retargeter_facts(rtg):
-    """Op stack as op_stack_check input [verify controller getters; fallback reads 'retarget_ops']."""
+    """Op stack as op_stack_check input. Run on 5.8.3: get_num_retarget_ops, get_op_name(i) (the op's display
+    name, e.g. "Pelvis Motion"), get_op_controller(i), get_retarget_op_enabled(i)."""
     u = _u()
     rtg = load(rtg)
     c = u.IKRetargeterController.get_controller(rtg)
     ops = []
     try:
         for i in range(int(_call(c, ["get_num_retarget_ops"]))):
-            op = _call(c, ["get_retarget_op_at_index"], i)
-            typ = type(op).__name__.replace("IKRetarget", "").replace("Op", "")
-            ops.append({"type": re.sub(r"(?<!^)(?=[A-Z])", " ", typ).strip(), "index": i,
+            name = str(c.get_op_name(i))
+            typ = re.sub(r"\s*\d+$", "", name)   # "Run IK Rig 1" style uniquified names keep the type
+            ops.append({"type": typ, "name": name, "index": i,
                         "enabled": bool(_call(c, ["get_retarget_op_enabled"], i)) if _has(c, "get_retarget_op_enabled") else True})
     except Exception as exc:  # noqa: BLE001
         MISSES.append("retargeter ops: %s" % exc)
@@ -2469,28 +2546,35 @@ def retargeter_facts(rtg):
 
 
 def batch_retarget(anims, source_mesh, target_mesh, retargeter, suffix="_Retarget", prefix="", folder="",
-                   retain_additive=True, override_set=""):
-    """Offline batch retarget. 5.8: RunBatchRetarget with FIKRetargetBatchOperationInputs (bRetainAdditiveFlags,
-    release notes); fallback: duplicate_and_retarget (pre-5.8 signature). NOT YET RUN, names [verify]."""
+                   retain_additive=True, override_set="", overwrite=False):
+    """Offline batch retarget. Run on 5.8.3: IKRetargetBatchOperation.run_batch_retarget(inputs) with
+    IKRetargetBatchOperationInputs, whose fields are assets_to_retarget (a list of AssetData, not assets),
+    source_mesh, target_mesh, ik_retarget_asset, prefix, suffix, target_path (or use_source_path),
+    retain_additive_flags, override_set_names (a list), overwrite_existing_files. It returns AssetData.
+    Fallback for older engines: duplicate_and_retarget."""
     u = _u()
     assets = [load(a) for a in anims]
     op = u.IKRetargetBatchOperation
     if _has(op, "run_batch_retarget") and _has(u, "IKRetargetBatchOperationInputs"):
         inp = u.IKRetargetBatchOperationInputs()
-        for names, val in ((["assets_to_retarget", "assets"], assets), (["source_mesh"], load(source_mesh)),
-                           (["target_mesh"], load(target_mesh)), (["retargeter", "ik_retarget_asset"], load(retargeter)),
-                           (["suffix"], suffix), (["prefix"], prefix), (["folder_path", "output_folder"], folder),
-                           (["retain_additive_flags", "b_retain_additive_flags"], bool(retain_additive)),
-                           (["override_set_to_apply", "override_set"], override_set)):
+        reg = u.AssetRegistryHelpers.get_asset_registry()
+        data = [reg.get_asset_by_object_path(a.get_path_name()) for a in assets]
+        for names, val in ((["assets_to_retarget"], data), (["source_mesh"], load(source_mesh)),
+                           (["target_mesh"], load(target_mesh)), (["ik_retarget_asset"], load(retargeter)),
+                           (["suffix"], suffix), (["prefix"], prefix), (["target_path"], folder),
+                           (["use_source_path"], not folder), (["retain_additive_flags"], bool(retain_additive)),
+                           (["override_set_names"], [override_set] if override_set else None),
+                           (["overwrite_existing_files"], bool(overwrite))):
             if val not in ("", None):
                 _set(inp, names, val)
         res = op.run_batch_retarget(inp)
         route = "run_batch_retarget"
+        out = [str(d.package_name) + "." + str(d.asset_name) for d in (res or [])]
     else:
         res = op.duplicate_and_retarget(assets, load(source_mesh), load(target_mesh), load(retargeter),
                                         "", "", prefix, suffix, True)
         route = "duplicate_and_retarget"
-    out = [getattr(a, "get_path_name", lambda: str(a))() for a in (res or [])]
+        out = [getattr(a, "get_path_name", lambda: str(a))() for a in (res or [])]
     return {"route": route, "created": out}
 
 
@@ -2500,7 +2584,6 @@ POSE_SEARCH_TAGS = {
     "block_transition_in": ["AnimNotifyState_PoseSearchBlockTransition"],
     "exclude": ["AnimNotifyState_PoseSearchExcludeFromDatabase"],
     "continuing_bias": ["AnimNotifyState_PoseSearchOverrideContinuingPoseCostBias"],
-    "base_bias": ["AnimNotifyState_PoseSearchOverrideBaseCostBias"],
     "branch_in": ["AnimNotifyState_PoseSearchBranchIn"],
 }
 
@@ -2599,7 +2682,8 @@ def schema_facts(schema):
 def add_pose_search_tag(seq_or_path, kind, start_s, duration_s, track="PoseSearch"):
     """Add a Pose Search notify state (Block Transition In, Exclude From Database, Override Continuing Pose
     Cost Bias, Override Base Cost Bias, Branch In) on a frame window: late tuning without schema changes
-    (Jose tNw9lD2PW3U [00:18:28]). Class names [verify]."""
+    (Jose tNw9lD2PW3U [00:18:28]). Run on 5.8.3 with block_transition_in (PoseSearch plugin on); 5.8.3 has
+    no Override Base Cost Bias class (the continuing-pose one exists)."""
     u = _u()
     seq = load(seq_or_path)
     cls = None
@@ -2622,7 +2706,8 @@ def add_pose_search_tag(seq_or_path, kind, start_s, duration_s, track="PoseSearc
 # ----------------------------------------------------------------------------- AnimBP, montages, budget
 
 def animbp_settings(bp_or_path, multithreaded=True, warn_bp_usage=True, root_motion_mode="ROOT_MOTION_FROM_MONTAGES_ONLY"):
-    """AnimBP class settings and the anim instance CDO's Root Motion Mode [verify names]."""
+    """AnimBP class settings and the anim instance CDO's Root Motion Mode. Run on 5.8.3: all three names
+    (use_multi_threaded_animation_update, warn_about_blueprint_usage, root_motion_mode) set and read back."""
     u = _u()
     bp = load(bp_or_path)
     rep = {"bp": bp.get_path_name(),
@@ -2637,18 +2722,30 @@ def animbp_settings(bp_or_path, multithreaded=True, warn_bp_usage=True, root_mot
     return rep
 
 
+def _log_file():
+    """The log this editor writes. Run on 5.8.3: an editor started with -abslog=<file> (ue_run, the MCP
+    launchers) writes there, not under Paths.project_log_dir() (~/Library/Logs/Unreal Engine/<Project>Editor/
+    on a Mac), so the newest file in that folder can be another session's log."""
+    u = _u()
+    m = re.search(r'-abslog=("[^"]+"|\S+)', str(u.SystemLibrary.get_command_line()), re.I)
+    if m:
+        return m.group(1).strip('"')
+    log_dir = u.Paths.project_log_dir()
+    logs = sorted((os.path.join(log_dir, f) for f in os.listdir(log_dir) if f.endswith(".log")), key=os.path.getmtime)
+    return logs[-1]
+
+
 def compile_and_scan(bp_or_path, log_tail_lines=4000):
-    """Compile an AnimBP and scan the newest log for Blueprint usage (fast path) warnings about it.
-    Message text [verify]; the Compiler Results panel is the GUI truth."""
+    """Compile an AnimBP and scan this editor's log for Blueprint usage (fast path) warnings about it.
+    Run on 5.8.3 on a clean AnimBP (no hit); the warning text itself is still [verify]: no AnimBP with a
+    fast-path break was compiled. The Compiler Results panel is the GUI truth."""
     u = _u()
     bp = load(bp_or_path)
     u.BlueprintEditorLibrary.compile_blueprint(bp)
     save(bp)
     hits = []
     try:
-        log_dir = u.Paths.project_log_dir()
-        logs = sorted((os.path.join(log_dir, f) for f in os.listdir(log_dir) if f.endswith(".log")), key=os.path.getmtime)
-        with open(logs[-1], errors="ignore") as fh:
+        with open(_log_file(), errors="ignore") as fh:
             lines = fh.readlines()[-log_tail_lines:]
         name = bp.get_name()
         for line in lines:
@@ -2664,6 +2761,60 @@ def set_montage_blend_out(montage, trigger_time=0.0):
     n = _set(m, ["blend_out_trigger_time"], float(trigger_time))
     save(m)
     return {"montage": m.get_path_name(), "set": n}
+
+
+def create_montage(anim, dest_path, notifies=()):
+    """Montage from one AnimSequence (AnimMontageFactory.source_animation), plus notifies given as
+    (track, time_s, notify class name). Run on 5.8.3: one DefaultSlot track, blend in and out 0.25 s,
+    blend_out_trigger_time -1 (blend starts blend-out-time before the end)."""
+    u = _u()
+    a = load(anim)
+    f = u.AnimMontageFactory()
+    f.set_editor_property("source_animation", a)
+    f.set_editor_property("target_skeleton", a.get_editor_property("skeleton"))
+    folder, name = dest_path.rsplit("/", 1)
+    m = _asset_tools().create_asset(name, folder, u.AnimMontage, f)
+    lib = u.AnimationLibrary
+    for track, time_s, cls in notifies:
+        if not lib.is_valid_anim_notify_track_name(m, track):
+            lib.add_animation_notify_track(m, track)
+        lib.add_animation_notify_event(m, track, float(time_s), getattr(u, cls))
+    save(m)
+    return {"montage": m.get_path_name(), "length_s": m.get_play_length(),
+            "slots": [str(s.get_editor_property("slot_name")) for s in m.get_editor_property("slot_anim_tracks")],
+            "notifies": [str(n) for n in lib.get_animation_notify_event_names(m)]}
+
+
+def create_keyed_sequence(dest_path, skeleton, frames, fps, offsets):
+    """Hand-keyed AnimSequence with no Sequencer and no viewport (works in a headless editor or a commandlet).
+    offsets: {bone: [(pitch, yaw, roll), ...]} local rotation offsets from the reference pose, one per key,
+    frames + 1 keys. Bones not listed hold the reference pose. Run on 5.8.3 through the
+    AnimationDataController (asset.controller): set_frame_rate, set_number_of_frames, add_bone_curve,
+    set_bone_track_keys. Rotator is built with keywords: unreal.Rotator's positional order is (roll, pitch, yaw)."""
+    u = _u()
+    skel = load(skeleton)
+    f = u.AnimSequenceFactory()
+    f.set_editor_property("target_skeleton", skel)
+    folder, name = dest_path.rsplit("/", 1)
+    seq = _asset_tools().create_asset(name, folder, u.AnimSequence, f)
+    c = seq.get_editor_property("controller")
+    E = u.AnimPoseExtensions
+    ref = E.get_reference_pose(skel)
+    n = int(frames) + 1
+    c.open_bracket(u.Text("create_keyed_sequence"))
+    c.set_frame_rate(u.FrameRate(int(fps), 1))
+    c.set_number_of_frames(u.FrameNumber(int(frames)))
+    for bone, rots in offsets.items():
+        if len(rots) != n:
+            raise ValueError("%s: %d keys given, %d needed (frames + 1)" % (bone, len(rots), n))
+        rt = E.get_ref_bone_pose(ref, bone, u.AnimPoseSpaces.LOCAL)
+        c.add_bone_curve(bone)
+        q = [rt.rotation * u.Rotator(pitch=p, yaw=y, roll=r).quaternion() for p, y, r in rots]
+        c.set_bone_track_keys(bone, [rt.translation] * n, q, [rt.scale3d] * n)
+    c.close_bracket()
+    save(seq)
+    return {"anim": seq.get_path_name(), "frames": int(u.AnimationLibrary.get_num_frames(seq)),
+            "length_s": seq.get_play_length()}
 
 
 def console(cmd):
@@ -2701,14 +2852,21 @@ def metahuman_build(character_path, quality="MEDIUM", pipeline="OPTIMIZED"):
     return {"character": character_path, "pipeline": pipeline, "quality": quality}
 
 
-def bake_to_anim_sequence(level_sequence, binding, dest_path, link=True):
+def bake_to_anim_sequence(level_sequence, binding, dest_path, skeleton, link=True):
     """Bake a Sequencer binding (live Control Rig, layers) to an AnimSequence; link=True makes a linked
-    sequence that re-bakes on edits (Control Rig doc, SequencerTools.export_anim_sequence)."""
+    sequence that re-bakes on edits (Control Rig doc, SequencerTools.export_anim_sequence). Run on 5.8.3:
+    the new AnimSequence needs its target skeleton set on the factory, or create_asset fails with "Unable to
+    retrieve target USkeleton". Through MCP export_anim_sequence a Control Rig track baked one pose at every
+    frame both headless (-nullrhi) and offscreen (-RenderOffscreen); a GUI bake is not yet run. Read the
+    result back (AnimPoseExtensions.get_anim_pose_at_frame); for agent-authored clips prefer
+    create_keyed_sequence."""
     u = _u()
     world = u.get_editor_subsystem(u.UnrealEditorSubsystem).get_editor_world()
     seq = load(level_sequence)
     folder, name = dest_path.rsplit("/", 1)
-    anim = _asset_tools().create_asset(name, folder, u.AnimSequence, u.AnimSequenceFactory())
+    fac = u.AnimSequenceFactory()
+    fac.set_editor_property("target_skeleton", load(skeleton))
+    anim = _asset_tools().create_asset(name, folder, u.AnimSequence, fac)
     opts = u.AnimSeqExportOption()
     ok = u.SequencerTools.export_anim_sequence(world, seq, anim, opts, binding, bool(link))
     save(anim)
@@ -2733,10 +2891,13 @@ def control_rig_from_mesh(mesh):
 
 def review_sequence(mesh, anim, dest_path, fps=30):
     """A Level Sequence with a spawnable skeletal mesh playing `anim`, for contact-frame stills with
-    ue_review.render_still(seq, out_dir, frame=f). Cameras are added by the caller [verify API]."""
+    ue_review.render_still(seq, out_dir, frame=f). Cameras are added by the caller. Run on 5.8.3."""
     u = _u()
     folder, name = dest_path.rsplit("/", 1)
     seq = _asset_tools().create_asset(name, folder, u.LevelSequence, u.LevelSequenceFactoryNew())
+    # Run on 5.8.3: until the sequence is open in Sequencer, add_spawnable_from_class returns a binding with an
+    # empty id and add_track returns None. Opening works in a headless editor.
+    u.LevelSequenceEditorBlueprintLibrary.open_level_sequence(seq)
     les = u.get_editor_subsystem(u.LevelSequenceEditorSubsystem)
     binding = les.add_spawnable_from_class(seq, u.SkeletalMeshActor)
     tpl = binding.get_object_template() if _has(binding, "get_object_template") else None

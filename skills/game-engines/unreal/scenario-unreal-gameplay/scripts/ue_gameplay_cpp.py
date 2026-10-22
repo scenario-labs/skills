@@ -7,10 +7,13 @@ write, diff and review. Tuning values are EditDefaultsOnly (Python-settable on t
 CDO), tests read state through BlueprintPure getters (Python calls them as methods), cosmetics
 are BlueprintImplementableEvent hooks.
 
-STATUS: NOT YET COMPILED. Unreal is not installed on 2026-09-24 and Xcode 26.6 is unlisted by
-Epic (26.0 min, 26.1.1 recommended, 26.4 incompatible). API names marked [verify] in comments
-are the ones most likely to have moved; compile once, then fix. The offline tests only check
-structure (balanced braces, GENERATED_BODY, generated.h last, API macro, no em dashes).
+STATUS: compiled on UE 5.8.3 with Xcode 26.6 (unlisted by Epic: 26.0 min, 26.1.1 recommended,
+26.4 incompatible) on 2026-10-21: all features, 0 errors, 0 warnings, 67 s
+(tests/code/unreal-gameplay/live_cpp_build.py). The module's Build.cs needs
+PublicIncludePaths.Add(ModuleDirectory) for the "Gameplay/X.h" includes (patch_build_cs adds it).
+Compiling proves the API names; runtime behavior of the classes is not yet run (it needs a level
+built from them). The offline tests check structure (braces, GENERATED_BODY, generated.h last,
+API macro, no em dashes).
 
 Default numbers in these files (dash speed, radii, sight ranges) are PLACEHOLDERS to replace
 with the feel targets the user gives; they are not expert numbers.
@@ -21,7 +24,7 @@ with the feel targets the user gives; they are not expert numbers.
 """
 from __future__ import annotations
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21)
 
 FEATURES = ("tags", "health", "character", "controller", "hero", "enemy", "dash", "melee",
             "ai", "statetree", "widget")
@@ -55,7 +58,7 @@ BUILD_MODULES = {
     "widget": ["UMG", "Slate", "SlateCore"],
 }
 
-# Plugins the features need in the .uproject (identifiers; [verify] on the installed engine).
+# Plugins the features need in the .uproject (identifiers; loaded on 5.8.3).
 PLUGINS = {
     "health": ["GameplayAbilities"], "character": ["GameplayAbilities"],
     "dash": ["GameplayAbilities"], "melee": ["GameplayAbilities"],
@@ -92,7 +95,7 @@ def _tags(module, api, tags):
                      for t, c in tags)
     h = """#pragma once
 // Native gameplay tags (text, diffable, no ini round trip). Designer tags can still live in
-// Config/DefaultGameplayTags.ini. NOT YET COMPILED.
+// Config/DefaultGameplayTags.ini. Compiled on UE 5.8.3.
 #include "NativeGameplayTags.h"
 
 %s
@@ -106,7 +109,7 @@ def _tags(module, api, tags):
 
 # ---------------------------------------------------------------------------------- health
 _HEALTH_H = r"""#pragma once
-// Health attribute set. Attribute sets are C++ only (GAS doc; tranek 4.4). NOT YET COMPILED.
+// Health attribute set. Attribute sets are C++ only (GAS doc; tranek 4.4). Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
@@ -218,7 +221,7 @@ _CHAR_H = r"""#pragma once
 // Base for every character that uses GAS: ASC on the pawn (non-respawning or single player;
 // move it to the PlayerState when attributes must survive respawn, tranek 4.1).
 // Tests read state through the BlueprintPure getters (Python calls them as methods).
-// NOT YET COMPILED.
+// Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
@@ -434,7 +437,7 @@ _PC_H = r"""#pragma once
 // BOTH sides after possession: server in the pawn's PossessedBy, owning client here
 // (tranek 4.1.2). For an ASC on the PlayerState the client hook is OnRep_PlayerState instead.
 // Set it as the GameMode's PlayerControllerClass (Python: player_controller_class).
-// NOT YET COMPILED.
+// Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "GameplayPlayerController.generated.h"
@@ -466,7 +469,7 @@ void AGameplayPlayerController::AcknowledgePossession(APawn* P)
 _HERO_H = r"""#pragma once
 // Player character: camera, Enhanced Input, abilities activated by tag, HUD widget.
 // Input assets are EditDefaultsOnly slots filled on the Blueprint child from Python.
-// NOT YET COMPILED.
+// Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "Gameplay/GameplayCharacterBase.h"
 #include "GameplayTagContainer.h"
@@ -677,7 +680,7 @@ void AHeroCharacter::Attack(const FInputActionValue& Value)
 # ----------------------------------------------------------------------------------- enemy
 _ENEMY_H = r"""#pragma once
 // Enemy: Minimal ASC replication, AI controller class, overhead health bar.
-// NOT YET COMPILED.
+// Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "Gameplay/GameplayCharacterBase.h"
 #include "EnemyCharacter.generated.h"
@@ -735,7 +738,7 @@ void AEnemyCharacter::BeginPlay()
 _DASH_H = r"""#pragma once
 // Dash with cooldown. The cooldown GE class is a Blueprint default (CooldownGameplayEffectClass)
 // set from Python on the ability's Blueprint child. Distance is about DashSpeed * DashDuration.
-// NOT YET COMPILED.
+// Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "GA_Dash.generated.h"
@@ -789,7 +792,7 @@ UGA_Dash::UGA_Dash()
 
 	FGameplayTagContainer AssetTagContainer;
 	AssetTagContainer.AddTag(TAG_Ability_Dash);
-	SetAssetTags(AssetTagContainer);   // 5.5+ accessor [verify]; older engines: AbilityTags = AssetTagContainer;
+	SetAssetTags(AssetTagContainer);   // 5.5+ accessor, compiled on 5.8.3; older engines: AbilityTags = AssetTagContainer;
 	ActivationBlockedTags.AddTag(TAG_State_Dead);
 	ActivationBlockedTags.AddTag(TAG_State_Stunned);
 }
@@ -822,7 +825,7 @@ void UGA_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
 			this, TEXT("Dash"), Direction, DashSpeed, DashDuration, /*bIsAdditive*/ false,
 			/*StrengthOverTime*/ nullptr, ERootMotionFinishVelocityMode::ClampVelocity,
-			FVector::ZeroVector, ExitSpeedClamp, /*bEnableGravity*/ false);   // signature [verify]
+			FVector::ZeroVector, ExitSpeedClamp, /*bEnableGravity*/ false);   // signature compiled on 5.8.3
 	if (!Task)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -844,7 +847,7 @@ _MELEE_H = r"""#pragma once
 // Melee attack: montage plus a gameplay event on the hit frame (AN_SendGameplayEvent with an
 // instance-editable tag, Shao 8bi0rnXnRj4 [00:10:46]), damage through ONE damage GE with a
 // SetByCaller magnitude ([00:49:12]). Without a montage it hits at once (for tests before
-// animation arrives). NOT YET COMPILED.
+// animation arrives). Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "GA_MeleeAttack.generated.h"
@@ -913,7 +916,7 @@ UGA_MeleeAttack::UGA_MeleeAttack()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 	FGameplayTagContainer AssetTagContainer;
 	AssetTagContainer.AddTag(TAG_Ability_Attack_Melee);
-	SetAssetTags(AssetTagContainer);   // [verify] as in UGA_Dash
+	SetAssetTags(AssetTagContainer);   // compiled on 5.8.3, as in UGA_Dash
 	ActivationBlockedTags.AddTag(TAG_State_Dead);
 	ActivationBlockedTags.AddTag(TAG_State_Stunned);
 	HitEventTag = TAG_Event_Attack_Hit;
@@ -1011,7 +1014,7 @@ _AI_H = r"""#pragma once
 // Enemy controller: StateTree AI component (5.4) plus sight perception that sends StateTree
 // events (events are the cheapest transitions, Mononen YEmq4kcblj4 [00:15:01]).
 // DebugStateName is written by FSTTask_SetDebugState so Python tests can read the state.
-// NOT YET COMPILED.
+// Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
@@ -1086,7 +1089,7 @@ _AI_CPP = r"""#include "Gameplay/EnemyAIController.h"
 AEnemyAIController::AEnemyAIController()
 {
 	StateTreeComponent = CreateDefaultSubobject<UStateTreeAIComponent>(TEXT("StateTree"));
-	StateTreeComponent->SetStartLogicAutomatically(false);   // start on possess, not at BeginPlay [verify]
+	StateTreeComponent->SetStartLogicAutomatically(false);   // start on possess, not at BeginPlay (compiled on 5.8.3)
 
 	Perception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception"));
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
@@ -1171,7 +1174,7 @@ _ST_H = r"""#pragma once
 // efficiency, Blueprint tasks for iteration [00:28:05]). Property categories define binding
 // usage: Context (auto-bound), Input (must bind), Output (written by code), Parameter.
 // On 5.6+ set Task Control Flow so helper tasks do not complete the state.
-// NOT YET COMPILED; base class and signatures [verify] on 5.8.
+// Compiled on 5.8.3 (base class and signatures).
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
 #include "StateTreeExecutionContext.h"
@@ -1386,7 +1389,7 @@ EStateTreeRunStatus FSTTask_SetDebugState::EnterState(FStateTreeExecutionContext
 _WIDGET_H = r"""#pragma once
 // Health bar: BindWidget members (the Widget Blueprint tree is built from Python with
 // EditorUtilityLibrary.add_source_widget using the same names), event-driven updates,
-// no property bindings, no Tick (Albert VxX1aah6TZM [00:24:09]). NOT YET COMPILED.
+// no property bindings, no Tick (Albert VxX1aah6TZM [00:24:09]). Compiled on UE 5.8.3.
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "HealthBarWidget.generated.h"

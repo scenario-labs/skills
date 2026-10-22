@@ -1,10 +1,12 @@
 # scenario-unreal-gameplay procedures (agent side)
 
 Every procedure names its channel, its test path and its status. Status words: **offline-tested**
-(ran with system python3, `tests/code/unreal-gameplay/test_gameplay_offline.py`), **not yet run in
-Unreal** (engine not installed on 2026-09-24), **not yet compiled** (C++). Helpers live in
-`scripts/ue_gameplay.py` (G) and `scripts/ue_gameplay_cpp.py` (C); shared toolkit calls (`ue_run`,
-`ue_env`, `ue_review`, `ue_remote`) come from scenario-unreal-expert.
+(ran with system python3, `tests/code/unreal-gameplay/test_gameplay_offline.py`), **run on 5.8.3**
+(ran in Unreal Engine 5.8.3 on macOS on 2026-10-21, through the jobs, `live_mcp_recipes.py` or
+`live_cpp_build.py`), **not yet run** (with the reason). Epic MCP argument shapes for every step a
+toolset covers: `references/mcp-gameplay.md`. Helpers live in `scripts/ue_gameplay.py` (G) and
+`scripts/ue_gameplay_cpp.py` (C); shared toolkit calls (`ue_run`, `ue_env`, `ue_review`,
+`ue_remote`) come from scenario-unreal-expert.
 
 Channel reminder (scenario-unreal-expert): asset authoring runs headless
 (`ue_run.run_python(uproject, job)`, commandlet, no level loaded) unless an editor already holds the
@@ -22,14 +24,20 @@ for any character, ability, effect, tree or widget; U4 only supplies the example
 
 - Channel: headless job `tests/code/unreal-gameplay/job_00_gameplay_probe.py` through
   `ue_run.run_python`.
-- Output: `archive/tests/unreal-gameplay/<stamp>/probe.json` with `G.probe()` (classes, CDO
+- Output: `archive/tests/scenario-unreal-gameplay/<stamp>/probe.json` with `G.probe()` (classes, CDO
   properties, methods of `BlueprintEditorLibrary`, `BlueprintGraphEditor`, `EditorUtilityLibrary`,
   `LevelEditorSubsystem`, `StateTreeEditorData`), the console variables and commands matching
   `AbilitySystem.`, `StateTree`, `Slate.`, `EnhancedInput`, `Input.`, and the help text of
   `BlueprintGraphEditor`.
-- Then: replace each `[verify]` in the skill with what the probe found; record the GE asset-tag cvar
-  name (`AbilitySystem.Fix...`, Shao 8bi0rnXnRj4 [00:21:43]).
-- Status: not yet run in Unreal.
+- Status: run on 5.8.3 (about 35 s headless). All classes in `G.PROBE_CLASSES` exist; three are
+  C++-only (`G.SCRIPT_ONLY_CLASSES`: TargetTags and AssetTags GE components,
+  LevelEditorPlaySettings); several Python names differ from C++ (`AbilitySystemLibrary`,
+  `GameplayTagLibrary`, `WidgetLibrary`, `SystemLibrary`). The GE asset-tag cvar is
+  `AbilitySystem.Fix.GameplayEffects.ReturnAssetTagsViaGetOwnedGameplayTags`, default 2 (0 = return
+  asset tags as the function name says, 1 legacy, 2 legacy plus ensure, 3 legacy plus ensure every
+  time; GameplayEffect.cpp), Shao 8bi0rnXnRj4 [00:21:43]. The console-name scan reads the
+  commandlet's `-abslog`; `AbilitySystem.Ability.*`, `AbilitySystem.Effect.Apply/ListActive/Remove`
+  and `AbilitySystem.Debug.*` exist.
 
 ```python
 import sys; sys.path.insert(0, "<skill>/scripts"); sys.path.insert(0, "<expert>/scripts")
@@ -60,8 +68,9 @@ to an ability with a timeout, Bruno XKQfMZOXFv0 [00:17:37]).
 
 ## P2. Project scaffolding: plugins, config, tags
 
-- Channel: files on disk (editor closed). Test: `IniAndConfig.*` (offline-tested); the plugin
-  identifiers are `[verify]`.
+- Channel: files on disk (editor closed). Test: `IniAndConfig.*` (offline-tested). Plugin
+  identifiers `GameplayAbilities`, `StateTree`, `GameplayStateTree`, `PythonAutomationTest`,
+  `EnhancedInput` loaded on 5.8.3 (live_util.make_project).
 
 ```python
 import ue_env, ue_gameplay as G, ue_gameplay_cpp as C
@@ -78,14 +87,19 @@ print(G.config_verdict("/abs/MyGame", needs=("gas", "statetree", "tests"),
 ```
 
 Also, when a live MCP session is wanted:
-`ue_env.enable_plugins(up, ["ModelContextProtocol", "AllToolsets"])` plus the Editor Toolset plugin
-the 5.8 webinar says the docs omit (Deiter k0tgmrBuIJc [00:06:00], identifier `[verify]`); launch
-with `-ModelContextProtocolStartServer`.
+`ue_env.enable_plugins(up, ["ModelContextProtocol", "AllToolsets"])` (AllToolsets pulls in
+EditorToolset, run on 5.8.3; Deiter k0tgmrBuIJc [00:06:00]); launch through
+`ue_run.launch_editor(uproject, mcp_port=N)`.
 
 ## P3. C++ layer: Xcode gate, probe build, scaffold, build, lint
 
-- Channel: shell (editor closed). Tests: `Cpp.*` and `Lint.*` (offline-tested); the generated C++ is
-  **not yet compiled**.
+- Channel: shell (editor closed). Tests: `Cpp.*` and `Lint.*` (offline-tested). Run on 5.8.3: the
+  full scaffold (all features) compiled with 0 errors and 0 warnings in 67 s with Xcode 26.6
+  (`tests/code/unreal-gameplay/live_cpp_build.py`), after `patch_build_cs` added
+  `PublicIncludePaths.Add(ModuleDirectory)`; without it every file failed with
+  `'Gameplay/X.h' file not found`. A new module needs `Source/<Name>.Target.cs`,
+  `<Name>Editor.Target.cs`, the module's Build.cs, a `.cpp` with `IMPLEMENT_PRIMARY_GAME_MODULE` and
+  a `Modules` entry in the `.uproject` (the test writes all five).
 - Why first: Xcode 26.6 is installed, Epic names 26.0 minimum, 26.1.1 recommended and 26.4
   incompatible; 26.6 is unlisted (macOS requirements doc).
 
@@ -110,8 +124,8 @@ print(G.lint_verdict(G.cpp_lint("/abs/MyGame/Source")))       # GATE: ok and no 
   Class, or add a `Source/` module and a `Modules` entry in the `.uproject`), then project files
   regenerate.
 - Close the editor for new classes, new `UPROPERTY`/`UFUNCTION`, and header changes. Live Coding on
-  Mac is not described in the saved sources `[verify]`; the MCP doc notes Live Coding does not
-  propagate new `UFUNCTION` declarations even where it works.
+  Mac was not tried here (not yet run: the test builds with UBT and the editor closed); the MCP doc
+  notes Live Coding does not propagate new `UFUNCTION` declarations even where it works.
 - ASC initialization is the first thing that breaks: `InitAbilityActorInfo` must run on the server
   AND on the owning client after possession. ASC on the pawn: server `PossessedBy`, client
   `AcknowledgePossession` on the PlayerController; ASC on the PlayerState: server `PossessedBy`,
@@ -137,7 +151,11 @@ print(G.lint_verdict(G.cpp_lint("/abs/MyGame/Source")))       # GATE: ok and no 
 ## P4. Blueprint children and defaults from Python (data layer)
 
 - Channel: headless job (or live editor). Test: in-engine
-  `tests/code/unreal-gameplay/job_u4_assets.py`. Status: not yet run in Unreal.
+  `tests/code/unreal-gameplay/job_u4_assets.py`. Status: run on 5.8.3 against the compiled scaffold
+  (module `Arena`): every default below applied, compiled and saved. A `{"soft": path}` slot takes
+  the loaded object; a SoftObjectPath is refused (fixed in `set_defaults`). Python property names
+  drop the `b` of bools (`orient_rotation_to_movement`); the C++ name (`bOrientRotationToMovement`)
+  is accepted too.
 
 ```python
 import unreal, ue_gameplay as G
@@ -161,7 +179,7 @@ G.set_component_defaults(F + "/BP_Hero", "character_movement",
 G.set_defaults(F + "/BP_Enemy", {"default_abilities": [G.load_class(F + "/GA_Melee_Enemy")],
     # the controller BLUEPRINT that holds the StateTree (P7), not the bare C++ class
     "ai_controller_class": {"class": "/Game/AI/BP_EnemyController"},
-    "auto_possess_ai": unreal.AutoPossessAI.PLACED_IN_WORLD_OR_SPAWNED})   # enum name [verify]
+    "auto_possess_ai": unreal.AutoPossessAI.PLACED_IN_WORLD_OR_SPAWNED})   # run on 5.8.3
 G.set_component_defaults(F + "/BP_Enemy", "character_movement", {"max_walk_speed": 200.0})
 G.set_defaults(F + "/BP_GameMode", {"default_pawn_class": {"class": F + "/BP_Hero"},
     "player_controller_class": {"class": "/Script/MyGame.GameplayPlayerController"},  # client ASC init
@@ -175,23 +193,29 @@ G.set_defaults(F + "/BP_GameMode", {"default_pawn_class": {"class": F + "/BP_Her
   controller (AI docs, Agent translation; BAU digest P4 step 4).
   `G.ai_setup_verdict(G.ai_setup_facts(bp))` checks both plus the tree reference and a
   NavMeshBoundsVolume.
-- Components added in a Blueprint (not declared in C++) need `SubobjectDataSubsystem` `[verify]`;
-  declare runtime-controlled components in C++ instead (Forsythe [00:31:39]).
+- Components added in a Blueprint (not declared in C++) are not CDO properties:
+  `G.blueprint_components(bp)` reaches them through `SubobjectDataSubsystem` (run on 5.8.3); their
+  templates end in `_GEN_VARIABLE` and take `ObjectTools.set_properties`. Declare runtime-controlled
+  components in C++ when you can (Forsythe [00:31:39]).
 - Project default GameMode:
   `[/Script/EngineSettings.GameMapsSettings] GlobalDefaultGameMode=/Game/Gameplay/BP_GameMode.BP_GameMode_C`
-  in `DefaultEngine.ini` `[verify key]`, or World Settings GameMode Override per level.
+  in `DefaultEngine.ini` (run on 5.8.3: PIE spawned the GameMode's pawn), or World Settings GameMode
+  Override per level.
 
 ## P5. Enhanced Input assets
 
 - Channel: headless job. Offline part (`G.input_plan`, `G.input_verdict`) offline-tested; asset
-  creation not yet run in Unreal.
+  creation run on 5.8.3 (13 mappings with their modifiers and triggers, verified after a reload).
+  5.8 keeps mappings in `default_key_mappings.mappings` (an `InputMappingContextMappingData`
+  struct); writing only the top-level `mappings` copy silently drops modifiers and triggers.
+  `apply_input_plan` writes the struct back.
 
 ```python
 import ue_gameplay as G
 plan = G.input_plan()                  # IA_Move/Look/Jump/Dash/Attack, IMC_Default
 assert not [l for l in G.input_verdict(plan) if l.startswith("error")]
 rep = G.apply_input_plan(plan, "/Game/Input")
-print(rep["failed"])                    # instanced modifiers/triggers are the [verify] part
+print(rep["failed"])                    # empty on 5.8.3
 ```
 
 - WASD: one Axis2D action; W Swizzle YXZ, A Negate, S Negate + Swizzle, D none (framework doc,
@@ -211,8 +235,13 @@ print(rep["failed"])                    # instanced modifiers/triggers are the [
 
 ## P6. GAS data: tags, cooldown and damage effects, ability children
 
-- Channel: headless job. Status: not yet run in Unreal. GE components as Python instanced objects
-  are the least certain step `[verify]`; the template route always works.
+- Channel: headless job or editor Python, then Epic MCP `ObjectTools` for the fields Python cannot
+  write. Status: run on 5.8.3 (`live_mcp_recipes.py` recipe 7). Duration policy and duration go
+  through Python. The TargetTags and AssetTags component classes are not exposed to Python:
+  `create_gameplay_effect` instantiates them with `unreal.load_class` and returns
+  `rep["object_tools"]`, one `set_properties` call per component; then
+  `G.finish_gameplay_effect(path)`. In a pure-Python setting (no MCP) the template route remains:
+  duplicate a GE made once in the GUI.
 
 ```python
 import ue_gameplay as G
@@ -220,10 +249,10 @@ F = "/Game/Gameplay"
 # Cooldown: HasDuration + grants Cooldown.Ability.Dash (5.7 warns when a cooldown GE grants no tag)
 cd = G.create_gameplay_effect(F, "GE_Cooldown_Dash", "HAS_DURATION", duration_s=1.2,
                               granted_tags=["Cooldown.Ability.Dash"])
-print(cd["needs_gui"])     # empty = done; else build GE_Template_Cooldown once and pass template=
+print(cd["object_tools"])  # send each to ObjectTools.set_properties, then G.finish_gameplay_effect(...)
 # Damage: instant, modifier Add on GameplayHealthSet.Damage with SetByCaller Data.Damage,
-# asset tag Effect.Type.Damage. The attribute modifier needs an FGameplayAttribute: make ONE
-# template in the GUI (gui-paths.md, GAS), then duplicate for variants.
+# asset tag Effect.Type.Damage. Modifiers are writable only through ObjectTools (JSON in
+# mcp-gameplay.md recipe 7) or the GUI; the attribute must come from a C++ AttributeSet.
 dmg = G.create_gameplay_effect(F, "GE_Damage", "INSTANT", template="/Game/Gameplay/GE_Template_Damage")
 G.create_blueprint(F, "GA_Dash_Hero", "/Script/MyGame.GA_Dash")
 G.set_defaults(F + "/GA_Dash_Hero", {"cooldown_gameplay_effect_class": {"class": F + "/GE_Cooldown_Dash"},
@@ -238,8 +267,9 @@ G.set_defaults(F + "/GA_Melee_Hero", {"damage_effect": {"class": F + "/GE_Damage
   Air dash once per jump would be a tag cleared on landing (new reactive asset, not an edit of
   GA_Dash; Shao [00:47:35]).
 - Hit timing: scenario-unreal-animation places the reusable `AN_SendGameplayEvent` notify
-  (instance-editable `EventTag` = `Event.Attack.Hit`) on the swing frame (Shao [00:10:46]). Python
-  notify APIs are `[verify]`; the GUI path is the montage Notifies track.
+  (instance-editable `EventTag` = `Event.Attack.Hit`) on the swing frame (Shao [00:10:46]). Notify
+  placement belongs to scenario-unreal-animation (its procedures say which route ran); the GUI path
+  is the montage Notifies track.
 - New behavior = new asset: a freeze on the fifth chill stack is a reactive ability plus a debuff
   GE, not an edit of the chill spell (Shao [00:47:35]). Query GE asset tags, not granted tags.
 - Plan every GE as data first and check it: `G.ge_plan_verdict(G.U4_GE_PLANS)` (cooldown has a
@@ -250,25 +280,32 @@ G.set_defaults(F + "/GA_Melee_Hero", {"damage_effect": {"class": F + "/GE_Damage
   twin: a SetByCaller magnitude exists only when code sets it on the spec, so
   `AbilitySystem.Effect.Apply GE_Damage` from the console applies 0 and logs a missing SetByCaller
   magnitude [added, engine behavior, verify]. The talk's console test used a fixed GE. Build
-  `GE_Damage_Debug` (same attribute path, Scalable Float magnitude) with
-  `G.make_fixed_magnitude_variant(F + "/GE_Damage", F + "/GE_Damage_Debug", 10.0)` (`[verify]`, GUI
-  fallback in gui-paths.md), then `AbilitySystem.Effect.Apply GE_Damage_Debug`
-  `[verify subcommand]`, then `showdebug abilitysystem` (3 pages: attributes, effects, abilities;
-  `AbilitySystem.Debug.NextCategory`), then the gameplay debugger on the enemy (P11). The
+  `GE_Damage_Debug` (same attribute path, Scalable Float magnitude):
+  `G.make_fixed_magnitude_variant(F + "/GE_Damage", F + "/GE_Damage_Debug")` duplicates, then
+  `ObjectTools.get_properties(Modifiers)`, `G.fixed_magnitude_values(..., 10.0)`,
+  `ObjectTools.set_properties`, `G.compile_and_save` (run on 5.8.3; Python alone is refused: "cannot
+  be edited on instances"). Then `AbilitySystem.Effect.Apply GE_Damage_Debug` (command exists on
+  5.8.3; applies locally, `-Server` on the server, optional level; the apply itself not yet run: it
+  needs a pawn with an ASC in PIE), then `showdebug abilitysystem` (3 pages: attributes, effects,
+  abilities; `AbilitySystem.Debug.NextCategory`), then the gameplay debugger on the enemy (P11). The
   SetByCaller path itself is tested through the ability (the melee hit sets `Data.Damage`).
 - Reactions query a GE's ASSET tags (what it is), not its granted tags (what it gives the target);
-  set the `AbilitySystem.Fix...` cvar to 0 under `[ConsoleVariables]` in `DefaultEngine.ini` as Epic
-  and Fortnite do, name from the probe (Shao [00:21:43], [00:22:17]); `G.config_verdict` warns while
-  it is missing.
+  set `AbilitySystem.Fix.GameplayEffects.ReturnAssetTagsViaGetOwnedGameplayTags=0` under
+  `[ConsoleVariables]` in `DefaultEngine.ini` as Epic and Fortnite do (default 2 on 5.8.3; Shao
+  [00:21:43], [00:22:17]); `G.config_verdict` warns while it is missing.
 - Montages inside abilities: `PlayMontageAndWait`, never PlayMontage (it replicates and ends with
   the ability; tranek 9.3). Gameplay Cues are unreliable and cosmetic only: no gameplay state waits
   on a cue (GAS doc, Handling Cosmetic Effects).
 
 ## P7. StateTree enemy (patrol, chase, attack)
 
-- Channel: asset from Python (headless); tree structure through Epic's MCP if a StateTree toolset is
-  listed, else one GUI pass from the spec, else the C++ builder (below). Spec check offline-tested
-  (`RefactorV2.test_statetree_spec`); assets not yet run in Unreal.
+- Channel: asset by duplicating a template StateTree (Python cannot create one on 5.8.3:
+  `StateTreeFactory` returns None without a schema and its schema field is unreachable from Python
+  and ObjectTools); reading through `StateTreeTools` (read only); states and transitions on a new
+  tree: one GUI pass from the spec, or the C++ builder (below). Parameters per enemy through
+  `ObjectTools` (run on 5.8.3, value kept after reload). Spec check offline-tested
+  (`RefactorV2.test_statetree_spec`). The engine's Combat, Shooter, SideScroller and TwinStick
+  template variants ship AI trees to start from.
 - Execution model to design for (Mononen YEmq4kcblj4): selection finds a leaf BEFORE any transition
   [00:11:22]; enter conditions are evaluated only when a transition requests selection, never polled
   like a Behavior Tree, so every condition that should end a state (target in range, target lost)
@@ -283,10 +320,11 @@ tree = G.U4_ENEMY_TREE                       # the spec as data: states, tasks, 
 lines = G.statetree_spec_verdict(tree)       # GATE: no error or warn lines
 assert not [l for l in lines if l.startswith(("error", "warn"))], lines
 print(G.statetree_outline(tree))             # text for the GUI pass or an MCP prompt
-st = G.create_state_tree("/Game/AI", "ST_Enemy", schema="ai")
+st = G.create_state_tree("/Game/AI", "ST_Enemy", template="/Game/Variant_Combat/Blueprints/AI/ST_CombatEnemy")
 G.create_blueprint("/Game/AI", "BP_EnemyController", "/Script/MyGame.EnemyAIController")
 G.set_defaults("/Game/AI/BP_EnemyController", {"sight_radius": 1500.0})
-# after the tree is wired: per-enemy tuning as TREE PARAMETERS on the component's reference
+# after the tree is wired: per-enemy tuning as TREE PARAMETERS on the component's reference;
+# returns the component template for ObjectTools get/set_properties (mcp-gameplay.md recipe 8)
 print(G.set_state_tree_parameters("/Game/AI/BP_EnemyController", {"AttackRange": 180.0,
                                                                   "PatrolWait": 1.5}))
 print(G.ai_setup_verdict(G.ai_setup_facts("/Game/Gameplay/BP_Enemy", tree_spec=tree)))
@@ -323,9 +361,10 @@ Root
   (5.6); tuning numbers (range, radius, wait, speed, timeout) as tree parameters, not literals
   ([00:16:40]); every event has a sender.
 - Per-enemy tuning: tree parameters set per enemy on the component's State Tree Reference (Mononen
-  [00:16:40]; BAU digest P4 step 3). Property-bag access from Python is `[verify]`;
-  `set_state_tree_parameters` reports each value it could not set, with the GUI path. Fallback: bind
-  from context-actor properties that Python sets on the CDO.
+  [00:16:40]; BAU digest P4 step 3). Property bags have no Python setters on 5.8.3
+  (`InstancedPropertyBag` offers only import/export text); `ObjectTools.set_properties` with
+  `G.state_tree_parameter_values` works and the value survives a reload. Fallback: bind from
+  context-actor properties that Python sets on the CDO.
 - Wiring (`ai_setup_verdict`): the enemy CDO's `ai_controller_class` is `BP_EnemyController` (the
   Blueprint that holds `ST_Enemy`), `auto_possess_ai` `PLACED_IN_WORLD_OR_SPAWNED`, a
   NavMeshBoundsVolume in the level. The C++ controller starts the tree on possess and stops it on
@@ -351,8 +390,9 @@ Root
 
 ## P8. Health bar Widget Blueprint
 
-- Channel: headless job. Status: not yet run in Unreal (`add_source_widget` is in the 5.8 Python
-  reference).
+- Channel: headless job, or `UMGToolSet` (mcp-gameplay.md recipe 2). Status: run on 5.8.3:
+  `build_widget_tree` through `EditorUtilityLibrary.add_source_widget` (root parent `"None"`) built
+  both trees, compiled and saved; widgets found again after a reload.
 
 ```python
 import ue_gameplay as G
@@ -360,12 +400,12 @@ hud = G.create_widget_blueprint("/Game/UI", "WBP_HUD", "/Script/MyGame.HealthBar
 print(G.build_widget_tree(hud, G.HEALTH_BAR_TREE_HUD))           # Root canvas, HealthBar, HealthText
 bar = G.create_widget_blueprint("/Game/UI", "WBP_EnemyBar", "/Script/MyGame.HealthBarWidget")
 print(G.build_widget_tree(bar, G.HEALTH_BAR_TREE_OVERHEAD))      # SizeBox root, HealthBar
-G.set_defaults("/Game/UI/WBP_EnemyBar", {"b_hide_when_full": True})   # snake_case of bHideWhenFull [verify]
+G.set_defaults("/Game/UI/WBP_EnemyBar", {"hide_when_full": True})   # Python drops the b of bools; "bHideWhenFull" also works
 ```
 
 - Names must match the C++ `BindWidget` members; compile errors say which is missing.
-- Enemy bar widget class: set `Widget Class` on the enemy's `OverheadWidget` component (component
-  defaults, P4) `[verify property name widget_class]`.
+- Enemy bar widget class: set `widget_class` on the enemy's `OverheadWidget` component (component
+  defaults, P4; `WidgetComponent.widget_class` read on 5.8.3, also `draw_size`, `space`).
 - No property bindings, no widget Tick; text changes only when the shown number changes (layout
   invalidation, Albert [00:13:56]).
 - Under Global Invalidation widget Tick is called by Paint: a widget that does not repaint does not
@@ -374,13 +414,18 @@ G.set_defaults("/Game/UI/WBP_EnemyBar", {"b_hide_when_full": True})   # snake_ca
   Visible to Hidden only repaints, so a widget toggled often (enemy bar hidden at full health, hit
   markers) uses Hidden; Collapsed is for rarely shown widgets whose space must be reclaimed
   ([00:12:53]). Lint: `WIDGET_TICK`, `COLLAPSED_TOGGLE`.
-- Anchors and layout polish: slot properties on the returned widgets `[verify]`, then a screenshot
-  at the target resolution and two other aspect ratios.
+- Anchors and layout: `ObjectTools.set_properties` on `<WBP>:WidgetTree.<Panel>.CanvasPanelSlot_<k>`
+  with `LayoutData` (offsets, anchors, alignment; run on 5.8.3, JSON in mcp-gameplay.md), then a
+  screenshot at the target resolution and two other aspect ratios (offscreen editor; not yet run for
+  this skill).
 
 ## P9. Automated gameplay tests (automation framework)
 
 - Channel: PythonAutomationTest in the project (CI and headless) and the latent job of P10 (agent
-  loop). Generation offline-tested; runs not yet run in Unreal.
+  loop). Discovery and runs through `AutomationTestToolset` run on 5.8.3 in a headless editor
+  (mcp-gameplay.md recipe 5): tests under `Content/Python/**/test_*.py` are named
+  `Editor.Python.<Project>.<dotted path>`, a failing assert comes back with its traceback. The
+  generated U4 test file is not yet run (it needs the U4 level and content).
 
 ```python
 import ue_gameplay as G
@@ -412,8 +457,11 @@ Run (Automation doc; flags `[verify]`, rendering needed for screenshots so no `-
 ## P10. PIE scenario in a latent job (the agent's own loop)
 
 - Channel: `ue_run.run_python(..., mode="latent")` with `tests/code/unreal-gameplay/job_u4_pie.py`,
-  or the same generator through `ue_remote.PythonRemote` in a live editor. Status: not yet run in
-  Unreal; analyzers offline-tested (`Traces.*`, `TestsAndHandoffs.test_scenario_verdicts`).
+  or the same generator through `ue_remote.PythonRemote` in a live editor. Status: `pie_scenario`
+  run on 5.8.3 in a headless editor through `G.start_on_tick` (a Third Person jump: apex 127.4 cm at
+  JumpZVelocity 500, gravity 980; theory 127.6 cm), and the analyzers offline-tested (`Traces.*`,
+  `TestsAndHandoffs.test_scenario_verdicts`). `job_u4_pie.py` itself is not yet run: it needs the U4
+  level (enemy, navmesh, tree states from the GUI pass).
 
 ```python
 import ue_run
@@ -455,7 +503,9 @@ all-white or all-black frames) before you judge the jump arc, enemy spacing and 
 
 ## P11. Debug evidence for the report
 
-- Channel: live editor or latent job during PIE. Status: not yet run in Unreal.
+- Channel: live editor or latent job during PIE. Status: not yet run (needs a level with an
+  ASC-carrying pawn and a focused PIE window for the gameplay debugger; the `AbilitySystem.*` and
+  `showdebug` commands exist on 5.8.3).
 - `showdebug abilitysystem` then `AbilitySystem.Debug.NextCategory` twice, a screenshot per page
   (needs the GameMode HUD class; tranek 6.1).
 - `showdebug enhancedinput`, `showdebug devices` (framework doc).
@@ -490,11 +540,11 @@ print(G.scan_blueprint_snapshot("/abs/MyGame/Saved/<snapshot folder>"))   # fold
 ```
 
 - Tick census: count and justify; aggregate hundreds of ticking actors into a manager with instanced
-  meshes or Mass (Arnbjörnsson [00:11:35]); empty Ticks are free from 5.6.
+  meshes or Mass (Arnbjornsson [00:11:35]); empty Ticks are free from 5.6.
 - Hard references from always-loaded classes (player, GameMode, HUD, game instance) to optional
-  heavy Blueprints: C++ base class, interface, IsA (Soft) or soft references (Arnbjörnsson
+  heavy Blueprints: C++ base class, interface, IsA (Soft) or soft references (Arnbjornsson
   [00:28:01]).
-- Cook rules: Asset Manager Map rule Always Cook with Is Editor Only off (Arnbjörnsson [00:44:27])
+- Cook rules: Asset Manager Map rule Always Cook with Is Editor Only off (Arnbjornsson [00:44:27])
   belongs to scenario-unreal-pipeline-automation; flag it if missing.
 - Before any Blueprint-to-C++ rewrite or "Blueprints are slow" claim: an Unreal Insights trace of
   the repeatable scenario in a Development build (`-trace=default -tracefile=<abs>.utrace` [verify],
@@ -507,17 +557,21 @@ print(G.rewrite_gate(tot, ["BP_Enemy", "UpdateAim"])["candidates"])   # rewrite 
 ```
 
 Forsythe: 80 percent of the time sits in 20 percent of the code; often one function in C++ equals a
-system rewrite (VMZftEVDuCE [00:16:33], [00:17:06]); Arnbjörnsson's tick numbers only matter at
+system rewrite (VMZftEVDuCE [00:16:33], [00:17:06]); Arnbjornsson's tick numbers only matter at
 scale (S2olUc9zcB8 [00:06:07]). Stat commands alone do not decide it.
 
 ## P13. Multiplayer smoke test (when multiplayer is in scope)
 
-- Channel: latent job. Status: not yet run in Unreal; setting names `[verify]`.
+- Channel: editor with Epic's MCP. Status: two-player listen-server PIE run on 5.8.3 in a headless
+  editor (two PIE worlds, the server one with the GameMode, two characters in each); the replication
+  checks below not yet run (they need a replicated test level). `LevelEditorPlaySettings` is not
+  exposed to Python, so `configure_play` returns `ObjectTools.set_properties` arguments.
 
 ```python
 import ue_gameplay as G
-G.configure_play(num_players=2, net_mode="PIE_LISTEN_SERVER", new_window=True)
-# add latency on the client: console "NetEmulation.PktLag 150" [verify]
+args = G.configure_play(num_players=2, net_mode="PIE_ListenServer")   # -> ObjectTools.set_properties(**args)
+# then EditorAppToolset.StartPIE; reset with G.configure_play(1, "PIE_Standalone")
+# add latency on the client: console "NetEmulation.PktLag 150" (cvar exists on 5.8.3, effect not yet run)
 # run the same scenarios; assert in the log that Server RPCs run with authority and RepNotifies
 # fire on clients; screenshot both windows: same health, same enemy state
 ```
@@ -530,7 +584,7 @@ G.configure_play(num_players=2, net_mode="PIE_LISTEN_SERVER", new_window=True)
 
 ## P14. World Partition persistence regression
 
-- Channel: latent job. Status: not yet run in Unreal.
+- Channel: latent job. Status: not yet run (needs a World Partition level with streaming state).
 - Steps (Shao KBn62trwkLw [00:07:29]): change state (open a door), teleport the player beyond the
   streaming range, run `obj gc` `[verify]` (forces the reload-from-disk path), return and compare;
   repeat without GC (reuse path, BeginPlay runs again); then save with `AsyncSaveGameToSlot`, end
@@ -545,26 +599,26 @@ G.configure_play(num_players=2, net_mode="PIE_LISTEN_SERVER", new_window=True)
 
 Authoring surfaces (moved here from SKILL.md in v2):
 
-| Target                         | Scriptable without a graph                                                                                                                                                                                                                                                    | Needs a graph editor, Epic's MCP toolsets, or one GUI pass                                                                                                                              |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Logic                          | C++ classes (text, built with UBT when the Xcode probe passes); `UBlueprintFunctionLibrary` statics                                                                                                                                                                           | Blueprint event graphs: try 5.8 `unreal.BlueprintGraphEditor` after `help()` on a throwaway asset, or Epic's MCP Blueprint toolset (it edited `BP_ThirdPersonCharacter` in Epic's demo) |
-| Blueprint classes              | create with a parent (5.5 `CreateBlueprintAssetWithParent` or `BlueprintFactory`), reparent, 5.5 `AddMemberVariable`, CDO defaults (including `ai_controller_class`, `auto_possess_ai`, `player_controller_class`), compile, save                                             | Blueprint-added component templates need `SubobjectDataSubsystem` [verify]                                                                                                              |
-| Data                           | data assets, data tables from CSV or JSON, Primary Asset rules, config ini                                                                                                                                                                                                    | instanced-struct rows: duplicate a template                                                                                                                                             |
-| Enhanced Input                 | Input Actions, Mapping Contexts, `map_key`, modifiers and triggers as instanced objects [verify]                                                                                                                                                                              | none (duplicate the template's IMC if instancing fails)                                                                                                                                 |
-| GAS                            | native tags (C++) and `DefaultGameplayTags.ini`; GE Blueprints (duration, components [verify]); fixed-magnitude debug twins (`make_fixed_magnitude_variant` [verify]); ability children of parameterized C++ abilities; ASC, attribute sets, init and executions are C++ only | GE modifiers and components when Python cannot instance them: one template GE per shape, then duplicate; experimental `GASToolsets` MCP plugin [verify]                                 |
-| StateTree                      | asset, schema, component reference, tree parameters on the reference [verify], C++ tasks and conditions, the spec as data (`U4_ENEMY_TREE`) checked offline; 5.8 start state by gameplay tag                                                                                  | states, transitions, bindings: StateTree editor, an MCP toolset if `list_toolsets` shows one, or a C++ editor builder [added, verify]                                                   |
-| Behavior Tree, Blackboard, EQS | assets and references                                                                                                                                                                                                                                                         | node graphs; custom EQS tests are C++ only                                                                                                                                              |
-| UMG                            | Widget Blueprint with a C++ `BindWidget` parent; tree via `EditorUtilityLibrary.add_source_widget` (5.6+)                                                                                                                                                                     | bindings, animations; UMG ToolSet is Experimental                                                                                                                                       |
+| Target                         | Scriptable without a graph                                                                                                                                                                                                                                                                                                                             | Needs a graph editor, Epic's MCP toolsets, or one GUI pass                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Logic                          | C++ classes (text, built with UBT; Xcode 26.6 built 5.8.3 code, run); `UBlueprintFunctionLibrary` statics; Blueprint event and function graphs through `BlueprintTools.write_graph_dsl` (run on 5.8.3, mcp-gameplay.md recipe 1)                                                                                                                       | nothing required; read the DSL back after writing                                                                           |
+| Blueprint classes              | create with a parent (5.5 `CreateBlueprintAssetWithParent` or `BlueprintFactory`), reparent, 5.5 `AddMemberVariable`, CDO defaults (including `ai_controller_class`, `auto_possess_ai`, `player_controller_class`), compile, save (run on 5.8.3); Blueprint-added component templates through `SubobjectDataSubsystem` (`G.blueprint_components`, run) | none                                                                                                                        |
+| Data                           | data assets, data tables from CSV or JSON, Primary Asset rules, config ini                                                                                                                                                                                                                                                                             | instanced-struct rows: duplicate a template                                                                                 |
+| Enhanced Input                 | Input Actions, Mapping Contexts, `map_key`, modifiers and triggers as instanced objects written back through `default_key_mappings` (run on 5.8.3)                                                                                                                                                                                                     | none                                                                                                                        |
+| GAS                            | native tags (C++) and `DefaultGameplayTags.ini`; GE Blueprints (duration from Python; component tags and modifiers through `ObjectTools`, run on 5.8.3); fixed-magnitude debug twins; ability children of parameterized C++ abilities; ASC, attribute sets, init and executions are C++ only                                                           | without MCP: one template GE per shape, then duplicate. `GASToolsets` inspect runtime state and cues (catalog, not yet run) |
+| StateTree                      | asset by duplicating a template, tree parameters on the component reference through `ObjectTools` (run on 5.8.3), reading through `StateTreeTools`, C++ tasks and conditions, the spec as data (`U4_ENEMY_TREE`) checked offline; 5.8 start state by gameplay tag                                                                                      | states, transitions, bindings on a new tree: StateTree editor, or a C++ editor builder [added, not yet run]                 |
+| Behavior Tree, Blackboard, EQS | assets and references                                                                                                                                                                                                                                                                                                                                  | node graphs; custom EQS tests are C++ only                                                                                  |
+| UMG                            | Widget Blueprint with a C++ `BindWidget` parent; tree via `EditorUtilityLibrary.add_source_widget` or `UMGToolSet` (both run on 5.8.3); slot layout via `ObjectTools`                                                                                                                                                                                  | widget animations                                                                                                           |
 
 Graph residue:
 
 - Order of preference: (1) do not need a graph (C++ base plus data-only child; a prebuilt parent
-  that already owns the graph, as Lyra's `GA_WeaponFire` children do, Lombardo [00:50:07]); (2) 5.8
-  `unreal.BlueprintGraphEditor` after `help()` and a throwaway test asset (P0 records its methods);
-  (3) Epic's MCP Blueprint toolset: `list_toolsets`, `describe_toolset` for that toolset only
-  (Niagara's description alone is about a quarter million, Deiter webinar [00:46:04]), name the
-  Blueprint asset, not the placed actor ([00:24:52]), forbid Delay chains and Event Tick in prompts
-  ([00:56:45]); (4) a precise GUI request from `gui-paths.md`.
+  that already owns the graph, as Lyra's `GA_WeaponFire` children do, Lombardo [00:50:07]); (2)
+  `BlueprintTools` DSL with the arguments in mcp-gameplay.md (no `describe_toolset` needed; name the
+  Blueprint asset, not the placed actor, Deiter k0tgmrBuIJc [00:24:52]; no Delay chains or Event
+  Tick, [00:56:45]); (3) 5.8 `unreal.BlueprintGraphEditor` from Python (`list_nodes_with_errors`,
+  `add_call_function_node`, run on 5.8.3 for error listing only); (4) a precise GUI request from
+  `gui-paths.md`.
 - Always recompile and rerun P9 after graph edits.
 
 ## P16. Handoffs

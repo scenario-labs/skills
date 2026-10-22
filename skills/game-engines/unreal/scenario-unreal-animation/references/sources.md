@@ -55,4 +55,15 @@ Names uncertain in auto-captions are marked as such.
   Everything and from Montages Only put the AnimGraph on the game thread (`root_motion_mode_check`);
   GASP 5.4 leg IK has no ground adaptation; sub-ops no longer listed as top-level costly ops;
   weights nuance; Interchange default stated as [verify]. Offline tests 23 to 30, all passing;
-  nothing run in Unreal yet. Previous state: `skills/_versions/unreal-animation v1 2026-09-24/`.
+  nothing run in Unreal yet. Previous state:
+  `skills/_versions/scenario-unreal-animation v1 2026-09-24/`.
+
+## Verification status (2026-10-21, UE 5.8.3, macOS)
+
+Ran live: Epic's skeletal mesh, physics asset, Control Rig and Sequencer Control Rig toolsets
+(`tests/code/unreal-animation/live_mcp_recipes.py`, its own project and editor), the in-editor layer
+of `scripts/ue_anim.py` (imports, IK Rigs, retargeter, batch retarget, keyed clips, montages, root
+motion, AnimBP settings, Pose Search tags) and the five `job_*.py` jobs; a Control Rig bake (it held
+one pose); offline tests pass (`run_all.py --offline`). Not run: Motion Matching databases, schemas,
+Choosers (no Game Animation Sample), MetaHuman, ML Deformer, cloth, foot IK on slopes, Insights;
+remaining `[verify]` marks are those.

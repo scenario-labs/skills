@@ -1,21 +1,24 @@
 # Procedures: pipeline automation for Unreal Engine 5.8
 
-**Status: not yet run in Unreal.** UE 5.8 was not installed when this was written (2026-09-24). What
-ran: the pure layer of `scripts/ue_pipeline.py` (naming, intake, plan, staging, rules, validation,
-reports, command builders, log parsers, ini patch, CLI) under python3 in
-`tests/code/unreal-pipeline-automation/test_offline_pure.py`; the in-editor layer and both job files
-against a fake `unreal` module in `test_offline_fake_unreal.py` (control flow only: ordering, error
-isolation, save per chunk, validator passes/fails contract, report); every Python block of this file
-compiled by `test_snippets_compile.py`. Once 5.8 is installed:
-`python3 tests/code/unreal-pipeline-automation/in_engine/run_in_unreal.py --project /abs/NoSpaces/MyGame.uproject`,
-then replace each "not yet run" below with the version it ran on.
+**Status (2026-10-21, UE 5.8.3):** P0, P2, P3, P3b's calls (through the toolkit), P5's registration
+and engine validation, and P8's redirector query ran as commandlet jobs in
+`tests/code/unreal-pipeline-automation/in_engine/run_in_unreal.py` (preset, import of the OBJ
+fixtures, textures with roles, one instance per slot from a master built by
+scenario-unreal-materials, class rules, facts, validators, report; every fixture expectation held).
+The import probes (`in_engine/job_01_generated_assets_probe.py`, `job_02_pipeline_overrides.py`) ran
+in a commandlet and in a headless editor; `live_mcp_recipes.py` covers the MCP side
+(`references/mcp-pipeline.md`). Still **[not yet run]**: P4, P6, P7, P9 to P14, the Python pipeline
+filter in P2, and the raw P3b sketch as written. Pure layer and fake-`unreal` control flow:
+`test_offline_pure.py`, `test_offline_fake_unreal.py`; Python blocks compiled by
+`test_snippets_compile.py`. Imports of generated assets (glTF, PNG, HDR, EXR, audio):
+`references/generated-assets.md`.
 
 Layers, same as the lead skill: `scripts/ue_pipeline.py` (import as `P`) plus the lead's
 `<skills>/scenario-unreal-expert/scripts` (`ue_env`, `ue_run`, `ue_remote`, `ue_audit`,
-`ue_review`). `P` finds the lead's folder itself. [verify] marks a name no saved 5.8 page confirms;
-[added] marks this skill's own rule. Toolkit calls are thin: **P3b shows the engine calls under the
-import, P5 the raw validator, P7 the raw screenshot loop, P8 the raw redirector query**, so a run
-can be checked, or rebuilt, without the toolkit.
+`ue_review`). `P` finds the lead's folder itself. [not yet run] marks a name or behavior no 5.8.3
+run has confirmed yet; [added] marks this skill's own rule. Toolkit calls are thin: **P3b shows the
+engine calls under the import, P5 the raw validator, P7 the raw screenshot loop, P8 the raw
+redirector query**, so a run can be checked, or rebuilt, without the toolkit.
 
 The procedures are written for any batch, from one reimported asset to thousands: a new batch runs
 P0 to P9; changed sources run P1 with `previous=` and `policy=` then P3 (P11); a live project
@@ -35,7 +38,8 @@ import ue_run
 
 ## P0. Preflight: Mac, engine, project, channel
 
-Not yet run in Unreal. Tests: `ue_env` offline tests (lead), `test_offline_pure.py`
+Run on 5.8.3 (`ue_env.preflight`, `project_path_problems`, the pgrep check; `first_run_checks.py`
+for API presence). Tests: `ue_env` offline tests (lead), `test_offline_pure.py`
 (`project_path_problems`).
 
 ```python
@@ -47,7 +51,7 @@ eng = ue_env.find_engine()                    # None until the launcher install 
 prj = ue_env.find_project(UPROJECT)
 problems = P.project_path_problems(UPROJECT)  # spaces, non-ASCII (Allar 2.1)
 need = ["PythonScriptPlugin", "EditorScriptingUtilities", "DataValidation", "PythonAutomationTest"]
-plan_plugins = ue_env.plan_plugins(UPROJECT, need)   # what enable_plugins would change [verify ids]
+plan_plugins = ue_env.plan_plugins(UPROJECT, need)   # what enable_plugins would change [not yet run: ids]
 # Write-lock rule (Jamie Dale [01:17:18]): is an editor holding this project?
 ps = subprocess.run(["pgrep", "-fl", "UnrealEditor"], capture_output=True, text=True).stdout
 editor_open = UPROJECT in ps or prj and prj.get("root", "~") in ps
@@ -100,24 +104,19 @@ for it in plan["items"]:
 CLI equivalent:
 `python3 ue_pipeline.py plan --src /abs/Exports/Props --dest /Game/MyGame/Art/Props --out /abs/Staging/plan.json --master /Game/MyGame/MaterialLibrary/M_PropMaster --param-map '{"base_color":"BaseColor","normal":"Normal","pack":"ORM"}' --dcc-manifest /abs/maya_out/summary.json --project-root /Game/MyGame --pipeline /Game/MyGame/Pipelines/PL_PropsImport --stage /abs/Staging/Props`.
 
-Why stage: Interchange ignores `AssetImportTask.destination_name` (5.8 API); the preset sets "use
-source name for asset", so a file named `SM_CrateWood_03.fbx` should become `SM_CrateWood_03` with
-no rename and no redirector [verify with Interchange on install]. The material sidecar
-`<stem>.materials.json` carries what FBX cannot (Bardoux, MjjkWH0eT3U [00:06:30]):
+Why stage: Interchange ignores `AssetImportTask.destination_name` for meshes (5.8 API; run on 5.8.3
+for FBX and glTF, while a single PNG did take the name); the preset sets "use source name for
+asset", and a file staged as `SM_CrateWood_03.obj` became `SM_CrateWood_03` with no rename and no
+redirector (run on 5.8.3). The material sidecar `<stem>.materials.json` carries what FBX cannot
+(Bardoux, MjjkWH0eT3U [00:06:30]):
 
 ```json
 {
   "asset_class": "architecture",
   "normal_convention": "opengl",
   "slots": {
-    "Frame": {
-      "base_color": "tex/wall_Frame_BC.png",
-      "normal": "tex/wall_Frame_N.png"
-    },
-    "Panel": {
-      "BaseColor": "tex/wall_Panel_BC.png",
-      "pack:ORM": "tex/wall_Panel_ORM.png"
-    }
+    "Frame": { "base_color": "tex/wall_Frame_BC.png", "normal": "tex/wall_Frame_N.png" },
+    "Panel": { "BaseColor": "tex/wall_Panel_BC.png", "pack:ORM": "tex/wall_Panel_ORM.png" }
   }
 }
 ```
@@ -129,8 +128,10 @@ left the sources byte-identical (the test checks sha1 before and after).
 
 ## P2. Import policy: a project pipeline preset, and a Python pipeline only when filtering is needed
 
-Not yet run in Unreal. Tests: `test_offline_fake_unreal.py` (Preset: set and failed lists, enum
-rows, the Interchange MI route), `test_offline_pure.py` (`pipeline_stack_problems`,
+Run on 5.8.3 (actions `describe` and `preset` as commandlet jobs; every `post_import` row set,
+`failed` empty). The Python pipeline filter below is [not yet run]. Tests:
+`test_offline_fake_unreal.py` (Preset: set and failed lists, enum rows, the Interchange MI route,
+the commandlet duplicate fallback), `test_offline_pure.py` (`pipeline_stack_problems`,
 PolicyAndRoutes).
 
 ```python
@@ -139,7 +140,7 @@ d = ue_run.run_python(UPROJECT, job, args={"action": "describe"})        # real 
 p = ue_run.run_python(UPROJECT, job, args={"action": "preset", "dest": "/Game/MyGame/Pipelines/PL_PropsImport",
                                            "route": "post_import",      # or "interchange_mi" (below)
                                            "master": "/Game/MyGame/MaterialLibrary/M_PropMaster",
-                                           "vertex_color": False})      # True only if the master reads vertex color
+                                           "vertex_color": False})      # True only if the master reads vertex colour
 print(p["result"]["set"], p["result"]["failed"])   # failed: fix the row names from `describe`
 f = ue_run.run_python(UPROJECT, job, args={"action": "flags"})           # Interchange FBX cvars, API presence
 stack = ["/Interchange/Pipelines/DefaultAssetsPipeline", "/Game/MyGame/Pipelines/PL_FolderRouting"]
@@ -153,9 +154,29 @@ Build Nanite off at import (decided per mesh, P3); Generate Lightmap UVs off for
 **Vertex Color Import Option = Ignore** unless the master reads vertex color (pipeline digest P2
 preset; the Interchange reference lists Replace, Ignore, Override); materials not imported (Maya's
 `lambert1` never becomes an asset; instances come from the plan); textures imported separately from
-staged files with explicit roles. Enum values are `P.EnumRef` rows resolved inside Unreal
-(`InterchangeVertexColorImportOption.IVCIO_IGNORE`, `InterchangeMaterialImportOption.DO_NOT_IMPORT`
-[verify both]); a row whose names do not exist lands in `failed`, never silently.
+staged files with explicit roles. Enum values are `P.EnumRef` rows resolved inside Unreal; a row
+whose names do not exist lands in `failed`, never silently. Run on 5.8.3:
+
+- `InterchangeVertexColorImportOption.IVCIO_IGNORE` exists. `InterchangeMaterialImportOption` has
+  only `IMPORT_AS_MATERIALS` (the default) and `IMPORT_AS_MATERIAL_INSTANCES`: "no materials" is
+  `material_pipeline.import_materials = False`.
+- The texture pipeline sits under the material pipeline:
+  `material_pipeline.texture_pipeline.import_textures`, `.detect_normal_map_texture` (default on),
+  `.flip_normal_map_green_channel`, `.detect_long_lat_cubemap` (default off),
+  `.file_extensions_to_import_as_long_lat_cubemap` (default `{"hdr"}`).
+- `mesh_pipeline.combine_static_meshes` is deprecated and setting it raises a DeprecationWarning;
+  use `combine_static_meshes_behavior = InterchangeCombineStaticMeshesBehavior.ALL`
+  (`DO_NOT_COMBINE`, `VISIBLE_ONLY`).
+- The engine ships two generic presets, `/Interchange/Pipelines/DefaultAssetsPipeline` and
+  `/Interchange/Pipelines/DefaultGLTFAssetsPipeline`. A preset duplicated from the first turned glTF
+  materials into `Material` assets in a flat folder; duplicated from the glTF one, it kept material
+  instances (parent `/InterchangeAssets/Materials/PBRSurfaceMaterial_MR`) in
+  `<file>/StaticMeshes|Materials|Textures` folders. Duplicate the glTF one for glTF sources
+  (`ensure_pipeline_preset(..., source=P.GLTF_PIPELINE)`).
+- In a commandlet, `EditorAssetSubsystem.duplicate_asset` cannot find plugin content
+  (`/Interchange/...` is not in that registry) and logs an Error;
+  `AssetTools.duplicate_asset(name, folder, unreal.load_asset(source))` works in both channels, and
+  `ensure_pipeline_preset` uses it first.
 
 Two material routes, chosen per project:
 
@@ -172,7 +193,7 @@ scripted imports read the preset's defaults [00:39:28].
 
 When unwanted content must never be created (hidden helper meshes, a name filter), add a Python
 pipeline after the default one and disable factory nodes plus their dependencies (Interchange PM
-[00:31:33], [00:32:39]). Sketch, every Interchange Python name [verify] (the doc's sample is
+[00:31:33], [00:32:39]). Sketch, every Interchange Python name [not yet run] (the doc's sample is
 truncated):
 
 ```python
@@ -185,15 +206,15 @@ class PipelineFilterByName(unreal.InterchangePythonPipelineBase):
     exclude_substring = unreal.uproperty(str, meta=dict(Category="Filter"))
 
     @unreal.ufunction(override=True)
-    def scripted_execute_pipeline(self, base_node_container, source_datas, content_base_path):  # [verify name, args]
+    def scripted_execute_pipeline(self, base_node_container, source_datas, content_base_path):  # [not yet run: name, args]
         needle = (self.get_editor_property("exclude_substring") or "").lower()
         if not needle:
             return True
-        for uid in base_node_container.get_nodes(unreal.InterchangeStaticMeshFactoryNode):    # [verify]
+        for uid in base_node_container.get_nodes(unreal.InterchangeStaticMeshFactoryNode):    # [not yet run]
             node = base_node_container.get_node(uid)
             if needle in str(node.get_display_label()).lower():
-                node.set_enabled(False)                                                       # [verify]
-                for dep in node.get_factory_dependencies():                                   # [verify]
+                node.set_enabled(False)                                                       # [not yet run]
+                for dep in node.get_factory_dependencies():                                   # [not yet run]
                     base_node_container.get_node(dep).set_enabled(False)
         return True
 ```
@@ -205,9 +226,12 @@ automated stack ([00:40:00]).
 
 ## P3. Headless import job (any batch size)
 
-Not yet run in Unreal. Tests: `test_offline_fake_unreal.py` (ImportPlan, Unstaged, Jobs, Hardening:
-LOD fallback, checkout stop, bool-returning import, duplicate guard), `test_offline_pure.py`
-(ExitCodesAndLauncher: `job_verdict`).
+Run on 5.8.3 as a commandlet job (`in_engine/run_in_unreal.py`: 10 fixture files, about 17 s for the
+import job; every expectation held, including I01 on an empty OBJ, I03-style name collision, S01 on
+a meter-scaled OBJ, T01 on a 100 x 60 texture, the skeletal handoff). Checkout under Perforce (SC01)
+is [not yet run]. Tests: `test_offline_fake_unreal.py` (ImportPlan, Unstaged, Jobs, Hardening: LOD
+fallback, checkout stop, bool-returning import, duplicate guard, commandlet without the mesh
+subsystem), `test_offline_pure.py` (ExitCodesAndLauncher: `job_verdict`).
 
 ```python
 res = ue_run.run_python(UPROJECT, job, args={"action": "import", "plan": "/abs/Staging/plan.json",
@@ -236,16 +260,26 @@ decreasing). Per chunk: checkout when `rules["require_checkout"]` (stop on failu
 `ue_audit.audit_assets(folders, rules, profile="game")`, and `redirectors_under(folders)` from the
 registry. One exception fails one record (E01), never the run.
 
+Commandlet facts behind the toolkit (run on 5.8.3): `StaticMeshEditorSubsystem` is None, and the
+deprecated `EditorStaticMeshLibrary` refuses (`get_lod_count`, `set_lods`, `add_simple_collisions`
+return -1, `get_lod_screen_sizes` returns []). `StaticMesh.get_num_lods()` works, setting the
+`lod_group` property rebuilds the chain (1 to 4 LODs for `LargeProp`), and simple collision is
+counted from `body_setup.agg_geom` (`get_simple_collision_count` read -1 there and 0 in an editor
+for a mesh that had a convex hull). So `apply_mesh_rules` records `needs_editor` when a class needs
+an explicit LOD chain or added collision in a commandlet: run those meshes again in an editor. An
+OBJ without `vt` lines raised a handled ensure in the Interchange OBJ translator
+(`UVs.IsValidIndex`), logged as errors, and still imported.
+
 Numbers to expect: the first run is DDC-heavy (Nanite builds, distance fields, shaders) [added];
 measure seconds per file on the 5 to 10 file trial and set the timeout from it. The ScopedSlowTask
-dialog is a no-op headless [verify].
+dialog is a no-op headless [not yet run].
 
 Verdict: the envelope, not the exit code (a Python failure only logs an error unless
 `-ScriptErrorsAreFatal`, 5.5 notes). `ue_run.py` exits 1 when the job is not ok; in Python:
 `v = P.job_verdict(res, require_summary_ok=True)`, CLI
 `python3 ue_pipeline.py verdict import.json --require-summary-ok`. A raw call without `ue_run`
-(`P.python_job_command`) adds `-ScriptErrorsAreFatal` [verify it applies to `-run=pythonscript`;
-documented for `-ExecutePythonScript`] and must still print a result line.
+(`P.python_job_command`) adds `-ScriptErrorsAreFatal` [not yet run: it applies to
+`-run=pythonscript`; documented for `-ExecutePythonScript`] and must still print a result line.
 
 Gate: `len(records) == items + rejected`; `summary["ok"]` or every failure explained by an issue id;
 `job_verdict` exit 0; `stopped` is None (SC01 means a checkout failed and nothing of that chunk was
@@ -254,22 +288,24 @@ the item should have been a reimport.
 
 ### P3b. The engine calls under `run_import_plan` (no toolkit)
 
-Not yet run in Unreal. Tests: the same calls run against the fake `unreal` in
-`test_offline_fake_unreal.py` (ImportPlan, Hardening); the names are checked on the real build by
-`in_engine/first_run_checks.py`.
+The calls ran on 5.8.3 through the toolkit (P3); this sketch as written is [not yet run]. Tests: the
+same calls run against the fake `unreal` in `test_offline_fake_unreal.py` (ImportPlan, Hardening);
+the names are checked on the real build by `in_engine/first_run_checks.py`.
 
 What each file goes through, written against `unreal` only, so a reviewer can check the engine calls
 behind `P.*` and a run can be rebuilt without the toolkit. Confirmed by the saved 5.8 API page:
 `InterchangeManager.get_interchange_manager_scripted`, `create_source_data`, `import_asset` and
 `reimport_asset` (both return the imported objects, or None on failure),
 `AssetTools.create_asset(..., overwrite_existing)`, `EditorAssetSubsystem` load, save, rename and
-checkout calls. Everything else is [verify].
+checkout calls; `ImportAssetParameters.is_automated` and `override_pipelines`,
+`MaterialEditingLibrary` instance calls and the `lod_group` property ran on 5.8.3 through the
+toolkit. The sketch uses the editor subsystem: in a commandlet see the facts under P3.
 
 ```python
 import unreal
 
 eas = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
-sms = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+sms = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)        # None in a commandlet (P3)
 mel = unreal.MaterialEditingLibrary
 tools = unreal.AssetToolsHelpers.get_asset_tools()
 mgr = unreal.InterchangeManager.get_interchange_manager_scripted()
@@ -282,7 +318,7 @@ PARAMS = {"base_color": "BaseColor", "normal": "Normal", "pack": "ORM"}      # f
 
 def interchange(path, folder, existing=None):
     params = unreal.ImportAssetParameters()
-    params.set_editor_property("is_automated", True)                        # no dialog [verify field]
+    params.set_editor_property("is_automated", True)                        # no dialog (run on 5.8.3)
     params.set_editor_property("override_pipelines", [unreal.SoftObjectPath(PIPELINE)])  # also on reimport
     if existing is not None:
         return list(mgr.reimport_asset(existing, params) or [])             # stored stack unless overridden
@@ -328,11 +364,12 @@ def import_one(staged_mesh, textures, folder, mesh_name, existing=None):
     ns = mesh.get_editor_property("nanite_settings")
     ns.set_editor_property("enabled", nanite)
     sms.set_nanite_settings(mesh, ns, apply_changes=True)
-    if sms.get_simple_collision_count(mesh) == 0:                            # UCX_ from the DCC wins
+    ag = mesh.get_editor_property("body_setup").get_editor_property("agg_geom")
+    if not (len(ag.convex_elems) + len(ag.box_elems) + len(ag.sphyl_elems) + len(ag.sphere_elems)):  # UCX_ wins
         sms.add_simple_collisions(mesh, unreal.ScriptCollisionShapeType.NDOP26)
     if not nanite:
-        mesh.set_editor_property("lod_group", "SmallProp")                  # or StaticMesh.set_lod_group [verify]
-        if sms.get_lod_count(mesh) < 3:                                      # a group may build no LODs: count
+        mesh.set_editor_property("lod_group", "SmallProp")                  # rebuilds the chain (run on 5.8.3)
+        if mesh.get_num_lods() < 3:                                          # count anyway
             opts = unreal.EditorScriptingMeshReductionOptions()
             opts.set_editor_property("auto_compute_lod_screen_size", False)
             opts.set_editor_property("reduction_settings", [
@@ -360,7 +397,8 @@ isolation per file, reports and manifests.
 
 ## P4. The same job inside an open editor (write lock)
 
-Not yet run in Unreal. Tests: none offline beyond P3's fake run (same function).
+[not yet run] in an open editor (the same function ran headless, P3). Tests: none offline beyond
+P3's fake run.
 
 Option A, Python remote execution through the lead's client (Project Settings > Plugins > Python >
 Enable Remote Execution, off by default, keep it on loopback):
@@ -438,16 +476,21 @@ class PipelineTools(unreal.ToolsetDefinition):
 ```
 
 Decorator order copied from the doc excerpt; check the shipped
-`toolset_registry/toolsets/core/actor.py` [verify]. After editing:
+`toolset_registry/toolsets/core/actor.py` [not yet run]. After editing:
 `ModelContextProtocol.RefreshTools`, reconnect the client. Await each `call_tool` before the next.
 
 ---
 
 ## P5. Validators: register, prove, allow-list, run in CI and in the cook
 
-Not yet run in Unreal. Tests: `test_offline_pure.py` (Validation: every issue id fires on a crafted
-fact dict, allow list), `test_offline_fake_unreal.py` (Validators: passes exactly once, fails with
-ids, a crash becomes a failure).
+Run on 5.8.3 in a commandlet job: `register_validators` then `engine_validate` (our
+`PipelineMeshValidator` and `PipelineTextureValidator` appear in `validator_statistics` with their
+durations, beside the C++ validators). The DataValidation commandlet on the base project reported
+Failure because of an unrelated `LogGameFeatures` error (no AssetManager rule for GameFeatureData),
+so read its error lines before blaming a validator. Cook validation is [not yet run]. Tests:
+`test_offline_pure.py` (Validation: every issue id fires on a crafted fact dict, allow list),
+`test_offline_fake_unreal.py` (Validators: passes exactly once, fails with ids, a crash becomes a
+failure).
 
 ```python
 # <Project>/Content/Python/init_unreal.py   (runs at editor start, from any Content/Python path)
@@ -472,8 +515,8 @@ The validators (`PipelineMeshValidator`, `PipelineTextureValidator`) filter by c
 `k2_validate_loaded_asset`, calling `asset_passes` whenever no error was found (a path without
 passes or fails is reported "not checked", data validation doc). They run on save (on by default),
 from Content Browser > Validate Assets, and in our jobs. The same thing without the toolkit (5.8
-override names from the saved API page; `add_validator` and keeping a module-level reference
-[verify]):
+override names from the saved API page; `add_validator` and keeping a module-level reference [not
+yet run]):
 
 ```python
 import unreal
@@ -500,7 +543,7 @@ unreal.get_editor_subsystem(unreal.EditorValidatorSubsystem).add_validator(_KEEP
 
 Cost: 5.8 reports each validator's duration during cook (`DataValidation.ReportCookValidationStats`,
 on by default; data validation note, cross-source). Read the stats block of the cook log
-(`grep -i validat <cook log>`; exact wording [verify]) and keep ours from dominating. Locally,
+(`grep -i validat <cook log>`; exact wording [not yet run]) and keep ours from dominating. Locally,
 `validate_paths(...)["cost"]` gives our rules' own seconds per asset (load plus facts plus rules): a
 validator that needs more than a class test in `k2_can_validate_asset`, or loads other assets, is
 the usual culprit.
@@ -523,9 +566,9 @@ print(len(new), "new errors;", "DataValidation ok" if dv["ok"] else dv["log"]["e
 ```
 
 Whether Python validators exist inside the DataValidation or cook commandlets depends on Python
-being initialized there (lazy init since 5.6) and on `init_unreal.py` running: treat it as [verify]
-and keep the explicit `validate` job as the Python-rules gate [added]. On a live project, write the
-first run's errors to the allow list, then burn it down (Fray: "faster than you think"). The
+being initialized there (lazy init since 5.6) and on `init_unreal.py` running: treat it as [not yet
+run] and keep the explicit `validate` job as the Python-rules gate [added]. On a live project, write
+the first run's errors to the allow list, then burn it down (Fray: "faster than you think"). The
 `validate` job waits for the asset registry before listing (`wait_for_completion()`, 5.8 batch
 example) because headless it may still be scanning.
 
@@ -533,12 +576,14 @@ example) because headless it may still be scanning.
 
 ## P6. Automation tests: Python editor tests, headless run, report
 
-Not yet run in Unreal. Tests: `test_offline_pure.py` (`automation_command`,
-`parse_automation_report` on a synthetic report).
+[not yet run]. On 5.8.3 `unreal.AutomationScheduler` was absent from the Python API of the base
+project (first_run_checks); that enabling the PythonAutomationTest plugin brings it is [not yet
+run], so check `hasattr(unreal, "AutomationScheduler")` before the latent examples below. Tests:
+`test_offline_pure.py` (`automation_command`, `parse_automation_report` on a synthetic report).
 
 ```python
 # <Project>/Content/Python/Tests/test_pipeline_rules.py   (plugin PythonAutomationTest; discovered as
-# Editor > Python > <Project> > Tests > test_pipeline_rules [verify path]). Fixture assets come from P3 on make_fixtures.
+# Editor > Python > <Project> > Tests > test_pipeline_rules [not yet run: path]). Fixture assets come from P3 on make_fixtures.
 import unreal
 import ue_pipeline as P
 
@@ -562,10 +607,10 @@ def test_clean_crate_passes():
 @unreal.AutomationScheduler.add_latent_command
 def screenshot_matches_reference():
     """Screenshot comparison (automation doc): latent, needs a rendering editor."""
-    task = unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, "PipelineCrate")   # [verify args]
+    task = unreal.AutomationLibrary.take_high_res_screenshot(1280, 720, "PipelineCrate")   # [not yet run: args]
     while not task.is_task_done():
         yield
-    unreal.AutomationLibrary.compare_image_against_reference("PipelineCrate", "PipelineCrate", 0.02)  # [verify]
+    unreal.AutomationLibrary.compare_image_against_reference("PipelineCrate", "PipelineCrate", 0.02)  # [not yet run]
 ```
 
 Run and read:
@@ -589,15 +634,14 @@ any AI-written test: it must fail when the bug is put back (Fray [02:02:02]).
 Gauntlet from the terminal:
 `P.gauntlet_command(UPROJECT, test="UE.EditorAutomation", build="editor", runtest="Editor.Python")`
 for editor tests, `test="UE.TargetAutomation", build=<staged build>` for packaged ones (Gauntlet
-doc) [verify on Mac].
+doc) [not yet run: on Mac].
 
 ---
 
 ## P7. Contact sheet review
 
-Not yet run in Unreal. Tests: `test_offline_fake_unreal.py` (Jobs: contact sheet through the
-fallback path and through the lead's `ue_review`), `test_offline_pure.py` (`frame_camera`,
-`contact_sheet_html`).
+[not yet run]. Tests: `test_offline_fake_unreal.py` (Jobs: contact sheet through the fallback path
+and through the lead's `ue_review`), `test_offline_pure.py` (`frame_camera`, `contact_sheet_html`).
 
 ```python
 import glob, os
@@ -633,7 +677,7 @@ def contact_sheet(meshes=("/Game/MyGame/Art/Props/Crates/CrateWood_03/SM_CrateWo
     ues = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     les.load_level("/Game/MyGame/Dev/L_Lookdev")        # closes the current level without saving
-    les.set_level_viewport_fov(40.0)                     # 5.8, clamped 5 to 170 [verify signature]
+    les.set_level_viewport_fov(40.0)                     # 5.8, clamped 5 to 170 [not yet run: signature]
     for path in meshes:
         mesh = unreal.load_asset(path)
         actor = actors.spawn_actor_from_object(mesh, unreal.Vector(0, 0, 0))
@@ -656,13 +700,14 @@ human or model, judges the look.
 What to look for (pipeline digest): scale next to a mannequin, pivot, normal map green channel
 (bumps inverted means the convention was wrong), texture on the right slot, no default grid
 material; on a sample, collision in the collision view mode and LOD transitions with `r.ForceLOD 1`
-to `3` on non-Nanite meshes. This Mac (M5 Max) can show Nanite and VSM; an M1 could not (macOS doc).
+to `3` on non-Nanite meshes. An M2 or later can show Nanite and VSM; an M1 could not (macOS doc).
 
 ---
 
 ## P8. Redirectors and resave
 
-Not yet run in Unreal. Tests: `test_offline_pure.py` (`resave_command`),
+The registry query ran on 5.8.3 (P3's report: `redirectors_found` empty after a staged import); the
+ResavePackages commandlet is [not yet run]. Tests: `test_offline_pure.py` (`resave_command`),
 `test_offline_fake_unreal.py` (Unstaged: `redirectors_left` and the registry-measured
 `redirectors_found`).
 
@@ -674,7 +719,8 @@ if r["redirectors_found"]:                        # from the registry, not from 
     print(out["ok"], out["log"]["summary"])
 ```
 
-The measurement, raw (AssetData field names [verify]); `P.redirectors_under(folders)` wraps it:
+The measurement, raw (AssetData fields `package_name`, `asset_class_path.asset_name`, run on 5.8.3);
+`P.redirectors_under(folders)` wraps it:
 
 ```python
 import unreal
@@ -686,7 +732,7 @@ print(len(left), left[:10])
 ```
 
 Spelling: the naming doc's prose says `-FixupRedirectors`, its example `-fixupredirects`; use the
-example [verify]. Fix redirectors before deleting anything renamed, and before cooking (the Zen
+example [not yet run]. Fix redirectors before deleting anything renamed, and before cooking (the Zen
 loader ignores core redirects). After an engine upgrade, resave the whole project once so loads stop
 paying the PostLoad upgrade path (Ari [00:10:13]): same commandlet without `-fixupredirects`.
 
@@ -694,8 +740,8 @@ paying the PostLoad upgrade path (Ari [00:10:13]): same commandlet without `-fix
 
 ## P9. Cook, package, boot
 
-Not yet run in Unreal. Tests: `test_offline_pure.py` (Commands, Logs, ini, ExitCodesAndLauncher:
-launcher diff, `-archive` without `-package`), lead's `build_buildcookrun` tests.
+[not yet run]. Tests: `test_offline_pure.py` (Commands, Logs, ini, ExitCodesAndLauncher: launcher
+diff, `-archive` without `-package`), lead's `build_buildcookrun` tests.
 
 ```python
 import os
@@ -716,8 +762,8 @@ print(b["ok"], u["ok"], apps, boot["ok"])
 The command (lead's builder plus `-nop4`):
 `RunUAT.sh BuildCookRun -project=... -platform=Mac -clientconfig=Development -unattended -utf8output -build -cook -stage -pak -package -iostore -archive -archivedirectory=... -additionalcookeroptions="-RunAssetValidation -RunMapValidation -ValidationErrorsAreFatal" -nop4`.
 Flags from the batch sources:
-`-project -platform -clientconfig -build -cook -stage -pak -package -archive`; the rest [added]
-[verify]. Package is its own stage: without `-package` the archive holds staged files, not a
+`-project -platform -clientconfig -build -cook -stage -pak -package -archive`; the rest [added] [not
+yet run]. Package is its own stage: without `-package` the archive holds staged files, not a
 finished `.app` (UAT doc; Josh Adams [00:19:48]); `buildcookrun_problems` warns.
 
 Reference line, never hand-typed (UAT doc, Command Line): in the editor, Platforms > Project
@@ -742,12 +788,12 @@ packaging page only knows `-iterate`).
 
 Mac specifics (Josh Adams, uxdEt9XXKb8): Xcode assembles and signs the app "whether or not you edit
 in Xcode" [00:03:33]; that a content-only project therefore needs full Xcode too is an inference
-[verify with a content-only BuildCookRun]; 5.8 wants 26.0 to 26.1.x and 26.4 is incompatible (macOS
-doc), this Mac has 26.6 (unlisted); command-line builds regenerate the Xcode project each time
-[00:28:26]; `-distribution` makes an `.xcarchive` with dSYMs; build machines sign with an App Store
-Connect `.p8` key of the smallest sufficient role [00:13:34]; a received zip gets the quarantine
-attribute: `xattr -dr com.apple.quarantine MyGame.app` [added exact command]. Incremental cook
-against Zen: `package_command(..., incremental=True)` adds `-cookincremental` (Beta).
+[not yet run: with a content-only BuildCookRun]; 5.8 wants 26.0 to 26.1.x and 26.4 is incompatible
+(macOS doc), this Mac has 26.6 (unlisted); command-line builds regenerate the Xcode project each
+time [00:28:26]; `-distribution` makes an `.xcarchive` with dSYMs; build machines sign with an App
+Store Connect `.p8` key of the smallest sufficient role [00:13:34]; a received zip gets the
+quarantine attribute: `xattr -dr com.apple.quarantine MyGame.app` [added exact command]. Incremental
+cook against Zen: `package_command(..., incremental=True)` adds `-cookincremental` (Beta).
 
 Gate: UAT exit 0, `.app` in the archive, BootTest passes, no error lines; then hand the archive
 path, UAT verdict, BootTest result and changelist to QA and scenario-unreal-performance.
@@ -756,7 +802,7 @@ path, UAT verdict, BootTest result and changelist to QA and scenario-unreal-perf
 
 ## P10. Batch processor for thousands of assets (5.8)
 
-Not yet run in Unreal. Tests: `test_offline_pure.py` (`batch_job`, `parse_batch_results`).
+[not yet run]. Tests: `test_offline_pure.py` (`batch_job`, `parse_batch_results`).
 
 ```python
 # <Project>/Content/Python/pipeline_batch.py   imported from init_unreal.py so the uclass is registered
@@ -778,8 +824,8 @@ class PipelineBatch(unreal.Object):
 if __name__ == "__main__":        # critical: init_unreal imports this module (5.8 notes: fork bomb)
     reg = unreal.AssetRegistryHelpers.get_asset_registry()
     reg.wait_for_completion()
-    assets = [str(d.package_name) for d in reg.get_assets_by_path("/Game/MyGame", recursive=True)]   # [verify]
-    job = {"function": "/Game/Python/pipeline_batch_PY.PipelineBatch:audit_one",               # [verify path format]
+    assets = [str(d.package_name) for d in reg.get_assets_by_path("/Game/MyGame", recursive=True)]   # [not yet run]
+    job = {"function": "/Game/Python/pipeline_batch_PY.PipelineBatch:audit_one",               # [not yet run: path format]
            "arguments": [{"asset": a} for a in assets]}
     print(unreal.BatchProcessLibrary.run_batch(json.dumps(job), num_workers=8))
 ```
@@ -818,7 +864,7 @@ ask before any delete; `delete_asset` is a force delete that may clear undo, 5.8
 
 ## P12. A button for humans (Editor Utility)
 
-Not yet run in Unreal. No offline test (Blueprint asset).
+[not yet run]. No offline test (Blueprint asset).
 
 The agent needs no button; artists do. Build an Asset Action Utility (Content Browser > Editor
 Utilities > Editor Utility Blueprint > Asset Action Utility), set Supported Classes first
@@ -842,7 +888,7 @@ jobs use an Editor Utility Task that always calls Finish Executing Task [00:22:0
 
 ## P13. Datasmith (CAD, archviz) import
 
-Not yet run in Unreal. No offline test.
+[not yet run]. No offline test.
 
 ```python
 import unreal
@@ -850,7 +896,7 @@ scene = unreal.DatasmithSceneElement.construct_datasmith_scene_from_file("/abs/c
 if scene is None:
     raise RuntimeError("Datasmith could not read the file")
 opts = scene.get_options(unreal.DatasmithImportOptions)
-opts.base_options.scene_handling = unreal.DatasmithImportScene.NEW_LEVEL   # headless: load or create a level first [verify]
+opts.base_options.scene_handling = unreal.DatasmithImportScene.NEW_LEVEL   # headless: load or create a level first [not yet run]
 tess = scene.get_options(unreal.DatasmithCommonTessellationOptions)
 if tess:
     tess.options.chord_tolerance, tess.options.max_edge_length, tess.options.normal_tolerance = 0.1, 0, 30
@@ -867,7 +913,7 @@ unlike Interchange pipelines, which are stored on the asset.
 
 ## P14. CI script (tiers)
 
-Not yet run. The shell calls the tested CLI (`plan`, `verdict`, `compare-launcher`, `package`,
+[not yet run]. The shell calls the tested CLI (`plan`, `verdict`, `compare-launcher`, `package`,
 `parse-uat`; tests in `test_offline_pure.py`) and the lead's `ue_run.py`.
 
 ```bash

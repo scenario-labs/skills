@@ -22,9 +22,12 @@ Two layers in one file:
    Template duplication, User parameters, system properties, Effect Type creation and
    assignment, asset audits, pooled spawning, deterministic capture series, Geometry
    Collection hardening and strain calls, and an API probe.
-   STATUS: NOT YET RUN IN UNREAL (the engine is not installed on 2026-09-24). Names marked
-   [verify] are resolved at run time by trying candidates and logging what was missing;
-   job_00_vfx_probe.py records the real names.
+   STATUS (2026-10-21): run on Unreal 5.8.3 for probe, scan_paths, duplicate_template,
+   niagara_tool / system_data / emitter_sim_targets, niagara_facts, user_parameters,
+   set_system_properties, set_user_params, place_system, create_effect_type (not its caps),
+   gc_facts, harden_gc, project_to_screen and capture_ages; each docstring says what ran.
+   Names still marked [verify] were not touched by a 5.8.3 run; those calls try candidates
+   and log what was missing.
 
 Shared toolkit (<skills>/scenario-unreal-expert/scripts, written by the lead agent): ue_run.run_python
 (modes commandlet, editor, latent) and ue_run.result for jobs, ue_review.screenshot /
@@ -42,7 +45,7 @@ import math
 import os
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the checks from the U7 blind grade, section 2b)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21), run on 5.8.3
 
 # =============================================================================================
 # 1. OFFLINE LAYER: constants
@@ -510,7 +513,7 @@ def gc_verdict(f: Dict[str, Any], placements: int = 1, concave_or_modular: bool 
                             "[threshold %d added]" % (placements, root_proxy_placement_threshold), gdc + " [00:05:58]"))
     if f.get("root_proxy_count") and "RootProxy" not in str(f.get("custom_renderer_type", "")):
         out.append(_problem("note", "RENDERER", "root proxy set but custom renderer is not the root proxy "
-                            "renderer (GeometryCollectionRootProxyRenderer, 5.5 notes) [verify]", gdc + " [00:07:05]"))
+                            "renderer (5.5 notes; no Python class GeometryCollectionRootProxyRenderer on 5.8.3, set it in the Details panel)", gdc + " [00:07:05]"))
     if not f.get("remove_on_max_sleep"):
         out.append(_problem("note", "REMOVAL", "no asset-level Remove on Sleep; confirm per-bone Remove on Break "
                             "exists (Fracture Mode or Dataflow; not readable from the Python class)",
@@ -522,7 +525,7 @@ def gc_verdict(f: Dict[str, Any], placements: int = 1, concave_or_modular: bool 
     thr = list(f.get("damage_threshold") or [])
     levels = f.get("levels")
     model = str(f.get("damage_model", "")).upper()
-    msc = "STRENGTH" in model or "CONNECTIVITY" in model          # enum member names [verify]
+    msc = "STRENGTH" in model or "CONNECTIVITY" in model          # CHAOS_DAMAGE_MODEL_MATERIAL_STRENGTH_AND_CONNECTIVITY_DAMAGE_THRESHOLD (run on 5.8.3)
     if msc:
         if f.get("tensile_strength") in (None, 0, 0.0):
             out.append(_problem("warn", "MSC_TENSILE", "Material Strength and Connectivity: thresholds are contact area "
@@ -544,7 +547,7 @@ def gc_verdict(f: Dict[str, Any], placements: int = 1, concave_or_modular: bool 
     if concave_or_modular and conn and ("PROXIMITY" not in conn.upper() and "OVERLAP" not in conn.upper()):
         out.append(_problem("warn", "CONNECTION_GRAPH",
                             "connection type %s on a concave or modular asset: floating chunks and corner hinges; "
-                            "use Bounds Overlap Filtered or Proximity with an area threshold [enum names verify]"
+                            "use Bounds Overlap Filtered (CHAOS_BOUNDS_OVERLAP_FILTERED_DELAUNAY_TRIANGULATION on 5.8.3) or Proximity with an area threshold"
                             % conn, xiao + " [00:17:14]-[00:18:56]"))
     if not f.get("physics_material"):
         out.append(_problem("warn", "NO_PHYSMAT", "no physics material: heft and damage multipliers come from it",
@@ -2072,7 +2075,7 @@ def rubric_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 # =============================================================================================
-# 4. IN-EDITOR LAYER (UE 5.8 Editor Python). NOT YET RUN IN UNREAL.
+# 4. IN-EDITOR LAYER (UE 5.8 Editor Python). Run on 5.8.3 where the docstring says so.
 # =============================================================================================
 
 def _ue():
@@ -2118,23 +2121,66 @@ def load(path: str):
     return _ue().load_asset(path)
 
 
+def niagara_tool(tool: str, *args, toolset: str = "NiagaraToolset_System"):
+    """Call one of Epic's Niagara toolset functions from Editor Python, without the MCP server.
+
+    The toolset classes are Python-visible (unreal.NiagaraToolset_System, _Component, _Assets,
+    _Blueprint, _Info); their functions are AICallable statics reached with call_method on the
+    class default object. Run on 5.8.3 in a commandlet: CreateNiagaraSystem, GetSystemSummary,
+    GetSystemData. Arguments are positional in the C++ order of the signatures in
+    references/mcp-niagara.md; struct results are read with get_editor_property(snake_case)."""
+    u = _ue()
+    return u.get_default_object(getattr(u, toolset)).call_method(tool, tuple(args))
+
+
+def system_data(system) -> Dict[str, Any]:
+    """System properties as the toolset's GetSystemData JSON (EffectType, MaxPoolSize, PoolPrimeSize,
+    bFixedBounds, FixedBounds, WarmupTime, bRequireCurrentFrameData, ...). Run on 5.8.3. The Python
+    class hides bFixedBounds (get_editor_property("fixed_bounds") returns the Box only)."""
+    import json as _json
+    return _json.loads(niagara_tool("GetSystemData", system).get_editor_property("property_values"))
+
+
+def emitter_sim_targets(system) -> Dict[str, str]:
+    """{emitter name: "CPU_SIM" | "GPU_COMPUTE_SIM"} through GetSystemSummary (run on 5.8.3).
+    NiagaraFunctionLibrary.get_all_emitters returns NiagaraMinimalEmitterInfo without a sim target."""
+    out = {}
+    for e in niagara_tool("GetSystemSummary", system).get_editor_property("emitters"):
+        out[str(e.get_editor_property("emitter_name"))] = str(e.get_editor_property("sim_target")).split(".")[-1].split(":")[0]
+    return out
+
+
+def scan_paths(paths: Sequence[str]) -> None:
+    """Make the Asset Registry see plugin or engine content. A -run=pythonscript commandlet does not
+    list /Niagara/... (EditorAssetSubsystem.duplicate_asset: "could not be found in the Asset
+    Registry", list_assets returns [] on 5.8.3) until the folder is scanned synchronously."""
+    u = _ue()
+    u.AssetRegistryHelpers.get_asset_registry().scan_paths_synchronous(list(paths), True)
+
+
 def duplicate_template(src: str, dst: str, overwrite: bool = False):
-    """Duplicate a template NiagaraSystem (or any asset). Python cannot author emitters or modules
-    (py-nia doc), so every effect starts as a duplicate. Not yet run in Unreal."""
+    """Duplicate a template NiagaraSystem (or any asset) into the project. Templates live under
+    /Niagara/DefaultAssets/Templates/Systems (RadialBurst, DirectionalBurst, SimpleExplosion,
+    AttributeReaderTrails, *Lightweight) and .../Emitters (Fountain, SimpleSpriteBurst, Minimal, ...).
+    Run on 5.8.3 in a commandlet: the source folder is scanned first (see scan_paths)."""
     eas = asset_subsystem()
     if eas.does_asset_exist(dst):
         if not overwrite:
             raise RuntimeError("%s exists; version it (never overwrite a deliverable) or pass overwrite" % dst)
         return load(dst)
-    asset = eas.duplicate_asset(src, dst)
+    src_pkg = src.split(".")[0]
+    if src_pkg.startswith(("/Niagara", "/Engine", "/NiagaraFluids")) or not eas.does_asset_exist(src_pkg):
+        scan_paths([src_pkg.rsplit("/", 1)[0]])
+    asset = eas.duplicate_asset(src_pkg, dst)
     if asset is None:
         raise RuntimeError("duplicate_asset failed: %s -> %s" % (src, dst))
     return asset
 
 
 def user_parameters(system) -> List[Dict[str, str]]:
-    """get_all_user_parameters -> [{'name','type','raw'}]. NiagaraUserParameterInfo field names are
-    [verify]; the function tries common ones and keeps the repr."""
+    """get_all_user_parameters -> [{'name','type','raw'}]. NiagaraUserParameterInfo carries
+    parameter_name (without "User.") and type_name (NiagaraFloat, NiagaraInt32, LinearColor, ...)
+    (run on 5.8.3)."""
     u = _ue()
     out = []
     for p in u.NiagaraFunctionLibrary.get_all_user_parameters(system):
@@ -2180,9 +2226,12 @@ def assign_effect_type(system_paths: Sequence[str], effect_type_path: str, save:
 
 
 def create_effect_type(path: str, preset_name: str) -> Tuple[Any, Dict[str, str]]:
-    """Create a NiagaraEffectType from EFFECT_TYPE_PRESETS [verify: factory class and field names;
-    the 5.8 Python doc audited for this project does not cover NiagaraEffectType]. If this fails,
-    a human or GUI agent builds the asset once from gui-paths.md and the agent only assigns it."""
+    """Create a NiagaraEffectType from EFFECT_TYPE_PRESETS. Run on 5.8.3: NiagaraEffectTypeFactoryNew,
+    update_frequency, cull_reaction and allow_culling_for_local_players set. Not reachable from
+    Python on 5.8.3: NiagaraSignificanceHandlerDistance (no Python class) and the fields of
+    NiagaraSystemScalabilitySettings (only to_dict), so the caps below log FAILED; write them with
+    ObjectTools.set_properties on SystemScalabilitySettings (references/mcp-niagara.md R8).
+    Effect Types are shared: list the existing ones and ask before creating a new one."""
     u = _ue()
     preset = EFFECT_TYPE_PRESETS[preset_name]
     pkg, name = path.rsplit("/", 1)
@@ -2231,8 +2280,8 @@ def create_effect_type(path: str, preset_name: str) -> Tuple[Any, Dict[str, str]
 
 
 def niagara_facts(system, path: str = "") -> Dict[str, Any]:
-    """Facts for niagara_system_verdict. Handles the two `fixed_bounds` properties the doc lists
-    (a Box and a bool) by type [verify which one Python returns]."""
+    """Facts for niagara_system_verdict. Python returns `fixed_bounds` as the Box; the bFixedBounds
+    flag and the sim targets come from the Niagara toolset (system_data, emitter_sim_targets). Run on 5.8.3."""
     u = _ue()
     eft = _get(system, "effect_type")
     fb = _get(system, "fixed_bounds")
@@ -2240,13 +2289,15 @@ def niagara_facts(system, path: str = "") -> Dict[str, Any]:
     emitters = []
     gpu = 0
     try:
-        for e in u.NiagaraFunctionLibrary.get_all_emitters(system):
-            s = str(e)
-            emitters.append(s)
-            if "GPU" in s.upper():
-                gpu += 1
-    except Exception as exc:  # noqa: BLE001
-        emitters.append("get_all_emitters FAILED: %s" % exc)
+        targets = emitter_sim_targets(system)
+        emitters = sorted(targets)
+        gpu = sum(1 for t in targets.values() if "GPU" in t)
+        fixed_enabled = bool(system_data(system).get("bFixedBounds"))
+    except Exception as exc:  # noqa: BLE001  (toolset plugin off: fall back to the minimal info)
+        try:
+            emitters = [str(e.get_editor_property("emitter_name")) for e in u.NiagaraFunctionLibrary.get_all_emitters(system)]
+        except Exception as exc2:  # noqa: BLE001
+            emitters.append("get_all_emitters FAILED: %s / %s" % (exc, exc2))
     return {
         "path": path or system.get_path_name(),
         "effect_type": eft.get_name() if eft else None,
@@ -2258,7 +2309,7 @@ def niagara_facts(system, path: str = "") -> Dict[str, Any]:
         "fixed_bounds_enabled": fixed_enabled,
         "fixed_bounds_raw": str(fb),
         "emitters": emitters,
-        "gpu_emitters": gpu,          # from NiagaraMinimalEmitterInfo repr [verify fields]
+        "gpu_emitters": gpu,          # GetSystemSummary sim targets (run on 5.8.3)
         "user_parameters": [p.get("name", p["raw"]) for p in user_parameters(system)],
     }
 
@@ -2284,44 +2335,68 @@ def place_system(system, location=(0.0, 0.0, 100.0)):
     """Place a NiagaraActor in the editor level and return (actor, component)."""
     u = _ue()
     actor = actor_subsystem().spawn_actor_from_object(system, u.Vector(*location))
+    if actor is None:
+        # spawn_actor_from_object returns None for a NiagaraSystem in a -run=pythonscript commandlet
+        # (run on 5.8.3, level loaded): spawn the actor class and assign the asset instead.
+        actor = actor_subsystem().spawn_actor_from_class(u.NiagaraActor, u.Vector(*location))
+        comp = actor.get_component_by_class(u.NiagaraComponent)
+        comp.set_asset(system)
+        return actor, comp
     comp = actor.get_component_by_class(u.NiagaraComponent)
     return actor, comp
 
 
 def set_user_params(comp, params: Dict[str, Any]) -> Dict[str, str]:
-    """Set User parameters on a NiagaraComponent by value type (doc-listed set_variable_*).
-    Names are passed as given; the User redirection store should accept both 'User.X' and 'X'
-    [verify]. Verifies floats/ints/bools with get_variable_* when that returns a value."""
+    """Set User parameters on a NiagaraComponent, typed by the SYSTEM's declared parameters.
+
+    Run on 5.8.3: "X" and "User.X" both address the same parameter; a setter of the wrong type
+    (set_variable_int on a float) or an unknown name does not fail, it adds a stray override that the
+    effect never reads, and get_variable_* returns (value, found) tuples. So this function looks up
+    the declared type (user_parameters), coerces ints to floats where needed, refuses unknown names
+    and verifies by reading back with the matching getter."""
     u = _ue()
     log: Dict[str, str] = {}
+    declared = {}
+    try:
+        declared = {p.get("name"): p.get("type") for p in user_parameters(comp.get_asset())}
+    except Exception:  # noqa: BLE001
+        pass
     for name, v in params.items():
+        bare = name[5:] if name.startswith("User.") else name
+        typ = declared.get(bare)
+        if declared and typ is None:
+            log[name] = "REFUSED: no User parameter %s on the system (declared: %s)" % (bare, sorted(declared))
+            continue
         try:
             if isinstance(v, str) and v.startswith("/"):
                 v = load(v)
-            if isinstance(v, bool):
-                comp.set_variable_bool(name, v)
-            elif isinstance(v, int):
-                comp.set_variable_int(name, v)
-            elif isinstance(v, float):
-                comp.set_variable_float(name, v)
-            elif isinstance(v, u.LinearColor):
-                comp.set_variable_linear_color(name, v)
-            elif isinstance(v, u.Vector):
-                (comp.set_variable_position if "position" in name.lower() else comp.set_variable_vec3)(name, v)
+            getter = None
+            if typ == "NiagaraFloat" or (typ is None and isinstance(v, float)):
+                comp.set_variable_float(bare, float(v)); getter = comp.get_variable_float
+            elif typ == "NiagaraInt32" or (typ is None and isinstance(v, int) and not isinstance(v, bool)):
+                comp.set_variable_int(bare, int(v)); getter = comp.get_variable_int
+            elif typ == "NiagaraBool" or isinstance(v, bool):
+                comp.set_variable_bool(bare, bool(v)); getter = comp.get_variable_bool
+            elif typ == "LinearColor" or isinstance(v, u.LinearColor):
+                comp.set_variable_linear_color(bare, v if isinstance(v, u.LinearColor) else u.LinearColor(*v))
+            elif typ == "NiagaraPosition" or (isinstance(v, u.Vector) and "position" in bare.lower()):
+                comp.set_variable_position(bare, v if isinstance(v, u.Vector) else u.Vector(*v))
+            elif typ in ("Vector3f", "Vector") or isinstance(v, u.Vector):
+                comp.set_variable_vec3(bare, v if isinstance(v, u.Vector) else u.Vector(*v))
             elif isinstance(v, u.MaterialInterface):
-                comp.set_variable_material(name, v)
+                comp.set_variable_material(bare, v)
             elif isinstance(v, u.StaticMesh):
-                comp.set_variable_static_mesh(name, v)
+                comp.set_variable_static_mesh(bare, v)
             elif isinstance(v, u.Texture):
-                comp.set_variable_texture(name, v)
+                comp.set_variable_texture(bare, v)
             elif isinstance(v, u.Actor):
-                comp.set_variable_actor(name, v)
+                comp.set_variable_actor(bare, v)
             else:
-                comp.set_variable_object(name, v)
+                comp.set_variable_object(bare, v)
             log[name] = "set"
-            if isinstance(v, (float, int)) and not isinstance(v, bool):
-                getter = comp.get_variable_float if isinstance(v, float) else comp.get_variable_int
-                got = getter(name)
+            if getter is not None:
+                got = getter(bare)
+                got = got[0] if isinstance(got, tuple) else got
                 log[name] = "set, read back %s" % (got,)
         except Exception as exc:  # noqa: BLE001
             log[name] = "FAILED: %s" % exc
@@ -2355,16 +2430,36 @@ def stress_grid_place(system, n: int = 20, spacing: float = 300.0, origin=(0.0, 
     return [eas.spawn_actor_from_object(system, u.Vector(*p)) for p in stress_grid(n, spacing, origin)]
 
 
+def project_to_screen(cam_loc: Sequence[float], cam_rot: Sequence[float], point: Sequence[float],
+                      width: int, height: int, hfov_deg: float = 90.0) -> Optional[Tuple[float, float]]:
+    """Pixel position of a world point for a camera (Unreal axes: X forward, Y right, Z up; rotation
+    (pitch, yaw, roll) in degrees, roll ignored; horizontal FOV as on CameraComponent). None when
+    behind the camera. Use it instead of UnrealEditorSubsystem.world_to_screen, which projects
+    through the editor viewport: an offscreen editor's viewport was 424 x 40 on 5.8.3."""
+    p, y = math.radians(cam_rot[0]), math.radians(cam_rot[1])
+    fwd = (math.cos(p) * math.cos(y), math.cos(p) * math.sin(y), math.sin(p))
+    right = (-math.sin(y), math.cos(y), 0.0)
+    up = (-math.sin(p) * math.cos(y), -math.sin(p) * math.sin(y), math.cos(p))
+    d = [point[i] - cam_loc[i] for i in range(3)]
+    z = sum(d[i] * fwd[i] for i in range(3))
+    if z <= 1e-6:
+        return None
+    k = (width / 2.0) / math.tan(math.radians(hfov_deg) / 2.0)
+    return (width / 2.0 + k * sum(d[i] * right[i] for i in range(3)) / z,
+            height / 2.0 - k * sum(d[i] * up[i] for i in range(3)) / z)
+
+
 def capture_ages(comp, ages: Sequence[float], out_dir: str, width: int = 1280, height: int = 720,
-                 prefix: str = "fx", settle_ticks: int = 3):
+                 prefix: str = "fx", settle_ticks: int = 3, camera=None):
     """GENERATOR: deterministic capture of a Niagara component at fixed ages. Run it as a latent
     job (ue_run.run_python(..., mode="latent"): one editor tick per yield) or in a live editor with
     run_on_ticker(). Needs a rendering editor (never a commandlet or -nullrhi).
 
     DesiredAge mode + seek, a few settle ticks, then ue_review.screenshot + wait_screenshot
     (lead toolkit). Writes <out_dir>/<prefix>_series.json and returns {"ages", "files", "series"}.
-    Seeks longer than set_max_sim_time spill over frames; settle_ticks may need raising [verify].
-    Not yet run in Unreal."""
+    Pass camera= a CameraActor: take_high_res_screenshot then renders through it at width x height.
+    Without it the shot follows the editor viewport, which in an offscreen editor was 424 x 40 on
+    5.8.3 and left the effect out of frame. Run on 5.8.3 (latent job, offscreen editor)."""
     import ue_review  # <skills>/scenario-unreal-expert/scripts
     u = _ue()
     os.makedirs(out_dir, exist_ok=True)
@@ -2377,7 +2472,7 @@ def capture_ages(comp, ages: Sequence[float], out_dir: str, width: int = 1280, h
         for _ in range(int(settle_ticks)):
             yield
         path = os.path.join(out_dir, "%s_%02d_%0.3fs.png" % (prefix, i, float(age)))
-        req = ue_review.screenshot(path, width, height)
+        req = ue_review.screenshot(path, width, height, camera=camera)
         got = yield from ue_review.wait_screenshot(req)
         files.append(got)
     series = os.path.join(out_dir, prefix + "_series.json")
@@ -2504,7 +2599,11 @@ def gc_facts(gc, path: str = "") -> Dict[str, Any]:
         "maximum_sleep_time": str(_get(gc, "maximum_sleep_time")),
         "removal_duration": str(_get(gc, "removal_duration")),
         "damage_threshold": [float(x) for x in thr],
-        "levels": _get(gc, "max_cluster_level"),
+        # max_cluster_level is the CAP on damage levels (default 100 on 5.8.3), not the fracture depth;
+        # the real level count is not readable from the Python class (run on 5.8.3), so levels stays
+        # None unless the caller knows it (Fracture Mode outliner or the Dataflow graph).
+        "max_cluster_level": _get(gc, "max_cluster_level"),
+        "levels": None,
         "use_size_specific_damage_threshold": _get(gc, "use_size_specific_damage_threshold"),
         "damage_model": str(_get(gc, "damage_model")),
         "cluster_connection_type": str(_get(gc, "cluster_connection_type")),

@@ -1,6 +1,6 @@
 ---
 name: scenario-unreal-animation
-description: 'Use when a UE5 task involves characters in motion: "import FBX from Maya" with a skeleton, "retarget animations", IK Rig, IK Retargeter, feet sinking or floating after retarget, mocap cleanup, Motion Matching, Pose Search, Choosers, GASP, state machine vs motion matching, root motion, offset root bone, foot IK, Control Rig, Animation Blueprint cost, "animation is expensive", budget allocator, URO, MetaHuman LODs, ML Deformer, cloth.'
+description: 'Use when a UE5 task involves characters in motion: "import FBX from Maya" with a skeleton, "retarget animations", IK Rig, IK Retargeter, batch retarget, feet sinking or floating after retarget, mocap cleanup, sockets, physics assets and ragdoll bodies, Control Rig assets or keying a Control Rig in Sequencer through Epic''s MCP toolsets, hand-keyed AnimSequences, montages and notifies from Python, Motion Matching, Pose Search, Choosers, GASP, state machine vs motion matching, root motion, offset root bone, foot IK, Animation Blueprint cost, "animation is expensive", budget allocator, URO, MetaHuman LODs, ML Deformer, cloth.'
 license: MIT
 ---
 
@@ -17,10 +17,10 @@ flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 
-**Status (2026-09-24):** Unreal is not installed. The offline layer of
-[`scripts/ue_anim.py`](scripts/ue_anim.py) passed 30 tests
-(`python3 tests/code/unreal-animation/run_all.py --offline`). Every in-editor snippet is **not yet
-run in Unreal**; `[verify]` names are answered by `job_00_anim_probe.py`. Import:
+**Status (2026-10-21):** what ran in Unreal and what did not:
+[`references/sources.md`](references/sources.md).
+
+Import:
 `sys.path[:0] = ["<skills>/scenario-unreal-animation/scripts", "<skills>/scenario-unreal-expert/scripts"]; import ue_anim as A`.
 
 ## Stance (the expert delta)
@@ -65,8 +65,7 @@ run in Unreal**; `[verify]` names are answered by `job_00_anim_probe.py`. Import
   instead of locking them; a Backwards Solve makes a rig bakeable (Stéphane Biava, XYMad1EutcA
   [00:10:08]; LEGO Fortnite tech animator, kO6pz8ADgcU [00:12:04]).
 - **Never ship the cinematic MetaHuman.** About 800 MB cooked vs about 60 MB Optimized High;
-  audition LODs at the game camera from LOD 2 on PS5-class; Mac renders cards only (DeVoe,
-  tTgMafRAM7A [00:15:16], [00:23:34]).
+  audition LODs at the game camera (DeVoe, tTgMafRAM7A [00:15:16], [00:23:34]).
 
 ## Establish first
 
@@ -79,21 +78,36 @@ run in Unreal**; `[verify]` names are answered by `job_00_anim_probe.py`. Import
 | Gameplay needs                                              | strafing and states multiply content (each state almost doubles it, DeVoe) | orient-to-movement, walk, run, jump                                                                                                                                                                                                                                                     |
 | Skeleton contract from the DCC                              | chains, IK bones, root                                                     | scenario-maya-rigging `game_skeleton_check` clean                                                                                                                                                                                                                                       |
 
+## Authoring surfaces (run on 5.8.3)
+
+- **Epic MCP first** for skeletal mesh facts and sockets (`SkeletalMeshTools`), physics assets
+  (`PhysicsAssetToolset`), Control Rig hierarchy and graphs (`ControlRigTools`) and Control Rig keys
+  in a Level Sequence (`SequencerControlRigTools`, `SequencerKeyframingTools`). Four or more toolset
+  calls in a row go through one `ProgrammaticToolset.execute_tool_script`:
+  [`references/mcp-animation.md`](references/mcp-animation.md) has each recipe as a script (a
+  physics asset pass is 1 call instead of 12) plus the signatures; do not `describe_toolset`.
+- **Python** ([`ue_anim`](scripts/ue_anim.py), next to MCP or headless) for everything no toolset
+  writes: AnimSequence keys (`create_keyed_sequence`), montages and notifies (`create_montage`),
+  root motion, imports with explicit pipelines, IK Rigs, retargeters, batch retarget, AnimBP
+  settings, facts for the offline checks.
+- **Control Rig bakes:** `export_anim_sequence` gave one pose at every frame, headless and
+  offscreen; a GUI bake is not yet run. Key agent-made clips directly (`create_keyed_sequence`).
+
 ## Workflow
 
 1. **Probe once per engine.** `job_00_anim_probe.py` headless. GATE: `probe.json` lists IK Rig,
    retargeter, Pose Search, AnimPose, Interchange, MetaHuman names and whether 5.8
    `BlueprintGraphEditor` exists.
 2. **Receive and audit the character.** `A.import_character` / `A.import_animations` (explicit
-   options on either importer), then `A.import_audit(A.skeletal_mesh_facts(mesh))`: one root, unused
-   bones (5.8 Bone Count Reduction), influences over 8, units. Set project-wide import defaults
-   once: `A.apply_ini_plan(cfg, A.import_defaults_plan())` for the legacy importer, the project
-   pipeline in the Interchange Import Content stack. GATE: no error; mesh looked at in a neutral lit
-   preview.
+   Interchange options; an empty result carries the log errors), then
+   `A.import_audit(A.skeletal_mesh_facts(mesh))`: one root, unused bones (5.8 Bone Count Reduction),
+   influences over 8, units. Set project-wide import defaults once:
+   `A.apply_ini_plan(cfg, A.import_defaults_plan())` for the legacy importer, the project pipeline
+   in the Interchange Import Content stack. GATE: no error; mesh looked at in a neutral lit preview.
 3. **Choose the transfer.** `A.transfer_method(source, target)`. GATE: method and reason written
    down.
-4. **IK Rigs.** `A.create_ik_rig` (5.8 template splits Leg at the ankle and adds Foot chains),
-   `A.biped_chain_plan` for custom names. GATE: `A.chain_map_check` clean.
+4. **IK Rigs.** `A.create_ik_rig` (5.8 template: 29 chains on the mannequin; on unknown names zero,
+   then `A.biped_chain_plan`). GATE: `A.chain_map_check` clean.
 5. **Retargeter, built once, then templated.** `A.create_retargeter`; op settings once in the GUI,
    saved as `RTG_Template`; Pin Bones from
    `A.ik_bone_pin_plan(bones, A.mannequin_bone_map(bones, parents))`. GATE:
@@ -131,6 +145,24 @@ run in Unreal**; `[verify]` names are answered by `job_00_anim_probe.py`. Import
     before and after on the same path.
 12. **Deliver** per Handoffs, with what was not verified.
 
+## Live traps (run on 5.8.3)
+
+- `SequencerControlRigTools` setters key nothing until the sequence is open
+  (`SequencerTools.open_sequence`), return true for control names that do not exist, and
+  Euler-transform controls (117 of 148 on CR_Mannequin_Body) need `set_euler_transform`, not
+  `set_rotator`. Read `get_controls_info` first.
+- `PhysicsAssetToolset.CreateFromMesh` takes the package path, not `/Pkg.Asset`; on an existing
+  `<Mesh>_PhysicsAsset` it returns it unchanged.
+- `SkeletalMeshTools.get_bone_names` and `ControlRigTools.import_bones_from_asset` give the
+  Skeleton's bones (161 on SK_Mannequin), not the mesh's (89 on SKM_Manny_Simple).
+- The IK Rig auto template returns without error and makes zero chains on a skeleton it does not
+  know: count chains (`create_ik_rig` falls back to `biped_chain_plan`).
+- Imports refused by Interchange return an empty list and no exception; the reason is in the log
+  (the helpers return it). Forcing 30 Hz refuses a clip that is not frame-aligned at 30: keep the
+  source rate.
+- `AnimationLibrary.get_num_frames` counts intervals (keys = frames + 1); the rate is on
+  `data_model_interface`. `unreal.Rotator` positional order is (roll, pitch, yaw).
+
 ## Numbers
 
 | Value                                                                                      | Relative to                             | Source                           |
@@ -161,38 +193,34 @@ scenario-unreal-performance.
 
 ## Common mistakes
 
-| Mistake                                                          | What it looks like                                  | Fix                                                                               |
-| ---------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Animation imported without the target skeleton                   | clip does not play; stray `<Mesh>_Skeleton`         | always pass the skeleton                                                          |
-| No Blend to Source on leg IK                                     | feet sink on shorter targets                        | Blend to Source; Scale Source at the top if hands over-reach                      |
-| IK helper bones not pinned                                       | leg or weapon IK reads a reference-pose bone        | Pin Bones per `ik_bone_pin_plan`                                                  |
-| Batch with an auto-generated retargeter                          | IK off, override sets ignored                       | hand-built retargeter                                                             |
-| Clips authored before the movement model is tuned                | every clip retimed; animation and system bugs mixed | model first, `capsule_match`                                                      |
-| Duplicated GASP schema on a custom skeleton                      | channels read missing mannequin bones, poor picks   | `schema_bone_check`, schema skeleton, mirror table rebuilt                        |
-| One big database, weights tuned                                  | starts improve, stops break                         | split by state, Chooser, interrupt on core state change                           |
-| State machine chosen because the set is small                    | stiff transitions                                   | minimal set plus procedural nodes                                                 |
-| Steering after Offset Root Bone, or none, with keyboard input    | selection thrashes                                  | Steering first, only while moving or in air                                       |
-| Montages Only picked "to keep the graph on workers"              | unbudgeted game-thread cost                         | both modes run the graph on the game thread; budget, or No Root Motion Extraction |
-| Blend Out Trigger Time -1 with root still moving                 | walk-loop frames after traversal                    | trigger 0, or root motion ends earlier                                            |
-| Allocator node without `a.Budget.Enabled`, or allocator plus URO | no effect, confusing throttling                     | both switches on; never both systems                                              |
-| Offset root bone near walls                                      | mesh clips into walls                               | smaller radius near walls or collision-aware trajectory                           |
+| Mistake                                             | What it looks like                                  | Fix                                                                               |
+| --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Animation imported without the target skeleton      | clip does not play; stray `<Mesh>_Skeleton`         | always pass the skeleton                                                          |
+| No Blend to Source on leg IK                        | feet sink on shorter targets                        | Blend to Source; Scale Source at the top                                          |
+| IK helper bones not pinned                          | leg or weapon IK reads a reference-pose bone        | Pin Bones per `ik_bone_pin_plan`                                                  |
+| Batch with an auto-generated retargeter             | IK off, override sets ignored                       | hand-built retargeter                                                             |
+| Clips authored before the movement model is tuned   | every clip retimed; animation and system bugs mixed | model first, `capsule_match`                                                      |
+| Duplicated GASP schema on a custom skeleton         | channels read missing mannequin bones, poor picks   | `schema_bone_check`, schema skeleton, mirror table rebuilt                        |
+| One big database, weights tuned                     | starts improve, stops break                         | split by state, Chooser, interrupt on core state change                           |
+| Steering after Offset Root Bone, or none            | selection thrashes                                  | Steering first, only while moving or in air                                       |
+| Montages Only picked "to keep the graph on workers" | unbudgeted game-thread cost                         | both modes run the graph on the game thread; budget, or No Root Motion Extraction |
+| Blend Out Trigger Time -1 with root still moving    | walk-loop frames after traversal                    | trigger 0, or root motion ends earlier                                            |
 
 ## Handoffs
 
-- **Receives** from scenario-maya-rigging, scenario-maya-animation, scenario-blender-rigging,
-  scenario-blender-animation through scenario-unreal-pipeline-automation: FBX 2020.2, cm, one root
-  at the origin, joints only, one clip per file, `game_skeleton_check` JSON. Blender files come from
-  scenario-blender-export's `unreal_skeletal` preset.
+- **Receives** from the Maya and Blender rigging and animation skills via
+  scenario-unreal-pipeline-automation: FBX 2020.2, cm, one root at the origin, joints only, one clip
+  per file, `game_skeleton_check` JSON. Blender files come from scenario-blender-export's
+  `unreal_skeletal` preset.
 - **Delivers to scenario-maya-animation or scenario-blender-animation:** exported capsule
   trajectory, speed, acceleration and braking per direction, stop spec, chest tolerance, clip list
   with both feet.
 - **Delivers to scenario-unreal-gameplay:** character Blueprint child (GASP or Lyra), AnimBP
   variable contract (gait, stance, movement mode, rotation mode), montages with warp targets,
-  movement model values, note that CMC input acceleration needs C++ replication for multiplayer
-  trajectories.
+  movement model values; CMC input acceleration needs C++ replication for multiplayer trajectories.
 - **Delivers to scenario-unreal-cinematics:** retargeted clips, bakeable Control Rigs,
   `CR_GroundAlignment` guidance, MetaHuman Cine tier only for pre-rendered shots.
-- **Asks scenario-unreal-performance** for the animation budget and target captures.
+- **Asks scenario-unreal-performance** for the budget and captures.
 
 ## UE 5.8 notes
 
@@ -201,19 +229,19 @@ scenario-unreal-performance.
   pre-5.8 retargeters.
 - Pose Search: `DatabaseAnimationAssets` (5.7), Chooser-column databases default to Brute Force,
   `...FromContext` channel getters, renamed stats, "Block Transition In".
-- `unreal.BlueprintGraphEditor` is the 5.8 route for Blueprint graph edits; whether it reaches
-  AnimGraph nodes is [verify]: try on a copy, else templates and computer use.
-- Interchange: production ready for asset import (5.5), default for FBX level import (5.6), dialog
-  reworked (5.8); the FBX asset-import default is [verify], so pass options for both importers.
-- Control Rig: Construction Event, Physics Beta, Dynamics Experimental; `FSmartName` and 5.0 to 5.6
-  anim APIs removed.
+- `unreal.BlueprintGraphEditor` exists on 5.8.3; whether it reaches AnimGraph nodes is [verify] (not
+  tried): use a copy, else templates.
+- Interchange imports skeletal FBX from Python on 5.8.3 (`import_character`); pass options
+  explicitly.
+- Control Rig: Construction Event; Physics Beta; `FSmartName` and 5.0 to 5.6 anim APIs removed.
 - MetaHuman: `ConvertLegacyDNAAssets -DryRun` first; face MetaHuman Animator on macOS, body Windows
   only.
-- Experimental, fallback required: Animation Mixer, Direct Mesh Controls, uFBX, MetaHuman Crowd,
-  MotionMatchMulti. Mover still Experimental.
+- Experimental (keep a fallback): Animation Mixer, Direct Mesh Controls, uFBX, MetaHuman Crowd,
+  MotionMatchMulti, Mover.
 
 ## References
 
+- `references/mcp-animation.md`: Epic toolsets: intent table, scripts that ran, traps, signatures.
 - [`references/procedures.md`](references/procedures.md): full code per stage, test path, status;
   before any scripted step.
 - [`references/expert-notes.md`](references/expert-notes.md): judgment by expert, disagreements and
@@ -221,5 +249,4 @@ scenario-unreal-performance.
 - `references/critique.md`: the self-review rubric; at every gate.
 - [`references/gui-paths.md`](references/gui-paths.md): editors, menus, settings for a computer-use
   agent.
-- [`references/sources.md`](references/sources.md): every source, credential, URL, best timestamps,
-  revision history.
+- `references/sources.md`: every source, credential, URL, best timestamps, revision history.

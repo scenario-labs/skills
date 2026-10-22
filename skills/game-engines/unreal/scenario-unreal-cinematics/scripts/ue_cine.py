@@ -1,13 +1,14 @@
 """
 ue_cine: Sequencer, camera, shot-plan and Movie Render Graph toolkit for scenario-unreal-cinematics.
 
-STATUS: NOT YET RUN IN UNREAL (UE 5.8 not installed on 2026-09-24). The offline layer ran
-with system python3 + numpy (+ ffmpeg, PIL for EXR pixels and sheets):
-tests/code/unreal-cinematics/test_ue_cine_offline.py. The in-editor layer ran only against a
-fake `unreal` module (test_ue_cine_fakeunreal.py): that proves the Python logic and call
-order, NOT the Unreal API names. Run tests/code/unreal-cinematics/job_00_probe_cine.py first
-in the installed engine and fix names from its report. Calls marked [verify] in comments are
-not confirmed by the saved 5.8 docs.
+STATUS: run on 5.8.3 (2026-10-21, macOS) through ue_run: probe, build_from_plan with a
+synthetic cast (audit verdict pass), create_render_graph and the graph audit (commandlet),
+board_generator and render_generator for one shot (latent offscreen editor). The offline
+layer runs with system python3 + numpy (+ ffmpeg, PIL): test_ue_cine_offline.py; the
+in-editor layer also runs against a fake `unreal` module (test_ue_cine_fakeunreal.py) for
+logic and call order. Not yet run in Unreal: animation sections with a real cast, audio,
+render variables on a graph that exposes them, new_take, retime_shot, empty_level_test,
+mrq_command_line. Calls still marked [verify] in comments are not confirmed.
 
 The plan is data (JSON): shots, sizes, lenses, planned camera and subject positions (cm,
 Z up, X forward, like Unreal), flags (cloth, particles, hair, dof_centric...). Everything is
@@ -51,7 +52,7 @@ JT = mAMp6qCt7kc (Toonen), WF = 2Q3CybANHKE / fVg5ihB8Wdc (Faucher), VP = 5SJA1F
 [added] marks values that no source states (conventions of this toolkit; calibrate).
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor after blind grade U6)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21), run on 5.8.3
 
 import contextlib
 import glob
@@ -64,7 +65,7 @@ import subprocess
 
 # =========================================================================== constants
 DEFAULT_FILMBACK = {"name": "16:9 Digital Film", "sensor_width": 23.76, "sensor_height": 13.365}
-# [added, verify]: UE's default Cine Camera filmback preset and its mm values.
+# UE's default Cine Camera filmback preset: DefaultFilmbackPreset in 5.8.3 BaseEngine.ini.
 
 # Lens and aperture by shot size. Ranges are [added] general cinematography (digest table),
 # except the 24 mm establishing lens (JT [00:10:29]) and "a longer lens feels tighter"
@@ -1088,8 +1089,8 @@ def audit_render_settings(s):
 
 def normalize_graph_snapshot(snapshot):
     """Map graph_snapshot() output (nodes with class names and editor properties) to the
-    settings dict of audit_render_settings. Heuristic on property names [verify each name in
-    5.8; extend the tables when the probe lists the real ones]."""
+    settings dict of audit_render_settings. Heuristic on property names; the names used here
+    were listed by job_00_probe_cine on 5.8.3 (override_* flags are skipped)."""
     s = {"cvars": {}, "renderer": None}
     for node in snapshot.get("nodes", []):
         cls = node.get("class", "")
@@ -1106,6 +1107,8 @@ def normalize_graph_snapshot(snapshot):
         elif re.search(r"PNG|JPG|BMP", cls):
             s.setdefault("output_format", "png")
         for k, v in low.items():
+            if k.startswith("override_"):
+                continue   # the override_ flags are bools beside each real property (5.8.3)
             if "temporal_sample" in k:
                 s["temporal_samples"] = int(v)
             elif "spatial_sample" in k:
@@ -1116,7 +1119,7 @@ def normalize_graph_snapshot(snapshot):
                 s["tone_curve_disabled"] = bool(v)
             elif "shutter_timing" in k:
                 s["shutter_timing"] = str(v).split(".")[-1].lower()
-            elif "compression" in k:
+            elif k == "compression":
                 s["compression"] = str(v).split(".")[-1].lower()
             elif "use_lod_zero" in k:
                 s["use_lod_zero"] = bool(v)
@@ -1124,7 +1127,8 @@ def normalize_graph_snapshot(snapshot):
                 s["warmup_frames"] = int(v)
             elif "camera_cut" in k and "warm" in k:
                 s["camera_cut_warmup"] = bool(v)
-            elif "ocio" in k and isinstance(v, bool):
+            elif "ocio" in k and isinstance(v, bool) and not k.startswith("allow"):
+                # allow_ocio (Deferred node, default True on 5.8.3) only permits OCIO
                 if v:
                     s["ocio"] = s.get("ocio") or "enabled"
             elif k.endswith("half") or "16_bit" in k or "half_float" in k:
@@ -1737,6 +1741,66 @@ def _ls():
     return u.get_editor_subsystem(u.LevelSequenceEditorSubsystem)
 
 
+def _bound(binding):
+    """A MovieSceneBindingProxy that points at a sequence (an empty proxy has sequence None)."""
+    try:
+        return binding is not None and binding.get_editor_property("sequence") is not None
+    except Exception:
+        return binding is not None
+
+
+def add_spawnable(seq, cls=None, instance=None):
+    """Spawnable binding from a class or a level actor. Uses the sequence's own
+    add_spawnable_from_class / add_spawnable_from_instance (MovieSceneSequenceExtensions), which
+    work in a commandlet; LevelSequenceEditorSubsystem's versions act through the open Sequencer
+    and returned an empty proxy (sequence None, no tracks) in a commandlet (run on 5.8.3)."""
+    fn = getattr(seq, "add_spawnable_from_instance" if instance is not None else "add_spawnable_from_class", None)
+    b = None
+    if fn is not None:
+        b = fn(instance if instance is not None else cls)
+    if not _bound(b):
+        ls = _ls()
+        b = (ls.add_spawnable_from_instance(seq, instance) if instance is not None
+             else ls.add_spawnable_from_class(seq, cls))
+    if not _bound(b):
+        raise RuntimeError("could not add a spawnable to %s (open the sequence in Sequencer or "
+                           "use the sequence's own add_spawnable_* in Python)" % seq.get_name())
+    return b
+
+
+def _gid(guid):
+    """Comparable text for an unreal.Guid. On 5.8.3, str(guid) is the Python object address and
+    guid == same_guid returned False, so compare guid.to_string() (run on 5.8.3)."""
+    try:
+        return guid.to_string()
+    except Exception:
+        return str(guid)
+
+
+def bind_component(seq, component, parent_binding):
+    """Possessable binding for a component under its (spawnable) owner binding. Possessing a
+    component also adds a possessable for its owner actor when that actor is not bound yet; for
+    a temporary template camera that orphan never resolves, so it is removed here (run on 5.8.3:
+    without this, audit_sequence reported bind.unresolved on every shot)."""
+    before = {_gid(b.get_id()) for b in seq.get_bindings()}
+    comp_b = seq.add_possessable(component)
+    comp_b.set_parent(parent_binding)
+    keep = _gid(comp_b.get_id())
+    for b in list(seq.get_bindings()):
+        g = _gid(b.get_id())
+        if g not in before and g != keep and not list(b.get_tracks()):
+            b.remove()
+    return comp_b
+
+
+def track_of(binding, track_class):
+    """The binding's existing track of that class, else a new one (some bindings arrive with
+    default tracks, and add_track then returns None for a duplicate)."""
+    found = list(binding.find_tracks_by_exact_type(track_class)) if hasattr(
+        binding, "find_tracks_by_exact_type") else []
+    return found[0] if found else binding.add_track(track_class)
+
+
 @contextlib.contextmanager
 def editor_tool(name, steps):
     """ONE undo entry plus a progress dialog around any Sequencer tool: "long running Python
@@ -1805,7 +1869,7 @@ def new_sequence(name, package_path, fps, start=None, end=None):
 
 def _channels(section):
     """{name: channel} for a section, with index names as fallback."""
-    chans = list(section.get_all_channels())  # [verify] 5.8 name
+    chans = list(section.get_all_channels())  # run on 5.8.3
     out = {}
     for i, ch in enumerate(chans):
         try:
@@ -1813,6 +1877,9 @@ def _channels(section):
         except Exception:
             nm = str(i)
         out[nm] = ch
+        # 5.8.3 names carry an index suffix: "Location.X_0" (run on 5.8.3)
+        base = nm.rsplit("_", 1)[0] if nm.rsplit("_", 1)[-1].isdigit() else nm
+        out.setdefault(base, ch)
         out.setdefault(str(i), ch)
     return out
 
@@ -1827,15 +1894,16 @@ def key(channel, frame, value, interp="auto"):
     mode = {"auto": "AUTO", "constant": "CONSTANT", "linear": "LINEAR"}[interp]
     return channel.add_key(u.FrameNumber(int(frame)), value, 0.0,
                            u.MovieSceneTimeUnit.DISPLAY_RATE,
-                           getattr(u.MovieSceneKeyInterpolation, mode))  # [verify] signature
+                           getattr(u.MovieSceneKeyInterpolation, mode))  # run on 5.8.3
 
 
 def key_transform(binding, keys, section_range):
     """keys: [(frame, (x, y, z), (pitch, yaw, roll))]. Adds a transform track and keys
     location and rotation (Rotation.X roll, .Y pitch, .Z yaw)."""
     u = _u()
-    tr = binding.add_track(u.MovieScene3DTransformTrack)
-    sec = tr.add_section()
+    tr = track_of(binding, u.MovieScene3DTransformTrack)
+    secs = list(tr.get_sections())
+    sec = secs[0] if secs else tr.add_section()
     sec.set_range(int(section_range[0]), int(section_range[1]))
     ch = _channels(sec)
     for frame, loc, rot in keys:
@@ -1852,7 +1920,7 @@ def key_property(binding, prop_name, prop_path, keys, section_range, interp="con
     FocusSettings.ManualFocusDistance): keys [(frame, value)]."""
     u = _u()
     tr = binding.add_track(u.MovieSceneFloatTrack)
-    tr.set_property_name_and_path(prop_name, prop_path)  # [verify]
+    tr.set_property_name_and_path(prop_name, prop_path)  # run on 5.8.3
     sec = tr.add_section()
     sec.set_range(int(section_range[0]), int(section_range[1]))
     ch = list(sec.get_all_channels())[0]
@@ -1887,7 +1955,7 @@ def _in_folder(folder, binding, report):
     if folder is None:
         return
     try:
-        folder.add_child_object_binding(binding)  # [verify]
+        folder.add_child_object_binding(binding)  # run on 5.8.3
     except Exception as e:
         report["soft"].append("folder: %s" % e)
 
@@ -1900,7 +1968,6 @@ def add_cine_camera(shot_seq, plan, shot, row, report):
     covers pre-roll plus the shot. The UI equivalent, create_camera(spawnable=True), acts on
     the sequence focused in Sequencer and adds the same default tracks (seq-py)."""
     u = _u()
-    ls = _ls()
     actors = u.get_editor_subsystem(u.EditorActorSubsystem)
     g = shot_geometry(plan, shot)
     fb = _filmback(plan)
@@ -1919,13 +1986,13 @@ def add_cine_camera(shot_seq, plan, shot, row, report):
     if g["focus_start"]:
         fs.set_editor_property("manual_focus_distance", float(g["focus_start"]))
     cc.set_editor_property("focus_settings", fs)
-    try:  # zoomed-in far cameras get correct LODs (cam doc, Camera Options) [verify name]
+    try:  # zoomed-in far cameras get correct LODs (cam doc, Camera Options); run on 5.8.3
         cc.set_editor_property("use_field_of_view_for_lod", True)
     except Exception as e:
         report["soft"].append("fov lod: %s" % e)
     if fb.get("crop"):
         try:
-            crop = cc.get_editor_property("crop_settings")  # [verify] 5.x name
+            crop = cc.get_editor_property("crop_settings")  # run on 5.8.3
             crop.set_editor_property("aspect_ratio", float(fb["crop"]))
             cc.set_editor_property("crop_settings", crop)
         except Exception as e:
@@ -1934,15 +2001,14 @@ def add_cine_camera(shot_seq, plan, shot, row, report):
     if iso is not None:
         try:
             pps = cc.get_editor_property("post_process_settings")
-            pps.set_editor_property("override_camera_iso", True)  # [verify]
+            pps.set_editor_property("override_camera_iso", True)  # run on 5.8.3
             pps.set_editor_property("camera_iso", float(iso))
             cc.set_editor_property("post_process_settings", pps)
         except Exception as e:
             report["soft"].append("iso: %s" % e)
-    cam_b = ls.add_spawnable_from_instance(shot_seq, tmp)
+    cam_b = add_spawnable(shot_seq, instance=tmp)
     cam_b.set_display_name("CAM_%s" % shot["name"])
-    comp_b = shot_seq.add_possessable(cc)
-    comp_b.set_parent(cam_b)
+    comp_b = bind_component(shot_seq, cc, cam_b)
     actors.destroy_actor(tmp)
     rng = (row["cut_start"], row["local_end"])
     key_property(comp_b, "CurrentFocalLength", "CurrentFocalLength",
@@ -1963,7 +2029,7 @@ def add_cine_camera(shot_seq, plan, shot, row, report):
     cut_tr = shot_seq.add_track(u.MovieSceneCameraCutTrack)
     cut = cut_tr.add_section()
     cut.set_range(int(row["cut_start"]), int(row["local_end"]))
-    cut.set_camera_binding_id(shot_seq.get_binding_id(cam_b))  # [verify]
+    cut.set_camera_binding_id(shot_seq.get_binding_id(cam_b))  # run on 5.8.3
     return cam_b, comp_b, g
 
 
@@ -1972,10 +2038,9 @@ def add_performer(shot_seq, plan, shot, row, perf, report):
     and at least 1 frame because temporal samples evaluate before the start, mrg doc); the
     animation offset keeps the planned pose on the shot's first frame."""
     u = _u()
-    ls = _ls()
     subj = plan["subjects"][perf["subject"]]
     cls = _load_class(u, subj["class"])
-    b = ls.add_spawnable_from_class(shot_seq, cls)
+    b = add_spawnable(shot_seq, cls=cls)
     b.set_display_name(perf["subject"])
     pos = perf.get("position") or subj.get("position", [0, 0, 0])
     yaw = float(perf.get("yaw", subj.get("yaw", 0.0)))
@@ -1994,7 +2059,8 @@ def add_performer(shot_seq, plan, shot, row, perf, report):
         sec.set_range(int(start), int(row["local_end"]))
         params = sec.get_editor_property("params")
         params.set_editor_property("animation", u.load_asset(perf["anim"]))
-        # offset in TICK resolution, not display frames [added, verify property name]
+        # offset in TICK resolution, not display frames [added]; the property is a FrameNumber on
+        # 5.8.3, this path (a real animation) is not yet run
         tick = shot_seq.get_tick_resolution()
         disp = shot_seq.get_display_rate()
         ticks_per_frame = (tick.numerator / float(tick.denominator)) / (
@@ -2012,7 +2078,6 @@ def add_lighting_subsequence(shot_seq, plan, shot, row, cam_keys=None):
     Glitch's camera-parented spotlight (GLITCH [00:27:18]) [added: keys instead of an attach
     track, which is scripted only with [verify] calls]."""
     u = _u()
-    ls = _ls()
     pkg = shot_asset_path(plan, shot["name"]).rsplit("/", 1)[0]
     lgt = new_sequence("%s_%s_LGT" % (plan["name"], shot["name"]), pkg, plan["fps"],
                        row["local_start"], row["local_end"])
@@ -2022,14 +2087,14 @@ def add_lighting_subsequence(shot_seq, plan, shot, row, cam_keys=None):
     sec.set_range(int(row["cut_start"]), int(row["local_end"]))
     made = []
     if cam_keys:
-        b = ls.add_spawnable_from_class(lgt, u.SpotLight)
+        b = add_spawnable(lgt, cls=u.SpotLight)
         b.set_display_name("TEMP_camlight")
         key_transform(b, [(f, [p[0], p[1], p[2] + 20.0], r) for f, p, r in cam_keys],
                       (row["cut_start"], row["local_end"]))
         made.append("TEMP_camlight")
     for i, L in enumerate(shot.get("lights", [])):
         cls = getattr(u, L.get("class", "RectLight"))
-        b = ls.add_spawnable_from_class(lgt, cls)
+        b = add_spawnable(lgt, cls=cls)
         b.set_display_name(L.get("role", "light%d" % i))
         tgt = _resolve_target(plan, L.get("target"))
         pitch, yaw = look_at(L["position"], tgt) if tgt else (0.0, 0.0)
@@ -2089,7 +2154,7 @@ def build_from_plan(plan, check=True):
                 try:
                     tr = master.add_track(u.MovieSceneAudioTrack)
                     sec = tr.add_section()
-                    sec.set_sound(u.load_asset(a["sound"]))  # [verify]
+                    sec.set_sound(u.load_asset(a["sound"]))  # [verify] not yet run
                     sec.set_range(int(a.get("start", 0)), int(total))
                 except Exception as e:
                     report["soft"].append("audio: %s" % e)
@@ -2159,7 +2224,7 @@ def audit_sequence(master, plan=None, world=None, bias_policy="bottom_up"):
         except Exception:
             pass
         cuts = _sections(seq, u.MovieSceneCameraCutTrack)
-        spawn_ids = {str(x.get_id()) for x in seq.get_spawnables()}
+        spawn_ids = {_gid(x.get_id()) for x in seq.get_spawnables()}
         if not cuts:
             out.append(_f("fail", "cam.cut", "no camera cut", short))
         else:
@@ -2175,16 +2240,19 @@ def audit_sequence(master, plan=None, world=None, bias_policy="bottom_up"):
             for c in cuts:
                 try:
                     bid = c.get_camera_binding_id()
-                    bp = seq.resolve_binding_id(bid)  # [verify]
-                    if str(bp.get_id()) not in spawn_ids:
+                    bp = seq.resolve_binding_id(bid)  # run on 5.8.3
+                    if _gid(bp.get_id()) not in spawn_ids:
                         out.append(_f("warn", "cam.spawnable", "camera is not a spawnable of this "
                                       "shot (possessable or cross-sequence)", short,
                                       "cam doc; SW yOcgYMcxr3Q [00:07:53]"))
                 except Exception as e:
                     out.append(_f("warn", "cam.resolve", "cannot resolve camera binding: %s" % e,
                                   short))
+        # after a binding's remove(), get_possessables() still returned it in the same session
+        # as an invalid proxy with an empty name (run on 5.8.3): skip invalid proxies
+        live_poss = [p for p in seq.get_possessables() if not hasattr(p, "is_valid") or p.is_valid()]
         if world is not None:
-            for p in seq.get_possessables():
+            for p in live_poss:
                 try:
                     if p.get_parent() is not None and p.get_parent().is_valid():
                         continue  # component bindings resolve through their spawnable parent
@@ -2195,7 +2263,7 @@ def audit_sequence(master, plan=None, world=None, bias_policy="bottom_up"):
                     out.append(_f("fail", "bind.unresolved", "possessable %s does not resolve in "
                                   "this map (world dependency)" % p.get_display_name(), short,
                                   "SW yOcgYMcxr3Q [00:13:50]"))
-        for p in seq.get_possessables():
+        for p in live_poss:
             try:
                 if p.get_parent() is not None and p.get_parent().is_valid():
                     continue
@@ -2290,7 +2358,7 @@ def board_frames(plan):
 def _playback_params(u, frame):
     p = u.MovieSceneSequencePlaybackParams()
     try:
-        p.set_editor_property("frame", u.FrameTime(u.FrameNumber(int(frame))))  # [verify]
+        p.set_editor_property("frame", u.FrameTime(u.FrameNumber(int(frame))))  # run on 5.8.3
     except Exception:
         p.frame = u.FrameTime(u.FrameNumber(int(frame)))
     return p
@@ -2388,7 +2456,7 @@ def run_on_ticker(gen, on_done=None, name="ue_cine"):
 
 def _editor_property_names(obj):
     """Editor property names parsed from the class docstring ("- ``name`` (type): ...")
-    [added: Unreal Python has no property listing; verify the docstring format in 5.8]."""
+    [added: Unreal Python has no property listing; the docstring format held on 5.8.3]."""
     doc = (obj if isinstance(obj, type) else type(obj)).__doc__ or ""
     names = re.findall(r"^\s*-\s+``?([a-z_][a-z0-9_]*)``?\s+\(", doc, re.M)
     return list(dict.fromkeys(names))
@@ -2417,7 +2485,15 @@ def graph_snapshot(graph):
             elif hasattr(v, "name") and isinstance(getattr(v, "name"), str):
                 props[n] = v.name
         nodes.append({"name": key_, "class": type(node).__name__, "properties": props})
-        if isinstance(node, (u.MovieGraphSubgraphNode, u.MovieGraphOutputNode)):
+        pins = []
+        if hasattr(node, "get_input_pins"):
+            try:  # every input pin, so named branches ("main", "beauty") are walked too
+                pins = list(node.get_input_pins())
+            except Exception:
+                pins = []
+        if pins:
+            pass
+        elif isinstance(node, (u.MovieGraphSubgraphNode, u.MovieGraphOutputNode)):
             pins = [node.get_input_pin("Globals"), node.get_input_pin("Input")]
         elif isinstance(node, u.MovieGraphBranchNode):
             pins = [node.get_input_pin("True"), node.get_input_pin("False")]
@@ -2437,6 +2513,63 @@ def graph_snapshot(graph):
     except Exception:
         pass
     return {"graph": graph.get_path_name(), "nodes": nodes, "variables": variables}
+
+
+def create_render_graph(asset_path, width, height, output_dir=None, formats=("exr",),
+                        file_name_format="{sequence_name}.{frame_number}", disable_tone_curve=True,
+                        exr_compression="PIZ"):
+    """A minimal Movie Render Graph asset: Global Output Settings (resolution, folder, file
+    name) feeding the output format nodes on Globals, and one render layer with the deferred
+    renderer. Same wiring as Epic's MovieGraphCreateConfigExample.py (Engine/Plugins/MovieScene/
+    MovieRenderPipeline/Content/Python). formats: any of exr, multilayer_exr, png, jpg, bmp.
+    A starting point for review renders and tests; the production template (P8) adds sampling,
+    warm-up, game overrides and exposed variables. Run on 5.8.3 (commandlet and latent editor).
+    Refuses to overwrite an existing asset."""
+    u = _u()
+    if u.EditorAssetLibrary.does_asset_exist(asset_path):
+        raise RuntimeError("%s exists: version the graph name instead of overwriting" % asset_path)
+    pkg, name = asset_path.rsplit("/", 1)
+    g = u.AssetToolsHelpers.get_asset_tools().create_asset(name, pkg, u.MovieGraphConfig, None)
+    out_node = g.get_output_node()
+    gos = g.create_node_by_class(u.MovieGraphGlobalOutputSettingNode)
+    gos.set_editor_property("override_output_resolution", True)
+    gos.set_editor_property("output_resolution", u.MovieGraphLibrary.named_resolution_from_size(
+        int(width), int(height)))
+    if output_dir:
+        gos.set_editor_property("override_output_directory", True)
+        gos.set_editor_property("output_directory", u.DirectoryPath(path=output_dir))
+    cls = {"exr": "MovieGraphImageSequenceOutputNode_EXR",
+           "multilayer_exr": "MovieGraphImageSequenceOutputNode_MultiLayerEXR",
+           "png": "MovieGraphImageSequenceOutputNode_PNG", "jpg": "MovieGraphImageSequenceOutputNode_JPG",
+           "bmp": "MovieGraphImageSequenceOutputNode_BMP"}
+    prev = gos
+    for f in formats:
+        node = g.create_node_by_class(getattr(u, cls[f]))
+        node.set_editor_property("override_file_name_format", True)
+        node.set_editor_property("file_name_format", file_name_format)
+        if "exr" in f and exr_compression:
+            node.set_editor_property("override_compression", True)
+            node.set_editor_property("compression", getattr(u.EXRCompressionFormat, exr_compression))
+        g.add_labeled_edge(prev, "", node, "")
+        prev = node
+    g.add_labeled_edge(prev, "", out_node, "Globals")
+    g.add_labeled_edge(g.get_input_node(), "Globals", gos, "")
+    branch_out = g.add_output()
+    branch_out.set_member_name("main")
+    branch_in = g.add_input()
+    branch_in.set_member_name("main")
+    deferred = g.create_node_by_class(u.MovieGraphDeferredRenderPassNode)
+    if disable_tone_curve:
+        deferred.set_editor_property("override_b_disable_tone_curve", True)
+        deferred.set_editor_property("disable_tone_curve", True)
+    layer = g.create_node_by_class(u.MovieGraphRenderLayerNode)
+    layer.set_editor_property("override_layer_name", True)
+    layer.set_editor_property("layer_name", "beauty")
+    g.add_labeled_edge(deferred, "", layer, "")
+    g.add_labeled_edge(layer, "", out_node, "main")
+    g.add_labeled_edge(g.get_input_node(), "main", deferred, "")
+    u.EditorAssetLibrary.save_asset(asset_path)
+    return g
 
 
 _EXECUTOR = {"executor": None, "done": None}

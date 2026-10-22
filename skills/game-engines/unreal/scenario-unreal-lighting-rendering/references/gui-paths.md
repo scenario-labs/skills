@@ -2,8 +2,9 @@
 
 The same procedures as `procedures.md`, through menus. UE 5.8 on macOS: the 5.6 viewport toolbar
 redesign moved the view mode, exposure and show menus (`ToolMenusViewportToolbars 0` restores the
-old toolbars); Ctrl shortcuts in Epic's docs usually map to Cmd on Mac [verify]. Paths come from the
-5.8 docs quoted in the notes; wording may differ slightly in the installed editor [verify].
+old toolbars); Ctrl shortcuts in Epic's docs usually map to Cmd on Mac [not yet run]. Paths come
+from the 5.8 docs quoted in the notes; wording may differ slightly in the installed editor [not yet
+run: GUI paths were not walked in 5.8.3].
 
 ## Project settings (P1)
 
@@ -89,8 +90,8 @@ old toolbars); Ctrl shortcuts in Epic's docs usually map to Cmd on Mac [verify].
   Offset Disable Distance.
 - Albedo: viewport view mode > Buffer Visualization > Base Color (read it next to the chart of the
   calibrator); material instance Details > Base Color parameters.
-- Chrome ball and chart: hold backslash in the viewport for the calibration chart [verify in 5.8],
-  or place `/Engine/EditorMeshes/ColorCalibrator/SM_ColorCalibrator`.
+- Chrome ball and chart: hold backslash in the viewport for the calibration chart [not yet run in
+  5.8], or place `/Engine/EditorMeshes/ColorCalibrator/SM_ColorCalibrator`.
 
 ## Path tracer and Movie Render Graph (P13)
 

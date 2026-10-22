@@ -1,10 +1,11 @@
 # scenario-unreal-vfx procedures (full code)
 
-Every in-editor snippet here is **not yet run in Unreal** (engine not installed on 2026-09-24).
-"Offline" procedures ran with system python3 (numpy, Pillow) through
-`python3 tests/code/unreal-vfx/run_all.py --offline`. Names marked [verify] are answered by
-`tests/code/unreal-vfx/job_00_vfx_probe.py`; after its first run, replace each [verify] here with
-what `archive/tests/unreal-vfx/<stamp>/probe.json` recorded.
+**Status (2026-10-21, Unreal 5.8.3):** each block says "run on 5.8.3" or "not yet run" in its Test
+line. Run live: V0, V2, V3 creation, V7, D1 and the MCP recipes (`mcp-niagara.md`,
+`tests/code/unreal-vfx/live_mcp_recipes.py`). "Offline" procedures ran with system python3 (numpy,
+Pillow) through `python3 tests/code/unreal-vfx/run_all.py --offline`. A `[verify]` left below marks
+a name that no 5.8.3 run has touched yet. With an editor and Epic's MCP, most V2 and V3 steps are a
+few toolset calls: `mcp-niagara.md` has them as JSON.
 
 Channels (owned by scenario-unreal-expert): headless jobs through
 `ue_run.run_python(uproject, script)` (`UnrealEditor-Cmd <uproject> -run=pythonscript -script=...`,
@@ -22,20 +23,32 @@ import unreal
 import ue_vfx as V
 ```
 
-The strategy in one paragraph: Python cannot add or edit emitters, modules, renderers, simulation
-stages or scratchpads (5.8 API, audited classes). So every effect is a **duplicate of a template**
-whose structure is final and whose variable parts are **User parameters** under a written contract
-(`V.TEMPLATE_CONTRACTS`), its look comes from **Material Instances and textures** swapped by
-parameter, its cost class from an **Effect Type** asset and system properties, and its variation per
-placement from **component overrides** set at spawn by gameplay. Anything the template does not
-expose becomes one precise GUI request (module input to bind to which User parameter), made once,
-then verified by script.
+The strategy in one paragraph: on 5.8.3 Epic's Niagara toolsets add emitters, modules and renderers,
+set stack inputs and User parameters and read stack errors, through MCP or from Python with
+`V.niagara_tool` (run on 5.8.3; v0.1 said Python could not, which held only for the plain Python
+API). The craft is unchanged: every effect is a **duplicate of a template** whose structure is final
+and whose variable parts are **User parameters** under a written contract (`V.TEMPLATE_CONTRACTS`),
+its look comes from **Material Instances and textures** swapped by parameter, its cost class from an
+**Effect Type** asset and system properties, and its variation per placement from **component
+overrides** set at spawn by gameplay. Anything the template does not expose is added with
+`AddUserVariables` plus a Linked stack input (`mcp-niagara.md` R4), or, without the toolsets, one
+precise GUI request, then verified by script.
 
 ---
 
 ## V0. Probe the engine (run first)
 
-Test: `tests/code/unreal-vfx/job_00_vfx_probe.py`. Status: not yet run in Unreal.
+Test: `tests/code/unreal-vfx/job_00_vfx_probe.py`. Status: run on 5.8.3 (commandlet). Answers:
+NCPoolMethod AUTO_RELEASE, MANUAL_RELEASE, NONE; NiagaraAgeUpdateMode DESIRED_AGE,
+DESIRED_AGE_NO_SEEK, TICK_DELTA_TIME; NiagaraCullReaction DEACTIVATE, DEACTIVATE_IMMEDIATE,
+DEACTIVATE_IMMEDIATE_RESUME, DEACTIVATE_RESUME, PAUSE_RESUME; NiagaraScalabilityUpdateFrequency
+CONTINUOUS, HIGH, LOW, MEDIUM, SPAWN_ONLY; ClusterConnectionTypeEnum
+CHAOS_BOUNDS_OVERLAP_FILTERED_DELAUNAY_TRIANGULATION,
+CHAOS_MINIMAL_SPANNING_SUBSET_DELAUNAY_TRIANGULATION, CHAOS_POINT_IMPLICIT,
+CHAOS_POINT_IMPLICIT_AUGMENTED_WITH_MINIMAL_DELAUNAY; DamageModelTypeEnum
+CHAOS_DAMAGE_MODEL_MATERIAL_STRENGTH_AND_CONNECTIVITY_DAMAGE_THRESHOLD,
+CHAOS_DAMAGE_MODEL_USER_DEFINED_DAMAGE_THRESHOLD; NiagaraEffectTypeFactoryNew present; no
+GeometryCollectionRootProxyRenderer class in Python.
 
 ```python
 rep = V.probe()        # classes with Niagara/GeometryCollection/Dataflow/Fracture/FieldSystem/ChaosCache/FXConverter,
@@ -46,12 +59,14 @@ V.console("DumpConsoleCommands")   # then grep the project log for fx., Niagara,
 ```
 
 The job also lists `/Niagara`, `/NiagaraFluids` and `/Engine/EditorResources/FieldNodes` assets
-whose path matches Template, Fountain, Minimal, SpriteBurst, Gas or FS_. Two discovery routes stay
-open and are only used once the probe proves them: helper classes of the Cascade to Niagara
-converter plugin (Python-driven emitter merging works in commandlets since 5.7, deltas) and
-community MCP bridges that advertise Niagara stack authoring (db-lyon/ue-mcp) [verify both]. A
-Developer Mode `unreal.py` stub (Project Settings > Plugins > Python) is the most complete list of
-what the installed engine exposes.
+whose path matches Template, Fountain, Minimal, SpriteBurst, Gas or FS_; in a commandlet that list
+stays empty until `V.scan_paths(["/Niagara", ...])` runs (run on 5.8.3). The console scan is weak
+(12 names seen); check CVar names with `EditorAppToolset.SearchCVars` instead (`mcp-niagara.md`
+R10). Two discovery routes stay open and are only used once the probe proves them: helper classes of
+the Cascade to Niagara converter plugin (Python-driven emitter merging works in commandlets since
+5.7, deltas) and community MCP bridges that advertise Niagara stack authoring (db-lyon/ue-mcp)
+[verify both]. A Developer Mode `unreal.py` stub (Project Settings > Plugins > Python) is the most
+complete list of what the installed engine exposes.
 
 ## V1. Classify elements and write the plan (offline)
 
@@ -121,7 +136,9 @@ interior motes on Scalability Mode Self), rain or leaves (NET_Ambient, all emitt
 
 ## V2. Duplicate a template, set system properties, verify the contract (headless)
 
-Test: `tests/code/unreal-vfx/job_niagara_template_pass.py`. Status: not yet run in Unreal.
+Test: `tests/code/unreal-vfx/job_niagara_template_pass.py`. Status: run on 5.8.3 (commandlet),
+passing, from the engine template `/Niagara/DefaultAssets/Templates/Systems/RadialBurst`. MCP
+equivalent: `mcp-niagara.md` R1 and R5.
 
 ```python
 sysA = V.duplicate_template("/Game/VFX/Templates/NS_T_Projectile",          # project template built once (V2b)
@@ -133,16 +150,16 @@ log = V.set_system_properties(sysA, {
     "warmup_time": 0.0,                    # warmup evaluates frames in sequence and hitches (scalability doc)
     "require_current_frame_data": True,    # the head follows a moving projectile this frame; False for static FX
 })
-params = V.user_parameters(sysA)           # NiagaraUserParameterInfo field names [verify]
+params = V.user_parameters(sysA)           # NiagaraUserParameterInfo.parameter_name / type_name (run on 5.8.3)
 check = V.contract_verdict(V.TEMPLATE_CONTRACTS["projectile"], params)
 print(log, check)                          # missing -> one GUI binding request (gui-paths.md, "Expose a User parameter")
 V.asset_subsystem().save_loaded_asset(sysA, only_if_is_dirty=False)
 ```
 
-`fixed_bounds` appears twice in the 5.8 Python doc (a Box and a bool): `V.niagara_facts` reads it by
-type; set the bool and the box through the Niagara Editor until the probe shows which one Python
-writes [verify]. Per-placement bounds can be set at runtime with
-`NiagaraComponent.set_system_fixed_bounds(local_box)` (doc-listed).
+`fixed_bounds` appears twice in the 5.8 Python doc (a Box and a bool): `V.niagara_facts` reads them
+through the toolset's `GetSystemData` (`bFixedBounds`, `FixedBounds`), and `SetSystemData` writes
+both in one merge (`mcp-niagara.md` R5, run on 5.8.3). Per-placement bounds can be set at runtime
+with `NiagaraComponent.set_system_fixed_bounds(local_box)` (doc-listed).
 
 Size fixed bounds for what the system leaves behind, not for the head (test
 `TestRefactorV2::test_fixed_bounds_for_travelling_effects`, offline, passed):
@@ -150,7 +167,7 @@ Size fixed bounds for what the system leaves behind, not for the head (test
 ```python
 print(V.fixed_bounds_check(speed_cm_s=2000, max_lifetime_s=1.2, effect_radius_cm=50, box_half_extent_cm=300))
 # needed 2450 cm: a 300 cm box culls the smoke trail while it is on screen (BOUNDS_TOO_SMALL)
-print(V.fixed_bounds_check(10000, 1.0, 20))      # PREFER_DYNAMIC: small effect traveling far
+print(V.fixed_bounds_check(10000, 1.0, 20))      # PREFER_DYNAMIC: small effect travelling far
 ```
 
 World-space particles trail up to speed x lifetime behind a moving emitter [derived]. Fixed bounds
@@ -177,12 +194,15 @@ Keyser's (#1 [00:09:44]).
 
 ## V3. Effect Types: create from presets or build once, then assign
 
-Test: `job_niagara_template_pass.py` (creation attempt is logged as soft). Status: not yet run in
-Unreal.
+Test: `job_niagara_template_pass.py` and `job_mcp_fixture.py`. Status: run on 5.8.3: the factory,
+`update_frequency`, `cull_reaction` and `allow_culling` set from Python; the caps
+(`SystemScalabilitySettings`) are not exposed to Python and `NiagaraSignificanceHandlerDistance` is
+not a Python class, so set caps with ObjectTools (`mcp-niagara.md` R8). Effect Types are shared:
+list existing ones and ask before creating.
 
 ```python
 for name in ("NET_OneShot", "NET_OneShotCritical", "NET_PersistentCritical", "NET_Ambient"):
-    eft, log = V.create_effect_type("/Game/VFX/EffectTypes/" + name, name)   # factory and fields [verify]
+    eft, log = V.create_effect_type("/Game/VFX/EffectTypes/" + name, name)   # run on 5.8.3; caps: see Test line
     print(name, log)                                                        # each field "ok" or "FAILED: ..."
 res = V.assign_effect_type(["/Game/VFX/Fireball/NS_Fireball", "/Game/VFX/Fireball/NS_FireballImpact"],
                            "/Game/VFX/EffectTypes/NET_OneShotCritical")
@@ -268,8 +288,8 @@ Generate what is missing (offline, system python3):
 ```python
 import ue_vfx as V
 V.save_png(V.make_glow_dot(256), "<out>/T_GlowDot.png")                # dot, blur, blur more, artifacts (Shishido [00:14:22])
-V.save_png(V.make_gradient_lut(V.FIRE_RAMP), "<out>/T_LUT_Fire.png")   # grayscale flipbook + LUT beats color variants
-V.save_png(V.make_erosion_noise(512), "<out>/T_Erosion_Noise.png")     # tileable erosion mask (Trümpler [00:39:52])
+V.save_png(V.make_gradient_lut(V.FIRE_RAMP), "<out>/T_LUT_Fire.png")   # grayscale flipbook + LUT beats colour variants
+V.save_png(V.make_erosion_noise(512), "<out>/T_Erosion_Noise.png")     # tileable erosion mask (Trumpler [00:39:52])
 ```
 
 Import and set (in editor):
@@ -307,7 +327,7 @@ Test: none automated yet; run in a live editor after V2. Status: not yet run in 
 
 ```python
 impact = V.load("/Game/VFX/Fireball/NS_FireballImpact")
-comp = V.spawn_pooled(impact, (0, 0, 100), method="AUTO_RELEASE", pie=True)   # NCPoolMethod member names [verify]
+comp = V.spawn_pooled(impact, (0, 0, 100), method="AUTO_RELEASE", pie=True)   # NCPoolMethod names from the probe; PIE spawn not yet run
 V.set_user_params(comp, {"User.Radius": 300.0,                                # the gameplay damage radius, same number
                          "User.SurfaceColor": unreal.LinearColor(0.35, 0.33, 0.30, 1.0),
                          "User.ImpactNormal": unreal.Vector(-1, 0, 0)})
@@ -335,7 +355,11 @@ rc.call("/Game/Maps/VFX_Review.VFX_Review:PersistentLevel.NiagaraActor_0.Niagara
 
 ## V7. Deterministic capture series (live editor)
 
-Test: `tests/code/unreal-vfx/live_capture_series.py`. Status: not yet run in Unreal.
+Test: `tests/code/unreal-vfx/live_capture_series.py`. Status: run on 5.8.3 as a latent job in an
+offscreen editor over `job_review_level.py`'s level (60 to 170 s); frames scored with
+`score_captures.py`. The offscreen editor viewport was 424 x 40, so the job renders through a
+CameraActor (`capture_ages(..., camera=)`) and projects the effect center with
+`V.project_to_screen`; plain ticking without seek did not show particles, DesiredAge plus seek did.
 
 1. Review level: the game's own lighting or a neutral but textured background (never a flat color:
    `ue_review.image_checks` flags a uniform frame as blank, and value is judged over the game
@@ -483,7 +507,7 @@ Test: none automated yet. Status: not yet run in Unreal.
 ```python
 for q in (0, 1, 2, 3):
     V.console("sg.EffectsQuality %d" % q, pie=True)
-    # check fx.Niagara.QualityLevel follows (Kiraly [00:27:17]) [verify]
+    # check fx.Niagara.QualityLevel follows (Kiraly [00:27:17]); the CVar exists, default 3 on 5.8.3
     # run the V10 scenario; capture the same frames (V7 in PIE); record active and culled counts from the Debug HUD
 ```
 
@@ -691,7 +715,8 @@ is not computed here).
 
 ## D1. Harden a Geometry Collection (headless)
 
-Test: `tests/code/unreal-vfx/job_gc_harden.py`. Status: not yet run in Unreal.
+Test: `tests/code/unreal-vfx/job_gc_harden.py`. Status: run on 5.8.3 (commandlet) on a GC made from
+the StaticMesh Dataflow template (`mcp-niagara.md` R7): Nanite on, removal written.
 
 **Choose ONE damage model first; it decides which number you tune** (Xiao Yue
 [00:19:54]-[00:20:27]). v0.1 of this skill showed Material Strength and Connectivity in the workflow
@@ -714,14 +739,14 @@ common = {
     "strip_on_cook": True,                  # stripping non-Nanite geometry cut about 95 % of asset size [00:05:28]
     "enable_nanite_fallback": False,        # True only if a non-Nanite platform ships
     "root_proxy_meshes": ["/Game/Destruction/SM_Wall"],             # renders until the first break; collision stays on the GC
-    "custom_renderer_class": "GeometryCollectionRootProxyRenderer", # ISM batching of proxies (5.5 notes) [verify class]
+    "custom_renderer_class": "GeometryCollectionRootProxyRenderer", # ISM batching (5.5 notes); not a Python class on 5.8.3: set in the GUI
     "remove_on_max_sleep": True, "maximum_sleep_time": (3.0, 5.0), "removal_duration": (1.0, 2.0),
     "automatic_crumble_partial_clusters": True,   # asset-level crumbling for Remove on Sleep (GeometryCollection doc)
     "slow_moving_as_sleeping": True,
     "physics_material": "/Game/Destruction/PM_Concrete",   # D3: density, friction, restitution, tensile strength
 }
 if MSC:
-    model = {"damage_model": "<DamageModelTypeEnum member for Material Strength and Connectivity>"}  # probe lists it [verify]
+    model = {"damage_model": "CHAOS_DAMAGE_MODEL_MATERIAL_STRENGTH_AND_CONNECTIVITY_DAMAGE_THRESHOLD"}  # run on 5.8.3
 else:
     model = {"damage_threshold": [5000.0, 500.0, 50.0],   # per level, decreasing (quickstart); tune in the gym
              "use_material_damage_modifiers": True}       # physical material multipliers steer every destructible
@@ -823,7 +848,7 @@ Gym level: the wall on a floor, a fixed camera, a turret Blueprint or the call b
 
 ```python
 plan = V.strain_plan([500000.0, 50000.0, 5000.0], projectile_speed=2000.0, reference_speed=2000.0)
-V.console("t.OverrideFPS 60", pie=True)          # fixed 60 fps review in PIE (McAdams and Monson [00:29:57]) [verify]
+V.console("t.OverrideFPS 60", pie=True)          # fixed 60 fps review in PIE (McAdams and Monson [00:29:57]); CVar exists on 5.8.3
 V.console("stat unit", pie=True)
 gc_actor = [a for a in unreal.GameplayStatics.get_all_actors_of_class(V.world(True), unreal.GeometryCollectionActor)][0]
 gc_comp = gc_actor.get_component_by_class(unreal.GeometryCollectionComponent)

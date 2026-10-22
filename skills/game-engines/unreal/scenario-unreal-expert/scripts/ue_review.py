@@ -34,7 +34,7 @@ Command line (headless render of a Level Sequence, legacy Primary Config or save
   build_render_command(engine, uproject, map, sequence, config, resolution=(1920, 1080))
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24)
 
 import json
 import math
@@ -699,14 +699,15 @@ def _rot(r):
 
 def set_camera(location, rotation, fov=None):
     """Put the active level viewport camera at location (cm) and rotation (pitch, yaw,
-    roll in degrees). fov uses LevelEditorSubsystem.set_level_viewport_fov (5.8, clamped
-    5 to 170). Returns what the viewport reports back."""
+    roll in degrees). fov uses LevelEditorSubsystem.set_level_viewport_fov(fov, viewport_config_key)
+    (5.8: the key is required, taken from get_active_viewport_config_key(); clamped 5 to 170).
+    Returns what the viewport reports back."""
     import unreal
     ues = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
     ues.set_level_viewport_camera_info(_vec(location), _rot(rotation))
     if fov is not None:
         les = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-        les.set_level_viewport_fov(float(fov))
+        les.set_level_viewport_fov(float(fov), les.get_active_viewport_config_key())
     loc, rot = ues.get_level_viewport_camera_info()
     return {"location": [loc.x, loc.y, loc.z], "rotation": [rot.pitch, rot.yaw, rot.roll]}
 

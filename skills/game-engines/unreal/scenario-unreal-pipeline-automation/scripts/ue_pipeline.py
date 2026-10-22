@@ -5,11 +5,15 @@ ue_pipeline: the pipeline TD layer of the Unreal Engine 5.8 agent team
 collision, LODs), material instance assignment, Python EditorValidators, reports, test and
 build command lines, log parsing.
 
-STATUS (2026-09-24): the PURE layer ran offline under python3 (tests in
-tests/code/unreal-pipeline-automation/). Every IN-EDITOR function is NOT YET RUN IN UNREAL:
-Unreal Engine was not installed when this was written. Names marked [verify] come from notes,
-older versions or inference; UNREAL_API lists every engine name this module touches, and
-tests/code/unreal-pipeline-automation/in_engine/first_run_checks.py checks them in the editor.
+STATUS (2026-10-21): the PURE layer runs offline under python3 (tests in
+tests/code/unreal-pipeline-automation/). The IN-EDITOR import path ran on UE 5.8.3 as a
+commandlet job (in_engine/run_in_unreal.py: preset, import, textures, instances, class rules,
+facts, validators, engine validation, redirector query; every fixture expectation held) and the
+probes in in_engine/ ran in a headless editor too. Still [not yet run]: validate_paths, the
+contact sheet job, explicit LOD chains and added collision in an editor, everything in the
+build half (cook, package, Gauntlet). UNREAL_API lists every engine name this module touches;
+in_engine/first_run_checks.py checks them (on 5.8.3: AutomationScheduler, StaticMesh.set_lod_group
+and, in a commandlet, StaticMeshEditorSubsystem are absent).
 
 Builds on the lead skill's toolkit (<skills>/scenario-unreal-expert/scripts): ue_env.find_engine,
 ue_run.run_python / run_commandlet / run_uat / build_buildcookrun / scan_log / result, and,
@@ -39,7 +43,7 @@ PURE (python3 anywhere, and inside Unreal)
               validation_messages(), job_verdict()
   config      ini_set(), zen_ci_patch()
   (also pure) normalize_role(), texture_params(), role_settings(), prefix_for()
-IN-EDITOR (need the `unreal` module; NOT YET RUN IN UNREAL)
+IN-EDITOR (need the `unreal` module; run on 5.8.3 except validate_paths and interchange_fbx_flags)
   api_presence(), ensure_pipeline_preset(), describe_pipeline(), interchange_fbx_flags(),
   import_source(), apply_texture_role(), create_material_instance(), assign_materials(),
   apply_mesh_rules(), mesh_facts(), texture_facts(), register_validators(), engine_validate(),
@@ -50,7 +54,7 @@ Jobs inside Unreal: scripts/ue_pipeline_job.py (through ue_run.run_python) and
 scripts/ue_contact_sheet_job.py (mode="latent").
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor after the U8 grade)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24; includes the refactor after the U8 grade)
 
 import csv
 import hashlib
@@ -97,7 +101,7 @@ def read_json(path):
 # =================================================================================== naming
 # Epic: "Recommended Asset Naming Conventions" (5.8 doc). Allar: Gamemakin UE style guide.
 # Values are tuples of accepted prefixes. Keys are Unreal class names as get_class().get_name()
-# returns them [verify for Blueprint subclasses]. "(added)" entries extend a table by analogy.
+# returns them [not yet run: for Blueprint subclasses]. "(added)" entries extend a table by analogy.
 CONVENTIONS = {
     "epic": {
         "source": "Epic, Recommended Asset Naming Conventions (5.8)",
@@ -158,7 +162,7 @@ PACK_ALIASES = {"ARM": "ORM"}
 TEXTURE_EXTS = (".png", ".tga", ".tif", ".tiff", ".exr", ".jpg", ".jpeg", ".psd", ".hdr")
 
 # (compression, srgb, lod_group) per role; enum member names on unreal.TextureCompressionSettings
-# and unreal.TextureGroup [verify]. Base color and emissive sRGB on, everything else linear.
+# and unreal.TextureGroup [not yet run]. Base color and emissive sRGB on, everything else linear.
 ROLE_SETTINGS = {
     "base_color": ("TC_DEFAULT", True, "TEXTUREGROUP_WORLD"),
     "emissive": ("TC_DEFAULT", True, "TEXTUREGROUP_WORLD"),
@@ -271,10 +275,10 @@ def check_name(name, class_name, convention="epic", folder=None, project_root=No
 
 
 def project_path_problems(path):
-    """Spaces or non-ASCII in the project path (Allar 2.1; the deltas list it as [verify] for UAT)."""
+    """Spaces or non-ASCII in the project path (Allar 2.1; the deltas list it as [not yet run] for UAT)."""
     out = []
     if " " in path:
-        out.append("project path contains spaces: keep the .uproject in a path without spaces [verify impact]")
+        out.append("project path contains spaces: keep the .uproject in a path without spaces [not yet run: impact]")
     try:
         path.encode("ascii")
     except UnicodeEncodeError:
@@ -556,7 +560,7 @@ def publish_diff(old, new, hash_key="sha1"):
 # =================================================================================== rules
 # Asset classes. lod_group values are the engine LOD groups listed by the Interchange import
 # reference (Small Prop, Large Prop, Level Architecture, Foliage, Deco, High Detail, Vista);
-# their FName spellings are [verify]. Collision kinds and every threshold are project defaults
+# their FName spellings are [not yet run]. Collision kinds and every threshold are project defaults
 # [added]: change them in the plan, not in code.
 ASSET_CLASSES = {
     "prop_small": {"lod_group": "SmallProp", "collision": "kdop26", "min_lods": 3},
@@ -568,7 +572,7 @@ ASSET_CLASSES = {
     "vista": {"lod_group": "Vista", "collision": "none", "min_lods": 2},
 }
 SMALL_PROP_MAX_CM = 150.0      # [added] project default: largest extent of a "small" prop
-DECOMPOSITION = {"hull_count": 4, "max_hull_verts": 16, "hull_precision": 100000}  # editor dialog defaults [verify]
+DECOMPOSITION = {"hull_count": 4, "max_hull_verts": 16, "hull_precision": 100000}  # editor dialog defaults [not yet run]
 NANITE_BLEND_MODES = ("BLEND_OPAQUE", "BLEND_MASKED")  # Nanite doc: Opaque and Masked only
 
 
@@ -843,7 +847,7 @@ def new_issues(records, allow):
 NOT_VERIFIED_DEFAULT = [
     "visual review of the contact sheet (pivot, scale, normals, texture assignment, LOD pops)",
     "collision fit in the collision view mode",
-    "in-editor API names marked [verify] (first_run_checks.py)",
+    "engine names marked [not yet run] (first_run_checks.py)",
 ]
 
 
@@ -935,7 +939,7 @@ def _engine(engine=None):
     return eng
 
 
-COMMON = ("-unattended", "-nosplash", "-stdout", "-FullStdOutLogOutput")  # [verify] on Mac
+COMMON = ("-unattended", "-nosplash", "-stdout", "-FullStdOutLogOutput")  # [not yet run] on Mac
 
 
 def shell_line(argv):
@@ -947,7 +951,7 @@ def python_job_command(uproject, script, engine=None, fatal_script_errors=True):
     space-free folder: -script= is split on spaces).
 
     Exit code rule: a Python failure only logs an error unless -ScriptErrorsAreFatal (5.5
-    release notes; documented for -ExecutePythonScript, [verify] under -run=pythonscript), so
+    release notes; documented for -ExecutePythonScript, [not yet run] under -run=pythonscript), so
     exit code 0 alone never proves the job worked. Add the flag, and still require the job's
     own result line (ue_run's UE_RESULT, read with job_verdict())."""
     if " " in script:
@@ -967,7 +971,7 @@ def datavalidation_command(uproject, engine=None):
 
 
 def resave_command(uproject, fixup_redirects=True, autocheckout=False, autocheckin=False, engine=None):
-    """ResavePackages (naming doc; spelling -fixupredirects from its example, [verify])."""
+    """ResavePackages (naming doc; spelling -fixupredirects from its example, [not yet run])."""
     e = _engine(engine)
     a = [e["editor_cmd"], uproject, "-run=ResavePackages", "-projectonly"]
     if fixup_redirects:
@@ -991,7 +995,7 @@ def cook_command(uproject, platform="Mac", validation=True, engine=None, extra=(
 
 def automation_command(uproject, tests, report_dir, rendering=False, engine=None):
     """`Automation RunTest A+B;Quit` with -ReportExportPath (automation doc). rendering=True uses
-    the GUI binary without -nullrhi (screenshot tests); otherwise -Cmd with -nullrhi [verify]."""
+    the GUI binary without -nullrhi (screenshot tests); otherwise -Cmd with -nullrhi [not yet run]."""
     e = _engine(engine)
     names = tests if isinstance(tests, str) else "+".join(tests)
     a = [e["editor"] if rendering else e["editor_cmd"], uproject,
@@ -1005,7 +1009,7 @@ def gauntlet_command(uproject, test="UE.BootTest", build="local", platform="Mac"
                      configuration="Development", runtest=None, engine=None, extra=()):
     """RunUAT RunUnreal: -build is WHERE the build is (editor, local, a path), not what to build
     (Zack Hamilton, 3ftOkc-cA7U [00:13:16]). Built-ins: UE.BootTest, UE.EditorAutomation,
-    UE.TargetAutomation (Gauntlet doc) [verify on Mac]."""
+    UE.TargetAutomation (Gauntlet doc) [not yet run: on Mac]."""
     e = _engine(engine)
     a = [e["uat"], "RunUnreal", "-project=" + uproject, "-platform=" + platform,
          "-configuration=" + configuration, "-build=" + build, "-test=" + test]
@@ -1018,7 +1022,7 @@ def package_command(uproject, archive_dir, platform="Mac", config="Development",
                     nop4=True, distribution=False, incremental=False, extra=()):
     """BuildCookRun argv through the lead's ue_run.build_buildcookrun (cook validation on),
     plus -nop4, -distribution (.xcarchive and dSYMs on Apple, Josh Adams uxdEt9XXKb8 [00:19:48])
-    and -cookincremental (5.6, Beta in 5.8) when asked. All added flags [verify]."""
+    and -cookincremental (5.6, Beta in 5.8) when asked. All added flags [not yet run]."""
     e = _engine(engine)
     x = list(extra)
     if nop4:
@@ -1117,14 +1121,14 @@ def buildcookrun_diff(ours, launcher):
 
 def batch_job(function_path, arguments):
     """JSON for the 5.8 batch processor (BatchProcessLibrary.run_batch / -run=BatchProcessCommandlet).
-    function_path format from the 5.8 notes: '/Game/Python/<module>_PY.<Class>:<func>' [verify]."""
+    function_path format from the 5.8 notes: '/Game/Python/<module>_PY.<Class>:<func>' [not yet run]."""
     return json.dumps({"function": function_path, "arguments": list(arguments)})
 
 
 # =================================================================================== logs
 def parse_uat_log(text):
     """{ok, exit_code, success_line, failure_line, errors[:40], archive_hint}. Wording of the UAT
-    summary lines is [verify] on 5.8; exit code wins when present."""
+    summary lines is [not yet run] on 5.8; exit code wins when present."""
     code = None
     for m in re.finditer(r"ExitCode[=:\s]+(-?\d+)", text or ""):
         code = int(m.group(1))
@@ -1140,7 +1144,7 @@ def parse_uat_log(text):
 
 def parse_automation_report(report_dir):
     """Totals and failures from -ReportExportPath/index.json. The key names follow the report UE
-    writes (succeeded, failed, notRun, tests[].state, entries[].event) [verify on 5.8]."""
+    writes (succeeded, failed, notRun, tests[].state, entries[].event) [not yet run: on 5.8]."""
     p = os.path.join(report_dir, "index.json")
     if not os.path.isfile(p):
         return {"ok": False, "error": "no index.json in %s" % report_dir}
@@ -1166,7 +1170,7 @@ def parse_automation_report(report_dir):
 
 def parse_batch_results(path):
     """Rows of Saved/MultiprocessResults/results.txt (5.8 batch processor: Passed, ArgumentSummary,
-    Output per call) [verify exact layout]. Accepts a JSON list, a {"Results": [...]} object or JSON lines."""
+    Output per call) [not yet run: exact layout]. Accepts a JSON list, a {"Results": [...]} object or JSON lines."""
     with open(path, "r", encoding="utf-8-sig") as f:
         text = f.read()
     try:
@@ -1208,7 +1212,7 @@ def job_verdict(envelope, require_summary_ok=False):
 
 def validation_messages(text):
     """(asset, message) pairs from DataValidation or cook validation log lines, for allow-listing
-    legacy errors. Heuristic: an error line naming a /Game/ path [verify message format]."""
+    legacy errors. Heuristic: an error line naming a /Game/ path [not yet run: message format]."""
     out = []
     for ln in (text or "").splitlines():
         if re.search(r"Error", ln) and "/Game/" in ln and re.search(r"Validat|AssetCheck|DataValidation", ln):
@@ -1270,17 +1274,18 @@ UNREAL_API = [
     "AutomationLibrary", "AutomationScheduler", "LevelEditorSubsystem", "UnrealEditorSubsystem",
     "EditorActorSubsystem",
 ]
-DEFAULT_PIPELINE = "/Interchange/Pipelines/DefaultAssetsPipeline"  # engine plugin content [verify path]
+DEFAULT_PIPELINE = "/Interchange/Pipelines/DefaultAssetsPipeline"  # engine plugin content (run on 5.8.3)
+GLTF_PIPELINE = "/Interchange/Pipelines/DefaultGLTFAssetsPipeline"  # keeps glTF material instances (run on 5.8.3)
 DEFAULT_MATERIAL_HINTS = ("WorldGridMaterial", "DefaultMaterial")
 
 # Import policy for static props. Each row: candidates, value, why. A candidate is a dotted
 # property path on the duplicated generic assets pipeline, or (path, value) when spellings need
 # different values; the first that exists wins. Values may be EnumRef or PathRef, resolved
-# inside Unreal. Property and enum names are [verify]: describe_pipeline() dumps the real ones
-# on the first run, and ensure_pipeline_preset() lists every row it could not set.
+# inside Unreal. Names checked with describe_pipeline() on 5.8.3 (the texture pipeline sits under
+# material_pipeline); ensure_pipeline_preset() still lists every row it could not set.
 class EnumRef(tuple):
     """An unreal enum member resolved at set time: EnumRef("InterchangeMaterialImportOption",
-    ("DO_NOT_IMPORT", ...)) tries unreal.<enum>.<member> for each spelling. Pure container."""
+    ("IMPORT_AS_MATERIAL_INSTANCES", ...)) tries unreal.<enum>.<member> for each spelling. Pure container."""
     def __new__(cls, enum_name, members):
         return tuple.__new__(cls, (enum_name, tuple(members)))
 
@@ -1293,7 +1298,10 @@ PROP_PIPELINE_SETTINGS = [
     (["use_source_name_for_asset"], True, "asset name from the staged file name (plan names)"),
     (["mesh_pipeline.import_static_meshes"], True, "static props"),
     (["mesh_pipeline.import_skeletal_meshes"], False, "skeletal goes to scenario-unreal-animation's preset"),
-    (["mesh_pipeline.combine_static_meshes"], True, "one static mesh per file [added]"),
+    ([("mesh_pipeline.combine_static_meshes_behavior",
+       EnumRef("InterchangeCombineStaticMeshesBehavior", ("ALL",))),
+      "mesh_pipeline.combine_static_meshes"], True,
+     "one static mesh per file; 5.8.3 deprecates the bool (DeprecationWarning) for the enum"),
     (["mesh_pipeline.import_collision_according_to_mesh_name"], True, "UCX_/UBX_/UCP_/USP_ from the DCC"),
     (["mesh_pipeline.import_collision"], False, "class rule adds collision after import [added]"),
     (["mesh_pipeline.build_nanite"], False, "decided per mesh after import (nanite_decision)"),
@@ -1305,12 +1313,14 @@ PROP_PIPELINE_SETTINGS = [
        EnumRef("InterchangeVertexColorImportOption", ("IVCIO_IGNORE", "IGNORE")))], None,
      "Vertex Color Import Option = Ignore unless the master reads vertex colour (pipeline digest P2 preset)"),
     (["animation_pipeline.import_animations"], False, "static props"),
-    ([("material_pipeline.material_import",
-       EnumRef("InterchangeMaterialImportOption", ("DO_NOT_IMPORT", "IMPORT_NONE"))),
-      "material_pipeline.import_materials", "material_pipeline.b_import_materials"], False,
+    # 5.8.3: InterchangeMaterialImportOption has only IMPORT_AS_MATERIALS and IMPORT_AS_MATERIAL_INSTANCES;
+    # "no materials" is import_materials False. The texture pipeline sits under the material pipeline.
+    (["material_pipeline.import_materials"], False,
      "DCC shaders (lambert1) never become assets; instances come from the plan"),
-    (["texture_pipeline.import_textures"], False, "textures import from staged files with explicit roles"),
-    (["texture_pipeline.detect_normal_map_texture"], True, "safety net if textures are imported"),
+    (["material_pipeline.texture_pipeline.import_textures", "texture_pipeline.import_textures"], False,
+     "textures import from staged files with explicit roles"),
+    (["material_pipeline.texture_pipeline.detect_normal_map_texture", "texture_pipeline.detect_normal_map_texture"], True,
+     "safety net if textures are imported"),
 ]
 
 
@@ -1368,8 +1378,44 @@ def _eas():
 
 
 def _sms():
+    """StaticMeshEditorSubsystem, or EditorStaticMeshLibrary where the subsystem is None (a
+    commandlet). Run on 5.8.3 in a commandlet: the library's get_lod_count, set_lods and
+    add_simple_collisions return -1 and get_lod_screen_sizes returns [] (they refuse to run
+    outside the editor); use _mesh_lod_count and _simple_collision_count for reads, and run
+    LOD chains and added collision in an editor (MCP or the latent mode)."""
     u = _u()
-    return u.get_editor_subsystem(u.StaticMeshEditorSubsystem)
+    return u.get_editor_subsystem(u.StaticMeshEditorSubsystem) or u.EditorStaticMeshLibrary
+
+
+def _in_editor_mesh_tools():
+    u = _u()
+    return u.get_editor_subsystem(u.StaticMeshEditorSubsystem) is not None
+
+
+def _mesh_lod_count(mesh):
+    """StaticMesh.get_num_lods works in both channels (run on 5.8.3)."""
+    if hasattr(mesh, "get_num_lods"):
+        try:
+            return int(mesh.get_num_lods())
+        except Exception:
+            pass
+    return _sms().get_lod_count(mesh)
+
+
+def _simple_collision_count(mesh):
+    """Simple shapes in the body setup. Run on 5.8.3: get_simple_collision_count read 0 (editor)
+    and -1 (commandlet) for the convex hull Interchange builds, while agg_geom held it."""
+    try:
+        ag = mesh.get_editor_property("body_setup").get_editor_property("agg_geom")
+    except Exception:
+        return _sms().get_simple_collision_count(mesh)
+    n = 0
+    for k in ("convex_elems", "box_elems", "sphyl_elems", "sphere_elems", "tapered_capsule_elems"):
+        try:
+            n += len(ag.get_editor_property(k))
+        except Exception:
+            pass
+    return n
 
 
 def _enum(enum_name, *members):
@@ -1378,7 +1424,7 @@ def _enum(enum_name, *members):
     for m in members:
         if e is not None and hasattr(e, m):
             return getattr(e, m)
-    raise AttributeError("unreal.%s has none of %s [verify]" % (enum_name, members))
+    raise AttributeError("unreal.%s has none of %s [not yet run]" % (enum_name, members))
 
 
 def _get(obj, name):
@@ -1406,19 +1452,33 @@ def _set_path(root, dotted, value):
 
 
 def ensure_pipeline_preset(dest_path, settings=None, source=DEFAULT_PIPELINE, overwrite=False):
-    """IN-EDITOR, NOT YET RUN IN UNREAL. Duplicate the engine's generic assets pipeline into the
+    """IN-EDITOR (run on 5.8.3, commandlet). Duplicate the engine's generic assets pipeline into the
     project and set the import policy (Interchange PM, Oq6KbrqkGnw [00:10:59]: presets are team
     policy; [00:39:28]: scripted imports use the pipeline's defaults, not the dialog memory).
-    Returns {path, created, set: [...], failed: [...]}; `failed` lists names to fix on 5.8."""
+    An existing preset is loaded and the rows are applied again (overwrite=True re-duplicates
+    it only when the existing asset cannot be loaded). Returns {path, created, set: [...],
+    failed: [...]}; `failed` lists property paths the engine refused.
+
+    5.8.3: EditorAssetSubsystem.duplicate_asset returned None for /Interchange/Pipelines/... in a
+    commandlet (the registry there misses plugin and engine content, and it logs an Error);
+    AssetTools.duplicate_asset on the object from unreal.load_asset works in both channels.
+    For glTF sources pass source="/Interchange/Pipelines/DefaultGLTFAssetsPipeline": a preset
+    duplicated from the generic DefaultAssetsPipeline imports glTF materials as Material assets
+    in a flat folder, the glTF one keeps material instances (run on 5.8.3)."""
+    u = _u()
     eas = _eas()
     rec = {"path": dest_path, "created": False, "set": [], "failed": []}
-    if eas.does_asset_exist(dest_path) and not overwrite:
-        asset = eas.load_asset(dest_path)
-    else:
-        asset = eas.duplicate_asset(source, dest_path)
+    asset = eas.load_asset(dest_path) if eas.does_asset_exist(dest_path) else None
+    if asset is None:
+        src = u.load_asset(source)
+        if src is not None:   # AssetTools first: the subsystem logs an Error in a commandlet
+            folder, name = dest_path.rsplit("/", 1)
+            asset = u.AssetToolsHelpers.get_asset_tools().duplicate_asset(name, folder, src)
+        if asset is None:
+            asset = eas.duplicate_asset(source, dest_path)
         rec["created"] = asset is not None
         if asset is None:
-            raise RuntimeError("could not duplicate %s to %s [verify source path]" % (source, dest_path))
+            raise RuntimeError("could not duplicate %s to %s" % (source, dest_path))
     for candidates, value, why in (settings or PROP_PIPELINE_SETTINGS):
         last = None
         for c in candidates:
@@ -1437,7 +1497,7 @@ def ensure_pipeline_preset(dest_path, settings=None, source=DEFAULT_PIPELINE, ov
 
 
 def describe_pipeline(path=DEFAULT_PIPELINE, depth=1):
-    """IN-EDITOR, NOT YET RUN. Property names of a pipeline asset and its sub-objects, from dir():
+    """IN-EDITOR (run on 5.8.3, commandlet). Property names of a pipeline asset and its sub-objects, from dir():
     the first-run source of truth for PROP_PIPELINE_SETTINGS."""
     asset = _u().load_asset(path)
     out = {"path": path, "class": type(asset).__name__, "properties": [n for n in dir(asset) if not n.startswith("_")]}
@@ -1468,9 +1528,9 @@ def interchange_fbx_flags():
 
 
 def import_source(path, folder, pipeline=None, reimport_of=None, use_interchange=True, expect_name=None):
-    """IN-EDITOR, NOT YET RUN IN UNREAL. Import one file into folder with an explicit pipeline
+    """IN-EDITOR (run on 5.8.3, commandlet). Import one file into folder with an explicit pipeline
     (never the dialog's remembered settings). Interchange first (InterchangeManager.import_asset
-    with ImportAssetParameters: is_automated, override_pipelines [verify field names]); legacy
+    with ImportAssetParameters: is_automated, override_pipelines; run on 5.8.3); legacy
     AssetImportTask as fallback (automated, replace_existing; destination_name is ignored by
     Interchange). Imports are not undoable: the caller snapshots first. Returns [objects].
 
@@ -1516,9 +1576,9 @@ def import_source(path, folder, pipeline=None, reimport_of=None, use_interchange
 
 
 def apply_texture_role(tex, role, normal_convention="directx"):
-    """IN-EDITOR, NOT YET RUN. Compression, sRGB and texture group by role (Allar 7; Interchange
+    """IN-EDITOR (run on 5.8.3, commandlet). Compression, sRGB and texture group by role (Allar 7; Interchange
     Detect Normal Map is only a safety net). OpenGL normals (Blender, Unity, glTF bakes) get the
-    green channel flipped for Unreal's DirectX convention [verify property flip_green_channel]."""
+    green channel flipped for Unreal's DirectX convention (flip_green_channel, read on 5.8.3)."""
     comp, srgb, grp = role_settings(role)
     tex.set_editor_property("compression_settings", _enum("TextureCompressionSettings", comp))
     tex.set_editor_property("srgb", srgb)
@@ -1532,7 +1592,7 @@ def apply_texture_role(tex, role, normal_convention="directx"):
 
 
 def create_material_instance(name, folder, parent_path, textures_by_param, overwrite=False):
-    """IN-EDITOR, NOT YET RUN. Get or create MI_<name> under folder with the approved master as
+    """IN-EDITOR (run on 5.8.3, commandlet). Get or create MI_<name> under folder with the approved master as
     parent, then set texture parameters by name. Parameters absent from the master are reported
     (M04), never guessed. Returns (mi, "created"|"existed", issues)."""
     u = _u()
@@ -1575,7 +1635,7 @@ def create_material_instance(name, folder, parent_path, textures_by_param, overw
 
 
 def assign_materials(mesh, mi_by_slot):
-    """IN-EDITOR, NOT YET RUN. Put an instance on every slot: exact slot name, else '*'."""
+    """IN-EDITOR (run on 5.8.3, commandlet). Put an instance on every slot: exact slot name, else '*'."""
     done = []
     for i, sm in enumerate(list(mesh.get_editor_property("static_materials"))):
         slot = str(sm.get_editor_property("material_slot_name"))
@@ -1587,7 +1647,7 @@ def assign_materials(mesh, mi_by_slot):
 
 
 def apply_mesh_rules(mesh, decision):
-    """IN-EDITOR, NOT YET RUN IN UNREAL. Nanite, LODs and collision in one pass (each change
+    """IN-EDITOR (run on 5.8.3, commandlet). Nanite, LODs and collision in one pass (each change
     rebuilds the mesh; save once afterwards). Returns what was done."""
     _u()
     sms = _sms()
@@ -1602,31 +1662,39 @@ def apply_mesh_rules(mesh, decision):
     done["nanite"] = bool(nd["nanite"])
     lods = decision["lods"]
     if lods["mode"] == "lod_group":
-        # Whether assigning a LOD group regenerates LODs is not stated by any saved 5.8 page:
-        # set it (StaticMesh.set_lod_group with rebuild if exposed [verify], else the property),
-        # then COUNT, and build the chain explicitly when the count is short.
+        # StaticMesh.set_lod_group is not exposed to Python in 5.8.3 (api_presence, run on 5.8.3):
+        # set the property, then COUNT, and build the chain explicitly when the count is short.
         if hasattr(mesh, "set_lod_group"):
             try:
                 mesh.set_lod_group(lods["lod_group"], True)
             except TypeError:
                 mesh.set_lod_group(lods["lod_group"])
-        else:
+        else:   # run on 5.8.3, commandlet: setting the property rebuilt the chain (1 -> 4 LODs for LargeProp)
             mesh.set_editor_property("lod_group", lods["lod_group"])
         done["lod_group"] = lods["lod_group"]
-        if sms.get_lod_count(mesh) < lods.get("min_lods", 1):
+        if _mesh_lod_count(mesh) < lods.get("min_lods", 1):
             done["lods_set"] = _set_lods(mesh, DEFAULT_LOD_REDUCTION[:max(lods.get("min_lods", 1), 2)])
-            done["lod_fallback"] = "LOD group gave %d LOD(s); explicit reduction applied" % sms.get_lod_count(mesh)
+            done["lod_fallback"] = "LOD group gave %d LOD(s); explicit reduction applied" % _mesh_lod_count(mesh)
     elif lods["mode"] == "reduction":
         done["lods_set"] = _set_lods(mesh, lods["reduction"])
     col = decision["collision"]["action"]
-    if col in ("box", "kdop26") and sms.get_simple_collision_count(mesh) == 0:
+    needs_editor = []
+    if col in ("box", "kdop26") and _simple_collision_count(mesh) == 0:
         shape = _enum("ScriptCollisionShapeType", "BOX" if col == "box" else "NDOP26")
-        sms.add_simple_collisions(mesh, shape)
-    elif col == "decomposition" and sms.get_simple_collision_count(mesh) == 0:
-        sms.set_convex_decomposition_collisions(mesh, DECOMPOSITION["hull_count"],
-                                                DECOMPOSITION["max_hull_verts"], DECOMPOSITION["hull_precision"])
+        if sms.add_simple_collisions(mesh, shape) == -1:
+            needs_editor.append("collision " + col)
+    elif col == "decomposition" and _simple_collision_count(mesh) == 0:
+        if not _in_editor_mesh_tools():
+            needs_editor.append("collision decomposition")
+        else:
+            sms.set_convex_decomposition_collisions(mesh, DECOMPOSITION["hull_count"],
+                                                    DECOMPOSITION["max_hull_verts"], DECOMPOSITION["hull_precision"])
+    if done.get("lods_set") == -1:
+        needs_editor.append("LOD chain")
+    if needs_editor:   # the library refuses in a commandlet (run on 5.8.3): say so, never pass silently
+        done["needs_editor"] = needs_editor
     done["collision"] = col
-    done["simple_collision_count"] = sms.get_simple_collision_count(mesh)
+    done["simple_collision_count"] = _simple_collision_count(mesh)
     return done
 
 
@@ -1637,7 +1705,8 @@ DEFAULT_LOD_REDUCTION = [(1.0, 1.0), (0.5, 0.5), (0.25, 0.25), (0.125, 0.125)]
 
 
 def _set_lods(mesh, reduction):
-    """IN-EDITOR, NOT YET RUN. StaticMeshEditorSubsystem.set_lods with explicit settings."""
+    """IN-EDITOR. StaticMeshEditorSubsystem.set_lods with explicit settings [not yet run in an editor];
+    in a commandlet the library fallback returns -1 (run on 5.8.3) and apply_mesh_rules reports needs_editor."""
     u = _u()
     opts = u.EditorScriptingMeshReductionOptions()
     opts.set_editor_property("auto_compute_lod_screen_size", False)
@@ -1655,7 +1724,7 @@ def _blend_name(mat):
 
 
 def mesh_facts(mesh, category=None, asset_class=None):
-    """IN-EDITOR, NOT YET RUN. The facts validate_mesh_facts() and mesh_rules() read."""
+    """IN-EDITOR (run on 5.8.3, commandlet). The facts validate_mesh_facts() and mesh_rules() read."""
     u = _u()
     sms = _sms()
     path = mesh.get_path_name()
@@ -1668,12 +1737,12 @@ def mesh_facts(mesh, category=None, asset_class=None):
         facts["tris"] = None
     ns = mesh.get_editor_property("nanite_settings")
     facts["nanite"] = bool(ns.get_editor_property("enabled"))
-    facts["lod_count"] = sms.get_lod_count(mesh)
+    facts["lod_count"] = _mesh_lod_count(mesh)
     try:
         facts["lod_screen_sizes"] = [round(float(x), 4) for x in sms.get_lod_screen_sizes(mesh)]
     except Exception:
         facts["lod_screen_sizes"] = None
-    facts["simple_collision_count"] = sms.get_simple_collision_count(mesh)
+    facts["simple_collision_count"] = _simple_collision_count(mesh)
     box = mesh.get_bounding_box()
     mn, mx = box.get_editor_property("min"), box.get_editor_property("max")
     facts["bounds_min"] = [mn.x, mn.y, mn.z]
@@ -1703,7 +1772,7 @@ def mesh_facts(mesh, category=None, asset_class=None):
 
 
 def texture_facts(tex):
-    """IN-EDITOR, NOT YET RUN. Size getters are [verify] (blueprint_get_size_x / _y)."""
+    """IN-EDITOR (run on 5.8.3, commandlet). Size getters blueprint_get_size_x / _y (run on 5.8.3)."""
     pkg = _pkg(tex.get_path_name())
     f = {"name": tex.get_name(), "path": pkg, "folder": pkg.rsplit("/", 1)[0]}
     try:
@@ -1717,7 +1786,7 @@ def texture_facts(tex):
     return f
 
 
-_VALIDATORS = []   # module-level references keep registered validators alive [verify need]
+_VALIDATORS = []   # module-level references keep registered validators alive [not yet run: need]
 _VALIDATOR_RULES = {}
 
 
@@ -1778,7 +1847,7 @@ def _validator_classes():
 
 
 def register_validators(rules=None, only_under=None):
-    """IN-EDITOR, NOT YET RUN IN UNREAL. Register the Python validators with the editor's
+    """IN-EDITOR (run on 5.8.3, commandlet). Register the Python validators with the editor's
     validator subsystem (Python validators are not gathered at startup: they register
     themselves, every session; call this from Content/Python/init_unreal.py and at the top of
     every job that validates). Idempotent. Returns the class names registered."""
@@ -1789,15 +1858,15 @@ def register_validators(rules=None, only_under=None):
     vs = u.get_editor_subsystem(u.EditorValidatorSubsystem)
     for cls in _validator_classes():
         v = cls()
-        vs.add_validator(v)   # [verify Python name of AddValidator]
+        vs.add_validator(v)   # run on 5.8.3: registered validators show in engine_validate's statistics
         _VALIDATORS.append(v)
     return [type(v).__name__ for v in _VALIDATORS]
 
 
 def engine_validate(asset_paths):
-    """IN-EDITOR, NOT YET RUN. Run every registered validator (C++, Blueprint, ours) on the given
-    packages through EditorValidatorSubsystem [verify validate_assets_with_settings signature and
-    return shape]. Returns {"raw": str(result), "ok": bool or None}."""
+    """IN-EDITOR (run on 5.8.3, commandlet). Run every registered validator (C++, Blueprint, ours) on the given
+    packages through EditorValidatorSubsystem (validate_assets_with_settings ran on 5.8.3 and returned
+    (count, ValidateAssetsResults) with per-validator timings). Returns {"raw": str(result), "ok": bool or None}."""
     u = _u()
     vs = u.get_editor_subsystem(u.EditorValidatorSubsystem)
     eas = _eas()
@@ -1823,9 +1892,9 @@ def _wait_registry():
 
 
 def redirectors_under(paths):
-    """IN-EDITOR, NOT YET RUN. Package names of ObjectRedirector assets under the given folders,
+    """IN-EDITOR (run on 5.8.3, commandlet). Package names of ObjectRedirector assets under the given folders,
     read from the asset registry (the measured gate for "zero redirectors", instead of counting
-    our own renames). AssetData field names (asset_class_path.asset_name, package_name) [verify]."""
+    our own renames). AssetData field names asset_class_path.asset_name, package_name (run on 5.8.3)."""
     u = _u()
     _wait_registry()
     reg = u.AssetRegistryHelpers.get_asset_registry()
@@ -1840,7 +1909,7 @@ def redirectors_under(paths):
 
 
 def api_presence(names=None):
-    """IN-EDITOR, NOT YET RUN. {name: bool} for every engine name this module uses."""
+    """IN-EDITOR (run on 5.8.3, commandlet). {name: bool} for every engine name this module uses."""
     u = _u()
     return {n: hasattr(u, n) for n in (names or UNREAL_API)}
 
@@ -1901,7 +1970,7 @@ def texture_params(item, textures, param_map, slot="*"):
 
 
 def run_import_plan(plan_path, out_dir=None, chunk=25, rules=None, pipeline=None, do_validate=True):
-    """IN-EDITOR JOB, NOT YET RUN IN UNREAL. Execute a plan from plan_imports()/stage_plan():
+    """IN-EDITOR JOB (run on 5.8.3, commandlet, in_engine/run_in_unreal.py). Execute a plan from plan_imports()/stage_plan():
     per item import (or reimport) with the explicit pipeline, textures with roles, one MI per
     slot from the master, class rules (Nanite, LODs, collision) in one pass, facts and issues;
     save per chunk and collect_garbage(); then registered validators and the lead's ue_audit on

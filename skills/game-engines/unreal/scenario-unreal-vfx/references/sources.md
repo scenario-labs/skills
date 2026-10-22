@@ -50,8 +50,9 @@ Speaker names marked [?] come from garbled auto-captions and are unverified.
   `GetCurrentTransforms` in 5.8; deprecated GC properties).
 - `sources/docs/versions__ue-5.7-release-notes.md` and `versions__ue-5.8-release-notes.md`: Niagara
   Editor Preview Actor, emitter merging for Python in commandlets, Chaos Reset State and leaf
-  sub-trace (5.7); `r.HeterogeneousVolumes.Allow`, tag migration, per-component caching in
-  Sequencer, runtime Dataflow evaluation (5.8).
+  sub-trace (5.7); `r.HeterogeneousVolumes.Allow` (the 5.8.3 CVar is
+  `r.HeterogeneousVolumes.Allowed`), tag migration, per-component caching in Sequencer, runtime
+  Dataflow evaluation (5.8).
 - `sources/docs/automation-pipeline__unreal-mcp-official.md`: toolset authoring in Python for Epic's
   MCP server (used by procedure V14).
 
@@ -72,4 +73,20 @@ Speaker names marked [?] come from garbled auto-captions and are unverified.
   break events, disable vs sleep, color-blind check, wind-up on the cast animation) in SKILL.md,
   procedures V1b, V15, V16, D0, D8 and the rubric, with offline checks in `scripts/ue_vfx.py` 0.2;
   fixed the per-emitter Effect Type table and the damage-model inconsistency in D1; v0.1 kept in
-  `skills/_versions/unreal-vfx v1 2026-09-24/`.
+  `skills/_versions/scenario-unreal-vfx v1 2026-09-24/`.
+
+- 2026-10-21 v0.2 (skill version 0.2): first live runs on Unreal 5.8.3 (macOS). Added
+  `references/mcp-niagara.md` (signatures from the 5.8.3 MCP catalog, value JSON, 10 recipes run by
+  `tests/code/unreal-vfx/live_mcp_recipes.py`) and `references/engine-skills.md` (Epic's in-editor
+  Niagara and Dataflow skills, tested contradictions). Fixed from live runs: commandlet template
+  discovery (`scan_paths`), the template default, `set_user_params` typing and refusal,
+  `place_system` fallback, `gc_facts` levels, capture through a CameraActor. Removed the v0.1 claim
+  that Python cannot author Niagara. v0.1 files: `archive/`.
+
+## Verification status (2026-10-21, Unreal 5.8.3, macOS)
+
+The probe, review level, template pass and GC hardening jobs (commandlet), `live_capture_series`
+(latent offscreen, frames scored) and `live_mcp_recipes.py` (10 recipes, headless and offscreen) ran
+and pass; offline tests pass. **Not yet run:** stress grids and PIE pooling, budgets under load,
+Insights traces, break events, Blueprint-side parameter nodes, Niagara Fluids; `procedures.md` marks
+each block.

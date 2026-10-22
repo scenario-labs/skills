@@ -1,9 +1,9 @@
 # GUI paths: scenario-unreal-world-building (for a computer-use agent or a human)
 
 The same procedures as `procedures.md`, through the editor. UE 5.8 names; macOS uses Cmd where the
-docs say Ctrl [verify]. 5.6 redesigned the viewport toolbars (`ToolMenusViewportToolbars 0` restores
-the old ones) and hid the level editor Settings menu (`LevelEditorToolbarSettings 1`). Items marked
-[verify] come from older screenshots.
+docs say Ctrl [not yet run]. 5.6 redesigned the viewport toolbars (`ToolMenusViewportToolbars 0`
+restores the old ones) and hid the level editor Settings menu (`LevelEditorToolbarSettings 1`).
+Items marked [not yet run] come from older screenshots.
 
 ## Map and World Partition (P2)
 
@@ -11,7 +11,7 @@ the old ones) and hid the level editor Settings menu (`LevelEditorToolbarSetting
 - Convert: Tools > Convert Level.
 - Grid: Window > World Settings > World Partition Setup (Grid Name, Cell Size, Loading Range,
   Preview Grids). New 5.8 maps use the runtime hash with partitions, so the fields may sit under a
-  partition entry [verify].
+  partition entry [not yet run].
 - Regions: Window > World Partition > World Partition Editor; drag a box, right-click > Load Region
   from Selection; Shift+drag snaps to the grid, double-click moves the camera, Shift+double-click
   starts PIE there, Ctrl+double-click loads a region.
@@ -73,7 +73,7 @@ the old ones) and hid the level editor Settings menu (`LevelEditorToolbarSetting
   Edit, then Commit (Esc twice discards). Break: right-click > Level > Break (save the map version
   first).
 - PCG Data Asset from a Level Instance: Content Browser > right-click the level > asset action
-  submenu (entry name unreadable in the talk [verify]).
+  submenu (entry name unreadable in the talk [not yet run]).
 - Tags: actor Details > Actor > Tags (use a tagging widget with a fixed vocabulary, never free
   typing).
 - Paths: landscape splines (Landscape mode > Manage > Splines, Ctrl+click to add points) on the
@@ -110,7 +110,7 @@ the old ones) and hid the level editor Settings menu (`LevelEditorToolbarSetting
   for trunks and boulders).
 - Grass mask: Landscape Grass Type assets with no meshes, painted through the landscape material;
   Generate Grass Maps node in the graph.
-- Teleports: add a PCG Generation Source component (class name [verify]) to the teleport target
+- Teleports: add a PCG Generation Source component (class name [not yet run]) to the teleport target
   actor, next to its World Partition Streaming Source.
 - Runtime and partition settings: select PCGWorldActor in the Outliner: Partition Grid Size, Treat
   Editor Viewport as Generation Source, Enable World Partition Generation Sources, landscape cache.
@@ -121,7 +121,7 @@ the old ones) and hid the level editor Settings menu (`LevelEditorToolbarSetting
 
 ## Review (P13)
 
-- Screenshots: console `HighResShot 1920x1080` [verify], or the viewport menu > High Resolution
+- Screenshots: console `HighResShot 1920x1080` [not yet run], or the viewport menu > High Resolution
   Screenshot.
 - Stats: console `stat unit`, `stat gpu`; Trace status-bar widget > start trace; Unreal Insights for
   the file.

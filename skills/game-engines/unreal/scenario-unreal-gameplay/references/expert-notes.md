@@ -63,7 +63,7 @@ Blueprints vs C++ (VMZftEVDuCE)
 - Agent reading [added]: C++ is the authorable shape for an agent (text, diff, review); Blueprints
   become defaults set from Python.
 
-## Ari Arnbjörnsson (Epic Tech Dev Relations): Myth-Busting Best Practices (S2olUc9zcB8, Unreal Fest 2024, UE 5.4 measurements; EDC article with 5.5 and 5.6 edits)
+## Ari Arnbjornsson (Epic Tech Dev Relations): Myth-Busting Best Practices (S2olUc9zcB8, Unreal Fest 2024, UE 5.4 measurements; EDC article with 5.5 and 5.6 edits)
 
 - Tick overhead per actor (100,000 actors): Blueprint 3.587 us editor, 1.841 us packaged
   Development; C++ 0.638 to 0.696 us; queuing 0.13 to 0.20 us [00:05:00]. Same Lyra frame: CMC 241.1
@@ -103,7 +103,7 @@ Blueprints vs C++ (VMZftEVDuCE)
   Span instead of destroy logic [00:16:09].
 - Data tables and composite tables with CSV or JSON round trips move balancing out of graphs
   [00:41:58] to [00:43:32].
-- His Tick-alternative and Get All Actors performance claims are superseded by Arnbjörnsson's 2024
+- His Tick-alternative and Get All Actors performance claims are superseded by Arnbjornsson's 2024
   measurements; the decoupling advice stands.
 
 ## Epic Blueprint docs (5.8 pages)
@@ -129,18 +129,19 @@ GAS
 - Always End Ability or it can never re-trigger [00:13:02]; Wait Delay (GAS task) instead of Delay
   [00:43:03]; cache values before latent nodes [00:42:32].
 - Query a GE's asset tags (what it is), not its target tags (what it grants); Epic and Fortnite set
-  the `AbilitySystem.Fix...` cvar [verify name] to 0 [00:21:43], [00:22:17].
+  the cvar (`AbilitySystem.Fix.GameplayEffects.ReturnAssetTagsViaGetOwnedGameplayTags` on 5.8.3,
+  default 2) to 0 [00:21:43], [00:22:17].
 - Effect-granted abilities with removal tag requirements give a target a listening ability exactly
   as long as a debuff lasts [00:28:41] to [00:29:45].
 - One damage GE, many damages: SetByCaller keyed by a tag, also for random item stats [00:49:12] to
   [00:50:19]. "Never use the old actor Apply Damage function" [00:32:24].
-- Test in isolation: GE on self from a debug key, `AbilitySystem.Effect.Apply` [verify], then the
-  gameplay debugger (blue granted and active, yellow granted inactive) [00:08:34], [00:21:12],
-  [00:24:08], [00:35:38]. Both isolation targets in the talk had fixed magnitudes (the melee GE: 50
-  on the meta attribute `AbilityDamage` [00:07:40]; the console test: `GE_Debuff_Cold_Frozen`
-  [00:21:12]). [added, engine behavior, verify]: a SetByCaller magnitude exists only when code sets
-  it on the spec, so a SetByCaller GE applied from the console applies 0 and logs the missing
-  magnitude; test it through its ability and use a fixed twin on the console.
+- Test in isolation: GE on self from a debug key, `AbilitySystem.Effect.Apply` (exists on 5.8.3),
+  then the gameplay debugger (blue granted and active, yellow granted inactive) [00:08:34],
+  [00:21:12], [00:24:08], [00:35:38]. Both isolation targets in the talk had fixed magnitudes (the
+  melee GE: 50 on the meta attribute `AbilityDamage` [00:07:40]; the console test:
+  `GE_Debuff_Cold_Frozen` [00:21:12]). [added, engine behavior, verify]: a SetByCaller magnitude
+  exists only when code sets it on the spec, so a SetByCaller GE applied from the console applies 0
+  and logs the missing magnitude; test it through its ability and use a fixed twin on the console.
 
 Persistence
 
@@ -299,9 +300,9 @@ Persistence
 | Blueprint or C++ for a system    | Blueprint first, move toward C++ as design settles (Forsythe [00:07:48]) | C++ for fundamental, shared, hot, engine-only or co-edited systems (Forsythe [00:39:06]) | Toolchain, profiler evidence, diff and merge needs; for an agent C++ wins whenever it builds |
 | GAS or not                       | GAS for growing ability and status interactions (Shao [00:01:11])        | GAS targets RPG, action, MOBA; C++ foundation mandatory (GAS doc)                        | Ability count, statuses, cooldown UI, multiplayer, C++ available                             |
 | ASC placement                    | Pawn (tranek 4.1)                                                        | PlayerState (tranek 4.1)                                                                 | Attributes must survive respawn                                                              |
-| Interface or cast                | Interfaces as default (docs; mW0IlgjF-iw [00:48:18])                     | Cast to a C++ base first (Arnbjörnsson [00:30:10])                                       | C++ available and target always loaded vs unrelated hierarchies                              |
-| Tick alternatives                | Timers and Timelines (mW0IlgjF-iw [00:14:30])                            | The work is the cost (Arnbjörnsson [00:10:31])                                           | Per-frame need: Tick; occasional: timer; thousands: aggregate or Mass                        |
-| Get All Actors                   | "Very rarely" right (mW0IlgjF-iw [00:45:40])                             | OfClass fine for a few dozen per frame (Arnbjörnsson [00:37:17])                         | Decoupling vs performance; WithTag/WithInterface never per frame                             |
+| Interface or cast                | Interfaces as default (docs; mW0IlgjF-iw [00:48:18])                     | Cast to a C++ base first (Arnbjornsson [00:30:10])                                       | C++ available and target always loaded vs unrelated hierarchies                              |
+| Tick alternatives                | Timers and Timelines (mW0IlgjF-iw [00:14:30])                            | The work is the cost (Arnbjornsson [00:10:31])                                           | Per-frame need: Tick; occasional: timer; thousands: aggregate or Mass                        |
+| Get All Actors                   | "Very rarely" right (mW0IlgjF-iw [00:45:40])                             | OfClass fine for a few dozen per frame (Arnbjornsson [00:37:17])                         | Decoupling vs performance; WithTag/WithInterface never per frame                             |
 | Behavior Tree, StateTree, hybrid | StateTree for new AI (Mononen)                                           | Existing BTs as leaves under a perception StateTree (Bruno [00:26:54])                   | Existing library and team skill                                                              |
 | UMG bindings                     | Acceptable on simple screens (UMG doc)                                   | Never (Albert [00:24:09])                                                                | Shipping UI: never                                                                           |
 | Collapsed vs Hidden              | Collapse unused widgets (classic)                                        | Hidden only repaints under invalidation (Albert [00:12:53])                              | Frequently toggled: Hidden; rarely shown: Collapsed                                          |

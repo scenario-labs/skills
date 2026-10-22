@@ -1,6 +1,6 @@
 ---
 name: scenario-unreal-pipeline-automation
-description: "Use when importing FBX, USD, OBJ or glTF from Maya, ZBrush or Blender into Unreal Engine 5.8 in bulk or reimporting changed files, writing Editor Python tools, Interchange pipelines or import presets, enforcing naming conventions, assigning material instances by script, setting Nanite, collision and LODs per asset class, writing data validators or automation tests, fixing redirectors, or cooking and packaging from the command line (BuildCookRun, RunUAT, CI, Perforce). Also when a scripted import ignores its settings or names, a Python validator never runs, or a Mac build will not package."
+description: "Use when importing FBX, USD, OBJ or glTF from Maya, ZBrush, Blender or an AI generator (Scenario MCP, the Scenario for Unreal plugin) into Unreal Engine 5.8, in bulk or as changed files; importing generated PNG maps, HDR or EXR skies and audio; writing Editor Python tools, Interchange pipelines or import presets; naming conventions; material instances by script; Nanite, collision and LODs per asset class; data validators or automation tests; redirectors; cooking and packaging from the command line (BuildCookRun, RunUAT, CI, Perforce). Also when a scripted import ignores its settings or names, a GLB splits into several meshes, a sky imports as a normal map, StaticMeshTools refuses a .glb, a commandlet returns -1 for LODs or collision, a Python validator never runs, or a Mac build will not package."
 license: MIT
 ---
 
@@ -16,10 +16,8 @@ flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 
-**Status (2026-09-24):** every Unreal call here is **not yet run in Unreal**; the pure layer of
-[`scripts/ue_pipeline.py`](scripts/ue_pipeline.py) and both jobs ran offline (unit tests, plus
-control flow against a fake `unreal`). First action once 5.8 is installed:
-`tests/code/unreal-pipeline-automation/in_engine/run_in_unreal.py`.
+**Status (2026-10-21):** what ran in Unreal and what did not:
+[`references/sources.md`](references/sources.md).
 
 ## Stance (the expert delta)
 
@@ -33,16 +31,18 @@ control flow against a fake `unreal`). First action once 5.8 is installed:
   stack and reimport reuses it (Interchange doc), so a policy change reaches existing assets only
   through a reimport that passes the new preset (`plan_imports(..., policy=)`).
 - **Names come from the plan, not the importer.** Interchange ignores
-  `AssetImportTask.destination_name` (5.8 API reference). Stage each file under its target name and
-  rename only as a fallback: a rename leaves a redirector (naming doc), and the Zen loader ignores
-  core redirects. Renaming onto an existing asset fails, which is how re-runs leave duplicates:
-  reimport instead (I03). No drag and drop: other tools depend on paths (Bardoux, MjjkWH0eT3U
-  [00:09:14]).
-- **Nanite by eligibility, not triangle count.** Opaque or masked static meshes on a Nanite target
-  get Nanite, low-poly included: non-Nanite geometry is "much more expensive to render into VSMs"
-  (VSM doc). Off for translucent materials (Nanite draws the default material), morph targets and
-  non-Nanite targets; "not everything can be Nanite" (Oztalay, S2olUc9zcB8 [00:34:33]). Fallback
-  settings on every Nanite mesh (DxBKmQ-0kfw [00:37:15]); simple collision still required.
+  `AssetImportTask.destination_name` for meshes (5.8 API; run on 5.8.3 for FBX and glTF, which also
+  split one mesh per node). Stage each file under its target name and rename only as a fallback: a
+  rename leaves a redirector (naming doc), and the Zen loader ignores core redirects. Renaming onto
+  an existing asset fails, which is how re-runs leave duplicates: reimport instead (I03). No drag
+  and drop: other tools depend on paths (Bardoux, MjjkWH0eT3U [00:09:14]).
+- **Nanite by eligibility, not triangle count.** Interchange turns Nanite on and builds one convex
+  hull by default (run on 5.8.3), so the decision is yours either way. Opaque or masked static
+  meshes on a Nanite target get Nanite, low-poly included: non-Nanite geometry is "much more
+  expensive to render into VSMs" (VSM doc). Off for translucent materials (Nanite draws the default
+  material), morph targets and non-Nanite targets; "not everything can be Nanite" (Oztalay,
+  S2olUc9zcB8 [00:34:33]). Fallback settings on every Nanite mesh (DxBKmQ-0kfw [00:37:15]); simple
+  collision still required.
 - **Validation is code at the point of creation, and red must mean new.** About 30 to 40 percent of
   bugs trace back to something an asset validator could catch (Fray, KuIWCzujtag [00:35:40]). Keep
   `CanValidateAsset` cheap [00:31:47] and watch each validator's cost in 5.8's per-validator cook
@@ -50,19 +50,29 @@ control flow against a fake `unreal`). First action once 5.8 is installed:
   check fail on a fixture first [01:46:04]. Python validators register every session,
   `-run=DataValidation` runs C++ rules only, and cook validation without `-ValidationErrorsAreFatal`
   turns errors into warnings.
-- **Headless for bulk, the open editor for what it holds, and no trust in exit codes.** The
-  commandlet loads no level (Python doc) and the registry may still be scanning:
-  `wait_for_completion()` before queries (5.8 batch example). A Python failure only logs an error
-  unless `-ScriptErrorsAreFatal` (5.5): the verdict is the job's own result line (`P.job_verdict`).
-  The editor keeps a write lock on loaded assets (Jamie Dale [01:17:18]): run inside it through MCP
-  or Python remote execution. `set_editor_property` behaves like the Details panel; plain attribute
-  writes rebuild nothing [00:21:25]. Under Perforce, 5.8's PythonScript commandlet enables source
-  control first; check out what you will save and stop if checkout fails (Bardoux [00:55:27]).
-  Imports are not undoable: snapshot first.
+- **Headless for bulk, the open editor for what it holds, and no trust in exit codes.** A commandlet
+  imports exactly what an editor imports (run on 5.8.3) but loads no level (Python doc), its
+  registry may still be scanning (`wait_for_completion()`, 5.8 batch example) and misses `/Engine`
+  and `/Interchange` content (`unreal.load_asset` finds it), and it has no
+  `StaticMeshEditorSubsystem`: the deprecated library returns -1 for LOD counts, `set_lods` and
+  added collision (run on 5.8.3). Use `StaticMesh.get_num_lods()`, the `lod_group` property and
+  `agg_geom` there; explicit LOD chains and added collision need an editor. A Python failure only
+  logs an error unless `-ScriptErrorsAreFatal` (5.5): the verdict is the job's own result line
+  (`P.job_verdict`). The editor keeps a write lock on loaded assets (Jamie Dale [01:17:18]): run
+  inside it through MCP or Python remote execution. `set_editor_property` behaves like the Details
+  panel; plain attribute writes rebuild nothing [00:21:25]. Under Perforce, 5.8's PythonScript
+  commandlet enables source control first; check out what you will save and stop if checkout fails
+  (Bardoux [00:55:27]). Imports are not undoable: snapshot first.
 - **List, confirm, act, one pass per mesh.** Print the resolved targets, then run (Sam Deiter,
-  k0tgmrBuIJc [00:52:23]). Set Nanite, LODs and collision in one pass and save once per chunk. A LOD
-  group may not build LODs by itself [verify]: count after setting it, build the chain explicitly if
-  short, check screen sizes decrease (L02). One bad file never stops the batch.
+  k0tgmrBuIJc [00:52:23]). Set Nanite, LODs and collision in one pass and save once per chunk.
+  Setting the `lod_group` property rebuilt the chain in a commandlet (1 to 4 LODs for `LargeProp`,
+  run on 5.8.3; `StaticMesh.set_lod_group` is not exposed): count anyway, build the chain explicitly
+  if short, check screen sizes decrease (L02). One bad file never stops the batch.
+- **Generated assets carry no conventions: check them in a fixed order.** Count, scale and pivot,
+  names, materials, texture flags, Nanite and collision, provenance tag, look. Run on 5.8.3: glTF
+  and FBX arrive in cm and Z up, OBJ unconverted; a packed ORM lands sRGB; an LDR equirect sky is
+  detected as a normal map; `.hdr` becomes a cube, `.exr` a 2D texture unless the preset lists it.
+  Full table and fixes: [`references/generated-assets.md`](references/generated-assets.md).
 - **A build is a reproducible command line, proven by booting.** Generate the BuildCookRun line once
   from a Project Launcher profile and diff yours against it (UAT doc; `P.buildcookrun_diff`). Cook
   does not stage, `-skipcook` is not omitting `-cook` (Josh Adams, uxdEt9XXKb8 [00:19:14],
@@ -77,7 +87,7 @@ control flow against a fake `unreal`). First action once 5.8 is installed:
 | ------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Task                | stages                  | new batch: all; changed sources: 2 to 10 with `previous=` (P11); live project adopting rules: 6 with an allow list; build only: 10; artists' button: P12 |
 | Source and sidecars | units, normals          | Maya `summary.json` and `<file>.settings.json`, else a scan; normals DirectX unless the sidecar says `opengl`                                            |
-| Target platforms    | Nanite, LODs            | PC and console; this Mac (M5 Max) clears the M2 bar for Nanite and VSM                                                                                   |
+| Target platforms    | Nanite, LODs            | PC and console; this Mac (Apple silicon) clears the M2 bar for Nanite and VSM                                                                            |
 | Naming              | validator prefixes      | Epic's table (`SM_`, `T_`, `MI_`); Allar only if the project uses it                                                                                     |
 | Layout              | destination             | `/Game/<Project>/Art/<Kind>/<Category>/<Base>`, no type folders (Allar 2.6)                                                                              |
 | Master material     | instances, vertex color | from scenario-unreal-materials; none: no instances, reported                                                                                             |
@@ -88,6 +98,15 @@ control flow against a fake `unreal`). First action once 5.8 is installed:
 
 ## Workflow
 
+**Channel.** Epic's toolsets first. Four or more toolset calls in a row go through one
+`ProgrammaticToolset.execute_tool_script`:
+[`references/mcp-pipeline.md`](references/mcp-pipeline.md) has each recipe as a script (import and
+read back, texture fixes: 1 call instead of 12 to 20); signatures stay for single calls. A failing
+call ends a script, so keep expected failures outside. `import_file` takes FBX and OBJ only, so
+glTF, audio, presets and batches go through Python: the headless job
+([`scripts/ue_pipeline_job.py`](scripts/ue_pipeline_job.py) via `ue_run.run_python`) or a
+project-local `run_python` tool in the open editor.
+
 1. **Preflight.** `ue_env.preflight()` (chip, Xcode window), `P.project_path_problems`, plugins
    (Python Editor Script, Editor Scripting Utilities, Interchange, Data Validation,
    PythonAutomationTest), editor holding the project, `p4 opened`. GATE: no error line; channel
@@ -95,22 +114,21 @@ control flow against a fake `unreal`). First action once 5.8 is installed:
 2. **Plan and stage, offline.** `P.scan_sources`, `P.read_dcc_manifest`,
    `P.plan_imports(..., previous=manifest, policy="PL_Props@3")`, `P.stage_plan`. GATE: items plus
    rejections equal sources; D01 to D07 read; sources byte-identical (P1).
-3. **Import policy.** Job `describe`, then `preset` with a route: `post_import` (default: materials
-   off, instances built after import with an explicit parameter map) or `interchange_mi` (Material
-   Import = Import as Material Instance, Parent Material = master; fills only parameters Interchange
-   knows by name). Vertex Color Import Option Ignore unless the master reads vertex color; Generate
-   Lightmap UVs off for Lumen. GATE: `failed` empty; `P.pipeline_stack_problems(stack)` clean (P2).
+3. **Import policy.** Job `describe`, then `preset` (duplicated from `DefaultAssetsPipeline`, or
+   `DefaultGLTFAssetsPipeline` for glTF so material instances survive) with a route: `post_import`
+   (default: materials off, instances built after import with an explicit parameter map) or
+   `interchange_mi` (Material Import = Import as Material Instance, Parent Material = master; fills
+   only parameters Interchange knows by name). Vertex Color Import Option Ignore unless the master
+   reads vertex color; Generate Lightmap UVs off for Lumen. GATE: `failed` empty;
+   `P.pipeline_stack_problems(stack)` clean (P2).
 4. **Trial.** `make_fixtures.py` plus 5 to 10 real files. GATE: each broken fixture shows its issue
    id; seconds per file known.
 5. **Import.** Headless: job `import` through `ue_run.run_python`; editor open: `P.run_import_plan`
    through MCP or `ue_remote.PythonRemote`; engine calls in P3b. Chunks of 25,
    `unreal.collect_garbage()`. GATE: every file accounted for, `P.job_verdict` exit 0 (P3, P4).
 
-   | Step                                                           | Headless                              | Needs a rendering editor             |
-   | -------------------------------------------------------------- | ------------------------------------- | ------------------------------------ |
-   | import, instances, Nanite, collision, LODs, validators, report | yes (write lock: use the open editor) | no                                   |
-   | screenshots, collision and Nanite views                        | no                                    | yes (`mode="latent"`)                |
-   | master graph, Blueprint pipelines, Graph Inspector             | no                                    | scenario-unreal-materials or a human |
+   Headless: import, instances, Nanite, validators, report (an open editor holds a write lock: use
+   it). Screenshots and views need `mode="latent"`; master graphs go to scenario-unreal-materials.
 
 6. **Validate.** Report carries our issues, `engine_validate` and `ue_audit`; `-run=DataValidation`
    for C++ rules; `P.new_issues(records, allow)` decides CI. GATE: zero new errors; validator cost
@@ -158,25 +176,26 @@ scenario-unreal-lighting-rendering's rig.
 
 ## Common mistakes
 
-| Mistake                                                                        | What it looks like                         | Fix                                                           |
-| ------------------------------------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------- |
-| Scripted import without an explicit pipeline                                   | differs from the dialog run                | preset in `override_pipelines`                                |
-| Preset changed, assets not reimported                                          | old settings on old assets                 | `policy=` in the plan: reimport with the preset               |
-| Importing again instead of reimporting                                         | duplicate beside the planned asset         | `previous=` manifest; I03 stops it                            |
-| `destination_name` under Interchange                                           | assets named after the file                | stage under the target name                                   |
-| Tweak pipeline above the default one                                           | changes silently lost                      | place it after                                                |
-| Deleting unwanted meshes after import                                          | orphan materials                           | disable factory nodes and dependencies                        |
-| Nanite by triangle count, or on translucency                                   | costly shadows; default material           | `P.nanite_decision`                                           |
-| Python validator never runs                                                    | CI green, editor silent                    | `add_validator` in `init_unreal.py` and each job; `k2_` names |
-| Validator path without passes or fails                                         | "not checked"                              | `asset_passes` when clean                                     |
-| Trusting a commandlet's exit code                                              | green run, job crashed                     | result line, `-ScriptErrorsAreFatal`, `P.job_verdict`         |
-| Registry query at headless start                                               | assets missing from lists                  | `wait_for_completion()` first                                 |
-| `EditorAssetLibrary`, `EditorStaticMeshLibrary`, `ScriptingCollisionShapeType` | deprecation warnings, type errors          | subsystems, `ScriptCollisionShapeType`                        |
-| LOD group set, LODs never counted                                              | one LOD in the report                      | count, then `set_lods`                                        |
-| Saving against an open editor                                                  | locked files                               | in-editor channel                                             |
-| One loop over hundreds of files                                                | memory climbs                              | chunks plus `collect_garbage`; batch processor for thousands  |
-| `Automation RunTests`; `-nullrhi` for screenshots                              | zero tests run; black images               | `Automation RunTest`; rendering editor                        |
-| Hand-typed BuildCookRun; first build Shipping                                  | no `-stage` or `-package`, no app; no logs | launcher line, `P.buildcookrun_problems`; Development first   |
+| Mistake                                             | What it looks like                         | Fix                                                                        |
+| --------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
+| Scripted import without an explicit pipeline        | differs from the dialog run                | preset in `override_pipelines`                                             |
+| Preset changed, assets not reimported               | old settings on old assets                 | `policy=` in the plan: reimport with the preset                            |
+| Importing again instead of reimporting              | duplicate beside the planned asset         | `previous=` manifest; I03 stops it                                         |
+| `destination_name` under Interchange                | assets named after the file                | stage under the target name                                                |
+| Tweak pipeline above the default one                | changes silently lost                      | place it after                                                             |
+| Deleting unwanted meshes after import               | orphan materials                           | disable factory nodes and dependencies                                     |
+| Nanite by triangle count, or on translucency        | costly shadows; default material           | `P.nanite_decision`                                                        |
+| Python validator never runs                         | CI green, editor silent                    | `add_validator` in `init_unreal.py` and each job; `k2_` names              |
+| Validator path without passes or fails              | "not checked"                              | `asset_passes` when clean                                                  |
+| Trusting a commandlet's exit code                   | green run, job crashed                     | result line, `-ScriptErrorsAreFatal`, `P.job_verdict`                      |
+| Registry query at headless start                    | assets missing from lists                  | `wait_for_completion()` first                                              |
+| `EditorAssetLibrary`, `ScriptingCollisionShapeType` | deprecation warnings, type errors          | subsystems, `ScriptCollisionShapeType`                                     |
+| `EditorStaticMeshLibrary` in a commandlet           | -1 for LOD count, `set_lods`, collision    | `get_num_lods`, `lod_group`, `agg_geom`; chains and collision in an editor |
+| glTF through `StaticMeshTools.import_file`          | ".glb" refused                             | Python `AssetImportTask` or `InterchangeManager`                           |
+| Saving against an open editor                       | locked files                               | in-editor channel                                                          |
+| One loop over hundreds of files                     | memory climbs                              | chunks plus `collect_garbage`; batch processor for thousands               |
+| `Automation RunTests`; `-nullrhi` for screenshots   | zero tests run; black images               | `Automation RunTest`; rendering editor                                     |
+| Hand-typed BuildCookRun; first build Shipping       | no `-stage` or `-package`, no app; no logs | launcher line, `P.buildcookrun_problems`; Development first                |
 
 ## Handoffs
 
@@ -194,6 +213,11 @@ scenario-unreal-performance as archive path, UAT verdict, BootTest result and ch
 
 ## UE 5.8 notes
 
+- 5.8.3 Python: `InterchangeMaterialImportOption` has only `IMPORT_AS_MATERIALS` and
+  `IMPORT_AS_MATERIAL_INSTANCES` (no materials: `import_materials` False); the texture pipeline sits
+  under `material_pipeline`; `combine_static_meshes` is deprecated for
+  `combine_static_meshes_behavior`. The legacy GLTFImporter plugin is absent; glTF goes through
+  Interchange even though `Interchange.FeatureFlags.Import.GLTF` reads False.
 - Interchange handles FBX (production since 5.5); 5.8 renamed dialog options, added uFBX
   (Experimental), made USD asset import production ready. `InterchangeManager.import_asset` and
   `reimport_asset` return the objects or None (5.8 API).
@@ -206,19 +230,21 @@ scenario-unreal-performance as archive path, UAT verdict, BootTest result and ch
   editor is removed in 5.9.
 - Remote Control blocks remote UFUNCTION calls by default: trigger imports through Python remote
   execution or MCP.
-- Action utilities with empty SupportedClasses fail validation. The Interchange page still shows
-  "Experimental" FBX cvars: read them on install (job `flags`).
+- Action utilities with empty SupportedClasses fail validation.
 - Python 3.11.8.
 
 ## References
 
 - [`references/procedures.md`](references/procedures.md): P0 to P14 plus P3b (the raw engine calls),
   each with test path and status.
+- `references/mcp-pipeline.md`: Epic's toolsets for import and asset hygiene, signatures, eight
+  recipes run on 5.8.3.
+- `references/generated-assets.md`: intake of generated meshes, maps, skies and audio, what lands
+  and what to fix.
 - [`references/expert-notes.md`](references/expert-notes.md): judgment by source, disagreements and
   deciding conditions.
 - `references/critique.md`: rubric for a run, a validator, a test and a build.
 - [`references/gui-paths.md`](references/gui-paths.md): menus for the same procedures.
-- [`references/sources.md`](references/sources.md): sources, credentials, timestamps, revision
-  history.
-- `scripts/ue_pipeline.py`, [`scripts/ue_pipeline_job.py`](scripts/ue_pipeline_job.py),
+- `references/sources.md`: sources, credentials, timestamps, revision history.
+- [`scripts/ue_pipeline.py`](scripts/ue_pipeline.py), `scripts/ue_pipeline_job.py`,
   [`scripts/ue_contact_sheet_job.py`](scripts/ue_contact_sheet_job.py).

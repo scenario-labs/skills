@@ -1,6 +1,6 @@
 ---
 name: scenario-unreal-vfx
-description: 'Use when a UE5 task involves Niagara or Chaos destruction: a Niagara fireball, projectile trail, impact explosion, muzzle flash, spell, smoke, sparks, debris, Niagara fluids or flipbooks; "Niagara is too expensive", stat NiagaraOverview, Effect Types, pooling, Data Channels, lightweight emitters, VFX scalability; judging an effect''s readability, value, color, timing, white blowout or strobing; or a wall that shatters, geometry collection fracture, Dataflow, damage thresholds, floating chunks, debris cost, Chaos Visual Debugger.'
+description: 'Use when a UE5 task involves Niagara or Chaos destruction: a Niagara fireball, projectile trail, impact explosion, muzzle flash, spell, smoke, sparks, debris, Niagara fluids or flipbooks; building or editing a Niagara system through Epic''s Unreal MCP (NiagaraToolset_System, SetStackInputData, user parameters, stack issues) or Python; "Niagara is too expensive", stat NiagaraOverview, Effect Types, pooling, Data Channels, lightweight emitters, VFX scalability; judging an effect''s readability, value, color, timing, white blowout or strobing; capturing an effect at fixed ages; or a wall that shatters, geometry collection fracture, Dataflow, damage thresholds, floating chunks, debris cost, Chaos Visual Debugger.'
 license: MIT
 ---
 
@@ -8,18 +8,26 @@ license: MIT
 
 Expert level means an effect that tells the player the truth (where it hurts, when it is over),
 costs what its gameplay class allows across the whole world, and is proven by per-thread numbers on
-the target core count plus captures scored against a written rubric. Python cannot author Niagara
-emitters or modules (5.8 API): the agent works through templates with a User parameter contract,
-Material Instances, Effect Types and Dataflow recipes, and escalates the few graph edits as precise
-GUI requests. If a sibling skill named here is missing from your available skills, ask the user to
-install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+the target core count plus captures scored against a written rubric. On 5.8 the agent can author
+Niagara: Epic's toolsets build systems, emitters, modules, renderers, inputs and User parameters and
+read stack errors, over MCP or from Python (`ue_vfx.niagara_tool`). The craft stays the same:
+templates with a User parameter contract, Material Instances, Effect Types and Dataflow recipes.
+Checked live on Unreal 5.8.3. If a sibling skill named here is missing from your available skills,
+ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 
-**Status (2026-09-24):** Unreal is not installed. Offline checks pass
-(`python3 tests/code/unreal-vfx/run_all.py --offline`); every in-editor snippet is **not yet run in
-Unreal**; `job_00_vfx_probe.py` answers the `[verify]` names.
+**Status (2026-10-21):** what ran in Unreal and what did not:
+[`references/sources.md`](references/sources.md).
+
+**MCP first.** With an editor and Epic's Unreal MCP: read
+[`references/mcp-niagara.md`](references/mcp-niagara.md) (signatures, JSON, recipes, traps) instead
+of `describe_toolset`; four or more toolset calls in a row go through one
+`ProgrammaticToolset.execute_tool_script` script (its section 7 has each recipe as one); read Epic's
+in-editor Niagara skill for the task through `ToolsetRegistry.AgentSkillToolset`
+([`references/engine-skills.md`](references/engine-skills.md): which one, and where 5.8.3
+disagrees). No editor: `ue_run` jobs.
 
 ## Stance (the expert delta)
 
@@ -61,24 +69,23 @@ Unreal**; `job_00_vfx_probe.py` answers the `[verify]` names.
   model (Xiao Yue [00:19:54]-[00:20:27]). Heft comes from friction (combine Max) and low
   restitution; stone density is 2 g/cm3, 2000 is a unit error (Van Allen [00:26:11]).
 - **Recipes, not clicks.** Templates with exposed parameters and Dataflow graphs with per-asset
-  variables survive art changes and are what an agent reaches reliably (Caillaud t_jyTILDYo8
-  [00:02:46]).
+  variables survive art changes (Caillaud t_jyTILDYo8 [00:02:46]).
 
 ## Establish first
 
-| Input                                       | Why it changes the plan                                                                            | Default when silent                                                                                                               |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Platform, frame rate, min-spec cores        | per-thread budgets, quality tables                                                                 | PC 60 fps; cores from scenario-unreal-performance, 4 if unknown (Kiraly)                                                          |
-| Gameplay numbers (scenario-unreal-gameplay) | radius, speed, damage window, fire rate, max simultaneous, cast animation timing                   | ask; never guess a radius                                                                                                         |
-| Camera and environment                      | read at gameplay distance over the real ground colors                                              | the game's camera and level                                                                                                       |
-| Style pillars, importance tier              | brightness budget: idle, basic, defensive, damaging, game changer, ultimate (Keyser #1 [00:13:08]) | three pillars from the art lead                                                                                                   |
-| Crowd and destruction scope                 | copies on screen; walls per level, must-break objects, low-end platforms                           | worst realistic fight; real time, Nanite on                                                                                       |
-| Budgets                                     | no source gives per-effect ms                                                                      | [added] all Niagara at or under about 2 ms GT + GT Concurrent and 1.5 ms RT at min spec; confirm with scenario-unreal-performance |
+| Input                                       | Why it changes the plan                                                                            | Default when silent                                                            |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Platform, frame rate, min-spec cores        | per-thread budgets, quality tables                                                                 | PC 60 fps; cores from scenario-unreal-performance, 4 if unknown (Kiraly)       |
+| Gameplay numbers (scenario-unreal-gameplay) | radius, speed, damage window, fire rate, max simultaneous, cast animation timing                   | ask; never guess a radius                                                      |
+| Camera and environment                      | read at gameplay distance over the real ground colors                                              | the game's camera and level                                                    |
+| Style pillars, importance tier              | brightness budget: idle, basic, defensive, damaging, game changer, ultimate (Keyser #1 [00:13:08]) | three pillars from the art lead                                                |
+| Crowd and destruction scope                 | copies on screen; walls per level, must-break objects, low-end platforms                           | worst realistic fight; real time, Nanite on                                    |
+| Budgets                                     | no source gives per-effect ms                                                                      | [added] all Niagara under about 2 ms GT + GT Concurrent, 1.5 ms RT at min spec |
 
 ## Workflow
 
-1. **Probe once per engine.** `job_00_vfx_probe.py` (headless). GATE: `probe.json` answers the
-   `[verify]` items.
+1. **Probe once per engine.** `job_00_vfx_probe.py` (headless). GATE: enum and class names as in
+   `probe.json` (5.8.3 answers are in the scripts).
 2. **Classify elements, group them into systems.** `classify_element` per element, then
    `system_plan`: one Effect Type per system (its most critical element); the rest get Scalability
    Mode Self, or their own system when spammy or on GPU.
@@ -97,9 +104,13 @@ Unreal**; `job_00_vfx_probe.py` answers the `[verify]` names.
    build-up ending at the hit, flash on the hit, debris and sparks, smoke, window end) and run
    `spawn_schedule_verdict`; `strobe_risk(speed, head length)` gives the stretch a fast head needs.
    GATE: no error; stretch in the template spec.
-4. **Template and contract.** `duplicate_template`, `user_parameters`, `contract_verdict`; a missing
-   control becomes one GUI request. Curves in that request pass `fade_curve_verdict` (opacity fades
-   from mid-life, never shrink-only) and `flipbook_playback_verdict` (fast then slow). GATE:
+4. **Template and contract.** Templates: `/Niagara/DefaultAssets/Templates/Systems/`
+   (RadialBurst...) and `.../Emitters/` (Fountain...); a commandlet sees them only after
+   `scan_paths`. `duplicate_template` or `CreateNiagaraSystem`, then `user_parameters`,
+   `contract_verdict`; a missing control is added with `AddUserVariables` and a Linked stack input
+   (`mcp-niagara.md` R4), else one GUI request. After every edit: wait for the compile, then
+   `GetStackIssues` (works headless). Curves in that request pass `fade_curve_verdict` (opacity
+   fades from mid-life, never shrink-only) and `flipbook_playback_verdict` (fast then slow). GATE:
    contract ok.
 5. **Look: materials and textures.** Master material and instances from scenario-unreal-materials
    (erosion, gradient-map LUT, depth fade); reuse textures first (Trümpler [00:16:33]), generate
@@ -110,8 +121,10 @@ Unreal**; `job_00_vfx_probe.py` answers the `[verify]` names.
 6. **System properties and scalability.** `set_system_properties`: `effect_type`, `max_pool_size` =
    the type's system cap, prime 0 for mid-play loads, warmup 0, current-frame data off for static
    effects; world-space trails need fixed bounds of speed x lifetime (`fixed_bounds_check`). Effect
-   Types from `EFFECT_TYPE_PRESETS` (`create_effect_type` [verify] or GUI once). GATE: no
-   `NO_EFFECT_TYPE` in `audit_niagara`; `caps_verdict`, `budget_verdict` clean.
+   Types are shared assets: list the existing ones and ask before creating one; new ones from
+   `EFFECT_TYPE_PRESETS` (`create_effect_type`, run on 5.8.3), caps through ObjectTools
+   (`mcp-niagara.md` R8; Python cannot reach them). GATE: no `NO_EFFECT_TYPE` in `audit_niagara`;
+   `caps_verdict`, `budget_verdict` clean.
 7. **Wire to gameplay.** scenario-unreal-gameplay spawns with the pooling method, sets User
    parameters from gameplay data, spawns the wind-up from the cast animation, writes Data Channel
    payloads, applies strain on hit (`strain_plan`; collision plus strain for must-break objects). On
@@ -127,18 +140,20 @@ Unreal**; `job_00_vfx_probe.py` answers the `[verify]` names.
    (`enable_break_events`, Xiao Yue [00:08:42]); switch only broken bones to a debris profile. Then
    `harden_gc`; piece count in a gym at 10, 50, 100 (Caillaud t_jy [00:35:12]). GATE:
    `gc_recipe_verdict`, `gc_verdict`, `physmat_check` clean.
-9. **Review loop.** Textured review level, Manual exposure, the gameplay camera;
-   `live_capture_series.py` or `capture_ages` with clean plates; `score_captures.py` (a blank frame
-   voids the series); LOOK at the color, grayscale and squint sheets; repeat in PIE ("the viewport
-   lies", Shishido [00:05:05]), over green and brown ground for the color-blind check, in a crowd
-   grid and at `sg.EffectsQuality` 0 to 3. On white-out run `duplicate_spawn_check` on Debugger
-   counts first. One change per pass. GATE: no rubric fail; judgment rows scored
+9. **Review loop.** Textured review level (`job_review_level.py`), Manual exposure, the gameplay
+   camera; `live_capture_series.py` or `capture_ages` with clean plates, rendered through a
+   CameraActor (an offscreen editor's viewport was 424 x 40, so viewport shots miss the effect;
+   `project_to_screen` gives the pixel center); `score_captures.py` (a blank frame voids the
+   series); LOOK at the color, grayscale and squint sheets; repeat in PIE ("the viewport lies",
+   Shishido [00:05:05]), over green and brown ground for the color-blind check, in a crowd grid and
+   at `sg.EffectsQuality` 0 to 3. On white-out run `duplicate_spawn_check` on Debugger counts first.
+   One change per pass. GATE: no rubric fail; judgment rows scored
    ([`references/critique.md`](references/critique.md)).
 10. **Measure.** Fixed worst fight at the target core count: `stat unit`, `stat NiagaraOverview`,
     Debug HUD, Insights with `-statnamedevents` (Niagara is invisible without it, Kiraly
     [00:10:52]); `init_for_performance_baseline()`; `lever_check` before each change;
     `budget_oscillation` when budgets are on. Destruction: frame series around the break, CVD,
-    `t.OverrideFPS 60` [verify]. GATE: `niagara_overview_verdict`, `before_after`,
+    `t.OverrideFPS 60` (exists on 5.8.3). GATE: `niagara_overview_verdict`, `before_after`,
     `destruction_run_verdict` within budget, visual parity.
 11. **Deliver** the budget sheet to scenario-unreal-performance.
 
@@ -156,69 +171,67 @@ Unreal**; `job_00_vfx_probe.py` answers the `[verify]` names.
 
 ## Quality gates
 
-- **Measurable:** audits (`audit_niagara`, `audit_gc`, `audit_vfx_textures`, `caps_verdict`,
-  `system_plan`, `gc_recipe_verdict`); per-thread stats at the target core count, averages and
-  spikes; break spike and recovery; capture rubric (footprint vs radius, value bands, blowout,
-  saturation under values, 60 / 30 / 10 with the accent at the focal point, size classes held over
-  time, head contrast, color-blind contrast, intensity curve, schedule, strobing); `image_checks`
-  rejects blank frames.
+- **Measurable:** the audits named in the workflow gates; per-thread stats at the target core count,
+  averages and spikes; break spike and recovery; capture rubric (footprint vs radius, value bands,
+  blowout, saturation under values, 60 / 30 / 10 with the accent at the focal point, size classes
+  held over time, head contrast, color-blind contrast, intensity curve, schedule, strobing);
+  `image_checks` rejects blank frames.
 - **Visual:** grayscale read at gameplay distance; popcorning; story beats; crowd read; no pops
   across quality levels; the break reads as the material with thick interiors, no floating chunks,
   heavy debris, removal hidden by dust.
 
 ## Common mistakes
 
-| Mistake                                        | What it looks like                   | Fix                                                                              |
-| ---------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------- |
-| Hand-matched radius                            | ring larger than the damage zone     | `User.Radius` from gameplay                                                      |
-| White blowout                                  | flat white blob                      | count duplicates, then an alpha-blended saturated layer behind the additive core |
-| Round head at speed                            | strobing dots                        | stretch along velocity, motion blur in the texture                               |
-| Build-up after the hit; smoke before the flash | muddy payoff                         | spawn schedule: stop at the hit, causes first                                    |
-| Shrink-only fade                               | popcorning cards                     | opacity fade from mid-life, matched layer colors                                 |
-| Effect Type per emitter                        | embers get the uncullable type       | one type per system, Scalability Mode Self                                       |
-| Distance culling to cut RT                     | RT unchanged                         | `lever_check`: caps, CPU sims, stateless                                         |
-| Budget without decay                           | cull, respawn, cull                  | decay rate, non-critical types only                                              |
-| Fixed bounds smaller than the trail            | trail vanishes on screen             | `fixed_bounds_check`                                                             |
-| Destroying the projectile on impact            | trail pops off                       | deactivate, let particles finish                                                 |
-| Sleep to hold a wall                           | wakes on a bump                      | anchor or kinematic bones                                                        |
-| Default connection graph                       | floating chunks, corner hinges       | Proximity or Bounds Overlap Filtered                                             |
-| MSC with a tuned threshold array               | tuning does nothing                  | tensile strength on the physical material                                        |
-| Field or strain falloff per bullet             | physics spike                        | strain plus breaking velocity, no falloff                                        |
-| Debris profile on the whole GC                 | player walks through the intact wall | switch broken bones on the break event                                           |
-| Sleeping debris that never wakes               | solver cost                          | disable                                                                          |
-| `gc.removal_duration = ...`                    | refused (read-only attribute)        | `set_editor_property`                                                            |
+| Mistake                                       | What it looks like                   | Fix                                                                              |
+| --------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------- |
+| White blowout                                 | flat white blob                      | count duplicates, then an alpha-blended saturated layer behind the additive core |
+| Round head at speed                           | strobing dots                        | stretch along velocity, motion blur in the texture                               |
+| Shrink-only fade                              | popcorning cards                     | opacity fade from mid-life, matched layer colors                                 |
+| Distance culling to cut RT                    | RT unchanged                         | `lever_check`: caps, CPU sims, stateless                                         |
+| Budget without decay                          | cull, respawn, cull                  | decay rate, non-critical types only                                              |
+| Fixed bounds smaller than the trail           | trail vanishes on screen             | `fixed_bounds_check`                                                             |
+| Destroying the projectile on impact           | trail pops off                       | deactivate, let particles finish                                                 |
+| Sleep to hold a wall                          | wakes on a bump                      | anchor or kinematic bones                                                        |
+| Default connection graph                      | floating chunks, corner hinges       | Bounds Overlap Filtered (`CHAOS_BOUNDS_OVERLAP_FILTERED_DELAUNAY_TRIANGULATION`) |
+| MSC with a tuned threshold array              | tuning does nothing                  | tensile strength on the physical material                                        |
+| Field or strain falloff per bullet            | physics spike                        | strain plus breaking velocity, no falloff                                        |
+| Debris profile on the whole GC                | player walks through the intact wall | switch broken bones on the break event                                           |
+| Sleeping debris that never wakes              | solver cost                          | disable                                                                          |
+| `gc.removal_duration = ...`                   | refused (read-only attribute)        | `set_editor_property`                                                            |
+| Setting a typo'd or wrong-type User parameter | no error, effect unchanged           | read `GetUserVariables` back; `set_user_params` refuses                          |
+| Reading stack issues right after an edit      | "compile is in flight"               | poll `GetSystemCompileState.bIsCompiling`                                        |
+| Writing an input a switch hides               | refused                              | set the switch first                                                             |
+| Trusting UpToDate after an edit               | broken expression saved as UpToDate  | see `bIsCompiling` go true before saving                                         |
 
 ## Handoffs
 
-- **Receives** from scenario-unreal-materials: particle master material, instances, texture
-  settings; from scenario-unreal-gameplay: numbers, cast animation timing, pooled spawns, NDC
-  writes, strain calls; from scenario-unreal-world-building: destructible placements and counts.
-- **Delivers** to scenario-unreal-performance: a budget sheet (system, Effect Type, caps, pool, sim
-  target, per-thread cost, core count, quality; GCs with pieces, peak active bodies, break spike,
-  recovery) plus the repeatable scenario; to scenario-unreal-cinematics: Chaos caches, Cinematic
-  scalability; to scenario-unreal-lighting-rendering: particle lights, Heterogeneous Volumes. Cloth
-  belongs to scenario-unreal-animation.
+Receives materials and texture settings (scenario-unreal-materials), gameplay numbers, cast timing,
+pooled spawns, NDC writes and strain calls (scenario-unreal-gameplay), destructible placements
+(scenario-unreal-world-building). Delivers a budget sheet and a repeatable scenario to
+scenario-unreal-performance (system, Effect Type, caps, pool, sim target, per-thread cost, core
+count, GC pieces, break spike); Chaos caches to scenario-unreal-cinematics; particle lights and
+Heterogeneous Volumes to scenario-unreal-lighting-rendering. Cloth: scenario-unreal-animation.
 
 ## UE 5.8 notes
 
 - Data Channels Production Ready since 5.5 (the GDC 2025 talk still says experimental); lightweight
   emitters Beta since 5.5, compile step dropped in 5.7; Niagara Fluids Beta; "Empty" template is
   "Minimal".
-- `r.HeterogeneousVolumes.Allow` (5.8); Niagara Editor Preview Actor (5.7).
+- `r.HeterogeneousVolumes.Allowed` on 5.8.3 (not `.Allow`); `fx.Budget.Enabled` defaults to 0;
+  `fx.Niagara.Debug.Hud` is a console command, not a CVar; Niagara Editor Preview Actor (5.7).
 - Chaos: default Dataflow template at GC creation, runtime Dataflow evaluation (5.8); destruction
   throttles in Project Settings (5.6).
 - GC Python: `root_proxy_data`, `size_specific_data`, `set_dataflow_asset`; per-bone data (anchors,
-  Remove on Break, one-way levels) is not on the class.
+  Remove on Break, one-way levels) is not on the class. A GC from the StaticMesh Dataflow template
+  arrives with Nanite off and thresholds [500000, 50000, 5000]: harden it.
 
 ## References
 
-- [`references/expert-notes.md`](references/expert-notes.md): principles by expert, timestamps,
-  disagreements, what the U7 grade found missing.
-- [`references/procedures.md`](references/procedures.md): full code, test path and status per
-  procedure.
-- `references/critique.md`: the rubric (metrics, thresholds, judgment rows).
-- [`references/gui-paths.md`](references/gui-paths.md): editor menus for the same work.
-- [`references/sources.md`](references/sources.md): every source, credential, URL, best timestamps,
-  revision history.
-- [`scripts/ue_vfx.py`](scripts/ue_vfx.py): offline verdicts and metrics; in-editor helpers (not yet
-  run).
+- `references/mcp-niagara.md`: signatures, JSON, recipes, batched scripts, traps.
+- `references/engine-skills.md`: Epic's in-editor Niagara and Dataflow skills, tested
+  contradictions.
+- [`references/procedures.md`](references/procedures.md) (code, status), `critique.md` (rubric),
+  [`gui-paths.md`](references/gui-paths.md) (menus),
+  [`expert-notes.md`](references/expert-notes.md), `sources.md`.
+- [`scripts/ue_vfx.py`](scripts/ue_vfx.py): offline verdicts and metrics; in-editor helpers (status
+  per function in its docstring).
