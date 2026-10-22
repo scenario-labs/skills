@@ -2,6 +2,8 @@
 name: scenario-kinetic-music-video
 description: "Use when turning a song into a kinetic-typography or motion-design music video, lyric video, visualizer or K-pop style MV with Scenario, landscape or vertical 9:16 for TikTok, Reels and Shorts: a generated subject sheet, style frames and footage, plus a deterministic JavaScript/three.js engine for lyric type, mattes and tracked graphics timed to sung onsets. Also for revising, recutting or cutting teasers from such a video."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Kinetic Music Video

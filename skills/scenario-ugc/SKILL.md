@@ -2,6 +2,8 @@
 name: scenario-ugc
 description: "Use when producing UGC-style creator video with Scenario: a talking-head ad or testimonial from a portrait and a script, a founder clip, a product demo or unboxing, a reaction or before-after cut, a faceless voiceover over b-roll, or vertical social video for TikTok, Reels, or Shorts that must feel filmed on a phone rather than produced. Keywords: UGC, creator ad, talking head, testimonial, avatar, lipsync, founder video, social proof, faceless voiceover, organic, vertical video."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario UGC Creator Video

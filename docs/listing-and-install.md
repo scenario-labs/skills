@@ -22,7 +22,13 @@ How skills.sh, the installer picker, and the install commands work. [AGENTS.md](
     Started"), because the picker sorts group names alphabetically. The prefix makes it follow the
     `skills.sh.json` order, so inserting or merging a grouping renumbers the plugin ids on
     regeneration.
-  - The manifest also makes the repo a Claude Code plugin marketplace, one plugin per grouping.
+  - The manifest also makes the repo a Claude Code plugin marketplace, `scenario-skills`, one plugin
+    per grouping. Claude Code namespaces a plugin's skills under the plugin name, so users see
+    `/03.-images:scenario-image`. Renaming a plugin changes its install key
+    (`<plugin>@scenario-skills`), so existing installs stop matching it.
+  - Each plugin entry carries the release version, so Claude Code updates installed plugins at
+    releases, not at every commit to `main`
+    ([docs/ci-and-releases.md](ci-and-releases.md#releases)).
 - Install commands:
   - `npx skills add scenario-labs/skills` opens a picker with nothing preselected, so a reader who
     runs the bare command and hits enter installs nothing. The README says so on the command.

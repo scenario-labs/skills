@@ -2,6 +2,8 @@
 name: scenario-gemini-image
 description: "Use when generating or editing images with Google's Gemini image models (Nano Banana) on Scenario via MCP: text-to-image, natural-language instruction editing, identity locking or style transfer from reference images, multi-image fusion, pulling stills from a video clip, Google Search grounding, thinking level tuning, 512 to 4K output, or choosing between Flash, Pro, and Lite. Keywords: Gemini 3.1 Flash, Gemini 3.0 Pro, Gemini 3.1 Lite, Nano Banana 2, Nano Banana Pro, txt2img, img2img."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario Gemini Image

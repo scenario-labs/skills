@@ -17,6 +17,23 @@ which commit types release and which files release-please owns.
 - Merging the release PR tags `skills-vX.Y.Z`, titles the GitHub release `skills: vX.Y.Z`, rewrites
   `CHANGELOG.md`, `version.txt`, and `.release-please-manifest.json`, and publishes the GitHub
   release.
+- Two release-please `extra-files` entries carry the version into shipped files
+  ([docs/decisions.md](decisions.md#skill-and-plugin-versions) records why):
+  - `skills/**/SKILL.md` (`generic`, `"glob": true`) rewrites `metadata.version` in every skill. The
+    updater only touches a line holding `x-release-please-version`, which rides as a YAML comment:
+    `version: "X.Y.Z" # x-release-please-version`. release-please expands the glob over `main` each
+    time it rebuilds the release PR, so new skills are included.
+  - `.claude-plugin/marketplace.json` (`json`, `$.plugins[*].version`) rewrites every plugin's
+    version. The manifest generator writes the same value from `version.txt`, so
+    `pnpm manifest:check` passes on the release PR.
+- `pnpm stamp` writes `metadata.version` from `version.txt`. `pnpm stamp:check` fails validation and
+  CI on a missing, misplaced, or malformed version, one newer than `version.txt`, or a missing
+  `extra-files` entry for the skills.
+- An older `metadata.version` passes on purpose. `main` does not require branches to be up to date,
+  so a new skill stamped before a release can merge after it, and the next release PR rewrites it.
+- Tests run release-please's own pinned updaters on both files (`scripts/version-stamp.test.mjs`,
+  `scripts/generate-plugin-manifest.test.mjs`), so a format or marker change fails before a release
+  does.
 - `.github/workflows/publish-changelog.yml` then posts the notes to the public changelog at
   [scenario.com/changelog](https://www.scenario.com/changelog). It hangs off the
   `release: published` event, not the release-please run, because release-please reports a created

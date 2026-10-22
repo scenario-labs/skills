@@ -2,6 +2,8 @@
 name: scenario-3d-worlds
 description: "Use when generating navigable 3D worlds or Gaussian splat scenes on Scenario via MCP: text-to-world, image-to-world, a 360 panorama or skybox turned into a walkable splat, multi-view photos or a video walkthrough reconstructed as a splat, or one object photo to splat. Keywords: World Labs Marble 1.1, 1.1 Plus, 1.0 Draft, Hunyuan World, HY World, image-to-skybox, skybox-to-splat, multiview-to-splat, TripoSplat, gaussian splatting, 3DGS, spz, world generation, explorable scene, VR."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario 3D Worlds

@@ -2,6 +2,8 @@
 name: scenario-unity-ui
 description: "Use when building or fixing game UI in Unity 6.3: main menu, settings screen (resolution, quality, volume, key rebinding), HUD, health bar, minimap frame; choosing uGUI or UI Toolkit or mixing both; 'UI scales wrong on phones', portrait to 4K, Canvas Scaler, anchors, layout groups collapsing, sort order, UXML/USS, data binding, TextMeshPro or UI Toolkit fonts missing glyphs, localized menus, gamepad navigation, UI draw calls, canvas rebuild spikes, UI tests, or capturing UI to check it."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Unity UI (UI developer)

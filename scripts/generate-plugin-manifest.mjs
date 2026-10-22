@@ -9,6 +9,10 @@
 //   expert tools under skills/<category>/<family>/),
 //   which also makes the repo installable as a Claude Code plugin marketplace,
 //   one plugin per grouping
+// - every plugin carries the release version from version.txt, which
+//   release-please rewrites in this file too (a json extra-files entry), so
+//   Claude Code updates installed plugins at each release rather than at every
+//   commit to main
 // - plugin names carry a two-digit position prefix (01.-getting-started,
 //   displayed by the picker as "01. Getting Started") because the picker sorts
 //   group names alphabetically, so the prefix is what makes it follow
@@ -41,7 +45,7 @@ const pluginNameOf = (title) =>
     .replace(/^-+|-+$/g, "");
 
 // `source` names the skills.sh.json being read in error messages.
-function render(source, read, skills) {
+function render(source, read, skills, version) {
   let config;
   try {
     config = JSON.parse(read());
@@ -79,6 +83,7 @@ function render(source, read, skills) {
     const name = `${String(index + 1).padStart(2, "0")}.-${slug}`;
     const plugin = { name };
     if (group.description) plugin.description = group.description;
+    plugin.version = version;
     plugin.source = "./";
     plugin.strict = false;
     plugin.skills = group.skills.map((skill) => {
@@ -111,6 +116,7 @@ const { rendered, groups } = render(
   "skills.sh.json",
   () => readFileSync("skills.sh.json", "utf8"),
   listSkills(),
+  readFileSync("version.txt", "utf8").trim(),
 );
 
 const existing = existsSync(MANIFEST_PATH)
@@ -148,6 +154,7 @@ let index;
 try {
   index = {
     config: git(["show", ":skills.sh.json"]),
+    version: git(["show", ":version.txt"]).trim(),
     paths: git(["ls-files", "-z", "--", "skills"]).split("\0"),
   };
 } catch {
@@ -158,6 +165,7 @@ if (index) {
     "staged skills.sh.json",
     () => index.config,
     listSkillsFromPaths(index.paths),
+    index.version,
   ).rendered;
   let indexed = null;
   try {

@@ -2,6 +2,8 @@
 name: scenario-roblox-environment
 description: "Use when building or lighting a Roblox map: graybox or blockout, level layout, landmarks, doors and walls, parts versus unions (CSG), collision fidelity, terrain (generate, sculpt, paint, water, Part to Terrain), MaterialVariants, custom terrain materials, PBR textures from Scenario, skyboxes, Lighting, Atmosphere, Clouds, bloom, color correction, day or night moods, interior light, scattering rocks, bushes and trees, level of detail (SLIM, RenderFidelity), per-model streaming or a streaming test, collision overlays, invisible walls, or texture sizes. Also when a map looks flat, foggy, too dark or plastic, grass pokes through floors, a doorway blocks players, content pops in or never unloads, a custom material disappears, or the sun lights the wrong side."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Roblox environment (builder, environment artist and lighter)

@@ -11,6 +11,7 @@
     {
       "name": "01.-getting-started",
       "description": "Connect the Scenario MCP server and learn the core generation loop every other skill builds on.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -20,6 +21,7 @@
     {
       "name": "02.-finding-a-direction",
       "description": "Turn a blank brief into references, options someone can choose between, and a moodboard the next batch runs from.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -29,6 +31,7 @@
     {
       "name": "03.-images",
       "description": "Generate and edit images: model choice, sizing, references, masked edits, post-processing tools, and letter-perfect text overlay cards.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -45,6 +48,7 @@
     {
       "name": "04.-game-art-and-3d",
       "description": "Sprites, icons, tilesets, textures, skyboxes, 3D models, and walkable spaces for games, the web, and interactive scenes.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -64,6 +68,7 @@
     {
       "name": "05.-video-and-audio",
       "description": "Video generation, editing, and color grading, seamless motion loops, music, sound effects, voice, and speech.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -84,6 +89,7 @@
     {
       "name": "06.-socials",
       "description": "Made for social feeds and chat apps: UGC-style creator videos, fan-cam reactions from a photo, trend reels recast with your own character, kinetic-typography lyric videos, and animated ChatGPT and Codex pets, new or updated.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -98,6 +104,7 @@
     {
       "name": "07.-consistency-and-custom-models",
       "description": "Hold one character, product, or style across a whole set, and train custom models on your own art.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -109,6 +116,7 @@
     {
       "name": "08.-reviewing-and-organizing-output",
       "description": "Read finished assets back: caption them, extract a style or a control map, check a batch against a brief or the Quality Gate, compare candidate models on one brief, and file the keepers.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -121,6 +129,7 @@
     {
       "name": "09.-formats-and-placements",
       "description": "Ship one approved master, image or video, to every placement: ratios, safe zones, and platform specs from social feeds to shops, storefronts, and print.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -130,6 +139,7 @@
     {
       "name": "10.-workflows-and-apps",
       "description": "Discover, run, build, and publish Scenario workflows (apps), and migrate graphs from Weavy, ComfyUI, or other node editors.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -140,6 +150,7 @@
     {
       "name": "11.-troubleshooting",
       "description": "Get past a blocked generation, and turn a stuck session into a reproducible public issue.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -150,6 +161,7 @@
     {
       "name": "12.-team-administration",
       "description": "Govern a team from the agent: which models it can run, who is on it and in which projects, per-member spend caps, API key roles, and who spent what.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -160,6 +172,7 @@
     {
       "name": "13.-image-model-families",
       "description": "The top image families in depth: generation and editing modes, reference rules, and the caps that differ per member.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -176,6 +189,7 @@
     {
       "name": "14.-video-model-families",
       "description": "The top video families in depth: conditioning modes, native audio, editing and extension, and per-member caps and costs.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -194,6 +208,7 @@
     {
       "name": "15.-audio-model-families",
       "description": "The top audio families in depth: music, covers and stems, sound effects, speech, dubbing, and video scoring.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -206,6 +221,7 @@
     {
       "name": "16.-3d-model-families",
       "description": "The top 3D families in depth: mesh generation, retexture and rigging toolchains, portraits, and explorable worlds and splats.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -218,6 +234,7 @@
     {
       "name": "17.-expert-tools-zbrush",
       "description": "DCC software. A lead and eight specialists that drive Maxon ZBrush 2026 through its agent bridge: sculpting, characters and creatures, stylized work, hard surface, polypaint and renders, posing and 3D print, retopology and export, automation. The bridge was proven live; full live tests of every skill are still pending.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -235,6 +252,7 @@
     {
       "name": "18.-expert-tools-blender",
       "description": "DCC software. A lead and fourteen specialists that drive Blender 5.2 through Python, headless or in a live session: sculpting, retopology, UVs and baking, shading, hair, rigging, animation, previs, blockouts for render-to-real video, Geometry Nodes, lighting, Grease Pencil, hard surface, export to game engines. Twelve test suites pass headless on Blender 5.2.1.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -258,6 +276,7 @@
     {
       "name": "19.-expert-tools-maya",
       "description": "DCC software. A lead and ten specialists that drive Autodesk Maya 2027 through Python, batch or live: modeling, retopology and UVs, rigging, skinning, animation, groom, FX, look dev, Arnold lighting and rendering, pipeline scripting.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -277,6 +296,7 @@
     {
       "name": "20.-expert-tools-unreal-engine",
       "description": "Game engine. A lead and nine specialists that drive Unreal Engine 5.8 on macOS through Editor Python, headless jobs, and Epic's Unreal MCP server: world building, materials, lighting and rendering, gameplay, animation, cinematics, VFX, pipeline automation, performance.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -295,6 +315,7 @@
     {
       "name": "21.-expert-tools-unity",
       "description": "Game engine. A lead and thirteen specialists that drive Unity 6.3 LTS on macOS through batch mode, a live editor, and command-line builds: architecture, gameplay, 2D, animation, UI, VFX, shaders, rendering and lighting, world building, performance, mobile, Web, pipeline automation. Every procedure was run live in Unity 6.3.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -317,6 +338,7 @@
     {
       "name": "22.-expert-tools-godot",
       "description": "Game engine. A lead and thirteen specialists that drive Godot 4.7 on macOS through headless jobs, windowed captures, GUT and gdUnit4 tests, and command-line exports: architecture, gameplay, 2D, 3D worlds, animation, UI, VFX, shaders, rendering and lighting, audio, multiplayer, performance and export, pipeline automation. Every procedure was run live in Godot 4.7.2.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [
@@ -339,6 +361,7 @@
     {
       "name": "23.-expert-tools-roblox-studio",
       "description": "Game engine. A lead and thirteen specialists that drive Roblox Studio on macOS through its built-in MCP server, playtests driven by code, offline Luau checks, and Rojo builds: architecture, Luau, networking and security, data, tooling, environment, VFX and audio, UI, animation, gameplay, assets and avatar items, performance, monetization. Procedures were run live in Roblox Studio 0.743.",
+      "version": "0.59.0",
       "source": "./",
       "strict": false,
       "skills": [

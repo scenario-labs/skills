@@ -2,6 +2,8 @@
 name: scenario-maya-animation
 description: "Use when animating a character or prop in Maya through Python: a walk or run cycle, a jump or landing, a heavy lift, throw or punch, an acting or dialogue shot, lip sync, eye darts and blinks, stepped blocking, splining, polish, Graph Editor tangents, animation layers, mocap cleanup or retargeting, game clips and root motion, or reviewing a playblast. Also when motion looks floaty, weightless, mushy, poppy, posey, sliding or chattery, or feet slap or skate."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Maya animation (animator)

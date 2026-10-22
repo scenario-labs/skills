@@ -2,6 +2,8 @@
 name: scenario-roblox-networking
 description: "Use when securing a Roblox experience against exploiters or designing its networking: RemoteEvent, RemoteFunction or UnreliableRemoteEvent design, validating remote arguments on the server, remote spam and rate limits, speed hacks, teleport or fly hacks, kill aura or hitbox abuse, hit validation under lag, network ownership and fling exploits, ProximityPrompt or ClickDetector abuse, honeypots, kick and ban policy, Server Authority (AuthorityMode) setup, bandwidth or payload size problems, or after an exploit (free items, infinite money, duplicated items)."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Roblox Networking and Security

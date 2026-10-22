@@ -2,6 +2,8 @@
 name: scenario-inspiration
 description: "Use when a creative task has no direction yet: finding inspiration, exploring looks or styles, proposing concept directions to pick between, building a moodboard or reference board, doing visual research, mining existing assets for a style, or escaping generic AI-looking output. Also when a saved Scenario collection should drive a new batch as art direction. Keywords: inspiration, moodboard, references, art direction, style exploration, concepts, serendipity, ideation, surprise me."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario Inspiration

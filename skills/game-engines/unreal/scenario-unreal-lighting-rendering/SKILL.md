@@ -2,6 +2,8 @@
 name: scenario-unreal-lighting-rendering
 description: 'Use when lighting or rendering in Unreal Engine 5.8: physical light units and exposure (EV100, lux, lumens), Lumen GI and reflections, MegaLights, virtual shadow maps, sky, fog and clouds, post process and color grading, the path tracer, or Movie Render Graph stills. Triggers: "Lumen is noisy", "MegaLights noise", "the interior is too dark", "light leaks", neon signs, a night or dusk scene, "fireflies", "path tracer vs Lumen", "render a still", EXR settings.'
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Lighting and rendering in Unreal Engine 5.8

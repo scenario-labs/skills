@@ -2,6 +2,8 @@
 name: scenario-roblox-gameplay
 description: "Use when building Roblox gameplay systems: NPC or enemy AI that patrols, chases and attacks, state machines or behavior trees, 'NPC pathfinding stuck', 100 zombies lag the server, hitboxes, melee combos, M1 combat, 'hits register twice', raycasts, Spherecast, Shapecast, guns and projectiles, 'bullets go through walls', knockback and stun, LinearVelocity, VectorForce or AlignPosition movers, replacing BodyVelocity, cars and vehicles with suspension, 'car flips', VehicleSeat, network ownership of NPCs and vehicles, round loops, BindToSimulation logic."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Roblox gameplay systems (gameplay systems programmer)

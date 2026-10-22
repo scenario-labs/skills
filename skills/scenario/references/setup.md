@@ -111,3 +111,24 @@ since the server refuses API keys there. To get an origin allowlisted, contact
 [support](https://www.scenario.com/contact-us?intent=scenario-mcp-issue) with the bare `https`
 origin (the port if any, no path), whether it is needed on production or a preview environment, and
 the tools the application will call.
+
+## Installing and updating these skills
+
+Each `SKILL.md` names the release it comes from in its frontmatter, as `metadata.version`. Releases
+are listed at
+[github.com/scenario-labs/skills/releases](https://github.com/scenario-labs/skills/releases).
+
+- Claude Code: install the skills as plugins from the `scenario-skills` marketplace, then turn on
+  auto-update once. Auto-update is off by default for third-party marketplaces.
+
+  ```text
+  /plugin marketplace add scenario-labs/skills
+  /plugin install 01.-getting-started@scenario-skills
+  ```
+
+  Then, in `/plugin`: add more groups from **Discover**, and under **Marketplaces**, select
+  `scenario-skills` and choose **Enable auto-update**. Plugins then update at each release.
+
+- Any other agent: `npx skills add scenario-labs/skills` installs, and `npx skills update` refreshes
+  the skills whose files changed.
+- Use one route, not both: a skill installed both ways loads twice.

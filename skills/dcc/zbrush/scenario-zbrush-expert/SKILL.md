@@ -2,6 +2,8 @@
 name: scenario-zbrush-expert
 description: "Use when an agent drives Maxon ZBrush 2026 for any task (sculpt in ZBrush, DynaMesh, ZRemesher, UVs, export, polypaint, posing, 3D print, clean up an AI mesh in ZBrush), when writing ZBrush Python (zbrush.commands) or ZScript, when the ZBrush bridge is not answering, a palette path or set() does nothing, a scripted stroke does not sculpt or a dialog blocks a script, or when a ZBrush result has to be judged the way a professional artist would."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # ZBrush expert (router and agent protocol)

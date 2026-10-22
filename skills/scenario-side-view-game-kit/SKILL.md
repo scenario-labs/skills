@@ -2,6 +2,8 @@
 name: scenario-side-view-game-kit
 description: "Use when making the art for a side-scroller or 2D platformer: side-view pixel-art sprite sheets for a hero and ground enemies (run, walk, idle, attack, hurt cycles, air spin, jump and fall poses) and per-level layers (parallax background and midground, seamless wall texture, platform strip, props). Also use when a magenta key eats part of a sprite, a walk loop will not close, a slash trail keys into a solid block, generated textures do not tile, or poses on one sheet will not split."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario Side-View Game Kit

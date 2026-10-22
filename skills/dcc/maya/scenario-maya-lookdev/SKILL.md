@@ -2,6 +2,8 @@
 name: scenario-maya-lookdev
 description: "Use when shading an asset in Maya with Arnold: OpenPBR or aiStandardSurface materials, hooking up Substance Painter or UDIM texture sets, color spaces (sRGB, Raw, ACEScg), a normal map that looks wrong, displacement with black holes or faceting, skin SSS, chrome and metals, glass or crystal, car paint, aiStandardHair, porting Standard Surface to OpenPBR, or a lookdev turntable with chrome and gray balls. Also when textures render washed out, too dark or plastic in Arnold."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Look development in Maya 2027 (Arnold)

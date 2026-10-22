@@ -5,7 +5,7 @@
   "packageManager": "pnpm@11.21.0",
   "scripts": {
     "prepare": "husky",
-    "validate": "pnpm style && pnpm format:check && pnpm sync:agent-commands:check && pnpm skill-files && pnpm lint:py && pnpm groupings && pnpm manifest:check && pnpm readme && pnpm words:check && pnpm spell && pnpm spec",
+    "validate": "pnpm style && pnpm format:check && pnpm sync:agent-commands:check && pnpm skill-files && pnpm lint:py && pnpm groupings && pnpm manifest:check && pnpm stamp:check && pnpm readme && pnpm words:check && pnpm spell && pnpm spec",
     "style": "./scripts/check-style.sh",
     "format": "prettier --write . && pnpm sync:agent-commands",
     "format:check": "prettier --check .",
@@ -13,13 +13,15 @@
     "groupings": "node ./scripts/check-groupings.mjs",
     "manifest": "node ./scripts/generate-plugin-manifest.mjs",
     "manifest:check": "node ./scripts/generate-plugin-manifest.mjs --check",
+    "stamp": "node ./scripts/version-stamp.mjs",
+    "stamp:check": "node ./scripts/version-stamp.mjs --check",
     "readme": "node ./scripts/check-readme.mjs",
     "spell": "./scripts/check-spelling.sh",
     "words:sort": "./scripts/sort-project-words.sh",
     "words:check": "./scripts/sort-project-words.sh --check",
     "spec": "./scripts/validate-skills.sh",
     "lint:py": "uvx ruff@0.16.10 check",
-    "test": "pnpm test:agent-commands && pnpm test:manifest && pnpm test:style && pnpm test:readme && pnpm test:runner && ./scripts/test-skill-scripts.sh",
+    "test": "pnpm test:agent-commands && pnpm test:manifest && pnpm test:style && pnpm test:readme && pnpm test:stamp && pnpm test:runner && ./scripts/test-skill-scripts.sh",
     "test:coverage": "COVERAGE=1 ./scripts/test-skill-scripts.sh",
     "sync:agent-commands": "node scripts/sync-agent-commands.mjs",
     "sync:agent-commands:check": "node scripts/sync-agent-commands.mjs --check",
@@ -27,6 +29,7 @@
     "test:manifest": "node --test scripts/generate-plugin-manifest.test.mjs",
     "test:style": "node --test scripts/check-style.test.mjs",
     "test:readme": "node --test scripts/check-readme.test.mjs",
+    "test:stamp": "node --test scripts/version-stamp.test.mjs",
     "test:runner": "node --test scripts/test-skill-scripts.test.mjs"
   },
   "devDependencies": {

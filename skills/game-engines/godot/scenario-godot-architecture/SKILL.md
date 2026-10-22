@@ -2,6 +2,8 @@
 name: scenario-godot-architecture
 description: "Use when structuring Godot 4.7 game code: folders, scenes and nodes, signals or an event bus autoload, custom Resources for item data, components (health, hitbox, hurtbox), an inventory, save and load, InputMap and key rebinding for keyboard, mouse and gamepad, GDScript static typing and style, or GDScript vs C#; or when code is spaghetti, a folder scan breaks in the export, a save loads wrong, the gamepad does nothing, or @onready is null."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Godot architecture (gameplay programmer and architect)

@@ -2,6 +2,8 @@
 name: scenario-minimax-music
 description: "Use when generating music with MiniMax models on Scenario via MCP: full songs with vocals from a lyric sheet, structure tags like [Verse] and [Chorus], auto-written lyrics from a plain-language brief, instrumental tracks from a style prompt, or covering an uploaded MP3 or WAV in a new genre while keeping the melody. Keywords: MiniMax Music 3.0, Music Cover, Hailuo, text-to-music, audio-to-audio, song generation, lyrics, vocals, instrumental, BPM, genre swap."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario MiniMax Music

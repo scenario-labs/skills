@@ -2,6 +2,8 @@
 name: scenario
 description: Use when connecting an AI agent to Scenario (scenario.com) through MCP, or when a task involves generating images, video, 3D, audio, sprites, textures, or game assets. Also when picking a Scenario model, running a LoRA, refining a generation prompt, uploading reference images, waiting on generation jobs, checking credits or quota, hitting Scenario auth, scope, or Forbidden errors, or setting up mcp.scenario.com in Claude Code, Cursor, VSCode, or another agent.
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario
@@ -18,6 +20,9 @@ through the core loop below.
 - Client config, headless API-key setup, and per-client re-authentication:
   [references/setup.md](references/setup.md).
 - Never ask an agent to collect, encode, or echo a secret.
+- These skills, when the user asks to install or update them: in Claude Code, the `scenario-skills`
+  plugin marketplace with auto-update on; elsewhere, `npx skills update`. Steps in
+  [references/setup.md](references/setup.md#installing-and-updating-these-skills).
 - A connection that authenticated once and now fails: re-authenticate its client before debugging
   anything else. `diagnostics_run` names the failing layer (`auth`, `tenant-scope`,
   `api-unreachable`, or `healthy`).

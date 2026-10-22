@@ -2,6 +2,8 @@
 name: scenario-3d
 description: Use when generating or handling 3D assets through the Scenario MCP server, including text-to-3D or image-to-3D meshes, GPT-6 Astra 3D or Claude Opus 5.5 3D, GLB, FBX, OBJ, STL, or VOX files, PBR-textured or game-ready models, voxel models, multi-view reconstruction, editing a mesh by prompt, retexture, remesh, UV unwrap, auto-rigging a biped or quadruped, or retargeting an animation, previewing a mesh in the 3D viewer, or downloading a model for import into Unity, Unreal, Godot, or Blender.
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario 3D Asset Workflows

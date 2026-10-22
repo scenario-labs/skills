@@ -2,6 +2,8 @@
 name: scenario-roblox-data
 description: "Use when a Roblox game saves or loads player data, or when players report data not saving, lost progress, rollbacks, duplicated items or a purchase granted twice. Triggers: DataStoreService, UpdateAsync, SetAsync, BindToClose, ProfileStore, ProfileService, DataStore2, session locking, data schema or migration, Developer Product ProcessReceipt, player trading, OrderedDataStore leaderboards, MemoryStore, MessagingService, TeleportService and reserved servers, DataStore budgets and throttling (errors 301 to 306), 'You must publish this place to the web to access DataStore', and testing data code in an unpublished place."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Roblox Data and Backend

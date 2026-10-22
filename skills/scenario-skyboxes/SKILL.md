@@ -2,6 +2,8 @@
 name: scenario-skyboxes
 description: Use when a task involves generating or iterating on skyboxes, 360 panoramas, equirectangular images, environment maps, HDRI-style backdrops, or VR backdrops through the Scenario MCP. Triggers include text-to-skybox, turning a photo into a 360 environment, restyling a panorama's mood, upscaling a skybox without breaking the seam wrap, or exporting equirectangular or cubemap layouts for game engines such as Unity, Unreal, or Godot.
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario Skyboxes and 360 Panoramas

@@ -2,6 +2,8 @@
 name: scenario-caption-studio
 description: "Use when a video needs its spoken words on screen through Scenario via MCP: burned-in styled captions for a TikTok, Reels, or Shorts cut, ad captions for sound-off feeds, YouTube subtitles, an SRT sidecar, transcription of a clip's audio, captions translated into another language, karaoke or word-by-word styles, or restyling and correcting an existing transcript. Keywords: captions, subtitles, SRT, transcribe, karaoke, word-by-word, burn in, closed captions, translate video, caption style."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario Caption Studio

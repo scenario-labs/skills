@@ -2,6 +2,8 @@
 name: scenario-blender-hard-surface
 description: "Use when modeling hard-surface objects in Blender (sci-fi panels, props, weapons, vehicles, robots, machined or product parts) with booleans and cutters, bevel modifiers, weighted normals, or subdivision with support loops or creases. Also when shading is broken (smears on flat faces, stretching near a cut, pinching), a bevel shrinks or vanishes after a boolean, a boolean empties the mesh or leaves holes, choosing n-gons vs quads, or making a game-ready mid-poly."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Blender hard surface

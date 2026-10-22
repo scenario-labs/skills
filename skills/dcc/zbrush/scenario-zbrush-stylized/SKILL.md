@@ -2,6 +2,8 @@
 name: scenario-zbrush-stylized
 description: "Use when sculpting a stylized or cartoon character, bust, collectible or toy in ZBrush (Overwatch, Fortnite, Disney look), judging shape language (S and C curves, parallel lines, 70/30, silhouette read at a distance), exaggerating proportions on purpose, keeping stylized planes crisp through subdivision, sculpting stylized hair (chunky clumps, curve tube strands, ClayPolish), or designing a figure for toy production (articulation, wall thickness, scale)."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # ZBrush stylized characters and collectibles

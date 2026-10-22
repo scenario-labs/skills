@@ -2,6 +2,8 @@
 name: scenario-maya-rigging
 description: 'Use when rigging a character, creature or prop in Maya: "rig this character", placing or orienting joints, Orient Joint doing nothing, IK/FK switch and matching, pole vector flips or elbow drift, space switching, foot roll, spline IK spine, offsetParentMatrix, blendMatrix or matrix rigging, controls and lockdown for animators, Quick Rig, HumanIK, AdvancedSkeleton or mGear, a game skeleton for Unreal or Unity, or a slow rig (parallel evaluation, profiling, GPU Override not kicking in).'
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Maya rigging

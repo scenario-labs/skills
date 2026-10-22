@@ -2,6 +2,8 @@
 name: scenario-godot-pipeline-automation
 description: "Use when Godot 4.7 work must run without a mouse or at scale: batch import of hundreds of GLB props or an AI image-to-3D art drop, naming rules, import presets and post-import scripts, editor plugins, EditorScript and @tool, EditorImportPlugin, GUT or gdUnit4 tests in CI, a GitHub Actions export workflow, GDExtension basics, or a Godot MCP server; also when --import is slow, textures stay uncompressed, tests pass locally but CI fails, or an export ships test folders."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Godot pipeline automation (tools and build engineer)

@@ -2,6 +2,8 @@
 name: scenario-maya-groom
 description: "Use when grooming hair or fur in Maya with XGen (Interactive Groom splines or legacy descriptions): scalp hair, eyebrows, eyelashes, fur, guides, clumps, noise, parting, density maps, a fill layer, aiStandardHair shading, noisy or flickering hair renders, hair that must move (Linear Wire, nHair, Alembic caches), or a groom for Unreal (groom Alembic, cards). Also when XGen hair looks CG, clumps look uniform, the scalp shows through, or an XGen script fails."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Hair and fur grooming (XGen Interactive Groom, Maya 2027)

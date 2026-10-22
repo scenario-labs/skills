@@ -2,6 +2,8 @@
 name: scenario-unity-vfx
 description: "Use when making or fixing real-time VFX in Unity 6.3: explosions, fireballs, projectiles with muzzle, trail and impact, spells, slashes, shockwaves, smoke, sparks, Particle System (Shuriken) or VFX Graph ('VFX Graph explosion', 'particles look bad', 'effect kills fps on mobile', 'too much overdraw'), mesh effects with scrolling textures, an uber VFX shader with LUT ramps, Custom Data and custom vertex streams, flipbooks and VFX textures, pink particles after URP upgrade, VFX budgets and readability."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Unity VFX (real-time VFX artist)

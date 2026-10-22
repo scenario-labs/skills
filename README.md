@@ -45,6 +45,24 @@ Skills follow the [Agent Skills](https://agentskills.io) format.
 
 ## Install
 
+**Claude Code: install as plugins, with auto-update.** The repository is a Claude Code plugin
+marketplace named `scenario-skills`, with one plugin per topic group of the Skills list below. In a
+Claude Code session:
+
+```text
+/plugin marketplace add scenario-labs/skills
+/plugin install 01.-getting-started@scenario-skills
+```
+
+Then run `/plugin`: add more groups from the **Discover** tab, and under **Marketplaces**, select
+`scenario-skills` and choose **Enable auto-update**. Auto-update is off by default for third-party
+marketplaces, and once on, Claude Code updates your plugins at each release. A plugin's skills
+appear as `/<plugin>:<skill>`, for example `/03.-images:scenario-image`. Install through plugins or
+through `npx skills add`, not both, or each skill loads twice.
+
+**Other agents.** The commands below use the [skills CLI](https://www.skills.sh), which works with
+Claude Code too.
+
 **Everything for Scenario.** Every Scenario skill, without the expert tools: the default for working
 through the Scenario MCP.
 
@@ -90,7 +108,6 @@ skill.
 
 ## Staying up to date
 
-Installs always fetch the latest copy of each skill from `main`; there is no version pinning.
 Releases are how changes become visible: every feature, fix, and documentation change merged to
 `main` lands in the next release, staged by release-please as an open release PR. Merging that PR
 tags a version, updates `CHANGELOG.md` in this repository, publishes a
@@ -100,8 +117,12 @@ tags a version, updates `CHANGELOG.md` in this repository, publishes a
 - To learn that a skill changed, watch this repository's releases (Watch, then Custom, then Releases
   on GitHub) or check any of the changelog pages above. An entry scoped to a single skill carries
   that skill's name; changes spanning several skills appear under broader scopes such as `skills`.
-- To pull the changes, run `npx skills update` where you installed, or re-run your original
-  `npx skills add` command.
+- Claude Code plugins update at each release once auto-update is on (see Install). To update now,
+  run `/plugin`, select the `scenario-skills` marketplace, and choose **Update marketplace**.
+- A `npx skills add` install copies the skills from `main` once. `npx skills update` refreshes every
+  skill whose files changed since; re-running your original `npx skills add` command does the same.
+- Each `SKILL.md` names the release it comes from in its frontmatter, as `metadata.version`.
+  `claude plugin list` shows the same version for each installed plugin.
 
 ## Skills
 

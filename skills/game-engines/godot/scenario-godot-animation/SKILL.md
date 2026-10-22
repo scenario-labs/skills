@@ -2,6 +2,8 @@
 name: scenario-godot-animation
 description: "Use when animating characters or scenes in Godot 4.7: AnimationPlayer clips and RESET, AnimationTree state machines and blend spaces built in code, Mixamo or glTF import, loop settings, BoneMap retargeting and shared animation libraries, root motion, foot sliding, foot IK with TwoBoneIK3D or custom SkeletonModifier3D, tweens, SpringArm3D cameras, cutscenes; or when a character T-poses, slides, floats, freezes mid-blend or a transition never fires."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Godot animation (animator and technical animator)

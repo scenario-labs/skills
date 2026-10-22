@@ -52,6 +52,20 @@ The README once offered `--skill "*"`. It takes every skill, the expert tools in
 loads every installed skill's description at startup: a reader who never opens a DCC tool carried 57
 expert descriptions at the time. The default command names the core skills instead.
 
+## Skill and plugin versions
+
+- Each SKILL.md carries `metadata.version`, the release it shipped in. The spec has no version
+  field, but its own example uses `metadata.version`, as do other public skill repositories. An
+  earlier draft put the version in a body HTML comment so Claude Code agents would see it (Claude
+  Code strips frontmatter). It was dropped: no other project does it, and updates belong to the
+  distribution layer, not to the agent.
+- One release-wide version, not one per skill: `npx skills update` and plugin updates refresh
+  everything at once, so a per-skill version adds bookkeeping without changing what a user does.
+- Plugin entries in the marketplace carry the release version. Without one, Claude Code versions a
+  relative-path plugin by commit, and every plugin here has `source: "./"`, so every merge to `main`
+  (CI and chore commits included) was an update for all of them. With it, Claude Code updates
+  plugins at releases, the same points the changelog announces.
+
 ## Release tags
 
 Releases through 0.37.3 tagged bare `vX.Y.Z`. That is because a `release-type: node` package gets

@@ -2,6 +2,8 @@
 name: scenario-chatgpt-pet-update
 description: "Use when changing an existing ChatGPT pet or Codex pet sprite sheet with Scenario: fixing a broken row, frame, jump or edge, regenerating one animation state, adding the sixteen look directions to a 1536x1872 v1 sheet, giving the pet a new outfit, color or accessory, renaming it in its pet.json, or checking a pet sheet and previewing it as an animated GIF."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario ChatGPT Pet: Update

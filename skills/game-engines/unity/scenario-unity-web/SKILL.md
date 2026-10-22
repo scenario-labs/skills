@@ -2,6 +2,8 @@
 name: scenario-unity-web
 description: "Use when a Unity 6.3 game must run in a browser: 'export to WebGL', Web build settings or Build Profiles, gzip or Brotli, Decompression Fallback, server headers, 'Unable to parse .framework.js.br', build too big or slow to load, itch.io, CrazyGames or Poki limits, Addressables or AssetBundles on the Web, 'Could not produce class with ID', Task.Run freezing the browser, WebGL 2 vs WebGPU, .jslib and SendMessage interop, a page text field that gets no keystrokes, mobile browsers crashing, HTTPS for sensors, hosting and rollout."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Unity Web (web specialist)

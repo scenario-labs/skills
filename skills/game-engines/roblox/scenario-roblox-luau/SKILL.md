@@ -2,6 +2,8 @@
 name: scenario-roblox-luau
 description: "Use when writing, reviewing or debugging Luau in a Roblox experience: task.spawn vs task.defer vs task.wait, replacing wait() or spawn(), Deferred events and SignalBehavior, handlers running in the wrong order or not at all, 'attempt to yield across metamethod/C-call boundary', --!strict and the new type solver, typed classes and metatables, Destroy and cleanup, 'server memory keeps growing' or memory leaks, Parallel Luau with Actors and SharedTable, 'not safe to write in parallel', --!native or 'make this script faster', buffers, coroutines."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Roblox Luau Engineering

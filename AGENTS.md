@@ -84,9 +84,9 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
 
 ### Frontmatter and budget
 
-- Published skill frontmatter: `name`, `description`, and `license: MIT`, nothing else. The spec
-  caps `name` at 64 characters and `description` at 1024. The other spec-optional fields
-  (`compatibility`, `metadata`, `allowed-tools`) are unused here.
+- Published skill frontmatter: `name`, `description`, `license: MIT`, and last a `metadata` block
+  holding only `version`, which `pnpm stamp` writes and releases update. The spec caps `name` at 64
+  characters and `description` at 1024. `compatibility` and `allowed-tools` are unused here.
 - `name`: lowercase letters, numbers, and hyphens, equal to the directory name.
 - `description`: third person, starting "Use when". It names triggering conditions only, never a
   summary of the skill's steps. Under 500 characters, rich in keywords an agent would search for.
@@ -348,6 +348,7 @@ and command lines.
   - **`pnpm groupings`**: every skill sits in a `skills.sh.json` grouping, every listed skill
     exists, and the file satisfies the published skills.sh schema.
   - **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
+  - **`pnpm stamp:check`**: every SKILL.md carries `metadata.version`, no newer than `version.txt`.
   - **`pnpm readme`**: the README Skills section mirrors `skills.sh.json`, one subsection per
     grouping in the same order with the same title, description, and rows, and every skill has
     exactly one non-stale row. It also checks the install commands (see Adding a skill).
@@ -391,6 +392,8 @@ and command lines.
   outcome bullet when it leads one), and any goal it leads or serves. Add any sibling it names that
   a command lacks, then update the "N skills." counts.
 - An expert skill joins its family README's install command.
+- Run `pnpm stamp` to add `metadata.version` to its frontmatter
+  ([docs/ci-and-releases.md](docs/ci-and-releases.md#releases)).
 - Never edit `.claude-plugin/marketplace.json`: the pre-commit hook regenerates it from
   `skills.sh.json`.
 - How skills.sh, the installer picker, and the install commands work:

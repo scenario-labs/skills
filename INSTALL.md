@@ -7,6 +7,10 @@ Commands can overlap, and installing two is fine. To install every Scenario skil
 [README](README.md#install). The Scenario skills need the Scenario MCP server connected (setup in
 the README).
 
+These commands use the skills CLI and work in any agent. In Claude Code, the recommended install is
+the plugin marketplace instead, with auto-update on: see the [README](README.md#install). Its
+plugins follow the topic groups of the README Skills list, not these roles.
+
 ## By role
 
 ### 2D Artist

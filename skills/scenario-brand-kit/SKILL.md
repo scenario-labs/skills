@@ -2,6 +2,8 @@
 name: scenario-brand-kit
 description: "Use when building a visual identity or brand kit with Scenario: a logo, wordmark, or icon as editable SVG, a color palette and typography spec, logo variants (mono, reversed, favicon), and brand applications like social templates, avatars, banners, or merchandise mockups. Also for a rebrand or refreshing an existing mark. Keywords: brandkit, brand kit, visual identity, logo, monogram, wordmark, SVG, vectorize, color palette, typography, brand guidelines, brand board, launch kit."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario Brand Kit

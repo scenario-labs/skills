@@ -2,6 +2,8 @@
 name: scenario-blender-animation
 description: "Use when animating characters or objects in Blender through Python, a bouncing ball, walk or run cycle, jump, acting shot, lip sync, eye darts or facial animation, blocking in stepped keys, splining, polish, timing and spacing, arcs, overlap, squash and stretch, graph editor handles, slotted actions or NLA layers, staging a playblast, or when animation looks floaty, stiff, slides, pops, chatters, the subject is too small in frame, or a knee pops and needs an expert review."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Blender animation (character and object)

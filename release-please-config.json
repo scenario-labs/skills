@@ -5,6 +5,14 @@
   "packages": {
     ".": {
       "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        { "type": "generic", "path": "skills/**/SKILL.md", "glob": true },
+        {
+          "type": "json",
+          "path": ".claude-plugin/marketplace.json",
+          "jsonpath": "$.plugins[*].version"
+        }
+      ],
       "release-type": "simple",
       "component": "skills",
       "include-component-in-tag": true,

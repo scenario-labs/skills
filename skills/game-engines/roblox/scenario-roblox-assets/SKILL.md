@@ -2,6 +2,8 @@
 name: scenario-roblox-assets
 description: "Use when bringing 3D assets into Roblox Studio or preparing avatar items: import from Blender, GLB, FBX or OBJ files, AI-generated or image-to-3D meshes (Scenario or other tools), wrong scale or size in studs, mesh faces the wrong way, too many triangles, mesh fails validation, holes or non-watertight meshes, textures too big or blurry, SurfaceAppearance and PBR maps, metalness or normal maps look wrong, rigid accessories and hats, UGC items, Accessory Fitting Tool, out of bounds, AvatarCreationService validation, EditableMesh or EditableImage previews, or generate_mesh."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Roblox Asset Pipeline and UGC

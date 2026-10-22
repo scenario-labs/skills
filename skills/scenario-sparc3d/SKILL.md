@@ -2,6 +2,8 @@
 name: scenario-sparc3d
 description: "Use when turning images or photos into 3D meshes with Sparc3D models on Scenario via MCP: single-image or multi-view image-to-3D, watertight meshes for game assets, AR/VR, or 3D printing, mesh-only versus PBR-textured output, face count targets, resolution tiers, or reconstructing human heads and busts with the Portrait variants. Keywords: Sparc3D 2.1 and 2.0, Hitem3D, image to 3D, img23d, multiview, watertight, PBR, GLB, OBJ, STL, FBX."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario Sparc3D Image-to-3D

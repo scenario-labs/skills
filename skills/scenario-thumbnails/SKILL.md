@@ -2,6 +2,8 @@
 name: scenario-thumbnails
 description: "Use when creating or revising finished video thumbnails or cover images with Scenario: game trailers, boss reveals, patch updates, devlogs, or community videos needing readable composition, exact headline text and consistent characters. Not for title ideas or critique alone, in-video title cards, or a generic image without a thumbnail deliverable."
 license: MIT
+metadata:
+  version: "0.59.0" # x-release-please-version
 ---
 
 # Scenario Thumbnails
