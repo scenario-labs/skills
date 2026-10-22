@@ -55,8 +55,7 @@ Sequence for "make a 3D treasure chest prop".
    `dry_run`). Those two LLM-based members alone:
    - reconstruct one object from 1 to 8 photos or renders into an editable mesh with named parts and
      per-part PBR materials;
-   - suit props and hard-surface subjects, not characters or creatures, and need those images (a
-     prompt alone returned 400 at authoring time);
+   - suit props and hard-surface subjects, not characters or creatures;
    - price by `buildEffort`: `standard`, `high` (the default), `maximum`;
    - cap the exported triangle count with `faceBudget` (10k to 50k for a game-ready asset; the
      default is not game-ready);
@@ -75,6 +74,11 @@ Sequence for "make a 3D treasure chest prop".
    the stored original, a Blender file for the LLM-based members. Ask for `fbx` for a Unity project
    without a glTF importer, and keep the GLB too: at authoring time the FBX embedded only two
    images, so it may miss PBR maps.
+
+**Prompt-only build.** The two LLM-based members also build from text alone (`txt23d`). When the
+user wants no concept to approve, skip step 1 and run steps 3 to 5 on either member with
+`images: []` and `prompt` describing the object. Name the parts the user needs in `prompt`: a
+chest's `lid`, `body`, and `padlock` came back as those node names.
 
 Multi-view models take several images of one subject; read the count and fields off
 `model_schema_get`. Side fields follow the subject: on the Tripo multi-view members at authoring
