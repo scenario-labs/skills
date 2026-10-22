@@ -1,1 +1,1 @@
-reportlab>=4,<6
+reportlab>=5.0.1,<6
