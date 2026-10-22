@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.60.0](https://github.com/scenario-labs/skills/compare/skills-v0.59.0...skills-v0.60.0) (2026-10-22)
+
+
+### Features
+
+* **scenario-motion-loops:** add seamless brand-color loops in code ([#283](https://github.com/scenario-labs/skills/issues/283)) ([6e7b8c3](https://github.com/scenario-labs/skills/commit/6e7b8c30f3589c57cf515a00820ddef7c81cc11f))
+
+
+### Bug Fixes
+
+* **scenario-blender-expert:** look inside node groups for image textures ([#293](https://github.com/scenario-labs/skills/issues/293)) ([1662b7b](https://github.com/scenario-labs/skills/commit/1662b7b9f7b1f8a6061f3e2bacd9cf13c55a6975)), closes [#287](https://github.com/scenario-labs/skills/issues/287)
+
 ## [0.59.0](https://github.com/scenario-labs/skills/compare/skills-v0.58.0...skills-v0.59.0) (2026-10-20)
 
 
