@@ -55,8 +55,11 @@ Sequence for "make a 3D treasure chest prop".
    `dry_run`). Those two LLM-based members alone:
    - reconstruct one object from 1 to 8 photos or renders into an editable mesh with named parts and
      per-part PBR materials;
-   - suit props and hard-surface subjects, not characters or creatures, and need those images (a
-     prompt alone returned 400 at authoring time);
+   - suit props and hard-surface subjects, not characters or creatures;
+   - also build from a prompt alone (`txt23d`): `images` empty, `prompt` describing the object. Skip
+     step 1 then only when the user wants no concept to approve. Name the parts the user needs in
+     `prompt`: a chest's `lid`, `body`, and `padlock` came back as those node names. A `standard`
+     build took about 15 minutes at authoring time;
    - price by `buildEffort`: `standard`, `high` (the default), `maximum`;
    - cap the exported triangle count with `faceBudget` (the game range in step 3);
    - change a result by editing it (see Refining meshes).
