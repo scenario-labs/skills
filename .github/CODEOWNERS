@@ -1,10 +1,15 @@
-# Auto-request review on release-please's release PRs: every release PR
-# rewrites these three files (and, per AGENTS.md, nothing else may touch
-# them), so owning them requests a review from the release owner exactly
-# when a release PR opens, with no effect on ordinary skill PRs.
+# Code owners are requested as reviewers. They grant no permission, and no
+# merge waits on them while the rules on main require no code-owner approval.
 #
-# The @scenario-labs/platform team is listed alongside @hervenivon so a
-# release is never blocked on one person being available.
+# The last matching line wins, so every line repeats the default owner. The
+# @scenario-labs/platform team (maintain access here) joins on release and
+# security files, so neither is ever blocked on one person being available.
+
+# Every path
+* @hervenivon
+
+# release-please rewrites these three files on every release PR (and, per
+# AGENTS.md, nothing else may touch them), so a release PR requests both.
 /CHANGELOG.md @hervenivon @scenario-labs/platform
 /version.txt @hervenivon @scenario-labs/platform
 /.release-please-manifest.json @hervenivon @scenario-labs/platform
@@ -15,4 +20,10 @@
 /release-please-config.json @hervenivon @scenario-labs/platform
 /.github/workflows/release-please.yml @hervenivon @scenario-labs/platform
 /.github/workflows/publish-changelog.yml @hervenivon @scenario-labs/platform
+
+# Security: the policy, the supply-chain report, dependency updates, and the
+# file that decides who reviews them.
+/SECURITY.md @hervenivon @scenario-labs/platform
+/.github/workflows/scorecard.yml @hervenivon @scenario-labs/platform
+/.github/dependabot.yml @hervenivon @scenario-labs/platform
 /.github/CODEOWNERS @hervenivon @scenario-labs/platform

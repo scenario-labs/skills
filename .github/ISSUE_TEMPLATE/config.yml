@@ -6,6 +6,9 @@ contact_links:
   - name: Account, billing, credits, or a security report
     url: https://app.scenario.com
     about: Anything tied to your account is private. Use in-app support or support@scenario.com, not a public issue.
+  - name: Scenario Knowledge Base
+    url: https://help.scenario.com
+    about: Help articles on the Scenario app, its models, and credits.
   - name: Scenario documentation
     url: https://docs.scenario.com
     about: Guides and product documentation.

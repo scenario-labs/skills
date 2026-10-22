@@ -1,0 +1,81 @@
+name: Links
+
+# Checks the links in tracked Markdown with lychee (lychee.toml holds the exclusions).
+# A pull request that changes Markdown gets every file's relative links and anchors checked
+# offline, and every link of the files it changes checked online, so a dead external link
+# elsewhere never blocks it. The weekly run checks every link, against link rot.
+
+on:
+  pull_request:
+    paths:
+      - "**/*.md"
+      - "lychee.toml"
+      - ".github/workflows/links.yml"
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: links-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  links:
+    if: github.repository == 'scenario-labs/skills'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # A pull request runs on its merge commit, whose first parent is the base.
+          fetch-depth: 2
+          persist-credentials: false
+      # Without the vendored dev skills, kept byte-identical to their source, and CHANGELOG.md:
+      # release-please writes it, and its compare links name a tag that exists only once the
+      # release is published.
+      - name: Select the files to check
+        id: select
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          dir="$RUNNER_TEMP/links"
+          mkdir -p "$dir"
+          git ls-files '*.md' | grep -v -E '^(\.agents/skills/|\.claude/skills/|CHANGELOG\.md$)' >"$dir/all.txt"
+          if [ "$EVENT" = pull_request ]; then
+            git diff --name-only --diff-filter=d HEAD^1 HEAD -- '*.md' | grep -F -x -f "$dir/all.txt" >"$dir/online.txt" || true
+          else
+            cp "$dir/all.txt" "$dir/online.txt"
+          fi
+          echo "count=$(wc -l <"$dir/online.txt" | tr -d ' ')" >>"$GITHUB_OUTPUT"
+          cat "$dir/online.txt"
+      - name: Relative links and anchors in every file
+        if: github.event_name == 'pull_request'
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          lycheeVersion: v0.24.2
+          args: >-
+            --offline --no-progress --include-fragments
+            --files-from ${{ runner.temp }}/links/all.txt
+          output: ${{ runner.temp }}/links/offline.md
+          fail: true
+      - name: Every link in the selected files
+        if: steps.select.outputs.count != '0'
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          lycheeVersion: v0.24.2
+          args: >-
+            --no-progress --exclude-loopback --include-fragments
+            --files-from ${{ runner.temp }}/links/online.txt
+          output: ${{ runner.temp }}/links/online.md
+          fail: true
+          failIfEmpty: false
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: links-report
+          path: ${{ runner.temp }}/links/*.md
+          if-no-files-found: ignore
+          retention-days: 14

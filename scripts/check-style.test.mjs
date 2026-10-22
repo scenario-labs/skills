@@ -44,6 +44,7 @@ function repo(t) {
     "AGENTS.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
+    "SUPPORT.md",
   ]) {
     writeFileSync(join(root, file), "");
   }
@@ -303,4 +304,13 @@ test("accepts AGENTS.md of exactly 32 KiB", (t) => {
   const { write, style } = repo(t);
   write("AGENTS.md", "x".repeat(32768));
   assert.ok(!style().includes(AGENTS_CAP));
+});
+
+test("fails on an em dash in SUPPORT.md", (t) => {
+  const { write, style } = repo(t);
+  write("SUPPORT.md", `Ask here ${String.fromCodePoint(0x2014)} or there.\n`);
+  assert.throws(style, (error) => {
+    assert.ok(error.stdout.includes("SUPPORT.md:1:10:"), error.stdout);
+    return true;
+  });
 });

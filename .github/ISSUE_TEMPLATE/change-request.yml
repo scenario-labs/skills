@@ -1,6 +1,7 @@
 name: Change request
 description: A missing capability, unclear guidance, or a workflow that costs more than it should
 type: Feature
+projects: ["scenario-labs/29"]
 body:
   - type: markdown
     attributes:

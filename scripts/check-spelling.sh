@@ -13,6 +13,7 @@ pnpm exec cspell --no-progress --relative --no-must-find-files \
   'CODE_OF_CONDUCT.md' \
   'CONTRIBUTING.md' \
   'SECURITY.md' \
+  'SUPPORT.md' \
   'docs/**/*.md' \
   'tests/**/*.md' \
   '.github/**/*.md' \

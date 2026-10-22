@@ -1,6 +1,7 @@
 name: Bug report
 description: Something in a skill, the MCP server, or a generation behaves wrong
 type: Bug
+projects: ["scenario-labs/29"]
 body:
   - type: markdown
     attributes:

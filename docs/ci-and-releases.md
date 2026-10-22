@@ -64,3 +64,14 @@ which commit types release and which files release-please owns.
     installs.
   - It skips release-please-action and the `release-please` CLI, which move by hand together: the
     `package.json` pin must stay the version the action bundles.
+- `scorecard.yml` publishes the OpenSSF Scorecard report, the README badge's source, on each push to
+  `main`, weekly, and when branch protection changes. It also uploads the findings to code scanning.
+  - It is never a required check.
+  - Publishing rejects a workflow-level `env` or `defaults`, write permissions above the job, and
+    actions outside upstream's approved list in the job.
+- `links.yml` runs lychee over tracked Markdown, without the vendored dev skills and `CHANGELOG.md`:
+  - on a pull request that changes Markdown, the relative links and anchors of every file offline,
+    then every link of the changed files, so a dead external link elsewhere never blocks it;
+  - weekly, and on dispatch, every link.
+  - `lychee.toml` lists the hosts and patterns it skips, each with its reason.
+  - GitHub notifies a failed scheduled run only to whoever last changed its `cron` line.
