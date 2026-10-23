@@ -84,7 +84,7 @@ On the same H3 Max test, no scheme came back as flat paint: hues moved into plau
 (sand stalls into wood, a red canopy color into red awnings), and the gray identity scheme came back
 colder, with steel stalls. Category kept the most market context behind the heroes. The model reads
 a hue as a material hint, so give a hue only where its real-world reading is right, and a hero's
-color only to something the hero really wears.
+color only to something the hero really wears: the garment the brief colors, when it names one.
 
 ## The prompt per level
 

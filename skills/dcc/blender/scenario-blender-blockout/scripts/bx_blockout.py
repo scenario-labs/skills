@@ -40,7 +40,8 @@ from bpy_extras import anim_utils
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Matrix, Vector
 
-# One saturated color per character or tracked element; the hero takes red.
+# One saturated color per character or tracked element. A hero takes the color the brief puts
+# on them, red when it names none.
 PALETTE = {
     "red": (0.80, 0.05, 0.05),
     "blue": (0.05, 0.18, 0.85),

@@ -12,10 +12,11 @@ Format: <fps> fps, <W>x<H>, frames 1..<end> (<seconds> s). Playblast: <file>. St
 
 ## Color legend
 
-| Color | Element        | Becomes (reference)     |
-| ----- | -------------- | ----------------------- |
-| red   | FIG_red (hero) | <role>, @image1 panel 1 |
-| blue  | FIG_blue       | <role>                  |
+| Color  | Element        | Becomes (reference)                                 |
+| ------ | -------------- | --------------------------------------------------- |
+| red    | FIG_red (hero) | <role> in a red <garment you name>, @image1 panel 1 |
+| yellow | FIG_mia (hero) | Mia's yellow raincoat, @image1 panel 2              |
+| blue   | FIG_blue       | <role>                                              |
 
 ## Cut list (from B.cut_list())
 
