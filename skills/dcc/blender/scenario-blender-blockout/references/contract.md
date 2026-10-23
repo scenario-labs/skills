@@ -170,6 +170,20 @@ measurement, not the setting. `animation_data_clear()` deletes the modifiers wit
 - Wheels: cylinders rotated so the spin axis is one local axis, centered at z = radius. `K.vehicle`
   builds them into the body mesh, which reads right at a distance; a close shot that reads rotation
   needs separate wheel objects with one keyed rotation channel.
+- Bicycles: `K.vehicle(name, "bicycle", size=h / 1.75)` for a rider of height h. It builds two
+  wheels at z = radius, a tube frame, a pale lamp in front and a dark red reflector behind, and
+  spinning cranks as a child object.
+- Riders: `K.pedal(fig, bike, (first, last))` seats a figure of any style on a bicycle.
+  - It parents the root to the bike with the pelvis on the saddle, leans the torso 25 degrees, and
+    puts the hands on the bars.
+  - A jointed figure or a mannequin keys its legs on the cranks every frame (70 rpm by default). A
+    capsule only sits and leans.
+  - A nonzero `overreach_m` in its result means the bike is too big for the rider: rebuild it with a
+    smaller `size`.
+  - Drive the bike with `K.drive`, never the rider. The rider counts with the bike in `K.movers`.
+  - It clears the rider's earlier keys, a `K.walk_path` included. Key gestures with `K.pose` after
+    it.
+  - Pass the bike, not the rider, to `B.audit_ground`: a pedaling foot is off the ground.
 - Interior shots: build the cabin (dashboard, steering wheel, a sphere-head driver) and give the
   cabin shell alpha (about 0.22, blended) so interior cameras see through it.
 

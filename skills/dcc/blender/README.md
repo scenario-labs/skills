@@ -75,6 +75,13 @@ runs changed:
 - `K.vehicle`: dark red rear blocks.
 - `B.solid_view`: Material by default.
 
+The bicycle kind and `K.pedal` came from issue 304: the application tests on PR 294 had no bike
+build or rider recipe to follow. They were checked headless in Blender 5.2.1: the bike's length,
+ground contact and marked front at every fidelity and at size 0.8, the feet on the pedals every
+frame, the pelvis on the saddle and the hands on the bars for 1.75 m and 1.4 m riders, and one hero
+per ridden bike in `K.movers`. Which cast style holds a pedaling motion in a video model is not yet
+tested.
+
 The delivery gate in `bx_audit.py` was written for this repository on 2026-10-18. A comparison with
 [EL4CTEO/blender-skills](https://github.com/EL4CTEO/blender-skills) (MIT) prompted it: that
 repository's QA check catches deliverability defects (floating parts, z-fighting, inside-out parts,

@@ -73,6 +73,11 @@ screen ([handoff](handoff.md), tested limits).
   featured capsule's `arm_L`, `arm_R`, `lantern`, `staff`, `shield`.
 - On raised or sagging ground add the deck height to the root's z keys; do not replace them, they
   carry the bob.
+- Riders: `K.pedal(fig, bike, frames)` seats any style on a `K.vehicle` bicycle
+  ([contract](contract.md), Vehicles). A jointed figure or a mannequin pedals with the cranks. A
+  capsule or featured rider only sits and leans, so the model invents the pedaling.
+- Which of those holds a pedaling motion on each model is untested. With cyclists in a long pass,
+  run the A/B in "Test before the long pass" with riders first.
 
 ## Prompt clauses
 
@@ -90,6 +95,11 @@ carries, for a capsule or featured cast:
    naturally at the pace the capsules move: heel then toe, each foot planted before the other lifts,
    weight shifting from foot to foot, arms swinging. Their feet never slide, glide or float."
 4. **Exclusion tail**: add "no capsule-shaped bodies".
+
+For riders, the stand-in clause says each capsule sits on a bicycle. The gait clause becomes a
+pedaling clause: "They pedal steadily at the pace the bikes move, feet on the pedals, knees rising
+and falling in turn, hands on the handlebars. The bikes never coast without pedaling unless the shot
+says so."
 
 For a jointed or mannequin cast, keep the motion-first grammar of [handoff](handoff.md) unchanged
 and add the gait clause if the model copied a stiff gait.
