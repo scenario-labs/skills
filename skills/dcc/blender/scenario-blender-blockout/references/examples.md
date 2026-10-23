@@ -5,7 +5,7 @@ wide exterior, photoreal to stylized. Each scene script builds the blockout head
 audits and writes stats, stills, a playblast and the `.blend`:
 
 ```bash
-blender -b --factory-startup --python scripts/examples/ex1_watchmaker.py -- /tmp/ex_out both
+blender -b --factory-startup --python-exit-code 1 --python scripts/examples/ex1_watchmaker.py -- /tmp/ex_out both
 ```
 
 The second argument is `stills`, `playblast`, `both` or `none` (audits and stats only); example 4
