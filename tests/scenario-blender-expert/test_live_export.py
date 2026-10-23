@@ -173,6 +173,33 @@ class Presets(unittest.TestCase):
         self.assertTrue(s["embed_textures"])
         self.assertTrue(s["use_armature_deform_only"])
 
+    def test_round_trip_reports_maps_an_fbx_drops(self):
+        self.assertEqual(self.c["maps_gltf_import"], {"M_Crate": ["Base Color", "Metallic", "Roughness"]})
+        self.assertEqual(self.c["maps_fbx"], ["Crate: material M_Crate lost its Metallic, Roughness maps"])
+        self.assertEqual(self.c["maps_glb"], [])
+        self.assertEqual(self.c["maps_fbx_direct"], [])
+
+    def test_extra_maps_carry_the_packed_values(self):
+        px = self.c["extra_maps"]
+        # metallic 0.75 in RGB, smoothness 1 - 0.25 in alpha; 8-bit PNGs
+        for got, want in zip(px["M_Crate_MetallicSmoothness.png"], (0.75, 0.75, 0.75, 0.75)):
+            self.assertAlmostEqual(got, want, delta=0.01)
+        self.assertAlmostEqual(px["M_Crate_Metallic.png"][0], 0.75, delta=0.01)
+        self.assertAlmostEqual(px["M_Crate_Roughness.png"][0], 0.25, delta=0.01)
+        self.assertEqual(self.c["extra_maps_png_type"],
+                         {"M_Crate_MetallicSmoothness.png": 6, "M_Crate_Metallic.png": 0, "M_Crate_Roughness.png": 0})
+
+    def test_ground_bakes_transforms_and_sets_the_pivot_on_the_floor(self):
+        g = self.c["ground"]
+        self.assertIsNone(g["parent"])
+        self.assertTrue(g["identity"])
+        self.assertAlmostEqual(g["min_z"], 0.0, places=4)
+        for v in g["center_xy"]:
+            self.assertAlmostEqual(v, 0.0, places=4)
+        self.assertAlmostEqual(max(g["result"]["size"][:2]), 0.5, places=3)
+        self.assertTrue(g["outward"])  # the mirrored mesh keeps its faces pointing out
+        self.assertIn("skinned", self.c["ground_skinned"])
+
 
 if __name__ == "__main__":
     unittest.main()

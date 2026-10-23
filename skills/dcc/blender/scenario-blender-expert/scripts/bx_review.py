@@ -10,11 +10,12 @@ temporary scene that is removed afterwards.
   import sys; sys.path.append("<skill>/scripts"); import bx_review
   sheet = bx_review.review([obj], "/abs/out/dir")                       # all defaults
   sheet = bx_review.review([obj], out, views=("front", "side"), modes=("silhouette",))
+  sheet = bx_review.review([obj], out, culling=True)  # back faces hidden, as engines draw
   bx_review.playblast("/abs/out/shot.mp4")        # scene camera, frame range, Workbench
   bx_review.turntable(obj, "/abs/out/turn.mp4", frames=72)
 
 headless:
-  blender --background scene.blend --python bx_review.py -- --objects Head,Eyes --out /abs/dir
+  blender --background scene.blend --python bx_review.py -- --objects Head,Eyes --out /abs/dir [--culling 1]
 
 Modes:  silhouette (black on white: reads shape and gesture only)
         matcap     (clay_studio matcap: reads planes and forms)
@@ -144,8 +145,9 @@ def _cleanup(sc, cam, world):
     bpy.data.worlds.remove(world)
 
 
-def _set_mode(sc, world, mode, objs, wires):
+def _set_mode(sc, world, mode, objs, wires, culling=False):
     sh = sc.display.shading
+    sh.show_backface_culling = culling
     for w in wires:
         w.hide_render = mode != "wire"
     if mode == "silhouette":
@@ -165,6 +167,8 @@ def _set_mode(sc, world, mode, objs, wires):
         for w in wires:
             w.color = (0.02, 0.02, 0.02, 1.0)
         world.color = (0.25, 0.25, 0.25)
+    if culling and mode != "silhouette":
+        world.color = (1.0, 0.0, 1.0)  # a hole where a face points inward reads at a glance
 
 
 def _make_wires(sc, objs):
@@ -226,12 +230,16 @@ def _tile(paths, rows, cols, out, labels):
 
 
 def review(objs, out_dir, views=("front", "right", "threequarter", "back"),
-           modes=("silhouette", "matcap", "wire"), res=800, margin=1.12, focus=None):
+           modes=("silhouette", "matcap", "wire"), res=800, margin=1.12, focus=None, culling=False):
     """Render modes x views and return the contact sheet path (rows = modes, cols = views).
+    objs: objects or their names.
+    culling: hide back faces, as game engines draw them, on a magenta background, so faces
+    pointing inward show as holes. Compare with a sheet rendered without it.
     focus: close-up framing instead of the whole object: ((x, y, z), radius) in world
     space, e.g. focus=(eye_center, 0.06) to inspect eye loops. The rest of the mesh stays
     in the render (no cropping, no temporary copies); the camera just frames that sphere."""
-    objs = [o for o in objs if o is not None]
+    # Names too, as bx_audit takes them: an agent passing the gate's list here hit a TypeError.
+    objs = [bpy.data.objects[o] if isinstance(o, str) else o for o in objs if o is not None]
     os.makedirs(out_dir, exist_ok=True)
     sc, cam, world = _setup_scene(objs, res)
     wires = _make_wires(sc, objs) if "wire" in modes else []
@@ -249,7 +257,7 @@ def review(objs, out_dir, views=("front", "right", "threequarter", "back"),
         for mode in modes:
             if mode == "wire" and not wires:
                 continue
-            _set_mode(sc, world, mode, objs, wires)
+            _set_mode(sc, world, mode, objs, wires, culling)
             for view in views:
                 d = VIEW_DIRS[view]
                 half, depth = _extent(corners, center, d)
@@ -356,7 +364,8 @@ def _cli():
     objs = [bpy.data.objects[n] for n in args["--objects"].split(",")]
     views = tuple(args.get("--views", "front,right,threequarter,back").split(","))
     modes = tuple(args.get("--modes", "silhouette,matcap,wire").split(","))
-    print("SHEET", review(objs, args["--out"], views=views, modes=modes, res=int(args.get("--res", 800))))
+    print("SHEET", review(objs, args["--out"], views=views, modes=modes, res=int(args.get("--res", 800)),
+                         culling=args.get("--culling", "0") == "1"))
 
 
 if __name__ == "__main__":
