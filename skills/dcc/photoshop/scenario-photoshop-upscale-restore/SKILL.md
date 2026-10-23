@@ -86,6 +86,14 @@ Photoshop's Generative Upscale and Neural Filters, Windows.
 call is one `ps_run` job; after one raises or times out, recover as the lead's Quality gates say.
 Code: [procedures](references/procedures.md).
 
+**Scenario for Photoshop.** When the plugin's tools are connected and signed in, run this skill's
+image, edit, upscale, expand and background-removal steps through them, as the lead's Live channel
+maps them, gates included; other Scenario steps stay on hosted Scenario MCP. Not tested end to end.
+There, an upscale lands as a new document (`new_document`) in sRGB 8-bit, even from an Adobe RGB
+16-bit source (measured through the panel): use it for a single upscale; converting back does not
+restore gamut or depth. A stack (stages 2 to 5), which the plugin cannot land, stays on hosted
+Scenario MCP and the toolkit.
+
 1. **Intake.** `A.doc_state()`: name, size, mode, bits, profile, layers. Note faces, text, gradients
    and damage. For a colorize on a Grayscale master, ask before switching it to RGB (Dinda
    [G5yuLhm0SdM 12:32]). GATE: document read by name; job, fidelity and factor written.
@@ -100,8 +108,8 @@ Code: [procedures](references/procedures.md).
    deliver it and quote nothing.
 4. **Candidates on the riskiest crop (paid).** `scenario` for the connection, `recommend`, the quote
    and the user's yes; `scenario-image-editing` for upscale tool models, run on `risk.png`. Two
-   candidates, one quote: an upscale is judged by comparison. Price the crop and the full frame
-   first; when they quote the same, run the candidates on the full frame (P2b). GATE: one beats the
+   candidates, one yes: an upscale is judged by comparison. Price the crop and the full frame first;
+   when they quote the same, run the candidates on the full frame (P2b). GATE: one beats the
    baseline's crop at 100% (`R.sheet` of both), else stop at the baseline.
 5. **Winner on the full frame (paid).** Quote the winner on `prep["path"]`. In the stack,
    `L = U.place_result(p, "<label>, 2x scale", prep=prep, base=st["base"])`, then `U.crops` again.

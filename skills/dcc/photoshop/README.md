@@ -24,13 +24,24 @@ lead skill, `scenario-photoshop-expert`.
   each with cited references and a Python toolkit.
 - Every toolkit has a live suite run against Photoshop 27.11 on macOS: 98 tests across 12 suites,
   several on real Scenario outputs (inpaint, upscale, restore, seamless texture repair), one that
-  fills History to its limit. All passed on 2026-10-19. Last run of each suite, Paris time: mockup
-  13:41, History 13:42, upscale 13:44 and restore 13:45, after the last toolkit change; composite
-  12:17, generative-edit 12:21, io 10:49, audit 10:42, retouch and game-art tiling 09:25, gates
-  06:39, key-art 06:36 and game-art export 06:35, each after the last change to the code it runs
-  (since then, the io and gates toolkits changed in docstrings only, and the composite, mockup and
-  upscale changes add no DOM constant to the io suite's enum sweep). Steps no script reaches are
-  listed as GUI paths and marked not tested.
+  fills History to its limit. All passed on 2026-10-19 and again on 2026-10-23, after the last
+  toolkit change. Steps no script reaches are listed as GUI paths and marked not tested.
+- The Scenario for Photoshop route: the core skill `scenario-photoshop` teaches the plugin's local
+  Scenario MCP tools, the lead's Live channel maps the toolkit calls to them, and each specialist
+  points there.
+- Verified live through the plugin: a paid selection edit in a Claude Code session on 2026-10-20, on
+  a development build (installed as plugin 0.6.1; its layers and server report 0.6.0). It ran one
+  take with Agents may modify the document on, the approval card answered through the plugin's
+  development tools, and landed masked with nothing changed outside. The free steps ran on
+  2026-10-23 (status, document read, model list, ranking and schema, an upscale capture and its
+  price check, a script-made document seen at once).
+- Not run live yet: `inspect_result_previews` on an edit, the toolkit gates after a plugin landing,
+  the upload card on screen, and a masked edit landed through the proposal card with the agent
+  polling `job_status`. The plugin's take checks (`shift_px`, badges), its `lands_unmasked` warning,
+  `DocumentClosed` refusal, apply retry after `PhotoshopBusy` and expand anchors are tested
+  automated only. Paid upscale, expand and cutout landings through the agent tools have not run live
+  either; the panel's own runs of those are verified live. Each specialist's pipeline end to end
+  through the plugin is not tested.
 - Blind grading on seven briefs, one per skill: the same model answered with the skills and from
   memory alone, and a separate grader scored the shuffled pairs without knowing which was which. On
   the final skills: 103 of 105 with the skills (four briefs won, three ties), 95 without. The gain
@@ -40,11 +51,11 @@ lead skill, `scenario-photoshop-expert`.
 
 ## Requirements
 
-Adobe Photoshop 2026 (27.x) on macOS, Python 3 with Pillow, and the Scenario MCP server for the
-generative steps. Placing a vector logo in a mockup needs an SVG renderer, such as librsvg's
-`rsvg-convert`. The lead skill explains the execution channel: ExtendScript jobs sent through
-AppleScript `do javascript`, each wrapped in one named History state, with Photoshop left in the
-background.
+Adobe Photoshop 2026 (27.x) on macOS, Python 3 with Pillow, and for the generative steps the
+Scenario MCP server or the Scenario for Photoshop plugin's local server (`scenario-photoshop`).
+Placing a vector logo in a mockup needs an SVG renderer, such as librsvg's `rsvg-convert`. The lead
+skill explains the execution channel: ExtendScript jobs sent through AppleScript `do javascript`,
+each wrapped in one named History state, with Photoshop left in the background.
 
 ## Install
 
@@ -52,9 +63,12 @@ background.
 npx skills add scenario-labs/skills --skill scenario-photoshop-expert scenario-photoshop-compositing scenario-photoshop-game-art scenario-photoshop-generative-edit scenario-photoshop-key-art scenario-photoshop-mockups scenario-photoshop-upscale-restore
 ```
 
-The installer puts the skills side by side, which the specialists need: they import the lead skill's
-`scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the
-"Expert tools: Photoshop" group. Update with `npx skills update`.
+With the Scenario for Photoshop plugin, add its core skill, `scenario-photoshop`, to that list. Its
+setup was run live with Claude Code; Codex's setup is tested headless only, and the Claude Desktop
+and Cursor routes are not tested. The installer puts the skills side by side, which the specialists
+need: they import the lead skill's `scripts/`. In the installer picker
+(`npx skills add scenario-labs/skills`), the family is the "Expert tools: Photoshop" group. Update
+with `npx skills update`.
 
 ## Provenance
 

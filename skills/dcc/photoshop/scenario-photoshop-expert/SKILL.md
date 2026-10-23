@@ -13,11 +13,12 @@ import, and the map to them. If a sibling skill named here is missing from your 
 ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
 proceed from tool schemas and flag the gap.
 
-**Status (2026-10-19):** every toolkit call in Workflow is verified live on Photoshop 27.11 (macOS)
-by the io, gates, audit, history and restore suites and the specialists' suites. `test_io_live.py`
-runs stage 5 as written (a masked placement with provenance, then the outside gate);
-`test_history_live.py` runs the History gate and `step_back` at the History limit. Not tested: the
-`social` profile, `app.doAction`, the batch loop, and Windows.
+**Status (2026-10-23):** every toolkit call in the stages is verified live on Photoshop 27.11
+(macOS) by the live suites. The Live channel is verified live in part (a paid selection edit
+2026-10-20, free steps 2026-10-23). Not tested: toolkit gates after a plugin landing,
+`inspect_result_previews` on an edit, a masked proposal-card landing, the upload card, a
+specialist's pipeline through the plugin, the `social` profile, `app.doAction`, the batch loop, and
+Windows.
 
 ## Stance (the expert delta)
 
@@ -33,7 +34,7 @@ runs stage 5 as written (a masked placement with provenance, then the outside ga
   layers good practice [MQDF-UW5-Uk 06:38].
 - **Select tight, capture with padding.** The model fills the selection it gets: Julieanne Kost
   [1bFcFVbbzjc 07:13]. A model shown only the crop lacks context: Jesús Ramirez [Ot_h4s1mXas 01:36],
-  Kost [1bFcFVbbzjc 07:46]. The selection marks the change; `pad` gives the context.
+  Kost [1bFcFVbbzjc 07:46].
 - **The mask in Photoshop, not the model, keeps the outside exact.** Colin Smith shows Harmonize
   regenerating the whole image and masking it [dWiOA5YZXwc 03:19]. Measured on one Scenario
   image-edit job, two takes: outside mean difference 17 to 18 before masking, max 0 after masked
@@ -45,8 +46,8 @@ runs stage 5 as written (a masked placement with provenance, then the outside ga
 - **Judge at 100%, then at viewing size.** Ramirez: "Any other zoom level can be misleading"
   [a7E4HlrAc3w 01:05]. Jared Verdi's agent renders the canvas and reads it before finishing
   [ojOTkInaZIk 11:08].
-- **Quote before every paid run; one quote for a batch.** A bad take still "counts against your
-  limits": Dinda [mSgSaisb6Kg 08:44]. [added] The user owns the spend, so the agent asks first.
+- **Quote before every paid run; one yes for a batch.** A bad take still "counts against your
+  limits": Dinda [mSgSaisb6Kg 08:44]. [added] The user owns the spend.
 
 ## Establish first
 
@@ -69,6 +70,20 @@ on failure (`ValueError` for a bad argument, before any job); a raw `ps_run.run`
 `error` and `exit`. The user keeps working meanwhile: never bring Photoshop to the front, click the
 screen, or open a modal dialog.
 
+**Live channel: Scenario for Photoshop.** When the `scenario-photoshop` tools return `connected` and
+`signed_in` true, stages 3 to 5 of a step in the plugin's lanes go through them, as the
+`scenario-photoshop` skill teaches, with its take checks, warnings and card stops. Never mix the two
+routes' Scenario calls inside one stage.
+
+- Stage 3: `capture_reference` replaces `IO.export_region` and `IO.export_mask`.
+- Stage 4: `list_models` and `model_schema` replace `recommend`; `upload_reference`,
+  `estimate_cost`, `generate`, `wait_for_job` and `inspect_result_previews`.
+- Stage 5: `prepare_result_application` with the kept `takes`, then `apply_result_application`,
+  replace `IO.place`. Gate on the returned `history_state` ("Scenario agent: <action>") and an
+  edit's `outside_check`. Switch off, neither returns: once `job_status` reads `committed`, gate on
+  its `history_state` and run stage 6's `G.diff` outside.
+- They replace a specialist's capture and History gates. Stages 6 to 8 run as written.
+
 1. **Connect and read.** `ps_run.find_photoshop()`, `ps_run.run("return app.version;")` (exit 3:
    `ps_run.py --launch`; exit 6: the user allows automation), then `A.doc_state()`. GATE: exit 0;
    the document name matches the brief; `saved`, bits and profile recorded.
@@ -77,10 +92,10 @@ screen, or open a modal dialog.
 3. **Capture.** `sel = IO.selection()["bounds"]`, `cap = IO.export_region(out, pad=32)`,
    `IO.export_mask(out_mask, bounds=cap["bounds"])`. Whole-image edits capture the canvas with no
    mask. GATE: both files share `cap["bounds"]`; the selection covers only what should change.
-4. **Quote and generate** through the Scenario MCP with the `scenario` skill: `recommend` for the
-   capability, upload, price the exact payload, get the user's yes, run, wait, download. A saved
-   Scenario workflow runs through `scenario-workflows`. GATE: the user approved this payload's
-   price; the result has the capture's aspect.
+4. **Quote and generate** through the Scenario MCP with the `scenario` skill (or the Live channel):
+   `recommend` for the capability, upload, price the exact payload, get the user's yes, run, wait,
+   download. A saved Scenario workflow runs through `scenario-workflows`. GATE: the user approved
+   this payload's price; the result has the capture's aspect.
 5. **Land.** `h0 = A.history()` right before, then
    `IO.place(result, name, bounds=cap["bounds"], mask_selection=True, xmp={...}, undo="Scenario: <action>")`:
    an embedded smart object, fitted, masked, with provenance; the selection stays active for
@@ -95,10 +110,10 @@ screen, or open a modal dialog.
    `psr_export` for copies (png, jpg, tif, psd, tga). GATE: `deliverable` returns `[]`; `saved` is
    unchanged by the agent.
 
-**Many files.** Prove stages 1 to 8 on one file, quote the whole batch once, then run one job per
-file that opens it, registers it as the job's own, applies the recipe, exports and closes it. Skip
-files the user has open; stop at the first failure ([procedures](references/procedures.md) P10).
-**The user's Actions:** read the steps first, then `app.doAction` (P11).
+**Many files.** Prove stages 1 to 8 on one file, get one yes for the batch, then run one job per
+file that opens it, registers it, applies the recipe, exports and closes it. Skip files the user has
+open; stop at the first failure ([procedures](references/procedures.md) P10). **The user's
+Actions:** read the steps first, then `app.doAction` (P11).
 
 ## Numbers
 
@@ -150,7 +165,7 @@ Visual gates:
 - 100% crops: no seam, tone step, halo, soft or smeared patch, grain mismatch.
 - Must-keep elements unchanged; hands, eyes, text and logos intact.
 - Losing takes hidden and named in a group named "Takes", never deleted (`A.deliverable` accepts
-  hidden layers there); every agent layer named.
+  them there); every agent layer named.
 
 ## Common mistakes
 
@@ -185,9 +200,9 @@ Receives any Photoshop brief. Routes it:
 | One character across a series of frames (animation, learning)                 | `scenario-consistency`, outside Photoshop                 |
 | Image to video                                                                | `scenario-video`, outside Photoshop                       |
 
-Connection, model choice and quoting go to `scenario`. A brief can chain: a packshot campaign is
-compositing (product into a generated scene), then mockups (label per variant), then key-art (sizes
-and type), then the audit per channel.
+Connection, model choice and quoting go to `scenario`, or to `scenario-photoshop` on the Live
+channel. A brief can chain: a packshot campaign is compositing (product into a generated scene),
+then mockups (label per variant), then key-art (sizes and type), then the audit per channel.
 
 **Handoff contract:** the receiving skill gets the document name, the layers made and their History
 state names, the gate numbers, the crops looked at, and the list of what was not verified.
@@ -195,8 +210,6 @@ state names, the gate numbers, the crops looked at, and the list of what was not
 ## Photoshop 2026 notes
 
 - Measured on 27.11. Read `app.version` every session: descriptors are undocumented and move.
-- 27.6 redesigned Actions and added Layer Cleanup; 27.9 changed the UI backend (re-test older code);
-  27.10 added Prompt to edit; 27.11 Enhance Edge.
 - Photoshop's generative tools have no toolkit call and no documented script call (traps, section
   1). Offer them to the user as manual steps, and play no Action that holds one.
 - AppleScript given a file alias fails with error 8800; `ps_run` inlines `$.evalFile`.

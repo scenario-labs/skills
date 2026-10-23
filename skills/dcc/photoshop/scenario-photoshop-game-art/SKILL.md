@@ -80,6 +80,13 @@ seam repair also imports `ps_generative as GE` from scenario-photoshop-generativ
 one `ps_run` job; after one raises or times out, recover as the lead's Quality gates say. Code:
 [procedures](references/procedures.md).
 
+**Scenario for Photoshop.** When the plugin's tools are connected and signed in, run this skill's
+image, edit, upscale, expand and background-removal steps through them, as the lead's Live channel
+maps them, gates included; other Scenario steps stay on hosted Scenario MCP. Not tested end to end.
+In stage 3's seam repair, `inspect_result_previews` replaces `GE.check`, `edit_selection` replaces
+`GE.place_edit`, the Live channel's outside gate replaces `GE.verify`, and `GA.offset` stays a
+toolkit step.
+
 **A. Seamless texture with maps**
 
 1. **Read the tile.** `A.doc_state()`, `t = GA.tile_check()`, `GA.tile_preview(out, n=3)`. GATE:

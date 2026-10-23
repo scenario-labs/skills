@@ -85,6 +85,15 @@ trained-model alignment, annotation edits, gray (partial) selections, Windows.
 call is one `ps_run` job; after one raises or times out, recover as the lead's Quality gates say.
 Code: [procedures](references/procedures.md).
 
+**Scenario for Photoshop.** When the plugin's tools are connected and signed in, run this skill's
+image, edit, upscale, expand and background-removal steps through them, as the lead's Live channel
+maps them, gates included; other Scenario steps stay on hosted Scenario MCP. Not tested end to end.
+There, `capture_reference` (`purpose: "edit"`) replaces `GE.capture`, and `edit_selection` with kept
+`takes` replaces `GE.place_edit`. `inspect_result_previews` replaces stage 5's code gates,
+`polarity_suspect` included: keep a take when `aspect_ok` and `edited` are true and no badge reads
+"May be misaligned" (width gate: `resolution_ratio` at least 1). The Live channel's outside gate is
+stage 7's `v["untouched"]`. `GE.check` and `GE.verify` need a toolkit capture.
+
 1. **Intake.** `A.doc_state()`: name, size, mode, bits, profile, active layer, selection bounds.
    Write the brief as one line to change and one line to keep, then route (last Stance bullet).
    GATE: document read by name; change and keep written.
@@ -117,8 +126,8 @@ Code: [procedures](references/procedures.md).
    `R.overlay(out, layer, base, crop=box)`. GATE: `v["untouched"]` (outside max 2 or less) and
    `v["edited"]`; no seam at 100% and 200%; grain and sharpness continuous across the edge.
 8. **Large areas (not tested end to end).** `GE.tile_plan(box, tile, overlap=64)` with `tile` the
-   model's output side minus twice the margin. Count the tiles that touch the edit area and quote
-   tiles times takes once. Per tile, nearest the real pixels first: the stored edit selection
+   model's output side minus twice the margin. Count the tiles that touch the edit area; price tiles
+   times takes and get one yes. Per tile, nearest the real pixels first: the stored edit selection
    intersected with the tile, then stages 3 to 7. Tile 1 passes stages 5 and 7 before any other tile
    runs. Prompt: empty or a texture description, never an object. GATE: every tile passes stages 5
    and 7; no repeat at fit-to-screen.
