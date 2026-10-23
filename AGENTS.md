@@ -59,15 +59,17 @@ publicly shareable language only.
 
 - Reference only public surfaces: scenario.com, app.scenario.com, help.scenario.com (the Scenario
   Knowledge Base), mcp.scenario.com and its `/docs`, docs.scenario.com, the public model catalog,
-  and the Scenario for Blender extension's public repository and releases
+  the Scenario for Blender extension's public repository and releases
   (github.com/scenario-labs/blender-plugin) with its `docs/MCP.md` tool reference and handbook at
-  blender.scenario.com.
+  blender.scenario.com, and the Scenario for Photoshop plugin's public repository
+  (github.com/scenario-labs/photoshop-plugin) with its `docs/MCP.md` and `docs/spec/MCP.md`.
 - Never reference internal repositories, source file paths, internal hostnames or environments,
   internal project or team names, customer names, real team/project/API identifiers, credentials,
   pricing internals, or unreleased features.
 - Every fact must be verifiable from public surfaces: the tool reference at
-  mcp.scenario.com/docs/tools, the Blender extension's `docs/MCP.md` for its local tools, live
-  public catalog searches. A fact knowable only from internal sources stays out.
+  mcp.scenario.com/docs/tools, the Blender extension's and the Photoshop plugin's `docs/MCP.md` (and
+  the plugin's `docs/spec/MCP.md`) for their local tools, live public catalog searches. A fact
+  knowable only from internal sources stays out.
 - In doubt, treat it as internal: ask, or drop it. Example: no internal repository naming.
 
 ## Authoring contract

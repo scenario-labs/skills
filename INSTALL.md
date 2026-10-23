@@ -11,7 +11,7 @@ the README).
 
 ### 2D Artist
 
-Concept art, sprites, and effects in one consistent style. 27 skills.
+Concept art, sprites, and effects in one consistent style. 28 skills.
 
 - **Concept Sketches** (`scenario-inspiration`, `scenario-image`). Try: "Give me four directions for
   a desert outpost, then a moodboard for the one I pick."
@@ -26,9 +26,11 @@ Concept art, sprites, and effects in one consistent style. 27 skills.
   sheet in the tavern from this painting, lit like this third image."
 - **ChatGPT and Codex Pets** (`scenario-chatgpt-pet-create`, `scenario-chatgpt-pet-update`). Try:
   "Hatch a pet from our mascot, then give it a winter scarf."
+- **Scenario for Photoshop** (`scenario-photoshop`). Try: "Replace the kite I selected in Photoshop
+  with a red paper lantern, two options, as layers I can compare."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-inspiration scenario-image scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-game-assets scenario-image-editing scenario-text-overlay scenario-3d scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-multi-reference scenario-chatgpt-pet-create scenario-chatgpt-pet-update
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-inspiration scenario-image scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-game-assets scenario-image-editing scenario-text-overlay scenario-3d scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-multi-reference scenario-chatgpt-pet-create scenario-chatgpt-pet-update scenario-photoshop
 ```
 
 Working in Photoshop? Add the expert tools for it: [Photoshop](skills/dcc/photoshop/README.md).
@@ -120,7 +122,7 @@ npx skills add scenario-labs/skills --skill scenario scenario-moderation scenari
 
 ### Marketing Artist
 
-Store art and ads that stay on brand at every size. 25 skills.
+Store art and ads that stay on brand at every size. 26 skills.
 
 - **Store Art for Every Platform** (`scenario-formats`, `scenario-brand-kit`,
   `scenario-text-overlay`). Try: "Turn this key art into every storefront size, with our logo and
@@ -135,7 +137,7 @@ Store art and ads that stay on brand at every size. 25 skills.
   jumbotron, cheering, then animate it."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam scenario-photoshop
 ```
 
 Working in Photoshop? Add the expert tools for it: [Photoshop](skills/dcc/photoshop/README.md).
@@ -191,10 +193,10 @@ npx skills add scenario-labs/skills --skill scenario scenario-game-assets scenar
 ### Marketing and brand visuals
 
 One product shot and a brief turned into on-brand stills, ads, UGC videos, and every placement size.
-22 skills.
+23 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-product-shots scenario-brand-kit scenario-video-ads scenario-ugc scenario-formats scenario-inspiration scenario-image scenario-image-editing scenario-text-overlay scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario scenario-product-shots scenario-brand-kit scenario-video-ads scenario-ugc scenario-formats scenario-inspiration scenario-image scenario-image-editing scenario-text-overlay scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-photoshop
 ```
 
 ### Video, music video, and audio
@@ -217,10 +219,10 @@ npx skills add scenario-labs/skills --skill scenario scenario-consistency scenar
 
 ### Images and editing
 
-Images generated and edited, exact text overlays, and a sequence storyboarded. 26 skills.
+Images generated and edited, exact text overlays, and a sequence storyboarded. 27 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-image scenario-multi-reference scenario-image-editing scenario-text-overlay scenario-storyboards scenario-game-assets scenario-textures scenario-skyboxes scenario-video scenario-video-editing scenario-seedance-storyboard scenario-video-ads scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-ad-variants scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario scenario-image scenario-multi-reference scenario-image-editing scenario-text-overlay scenario-storyboards scenario-game-assets scenario-textures scenario-skyboxes scenario-video scenario-video-editing scenario-seedance-storyboard scenario-video-ads scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-ad-variants scenario-thumbnails scenario-photoshop
 ```
 
 ### ChatGPT and Codex pets
