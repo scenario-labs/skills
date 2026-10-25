@@ -61,15 +61,22 @@ Sequence for "make a 3D treasure chest prop".
    - cap the exported triangle count with `faceBudget` (the game range in step 3);
    - change a result by editing it (see Refining meshes).
 3. `model_schema_get` on the chosen model: 3D schemas vary widely (single image or multi-view
-   arrays, polycount targets, PBR toggles, topology). A game-ready asset takes 10k to 50k triangles,
-   set through the member's face field; its default is not game-ready. Read the field's range first:
-   `min` and `max`, or its description when they are absent. At authoring time:
+   arrays, polycount targets, PBR toggles, topology). Target 10k to 50k triangles for this game
+   prop; never assume the default meets that budget. Use only controls the schema exposes:
+   - **Numeric field:** read `min` and `max`, or the description when they are absent.
+   - **Enum:** read `allowed_values` and their topology and count meanings (`scenario-rodin` covers
+     `qualityMeshOption`). A quad count is not a triangle count.
+   - **No face control, or the target is below its range:** generate, then remesh down if needed
+     (Refining meshes). Never invent a face field; `scenario-sparc3d` covers members without one.
+
+   Check the output's triangle count against the budget. At authoring time:
    - Tripo (`faceLimit`) and Meshy (`targetPolycount`, set where `scenario-meshy` says) reached both
      ends. At 10k, an eight-legged creature kept every leg and claw, and a chest its padlock and
      handles. Meshy's Smart Topology members capped lower, at 15k or 30k.
    - Hunyuan 3D (`faceCount`, from 40k) covers only the top of the range, and Trellis
-     (`decimationTarget`, from 100k) starts above it. For a target under the floor, generate, then
-     remesh down (Refining meshes).
+     (`decimationTarget`, from 100k) starts above it. Remesh only for a target under the member's
+     floor.
+
 4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `dry_run=true` to price it. Then
    run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`);
    a dry run creates no job. Re-call `jobs_wait` with the returned `pending_job_ids` if it times
