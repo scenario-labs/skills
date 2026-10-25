@@ -33,7 +33,8 @@ flag the gap.
 
 ## Choose the output before the member
 
-Three outcomes, and members cover different ones. Settle it with the user first.
+Three outcomes, and members cover different ones. Settle it with the user first (unattended: a
+character whose existing rig the project depends on takes motion only; otherwise animate the mesh).
 
 - **Your character, animated.** A member takes the mesh, auto-rigs it, and applies the motion. The
   rig is the member's own: it does not retarget onto a skeleton the mesh already carries, so clips
@@ -86,8 +87,8 @@ The user has a phone clip of a dance and a character GLB, and wants an Unreal-re
 2. `asset_get` the clip: read the duration and dimensions. Trim to the eight seconds that loop with
    the video cut tool, and resize to even dimensions if a candidate member requires it.
 3. `recommend` with `capability: "video23d"` and a prompt such as "apply the dance in this video to
-   my uploaded character mesh, looping, exported for Unreal". Present `ask_user` options; proceed on
-   the pick otherwise.
+   my uploaded character mesh, looping, exported for Unreal". Follow `next_step` per the `scenario`
+   skill: present `ask_user` options; on `proceed`, take its pick without asking.
 4. `model_schema_get` on the pick. Put the GLB in the field whose `kind` is `3d`. Set the Unreal
    output target if the format enum has one, `loop: true`, and `moveInPlace: true` if the game moves
    the character itself.
