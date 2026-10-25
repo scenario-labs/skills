@@ -50,6 +50,26 @@ which commit types release and which files release-please owns.
   - Coverage spans core skills only (`.coveragerc`). Expert-tool scripts mostly run inside their
     host application, which coverage.py cannot follow.
   - It reports without a threshold, so a drop never fails CI.
+- Python CI installs `tests/requirements-ci.txt` with hash checks and wheels only.
+  `SKILLS_TEST_USE_SYSTEM_PYTHON=1` keeps tests and coverage in that verified environment. Local
+  runs still resolve each suite's `requirements.txt` through uv. After changing a suite's
+  requirements, regenerate the lock:
+
+  ```bash
+  uv pip compile --generate-hashes --python-version 3.12 --python-platform linux \
+    tests/*/requirements.txt tests/coverage-requirements.in -o tests/requirements-ci.txt
+  ```
+
+  Blender's separate job uses a smaller lock. Regenerate it with:
+
+  ```bash
+  uv pip compile --generate-hashes --python-version 3.12 --python-platform linux \
+    tests/scenario-blender-expert/requirements.txt \
+    -o tests/scenario-blender-expert/requirements-ci.txt
+  ```
+
+  Add `--upgrade-package <name>` when updating a locked package without changing its requirement.
+
 - `upload-coverage` sends both Cobertura reports to GitHub code coverage (part of Code Quality),
   which shows each PR's percentage against `main`.
   - It needs code coverage enabled in the repository's Code Quality settings.
@@ -58,12 +78,16 @@ which commit types release and which files release-please owns.
 - Dependabot (`.github/dependabot.yml`) proposes one grouped PR a week per ecosystem, for releases
   at least seven days old:
   - `ci(deps)` for GitHub Actions;
-  - `chore(deps)` for the npm dev tooling in `pnpm-lock.yaml`;
-  - `chore(deps)` for the test suites' `tests/*/requirements.txt`. It raises the floors too, since
-    advisory scanners such as OpenSSF Scorecard read a requirement's lower bound, not the version CI
-    installs.
+  - `chore(deps)` for the npm dev tooling in `pnpm-lock.yaml` and the kinetic music-video scaffold's
+    `assets/npm/package-lock.json`;
+  - `chore(deps)` for the Python requirements and CI locks in `tests/` and `tests/*/`. It raises the
+    floors too, since advisory scanners such as OpenSSF Scorecard read a requirement's lower bound,
+    not the version CI installs.
   - It skips release-please-action and the `release-please` CLI, which move by hand together: the
     `package.json` pin must stay the version the action bundles.
+- The kinetic music-video scaffold uses `npm ci` with its shipped package lock. Keep `opentype.js`
+  on 1.x while the engine's import map names `dist/opentype.module.js`. Version 2 renamed that
+  module to `dist/opentype.mjs`.
 - `scorecard.yml` publishes the OpenSSF Scorecard report, the README badge's source, on each push to
   `main`, weekly, and when branch protection changes. It also uploads the findings to code scanning.
   - It is never a required check.

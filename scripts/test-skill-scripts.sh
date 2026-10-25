@@ -70,13 +70,14 @@ for dir in tests/*/; do
     # uv installs a suite's requirements into a cached environment of its
     # own, so a local run needs no pip step. python3 is pinned by path
     # because uv otherwise prefers an active conda or virtual environment.
-    # Without uv, python3 must already have them, as CI's pip step ensures.
+    # CI uses its hash-checked environment even when the runner has uv installed.
     python=(python3)
     req="${dir}requirements.txt"
     with=()
     [ ! -f "$req" ] || with+=(--with-requirements "$req")
     [ -z "$coverage" ] || with+=(--with "$COVERAGE_PY")
-    if [ "${#with[@]}" -gt 0 ] && command -v uv >/dev/null; then
+    if [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] &&
+      [ "${#with[@]}" -gt 0 ] && command -v uv >/dev/null; then
       python=(uv run --quiet --no-project --python "$(command -v python3)"
       "${with[@]}" python)
     fi
@@ -114,7 +115,7 @@ fi
 if [ -n "$coverage" ] && compgen -G 'coverage/.coverage.*' >/dev/null; then
   echo "== python coverage =="
   report=(python3)
-  if command -v uv >/dev/null; then
+  if [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] && command -v uv >/dev/null; then
     report=(uv run --quiet --no-project --python "$(command -v python3)"
     --with "$COVERAGE_PY" python)
   fi

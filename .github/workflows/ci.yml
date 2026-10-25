@@ -70,17 +70,14 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg && ffmpeg -version | head -n 1
-      - name: Install per-suite Python dependencies
+      - name: Install locked Python test dependencies
         run: |
-          shopt -s nullglob
-          for req in tests/*/requirements.txt; do
-            pip install -r "$req"
-          done
-          pip install "coverage>=7.10"
+          pip install --require-hashes --only-binary=:all: -r tests/requirements-ci.txt
       - name: Run skill-script test suites
         # One leg measures coverage: line coverage does not depend on the ffmpeg version.
         env:
           COVERAGE: ${{ matrix.os == 'ubuntu-24.04' && '1' || '' }}
+          SKILLS_TEST_USE_SYSTEM_PYTHON: "1"
         run: pnpm test
       - name: Coverage summary
         if: ${{ !cancelled() && matrix.os == 'ubuntu-24.04' && hashFiles('coverage/report.md') != '' }}

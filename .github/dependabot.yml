@@ -17,7 +17,7 @@ updates:
       prefix: ci
       include: scope
   - package-ecosystem: npm
-    directory: /
+    directories: ["/", "/skills/scenario-kinetic-music-video/assets/npm"]
     schedule:
       interval: weekly
     cooldown:
@@ -33,7 +33,7 @@ updates:
     commit-message:
       prefix: chore(deps)
   - package-ecosystem: pip
-    directories: ["/tests/*"]
+    directories: ["/tests", "/tests/*"]
     schedule:
       interval: weekly
     cooldown:

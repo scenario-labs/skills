@@ -232,6 +232,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - Setup and analysis: [scaffold.sh](scripts/scaffold.sh),
   [audio_analysis.py](scripts/audio_analysis.py), [lyrics_align.py](scripts/lyrics_align.py),
   [plot_lyrics.py](scripts/plot_lyrics.py)
+- Locked JavaScript dependencies copied by scaffold.sh into new projects:
+  [package.json](assets/npm/package.json), [package-lock.json](assets/npm/package-lock.json)
 - Approved-master stem lookup for transcription, plots and vocal slices:
   [audio_paths.py](scripts/audio_paths.py)
 - Footage generation helpers: [synth_beat.py](scripts/synth_beat.py),

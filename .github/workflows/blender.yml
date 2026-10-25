@@ -54,7 +54,7 @@ jobs:
       - name: Toolkit tests
         run: |
           set -o pipefail
-          pip install -q -r tests/scenario-blender-expert/requirements.txt
+          pip install --require-hashes --only-binary=:all: -r tests/scenario-blender-expert/requirements-ci.txt
           python -B -m unittest discover -s tests/scenario-blender-expert -v 2>&1 | tee tests.log
           # A live suite that skips here means Blender did not start: fail instead.
           if grep -q "skipped 'Blender is not installed'" tests.log; then exit 1; fi

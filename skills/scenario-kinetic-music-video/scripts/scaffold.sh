@@ -6,6 +6,11 @@
 set -euo pipefail
 SKILL="$(cd "$(dirname "$0")/.." && pwd)"
 MASTER_SRC="${1:?give the path to the song master}"
+if { [ -f package.json ] && [ ! -f package-lock.json ]; } ||
+  { [ -f package-lock.json ] && [ ! -f package.json ]; }; then
+  echo "Keep both package.json and package-lock.json, or use a new project folder." >&2
+  exit 1
+fi
 mkdir -p audio engine/scenes engine/data assets/fonts assets/refs assets/gen assets/clips assets/video assets/audio_slices assets/brand analysis out tools
 # the song may already sit at audio/master.<ext> (cp refuses identical files and set -e would abort)
 [ "$MASTER_SRC" -ef "audio/master.${MASTER_SRC##*.}" ] || cp "$MASTER_SRC" "audio/master.${MASTER_SRC##*.}"
@@ -31,9 +36,11 @@ for p in "archivo/Archivo%5Bwdth,wght%5D.ttf:Archivo-VF.ttf" "archivoblack/Archi
   [ -f "assets/fonts/${p##*:}" ] || curl -fsSL "$B/${p%%:*}" -o "assets/fonts/${p##*:}"
 done
 
-# JS deps
-[ -f package.json ] || npm init -y >/dev/null
-npm i -s three@0.170.0 playwright@1.49 opentype.js >/dev/null
+# Keep a project's customized dependency pair on repeat runs.
+if [ ! -f package.json ]; then
+  cp "$SKILL/assets/npm/package.json" "$SKILL/assets/npm/package-lock.json" .
+fi
+npm ci --ignore-scripts --no-audit --no-fund >/dev/null
 
 # Python env (audio analysis, lyric alignment, footage prep, tracking, sync checks)
 export UV_NATIVE_TLS=1 # uv ignores the system certificate store by default and fails behind a TLS-inspecting proxy

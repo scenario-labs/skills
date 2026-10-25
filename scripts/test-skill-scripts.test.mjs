@@ -35,7 +35,10 @@ const TOOLS = [
 // COVERAGE comes from the caller's `pnpm test`; each test sets its own.
 const env = Object.fromEntries(
   Object.entries(process.env).filter(
-    ([key]) => !key.startsWith("GIT_") && key !== "COVERAGE",
+    ([key]) =>
+      !key.startsWith("GIT_") &&
+      key !== "COVERAGE" &&
+      key !== "SKILLS_TEST_USE_SYSTEM_PYTHON",
   ),
 );
 const which = (tool) =>
@@ -56,7 +59,16 @@ const executable = (file, body) => {
 // would. `files` adds files to the repository before the run.
 function run(
   t,
-  { requirements, uv, pnpm, coverage, coverageData, files = {} },
+  {
+    requirements,
+    uv,
+    pnpm,
+    python,
+    coverage,
+    coverageData,
+    systemPython,
+    files = {},
+  },
 ) {
   const root = mkdtempSync(join(tmpdir(), "skills-script-tests-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -98,9 +110,21 @@ function run(
       : "",
   );
   stub("pnpm", pnpm);
+  stub(
+    "python3",
+    python,
+    coverageData
+      ? `case "$*" in *unittest*) "${which("mkdir")}" -p coverage && : > coverage/.coverage.stub ;; esac\n`
+      : "",
+  );
   const result = spawnSync(which("bash"), ["scripts/test-skill-scripts.sh"], {
     cwd: root,
-    env: { ...env, PATH: bin, ...(coverage ? { COVERAGE: "1" } : {}) },
+    env: {
+      ...env,
+      PATH: bin,
+      ...(coverage ? { COVERAGE: "1" } : {}),
+      ...(systemPython ? { SKILLS_TEST_USE_SYSTEM_PYTHON: "1" } : {}),
+    },
     encoding: "utf8",
   });
   const calls = (tool) => {
@@ -119,6 +143,7 @@ function run(
     uvArgs: uvCalls[0] ?? null,
     uvCalls,
     pnpmCalls: calls("pnpm"),
+    pythonCalls: calls("python3"),
     output: result.stdout + result.stderr,
   };
 }
@@ -163,6 +188,33 @@ test("without uv, a suite with a requirements.txt runs on python3", (t) => {
   const { result, output } = run(t, { requirements: "numpy\n" });
   assert.equal(result.status, 0, output);
   assert.match(result.stderr, /Ran 1 test/);
+});
+
+test("CI uses the installed Python environment even when uv is available", (t) => {
+  const { result, uvCalls, output } = run(t, {
+    requirements: "numpy\n",
+    uv: 1,
+    systemPython: true,
+  });
+  assert.equal(result.status, 0, output);
+  assert.deepEqual(uvCalls, []);
+  assert.match(result.stderr, /Ran 1 test/);
+});
+
+test("CI uses the installed coverage package for suites and reports", (t) => {
+  const { result, uvCalls, pythonCalls, output } = run(t, {
+    requirements: "numpy\n",
+    uv: 1,
+    python: 0,
+    systemPython: true,
+    coverage: true,
+    coverageData: true,
+  });
+  assert.equal(result.status, 0, output);
+  assert.deepEqual(uvCalls, []);
+  assert.equal(pythonCalls.length, 5);
+  assert.deepEqual(pythonCalls[0], ["-B", ...COVERAGE_RUN, ...UNITTEST]);
+  assert.ok(pythonCalls.slice(1).every((call) => call[1] === "coverage"));
 });
 
 // The uv arguments up to the interpreter, then the interpreter's own.
