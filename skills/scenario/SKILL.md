@@ -195,10 +195,17 @@ Uploading and filing alone are not publication.
     billing or membership yourself.
 - **429 `Too Many Requests. Please, wait N seconds` (`remainingSeconds`)**: Relax mode. The plan's
   CU are spent, so each job is followed by a wait.
-  - Never re-submit inside `remainingSeconds`.
+  - The countdown belongs to the payload you sent: the wait grows with the job's cost, so a heavy
+    job (a high effort tier, a long video) can stay locked while a cheaper one runs sooner. Never
+    re-submit the same payload inside `remainingSeconds`.
+  - A job any team member starts restarts the wait for the whole team, and waits lengthen the more
+    the team generates in Relax mode, so a batch slows down as it goes. A refused attempt is not
+    charged.
   - Stop the batch and invite the user to buy CU (a top-up ends Relax mode at once) or upgrade; else
-    offer a cheaper member, fewer outputs, or a later run (unattended: report and stop, never
-    relaunch).
+    offer a cheaper payload (`dry_run` it first), fewer outputs, or a later run (unattended: report
+    and stop, never relaunch).
+  - Rules and plan caps:
+    [Relax Mode](https://help.scenario.com/articles/2332232342-relax-mode-keep-generating-after-your-compute-units-run-out).
 - **Other 429, including an unfamiliar `actionName`**: never infer its behavior from the name.
   Report it and run `diagnostics_run` in the same scope before choosing a recovery.
 - **Transport error on `model_run` (no HTTP status)**: the request may still have landed. Run
