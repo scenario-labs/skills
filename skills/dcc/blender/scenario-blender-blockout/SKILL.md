@@ -118,10 +118,11 @@ first: `execute_python` stays off until the user enables **Allow connected agent
 Stage 2 set, with no figures, cameras or identity colors; **`camera_path`** keys one shot around a
 static center, never tracking or multi-shot (`B.rail_camera`); **Render Video** is the video pass.
 
-**Headless**, with no plugin: run each stage as a script through scenario-blender-expert's headless
-helper, saving the `.blend` as its backup. Copy the
-[examples harness](scripts/examples/ex_common.py). The 120 s limit is plugin-only; `B.guard` still
-opens every stage.
+**Headless**, with no plugin: run each stage through scenario-blender-expert's headless helper. Load
+the preceding `.blend`, check it with `B.guard`, extend it, then save a new `B.stage_backup(label)`
+for the next stage. The [examples harness](scripts/examples/ex_common.py) is only for one-shot
+builds from factory startup: `start()` deletes all objects, including prior stages. Never reuse it
+to resume a backup. The 120 s limit is plugin-only.
 
 ## 4. Build order
 
