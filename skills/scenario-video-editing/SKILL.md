@@ -1,6 +1,6 @@
 ---
 name: scenario-video-editing
-description: "Use when editing footage that already exists on Scenario through MCP with a tool model instead of a new generation: 3D LUT grading, color correction, film grain, vignette, blur, sharpen, glow, tint, desaturate, posterize, solarize, cubism, crystallize, oilify, chromatic aberration or dodge and burn on a clip; trimming to a time range, splitting at cut points, reversing, resizing, re-encoding, frame extraction, image sequences, background removal, segmentation masks, subjects as layers."
+description: "Use when editing footage that already exists on Scenario through MCP with a tool model instead of a new generation: 3D LUT grading, color correction, film grain, vignette, blur, sharpen, glow, tint, desaturate, posterize, solarize, cubism, crystallize, oilify, chromatic aberration or dodge and burn on a clip; trimming to a time range, splitting at cut points, reversing, resizing, re-encoding, frame extraction, image sequences, chroma key, green or blue screen removal to a transparent WebM or ProRes MOV, background removal, segmentation masks, subjects as layers."
 license: MIT
 ---
 
@@ -38,6 +38,7 @@ crossfading two clips is a concat transition.
 | Frames out, frames in | `model_scenario-video-to-image-seq`, `model_scenario-image-seq-to-video` |
 | Subjects as layers    | `model_scenario-video-layers-extractor`                                  |
 | Masks, cutouts        | `recommend` with the need in the user's own words                        |
+| Key a green screen    | `model_scenario-video-chroma-key`                                        |
 | Pull the audio track  | `model_scenario-audio-extract`                                           |
 
 Extracted frames carry no index and share one `createdAt`, so their order exists only in the job
@@ -64,6 +65,26 @@ Effect lookups go through `search`, `target="models"`, `public=true`. The `model
 constants: each is Scenario's single deterministic tool for its operation, so discovery would only
 re-derive it. `model_reverse-video` sits outside that set and is an authoring-time hit: re-discover
 it by name (`search` `query="video reverse"`).
+
+## Keying a green or blue screen
+
+Footage shot or generated on a solid screen goes to `model_scenario-video-chroma-key`, a fixed
+first-party id: Scenario's single chroma-key tool. Footage with no solid screen is a segmentation
+job instead (the Masks, cutouts row).
+
+- Leave `keyColor` empty: the tool detects the green or blue screen from the borders of the first
+  frames. Set a hex only when detection keys the wrong color.
+- `outputFormat` decides the alpha: `webm` (VP9 with alpha, the default) for web and engines, `mov`
+  (ProRes 4444 with alpha) for editing and compositing apps. `mp4` carries no alpha and requires
+  `backgroundColor`, a solid color composited behind the subject.
+- Edges are four knobs, read with `model_schema_get`: a green fringe or halo on hair and edges wants
+  `spillSuppression` (default 1, the maximum, at authoring time) and a positive `edgeShrink` of 1 to
+  2 pixels; holes in the subject want a lower `tolerance` (default 0.3); a hard, stepped edge wants
+  `softness` or `edgeFeather`.
+- The input is capped (60 seconds at authoring time, `max_duration` in the schema): trim first.
+- Generating footage to key: ask the video model for a flat, evenly lit pure green background, no
+  shadows on it, and a subject wearing no green. Motion blur and fine hair key worst, so judge those
+  frames first.
 
 ## Cost follows the clip, so trim first
 
