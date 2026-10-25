@@ -77,10 +77,10 @@ job instead (the Masks, cutouts row).
 - `outputFormat` decides the alpha: `webm` (VP9 with alpha, the default) for web and engines, `mov`
   (ProRes 4444 with alpha) for editing and compositing apps. `mp4` carries no alpha and requires
   `backgroundColor`, a solid color composited behind the subject.
-- Edges are four knobs, read with `model_schema_get`: a green fringe or halo on hair and edges wants
-  `spillSuppression` (default 1, the maximum, at authoring time) and a positive `edgeShrink` of 1 to
-  2 pixels; holes in the subject want a lower `tolerance` (default 0.3); a hard, stepped edge wants
-  `softness` or `edgeFeather`.
+- Edges take five controls, read with `model_schema_get`: a green fringe or halo on hair and edges
+  wants `spillSuppression` (default 1, the maximum, at authoring time) and a positive `edgeShrink`
+  of 1 to 2 pixels; holes in the subject want a lower `tolerance` (default 0.3); a hard, stepped
+  edge wants `softness` or `edgeFeather`.
 - The input is capped (60 seconds at authoring time, `max_duration` in the schema): trim first.
 - Generating footage to key: ask the video model for a flat, evenly lit pure green background, no
   shadows on it, and a subject wearing no green. Motion blur and fine hair key worst, so judge those
