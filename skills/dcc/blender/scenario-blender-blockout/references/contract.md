@@ -52,8 +52,10 @@ Typical real-world values; say in the plan which ones you assumed.
   palette lacks (black, white, gray, brown) cannot carry an identity against the gray set and dark
   world. Make that hero `featured`: the capsule takes the next free color, and the worn feature
   closest to the garment (`coat`, `hood`, `hat`, `cape`, `skirt`) takes the brief's color through
-  `colors`. The legend names both colors. These colors are load-bearing: the prompt later says which
-  reference image each one becomes.
+  `colors`. Name a garment for the capsule's color above that feature (a red hood and sweater over
+  the black coat), as for a default red hero: a color named as a marker only came back as a bare
+  capsule. The legend and the prompt name both garments. These colors are load-bearing: the prompt
+  later says which reference image each one becomes.
 - Set gray 0.32 to 0.55 (`B.NEUTRAL` 0.42), one light, world color about 0.035 to 0.055.
 - `B.paint` shares one material per color (`MAT_cc0d0d`); a figure gets its own (`MAT_FIG_<name>`
   via `material_name`) so it can be recolored alone. For linked duplicates put the material on the
