@@ -118,6 +118,7 @@ Beyond The Blox podcast (2026-03-18). Director of a studio that shipped a bowlin
 ## Cheese God: publishing from the command line
 
 "EASILY Publish Your Game From Command Line" (2022-10-14). Roblox developer, credential unverified.
+The video is private as of 2026-10-25, so these notes can no longer be rechecked against it.
 
 - Publishing from a CLI replaces Studio's Publish and keeps the key in CI secrets [3wVLa5PiqvQ
   00:00:52, 00:05:36].

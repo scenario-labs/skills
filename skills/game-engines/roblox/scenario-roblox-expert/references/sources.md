@@ -33,7 +33,7 @@ Credentials are as stated by the source or its channel; "unverified" means no in
 | https://create.roblox.com/docs/studio/testing-modes                                | playtest modes, Server & Clients, StudioTestService        |
 | https://create.roblox.com/docs/reference/engine/classes/StudioTestService          | programmatic multi-client tests                            |
 | https://create.roblox.com/docs/reference/engine/classes/InstanceFileSyncService    | checking sync status from code                             |
-| https://create.roblox.com/docs/studio/command-line-interface                       | `--task RunScript`                                         |
+| https://create.roblox.com/docs/studio/cli                                          | `--task RunScript`                                         |
 | https://create.roblox.com/docs/cloud (API reference, Luau Execution session tasks) | Open Cloud Luau Execution limits                           |
 | https://create.roblox.com/docs/studio/output                                       | the Output window                                          |
 | https://create.roblox.com/docs/studio/importer                                     | the 3D Importer                                            |
