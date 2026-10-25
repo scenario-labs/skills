@@ -37,6 +37,7 @@
         "scenario-textures",
         "scenario-skyboxes",
         "scenario-3d",
+        "scenario-video-to-motion",
         "scenario-blender",
         "scenario-patina-retexture",
         "scenario-orbit-views",

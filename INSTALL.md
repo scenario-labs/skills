@@ -33,17 +33,19 @@ npx skills add scenario-labs/skills --skill scenario scenario-moderation scenari
 
 ### 3D Artist
 
-Meshes from a picture, rigged and ready to animate. 13 skills.
+Meshes from a picture, rigged and ready to animate. 15 skills.
 
 - **Image to 3D** (`scenario-3d`, `scenario-orbit-views`). Try: "Turn this prop concept into a
   textured GLB, then show it from the back and from above."
 - **Rigging and Retargeting** (`scenario-meshy`). Try: "Rig this character mesh and give me a walk
   and an idle."
+- **Motion From a Video** (`scenario-video-to-motion`). Try: "Put the dance in this phone clip on my
+  character and export it for Unreal."
 - **Scenario for Blender** (`scenario-blender`). Try: "Turn what I see in the viewport into a 3D
   prop and put it at my 3D cursor."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-3d scenario-orbit-views scenario-meshy scenario-blender scenario-skyboxes scenario-patina-retexture scenario-video scenario-rodin scenario-sparc3d scenario-3d-worlds
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-3d scenario-orbit-views scenario-meshy scenario-blender scenario-skyboxes scenario-patina-retexture scenario-video scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-video-to-motion scenario-video-editing
 ```
 
 Working in ZBrush, Blender or Maya? Add the expert tools for it:
