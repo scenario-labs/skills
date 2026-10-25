@@ -56,9 +56,9 @@ filling it:
   image of the character, while its mesh field is `characterModel`. The field's `kind` (`3d` or
   `image`), not its name, says which asset it takes.
 - Output formats differ: one member writes engine-specific FBX variants (`fbx-blender`,
-  `fbx-unreal`, `fbx-roblox`, Maya scene files), one a plain `glb` or `fbx`, and one exposes no
-  format field at all. Pick the engine target in the run: `asset_download`'s `format` conversion is
-  not documented to keep the animation.
+  `fbx-unreal`, `fbx-roblox`, Maya scene files), one a plain `glb` or `fbx` (its schema names `fbx`
+  for Unity), and one exposes no format field at all. Pick the engine target in the run:
+  `asset_download`'s `format` conversion is not documented to keep the animation.
 - Controls worth setting when present: `moveInPlace` for game locomotion driven by code, `loop` for
   cycles, the frame rate field (named `frameRate`, `fps`, or `targetFps`), keyframe cleanup, and the
   `forward` and `up` axes when the motion arrives turned or lying down.
