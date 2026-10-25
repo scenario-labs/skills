@@ -28,6 +28,9 @@ updates:
     ignore:
       # Must stay the version release-please-action bundles (see above).
       - dependency-name: release-please
+      # The engine imports dist/opentype.module.js, which 2.x renamed.
+      - dependency-name: opentype.js
+        update-types: ["version-update:semver-major"]
     # A fixed scope: `include: scope` writes `deps-dev` for these devDependencies, which commitlint
     # rejects.
     commit-message:

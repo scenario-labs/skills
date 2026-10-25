@@ -87,7 +87,8 @@ which commit types release and which files release-please owns.
     `package.json` pin must stay the version the action bundles.
 - The kinetic music-video scaffold uses `npm ci` with its shipped package lock. Keep `opentype.js`
   on 1.x while the engine's import map names `dist/opentype.module.js`. Version 2 renamed that
-  module to `dist/opentype.mjs`.
+  module to `dist/opentype.mjs`. Dependabot ignores major updates for this dependency until the
+  import map is migrated.
 - `scorecard.yml` publishes the OpenSSF Scorecard report, the README badge's source, on each push to
   `main`, weekly, and when branch protection changes. It also uploads the findings to code scanning.
   - It is never a required check.
