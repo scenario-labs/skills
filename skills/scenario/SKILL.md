@@ -138,8 +138,13 @@ Local inputs go up with `upload_asset`:
 - Inline base64 `data` only under 100KB. It returns the asset directly, with no complete step; a
   larger file is rejected, naming the cap.
 - Both calls take scope and nothing else: no parts list, no etags.
-- The server decodes the file at completion. `Upload upl_… failed: Corrupt JPEG data`,
-  `premature end of data segment`, `bad Huffman code`, or `libpng read error` means it could not.
+- Inline `data` is decoded inside `upload_asset`, so a decode error there (`libpng read error`,
+  `Corrupt JPEG data`, `unable to read pixels`) means the base64 string is broken, not the file.
+  Never write or retype base64 yourself: encode with a tool (`base64 < file | tr -d '\n'`) and pass
+  the output untouched. Re-sending the same string repeats the error.
+- On the `file_size` path the server decodes at completion.
+  `Upload upl_… failed: Corrupt JPEG data`, `premature end of data segment`, `bad Huffman code`, or
+  `libpng read error` means it could not.
   - Check for a corrupt source, a truncated or re-encoded body, a missing part, or a wrong
     `file_size`.
   - Confirm the local file opens under its declared content type, then start over with a fresh
