@@ -26,9 +26,9 @@ heroes, extras, shots, each shot's length, the take and the footprint. An empty 
 
 - **Elements are cheap, heroes and shots are not.** The video model keeps what the clip shows, so
   set dressing adds richness at no risk. Risk grows with independent actors and with cuts.
-- **Heroes** are the movers the story needs: each gets a saturated color of its own, a line in the
-  prompt with its direction of travel, and a clear path. Past four heroes in one shot, identities
-  start to swap: spread them over shots.
+- **Heroes** are the movers the story needs: each gets a saturated color (its own, unless the brief
+  puts two in one color), a line in the prompt with its direction of travel, and a clear path. Past
+  four heroes in one shot, identities start to swap: spread them over shots.
 - **Extras** are crowd and traffic, tagged by `K.crowd` or `K.mark_extra`. The prompt names them as
   one class ("the gray walkers are pedestrians"), never one by one. Keep sight lines clear:
   `K.crowd(..., keep_clear=[(frame_a, frame_b, (xmin, xmax, ymin, ymax))])` drops any walker that
@@ -84,7 +84,8 @@ On the same H3 Max test, no scheme came back as flat paint: hues moved into plau
 (sand stalls into wood, a red canopy color into red awnings), and the gray identity scheme came back
 colder, with steel stalls. Category kept the most market context behind the heroes. The model reads
 a hue as a material hint, so give a hue only where its real-world reading is right, and a hero's
-color only to something the hero really wears: the garment the brief colors, when it names one.
+color only to something the hero really wears: the garment the brief colors, when the palette has
+that color.
 
 ## The prompt per level
 

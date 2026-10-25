@@ -48,7 +48,8 @@ with it and keep the widest clear arc.
 
 - **Identity**: distinct saturated colors visible (object color and material both set, viewport
   color type Material; Object paints a kit in its first color only); an all-white or all-gray
-  playblast is the failure this check exists for.
+  playblast is the failure this check exists for. Two heroes the brief puts in one color pass when
+  their signature features tell them apart.
 - **Ambiguity sweep**: a vehicle's front marked in geometry; every figure one connected proxy, no
   loose blocks near it; rigid props without organic curves (a bent pole reads as a living thing);
   nothing from another sub-scene at a frame edge; a scale reference when nothing familiar is in

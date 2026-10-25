@@ -64,7 +64,8 @@ Before any call, write down:
   the others can be A/B tested on a short window.
 - **Identity colors**: a hero takes the brief's color for them ("yellow raincoat": yellow) as the
   nearest `B.PALETTE` color, else the next free one: red, blue, green, yellow, purple, cyan. Two
-  heroes in one color: [contract](references/contract.md).
+  heroes in one color, or a color the palette lacks (black, white, gray, brown):
+  [contract](references/contract.md).
 - **Deliberate gaps** the video model fills, and **acceptance tests** the brief states: they become
   mandatory audits.
 
