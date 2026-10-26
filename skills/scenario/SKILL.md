@@ -8,8 +8,7 @@ license: MIT
 
 ## Overview
 
-Scenario generates images, video, 3D, and audio across 500+ models, plus custom training, all
-through the core loop below.
+Scenario generates images, video, 3D, and audio across 500+ models, plus custom training.
 
 ## Setup
 
@@ -18,17 +17,16 @@ through the core loop below.
 - Client config, headless API-key setup, and per-client re-authentication:
   [references/setup.md](references/setup.md).
 - Never ask an agent to collect, encode, or echo a secret.
-- A connection that authenticated once and now fails: re-authenticate its client before debugging
-  anything else. `diagnostics_run` names the failing layer (`auth`, `tenant-scope`,
-  `api-unreachable`, or `healthy`).
+- A previously authenticated connection now failing: re-authenticate before debugging.
+  `diagnostics_run` names the layer (`auth`, `tenant-scope`, `api-unreachable`, or `healthy`).
 
-Tools come in two kinds:
+Two tool kinds:
 
 - **Direct**: the loop below, plus `asset_get`, `job_get`, `jobs_list`, and `models_list`.
   `?toolsets=full` exposes everything.
 - **Catalog**: the rest (collections, tagging, analysis, training, members, keys).
-  - `scenario_tools_search` takes only `query` (a tool name or keywords) and `limit`. It returns the
-    schema and the lane.
+  - `scenario_tools_search` takes only `query` (tool name or keywords) and `limit`; returns schema
+    and lane.
   - `scenario_tool_execute_read` / `write` / `delete` runs the tool with `{name, parameters}`.
   - Every input goes inside `parameters`, scope ids and `dry_run` included. Nearly every catalog
     tool declares scope ids; `plan_generation` takes only `description`.
@@ -45,10 +43,9 @@ Tools come in two kinds:
   cannot come first.
 - Confirm the pair with the user: a guess writes into someone else's project. Unattended, take the
   pair from the task; if it names none, stop and list the choices.
-- The server fills scope only for read-only tools with one candidate left. Anything else fails, and
-  the error names the wrong half.
-- Scope errors, the most common failure, surface on the first call that drops the pair once a second
-  team or project is in play.
+- The server fills scope only for read-only tools with one candidate. Otherwise it fails, naming the
+  wrong half.
+- Scope omissions commonly fail when a second team or project becomes available.
 
 ## Quick reference
 
@@ -99,19 +96,17 @@ Generating a stylized game prop image:
    - Unless the user says cost does not matter, price first with `dry_run: true`, top level beside
      `model_id`. No job is created, and `creativeUnitsCost` is this exact payload's price.
    - A `recommend` quote assumes defaults; `cost_impact` fields move the real number.
-   - Then run. Assets come back inline (`status: success`, nothing to wait for), or a `job_id` for
-     `jobs_wait`.
-   - A job reads `in_progress` after a timed-out wait; with `wait=false`, the backend's word at
-     creation (`queued`, `in-progress`, `warming-up`). All mean the same state.
+   - Run: inline assets (`status: success`) need no wait; otherwise pass `job_id` to `jobs_wait`.
+   - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
+     `in-progress`, or `warming-up`. All need `jobs_wait`.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
-   - A timeout (`in_progress`) is not an error: re-call with the returned `pending_job_ids` as
-     `job_ids`, never a second `model_run` or a cancel. It takes no timeout argument.
+   - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
+     cancel. No timeout argument exists.
    - Failed jobs are reimbursed, except xAI generations stopped by moderation.
 7. `asset_display` shows the asset inline. Its `format` picks the rendering:
-   - `display` (default): an inline image, links, and viewer data. It does not disable a host's
-     widget.
-   - `viewer`: a lighter payload for a host that renders the interactive widget.
+   - `display` (default): inline image, links, viewer data; does not disable the host widget.
+   - `viewer`: lighter payload for hosts rendering the interactive widget.
    - `json`, `markdown`: metadata and links.
 8. `asset_download` returns a file URL, one call per asset; save it with `curl -L` (it may
    redirect).
@@ -160,10 +155,9 @@ Filing is part of delivering, not a tidy-up:
 - `collection_create` takes a name and the scope pair only. `asset_ids` sent there is silently
   ignored, so adding is always a second call: `collection_add_assets` with `collection_id` and
   `asset_ids`.
-- It takes any number of ids (it batches them by 49 itself) and skips an id already filed, listing
-  it under `already_present_asset_ids` beside `added_asset_ids`.
-- So after a failed batch, re-send the whole list: the error says how many went in; the retry adds
-  the rest.
+- It accepts any number of ids, batches by 49, and skips duplicates. Results separate
+  `already_present_asset_ids` from `added_asset_ids`.
+- After failure, safely resend the whole list: the error counts additions; retries add the rest.
 - Confirm from that reply: `search` `filters={"collection_ids": [...]}` lags on a fresh write.
 - `asset_add_tags` is additive, one `asset_id` per call. A tag the asset already carries returns 400
   `Duplicated tag`: read `tags` via `assets_get_bulk` first and send only the missing ones.
@@ -236,6 +230,9 @@ Uploading and filing alone are not publication.
   reference or LoRA. `asset_get` on the output echoes what the run consumed
   (`metadata.referenceImages`, `parentId`): the cheapest proof.
 - Taking `recommend`'s `ranked[0]` blindly. Read `next_step.type` first:
+  - `no_match`: stop generation, even with ranked partial options. Explain `unmet_requirements` and
+    `suggested_action`; never silently relax requirements. Schema checks or a successful dry run do
+    not override `no_match`.
   - `ask_user`: present the options; the user's pick wins (unattended: the task, else `proceed`).
   - `proceed`: prefer `specialty.model_id`, else the first `ranked` entry not marked deprecated in
     its `caveats`, `tradeoff`, or `explanation`. The ranking measures performance, not lifecycle.
