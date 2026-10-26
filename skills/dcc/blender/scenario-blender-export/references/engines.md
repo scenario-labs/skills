@@ -58,7 +58,20 @@ Not imported into Unreal by this skill's tests. From Epic's documentation:
   - LODs import with the base mesh or one by one in the Static Mesh Editor, with "Import LODs" on;
     every LOD shares the pivot and occupies the same space.
 - [FBX import options](https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-import-options-reference-in-unreal-engine):
-  Convert Scene Unit converts the FBX units to centimeters.
+  - Convert Scene Unit converts the FBX units to centimeters;
+  - Auto Generate Collision "will not be used if custom collision is detected in the FBX file";
+  - One Convex Hull per UCX "forces all UCX meshes to receive one convex hull"; off, the engine may
+    decompose a UCX mesh into several.
+- No page read states a vertex limit for a convex hull.
+  [Collision setup](https://dev.epicgames.com/documentation/en-us/unreal-engine/setting-up-collisions-with-static-meshes-in-unreal-engine)
+  calls higher Max Hull Verts "more precise" and "more complex". `collision()` caps hulls at 64
+  vertices by its own choice. Measured in Blender 5.2.1 (2026-10-26): a generated 17,500-triangle
+  side table hulled to 12,270 faces with open edges at near-duplicate points; capped at 64 vertices,
+  124 closed faces within 3 mm of its bounds.
+- Metallic and roughness maps are masks: the 4.27
+  [mobile textures](https://dev.epicgames.com/documentation/en-us/unreal-engine/textures-for-mobile-platforms?application_version=4.27)
+  page says sRGB "should be enabled on all Texture maps except for Normal Maps and Masks". Uncheck
+  sRGB on the `extra_maps()` files.
 - [FBX import errors](https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-import-errors-in-unreal-engine):
   "Found multiple roots. The importer only supports one root per mesh."
 - [FBX skeletal mesh pipeline](https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-skeletal-mesh-pipeline-in-unreal-engine):

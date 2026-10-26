@@ -33,7 +33,7 @@ from tool schemas and flag the gap.
 | 2. Model contract | `model_schema_get`                   | Handle names and required inputs         |
 | 3. Author         | `editor_info` + `inputs_definition`  | Per the reference file                   |
 | 4. Create         | `workflow_create`                    | Non-atomic, see below                    |
-| 5. Publish        | `workflow_publish`                   | Compiles `flow`, needs input+output pins |
+| 5. Publish        | `workflow_publish`                   | Compiles `flow`; one output pin required |
 | 6. Validate       | `workflow_run` with `dry_run=true`   | Prices and runs the real validator       |
 
 `workflow_create` is two calls under the hood: a failed create may still have created a draft whose
@@ -95,8 +95,10 @@ into the conversation.
   from the error.
 - Wiring a batch of assets into one model input and expecting one output per item: that is one
   generation over all of them; loop with `forEach`.
-- Publishing with no pins: at least one `data.isInput` node listed in `inputKeys` and one
-  `data.isOutput` node.
+- Publishing with no output pin, or with `data.isOutput` on a text or asset node: publish fails with
+  `compiled to an empty flow`. The output pin goes on the `model`, `llm`, or `forEachEnd` node that
+  produces the deliverable. Input pins are optional: a graph with its prompt built in publishes and
+  runs with no inputs.
 - Gating a text node in front of a builder or model: a branch skips only the node wired to its
   handle, so the consumer stays pending and the job never completes. Gate the node that does the
   work, or use a CEL ternary for conditional prompt text, per the reference's `ifElse` section.

@@ -109,12 +109,17 @@ trip only. The measurements live in [`references/engines.md`](references/engines
   under an empty called `Name`, which takes the mesh's place under its parent. Static meshes only:
   it refuses a skinned mesh. Unity builds the LOD Group from those names. Godot generates LODs at
   import (Generate LODs). Unreal documents "Import LODs", all LODs sharing one pivot. The group
-  exports as a plain FBX Null, and Unreal's import of it is unmeasured.
-- `bxe.collision(obj, engine, shape)` adds a collision mesh named for the importer:
-  - Unreal: `UCX_Name_00` (convex hull) or `UBX_Name_00` (box), exported in the same FBX.
+  exports as a plain FBX Null, and Unreal's import of it is unmeasured. It welds the vertices a glTF
+  import splits at UV seams before decimating; without the weld, the LODs open into cracks.
+- `bxe.collision(obj, engine, shape, max_verts=64)` adds a collision mesh named for the importer:
+  - Unreal: `UCX_Name_00` (convex hull) or `UBX_Name_00` (box), exported in the same FBX. Unreal
+    skips Auto Generate Collision when the file carries one.
   - Godot: `Name-convcolonly` for `convex` (one hull) and `box` (the bounds, a box collider), or
     `Name-colonly` for `mesh` (the mesh as a trimesh, static bodies only).
   - Unity and Roblox: returns None. Colliders are set in the editor.
+  - A convex hull keeps at most `max_verts` vertices, spread over the shape. A generated mesh's full
+    hull runs to thousands of faces. 64 is this toolkit's budget, not an engine limit. `None` keeps
+    every vertex, and a dense full hull can come out with open edges.
 - Decimation can wreck UV seams and silhouettes. Review every LOD with `bx_review` before export.
 
 ## Batch conversion
@@ -180,7 +185,8 @@ the parts selected) for a single static prop, then gate again.
     Smoothness Source on Metallic Alpha, sRGB unchecked. Unity's FBX import assigned only the base
     color, even from a file carrying both maps (measured).
   - Roblox and Unreal: `<material>_Metallic.png` and `<material>_Roughness.png`, 8-bit grayscale. On
-    Roblox, set them as MetalnessMap and RoughnessMap of a SurfaceAppearance.
+    Roblox, set them as MetalnessMap and RoughnessMap of a SurfaceAppearance. In Unreal, uncheck
+    sRGB on both.
   - Godot: deliver the `godot` GLB, which keeps every map.
 - An STL at Blender scale: a 10 cm part prints at 0.1 mm.
 - LODs exported without a look: decimation can collapse thin parts.

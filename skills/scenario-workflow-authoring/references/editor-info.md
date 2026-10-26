@@ -97,8 +97,14 @@ A workflow-level input is a node flagged `data.isInput: true`, ordered by `edito
 The published input's `name` IS the node id (`text1`, `image5`), which is why run-input keys look
 positional and non-contiguous. Outputs are `data.isOutput: true` pins on `model`, `llm`, or
 `forEachEnd` nodes; publish refuses a graph where no model or llm node is reachable from an output
-pin (the compiled flow would be empty). The webapp UI additionally requires at least one input pin
-and an output example image before it publishes; keep at least one of each for a usable app.
+pin with `Cannot publish: editor_info compiled to an empty flow`. That error means `isOutput` sits
+on another node type (a text or asset node) or on a model wired to nothing: move the flag to the
+model that produces the deliverable.
+
+Input pins are optional. A workflow whose prompt and settings live inside the graph publishes
+through `workflow_publish` with an empty `inputKeys` and an empty `inputs_definition`, and runs with
+no inputs. Only the webapp's Convert to App step requires an input pin (and an output example
+image), so never add a dummy input to satisfy it: publish through MCP instead.
 
 `inputs_definition` entries mirror the pinned nodes:
 

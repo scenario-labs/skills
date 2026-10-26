@@ -189,6 +189,26 @@ class Presets(unittest.TestCase):
         self.assertEqual(self.c["extra_maps_png_type"],
                          {"M_Crate_MetallicSmoothness.png": 6, "M_Crate_Metallic.png": 0, "M_Crate_Roughness.png": 0})
 
+    def test_lods_of_a_glb_import_stay_closed(self):
+        self.assertGreater(self.c["seam_split_verts"], 64 * 31 + 2)  # the import split the seams
+        self.assertEqual(self.c["seam_lods"], {"Sphere_LOD0": 0, "Sphere_LOD1": 0, "Sphere_LOD2": 0})
+        self.assertEqual(self.c["seam_meshes"], 3)  # the welded copy is gone
+
+    def test_convex_hull_keeps_to_its_vertex_budget(self):
+        h = self.c["seam_hull"]
+        self.assertEqual(h["object"], "UCX_Sphere_LOD0_00")
+        self.assertEqual(h["verts"], 64)
+        self.assertEqual(h["open"], 0)
+        self.assertEqual(self.c["collision_unreal"]["verts"], 8)  # a crate's hull is under budget
+        for msg in self.c["hull_too_small"]:
+            self.assertIn("at least 4", msg)
+
+    def test_lods_keep_both_sides_of_a_double_sided_card(self):
+        sides = self.c["card_sides"]
+        self.assertEqual(sides["Card_LOD0"], [400, 400])
+        up, down = sides["Card_LOD1"]
+        self.assertGreater(down, 0.8 * up)
+
     def test_ground_bakes_transforms_and_sets_the_pivot_on_the_floor(self):
         g = self.c["ground"]
         self.assertIsNone(g["parent"])

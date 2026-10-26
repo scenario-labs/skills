@@ -377,6 +377,54 @@ try:
 except ValueError as exc:
     cases["ground_skinned"] = str(exc)
 
+
+# A sphere through GLB, split at its UV seams as every glTF import is: its LODs must stay
+# closed once welded, and its convex hull must keep to the vertex budget and stay closed.
+def open_edges(ob):
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-5)
+    n = sum(1 for e in bm.edges if len(e.link_faces) == 1)
+    bm.free()
+    return n
+
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.mesh.primitive_uv_sphere_add(segments=64, ring_count=32)
+sphere_glb = os.path.join(TMP, "sphere.glb")
+bpy.ops.export_scene.gltf(filepath=sphere_glb)
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=sphere_glb)
+s = next(o for o in bpy.data.objects if o.type == "MESH")
+cases["seam_split_verts"] = len(s.data.vertices)
+r = bxe.lods(s.name, ratios=(0.5, 0.25))
+cases["seam_lods"] = {n: open_edges(bpy.data.objects[n]) for n in r["tris"]}
+cases["seam_meshes"] = len(bpy.data.meshes)
+hull = bxe.collision(s, "unreal")
+cases["seam_hull"] = dict(hull, open=open_edges(bpy.data.objects[hull["object"]]))
+cases["hull_too_small"] = []
+for n in (3, 0):
+    try:
+        bxe.collision(s, "unreal", max_verts=n)
+        cases["hull_too_small"].append("made")
+    except ValueError as exc:
+        cases["hull_too_small"].append(str(exc))
+
+
+# A double-sided card (a grid and its reversed copy on the same points): the weld must not fuse
+# the two sides, or every LOD loses its back.
+def card(bm):
+    bmesh.ops.create_grid(bm, x_segments=20, y_segments=20, size=1.0)
+    back = bmesh.ops.duplicate(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:])
+    bmesh.ops.reverse_faces(bm, faces=[g for g in back["geom"] if isinstance(g, bmesh.types.BMFace)])
+
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+mesh("Card", card)
+r = bxe.lods("Card", ratios=(0.5,))
+cases["card_sides"] = {n: [sum(1 for p in bpy.data.objects[n].data.polygons if (p.normal.z > 0) == up)
+                           for up in (True, False)] for n in r["tris"]}
+
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
 print("EXPORT CASES", len(cases))

@@ -530,7 +530,8 @@ def lods(obj, ratios=(0.5, 0.25)):
     """Decimated copies named for Unity's LOD import (Name_LOD0 is the original), grouped
     under an empty called Name that takes the mesh's place under its parent. Static meshes
     only. Godot builds LODs at import. The group exports as a plain FBX Null (no LodGroup), and
-    Unreal's "Import LODs" on it is unmeasured."""
+    Unreal's "Import LODs" on it is unmeasured. The copies are decimated from a welded mesh."""
+    import bmesh
     obj = bpy.data.objects[obj] if isinstance(obj, str) else obj
     if obj.parent_type == "ARMATURE" or any(m.type == "ARMATURE" for m in obj.modifiers):
         raise ValueError(f"{obj.name} is skinned: lods() makes static copies, which would lose the skinning")
@@ -551,27 +552,47 @@ def lods(obj, ratios=(0.5, 0.25)):
     obj.matrix_world = world
     group.name = name
     out = {obj.name: sum(len(p.vertices) - 2 for p in obj.data.polygons)}
-    for i, r in enumerate(ratios, 1):
-        tmp = obj.copy()
-        col.objects.link(tmp)
-        mod = tmp.modifiers.new("lod", "DECIMATE")
-        mod.ratio = r
-        bpy.context.view_layer.update()
-        me = bpy.data.meshes.new_from_object(tmp.evaluated_get(bpy.context.evaluated_depsgraph_get()))
-        bpy.data.objects.remove(tmp)
-        lod = bpy.data.objects.new(f"{name}_LOD{i}", me)
-        col.objects.link(lod)
-        lod.parent, lod.matrix_world = group, world
-        out[lod.name] = sum(len(p.vertices) - 2 for p in me.polygons)
+    # A glTF import splits vertices at every UV seam, and Decimate opens those splits into
+    # cracks. Only open-border vertices are welded (a millionth of the bounds' diagonal), so the
+    # two sides of a double-sided card stay apart; the UVs stay per corner.
+    welded = obj.data.copy()
+    bm = bmesh.new()
+    bm.from_mesh(welded)
+    diag = (Vector(obj.bound_box[6]) - Vector(obj.bound_box[0])).length or 1.0
+    bmesh.ops.remove_doubles(bm, verts=[v for v in bm.verts if v.is_boundary], dist=diag * 1e-6)
+    bm.to_mesh(welded)
+    bm.free()
+    try:
+        for i, r in enumerate(ratios, 1):
+            tmp = obj.copy()
+            tmp.data = welded
+            col.objects.link(tmp)
+            try:
+                mod = tmp.modifiers.new("lod", "DECIMATE")
+                mod.ratio = r
+                bpy.context.view_layer.update()
+                me = bpy.data.meshes.new_from_object(tmp.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+            finally:
+                bpy.data.objects.remove(tmp)
+            lod = bpy.data.objects.new(f"{name}_LOD{i}", me)
+            col.objects.link(lod)
+            lod.parent, lod.matrix_world = group, world
+            out[lod.name] = sum(len(p.vertices) - 2 for p in me.polygons)
+    finally:
+        bpy.data.meshes.remove(welded)
     return {"group": group.name, "tris": out}
 
 
-def collision(obj, engine, shape="convex"):
+def collision(obj, engine, shape="convex", max_verts=64):
     """A collision mesh named for the engine's importer: Unreal UCX_ (convex) or UBX_ (box);
     Godot -convcolonly (convex, or the bounding box for "box": Godot 4.7 builds one convex
     shape from its 8 corners) or -colonly ("mesh": a trimesh, static bodies only). Unity and
-    Roblox set colliders in the editor: None."""
+    Roblox set colliders in the editor: None. A convex hull keeps at most `max_verts` of its
+    vertices, spread over the shape: this toolkit's budget, not an engine limit. None keeps them
+    all, and a dense full hull can come out with open edges."""
     import bmesh
+    if max_verts is not None and max_verts < 4:
+        raise ValueError("max_verts must be at least 4 (a closed hull), or None")
     obj = bpy.data.objects[obj] if isinstance(obj, str) else obj
     names = {("unreal", "convex"): f"UCX_{obj.name}_00", ("unreal", "box"): f"UBX_{obj.name}_00",
              ("godot", "convex"): f"{obj.name}-convcolonly", ("godot", "box"): f"{obj.name}-convcolonly",
@@ -590,6 +611,22 @@ def collision(obj, engine, shape="convex"):
     elif shape == "convex":
         hull = bmesh.ops.convex_hull(bm, input=bm.verts[:])
         bmesh.ops.delete(bm, geom=list(set(hull["geom_interior"]) | set(hull["geom_unused"])), context="VERTS")
+        if max_verts is not None and len(bm.verts) > max_verts:
+            # A dense mesh hulls into thousands of faces. Keep the hull vertices farthest from
+            # those already kept, then hull them again: still convex, inside the full hull.
+            pts = [v.co.copy() for v in bm.verts]
+            keep = [max(range(len(pts)), key=lambda i: pts[i].x)]
+            dist = [(p - pts[keep[0]]).length for p in pts]
+            while len(keep) < max_verts:
+                i = max(range(len(pts)), key=dist.__getitem__)
+                keep.append(i)
+                dist = [min(d, (p - pts[i]).length) for d, p in zip(dist, pts)]
+            bm.clear()
+            for i in keep:
+                bm.verts.new(pts[i])
+            hull = bmesh.ops.convex_hull(bm, input=bm.verts[:])
+            bmesh.ops.delete(bm, geom=list(set(hull["geom_interior"]) | set(hull["geom_unused"])),
+                             context="VERTS")
     me = bpy.data.meshes.new(names[(engine, shape)])
     bm.to_mesh(me)
     bm.free()
@@ -597,7 +634,7 @@ def collision(obj, engine, shape="convex"):
     obj.users_collection[0].objects.link(col)
     col.matrix_world = obj.matrix_world.copy()
     col.display_type = "WIRE"
-    return {"object": col.name, "faces": len(me.polygons)}
+    return {"object": col.name, "faces": len(me.polygons), "verts": len(me.vertices)}
 
 
 def batch(src, dst, preset, profile="game", gate=True):
