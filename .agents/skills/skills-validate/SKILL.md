@@ -48,6 +48,9 @@ layers.
 
 ## 4. Spin up the fresh agent
 
+A PR from a fork (`isCrossRepository: true`) is quarantined: follow step 1 of
+`.agents/skills/skills-pr-handle/SKILL.md` for what may run, where, and with which tools.
+
 Build a run directory outside the repository and install the skill under test into it, from the
 working tree, so the run tests the version under review rather than the published one:
 
