@@ -101,9 +101,9 @@ that test yourself.
 
 Judge only lines this PR adds or changes: a pre-existing violation nearby goes in the report as a
 note, never as a fix smuggled into this PR. Fix findings the way step 5 fixes review comments
-(smallest safe change, conventional commit, push). When the right rewrite is not obvious from the
-diff alone (a lane table whose capabilities need re-verifying against the live catalog), raise it
-instead of guessing.
+(smallest safe change, conventional commit, push; on a quarantined fork, a suggestion). When the
+right rewrite is not obvious from the diff alone (a lane table whose capabilities need re-verifying
+against the live catalog), raise it instead of guessing.
 
 ## 4. List open review comments
 
@@ -142,8 +142,8 @@ For each open thread, decide fix, dismiss, or ask:
 
 - **Fix**: the comment identifies a real issue within this PR's scope. Make the smallest safe
   change, commit with a conventional message that passes `commitlint.config.js`, push, then reply in
-  the thread referencing the fix (commit SHA or what changed). On a quarantined fork, reply with a
-  `suggestion` block instead.
+  the thread referencing the fix (commit SHA or what changed). On a quarantined fork, commit and
+  push nothing: the fix goes in the review below.
 - **Dismiss**: the comment is invalid or moot in context. Reply with the concrete reason. Do not
   churn code to satisfy a noisy comment.
 - **Ask**: never guess on security, privacy, auth, billing, data, migration, or concurrency
@@ -157,12 +157,25 @@ comment's `databaseId` in that thread:
 gh api "repos/$OWNER/$REPO/pulls/$PR/comments/$COMMENT_ID/replies" -f body="..."
 ```
 
+On a quarantined fork, post every fix as one review that requests changes. A `suggestion` block
+applies only as a review comment on the changed line, never as a thread reply:
+
+```bash
+gh api --method POST "repos/$OWNER/$REPO/pulls/$PR/reviews" --input review.json
+```
+
+`review.json` holds `"event": "REQUEST_CHANGES"`, `"commit_id"` (the head SHA), a `"body"`, and one
+`"comments"` entry per fix: `"path"`, `"line"`, `"side": "RIGHT"`, and a `"body"` wrapping the
+replacement lines in a `suggestion` fence. Then reply in each thread with the review link, and leave
+it open until the contributor pushes the fix.
+
 After a fix or dismiss reply, resolve the thread if you have permission (`gh api graphql` with
 `resolveReviewThread`, or the GitHub UI equivalent). Leave a thread open only when it is waiting on
 an answer.
 
-Batch known fixes into as few commits and pushes as practical. Integrate the latest remote state of
-the PR branch before adding new commits when you are not in the middle of a rebase rewrite.
+Batch known fixes into as few commits and pushes as practical, or one review on a fork. Integrate
+the latest remote state of the PR branch before adding new commits when you are not in the middle of
+a rebase rewrite.
 
 ## 6. Decide whether to validate a skill
 
