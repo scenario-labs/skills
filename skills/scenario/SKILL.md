@@ -201,6 +201,8 @@ Uploading and filing alone are not publication.
   - A job any team member starts restarts the wait for the whole team, and waits lengthen the more
     the team generates in Relax mode, so a batch slows down as it goes. A refused attempt is not
     charged.
+  - Identify Relax mode from this refusal, not `usage`: that tool reports consumption, not remaining
+    CU. If the tools do not document how to check the wait, say it is unknown.
   - Stop the batch and invite the user to buy CU (a top-up ends Relax mode at once) or upgrade; else
     offer a cheaper payload (`dry_run` it first), fewer outputs, or a later run (unattended: report
     and stop, never relaunch).
