@@ -40,8 +40,9 @@ character whose existing rig the project depends on takes motion only; otherwise
   rig is the member's own: it does not retarget onto a skeleton the mesh already carries, so clips
   built for an existing rig need bone remapping.
 - **Motion only, on a named skeleton.** A member returns the animation on a Mixamo-style or
-  MetaHuman skeleton with no mesh, ready to retarget in a DCC or engine onto the user's own rig.
-  Choose this when the character is already rigged.
+  MetaHuman skeleton without uploading your character. Choose this when the character is already
+  rigged. The file can include a template mesh: inspect it, then omit that mesh when retargeting
+  onto the user's rig.
 - **Motion only, from a mesh member.** Some mesh members also offer an animation-only flag, which
   drops the mesh from the download.
 
@@ -60,6 +61,8 @@ filling it:
   `fbx-unreal`, `fbx-roblox`, Maya scene files), one a plain `glb` or `fbx` (its schema names `fbx`
   for Unity), and one exposes no format field at all. Pick the engine target in the run:
   `asset_download`'s `format` conversion is not documented to keep the animation.
+- An FBX export can be ASCII. Blender's legacy FBX importer rejects it; use its newer ASCII-capable
+  importer. Check the imported animation before calling the file Blender-ready.
 - Controls worth setting when present: `moveInPlace` for game locomotion driven by code, `loop` for
   cycles, the frame rate field (named `frameRate`, `fps`, or `targetFps`), keyframe cleanup, and the
   `forward` and `up` axes when the motion arrives turned or lying down.
@@ -71,8 +74,8 @@ filling it:
   in front. Loose clothing and props hide joints.
 - Trim to the move that ships: price follows the clip, and members cap the input. At authoring time
   one capped it at 30 seconds and about 30 MB, another required even pixel width and height. Read
-  `max_duration` and `max_size` off the schema, and fix the clip with the video editing tools before
-  pricing.
+  `max_duration` and `max_size` when exposed by the schema. An absent cap is not a promise of
+  unlimited input. Fix an over-cap clip with the video editing tools before pricing.
 - No footage? Generate the performance with a video model per `scenario-video`: a single full-body
   character on a plain background, a locked-off camera, and the action described beat by beat. The
   generated clip is then the input like any other.
@@ -95,8 +98,8 @@ The user has a phone clip of a dance and a character GLB, and wants an Unreal-re
 5. `model_run` with `dry_run: true` and quote the price. Then run with `wait: false`: these jobs
    take minutes. Retire it with `jobs_wait`, re-calling with `pending_job_ids` on timeout.
 6. `asset_display` the result, or open it in a DCC. Check the facing, that the feet meet the ground,
-   and that the loop point does not pop. Wrong facing is the `forward` or `up` axis, not the
-   capture: fix it and rerun only that.
+   and that the loop point does not pop. If facing is wrong, check `forward` and `up` when the
+   schema exposes them before blaming the capture. A preview link alone is not a visual check.
 7. `asset_download` with no `format`, and hand over the file with the skeleton it uses.
 
 ## Common mistakes
