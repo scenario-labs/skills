@@ -402,6 +402,28 @@ cases["seam_lods"] = {n: open_edges(bpy.data.objects[n]) for n in r["tris"]}
 cases["seam_meshes"] = len(bpy.data.meshes)
 hull = bxe.collision(s, "unreal")
 cases["seam_hull"] = dict(hull, open=open_edges(bpy.data.objects[hull["object"]]))
+cases["hull_too_small"] = []
+for n in (3, 0):
+    try:
+        bxe.collision(s, "unreal", max_verts=n)
+        cases["hull_too_small"].append("made")
+    except ValueError as exc:
+        cases["hull_too_small"].append(str(exc))
+
+
+# A double-sided card (a grid and its reversed copy on the same points): the weld must not fuse
+# the two sides, or every LOD loses its back.
+def card(bm):
+    bmesh.ops.create_grid(bm, x_segments=20, y_segments=20, size=1.0)
+    back = bmesh.ops.duplicate(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:])
+    bmesh.ops.reverse_faces(bm, faces=[g for g in back["geom"] if isinstance(g, bmesh.types.BMFace)])
+
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+mesh("Card", card)
+r = bxe.lods("Card", ratios=(0.5,))
+cases["card_sides"] = {n: [sum(1 for p in bpy.data.objects[n].data.polygons if (p.normal.z > 0) == up)
+                           for up in (True, False)] for n in r["tris"]}
 
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)

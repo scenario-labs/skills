@@ -200,6 +200,14 @@ class Presets(unittest.TestCase):
         self.assertEqual(h["verts"], 64)
         self.assertEqual(h["open"], 0)
         self.assertEqual(self.c["collision_unreal"]["verts"], 8)  # a crate's hull is under budget
+        for msg in self.c["hull_too_small"]:
+            self.assertIn("at least 4", msg)
+
+    def test_lods_keep_both_sides_of_a_double_sided_card(self):
+        sides = self.c["card_sides"]
+        self.assertEqual(sides["Card_LOD0"], [400, 400])
+        up, down = sides["Card_LOD1"]
+        self.assertGreater(down, 0.8 * up)
 
     def test_ground_bakes_transforms_and_sets_the_pivot_on_the_floor(self):
         g = self.c["ground"]

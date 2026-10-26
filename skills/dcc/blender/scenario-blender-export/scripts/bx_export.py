@@ -553,28 +553,33 @@ def lods(obj, ratios=(0.5, 0.25)):
     group.name = name
     out = {obj.name: sum(len(p.vertices) - 2 for p in obj.data.polygons)}
     # A glTF import splits vertices at every UV seam, and Decimate opens those splits into
-    # cracks; welded at the gate's distance, the seams stay closed and the UVs stay per corner.
+    # cracks. Only open-border vertices are welded (a millionth of the bounds' diagonal), so the
+    # two sides of a double-sided card stay apart; the UVs stay per corner.
     welded = obj.data.copy()
     bm = bmesh.new()
     bm.from_mesh(welded)
     diag = (Vector(obj.bound_box[6]) - Vector(obj.bound_box[0])).length or 1.0
-    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=diag * 1e-6)
+    bmesh.ops.remove_doubles(bm, verts=[v for v in bm.verts if v.is_boundary], dist=diag * 1e-6)
     bm.to_mesh(welded)
     bm.free()
-    for i, r in enumerate(ratios, 1):
-        tmp = obj.copy()
-        tmp.data = welded
-        col.objects.link(tmp)
-        mod = tmp.modifiers.new("lod", "DECIMATE")
-        mod.ratio = r
-        bpy.context.view_layer.update()
-        me = bpy.data.meshes.new_from_object(tmp.evaluated_get(bpy.context.evaluated_depsgraph_get()))
-        bpy.data.objects.remove(tmp)
-        lod = bpy.data.objects.new(f"{name}_LOD{i}", me)
-        col.objects.link(lod)
-        lod.parent, lod.matrix_world = group, world
-        out[lod.name] = sum(len(p.vertices) - 2 for p in me.polygons)
-    bpy.data.meshes.remove(welded)
+    try:
+        for i, r in enumerate(ratios, 1):
+            tmp = obj.copy()
+            tmp.data = welded
+            col.objects.link(tmp)
+            try:
+                mod = tmp.modifiers.new("lod", "DECIMATE")
+                mod.ratio = r
+                bpy.context.view_layer.update()
+                me = bpy.data.meshes.new_from_object(tmp.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+            finally:
+                bpy.data.objects.remove(tmp)
+            lod = bpy.data.objects.new(f"{name}_LOD{i}", me)
+            col.objects.link(lod)
+            lod.parent, lod.matrix_world = group, world
+            out[lod.name] = sum(len(p.vertices) - 2 for p in me.polygons)
+    finally:
+        bpy.data.meshes.remove(welded)
     return {"group": group.name, "tris": out}
 
 
@@ -583,8 +588,11 @@ def collision(obj, engine, shape="convex", max_verts=64):
     Godot -convcolonly (convex, or the bounding box for "box": Godot 4.7 builds one convex
     shape from its 8 corners) or -colonly ("mesh": a trimesh, static bodies only). Unity and
     Roblox set colliders in the editor: None. A convex hull keeps at most `max_verts` of its
-    vertices, spread over the shape (None keeps all): this toolkit's budget, not an engine limit."""
+    vertices, spread over the shape: this toolkit's budget, not an engine limit. None keeps them
+    all, and a dense full hull can come out with open edges."""
     import bmesh
+    if max_verts is not None and max_verts < 4:
+        raise ValueError("max_verts must be at least 4 (a closed hull), or None")
     obj = bpy.data.objects[obj] if isinstance(obj, str) else obj
     names = {("unreal", "convex"): f"UCX_{obj.name}_00", ("unreal", "box"): f"UBX_{obj.name}_00",
              ("godot", "convex"): f"{obj.name}-convcolonly", ("godot", "box"): f"{obj.name}-convcolonly",
@@ -603,7 +611,7 @@ def collision(obj, engine, shape="convex", max_verts=64):
     elif shape == "convex":
         hull = bmesh.ops.convex_hull(bm, input=bm.verts[:])
         bmesh.ops.delete(bm, geom=list(set(hull["geom_interior"]) | set(hull["geom_unused"])), context="VERTS")
-        if max_verts and len(bm.verts) > max_verts:
+        if max_verts is not None and len(bm.verts) > max_verts:
             # A dense mesh hulls into thousands of faces. Keep the hull vertices farthest from
             # those already kept, then hull them again: still convex, inside the full hull.
             pts = [v.co.copy() for v in bm.verts]

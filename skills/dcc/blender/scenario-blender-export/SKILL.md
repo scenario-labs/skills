@@ -118,8 +118,8 @@ trip only. The measurements live in [`references/engines.md`](references/engines
     `Name-colonly` for `mesh` (the mesh as a trimesh, static bodies only).
   - Unity and Roblox: returns None. Colliders are set in the editor.
   - A convex hull keeps at most `max_verts` vertices, spread over the shape. A generated mesh's full
-    hull runs to thousands of faces. 64 is this toolkit's budget, not an engine limit; `None` keeps
-    every vertex.
+    hull runs to thousands of faces. 64 is this toolkit's budget, not an engine limit. `None` keeps
+    every vertex, and a dense full hull can come out with open edges.
 - Decimation can wreck UV seams and silhouettes. Review every LOD with `bx_review` before export.
 
 ## Batch conversion

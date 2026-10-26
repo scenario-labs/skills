@@ -68,9 +68,7 @@ Not imported into Unreal by this skill's tests. From Epic's documentation:
   vertices by its own choice. Measured in Blender 5.2.1 (2026-10-26): a generated 17,500-triangle
   side table hulled to 12,270 faces with open edges at near-duplicate points; capped at 64 vertices,
   124 closed faces within 3 mm of its bounds.
-- Metallic and roughness maps are linear data:
-  [Texture sRGB property](https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/class/Texture?application_version=5.7)
-  "should be unchecked if using alpha channels individually as masks", and the 4.27
+- Metallic and roughness maps are masks: the 4.27
   [mobile textures](https://dev.epicgames.com/documentation/en-us/unreal-engine/textures-for-mobile-platforms?application_version=4.27)
   page says sRGB "should be enabled on all Texture maps except for Normal Maps and Masks". Uncheck
   sRGB on the `extra_maps()` files.
