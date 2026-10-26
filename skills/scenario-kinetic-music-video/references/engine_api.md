@@ -112,7 +112,9 @@ unreadable value stops the render with an error.
 - **Palette**
   - `E.PAL`: replace the values in `core.js` per project (from STYLE.md). Keep the role keys
     `black ink white accent`; the HUD and templates use them.
-  - `E.col(hex, mul)` gives a linear THREE.Color; `mul > 1` makes it glow.
+  - `E.col(hex, mul)` gives a linear THREE.Color, scaled by `mul`.
+  - Bloom keys on luminance, not the brightest channel, so `mul` must lift the color's luminance
+    past the 1.05 threshold: about 1.05 for white, 1.4 for pure cyan, 3.7 for pure magenta.
 - **2D**
   - `E.makeG2D(w, h)` returns `{ctx, tex, clear(), commit()}`.
   - `E.blitG2D(E, g, intensity, blending)` draws the surface fullscreen into the current target.
