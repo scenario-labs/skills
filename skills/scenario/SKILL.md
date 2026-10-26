@@ -47,8 +47,8 @@ Tools come in two kinds:
   pair from the task; if it names none, stop and list the choices.
 - The server fills scope only for read-only tools with one candidate left. Anything else fails, and
   the error names the wrong half.
-- Scope errors are the most common failure. They surface on the first call that drops the pair once
-  a second team or project is in play.
+- Scope errors, the most common failure, surface on the first call that drops the pair once a second
+  team or project is in play.
 
 ## Quick reference
 
@@ -101,8 +101,8 @@ Generating a stylized game prop image:
    - A `recommend` quote assumes defaults; `cost_impact` fields move the real number.
    - Then run. Assets come back inline (`status: success`, nothing to wait for), or a `job_id` for
      `jobs_wait`.
-   - A job's `status` is `in_progress` after a timed-out wait, or with `wait=false` the backend's
-     word at creation (`queued`, `in-progress`, `warming-up`). All mean the same state.
+   - A job reads `in_progress` after a timed-out wait; with `wait=false`, the backend's word at
+     creation (`queued`, `in-progress`, `warming-up`). All mean the same state.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
    - A timeout (`in_progress`) is not an error: re-call with the returned `pending_job_ids` as
@@ -138,14 +138,14 @@ Local inputs go up with `upload_asset`:
 - Inline base64 `data` only under 100KB, and only when no shell can PUT parts. It returns the asset
   directly, with no complete step; a larger file is rejected, naming the cap.
 - Both calls take scope and nothing else: no parts list, no etags.
-- Inline `data` is decoded inside `upload_asset`, so a decode error there (`libpng read error`,
-  `Corrupt JPEG data`, `unable to read pixels`) means the base64 string is broken, not the file.
-  - The agent retypes every character of `data`, and a 57K-character string already broke that way.
-  - With a shell, switch to the `file_size` path, even when the user asked for inline, and say why.
-  - Re-sending the same string repeats the error.
-- On the `file_size` path the server decodes at completion.
-  `Upload upl_… failed: Corrupt JPEG data`, `premature end of data segment`, `bad Huffman code`, or
-  `libpng read error` means it could not.
+- Inline `data` is decoded inside `upload_asset`: a decode error there (`libpng read error`,
+  `Corrupt JPEG data`, `unable to read pixels`) means the base64 string broke, not the file.
+  - The agent retypes every character of `data`; a 57K-character string broke that way.
+  - Re-sending it repeats the error. With a shell, switch to the `file_size` path, even when the
+    user asked for inline, and say why.
+- On the `file_size` path the server decodes at completion: `Upload upl_… failed:` with
+  `Corrupt JPEG data`, `premature end of data segment`, `bad Huffman code`, or `libpng read error`
+  means it could not.
   - Check for a corrupt source, a truncated or re-encoded body, a missing part, or a wrong
     `file_size`.
   - Confirm the local file opens under its declared content type, then start over with a fresh
@@ -162,8 +162,8 @@ Filing is part of delivering, not a tidy-up:
   `asset_ids`.
 - It takes any number of ids (it batches them by 49 itself) and skips an id already filed, listing
   it under `already_present_asset_ids` beside `added_asset_ids`.
-- So re-sending the whole list after a failed batch is safe: the error says how many went in, and
-  the retry adds the rest.
+- So after a failed batch, re-send the whole list: the error says how many went in; the retry adds
+  the rest.
 - Confirm from that reply: `search` `filters={"collection_ids": [...]}` lags on a fresh write.
 - `asset_add_tags` is additive, one `asset_id` per call. A tag the asset already carries returns 400
   `Duplicated tag`: read `tags` via `assets_get_bulk` first and send only the missing ones.
@@ -199,19 +199,17 @@ Uploading and filing alone are not publication.
   - `usage` takes the same `project_id` (or `scope: "team"`).
   - A per-user cap goes to the team admin; a seat-cap error can also block uploads. Never change
     billing or membership yourself.
-- **429 `Too Many Requests. Please, wait N seconds` (`remainingSeconds`)**: Relax mode. The plan's
-  CU are spent, so each job is followed by a wait.
-  - The countdown belongs to the payload you sent: the wait grows with the job's cost, so a heavy
-    job (a high effort tier, a long video) can stay locked while a cheaper one runs sooner. Never
-    re-submit the same payload inside `remainingSeconds`.
-  - A job any team member starts restarts the wait for the whole team, and waits lengthen the more
-    the team generates in Relax mode, so a batch slows down as it goes. A refused attempt is not
-    charged.
-  - Identify Relax mode from this refusal, not `usage`: that tool reports consumption, not remaining
-    CU. If the tools do not document how to check the wait, say it is unknown.
-  - Stop the batch and invite the user to buy CU (a top-up ends Relax mode at once) or upgrade; else
-    offer a cheaper payload (`dry_run` it first), fewer outputs, or a later run (unattended: report
-    and stop, never relaunch).
+- **429 `Too Many Requests. Please, wait N seconds` (`remainingSeconds`)**: Relax mode: the plan's
+  CU are spent, so every job brings a wait.
+  - The wait scales with the payload's cost: a heavy job (high effort tier, long video) can stay
+    locked while a cheaper one runs. Never re-submit the same payload inside `remainingSeconds`.
+  - Any team member's job restarts the team's wait, and waits lengthen as the team keeps generating,
+    so a batch slows down. A refused attempt is free.
+  - Detect Relax mode from this refusal: `usage` reports consumption, not remaining CU. If no tool
+    documents the wait, say it is unknown.
+  - Stop the batch. Offer a CU top-up (it ends Relax mode at once) or an upgrade; else a cheaper
+    payload (`dry_run` it first), fewer outputs, or a later run (unattended: report and stop, never
+    relaunch).
   - Rules and plan caps:
     [Relax Mode](https://help.scenario.com/articles/2332232342-relax-mode-keep-generating-after-your-compute-units-run-out).
 - **Other 429, including an unfamiliar `actionName`**: never infer its behavior from the name.
@@ -242,8 +240,7 @@ Uploading and filing alone are not publication.
   - `proceed`: prefer `specialty.model_id`, else the first `ranked` entry not marked deprecated in
     its `caveats`, `tradeoff`, or `explanation`. The ranking measures performance, not lifecycle.
 - Debugging blind: the `diagnose` MCP prompt returns trace ids, as does `diagnostics_run` with the
-  failing call's scope pair and any `mcpt_` ids seen as `observed_trace_ids`. `usage` answers credit
-  questions.
+  failing call's scope pair and any `mcpt_` ids seen as `observed_trace_ids`.
 - Guessing a file field's name: 400 `Input image is required` (or `referenceImages`, `startImage`,
   `frontImage`, `video`: each model names its own) means the payload lacks the schema's `required`
   field. Copy its name verbatim. A URL there reads as missing: file fields take asset ids only.
