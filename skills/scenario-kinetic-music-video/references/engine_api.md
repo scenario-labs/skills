@@ -116,6 +116,8 @@ unreadable value stops the render with an error.
 - **2D**
   - `E.makeG2D(w, h)` returns `{ctx, tex, clear(), commit()}`.
   - `E.blitG2D(E, g, intensity, blending)` draws the surface fullscreen into the current target.
+    Keep `intensity` at 1 or below for flat type: above it, white type passes the bloom threshold
+    and washes the whole frame gray. Go higher only for a deliberate glow.
 - **Type**
   - `E.drawText(ctx, text, x, y, {font, size, weight, stretch:'125%'|'extra-condensed'…, tracking(em), color, alpha, align, s|sx|sy, rot, skewX, stroke, strokeOnly, glow, italic})`.
   - `E.measure(ctx, text, o)`.
@@ -136,9 +138,12 @@ This is the default compositing mode. Footage is drawn exactly as generated, and
 in layers around it.
 
 - `const v = await E.loadVideo('clip')` loads `assets/video/<clip>/f_#####.jpg` +
-  `meta.json {fps,n,w,h,lumLo,lumHi,warp?,mask?,track?}`. If `meta.mask` is set, the matte sequence
-  `m_#####.png` loads too (`v.mtex`, white = subject). If `meta.track` is set, `track.json` loads
-  too.
+  `meta.json {fps,n,w,h,lumLo,lumHi,ext?,warp?,mask?,track?}`. If `meta.mask` is set, the matte
+  sequence `m_#####.png` loads too (`v.mtex`, white = subject). If `meta.track` is set, `track.json`
+  loads too.
+- A still (a style frame used as a backdrop plate) loads as a one-frame clip:
+  `assets/video/<name>/f_00001.png` plus `meta.json {fps:1, n:1, w, h, ext:'png'}`. Animate
+  `drawPlate`'s `zoom`, `x` and `y` so it never reads as a frozen frame.
 - In `prepare()`: `await v.frame(localT)`. Use `localT = t - SLOT` for slot clips. This updates
   `v.tex`, `v.mtex` and `v.i`. Beat-warp in `meta.warp` is applied automatically. The index clamps
   to the last frame, so **keep localT inside the clip**, because a held last frame reads as a
