@@ -377,6 +377,32 @@ try:
 except ValueError as exc:
     cases["ground_skinned"] = str(exc)
 
+
+# A sphere through GLB, split at its UV seams as every glTF import is: its LODs must stay
+# closed once welded, and its convex hull must keep to the vertex budget and stay closed.
+def open_edges(ob):
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-5)
+    n = sum(1 for e in bm.edges if len(e.link_faces) == 1)
+    bm.free()
+    return n
+
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.mesh.primitive_uv_sphere_add(segments=64, ring_count=32)
+sphere_glb = os.path.join(TMP, "sphere.glb")
+bpy.ops.export_scene.gltf(filepath=sphere_glb)
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=sphere_glb)
+s = next(o for o in bpy.data.objects if o.type == "MESH")
+cases["seam_split_verts"] = len(s.data.vertices)
+r = bxe.lods(s.name, ratios=(0.5, 0.25))
+cases["seam_lods"] = {n: open_edges(bpy.data.objects[n]) for n in r["tris"]}
+cases["seam_meshes"] = len(bpy.data.meshes)
+hull = bxe.collision(s, "unreal")
+cases["seam_hull"] = dict(hull, open=open_edges(bpy.data.objects[hull["object"]]))
+
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
 print("EXPORT CASES", len(cases))
