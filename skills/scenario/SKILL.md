@@ -135,13 +135,14 @@ Local inputs go up with `upload_asset`:
   presigned part URLs and `instructions`.
 - PUT each part's raw bytes to its URL with no added headers: a checksum header makes the store
   answer 403. Check every PUT returned 200, then `upload_asset_complete` with the `upload_id`.
-- Inline base64 `data` only under 100KB. It returns the asset directly, with no complete step; a
-  larger file is rejected, naming the cap.
+- Inline base64 `data` only under 100KB, and only when no shell can PUT parts. It returns the asset
+  directly, with no complete step; a larger file is rejected, naming the cap.
 - Both calls take scope and nothing else: no parts list, no etags.
 - Inline `data` is decoded inside `upload_asset`, so a decode error there (`libpng read error`,
   `Corrupt JPEG data`, `unable to read pixels`) means the base64 string is broken, not the file.
-  Never write or retype base64 yourself: encode with a tool (`base64 < file | tr -d '\n'`) and pass
-  the output untouched. Re-sending the same string repeats the error.
+  - The agent retypes every character of `data`, and a 57K-character string already broke that way.
+  - With a shell, switch to the `file_size` path, even when the user asked for inline, and say why.
+  - Re-sending the same string repeats the error.
 - On the `file_size` path the server decodes at completion.
   `Upload upl_… failed: Corrupt JPEG data`, `premature end of data segment`, `bad Huffman code`, or
   `libpng read error` means it could not.
