@@ -60,19 +60,18 @@ Before any call, write down:
   gait to copy; one without limbs lets it invent body and motion. Default heroes to colored
   capsules, featured (two or three signature features: goggles, a hood, a held lantern) when
   characters must stay apart or carry the story's object; a rigged gray mannequin only when the
-  blockout must own limb motion. Tell the user the style chosen, what it costs in control, and that
-  the others can be A/B tested on a short window.
-- **Identity colors**: a hero takes the brief's color for them ("yellow raincoat": yellow) as the
-  nearest `B.PALETTE` color, else the next free one: red, blue, green, yellow, purple, cyan. Two
-  heroes in one color, or a color the palette lacks (black, white, gray, brown):
-  [contract](references/contract.md).
+  blockout must own limb motion. Tell the user the style chosen, its cost in control, and that the
+  others can be A/B tested on a short window.
+- **Identity colors**: a hero takes the brief's color ("yellow raincoat": yellow) as the nearest
+  `B.PALETTE` color, else the next free one: red, blue, green, yellow, purple, cyan. Two heroes in
+  one color, or black, white, gray, brown: [contract](references/contract.md).
 - **Deliberate gaps** the video model fills, and **acceptance tests** the brief states: they become
   mandatory audits.
 
 Decide what the brief leaves open and record the decision; do not stop to ask. Spending is the
-exception: Scenario prices are shown and approved by the user (section 3). With a reference image:
-list its masses, block them at plausible scale, match camera height and lens, `render_still` from
-the camera, compare, adjust until the composition matches, and only then animate.
+exception: the user approves every Scenario price (section 6). With a reference image: list its
+masses, block them at plausible scale, match camera height and lens, `render_still` from the camera,
+compare, adjust until the composition matches, and only then animate.
 
 ## 2. Output contract
 
@@ -84,13 +83,13 @@ Four deliverables: the scene, a locked camera timeline, the playblast, the hand-
   (`B.make_scene`) and touch nothing existing; every object must trace to one of your stages.
 - **Scale.** Meters, Z up, ground at z = 0, figure roots at the feet. The model keeps every mass
   where it is at its size, mistakes included. Nothing familiar for scale: add a `REF_` figure.
-- **Color separates masses and names identities.** One saturated color per hero (`B.PALETTE`, see
-  identity colors), the set in one `K.scheme` (category hues by default, identity grays, or material
-  colors), extras in mid grays, one light, a dark world. `B.paint` and the kits set object color and
-  materials; a kit carries several colors, so Solid view needs color type Material
-  (`B.solid_view()`'s default and the playblast's). An all-gray playblast has lost identity. Recolor
-  a kit through its arguments: its materials are shared per color. Grid or checker texture only
-  where the camera travels and depth must read, declared "replace, never inherit" in the sheet.
+- **Color separates masses and names identities.** One saturated color per hero (`B.PALETTE`), the
+  set in one `K.scheme` (category hues by default, identity grays, or material colors), extras in
+  mid grays, one light, a dark world. `B.paint` and the kits set object color and materials; a kit
+  carries several colors, so Solid view needs color type Material (`B.solid_view()`'s default and
+  the playblast's). An all-gray playblast has lost identity. Recolor a kit through its arguments:
+  its materials are shared per color. Grid or checker texture only where the camera travels and
+  depth must read, declared "replace, never inherit" in the sheet.
 - **Timeline.** `B.lock_format` before any geometry: integer fps, frames 1 to fps x seconds,
   1920x1080 (2520x1080 for 21:9) at 100 %. One camera per shot, bound to a `CUT_` marker on its
   first frame (`B.bind_cuts`), hard cuts, zero transition frames.
@@ -129,9 +128,9 @@ to resume a backup. The 120 s limit is plugin-only.
 
 ## 4. Build order
 
-Back up after every stage; a reset is recovered from the last backup
-([contract](references/contract.md)). Every call or stage script starts with
-`B.guard(expected_file=..., scene=...)`: queued calls land in whatever file is open.
+A reset is recovered from the last backup ([contract](references/contract.md)). Every call or stage
+script starts with `B.guard(expected_file=..., scene=...)`: queued calls land in whatever file is
+open.
 
 0. **Probe**, read-only: `scene_summary`, `datablocks_summary` (headless: `bpy.data`). Other work
    present: new scene.
@@ -189,8 +188,8 @@ before running it again. Add camera stills at each shot's start, middle and end.
 
 **Hand-off sheet**, built from the scene ([template](references/handoff.md)):
 
-- color legend tied to reference images, and to the garment when the brief gave the color;
-- `K.cast()` rows and the cut list from `B.cut_list()` with exact times;
+- color legend tied to reference images and garments;
+- `K.cast()` rows, the cut list from `B.cut_list()` with exact times;
 - which entities are blocked and which exist only in words;
 - every artifact with its timecode, each motion state in words ("creeps", "stands still");
 - tie-break clauses ("if text and video disagree about motion, the video wins").
@@ -203,8 +202,8 @@ file choice:
   `force_solid` false (it turns everything one gray), a timeline length the model accepts, then
   `list_models`, `model_schema`, `render_form` (`configure` with `parameters`
   `{"duration": <clip seconds>}`, `prepare`, `inspect`), `estimate_cost`, `generate`, `wait_for_job`
-  and the result application, step by step in [handoff](references/handoff.md) Route 1. The capture
-  is a silent 1280x720 clip.
+  and the result application, steps in [handoff](references/handoff.md) Route 1. The capture is a
+  silent 1280x720 clip.
 - **Hosted Scenario MCP**, for the full-resolution playblast: upload the playblast as the `scenario`
   skill shows, discover a model that takes a reference video, `model_schema_get`, `model_run` with
   `dry_run` first, `jobs_wait`, `asset_download`.
