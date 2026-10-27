@@ -195,8 +195,8 @@ clip tracked before them has pose only.
 - **Before launching agents:**
   - Write STYLE.md and TREATMENT.md (see SKILL.md), and AGENTS_BRIEF.md from
     `references/agent_brief_template.md`. Copy ENGINE_API.md into the project.
-  - Fill in `engine/timeline.js` (`CANVAS`, sections on downbeats, `HUD`, `POST`) and set `PAL` in
-    `core.js`.
+  - Fill in `engine/timeline.js` (`CANVAS`, sections on downbeats with their `energy`, `HUD`,
+    `POST`) and set `PAL` in `core.js`.
   - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label. Render one
     still and a 5 s clip, then run `av_sync_check.py`.
 - **Launch** one `general-purpose` agent per section in a single message (background). Each prompt
@@ -210,6 +210,7 @@ clip tracked before them has pose only.
 ```bash
 node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/v1.mp4 [--variant b] [--to <end >]
 .venv/bin/python tools/av_sync_check.py out/final/v1.mp4 0                                          # expect audio 0.0 ms; visual 0..+1 frame
+.venv/bin/python tools/dynamism_check.py gate out/final/v1.mp4 --json out/final/v1_dynamism.json    # per-section holds, still share, motion; flashes. Exit 1: fix first
 ffmpeg -i out/final/v1.mp4 -vf "freezedetect=n=0.003:d=0.25" -map 0:v -f null - 2>&1 | grep freeze_ # frozen footage or graphics
 ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg                     # then tile 8x5 per 20 s (`tools/sheet.py <out.jpg> <cols> <img>...`) and Read every sheet
 ```
@@ -217,6 +218,9 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
 - **Freezes:** check every hit from `freezedetect`. A held footage frame (a clip that ran out, or a
   slot clip shown before its slot) was rejected as "static". Intentional holds of pure graphics are
   fine if something still moves.
+- **Dynamism:** a failing section lists its holds with song time, bar and beat. Fix it in its scene,
+  re-render the range and gate it with `--only` and `--start` ([dynamism.md](dynamism.md) §7). Gate
+  each variant's render too, with its `--variant`.
 - Check each section boundary at −1/0/+1 frames.
 - **Portrait safe band:** for each 20 s window,
   `node tools/still.mjs --range <a>:<a+20>:1 --scale 0.5 --safe --dir out/safe/<a> --sheet safe --cols 5`,
@@ -283,6 +287,7 @@ cost. Footage is not.
 - **Render and verify each canvas:**
   `node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/vN_16x9.mp4`, then
   the same with `--canvas portrait --out out/final/vN_9x16.mp4` (swap them when portrait is the
-  primary). Run §7's checks on each file, plus the safe-band sheets on the portrait one
-  (`still.mjs --canvas portrait --safe` when the primary is landscape).
+  primary). Run §7's checks on each file, the dynamism gate included (windowed plates move less of
+  the frame), plus the safe-band sheets on the portrait one (`still.mjs --canvas portrait --safe`
+  when the primary is landscape).
 - **Deliver** one set per canvas, suffixed by ratio as in §8.

@@ -97,6 +97,9 @@ what to avoid>". Treat this as your showreel.
   and read the printed fps.
 - **Freeze check:**
   `ffmpeg -i out/<id>/preview.mp4 -vf "freezedetect=n=0.003:d=0.25" -map 0:v -f null - 2>&1 | grep freeze_`.
+- **Dynamism check:**
+  `.venv/bin/python tools/dynamism_check.py gate out/<id>/preview.mp4 --only <id> --start <a>`: your
+  section against its energy's targets and the flash limit (exit 0).
 - A process boot takes about 10 s, so batch many times into one still call. Other agents render at
   the same time, so stay at scale 0.5 except for final checks.
 
@@ -109,7 +112,7 @@ what to avoid>". Treat this as your showreel.
 3. **Onset check:** stills at `w.s + 0.03` for every hero word (legible and at its peak) and at
    `w.s − 0.10` (not fully in yet).
 4. **Preview mp4** at 30 fps with audio. Confirm the cuts land on beat frames, and run the freeze
-   check.
+   and dynamism checks.
 5. **Iterate at least 3 times on the look:**
    - Would a top motion designer repost this?
    - Is there one focal point?
@@ -126,4 +129,4 @@ what to avoid>". Treat this as your showreel.
 - What you built, moment by moment (time → visual → layer), and which footage you used.
 - Measured 1080p fps.
 - Paths to your 4 best full-res stills (`--scale 1`).
-- Engine issues, lyric-timing doubts and freeze-check results.
+- Engine issues, lyric-timing doubts, and freeze- and dynamism-check results.
