@@ -126,6 +126,26 @@ describe("info.mjs verdict", () => {
     expect(verdict(null).lines).toContain("the page set no film and no reason");
   });
 
+  it("keeps the page errors when the page also warned", () => {
+    const v = verdict(
+      null,
+      [{ level: "warning", msg: "fps is 30" }],
+      ["PAGE Target crashed", "TIMEOUT waitForFunction"],
+    );
+    expect(v).toEqual({
+      code: 1,
+      lines: [
+        "the film did not load:",
+        "warning: fps is 30",
+        "PAGE Target crashed",
+        "TIMEOUT waitForFunction",
+      ],
+    });
+    expect(
+      verdict(null, [{ level: "warning", msg: "fps is 30" }]).lines,
+    ).toContain("the page set no film and no reason");
+  });
+
   it("passes a film with warnings, and prints them", () => {
     const v = verdict(film, [{ level: "warning", msg: "fps is 30" }]);
     expect(v).toEqual({ code: 0, lines: ["warning: fps is 30"] });

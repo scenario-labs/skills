@@ -9,7 +9,8 @@ export function verdict(film, problems = [], errs = []) {
   const errors = problems.filter((p) => p.level === "error");
   const lines = problems.map((p) => `${p.level}: ${p.msg}`);
   if (!film || errors.length) {
-    if (!problems.length)
+    // warnings never explain a failure: without an error, the page errors are the reason
+    if (!errors.length)
       lines.push(
         ...(errs.length
           ? errs.slice(0, 5)
