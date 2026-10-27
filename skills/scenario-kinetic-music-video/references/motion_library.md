@@ -263,9 +263,10 @@ Settle time is about 4/(z·√k) s.
 - **Cut discipline:** section changes on `downbeats`, word cuts on `vocal_onsets`, color flips and
   punches on `kicks`, shakes on `snares`.
 - **Cut density should climb with energy.** A shape that worked: intro and verse a cut every 2 bars
-  → pre-chorus 1 bar, then 1 beat in its last bar → drop 1 bar with beat events inside → build 1
-  beat, then a half-beat → chant a half-beat with 16th flashes. Let the bridge breathe with a long
-  held shot.
+  → pre-chorus 1 bar, then 1 beat in its last bar → drop 1 bar with beat events inside. Then build 1
+  beat, then a half-beat → chant a half-beat with 16th flashes on shapes or bands. Let the bridge
+  breathe with a long held shot. `dynamism_check.py gate` reports cuts per bar per section and warns
+  when they fall as the energy rises.
 - **Showcase moments need time.** A brand or logo reveal, a character turn or a sprite moment reads
   at 0.35-0.5× speed with few cuts. Directors rejected fast cut rates on these twice.
 - **A spine:** let the edit carry the song's meaning, with a counter, clock or countdown that
@@ -273,8 +274,11 @@ Settle time is about 4/(z·√k) s.
 
 ## 9. Safety and default bans
 
-- **Photosensitivity:** at most 3 full-frame luminance flips per second. Color-to-color flips of
-  similar luminance can run faster; keep white↔black flips to ≤ 2/s.
+- **Photosensitivity:** at most 3 full-frame flashes per second, end card included. A flash is a
+  pair of opposing changes in relative luminance (WCAG 2.x general flash: 10% or more, the darker
+  state under 0.80), so a flash in and out is one. `dynamism_check.py gate` counts them over the
+  whole video. Full-frame 16ths or 8ths at 120 BPM are 8 or 4 flashes per second. Color-to-color
+  swaps of similar luminance can run faster; keep white↔black to 1 flash per second.
 - **Banned unless the director asks:** any filter, glow, grain, outline, halftone or color change on
   generated footage; lens flares; generic HUD clutter with no meaning; "AI slop" nebula or particle
   soup; glossy Pixar-style 3D graphics; cyberpunk cyan/magenta; real people's faces; logos other

@@ -13,12 +13,15 @@ export const CANVAS = "landscape";
 //            Entries without a variant always render.
 //   canvas:  optional 'portrait' | 'landscape' | 'square' (or a list): the entry renders only on that canvas. Use it when one
 //            section needs a different layout per ratio; entries without it render on every canvas.
+//   energy:  optional 'calm' | 'mid' | 'high' | 'showcase': the targets tools/dynamism_check.py gate holds the section to.
+//            showcase (logo build, end card) skips the still, hold and motion targets, never the flash limit. Untagged
+//            sections take it from the song's loudness. The engine ignores it.
 export const TIMELINE = [
   { id: "intro", file: "_template.js", start: 0.0, end: 16.66, z: 0 }, // replace with your own scene files
-  // { id: 'hook1',  start: 16.66, end: 37.60, z: 0 },
+  // { id: 'hook1',  start: 16.66, end: 37.60, z: 0, energy: 'high' },
   // { id: 'hook1_v', start: 16.66, end: 37.60, z: 0, canvas: 'portrait' }, // with canvas: 'landscape' on hook1
-  // { id: 'outro',   start: 140.0, end: 150.0, z: 0, variant: 'a' },
-  // { id: 'outro_b', start: 140.0, end: 153.0, z: 0, variant: 'b' },     // may run past the song: render.mjs pads silence
+  // { id: 'outro',   start: 140.0, end: 150.0, z: 0, variant: 'a', energy: 'showcase' },
+  // { id: 'outro_b', start: 140.0, end: 153.0, z: 0, variant: 'b', energy: 'showcase' }, // may run past the song: render.mjs pads silence
   { id: "hud", start: 0.0, end: 9999, z: 100 },
 ];
 

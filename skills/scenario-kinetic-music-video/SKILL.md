@@ -98,7 +98,8 @@ Launch two sub-agents with web access while you work on other things:
   a verified fact, its iconic visual form, an insert idea and a short on-screen string.
 - **Craft:** study the user's motion references (download them, contact-sheet them, read the
   frames), plus genre direction techniques. Extract timing numbers, color hex values and
-  implementable JS moves.
+  implementable JS moves. Measure each reference per section into `analysis/targets.json`
+  ([references/dynamism.md](references/dynamism.md) §5).
 
 Save the condensed results as `analysis/research_*.md`. Scene agents read them alongside
 `references/motion_library.md`.
@@ -162,8 +163,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 ### 5. Engine and scene agents
 
 - **Smoke-test first:**
-  - Set `PAL` in `core.js`, and in `engine/timeline.js` set `CANVAS`, the sections on downbeats,
-    `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by default).
+  - Set `PAL` in `core.js`, and in `engine/timeline.js` set `CANVAS`, the sections on downbeats with
+    their `energy`, `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by
+    default).
   - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label.
   - Render one still and a 5 s clip, then confirm audio and flashes line up with `av_sync_check.py`.
 - **Brief the agents.** Fill in `AGENTS_BRIEF.md` from the template, then launch one background
@@ -185,6 +187,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual. Below a correlation of about
     0.15 the visual lag means nothing (type leading by `E.LEAD` reads as up to -3 frames): check
     onset stills instead.
+  - `dynamism_check.py gate` on each delivered render: exit 0. On exit 1, fix and re-gate (`--force`
+    replaces its JSON); unattended, after 3 rounds on a section or at the budget, deliver and report
+    the failing sections.
   - `freezedetect`: no frozen footage.
   - Contact sheets at 0.5 s steps, 20 s per sheet.
   - Every section boundary, frame by frame.
@@ -196,6 +201,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   to the owning agent via SendMessage. Resuming keeps its context. Fix a weak shot by replacing it
   with a new generation in a different look, or with code, never by adding effects. Offer
   alternatives as timeline `variant`s (render with `--variant b`) instead of guessing.
+- **Older projects:** without `tools/dynamism_check.py`, copy it and `rectify_screen.py` from
+  `<skill>/scripts/` into `tools/`, replace `ENGINE_API.md` with `references/engine_api.md`, and add
+  the template's dynamism check to `AGENTS_BRIEF.md`.
 
 ### 7. Deliver
 
@@ -224,7 +232,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - **Section variance.** Mix the looks, 2D and 3D, poster slams and quiet subtitles. Never use the
   same type treatment on two consecutive lines. Cut density climbs with the song's energy, and
   showcase moments (logo, end card) get time.
-- **Photosensitivity.** At most 3 full-frame luminance flips per second.
+- **Photosensitivity.** At most 3 full-frame flashes per second, end card included (WCAG flashes:
+  pairs of opposing luminance changes).
 - **Watch it yourself** before calling it done, then take a second look at the first 3 seconds.
 
 ## Files in this skill
@@ -244,6 +253,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   [track.py](scripts/track.py)
 - Sync checks: [lipsync_check.py](scripts/lipsync_check.py),
   [dance_sync_check.py](scripts/dance_sync_check.py), [av_sync_check.py](scripts/av_sync_check.py)
+- Dynamism: [dynamism_check.py](scripts/dynamism_check.py),
+  [rectify_screen.py](scripts/rectify_screen.py) (flattens a phone-filmed screen),
+  [references/dynamism.md](references/dynamism.md)
 - Rendering and review: [render.mjs](scripts/render.mjs), [still.mjs](scripts/still.mjs),
   [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py)
 - Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html),

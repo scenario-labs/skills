@@ -29,7 +29,7 @@ headless Chrome, and ffmpeg muxes the untouched master audio on top.
 | `plate.js`                            | `drawPlate`, `plateRect`, `plateToScreen`, `plateMaterialFor`: clean footage with optional matte cut-out                                                         |
 | `typekit.js`                          | kinetic type: `popScale`, `wordAlpha`, `drawText`, `fitSize`, `drawStagger`, `drawKaraoke`, `drawSubtitle`, `blitG2D`, `stretchKW`                               |
 | `roto.js`                             | `makeRotoMaterial`: luma-keyed footage planes for clips shot on a black void (stylized redraws only with `{stylized:true}`)                                      |
-| `timeline.js`                         | `CANVAS`, optional `SAFE`, `TIMELINE` (scene ids, [start,end), z, variant, canvas), `HUD` config, `POST` project defaults                                        |
+| `timeline.js`                         | `CANVAS`, optional `SAFE`, `TIMELINE` (scene ids, [start,end), z, variant, canvas, energy), `HUD` config, `POST` project defaults                                |
 | `scenes/hud.js`                       | global HUD layer (z=100): corners, title + mark, section code, bar/beat, counters (the spine), progress, subtitle track                                          |
 | `data/audio.json`, `data/lyrics.json` | written by `audio_analysis.py` / `lyrics_align.py`                                                                                                               |
 
@@ -235,8 +235,9 @@ every lyric readable.
 
 ## Timeline, variants and project config
 
-- `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?, canvas?}`. One file per section,
-  with hard cuts at boundaries on downbeats.
+- `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?, canvas?, energy?}`. One file per
+  section, with hard cuts at boundaries on downbeats. `energy` (`calm`, `mid`, `high`, `showcase`)
+  sets the targets `tools/dynamism_check.py gate` holds the section to; the engine ignores it.
 - **Per-canvas entries:** `canvas:'portrait'` (or a list of orientations) renders the entry only on
   that canvas, `--only` included; tags are case-insensitive, an unknown one stops the render with an
   error, and so does an `--only` that leaves nothing to render. Use it for a section that needs its
