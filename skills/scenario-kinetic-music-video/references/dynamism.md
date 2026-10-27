@@ -123,8 +123,9 @@ Defaults, authoring-time starting points that no full production has calibrated 
   about a third of a portrait frame, so the same motion changes less of it.
 - A 30 fps half-scale preview reads like its master, but a flash shorter than 1/30 s exists only in
   the 60 fps master.
-- On exit 1, fix the section and re-gate. Unattended, at the budget or the iteration cap, deliver
-  and list the failing sections in the report.
+- On exit 1, fix the section and re-gate, with `--force` to replace the JSON. Unattended, stop after
+  3 fix-and-re-gate rounds on a section, or when the next fix would pass the budget. Deliver and
+  list the failing sections in the report.
 
 ## 5. Measuring a reference
 

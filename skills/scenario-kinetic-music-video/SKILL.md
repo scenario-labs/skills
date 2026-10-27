@@ -188,8 +188,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual. Below a correlation of about
     0.15 the visual lag means nothing (type leading by `E.LEAD` reads as up to -3 frames): check
     onset stills instead.
-  - `dynamism_check.py gate` on each delivered render: exit 0. On exit 1, fix and re-gate;
-    unattended, at the budget or iteration cap, deliver and report the failing sections.
+  - `dynamism_check.py gate` on each delivered render: exit 0. On exit 1, fix and re-gate (`--force`
+    replaces its JSON); unattended, after 3 rounds on a section or at the budget, deliver and report
+    the failing sections.
   - `freezedetect`: no frozen footage.
   - Contact sheets at 0.5 s steps, 20 s per sheet.
   - Every section boundary, frame by frame.
@@ -201,6 +202,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   to the owning agent via SendMessage. Resuming keeps its context. Fix a weak shot by replacing it
   with a new generation in a different look, or with code, never by adding effects. Offer
   alternatives as timeline `variant`s (render with `--variant b`) instead of guessing.
+- **Older projects:** without `tools/dynamism_check.py`, copy it and `rectify_screen.py` from
+  `<skill>/scripts/` into `tools/`, replace `ENGINE_API.md` with `references/engine_api.md`, and add
+  the template's dynamism check to `AGENTS_BRIEF.md`.
 
 ### 7. Deliver
 

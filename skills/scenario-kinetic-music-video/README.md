@@ -117,8 +117,9 @@ Known limits:
   relative imports falls back to a file URL, which needs a Node that detects ES modules in the
   project's typeless `package.json` (20.19+ or 22.7+).
 - `scaffold.sh` copies the scripts into `tools/` on every run, but its `cp -n` keeps an existing
-  project's `ENGINE_API.md` and `AGENTS_BRIEF.md`: a revision of an older project copies those by
-  hand.
+  project's `ENGINE_API.md` and `AGENTS_BRIEF.md`, and rerunning it reinstalls the environment. So
+  SKILL.md step 6 tells a revision of an older project what to copy by hand: the brief is filled in
+  per project, so only its dynamism check is added.
 
 ## What the record does not cover
 
