@@ -19,7 +19,7 @@ return to script to verify it (contract check, audit, capture).
 | Timeline and preview                        | Niagara Editor Timeline panel; Preview viewport; 5.7 Niagara Editor Preview Actor for tuning without PIE                                                                                                  |                                                                      |
 | Tags for browsing                           | select assets, Ctrl + T or right-click > Manage Tags (User Asset Tags, 5.7); migrate old tags: right-click a Niagara Asset Tag Definition asset, or `fx.Niagara.MigrateInternalTagsToUserAssetTags` (5.8) | `asset_tags` Python property deprecated                              |
 
-## Exposing a User parameter (the one GUI request the agent makes)
+## Exposing a User parameter (GUI route; with the Niagara toolsets use `mcp-niagara.md` R4 instead)
 
 When `contract_verdict` reports a missing control, request exactly this, per parameter:
 
@@ -84,7 +84,7 @@ Instantaneous; flipbook texture to the sprite material parameter.
 | Gameplay write           | Blueprint: Write To Niagara Data Channel, or Write To Niagara Data Channel (Batch); flags Visible to Blueprint / Niagara CPU / Niagara GPU (frame 00:45:03). PCG has a Write to Niagara Data Channel node (5.5, Experimental)                                                                       |
 | Flipbook Baker           | Niagara Editor toolbar > Baker > Open Baker Tab: Camera, Timeline (Start Seconds, Duration Seconds, Frames Per Second 30), Texture (Frames Per Dimension 8 x 8, Texture Size), Source Binding None, Bake; Clear before a new variation                                                              |
 | Physics field Blueprints | Content Browser > Settings > Show Engine Content > Engine/Content/EditorResources/FieldNodes (FS_AnchorField_Generic, FS_SleepDisable_Generic, FS_MasterField; Niagara examples FS_RadialField, FS_UniformVectorField)                                                                              |
-| Heterogeneous Volumes    | Project Settings > Engine > Rendering > Heterogeneous Volumes; 5.8 cvar `r.HeterogeneousVolumes.Allow`                                                                                                                                                                                              |
+| Heterogeneous Volumes    | Project Settings > Engine > Rendering > Heterogeneous Volumes; cvar `r.HeterogeneousVolumes.Allowed` (name checked on 5.8.3 with SearchCVars)                                                                                                                                                       |
 
 ## Chaos destruction
 

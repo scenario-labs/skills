@@ -4,10 +4,10 @@ and agent review pass after an import. Latent job (needs editor ticks and render
     ue_run.run_python(uproject, "<skills>/scenario-unreal-pipeline-automation/scripts/ue_contact_sheet_job.py",
                       args={"meshes": [...], "out_dir": "/abs/shots", "level": "/Game/Dev/L_Lookdev"},
                       mode="latent", timeout=3600)
-NOT YET RUN IN UNREAL. Screenshot call order of preference: the lead's ue_review.screenshot
+[not yet run] on 5.8.3. Screenshot call order of preference: the lead's ue_review.screenshot
 (if present), unreal.AutomationLibrary.take_high_res_screenshot plus waiting on the task
-(automation doc, Screenshot Support) [verify outside a test], else the HighResShot console
-command [verify]. Then, on the parent side: ue_review.review_images(paths, sheet=...) runs
+(automation doc, Screenshot Support) [not yet run: outside a test], else the HighResShot console
+command [not yet run]. Then, on the parent side: ue_review.review_images(paths, sheet=...) runs
 image_checks on every frame (an agent once approved an all-white frame, lDf_y-YPELo
 [00:17:29]) and tiles a PNG sheet; P.contact_sheet_html adds a captioned HTML page for a person.
 
@@ -15,7 +15,7 @@ args: meshes (content paths), out_dir (abs, no spaces), level (lookdev level fro
 scenario-unreal-lighting-rendering; None = current level), width 1280, height 720, fov 40, settle 0.5 s.
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24)
 
 import json
 import os

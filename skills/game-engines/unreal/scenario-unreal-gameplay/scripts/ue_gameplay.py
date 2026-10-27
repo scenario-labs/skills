@@ -18,8 +18,12 @@ Two layers in one file.
    Gameplay Effects, ability children, StateTree assets, Widget Blueprint trees, data tables,
    a PIE scenario runner that injects input with Input.+key / Input.-key and samples the
    world every tick, and a gameplay asset audit.
-   STATUS: NOT YET RUN IN UNREAL (engine not installed on 2026-09-24). Names marked [verify]
-   are tried defensively; a failed attempt is reported, never silently skipped.
+   STATUS: run on UE 5.8.3 (macOS) on 2026-10-21: the probe, Blueprint children and defaults,
+   Enhanced Input assets, tags, GE assets (tags and modifiers finish through Epic MCP
+   ObjectTools: the report lists the calls), StateTree from a template and its parameters,
+   widget trees, data tables from CSV, AI facts, the audit, and pie_scenario driven by
+   start_on_tick in a headless editor. The C++ scaffold compiled (live_cpp_build.py). Names
+   still marked [verify] were not checked; a failed attempt is reported, never skipped.
 
 Shared toolkit (<skills>/scenario-unreal-expert/scripts, lead agent): ue_run.run_python / result /
 args for headless and latent jobs, ue_review.screenshot / image_checks for captures,
@@ -43,7 +47,7 @@ if _HERE not in sys.path:
 
 import ue_gameplay_cpp as cpp_templates  # noqa: E402
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21), in-editor layer run on 5.8.3
 
 # =============================================================================================
 # 1. OFFLINE: where data lives
@@ -483,7 +487,7 @@ def ini_set(path, section, key, value, array=False):
     return write_text(path, ini_set_text(text, section, key, value, array=array))
 
 
-TAG_SECTION = "/Script/GameplayTags.GameplayTagsSettings"  # [verify] by one GUI edit
+TAG_SECTION = "/Script/GameplayTags.GameplayTagsSettings"  # run on 5.8.3 (GameplayTagsToolset.AddTag wrote it)
 
 
 def gameplay_tag_line(tag, comment=""):
@@ -539,7 +543,7 @@ REQUIRED_PLUGINS = {
 
 def asset_tag_cvar(path_or_text):
     """(name, value) of the GE asset-tag cvar under [ConsoleVariables] (any key starting with
-    AbilitySystem.Fix, exact name [verify] by the probe), or None."""
+    AbilitySystem.Fix.GameplayEffects.ReturnAssetTagsViaGetOwnedGameplayTags on 5.8.3), or None."""
     text = path_or_text
     if os.path.isfile(str(path_or_text)):
         with open(path_or_text, "r", encoding="utf-8", errors="replace") as f:
@@ -589,7 +593,7 @@ def config_verdict(project_dir, needs=("gas", "statetree", "tests"), tags=()):
             out.append("warn: DefaultEngine.ini [ConsoleVariables] has no AbilitySystem.Fix... "
                        "cvar set to 0: GE tag queries then read granted (target) tags, not asset "
                        "tags; Epic and Fortnite set it to 0 (Shao 8bi0rnXnRj4 [00:21:43]). Take "
-                       "the exact name from the probe (P0) [verify]")
+                       "AbilitySystem.Fix.GameplayEffects.ReturnAssetTagsViaGetOwnedGameplayTags (5.8.3)")
         elif fix[1] != "0":
             out.append("warn: %s=%s: set it to 0 so tag queries read GE asset tags (Shao "
                        "[00:22:17])" % fix)
@@ -683,7 +687,7 @@ def input_verdict(plan):
         if not a["name"].startswith("IA_"):
             out.append("warn: input action %s should start with IA_ (Epic naming)" % a["name"])
     if plan.get("pmi") or plan.get("player_mappable_input_config"):
-        out.append("error: UPlayerMappableInputConfig is deprecated (5.4): use Player "
+        out.append("error: UPlayerMappableInputConfig is deprecated (5.3): use Player "
                    "Mappable Key Settings and UEnhancedInputUserSettings")
     expected_wasd = {"W": {"SwizzleAxis:YXZ"}, "S": {"Negate", "SwizzleAxis:YXZ"},
                      "A": {"Negate"}, "D": set()}
@@ -773,7 +777,7 @@ def _context_state_checks(plan):
 
 def cpp_scaffold(module, features=cpp_templates.FEATURES, api=None):
     """{relative path under Source/<module>/: text}. Templates: ue_gameplay_cpp.py.
-    NOT YET COMPILED (see that module's header)."""
+    Compiled on 5.8.3 with Xcode 26.6 (see that module's header)."""
     return cpp_templates.scaffold(module, features=features, api=api)
 
 
@@ -792,9 +796,20 @@ def write_scaffold(files, module_dir, overwrite=False):
     return rep
 
 
-def patch_build_cs(text, modules):
-    """Add modules to PublicDependencyModuleNames in a <Module>.Build.cs text.
-    Returns (new_text, added). Adds an AddRange line if none exists."""
+def patch_build_cs(text, modules, include_root=True):
+    """Add modules to PublicDependencyModuleNames in a <Module>.Build.cs text and, with
+    include_root, `PublicIncludePaths.Add(ModuleDirectory);` so the scaffold's
+    `#include "Gameplay/X.h"` lines resolve (without it UBT 5.8.3 fails every file with
+    "'Gameplay/X.h' file not found", run on 5.8.3). Returns (new_text, added modules)."""
+    text, added = _patch_modules(text, modules)
+    if include_root and "ModuleDirectory" not in text:
+        line = "\n\t\tPublicIncludePaths.Add(ModuleDirectory);"
+        m = re.search(r"PublicDependencyModuleNames\s*\.\s*AddRange\s*\([^;]*\);", text)
+        text = text[:m.end()] + line + text[m.end():]
+    return text, added
+
+
+def _patch_modules(text, modules):
     added = []
     m = re.search(r"PublicDependencyModuleNames\s*\.\s*AddRange\s*\(\s*new\s+string\s*\[\s*\]"
                   r"\s*\{([^}]*)\}", text)
@@ -821,7 +836,7 @@ def patch_build_cs(text, modules):
 
 
 def build_command(engine_root, uproject, target=None, config="Development", platform="Mac"):
-    """UBT editor build command for a code project on macOS [verify flags on 5.8].
+    """UBT editor build command for a code project on macOS (run on 5.8.3 with Xcode 26.6).
     Build with the editor CLOSED when classes or reflected members change."""
     name = os.path.splitext(os.path.basename(uproject))[0]
     script = os.path.join(engine_root, "Engine", "Build", "BatchFiles", platform, "Build.sh")
@@ -931,7 +946,7 @@ LINT_RULES = {
     "ABILITY_NEVER_ENDS": ("error", "ActivateAbility without EndAbility in the class: it can "
                            "never re-trigger", "Shao 8bi0rnXnRj4 [00:13:02]"),
     "NONINSTANCED": ("error", "NonInstanced abilities are deprecated (5.5)", "5.5 release notes"),
-    "DEPRECATED_INPUT": ("error", "deprecated input API (PMI 5.4, Combo trigger 5.8)",
+    "DEPRECATED_INPUT": ("error", "deprecated input API (PMI 5.3, Combo trigger 5.8)",
                          "5.4 and 5.8 release notes"),
     "SYNC_SAVE": ("warn", "SaveGameToSlot is synchronous: AsyncSaveGameToSlot during play",
                   "framework doc (Asynchronous Saving)"),
@@ -2212,7 +2227,7 @@ def rewrite_gate(totals, candidates, hot_share=0.8):
     return out
 
 # =============================================================================================
-# 9. IN-EDITOR layer (import unreal). NOT YET RUN IN UNREAL.
+# 9. IN-EDITOR layer (import unreal). Run on UE 5.8.3 (module STATUS); [verify] names were not checked.
 # =============================================================================================
 
 
@@ -2234,32 +2249,41 @@ PROBE_CLASSES = [
     "InputTriggerPressed", "InputTriggerHold", "InputActionValueType", "InputAxisSwizzle",
     "Key", "BlueprintFactory", "BlueprintEditorLibrary", "BlueprintGraphEditor",
     "SubobjectDataSubsystem", "GameplayEffect", "GameplayAbility", "GameplayEffectDurationType",
-    "TargetTagsGameplayEffectComponent", "AssetTagsGameplayEffectComponent",
     "GameplayEffectModifierMagnitude", "ScalableFloat", "GameplayModifierInfo",
-    "AbilitySystemBlueprintLibrary", "GameplayTag", "GameplayTagContainer",
-    "BlueprintGameplayTagLibrary", "StateTree", "StateTreeFactory", "StateTreeAIComponentSchema",
+    "AbilitySystemLibrary", "GameplayTag", "GameplayTagContainer",
+    "GameplayTagLibrary", "StateTree", "StateTreeFactory", "StateTreeAIComponentSchema",
     "StateTreeComponentSchema", "StateTreeEditorData", "InstancedStruct", "WidgetBlueprint",
     "WidgetBlueprintFactory", "EditorUtilityLibrary", "DataTableFunctionLibrary",
     "JsonObjectGraphFunctionLibrary", "AutomationLibrary", "AutomationScheduler",
-    "LevelEditorPlaySettings", "WidgetBlueprintLibrary", "ProgressBar", "CanvasPanel",
+    "WidgetLibrary", "ProgressBar", "CanvasPanel",
     "TextBlock", "SizeBox", "Character", "CharacterMovementComponent", "AIController",
     "StateTreeAIComponent", "StateTreeReference", "InstancedPropertyBag", "NavMeshBoundsVolume",
-    "EAutoPossessAI", "AutoPossessAI", "GameplayEffectMagnitudeCalculation",
+    "AutoPossessAI", "GameplayEffectMagnitudeCalculation",
 ]
+# Python renames (C++ ScriptName) seen on 5.8.3: UAbilitySystemBlueprintLibrary -> AbilitySystemLibrary,
+# UBlueprintGameplayTagLibrary -> GameplayTagLibrary, UWidgetBlueprintLibrary -> WidgetLibrary,
+# UKismetSystemLibrary -> SystemLibrary. Classes below exist in C++ but are not exposed to Python
+# (no unreal.X attribute); unreal.load_class finds them and unreal.new_object instantiates them, but
+# their properties are only writable through Epic's MCP ObjectTools.set_properties (run on 5.8.3).
+SCRIPT_ONLY_CLASSES = {
+    "TargetTagsGameplayEffectComponent": "/Script/GameplayAbilities.TargetTagsGameplayEffectComponent",
+    "AssetTagsGameplayEffectComponent": "/Script/GameplayAbilities.AssetTagsGameplayEffectComponent",
+    "LevelEditorPlaySettings": "/Script/UnrealEd.LevelEditorPlaySettings",
+}
 PROBE_PROPS = {
     "Character": ["jump_max_count", "jump_max_hold_time", "character_movement"],
     "CharacterMovementComponent": ["jump_z_velocity", "air_control", "max_walk_speed",
                                    "gravity_scale", "braking_deceleration_walking"],
     "GameplayEffect": ["duration_policy", "duration_magnitude", "modifiers", "ge_components",
-                       "g_e_components", "stacking_type"],
+                       "stacking_type"],
     "GameplayAbility": ["cooldown_gameplay_effect_class", "cost_gameplay_effect_class",
                         "instancing_policy", "net_execution_policy", "ability_tags",
-                        "asset_tags", "activation_blocked_tags"],
+                        "activation_blocked_tags"],
     "GameModeBase": ["default_pawn_class", "player_controller_class", "hud_class",
                      "game_state_class", "player_state_class"],
     "Pawn": ["ai_controller_class", "auto_possess_ai"],
     "InputMappingContext": ["mappings", "default_key_mappings"],
-    "StateTreeAIComponent": ["state_tree_ref", "state_tree", "start_logic_automatically"],
+    "StateTreeAIComponent": ["state_tree_ref", "start_logic_automatically"],
     "GameplayModifierInfo": ["attribute", "modifier_op", "modifier_magnitude"],
     "GameplayEffectModifierMagnitude": ["magnitude_calculation_type", "scalable_float_magnitude",
                                         "set_by_caller_magnitude"],
@@ -2275,6 +2299,10 @@ def probe():
            "methods": {}}
     for n in PROBE_CLASSES:
         rep["classes"][n] = hasattr(unreal, n)
+    rep["script_only"] = {}
+    for n, path in SCRIPT_ONLY_CLASSES.items():
+        ok, c = _try(unreal.load_class, None, path)
+        rep["script_only"][n] = bool(ok and c is not None)
     for cls, props in PROBE_PROPS.items():
         c = getattr(unreal, cls, None)
         rep["props"][cls] = {}
@@ -2288,7 +2316,7 @@ def probe():
             got, val = _try(cdo.get_editor_property, p)
             rep["props"][cls][p] = ("ok " + type(val).__name__) if got else val
     for cls in ("BlueprintEditorLibrary", "BlueprintGraphEditor", "EditorUtilityLibrary",
-                "LevelEditorSubsystem", "AbilitySystemBlueprintLibrary", "StateTreeEditorData",
+                "LevelEditorSubsystem", "AbilitySystemLibrary", "StateTreeEditorData",
                 "InputMappingContext", "AutomationLibrary"):
         c = getattr(unreal, cls, None)
         rep["methods"][cls] = sorted(m for m in dir(c) if not m.startswith("_")) if c else None
@@ -2312,7 +2340,7 @@ def load_class(path_or_class):
 
 def create_blueprint(folder, name, parent):
     """Blueprint child of a C++ or Blueprint parent. Tries 5.5 CreateBlueprintAssetWithParent
-    on BlueprintEditorLibrary [verify name], then AssetTools + BlueprintFactory."""
+    on BlueprintEditorLibrary (present on 5.8.3), then AssetTools + BlueprintFactory."""
     unreal = _u()
     parent_cls = load_class(parent)
     if parent_cls is None:
@@ -2348,7 +2376,8 @@ def set_defaults(bp_path, props, save=True):
     """Set CDO properties on a Blueprint's generated class. props: {name: value}. Wrap paths:
     {"class": "/Script/M.Cls" or "/Game/BP"} for class slots, {"asset": "/Game/IA_Jump"} for
     object slots, {"soft": "/Game/IMC_Default.IMC_Default"} for soft pointers; plain values are
-    set as given. Returns applied/failed per property plus compile and save flags."""
+    set as given. Returns applied/failed per property plus compile and save flags. Run on 5.8.3
+    (class, object, soft and enum slots on C++ parents compiled from ue_gameplay_cpp)."""
     unreal = _u()
     cls = unreal.EditorAssetLibrary.load_blueprint_class(bp_path)
     cdo = unreal.get_default_object(cls)
@@ -2359,7 +2388,9 @@ def set_defaults(bp_path, props, save=True):
         elif isinstance(v, dict) and "asset" in v:
             v = unreal.load_asset(v["asset"])   # object slots (input actions, montages)
         elif isinstance(v, dict) and "soft" in v:
-            v = unreal.SoftObjectPath(v["soft"])  # soft pointer slots [verify conversion]
+            # TSoftObjectPtr slots take the loaded object; a SoftObjectPath is refused on 5.8.3
+            # ("Failed to convert type 'SoftObjectPath' to property ... (SoftObjectProperty)").
+            v = unreal.load_asset(v["soft"]) or unreal.SoftObjectPath(v["soft"])
         ok, err = _try(cdo.set_editor_property, k, v)
         (rep["applied"].append(k) if ok else rep["failed"].__setitem__(k, err))
     if save:
@@ -2385,7 +2416,8 @@ def set_component_defaults(bp_path, component_prop, props, save=True):
 
 
 def make_key(name):
-    """unreal.Key from an FKey name ('SpaceBar', 'Gamepad_Left2D') [verify constructor]."""
+    """unreal.Key from an FKey name ('SpaceBar', 'Gamepad_Left2D'). unreal.Key(key_name=...) is
+    refused on 5.8.3; Key().import_text(name) works."""
     unreal = _u()
     for attempt in (lambda: unreal.Key(key_name=name),
                     lambda: _key_import(unreal, name)):
@@ -2462,12 +2494,17 @@ def apply_input_plan(plan, folder="/Game/Input"):
             ok, err = _try(imc.map_key, actions[mp["action"]], make_key(mp["key"]))
             if not ok:
                 rep["failed"].append(("map_key", mp["key"], err))
-        prop = "mappings"
-        ok, arr = _try(imc.get_editor_property, prop)
-        if not ok:
-            prop = "default_key_mappings"   # 5.x rename [verify]
-            ok, arr = _try(imc.get_editor_property, prop)
-        if ok and isinstance(arr, (list, unreal.Array)):
+        # 5.8 (run on 5.8.3): map_key fills default_key_mappings.mappings (an
+        # InputMappingContextMappingData struct); the old top-level `mappings` array stays empty,
+        # so writing it back silently drops nothing and changes nothing.
+        holder = None
+        ok, data = _try(imc.get_editor_property, "default_key_mappings")
+        if ok and data is not None:
+            holder = "default_key_mappings"
+            ok, arr = _try(data.get_editor_property, "mappings")
+        else:
+            ok, arr = _try(imc.get_editor_property, "mappings")
+        if ok and isinstance(arr, (list, unreal.Array)) and len(arr) == len(ctx["mappings"]):
             new = []
             for m, mp in zip(list(arr), ctx["mappings"]):
                 ok1, e1 = _try(m.set_editor_property, "modifiers",
@@ -2478,27 +2515,31 @@ def apply_input_plan(plan, folder="/Game/Input"):
                 if not (ok1 and ok2):
                     rep["failed"].append(("instanced", mp["key"], e1 if not ok1 else e2))
                 new.append(m)
-            ok3, e3 = _try(imc.set_editor_property, prop, new)
+            if holder:
+                ok3, e3 = _try(data.set_editor_property, "mappings", new)
+                if ok3:
+                    ok3, e3 = _try(imc.set_editor_property, holder, data)
+            else:
+                ok3, e3 = _try(imc.set_editor_property, "mappings", new)
             if not ok3:
                 rep["failed"].append(("write_back", ctx["name"], e3))
         else:
-            rep["failed"].append(("read_mappings", ctx["name"], arr))
+            rep["failed"].append(("read_mappings", ctx["name"],
+                                  arr if not ok else "%d mappings read, %d planned" % (
+                                      len(arr) if arr is not None else -1, len(ctx["mappings"]))))
         unreal.EditorAssetLibrary.save_loaded_asset(imc)
         rep["contexts"][ctx["name"]] = imc.get_path_name()
     return rep
 
 
 def make_tag(name):
-    """unreal.GameplayTag for a registered tag name [verify: import_text route]."""
+    """unreal.GameplayTag for a registered tag name. import_text is the route that works on 5.8.3
+    (GameplayTagLibrary.make_literal_gameplay_tag takes a tag, not a name). An unregistered name
+    gives an invalid tag: add it first (GameplayTagsToolset.AddTag or the ini) and restart."""
     unreal = _u()
-    lib = getattr(unreal, "BlueprintGameplayTagLibrary", None)
-    for attempt in (
-            lambda: lib.make_literal_gameplay_tag(name) if lib and hasattr(
-                lib, "make_literal_gameplay_tag") else None,
-            lambda: _tag_import(unreal, name)):
-        ok, t = _try(attempt)
-        if ok and t is not None:
-            return t
+    ok, t = _try(_tag_import, unreal, name)
+    if ok and t is not None and unreal.GameplayTagLibrary.is_gameplay_tag_valid(t):
+        return t
     raise RuntimeError("cannot build GameplayTag %s (registered? restart after ini edits)" % name)
 
 
@@ -2514,19 +2555,24 @@ def make_tag_container(names):
     ok, _ = _try(c.import_text, "(GameplayTags=(%s))" % ",".join('(TagName="%s")' % n for n in names))
     if ok:
         return c
-    lib = unreal.BlueprintGameplayTagLibrary
-    return lib.make_gameplay_tag_container_from_array([make_tag(n) for n in names])
+    return unreal.GameplayTagLibrary.make_gameplay_tag_container_from_array([make_tag(n) for n in names])
 
 
 def create_gameplay_effect(folder, name, duration_policy="INSTANT", duration_s=None,
                            granted_tags=(), asset_tags=(), template=None):
-    """Gameplay Effect Blueprint. template: duplicate a hand-made GE of the same shape (the
-    robust path while Python instancing of GE components is [verify]). Otherwise sets the
-    duration on the CDO and adds Target Tags / Asset Tags components as instanced objects.
-    Cooldown GEs MUST grant a tag (5.7 validation). Returns a report with 'needs_gui'."""
+    """Gameplay Effect Blueprint, run on 5.8.3. template: duplicate a hand-made GE of the same
+    shape. Otherwise sets duration_policy and duration_magnitude on the CDO and, for tags, adds
+    TargetTags / AssetTags components to ge_components.
+
+    5.8.3 limit: those component classes are not exposed to Python, so their tag containers
+    cannot be set here. The report's 'object_tools' lists the Epic MCP calls that finish the job
+    (ObjectTools.set_properties on each component), then call finish_gameplay_effect(path).
+    The deprecated CDO field inheritable_owned_tags_container does not convert to a component on
+    a new asset (the upgrade path only runs for assets saved before the 5.3 modular version).
+    Cooldown GEs must grant a tag (AbilitySystem.WarnCooldownEffectWithoutTags, default 1)."""
     unreal = _u()
     path = "%s/%s" % (folder.rstrip("/"), name)
-    rep = {"path": path, "applied": [], "needs_gui": []}
+    rep = {"path": path, "applied": [], "needs_gui": [], "object_tools": []}
     if template:
         if not unreal.EditorAssetLibrary.does_asset_exist(path):
             unreal.EditorAssetLibrary.duplicate_asset(template, path)
@@ -2546,48 +2592,76 @@ def create_gameplay_effect(folder, name, duration_policy="INSTANT", duration_s=N
         ok, err = _try(_dur)
         (rep["applied"].append("duration %.3fs" % duration_s) if ok else
          rep["needs_gui"].append(("duration_magnitude", err)))
-    comps_prop = None
-    for p in ("ge_components", "g_e_components"):
-        if _try(cdo.get_editor_property, p)[0]:
-            comps_prop = p
-            break
-    if (granted_tags or asset_tags) and comps_prop:
+    wanted = []
+    if granted_tags:
+        wanted.append(("TargetTagsGameplayEffectComponent", "InheritableGrantedTagsContainer", granted_tags))
+    if asset_tags:
+        wanted.append(("AssetTagsGameplayEffectComponent", "InheritableAssetTags", asset_tags))
+    if wanted:
         def _comps():
-            comps = list(cdo.get_editor_property(comps_prop))
-            if granted_tags:
-                c = unreal.new_object(unreal.TargetTagsGameplayEffectComponent, cdo)
-                inh = c.get_editor_property("inheritable_granted_tags_container")
-                inh.set_editor_property("added", make_tag_container(granted_tags))
-                c.set_editor_property("inheritable_granted_tags_container", inh)
-                comps.append(c)
-            if asset_tags:
-                c = unreal.new_object(unreal.AssetTagsGameplayEffectComponent, cdo)
-                inh = c.get_editor_property("inheritable_asset_tags")
-                inh.set_editor_property("added", make_tag_container(asset_tags))
-                c.set_editor_property("inheritable_asset_tags", inh)
-                comps.append(c)
-            cdo.set_editor_property(comps_prop, comps)
+            comps = list(cdo.get_editor_property("ge_components"))
+            have = {c.get_class().get_name(): c for c in comps if c is not None}
+            for cls_name, prop, tags in wanted:
+                comp = have.get(cls_name)
+                if comp is None:
+                    comp = unreal.new_object(unreal.load_class(None, SCRIPT_ONLY_CLASSES[cls_name]),
+                                             cdo, cls_name + "_0")
+                    comps.append(comp)
+                rep["object_tools"].append(ge_tag_values(comp.get_path_name(), prop, tags))
+            cdo.set_editor_property("ge_components", comps)
         ok, err = _try(_comps)
-        (rep["applied"].append("components") if ok else rep["needs_gui"].append(("components", err)))
-    elif granted_tags or asset_tags:
-        rep["needs_gui"].append(("components", "no GEComponents property found"))
-    rep.update(compile_and_save(unreal.EditorAssetLibrary.load_asset(path)))
+        (rep["applied"].append("components added, tags pending object_tools") if ok else
+         rep["needs_gui"].append(("components", err)))
+    if not rep["object_tools"]:
+        rep.update(compile_and_save(unreal.EditorAssetLibrary.load_asset(path)))
     return rep
 
 
-def create_state_tree(folder, name, schema="ai"):
-    """StateTree asset with the AI component schema (5.4) or the component schema. States,
-    transitions and bindings stay editor work (no documented Python API)."""
+def ge_tag_values(component_path, prop, tags):
+    """Arguments for Epic MCP editor_toolset.toolsets.object.ObjectTools.set_properties that write
+    the 'added' tags of a GE component (run on 5.8.3 for InheritableGrantedTagsContainer)."""
+    values = {prop: {"added": {"gameplayTags": [{"tagName": t} for t in tags]}}}
+    return {"instance": {"refPath": component_path}, "values": json.dumps(values)}
+
+
+def finish_gameplay_effect(path):
+    """Compile and save a GE after its component tags were set through ObjectTools; returns
+    compile_and_save's report plus the components' class names."""
+    unreal = _u()
+    bp = unreal.EditorAssetLibrary.load_asset(path)
+    rep = compile_and_save(bp)
+    cdo = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(path))
+    rep["components"] = [c.get_class().get_name() for c in cdo.get_editor_property("ge_components") if c]
+    return rep
+
+
+def create_state_tree(folder, name, schema="ai", template=None):
+    """StateTree asset. 5.8.3 limit (run): StateTreeFactory.StateTreeSchemaClass is a plain
+    UPROPERTY, unreachable from Python and refused by ObjectTools.set_properties, and the factory
+    returns None without a schema. Pass template= an existing StateTree of the right schema (the
+    engine's Combat, Shooter, SideScroller and TwinStick template variants ship ST_* assets) to
+    duplicate it; otherwise the report says to create it in the editor. Editing states stays
+    editor work; StateTreeTools (MCP) reads trees."""
     unreal = _u()
     path = "%s/%s" % (folder.rstrip("/"), name)
+    rep = {"path": path, "created": False, "how": None}
     if unreal.EditorAssetLibrary.does_asset_exist(path):
-        return unreal.EditorAssetLibrary.load_asset(path)
+        rep.update(created=True, how="exists")
+        return rep
     fac = unreal.StateTreeFactory()
-    sch = unreal.StateTreeAIComponentSchema if schema == "ai" else unreal.StateTreeComponentSchema
-    _try(fac.set_editor_property, "state_tree_schema_class", sch)   # [verify]
     st = unreal.AssetToolsHelpers.get_asset_tools().create_asset(name, folder, unreal.StateTree, fac)
-    unreal.EditorAssetLibrary.save_loaded_asset(st)
-    return st
+    if st is not None:
+        unreal.EditorAssetLibrary.save_loaded_asset(st)
+        rep.update(created=True, how="factory")
+        return rep
+    if template:
+        dup = unreal.EditorAssetLibrary.duplicate_asset(template, path)
+        if dup is not None:
+            unreal.EditorAssetLibrary.save_loaded_asset(dup)
+            rep.update(created=True, how="duplicated from %s" % template)
+            return rep
+    rep["how"] = "needs_gui: factory has no schema in Python; pass template= or create in the editor"
+    return rep
 
 
 def create_widget_blueprint(folder, name, parent_class):
@@ -2604,7 +2678,7 @@ def create_widget_blueprint(folder, name, parent_class):
 def build_widget_tree(wbp, tree):
     """tree: [(widget_class_name, name, parent_name or None)], root first. Names must match
     the C++ BindWidget members (HealthBar, HealthText). EditorUtilityLibrary.add_source_widget
-    is in the 5.8 Python reference; widget_parent_name for the root [verify: 'None' or '']."""
+    builds the tree (run on 5.8.3, root parent "None")."""
     unreal = _u()
     rep = {"added": [], "failed": []}
     for cls_name, wname, parent in tree:
@@ -2644,22 +2718,18 @@ def game_world():
     return unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
 
 
-def configure_play(num_players=None, net_mode=None, new_window=None):
-    """Level Editor Play Settings CDO [verify property names]."""
-    unreal = _u()
-    s = unreal.get_default_object(unreal.LevelEditorPlaySettings)
-    rep = {}
+def configure_play(num_players=None, net_mode=None):
+    """Play-in-editor multiplayer settings. LevelEditorPlaySettings is not exposed to Python in
+    5.8.3; this returns the Epic MCP ObjectTools.set_properties arguments that worked live (two
+    PIE worlds with net_mode='PIE_ListenServer', num_players=2 in a headless editor). net_mode:
+    PIE_Standalone, PIE_ListenServer or PIE_Client. Reset to 1 / PIE_Standalone afterwards."""
+    values = {}
     if num_players is not None:
-        rep["play_number_of_clients"] = _try(s.set_editor_property, "play_number_of_clients",
-                                             int(num_players))[0]
+        values["PlayNumberOfClients"] = int(num_players)
     if net_mode is not None:
-        rep["play_net_mode"] = _try(s.set_editor_property, "play_net_mode",
-                                    getattr(unreal.PlayNetMode, net_mode))[0]
-    if new_window is not None:
-        rep["new_window"] = _try(s.set_editor_property, "last_executed_play_mode_type",
-                                 getattr(unreal.PlayModeType, "PLAY_MODE_IN_EDITOR_FLOATING"
-                                         if new_window else "PLAY_MODE_IN_VIEWPORT"))[0]
-    return rep
+        values["PlayNetMode"] = str(net_mode)
+    return {"instance": {"refPath": "/Script/UnrealEd.Default__LevelEditorPlaySettings"},
+            "values": json.dumps(values)}
 
 
 def _vec(v):
@@ -2718,6 +2788,33 @@ def as_automation_latent(gen):
         return stop.value
 
 
+def start_on_tick(gen):
+    """Drive a pie_scenario generator inside an editor that is already running (Epic MCP Python
+    toolset or Remote Execution), one step per Slate post-tick. Returns a state dict; poll
+    state['done'], then read state['result'] or state['error']. Run on 5.8.3 in a headless
+    (-nullrhi) editor: a Third Person jump measured an apex of 127.4 cm at JumpZVelocity 500,
+    gravity 980 (theory v^2/2g = 127.6 cm)."""
+    unreal = _u()
+    st = {"done": False, "result": None, "error": None, "ticks": 0, "wake": 0.0}
+
+    def _tick(_dt):
+        if st["done"] or time.time() < st["wake"]:
+            return
+        st["ticks"] += 1
+        try:
+            step = next(gen)
+            if isinstance(step, (int, float)) and step > 0:
+                st["wake"] = time.time() + float(step)
+        except StopIteration as stop:
+            st["result"], st["done"] = stop.value, True
+        except Exception as exc:  # noqa: BLE001
+            st["error"], st["done"] = repr(exc), True
+        if st["done"]:
+            unreal.unregister_slate_post_tick_callback(st["handle"])
+    st["handle"] = unreal.register_slate_post_tick_callback(_tick)
+    return st
+
+
 def pie_scenario(scenario, out_dir=None, settle_s=1.0, timeout_s=30.0):
     """Generator for latent jobs (ue_run mode='latent') or, through as_automation_latent, for
     PythonAutomationTest. Starts PIE, finds the player pawn, runs steps, samples every tick,
@@ -2754,7 +2851,7 @@ def pie_scenario(scenario, out_dir=None, settle_s=1.0, timeout_s=30.0):
         extra["enemy"] = found[0] if found else None
     widget_cls = scenario.get("widget_class")
     if widget_cls:
-        ok, ws = _try(unreal.WidgetBlueprintLibrary.get_all_widgets_of_class, world,
+        ok, ws = _try(unreal.WidgetLibrary.get_all_widgets_of_class, world,
                       load_class(widget_cls), True)
         extra["widget"] = ws[0] if ok and ws else None
     ok, cm = _try(pawn.get_editor_property, "character_movement")
@@ -2838,7 +2935,7 @@ def pie_scenario(scenario, out_dir=None, settle_s=1.0, timeout_s=30.0):
 
 def gameplay_asset_facts(paths):
     """Facts per Blueprint for the audit: parent class, tick settings, ability cooldown class,
-    GE duration policy, widget bindings count [verify property names]."""
+    GE duration policy, widget bindings count (run on 5.8.3 through audit_gameplay)."""
     unreal = _u()
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
     facts = []
@@ -2898,97 +2995,125 @@ def audit_gameplay(paths, always_loaded=(), heavy_markers=("Boss", "Vehicle", "C
             "ok": not any(x.startswith("error") for x in lines)}
 
 
+def blueprint_components(bp_path):
+    """{variable name: component template} for every component of a Blueprint, including those
+    added in the Blueprint (SCS), through SubobjectDataSubsystem (run on 5.8.3). CDO properties
+    only reach C++-declared components; a StateTree component added in the Blueprint is only
+    visible here. Template object paths end in _GEN_VARIABLE (usable with ObjectTools)."""
+    unreal = _u()
+    bp = unreal.EditorAssetLibrary.load_asset(bp_path)
+    sds = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
+    lib = unreal.SubobjectDataBlueprintFunctionLibrary
+    out = {}
+    for h in sds.k2_gather_subobject_data_for_blueprint(bp):
+        d = lib.get_data(h)
+        obj = lib.get_object(d)
+        if obj is None or isinstance(obj, unreal.Actor):
+            continue
+        out[str(lib.get_variable_name(d))] = obj
+    return out
+
+
 def ai_setup_facts(enemy_bp, controller_component_prop="state_tree_component",
                    tree_spec=None):
-    """In-editor facts for ai_setup_verdict [verify property names with the probe]: the enemy
-    CDO's ai_controller_class and auto_possess_ai, the controller CDO's StateTree reference,
-    a NavMeshBoundsVolume in the loaded level."""
+    """In-editor facts for ai_setup_verdict (run on 5.8.3 on the Combat template enemy): the
+    enemy CDO's ai_controller_class and auto_possess_ai, the StateTree its controller runs
+    (C++ component property or a Blueprint-added StateTreeAIComponent), a NavMeshBoundsVolume
+    in the loaded level."""
     unreal = _u()
     cdo = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(enemy_bp))
     facts = {"pawn": enemy_bp, "tree_spec": tree_spec}
     ok, ctrl = _try(cdo.get_editor_property, "ai_controller_class")
     facts["ai_controller_class"] = ctrl.get_path_name() if ok and ctrl else None
-    ok, ap = _try(cdo.get_editor_property, "auto_possess_ai")
-    facts["auto_possess_ai"] = str(ap) if ok else None
+    ok2, ap = _try(cdo.get_editor_property, "auto_possess_ai")
+    facts["auto_possess_ai"] = str(ap) if ok2 else None
     facts["controller_state_tree"] = None
+    facts["state_tree_component"] = None
     if ok and ctrl:
+        comps = []
         ccdo = unreal.get_default_object(ctrl)
         for prop in (controller_component_prop, "state_tree_component", "brain_component"):
             got, comp = _try(ccdo.get_editor_property, prop)
-            if not got or comp is None:
-                continue
-            for tp in ("state_tree_ref", "state_tree"):
-                g2, ref = _try(comp.get_editor_property, tp)
-                if g2 and ref is not None:
-                    g3, st = _try(ref.get_editor_property, "state_tree") if tp == "state_tree_ref" \
-                        else (True, ref)
-                    if g3 and st:
-                        facts["controller_state_tree"] = st.get_path_name()
-                    break
-            break
+            if got and comp is not None:
+                comps.append(comp)
+        ctrl_bp = ctrl.get_path_name().rsplit(".", 1)[0]
+        if ctrl_bp.startswith("/Game/"):
+            got, found = _try(blueprint_components, ctrl_bp)
+            if got:
+                comps += list(found.values())
+        for comp in comps:
+            g2, ref = _try(comp.get_editor_property, "state_tree_ref")
+            if g2 and ref is not None:
+                st = ref.get_editor_property("state_tree")
+                facts["controller_state_tree"] = st.get_path_name() if st else None
+                facts["state_tree_component"] = comp.get_path_name()
+                break
     eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     facts["nav_bounds"] = any(isinstance(a, unreal.NavMeshBoundsVolume)
                               for a in eas.get_all_level_actors())
     return facts
 
 
+def state_tree_parameter_values(state_tree_ref_json, params):
+    """Pure. Input: returnValue of Epic MCP ObjectTools.get_properties(instance=<StateTree
+    component template>, properties=["StateTreeRef"]). Output: 'values' for set_properties with
+    the named parameters changed. Property bags have no Python setters in 5.8.3 (run), so
+    per-enemy tuning of StateTree parameters goes through ObjectTools (Mononen YEmq4kcblj4
+    [00:16:40] for why parameters, not copies of the tree)."""
+    data = json.loads(state_tree_ref_json) if isinstance(state_tree_ref_json, str) else dict(state_tree_ref_json)
+    ref = data.get("StateTreeRef", data)
+    bag = ref.setdefault("parameters", {})
+    missing = [k for k in params if k not in bag]
+    if missing:
+        raise KeyError("parameters not in the tree: %s (have %s)" % (missing, sorted(bag)))
+    bag.update(params)
+    out = {k: v for k, v in ref.items() if k != "propertyOverrides"}
+    return json.dumps({"StateTreeRef": out})
+
+
 def set_state_tree_parameters(controller_bp, params, component_prop="state_tree_component"):
-    """Per-enemy tuning as StateTree PARAMETERS on the component's State Tree Reference
-    (Mononen YEmq4kcblj4 [00:16:40]; BAU digest P4 step 3). Property bags from Python are
-    [verify]: every failure is reported with the GUI path (gui-paths.md, StateTree)."""
-    unreal = _u()
-    cdo = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(controller_bp))
-    rep = {"applied": [], "needs_gui": []}
-    ok, comp = _try(cdo.get_editor_property, component_prop)
-    if not ok or comp is None:
-        return {"applied": [], "needs_gui": [("component", comp)]}
-    ok, ref = _try(comp.get_editor_property, "state_tree_ref")
-    if not ok:
-        return {"applied": [], "needs_gui": [("state_tree_ref", ref)]}
-    ok, bag = _try(ref.get_editor_property, "parameters")
-    for name, value in params.items():
-        done = False
-        if ok and bag is not None:
-            for setter in ("set_value_float", "set_value_double", "set_value"):
-                fn = getattr(bag, setter, None)
-                if fn is None:
-                    continue
-                good, _err = _try(fn, name, value)
-                if good:
-                    done = True
-                    break
-        (rep["applied"].append(name) if done else rep["needs_gui"].append((name, value)))
-    if rep["applied"]:
-        _try(ref.set_editor_property, "parameters", bag)
-        _try(comp.set_editor_property, "state_tree_ref", ref)
-        rep.update(compile_and_save(unreal.EditorAssetLibrary.load_asset(controller_bp)))
-    return rep
+    """Where to send the parameter change: returns the component template path for
+    ObjectTools.get_properties / set_properties (see state_tree_parameter_values), then call
+    compile_and_save on the controller. Run on 5.8.3 on the Combat template controller."""
+    comps = blueprint_components(controller_bp)
+    for name, comp in comps.items():
+        if _try(comp.get_editor_property, "state_tree_ref")[0]:
+            return {"component": name, "instance": {"refPath": comp.get_path_name()},
+                    "params": dict(params),
+                    "next": "ObjectTools get_properties StateTreeRef, state_tree_parameter_values, "
+                            "set_properties, compile_and_save"}
+    return {"component": None, "needs_gui": "no StateTree component on %s" % controller_bp}
 
 
-def make_fixed_magnitude_variant(src_path, dst_path, value):
-    """Duplicate a GE whose modifiers use SetByCaller and switch every modifier to a fixed
-    Scalable Float magnitude (the console isolation twin, ge_plan_verdict). Struct access to
-    FGameplayEffectModifierMagnitude is [verify]; on failure build the twin once in the GUI
-    (gui-paths.md, GAS assets)."""
+def fixed_magnitude_values(modifiers_json, value):
+    """Pure. Input: the returnValue of Epic MCP ObjectTools.get_properties(instance=<GE CDO>,
+    properties=["Modifiers"]). Output: the 'values' string for ObjectTools.set_properties that
+    switches every modifier to a fixed Scalable Float magnitude and keeps everything else
+    (round trip run on 5.8.3: the lowerCamel keys of get_properties are accepted back)."""
+    data = json.loads(modifiers_json) if isinstance(modifiers_json, str) else dict(modifiers_json)
+    mods = data.get("Modifiers", data.get("modifiers", []))
+    for m in mods:
+        mag = m.setdefault("modifierMagnitude", {})
+        mag["magnitudeCalculationType"] = "ScalableFloat"
+        sf = mag.setdefault("scalableFloatMagnitude", {})
+        sf["value"] = float(value)
+    return json.dumps({"Modifiers": mods})
+
+
+def make_fixed_magnitude_variant(src_path, dst_path, value=None):
+    """Duplicate a GE whose modifiers use SetByCaller; the fixed-magnitude twin for console
+    isolation (ge_plan_verdict). 5.8.3 limit (run): modifier magnitudes are EditDefaultsOnly
+    struct fields, and Python refuses them ('cannot be edited on instances'). Finish through
+    Epic MCP: ObjectTools.get_properties(Modifiers) on rep['cdo'], fixed_magnitude_values(...,
+    value), ObjectTools.set_properties, then compile_and_save."""
     unreal = _u()
     rep = {"path": dst_path, "applied": [], "needs_gui": []}
     if not unreal.EditorAssetLibrary.does_asset_exist(dst_path):
         unreal.EditorAssetLibrary.duplicate_asset(src_path, dst_path)
+        rep["applied"].append("duplicated from %s" % src_path)
+    name = dst_path.rstrip("/").split("/")[-1]
+    rep["cdo"] = {"refPath": "%s.Default__%s_C" % (dst_path, name)}
     cdo = unreal.get_default_object(unreal.EditorAssetLibrary.load_blueprint_class(dst_path))
-
-    def _switch():
-        mods = list(cdo.get_editor_property("modifiers"))
-        for m in mods:
-            mag = m.get_editor_property("modifier_magnitude")
-            mag.set_editor_property("magnitude_calculation_type",
-                                    unreal.GameplayEffectMagnitudeCalculation.SCALABLE_FLOAT)
-            mag.set_editor_property("scalable_float_magnitude",
-                                    unreal.ScalableFloat(value=float(value)))
-            m.set_editor_property("modifier_magnitude", mag)
-        cdo.set_editor_property("modifiers", mods)
-        return len(mods)
-    ok, n = _try(_switch)
-    (rep["applied"].append("%s modifiers fixed at %s" % (n, value)) if ok else
-     rep["needs_gui"].append(("modifiers", n)))
-    rep.update(compile_and_save(unreal.EditorAssetLibrary.load_asset(dst_path)))
+    rep["modifiers"] = len(cdo.get_editor_property("modifiers"))
+    rep["next"] = "ObjectTools get_properties Modifiers, fixed_magnitude_values, set_properties, compile_and_save"
     return rep

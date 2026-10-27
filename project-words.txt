@@ -219,6 +219,7 @@ Ayres
 BCON
 BOTW
 BPTC
+BRDF
 BSDF
 Balatro
 Bammes
@@ -384,6 +385,7 @@ Guruz
 Gwizz
 HDRI
 HDRP
+HISM
 HLOD
 HLODs
 HLSL
@@ -657,6 +659,7 @@ Québec
 Qwen
 RAYC
 RETO
+RGBE
 RHIT
 RISO
 RRGGBB
@@ -1086,6 +1089,7 @@ mvdan
 nasojugal
 nasolabial
 nativization
+nativize
 ngons
 nlapinski
 noice
@@ -1110,6 +1114,7 @@ outsourcers
 pano
 pcall
 pdftoppm
+pgrep
 pheomelanin
 pixol
 pixols

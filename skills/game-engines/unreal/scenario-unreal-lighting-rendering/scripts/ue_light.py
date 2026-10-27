@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """ue_light: toolkit of the scenario-unreal-lighting-rendering skill (Unreal Engine 5.8, macOS Apple Silicon).
 
-STATUS: not yet run in Unreal. The pure layer is tested offline with python3 + numpy (Pillow for PNG,
-ffmpeg for EXR) by tests/code/unreal-lighting-rendering/test_ue_light_offline.py. The editor layer ran
-only against a fake `unreal` module (test_editor_layer_fake.py): that proves the Python logic, not the
-engine names. Every engine class, property, enum and console name here is [verify] until
-job_00_probe_lighting.py has run in the installed editor and its probe JSON has been read.
+STATUS (v0.2, 2026-10-21): run on 5.8.3. probe() ran in an offscreen 5.8.3 editor: every class, enum
+and property it lists exists (one PPV field name was wrong and is fixed). Every cvar and command name in
+the tables was checked against the 5.8.3 console help dump (EditorAppToolset.SearchCVars and the
+`help` command's Saved/ConsoleHelp.html); renamed ones are fixed and listed in DEPRECATED_CVARS. The
+exposure constants (SUN_TRANSMITTANCE_583, EXPOSURE_FACTS_583) were measured on 5.8.3 with a grey card
+and the tone mapper off. The pure layer is tested offline (test_ue_light_offline.py); the editor layer
+also against a fake `unreal` module. Frame analysis (load_image and everything under "frames") needs
+numpy, which the editor's embedded Python does not ship on 5.8.3: run it on the host python3, on the PNG
+or EXR the editor wrote.
 
 Use in the editor (Editor Python through Epic's MCP server, Remote Control Python exec, or a headless
 `ue_run.run_python` job): put this folder on sys.path, then `import ue_light as L`.
@@ -45,7 +49,7 @@ notes/lighting, notes/rendering, notes/post-process; `[added]` marks this toolki
 """
 from __future__ import annotations
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21)
 
 import colorsys
 import json
@@ -139,12 +143,15 @@ def ev100_from_camera(aperture, shutter_s, iso):
 
 
 def exposure_scale(ev100, comp=0.0):
-    """Exposure = 1 / 2^(EV100 + Exposure Compensation) (exposure doc)."""
-    return 1.0 / (2.0 ** (ev100 + comp))
+    """Exposure = 2^Exposure Compensation / 2^EV100: a positive compensation brightens (run on 5.8.3:
+    Manual without the physical camera renders at EV100 = -compensation, and the default compensation
+    of 1.0 brightens an un-overridden frame by one stop). v0.1 had the sign of comp reversed."""
+    return 1.0 / (2.0 ** (ev100 - comp))
 
 
 def pixel_from_luminance(luminance_cdm2, ev100, comp=0.0):
-    """Pixel value before the tonemapper: B = Exposure * L (exposure doc)."""
+    """Pixel value before the tonemapper: B = Exposure * L (exposure doc; run on 5.8.3 with the tone
+    mapper off: measured B / (L / 2^EV100) = 0.985)."""
     return luminance_cdm2 * exposure_scale(ev100, comp)
 
 
@@ -161,6 +168,239 @@ def ev100_for_luminance(luminance_cdm2, mid=MID_GREY):
 def ev100_for_illuminance(lux, albedo=MID_GREY, mid=MID_GREY):
     """EV100 that puts a diffuse surface of `albedo` lit by `lux` on mid grey (L = albedo*E/pi) [added]."""
     return ev100_for_luminance(albedo * lux / math.pi, mid)
+
+
+# Measured on 5.8.3 (2026-10-21): a DirectionalLight over a 0.18 grey floor, SkyAtmosphere at its
+# defaults, tone mapper off (ShowFlag.Tonemapper 0), manual exposure, sky light off. Ground lux divided
+# by (sun lux * sin(elevation)) = the atmosphere's transmittance on the sun. The same fraction held for a
+# 1,000 lux and a 120,000 lux sun. The sky adds light on top; that part was not measured reliably.
+SUN_TRANSMITTANCE_583 = {90.0: 0.848, 45.0: 0.801, 15.0: 0.597, 5.0: 0.248, 2.0: 0.108}
+SUN_GROUND_RGB_583 = {  # normalised colour of the light reaching the ground, white sun, no temperature
+    90.0: (0.38, 0.35, 0.30), 5.0: (0.24, 0.10, 0.026), 2.0: (0.18, 0.046, 0.005)}
+EXPOSURE_FACTS_583 = {
+    "pixel": "linear pixel before the tone mapper = L / 2^EV100 times 0.985 to 0.99 (tone mapper off, or the PreTonemapHDRColor dump); in the dump EV100 is the frame's, compensation included (measured with the physical camera off)",
+    "pretonemap_dump": "r.BufferVisualizationDumpFrames 1 + DumpFramesAsHDR 1 writes <shot>_PreTonemapHDRColor.exr beside a take_high_res_screenshot: emissive 1.0 at EV100 2 read 0.248; the same floor metered 4.96 lux at EV100 0 and at 3",
+    "default_sun_on_ground": "the default 10 lux sun at elevation 35 gave 4.96 lux on a 0.18 floor (sun plus sky): metered, PreTonemapHDRColor",
+    "cached_lighting_range": "r.EyeAdaptation.CachedLightingPreExposure 4 (default) covers about EV100 -8 to 12; 8 covers about -4 to 16 (5.8.3 console help): a physical noon sun (EV100 about 14) sits outside the default",
+    "emissive": "an unlit emissive of 1.0 reads 1 cd/m2",
+    "manual_no_physical_camera": "EV100 = -Exposure Compensation (bias -14 means EV100 14)",
+    "manual_physical_camera": "EV100 from ISO, shutter, aperture; the compensation is added on top, so keep it 0",
+    "auto_min_equals_max": "Auto with Min = Max = X EV100 and compensation 0 equals manual EV100 X (extended range project)",
+    "default_compensation": "r.DefaultFeature.AutoExposure.Bias is 1.0: an un-overridden compensation adds 1 stop",
+    "extended_range": "r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange depends on how the project was made (0 in the 5.8.3 test project): read it first; at 0, Min/Max Brightness are luminance, not EV100",
+    "adaptation": "Speed Up 3, Speed Down 1 EV/s by default: a frame taken seconds after a big light change shows the old exposure; set both speeds to 50 or use Manual before measuring",
+    "hdr_capture": "take_high_res_screenshot(capture_hdr=True) writes the frame after the tone mapper; it is scene-linear only with ShowFlag.Tonemapper 0; prefer the PreTonemapHDRColor dump",
+    "default_sun": "a spawned DirectionalLight is 10 lux, Stationary, Use Temperature off (6500 K stored)",
+    "empty_map": "a map with meshes and no light renders black; ue_review.image_checks flags it all_black",
+}
+
+
+def sun_transmittance(elevation_deg):
+    """Atmosphere transmittance on the sun at this elevation, interpolated in log space between the
+    5.8.3 measurements (SUN_TRANSMITTANCE_583). Below 2 degrees it extrapolates: meter instead."""
+    pts = sorted(SUN_TRANSMITTANCE_583.items())
+    e = max(min(float(elevation_deg), 90.0), 0.5)
+    for (e0, t0), (e1, t1) in zip(pts, pts[1:]):
+        if e <= e1:
+            f = (e - e0) / (e1 - e0)
+            return math.exp(math.log(t0) + f * (math.log(t1) - math.log(t0)))
+    return pts[-1][1]
+
+
+def ground_lux_from_sun(sun_lux, elevation_deg):
+    """Direct sun illuminance on flat ground under the default SkyAtmosphere (5.8.3 measurements):
+    sun_lux * sin(elevation) * transmittance. 120,000 lux gives about 101,700 at zenith, 68,000 at 45
+    degrees, 18,500 at 15, 2,600 at 5 and 450 at 2 (each run on 5.8.3)."""
+    el = float(elevation_deg)
+    return float(sun_lux) * math.sin(math.radians(max(el, 0.0))) * sun_transmittance(el)
+
+
+def ev100_for_sun(sun_lux, elevation_deg, albedo=MID_GREY, sky_stops=0.0):
+    """EV100 that puts an `albedo` surface in direct sun on mid grey, from the measured transmittance.
+    Pitch -35 in Unreal is elevation 35. sky_stops: add the sky's share once measured (a frame read,
+    not a guess). Examples, run on 5.8.3: 120,000 lux at 45 degrees -> 14.4; at 5 degrees -> 9.7."""
+    e = ground_lux_from_sun(sun_lux, elevation_deg)
+    return ev100_for_illuminance(e, albedo) + float(sky_stops)
+
+
+def exposure_settings_for_ev100(ev100, mode="manual"):
+    """PostProcessSettings values (Python names) that fix exposure at `ev100`.
+    mode="manual": Manual, physical camera off, compensation = -EV100 (run on 5.8.3).
+    mode="auto_locked": histogram with Min = Max = EV100 and compensation 0; valid only when
+    ExtendDefaultLuminanceRange is on (run on 5.8.3). The MCP JSON form is in references/mcp-lighting.md."""
+    if mode == "manual":
+        return {"auto_exposure_method": "enum:AutoExposureMethod.AEM_MANUAL",
+                "auto_exposure_apply_physical_camera_exposure": False, "auto_exposure_bias": -float(ev100)}
+    if mode == "auto_locked":
+        return {"auto_exposure_method": "enum:AutoExposureMethod.AEM_HISTOGRAM", "auto_exposure_bias": 0.0,
+                "auto_exposure_min_brightness": float(ev100), "auto_exposure_max_brightness": float(ev100),
+                "auto_exposure_apply_physical_camera_exposure": False}
+    raise ValueError("mode must be manual or auto_locked")
+
+
+def exposure_check(sun_lux, elevation_deg, pp, extended_range=True):
+    """Lint an exposure setup against the sun before rendering: returns a list of problems.
+    pp: PostProcessSettings values as set (Python names; missing = not overridden). Catches the
+    combinations that blew out or blacked out frames on 5.8.3: a physical-camera EV plus a large
+    compensation, a manual EV far from the sun's grey-card EV, a compensation table applied to an
+    auto exposure with no Min/Max in an extended-range project."""
+    out = []
+    target = ev100_for_sun(sun_lux, elevation_deg)
+    method = str(pp.get("auto_exposure_method", "AEM_HISTOGRAM")).upper()
+    bias = pp.get("auto_exposure_bias")
+    if "MANUAL" in method:
+        if pp.get("auto_exposure_apply_physical_camera_exposure", True):
+            ev = ev100_from_camera(pp.get("depth_of_field_fstop", 4.0), 1.0 / pp.get("camera_shutter_speed", 60.0),
+                                   pp.get("camera_iso", 100.0)) - (bias if bias is not None else 1.0)
+        else:
+            ev = -(bias if bias is not None else 1.0)
+        if abs(ev - target) > 1.5:
+            out.append("manual EV100 %.1f vs %.1f for the grey card in this sun: %s by %.1f stops" % (
+                ev, target, "overexposed" if ev < target else "underexposed", abs(ev - target)))
+        if pp.get("auto_exposure_apply_physical_camera_exposure", True) and bias not in (None, 0, 0.0) and abs(bias) > 2:
+            out.append("compensation %.1f on a physical camera: it adds to the camera EV; keep it near 0" % bias)
+    else:
+        lo, hi = pp.get("auto_exposure_min_brightness"), pp.get("auto_exposure_max_brightness")
+        if bias is not None and abs(bias) > 4 and lo is None and hi is None and extended_range:
+            out.append("compensation %.1f with no Min/Max: the frame goes black or white in an extended-range project (run on 5.8.3)" % bias)
+        if lo is not None and hi is not None and extended_range and not (lo - 0.01 <= target <= hi + 0.01):
+            out.append("Min/Max EV100 %.1f..%.1f excludes the sun's grey-card EV100 %.1f" % (lo, hi, target))
+        if pp.get("auto_exposure_speed_up", 3.0) < 10 and pp.get("auto_exposure_speed_down", 1.0) < 10:
+            out.append("note: auto exposure adapts at 3 and 1 EV/s; settle or raise both speeds before a measurement capture")
+    return out
+
+
+def cvars_in_help(help_html_text, names):
+    """Which names exist in the console help dump (Saved/ConsoleHelp.html after the `help` command).
+    Returns {name: bool}. Exact, case-insensitive match; SearchCVars also returns partial matches, so
+    r.MegaLights.Allow 'finds' r.MegaLights.Allowed (run on 5.8.3)."""
+    have = {m.lower() for m in re.findall(r'name:\s*"([^"]+)"', help_html_text)}
+    return {n: n.lower() in have for n in names}
+
+
+def cvar_search_hit(search_json, name):
+    """True only if EditorAppToolset.SearchCVars(name) returned that exact name (it also returns
+    partial matches, and "{}" when nothing matches)."""
+    try:
+        d = json.loads(search_json) if isinstance(search_json, str) else dict(search_json)
+    except ValueError:
+        return False
+    return any(k.lower() == name.lower() for k in d)
+
+
+# Generated equirect skies (references/generated-skies.md). Panorama convention used here: column
+# u = 0.5 + azimuth/360 (azimuth 0 at the image centre, increasing to the right), row v = 0.5 - el/180.
+EQUIRECT_UE_583 = {  # run on 5.8.3 with a synthetic panorama (make_synthetic_sky.py)
+    "import": ".hdr imports as TextureCube; .exr and .png import as Texture2D (long-lat, not a cube)",
+    "orientation": "SkyLight specified cubemap at Source Cubemap Angle 0, a cube sampled by world direction in a "
+                   "material, and HDRIBackdrop all show azimuth 90 (u = 0.75) at +X and the image centre at -Y; "
+                   "no mirror flip (turning right moves right in the panorama)",
+    "cubemap_angle": "Source Cubemap Angle +90 brings azimuth 180 to +X: visible azimuth = yaw + 90 + angle",
+    "hdribackdrop_rotation": "rotating the HDRIBackdrop actor (yaw 90) did not rotate the projected sky: rotate the image",
+    "sun_in_cubemap": "a 1.5 degree sun disc in the cubemap reached the floor's diffuse light only as the sky without "
+                      "the sun (measured floor luminance 0.091 vs 0.096 predicted without the sun, 0.185 with it): "
+                      "light the sun with a DirectionalLight",
+    "sky_sphere_under_lumen": "a 500 m emissive sky sphere added under 3% to the floor under Lumen; the SkyLight is the fill",
+}
+
+
+def cubemap_angle_for_forward(azimuth_at_plus_x=0.0):
+    """SkyLight Source Cubemap Angle that puts this panorama azimuth at world +X (run on 5.8.3:
+    visible azimuth = yaw + 90 + angle). 0 -> 270: the image centre faces +X."""
+    return (float(azimuth_at_plus_x) - 90.0) % 360.0
+
+
+def panorama_yaw_to_world_yaw(azimuth_deg, cubemap_angle=0.0):
+    """World yaw (degrees, Unreal) at which a panorama azimuth appears."""
+    return (float(azimuth_deg) - 90.0 - float(cubemap_angle)) % 360.0
+
+
+def sun_light_rotation(azimuth_deg, elevation_deg, cubemap_angle=0.0):
+    """DirectionalLight rotation (pitch, yaw, roll) that matches a sun seen at this panorama azimuth
+    and elevation: the light points away from the sun, so yaw is the sun's world yaw + 180."""
+    yaw = (panorama_yaw_to_world_yaw(azimuth_deg, cubemap_angle) + 180.0) % 360.0
+    return (-float(elevation_deg), yaw, 0.0)
+
+
+def find_sun_in_equirect(img, min_ratio=20.0):
+    """(azimuth, elevation, peak) of the brightest small region of a linear equirect array, or None
+    when nothing stands min_ratio above the sky median (an overcast or LDR panorama)."""
+    _need_numpy()
+    a = np.asarray(img, dtype=np.float64)
+    y = a[..., :3] @ np.array([0.2126, 0.7152, 0.0722]) if a.ndim == 3 else a
+    h, w = y.shape
+    i = int(np.argmax(y))
+    r, c = divmod(i, w)
+    med = float(np.median(y[: h // 2]))
+    if y[r, c] < min_ratio * max(med, 1e-9):
+        return None
+    return {"azimuth": ((c + 0.5) / w - 0.5) * 360.0, "elevation": (0.5 - (r + 0.5) / h) * 180.0, "peak": float(y[r, c])}
+
+
+def rotate_equirect(img, yaw_deg):
+    """Shift a panorama so content moves `yaw_deg` to the right (column roll). Use it for
+    HDRIBackdrop, which ignores its actor rotation (run on 5.8.3)."""
+    _need_numpy()
+    a = np.asarray(img)
+    return np.roll(a, int(round(a.shape[1] * float(yaw_deg) / 360.0)), axis=1)
+
+
+def equirect_to_linear(img_display, scale=1.0):
+    """An 8-bit sRGB panorama (0..1 floats) to linear radiance times `scale`. A generated LDR sky has
+    no absolute scale: choose `scale` with sky_scale_for_ev100."""
+    _need_numpy()
+    c = np.clip(np.asarray(img_display, dtype=np.float64), 0.0, 1.0)
+    lin = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    return lin * float(scale)
+
+
+def write_radiance_hdr(path, img):
+    """Flat (not run-length) Radiance RGBE writer: Unreal 5.8.3 imports it as a TextureCube."""
+    _need_numpy()
+    a = np.asarray(img, dtype=np.float64)[..., :3]
+    h, w, _ = a.shape
+    m = a.max(axis=2)
+    e = np.ceil(np.log2(np.maximum(m, 1e-32)))
+    s = np.where(m > 1e-32, 256.0 / np.exp2(e), 0.0)
+    rgbe = np.zeros((h, w, 4), np.uint8)
+    rgbe[..., :3] = np.clip(a * s[..., None], 0, 255).astype(np.uint8)
+    rgbe[..., 3] = np.where(m > 1e-32, e + 128, 0).astype(np.uint8)
+    with open(path, "wb") as f:
+        f.write(b"#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y %d +X %d\n" % (h, w))
+        f.write(rgbe.tobytes())
+    return path
+
+
+def equirect_seam_error(img, cols=1):
+    """Mean absolute difference between the left and right edge columns of a linear equirect, divided by
+    the mean radiance of those columns. Near 0 means the panorama wraps; generated panoramas often do not
+    (a visible vertical line where azimuth 180 lands: +Y at Source Cubemap Angle 0 on 5.8.3) [added]."""
+    _need_numpy()
+    a = np.asarray(img, dtype=np.float64)[..., :3]
+    left, right = a[:, :cols].mean(axis=1), a[:, -cols:].mean(axis=1)
+    m = max(float((np.abs(left) + np.abs(right)).mean() / 2.0), 1e-9)
+    return float(np.abs(left - right).mean() / m)
+
+
+def sky_mean_radiance(img):
+    """Mean luminance of the upper half of a linear equirect, solid-angle weighted."""
+    _need_numpy()
+    a = np.asarray(img, dtype=np.float64)
+    y = a[..., :3] @ np.array([0.2126, 0.7152, 0.0722])
+    h = y.shape[0]
+    el = (0.5 - (np.arange(h) + 0.5) / h) * math.pi
+    wgt = np.cos(el)[:, None] * np.ones_like(y)
+    up = (el > 0)[:, None] & np.ones_like(y, dtype=bool)
+    return float((y * wgt)[up].sum() / wgt[up].sum())
+
+
+def sky_scale_for_ev100(ev100, sky_mean, stops_above_grey=1.5):
+    """Multiplier for a generated sky (SkyLight Intensity and the backdrop's intensity, the same
+    number for both) so its mean luminance sits `stops_above_grey` over mid grey at this EV100.
+    A clear day sky reads about 1 to 2 stops over a grey card in sun [added: starting point,
+    read the frame]. Pixel check: B = L / 2^EV100 (run on 5.8.3)."""
+    target = MID_GREY * 2.0 ** (float(ev100) + float(stops_above_grey))
+    return target / max(float(sky_mean), 1e-9)
 
 
 def _nearest(value, steps):
@@ -186,8 +426,8 @@ def camera_for_ev100(ev100, shutter_s=1.0 / 48.0, iso=None, aperture=None, snap=
 def emissive_for_stops(ev100, stops=4.0, comp=0.0, mid=MID_GREY):
     """Emissive luminance that reads `stops` above mid grey at this exposure [added]. Set emissive only
     after exposure is calibrated (Gobey nlbJwMoj1Dg [00:02:38]); probe P0b checks that emissive 1.0
-    renders B = 1.0 at manual EV100 0."""
-    return mid * 2.0 ** (ev100 + comp + stops)
+    renders B = 1.0 at manual EV100 0 (run on 5.8.3: emissive 1.0 reads 1 cd/m2)."""
+    return mid * 2.0 ** (ev100 - comp + stops)
 
 
 def rect_candela_from_luminance(luminance_cdm2, width_cm, height_cm, fill=1.0):
@@ -206,7 +446,7 @@ def tight_attenuation_radius(candela, ev100, stops_below_mid=6.0, comp=0.0):
     """Radius (cm) beyond which the light lifts an 18 percent surface less than `stops_below_mid` under
     mid grey at this exposure [added]. Argyriou: the smallest attenuation radius is the strongest
     performance setting (Q1whHlGJB_o [00:26:32]); MegaLights: tight bounds cut noise (doc)."""
-    e_min = math.pi * 2.0 ** (ev100 + comp - stops_below_mid)
+    e_min = math.pi * 2.0 ** (ev100 - comp - stops_below_mid)
     return 100.0 * math.sqrt(max(candela, 0.0) / e_min)
 
 
@@ -295,35 +535,99 @@ THRESHOLDS = {  # all [added] unless noted: calibrate on an approved frame, then
     "lumen_emissive_boost": (5.0, 10.0),  # Campbell BKaAzhMHJZ0 [00:14:09]: visible about 1, Lumen scene 5 to 10
 }
 
-# Console names for representation views. Enable list, disable list. [verify] every name in the probe.
+# Console names for representation views. Enable list, disable list. Every name exists on 5.8.3 (console
+# help dump, 2026-10-21). One view per capture call: a screenshot is latent, so toggling several views
+# in one Python call renders only the last state; always run the disable list before the next view.
+# Run on 5.8.3 through AutomationLibrary.take_high_res_screenshot in an offscreen editor:
+#   - "viewmode <name>" sent with execute_console_command changes nothing in the captured frame; use the
+#     ShowFlag overrides below (0 forces off, 1 forces on, 2 = no override, which is the clean "off").
+#   - changed the frame: LightingOnlyOverride, VisualizeHDR (draws the illuminance and luminance meters
+#     and Average Scene EV100), r.Lumen.Visualize 1, ShowFlag.PathTracing, the VSM cache view.
+#   - no visible change: ShowFlag.VisualizeLumen alone, ShowFlag.LightComplexity alone, and the
+#     MegaLights views in a frame without local lights (VIEW_MODES_UNCONFIRMED_583).
+#   - Base Color comes from r.BufferVisualizationDumpFrames (see buffer_dump_paths), not from a view.
 VIEW_MODES = {
-    "lit": (["viewmode lit"], []),
-    "lighting_only": (["viewmode lightingonly"], ["viewmode lit"]),
-    "hdr": (["ShowFlag.VisualizeHDR 1"], ["ShowFlag.VisualizeHDR 0"]),  # HDR (Eye Adaptation) meter
+    "lit": ([], []),
+    "lighting_only": (["ShowFlag.LightingOnlyOverride 1"], ["ShowFlag.LightingOnlyOverride 2"]),
+    "hdr": (["ShowFlag.VisualizeHDR 1"], ["ShowFlag.VisualizeHDR 2"]),  # HDR (Eye Adaptation) meter
     "hdr_range": (["r.EyeAdaptation.VisualizeDebugType 1"], ["r.EyeAdaptation.VisualizeDebugType 0"]),
-    "local_exposure": (["ShowFlag.VisualizeLocalExposure 1"], ["ShowFlag.VisualizeLocalExposure 0"]),
+    "local_exposure": (["ShowFlag.VisualizeLocalExposure 1"], ["ShowFlag.VisualizeLocalExposure 2"]),
     "lumen_overview": (["r.Lumen.Visualize 1"], ["r.Lumen.Visualize 0"]),
     "lumen_performance": (["r.Lumen.Visualize 2"], ["r.Lumen.Visualize 0"]),  # 5.4 notes
     "lumen_cards": (["r.Lumen.Visualize.CardPlacement 1"], ["r.Lumen.Visualize.CardPlacement 0"]),
-    "mesh_distance_fields": (["ShowFlag.VisualizeMeshDistanceFields 1"], ["ShowFlag.VisualizeMeshDistanceFields 0"]),
+    "mesh_distance_fields": (["ShowFlag.VisualizeMeshDistanceFields 1"], ["ShowFlag.VisualizeMeshDistanceFields 2"]),
     "megalights": (["r.MegaLights.Visualize 1"], ["r.MegaLights.Visualize 0"]),
-    "megalights_raw_rt_shadows": (["ShowFlag.MegaLightsScreenTraces 0"], ["ShowFlag.MegaLightsScreenTraces 1"]),
+    "megalights_raw_rt_shadows": (["ShowFlag.MegaLightsScreenTraces 0"], ["ShowFlag.MegaLightsScreenTraces 2"]),
     "megalights_complexity_dump": (["r.MegaLights.Visualize.LightComplexity.Freeze 1",
                                     "r.MegaLights.Visualize.LightComplexity.Dump"],
                                    ["r.MegaLights.Visualize.LightComplexity.Freeze 0"]),
     "vsm_cache": (["r.Shadow.Virtual.Visualize cache", "ShowFlag.VisualizeVirtualShadowMap 1"],
-                  ["ShowFlag.VisualizeVirtualShadowMap 0"]),
-    "vsm_casters": (["ShowFlag.VisualizeShadowCasters 1"], ["ShowFlag.VisualizeShadowCasters 0"]),
-    "vsm_stats": (["r.ShaderPrintEnable 1", "r.Shadow.Virtual.ShowStats 2"], ["r.Shadow.Virtual.ShowStats 0"]),
-    "sky_atmosphere": (["ShowFlag.VisualizeSkyAtmosphere 1"], ["ShowFlag.VisualizeSkyAtmosphere 0"]),
-    "color_grading": (["ShowFlag.VisualizeColorGrading 1"], ["ShowFlag.VisualizeColorGrading 0"]),  # 5.8
-    "post_stack": (["ShowFlag.VisualizePostProcessStack 1"], ["ShowFlag.VisualizePostProcessStack 0"]),  # 5.8, with r.PostProcessing.Debug.Property <name>
-    "light_complexity": (["viewmode lightcomplexity"], ["viewmode lit"]),
-    "stationary_overlap": (["viewmode stationarylightoverlap"], ["viewmode lit"]),
-    "path_tracing": (["viewmode pathtracing", "r.PathTracing.ProgressDisplay 1"], ["viewmode lit"]),
-    # Buffer Visualization > Base Color, for albedo_check (display-encoded screenshot) [verify both names]
-    "base_color": (["viewmode VisualizeBuffer", "r.BufferVisualizationTarget BaseColor"], ["viewmode lit"]),
+                  ["ShowFlag.VisualizeVirtualShadowMap 2"]),
+    "vsm_casters": (["ShowFlag.VisualizeShadowCasters 1"], ["ShowFlag.VisualizeShadowCasters 2"]),
+    "vsm_stats": (["r.ShaderPrint 1", "r.Shadow.Virtual.Stats.Visible 1"], ["r.Shadow.Virtual.Stats.Visible 0"]),  # 5.8.3 names
+    "sky_atmosphere": (["ShowFlag.VisualizeSkyAtmosphere 1"], ["ShowFlag.VisualizeSkyAtmosphere 2"]),
+    "color_grading": (["ShowFlag.VisualizeColorGrading 1"], ["ShowFlag.VisualizeColorGrading 2"]),  # 5.8
+    "post_stack": (["ShowFlag.VisualizePostProcessStack 1"], ["ShowFlag.VisualizePostProcessStack 2"]),  # 5.8, with r.PostProcessing.Debug.Property <name>
+    "light_complexity": (["ShowFlag.LightComplexity 1"], ["ShowFlag.LightComplexity 2"]),
+    "path_tracing": (["ShowFlag.PathTracing 1", "r.PathTracing.ProgressDisplay 1"],
+                     ["ShowFlag.PathTracing 2", "r.PathTracing.ProgressDisplay 0"]),
+    # G-buffer dumps beside the next screenshot: <name>_BaseColor, _PreTonemapHDRColor, _SceneColor, ...
+    "buffer_dump": (["r.BufferVisualizationDumpFrames 1", "r.BufferVisualizationDumpFramesAsHDR 1"],
+                    ["r.BufferVisualizationDumpFrames 0", "r.BufferVisualizationDumpFramesAsHDR 0"]),
 }
+VIEW_MODES["base_color"] = VIEW_MODES["buffer_dump"]  # v0.1 name; the file is <shot>_BaseColor.exr
+VIEW_MODES_CHANGED_FRAME_583 = {"lighting_only", "hdr", "lumen_overview", "path_tracing", "vsm_cache", "buffer_dump", "base_color"}
+VIEW_MODES_UNCONFIRMED_583 = {"light_complexity", "megalights"}  # no visible change in the 5.8.3 test frame
+BUFFER_DUMP_NAMES_583 = ("BaseColor", "PreTonemapHDRColor", "PostTonemapHDRColor", "SceneColor", "SceneDepth",
+                         "SceneDepthWorldUnits", "WorldNormal", "WorldTangent", "Roughness", "Metallic", "Specular",
+                         "Opacity", "SubsurfaceColor", "LightingModel", "SeparateTranslucencyRGB")
+
+
+def buffer_dump_paths(screenshot_path, hdr=True):
+    """Files that r.BufferVisualizationDumpFrames 1 writes next to a take_high_res_screenshot file
+    (run on 5.8.3): <stem>_<Buffer>.exr with DumpFramesAsHDR 1, else .png. Returns {buffer: path}."""
+    stem = os.path.splitext(screenshot_path)[0]
+    ext = ".exr" if hdr else ".png"
+    return {n: stem + "_" + n + ext for n in BUFFER_DUMP_NAMES_583}
+
+
+# Calibrated on 5.8.3 (2026-10-21): an emissive 1.0 card rendered at manual EV100 2 reads 0.248 in
+# <shot>_PreTonemapHDRColor.exr, and the reading scales by exactly 2^-dEV between EV100 0 and 3. Those
+# EV100 values were set as compensation, physical camera off (camera EV100 0, exposure doc): the buffer
+# carries the compensation, not the tone mapper. A physical camera's EV100 in it was not measured, so
+# meter with exposure_settings_for_ev100(ev100, "manual") and pass that ev100.
+PRETONEMAP_GAIN_583 = 0.99
+
+
+def luminance_from_pretonemap(value, ev100, gain=PRETONEMAP_GAIN_583):
+    """cd/m2 from a PreTonemapHDRColor dump value rendered at a known EV100 (L = B * 2^EV100 / gain).
+    ev100 is the frame's, compensation included: -compensation in Manual without a physical camera."""
+    return float(value) * (2.0 ** ev100) / gain
+
+
+def illuminance_from_pretonemap(value, ev100, albedo=MID_GREY, gain=PRETONEMAP_GAIN_583):
+    """Lux on a diffuse surface of known albedo from its PreTonemapHDRColor value: E = pi * L / albedo."""
+    return math.pi * luminance_from_pretonemap(value, ev100, gain) / albedo
+
+
+def meter_pretonemap(path, ev100, regions, albedo=MID_GREY, gain=PRETONEMAP_GAIN_583):
+    """Median luminance (cd/m2), lux for `albedo`, and the EV100 that would put each region on mid grey,
+    from a <shot>_PreTonemapHDRColor.exr rendered under exposure_settings_for_ev100(ev100, "manual").
+    regions: {name: region spec as in region_mask}. Host side (numpy)."""
+    img, kind = load_image(path)
+    lum = luminance(img)
+    out = {}
+    for name, spec in regions.items():
+        m = region_mask(img.shape, spec) & np.isfinite(lum)
+        if not m.any():
+            out[name] = None
+            continue
+        b = float(np.median(lum[m]))
+        L = luminance_from_pretonemap(b, ev100, gain)
+        out[name] = {"pixel": round(b, 5), "cd_m2": round(L, 4), "lux_if_albedo": round(math.pi * L / albedo, 3),
+                     "ev100_for_grey": round(ev100_for_luminance(L), 2) if L > 0 else None}
+    return out
+
 
 # Cvar presets: few entries, each with its reason. "device_profile" lines go to <Platform>DeviceProfiles.ini.
 CVAR_PRESETS = {
@@ -348,7 +652,7 @@ CVAR_PRESETS = {
     "measure": {
         "device_profile": {},
         "cvars": {"r.RDG.AsyncCompute": ("0", "isolate pass timings; ship with async on (Lumen, VSM and MegaLights docs)"),
-                  "r.DynamicRes.OperationMode": ("0", "dynamic resolution hides the truth (Campbell BKaAzhMHJZ0 [00:38:37]) [verify name]")},
+                  "r.DynamicRes.OperationMode": ("0", "dynamic resolution hides the truth (Campbell BKaAzhMHJZ0 [00:38:37]); exists on 5.8.3, default 0")},
         "commands": ["stat unit", "stat gpu", "ProfileGPU", "stat SceneRendering"],
         "notes": "turn every visualization off first; re-measure with async compute on for the real frame total",
     },
@@ -365,7 +669,7 @@ CVAR_PRESETS = {
 CVAR_FIXES = {  # named problem -> cvars (value None = tune after a test render). Sources in the reason strings.
     "vsm_close_up_resolution": {"r.Shadow.Virtual.ResolutionLodBiasDirectional": ("-1", "-1 doubles resolution (VSM doc, Clipmaps)")},
     "vsm_shallow_dof": {"r.Shadow.Virtual.MaxDOFResolutionBias": (None, "lower shadow resolution out of focus (VSM doc, Depth of Field)")},
-    "megalights_noise_offline": {"r.MegaLights.Reference.NumShadingPass": (None, "reference mode for offline quality (MegaLights doc) [verify range]")},
+    "megalights_noise_offline": {"r.MegaLights.Reference.NumShadingPass": (None, "reference mode for offline quality (MegaLights doc); default 1 on 5.8.3, useful range not tested")},
     "nanite_proxy_in_rt": {"r.RayTracing.Nanite.Mode": ("1", "full-detail BVH, offline only: large cost, hitches (MegaLights doc; path tracer doc)")},
     "sky_cloud_cinematic": {
         "r.VolumetricRenderTarget": ("0", "full-quality cloud tracing (sky doc, Achieving Cinematic Quality)"),
@@ -376,9 +680,9 @@ CVAR_FIXES = {  # named problem -> cvars (value None = tune after a test render)
     "pt_instances_missing": {"r.RayTracing.Geometry.InstancedStaticMeshes.Culling": ("0", "ray tracing culling too aggressive for camera rays (path tracer doc, FAQ)")},
     "pt_show_sky_cubemap": {"r.PathTracing.VisibleLights": ("2", "Sky Light with a specified cubemap visible to camera rays, the HDRIBackdrop replacement; no effect under Reference Atmosphere, which ignores any Sky Light (path tracer doc)")},
     "pt_emissive_double_count_test": {"r.PathTracing.EnableEmissive": ("0", "debug only: A/B for fixtures with emissive plus a real light (path tracer doc)")},
-    "hidden_actor_in_lumen_reflections": {"r.Lumen.ScreenProbeGather.ScreenTraces": ("0", "Affect Indirect While Hidden needs screen traces off (Comly 8o2yaZzfHCA [00:19:38]) [verify name]"),
-                                          "r.Lumen.Reflections.ScreenTraces": ("0", "same [verify name]")},
-    "sun_steals_megalights_samples": {"r.MegaLights.DirectionalLightSampleFraction": (None, "5.7+, cap the sun's share indoors [verify default]")},
+    "hidden_actor_in_lumen_reflections": {"r.Lumen.ScreenProbeGather.ScreenTraces": ("0", "Affect Indirect While Hidden needs screen traces off (Comly 8o2yaZzfHCA [00:19:38]); exists on 5.8.3, default 1"),
+                                          "r.Lumen.Reflections.ScreenTraces": ("0", "same; exists on 5.8.3, default 1")},
+    "sun_steals_megalights_samples": {"r.MegaLights.Directional.LightSampleFraction": (None, "cap the sun's share indoors; default 0.5 on 5.8.3 (the 5.7 name r.MegaLights.DirectionalLightSampleFraction is gone)")},
     "megalights_alpha_masked_shadows": {"r.MegaLights.HardwareRayTracing.EvaluateMaterialMode": ("1", "alpha masks in RT shadows at non-trivial cost; better avoid masked casters (MegaLights doc)")},
     "reflections_budget": {"r.Lumen.Reflections.Allow": ("0", "SSR instead of Lumen reflections, 1 ms on Series S (Lumen doc, Tips); device profile only")},
 }
@@ -390,17 +694,22 @@ DEPRECATED_CVARS = {
     "r.Lumen.HardwareRayTracing.SurfaceCacheAlphaMasking": "removed in 5.8",
     "r.MegaLights.DownsampleFactor": "r.MegaLights.DownsampleMode (5.7)",
     "r.MegaLights.DownsampleCheckerboard": "r.MegaLights.DownsampleMode (5.7)",
-    "r.MegaLights.Volume.Debug": "r.MegaLights.Debug (5.8)",
+    "r.MegaLights.Volume.Debug": "absent on 5.8.3; r.MegaLights.Debug exists",
     "r.Shadow.Virtual.ForceOnlyVirtualShadowMaps": "deprecated, no replacement (unsupported geometry casts no shadow)",
-    "r.MinScreenRadiusForCSMDepth": "r.Shadow.RadiusThreshold (5.5)",
-    "r.UseClusteredDeferredShading": "deprecated (5.7)",
+    "r.MinScreenRadiusForCSMDepth": "r.Shadow.RadiusThreshold (5.5); absent on 5.8.3",
+    "r.UseClusteredDeferredShading": "renamed r.UseClusteredDeferredShading_ToBeRemoved on 5.8.3",
     "r.EyeAdaptation.Focus": "Exposure Metering Mask (removed in 4.25)",
     "r.PathTracing.EnableBackfaceCulling": "removed in 5.8, culling always on: make the material two-sided [cvar name inferred]",
     "r.PathTracing.HeterogeneousVolumes": "removed in 5.4",
     "r.SSGI.Enable": "SSGI deprecated in 5.8: Lumen GI or Lumen Lite [cvar name added]",
     "r.RayTracing.GlobalIllumination": "Ray Tracing GI removed in 5.4 [cvar name added]",
     "r.RayTracing.Reflections": "Ray Tracing Reflections deprecated: Lumen reflections, hit lighting [cvar name added]",
-    "r.TemporalAA.NumSamples": "the 5.8 doc names r.TemporalAASamples [verify which exists]",
+    "r.TemporalAA.NumSamples": "absent on 5.8.3: r.TemporalAASamples (default 8)",
+    "r.MegaLights.Allow": "r.MegaLights.Allowed (5.8.3)",
+    "r.MegaLights.DirectionalLightSampleFraction": "r.MegaLights.Directional.LightSampleFraction (5.8.3, default 0.5)",
+    "r.Shadow.Virtual.ShowStats": "r.Shadow.Virtual.Stats.Visible (5.8.3)",
+    "r.Shadow.Virtual.Stats": "r.Shadow.Virtual.Stats.Visible (5.8.3)",
+    "r.ShaderPrintEnable": "r.ShaderPrint (5.8.3)",
 }
 DEPRECATED_VALUES = {"r.Lumen.TraceMeshSDFs": ("1", "detail tracing deprecated in 5.6, default 0 in 5.7: use global tracing or HWRT")}
 CARGO_CULT_CVARS = {"r.MotionBlurQuality", "r.BloomQuality", "r.ShadowQuality"}  # Faucher's examples of pasted quality cvars [00:03:00]
@@ -483,7 +792,9 @@ def exposure_plan(use="gameplay", conditions=("interior", "blue_hour"), subject=
 
 
 def pp_values_for_exposure(plan):
-    """PostProcessSettings fields for an exposure plan (names [verify]). Enum values are 'enum:Type.NAME'."""
+    """PostProcessSettings fields for an exposure plan (names exist on 5.8.3, probe()). Enum values are 'enum:Type.NAME'.
+    Min/Max Brightness are EV100 only when ExtendDefaultLuminanceRange is on (it depends on how the
+    project was made; off in the 5.8.3 test project); check it first (probe()["cvars"] or SearchCVars)."""
     v = {"auto_exposure_bias": float(plan.get("bias", 0.0))}
     mode = plan["mode"]
     if mode == "histogram":
@@ -510,7 +821,7 @@ def look_values(dark_interior=False, lumen_gi=True):
     """Project-wide PPV look: Local Exposure is always set up with Lumen GI (doc); Film only here, never
     per shot (doc). With a dark interior under a correct exterior: Toe 0.3 and Shadow Contrast 0.6
     (Gobey) before any fill light. Under 5.8's ACES 2.0 SDR path the Film values may act differently
-    [verify by screenshot]."""
+    [not yet run: compare two screenshots]."""
     v = {}
     if lumen_gi:
         v.update(local_exposure_highlight_contrast_scale=0.8, local_exposure_shadow_contrast_scale=0.8,
@@ -567,7 +878,8 @@ def opening_rect_light(opening_min, opening_max, inward="+X", room_depth_cm=800.
     window, facing in, Source Width/Height = the opening, barn doors 88 degrees and 20 cm, cool colour
     for skylight, attenuation about the room depth. Intensity from the measured sky luminance through
     the opening (cd/m2, from a linear render: L = B * 2^EV100) [added]; without it, None (measure first).
-    Rect lights emit along +X; source width along local Y, height along local Z [verify]."""
+    Rect lights emit along +X (run on 5.8.3: forward vector (1, 0, 0) at rotation 0); source width along
+    local Y, height along local Z [not yet run]."""
     n = _AXES[inward]
     size = [opening_max[i] - opening_min[i] for i in range(3)]
     center = [(opening_max[i] + opening_min[i]) / 2.0 for i in range(3)]
@@ -575,7 +887,7 @@ def opening_rect_light(opening_min, opening_max, inward="+X", room_depth_cm=800.
     inner = opening_max[axis] if n[axis] > 0 else opening_min[axis]
     center[axis] = inner + n[axis] * offset_cm
     rot = aim_rotator((0, 0, 0), n)
-    if axis == 2:  # skylight in a ceiling or floor: width along world Y, height along world X [verify]
+    if axis == 2:  # skylight in a ceiling or floor: width along world Y, height along world X [not yet run]
         width, height = size[1], size[0]
     else:
         lateral = 1 if axis == 0 else 0
@@ -631,12 +943,12 @@ def emissive_strategy(use="gameplay", small=True, lumen=True, path_traced_still=
     if s["emissive_light_source"]:
         s["why"].append("small emissive: Emissive Light Source keeps it in the Lumen Scene (Lumen doc)")
     if s["lumen_boost"]:
-        s["why"].append("optional Lumen-only boost %g to %g through a Ray Tracing Quality Switch master from scenario-unreal-materials [verify node and HWRT/SWRT support]; list it in cheat_inventory" % (lo, hi))
+        s["why"].append("optional Lumen-only boost %g to %g through a Ray Tracing Quality Switch master from scenario-unreal-materials (MaterialExpressionRayTracingQualitySwitch exists on 5.8.3; its effect under HWRT and SWRT is not yet run); list it in cheat_inventory" % (lo, hi))
     if path_traced_still:
         s["path_tracer"] = {"boost_visible": False,
                             "double_count_test": "r.PathTracing.EnableEmissive 0 (or PPV Emissive Materials off) as an A/B",
                             "indirect_emissive_off": bool(light_nearby)}
-        s["why"].append("path tracer: the boost does not exist there; with a real light at the fixture, A/B Emissive Materials and turn off Indirect Emissive in Lighting Components")
+        s["why"].append("path tracer: the boost does not exist there; with a real light at the fixture, A/B Emissive Materials (path_tracing_enable_emissive_materials); 5.8.3 has one Emissive lighting component (path_tracing_include_emissive), no separate indirect switch")
     return s
 
 
@@ -644,8 +956,8 @@ def still_only_light_plan(target_labels, kind="rect", channel=1, intensity=None,
     """A cheat light for one still (rim, fill, faked bounce) that must not touch the rest of the level:
     light on lighting channel `channel` only, target meshes on channels 0 and `channel` (Faucher
     1LfiYtKDsac [00:24:02]). Caveats: direct light honours channels and MegaLights supports them in
-    5.8 (deltas file), but Lumen GI bounce probably does not [verify], so Indirect Lighting Intensity 0
-    [added]; whether the path tracer honours channels is not in the notes [verify with an A/B render].
+    5.8 (deltas file), but Lumen GI bounce probably does not [not yet run], so Indirect Lighting Intensity 0
+    [added]; whether the path tracer honours channels is not in the notes [not yet run: A/B render].
     Home: the shot's Level Sequence as a spawnable (scenario-unreal-cinematics), never the gameplay level."""
     ch = [False, False, False]
     ch[channel] = True
@@ -665,7 +977,7 @@ def exterior_rig_plan(condition="blue_hour", moon=False, sun_elevation=None, sun
                       key_camera_forward=None, key_to_light=None):
     """Physically based exterior (Epic sky doc; Faucher night recipe translated to 5.8).
     Sun intensity stays at its zenith value with Atmosphere Sun Light on; the atmosphere does the dusk
-    [verify with the HDR meter]. The moon is a second atmosphere light (index 1), 0.26 lux physical;
+    (run on 5.8.3: ground lux falls to 0.248 of the zenith-normalised value at 5 degrees and the light reddens, see SUN_TRANSMITTANCE_583). The moon is a second atmosphere light (index 1), 0.26 lux physical;
     film and gameplay readability push it brighter (Faucher 1LfiYtKDsac [00:01:37]; Argyriou; Oakley).
     key_camera_forward: the key camera's forward vector; the fog's Scattering Distribution then follows
     its angle to the light (scattering_distribution_for); key_to_light overrides the light direction
@@ -738,8 +1050,7 @@ def still_plan(renderer="path_traced", quality="final", delivery="direct", motio
         if sky_atmosphere_visible:
             why.append("Reference Atmosphere: Sky Atmosphere Transform Mode Planet Top at Component Transform, moved below the scene; any Sky Light is then ignored, so r.PathTracing.VisibleLights does nothing (path tracer doc)")
         if emissive_fixtures:
-            plan["ppv"]["path_tracing_include_indirect_emissive"] = False
-            why.append("emissive fixtures carry a real light: Indirect Emissive off in Lighting Components, the tubes stay visible (path tracer doc); it is global, so every emissive loses its bounce: A/B with r.PathTracing.EnableEmissive 0 first")
+            why.append("emissive fixtures carry a real light: the doc's Indirect Emissive switch does not exist on 5.8.3 (the PPV has path_tracing_include_emissive only, checked by probe()); what that switch hides is not yet run, so A/B with r.PathTracing.EnableEmissive 0 and read both frames before choosing")
         why.append("Max Path Intensity stays default: it is relative to exposure (path tracer doc)")
     elif renderer == "deferred":
         if motion_blur:
@@ -807,6 +1118,7 @@ def capture_plan(cameras, modes=("lit", "hdr", "lumen_overview"), out_dir="Saved
         for m in modes:
             on, off = VIEW_MODES[m]
             steps.append({"camera": cam, "mode": m, "enable": on, "disable": off,
+                          "changed_frame_583": m in VIEW_MODES_CHANGED_FRAME_583 or m == "lit",
                           "file": os.path.join(out_dir, "%s_%s_%s.png" % (tag, cam, m))})
     return steps
 
@@ -982,7 +1294,7 @@ def light_lint(lights, context=None):
                               "Faucher 1LfiYtKDsac [00:25:40] (a shot, not a game); [added] rule", name))
             if L.get("channels") and tuple(L["channels"]) != (True, False, False):
                 out.append(_f("lighting_channels", "info", "custom lighting channels %s" % (L["channels"],),
-                              "direct light honours channels; Lumen GI bounce probably does not [verify]: zero its indirect if the bounce matters",
+                              "direct light honours channels; Lumen GI bounce probably does not [not yet run]: zero its indirect if the bounce matters",
                               "Faucher 1LfiYtKDsac [00:24:02]; deltas file", name))
             if ctx.get("ev100") is not None and L.get("intensity") and units and not units.startswith("unit") and L.get("attenuation_radius"):
                 cd = to_candela(L["intensity"], units, k, L.get("outer_cone_angle") or 44.0)
@@ -1009,7 +1321,7 @@ def light_lint(lights, context=None):
                               "record it as art-directed if above physical", SKY["src"], name, lux))
             if ctx["megalights"] and ctx["megalights_directional"] and L.get("allow_mega_lights", True) and ctx["has_interiors"] and idx == 0:
                 out.append(_f("sun_in_megalights", "warn", "strong directional in MegaLights with interiors: it takes up to half the samples",
-                              "keep the sun on deferred + VSM (r.MegaLights.DirectionalLights 0) or cap r.MegaLights.DirectionalLightSampleFraction",
+                              "keep the sun on deferred + VSM (r.MegaLights.DirectionalLights 0) or cap r.MegaLights.Directional.LightSampleFraction",
                               "MegaLights doc, Directional Lights; SIGGRAPH [00:16:40]", name))
             floor = ctx.get("sun_floor_deg")
             rot = L.get("rotation") or {}
@@ -1205,7 +1517,7 @@ def _norm(v):
 def glass_lint(materials, renderer="path_traced"):
     """Glass materials against GLASS_RECIPE. materials: [{"name", "shading_model", "blend_mode",
     "lighting_mode" (Translucency Lighting Mode), "refraction_method"}], enum names in any case
-    (collect_glass_materials reads them; Python enum names [verify])."""
+    (collect_glass_materials reads them; Python enum names run on 5.8.3: TLM_SURFACE_PER_PIXEL_LIGHTING, RM_INDEX_OF_REFRACTION)."""
     out = []
     for m in materials:
         name = m.get("name", "?")
@@ -1221,7 +1533,7 @@ def glass_lint(materials, renderer="path_traced"):
                               "path tracer doc, Thin Translucency and Basic Glass Material", name))
             if not ("surfaceperpixellighting" in lm or "surfaceforwardshading" in lm):
                 out.append(_f("pt_glass_lighting_mode", "warn", "Lighting Mode %s" % (m.get("lighting_mode") or "unset"),
-                              "Surface ForwardShading (TLM_SurfacePerPixelLighting [verify enum]), Opacity 0 on the refractive part",
+                              "Surface ForwardShading (TLM_SURFACE_PER_PIXEL_LIGHTING on 5.8.3), Opacity 0 on the refractive part",
                               "path tracer doc, Basic Glass Material; Faucher X5zVhc5ahl0 [00:14:36]", name))
         elif "surfaceperpixellighting" in lm or "surfaceforwardshading" in lm:
             out.append(_f("glass_gameplay_cost", "info", "forward-shaded glass in a real-time view", GLASS_RECIPE["gameplay"]["why"],
@@ -1327,7 +1639,7 @@ _INI_KEYS = {
     "r.RayTracing": ("True", "Support Hardware Ray Tracing: MegaLights, path tracer, hit lighting (restart)"),
     "r.Lumen.HardwareRayTracing": ("True", "Use Hardware Ray Tracing when available"),
     "r.PathTracing": ("True", "path tracer shader permutations; off in projects that never path trace"),
-    "r.MegaLights.EnableForProject": ("True", "MegaLights project switch [verify key name]"),
+    "r.MegaLights.EnableForProject": ("True", "MegaLights project switch (key run on 5.8.3)"),
     "r.SkinCache.CompileShaders": ("True", "Support Compute Skin Cache (path tracer prompt)"),
     "r.SupportSkyAtmosphereAffectsHeightFog": ("True", "only when the atmosphere drives the height fog"),
 }
@@ -1463,13 +1775,32 @@ def mrg_lint(plan):
     return out
 
 
+_MS = re.compile(r"(\d+(?:\.\d+)?)\s*ms")
+
+
 def profilegpu_passes(text):
-    """Tolerant parse of a ProfileGPU log dump: [(depth, name, ms)] [verify the 5.8 line format]."""
+    """Parse a ProfileGPU log dump into [(depth, name, inclusive_ms)].
+    Run on 5.8.3: ProfileGPU prints a box table to LogRHI (columns Exclusive | Inclusive | Events, cells
+    split by the heavy vertical bar, the event name indented by depth); the Inclusive time is taken.
+    Older one-line formats ("12.3ms  Name") are still read as a fallback."""
     rows = []
-    rx = re.compile(r"^(?P<pre>.*?)(?P<ms>\d+(?:\.\d+)?)\s*ms\s+(?P<name>[A-Za-z].*?)\s*$")
+    boxed = "\u2503" in text
     for line in text.splitlines():
         body = re.sub(r"^\[[^\]]*\]\[[^\]]*\]", "", line)
         body = re.sub(r"^\s*Log\w+:(?: Display:)? ?", "", body)
+        if boxed and "\u2503" not in body:
+            continue
+        if "\u2503" in body:                                   # box table row
+            cells = body.split("\u2503")
+            if len(cells) >= 4:
+                inc = _MS.findall(cells[2])
+                name_cell = cells[3].rstrip()
+                name = name_cell.strip()
+                if inc and name and not name.startswith("<"):
+                    depth = len(name_cell) - len(name_cell.lstrip(" "))
+                    rows.append((depth, name.strip('"'), float(inc[-1])))
+            continue
+        rx = re.compile(r"^(?P<pre>.*?)(?P<ms>\d+(?:\.\d+)?)\s*ms\s+(?P<name>[A-Za-z].*?)\s*$")
         m = rx.match(body)
         if not m:
             continue
@@ -1490,10 +1821,19 @@ def pass_budget(passes, fps=60, budgets=None):
     rows = passes if isinstance(passes, list) else [(0, k, v) for k, v in passes.items()]
     groups = {}
     for g, keys in _PASS_KEYS.items():
-        hits = [(d, n, ms) for d, n, ms in rows if any(k in n.lower().replace(" ", "") for k in keys)]
-        if hits:
-            dmin = min(d for d, _, _ in hits)
-            groups[g] = sum(ms for d, _, ms in hits if d == dmin)
+        # sum the outermost matching events: a match nested under another match of the same group is skipped
+        # (5.8.3 tables nest LumenScreenProbeGather under LumenScreenProbeGather, and siblings must add up)
+        total, found, stack = 0.0, False, []
+        for d, n, ms in rows:
+            while stack and stack[-1][0] >= d:
+                stack.pop()
+            hit = any(k in n.lower().replace(" ", "") for k in keys)
+            if hit and not any(h for _, h in stack):
+                total += ms
+                found = True
+            stack.append((d, hit))
+        if found:
+            groups[g] = round(total, 3)
     budgets = dict(budgets or {})
     budgets.setdefault("lumen", BUDGETS["lumen_ms_60fps"] if fps >= 60 else BUDGETS["lumen_ms_30fps"])
     out = []
@@ -1510,7 +1850,9 @@ def pass_budget(passes, fps=60, budgets=None):
 
 
 def exposure_warnings(log_text):
-    """Lines of the 5.8 on-screen exposure-range warning echoed in the log [verify exact text]."""
+    """Lines that look like an exposure-range warning in the log. The exact on-screen text is not yet run
+    (no capture in the 5.8.3 runs printed one), so the match stays loose. What is known on 5.8.3 (console help):
+    r.EyeAdaptation.CachedLightingPreExposure 4 (default) covers about EV -8 to 12, and 8 covers about -4 to 16."""
     return [l for l in log_text.splitlines() if re.search(r"exposure", l, re.I) and re.search(r"range|clip", l, re.I)]
 
 
@@ -1519,7 +1861,8 @@ def exposure_warnings(log_text):
 # --------------------------------------------------------------------------------------------------
 def _need_numpy():
     if np is None:
-        raise RuntimeError("numpy is required for frame analysis")
+        raise RuntimeError("numpy is required for frame analysis; the editor's Python has none on 5.8.3: "
+                           "run this on the host python3 against the file the editor wrote")
 
 
 def srgb_to_linear(x):
@@ -1801,15 +2144,18 @@ def frame_report(path, brief=None, reference=None, log_text=None):
     return report
 
 
-def albedo_check(path, region=None, renderer="path_traced"):
-    """Diffuse albedo audit on a Base Color buffer capture (VIEW_MODES["base_color"]): albedo is
-    lighting (Gobey nlbJwMoj1Dg [00:07:30]) and above 0.8 it lengthens path-traced renders and washes
-    out (path tracer doc; Faucher X5zVhc5ahl0 [00:22:24]). The screenshot is treated as display-encoded
-    [verify on the first run with a known 0.5 material]; pure black (sky, background) is excluded.
-    High check on the brightest channel, low check on luminance [added]. Returns stats + findings;
-    stats["albedo_max"] (99th percentile) feeds scene_lint."""
+def albedo_check(path, region=None, renderer="path_traced", encoding="auto"):
+    """Diffuse albedo audit on a Base Color buffer dump (VIEW_MODES["buffer_dump"], file
+    <shot>_BaseColor.exr or .png): albedo is lighting (Gobey nlbJwMoj1Dg [00:07:30]) and above 0.8 it
+    lengthens path-traced renders and washes out (path tracer doc; Faucher X5zVhc5ahl0 [00:22:24]).
+    Run on 5.8.3: a 0.18 base colour reads 0.181 in the EXR dump and 46/255 in the PNG dump, so both
+    hold LINEAR values (encoding "auto" treats a *_BaseColor file as linear; pass "srgb" for a
+    display-encoded screenshot). Pure black (sky, background) is excluded. High check on the brightest
+    channel, low check on luminance [added]. stats["albedo_max"] (99th percentile) feeds scene_lint."""
     img, kind = load_image(path)
-    lin = img if kind == "linear" else srgb_to_linear(img)
+    if encoding == "auto":
+        encoding = "linear" if (kind == "linear" or "_basecolor" in str(path).lower()) else "srgb"
+    lin = img if encoding == "linear" else srgb_to_linear(img)
     m = region_mask(img.shape, region) & np.isfinite(lin).all(axis=-1)
     mx = lin.max(axis=-1)
     m &= mx > 1e-4
@@ -1918,7 +2264,7 @@ def write_report(report, out_dir, frame=None):
     lines = ["| status | id | subject | message | fix | source |", "|---|---|---|---|---|---|"]
     for x in report["findings"]:
         lines.append("| %s | %s | %s | %s | %s | %s |" % (x["status"], x["id"], x.get("subject") or "", x["message"], x.get("fix") or "", x.get("src") or ""))
-    with open(os.path.join(out_dir, "critique.md"), "w") as f:
+    with open(os.path.join(out_dir, "critique.md"), "w", encoding="utf-8") as f:
         f.write("Verdict: %s (code screens, the eye decides)\n\n%s\n" % (report.get("verdict"), "\n".join(lines)))
     if frame and isinstance(frame, str) and np is not None:
         try:
@@ -1941,7 +2287,7 @@ def write_report(report, out_dir, frame=None):
 
 
 # --------------------------------------------------------------------------------------------------
-# Editor layer (needs the `unreal` module). Not yet run in Unreal: names are [verify].
+# Editor layer (needs the `unreal` module). Names checked on 5.8.3 by probe() (2026-10-21).
 # --------------------------------------------------------------------------------------------------
 def _ue():
     import unreal  # noqa: E402  (only inside the editor)
@@ -1965,12 +2311,18 @@ def _rot(r):
     u = _ue()
     if isinstance(r, dict):
         return u.Rotator(pitch=float(r.get("pitch", 0)), yaw=float(r.get("yaw", 0)), roll=float(r.get("roll", 0)))
-    return u.Rotator(pitch=float(r[0]), yaw=float(r[1]), roll=float(r[2]))  # keywords: the positional order is roll, pitch, yaw [verify]
+    return u.Rotator(pitch=float(r[0]), yaw=float(r[1]), roll=float(r[2]))  # keywords: the positional order is roll, pitch, yaw (run on 5.8.3)
 
 
 def _color(c):
     u = _ue()
     return u.LinearColor(float(c[0]), float(c[1]), float(c[2]), 1.0)
+
+
+def _set_light_color(comp, c):
+    """light_color is an FColor: set_editor_property('light_color', LinearColor) raises "Cannot nativize
+    'LinearColor' as 'Color'" (run on 5.8.3). set_light_color takes the linear colour and converts it."""
+    comp.set_light_color(_color(c))
 
 
 def editor_world():
@@ -2121,7 +2473,7 @@ def set_light_physical(comp, intensity=None, units=None, kelvin=None, color=None
         comp.set_editor_property("use_temperature", True)
         comp.set_editor_property("temperature", float(kelvin))
     if color is not None:
-        comp.set_editor_property("light_color", _color(color))
+        _set_light_color(comp, color)
     for k, v in props.items():
         if v is None:
             continue
@@ -2158,7 +2510,7 @@ def _component_for(target, prefer=("LightComponent", "StaticMeshComponent", "Pri
 def set_lighting_channels(target, channels):
     """Lighting channels (0, 1, 2) on a light or a mesh: copy the struct, edit, write back. A light
     affects only meshes sharing one of its channels (Faucher 1LfiYtKDsac [00:24:02]); see
-    still_only_light_plan for the Lumen and path tracer caveats. Field names channel0..2 [verify]."""
+    still_only_light_plan for the Lumen and path tracer caveats. Field names channel0..2 (run on 5.8.3)."""
     comp = _component_for(target)
     lc = comp.get_editor_property("lighting_channels")
     for i, on in enumerate(tuple(channels)[:3]):
@@ -2170,7 +2522,7 @@ def set_lighting_channels(target, channels):
 
 def set_emissive_light_source(target, on=True):
     """Emissive Light Source on a mesh component: small emissive meshes stay in the Lumen Scene instead
-    of being culled and left to screen traces (Lumen doc, troubleshooting). Property name [verify]."""
+    of being culled and left to screen traces (Lumen doc, troubleshooting). Property emissive_light_source on the mesh component (run on 5.8.3)."""
     comp = _component_for(target, ("StaticMeshComponent", "PrimitiveComponent"))
     with _ue().ScopedEditorTransaction("ue_light emissive light source"):
         comp.set_editor_property("emissive_light_source", bool(on))
@@ -2329,7 +2681,7 @@ def _base_material(m):
 def collect_masked_casters(min_count=1):
     """Labels of static mesh actors whose materials use Masked blend mode (grilles, plants, bead
     curtains): MegaLights ray tracing ignores their masks by default (MegaLights doc, Alpha Masking).
-    Material API names [verify]."""
+    Material API names run on 5.8.3 (blend_mode reads BlendMode.BLEND_OPAQUE on a basic material)."""
     u = _ue()
     out = []
     for a in level_actors(u.StaticMeshActor):
@@ -2346,7 +2698,7 @@ def collect_masked_casters(min_count=1):
 
 def collect_glass_materials(paths):
     """Material dicts for glass_lint from asset paths (instances resolve to their base material).
-    Property names blend_mode, shading_model, translucency_lighting_mode, refraction_method [verify]."""
+    Property names blend_mode, shading_model, translucency_lighting_mode, refraction_method (run on 5.8.3)."""
     u = _ue()
     out = []
     for p in paths:
@@ -2370,7 +2722,7 @@ _PP_FIELDS = ["auto_exposure_method", "auto_exposure_bias", "auto_exposure_min_b
               "lumen_front_layer_translucency_reflections", "motion_blur_amount", "path_tracing_max_bounces",
               "path_tracing_samples_per_pixel", "path_tracing_max_path_intensity", "path_tracing_enable_emissive_materials",
               "path_tracing_enable_reference_atmosphere", "path_tracing_enable_denoiser",
-              "path_tracing_include_indirect_emissive"]  # Lighting Components > Indirect Emissive [verify name]
+              "path_tracing_include_emissive"]  # Lighting Components > Emissive; v0.1's ..._indirect_emissive does not exist on 5.8.3
 
 
 def collect_ppvs():
@@ -2457,8 +2809,8 @@ def build_exterior_rig(rig, folder="Lighting/Exterior"):
 
 
 def view_from(camera_label):
-    """Put the level viewport at a bookmark camera (CameraActor or CineCameraActor label) [verify API;
-    5.8 also adds per-viewport camera functions on LevelEditorSubsystem]."""
+    """Put the level viewport at a bookmark camera (CameraActor or CineCameraActor label). set_level_viewport_camera_info ran on 5.8.3 (P11 snippet);
+    5.8 also adds per-viewport camera functions on LevelEditorSubsystem."""
     u = _ue()
     cam = next((a for a in level_actors() if _label(a) == camera_label), None)
     if cam is None:
@@ -2476,7 +2828,7 @@ def set_mi_scalar(mi_path, param, value):
     return mi
 
 
-CALIBRATOR_MESH = "/Engine/EditorMeshes/ColorCalibrator/SM_ColorCalibrator"  # chrome, grey spheres, chart [verify path]
+CALIBRATOR_MESH = "/Engine/EditorMeshes/ColorCalibrator/SM_ColorCalibrator"  # chrome, grey spheres, chart (path run on 5.8.3)
 
 
 def spawn_calibrator(location, label="Probe_Calibrator", hidden_in_game=True):
@@ -2505,7 +2857,8 @@ def queue_mrg_still(sequence_path, map_path, graph_path, variables, job_name="Li
     the shared graph), in PIE, from a transient queue so the user's queued jobs are never touched (same
     choice as ue_review.render_still, which sets only output folder and frame range). Asynchronous:
     the log gets UE_LIGHT_MRG_DONE; wait for it in a later call. Job and variable calls follow the MRG
-    scripting doc (5.7 reference); `executor.execute(queue)` on a transient queue is [verify]."""
+    scripting doc (5.7 reference); MoviePipelineQueue, MovieGraphConfig and MoviePipelinePIEExecutor exist on 5.8.3;
+    `executor.execute(queue)` on a transient queue is not yet run."""
     global _EXECUTOR
     u = _ue()
     if not hasattr(u, "MoviePipelineQueue"):
@@ -2557,7 +2910,7 @@ def log_since(tag, path=None):
     path = path or _log_file()
     if not path:
         return ""
-    with open(path, errors="ignore") as f:
+    with open(path, encoding="utf-8", errors="ignore") as f:
         text = f.read()
     i = text.rfind("UE_LIGHT_MARK %s" % tag)
     return text[i:] if i >= 0 else ""
@@ -2584,10 +2937,10 @@ _PROBE_CLASSES = ["PostProcessVolume", "PostProcessSettings", "AutoExposureMetho
                   "CineCameraActor", "ScopedEditorTransaction", "EditorActorSubsystem", "UnrealEditorSubsystem",
                   "BlendMode", "TranslucencyLightingMode", "RefractionMode", "Material", "LightingChannels"]
 _PROBE_CVARS = ["r.DynamicGlobalIlluminationMethod", "r.ReflectionMethod", "r.Shadow.Virtual.Enable", "r.RayTracing",
-                "r.Lumen.HardwareRayTracing", "r.MegaLights.EnableForProject", "r.MegaLights.Allow", "r.MegaLights.DirectionalLights",
-                "r.MegaLights.DirectionalLightSampleFraction", "r.PathTracing", "r.EyeAdaptation.CachedLightingPreExposure",
+                "r.Lumen.HardwareRayTracing", "r.MegaLights.EnableForProject", "r.MegaLights.Allowed", "r.MegaLights.DirectionalLights",
+                "r.MegaLights.Directional.LightSampleFraction", "r.PathTracing", "r.EyeAdaptation.CachedLightingPreExposure",
                 "r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange", "r.AntiAliasingMethod", "r.Lumen.TraceMeshSDFs",
-                "r.TemporalAASamples", "r.TemporalAA.NumSamples", "r.Shadow.Virtual.Stats", "r.Shadow.Virtual.ShowStats",
+                "r.TemporalAASamples", "r.Shadow.Virtual.Stats.Visible", "r.ShaderPrint", "r.DefaultFeature.AutoExposure.Bias",
                 "r.MegaLights.DownsampleMode", "r.PathTracing.Denoiser.Name", "r.PathTracing.TemporalDenoiser.Name",
                 "sg.GlobalIlluminationQuality", "sg.ReflectionQuality", "r.SupportSkyAtmosphereAffectsHeightFog",
                 "r.PathTracing.EnableEmissive", "r.PathTracing.VisibleLights", "r.MegaLights.HardwareRayTracing.EvaluateMaterialMode",
@@ -2595,7 +2948,7 @@ _PROBE_CVARS = ["r.DynamicGlobalIlluminationMethod", "r.ReflectionMethod", "r.Sh
 
 
 def probe():
-    """Answer the [verify] list in the installed editor: classes, enums, property names, cvar values,
+    """Answer the open-name list in the installed editor: classes, enums, property names, cvar values,
     PostProcessSettings fields. Nothing is changed. Returns a dict (write it to JSON and read it)."""
     u = _ue()
     res = {"engine": None, "classes": {}, "props": {}, "pp_fields": {}, "cvars": {}, "enums": {}}
@@ -2684,6 +3037,12 @@ def _frac(s):
     return float(s)
 
 
+def _read(path, errors=None):
+    # utf-8-sig: Windows tools often save JSON and ini files with a BOM, which json.loads rejects
+    with open(path, encoding="utf-8-sig", errors=errors) as f:
+        return f.read()
+
+
 def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser(prog="ue_light", description="scenario-unreal-lighting-rendering offline tools")
@@ -2736,23 +3095,23 @@ def main(argv=None):
         cd = to_candela(a.value, a.units, a.kind, a.cone)
         r = {"candelas": cd, "lumens": candela_to_lumens(cd, a.kind, a.cone), "unitless": cd * UNITLESS_PER_CANDELA}
     elif a.cmd == "frame":
-        brief = json.load(open(a.brief)) if a.brief else {}
+        brief = json.loads(_read(a.brief)) if a.brief else {}
         r = frame_report(a.image, brief, a.reference)
         r["brief_regions"] = brief.get("regions")
         if a.out:
             write_report(r, a.out, a.image)
     elif a.cmd == "compare":
-        brief = json.load(open(a.brief)) if a.brief else {}
+        brief = json.loads(_read(a.brief)) if a.brief else {}
         r = compare_ground_truth(a.realtime, a.pathtraced, brief.get("regions"), a.diff)
     elif a.cmd == "still-plan":
         pl = still_plan(a.renderer, a.quality, a.delivery, a.motion_blur, a.glass)
         r = {"plan": pl, "lint": mrg_lint(pl), "variables": mrg_variables(pl)}
     elif a.cmd == "lint-lights":
-        r = light_lint(json.load(open(a.lights_json)), json.load(open(a.context)) if a.context else None)
+        r = light_lint(json.loads(_read(a.lights_json)), json.loads(_read(a.context)) if a.context else None)
     elif a.cmd == "lint-ini":
-        r = render_settings_report(open(a.ini).read(), tuple(a.wants.split(",")))
+        r = render_settings_report(_read(a.ini), tuple(a.wants.split(",")))
     elif a.cmd == "budget":
-        r = pass_budget(profilegpu_passes(open(a.log, errors="ignore").read()), a.fps)
+        r = pass_budget(profilegpu_passes(_read(a.log, errors="ignore")), a.fps)
     elif a.cmd == "albedo":
         r = albedo_check(a.image, renderer=a.renderer)
     print(json.dumps(r, indent=1, default=str))

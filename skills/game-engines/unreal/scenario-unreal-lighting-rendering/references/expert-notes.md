@@ -81,9 +81,9 @@ UE5 Early Access, Argyriou and Campbell shipped on 5.3; every 5.8 correction is 
   blue subtle (HSV 214, 0.34, 1.0) [00:18:17]; warm practicals against cool fog [00:19:33]; tight
   dim fills (0.2 to 2.5, 300 to 500 cm radius) and rims isolated with lighting channels: light
   Channel 0 off and 1 on, hero mesh Channel 1 on [00:21:24] [00:24:02]. 5.8: direct light and
-  MegaLights honor channels; Lumen GI bounce probably does not [verify], so the cheat's Indirect
-  Lighting Intensity goes to 0 [added]; the path tracer's behavior with channels is not in the notes
-  [verify]. "It's all faked anyway" for a shot, not for a game [00:26:13] [00:25:40].
+  MegaLights honor channels; Lumen GI bounce probably does not [not yet run], so the cheat's
+  Indirect Lighting Intensity goes to 0 [added]; the path tracer's behavior with channels is not in
+  the notes [not yet run]. "It's all faked anyway" for a shot, not for a game [00:26:13] [00:25:40].
 
 **Demystifying the Skylight (BGoaPyfZlYg, 4.26)**: chrome ball before any light [00:01:34]; hiding a
 skylight in the Outliner does not stop it, Affects World does [00:04:46]; Sky Distance Threshold 1
@@ -196,8 +196,9 @@ Blur Amount 1.0 [00:07:59].
   MegaLights and Shadow Method per light; directional excluded by default (keep the sun on
   deferred + VSM); front-layer translucency can double cost; alpha masks off in RT by default; Light
   Complexity view and dump.
-- **VSM**: designed for Nanite; cost is invalidation; stats with `r.ShaderPrintEnable 1`; Source
-  Radius or Angle before SMRT counts; Apple Silicon M2 or newer.
+- **VSM**: designed for Nanite; cost is invalidation; stats with `r.ShaderPrint 1` and
+  `r.Shadow.Virtual.Stats.Visible 1` (5.8.3 names); Source Radius or Angle before SMRT counts; Apple
+  Silicon M2 or newer.
 - **Sky and fog**: sun 120,000 lux at zenith, moon 0.26 lux; Mie is already a height fog; shadowed
   local lights cost about 3x in volumetric fog; fast lights trail; cinematic cvars for clouds and
   atmosphere.
@@ -236,3 +237,24 @@ Blur Amount 1.0 [00:07:59].
 | Emissive as light                    | Avowed: Lumen-only emissive boost                                                           | Epic and Faucher: real lights                                          | real-time with Lumen (the boost can replace fill) vs path-traced stills (real lights; the boost is invisible there)                                               |
 | Contact shadows                      | Avowed: cheap, for small ground objects and dialogue close-ups [00:37:32]                   | VSM doc: not needed for sharp contact, less accurate than VSM          | VSM on Nanite content (skip them) vs grass that only takes contact shadows, or RT local lights missing small detail (add them)                                    |
 | Indirect Emissive in the path tracer | keep: emissives without a light keep their bounce                                           | off: fixtures with a real light stop double counting (path tracer doc) | whether every visible emissive has a real light at it (`emissive_fixture_pairs`); it is one global switch                                                         |
+
+## UE 5.8 notes (moved from SKILL.md in v0.2)
+
+- MegaLights Production Ready (lighting channels, cloud shadows, mismatch views); directional lights
+  excluded unless `r.MegaLights.DirectionalLights 1`; `r.MegaLights.Debug`,
+  `r.MegaLights.DownsampleMode`.
+- Lumen Lite at Medium (Beta); SSGI deprecated; RTGI gone since 5.4; detail tracing deprecated;
+  `r.Lumen.HeightFog 1` default.
+- `r.EyeAdaptation.CachedLightingPreExposure` (default 4) unifies pre-exposure, with an on-screen
+  warning when exposure leaves the supported range.
+- ACES 2.0 is the SDR path; OCIO 2.5.1; grading scopes `ShowFlag.VisualizeColorGrading`.
+- Path tracer on Mac (macOS 26.4+); back-face culling always on; HDRIBackdrop incompatible;
+  Reference Atmosphere ignores Sky Lights.
+- Movie Render Graph Production Ready: Basic config by default, Light Modifier, layer warm-ups,
+  DWAA/DWAB EXR.
+- Python: the Rotator's positional order is roll, pitch, yaw (run on 5.8.3), so `ue_light` passes
+  keywords.
+- Scripted captures: `viewmode <x>` did nothing in a `take_high_res_screenshot`; ShowFlag overrides
+  did (`VIEW_MODES`, off is `2`). `r.BufferVisualizationDumpFrames 1` writes BaseColor (linear),
+  PreTonemapHDRColor and a dozen G-buffer files beside the shot. ProfileGPU prints a box table to
+  LogRHI (`profilegpu_passes` reads it).

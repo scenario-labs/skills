@@ -1,13 +1,14 @@
 # Procedures (ue_perf and the shared toolkit, full code)
 
-**Status of every Python block below: not yet run in Unreal** (UE 5.8 not installed on 2026-09-24).
-Each block starts with `# test: <id>` and `# status: ...`.
-`tests/code/unreal-performance/test_ue_perf_offline.py` extracts every block from this file and
-parses it (syntax only), and runs the pure functions the blocks call on synthetic captures (stat
-unit style frames, a CSV-profiler-like file, TraceQuery-like JSONL, a classic ProfileGPU dump, cvar
-read-back, `obj list`, PSO miss blocks, a snapshothitches folder). That proves the analysis and
-proof logic, not any UE name, file layout, cvar or flag: those stay [verify] until
-`job_probe_perf.py` (P0) and a first real capture confirm them.
+**Status (v0.2, 2026-10-21, UE 5.8.3 on an Apple Silicon Mac).** Each block starts with
+`# test: <id>` and `# status: ...`. Ran on 5.8.3: P0 (probe), P4 on real CSV captures, P7 on real
+traces through the Insights command line, P8 (audits in a commandlet), P9 snapshots and their
+analysis, and the diagnose-and-fix loop in `mcp-performance.md`
+(`tests/code/unreal-performance/live_mcp_recipes.py --measure`). Captures ran from the editor binary
+with `-game` in an offscreen window, not from a packaged build: packaging (P3), devkit runs,
+ProfileGPU parsing (P6), PIE routes (P2), P10 proof on a packaged build and P11 are **[not yet
+run]**. `tests/code/unreal-performance/test_ue_perf_offline.py` parses every block and runs the pure
+functions on synthetic captures plus a small fixture in the 5.8.3 CSV layout.
 
 Conventions. Agent side is system `python3`. Editor side runs through scenario-unreal-expert's
 channels: `ue_remote.PythonRemote().exec(code)` (or the MCP server) into a running editor,
@@ -57,7 +58,7 @@ and write the answers into this section.
 
 ```python
 # test: P0_probe
-# status: not yet run in Unreal; in-editor part: tests/code/unreal-performance/job_probe_perf.py
+# status: run on 5.8.3 (2026-10-21); in-editor part: tests/code/unreal-performance/job_probe_perf.py
 import importlib.util
 import ue_run
 job = os.path.join(PROJ, "tests", "code", "scenario-unreal-performance", "job_probe_perf.py")
@@ -71,19 +72,22 @@ rb = P.parse_cvar_readback(open(env["log_path"], errors="replace").read())
 spec = importlib.util.spec_from_file_location("probe", job)
 probe = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(probe)               # offline import: `unreal` absent, nothing runs
-print("cvars that printed nothing:", [c for c in probe.CVARS if c not in rb])
-# TraceQuery: a UBT program new in 5.8; a Launcher install may not ship it [verify]
-tq = ENG["trace_query"] if ENG else None
-if tq and os.path.exists(tq):
-    print(subprocess.run([tq, "--help"], capture_output=True, text=True).stdout[:3000])
-else:
-    print("TraceQuery missing. Source engine: RunUBT.sh TraceQuery Mac Development [verify]. "
-          "Fallback: CSV profiler for frame series, Insights GUI for timers (gui-paths.md).")
+low = {k.lower() for k in rb}                # console names are case-insensitive
+print("cvars that printed nothing:", [c for c in probe.CVARS if c.lower() not in low])
+# Traces: the 5.8.3 launcher build ships Unreal Insights but no TraceQuery binary; read
+# .utrace files with the Insights command line (P7).
+print("insights:", P.insights_binary(ENG["root"] if ENG else "/Users/Shared/Epic Games/UE_5.8"))
 ```
 
-On the first real JSONL (P7), run `P.schema_probe(jsonl)` and set `time_unit` and `duration_unit`
-for `P.load_trace`. Record here: TraceQuery path, arguments, record kinds, key names, units; the
-packaged Mac game's Saved folder; which cvars printed nothing.
+Answers on 5.8.3 (2026-10-21): every API name resolved; `Material.displacement_fade` does not exist
+(use `enable_displacement_fade`); engine defaults `default_shape_complexity`
+CTF_USE_SIMPLE_AND_COMPLEX and `default_update_overlaps_method_during_level_streaming`
+ONLY_UPDATE_MOVABLE; every cvar in `CVARS` printed. Renamed or gone: `r.ShaderPrintEnable` (now
+`r.ShaderPrint`), `r.Shadow.Virtual.ShowStats` (deprecated, typing it fires an ensure; use
+`r.Shadow.Virtual.Stats.Visible`), `r.Nanite.ShowMeshDrawEvents` (gone). Not variables:
+`r.RHISetGPUCaptureOptions`, `fx.Niagara.Debug.Hud` (commands). `r.PSOPrecache.Validation` exists
+only in packaged builds; `a.Budget.*` only with the Animation Budget Allocator plugin. The same
+checks run through MCP in one script: `mcp-performance.md` R1.
 
 ## P1. Frame the gap and write the budget table
 
@@ -146,7 +150,8 @@ engine (PKG build table).
 
 ```python
 # test: P3_capture
-# status: not yet run in Unreal; test: test_ue_perf_offline.py TestPlans.test_capture_plans
+# status: [not yet run] (packaging and the packaged run); the editor -game CSV capture ran on
+#   5.8.3: mcp-performance.md "Measure"; test: test_ue_perf_offline.py TestPlans.test_capture_plans
 # Package (handoff to scenario-unreal-pipeline-automation; flags [verify]):
 #   RunUAT.sh BuildCookRun -project=<abs uproject> -platform=Mac -clientconfig=Test
 #     -build -cook -stage -pak -iostore -archive -archivedirectory=<abs> -utf8output
@@ -162,7 +167,7 @@ for i in range(3):
     print(" ".join(argv))
     subprocess.run(argv, timeout=900)                  # the route's last event quits the game
     runs.append({"trace": plan["args"][1].split("=", 1)[1], "log": argv[-1].split("=", 1)[1],
-                 "hygiene": dict(plan["hygiene"], route=route["name"], device="M5 Max, macOS 26.5")})
+                 "hygiene": dict(plan["hygiene"], route=route["name"], device="Apple silicon, macOS 26.5")})
 json.dump(runs, open(os.path.join(OUT, "lean_runs.json"), "w"), indent=1)
 # Console devkit: the same plan["args"] go into the devkit launch by CI or a person; the agent
 # reads the .utrace, CSV and log they return. A Mac number never proves a console target.
@@ -176,15 +181,20 @@ target is the first finding (OZ26 [00:11:00]).
 
 ```python
 # test: P4_classify
-# status: not yet run in Unreal; test: test_ue_perf_offline.py TestFramesAndDiagnosis
-csvs = sorted(glob.glob(os.path.join(GAME_SAVED, "Profiling", "CSV", "*.csv")))   # folder [verify]
-frames = P.load_frames(csvs[-1])            # through ue_stat's CSV profiler parser when present
+# status: run on 5.8.3 on real CSV captures (load_frames, diagnose_bound, csv_breakdown);
+#   the scalability read-back in a running editor is [not yet run]; test: TestFramesAndDiagnosis
+# The log names the CSV ("Writing CSV to file : ..."), relative to the binary's folder.
+csv = P.csv_path_from_log(open(os.path.join(OUT, "lean_0.log"), errors="replace").read(),
+                          os.path.dirname(EXE))
+frames = P.load_frames(csv)[250:]           # skip boot frames (level load) of a boot capture
 d = P.diagnose_bound(frames, target_ms=16.67,
                      context={"dynres_locked": False, "editor": False, "mac_proxy": True})
 print(d["bound"], d["gap_ms"], d["also_over"], d["per_frame_bound"])
 for c in d["caveats"]:
     print(" caveat:", c)
 print(" next capture:", d["next"])
+print(P.csv_breakdown(csv, tail=250, n=8))   # which GPU pass or render-thread scope (or wait)
+print(P.csv_counters(csv, tail=250))         # instances, lights, non-streaming texture MB
 # Which scalability is really active (value and LastSetBy), in a running editor or PIE:
 in_editor("P.console_many(%r)\n" % P.stat_sequence("scalability_readback"))
 rb = P.parse_cvar_readback(open(os.path.join(GAME["root"], "Saved", "Logs",
@@ -268,7 +278,7 @@ print(t["total_ms"], t["buckets"], t["unattributed_ms"], t["same_name"], t["over
 # off, then restores them; frame ms comes from the CSV of each state.
 print(P.lumen_delta(frame_ms_on=26.3, frame_ms_off=21.4, fps=60))
 # Views that locate the cause, one screenshot each from the same BugItGo view (editor):
-views = {"lumen_perf_overview": ["r.Lumen.Visualize 2"],      # mode number [verify]
+views = {"lumen_perf_overview": ["r.Lumen.Visualize 2"],      # 2 = Performance Overview (5.8.3 source)
          "vsm_cache": P.stat_sequence("vsm_cache_view"),
          "vsm_stats": P.stat_sequence("vsm"),
          "nanite_pixel_programmable": ["r.Nanite.Visualize.PixelProgrammableVisMode 0"],
@@ -286,7 +296,7 @@ for name, cmds in views.items():
     chk = ue_review.image_checks(png)
     print(name, ue_review.image_verdict(chk))            # rejects all-white or all-black frames
     in_editor("P.console_many(['r.Lumen.Visualize 0', 'ShowFlag.VisualizeVirtualShadowMap 0', "
-              "'r.ShaderPrintEnable 0'])\n")             # restore [verify values]
+              "'r.ShaderPrint 0', 'r.Shadow.Virtual.Stats.Visible 0'])\n")   # restore
 ```
 
 Reading order (OZ24 decision tree; NORSE triage): the one big number, then many small ones, then
@@ -309,8 +319,8 @@ Witcher demo while Lumen reflections back on graphics saved more (W4R [00:20:42]
 # test: P6b_trees
 # status: not yet run in Unreal; test: test_ue_perf_offline.py TestSuspectTrees
 # Numbers from P6 (ProfileGPU buckets, lumen_delta), stat SceneRendering, NaniteStats and
-# r.ShaderPrintEnable 1 + r.Shadow.Virtual.ShowStats 2 read off the screenshot or log [verify
-# formats]; budgets for Nanite and VSM passes are the project's (P1).
+# r.ShaderPrint 1 + r.Shadow.Virtual.Stats.Visible 1 read off the screenshot (names checked on
+# 5.8.3, on-screen formats [not yet run]); budgets for Nanite and VSM passes are the project's (P1).
 feat = P.feature_budget_check({"lumen_delta_ms": 4.9, "rt_active_instances": 131000,
                                "rt_scene_update_ms": 0.9, "gt_wait_ms": 1.8}, fps=60)
 for f in feat["findings"]:
@@ -353,20 +363,22 @@ on non-colliding types with Enable Density Scaling (FFW [00:32:48] [00:33:18]).
 ## P7. CPU deep pass from a rich trace
 
 Why: read the worst frame thread by thread, drop the waits, count instances against what is on
-screen (KEN [00:09:24]; NORSE [00:24:20] [00:25:24]). TraceQuery (5.8) turns a `.utrace` into JSONL,
-so the agent does not need the Insights GUI.
+screen (KEN [00:09:24]; NORSE [00:24:20] [00:25:24]). The Insights command line turns a `.utrace`
+into CSV with no window (`-NoUI -AutoQuit`, commands in a response file), so the agent does not need
+the Insights GUI; TraceQuery JSONL is the alternative where a source build ships it.
 
 ```python
 # test: P7_cpu_trace
-# status: not yet run in Unreal; test: test_ue_perf_offline.py TestTrace
+# status: run on 5.8.3 (a 10.8 MB lean trace of 500 -game frames and 4.5 MB hitch snapshots:
+#   export under a second, analyze_trace median within 0.1 ms of the CSV); test: TestTrace
 plan = P.capture_plan("gt", platform="console", build="Test",
                       tracefile=os.path.join(OUT, "gt_rich.utrace"))
 utrace = "/abs/devkit_capture/gt_rich.utrace"
-jsonl = os.path.join(OUT, "gt_rich.jsonl")
-with open(jsonl, "w") as f:                    # arguments [verify] from P0's --help output
-    subprocess.run([ENG["trace_query"], utrace], stdout=f, check=True, timeout=1800)
-print(P.schema_probe(jsonl)["keys"].keys())    # confirm the mapping before trusting numbers
-tr = P.load_trace(jsonl, time_unit="s", duration_unit="ms")      # units from P0
+x = P.insights_export(P.insights_binary(ENG["root"]), utrace, os.path.join(OUT, "gt_rich"),
+                      threads=("GameThread", "RenderThread"))
+print(x["rc"], x["exported"])                 # "Exported N timing events to file ..."
+tr = P.load_insights_events(x["outputs"]["events"])   # frames = GameThread FEngineLoop::Tick
+stats = P.load_timer_statistics(x["outputs"]["timers"])[:15]   # count, inclusive, exclusive ms
 an = P.analyze_trace(tr, target_ms=16.67,
                      count_names=("LineTrace", "Sweep", "CharacterMovement", "SkeletalMesh", "SpawnActor"))
 open(os.path.join(OUT, "gt_trace_report.md"), "w").write(P.trace_report_md(an, "Game thread, market route"))
@@ -436,7 +448,9 @@ performance agent finds and measures them; the owner applies or approves.
 
 ```python
 # test: P8_audit
-# status: not yet run in Unreal (all property and enum names [verify], see P0); offline syntax only
+# status: run on 5.8.3 through ue_run in a commandlet (tests/code/unreal-performance/live/
+#   job_perf_audit.py) on the heavy test level: all rules read; the in_editor() channel below is
+#   [not yet run] (Python Remote Execution); apply_change_requests(apply=True) [not yet run]
 audit_json = os.path.join(OUT, "audit.json")
 in_editor(r'''
 import json
@@ -461,6 +475,11 @@ World Partition maps expose only loaded actors to `perf_audit_level`: load the r
 (scenario-unreal-world-building's region procedure). Content lives in source control; a change
 request is the unit of review.
 
+On the heavy test level (5.8.3) the audit found 1,660 `non_static_mesh`, 48 `shadowed_local_light`,
+`default_complex_collision` on the imported sphere and the four texture rules on the 4K texture; the
+lead's `ue_audit.audit_assets(profile="game")` passed the same content, so keep both. The same audit
+and the fixes run through MCP as one script each (`mcp-performance.md` R3 to R8).
+
 Rules added in the refactor pass: `non_static_mesh` (props left Movable or Stationary; about 1,000
 of them caused a 20 percent drop in a shipped 5.3 shooter, ARG [00:11:54]; mobility must be correct
 both ways, since a Static actor that moves invalidates the Global Distance Field static cache under
@@ -478,22 +497,23 @@ mobile runs start cold (HITCH [00:35:50]; PSO doc); consoles compile PSOs at coo
 
 ```python
 # test: P9_hitch
-# status: not yet run in Unreal; test: test_ue_perf_offline.py TestLogParsers.test_hitch_snapshots, TestTrace.test_categories
+# status: snapshots and their analysis ran on 5.8.3 (editor binary, -game, "stat default" or
+#   "stat game" then "snapshothitches -start"; 30 snapshots at a 5 ms threshold); the packaged
+#   cold and warm runs and the PSO and GC log parsers are [not yet run]; test: TestLogParsers, TestTrace
 for label, cold in (("cold", True), ("warm", False)):
     plan = P.capture_plan("hitch", platform="mac", build="Test", cold=cold, gc_log=True,
                           tracefile=os.path.join(OUT, "hitch_%s.utrace" % label),
                           extra_dpcvars={"r.PSOPrecache.Validation": 2})
     argv = P.launch_command(EXE, plan) + ["-abslog=" + os.path.join(OUT, "hitch_%s.log" % label)]
     subprocess.run(argv, timeout=1200)
-snaps = P.hitch_snapshots(os.path.join(GAME_SAVED, "Profiling", "Hitches"))    # [verify]
+snaps = P.hitch_snapshots(os.path.join(GAME_SAVED, "Profiling", "Hitches"))    # <instance id>/Frame-<N>.*
 rows = []
 for s in snaps:
     if not s["trace"]:
         continue
-    j = s["trace"] + ".jsonl"
-    with open(j, "w") as f:
-        subprocess.run([ENG["trace_query"], s["trace"]], stdout=f, timeout=600)
-    an = P.analyze_trace(P.load_trace(j), 16.67)
+    x = P.insights_export(P.insights_binary(ENG["root"]), s["trace"], s["trace"] + "_export",
+                          statistics=False, counters=False)
+    an = P.analyze_trace(P.load_insights_events(x["outputs"]["events"]), 16.67)
     rows.append({"snapshot": s["stem"], "image": s["image"], "categories": an["categories"],
                  "worst": an["worst"]})
 json.dump(rows, open(os.path.join(OUT, "hitches.json"), "w"), indent=1, default=str)
@@ -516,7 +536,7 @@ GPU hitches after camera cuts: the frames after a cut lose occlusion history and
 frames = P.load_frames(sorted(glob.glob(os.path.join(GAME_SAVED, "Profiling", "CSV", "*.csv")))[-1])
 cuts = [412, 1290]            # frame indices of the cuts (bookmarks or the sequence's cut list)
 for c in P.camera_cut_spikes(frames, cuts, target_ms=16.67):
-    print(c)                   # spike -> r.Nanite.PrimeHZB (5.7) [verify], Overdraw view on the frame after
+    print(c)                   # spike -> r.Nanite.PrimeHZB (0 off, 1 when no HZB, 2 always; 5.8.3), Overdraw view
 ```
 
 Prevent blocking loads at authoring time, not only in traces: a validator that rejects Load Asset

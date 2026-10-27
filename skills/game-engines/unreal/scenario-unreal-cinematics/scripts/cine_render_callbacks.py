@@ -28,7 +28,7 @@ with ue_cine.latest_manifests(dir). The job and graph handed to callbacks are du
 nothing done here leaks into the shared queue or graph assets (mrq-cli).
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24)
 
 import json
 import os

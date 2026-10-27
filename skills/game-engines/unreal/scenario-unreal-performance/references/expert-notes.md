@@ -46,9 +46,9 @@ marks this skill's own inference. Status of anything that touches a UE name: [ve
 
 - **Budget first.** "What's your Nanite budget?" before debugging Nanite [00:29:18].
 - **Nanite decision tree:** VisBuffer, split fixed-function from programmable raster
-  (`r.Nanite.ShowMeshDrawEvents 1`, needed only up to 5.4), then Evaluate WPO, Pixel Programmable,
-  then fixed-function and overdraw; base pass over budget means shading bins (NaniteStats, total
-  minus empty) or expensive materials [00:29:52] to [00:36:46].
+  (`r.Nanite.ShowMeshDrawEvents 1`, needed only up to 5.4; gone in 5.8.3), then Evaluate WPO, Pixel
+  Programmable, then fixed-function and overdraw; base pass over budget means shading bins
+  (NaniteStats, total minus empty) or expensive materials [00:29:52] to [00:36:46].
 - **A view is a locator, not a verdict:** overdraw white pixels do not mean a problem [00:32:13];
   real causes are long thin triangles and interpenetrating meshes; greebles on flat surfaces are
   fine [00:32:46] to [00:36:03].
@@ -64,9 +64,10 @@ marks this skill's own inference. Status of anything that touches a UE name: [ve
 - **VSM starts at the Nanite VisBuffer** (same raster) [00:47:52]; half a long shadow animating =
   WPO disable distance with a too-low clipmap LOD bias
   (`r.Shadow.Virtual.Clipmap.WPODisableDistance.LodBias`, 2 to 4 typical) [00:46:49]. Read pages and
-  invalidations on screen (`r.ShaderPrintEnable 1`, `r.Shadow.Virtual.ShowStats 2`) and decide
-  whether to chase static or dynamic invalidation [00:48:59]; objects past their WPO disable
-  distance return to static caching [00:43:59] [00:44:33].
+  invalidations on screen (`r.ShaderPrintEnable 1`, `r.Shadow.Virtual.ShowStats 2` in the talk; on
+  5.8.3 `r.ShaderPrint 1` and `r.Shadow.Virtual.Stats.Visible 1`) and decide whether to chase static
+  or dynamic invalidation [00:48:59]; objects past their WPO disable distance return to static
+  caching [00:43:59] [00:44:33].
 - **Virtual textures:** SVT saves memory for a marginal cost, RVT saves time for memory [00:07:59];
   right-size pools from high water marks (Hillside: 2,000 MB pool, 95 MB needed) [00:15:47]; mapped
   requests climbing in a static scene = thrashing [00:20:54].
@@ -115,7 +116,7 @@ marks this skill's own inference. Status of anything that touches a UE name: [ve
   so splits can be A/B tested [00:06:19] [00:07:29]. Transformers are unvalidated: add logging
   [00:13:11].
 
-## Ari Arnbjörnsson and Matt Oztalay: "Profiling with Purpose", Norse (NORSE, UE 5.6, Xbox Series X)
+## Ari Arnbjornsson and Matt Oztalay: "Profiling with Purpose", Norse (NORSE, UE 5.6, Xbox Series X)
 
 - **"Give us captures":** Insights for CPU, a GPU capture tool for GPU (PIX, Razor or the platform
   tool on a devkit) [00:05:47] [00:06:29] [00:42:12].
@@ -140,8 +141,8 @@ marks this skill's own inference. Status of anything that touches a UE name: [ve
   [00:30:55] [00:33:06]; PrePhysics to DuringPhysics is "a bandage on an infection" [00:30:22].
 - **GPU capture hygiene:** lock dynres (`r.DynamicRes.TestScreenPercentage 75`),
   `r.RDG.AsyncCompute 0` "so there's nowhere to hide", `r.RHISetGPUCaptureOptions 1` [00:43:17] to
-  [00:45:45]. Triage: one big number, many little numbers, numbers where they should not be
-  [00:47:25].
+  [00:45:45] (a console command on 5.8.3, so `-ExecCmds`, not `-DPCVars`). Triage: one big number,
+  many little numbers, numbers where they should not be [00:47:25].
 - **GPU culprits:** translucency After DOF renders at full output resolution even at 75% dynres
   [00:48:38] [00:49:03]; overlapping shadowed lights appear in VSM projection mask bits [00:49:35];
   96 Niagara readbacks hide in Visibility Commands (2 ms, ocean off screen) [00:51:16]; custom depth
@@ -151,7 +152,7 @@ marks this skill's own inference. Status of anything that touches a UE name: [ve
 - **Repeatability:** save files, BugIt/BugItGo, a cinematic timestamp jump [00:45:47] [00:46:19]. GC
   heuristic: about 100k UObjects normal, 500k to 1M wrong [00:15:51].
 
-## Ari Arnbjörnsson: "The Great Hitch Hunt" (HITCH, UE 5.5 and 5.6, 18 studios)
+## Ari Arnbjornsson: "The Great Hitch Hunt" (HITCH, UE 5.5 and 5.6, 18 studios)
 
 - **What, why, how; never random checkboxes** [00:03:32] to [00:04:40]. Every hitch family can
   happen during level streaming [00:07:04].
@@ -179,7 +180,7 @@ marks this skill's own inference. Status of anything that touches a UE name: [ve
 - **Content:** tick less, LOD everything, significance; BeginPlay is incremental for streamed levels
   [00:47:14] to [00:48:27].
 
-## Ari Arnbjörnsson: "Maximizing your game's performance" (ARI22, UE 5.0/5.1)
+## Ari Arnbjornsson: "Maximizing your game's performance" (ARI22, UE 5.0/5.1)
 
 - **The budget is money:** consoles can spend almost all of it, PC needs leeway, mobile needs
   thermal and battery leeway [00:04:49] to [00:05:53].

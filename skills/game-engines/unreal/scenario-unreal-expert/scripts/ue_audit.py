@@ -21,7 +21,7 @@ Headless: ue_run.run_python(uproject, job) with a job that calls audit_assets (n
 needed). Profiles: game (default), cinematic, mobile, prototype.
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24)
 
 import json
 import os
@@ -285,6 +285,19 @@ def _root_material(mat):
         return None
 
 
+def _simple_collision_count(asset, sms=None):
+    """Simple collision shapes on a static mesh. Counts the aggregate geometry of the body setup,
+    which works in a commandlet and in the editor; get_simple_collision_count reads 0 in the editor
+    and -1 in a commandlet on 5.8.3 (run by the performance and pipeline agents)."""
+    try:
+        geom = asset.get_editor_property("body_setup").get_editor_property("agg_geom")
+        return sum(len(geom.get_editor_property(n)) for n in ("box_elems", "sphere_elems", "sphyl_elems", "convex_elems"))
+    except Exception:
+        if sms is None:
+            raise
+        return sms.get_simple_collision_count(asset)
+
+
 def _slot_facts(mat_list, slot_attr):
     import unreal
     slots = []
@@ -313,7 +326,7 @@ def collect_facts(asset, path=None, referencers=False):
     _try(f, "cook_path_length", lambda: eas.get_asset_filename_length_for_cooking(f["path"]))
     if referencers:
         _try(f, "referencers", lambda: len(eas.find_package_referencers_for_asset(f["path"], False)))
-    if isinstance(asset, unreal.ObjectRedirector):
+    if f["class"] == "ObjectRedirector":  # no Python class for it in 5.8 (live check 2026-10-21)
         f["is_redirector"] = True
         return f
     if isinstance(asset, unreal.Texture2D):
@@ -327,7 +340,7 @@ def collect_facts(asset, path=None, referencers=False):
         _try(f, "lods", lambda: asset.get_num_lods())
         _try(f, "triangles", lambda: asset.get_num_triangles(0))
         _try(f, "nanite", lambda: bool(asset.get_editor_property("nanite_settings").enabled))
-        _try(f, "simple_collisions", lambda: sms.get_simple_collision_count(asset))
+        _try(f, "simple_collisions", lambda: _simple_collision_count(asset, sms))
         _try(f, "collision_trace", lambda: _enum_name(
             asset.get_editor_property("body_setup").get_editor_property("collision_trace_flag")))
         _try(f, "materials", lambda: _slot_facts(asset.get_editor_property("static_materials"),

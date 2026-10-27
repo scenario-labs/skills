@@ -1,7 +1,9 @@
 """
 ue_pipeline_job: the job file ue_run.run_python executes inside Unreal for this skill.
-NOT YET RUN IN UNREAL (written 2026-09-24, engine not installed). Offline: exercised against
-a fake `unreal` module in tests/code/unreal-pipeline-automation/test_offline_fake_unreal.py.
+Run on 5.8.3 as a commandlet (actions preset and import, through
+tests/code/unreal-pipeline-automation/in_engine/run_in_unreal.py, 2026-10-21); the other actions
+[not yet run]. Offline: exercised against a fake `unreal` module in
+tests/code/unreal-pipeline-automation/test_offline_fake_unreal.py.
 
 Parent side (system python3):
     import sys; sys.path.insert(0, "<skills>/scenario-unreal-expert/scripts"); import ue_run
@@ -21,7 +23,7 @@ Never point a saving job at a project an open editor has loaded (write lock): ru
 action in that editor through the MCP toolset or ue_remote.PythonRemote instead.
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24)
 
 import json
 import os

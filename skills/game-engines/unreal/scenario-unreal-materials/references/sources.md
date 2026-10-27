@@ -47,14 +47,27 @@ folder (one note per source plus four digests). Version facts: `sources/unreal-v
 ## Revision history
 
 - 2026-09-24, v0.2: refactor after blind grade U2 (v0.1 kept in
-  `skills/_versions/unreal-materials v1 2026-09-24/`). Fixed: the Horizontal Blend mask-cost rule
-  now applies only without parameter blending on Adaptive; Enum-bound scalars dated by the 5.7
-  release notes (Unreal Fest showed them as 5.8); the invented decal sort-order range removed;
-  Temporal Responsiveness marked experimental with its cvar and the Nanite WPO condition. Added from
-  the notes: Blendable ceiling and Adaptive fallback in the GBuffer decision; independent vs
-  dependent transcendentals and material-function samples (`cost_census`, lint budgets);
+  `skills/_versions/scenario-unreal-materials v1 2026-09-24/`). Fixed: the Horizontal Blend
+  mask-cost rule now applies only without parameter blending on Adaptive; Enum-bound scalars dated
+  by the 5.7 release notes (Unreal Fest showed them as 5.8); the invented decal sort-order range
+  removed; Temporal Responsiveness marked experimental with its cvar and the Nanite WPO condition.
+  Added from the notes: Blendable ceiling and Adaptive fallback in the GBuffer decision; independent
+  vs dependent transcendentals and material-function samples (`cost_census`, lint budgets);
   sampler-type cross-check; Used with Static Mesh off on decal masters; MPC limit; Substrate Shading
   Model node and Temporal Responsiveness lint; instance value audit (P16); cooked texture memory
   from `listtextures` (P17); value-clamped ID masks, world-aligned seams, directional blends, cavity
   specular occlusion, Normalize after making Mips, Alpha-only compression, Decal Response per
   receiver, quality levels in the permutation count, Window > Substrate panel.
+- 2026-10-21, v0.2 (release): first runs on UE 5.8.3. Added `references/mcp-materials.md` (Epic's
+  toolsets, six recipes run live) and a pointer to Epic's in-editor MaterialBasics skill. Fixed from
+  live runs: sampler default textures (a texture parameter without one fails the master), compile
+  proof only in a rendering process (offscreen editor or -AllowCommandletRendering),
+  overwrite_existing on create_asset, decal blend before domain, Substrate legacy against on
+  results, CPD reads 0. Every open name check resolved or marked [not yet run].
+
+## Verification status (2026-10-21, run on 5.8.3)
+
+Ran: the MCP recipes (`tests/code/unreal-materials/live_mcp_recipes.py`, 6 of 6), the builders with
+compile check and look capture in a legacy and a Substrate project (`live_builders_look.py`),
+procedures P0 to P8, P11 to P14, P16 headless. **[not yet run]**: P9, P10, P15, P17 (GPU timing,
+review board, blending A/B, cooked memory).

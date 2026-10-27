@@ -26,9 +26,12 @@ Two layers in one file.
    HLOD Layer assets, Nanite batch edits, PCG volume spawn and parameters, assembly tags,
    region-by-region batch edits, viewpoint tours, console helpers, an API probe, a PCG graph
    dump, a world census and a world-rules EditorValidatorBase.
-   STATUS: NOT YET RUN IN UNREAL (the engine is not installed on 2026-09-24). Every name
-   marked [verify] is resolved at run time by trying candidates; misses are recorded in
-   MISSING and returned by probe(). The plumbing ran offline against a fake `unreal` module.
+   STATUS (v0.2, 2026-10-21): run on 5.8.3 in an offscreen editor: probe, new_open_world_map,
+   world_facts, create_hlod_layer, create_data_layer_asset, assign_data_layer, set_streaming,
+   dump_pcg_graph, add_instanced_mesh, instance_positions, nav_ready. Not yet run: batch_nanite,
+   region_batch, tour, landscape_facts, register_world_validator, spawn_pcg_volume (the PCG volume
+   path that ran is PCGToolset.SpawnGraphInstance, see references/mcp-world-building.md). Misses
+   are recorded in MISSING and returned by probe().
 
 Shared toolkit (<skills>/scenario-unreal-expert/scripts, lead agent): ue_run.run_python / result /
 run_commandlet for jobs and builders, ue_review.screenshot / image_checks for captures,
@@ -63,7 +66,7 @@ import struct
 import zlib
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor pass)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21)
 
 # =============================================================================================
 # 0. Findings helper
@@ -400,7 +403,7 @@ def read_png16(path: str) -> Tuple[int, int, List[int]]:
 def write_r16(path: str, values: Sequence[int], width: int, height: int, sidecar: bool = True) -> Dict[str, str]:
     """Little-endian 16-bit raw heightmap, plus the same-named JSON with width, height and
     bbp that the importer reads for .raw files (LANDdoc, Importing RAW; key name bbp as the
-    doc prints it [verify]). The file is written as .r16 when path has no .raw extension."""
+    doc prints it; [not yet run] in an import). The file is written as .r16 when path has no .raw extension."""
     if len(values) != width * height:
         raise ValueError("expected %d values" % (width * height))
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
@@ -619,8 +622,12 @@ def landscape_material_check(layers: Sequence[Dict[str, Any]], layer_infos: Sequ
 # 2. World Partition: grids, streaming, Data Layers, HLOD
 # =============================================================================================
 
-TEMPLATE_CELL_CM = 25600.0      # Open World template runtime grid (EEf07 [00:15:32]; WPdoc example)
-TEMPLATE_RANGE_CM = 76800.0
+TEMPLATE_CELL_CM = 25200.0      # run on 5.8.3: OpenWorld template, RuntimeHashSet "MainGrid" (RuntimePartitionLHGrid,
+TEMPLATE_RANGE_CM = 76800.0     # 3D, not 2D). v0.1 had 25,600 from the 2022 talk (EEf07 [00:15:32]).
+TEMPLATE_GRID_583 = {"hash": "WorldPartitionRuntimeHashSet", "partition": "MainGrid", "class": "RuntimePartitionLHGrid",
+                     "cell_size_cm": 25200.0, "loading_range_cm": 76800.0, "is_2d": False,
+                     "hlod_layer": "<map>_HLOD0_Instancing", "landscape_proxies": 64, "hlod_actors": 64,
+                     "ofpa_files_after_save": 138}  # all run on 5.8.3, new_level_from_template(OpenWorld)
 
 
 def wp_grid_check(grids: Sequence[Dict[str, float]], world_extent_m: float,
@@ -639,7 +646,7 @@ def wp_grid_check(grids: Sequence[Dict[str, float]], world_extent_m: float,
         cell, rng = float(g["cell_size_cm"]), float(g["loading_range_cm"])
         if cell < 1000.0:
             out.append(finding("error", "wp.units",
-                               "cell size %.0f looks like metres; grid values are centimetres (25600 = 256 m)"
+                               "cell size %.0f looks like metres; grid values are centimetres (25200 = 252 m)"
                                % cell, "EEf07 [00:14:57]"))
         if rng < cell:
             out.append(finding("warn", "wp.range_below_cell",
@@ -707,7 +714,7 @@ def wp_facts_check(facts: Dict[str, Any]) -> List[Dict[str, str]]:
     if facts.get("runtime_hash_class") and "SpatialHash" not in str(facts["runtime_hash_class"]):
         out.append(finding("info", "wp.runtime_hash",
                            "runtime hash %s: since 5.4 new maps use the runtime hash with partitions"
-                           " (loose hierarchical grid); grid properties live on the partition objects [verify]"
+                           " (loose hierarchical grid); grid properties live on the partition objects: runtimePartitions[0].mainLayer cellSize and loadingRange, read with ObjectTools.get_properties (run on 5.8.3)"
                            % facts["runtime_hash_class"], "rn54 World Partition Runtime Hash with 3D Grid"))
     return out
 
@@ -807,7 +814,7 @@ def changelist_check(entries: Sequence[Dict[str, Any]], builders_own_generation:
                      submitted_from_editor: bool = True) -> List[Dict[str, str]]:
     """entries: [{"path", "actor_class"}] of a pending changelist (OFPA external actor files map
     to actor descriptors in the editor's View Changelists). PCG partition actor class name
-    (APCGPartitionActor) is [verify]."""
+    (APCGPartitionActor) is [not yet run]."""
     out = []
     gen = [e for e in entries if "pcgpartitionactor" in str(e.get("actor_class", "")).lower()]
     if builders_own_generation and gen:
@@ -867,7 +874,7 @@ def expected_points(area_m2: float, points_per_m2: float) -> float:
 
 def surface_sampler_cell_cm(point_extents_cm: float, looseness: float) -> float:
     """Cell size = Point Extents x (1 + Looseness), as the node reference words it
-    (PCGnodes Surface Sampler). Whether extents are half-sizes here is [verify]."""
+    (PCGnodes Surface Sampler). Whether extents are half-sizes here is [not yet run]."""
     return float(point_extents_cm) * (1.0 + float(looseness))
 
 
@@ -886,7 +893,7 @@ def instances_per_cell(points_per_m2: float, cell_m: float) -> float:
 
 def check_hier_grids(grids: Sequence[Any], landscape_read_grid: Any = None) -> List[Dict[str, str]]:
     """grids: e.g. ["unbounded", 128, 32] in metres. Grid enum values are powers of two in the
-    editor [verify]; the Witcher 4 split is unbounded (params, CPU, one-off), 128 m (landscape
+    editor [not yet run]; the Witcher 4 split is unbounded (params, CPU, one-off), 128 m (landscape
     reads, overhead), 32 m (scatter) (ic [00:08:04]-[00:11:17])."""
     out = []
     nums = [g for g in grids if not (isinstance(g, str) and g.lower() == "unbounded")]
@@ -918,7 +925,7 @@ def grass_rings(dense_radius_m: float = 128.0, sparse_radius_m: float = 256.0,
     recolor far instances toward the ground color. The talk hands over with min and max draw
     distances; those do not apply to Nanite instances (NANdoc Rendering: no distance culling;
     Looman), so with nanite=True the ring edges are the generation radii of each grid and the
-    handover must be checked on the first run [verify]. Densities are the project's."""
+    handover must be checked on the first run [not yet run]. Densities are the project's."""
     out: Dict[str, Any] = {"rings": [], "findings": []}
     if nanite:
         out["findings"].append(finding(
@@ -1117,7 +1124,7 @@ def grammar_string(start: str, modules: Dict[str, float], end: str, repeat: str 
     """Shape grammar for Subdivide Spline or Segment (j3 [00:10:31]-[00:15:14]):
     [ ] sequences, { } stochastic choice with optional :weight, * or + repetition.
     grammar_string("NA", {"Straight": 3, "DoorLeft": 1}, "NB") -> "NA [{Straight:3, DoorLeft:1}]* NB"
-    Exact weight syntax [verify] in 5.8."""
+    Exact weight syntax [not yet run] in 5.8."""
     if repeat not in ("*", "+"):
         raise ValueError("repeat must be * or +")
     parts = []
@@ -1626,6 +1633,107 @@ def door_width_check(openings_cm: Dict[str, float], standards_cm: Sequence[float
 
 
 # =============================================================================================
+# 5b. Layout and count audit (pure, v0.2): build from numbers, then read the level back
+# =============================================================================================
+
+def ring_layout(n: int, radius_cm: float, center_cm: Sequence[float] = (0.0, 0.0, 0.0),
+                start_deg: float = 0.0) -> List[Tuple[float, float, float]]:
+    """n positions evenly spaced on a circle (cm). The first sits at start_deg from +X."""
+    cx, cy, cz = (list(center_cm) + [0.0, 0.0, 0.0])[:3]
+    return [(cx + radius_cm * math.cos(math.radians(start_deg + 360.0 * i / n)),
+             cy + radius_cm * math.sin(math.radians(start_deg + 360.0 * i / n)), cz) for i in range(int(n))]
+
+
+def line_layout(n: int, start_cm: Sequence[float], end_cm: Sequence[float]) -> List[Tuple[float, float, float]]:
+    """n positions from start to end inclusive (n >= 2), or the midpoint for n == 1. A colonnade of
+    12 columns over 44 m: line_layout(12, (0,0,0), (4400,0,0)) puts them 400 cm apart."""
+    a, b = (list(start_cm) + [0.0] * 3)[:3], (list(end_cm) + [0.0] * 3)[:3]
+    if n == 1:
+        return [tuple((a[k] + b[k]) / 2.0 for k in range(3))]
+    return [tuple(a[k] + (b[k] - a[k]) * i / (n - 1) for k in range(3)) for i in range(int(n))]
+
+
+def wall_with_gate(length_cm: float, gate_width_cm: float, gate_center_cm: float = 0.0,
+                   axis: str = "x", origin_cm: Sequence[float] = (0.0, 0.0, 0.0)) -> List[Dict[str, Any]]:
+    """Two wall segments along `axis` around a gate: [{"center_cm", "length_cm"}]. gate_center_cm is
+    the gate centre measured from the wall centre. Raises if the gate does not fit. Totals are
+    checkable: the segment lengths plus the gate width equal the wall length."""
+    half = length_cm / 2.0
+    g0, g1 = gate_center_cm - gate_width_cm / 2.0, gate_center_cm + gate_width_cm / 2.0
+    if g0 < -half or g1 > half or gate_width_cm <= 0:
+        raise ValueError("gate %.0f cm at %.0f does not fit a %.0f cm wall" % (gate_width_cm, gate_center_cm, length_cm))
+    i = {"x": 0, "y": 1}[axis]
+    out = []
+    for a, b in ((-half, g0), (g1, half)):
+        if b - a > 0.5:
+            c = list((list(origin_cm) + [0.0] * 3)[:3])
+            c[i] += (a + b) / 2.0
+            out.append({"center_cm": tuple(c), "length_cm": b - a})
+    return out
+
+
+def ism_matrix(location_cm: Sequence[float], scale: Sequence[float] = (1.0, 1.0, 1.0), yaw_deg: float = 0.0) -> Dict[str, Any]:
+    """One PerInstanceSMData entry for ObjectTools.set_properties on an InstancedStaticMeshComponent:
+    the field is an FMatrix (row planes, translation in wPlane), local to the component. A
+    {"Translation", "Rotation", "Scale3D"} transform changes nothing (run on 5.8.3). A set_properties that GROWS
+    the array leaves its last new entry at identity (the actor origin) while the count is right: write the
+    same array a second time, then read the positions back (run on 5.8.3)."""
+    c, s_ = math.cos(math.radians(yaw_deg)), math.sin(math.radians(yaw_deg))
+    sx, sy, sz = scale
+    x, y, z = location_cm
+    return {"transform": {"xPlane": {"x": c * sx, "y": s_ * sx, "z": 0.0, "w": 0.0},
+                          "yPlane": {"x": -s_ * sy, "y": c * sy, "z": 0.0, "w": 0.0},
+                          "zPlane": {"x": 0.0, "y": 0.0, "z": float(sz), "w": 0.0},
+                          "wPlane": {"x": float(x), "y": float(y), "z": float(z), "w": 1.0}}}
+
+
+def count_audit(expected: Dict[str, int], actual: Dict[str, int]) -> List[Dict[str, str]]:
+    """Compare what the brief asked for with what the level holds, per key (a label prefix, a tag or
+    an instanced component). Missing and extra items are errors: 11 pillars for 12 is a failed build."""
+    out = []
+    for k, n in expected.items():
+        got = int(actual.get(k, 0))
+        if got != int(n):
+            out.append(finding("error", "count.mismatch", "%s: %d in the level, %d asked" % (k, got, n), "[added]",
+                               "list the level again after fixing; do not trust the build log"))
+    return out
+
+
+def position_audit(expected_cm: Sequence[Sequence[float]], actual_cm: Sequence[Sequence[float]],
+                   tol_cm: float = 5.0, label: str = "items") -> List[Dict[str, str]]:
+    """Match each expected position to the nearest actual one (greedy). Reports missing, extra and
+    misplaced items beyond tol_cm."""
+    out, left = [], [tuple(a) for a in actual_cm]
+    for e in expected_cm:
+        if not left:
+            out.append(finding("error", "position.missing", "%s: nothing near %s" % (label, tuple(round(v) for v in e))))
+            continue
+        d = [math.dist(e[:3], a[:3]) for a in left]
+        j = min(range(len(d)), key=d.__getitem__)
+        if d[j] > tol_cm:
+            out.append(finding("error", "position.off", "%s: nearest to %s is %.0f cm away" % (
+                label, tuple(round(v) for v in e), d[j]), "[added]"))
+        left.pop(j)
+    for a in left:
+        out.append(finding("error", "position.extra", "%s: unexpected item at %s" % (label, tuple(round(v) for v in a))))
+    return out
+
+
+def extent_audit(name: str, bounds_min_cm: Sequence[float], bounds_max_cm: Sequence[float],
+                 expected_size_cm: Sequence[Optional[float]], tol_cm: float = 10.0) -> List[Dict[str, str]]:
+    """Check a built piece's size from its bounds (a wall asked 40 m long that measures 18 m)."""
+    out = []
+    for i, ax in enumerate("xyz"):
+        want = expected_size_cm[i] if i < len(expected_size_cm) else None
+        if want is None:
+            continue
+        got = float(bounds_max_cm[i]) - float(bounds_min_cm[i])
+        if abs(got - want) > tol_cm:
+            out.append(finding("error", "extent.mismatch", "%s size %s %.0f cm, asked %.0f cm" % (name, ax, got, want), "[added]"))
+    return out
+
+
+# =============================================================================================
 # 6. Regions for batch edits
 # =============================================================================================
 
@@ -1822,7 +1930,7 @@ def check_world_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
         t = str(l.get("layer_type", "")).lower()
         if t in ("approximatemesh", "approximatedmesh", "meshapproximate"):
             f.append(finding("info", "hlod.approximate", "%s uses Approximate Mesh: not listed in the saved 5.8 HLOD doc"
-                             " (Instancing, Merged, Simplified) [verify]" % l.get("name"), "WPdoc; EEf07 [00:41:46]"))
+                             " (Instancing, Merged, Simplified); HLODLayerType.MESH_APPROXIMATE exists on 5.8.3" % l.get("name"), "WPdoc; EEf07 [00:41:46]"))
         if "tree" in str(l.get("families", l.get("name", ""))).lower() and t != "instancing":
             f.append(finding("warn", "hlod.trees_not_instancing", "%s holds trees but is %s" % (l.get("name"), l.get("layer_type")),
                              "WPdoc Choosing a Layer Type"))
@@ -1996,7 +2104,7 @@ def landscape_builder_args(map_path: str, scc: Optional[str] = None, iterative_c
 def pcg_builder_args(map_path: str, graph_names: Sequence[str] = (), settings_asset: Optional[str] = None) -> Tuple[str, List[str]]:
     """PCG offline builder (rn54 PCG Offline Builder; -PCGBuilderSettings= from rn55). 5.8
     adds a PCG Builder commandlet and PCG Builder Volume (rn58); its name and arguments are
-    [verify], so this keeps the documented 5.4 form."""
+    [not yet run] (no PCGBuilderSettings class in 5.8.3 Python), so this keeps the documented 5.4 form."""
     args = [map_path, "-Unattended", "-AllowCommandletRendering", "-Builder=PCGWorldPartitionBuilder"]
     if graph_names:
         args.append("-IncludeGraphNames=%s" % ";".join(graph_names))
@@ -2006,8 +2114,8 @@ def pcg_builder_args(map_path: str, graph_names: Sequence[str] = (), settings_as
 
 
 def minimap_builder_args(map_path: str) -> Tuple[str, List[str]]:
-    """Minimap builder; class name [verify] (WPdoc names the Minimap Builder commandlet;
-    minimap display needs virtual texture support)."""
+    """Minimap builder: UWorldPartitionMiniMapBuilder (5.8 C++ API); the run is [not yet run]
+    (WPdoc names the Minimap Builder commandlet; minimap display needs virtual texture support)."""
     return WP_BUILDER, [map_path, "-Builder=WorldPartitionMiniMapBuilder", "-AllowCommandletRendering"]
 
 
@@ -2035,7 +2143,7 @@ REVIEW_CONSOLE = {
     "hlod_coloration": (["viewmode hlodcoloration"], "sources green, proxies blue as the camera leaves [verify command;"
                         " GUI: View Mode > Level of Detail Coloration > Hierarchical LOD Coloration]",
                         "WPdoc Visualizing HLODs"),
-    "data_layers": (["wp.DumpDatalayers", "wp.Runtime.ToggleDrawDataLayers"], "runtime states as expected", "WPdoc Data Layers"),
+    "data_layers": (["wp.Runtime.DumpDataLayers", "wp.Runtime.ToggleDrawDataLayers"], "runtime states as expected", "WPdoc Data Layers"),
     "nanite_overdraw": (["r.Nanite.Visualize Overdraw"], "canopy line: 'the nuclear explosion' is failure [verify mode name]",
                         "6ig [00:32:00]; NANdoc"),
     "nanite_triangles": (["r.Nanite.Visualize Triangles"], "density responds to distance [verify mode name]", "6ig [00:05:52]"),
@@ -2046,43 +2154,56 @@ REVIEW_CONSOLE = {
 
 
 # =============================================================================================
-# 9. IN-EDITOR LAYER (Editor Python in UnrealEditor 5.8). NOT YET RUN IN UNREAL.
+# 9. IN-EDITOR LAYER (Editor Python in UnrealEditor 5.8). Run on 5.8.3 where the header says so.
 # =============================================================================================
 
 MISSING: Dict[str, str] = {}      # name -> where it was needed; returned by probe()
 
 API_CANDIDATES = {
-    # what we need: candidate names in order (first that exists wins). All [verify].
-    "LevelEditorSubsystem.new_level": "doc (py-ref)",
-    "LevelEditorSubsystem.new_level_from_template": "doc (py-ref)",
-    "EditorActorSubsystem.spawn_actor_from_class": "doc (py-ref)",
-    "UnrealEditorSubsystem.get_editor_world": "doc (py-ref)",
-    "UnrealEditorSubsystem.set_level_viewport_camera_info": "[verify]",
-    "WorldPartitionBlueprintLibrary.get_editor_world_bounds": "[verify]",
-    "WorldPartitionBlueprintLibrary.get_intersecting_actor_descs": "[verify]",
-    "WorldPartitionBlueprintLibrary.load_actors": "[verify]",
-    "WorldPartitionBlueprintLibrary.unload_actors": "[verify]",
-    "DataLayerEditorSubsystem.create_data_layer_instance": "[verify]",
-    "DataLayerEditorSubsystem.add_actors_to_data_layer": "[verify]",
-    "DataLayerFactory": "[verify]",
-    "HLODLayerFactory": "[verify]",
-    "HLODLayer": "[verify]",
-    "PCGVolume": "[verify]",
-    "PCGComponent": "[verify]",
-    "PCGGraphInstance": "[verify]",
-    "PCGGraphInstanceFactory": "[verify]",
-    "PCGGraphParametersHelpers": "[verify]",
-    "PCGWorldActor": "[verify]",
-    "LandscapeProxy": "[verify]",
-    "LandscapeComponent": "[verify]",
-    "LevelInstanceSubsystem": "[verify]",
-    "SystemLibrary.execute_console_command": "[added] deltas helpers",
-    "AutomationLibrary.take_high_res_screenshot": "[verify]",
+    # name -> status on 5.8.3 (probe run 2026-10-21). probe() re-checks them on any install.
+    "LevelEditorSubsystem.new_level": "run on 5.8.3 (is_partitioned_world=True makes a WP map)",
+    "LevelEditorSubsystem.new_level_from_template": "run on 5.8.3",
+    "LevelEditorSubsystem.save_current_level": "run on 5.8.3",
+    "LevelEditorSubsystem.load_level": "run on 5.8.3",
+    "EditorActorSubsystem.spawn_actor_from_class": "run on 5.8.3",
+    "UnrealEditorSubsystem.get_editor_world": "run on 5.8.3",
+    "UnrealEditorSubsystem.set_level_viewport_camera_info": "run on 5.8.3",
+    "SubobjectDataSubsystem.add_new_subobject": "run on 5.8.3 (Actor.add_component_by_class is not exposed)",
+    "InstancedStaticMeshComponent.add_instances": "run on 5.8.3",
+    "WorldPartitionBlueprintLibrary.get_editor_world_bounds": "exists on 5.8.3",
+    "WorldPartitionBlueprintLibrary.get_intersecting_actor_descs": "exists on 5.8.3",
+    "WorldPartitionBlueprintLibrary.load_actors": "exists on 5.8.3",
+    "WorldPartitionBlueprintLibrary.unload_actors": "exists on 5.8.3",
+    "DataLayerEditorSubsystem.create_data_layer_instance": "run on 5.8.3",
+    "DataLayerEditorSubsystem.add_actors_to_data_layer": "run on 5.8.3",
+    "DataLayerFactory": "run on 5.8.3",
+    "HLODLayerFactory": "run on 5.8.3",
+    "HLODLayer": "run on 5.8.3",
+    "HLODLayerType": "exists on 5.8.3: INSTANCING, MESH_MERGE, MESH_SIMPLIFY, MESH_APPROXIMATE, CUSTOM, CUSTOM_HLOD_ACTOR",
+    "PCGVolume": "run on 5.8.3",
+    "PCGComponent": "run on 5.8.3",
+    "PCGGraphInstance": "exists on 5.8.3",
+    "PCGGraphInstanceFactory": "exists on 5.8.3",
+    "PCGGraphParametersHelpers": "exists on 5.8.3",
+    "PCGWorldActor": "exists on 5.8.3",
+    "PCGGenSourceComponent": "exists on 5.8.3 (v0.1 guessed PCGGenerationSourceComponent, absent)",
+    "LandscapeProxy": "exists on 5.8.3",
+    "LandscapeComponent": "exists on 5.8.3",
+    "NavMeshBoundsVolume": "run on 5.8.3",
+    "NavigationSystemV1.project_point_to_navigation": "run on 5.8.3 (None until the build finishes)",
+    "SystemLibrary.execute_console_command": "run on 5.8.3",
+    "AutomationLibrary.take_high_res_screenshot": "run on 5.8.3 (latent: one per call)",
     "ScopedEditorTransaction": "doc (py-ed)",
-    "PCGGraph.get_nodes": "[verify]",
     "EditorValidatorBase": "doc (py-ref, k2_* overrides in 5.8)",
-    "EditorValidatorSubsystem.add_validator": "[verify]",
-    "PCGGenerationSourceComponent": "[verify] (rn54 names PCG Generation Source components)",
+    "EditorValidatorSubsystem.add_validator": "exists on 5.8.3",
+}
+API_ABSENT_583 = {  # checked on 5.8.3: do not call these
+    "LevelInstanceSubsystem": "not exposed to Python: use SceneTools.create_level_instance (MCP)",
+    "Actor.add_component_by_class": "not exposed: SubobjectDataSubsystem.add_new_subobject or ActorTools.add_component (MCP)",
+    "NavigationSystemV1.build": "absent: the editor builds the navmesh after a NavMeshBoundsVolume appears; poll is_navigation_being_built",
+    "PCGGraph.get_nodes": "absent: read the `nodes` property",
+    "WorldPartition.runtime_hash": "not readable from Python: read <world partition>.WorldPartitionRuntimeHashSet_0 through ObjectTools (MCP)",
+    "PCGGenerationSourceComponent": "the class is PCGGenSourceComponent",
 }
 
 
@@ -2121,7 +2242,7 @@ def _sub(name: str):
     cls = getattr(u, name, None)
     if cls is None:
         MISSING[name] = "subsystem"
-        raise RuntimeError("unreal.%s missing [verify]" % name)
+        raise RuntimeError("unreal.%s missing in this engine build" % name)
     return u.get_editor_subsystem(cls)
 
 
@@ -2168,7 +2289,7 @@ def console(cmd: str) -> None:
 
 
 def template_candidates(root: str = "/Engine/Maps/Templates") -> List[str]:
-    """List template maps; the Open World template path is [verify], so list, then pick."""
+    """List template maps. 5.8.3: /Engine/Maps/Templates/OpenWorld.OpenWorld (plus a Thumbnails copy) (run on 5.8.3)."""
     u = _ue()
     try:
         return [p for p in u.EditorAssetLibrary.list_assets(root, recursive=True) if "open" in p.lower()]
@@ -2198,8 +2319,9 @@ def new_open_world_map(asset_path: str, template: Optional[str] = None) -> Dict[
 
 
 def world_facts() -> Dict[str, Any]:
-    """Dump what wp_facts_check needs. Property names are candidates [verify]."""
-    _ue()
+    """Dump what wp_facts_check needs (run on 5.8.3). 5.8.3: world_partition is readable, runtime_hash and
+    enable_streaming are not (None); the hash object path is returned for an MCP get_properties read."""
+    u = _ue()
     world = _world()
     facts: Dict[str, Any] = {"world": world.get_name() if world else None}
     ws = None
@@ -2214,6 +2336,17 @@ def world_facts() -> Dict[str, Any]:
     facts["is_partitioned"] = wp is not None if ws else None
     facts["enable_streaming"] = _try_get(wp, ["enable_streaming", "b_enable_streaming"]) if wp else None
     rh = _try_get(wp, ["runtime_hash"]) if wp else None
+    if rh is None and wp is not None:  # 5.8.3: runtime_hash is not exposed; the subobject can be found
+        for n in ("WorldPartitionRuntimeHashSet_0", "WorldPartitionRuntimeSpatialHash_0"):
+            try:
+                obj = u.find_object(None, wp.get_path_name() + "." + n)
+            except Exception:
+                obj = None
+            if obj is not None:
+                facts["runtime_hash_path"] = obj.get_path_name()
+                facts["grids_note"] = ("Python cannot read its partitions on 5.8.3: ObjectTools.get_properties(%s, "
+                                       "[\"runtimePartitions\"]), then the mainLayer's cellSize and loadingRange" % obj.get_path_name())
+                break
     facts["runtime_hash_class"] = type(rh).__name__ if rh is not None else None
     grids = _try_get(rh, ["grids", "runtime_partitions"], []) if rh is not None else []
     facts["grids"] = []
@@ -2234,7 +2367,7 @@ def world_facts() -> Dict[str, Any]:
 
 
 def landscape_facts() -> List[Dict[str, Any]]:
-    """Per landscape: components, section layout, material, Nanite flag. [verify] names."""
+    """Per landscape: components, section layout, material, Nanite flag. Property names [not yet run]."""
     u = _ue()
     out = []
     for a in _sub("EditorActorSubsystem").get_all_level_actors():
@@ -2257,7 +2390,8 @@ def landscape_facts() -> List[Dict[str, Any]]:
 
 def set_streaming(actor, spatially_loaded: Optional[bool] = None, runtime_grid: Optional[str] = None,
                   hlod_layer=None) -> Dict[str, Optional[str]]:
-    """Actor-level World Partition properties. Names are candidates [verify]."""
+    """Actor-level World Partition properties. is_spatially_loaded and hlod_layer set on 5.8.3 (run on 5.8.3);
+    runtime_grid [not yet run]."""
     used = {}
     if spatially_loaded is not None:
         used["spatially_loaded"] = _try_set(actor, ["set_is_spatially_loaded", "is_spatially_loaded",
@@ -2274,8 +2408,8 @@ def _asset_tools():
 
 
 def create_hlod_layer(name: str, folder: str, layer_type: str = "Instancing", parent=None) -> Dict[str, Any]:
-    """HLOD Layer asset. Enum member names [verify]: INSTANCING, MESH_MERGE, MESH_SIMPLIFY
-    (Merged Mesh, Simplified Mesh in the UI)."""
+    """HLOD Layer asset. HLODLayerType on 5.8.3: INSTANCING, MESH_MERGE, MESH_SIMPLIFY,
+    MESH_APPROXIMATE, CUSTOM, CUSTOM_HLOD_ACTOR; factory and layer_type set ran (run on 5.8.3)."""
     u = _ue()
     fac = getattr(u, "HLODLayerFactory", None)
     cls = getattr(u, "HLODLayer", None)
@@ -2294,7 +2428,7 @@ def create_hlod_layer(name: str, folder: str, layer_type: str = "Instancing", pa
 
 
 def create_data_layer_asset(name: str, folder: str, runtime: bool = False) -> Dict[str, Any]:
-    """Data Layer Asset (Editor or Runtime). Factory and enum names [verify]."""
+    """Data Layer Asset (Editor or Runtime). DataLayerFactory and DataLayerType EDITOR / RUNTIME (run on 5.8.3)."""
     u = _ue()
     fac, cls = getattr(u, "DataLayerFactory", None), getattr(u, "DataLayerAsset", None)
     if fac is None or cls is None:
@@ -2326,7 +2460,7 @@ def assign_data_layer(actors, data_layer_asset) -> Dict[str, Any]:
         params_cls = getattr(u, "DataLayerCreationParameters", None)
         if params_cls is None:
             MISSING["DataLayerCreationParameters"] = "assign_data_layer"
-            return {"ok": False, "why": "no creation params class [verify]"}
+            return {"ok": False, "why": "no DataLayerCreationParameters class in this engine build"}
         p = params_cls()
         _try_set(p, ["data_layer_asset"], data_layer_asset)
         inst = dles.create_data_layer_instance(p)
@@ -2338,7 +2472,7 @@ def batch_nanite(paths: Sequence[str], enable: bool = True, dry_run: bool = True
                  voxelize_foliage: bool = False, foliage_hint: str = "foliage") -> Dict[str, Any]:
     """Nanite on for static meshes under paths, skipping translucent materials (NANdoc).
     dry_run lists the plan. voxelize_foliage sets Shape Preservation to Voxelize on meshes
-    whose path contains foliage_hint (Nanite Foliage, Experimental; enum [verify])."""
+    whose path contains foliage_hint (Nanite Foliage, Experimental; NaniteShapePreservation NONE, PRESERVE_AREA, VOXELIZE on 5.8.3)."""
     u = _ue()
     lib = u.EditorAssetLibrary
     changed, skipped, errors = [], [], []
@@ -2370,7 +2504,7 @@ def batch_nanite(paths: Sequence[str], enable: bool = True, dry_run: bool = True
             plan = {"asset": p, "enabled": enable}
             if voxelize_foliage and foliage_hint in p.lower():
                 enum = getattr(u, "NaniteShapePreservation", None)
-                plan["shape_preservation"] = "VOXELIZE" if enum and hasattr(enum, "VOXELIZE") else "missing [verify]"
+                plan["shape_preservation"] = "VOXELIZE" if enum and hasattr(enum, "VOXELIZE") else "missing in this engine build"
             if not dry_run:
                 ns.set_editor_property("enabled", enable)
                 if plan.get("shape_preservation") == "VOXELIZE":
@@ -2385,7 +2519,8 @@ def spawn_pcg_volume(graph, location_cm, size_cm, partitioned: bool = True, trig
                      seed: Optional[int] = None, generate: bool = True, label: Optional[str] = None,
                      hlod_layer=None, data_layer=None) -> Dict[str, Any]:
     """PCG Volume with a graph or Graph Instance. The volume is a unit box scaled to size
-    (the forest tutorial scales it 8 x 8 x 8, PCGdoc); unit size 100 cm is [verify].
+    (the forest tutorial scales it 8 x 8 x 8, PCGdoc); unit size 100 cm is [not yet run]. A Create Points Grid
+    in LocalComponent space ignored the volume scale (cell 500 cm stayed 500 cm at scale 20: run on 5.8.3).
     trigger: OnLoad (means cook, Tb [00:25:17]) | OnDemand | AtRuntime.
     hlod_layer / data_layer (loaded assets) are set BEFORE generation: spawned output inherits
     the PCG actor's HLOD Layer and Data Layer (PCGdoc World Partition Support)."""
@@ -2429,7 +2564,8 @@ def spawn_pcg_volume(graph, location_cm, size_cm, partitioned: bool = True, trig
 
 def set_graph_params(target, params: Dict[str, Any]) -> Dict[str, Any]:
     """Override graph parameters on a Graph Instance or a component's instance through
-    PCGGraphParametersHelpers set_<type>_parameter [verify]. Types by Python value:
+    PCGGraphParametersHelpers set_<type>_parameter (set_double_parameter and set_float_parameter exist on
+    5.8.3; behaviour [not yet run]). Types by Python value:
     bool, int, float, str (as name or string), unreal objects (as object parameter)."""
     u = _ue()
     helpers = getattr(u, "PCGGraphParametersHelpers", None)
@@ -2481,7 +2617,8 @@ def region_batch(process, tile_m: float = 256.0, bounds_m=None, save: bool = Tru
     """Region-by-region edit of a World Partition map (Aal [00:20:55]): per tile, load the
     actors whose descriptors intersect it, call process(actors, tile) -> list of changed
     actor names, save dirty packages, unload, next. Never select-all in the Outliner for
-    world-scale edits (Aal [00:20:23]). WorldPartitionBlueprintLibrary names [verify];
+    world-scale edits (Aal [00:20:23]). WorldPartitionBlueprintLibrary get_intersecting_actor_descs, load_actors, unload_actors exist on 5.8.3
+    (the loop itself [not yet run]);
     for whole-map jobs that need C++ use a UWorldPartitionBuilder subclass (WPdoc)."""
     u = _ue()
     lib = getattr(u, "WorldPartitionBlueprintLibrary", None)
@@ -2517,15 +2654,16 @@ def region_batch(process, tile_m: float = 256.0, bounds_m=None, save: bool = Tru
 
 
 def set_viewpoint(location_cm, rotation) -> bool:
-    """Move the level viewport camera (UnrealEditorSubsystem.set_level_viewport_camera_info
-    [verify])."""
+    """Move the level viewport camera (UnrealEditorSubsystem.set_level_viewport_camera_info, run on
+    5.8.3). rotation is (pitch, yaw, roll) in degrees."""
     u = _ue()
     ues = _sub("UnrealEditorSubsystem")
     fn = getattr(ues, "set_level_viewport_camera_info", None)
     if not callable(fn):
         MISSING["UnrealEditorSubsystem.set_level_viewport_camera_info"] = "set_viewpoint"
         return False
-    fn(u.Vector(*location_cm), u.Rotator(*rotation))
+    r = rotation  # keywords: the positional order of unreal.Rotator is roll, pitch, yaw (run on 5.8.3)
+    fn(u.Vector(*location_cm), u.Rotator(pitch=float(r[0]), yaw=float(r[1]), roll=float(r[2])))
     return True
 
 
@@ -2533,7 +2671,7 @@ def tour(viewpoints: Sequence[Dict[str, Any]], out_dir: str, width: int = 1920, 
          console_per_view: Sequence[str] = ()):
     """Generator job for ue_run latent mode: one screenshot per viewpoint (daily tour, Aal
     [00:23:36]). Uses ue_review.screenshot when importable, else
-    AutomationLibrary.take_high_res_screenshot [verify]. yield gives the editor ticks."""
+    AutomationLibrary.take_high_res_screenshot (runs on 5.8.3, latent: the file lands after the call). yield gives the editor ticks."""
     os.makedirs(out_dir, exist_ok=True)
     try:
         import ue_review  # lead toolkit
@@ -2577,11 +2715,11 @@ def _prop(obj, names: Sequence[str]):
 
 def dump_pcg_graph(graph) -> Dict[str, Any]:
     """Dump a PCG graph's nodes for pcg_graph_lint and find_gpu_transfers:
-    {id: {"title", "gpu", "settings": {...}}}. Node and settings accessors are candidates
-    [verify]; misses land in MISSING and the dump says what it could not read. The fallback
+    {id: {"title", "gpu", "settings": {...}}}. 5.8.3: `nodes` property and node titles read
+    (run on 5.8.3); settings keys are candidates; misses land in MISSING and the dump says what it could not read. The fallback
     is a graph editor screenshot read by eye."""
     nodes_out: Dict[str, Dict[str, Any]] = {}
-    nodes = _try_get(graph, ["get_nodes", "nodes"], None)
+    nodes = _try_get(graph, ["nodes", "get_nodes"], None)   # 5.8.3: `nodes` property, no get_nodes()
     if nodes is None:
         MISSING["PCGGraph.get_nodes"] = "dump_pcg_graph"
         return {"ok": False, "nodes": {}, "why": "no node accessor: lint from a graph screenshot"}
@@ -2605,7 +2743,7 @@ def dump_pcg_graph(graph) -> Dict[str, Any]:
 
 def world_census(tags_vocabulary: Sequence[str] = ()) -> List[Dict[str, Any]]:
     """Facts per loaded actor for world_rules_check (load a region first in WP maps).
-    Tick and collision getters are candidates [verify]; construction-script spawning cannot
+    Tick and collision getters are candidates [not yet run]; construction-script spawning cannot
     be read from Python, so it stays None unless a component count grows after a rerun
     [added]."""
     out = []
@@ -2620,6 +2758,74 @@ def world_census(tags_vocabulary: Sequence[str] = ()) -> List[Dict[str, Any]]:
     return out
 
 
+def add_instanced_mesh(actor, mesh_path: str, transforms_cm: Sequence[Dict[str, Any]], hierarchical: bool = False,
+                       world_space: bool = True):
+    """Add an (H)ISM component to an existing actor through SubobjectDataSubsystem (run on 5.8.3;
+    Actor.add_component_by_class is not exposed) and fill it. transforms_cm: [{"location": (x,y,z),
+    "rotation": (pitch, yaw, roll), "scale": (sx, sy, sz)}]. Returns the component and its count.
+    The instances persist after save and reload, and add_instances places every entry (no growing-write
+    trap as with MCP set_properties) (run on 5.8.3). get_actor_bounds can stay stale until
+    the level reloads: audit with instance_positions, not with the actor bounds."""
+    u = _ue()
+    sds = u.get_engine_subsystem(u.SubobjectDataSubsystem)
+    handles = sds.k2_gather_subobject_data_for_instance(actor)
+    cls = u.HierarchicalInstancedStaticMeshComponent if hierarchical else u.InstancedStaticMeshComponent
+    before = set(c.get_name() for c in actor.get_components_by_class(cls))
+    params = u.AddNewSubobjectParams(parent_handle=handles[0], new_class=cls, blueprint_context=None)
+    sds.add_new_subobject(params)
+    comp = [c for c in actor.get_components_by_class(cls) if c.get_name() not in before and type(c) is cls][0]
+    comp.set_static_mesh(u.load_asset(mesh_path))
+    xs = []
+    for t in transforms_cm:
+        r = t.get("rotation", (0.0, 0.0, 0.0))
+        xs.append(u.Transform(location=u.Vector(*t["location"]),
+                              rotation=u.Rotator(pitch=float(r[0]), yaw=float(r[1]), roll=float(r[2])),
+                              scale=u.Vector(*t.get("scale", (1.0, 1.0, 1.0)))))
+    comp.add_instances(xs, False, world_space)
+    return {"component": comp.get_name(), "count": comp.get_instance_count()}
+
+
+def instance_positions(actor, world_space: bool = True) -> Dict[str, List[Tuple[float, float, float]]]:
+    """{component name: [(x, y, z) cm]} for every instanced component on the actor (run on 5.8.3)."""
+    u = _ue()
+    out = {}
+    for c in actor.get_components_by_class(u.InstancedStaticMeshComponent):
+        pts = []
+        for i in range(c.get_instance_count()):
+            t = c.get_instance_transform(i, world_space)
+            t = t[1] if isinstance(t, tuple) else t
+            pts.append((round(t.translation.x, 1), round(t.translation.y, 1), round(t.translation.z, 1)))
+        out[c.get_name()] = pts
+    return out
+
+
+def level_counts(prefixes: Sequence[str] = ()) -> Dict[str, int]:
+    """Counts to feed count_audit: actors per label prefix, plus 'instances:<label>' per actor that
+    carries instanced components (run on 5.8.3). Loaded actors only in a World Partition map."""
+    u = _ue()
+    out: Dict[str, int] = {}
+    for a in _sub("EditorActorSubsystem").get_all_level_actors():
+        lab = a.get_actor_label()
+        for p in prefixes:
+            if lab.startswith(p):
+                out[p] = out.get(p, 0) + 1
+        n = sum(c.get_instance_count() for c in a.get_components_by_class(u.InstancedStaticMeshComponent))
+        if n:
+            out["instances:" + lab] = n
+    return out
+
+
+def nav_ready(point_cm=(0.0, 0.0, 0.0), extent_cm=(200.0, 200.0, 500.0)) -> Dict[str, Any]:
+    """Is there navmesh under this point? project_point_to_navigation returns None while the editor is
+    still building after a NavMeshBoundsVolume was added (run on 5.8.3); call again in a later turn."""
+    u = _ue()
+    w = _world()
+    building = bool(u.NavigationSystemV1.is_navigation_being_built(w))
+    p = u.NavigationSystemV1.project_point_to_navigation(w, u.Vector(*point_cm), None, None, u.Vector(*extent_cm))
+    return {"building": building, "on_navmesh": p is not None,
+            "projected_cm": (p.x, p.y, p.z) if p is not None else None}
+
+
 _WORLD_VALIDATORS: List[Any] = []
 
 
@@ -2628,7 +2834,7 @@ def register_world_validator(vocabulary: Sequence[str], tick_limit: int = TICK_A
     runs the per-actor world rules (tag vocabulary, clutter collision) on actors being saved
     or validated. Same pattern as scenario-unreal-pipeline-automation (ue_pipeline.register_validators,
     k2_* overrides in 5.8; Python validators self-register every session). Whether OFPA actor
-    packages reach asset validators on save is [verify]; the census path (world_census +
+    packages reach asset validators on save is [not yet run]; the census path (world_census +
     world_rules_check) covers the class-level rules in any case. Idempotent."""
     u = _ue()
     if _WORLD_VALIDATORS:

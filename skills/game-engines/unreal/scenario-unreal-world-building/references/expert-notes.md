@@ -9,8 +9,9 @@ their deciding condition at the end.
 
 - Use the Open World template; hand-built setups miss checkboxes with cascading bugs [00:20:40]; the
   tools are a set (WP, OFPA, HLOD, Level Instancing, Data Layers, VSM, VT, Nanite) [00:35:59].
-- Grid values are centimeters: 25,600 = 256 m cells, 76,800 = 768 m range in the template [00:14:57]
-  [00:15:32].
+- Grid values are centimeters: 25,600 = 256 m cells, 76,800 = 768 m range in the 5.1 template
+  [00:14:57] [00:15:32]. The 5.8.3 Open World template reads cell 25,200 cm and range 76,800 cm (run
+  on 5.8.3).
 - Streaming Source component where the player teleports, target grid named to match
   [00:16:39]-[00:19:31].
 - Level Instance for content that changes with gameplay, Packed Level Actor to render static sets
@@ -215,7 +216,7 @@ their deciding condition at the end.
   [0L5Azq6ugyo 00:12:33] [00:15:20]. RVT caches the heavy landscape shader, sized to the area that
   matters [ucuSaiDuqiM 00:21:05].
 
-## Ari Arnbjörnsson, Epic, studio setup (102O0FOEzNY) and editor docs
+## Ari Arnbjornsson, Epic, studio setup (102O0FOEzNY) and editor docs
 
 - Validate only the submitted assets before commit; zero warnings; resave after upgrades with
   ResavePackages [00:10:13] [00:24:51]. Case-insensitive Perforce, typemap first; OFPA needs

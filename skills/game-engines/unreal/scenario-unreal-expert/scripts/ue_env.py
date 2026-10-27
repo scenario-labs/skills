@@ -30,7 +30,7 @@ Mac binaries (verify on the installed build, listed in the facts-to-verify check
   uat         Engine/Build/BatchFiles/RunUAT.sh
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1
 
 import glob
 import json
@@ -192,7 +192,8 @@ def engine_paths(root, system=None):
     return {
         "root": root, "editor": editor, "editor_cmd": editor_cmd,
         "editor_cmd_is_fallback": fallback, "uat": uat,
-        # TraceQuery is a UBT program added in 5.8; the binary location is [verify].
+        # TraceQuery is not in the launcher build of 5.8.3 (run on 5.8.3): read .utrace files through the
+        # UnrealInsights command line (scenario-unreal-performance: ue_perf.insights_export, load_insights_events).
         "insights": insights, "trace_query": trace_query,
         "python_plugin": os.path.join(root, "Engine", "Plugins", "Experimental",
                                       "PythonScriptPlugin"),
@@ -322,6 +323,131 @@ def enable_plugins(uproject, names, enabled=True, backup_dir=None):
         f.write("\n")
     os.replace(tmp, uproject)
     return {"changes": changes, "backup": backup}
+
+
+def install_python_toolset(project, backup_dir=None):
+    """Install agent_python_toolset.py into a project so Epic's MCP gets a `run_python` tool.
+
+    `project` is a .uproject path or its folder. Copies the module to Content/Python/ and appends the
+    register call to Content/Python/init_unreal.py (a timestamped backup of an existing init_unreal.py
+    goes to `backup_dir`, default Content/Python/_backup). Idempotent. Returns {installed, files,
+    needs_restart: True, call}. Opt-in: see the module docstring for the security note."""
+    root = project if os.path.isdir(project) else os.path.dirname(os.path.abspath(project))
+    pydir = os.path.join(root, "Content", "Python")
+    os.makedirs(pydir, exist_ok=True)
+    here = os.path.dirname(os.path.abspath(__file__))
+    dst = os.path.join(pydir, "agent_python_toolset.py")
+    shutil.copy(os.path.join(here, "agent_python_toolset.py"), dst)
+    init = os.path.join(pydir, "init_unreal.py")
+    line = "import agent_python_toolset\nagent_python_toolset.register()\n"
+    text = ""
+    if os.path.exists(init):
+        with open(init, "r", encoding="utf-8-sig") as fh:
+            text = fh.read()
+    changed = "agent_python_toolset.register()" not in text
+    if changed:
+        if text:
+            bdir = backup_dir or os.path.join(pydir, "_backup")
+            os.makedirs(bdir, exist_ok=True)
+            shutil.copy(init, os.path.join(bdir, "init_unreal.%s.py" % time.strftime("%Y%m%d-%H%M%S")))
+        with open(init, "w", encoding="utf-8") as fh:
+            fh.write(text + ("\n" if text and not text.endswith("\n") else "") + line)
+    return {"installed": True, "changed_init": changed, "files": [dst, init], "needs_restart": True,
+            "call": 'call_tool(toolset_name="agent.AgentPythonToolset", tool_name="run_python", '
+                    'arguments={"code": "..."})'}
+
+
+PYTHON_SETTINGS_SECTION = "/Script/PythonScriptPlugin.PythonScriptPluginSettings"
+
+
+def set_ini_values(ini_path, section, values, backup_dir=None):
+    """Set keys in one ini section in place, keeping every other line. Creates the file or section.
+
+    The previous file goes to `backup_dir` (default <project>/Saved/AgentBackups, found by walking up to
+    the folder with Config/) as <name>.<YYYYmmdd-HHMMSS>.bak before any change; nothing is deleted.
+    A key that already has the wanted value is left alone. Returns {"changed": {key: (before, after)},
+    "backup": path or None}."""
+    lines = []
+    if os.path.isfile(ini_path):
+        with open(ini_path, "r", encoding="utf-8-sig") as fh:
+            lines = fh.read().splitlines()
+    out, cur, seen, changed = [], None, set(), {}
+    sec_end = None
+    for i, raw in enumerate(lines):
+        s = raw.strip()
+        if s.startswith("[") and s.endswith("]"):
+            if cur == section and sec_end is None:
+                sec_end = len(out)
+            cur = s[1:-1]
+        elif cur == section and "=" in s and s[0] not in ";+-.!":
+            k, v = s.split("=", 1)
+            k = k.strip()
+            if k in values:
+                seen.add(k)
+                if v.strip() != str(values[k]):
+                    changed[k] = (v.strip(), str(values[k]))
+                    raw = "%s=%s" % (k, values[k])
+        out.append(raw)
+    missing = [k for k in values if k not in seen]
+    if missing:
+        add = ["%s=%s" % (k, values[k]) for k in missing]
+        for k in missing:
+            changed[k] = (None, str(values[k]))
+        if cur == section and sec_end is None:
+            sec_end = len(out)
+        if sec_end is None:
+            out += ([""] if out and out[-1].strip() else []) + ["[%s]" % section] + add
+        else:
+            out[sec_end:sec_end] = add
+    if not changed:
+        return {"changed": {}, "backup": None}
+    backup = None
+    if os.path.isfile(ini_path):
+        root = os.path.dirname(os.path.abspath(ini_path))
+        bdir = backup_dir or os.path.join(os.path.dirname(root), "Saved", "AgentBackups")
+        os.makedirs(bdir, exist_ok=True)
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        backup = os.path.join(bdir, "%s.%s.bak" % (os.path.basename(ini_path), stamp))
+        n = 1
+        while os.path.exists(backup):
+            backup = os.path.join(bdir, "%s.%s-%d.bak" % (os.path.basename(ini_path), stamp, n))
+            n += 1
+        shutil.copy2(ini_path, backup)
+    else:
+        os.makedirs(os.path.dirname(os.path.abspath(ini_path)), exist_ok=True)
+    tmp = ini_path + ".agent-tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(out) + "\n")
+    os.replace(tmp, ini_path)
+    return {"changed": changed, "backup": backup}
+
+
+def enable_remote_execution(project, bind=None, backup_dir=None):
+    """Turn on Python Remote Execution in a project (Config/DefaultEngine.ini) so `ue_remote.PythonRemote`
+    can find the editor. `project` is a .uproject path or its folder.
+
+    Sets bRemoteExecution=True, the multicast bind address and TTL 0. `bind` defaults to 127.0.0.1
+    (Epic's default) on Windows and 0.0.0.0 on macOS and Linux, where a socket bound to 127.0.0.1
+    never sees the multicast pings (editor checked live on 5.8.3 on macOS). The editor must restart.
+
+    Security: any process on this machine can run code in the editor. With 0.0.0.0 the editor also
+    joins the group on the network interface, so any host on the local network can run code in it:
+    TTL 0 limits what the editor sends, not what it receives. Use it on a trusted network or behind a
+    firewall that drops inbound UDP 6766 from other hosts, and prefer Epic's MCP server (loopback)
+    when its toolsets or install_python_toolset are enough. Say so before calling this. Returns
+    {"changed", "backup", "bind", "needs_restart": True, "warning"}; warning is None on loopback."""
+    root = project if os.path.isdir(project) else os.path.dirname(os.path.abspath(project))
+    bind = bind or ("127.0.0.1" if sys.platform == "win32" else "0.0.0.0")
+    res = set_ini_values(os.path.join(root, "Config", "DefaultEngine.ini"), PYTHON_SETTINGS_SECTION,
+                         {"bRemoteExecution": "True", "RemoteExecutionMulticastBindAddress": bind,
+                          "RemoteExecutionMulticastTtl": "0"}, backup_dir)
+    warning = None
+    if not bind.startswith("127."):
+        warning = ("Python Remote Execution bound to %s: any host on the local network can run code "
+                   "in this editor; use a trusted network or a firewall, and turn bRemoteExecution "
+                   "off when done" % bind)
+    res.update({"bind": bind, "needs_restart": True, "warning": warning})
+    return res
 
 
 def read_ini_value(ini_path, section, key):

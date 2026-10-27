@@ -65,7 +65,7 @@ notes; spoken names that captions garbled are marked.
 ## Revision history
 
 - 2026-09-24, v0.1: first version (snapshot in
-  `skills/_versions/unreal-pipeline-automation v1 2026-09-24/`).
+  `skills/_versions/scenario-unreal-pipeline-automation v1 2026-09-24/`).
 - 2026-09-24, v0.2: refactor after the blind grade `tests/grading/U8_grade.md`. Added from the
   notes: reimport reuses the stored pipeline stack, so the plan versions the policy and reimports
   with the preset (Interchange doc); Interchange's own material instance route and its
@@ -79,3 +79,18 @@ notes; spoken names that captions garbled are marked.
   with `buildcookrun_diff`, cook-only iteration and `-cookincremental` (UAT doc, deltas); duplicate
   guard on re-runs (naming doc). Corrected: the Xcode content-only statement is now marked as an
   inference. Scripts and offline tests extended (not yet run in Unreal).
+- 2026-10-21, v0.2 (release): first runs on UE 5.8.3. Added `references/mcp-pipeline.md` (Epic's
+  toolsets, eight recipes run live) and `references/generated-assets.md` (intake of generated
+  meshes, maps, skies and audio). Fixed from live runs: pipeline preset duplication in a commandlet,
+  5.8.3 pipeline property layout (texture pipeline under the material pipeline, combine behavior
+  enum, no DO_NOT_IMPORT), commandlet-safe LOD and collision reads, OBJ and glTF scale facts. Every
+  open name check resolved or marked [not yet run].
+
+## Verification status (2026-10-21, run on 5.8.3)
+
+Ran: the MCP recipes (`tests/code/unreal-pipeline-automation/live_mcp_recipes.py`, 8 of 8), the
+end-to-end import job (`in_engine/run_in_unreal.py`: preset, import, textures, instances, class
+rules, validators, report; every fixture expectation held), the generated-asset probes in a
+commandlet and a headless editor (`live_engine_checks.py`, `job_02_pipeline_overrides.py`). **[not
+yet run]**: the in-editor channel for the full job (P4), automation tests (P6), contact sheet (P7),
+resave, cook, package and boot (P8 commandlet, P9), P10 to P14.

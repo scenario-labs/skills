@@ -1,13 +1,15 @@
 # Procedures (full code)
 
-**Status of every block: not yet run in Unreal** (UE 5.8 not installed on 2026-09-24). Each block
-starts with `# test: <id>`. `tests/code/unreal-cinematics/test_procedures_snippets.py` extracts
-these exact blocks and runs them in order, in one namespace, against a fake `unreal` module
-(in-editor blocks) or for real (python3 blocks, ffmpeg); blocks tagged `compile-only` are only
-compiled because they launch Unreal. The fake proves logic and call order, not API names: in the
-engine run `job_00_probe_cine.py` first and fix every name it reports missing. Deeper tests:
-`test_ue_cine_offline.py` (pure layer), `test_ue_cine_fakeunreal.py` (in-editor layer); engine jobs
-`job_00` to `job_30` in the same folder.
+**Status (2026-10-21, Unreal 5.8.3, macOS):** each block's `# status:` line says what ran. Run on
+5.8.3: P0 (probe), P3_build (synthetic cast, audit verdict pass), P4_board (latent offscreen, 21
+frames), P8 graph authoring and audit (`job_25_author_graph.py`, audit pass), P9_render_editor (one
+shot, latent offscreen). The rest is not yet run in Unreal. Each block starts with `# test: <id>`.
+`tests/code/unreal-cinematics/test_procedures_snippets.py` extracts these exact blocks and runs them
+in order, in one namespace, against a fake `unreal` module (in-editor blocks) or for real (python3
+blocks, ffmpeg); blocks tagged `compile-only` are only compiled because they launch Unreal. The fake
+proves logic and call order, not API names: in the engine run `job_00_probe_cine.py` first and fix
+every name it reports missing. Deeper tests: `test_ue_cine_offline.py` (pure layer),
+`test_ue_cine_fakeunreal.py` (in-editor layer); engine jobs `job_00` to `job_30` in the same folder.
 
 Channels (from scenario-unreal-expert): in-editor blocks run in a live editor through Epic's MCP
 server (Python tool) or `ue_remote.PythonRemote().exec(...)`, or as a job file through
@@ -16,10 +18,11 @@ blocks run in system python3. Context the blocks assume: `PLAN_PATH` (a plan JSO
 `tests/code/unreal-cinematics/fixtures/trailer_plan.json`), `OUT` (a writable folder), the skill's
 `scripts/` and scenario-unreal-expert's `scripts/` on `sys.path`.
 
-Before writing raw Python, check whether Epic's MCP server lists a SequencerTools toolset (5.8
-notes: "SequencerTools toolset for AI-driven sequence creation and editing"): `list_toolsets`, then
-`describe_toolset` [verify name and coverage]. Prefer it for what it covers; the blocks below are
-the fallback and the audit.
+With an editor running Epic's Unreal MCP, single edits (bind, key, cut, marker) go through
+`animation_toolset.toolsets.sequencer.SequencerTools` and its sibling toolsets: `mcp-cinematics.md`
+has the signatures, JSON and six recipes run on 5.8.3, so `describe_toolset` (about 42,000 tokens)
+is not needed. No toolset covers Movie Render Graph or rendering. The blocks below build whole cuts,
+audit them and render.
 
 ## P0. Probe the engine (in editor, first time only)
 
@@ -29,7 +32,7 @@ a build.
 
 ```python
 # test: P0_probe
-# status: not yet run in Unreal; engine test: tests/code/unreal-cinematics/job_00_probe_cine.py
+# status: run on 5.8.3 (2026-10-21, commandlet); engine test: tests/code/unreal-cinematics/job_00_probe_cine.py
 import json
 import unreal
 import ue_cine as C
@@ -119,7 +122,7 @@ bad = [f for f in C.check_production(plan) if f["status"] == "fail"]
 assert not bad, bad                      # the plan follows the production record
 root = plan["root"]
 for sub in ("", "/Shots", "/Render", "/Audio", "/Review"):
-    unreal.EditorAssetLibrary.make_directory(root + sub)   # [verify] returns bool
+    unreal.EditorAssetLibrary.make_directory(root + sub)   # returns True (run on 5.8.3)
 for s in plan["shots"]:
     unreal.EditorAssetLibrary.make_directory("%s/Shots/%s" % (root, s["name"]))
 ```
@@ -137,7 +140,7 @@ undo entry with a progress bar (SPI [00:16:16]).
 
 ```python
 # test: P3_build
-# status: not yet run in Unreal; test: test_procedures_snippets.py block P3_build, engine: job_10_build_trailer.py
+# status: run on 5.8.3 (2026-10-21, commandlet, synthetic cast: SkeletalMeshActor, no animation, no audio): audit verdict pass; test: test_procedures_snippets.py block P3_build, engine: job_10_build_trailer.py
 import unreal
 import ue_cine as C
 
@@ -157,8 +160,9 @@ template, and keyed Current Focal Length, Current Aperture and Manual Focus Dist
 shot owns its lens), transform keys on the first and last frame aimed with `look_at`, a camera cut
 from `cut_start` (pre-roll) to the exclusive end, spawnable performers whose animation section
 starts before the shot (pre-roll, and at least one frame because temporal samples evaluate before
-the start: mrg doc), an animation start offset converted to tick resolution [verify property name],
-and `<prefix>_<shot>_LGT` with the temp camera light. Master: the Shots track and the music. Master
+the start: mrg doc), an animation start offset converted to tick resolution
+(`first_loop_start_frame_offset`, a FrameNumber on 5.8.3; not yet run with a real animation), and
+`<prefix>_<shot>_LGT` with the temp camera light. Master: the Shots track and the music. Master
 lighting stays in the level (a lighting sub-level or data layer), not in the master sequence,
 because per-shot renders do not evaluate master-level tracks [added].
 
@@ -170,8 +174,8 @@ Bindings that bite later (Sir Wade, yOcgYMcxr3Q):
   a spawnable [00:11:46].
 - Visibility: Outliner eye toggles are not saved; Levels panel (sub-level) visibility is [00:02:23].
   Per shot, hide or show with a Level Visibility track in the shot or discipline subsequence (Glitch
-  keys level visibility per subsequence, GLITCH [00:37:33]) [track class name verify]; in World
-  Partition maps use data layers [added].
+  keys level visibility per subsequence, GLITCH [00:37:33]) (`MovieSceneLevelVisibilityTrack` exists
+  on 5.8.3; not yet run); in World Partition maps use data layers [added].
 - A character Blueprint made of several skeletal meshes animates only the mesh the animation track
   binds; Set Leader Pose Component in its construction script makes the others follow (GLITCH
   [00:18:46]); `check_characters` asks for `"leader_pose": true`.
@@ -195,7 +199,7 @@ any render.
 
 ```python
 # test: P4_board
-# status: not yet run in Unreal; test: test_procedures_snippets.py block P4_board, engine: job_20_board_latent.py
+# status: run on 5.8.3 (2026-10-21, latent offscreen editor): 21 frames at 1280x536 through the shot cameras; test: test_procedures_snippets.py block P4_board, engine: job_20_board_latent.py
 import os
 board_dir = os.path.join(OUT, "board")
 result = {}
@@ -300,7 +304,8 @@ Why: Sir Wade's camera rigs separate base move, framing offset and shake (E7C1xb
 [00:05:17]); re-keying a dense base move to reframe destroys it.
 
 - Base move: the two transform keys from P3, or a Camera Rig Rail or Crane with the camera attached
-  and the rail position keyed (cam doc; class names `CameraRig_Rail`, `CameraRig_Crane` [verify]).
+  and the rail position keyed (cam doc; class names `CameraRig_Rail`, `CameraRig_Crane`, both
+  present on 5.8.3).
 - Framing offset: parent the camera to an offset actor and key the offset only [added]; in the GUI,
   a camera Control Rig's offset control or an Animation Layer (gui-paths.md).
 - Shake: its own weighted layer keyed per moment, strongest on action, near zero on slow moments
@@ -348,9 +353,14 @@ scenario-unreal-performance (`ue_stat.budget_check`).
 
 Why: one source-controlled graph, per-shot values as exposed variables (8o2yaZzfHCA [00:26:58]
 [00:30:14]); editing node defaults from a script dirties the shared asset (mrq-cli). Graph authoring
-is only partly scriptable: read `MovieGraphCreateConfigExample.py` in
-`Engine/Plugins/MovieScene/MovieRenderPipeline/Content/Python/` before scripting node creation;
-otherwise build it in the GUI (gui-paths.md) or start from the 5.8 Basic config and "save as graph".
+is scriptable: `C.create_render_graph(path, width, height, output_dir, formats)` builds Global
+Output Settings, the output nodes, a Deferred Renderer and a render layer, following Epic's
+`MovieGraphCreateConfigExample.py` in
+`Engine/Plugins/MovieScene/MovieRenderPipeline/Content/Python/` (run on 5.8.3). Node classes on
+5.8.3: `MovieGraphImageSequenceOutputNode_EXR`, `..._PNG`,
+`MovieGraphImageSequenceOutputNode_MultiLayerEXR`, `MovieGraphGlobalOutputSettingNode`. Samples,
+warm-up, camera settings, variables and the Execute Script node are not added by it: add them in the
+GUI (gui-paths.md) or extend the function, then re-audit.
 
 Spec of `MRG_<prod>_EXR` (names are what `ue_cine.render_jobs` overrides):
 
@@ -358,7 +368,7 @@ Spec of `MRG_<prod>_EXR` (names are what `ue_cine.render_jobs` overrides):
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
 | Global Output Settings                | resolution (3840 x 2160 or the scope 3840 x 1608), frame rate from the sequence, output folder `{project_dir}/Saved/MovieRenders/{sequence_name}` [added], file name `{sequence_name}.{frame_number}` with Zero Pad 4 (add `{layer_name}` with layers); `check_render_output`'s default pattern mirrors this                                                                                                                                     | mrg doc tokens                                                   |
 | Sampling Method                       | Temporal Sample Count exposed as `TemporalSamples` (Int32)                                                                                                                                                                                                                                                                                                                                                                                       | 8o2yaZzfHCA [00:28:03]                                           |
-| Warm Up Settings                      | frames exposed as `WarmUpFrames`; camera-cut warm-up exposed as `UseCameraCutWarmUp` [verify the property exists on the 5.8 node]; emulate motion blur on                                                                                                                                                                                                                                                                                        | tips doc; mrg doc                                                |
+| Warm Up Settings                      | frames exposed as `WarmUpFrames`; camera-cut warm-up exposed as `UseCameraCutWarmUp` (on 5.8.3 the Warm Up node lists `num_warm_up_frames`, `layer_warm_up_frames` and `emulate_motion_blur` from Python, no camera-cut property; where MRG keeps it is not yet checked); emulate motion blur on                                                                                                                                                 | tips doc; mrg doc                                                |
 | Camera Settings                       | shutter timing Frame Center (odd counts)                                                                                                                                                                                                                                                                                                                                                                                                         | dmrq                                                             |
 | Global Game Overrides                 | connected (cinematic quality applies only while connected); Use LODZero off in foliage shots                                                                                                                                                                                                                                                                                                                                                     | mrq-cli; mrg doc                                                 |
 | Render Layer + Deferred Renderer      | spatial 1, Anti-Aliasing override None, Disable Tone Curve on                                                                                                                                                                                                                                                                                                                                                                                    | mrg doc; WF 2Q3CybANHKE [00:04:31]                               |
@@ -374,7 +384,7 @@ output type since 5.7). Then audit whatever graph the job will use, read-only:
 
 ```python
 # test: P8_audit_graph
-# status: not yet run in Unreal; test: test_procedures_snippets.py block P8_audit_graph
+# status: run on 5.8.3 (2026-10-21, commandlet) on a graph from `C.create_render_graph`: tone curve off, EXR PIZ, audit pass; test: test_procedures_snippets.py block P8_audit_graph
 graph = unreal.load_asset(plan["render"]["graph"])
 snap = C.graph_snapshot(graph)            # read-only walk from the Output node
 settings = C.normalize_graph_snapshot(snap)
@@ -392,7 +402,7 @@ render: fades belong to the edit [added].
 
 ```python
 # test: P9_render_editor
-# status: not yet run in Unreal; test: test_procedures_snippets.py block P9_render_editor, engine: job_30_render_latent.py
+# status: run on 5.8.3 (2026-10-21, latent offscreen editor, one shot, PIE executor): 48 EXR + 48 PNG for a 48-frame shot (end exclusive), half float, PIZ, output folder and file name format respected, about 32 s; test: test_procedures_snippets.py block P9_render_editor, engine: job_30_render_latent.py
 active = C.active_shot_paths(master, plan)   # the takes the edit plays, not the plan's names
 specs = C.render_jobs(plan, sequences=active)  # one job per shot, variables from motion, flags
 for f in C.render_orchestration(specs, unattended=False):

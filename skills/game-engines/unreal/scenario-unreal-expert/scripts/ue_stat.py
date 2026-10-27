@@ -32,7 +32,7 @@ Where the numbers come from (commands from the sources, flags [verify] on 5.8 Ma
   snapshothitches -start / -stop (5.8, needs `stat default`): Saved/Profiling/Hitches
 """
 
-__version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24)
+__version__ = "0.2.1"  # Unreal Engine Expert Skills v0.2.1 (2026-10-21; v0.1 was 2026-09-24)
 
 import csv
 import io
@@ -216,8 +216,14 @@ def parse_csv_profile(path_or_text):
     Returns {"columns", "rows" (dicts of floats; non-numeric cells kept as text),
     "metadata", "events" ([(row index, text)])}."""
     text = _read_text(path_or_text)
+    # 5.8.3 files (run 2026-10-21): the EVENTS cell of the first row can exceed csv's default
+    # 128 KB field limit; the first line is an early header and, with [HasHeaderRowAtEnd],1,
+    # the complete header (more columns, stats that appeared mid-capture) is the last row
+    # before the metadata row. Rows grow in width as stats appear.
+    csv.field_size_limit(min(sys.maxsize, 2 ** 31 - 1))
     reader = csv.reader(io.StringIO(text))
     header, rows, meta, events = None, [], {}, []
+    table = []
     for cells in reader:
         if not cells or all(not c.strip() for c in cells):
             continue
@@ -227,10 +233,17 @@ def parse_csv_profile(path_or_text):
                 if k:
                     meta[k] = cells[j + 1].strip()
             continue
-        if header is None:
-            header = [c.strip() for c in cells]
-            continue
-        if [c.strip() for c in cells] == header:
+        table.append(cells)
+    if not table:
+        return {"columns": [], "rows": [], "metadata": meta, "events": []}
+    first = [c.strip() for c in table[0]]
+    last = [c.strip() for c in table[-1]]
+    if meta.get("HasHeaderRowAtEnd") == "1" and len(table) > 1 and last[:len(first)] == first:
+        header, body = last, table[1:-1]
+    else:
+        header, body = first, table[1:]
+    for cells in body:
+        if [c.strip() for c in cells] in (header, first):
             continue
         row = {}
         for name, cell in zip(header, cells):
