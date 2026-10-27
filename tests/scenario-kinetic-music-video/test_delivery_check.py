@@ -161,6 +161,18 @@ class Fixtures(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertTrue(line(out, "file size").startswith("FAIL"), out)
 
+    def test_peak_bitrate_over_the_level_warns_and_still_passes(self):
+        # noise at crf 1 runs past Level 1's 80 kb/s; a frame this small may signal Level 1, so only the WARN fires
+        path = self.d / "busy.mp4"
+        ff("-f", "lavfi", "-i", "testsrc2=s=64x36:r=60", "-vf", "noise=alls=100:allf=t", "-frames:v", "60", "-c:v",
+           "libx264", "-crf", "1", "-pix_fmt", "yuv420p", "-level", "1", "-movflags", "+faststart", str(path))
+        code, out, _ = check(path, "--no-audio", "--frames", "60")
+        if not line(out, "level").startswith("PASS level: 1 "):
+            self.skipTest(f"x264 did not write Level 1: {line(out, 'level')}")
+        self.assertTrue(line(out, "peak bitrate").startswith("WARN peak bitrate"), out)
+        self.assertEqual(code, 0, out)
+        self.assertIn("ALL CHECKS PASS", out)
+
 
 class Helpers(unittest.TestCase):
     def test_level_cap_by_frame_size(self):
