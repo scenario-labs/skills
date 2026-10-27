@@ -149,6 +149,10 @@ unchanged.
   far. It now runs at the scale-1 size. Its bright pass then read only the middle of each 4×4 block,
   so it averages the block with four bilinear taps instead: without them, thin lines pulse as they
   move.
+  - The engine supplies that bright pass whole instead of patching three's shader text, which a
+    reformatting release would break with no CI test to notice (the repository installs no three).
+    It relies only on the uniforms UnrealBloomPass feeds, and boot refuses `--scale` above 1 if one
+    goes missing. Seven 4K stills match the text-patched version byte for byte.
 - **Grain and scanlines** keep 1080p cells (string substitution in the final shader).
 - **Encoder:** above 1080p, `-level` from H.264 Table A-1 and `-threads 4`; `render.mjs` caps the
   workers to memory and refuses a 4K master past Level 5.2.

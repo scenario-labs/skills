@@ -120,25 +120,40 @@ composer.addPass(texPass);
 const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 1.0, 0.55, 1.05);
 // Above scale 1 (the 4K master) the bloom runs at the scale-1 size, since UnrealBloomPass blurs in texels of its own
 // targets; its bright pass then averages each SCALE x SCALE cell instead of reading only its middle, so a thin line keeps
-// a steady glow as it moves. The shader text is untouched at scale 1 or below.
+// a steady glow as it moves. The engine supplies that whole bright pass (three's LuminosityHighPassShader with the
+// averaged read), so a three release that reformats its shader text cannot break it; it relies only on the uniforms
+// UnrealBloomPass feeds. Three's shaders run untouched at scale 1 or below.
 let scaleError = null;
 if (SCALE > 1) {
   const setSize = bloom.setSize.bind(bloom);
   bloom.setSize = (w, h) =>
     setSize(Math.round(w / SCALE), Math.round(h / SCALE));
   const hp = bloom.materialHighPassFilter,
-    tap = "vec4 texel = texture2D( tDiffuse, vUv );";
-  if (hp.fragmentShader.includes(tap)) {
-    hp.fragmentShader = hp.fragmentShader.replace(
-      tap,
-      `vec2 o = ${(SCALE / 2).toFixed(4)} / vec2(textureSize(tDiffuse, 0));
-      vec4 texel = 0.25 * (texture2D(tDiffuse, vUv - o) + texture2D(tDiffuse, vUv + o)
-        + texture2D(tDiffuse, vUv + vec2(o.x, -o.y)) + texture2D(tDiffuse, vUv + vec2(-o.x, o.y)));`,
-    );
+    fed = [
+      "tDiffuse",
+      "luminosityThreshold",
+      "smoothWidth",
+      "defaultColor",
+      "defaultOpacity",
+    ];
+  if (hp?.uniforms && fed.every((k) => k in hp.uniforms)) {
+    hp.vertexShader = `varying vec2 vUv;
+      void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+    hp.fragmentShader = `uniform sampler2D tDiffuse; uniform vec3 defaultColor;
+      uniform float defaultOpacity, luminosityThreshold, smoothWidth; varying vec2 vUv;
+      void main(){
+        vec2 o = ${(SCALE / 2).toFixed(4)} / vec2(textureSize(tDiffuse, 0));
+        vec4 texel = 0.25 * (texture2D(tDiffuse, vUv - o) + texture2D(tDiffuse, vUv + o)
+          + texture2D(tDiffuse, vUv + vec2(o.x, -o.y)) + texture2D(tDiffuse, vUv + vec2(-o.x, o.y)));
+        float v = luminance(texel.xyz);
+        vec4 outputColor = vec4(defaultColor.rgb, defaultOpacity);
+        float alpha = smoothstep(luminosityThreshold, luminosityThreshold + smoothWidth, v);
+        gl_FragColor = mix(outputColor, texel, alpha);
+      }`;
     hp.needsUpdate = true;
   } else
     scaleError = new Error(
-      `--scale ${SCALE}: this three.js changed UnrealBloomPass's bright pass; update the 4K bloom fix in main.js`,
+      `--scale ${SCALE}: this three.js changed UnrealBloomPass's bright pass uniforms; update the 4K bloom fix in main.js`,
     );
 }
 composer.addPass(bloom);
