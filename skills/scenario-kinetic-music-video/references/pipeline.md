@@ -230,6 +230,12 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
   and graphics may run behind it.
 - Do a global look pass: a still sheet across all sections, then tune `POST`, the palette and the
   HUD theme before the final render.
+- **Motion blur:** decide it in the look pass. Render the fastest 5 s twice at `--fps 60 --scale 1`,
+  with `--blur` and without, and show the pair (unattended: leave it off). Once approved, set
+  `export const BLUR = { on: true }` in `engine/timeline.js`, so every later render carries it
+  (`ENGINE_API.md`, Motion blur). Then run a sheet of frames at each hard cut inside a scene
+  (`still.mjs --blur`): a double exposure there needs an `E.cut(t)`, and `render.mjs` lists the
+  frames it had to render without blur.
 
 ## 8. Delivery
 
@@ -277,6 +283,7 @@ ffmpeg -i out/final/vN_4k.mp4 -vf scale=-2:1080:flags=lanczos -c:v libx264 -pres
 - **Variants:** render each with `--variant`, and name the files by what differs (`_ending_b.mp4`).
 - **Stills:** `node tools/still.mjs --t <times> --scale 1 --dir out/stills` gives lossless PNGs at
   the canvas size (1920×1080 or 1080×1920) straight from the engine; `--scale 2` with a 4K master.
+  They stay sharp under motion blur unless you pass `--blur`.
 - **Style sheet / making-of:** publish an artifact or doc with the palette, type, subject sheets,
   source-vs-final footage pairs, a frame index, the pipeline and the iteration count.
 

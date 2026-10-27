@@ -13,6 +13,7 @@ headless Chrome, and ffmpeg muxes the untouched master audio on top.
 - [Footage: clean plates, mattes and tracking](#footage-clean-plates-mattes-and-tracking)
 - [Keyed footage planes in 3D (roto)](#keyed-footage-planes-in-3d-roto)
 - [Post](#post)
+- [Motion blur](#motion-blur)
 - [HUD](#hud)
 - [Timeline, variants and project config](#timeline-variants-and-project-config)
 - [Fonts and 3D assets](#fonts-and-3d-assets)
@@ -24,6 +25,7 @@ headless Chrome, and ffmpeg muxes the untouched master audio on top.
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `index.html`                          | fonts (@font-face → assets/fonts), importmap for three                                                                                                           |
 | `main.js`                             | loads data and scenes, per-frame layer compositing, bloom, final grade shader, `renderFrame` / `grab`                                                            |
+| `blur.js`                             | motion-blur planning: settings, cuts, shutter windows, sample times                                                                                              |
 | `canvas.js`                           | canvas presets, orientation, the platform-UI safe band, per-canvas timeline filtering                                                                            |
 | `core.js`                             | math, easing, springs, RNG/noise, palette, audio/lyric timeline helpers, text canvases, 3D type, G2D surfaces, video frame sequences (frames + matte + tracking) |
 | `plate.js`                            | `drawPlate`, `plateRect`, `plateToScreen`, `plateMaterialFor`: clean footage with optional matte cut-out                                                         |
@@ -64,6 +66,8 @@ export default {
   At most 2 full-res 2D canvases redrawn per frame, and no allocation in hot loops.
 - The first frame at `layer.start` is a hard cut in, so make it striking. The last frames land on an
   accent.
+- With motion blur on, `render()` runs several times per output frame and `prepare()` once, so keep
+  `render()` free of state between calls ([Motion blur](#motion-blur)).
 
 ## Canvas and safe band
 
@@ -99,6 +103,8 @@ unreadable value stops the render with an error.
 
 - **Time and audio**
   - `E.t`, `E.frame`, `E.fps`, `E.dur`, `E.bpm`, `E.spb`.
+  - `E.frameT`, `E.atFrame(t)`, `E.blur`, `E.blurring`, `E.cut`, `E.fast`, `E.shutter`, `E.sharp`:
+    see [Motion blur](#motion-blur).
   - `E.env(name, t)` for `mix|vocal|kick|snare|hats|bass` (≈0..1.5), plus `E.envAvg(name, t, win)`.
   - `E.last(list, t)` / `E.next(list, t)` return `{i, t, dt}` for the lists
     `beats|downbeats|kicks|snares|vocal_onsets`. There is no `hats` list (hats are an envelope
@@ -220,6 +226,47 @@ For clips shot on a pitch-black void that should float inside a 3D world without
 - `letterbox` masks to a 2.39:1 window across the full width, which is a thin strip on a portrait
   canvas. There, frame a cinema moment as a boxed plate instead.
 
+## Motion blur
+
+Off by default. `export const BLUR = { on: true }` in timeline.js turns it on from `--scale 1` up;
+`render.mjs --blur`, `--blur off` or `--blur 12` (a sample count) overrides it for one run. Previews
+below scale 1 and `still.mjs` stay sharp unless given `--blur`.
+
+- **How:** each output frame renders its blurred layers at `samples` sub-frame times (default 8)
+  across a shutter of `shutter` degrees (default 180: 1/120 s at 60 fps) that opens at the frame
+  time. They are averaged in a float target, then post runs once.
+- **Once per frame, at the frame time:** `prepare()`, the HUD, `E.post` (bloom, grade, grain, flash,
+  punch, shake, rot) and `E.hud`. A sample's writes to `E.post` and `E.hud` are dropped, so camera
+  moves made with `E.post` stay sharp: move your own camera or group for a blurred whip.
+- **Every sample:** `render()` with `t` (and `E.t`) the sample time, `E.frameT` the frame's.
+  `E.atFrame(t)` maps a sample time back to the frame's: draw counters and digits from it.
+- **Footage never mixes two frames.** Every sample shows the frame `prepare()` loaded, and
+  `v.trackAt()` replays what the frame pass got, call by call. A plate your scene does not move is
+  identical to a render without blur; a plate it moves blurs with the move.
+- **Cuts:** no sample crosses a layer start or end, a word switch (`w.s - E.LEAD`) or an `E.cut(t)`.
+  A cut inside the shutter slides it back, so the frame before it still blurs. Call `E.cut(t)` in
+  `load()` for every other hard switch inside your section (a clip, a color field, a layout).
+  `BLUR.beatCuts: true` adds every beat; `BLUR.wordCuts: false` drops the word switches.
+- **Undeclared clip switch:** a sample drawing a clip that `prepare()` did not advance this frame
+  makes that frame render without blur. `render.mjs` lists those frames at the end; add the `E.cut`.
+  Roto materials and custom textures are not checked.
+- **Per moment,** registered in `load()` in global seconds:
+  - `E.fast(t0, t1, n)`: at least `n` samples on frames whose shutter overlaps the window (12 to 24
+    for a slam or a spin).
+  - `E.shutter(t0, t1, k)`: a shutter `k` times longer (2 to 3 for a whip), with `k` times the
+    samples.
+  - `E.sharp(t0, t1)`: no blur, for a held poster slam.
+  - Samples stop at `max` (24 by default, `--blur-max`).
+- **Per layer:** `blur: false` on a TIMELINE entry renders it once per frame, like the HUD (`hud.js`
+  declares `blur: false`; an entry's own `blur` wins); `blur: n` is `E.fast` over the whole entry.
+  Anything else stops the render with an error.
+- **Hand-made blur:** `E.blurring` is true while a layer that blurs this frame renders. Draw the
+  ghost copies of moves 1, 2 and 38 (`motion_library.md` §4) only while it is false.
+- **Cost:** each sample re-renders every blurred layer, so keep each `render()` within the frame
+  budget. 8 samples took about 2.5 times as long as no blur on a synthetic scene (authoring-time
+  measurement); `E.fast` and `E.shutter` windows cost more.
+- It needs float render targets; without float blending it falls back to a slower exact path.
+
 ## HUD
 
 A persistent frame glues 2D, 3D and footage sections into one piece, and its subtitle track keeps
@@ -239,9 +286,10 @@ every lyric readable.
 
 ## Timeline, variants and project config
 
-- `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?, canvas?, energy?}`. One file per
-  section, with hard cuts at boundaries on downbeats. `energy` (`calm`, `mid`, `high`, `showcase`)
-  sets the targets `tools/dynamism_check.py gate` holds the section to; the engine ignores it.
+- `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?, canvas?, energy?, blur?}`. One
+  file per section, with hard cuts at boundaries on downbeats. `energy` (`calm`, `mid`, `high`,
+  `showcase`) sets the targets `tools/dynamism_check.py gate` holds the section to; the engine
+  ignores it.
 - **Per-canvas entries:** `canvas:'portrait'` (or a list of orientations) renders the entry only on
   that canvas, `--only` included; tags are case-insensitive, an unknown one stops the render with an
   error, and so does an `--only` that leaves nothing to render. Use it for a section that needs its
@@ -274,3 +322,4 @@ every lyric readable.
 - Full:
   `node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/master.mp4 [--variant b] [--to <end>] [--canvas portrait]`
 - 4K master: the same with `--scale 2 --out out/final/master_4k.mp4` (`pipeline.md` §8).
+- Motion blur for one run: add `--blur` (or `--blur off`) to `render.mjs` or `still.mjs`.

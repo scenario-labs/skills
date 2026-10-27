@@ -17,16 +17,40 @@ export function parseArgs(argv) {
   );
 }
 
-// The engine page's query. `safe` only for still.mjs: a delivery render never outlines the safe band.
-export function engineQuery(args, { scale, safe = false }) {
+// The engine page's query. `still` is for still.mjs: it may outline the safe band (a delivery render never does), and
+// its stills stay sharp unless --blur asks for motion blur.
+export function engineQuery(args, { scale, still = false }) {
   const q = new URLSearchParams({ scale: String(scale) });
   if (args.only) q.set("only", args.only);
   if (args.variant || args.ending)
     q.set("variant", args.variant || args.ending);
   if (args.canvas) q.set("canvas", args.canvas);
-  if (safe && args.safe) q.set("safe", "1");
+  if (still && args.safe) q.set("safe", "1");
+  if (args.blur !== undefined)
+    q.set("blur", args.blur === true ? "on" : String(args.blur));
+  else if (still) q.set("blur", "off");
+  if (args.shutter !== undefined) q.set("shutter", String(args.shutter));
+  if (args["blur-max"] !== undefined)
+    q.set("blurmax", String(args["blur-max"]));
   return q;
 }
+
+// Why a motion-blur flag cannot run on this project's engine, or null
+export function blurRefusal(args, engineHasBlur) {
+  const asked = ["blur", "shutter", "blur-max"].filter(
+    (k) => args[k] !== undefined,
+  );
+  if (!asked.length || engineHasBlur) return null;
+  return `--${asked[0]}: this project's engine predates motion blur; copy main.js, blur.js, core.js, plate.js, typekit.js and scenes/hud.js from the skill's assets/engine into engine/ first`;
+}
+
+// One line on the blur a render uses
+export const describeBlur = (b) =>
+  b == null
+    ? null
+    : b.on
+      ? `motion blur: ${b.samples} samples over a ${b.shutter} degree shutter, up to ${b.max} in fast windows`
+      : "motion blur: off";
 
 const mbs = (w, h) => Math.ceil(w / 16) * Math.ceil(h / 16);
 // H.264 Table A-1: [level, max macroblocks per second, per frame, decoded picture buffer]

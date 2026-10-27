@@ -1,5 +1,5 @@
 // Deterministic renderer: steps the engine frame by frame in headless Chrome, pipes JPEGs to ffmpeg.
-// usage: node tools/render.mjs --from 22 --to 30 --fps 30 --scale 0.5 --out out/preview.mp4 [--only a,b] [--workers 3] [--noaudio] [--crf 16] [--variant b] [--canvas portrait|landscape|square|WxH] [--force]  (--to defaults to the song length; --canvas defaults to CANVAS in engine/timeline.js; an existing --out is kept unless --force; --scale 2 renders the 4K master and fits --workers to memory)
+// usage: node tools/render.mjs --from 22 --to 30 --fps 30 --scale 0.5 --out out/preview.mp4 [--only a,b] [--workers 3] [--noaudio] [--crf 16] [--variant b] [--canvas portrait|landscape|square|WxH] [--blur [on|off|N]] [--shutter 180] [--blur-max 24] [--force]  (--blur overrides BLUR in engine/timeline.js; --to defaults to the song length; --canvas defaults to CANVAS in engine/timeline.js; an existing --out is kept unless --force; --scale 2 renders the 4K master and fits --workers to memory)
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -7,6 +7,8 @@ import os from "node:os";
 import path from "node:path";
 import { serve } from "./serve.mjs";
 import {
+  blurRefusal,
+  describeBlur,
   engineQuery,
   levelProblem,
   parseArgs,
@@ -58,13 +60,17 @@ async function renderChunk(a, b, file, wi) {
   await page.waitForFunction(() => window.__ready || window.__error, null, {
     timeout: 180000,
   });
-  const err = await page.evaluate(() => window.__error);
+  const err =
+    (await page.evaluate(() => window.__error)) ||
+    blurRefusal(args, await page.evaluate(() => "blur" in window.E));
   if (err) throw new Error(err);
   // the engine resolved the canvas (timeline.js CANVAS or --canvas); match the page to it
   const [w, h] = await page.evaluate(() => [window.E.W, window.E.H]);
   await page.setViewportSize({ width: w, height: h });
   const enc = x264Args({ w, h, fps, crf: args.crf ?? 16, scale });
   if (wi === 0) {
+    const b = describeBlur(await page.evaluate(() => window.E.blur));
+    if (b) console.log(b);
     if (!enc.includes("-level") && enc.includes("-threads"))
       console.log(`note: ${levelProblem(w, h, fps)}; rendering anyway`);
     if (scale > 1) fitWorkers(w, h);
@@ -108,6 +114,9 @@ async function renderChunk(a, b, file, wi) {
         `[w${wi}] frame ${f}/${b} ${((f - a + 1) / ((Date.now() - t0) / 1000)).toFixed(1)} fps\n`,
       );
   }
+  sharpFrames.push(
+    ...((await page.evaluate(() => window.__blurFallbacks)) ?? []),
+  );
   ff.stdin.end();
   const code = await new Promise((r) => ff.on("close", r));
   await browser.close();
@@ -118,7 +127,8 @@ async function renderChunk(a, b, file, wi) {
 // memory. The chunks stay those of --workers, so the file does not depend on the machine.
 let slots = scale > 1 ? 1 : Infinity,
   running = 0;
-const waiting = [];
+const waiting = [],
+  sharpFrames = [];
 const pump = () => {
   while (running < slots && waiting.length) {
     running++;
@@ -209,4 +219,11 @@ if (muxCode !== 0) {
 parts.forEach(([, f]) => fs.unlinkSync(f));
 fs.unlinkSync(list);
 srv.close();
+if (sharpFrames.length)
+  console.log(
+    `motion blur: ${sharpFrames.length} frame${sharpFrames.length === 1 ? "" : "s"} rendered sharp, because a sample drew a clip prepare() had not advanced (a cut inside a scene): ${sharpFrames
+      .sort((x, y) => x[0] - y[0])
+      .map(([f, c]) => `${f} (${c})`)
+      .join(", ")}. Register those cuts with E.cut(t) in load().`,
+  );
 console.log("wrote", out, `(${n} frames)`); // the count delivery_check.py --frames takes

@@ -6,6 +6,8 @@ import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import {
   above1080p,
+  blurRefusal,
+  describeBlur,
   engineQuery,
   h264Level,
   parseArgs,
@@ -59,8 +61,41 @@ describe("engineQuery", () => {
   it("forwards --safe for stills only, never for a render", () => {
     expect(engineQuery({ safe: true }, { scale: 1 }).has("safe")).toBe(false);
     expect(
-      engineQuery({ safe: true }, { scale: 1, safe: true }).get("safe"),
+      engineQuery({ safe: true }, { scale: 1, still: true }).get("safe"),
     ).toBe("1");
+  });
+
+  it("passes the motion-blur flags through", () => {
+    const q = (a: object) => String(engineQuery(a, { scale: 1 }));
+    expect(q({})).toBe("scale=1");
+    expect(q({ blur: true })).toBe("scale=1&blur=on");
+    expect(q({ blur: "12", shutter: "270", "blur-max": "16" })).toBe(
+      "scale=1&blur=12&shutter=270&blurmax=16",
+    );
+    expect(q({ blur: "off" })).toBe("scale=1&blur=off");
+  });
+
+  it("keeps stills sharp unless --blur asks", () => {
+    const q = (a: object) => engineQuery(a, { scale: 1, still: true });
+    expect(q({}).get("blur")).toBe("off");
+    expect(q({ blur: true }).get("blur")).toBe("on");
+  });
+});
+
+describe("motion blur on the engine", () => {
+  it("refuses a blur flag on an engine without blur, naming the files to copy", () => {
+    expect(blurRefusal({ blur: true }, false)).toMatch(/^--blur: .*blur\.js/);
+    expect(blurRefusal({ "blur-max": "8" }, false)).toMatch(/^--blur-max/);
+    expect(blurRefusal({ blur: true }, true)).toBeNull();
+    expect(blurRefusal({}, false)).toBeNull();
+  });
+
+  it("describes the blur a render uses", () => {
+    expect(describeBlur(undefined)).toBeNull();
+    expect(describeBlur({ on: false })).toBe("motion blur: off");
+    expect(
+      describeBlur({ on: true, samples: 8, shutter: 180, max: 24 }),
+    ).toMatch(/8 samples over a 180 degree shutter/);
   });
 });
 

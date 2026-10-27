@@ -197,7 +197,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - On portrait, `still.mjs --safe` sheets, 20 s each: no word, logo or face outside the outlined
     band.
 - **Global look pass:** a still sheet across all sections, then tune `POST`, the palette and the HUD
-  theme.
+  theme. Decide motion blur from an A/B of the fastest 5 s (`--blur`, `references/pipeline.md` §7;
+  unattended: off).
 - **Revisions:** map each director note (they arrive as timestamps) to its section and send it back
   to the owning agent via SendMessage. Resuming keeps its context. Fix a weak shot by replacing it
   with a new generation in a different look, or with code, never by adding effects. Offer
@@ -269,11 +270,12 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   [still.mjs](scripts/still.mjs), [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py),
   [delivery_check.py](scripts/delivery_check.py)
 - Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html),
-  [main.js](assets/engine/main.js), [canvas.js](assets/engine/canvas.js),
-  [core.js](assets/engine/core.js), [plate.js](assets/engine/plate.js),
-  [roto.js](assets/engine/roto.js), [typekit.js](assets/engine/typekit.js),
-  [hud.js](assets/engine/scenes/hud.js), plus [timeline.template.js](assets/timeline.template.js)
-  and [scene.template.js](assets/scene.template.js)
+  [main.js](assets/engine/main.js), [blur.js](assets/engine/blur.js),
+  [canvas.js](assets/engine/canvas.js), [core.js](assets/engine/core.js),
+  [plate.js](assets/engine/plate.js), [roto.js](assets/engine/roto.js),
+  [typekit.js](assets/engine/typekit.js), [hud.js](assets/engine/scenes/hud.js), plus
+  [timeline.template.js](assets/timeline.template.js) and
+  [scene.template.js](assets/scene.template.js)
 - [references/pipeline.md](references/pipeline.md): every command and Scenario call, step by step
 - [references/engine_api.md](references/engine_api.md): the scene contract and the full `E` API
   (canvas and safe band, plates, mattes, tracking, post, HUD, variants)

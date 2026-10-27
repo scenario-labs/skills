@@ -1,9 +1,11 @@
 // Kinetic-music-video engine core: deterministic helpers shared by every scene.
 // Everything is a pure function of global song time `t` (seconds). Never use Date/performance/Math.random.
+// With motion blur on, render() runs several times per output frame and prepare() once (ENGINE_API.md, Motion blur).
 import * as THREE from "three";
 import { TTFLoader } from "three/addons/loaders/TTFLoader.js";
 import { Font } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+import { clock, replayIndex } from "./blur.js";
 
 export function stretchKW(v) {
   if (!v || v === "normal") return "normal";
@@ -396,6 +398,14 @@ export function makeG2D(w, h) {
 
 // ---------- video frame sequences (generated clips, pre-extracted to /assets/video/<clip>/f_00001.jpg + meta.json)
 const _vids = {};
+// main.js calls this before each frame pass: forget the last frame's trackAt calls, and record this frame's when its
+// motion-blur samples will replay them
+const _tracked = new Set();
+export function trackFrame(keep) {
+  for (const v of _tracked) v._seen = [];
+  _tracked.clear();
+  clock.keep = keep;
+}
 function warpT(W, x) {
   if (x <= W[0][0]) return x;
   for (let k = 1; k < W.length; k++) {
@@ -433,11 +443,13 @@ export async function loadVideo(clip) {
     return p;
   };
   const v = {
+    name: clip,
     meta,
     tex,
     cur: -1,
     // localT seconds into the clip -> updates tex. returns frame index.
     async frame(localT) {
+      v.prepared = clock.id;
       if (meta.warp) localT = warpT(meta.warp, localT);
       const i = Math.max(
         1,
@@ -461,13 +473,27 @@ export async function loadVideo(clip) {
       return i;
     },
     // tracking (tools/track.py): pose = 33 MediaPipe landmarks [x,y,vis] in video UV (0..1, y down); box = matte bbox [x0,y0,x1,y1]; c = matte centroid
+    // Inside a motion-blur sample it returns what the frame pass got, so tracked graphics stay on the footage frame shown.
     trackAt(localT) {
       if (!v.track) return null;
+      if (clock.sub && v._seen) {
+        if (v._pass !== clock.pass) {
+          v._pass = clock.pass;
+          v._k = 0;
+        }
+        const i = replayIndex(v._seen, v._k++, localT, clock.shift);
+        if (i !== null) return v.track[i];
+      }
+      const arg = localT;
       if (meta.warp) localT = warpT(meta.warp, localT);
       const i = Math.max(
         0,
         Math.min(v.track.length - 1, Math.floor(localT * meta.fps)),
       );
+      if (clock.keep && !clock.sub) {
+        (v._seen ??= []).push([arg, i]);
+        _tracked.add(v);
+      }
       return v.track[i];
     },
   };
