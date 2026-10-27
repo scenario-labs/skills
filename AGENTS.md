@@ -316,6 +316,8 @@ and command lines.
 
 - After cloning, run `pnpm install`. It installs commitlint, cspell, prettier, and the husky git
   hooks.
+- The prerequisites are listed in [CONTRIBUTING.md](CONTRIBUTING.md#setup). Without uv, every commit
+  fails.
 - In Claude Code, a SessionStart hook (`.claude/hooks/ensure-husky.sh`) runs it when the hooks are
   missing.
 - In Codex, run `pnpm install --frozen-lockfile` if `node_modules` is missing or

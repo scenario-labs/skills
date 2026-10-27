@@ -493,10 +493,11 @@ files into 70+ agents, and the ecosystem directory lives at [skills.sh](https://
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow, and [AGENTS.md](AGENTS.md) for
 the authoring contract, the public-content policy, validation, and the application-testing bar.
-One-time setup after cloning: `pnpm install` (installs commitlint, cspell, prettier, and the husky
-git hooks). `pnpm run validate` runs the same content checks CI runs; commit messages and the PR
-title are linted separately with commitlint. PRs welcome; PR titles follow Conventional Commits
-since they become the squash commit header on `main`.
+One-time setup after cloning: install the [prerequisites](CONTRIBUTING.md#setup), uv included, then
+run `pnpm install` (installs commitlint, cspell, prettier, and the husky git hooks).
+`pnpm run validate` runs the same content checks CI runs; commit messages and the PR title are
+linted separately with commitlint. PRs welcome; PR titles follow Conventional Commits since they
+become the squash commit header on `main`.
 
 Every script shipped with a skill has a test suite in `tests/<name>/`; `pnpm test` runs them all (CI
 does too). Suites need Python 3.11+, plus ffmpeg on PATH where a suite uses it. With uv installed,
