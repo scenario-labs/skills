@@ -99,7 +99,10 @@ def loudness(path):
 
 
 def make_deliverables(video, audio, dest, name, title, fps, vertical=True):
-    """The master, a 1080p version of a 4K master, and the 9:16 version; returns their paths."""
+    """The master, a 1080p version of a larger master, and the 9:16 version.
+
+    Returns (every path, the 1080p one the dynamism gates measure: the version, or the master itself).
+    """
     h = int(probe(video, "stream=height") or 0)
     if not h:
         sys.exit(f"could not read {video} as a video")
@@ -109,17 +112,17 @@ def make_deliverables(video, audio, dest, name, title, fps, vertical=True):
     master = os.path.join(dest, f"{name}_{'4k' if h > 1440 else str(h) + 'p'}{fps}.mp4")
     run = ["ffmpeg", "-v", "error", "-y", "-i", video, *mux]
     subprocess.run([*run, "-c:v", "copy", "-movflags", "+faststart", "-metadata", f"title={title}", master], check=True)
-    outs = [master]
+    outs, check = [master], master
     if h > 1080:
-        p = os.path.join(dest, f"{name}_1080p{fps}.mp4")
-        subprocess.run([*run, "-vf", "scale=1920:1080:flags=lanczos", *x264, "-movflags", "+faststart", p], check=True)
-        outs.append(p)
+        check = os.path.join(dest, f"{name}_1080p{fps}.mp4")
+        subprocess.run([*run, "-vf", "scale=1920:1080:flags=lanczos", *x264, "-movflags", "+faststart", check], check=True)
+        outs.append(check)
     if vertical:
         p = os.path.join(dest, f"{name}_9x16.mp4")
         pad = "scale=1080:-2:flags=lanczos,pad=1080:1920:0:(1920-ih)/2:black"
         subprocess.run([*run, "-vf", pad, *x264, "-movflags", "+faststart", p], check=True)
         outs.append(p)
-    return outs
+    return outs, check
 
 
 class Report:
@@ -148,7 +151,7 @@ def main(argv=None):
     os.makedirs(dest, exist_ok=True)
     fps = info["fps"]
     expected = round(info["dur"] * fps)
-    outs = make_deliverables(a.video, a.audio, dest, name, info.get("title", ""), fps, not a.no_vertical)
+    outs, src = make_deliverables(a.video, a.audio, dest, name, info.get("title", ""), fps, not a.no_vertical)
     report = Report()
     for f in outs:
         print(os.path.basename(f))
@@ -158,8 +161,7 @@ def main(argv=None):
         report.line("plays on the Mac hardware decoder", hw_decode(f))
         if a.audio:
             report.line("loudness", gate_loudness(loudness(f)))
-    # dynamism of the film itself, measured on the 1080p file: the numbers the reference reels were measured with
-    src = outs[1] if len(outs) > 1 and "1080p" in outs[1] else outs[0]
+    # dynamism of the film itself, measured on the 1080p file: the motion threshold is in 1080p pixels
     end = end_card_time(info)
     measured = dyn.measure(src, 0, max(1, end))
     print("dynamism")

@@ -185,8 +185,19 @@ class FinishRunTest(unittest.TestCase):
         self.assertEqual(media.ffprobe(dest / "short_4k60.mp4", "stream=height"), "2160")
         self.assertEqual(media.ffprobe(dest / "short_1080p60.mp4", "stream=height,level"), "1080,42")
         self.assertEqual(r.stdout.count("PASS  frames: 30 of 30"), 2)
-        # the dynamism is measured on the 1080p version, the scale the reference numbers use
+        # the dynamism is measured on the 1080p version, the scale the motion threshold is set in
         self.assertTrue(json.loads((dest / "dynamism.json").read_text())["summary"]["src"].endswith("short_1080p60.mp4"))
+
+    def test_a_1080p_master_is_measured_whatever_the_folder_is_called(self):
+        # a folder or title holding "1080p" must not make the 9:16 version the measured file
+        dest = self.dir / "renders_1080p" / "final"
+        info = self.dir / "named.json"
+        info.write_text(json.dumps({"title": "Promo 1080p", "dur": 0.5, "fps": 60, "bpm": 120}))
+        video = write_film_video(self.dir / "named_1080.mp4", 0.5, 1080)
+        r = self.run_finish("--video", video, "--dest", dest, info=info)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        src = json.loads((dest / "dynamism.json").read_text())["summary"]["src"]
+        self.assertEqual(Path(src).name, "promo-1080p_1080p60.mp4")
 
     def test_a_1440p_master_also_gets_a_1080p_version(self):
         info = self.dir / "q.json"
