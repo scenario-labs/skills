@@ -2,7 +2,7 @@
 // and the option instead of a crash inside a block. checkSpec(spec) returns [{ level, msg }]:
 // an 'error' stops the boot (info.mjs exits 1 and lists it), a 'warning' is printed and the film still builds.
 // Custom blocks are fine: any subclass of Scene passes, wherever it is defined.
-import { Scene, Words, Picture, Logo, SHOT_STYLES } from './blocks.js';
+import { Scene, Words, Picture, Stretch, Notes, Progress, Logo, SHOT_STYLES } from './blocks.js';
 
 const HEX6 = /^#[0-9a-f]{6}$/i;
 const RGB = /^rgba?\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*(,\s*[\d.]+\s*)?\)$/i;
@@ -27,7 +27,7 @@ export function checkSpec(spec) {
   const inFilm = k => num(k) && k >= 0 && k <= beats;
   if (spec.fps !== undefined) {
     if (!(num(spec.fps) && spec.fps > 0)) error(`fps must be a number above 0, not ${show(spec.fps)}`);
-    else if (spec.fps !== 60) warn(`fps is ${spec.fps}: the HUD, finish.py's motion target and the reference numbers assume 60`);
+    else if (spec.fps !== 60) warn(`fps is ${spec.fps}: the HUD and finish.py's motion target assume 60`);
   }
   // the engine mixes palette colors channel by channel, which only works on #RRGGBB and rgb()
   for (const [k, v] of Object.entries(spec.palette || {}))
@@ -45,6 +45,11 @@ export function checkSpec(spec) {
     if (S.endCard) logoStart = logoStart === null ? k0 : Math.max(logoStart, k0);
     if (is(S, Words)) checkWords(o, k0, k1, name, error);
     if (is(S, Picture) && !(typeof o.src === 'string' && o.src)) error(`${name}: Picture needs src, the image path`);
+    // the film's words are the user's: these blocks have no placeholder copy to fall back on
+    if (is(S, Stretch) && !(typeof o.word === 'string' && o.word)) error(`${name}: Stretch needs word: 'ONE WORD.'`);
+    if (is(S, Notes) && !(typeof o.preview === 'string' && o.preview)) error(`${name}: Notes needs preview, the word in the preview window`);
+    if (is(S, Progress) && !(Array.isArray(o.lines) && o.lines.length === 2 && o.lines.every(l => typeof l === 'string')))
+      error(`${name}: Progress needs lines: ['FIRST', 'SECOND LINE.']`);
     if (is(S, Logo) && spec.logo === undefined && o.mark) warn(`${name}: mark ids are set but spec.logo names no SVG file`);
   });
 

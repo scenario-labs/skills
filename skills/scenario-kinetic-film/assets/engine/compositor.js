@@ -1,5 +1,5 @@
 // compositor.js: composes a film from its spec (blocks on a beat grid, captions, HUD) into one seekable film.
-// v2: a camera rig moves the whole scene layer every frame (scene drift + whips + shakes + beat bumps),
+// A camera rig moves the whole scene layer every frame (scene drift + whips + shakes + beat bumps),
 // color grounds swap behind it, and FX draw either in world space (with the camera) or in screen space.
 import { B, C, E, tw, rgba, el, vis, set, Caption, HUD, FX, drawComet, drawBurst, drawSlash, drawDots,
   drawRays, drawRing, drawBokeh, drawStarburst } from './core.js';

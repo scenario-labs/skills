@@ -131,7 +131,7 @@ describe("a film built from the tour spec", () => {
   });
 
   it("the end card starts at the Logo block", () => {
-    expect(film.endCard()).toBeCloseTo(core.B(139), 9);
+    expect(film.endCard()).toBeCloseTo(core.B(137), 9);
   });
 
   it("registers sound cues once: the nested Rewind film adds none", () => {

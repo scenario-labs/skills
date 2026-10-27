@@ -298,7 +298,7 @@ export function drawDots(x, d, t) {
   x.restore();
 }
 
-// ---------- v2 effects ----------
+// ---------- effects ----------
 // Speed lines on a spoke pattern. Outward: a burst that stretches and drains. Inward: lines that keep converging.
 export function drawRays(x, o, t) {
   const { t0, dur = .5, cx = 960, cy = 540, n = 64, inward = false, color = C.paper, w = 2.4, r0 = 60, r1 = 1400, seed = 3, alpha = 1, rate = 2.2 } = o;

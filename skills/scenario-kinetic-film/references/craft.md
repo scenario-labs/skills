@@ -1,7 +1,7 @@
 # Craft: what makes it read as motion design
 
-These came from measuring three high-energy reference reels frame by frame and from building two
-films against them. Each rule has a reason you can see on screen.
+These were measured on high-energy motion design reels and checked on Kaiju Postal. Each rule has a
+reason you can see on screen.
 
 ## Never park
 
@@ -37,7 +37,7 @@ films against them. Each rule has a reason you can see on screen.
   matters.
 - Archivo's width axis (62 to 125) is part of the motion: words can stretch, squeeze and fill a
   width.
-- Outlined (stroke) words for things not yet true, filled when they are: NO TIMELINE. fills on its
+- Outlined (stroke) words for things not yet true, filled when they are: NO GUESSWORK. fills on its
   beat.
 - Glyph scrambles and code backdrops say "code"; for a game or product, use its own visual language
   instead.

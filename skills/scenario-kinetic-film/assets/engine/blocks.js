@@ -1,7 +1,7 @@
 // blocks.js: the scene blocks a kinetic film is assembled from. Each block is a class placed on the beat grid in
 // spec.js as [Block, startBeat, endBeat, options]. Blocks with a nominal length (static N, in beats) scale their
 // internal timing to the span they are given; sequencing blocks (Words, Strike) take absolute beats.
-// v2 rule built into every block: nothing parks. The camera always moves, a new idea lands every beat or half
+// Rule built into every block: nothing parks. The camera always moves, a new idea lands every beat or half
 // beat, and transitions are moves (whip, zoom through a letter, slot reel, collapse), not fades.
 import { W, H, B, C, DUR, FPS, E, clamp, lerp, tw, env, rng, mixc, rgba, el, vis, set, at, type, styleType, letters, extrude, tumble } from './core.js';
 
@@ -346,8 +346,8 @@ function timelinePanel(parent, ui) {
   const p = el('div', parent, 'panel');
   const hd = el('div', p, 'phead');
   for (let i = 0; i < 3; i++) el('span', hd, 'pdot');
-  el('span', hd, 'mono ptitle').textContent = ui.title || 'sequence_final_v12_FINAL';
-  el('span', hd, 'mono ptag').textContent = ui.tag || 'EXPORTING  3%  ·  14 H LEFT';
+  el('span', hd, 'mono ptitle').textContent = ui.title || 'untitled_v1';
+  el('span', hd, 'mono ptag').textContent = ui.tag || 'EXPORTING';
   const ru = el('div', p, 'ruler');
   for (let i = 0; i < 24; i++) {
     el('div', ru, 'tick', { left: (160 + i * 40) + 'px', height: i % 4 ? '7px' : '13px' });
@@ -514,7 +514,7 @@ export class Strike extends Scene {
 }
 
 // ---------- Graph: a comet draws a graph, it folds, a giant number lands, the camera flies through it ----------
-// { number: '0', label: 'KEYFRAMES', sub: 'DRAGGED BY HAND', ground: 'paper', ticks: i => i * 4 + 'f', portal: true }
+// { number: '0', label: 'CUTS', sub: 'OFF THE BEAT', ground: 'paper', ticks: i => i * 4 + 'f', portal: true }
 export class Graph extends Scene {
   static N = 6;
   build() {
@@ -811,12 +811,12 @@ export class Prompt extends Scene {
 }
 
 // ---------- Stretch: a word on the variable width axis, ghost rows, a live ruler and the CSS that drives it ----------
-// { word: 'ELASTIC.', grounds: [[0, 'accent'], [4, 'paper'], [5, 'accent']], code: true }
+// { word: 'BOUNCE.', grounds: [[0, 'accent'], [4, 'paper'], [5, 'accent']], code: true }
 export class Stretch extends Scene {
   static N = 8;
   build() {
     const f = this.f, r = this.root, o = this.o;
-    this.word = o.word || 'ELASTIC.';
+    this.word = o.word;
     this.g = el('div', r, 'abs full');
     this.echo = [-2, -1, 1, 2].map(k => ({ k, e: type(this.g, this.word, { size: 240, color: rgba(C.ink, Math.abs(k) === 1 ? .34 : .17), wdth: 62, stroke: 3, cls: 'abs' }) }));
     this.w = type(this.g, this.word, { size: 240, color: C.ink, wdth: 62, cls: 'abs' });
@@ -860,7 +860,7 @@ export class Stretch extends Scene {
 }
 
 // ---------- Fly: the camera flies through extruded words in depth, then orbits the last one ----------
-// { words: [['CAMERA', 'paper'], ['FLIES', 'accent'], ['THROUGH', 'paper'], ['THE TYPE.', 'accent']] }
+// { words: [['DODGE', 'paper'], ['THE', 'accent'], ['BIG', 'paper'], ['FEET.', 'accent']] }
 export class Fly extends Scene {
   static N = 11;
   constructor(f, k0, k1, o) { super(f, k0, k1, o); this.noGrid = true; }
@@ -937,8 +937,8 @@ export class Fly extends Scene {
 }
 
 // ---------- Notes: notes typed in a panel, the preview answers each one (camera moves between them) ----------
-// { preview: 'ELASTIC.', notes: [['hotter orange', 'recolor'], ['cut the intro in half', 'trim'], ['more punch', 'punch']],
-//   segments: [['INTRO', 220], ['BRIEF', 190], ...], tag: 'PREVIEW  ·  00:18', panel: 'NOTES', file: 'film.js' }
+// { preview: 'BOUNCE.', notes: [['make it warmer', 'recolor'], ['shorter opening', 'trim'], ['louder on the hits', 'punch']],
+//   segments: [['HOOK', 180], ['TITLE', 160], ...] (widths sum to 1000), tag: 'PREVIEW  ·  00:24', panel: 'NOTES', file: 'spec.js' }
 export class Notes extends Scene {
   static N = 16;
   build() {
@@ -949,12 +949,12 @@ export class Notes extends Scene {
     this.pvIn = el('div', this.pv, 'abs full');
     this.burstSvg = svg('svg', this.pvIn, { class: 'abs', width: 1000, height: 562, viewBox: '0 0 1000 562' });
     this.burstPoly = svg('polygon', this.burstSvg, { fill: C.paper });
-    this.pvW = type(this.pvIn, o.preview || 'ELASTIC.', { size: 150, color: C.ink, wdth: 118, cls: 'abs' });
+    this.pvW = type(this.pvIn, o.preview, { size: 150, color: C.ink, wdth: 118, cls: 'abs' });
     this.pvFit = fitTo(this.pvW.offsetWidth, 900);
     this.scan = el('div', this.pv, 'abs scanl');
     el('div', this.pv, 'abs mono pvtag').textContent = o.tag || 'PREVIEW';
     this.strip = el('div', this.g, 'abs strip', { left: '130px', top: '836px', width: '1000px' });
-    const segs = o.segments || [['INTRO', 220], ['BRIEF', 190], ['STRETCH', 120], ['FLY', 150], ['CUTS', 90], ['NOTES', 230]];
+    const segs = o.segments || [['OPEN', 220], ['HOOK', 190], ['BUILD', 120], ['DROP', 150], ['RUN', 90], ['END', 230]];
     let x = 0;
     this.segs = segs.map(([nm, w], i) => { const s = el('div', this.strip, 'seg' + (i === 0 ? ' hot' : ''), { left: x + 'px', width: (w - 6) + 'px' }); s.textContent = nm; s.w0 = w; x += w; return s; });
     this.ph = el('div', this.strip, 'sph');
@@ -1036,7 +1036,7 @@ export class Notes extends Scene {
 }
 
 // ---------- Counters: the source as a plane the camera flies over, giant numbers on slot reels ----------
-// { counters: [['1', 'WEB PAGE'], ['{lines}', 'LINES OF CODE'], ['{frames}', 'FRAMES']], title: 'film / spec.js' }
+// { counters: [['14', 'BLOCKS'], ['{lines}', 'LINES OF SOURCE'], ['{frames}', 'FRAMES RENDERED']], title: 'tour / spec.js' }
 // '{lines}' and '{frames}' are filled from the film itself.
 export class Counters extends Scene {
   static N = 11;
@@ -1111,11 +1111,11 @@ export function hl(line) {
 }
 
 // ---------- Progress: a two-line claim renders itself, frames of the film ride a conveyor past a render head ----------
-// { lines: ['RENDERED', 'ON A LAPTOP.'], cards: [['EVERY', 'bg', 'paper'], ['FRAME', 'accent', 'ink'], ...], label: 'RENDER  4K · 60 FPS', doneLabel: 'RENDER  ✓ DONE', doneRight: 'ON A LAPTOP', ground: 'paper' }
+// { lines: ['DRAWN', 'FRAME BY FRAME.'], cards: [['FOURTEEN', 'bg', 'paper'], ['BLOCKS', 'accent', 'ink'], ...], label: 'RENDER  4K · 60 FPS', doneLabel: 'RENDER  ✓ DONE', doneRight: 'FRAME BY FRAME', ground: 'paper' }
 export class Progress extends Scene {
   static N = 9;
   build() {
-    const f = this.f, r = this.root, o = this.o, [l1, l2] = o.lines || ['RENDERED', 'ON A LAPTOP.'];
+    const f = this.f, r = this.root, o = this.o, [l1, l2] = o.lines;
     this.R = el('div', r, 'abs full');
     this.r1o = type(this.R, l1, { size: 170, color: rgba(C.ink, .45), stroke: 2.5, cls: 'abs' });
     this.r1 = type(this.R, l1, { size: 170, color: C.ink, cls: 'abs' });
@@ -1128,7 +1128,7 @@ export class Progress extends Scene {
     this.barL = el('div', this.R, 'abs mono rlab lt'); this.barR = el('div', this.R, 'abs mono rlab lt');
     this.belt = el('div', this.R, 'abs full');
     this.head = el('div', this.R, 'abs rhead');
-    const FR = o.cards || [['FRAME', 'bg', 'paper'], ['BY', 'accent', 'ink'], ['FRAME', 'paper', 'ink'], ['IN', 'bg', 'accent'], ['CODE.', 'accent', 'ink']];
+    const FR = o.cards || [['01', 'bg', 'paper'], ['02', 'accent', 'ink'], ['03', 'paper', 'ink'], ['04', 'bg', 'accent'], ['05', 'accent', 'ink']];
     this.cards = FR.map(([wd, bg, col], i) => {
       const c = el('div', this.belt, 'abs fcard');
       const tx = type(c, wd, { size: 50, wdth: 110, color: cc(col), cls: 'abs' });
@@ -1177,7 +1177,7 @@ export class Progress extends Scene {
 }
 
 // ---------- Chain: A to B to C as one long world; the camera rides the comet from node to node, then pulls back ----------
-// { nodes: [['BRIEF', 'brief.md'], ['CODE', 'film.js'], ['FILM.', '4K · 60 FPS', 'accent']] }
+// { nodes: [['BRIEF', 'brief.md'], ['BEATS', '{seconds} s on the grid'], ['FILM.', '4K · 60 FPS', 'accent']] }
 export class Chain extends Scene {
   static N = 12;
   build() {
@@ -1282,7 +1282,7 @@ export class Rewind extends Scene {
 // Without mark/word ids the whole logo wipes in. The logo comes from spec.logo (inline SVG text).
 export class Logo extends Scene {
   static N = 11;
-  // finish.py measures dynamism up to the end card: the start of the last endCard block
+  // starts the end card (Film.endCard): finish.py's motion gates stop here, or 4.5 s before the end if that is earlier
   static endCard = true;
   build() {
     const f = this.f, r = this.root, o = this.o;

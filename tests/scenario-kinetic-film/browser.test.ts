@@ -127,8 +127,8 @@ describe.skipIf(!withPlaywright)("the film in a browser", () => {
     expect(r.err).toBe("");
     const info = JSON.parse(r.out.toString());
     expect(info.title).toBe("Tour");
-    expect(info.dur).toBeCloseTo((150 * 60) / 172, 9);
-    expect(info.endCard).toBeCloseTo((139 * 60) / 172, 9);
+    expect(info.dur).toBeCloseTo((148 * 60) / 172, 9);
+    expect(info.endCard).toBeCloseTo((137 * 60) / 172, 9);
     expect(info.problems).toEqual([]);
     expect(info.cues.length).toBeGreaterThan(100);
     expect(info.lines).toBeGreaterThan(1000);
@@ -192,9 +192,11 @@ describe.skipIf(!withPlaywright)("the film in a browser", () => {
       await pg.close();
       return png;
     };
+    // Prompt and Rewind: DOM blocks. 3D layers (Fly, Hero) can differ by a level or two on a few
+    // pixels with the GPU's tile history, which byte equality cannot tell from a real state bug.
     try {
       for (const [t, ...before] of [
-        [12.3, 40, 12.9],
+        [17.0, 40, 17.6],
         [44.2, 3, 44.9],
       ])
         expect(
@@ -209,18 +211,18 @@ describe.skipIf(!withPlaywright)("the film in a browser", () => {
   it("a spec error fails at once, naming the scene", async () => {
     const bad = await film("bad-style", "tour", (d) => {
       const spec = path.join(d, "spec.js");
-      writeFileSync(
-        spec,
-        readFileSync(spec, "utf8").replace(
-          "style: 'slam', text: 'BLOCKS'",
-          "style: 'nope', text: 'BLOCKS'",
-        ),
+      const text = readFileSync(spec, "utf8");
+      const broken = text.replace(
+        "style: 'stack', text: ['BLOCKS ON'",
+        "style: 'nope', text: ['BLOCKS ON'",
       );
+      expect(broken).not.toBe(text);
+      writeFileSync(spec, broken);
     });
     const r = await node("info.mjs", [], bad.url);
     expect(r.code).toBe(1);
     expect(r.err).toContain(
-      "scene 1 (Words 0-9) shot 2: style 'nope' is not one of",
+      "scene 1 (Words 0-8) shot 2: style 'nope' is not one of",
     );
     expect(r.ms).toBeLessThan(20000);
   }, 60000);

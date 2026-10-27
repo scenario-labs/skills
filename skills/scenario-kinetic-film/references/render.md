@@ -10,8 +10,8 @@
   resolution, two radii) and film grain (seeded, so re-renders match), and pipes the frames to the
   encoder.
 - Motion blur: a 180 degree forward shutter with 4 samples by default. Blocks raise the count in
-  fast windows (`f.fast`), and whips stretch the shutter (`f.smear`) to about 600 degrees with up to
-  24 samples.
+  fast windows (`f.fast`), and whips stretch the shutter (`f.smear`) to about 600 degrees with 21
+  samples.
 - Samples never cross a hard cut: when a cut falls inside the shutter, the window slides back, so
   the fastest frame of a whip is still blurred.
 - The HUD frame counter reads the output frame time (`window.__frameT`), so blur never smears its

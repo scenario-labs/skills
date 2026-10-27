@@ -14,7 +14,7 @@ export default {
   sounds: { stomp: -1, hit: 1 },                      // level in dB per sound name (custom sounds, or retune a kit sound)
   cues: [[5.5, 'stomp', 1]],                          // extra sounds at beats: [beat, name, gain]
   scenes: [ [Block, startBeat, endBeat, options], ... ],
-  captions: [ [startBeat, endBeat, [['Every', 1], ['frame', 2], ...]], ... ],   // optional karaoke caption, top left
+  captions: [ [startBeat, endBeat, [['Fourteen', 1], ['blocks', 2.5], ...]], ... ],   // optional karaoke caption, top left
 };
 ```
 
@@ -24,7 +24,7 @@ export default {
   channel, and `#fff` or `white` breaks every derived color.
 - `bg` is the dark ground, `paper` the light ground and light type, `ink` type on light grounds,
   `accent` the brand color. Grounds other than `bg` switch the HUD and caption to ink.
-- Keep `fps: 60`. The checks in finish.py and the reference numbers assume 60.
+- Keep `fps: 60`. The HUD and the checks in finish.py assume 60.
 - Blocks with a nominal length (N beats) scale their internal timing to the span you give them. Keep
   close to N.
 - Every block accepts `whipIn: [dx, dy, dur, roll]` and `whipOut: [...]`: a whip pan of the camera
@@ -35,7 +35,8 @@ export default {
 
 - An error stops the boot with a message naming the scene; info.mjs, render.py, mix.py and finish.py
   print it and exit 1. Errors include a scene past the last beat, an unknown shot style, shots out
-  of order, a Picture without `src` and a bad palette color.
+  of order, a bad palette color, and a block missing its own words or image: Picture `src`, Stretch
+  `word`, Notes `preview`, Progress `lines`.
 - A warning prints and the film still builds: `fps` other than 60, a `music.stopBeat` off the logo
   hit.
 
@@ -44,8 +45,8 @@ export default {
 Kinetic type, one shot per beat or half beat. Shots ascend and sit inside the block.
 
 ```js
-[Words, 0, 9, { charge: true, shots: [ { at: 1, style: 'punch3d', text: 'EVERY', fx: 'punch' }, ... ],
-                exit: { type: 'zoom', at: 8.1, char: 1 } }]
+[Words, 0, 8, { charge: true, shots: [ { at: 1, style: 'punch3d', text: 'FOURTEEN', fx: 'punch' }, ... ],
+                exit: { type: 'zoom', at: 7.2, char: 4 } }]
 ```
 
 Shot options:
@@ -90,10 +91,10 @@ one of:
 "NO <thing>." over a mock of the thing, then the thing dies.
 
 ```js
-[Strike, 9, 19, { no: 'NO', items: [
-  { at: 9, word: 'TIMELINE.', ui: { type: 'timeline', title: 'sequence_final_v12', tag: 'EXPORTING 3%' } },
-  { at: 12, word: 'PLUGINS.', ground: 'paper', ui: { type: 'tiles', tiles: [['GLOW', '☀', 'PLUG-IN · v2.0'], ...] } },
-  { at: 15, word: 'RENDER FARM.', ui: { type: 'rack', rows: ['NODE 01', 'NODE 02', 'NODE 03'] } } ] }]
+[Strike, 16, 27, { no: 'NO', items: [
+  { at: 16, word: 'GUESSWORK.', ui: { type: 'timeline', title: 'cut_guess_v7', tag: 'GUESSING  12%' } },
+  { at: 19.5, word: 'PRESETS.', ground: 'paper', ui: { type: 'tiles', tiles: [['BLUR', '◆', 'PRESET 01'], ...] } },
+  { at: 23, word: 'QUEUE.', ui: { type: 'rack', rows: ['QUEUE 01', 'QUEUE 02', 'QUEUE 03'] } } ] }]
 ```
 
 Per item: the mock enters, NO slams at +1 beat, the word fills at +1.5, the mock dies at +2.
@@ -127,39 +128,40 @@ whatever the length.
 
 ## Stretch (N = 8)
 
-`{ word: 'ELASTIC.', grounds: [[0, 'accent'], [4, 'paper'], [5, 'accent']], code: true }`. A word on
+`{ word: 'BOUNCE.', grounds: [[0, 'accent'], [4, 'paper'], [5, 'accent']], code: true }`. A word on
 the variable width axis: drop slam, elastic stretch, a weight dip, a squeeze, a stretch, spreading
 letters. Ghost rows lag behind, with a live ruler and the CSS that drives it.
 
 ## Fly (N = 11)
 
-`{ words: [['CAMERA', 'paper'], ['FLIES', 'accent'], ['THROUGH', 'paper'], ['THE TYPE.', 'accent']] }`.
+`{ words: [['DODGE', 'paper'], ['THE', 'accent'], ['BIG', 'paper'], ['FEET.', 'accent']] }`.
 Extruded words in depth inside chamfered portals. The camera flies through them with a banked roll
 and tunnel dust, lands on the last word and orbits it. Use 3 to 5 words.
 
 ## Notes (N = 16)
 
-`{ preview: 'ELASTIC.', notes: [['hotter orange', 'recolor'], ['cut the intro in half', 'trim'], ['more punch', 'punch']], segments: [['INTRO', 220], ...], tag, panel, file }`.
-Three notes are typed into a panel while the camera moves between the input, the preview and the
-timeline. Each note's effect plays: recolor the preview, halve the first segment with a slash, punch
-on every beat over a starburst. The note being typed runs huge across the frame.
+`{ preview: 'BOUNCE.', notes: [['make it warmer', 'recolor'], ['shorter opening', 'trim'], ['louder on the hits', 'punch']], segments: [['HOOK', 180], ...], tag, panel, file }`.
+Segment widths sum to 1000 px. Three notes are typed into a panel while the camera moves between the
+input, the preview and the timeline. Each note's effect plays: recolor the preview, halve the first
+segment with a slash, punch on every beat over a starburst. The note being typed runs huge across
+the frame.
 
 ## Counters (N = 11)
 
-`{ counters: [['1', 'WEB PAGE'], ['{lines}', 'LINES OF CODE'], ['{frames}', 'FRAMES']], title, source }`.
+`{ counters: [['14', 'BLOCKS'], ['{lines}', 'LINES OF SOURCE'], ['{frames}', 'FRAMES RENDERED']], title, source }`.
 The film's own source (or `source` text) is a plane the camera flies over. Giant numbers land on
 slot reels, one every 3 beats. `{lines}`, `{frames}` and `{seconds}` are filled from the film.
 
 ## Progress (N = 9)
 
-`{ lines: ['RENDERED', 'ON A LAPTOP.'], cards: [['EVERY', 'bg', 'paper'], ...], label, doneLabel, doneRight, ground: 'paper' }`.
+`{ lines: ['DRAWN', 'FRAME BY FRAME.'], cards: [['FOURTEEN', 'bg', 'paper'], ...], label, doneLabel, doneRight, ground: 'paper' }`.
 Line 1 renders itself (outline, then a scan line fills it) and line 2 slams. Frames of the film ride
 a conveyor past a render head, outlined until they pass it. A progress bar and a frame counter run
 to done.
 
 ## Chain (N = 12)
 
-`{ nodes: [['BRIEF', 'brief.md · 142 chars'], ['CODE', 'spec.js · {lines} lines'], ['FILM.', '4K · 60 FPS', 'accent']] }`.
+`{ nodes: [['BRIEF', 'brief.md'], ['BEATS', '{seconds} s on the grid'], ['FILM.', '4K · 60 FPS · {frames} frames', 'accent']] }`.
 Three words 2,000 px apart in one world. The camera rides the comet from node to node, each lands
 with a ring, then the camera pulls back to show the chain and its trails.
 
@@ -209,7 +211,7 @@ window and lands on its first frame as the window fills the screen.
 - The tagline and small line follow, then a slow push, drifting particles and a light sweep until
   the end.
 - The music should stop dead on beat 1 of this block: `music.stopBeat` is the block's start + 1.
-- finish.py measures motion up to the start of this block, the end card.
+- finish.py's motion gates stop at this block's start, or 4.5 s before the end when that is earlier.
 - The logo file is inlined, so main.js rebuilds it from SVG drawing elements first. Scripts,
   embedded HTML, event handlers and references to other hosts are dropped; `#id` and same-folder
   references stay.

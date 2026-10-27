@@ -2,8 +2,11 @@ import { afterAll, describe, expect, it } from "vitest";
 import {
   Hero,
   Logo,
+  Notes,
   Picture,
+  Progress,
   Scene,
+  Stretch,
   Words,
 } from "../../skills/scenario-kinetic-film/assets/engine/blocks.js";
 import { checkSpec } from "../../skills/scenario-kinetic-film/assets/engine/validate.js";
@@ -153,6 +156,21 @@ describe("checkSpec", () => {
       "a Picture without src",
       (s) => s.scenes.push([Picture, 2, 4, {}]),
       "Picture needs src",
+    ],
+    [
+      "a Stretch without its word",
+      (s) => s.scenes.push([Stretch, 2, 4, {}]),
+      "Stretch needs word",
+    ],
+    [
+      "Notes without a preview word",
+      (s) => s.scenes.push([Notes, 2, 4, { notes: [["warmer", "recolor"]] }]),
+      "Notes needs preview",
+    ],
+    [
+      "Progress with one line",
+      (s) => s.scenes.push([Progress, 2, 4, { lines: ["DRAWN"] }]),
+      "Progress needs lines",
     ],
     [
       "a 3-digit palette color",

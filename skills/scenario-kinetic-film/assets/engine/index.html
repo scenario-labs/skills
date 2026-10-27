@@ -48,10 +48,10 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 .hudt.bl { left: 62px; bottom: 49px; } .hudt.brt { right: 62px; bottom: 49px; }
 .recdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 10px; vertical-align: 1px; }
 
-/* scene 1 */
+/* Words */
 .note { font-size: 19px; color: color-mix(in srgb, var(--paper) 50%, transparent); letter-spacing: .04em; white-space: pre; }
 
-/* scene 2 */
+/* Strike: the timeline, tiles and rack mocks */
 .panel { position: absolute; left: 0; top: 0; width: 1120px; height: 440px; background: var(--panel); border: 1.5px solid color-mix(in srgb, var(--paper) 22%, transparent); border-radius: 12px; box-shadow: 0 40px 90px rgba(0,0,0,.55); overflow: hidden; }
 .phead { position: absolute; left: 0; top: 0; right: 0; height: 40px; border-bottom: 1px solid color-mix(in srgb, var(--paper) 10%, transparent); display: flex; align-items: center; gap: 8px; padding-left: 16px; }
 .pdot { width: 10px; height: 10px; border-radius: 50%; background: color-mix(in srgb, var(--paper) 22%, transparent); }
@@ -75,16 +75,16 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 .led { width: 16px; height: 16px; border-radius: 3px; }
 .vents { position: absolute; left: 330px; top: 26px; width: 170px; height: 60px; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--paper) 14%, transparent) 0 3px, transparent 3px 9px); }
 
-/* scene 3 */
+/* Graph */
 .svgmono { font-family: JBM; font-size: 15px; fill: color-mix(in srgb, var(--paper) 45%, transparent); }
 .glowline { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 80%, transparent)); }
 .sub { font-size: 26px; color: color-mix(in srgb, var(--paper) 55%, transparent); letter-spacing: .32em; white-space: nowrap; }
 
-/* scene 4 */
+/* Hero */
 .by { font-size: 24px; letter-spacing: .5em; color: color-mix(in srgb, var(--paper) 75%, transparent); white-space: pre; }
 .subline { font-family: Inst; font-size: 38px; color: color-mix(in srgb, var(--paper) 75%, transparent); white-space: nowrap; }
 
-/* scene 5 */
+/* Prompt */
 .briefbox { background: color-mix(in srgb, var(--panel) 94%, transparent); }
 .bhead { position: absolute; left: 26px; right: 26px; top: 18px; display: flex; justify-content: space-between; font-size: 14px; color: color-mix(in srgb, var(--paper) 50%, transparent); letter-spacing: .14em; }
 .bdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 10px; vertical-align: 1px; }
@@ -95,7 +95,7 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 .cutsq { width: 70px; height: 70px; background: var(--accent); }
 .iris { width: 100px; height: 100px; border-radius: 50%; background: var(--accent); }
 
-/* scene 6 */
+/* Stretch */
 .orangebg { background: radial-gradient(ellipse 70% 70% at 50% 45%, color-mix(in srgb, var(--accent), white 8%) 0%, var(--accent) 55%, color-mix(in srgb, var(--accent), black 10%) 100%); }
 .rule { height: 2px; background: color-mix(in srgb, var(--ink) 55%, transparent); }
 .rule::before, .rule::after { content: ''; position: absolute; top: -9px; width: 2px; height: 20px; background: color-mix(in srgb, var(--ink) 55%, transparent); }
@@ -103,7 +103,7 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 .pxl { font-size: 17px; color: color-mix(in srgb, var(--ink) 70%, transparent); letter-spacing: .2em; white-space: pre; }
 .codel { font-size: 24px; color: color-mix(in srgb, var(--ink) 80%, transparent); white-space: pre; }
 
-/* scene 9 */
+/* Notes */
 .pvwin { border-radius: 10px; overflow: hidden; border: 1.5px solid color-mix(in srgb, var(--paper) 28%, transparent); box-shadow: 0 40px 90px rgba(0,0,0,.5); }
 .pvtag { left: 20px; top: 16px; font-size: 13px; color: color-mix(in srgb, var(--ink) 60%, transparent); letter-spacing: .18em; }
 .scanl { width: 4px; height: 562px; background: color-mix(in srgb, var(--accent), white 92%); box-shadow: 0 0 30px 10px color-mix(in srgb, color-mix(in srgb, var(--accent), white 90%) 55%, transparent); }
@@ -122,7 +122,7 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 .ncaret { display: inline-block; width: 11px; height: 26px; background: var(--accent); vertical-align: -5px; margin-left: 2px; }
 .nsend { position: absolute; right: 24px; bottom: 24px; width: 48px; height: 60px; border-radius: 10px; background: var(--accent); color: var(--ink); font-family: Inst; font-weight: 700; font-size: 28px; line-height: 60px; text-align: center; }
 
-/* scene 10 */
+/* Counters and Progress */
 .codewin { background: var(--panel); border: 1.5px solid color-mix(in srgb, var(--paper) 20%, transparent); border-radius: 12px; overflow: hidden; box-shadow: 0 40px 90px rgba(0,0,0,.5); }
 .cbody { position: absolute; left: 0; right: 0; top: 41px; bottom: 0; overflow: hidden; }
 .cinner { position: absolute; left: 0; top: 14px; right: 0; font-family: JBM; font-size: 17px; line-height: 26px; color: color-mix(in srgb, var(--paper) 78%, transparent); }
@@ -137,10 +137,10 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 .rfill { height: 100%; background: var(--accent); box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 80%, transparent); }
 .rlab { font-size: 15px; letter-spacing: .18em; color: color-mix(in srgb, var(--paper) 60%, transparent); white-space: pre; }
 
-/* scene 11 */
+/* Chain */
 .ctag { font-size: 18px; letter-spacing: .16em; color: color-mix(in srgb, var(--paper) 50%, transparent); white-space: nowrap; }
 
-/* scene 12 */
+/* Rewind */
 .pbwin { border: 1.5px solid color-mix(in srgb, var(--paper) 40%, transparent); border-radius: 6px; overflow: hidden; box-shadow: 0 50px 120px rgba(0,0,0,.6); }
 .track { left: 0; width: 1150px; height: 6px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--paper) 25%, transparent), transparent); }
 .pbhead { width: 1150px; display: flex; justify-content: space-between; font-size: 14px; letter-spacing: .22em; color: color-mix(in srgb, var(--paper) 60%, transparent); }
@@ -149,13 +149,13 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 .pbph { height: 100%; background: var(--accent); }
 .pbtc { font-size: 14px; letter-spacing: .14em; color: color-mix(in srgb, var(--paper) 55%, transparent); white-space: pre; }
 
-/* scene 14 */
+/* Logo */
 .lline { height: 3px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 90%, transparent), 0 0 50px color-mix(in srgb, var(--accent) 50%, transparent); }
 .logo svg path { transform-box: fill-box; }
 .endline { font-family: Inst; font-size: 40px; color: color-mix(in srgb, var(--paper) 92%, transparent); white-space: nowrap; }
 .made { font-size: 15px; letter-spacing: .3em; color: color-mix(in srgb, var(--paper) 60%, transparent); white-space: nowrap; }
 
-/* v2 */
+/* shared pieces, and extras for Strike, Hero, Counters and Progress */
 .ch { display: inline-block; }
 .tile.lt { background: #FFFFFF; border-color: color-mix(in srgb, var(--ink) 16%, transparent); box-shadow: 0 22px 50px color-mix(in srgb, var(--ink) 18%, transparent); }
 .tile.lt .tlabel { color: var(--ink); } .tile.lt .tver { color: color-mix(in srgb, var(--ink) 45%, transparent); }
