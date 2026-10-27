@@ -71,6 +71,12 @@ def finish_frame(samples, k, tiles, dsf, grain=GRAIN):
     return np.clip(img + 0.5, 0, 255).astype(np.uint8)
 
 
+def encoder_args(h):
+    """The master encode for a frame h px tall. A slower preset with no level came out Level 6.0, which no Mac plays."""
+    level = "5.2" if h > 1440 else "4.2"
+    return ["-c:v", "libx264", "-crf", "12.4", "-preset", "slower", "-level", level, "-rc-lookahead", "40", "-threads", "8"]
+
+
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
     if len(args) < 4:
@@ -78,12 +84,11 @@ def main(argv=None):
     dsf, f0, f1, out = float(args[0]), int(args[1]), int(args[2]), args[3]
     fps = args[4] if len(args) > 4 else "60"
     w, h = int(1920 * dsf), int(1080 * dsf)
-    level = "5.2" if h > 1440 else "4.2"
-    enc = os.environ.get("ENC") or f"-c:v libx264 -crf 12.4 -preset slower -level {level} -rc-lookahead 40 -threads 8"
+    enc = os.environ.get("ENC", "").split() or encoder_args(h)
     node = subprocess.Popen(["node", os.path.join(HERE, "render.mjs"), str(dsf), str(f0), str(f1)], stdout=subprocess.PIPE, bufsize=1 << 24)
     color = ["-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709"]
     ff = subprocess.Popen(
-        ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}", "-r", fps, "-i", "-", *enc.split(), "-pix_fmt", "yuv420p", *color, out],
+        ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}", "-r", fps, "-i", "-", *enc, "-pix_fmt", "yuv420p", *color, out],
         stdin=subprocess.PIPE,
     )
     tiles = grain_tiles(w, h) if GRAIN else None

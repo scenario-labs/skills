@@ -83,6 +83,20 @@ class PostUnitTest(unittest.TestCase):
         np.testing.assert_array_equal(grainy, post.finish_frame(samples, 8, tiles, 1, grain=2.2))  # 8 tiles cycle
         self.assertFalse(np.array_equal(grainy, post.finish_frame(samples, 1, tiles, 1, grain=2.2)))
 
+    def test_master_encode_settings(self):
+        def option(args, name):
+            return args[args.index(name) + 1]
+
+        uhd, hd = post.encoder_args(2160), post.encoder_args(1080)
+        for args in (uhd, hd):
+            self.assertEqual(option(args, "-c:v"), "libx264")
+            self.assertEqual(option(args, "-crf"), "12.4")
+            self.assertEqual(option(args, "-preset"), "slower")
+        # Level 6 plays in ffmpeg and nowhere on a Mac
+        self.assertEqual(option(uhd, "-level"), "5.2")
+        self.assertEqual(option(hd, "-level"), "4.2")
+        self.assertEqual(option(post.encoder_args(1440), "-level"), "4.2")
+
 
 class PostRunTest(unittest.TestCase):
     def setUp(self):
@@ -106,6 +120,13 @@ class PostRunTest(unittest.TestCase):
         frames = np.frombuffer(raw, np.uint8).reshape(-1, 180, 320)
         self.assertEqual(len(frames), 2)
         self.assertAlmostEqual(float(frames.mean()), 128, delta=3)  # black and white samples, blended
+
+    def test_without_enc_the_master_settings_encode(self):
+        del self.env["ENC"]
+        out = self.dir / "default.mp4"
+        r = self.run_post(1 / 6, 0, 2, out, 60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(media.ffprobe(out, "stream=codec_name,level"), "h264,42")
 
     def test_a_frame_shortfall_fails(self):
         self.env["FAKE_NODE_FRAMES"] = "1"
