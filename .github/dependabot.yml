@@ -17,7 +17,12 @@ updates:
       prefix: ci
       include: scope
   - package-ecosystem: npm
-    directories: ["/", "/skills/scenario-kinetic-music-video/assets/npm"]
+    directories:
+      [
+        "/",
+        "/skills/scenario-kinetic-music-video/assets/npm",
+        "/skills/scenario-kinetic-film/assets/npm",
+      ]
     schedule:
       interval: weekly
     cooldown:
@@ -36,7 +41,8 @@ updates:
     commit-message:
       prefix: chore(deps)
   - package-ecosystem: pip
-    directories: ["/tests", "/tests/*"]
+    # The kinetic-film requirements pin what tests/requirements-ci.txt locks: one group bumps both together.
+    directories: ["/tests", "/tests/*", "/skills/scenario-kinetic-film/assets"]
     schedule:
       interval: weekly
     cooldown:
