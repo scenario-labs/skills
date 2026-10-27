@@ -259,7 +259,9 @@ settings (`on`, `samples`, `shutter`, `max`, `beatCuts`, `wordCuts`), so `load()
   - `E.shutter(t0, t1, k)`: a shutter `k` times longer (2 to 3 for a whip), with `k` times the
     samples.
   - `E.sharp(t0, t1)`: no blur, for a held poster slam.
-  - Samples stop at `max` (24 by default, `--blur-max`). A base `samples` above it is refused.
+  - Samples stop at `max` (24 by default, `--blur-max` for one run). A base `samples` above it is
+    refused. `BLUR.samples` above `BLUR.max` stops every run until timeline.js changes: no flag
+    clears it.
 - **Per layer:** `blur: false` on a TIMELINE entry renders it once per frame, like the HUD (`hud.js`
   declares `blur: false`; an entry's own `blur` wins); `blur: n` is `E.fast` over the whole entry.
   Anything else stops the render with an error.

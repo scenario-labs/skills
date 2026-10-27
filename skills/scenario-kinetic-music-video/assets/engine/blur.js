@@ -36,7 +36,9 @@ export function resolveBlur(q = {}, cfg, scale = 1) {
         `BLUR.${k} in timeline.js: unknown key (use ${Object.keys(DEFAULTS).join(", ")})`,
       );
   // the project's values are checked even where the query overrides them or a preview ignores them
-  check({ ...DEFAULTS, ...cfg }, "BLUR in timeline.js");
+  const p = { ...DEFAULTS, ...cfg };
+  check(p, "BLUR in timeline.js");
+  fits(p, "BLUR in timeline.js", "raise BLUR.max or lower BLUR.samples");
   const o = { ...DEFAULTS, ...(q.blur == null && scale < 1 ? {} : cfg) };
   const v = q.blur == null ? "" : String(q.blur).trim().toLowerCase();
   if (v === "off" || v === "0" || v === "1") o.on = false;
@@ -51,6 +53,8 @@ export function resolveBlur(q = {}, cfg, scale = 1) {
   if (q.shutter != null && q.shutter !== "") o.shutter = +q.shutter;
   if (q.blurmax != null && q.blurmax !== "") o.max = +q.blurmax;
   check(o, "motion blur");
+  // a run that stays sharp renders no samples, so its max holds nothing back
+  if (o.on) fits(o, "motion blur", "raise --blur-max or pass a smaller --blur");
   o.on = o.on && o.samples > 1;
   return o;
 }
@@ -69,10 +73,13 @@ function check(o, where) {
     throw new Error(
       `${where}: shutter ${o.shutter}, use degrees above 0, up to 720`,
     );
-  // sampleCount caps every frame at max, so a larger base count would never render
+}
+// sampleCount caps every frame at max, so a larger base count would never render. `fix` names the remedy for where the
+// values came from: no flag clears the project check.
+function fits(o, where, fix) {
   if (o.samples > o.max)
     throw new Error(
-      `${where}: samples ${o.samples} above max ${o.max}, raise max (--blur-max) or lower samples`,
+      `${where}: samples ${o.samples} above max ${o.max}, ${fix}`,
     );
 }
 

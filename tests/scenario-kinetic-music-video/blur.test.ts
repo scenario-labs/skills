@@ -92,6 +92,30 @@ describe("resolveBlur", () => {
     const o = resolveBlur({ blur: "32", blurmax: "32" }, undefined);
     expect(framePlan(1, 60, o, none)).toHaveLength(o.samples);
   });
+
+  it("names the remedy that clears the refusal", () => {
+    // the project check reads only timeline.js, so no flag clears it
+    const project = { on: true, samples: 32 };
+    for (const q of [{}, { blurmax: "32" }, { blur: "32", blurmax: "32" }])
+      expect(() => resolveBlur(q, project)).toThrow(
+        /^BLUR in timeline.js: samples 32 above max 24, raise BLUR.max or lower BLUR.samples$/,
+      );
+    expect(resolveBlur({}, { ...project, max: 32 }).samples).toBe(32);
+    expect(() => resolveBlur({ blur: "32" }, undefined)).toThrow(
+      /^motion blur: samples 32 above max 24, raise --blur-max or pass a smaller --blur$/,
+    );
+  });
+
+  it("skips the max check on a run that stays sharp", () => {
+    // still.mjs sends blur=off unless given --blur
+    expect(resolveBlur({ blur: "off", blurmax: "4" }, undefined).on).toBe(
+      false,
+    );
+    // a preview ignores the project's 4 samples, leaving the default 8
+    expect(
+      resolveBlur({ blurmax: "4" }, { on: true, samples: 4 }, 0.5).on,
+    ).toBe(false);
+  });
 });
 
 describe("layerBlur", () => {
