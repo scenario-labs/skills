@@ -13,13 +13,15 @@ export const CANVAS = "landscape";
 //            Entries without a variant always render.
 //   canvas:  optional 'portrait' | 'landscape' | 'square' (or a list): the entry renders only on that canvas. Use it when one
 //            section needs a different layout per ratio; entries without it render on every canvas.
+//   blur:    optional false (renders sharp, once per frame, like the HUD) or a sample count for the whole entry under
+//            motion blur; see ENGINE_API.md, Motion blur
 export const TIMELINE = [
   { id: "intro", file: "_template.js", start: 0.0, end: 16.66, z: 0 }, // replace with your own scene files
   // { id: 'hook1',  start: 16.66, end: 37.60, z: 0 },
   // { id: 'hook1_v', start: 16.66, end: 37.60, z: 0, canvas: 'portrait' }, // with canvas: 'landscape' on hook1
   // { id: 'outro',   start: 140.0, end: 150.0, z: 0, variant: 'a' },
   // { id: 'outro_b', start: 140.0, end: 153.0, z: 0, variant: 'b' },     // may run past the song: render.mjs pads silence
-  { id: "hud", start: 0.0, end: 9999, z: 100 },
+  { id: "hud", start: 0.0, end: 9999, z: 100 }, // sharp under motion blur (hud.js declares blur: false)
 ];
 
 // Persistent frame. See engine/scenes/hud.js for every option.
@@ -43,3 +45,7 @@ export const HUD = {
 export const POST = {
   // grade: 'warm', grain: 0.045, vignette: 0.35, ca: 0.0015, invertCol: '#FFA010',
 };
+
+// Motion blur, off by default: decide it in the look pass from an A/B of the fastest 5 s (ENGINE_API.md, Motion blur).
+// It applies from --scale 1 up; render.mjs --blur overrides it per run, and stills stay sharp unless given --blur.
+// export const BLUR = { on: true }; // also: samples 8, shutter 180 (degrees), max 24, beatCuts false, wordCuts true

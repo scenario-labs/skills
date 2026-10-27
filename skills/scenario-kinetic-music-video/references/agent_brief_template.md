@@ -82,6 +82,9 @@ what to avoid>". Treat this as your showreel.
   leaves the footage and becomes type, a 3D object that comes out of a 2D drawing, a match cut on
   shape, or a tile explosion.
 - Set `E.hud.theme` for your look (`'light'` on white or color frames).
+- **Cuts and motion blur:** in `load()`, register every hard switch inside your section with
+  `E.cut(t)`, and slams or whips with `E.fast` or `E.shutter` (ENGINE_API.md, Motion blur). Keep
+  `render()` free of state between calls; it runs once per blur sample.
 - **Lay out from `E.W`, `E.H` and `E.SAFE`,** never from 1920 or 1080 constants. On a portrait
   canvas, every word, logo and face stays inside `E.SAFE` (`motion_library.md` §10).
 
@@ -94,7 +97,7 @@ what to avoid>". Treat this as your showreel.
   `node tools/render.mjs --only <id>,hud --from <a> --to <b> --fps 30 --scale 0.5 --out out/<id>/preview.mp4 --force`.
 - **Perf:**
   `node tools/render.mjs --only <id> --from <a> --to <a+2> --fps 60 --scale 1 --out out/<id>/perf.mp4 --force`,
-  and read the printed fps.
+  and read the printed fps (it includes motion blur when the project has it on).
 - **Freeze check:**
   `ffmpeg -i out/<id>/preview.mp4 -vf "freezedetect=n=0.003:d=0.25" -map 0:v -f null - 2>&1 | grep freeze_`.
 - A process boot takes about 10 s, so batch many times into one still call. Other agents render at

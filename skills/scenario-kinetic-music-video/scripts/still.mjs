@@ -1,23 +1,12 @@
-// Render stills at given times -> PNGs (+ optional contact sheet). usage: node tools/still.mjs --t 23.5,24,30 --scale 0.5 --dir out/stills [--only id] [--sheet name] [--variant b] [--canvas portrait|landscape|square|WxH] [--safe]
+// Render stills at given times -> PNGs (+ optional contact sheet). usage: node tools/still.mjs --t 23.5,24,30 --scale 0.5 --dir out/stills [--only id] [--sheet name] [--variant b] [--canvas portrait|landscape|square|WxH] [--safe] [--blur [on|N]] [--shutter 180]
 // --safe outlines the platform-UI safe band (drawn by the HUD) for review stills; never pass it to render.mjs.
+// Stills are sharp unless --blur asks for the project's motion blur.
 import { chromium } from "playwright";
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 import { serve } from "./serve.mjs";
-const args = Object.fromEntries(
-  process.argv
-    .slice(2)
-    .join(" ")
-    .split("--")
-    .filter(Boolean)
-    .map((s) => {
-      const [k, ...v] = s.trim().split(" ");
-      const eq = k.indexOf("="); // --canvas=portrait as well as --canvas portrait
-      return eq > 0
-        ? [k.slice(0, eq), k.slice(eq + 1) || true]
-        : [k, v.join(" ") || true];
-    }),
-);
+import { blurRefusal, engineQuery, parseArgs } from "./render_lib.mjs";
+const args = parseArgs(process.argv.slice(2));
 const scale = +(args.scale ?? 0.5),
   dir = args.dir ?? "out/stills";
 fs.mkdirSync(dir, { recursive: true });
@@ -28,11 +17,7 @@ if (args.range) {
   for (let x = a; x <= b + 1e-6; x += st) times.push(+x.toFixed(3));
 }
 const { srv, port } = await serve(0);
-const q = new URLSearchParams({ scale: String(scale) });
-if (args.only) q.set("only", args.only);
-if (args.variant || args.ending) q.set("variant", args.variant || args.ending);
-if (args.canvas) q.set("canvas", args.canvas);
-if (args.safe) q.set("safe", "1");
+const q = engineQuery(args, { scale, still: true });
 const browser = await chromium.launch({
   channel: "chrome",
   headless: true,
@@ -47,7 +32,9 @@ await page.goto(`http://127.0.0.1:${port}/engine/index.html?${q}`);
 await page.waitForFunction(() => window.__ready || window.__error, null, {
   timeout: 180000,
 });
-const err = await page.evaluate(() => window.__error);
+const err =
+  (await page.evaluate(() => window.__error)) ||
+  blurRefusal(args, await page.evaluate(() => "blur" in window.E));
 if (err) {
   console.log(err);
   process.exit(1);
