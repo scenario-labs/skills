@@ -229,6 +229,27 @@ class MeasureTest(unittest.TestCase):
         self.assertLess(s["still_share"], 0.05)  # under the gray threshold everywhere: the flow sees it move
         self.assertAlmostEqual(s["median_motion"], 12, delta=3)
 
+    def summary(self, name, frames, size=(fx.W, fx.H)):
+        clip = self.dir / f"{name}.mp4"
+        fx.encode(clip, frames, size=size)
+        m = dc.measure(str(clip))
+        return m, dc.summarize(m, 0, m["n"], 0, None)
+
+    def test_slow_moves_at_each_motion_floor_are_not_still(self):
+        tex = fx.texture()
+        for energy, tg in dc.DEFAULT_TARGETS.items():  # per-pair flow alone read the calm and mid floors 100% still
+            _, s = self.summary(f"drift_{energy}", fx.drift(tex, tg["motion_min"]))
+            self.assertLess(s["still_share"], 0.05, energy)
+            self.assertAlmostEqual(s["median_motion"], tg["motion_min"], delta=0.25 * tg["motion_min"], msg=energy)
+        _, s = self.summary("push_in", fx.push_in(fx.texture(3, 2 * fx.W, 2 * fx.H), 0.1))
+        self.assertLess(s["still_share"], 0.05)  # a 10% push-in over 2 s: the mean flow vector stays near zero
+        self.assertGreaterEqual(s["median_motion"], dc.DEFAULT_TARGETS["calm"]["motion_min"])
+
+    def test_grain_on_a_hold_is_still(self):
+        for sigma in (1, 3):  # the drift from the run's first frame stays near 0.15 px at sigma 3
+            _, s = self.summary(f"grain{sigma}", fx.grain(self.view(700).astype(np.float32), sigma))
+            self.assertGreater(s["still_share"], 0.95, sigma)
+
     def test_toggle_and_jitter_are_not_still(self):
         for name, frames in (("toggle", [self.view(0 if i % 2 else 20) for i in range(90)]),
                              ("jitter", [self.view([0, 8, 16][i % 3]) for i in range(90)])):
@@ -270,6 +291,57 @@ class MeasureTest(unittest.TestCase):
         self.assertAlmostEqual(hold["t"], 5.0, delta=0.02)
         self.assertEqual((hold["bar"], hold["beat"]), (3, 3))
         self.assertEqual(j["per_second"][0]["t"], 2.0)
+
+    def test_still_share_and_motion_each_fail_a_section(self):
+        frames, x = [], 0
+        for i in range(120):  # 6 moving frames, then a 0.4 s hold, every 0.5 s: each hold passes high's 0.5 s
+            frames.append(self.view(x))
+            x += 4 if i % 30 < 6 else 0
+        frames += fx.drift(fx.texture(), 1.0)  # live but slow: 1.0 against high's 2.0
+        clip = self.dir / "share_motion.mp4"
+        fx.encode(clip, frames)
+        r, j = Project(self).gate(clip, "--span", "parked=0:2:high", "--span", "slow=2:4:high")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        parked, slow = j["sections"]
+        self.assertRegex(" | ".join(parked["failures"]), r"^still \d+% > 15%$")
+        self.assertRegex(" | ".join(slow["failures"]), r"^motion \d\.\d < 2\.0$")
+        self.assertIn("GATE FAILED: parked@0, slow@2", r.stdout)
+
+    def test_section_under_1s_is_reported_not_judged(self):
+        r, j = Project(self).gate(self.two, "--span", "a=0:3:high", "--span", "tail=3:3.9:high")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        tail = j["sections"][1]
+        self.assertEqual((tail["result"], tail["failures"]), ("short", []))
+        self.assertGreater(tail["longest_hold_s"], dc.DEFAULT_TARGETS["high"]["hold_max_s"])  # judged, it fails
+
+    def test_a_flash_in_and_out_is_one_cut(self):
+        white = np.full((fx.H, fx.W), 250, np.uint8)
+        before, after = [self.view(300 + 2 * i) for i in range(60)], [self.view(420 + 2 * i) for i in range(60)]
+        for k in (1, 4, 6):  # 4 frames at 60 fps, or 2 in a 30 fps preview, read as two cuts
+            m, _ = self.summary(f"flash{k}", before + [white] * k + after)
+            self.assertEqual(m["cuts"], [60], f"a {k}-frame flash")
+        m, _ = self.summary("insert", before + [self.view(2000)] * 6 + [self.view(3000 + 2 * i) for i in range(60)])
+        self.assertEqual(m["cuts"], [60, 66])  # an insert, then a third shot: two cuts
+
+    def test_rotation_tag_is_applied(self):
+        tall = fx.viewer(fx.texture(9, 600, 3000), 180, 320)
+        frames = [tall(0, 4 * i) for i in range(120)]
+        upright, coded, rotated = (self.dir / f"{n}.mp4" for n in ("upright", "coded", "rotated"))
+        fx.encode(upright, frames, size=(180, 320))
+        fx.encode(coded, [np.ascontiguousarray(np.rot90(f)) for f in frames], size=(320, 180))
+        tag = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-display_rotation:v:0", "-90", "-i",
+                              str(coded), "-c", "copy", str(rotated)], capture_output=True)
+        shown = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", str(rotated), "-frames:v", "1", "-f",
+                                "image2pipe", "-c:v", "ppm", "-"], capture_output=True).stdout[:16].split()[1:3]
+        if tag.returncode or shown != [b"180", b"320"]:
+            self.skipTest("this ffmpeg cannot tag a display rotation")
+        m = dc.measure(str(upright))
+        want = dc.summarize(m, 0, m["n"], 0, None)["median_motion"]
+        m = dc.measure(str(rotated))
+        self.assertEqual(m["size"], [180, 320])  # ffprobe's coded size is 320x180
+        self.assertAlmostEqual(dc.summarize(m, 0, m["n"], 0, None)["median_motion"], want, delta=0.05 * want)
+        _, j = Project(self).gate(rotated, "--span", "a=0:2:high")
+        self.assertEqual(j["canvas"], "portrait")
 
     def test_strobe_fails_photosensitivity_even_in_showcase(self):
         r, j = Project(self).gate(self.five, "--span", "s=6:7:showcase")
@@ -353,6 +425,7 @@ class MeasureTest(unittest.TestCase):
         r, j = Project(self).gate(clip, "--span", "c=0:2:calm", "--span", "h=2:4:high")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertGreaterEqual(j["sections"][0]["cuts"], 6)
+        self.assertEqual(j["sections"][0]["cuts_per_bar"], j["sections"][0]["cuts"])  # 2 s, with a 2 s bar
         self.assertIn("WARN cut density", r.stdout)
         self.assertFalse(j["cut_density"]["climbs"])
 

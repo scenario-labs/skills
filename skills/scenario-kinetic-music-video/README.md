@@ -67,6 +67,19 @@ How the measurement was chosen, all on synthetic clips encoded with libx264:
   the high limit. Runs now end on the frame, and a 0.60 s hold reads 0.60 s. The still test uses a
   gray difference of 12, not 24: at 24, a 6 px per frame pan of 24 fps footage over soft texture
   read 44% still.
+- **Slow moves add up.** A still run first ended only on per-pair flow of 1 px or a pixel change, so
+  sub-pixel drifts at the calm (0.5) and mid (1.0) motion floors split into short runs that all read
+  100% still, and a 10% push-in over 2 s read 97% still. A run now also ends once the flow from its
+  first frame reaches 0.4 px at 320: those moves read 0% still. Gaussian grain of sigma 1 to 3 gray
+  levels on a hold measured 0.06 to 0.16 px from the run's first frame, so the hold keeps reading
+  still; at sigma 4 the pixel test breaks it, as before. That flow call runs only once the per-pair
+  steps since the run began sum to 0.2 px, so a clean hold or a fast move never pays for it.
+- **Decoded size.** ffprobe reports a phone clip's coded size, before its rotation tag. A portrait
+  clip stored landscape read as a landscape canvas, with 45% less motion. The size now comes from a
+  decoded frame, as in `rectify_screen.py`.
+- **A flash is one cut.** Cut frames within 3 frames of each other merged, so a white flash of 4 or
+  more frames (2 in a 30 fps preview) read as two cuts. A cut back to the previous shot within 0.15
+  s now ends the same cut; a strobe counts one cut per flash.
 - **Flashes follow WCAG 2.x general flashes:** a pair of opposing changes of 10% relative luminance,
   the darker state under 0.80, on the frame mean, at most 3 per second everywhere. Counting each
   change as a flip would have failed a white flash on every beat at 120 BPM; the pair reading allows

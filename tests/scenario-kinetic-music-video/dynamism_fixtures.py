@@ -49,6 +49,37 @@ def pan(view, px_per_frame_1920, seconds=2.0, source_fps=60, w=W):
     return [view(200 + int(i * source_fps / FPS) * step * FPS / source_fps) for i in range(int(seconds * FPS))]
 
 
+def drift(tex, px_per_frame_1920, seconds=2.0, w=W, h=H):
+    """A sub-pixel pan at a speed in px per 1/60 s on a 1920 px long side, resampled bilinearly: whole-pixel views
+    would step once every few frames and hold in between."""
+    import cv2
+
+    step, tex, out = px_per_frame_1920 * w / 1920, tex.astype(np.float32), []
+    for i in range(int(seconds * FPS)):
+        shift = np.float32([[1, 0, -(200 + i * step)], [0, 1, 0]])
+        out.append(cv2.warpAffine(tex, shift, (w, h), flags=cv2.INTER_LINEAR).clip(0, 255).astype(np.uint8))
+    return out
+
+
+def push_in(tex, total, seconds=2.0, w=W, h=H):
+    """A centered zoom from 1 to 1 + total on the top left 2w x 2h of tex, downscaled by area as a render would be."""
+    import cv2
+
+    big, n, out = tex[: 2 * h, : 2 * w].astype(np.float32), int(seconds * FPS), []
+    for i in range(n):
+        zoom = cv2.getRotationMatrix2D((w, h), 0, 1 + total * i / (n - 1))
+        frame = cv2.warpAffine(big, zoom, (2 * w, 2 * h), flags=cv2.INTER_LINEAR)
+        out.append(cv2.resize(frame, (w, h), interpolation=cv2.INTER_AREA).clip(0, 255).astype(np.uint8))
+    return out
+
+
+def grain(frame, sigma, seconds=2.0, seed=1):
+    """One frame held, under fresh Gaussian grain of sigma gray levels on every frame."""
+    rng = np.random.default_rng(seed)
+    n = int(seconds * FPS)
+    return [(frame + rng.normal(0, sigma, frame.shape)).clip(0, 255).astype(np.uint8) for _ in range(n)]
+
+
 def five_segments(view):
     """footage24 [0,3), frozen [3,4.2), moving60 [4.2,6), strobe [6,7), card [7,9)."""
     out = [view(4 * int(i / FPS * 24)) for i in range(180)]

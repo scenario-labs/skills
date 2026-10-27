@@ -18,14 +18,18 @@ REF_LONG = 1920       # motion is reported in px per 1/60 s on a 1920 px long si
 DIFF = 24             # a pixel changed (cuts, busiest seconds): gray difference over 24 of 255
 STILL_DIFF = 12       # the still test's finer threshold: a slow move over soft detail still breaks a run
 STILL_AREA = 0.015    # a frame continues a still run while under 1.5% of it differs from the previous frame and
-STILL_FLOW = 1.0      # from the run's first frame, and its flow moves under 1 px at the analysis size
+STILL_FLOW = 1.0      # from the run's first frame, and its flow moves under 1 px at the analysis size...
+STILL_DRIFT = 0.4     # ...and under 0.4 px from the run's first frame: per-pair flow alone read a calm-floor drift
+                      # (0.5 per 1/60 s, 0.58 px here over a still run) as still, while grain on a hold stays under it
 STILL_RUN = 6         # a frame is still when its run lasts longer than 6 frames (0.1 s): 10 fps footage still plays
 REPEAT_MAX = 2        # a pair whose largest difference is this small is a repeated frame: no flow call, no motion
 FLOW_OK = 0.8         # flow explains a pair when the warped frame correlates this well with the previous one
 FLOW_CAP = 24         # px at LONG: the flow range; a change the flow cannot explain reads at least this, scaled by area
 CUT_AREA = 0.45       # a cut: neither the flow nor a global shift explains the change, and most of the frame
 CUT_NCC = 0.5         # changes or the two frames barely correlate (a flash, a color swap, another shot)
-CUT_MERGE = 3         # frames: a flash in and out is one cut
+CUT_MERGE = 3         # frames: cut frames this close are one cut (a flash of up to 3 frames)
+CUT_RETURN = 9        # frames: a cut back, within 0.15 s, to the shot before the previous cut closes that cut (a
+                      # longer flash, an insert); a 4-frame white flash at 60 fps read as two cuts
 WINDOW, HOP = 30, 6   # motion is a 0.5 s window mean (whole 24, 25 and 30 fps cycles), stepped every 0.1 s
 FLASH_DELTA = 0.10    # WCAG: a change of 10% of the maximum relative luminance...
 FLASH_DARK = 0.80     # ...where the darker state is below 0.80
@@ -76,14 +80,20 @@ def save_json(obj, path, **kw):
 
 
 def probe(video):
+    """The decoded frame size, from one PPM header: ffmpeg applies a phone clip's rotation tag, ffprobe does not."""
     if not os.path.isfile(video):
         raise BadInput(f'{video}: no such file')
-    r = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height',
-                        '-of', 'json', video], capture_output=True, text=True)
-    streams = json.loads(r.stdout or '{}').get('streams') if r.returncode == 0 else None
-    if not streams:
-        raise BadInput(f'{video}: no video stream')
-    return streams[0]['width'], streams[0]['height']
+    p = subprocess.Popen(['ffmpeg', '-nostdin', '-v', 'error', '-i', video, '-frames:v', '1', '-f', 'image2pipe',
+                          '-c:v', 'ppm', '-'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    try:
+        head = p.stdout.read(64).split()
+    finally:
+        p.kill()
+        p.wait()
+        p.stdout.close()
+    if len(head) < 3 or head[0] != b'P6':
+        raise BadInput(f'{video}: no video frames')
+    return int(head[1]), int(head[2])
 
 
 def analysis_size(w, h):
@@ -175,18 +185,42 @@ def measure(video, crop=None, workers=None):
             return a1, moved, 0.0, False
         return (a1, moved, *pair(prev, g, a1))
 
-    lum, gray, area, motion, cut, runs = [], [], [0.0], [np.nan], [False], []
-    state = {'s': 0, 'anchor': None}
+    lum, gray, area, motion, runs, onsets = [], [], [0.0], [np.nan], [], []
+    state = {'s': 0, 'anchor': None, 'acc': 0.0, 'cut': -99, 'open': None}
+
+    def continues_run(g, v):
+        d = cv2.absdiff(g, state['anchor'])
+        if float((d > STILL_DIFF).mean()) >= STILL_AREA:
+            return False
+        # The summed steps bound the drift from the anchor: the flow call waits until they reach half the limit.
+        state['acc'] += v
+        if state['acc'] < STILL_DRIFT / 2:
+            return True
+        drift, c = pair(state['anchor'], g, float((d > DIFF).mean())) if int(d.max()) > REPEAT_MAX else (0.0, False)
+        state['acc'] = drift
+        return not c and drift < STILL_DRIFT
+
+    def on_cut(i, before, g):
+        last, state['cut'] = state['cut'], i
+        if i - last <= CUT_MERGE:
+            return
+        o = state['open']
+        if o and i - o[0] <= CUT_RETURN and not pair(o[1], g, float((cv2.absdiff(o[1], g) > DIFF).mean()))[1]:
+            state['open'] = None  # back on the shot before the flash
+            return
+        onsets.append(i)
+        state['open'] = (i, before)
 
     def consume(pending):
-        i, g, job = pending.popleft()
+        i, before, g, job = pending.popleft()
         a1, moved, v, c = job.result()
         area.append(a1)
-        cut.append(c)
         motion.append(np.nan if c else v * REF_LONG / LONG)
-        if c or moved or v >= STILL_FLOW or float((cv2.absdiff(g, state['anchor']) > STILL_DIFF).mean()) >= STILL_AREA:
+        if c:
+            on_cut(i, before, g)
+        if c or moved or v >= STILL_FLOW or not continues_run(g, v):
             runs.append((state['s'], i))
-            state.update(s=i, anchor=g)
+            state.update(s=i, anchor=g, acc=0.0)
 
     workers = workers or min(4, os.cpu_count() or 1)
     threads = cv2.getNumThreads()
@@ -200,7 +234,7 @@ def measure(video, crop=None, workers=None):
                 if prev is None:
                     state['anchor'] = g
                 else:
-                    pending.append((i, g, pool.submit(compare, prev, g)))
+                    pending.append((i, prev, g, pool.submit(compare, prev, g)))
                     if len(pending) > 4 * workers:
                         consume(pending)
                 prev = g
@@ -217,11 +251,6 @@ def measure(video, crop=None, workers=None):
     for a, b in runs:
         if b - a > STILL_RUN:
             still[a:b] = True
-    onsets, last = [], -99
-    for i in np.flatnonzero(cut):
-        if i - last > CUT_MERGE:
-            onsets.append(int(i))
-        last = i
     return dict(n=n, size=[w, h], lum=np.array(lum), gray=np.array(gray), area=np.array(area),
                 motion=np.array(motion), still=still, runs=[r for r in runs if r[1] - r[0] > STILL_RUN], cuts=onsets)
 
@@ -649,8 +678,10 @@ def run_gate(a):
 
 def method():
     return {'clock_fps': CLOCK, 'analysis_long_side': LONG, 'motion_units': f'px per 1/{CLOCK} s at {REF_LONG} px',
-            'motion_window_s': WINDOW / CLOCK, 'diff': DIFF, 'still_diff': STILL_DIFF, 'still_area': STILL_AREA, 'still_flow_px': STILL_FLOW, 'still_run_s': STILL_RUN / CLOCK,
-            'cut_area': CUT_AREA, 'flash_delta': FLASH_DELTA, 'flash_dark': FLASH_DARK, 'flash_max_per_s': FLASH_MAX}
+            'motion_window_s': WINDOW / CLOCK, 'diff': DIFF, 'still_diff': STILL_DIFF, 'still_area': STILL_AREA,
+            'still_flow_px': STILL_FLOW, 'still_drift_px': STILL_DRIFT, 'still_run_s': STILL_RUN / CLOCK,
+            'cut_area': CUT_AREA, 'cut_return_s': CUT_RETURN / CLOCK, 'flash_delta': FLASH_DELTA,
+            'flash_dark': FLASH_DARK, 'flash_max_per_s': FLASH_MAX}
 
 
 def run_measure(a):
