@@ -208,6 +208,7 @@ clip tracked before them has pose only.
 ## 7. Assembly, grade and verification
 
 ```bash
+# render.mjs ends with "wrote <file> (<N> frames)": delivery_check.py takes that N (§8)
 node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/v1.mp4 [--variant b] [--to <end >]
 .venv/bin/python tools/av_sync_check.py out/final/v1.mp4 0                                          # expect audio 0.0 ms; visual 0..+1 frame
 .venv/bin/python tools/dynamism_check.py gate out/final/v1.mp4 --json out/final/v1_dynamism.json    # per-section holds, still share, motion; flashes. Exit 1: fix first
@@ -234,12 +235,19 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
 
 ```bash
 # landscape canvas: the X-ready file (YouTube takes the master itself)
-ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
-ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -b:v 21M -maxrate 25M -bufsize 42M -pass 2 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_x_1080p60.mp4
+ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
+ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 2 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_x_1080p60.mp4
 # portrait canvas: one vertical upload for TikTok, Reels and Shorts (the platforms re-encode, so keep quality high)
-ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
+ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
 # teaser: END is the teaser length in seconds, FADE = END - 0.6
-ffmpeg -i out/final/vN.mp4 -t "$END" -af "afade=t=out:st=$FADE:d=0.6" out/final/vN_teaser.mp4
+ffmpeg -i out/final/vN.mp4 -t "$END" -af "afade=t=out:st=$FADE:d=0.6" -movflags +faststart out/final/vN_teaser.mp4
+# every delivered file, before handing it over: --frames as render.mjs printed it on a master, --max-mb 512 on the X file
+.venv/bin/python tools/delivery_check.py out/final/vN.mp4 --frames <N>
+.venv/bin/python tools/delivery_check.py out/final/vN_x_1080p60.mp4 --max-mb 512
+# 4K master, on request: the same cut at --scale 2 (render.mjs pins Level 5.2 and runs only as many workers as fit in memory)
+node tools/render.mjs --fps 60 --scale 2 --workers 3 --crf 17 --out out/final/vN_4k.mp4
+# from a 4K master, each encode above reads vN_4k.mp4 and adds a downscale before -c:v (portrait: scale=1080:-2:flags=lanczos)
+ffmpeg -i out/final/vN_4k.mp4 -vf scale=-2:1080:flags=lanczos -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
 ```
 
 - **Vertical length:** platform caps on vertical uploads change often (Shorts, Reels and TikTok each
@@ -248,11 +256,27 @@ ffmpeg -i out/final/vN.mp4 -t "$END" -af "afade=t=out:st=$FADE:d=0.6" out/final/
 - **Two ratios:** the renders are `vN_16x9.mp4` and `vN_9x16.mp4` (§9). Run each encode on its own
   canvas's render and carry the suffix into every output (`vN_9x16_vertical_1080x1920.mp4`,
   `vN_9x16_teaser.mp4`), so nothing collides.
+- **Levels:** keep `-level 4.2` on the `-preset slow` encodes. Without it x264 signals Level 5.0 at
+  1080p60, above what some phones and browsers decode; with it, x264 uses fewer reference frames.
+- **Check every delivered file** with `delivery_check.py`: H.264 4:2:0, a level the frame needs and
+  devices decode (4.2 at 1080p, 5.2 at 4K), the frame count, a clean decode, the audio track,
+  faststart and the size. It warns when the busiest second outruns the level's bitrate. Hand over
+  nothing that fails.
+- **4K master:** only on request. `--scale 2` renders the same cut at 3840×2160 (2160×3840 on
+  portrait); bloom, grain and scanlines keep their 1080p size.
+  - Footage keeps its generated resolution (a 720p plate is upscaled 3×), so the gain is in type and
+    graphics.
+  - YouTube takes the 4K file; every other file is made from it at 1080p, as above.
+  - Before the long render, compare one still per section at `--scale 2` with `--scale 1`: a size
+    that skips `E.SCALE` shows as a mismatch (`ENGINE_API.md`, Scene contract).
+  - A 4K frame takes about 3 times as long, and a worker needs about 6.5 GB, so `render.mjs` runs
+    one on 16 GB of RAM: budget 15 min (3 workers) to 45 min (one) for 2:00 (authoring-time
+    estimates).
 - **Name outputs distinctly.** macOS filenames are case-insensitive, so an encode named like its
   input with different case overwrites the input mid-encode.
 - **Variants:** render each with `--variant`, and name the files by what differs (`_ending_b.mp4`).
 - **Stills:** `node tools/still.mjs --t <times> --scale 1 --dir out/stills` gives lossless PNGs at
-  the canvas size (1920×1080 or 1080×1920) straight from the engine.
+  the canvas size (1920×1080 or 1080×1920) straight from the engine; `--scale 2` with a 4K master.
 - **Style sheet / making-of:** publish an artifact or doc with the palette, type, subject sheets,
   source-vs-final footage pairs, a frame index, the pipeline and the iteration count.
 

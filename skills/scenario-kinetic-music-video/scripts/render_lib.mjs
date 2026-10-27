@@ -1,0 +1,103 @@
+// Pure helpers for render.mjs and still.mjs: flags, the engine URL, H.264 levels, encoder arguments, workers per memory.
+
+// --key value, --key=value and bare --flag (true); values may hold spaces
+export function parseArgs(argv) {
+  return Object.fromEntries(
+    argv
+      .join(" ")
+      .split("--")
+      .filter(Boolean)
+      .map((s) => {
+        const [k, ...v] = s.trim().split(" ");
+        const eq = k.indexOf("=");
+        return eq > 0
+          ? [k.slice(0, eq), k.slice(eq + 1) || true]
+          : [k, v.join(" ") || true];
+      }),
+  );
+}
+
+// The engine page's query. `safe` only for still.mjs: a delivery render never outlines the safe band.
+export function engineQuery(args, { scale, safe = false }) {
+  const q = new URLSearchParams({ scale: String(scale) });
+  if (args.only) q.set("only", args.only);
+  if (args.variant || args.ending)
+    q.set("variant", args.variant || args.ending);
+  if (args.canvas) q.set("canvas", args.canvas);
+  if (safe && args.safe) q.set("safe", "1");
+  return q;
+}
+
+const mbs = (w, h) => Math.ceil(w / 16) * Math.ceil(h / 16);
+// H.264 Table A-1: [level, max macroblocks per second, per frame, decoded picture buffer]
+const LEVELS = [
+  ["1", 1485, 99, 396],
+  ["1.1", 3000, 396, 900],
+  ["1.2", 6000, 396, 2376],
+  ["1.3", 11880, 396, 2376],
+  ["2", 11880, 396, 2376],
+  ["2.1", 19800, 792, 4752],
+  ["2.2", 20250, 1620, 8100],
+  ["3", 40500, 1620, 8100],
+  ["3.1", 108000, 3600, 18000],
+  ["3.2", 216000, 5120, 20480],
+  ["4", 245760, 8192, 32768],
+  ["4.1", 245760, 8192, 32768],
+  ["4.2", 522240, 8704, 34816],
+  ["5", 589824, 22080, 110400],
+  ["5.1", 983040, 36864, 184320],
+  ["5.2", 2073600, 36864, 184320],
+  ["6", 4177920, 139264, 696320],
+  ["6.1", 8355840, 139264, 696320],
+  ["6.2", 16711680, 139264, 696320],
+];
+// x264 medium keeps 4 frames in the buffer and caps each side at sqrt(8 * max frame size)
+const fits = ([, mbps, fs, dpb], w, h, fps) => {
+  const n = mbs(w, h);
+  const side = Math.max(Math.ceil(w / 16), Math.ceil(h / 16));
+  return n <= fs && side * side <= 8 * fs && n * fps <= mbps && 4 * n <= dpb;
+};
+
+// The lowest level x264 medium signals for this size and rate, or null past 6.2
+export function h264Level(w, h, fps) {
+  return LEVELS.find((l) => fits(l, w, h, fps))?.[0] ?? null;
+}
+
+// 1920x1080 and 1080x1920 are 8160 macroblocks; anything larger is a 4K-class frame
+export const above1080p = (w, h) => mbs(w, h) > mbs(1920, 1080);
+const MAX = LEVELS.find(([l]) => l === "5.2");
+
+// Encoder arguments for one chunk. At or below 1080p they are exactly the ones every earlier render used, so those files
+// stay byte-identical. Above it the level is pinned (a slower preset or a later x264 would signal more than 4K60 players
+// decode) and x264 keeps to 4 threads (about 1.8 GB at 4K instead of 3.2).
+export function x264Args({ w, h, fps, crf = 16, scale = 1 }) {
+  const head = ["-c:v", "libx264", "-preset", "medium", "-crf", String(crf)];
+  const tail = ["-pix_fmt", "yuv420p", "-r", String(fps)];
+  if (!above1080p(w, h)) return [...head, ...tail];
+  const level = h264Level(w, h, fps);
+  const ok = fits(MAX, w, h, fps);
+  if (!ok && scale > 1) throw new Error(levelProblem(w, h, fps));
+  return [...head, ...(ok ? ["-level", level] : []), "-threads", "4", ...tail];
+}
+
+// Why a frame does not fit Level 5.2, naming the constraint that failed
+export function levelProblem(w, h, fps) {
+  const [, mbps, fs] = MAX,
+    side = Math.max(Math.ceil(w / 16), Math.ceil(h / 16));
+  if (mbs(w, h) > fs || side * side > 8 * fs)
+    return `${w}x${h} is larger than H.264 Level 5.2 allows (4K is 3840x2160): use a smaller canvas or --scale`;
+  if (mbs(w, h) * fps > mbps)
+    return `${w}x${h} at ${fps} fps needs H.264 Level ${h264Level(w, h, fps) ?? "above 6.2"}, above the 5.2 that 4K60 players decode: render at 60 fps or less`;
+  return null;
+}
+
+// One worker's memory, an authoring-time estimate: 3.5 GB at 1080p and 6.5 GB at 4K. A synthetic project measured 2.5
+// and 5.3 GB (Chrome with its GPU targets plus x264); real footage caches add about a gigabyte at any scale.
+export const workerGB = (w, h) => 2.5 + (w * h) / (1920 * 1080);
+
+// Workers that fit in memory. Unchanged at or below 1080p, where 3 workers is the documented default.
+export function workerCap(requested, w, h, totalBytes, reserveGB = 4) {
+  if (!above1080p(w, h)) return requested;
+  const fit = Math.floor((totalBytes / 2 ** 30 - reserveGB) / workerGB(w, h));
+  return Math.max(1, Math.min(requested, fit));
+}

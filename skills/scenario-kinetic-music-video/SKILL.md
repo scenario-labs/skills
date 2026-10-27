@@ -214,6 +214,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   file under 512 MB for X; portrait: the vertical upload in `references/pipeline.md` §8), a teaser
   (verse plus first chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and
   `_9x16`, when both were asked for. Use distinct filenames, because macOS is case-insensitive.
+- **4K and checks:** a 4K master only on request (`--scale 2`, `references/pipeline.md` §8). Run
+  `delivery_check.py` on every file before handing it over.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet,
   source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
@@ -263,8 +265,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - Dynamism: [dynamism_check.py](scripts/dynamism_check.py),
   [rectify_screen.py](scripts/rectify_screen.py) (flattens a phone-filmed screen),
   [references/dynamism.md](references/dynamism.md)
-- Rendering and review: [render.mjs](scripts/render.mjs), [still.mjs](scripts/still.mjs),
-  [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py)
+- Rendering and review: [render.mjs](scripts/render.mjs), [render_lib.mjs](scripts/render_lib.mjs),
+  [still.mjs](scripts/still.mjs), [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py),
+  [delivery_check.py](scripts/delivery_check.py)
 - Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html),
   [main.js](assets/engine/main.js), [canvas.js](assets/engine/canvas.js),
   [core.js](assets/engine/core.js), [plate.js](assets/engine/plate.js),

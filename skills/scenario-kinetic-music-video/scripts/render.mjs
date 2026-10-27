@@ -1,24 +1,20 @@
 // Deterministic renderer: steps the engine frame by frame in headless Chrome, pipes JPEGs to ffmpeg.
-// usage: node tools/render.mjs --from 22 --to 30 --fps 30 --scale 0.5 --out out/preview.mp4 [--only a,b] [--workers 3] [--noaudio] [--crf 16] [--variant b] [--canvas portrait|landscape|square|WxH] [--force]  (--to defaults to the song length; --canvas defaults to CANVAS in engine/timeline.js; an existing --out is kept unless --force)
+// usage: node tools/render.mjs --from 22 --to 30 --fps 30 --scale 0.5 --out out/preview.mp4 [--only a,b] [--workers 3] [--noaudio] [--crf 16] [--variant b] [--canvas portrait|landscape|square|WxH] [--force]  (--to defaults to the song length; --canvas defaults to CANVAS in engine/timeline.js; an existing --out is kept unless --force; --scale 2 renders the 4K master and fits --workers to memory)
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { serve } from "./serve.mjs";
-const args = Object.fromEntries(
-  process.argv
-    .slice(2)
-    .join(" ")
-    .split("--")
-    .filter(Boolean)
-    .map((s) => {
-      const [k, ...v] = s.trim().split(" ");
-      const eq = k.indexOf("="); // --canvas=portrait as well as --canvas portrait
-      return eq > 0
-        ? [k.slice(0, eq), k.slice(eq + 1) || true]
-        : [k, v.join(" ") || true];
-    }),
-);
+import {
+  engineQuery,
+  levelProblem,
+  parseArgs,
+  workerCap,
+  workerGB,
+  x264Args,
+} from "./render_lib.mjs";
+const args = parseArgs(process.argv.slice(2));
 const fps = +(args.fps ?? 30),
   scale = +(args.scale ?? 1),
   from = +(args.from ?? 0),
@@ -36,10 +32,7 @@ fs.mkdirSync(path.dirname(out), { recursive: true });
 const f0 = Math.round(from * fps),
   f1 = Math.round(to * fps);
 const { srv, port } = await serve(0);
-const q = new URLSearchParams({ scale: String(scale) });
-if (args.only) q.set("only", args.only);
-if (args.variant || args.ending) q.set("variant", args.variant || args.ending);
-if (args.canvas) q.set("canvas", args.canvas);
+const q = engineQuery(args, { scale });
 const launch = () =>
   chromium.launch({
     channel: "chrome",
@@ -70,6 +63,12 @@ async function renderChunk(a, b, file, wi) {
   // the engine resolved the canvas (timeline.js CANVAS or --canvas); match the page to it
   const [w, h] = await page.evaluate(() => [window.E.W, window.E.H]);
   await page.setViewportSize({ width: w, height: h });
+  const enc = x264Args({ w, h, fps, crf: args.crf ?? 16, scale });
+  if (wi === 0) {
+    if (!enc.includes("-level") && enc.includes("-threads"))
+      console.log(`note: ${levelProblem(w, h, fps)}; rendering anyway`);
+    if (scale > 1) fitWorkers(w, h);
+  }
   const ff = spawn(
     "ffmpeg",
     [
@@ -84,16 +83,7 @@ async function renderChunk(a, b, file, wi) {
       "mjpeg",
       "-i",
       "-",
-      "-c:v",
-      "libx264",
-      "-preset",
-      "medium",
-      "-crf",
-      String(args.crf ?? 16),
-      "-pix_fmt",
-      "yuv420p",
-      "-r",
-      String(fps),
+      ...enc,
       file,
     ],
     { stdio: ["pipe", "inherit", "inherit"] },
@@ -124,6 +114,38 @@ async function renderChunk(a, b, file, wi) {
   if (code !== 0)
     throw new Error(`ffmpeg chunk encode failed (exit ${code}): ${file}`);
 }
+// Above scale 1, chunk 0 renders alone until its page reports the frame size; then as many chunks run at once as fit in
+// memory. The chunks stay those of --workers, so the file does not depend on the machine.
+let slots = scale > 1 ? 1 : Infinity,
+  running = 0;
+const waiting = [];
+const pump = () => {
+  while (running < slots && waiting.length) {
+    running++;
+    waiting.shift()();
+  }
+};
+function fitWorkers(w, h) {
+  const cap = workerCap(workers, w, h, os.totalmem());
+  if (cap < workers)
+    console.log(
+      `--scale ${scale}: ${workers} workers lowered to ${cap} at once (${Math.round(os.totalmem() / 2 ** 30)} GB RAM, about ${workerGB(w, h).toFixed(1)} GB per worker)`,
+    );
+  slots = cap;
+  pump();
+}
+async function inSlot(job) {
+  await new Promise((r) => {
+    waiting.push(r);
+    pump();
+  });
+  try {
+    return await job();
+  } finally {
+    running--;
+    pump();
+  }
+}
 const n = f1 - f0,
   per = Math.ceil(n / workers),
   parts = [];
@@ -134,7 +156,7 @@ await Promise.all(
     if (a >= b) return;
     const file = out.replace(/\.mp4$/, `.part${i}.mp4`);
     parts.push([i, file]);
-    return renderChunk(a, b, file, i);
+    return inSlot(() => renderChunk(a, b, file, i));
   }),
 );
 parts.sort((x, y) => x[0] - y[0]);
@@ -187,4 +209,4 @@ if (muxCode !== 0) {
 parts.forEach(([, f]) => fs.unlinkSync(f));
 fs.unlinkSync(list);
 srv.close();
-console.log("wrote", out);
+console.log("wrote", out, `(${n} frames)`); // the count delivery_check.py --frames takes

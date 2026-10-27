@@ -4,20 +4,8 @@ import { chromium } from "playwright";
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 import { serve } from "./serve.mjs";
-const args = Object.fromEntries(
-  process.argv
-    .slice(2)
-    .join(" ")
-    .split("--")
-    .filter(Boolean)
-    .map((s) => {
-      const [k, ...v] = s.trim().split(" ");
-      const eq = k.indexOf("="); // --canvas=portrait as well as --canvas portrait
-      return eq > 0
-        ? [k.slice(0, eq), k.slice(eq + 1) || true]
-        : [k, v.join(" ") || true];
-    }),
-);
+import { engineQuery, parseArgs } from "./render_lib.mjs";
+const args = parseArgs(process.argv.slice(2));
 const scale = +(args.scale ?? 0.5),
   dir = args.dir ?? "out/stills";
 fs.mkdirSync(dir, { recursive: true });
@@ -28,11 +16,7 @@ if (args.range) {
   for (let x = a; x <= b + 1e-6; x += st) times.push(+x.toFixed(3));
 }
 const { srv, port } = await serve(0);
-const q = new URLSearchParams({ scale: String(scale) });
-if (args.only) q.set("only", args.only);
-if (args.variant || args.ending) q.set("variant", args.variant || args.ending);
-if (args.canvas) q.set("canvas", args.canvas);
-if (args.safe) q.set("safe", "1");
+const q = engineQuery(args, { scale, safe: true });
 const browser = await chromium.launch({
   channel: "chrome",
   headless: true,

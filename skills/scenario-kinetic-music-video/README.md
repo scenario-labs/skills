@@ -139,6 +139,41 @@ Known limits:
   SKILL.md step 6 tells a revision of an older project what to copy by hand: the brief is filled in
   per project, so only its dynamism check is added.
 
+## 4K master
+
+`--scale 2` reuses the canvas: layouts already scale with `E.SCALE`. Three things did not, and each
+fix applies above scale 1 only, so the shader text and the encoder arguments at scale 1 or below are
+unchanged.
+
+- **Bloom:** UnrealBloomPass blurs in texels of its own targets, so at 4K the glow reached half as
+  far. It now runs at the scale-1 size. Its bright pass then read only the middle of each 4×4 block,
+  so it averages the block with four bilinear taps instead: without them, thin lines pulse as they
+  move.
+- **Grain and scanlines** keep 1080p cells (string substitution in the final shader).
+- **Encoder:** above 1080p, `-level` from H.264 Table A-1 and `-threads 4`; `render.mjs` caps the
+  workers to memory and refuses a 4K master past Level 5.2.
+
+Evidence (an M-series Mac, ANGLE Metal, three 0.186.1, ffmpeg 7.1.1, a synthetic project with a
+footage plate, matte and tracking, 2D and 3D type, grain, scanlines and the HUD):
+
+- **Unchanged at scale 1 or below:** stills of every frame at scales 0.5 and 1, plus square and
+  portrait, are pixel-identical to the previous engine. Four `render.mjs` files (960×540 at 30 fps
+  on 2 workers, 1920×1080 at 60, 540×540 at 30, 1080×1920 at 60) are byte-identical.
+  - Chrome's GPU canvas rasterizes large or scaled glyph edges with ±1 differences from run to run,
+    in the old engine as in the new. The comparison runs with `--disable-accelerated-2d-canvas` (3
+    of 3 repeat runs identical), so a difference can only come from the engine.
+- **Moving thin lines** (0.5 to 1.5 px wide, half a 1080p pixel per frame), per-frame halo energy
+  against 1080p: within 0.6% with the fix, up to 148% off with the bloom resized alone, 129% off
+  with no fix. Area-downscaled PSNR against 1080p: 39.3, 27.9 and 24.2 dB.
+- **Grain:** 4K grain is constant over 2×2 cells and correlates 0.79 with the 1080p pattern (−0.04
+  before), the rest being 8-bit rounding near black.
+- **Levels:** `h264Level` matched x264 medium's own pick in 30 cases from 176×144 to 5120×2880, so
+  the pin changes no bytes at 4K60; a vitest case reruns that on CI's ffmpeg. With `-preset slow`,
+  x264 signals 5.0 at 1080p60 on its own; `-level 4.2` makes it drop to 4 reference frames.
+- **Cost:** a 4K frame took 3.3 times as long. Peak footprint per worker (Chrome, its GPU process
+  and x264) was 2.5 GB at 1080p and 5.3 GB at 4K; `workerGB` adds about a gigabyte for real footage
+  caches.
+
 ## What the record does not cover
 
 - The skill is the creator's own document, not distilled here, so it does not follow the house
@@ -146,8 +181,10 @@ Known limits:
 - Costs are the production's observed relative prices, not live quotes.
 - The engine and scripts need Node with Playwright, ffmpeg and a Python environment
   (`scripts/scaffold.sh` builds it); the matte tool needs macOS (Apple Vision).
-- Tests cover the dependency-light scripts, the dynamism and rectify scripts on synthetic clips, and
-  `canvas.js`; the rest need the full environment and generated footage.
+- Tests cover the dependency-light scripts, the dynamism and rectify scripts on synthetic clips,
+  `canvas.js`, `render_lib.mjs` and `delivery_check.py`; the rest need the full environment and
+  generated footage.
+- The 4K path was checked on synthetic projects only, not yet in a live application test.
 
 ## Supply chain
 

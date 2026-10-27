@@ -100,7 +100,39 @@ composer.setSize(W, H);
 const texPass = new TexturePass(accum.texture);
 composer.addPass(texPass);
 const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 1.0, 0.55, 1.05);
+// Above scale 1 (the 4K master) the bloom runs at the scale-1 size, since UnrealBloomPass blurs in texels of its own
+// targets; its bright pass then averages each SCALE x SCALE cell instead of reading only its middle, so a thin line keeps
+// a steady glow as it moves. The shader text is untouched at scale 1 or below.
+let scaleError = null;
+if (SCALE > 1) {
+  const setSize = bloom.setSize.bind(bloom);
+  bloom.setSize = (w, h) =>
+    setSize(Math.round(w / SCALE), Math.round(h / SCALE));
+  const hp = bloom.materialHighPassFilter,
+    tap = "vec4 texel = texture2D( tDiffuse, vUv );";
+  if (hp.fragmentShader.includes(tap)) {
+    hp.fragmentShader = hp.fragmentShader.replace(
+      tap,
+      `vec2 o = ${(SCALE / 2).toFixed(4)} / vec2(textureSize(tDiffuse, 0));
+      vec4 texel = 0.25 * (texture2D(tDiffuse, vUv - o) + texture2D(tDiffuse, vUv + o)
+        + texture2D(tDiffuse, vUv + vec2(o.x, -o.y)) + texture2D(tDiffuse, vUv + vec2(-o.x, o.y)));`,
+    );
+    hp.needsUpdate = true;
+  } else
+    scaleError = new Error(
+      `--scale ${SCALE}: this three.js changed UnrealBloomPass's bright pass; update the 4K bloom fix in main.js`,
+    );
+}
 composer.addPass(bloom);
+// Above scale 1, grain and scanlines keep their scale-1 cells, so the 4K master carries the approved texture
+const FC =
+  SCALE > 1
+    ? `(floor(gl_FragCoord.xy / ${SCALE.toFixed(4)}) + 0.5)`
+    : "gl_FragCoord.xy";
+const FCY =
+  SCALE > 1
+    ? `(floor(gl_FragCoord.y / ${SCALE.toFixed(4)}) + 0.5)`
+    : "gl_FragCoord.y";
 const FinalShader = {
   uniforms: {
     tDiffuse: { value: null },
@@ -163,10 +195,10 @@ const FinalShader = {
       }
       col += uFlashCol * uFlash;
       col *= 1.0 - uVig * smoothstep(0.15, 0.85, r2*2.2);
-      if(uScan>0.) col *= 1.0 - uScan*0.5*(0.5+0.5*sin(gl_FragCoord.y*3.14159*0.5));
+      if(uScan>0.) col *= 1.0 - uScan*0.5*(0.5+0.5*sin(${FCY}*3.14159*0.5));
       col = clamp(col,0.,1.);
       col = toSRGB(col);
-      col += (h(gl_FragCoord.xy + fract(uFrame*0.61803)*100.) - 0.5) * uGrain;
+      col += (h(${FC} + fract(uFrame*0.61803)*100.) - 0.5) * uGrain;
       float lb = uLetterbox * 0.5 * (1.0 - (uRes.x/uRes.y)/2.39);
       if (vUv.y < lb || vUv.y > 1.0-lb) col = vec3(0.);
       gl_FragColor = vec4(col*uFade, 1.0);
@@ -232,6 +264,7 @@ window.E = E;
 
 async function boot() {
   if (canvasError) throw canvasError;
+  if (scaleError) throw scaleError;
   const [A, L] = await Promise.all([
     fetch("/engine/data/audio.json").then((r) => r.json()),
     fetch("/engine/data/lyrics.json").then((r) => r.json()),

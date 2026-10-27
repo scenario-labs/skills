@@ -51,9 +51,13 @@ export default {
 - Layers composite premultiplied-normal over black in z order (an entry can set
   `blend: 'add'|'screen'|'multiply'`). HDR linear color. Values above the bloom threshold (1.05)
   bloom.
-- Previews run at `E.SCALE = 0.5` (E.W = 960 on landscape, 540 on portrait). Always size 2D pixels
-  as `px * E.SCALE`, and place them from `E.W`, `E.H` and `E.SAFE`, never from 1920 or 1080
-  constants. The camera aspect is `E.W/E.H`.
+- Previews run at `E.SCALE = 0.5` (E.W = 960 on landscape, 540 on portrait), a 4K master at 2.
+  Always size 2D pixels as `px * E.SCALE`, and place them from `E.W`, `E.H` and `E.SAFE`, never from
+  1920 or 1080 constants. The camera aspect is `E.W/E.H`.
+  - `E.SCALE` also goes on text-texture sizes, `glow`, `stroke` and `drawStagger`'s `dy` (its
+    default of 60 is unscaled).
+  - `THREE.Line` stays one device pixel wide at every scale: draw hairlines as meshes or scaled
+    canvas strokes.
 - Deterministic only. No `Math.random`, `Date`, `performance.now` or rAF timing. Use `E.rng(seed)`,
   `E.hash1`, `E.noise1/2`. Particles use closed-form positions (no accumulated state).
 - The budget is about 35 ms/frame at 1080p. Cache text textures, geometry and canvases in `load()`.
@@ -269,3 +273,4 @@ every lyric readable.
 - `node tools/render.mjs --only <id>,hud --from a --to b --fps 30 --scale 0.5 --out out/<id>/preview.mp4 --force`
 - Full:
   `node tools/render.mjs --fps 60 --scale 1 --workers 3 --crf 17 --out out/final/master.mp4 [--variant b] [--to <end>] [--canvas portrait]`
+- 4K master: the same with `--scale 2 --out out/final/master_4k.mp4` (`pipeline.md` §8).
