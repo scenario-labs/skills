@@ -22,7 +22,7 @@ overlap.
 
 Prerequisites:
 
-- Node.js 22 (the version CI runs) and pnpm.
+- Node.js at the version in `.nvmrc`, which CI reads too, and pnpm.
 - [uv](https://docs.astral.sh/uv/). The pre-commit hook runs ruff and the spec validator through
   `uvx`, so every commit fails without it.
 - For `pnpm test` only: Python 3.11+ as the `python3` on PATH, and ffmpeg. The runner uses that
