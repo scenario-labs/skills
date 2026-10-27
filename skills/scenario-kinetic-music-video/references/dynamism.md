@@ -148,9 +148,10 @@ The Craft agent in step 2 measures each motion reference the user gives:
 6. Copy the numbers into `analysis/research_craft.md` next to the moves, so scene agents see them.
 
 - `measure` never fails a video, and its times are video times.
-- `WARN targets out of order` names each pair of energies where a written target loosens from calm
-  to mid to high: `motion_min` falls, or `still_max` or `hold_max_s` rises. Check the span labels
-  first. When they hold, measure other spans for that energy, or set the key by hand.
+- `WARN targets out of order` names each pair of energies where a target the gate will use loosens
+  from calm to mid to high: `motion_min` falls, or `still_max` or `hold_max_s` rises. A key the file
+  omits counts at its default (§3), marked `(default)`. Check the span labels first. When they hold,
+  measure other spans for that energy, or set the key by hand.
 - Burnt-in captions and platform UI count as motion. Keep them out with `--crop W:H:X:Y`.
 - Take the register from a reference, never its frames, logo or script.
 
@@ -167,9 +168,12 @@ camera on the static room around the screen and warps the screen flat:
   0), and prints the corners (top left, top right, bottom right, bottom left).
 - Read the `--check` image: the frame at `--at` with the outline it found, beside that frame
   flattened. It is written before tracking, so a failed run leaves it too. When the outline misses a
-  corner, or no screen is found, rerun with `--quad "x,y x,y x,y x,y"` read off that image.
+  corner, or no screen is found, rerun with `--quad "x,y x,y x,y x,y"` read off that image and
+  `--force`, which replaces the first run's files.
 - A video inside the screen with black bars (a vertical video on a laptop, a letterboxed film): quad
   the video itself, not the whole screen.
+- Black bars around the whole recording (a landscape clip posted as a vertical video) are skipped.
+  Corners stay in pixels of the full frame, as the `--check` image shows them.
 - `--band y0:y1` keeps a burnt-in caption band out of the tracking.
 - The output is 1280x720, or 720x1280 for a tall screen, at `--fps` (default 30), from `--from` to
   `--to`. `--size WxH` overrides the size.

@@ -594,14 +594,17 @@ def write_targets(path, existing, rows, video):
 
 
 def out_of_order(targets):
-    """Each step from calm to mid to high where a target loosens: motion_min falls, still_max or hold_max_s rises.
-    Energies or keys the targets omit are skipped."""
+    """Each step from calm to mid to high where a target the gate uses loosens: motion_min falls, still_max or
+    hold_max_s rises. A key the targets file omits counts at its default, as the gate reads it, marked (default)."""
     found = []
     for k, sign in (('motion_min', '>'), ('still_max', '<'), ('hold_max_s', '<')):
-        seq = [(e, targets[e][k]) for e in ('calm', 'mid', 'high') if k in (targets.get(e) or {})]
-        for (e0, v0), (e1, v1) in zip(seq, seq[1:]):
+        seq = []
+        for e in ('calm', 'mid', 'high'):
+            own = targets.get(e) if isinstance(targets.get(e), dict) else {}
+            seq.append((e, own[k], '') if k in own else (e, DEFAULT_TARGETS[e][k], ' (default)'))
+        for (e0, v0, d0), (e1, v1, d1) in zip(seq, seq[1:]):
             if (v0 > v1) if sign == '>' else (v0 < v1):
-                found.append(f'{k} {e0} {v0:g} {sign} {e1} {v1:g}')
+                found.append(f'{k} {e0} {v0:g}{d0} {sign} {e1} {v1:g}{d1}')
     return found
 
 
@@ -760,7 +763,8 @@ def run_measure(a):
         if bad:
             print('WARN targets out of order across energies: ' + '; '.join(bad) + '. From calm to mid to high, '
                   'motion_min should not fall, nor still_max or hold_max_s rise. Label each span with the energy of '
-                  'the song section it stands in for')
+                  'the song section it stands in for. A (default) value is one the file omits: measure a span of '
+                  'that energy, or set it by hand')
     if a.json:
         save_json({'video': a.video, 'seconds': round(dur, 3), 'size': m['size'], 'crop': a.crop, 'method': method(),
                    'spans': rows, 'photosensitivity': photo, 'per_second': ps, 'busiest': busiest,

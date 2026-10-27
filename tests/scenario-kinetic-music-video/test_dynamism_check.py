@@ -168,7 +168,17 @@ class PureTest(unittest.TestCase):
                     "mid": {"still_max": 0.333, "hold_max_s": 0.3, "motion_min": 0.9}, "from": {}}
         self.assertEqual(dc.out_of_order(inverted), ["motion_min calm 1.01 > mid 0.9"])
         partial = {"calm": {"hold_max_s": 1.2}, "high": {"hold_max_s": 1.5, "motion_min": 2.0}}
-        self.assertEqual(dc.out_of_order(partial), ["hold_max_s calm 1.2 < high 1.5"])
+        self.assertEqual(dc.out_of_order(partial), ["hold_max_s mid 1 (default) < high 1.5"])
+
+    def test_targets_order_counts_the_defaults_the_gate_fills_in(self):
+        # calm and high spans only, as the measure example writes: the gate holds mid to its defaults
+        written = {"calm": {"still_max": 0.344, "hold_max_s": 0.3, "motion_min": 1.01},
+                   "high": {"still_max": 0.178, "hold_max_s": 0.3, "motion_min": 1.67}, "from": {}}
+        self.assertEqual(dc.out_of_order(written),
+                         ["motion_min calm 1.01 > mid 1 (default)", "hold_max_s calm 0.3 < mid 1 (default)"])
+        effective, _ = dc.load_targets(None)
+        effective.update({k: v for k, v in written.items() if k != "from"})
+        self.assertEqual([s.replace(" (default)", "") for s in dc.out_of_order(written)], dc.out_of_order(effective))
 
     def test_documented_targets_example_parses(self):
         doc = (SKILL / "references" / "dynamism.md").read_text()
@@ -430,6 +440,16 @@ class MeasureTest(unittest.TestCase):
         self.assertIsNotNone(warn, r.stdout)
         for k in ("motion_min calm", "still_max calm", "hold_max_s calm"):
             self.assertIn(k, warn.group(1))
+
+    def test_write_targets_warns_against_a_default_energy(self):
+        p = Project(self)
+        r, _ = p.measure(self.two, "--span", "verse=0:3:calm", "--write-targets", "analysis/targets.json")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(set(json.loads((p.dir / "analysis" / "targets.json").read_text())), {"calm", "from"})
+        warn = re.search(r"WARN targets out of order across energies: (.+)", r.stdout)
+        self.assertIsNotNone(warn, r.stdout)  # the busy calm span is held to more than the default mid
+        self.assertIn("motion_min calm", warn.group(1))
+        self.assertIn("mid 1 (default)", warn.group(1))
 
     def test_write_targets_keeps_a_note_until_an_energy_is_replaced(self):
         p = Project(self)

@@ -3,10 +3,10 @@ usage: python tools/rectify_screen.py <phone.mp4> <out.mp4> [--quad auto|"x,y x,
                                       [--to S] [--band y0:y1] [--size WxH] [--fps 30] [--check FILE.jpg] [--force]
 The camera is tracked on the static room around the screen (feature matches outside the screen), and the screen's
 quadrilateral at --at follows it into every frame. --quad auto finds the screen as the brightest changing
-quadrilateral over the 0.2 s after --at; otherwise give its corners at --at, top left, top right, bottom right,
-bottom left, in pixels of the decoded frame (read them off the --check image). --band rows (a burnt-in caption) are
-kept out of the tracking. The output is 1280x720, or 720x1280 for a tall screen, at --fps, without audio. The --check
-image is written before tracking, so a failed run leaves it too.
+quadrilateral over the 0.2 s after --at, inside any black bars around the recording; otherwise give its corners at
+--at, top left, top right, bottom right, bottom left, in pixels of the decoded frame (read them off the --check
+image). --band rows (a burnt-in caption) are kept out of the tracking. The output is 1280x720, or 720x1280 for a
+tall screen, at --fps, without audio. The --check image is written before tracking, so a failed run leaves it too.
 Exit 0: written; 2: bad input, no screen found or no frames."""
 import argparse, os, subprocess, sys
 import numpy as np
@@ -15,6 +15,8 @@ STACK_S = 0.2        # auto detection reads this much after --at: longer, and ha
 MIN_AREA = 0.05      # the screen covers at least 5% of the frame
 MAX_AREA = 0.9       # an auto outline over 90% of the frame, or on three borders, is the room around the screen
 BORDER = 0.01        # an outline this close to a border, as a share of that side, touches it
+BAR_LEVEL = 24       # edge rows or columns under this gray level in every frame read are black bars around the
+                     # recording (a landscape clip posted as a vertical video): auto detection looks inside them
 GROW = 1.08          # tracking ignores the screen and a margin around it: its content moves, the room does not
 SCALE = 0.5          # features are found at half resolution
 MIN_MATCHES, MIN_INLIERS = 25, 20
@@ -69,12 +71,23 @@ def fills_frame(q, w, h):
     return sum(map(bool, touches)) >= 3 or cv2.contourArea(q) > MAX_AREA * w * h
 
 
+def picture(g):
+    """The recording inside black bars along the decoded frame's edges, as x0, y0, x1, y1 (end exclusive)."""
+    lit = g.max(0) > BAR_LEVEL
+    rows, cols = np.flatnonzero(lit.any(1)), np.flatnonzero(lit.any(0))
+    if not len(rows):
+        return 0, 0, g.shape[2], g.shape[1]
+    return int(cols[0]), int(rows[0]), int(cols[-1]) + 1, int(rows[-1]) + 1
+
+
 def find_screen(stack, w, h):
-    """The brightest changing region of the stack, reduced to four corners, or None. A bright, textured room drifting
-    around a dark screen (black bars around a vertical video) outscores the screen, and its outline fills the frame:
-    None too."""
+    """The brightest changing region of the recording, reduced to four corners, or None. A bright, textured room
+    drifting around a dark screen (black bars around a vertical video) outscores the screen, and its outline fills the
+    recording: None too. Black bars around the recording itself are cropped first: the recording outscores them."""
     import cv2
     g = np.stack([cv2.cvtColor(f, cv2.COLOR_BGR2GRAY).astype(np.float32) for f in stack])
+    x0, y0, x1, y1 = picture(g)
+    g, w, h = g[:, y0:y1, x0:x1], x1 - x0, y1 - y0
     score = cv2.normalize(g.std(0), None, 0, 1, cv2.NORM_MINMAX) + cv2.normalize(g.mean(0), None, 0, 1, cv2.NORM_MINMAX)
     u8 = cv2.normalize(cv2.GaussianBlur(score, (0, 0), 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
     _, m = cv2.threshold(u8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -91,7 +104,7 @@ def find_screen(stack, w, h):
         p = cv2.approxPolyDP(hull, eps * per, True)
         if len(p) == 4:
             q = order(p[:, 0])
-            return None if fills_frame(q, w, h) else q
+            return None if fills_frame(q, w, h) else q + np.float32([x0, y0])
     return None
 
 
@@ -178,10 +191,11 @@ def run(a):
         size = (1280, 720) if wide >= tall else (720, 1280)
     if a.check:
         check_image(a.check, stack[0], q, size)  # first, so the image the corners are read off survives a failure
+    rerun = (f'read the corners off {a.check or "a --check FILE.jpg image"} and rerun with --quad "x,y x,y x,y x,y"'
+             + (' and --force, which replaces that image' if a.check else ''))
     if q is None:
-        look = a.check or 'a --check FILE.jpg image'
-        raise BadInput(f'no screen found: read the corners off {look} and pass --quad "x,y x,y x,y x,y" '
-                       "(TL TR BR BL at --at; a video inside black bars: the video's own corners)")
+        raise BadInput(f"no screen found: {rerun} (TL TR BR BL at --at; a video inside black bars: the video's own "
+                       'corners)')
     print('corners at --at (TL TR BR BL): ' + ' '.join(f'{x:.0f},{y:.0f}' for x, y in q))
     ow, oh = size
     sift, bf = cv2.SIFT_create(4000), cv2.BFMatcher()
@@ -191,7 +205,8 @@ def run(a):
 
     kr, dr = sift.detectAndCompute(small(stack[0]), mask_for(q, band, w, h))
     if dr is None or len(kr) < MIN_MATCHES:
-        raise BadInput('too little texture around the screen to track the camera (fill less of the frame with it)')
+        raise BadInput('too little texture around the screen to track the camera (fill less of the frame with it)'
+                       + (f'; when the outline is not the screen, {rerun}' if a.quad == 'auto' else ''))
     try:
         os.makedirs(os.path.dirname(a.out) or '.', exist_ok=True)
     except OSError as e:

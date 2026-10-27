@@ -12,7 +12,8 @@ from pathlib import Path
 
 import numpy as np
 
-SCRIPT = Path(__file__).resolve().parents[2] / "skills" / "scenario-kinetic-music-video" / "scripts" / "rectify_screen.py"
+SKILL = Path(__file__).resolve().parents[2] / "skills" / "scenario-kinetic-music-video"
+SCRIPT = SKILL / "scripts" / "rectify_screen.py"
 W, H, SW, SH, FPS, N = 960, 540, 640, 360, 30, 30
 # The screen's corners in the room (TL TR BR BL). At t=0 the camera drift is (0, +9) px, so the clip shows them 9 lower.
 QUAD = np.float32([[250, 110], [710, 140], [700, 400], [240, 425]])
@@ -94,6 +95,13 @@ def make_phone_clip(out, textured=False, pillarbox=False):
     for p in (phone, truth):
         p.stdin.close()
         p.wait()
+
+
+def letterbox(src, out, top, height):
+    """The clip inside black bars, as a landscape recording posted as a vertical video: top rows above, the rest
+    below, to the given height."""
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(src), "-vf", f"pad={W}:{height}:0:{top}",
+                    "-c:v", "libx264", "-crf", "14", "-pix_fmt", "yuv420p", str(out)], check=True)
 
 
 def gray_frames(path):
@@ -215,16 +223,44 @@ class RectifyScreenTest(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
         self.assertIn("no screen found", r.stderr)  # the room outscores the dark screen and fills the frame
         self.assertIn("pillar.jpg", r.stderr)
+        self.assertIn("--force", r.stderr)  # the rerun replaces the image this run left
         self.assertNotIn("texture", r.stderr)
         self.assertEqual(cv2.imread(str(self.dir / "pillar.jpg")).shape, (H, W, 3))  # the frame alone, to read off
         to_room = cv2.getPerspectiveTransform(np.float32([[0, 0], [SW, 0], [SW, SH], [0, SH]]), QUAD)
         video = np.float32([[[VX0, 0], [VX1, 0], [VX1, SH], [VX0, SH]]])
-        r = run(self.dir, "phone_pillar.mp4", "pillar.mp4", "--quad",
+        r = run(self.dir, "phone_pillar.mp4", "pillar.mp4", "--check", "pillar.jpg", "--force", "--quad",
                 quad_text(cv2.perspectiveTransform(video, to_room)[0] + np.float32([0, 9])))
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertGreaterEqual(int(re.search(r"720x1280, tracked (\d+)%", r.stdout).group(1)), 90)
         self.assertLess(self.error_against_truth(self.dir / "pillar.mp4", gray_frames(self.dir / "truth_pillar.mp4")),
                         4.0)
+
+    def test_recording_inside_black_bars_is_read_without_them(self):
+        import cv2
+
+        top, height = 230, 1000
+        letterbox(self.dir / "phone.mp4", self.dir / "phone_lb.mp4", top, height)
+        r = run(self.dir, "phone_lb.mp4", "lb.mp4", "--band", f"{top + 490}:{top + 540}")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        corners = re.search(r"corners at --at \(TL TR BR BL\): (.+)", r.stdout).group(1)
+        found = np.float32([[float(v) for v in p.split(",")] for p in corners.split()])
+        self.assertLess(float(np.abs(found - SHOWN - np.float32([0, top])).max()), 8.0, corners)
+        if not (self.dir / "phone_pillar.mp4").exists():
+            make_phone_clip(self.dir, pillarbox=True)
+        letterbox(self.dir / "phone_pillar.mp4", self.dir / "pillar_lb.mp4", top, height)
+        r = run(self.dir, "pillar_lb.mp4", "pillar_lb_out.mp4", "--check", "pillar_lb.jpg")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("no screen found", r.stderr)  # as without the bars, never the whole recording
+        self.assertNotIn("texture", r.stderr)
+        self.assertEqual(cv2.imread(str(self.dir / "pillar_lb.jpg")).shape, (height, W, 3))
+
+    def test_documented_rerun_replaces_the_check_image(self):
+        doc = (SKILL / "references" / "dynamism.md").read_text()
+        section = doc.split("## 6. ", 1)[1].split("\n## ", 1)[0]
+        bullets = [" ".join(b.split()) for b in re.split(r"\n- ", section)]
+        rerun = [b for b in bullets if "rerun with `--quad" in b]
+        self.assertEqual(len(rerun), 1, bullets)
+        self.assertIn("--force", rerun[0])
 
     def test_a_failed_run_still_writes_the_check_image(self):
         import cv2

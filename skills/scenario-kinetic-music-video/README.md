@@ -125,8 +125,12 @@ Known limits:
   black bars around a vertical video: the room outscored the screen, and its outline filled the
   frame. Such an outline now exits "no screen found", after writing the `--check` frame. Quadding
   the video itself tracked 100% of frames.
+- The same clip inside black bars (a landscape recording posted as a vertical video) outlined the
+  whole recording and failed on texture, with no `--quad` hint. Detection now crops the bars first,
+  and the clip exits "no screen found" as it does without them.
 - `--write-targets` takes span energies as given. Labeling spans by how busy they look once held a
-  calm section to more motion than a mid one, so `measure` warns when targets run out of order.
+  calm section to more motion than a mid one, so `measure` warns when targets run out of order. It
+  checks the targets the gate will use: a calm-and-high file still meets the default mid.
 - Sections come from `node` evaluating `engine/timeline.js` as a `data:` URL module. A timeline with
   relative imports falls back to a file URL, which needs a Node that detects ES modules in the
   project's typeless `package.json` (20.19+ or 22.7+).
