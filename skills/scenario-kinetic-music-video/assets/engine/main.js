@@ -378,11 +378,12 @@ async function boot() {
     if (floor) BL.fasts.push([l.start, l.end, floor]);
   }
   // cuts come from every entry on this canvas and variant, so an --only preview slides its shutters like the full render
-  const variant = Q.get("variant") || Q.get("ending") || "a";
   BL.cuts = blur.cutList(
-    TIMELINE.filter(
-      (e) => cv.onCanvas(e, ORIENT) && (!e.variant || e.variant === variant),
-    ),
+    blur.cutEntries(TIMELINE, {
+      onCanvas: (e) => cv.onCanvas(e, ORIENT),
+      variant: Q.get("variant") || Q.get("ending"),
+      loaded: E.layers,
+    }),
     {
       beats: E.A.beats,
       words: E.words,

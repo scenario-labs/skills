@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { onCanvas } from "../../skills/scenario-kinetic-music-video/assets/engine/canvas.js";
 import {
+  cutEntries,
   cutList,
   DEFAULTS,
   EPS,
@@ -133,6 +135,52 @@ describe("cutList", () => {
     expect(cutList(entries, { beats: [0.5, 1], words, o })).toEqual([
       0, 0.5, 1, 4, 9.5, 9999,
     ]);
+  });
+});
+
+describe("cutEntries", () => {
+  const TL = [
+    { id: "intro", start: 0, end: 16.66 },
+    { id: "hook", start: 16.66, end: 37.6, canvas: "landscape" },
+    { id: "hook_v", start: 16.66, end: 37.6, canvas: "portrait" },
+    { id: "outro", start: 140, end: 150, variant: "a" },
+    { id: "outro_b", start: 140, end: 153, variant: "b" },
+    { id: "hud", start: 0, end: 9999 },
+  ];
+  const land = { onCanvas: (e: object) => onCanvas(e, "landscape") };
+  const pick = (...ids: string[]) => TL.filter((e) => ids.includes(e.id));
+  const ids = (es: { id: string }[]) => es.map((e) => e.id);
+
+  it("takes every entry on this canvas in the render's variant", () => {
+    const full = cutEntries(TL, {
+      ...land,
+      loaded: pick("intro", "hook", "outro", "hud"),
+    });
+    expect(ids(full)).toEqual(["intro", "hook", "outro", "hud"]);
+    const b = cutEntries(TL, {
+      ...land,
+      variant: "b",
+      loaded: pick("intro", "hook", "outro_b", "hud"),
+    });
+    expect(ids(b)).toEqual(["intro", "hook", "outro_b", "hud"]);
+  });
+
+  it("gives an --only preview of a variant the cuts of that variant's full render", () => {
+    const only = cutEntries(TL, { ...land, loaded: pick("outro_b", "hud") });
+    expect(ids(only)).toEqual(["intro", "hook", "outro_b", "hud"]);
+    const cuts = cutList(only);
+    expect(cuts).toContain(153);
+    expect(cuts).not.toContain(150);
+    // both endings loaded at once: each keeps its own bounds
+    const both = cutEntries(TL, { ...land, loaded: pick("outro", "outro_b") });
+    expect(ids(both)).toEqual(["intro", "hook", "outro", "outro_b", "hud"]);
+  });
+
+  it("skips another entry's unreadable canvas tag, so only renders loading it fail", () => {
+    const bad = { id: "verse", start: 37.6, end: 60, canvas: "vertical" };
+    expect(() => onCanvas(bad, "landscape")).toThrow(/verse/);
+    const es = cutEntries([...TL, bad], { ...land, loaded: pick("intro") });
+    expect(ids(es)).toEqual(["intro", "hook", "outro", "hud"]);
   });
 });
 

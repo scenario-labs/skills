@@ -88,6 +88,24 @@ export function layerBlur(entry, scene, id) {
   );
 }
 
+// The TIMELINE entries whose bounds are cuts: the loaded ones, plus every other entry on this canvas in the render's
+// variant. `variant` is the one asked for, else the one an --only preview loaded, else 'a'. An entry whose canvas tag
+// throws counts as off this canvas, so a typo stops only the renders that load it.
+export function cutEntries(timeline, { onCanvas, variant, loaded = [] }) {
+  const ids = new Set(loaded.map((l) => l.id)),
+    vs = new Set(loaded.map((l) => l.variant).filter(Boolean));
+  const v = variant || (vs.size === 1 ? [...vs][0] : "a");
+  return timeline.filter((e) => {
+    if (ids.has(e.id)) return true;
+    try {
+      if (!onCanvas(e)) return false;
+    } catch {
+      return false;
+    }
+    return !e.variant || e.variant === v;
+  });
+}
+
 // Times no sample may cross: every entry's start and end, registered E.cut times, word switches (onset minus LEAD) and,
 // when asked, the beats.
 export function cutList(
