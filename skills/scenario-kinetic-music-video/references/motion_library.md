@@ -179,8 +179,8 @@ Never use the same treatment on two consecutive lines.
 37. **Kick Scale-Punch.** `E.post.punch = 0.035*E.pulse('kicks',t,0.09)`, plus small shake on
     snares.
 38. **Whip Pan with Smear Frame.** Exit 5 fr inQuart, 1 smear frame (a stretched copy), then entry 6
-    fr outQuart, centered on the kick. While `E.blurring`, skip the stretched copy and give the whip
-    `E.shutter`.
+    fr outQuart, centered on the kick. Under motion blur, register the whip in `load()` with
+    `E.shutter(t0, t1, 2 to 3)`, and in `render()` skip the stretched copy while `E.blurring`.
 39. **HUD Frame.** Corner brackets, title, section code, bar and beat squares, a spine counter and a
     progress line, for the whole video (`scenes/hud.js`).
 40. **Chant Metronome Grid.** Each chant syllable fills the next cell of a 4×4 grid on its onset, a

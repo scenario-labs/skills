@@ -181,9 +181,10 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 ### 6. Assemble, watch, iterate
 
-- **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac). Wait for it in the
-  foreground (or poll until it prints `wrote`) and carry on to verification and delivery: never end
-  the run while a render or encode is still going, because a headless session that stops kills it.
+- **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac, 2.5 times that with
+  motion blur on). Wait for it in the foreground (or poll until it prints `wrote`) and carry on to
+  verification and delivery: never end the run while a render or encode is still going, because a
+  headless session that stops kills it.
 - **Verify:**
   - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual. Below a correlation of about
     0.15 the visual lag means nothing (type leading by `E.LEAD` reads as up to -3 frames): check
@@ -211,12 +212,13 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 ### 7. Deliver
 
+- **4K master:** only on request (`--scale 2`, `references/pipeline.md` §8). Render it first, since
+  every other file is then made from it.
 - **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready 2-pass 21 Mb/s
   file under 512 MB for X; portrait: the vertical upload in `references/pipeline.md` §8), a teaser
   (verse plus first chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and
   `_9x16`, when both were asked for. Use distinct filenames, because macOS is case-insensitive.
-- **4K and checks:** a 4K master only on request (`--scale 2`, `references/pipeline.md` §8). Run
-  `delivery_check.py` on every file before handing it over.
+- **Checks:** run `delivery_check.py` on every file, last, before handing it over.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet,
   source-vs-final footage pairs, a frame index, the pipeline and iteration counts.

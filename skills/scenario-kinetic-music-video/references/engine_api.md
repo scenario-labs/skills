@@ -230,7 +230,9 @@ For clips shot on a pitch-black void that should float inside a 3D world without
 
 Off by default. `export const BLUR = { on: true }` in timeline.js turns it on from `--scale 1` up;
 `render.mjs --blur`, `--blur off` or `--blur 12` (a sample count) overrides it for one run. Previews
-below scale 1 and `still.mjs` stay sharp unless given `--blur`.
+below scale 1 and `still.mjs` stay sharp unless given `--blur`. `E.blur` holds this run's resolved
+settings (`on`, `samples`, `shutter`, `max`, `beatCuts`, `wordCuts`), so `load()` can check
+`E.blur.on`.
 
 - **How:** each output frame renders its blurred layers at `samples` sub-frame times (default 8)
   across a shutter of `shutter` degrees (default 180: 1/120 s at 60 fps) that opens at the frame
