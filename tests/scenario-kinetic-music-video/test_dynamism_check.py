@@ -381,7 +381,8 @@ class MeasureTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         tg = json.loads((p.dir / "analysis" / "targets.json").read_text())
         self.assertEqual(set(tg), {"high", "calm", "from"})
-        self.assertIn("high 0-3 s (high)", tg["from"])
+        self.assertEqual(set(tg["from"]), {"high", "calm"})
+        self.assertIn("high 0-3 s", tg["from"]["high"])
         self.assertAlmostEqual(tg["calm"]["hold_max_s"], 2.5, delta=0.05)  # 2.0 s card hold x 1.25
         r, j = p.gate(self.two, "--span", "a=0:3:high", "--span", "end=3:5:calm")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
@@ -393,6 +394,24 @@ class MeasureTest(unittest.TestCase):
         self.assertEqual(mid.returncode, 0, mid.stderr)  # a new energy merges in
         self.assertEqual(set(json.loads((p.dir / "analysis" / "targets.json").read_text())),
                          {"high", "calm", "mid", "from"})
+        forced, _ = p.measure(self.two, "--span", "chorus=0.5:2.5:high", "--write-targets", "analysis/targets.json",
+                              "--force")
+        self.assertEqual(forced.returncode, 0, forced.stderr)
+        src = json.loads((p.dir / "analysis" / "targets.json").read_text())["from"]
+        self.assertEqual(set(src), {"high", "calm", "mid"})
+        self.assertIn("chorus 0.5-2.5 s", src["high"])
+        self.assertNotIn("high 0-3 s", src["high"])  # the replaced span no longer reads as the source
+        self.assertEqual(src["calm"], tg["from"]["calm"])
+
+    def test_write_targets_keeps_a_note_until_an_energy_is_replaced(self):
+        p = Project(self)
+        path = p.write("analysis/targets.json", json.dumps({"calm": {"hold_max_s": 1.2}, "from": "set by hand"}))
+        r, _ = p.measure(self.two, "--span", "high=0:3", "--write-targets", str(path))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(set(json.loads(path.read_text())["from"]), {"note", "high"})
+        r, _ = p.measure(self.two, "--span", "calm=3:5", "--write-targets", str(path), "--force")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(set(json.loads(path.read_text())["from"]), {"high", "calm"})
 
     def test_measure_reports_and_never_fails(self):
         r, j = Project(self).measure(self.five)
@@ -466,6 +485,20 @@ class MeasureTest(unittest.TestCase):
         again = run(p.dir, "gate", str(self.five), "--span", "h=3:4.2:mid", "--sheets", "sheets")
         self.assertEqual(again.returncode, 2)
         self.assertIn("--force", again.stderr)
+
+    def test_outputs_make_missing_folders(self):
+        p = Project(self)
+        for args in (("gate", str(self.two), "--span", "a=0:3:high", "--json", "out/final/v1.json"),
+                     ("measure", str(self.two), "--json", "analysis/refs/two.json")):
+            r = run(p.dir, *args)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertTrue((p.dir / args[-1]).is_file(), args[0])
+        p.write("blocked", "a file, not a folder")
+        for flag in ("--json", "--sheets"):
+            r = run(p.dir, "measure", str(self.two), flag, "blocked/two")
+            self.assertEqual(r.returncode, 2, flag)
+            self.assertIn("cannot write there", r.stderr)
+            self.assertNotIn("dynamism measure", r.stdout)  # refused before decoding
 
     def test_bad_input_exits_2(self):
         p = Project(self)

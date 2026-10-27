@@ -119,7 +119,8 @@ def check_image(path, ref, q, flat):
         cv2.putText(img, f'{name} {int(x)},{int(y)}', (int(x) + 8, int(y) - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
                     (0, 0, 255), 2)
     side = cv2.resize(flat, (max(2, round(flat.shape[1] * img.shape[0] / flat.shape[0])), img.shape[0]))
-    cv2.imwrite(path, np.hstack([img, side]))
+    if not cv2.imwrite(path, np.hstack([img, side])):
+        raise BadInput(f'could not write {path}')
 
 
 def run(a):
@@ -129,6 +130,8 @@ def run(a):
             raise BadInput(f'{path} is the source video; pick another output path')
         if path and os.path.exists(path) and not a.force:
             raise BadInput(f'{path} exists; pass --force to replace it')
+    if a.check and not cv2.haveImageWriter(a.check):
+        raise BadInput(f'--check {a.check}: no image writer for that extension (use .jpg or .png)')
     if not os.path.isfile(a.src):
         raise BadInput(f'{a.src}: no such file')
     w, h = frame_size(a.src)
@@ -159,7 +162,12 @@ def run(a):
     kr, dr = sift.detectAndCompute(small(stack[0]), mask_for(q, band, w, h))
     if dr is None or len(kr) < MIN_MATCHES:
         raise BadInput('too little texture around the screen to track the camera (fill less of the frame with it)')
-    os.makedirs(os.path.dirname(a.out) or '.', exist_ok=True)
+    for path in (a.out, a.check):
+        try:
+            if path:
+                os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+        except OSError as e:
+            raise BadInput(f'{path}: {e.strerror or e}')
     enc = subprocess.Popen(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'bgr24', '-s',
                             f'{ow}x{oh}', '-r', f'{a.fps:g}', '-i', '-', '-c:v', 'libx264', '-crf', '14', '-pix_fmt',
                             'yuv420p', '-an', a.out], stdin=subprocess.PIPE)

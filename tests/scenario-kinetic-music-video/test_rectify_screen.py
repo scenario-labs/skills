@@ -1,5 +1,6 @@
 """rectify_screen.py: a screen filmed by a drifting handheld camera comes out flat and matches what it showed."""
 
+import os
 import re
 import shutil
 import subprocess
@@ -150,6 +151,26 @@ class RectifyScreenTest(unittest.TestCase):
         self.assertEqual(sized.returncode, 0, sized.stderr)
         frames = int(re.search(r"(\d+) frames at 10 fps, 640x360", sized.stdout).group(1))
         self.assertIn(frames, (5, 6))  # ffmpeg versions round the last frame of a trimmed fps resample differently
+
+    def test_check_image_folder_is_made_and_a_failed_write_exits_2(self):
+        import cv2
+
+        r = run(self.dir, "phone.mp4", "nested.mp4", "--band", "490:540", "--to", "0.3", "--check", "a/refs/quad.jpg")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIsNotNone(cv2.imread(str(self.dir / "a" / "refs" / "quad.jpg")))
+        r = run(self.dir, "phone.mp4", "ext.mp4", "--check", "quad.xyz")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("--check quad.xyz", r.stderr)
+        self.assertFalse((self.dir / "ext.mp4").exists())  # refused before flattening
+        if hasattr(os, "geteuid") and os.geteuid() == 0:
+            self.skipTest("root writes into a read-only folder")
+        locked = self.dir / "locked"
+        locked.mkdir()
+        locked.chmod(0o500)
+        self.addCleanup(locked.chmod, 0o700)
+        r = run(self.dir, "phone.mp4", "locked.mp4", "--band", "490:540", "--to", "0.3", "--check", "locked/quad.jpg")
+        self.assertEqual(r.returncode, 2)  # imwrite returns False rather than raising
+        self.assertIn("could not write locked/quad.jpg", r.stderr)
 
     def test_no_screen_exits_2(self):
         flat = encode(self.dir / "flat.mp4", (320, 180))

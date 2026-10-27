@@ -75,8 +75,12 @@ def load_json(path):
 
 
 def save_json(obj, path, **kw):
-    with open(path, 'w') as f:
-        json.dump(obj, f, **kw)
+    try:
+        os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+        with open(path, 'w') as f:
+            json.dump(obj, f, **kw)
+    except OSError as e:
+        raise BadInput(f'{path}: {e.strerror or e}')
 
 
 def probe(video):
@@ -527,11 +531,22 @@ def sheet(video, t, out):
                     '-vf', 'fps=10,scale=320:-2,tile=5x2', '-frames:v', '1', out], check=False)
 
 
+def creatable(path):
+    """Whether path can be written once its missing folders are made: its nearest existing ancestor is a writable
+    folder and it is not a folder itself."""
+    d = os.path.dirname(os.path.abspath(path))
+    while not os.path.exists(d):
+        d = os.path.dirname(d)
+    return not os.path.isdir(path) and os.path.isdir(d) and os.access(d, os.W_OK)
+
+
 def check_outputs(a):
-    """Refuse before decoding, so a rerun never wastes a full measurement."""
-    for path in (a.json, getattr(a, 'write_targets', None)):
+    """Refuse before decoding, so a rerun never wastes a full measurement. Missing folders are made when writing."""
+    for path in (a.json, getattr(a, 'write_targets', None), a.sheets and os.path.join(a.sheets, 'sheet.jpg')):
         if path and os.path.abspath(path) == os.path.abspath(a.video):
             raise BadInput(f'{path} is the video; pick another output path')
+        if path and not creatable(path):
+            raise BadInput(f'{path}: cannot write there (a file in the way, or no write permission)')
     if a.json and os.path.exists(a.json) and not a.force:
         raise BadInput(f'{a.json} exists; pass --force to replace it')
     if a.sheets and os.path.isdir(a.sheets) and os.listdir(a.sheets) and not a.force:
@@ -562,13 +577,17 @@ def write_targets(path, existing, rows, video):
     if not by:
         raise BadInput('--write-targets: every calm, mid or high span is under 1 s')
     out = dict(existing)
+    prov = existing.get('from')
+    prov = dict(prov) if isinstance(prov, dict) else {'note': prov} if isinstance(prov, str) and prov else {}
+    if any(e in existing for e in by):
+        prov.pop('note', None)  # a note names no energy, so it may describe one this run replaces
     for e, rs in by.items():
         out[e] = {'still_max': round(min(1.0, max(r['still_share'] for r in rs) + 0.10), 3),
                   'hold_max_s': round(max(HOLD_LIST_MIN, 1.25 * max(r['longest_hold_s'] for r in rs)), 2),
                   'motion_min': round(0.7 * min(r['median_motion'] for r in rs), 2)}
-    used = ', '.join(f"{r['id']} {r['start']:g}-{r['end']:g} s ({e})" for e, rs in by.items() for r in rs)
-    out['from'] = '; '.join(x for x in (existing.get('from'), f'{video}: {used}; margins {MARGINS}') if x)
-    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+        spans = ', '.join(f"{r['id']} {r['start']:g}-{r['end']:g} s" for r in rs)
+        prov[e] = f'{video}: {spans}; margins {MARGINS}'
+    out['from'] = prov
     save_json(out, path, indent=2)
     return out
 

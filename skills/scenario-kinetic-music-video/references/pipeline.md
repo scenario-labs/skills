@@ -220,7 +220,8 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
   fine if something still moves.
 - **Dynamism:** a failing section lists its holds with song time, bar and beat. Fix it in its scene,
   re-render the range and gate it with `--only` and `--start` ([dynamism.md](dynamism.md) §7). Gate
-  each variant's render too, with its `--variant`.
+  each variant's render too, with its `--variant`. Re-gating a render into the same `--json` needs
+  `--force`.
 - Check each section boundary at −1/0/+1 frames.
 - **Portrait safe band:** for each 20 s window,
   `node tools/still.mjs --range <a>:<a+20>:1 --scale 0.5 --safe --dir out/safe/<a> --sheet safe --cols 5`,

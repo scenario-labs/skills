@@ -67,13 +67,14 @@ How the measurement was chosen, all on synthetic clips encoded with libx264:
   the high limit. Runs now end on the frame, and a 0.60 s hold reads 0.60 s. The still test uses a
   gray difference of 12, not 24: at 24, a 6 px per frame pan of 24 fps footage over soft texture
   read 44% still.
-- **Slow moves add up.** A still run first ended only on per-pair flow of 1 px or a pixel change, so
-  sub-pixel drifts at the calm (0.5) and mid (1.0) motion floors split into short runs that all read
-  100% still, and a 10% push-in over 2 s read 97% still. A run now also ends once the flow from its
-  first frame reaches 0.4 px at 320: those moves read 0% still. Gaussian grain of sigma 1 to 3 gray
-  levels on a hold measured 0.06 to 0.16 px from the run's first frame, so the hold keeps reading
-  still; at sigma 4 the pixel test breaks it, as before. That flow call runs only once the per-pair
-  steps since the run began sum to 0.2 px, so a clean hold or a fast move never pays for it.
+- **Slow moves add up.** A still run first ended only on per-pair flow of 1 px or a pixel change.
+  Sub-pixel drifts at the calm (0.5) and mid (1.0) motion floors then split into short runs that all
+  read 100% still, and a 10% push-in over 2 s read 97% still. A run now also ends once the flow from
+  its first frame reaches 0.4 px at 320: those moves read 0% still. Gaussian grain of sigma 1 to 3
+  gray levels on a hold measured 0.06 to 0.16 px from the run's first frame, so the hold keeps
+  reading still; at sigma 4 the pixel test breaks it, as before. That flow call runs only once the
+  per-pair steps since the run began sum to 0.2 px, so a clean hold or a fast move never pays for
+  it.
 - **Decoded size.** ffprobe reports a phone clip's coded size, before its rotation tag. A portrait
   clip stored landscape read as a landscape canvas, with 45% less motion. The size now comes from a
   decoded frame, as in `rectify_screen.py`.

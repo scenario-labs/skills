@@ -85,13 +85,13 @@ Defaults, authoring-time starting points that no full production has calibrated 
 - A passing gate never clears frozen footage under moving type: the frame-wide numbers miss it.
   `freezedetect` and the contact sheets still run.
 - `analysis/targets.json`, when present, replaces defaults key by key, so the references set the
-  bar. A key it omits keeps its default; `from` records the source:
+  bar. A key it omits keeps its default; `from` records each energy's source:
 
 ```json
 {
   "high": { "still_max": 0.12, "hold_max_s": 0.45, "motion_min": 3.1 },
   "calm": { "hold_max_s": 1.2 },
-  "from": "assets/refs/ref_a.mp4: chorus 45-62 s (high), verse 12-30 s (calm)"
+  "from": { "high": "assets/refs/ref_a.mp4: chorus 45-62 s", "calm": "set by hand" }
 }
 ```
 
@@ -110,12 +110,15 @@ Defaults, authoring-time starting points that no full production has calibrated 
   section covers prints a `WARN gap`.
 - `--span id=a:b[:energy]`, repeated, replaces the timeline sections.
 - `--targets <file>` replaces `analysis/targets.json`.
-- `--sheets <dir>` writes a 10 fps contact sheet of each failing hold and of the second with the
-  most flashes.
+- `--sheets <dir>` writes a 10 fps contact sheet of each failing hold, and of the second with the
+  most flashes when the flash limit fails.
 - `--json <file>` holds per-section metrics, every hold over 0.3 s with its bar and beat, every
   flash change, a per-second series and the method's thresholds.
+- Missing folders for `--json` and `--sheets` are made. An existing `--json` or a non-empty
+  `--sheets` needs `--force`, and a path it cannot write is refused, both before decoding.
 - Exit 0: every judged section and the flash limit pass, warnings allowed. Exit 1: a gate failed.
-  Exit 2: bad input (no video, no frames, no sections, an unknown energy or canvas tag).
+  Exit 2: bad input (no video, no frames, no sections, an unknown energy or canvas tag) or a refused
+  output.
 - Gate every delivered render: each canvas and each variant (`--variant b`). A windowed plate fills
   about a third of a portrait frame, so the same motion changes less of it.
 - A 30 fps half-scale preview reads like its master, but a flash shorter than 1/30 s exists only in
@@ -135,7 +138,7 @@ The Craft agent in step 2 measures each motion reference the user gives:
    - `still_max`: the still share plus 0.10;
    - `hold_max_s`: the longest hold times 1.25, at least 0.3 s;
    - `motion_min`: 0.7 times the median motion;
-   - `from`: the reference and spans used.
+   - `from`: per energy, the reference and spans used.
 5. A second reference adds its energies to the file. Replacing an energy already there needs
    `--force`.
 6. Copy the numbers into `analysis/research_craft.md` next to the moves, so scene agents see them.
