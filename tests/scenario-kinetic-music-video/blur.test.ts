@@ -76,6 +76,20 @@ describe("resolveBlur", () => {
     expect(() => resolveBlur({ blur: "12" }, { max: 0 })).toThrow(/max 0/);
     expect(() => resolveBlur({}, true)).toThrow(/object/);
   });
+
+  it("refuses a base count above max, which no frame would render", () => {
+    expect(() => resolveBlur({ blur: "32" }, undefined)).toThrow(
+      /samples 32 above max 24/,
+    );
+    expect(() => resolveBlur({ blur: "on", blurmax: "4" }, undefined)).toThrow(
+      /samples 8 above max 4/,
+    );
+    expect(() => resolveBlur({}, { samples: 12, max: 8 })).toThrow(
+      /BLUR in timeline.js: samples 12 above max 8/,
+    );
+    const o = resolveBlur({ blur: "32", blurmax: "32" }, undefined);
+    expect(framePlan(1, 60, o, none)).toHaveLength(o.samples);
+  });
 });
 
 describe("layerBlur", () => {

@@ -69,6 +69,11 @@ function check(o, where) {
     throw new Error(
       `${where}: shutter ${o.shutter}, use degrees above 0, up to 720`,
     );
+  // sampleCount caps every frame at max, so a larger base count would never render
+  if (o.samples > o.max)
+    throw new Error(
+      `${where}: samples ${o.samples} above max ${o.max}, raise max (--blur-max) or lower samples`,
+    );
 }
 
 // A layer's blur from its TIMELINE entry, else its scene's default export: { sharp, floor }. false or 0 renders it once
