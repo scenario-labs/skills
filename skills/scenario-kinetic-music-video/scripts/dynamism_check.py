@@ -19,8 +19,9 @@ DIFF = 24             # a pixel changed (cuts, busiest seconds): gray difference
 STILL_DIFF = 12       # the still test's finer threshold: a slow move over soft detail still breaks a run
 STILL_AREA = 0.015    # a frame continues a still run while under 1.5% of it differs from the previous frame and
 STILL_FLOW = 1.0      # from the run's first frame, and its flow moves under 1 px at the analysis size...
-STILL_DRIFT = 0.4     # ...and under 0.4 px from the run's first frame: per-pair flow alone read a calm-floor drift
-                      # (0.5 per 1/60 s, 0.58 px here over a still run) as still, while grain on a hold stays under it
+STILL_DRIFT = 0.25    # ...and under 0.25 px from the run's first frame: per-pair flow alone read a calm-floor drift
+                      # as still. At 0.4, 24 or 25 fps footage of it read still: a still run spans 2 new pictures,
+                      # 0.4 px. At 0.2, grain of sigma 3.4 on a hold, at CRF 23, read only 70 to 83% still
 STILL_RUN = 6         # a frame is still when its run lasts longer than 6 frames (0.1 s): 10 fps footage still plays
 REPEAT_MAX = 2        # a pair whose largest difference is this small is a repeated frame: no flow call, no motion
 FLOW_OK = 0.8         # flow explains a pair when the warped frame correlates this well with the previous one

@@ -21,7 +21,7 @@ Every input is resampled to a 60 fps clock and read at 320 px on its long side.
 - **still**: a frame belongs to a run longer than 0.1 s in which nothing visibly changes. Each frame
   of the run differs from the one before and from the run's first frame on under 1.5% of its pixels
   (a gray difference over 12 of 255). At that size, its mean optical flow stays under 1 px from the
-  frame before and under 0.4 px from the run's first frame.
+  frame before and under 0.25 px from the run's first frame.
 - **still share**: the share of a section's frames that are still.
 - **longest hold**: the longest run of still frames, to the frame.
 - **median motion**: optical flow between consecutive distinct frames, averaged over textured or
@@ -43,8 +43,9 @@ Why this method:
 - A faster move reads higher, never lower: a whip pan beyond the flow's range is measured as one
   whole-frame shift.
 - A 1-frame glitch alternation or a shake never reads as still, since every step of it changes.
-- A slow drift or push-in adds up from the run's first frame, so a move at a motion floor never
-  reads still. Grain on a hold does not add up, and the hold stays still.
+- A slow drift or push-in adds up from the run's first frame, so a move at a motion floor reads as
+  moving, at 60 fps or as 24 or 25 fps footage. Grain on a hold does not add up, and the hold stays
+  still.
 - The frame mean catches full-frame flashes only. A flash on a small area passes unmeasured.
 
 ## 2. Section energy

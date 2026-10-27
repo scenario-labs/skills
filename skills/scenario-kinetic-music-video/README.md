@@ -70,11 +70,19 @@ How the measurement was chosen, all on synthetic clips encoded with libx264:
 - **Slow moves add up.** A still run first ended only on per-pair flow of 1 px or a pixel change.
   Sub-pixel drifts at the calm (0.5) and mid (1.0) motion floors then split into short runs that all
   read 100% still, and a 10% push-in over 2 s read 97% still. A run now also ends once the flow from
-  its first frame reaches 0.4 px at 320: those moves read 0% still. Gaussian grain of sigma 1 to 3
-  gray levels on a hold measured 0.06 to 0.16 px from the run's first frame, so the hold keeps
-  reading still; at sigma 4 the pixel test breaks it, as before. That flow call runs only once the
-  per-pair steps since the run began sum to 0.2 px, so a clean hold or a fast move never pays for
-  it.
+  its first frame reaches 0.25 px at 320.
+  - The limit was 0.4 first. 24 or 25 fps footage shows only 2 new pictures in a 0.1 s run, about
+    0.4 px at the calm floor, so a calm drift and a 10% push-in read 12 to 93% still there.
+  - At 0.25, both read 0% still at 15, 23.976, 24, 25, 29.97, 30 and 60 fps drawn at twice the
+    analysis size, and at 24, 25 and 60 fps rendered at 1920 x 1080. Drawn at 320 itself, a drift
+    still read up to 23% still at 24 and 25 fps (53% at 15): libx264 holds some of its sub-pixel
+    steps.
+  - Gaussian grain of sigma 1 to 3 gray levels on a hold measured 0.01 to 0.17 px from the run's
+    first frame and reads 100% still. CRF 23 smooths grain past the pixel test: there, sigma 3.4 to
+    4 read 70 to 100% still at 0.25, and sigma 3.4 only 70 to 83% at 0.2, so the limit stops at
+    0.25. At CRF 12, the pixel test breaks a hold from sigma 3.8, as before.
+  - That flow call runs only once the per-pair steps since the run began sum to half the limit, so a
+    clean hold or a fast move never pays for it.
 - **Decoded size.** ffprobe reports a phone clip's coded size, before its rotation tag. A portrait
   clip stored landscape read as a landscape canvas, with 45% less motion. The size now comes from a
   decoded frame, as in `rectify_screen.py`.

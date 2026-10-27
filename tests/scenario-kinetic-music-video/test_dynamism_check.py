@@ -236,14 +236,21 @@ class MeasureTest(unittest.TestCase):
         return m, dc.summarize(m, 0, m["n"], 0, None)
 
     def test_slow_moves_at_each_motion_floor_are_not_still(self):
-        tex = fx.texture()
+        tex = fx.texture(3, 2 * fx.W + 800, 2 * fx.H)
         for energy, tg in dc.DEFAULT_TARGETS.items():  # per-pair flow alone read the calm and mid floors 100% still
             _, s = self.summary(f"drift_{energy}", fx.drift(tex, tg["motion_min"]))
             self.assertLess(s["still_share"], 0.05, energy)
             self.assertAlmostEqual(s["median_motion"], tg["motion_min"], delta=0.25 * tg["motion_min"], msg=energy)
-        _, s = self.summary("push_in", fx.push_in(fx.texture(3, 2 * fx.W, 2 * fx.H), 0.1))
+        push = fx.push_in(fx.texture(3, 2 * fx.W, 2 * fx.H), 0.1)
+        _, s = self.summary("push_in", push)
         self.assertLess(s["still_share"], 0.05)  # a 10% push-in over 2 s: the mean flow vector stays near zero
         self.assertGreaterEqual(s["median_motion"], dc.DEFAULT_TARGETS["calm"]["motion_min"])
+        calm = fx.drift(tex, dc.DEFAULT_TARGETS["calm"]["motion_min"])
+        for source_fps in (24, 25):  # a still run spans 2 new pictures: a 0.4 px limit read these 12-93% still
+            for name, frames in (("drift", calm), ("push_in", push)):
+                with self.subTest(name, source_fps=source_fps):
+                    _, s = self.summary(f"{name}_{source_fps}", fx.held(frames, source_fps))
+                    self.assertLess(s["still_share"], 0.05)
 
     def test_grain_on_a_hold_is_still(self):
         for sigma in (1, 3):  # the drift from the run's first frame stays near 0.15 px at sigma 3
@@ -297,7 +304,7 @@ class MeasureTest(unittest.TestCase):
         for i in range(120):  # 6 moving frames, then a 0.4 s hold, every 0.5 s: each hold passes high's 0.5 s
             frames.append(self.view(x))
             x += 4 if i % 30 < 6 else 0
-        frames += fx.drift(fx.texture(), 1.0)  # live but slow: 1.0 against high's 2.0
+        frames += fx.drift(fx.texture(3, 2 * fx.W + 800, 2 * fx.H), 1.0)  # live but slow: 1.0 against high's 2.0
         clip = self.dir / "share_motion.mp4"
         fx.encode(clip, frames)
         r, j = Project(self).gate(clip, "--span", "parked=0:2:high", "--span", "slow=2:4:high")
