@@ -241,8 +241,9 @@ below scale 1 and `still.mjs` stay sharp unless given `--blur`.
 - **Every sample:** `render()` with `t` (and `E.t`) the sample time, `E.frameT` the frame's.
   `E.atFrame(t)` maps a sample time back to the frame's: draw counters and digits from it.
 - **Footage never mixes two frames.** Every sample shows the frame `prepare()` loaded, and
-  `v.trackAt()` replays what the frame pass got, call by call. A plate your scene does not move is
-  identical to a render without blur; a plate it moves blurs with the move.
+  `v.trackAt()` in `render()` replays what the same layer got in the frame pass, call by call. A
+  plate your scene does not move is identical to a render without blur; a plate it moves blurs with
+  the move.
 - **Cuts:** no sample crosses a layer start or end, a word switch (`w.s - E.LEAD`) or an `E.cut(t)`.
   A cut inside the shutter slides it back, so the frame before it still blurs. Call `E.cut(t)` in
   `load()` for every other hard switch inside your section (a clip, a color field, a layout).

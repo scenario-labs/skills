@@ -11,13 +11,15 @@ export const DEFAULTS = {
 
 // Which pass is drawing, shared with core.js and plate.js. id counts frames and pass counts every pass, samples included;
 // sub is true inside a sample, shift is the sample's time minus the frame's; keep records trackAt calls for the samples;
-// stale names a clip a sample drew that prepare() did not advance this frame.
+// layer is the index of the layer whose render() runs, else null; stale names a clip a sample drew that prepare() did
+// not advance this frame.
 export const clock = {
   id: 0,
   pass: 0,
   sub: false,
   shift: 0,
   keep: false,
+  layer: null,
   stale: null,
 };
 

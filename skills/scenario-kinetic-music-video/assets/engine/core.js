@@ -399,12 +399,14 @@ export function makeG2D(w, h) {
 // ---------- video frame sequences (generated clips, pre-extracted to /assets/video/<clip>/f_00001.jpg + meta.json)
 const _vids = {};
 // main.js calls this before each frame pass: forget the last frame's trackAt calls, and record this frame's when its
-// motion-blur samples will replay them
+// motion-blur samples will replay them. Calls are kept per layer, since a sample re-renders only the blurred layers and
+// never runs prepare().
 const _tracked = new Set();
 export function trackFrame(keep) {
-  for (const v of _tracked) v._seen = [];
+  for (const v of _tracked) v._seen = null;
   _tracked.clear();
   clock.keep = keep;
+  clock.layer = null;
 }
 function warpT(W, x) {
   if (x <= W[0][0]) return x;
@@ -473,15 +475,19 @@ export async function loadVideo(clip) {
       return i;
     },
     // tracking (tools/track.py): pose = 33 MediaPipe landmarks [x,y,vis] in video UV (0..1, y down); box = matte bbox [x0,y0,x1,y1]; c = matte centroid
-    // Inside a motion-blur sample it returns what the frame pass got, so tracked graphics stay on the footage frame shown.
+    // Inside a motion-blur sample it returns what the same layer's frame pass got, so tracked graphics stay on the
+    // footage frame shown.
     trackAt(localT) {
       if (!v.track) return null;
-      if (clock.sub && v._seen) {
-        if (v._pass !== clock.pass) {
+      const L = clock.layer,
+        seen = L == null ? null : v._seen?.get(L);
+      if (clock.sub && seen) {
+        if (v._pass !== clock.pass || v._layer !== L) {
           v._pass = clock.pass;
+          v._layer = L;
           v._k = 0;
         }
-        const i = replayIndex(v._seen, v._k++, localT, clock.shift);
+        const i = replayIndex(seen, v._k++, localT, clock.shift);
         if (i !== null) return v.track[i];
       }
       const arg = localT;
@@ -490,8 +496,10 @@ export async function loadVideo(clip) {
         0,
         Math.min(v.track.length - 1, Math.floor(localT * meta.fps)),
       );
-      if (clock.keep && !clock.sub) {
-        (v._seen ??= []).push([arg, i]);
+      if (clock.keep && !clock.sub && L != null) {
+        v._seen ??= new Map();
+        if (!v._seen.has(L)) v._seen.set(L, []);
+        v._seen.get(L).push([arg, i]);
         _tracked.add(v);
       }
       return v.track[i];

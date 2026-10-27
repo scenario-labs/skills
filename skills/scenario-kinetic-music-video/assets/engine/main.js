@@ -419,7 +419,9 @@ function composite(active, t, sample, blurred) {
       renderer.setClearColor(0x000000, 0);
       renderer.clear(true, true, true);
       E.blurring = blurred && !l.sharp;
+      blur.clock.layer = i; // trackAt records and replays per layer
       const op = l.scene.render(E, t, rt, l);
+      blur.clock.layer = null;
       renderer.setRenderTarget(rt);
       renderer.render(_emptyScene, _emptyCam); // force MSAA resolve even if the scene drew nothing
       l._op = typeof op === "number" ? op : 1;

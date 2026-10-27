@@ -191,9 +191,11 @@ In-engine GPU accumulation, opt-in per project (`BLUR` in timeline.js).
   - Cuts: entry bounds, `E.cut`, and word switches (`w.s - LEAD`). Without them, a hero word swapped
     on its onset showed both words in one frame of the fixture. Beats are opt-in: a cut per beat
     shifts the streak on about one frame per beat.
-  - `trackAt` replays the frame pass by call order. Recomputing from the sample time crosses clip
-    frames; matching by clip time first picked the wrong call when a clamped label's time coincided
-    with a slow-motion one (a `blur.test.ts` case pins it).
+  - `trackAt` replays the frame pass by call order, per layer. Recomputing from the sample time
+    crosses clip frames; matching by clip time first picked the wrong call when a clamped label's
+    time coincided with a slow-motion one (a `blur.test.ts` case pins it). One order across layers
+    let a sharp layer's calls, or `prepare()`'s, shift a blurred layer onto another call's landmark
+    (`core.test.ts` cases pin both).
   - A sample drawing a clip that `prepare()` did not advance (an undeclared switch inside a scene)
     makes the frame fall back to its frame pass, copied aside before the samples.
   - Without `EXT_float_blend` the sum ping-pongs between two float targets, bit-identical to
