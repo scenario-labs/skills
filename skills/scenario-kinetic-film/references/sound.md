@@ -3,8 +3,8 @@
 The film's motion is free to render; the soundtrack and pictures are the paid steps. The `scenario`
 skill owns the generation loop. What this film adds:
 
-- Price every step with `model_run` and `dry_run: true`, tell the user the total for the whole
-  soundtrack and picture set, and wait for a go before the first paid run.
+- Price each step (the music, the sound kit, the pictures) with `model_run` and `dry_run: true`.
+  Tell the user the step's total and wait for a go before its paid runs.
 - Choose each model with `recommend`: `txt2audio` for music and sound effects, `txt2img` for
   pictures, `img2img` from the user's own art (uploaded first).
 - Read the inputs with `model_schema_get`. Input names below (`bpm`, `instrumental`, `duration`,

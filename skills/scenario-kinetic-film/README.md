@@ -5,12 +5,16 @@ humans working on the skill; SKILL.md does not link it.
 
 ## Origin
 
-Added on 2026-10-27. Its author first hand-wrote a kinetic-type film as code. Version 1 matched a
-reference reel's cut timing but measured 81% still frames and a 6 s hold. Version 2 was rebuilt
-after measuring three high-energy motion design reels frame by frame (still share, holds, motion,
-cuts, color flips). The skill turns version 2's hand-written scenes into 14 blocks driven by a spec,
-plus the render, sound and check pipeline. Kaiju Postal, a fictional game teaser written from a
-fresh brief, tested that the blocks generalize.
+Added on 2026-10-27.
+
+- A film is 14 blocks placed on the beat grid of its music by a spec, plus the render, sound and
+  check pipeline.
+- The gates in finish.py come from measuring high-energy motion design reels frame by frame: still
+  share, holds, motion, cuts and color flips. Landing every cut on the beat is not enough; a film
+  that parks between hits fails them.
+- Kaiju Postal, a fictional game teaser written from a fresh brief, tests that the blocks
+  generalize. The tour exercises 13 blocks in one film; the starter is the smallest film that passes
+  the gates.
 
 ## Choices
 
@@ -31,15 +35,27 @@ fresh brief, tested that the blocks generalize.
   instructions go too: a PI whose data holds `>` ends early in the HTML parser and lets markup
   through. References to other hosts are dropped from `href`, `url()` in attributes and style, and
   `<style>` blocks; fragments and same-folder paths stay.
+- **`title` and `desc` keep text only, and CDATA becomes text.** Both are HTML integration points:
+  inlined, a `<style>` inside them is HTML raw text, and a raw CDATA `</style>` closed it and let an
+  `<img onerror>` through (seen in Chrome and jsdom). The serializer escapes text, never CDATA.
+- **No placeholder copy.** Stretch, Notes and Progress need their words (`word`, `preview`,
+  `lines`), and validate.js names a missing one. Defaults that stay (a timeline title, segment
+  names, frame cards) are neutral.
 - **Only new_film.sh refuses to overwrite**: a non-empty folder needs `--force`, which also finishes
   a scaffold that stopped part way (the exit message prints the command) and refreshes the engine
   while keeping spec.js, custom.js, audio/, art/ and out/. mix, render and finish replace their
   outputs, so the 1080p check run and the 4K master share out/final.
-- **holds.py reads at 60 fps, like dyn.py.** It used to divide frame counts by 60 at the source's
-  own rate, so a 30 fps reference reported holds at half their length. Units stay px per 1/60 s.
+- **holds.py reads at 60 fps, like dyn.py**, so a 30 fps reel reports holds at their real length.
+  Units stay px per 1/60 s.
 - **The end card starts at the Logo block or 4.5 s before the end, whichever is earlier.** The 4.5 s
-  rule alone counted the last second of a long Logo block (11 beats at a calm 120 BPM is 5.5 s) as
-  holds. At 172 BPM nothing changes, so the Kaiju Postal numbers stay comparable.
+  rule alone would count the last second of a long Logo block (11 beats at a calm 120 BPM is 5.5 s)
+  as holds. At 172 BPM nothing changes.
+- **finish.py measures the file it made at 1080p**, tracked by path, never found by name: a folder
+  called `renders_1080p` once made the 9:16 version the measured one.
+- **`isMain` compares real paths.** Node resolves a module's URL through symlinks but keeps them in
+  `argv[1]`, and the skills CLI can install a skill as a link: the scripts exited 0 doing nothing.
+- **The `scroll` cue falls back to `whoosh`**, so the 12 core sounds play every cue the engine
+  registers. A test reads the cue names out of the engine and the kit out of sound.md.
 - **The HUD and the Rewind timecode count frames at `spec.fps`**, not a fixed 60.
 - **main.js fetches the film's source files one at a time**: a burst of requests once had a
   connection reset by `python3 -m http.server`, the documented preview server.
@@ -48,10 +64,8 @@ fresh brief, tested that the blocks generalize.
   bump of the shipped file releases only under a `fix` PR title.
 - **Playwright 1.64.1, locked**, the same pin and integrity as the music-video skill's lock (a test
   checks), installed with `npm ci --ignore-scripts`.
-- **Scripts were rewritten for reading** (one statement per line, usage on a bare call, messages
-  instead of tracebacks). Outputs were compared against the earlier versions on the same synthetic
-  inputs: mix.py's WAV, post.py's frames (with and without grain), dyn.py, holds.py at 60 fps,
-  audit.py and montage.py came out identical, and beat_grid.py's JSON matched on 10 tracks.
+- **Scripts are written for reading**: one statement per line, usage on a bare call, messages
+  instead of tracebacks.
 
 ## Open issues
 
@@ -86,11 +100,20 @@ fresh brief, tested that the blocks generalize.
   real fonts. browser.test.ts boots the tour with no problem, takes stills and streams render
   samples. It checks a frame is identical whatever was seeked before. It fails fast on a bad style,
   a spec.js syntax error and missing fonts.
+- **Byte equality holds in DOM blocks only.** The seek check uses Prompt and Rewind times. In Fly, a
+  frame seeked after others differed from a fresh one on about 150 pixels by one or two levels: GPU
+  tile noise in 3D layers, which byte equality cannot tell from a state bug. compositor.test.ts
+  covers every block's state with recording canvases.
 - **A scaffold-to-finish run on macOS, 2026-10-27**: new_film.sh with the real npm, uv (Python
-  3.12.9) and font download, then a synthetic sound kit, mix.py, render.py at 1080p (889 frames, 2
-  workers, 3 min 51 s) and finish.py on the starter film. Every per-file gate passed, the hardware
-  decode included. The motion gates failed: 43% still frames and 2.24 px/frame. The starter is a
-  shape to fill in, and its stills match the earlier engine's to within GPU noise.
+  3.12.9) and font download, then a synthetic sound kit, mix.py, render.py at 1080p and finish.py on
+  the starter film. Every per-file gate passed, the hardware decode included.
+- **The starter passes the motion gates as shipped**: at 1080p (762 frames, 2 workers, 2 min 43 s)
+  finish.py printed `ALL CHECKS PASS` with 31% still frames, no hold over 0.6 s and 3.46 px/frame.
+  Its first cut, 15 s with three Strike items and a held split, measured 43% still frames and 2.24
+  px/frame. Its still share per beat showed the holds: the tiles mock, the split word and the last
+  cut. It now has two Strike items, a 7-beat Hero, a cut word after the split and an accelerating
+  cut run.
+- **The tour was checked by eye** on a 38-still contact sheet across every block.
 - **Not covered**: no fresh-agent run (`/skills:validate`) yet; no render on Linux or Windows; no
-  real generated music through the refactored scripts; no 4K render of the refactored pipeline.
+  real generated music through mix.py; no 4K render since the scripts reached their current form.
 - Dependabot bumps of `assets/npm` or `assets/requirements.txt` deserve a live `/skills:validate`.

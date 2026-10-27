@@ -18,9 +18,8 @@ film.
   card.
 - **Scenario** makes what code cannot: a music bed at the exact tempo the grid needs, a kit of
   one-shot sound effects, and any key art, product shot or character the Picture block cuts in.
-- **finish.py** holds the bar the reference reels set: 40% still frames or less, no still stretch
-  over 0.6 s, and a median motion of 2.5 px/frame or more before the end card. A film that parks
-  fails.
+- **finish.py** passes a film only with 40% still frames or less, no still stretch over 0.6 s, and a
+  median motion of 2.5 px/frame or more before the end card. A film that parks fails.
 
 Needs: Node 20+, ffmpeg and ffprobe, uv (or Python 3.12+), Google Chrome or Playwright's Chromium.
 [new_film.sh](scripts/new_film.sh) puts the locked Playwright
@@ -74,12 +73,14 @@ Rules:
 
 The steps, each with its reference:
 
-1. Brief to beat sheet: [method.md](references/method.md).
-2. Music, sound kit and pictures on Scenario: [sound.md](references/sound.md).
-3. spec.js: [blocks.md](references/blocks.md), with the motion rules in
+1. Scaffold the film folder with `new_film.sh` (the first command above). Every later step runs in
+   it, and the downloads go in its `audio/` and `art/`.
+2. Brief to beat sheet: [method.md](references/method.md).
+3. Music, sound kit and pictures on Scenario: [sound.md](references/sound.md).
+4. spec.js: [blocks.md](references/blocks.md), with the motion rules in
    [craft.md](references/craft.md).
-4. Preview and stills: scrub, snap the beats, fix, repeat.
-5. A 1080p check render until `finish.py` prints `ALL CHECKS PASS`, then the 4K master:
+5. Preview and stills: scrub, snap the beats, fix, repeat.
+6. A 1080p check render until `finish.py` prints `ALL CHECKS PASS`, then the 4K master:
    [render.md](references/render.md).
 
 ## Worked example: a 24-second game teaser
@@ -89,7 +90,9 @@ about a courier delivering mail in a city of giant monsters. Kinetic type runs o
 bass track, two key arts cut in on the drop, a door-knock gag rides the beat cuts, and the title
 lands on the last hit.
 
-1. **Scope.** The `scenario` skill connects and picks the team and project.
+1. **Scope and folder.** The `scenario` skill connects and picks the team and project.
+   `new_film.sh kaiju-postal` scaffolds the film folder from the starter; every later command runs
+   in it.
 2. **Beat sheet (free).** 68 beats at 172 BPM (23.7 s):
    - 0-8 type: a charge, then THE CITY / HAS NEW / VERY BIG NEIGHBORS. / THEY STOMP.;
    - 8-16 key art 1 on the drop; 16-24 type ending in a zoom through the D of DELIVER.;
@@ -115,9 +118,11 @@ lands on the last hit.
    lands on the first key art and the music stops dead on the title.
 
 4. **The sound kit.** The 12 core sounds of sound.md, plus the film's own jokes (`stomp`, `roar`,
-   `bell`, `knock`): one run each, `"wait": false`, one `jobs_wait`.
-5. **Key art.** Two pictures, the first passed as a reference for the second so the courier and the
-   city match. The scooter came back with a maker's logo, painted out before use.
+   `bell`, `knock`): a dry run each and one total. After the user's go: one run each,
+   `"wait": false`, one `jobs_wait`.
+5. **Key art.** Two pictures, priced the same way before the user's go. The first is passed as a
+   reference for the second so the courier and the city match. The scooter came back with a maker's
+   logo, painted out before use.
 6. **spec.js**, an excerpt:
 
    ```js
@@ -145,8 +150,8 @@ lands on the last hit.
 
 ## Common mistakes
 
-- **Parking between hits.** A film can land every cut on the reference's rhythm and still feel slow:
-  an early cut of one film had 81% still frames and a 6 s hold. Keep something moving every frame.
+- **Parking between hits.** A film can land every cut on the beat and still read as slides: a word
+  or a picture that sits still for a beat is a hold. Keep something moving every frame.
 - **Picture prompts that backfire.** "A calm darker band for the title" came back as a gray band:
   describe the composition and darken with `tint`. "No watermark" beside a reference image was
   blocked: say "no text, no logos". Vehicles and clothes come back with makers' logos: inspect at
@@ -176,7 +181,7 @@ lands on the last hit.
   [main.js](assets/engine/main.js), [core.js](assets/engine/core.js),
   [compositor.js](assets/engine/compositor.js), [blocks.js](assets/engine/blocks.js),
   [sanitize.js](assets/engine/sanitize.js), [validate.js](assets/engine/validate.js).
-- Examples: [starter](assets/examples/starter/spec.js) (15 s, a shape to fill: as shipped it misses
-  the motion gates), [kaiju-postal](assets/examples/kaiju-postal/spec.js) (24 s),
+- Examples: [starter](assets/examples/starter/spec.js) (13 s, a shape to fill that passes the
+  gates), [kaiju-postal](assets/examples/kaiju-postal/spec.js) (24 s),
   [tour](assets/examples/tour/spec.js) (52 s, 13 blocks) with its placeholder
   [logo.svg](assets/examples/tour/logo.svg).
