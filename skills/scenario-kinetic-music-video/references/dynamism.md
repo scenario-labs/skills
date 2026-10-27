@@ -160,8 +160,11 @@ camera on the static room around the screen and warps the screen flat:
 
 - It finds the screen as the brightest changing quadrilateral over the 0.2 s after `--at` (default
   0), and prints the corners (top left, top right, bottom right, bottom left).
-- Read the `--check` image: the outline it found over the frame, beside the first flattened frame.
-  When the outline misses a corner, rerun with `--quad "x,y x,y x,y x,y"` read off that image.
+- Read the `--check` image: the frame at `--at` with the outline it found, beside that frame
+  flattened. It is written before tracking, so a failed run leaves it too. When the outline misses a
+  corner, or no screen is found, rerun with `--quad "x,y x,y x,y x,y"` read off that image.
+- A video inside the screen with black bars (a vertical video on a laptop, a letterboxed film): quad
+  the video itself, not the whole screen.
 - `--band y0:y1` keeps a burnt-in caption band out of the tracking.
 - The output is 1280x720, or 720x1280 for a tall screen, at `--fps` (default 30), from `--from` to
   `--to`. `--size WxH` overrides the size.

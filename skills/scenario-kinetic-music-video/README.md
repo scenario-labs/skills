@@ -121,6 +121,10 @@ Known limits:
   only the mouth moves reads still; `freezedetect`, the contact sheets and dynamism.md §7 cover
   them.
 - Flashes on part of the frame are not measured.
+- Auto screen detection needs a screen brighter than the room. A live `/skills:validate` run filmed
+  black bars around a vertical video: the room outscored the screen, and its outline filled the
+  frame. Such an outline now exits "no screen found", after writing the `--check` frame. Quadding
+  the video itself tracked 100% of frames.
 - Sections come from `node` evaluating `engine/timeline.js` as a `data:` URL module. A timeline with
   relative imports falls back to a file URL, which needs a Node that detects ES modules in the
   project's typeless `package.json` (20.19+ or 22.7+).

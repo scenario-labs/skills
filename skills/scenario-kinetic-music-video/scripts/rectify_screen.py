@@ -5,13 +5,16 @@ The camera is tracked on the static room around the screen (feature matches outs
 quadrilateral at --at follows it into every frame. --quad auto finds the screen as the brightest changing
 quadrilateral over the 0.2 s after --at; otherwise give its corners at --at, top left, top right, bottom right,
 bottom left, in pixels of the decoded frame (read them off the --check image). --band rows (a burnt-in caption) are
-kept out of the tracking. The output is 1280x720, or 720x1280 for a tall screen, at --fps, without audio.
+kept out of the tracking. The output is 1280x720, or 720x1280 for a tall screen, at --fps, without audio. The --check
+image is written before tracking, so a failed run leaves it too.
 Exit 0: written; 2: bad input, no screen found or no frames."""
 import argparse, os, subprocess, sys
 import numpy as np
 
 STACK_S = 0.2        # auto detection reads this much after --at: longer, and handheld drift smears the outline
 MIN_AREA = 0.05      # the screen covers at least 5% of the frame
+MAX_AREA = 0.9       # an auto outline over 90% of the frame, or on three borders, is the room around the screen
+BORDER = 0.01        # an outline this close to a border, as a share of that side, touches it
 GROW = 1.08          # tracking ignores the screen and a margin around it: its content moves, the room does not
 SCALE = 0.5          # features are found at half resolution
 MIN_MATCHES, MIN_INLIERS = 25, 20
@@ -57,8 +60,19 @@ def order(q):
     return np.float32([q[np.argmin(s)], q[np.argmin(d)], q[np.argmax(s)], q[np.argmax(d)]])
 
 
+def fills_frame(q, w, h):
+    """Whether an outline is the room rather than a screen. Three borders, not four: a burnt-in caption band along the
+    fourth keeps the room's outline off it."""
+    import cv2
+    (x0, y0), (x1, y1) = q.min(0), q.max(0)
+    touches = [x0 <= BORDER * w, y0 <= BORDER * h, x1 >= (1 - BORDER) * w - 1, y1 >= (1 - BORDER) * h - 1]
+    return sum(map(bool, touches)) >= 3 or cv2.contourArea(q) > MAX_AREA * w * h
+
+
 def find_screen(stack, w, h):
-    """The brightest changing region of the stack, reduced to four corners, or None."""
+    """The brightest changing region of the stack, reduced to four corners, or None. A bright, textured room drifting
+    around a dark screen (black bars around a vertical video) outscores the screen, and its outline fills the frame:
+    None too."""
     import cv2
     g = np.stack([cv2.cvtColor(f, cv2.COLOR_BGR2GRAY).astype(np.float32) for f in stack])
     score = cv2.normalize(g.std(0), None, 0, 1, cv2.NORM_MINMAX) + cv2.normalize(g.mean(0), None, 0, 1, cv2.NORM_MINMAX)
@@ -76,7 +90,8 @@ def find_screen(stack, w, h):
     for eps in np.linspace(0.01, 0.08, 15):
         p = cv2.approxPolyDP(hull, eps * per, True)
         if len(p) == 4:
-            return order(p[:, 0])
+            q = order(p[:, 0])
+            return None if fills_frame(q, w, h) else q
     return None
 
 
@@ -110,16 +125,28 @@ def mask_for(q, band, w, h):
     return m
 
 
-def check_image(path, ref, q, flat):
+def corners_to(size):
+    return np.float32([[0, 0], [size[0], 0], [size[0], size[1]], [0, size[1]]])
+
+
+def check_image(path, ref, q, size):
+    """The --at frame with the screen's outline, beside that frame flattened; without a screen, the frame alone."""
     import cv2
     img = ref.copy()
-    cv2.polylines(img, [np.int32(q)], True, (0, 255, 0), 2)
-    for (x, y), name in zip(q, ('TL', 'TR', 'BR', 'BL')):
-        cv2.circle(img, (int(x), int(y)), 6, (0, 0, 255), -1)
-        cv2.putText(img, f'{name} {int(x)},{int(y)}', (int(x) + 8, int(y) - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-                    (0, 0, 255), 2)
-    side = cv2.resize(flat, (max(2, round(flat.shape[1] * img.shape[0] / flat.shape[0])), img.shape[0]))
-    if not cv2.imwrite(path, np.hstack([img, side])):
+    if q is not None:
+        cv2.polylines(img, [np.int32(q)], True, (0, 255, 0), 2)
+        for (x, y), name in zip(q, ('TL', 'TR', 'BR', 'BL')):
+            cv2.circle(img, (int(x), int(y)), 6, (0, 0, 255), -1)
+            cv2.putText(img, f'{name} {int(x)},{int(y)}', (int(x) + 8, int(y) - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
+                        (0, 0, 255), 2)
+        flat = cv2.warpPerspective(ref, cv2.getPerspectiveTransform(q, corners_to(size)), size, flags=cv2.INTER_CUBIC)
+        side = cv2.resize(flat, (max(2, round(size[0] * img.shape[0] / size[1])), img.shape[0]))
+        img = np.hstack([img, side])
+    try:
+        os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+    except OSError as e:
+        raise BadInput(f'{path}: {e.strerror or e}')
+    if not cv2.imwrite(path, img):
         raise BadInput(f'could not write {path}')
 
 
@@ -136,24 +163,27 @@ def run(a):
         raise BadInput(f'{a.src}: no such file')
     w, h = frame_size(a.src)
     band = parse_pair(a.band, ':', '--band') if a.band else None
+    size = parse_pair(a.size, 'x', '--size') if a.size else None
+    if size and (min(size) < 2 or size[0] % 2 or size[1] % 2):
+        raise BadInput(f'--size {size[0]}x{size[1]}: sides must be even and at least 2')
+    q = None if a.quad == 'auto' else parse_quad(a.quad, w, h)
     stack = [f for _, f in zip(range(max(2, round(STACK_S * a.fps))), frames(a.src, w, h, a.fps, a.at))]
     if not stack:
         raise BadInput(f'{a.src}: no frames at --at {a.at:g}')
-    if a.quad == 'auto':
+    if q is None:
         q = find_screen(stack, w, h)
-        if q is None:
-            raise BadInput('no screen found: pass --quad "x,y x,y x,y x,y" (TL TR BR BL at --at)')
-    else:
-        q = parse_quad(a.quad, w, h)
-    print('corners at --at (TL TR BR BL): ' + ' '.join(f'{x:.0f},{y:.0f}' for x, y in q))
-    if a.size:
-        ow, oh = parse_pair(a.size, 'x', '--size')
-    else:
+    if q is not None and not size:
         wide = np.linalg.norm(q[1] - q[0]) + np.linalg.norm(q[2] - q[3])
         tall = np.linalg.norm(q[3] - q[0]) + np.linalg.norm(q[2] - q[1])
-        ow, oh = (1280, 720) if wide >= tall else (720, 1280)
-    if ow < 2 or oh < 2 or ow % 2 or oh % 2:
-        raise BadInput(f'--size {ow}x{oh}: sides must be even and at least 2')
+        size = (1280, 720) if wide >= tall else (720, 1280)
+    if a.check:
+        check_image(a.check, stack[0], q, size)  # first, so the image the corners are read off survives a failure
+    if q is None:
+        look = a.check or 'a --check FILE.jpg image'
+        raise BadInput(f'no screen found: read the corners off {look} and pass --quad "x,y x,y x,y x,y" '
+                       "(TL TR BR BL at --at; a video inside black bars: the video's own corners)")
+    print('corners at --at (TL TR BR BL): ' + ' '.join(f'{x:.0f},{y:.0f}' for x, y in q))
+    ow, oh = size
     sift, bf = cv2.SIFT_create(4000), cv2.BFMatcher()
 
     def small(f):
@@ -162,17 +192,15 @@ def run(a):
     kr, dr = sift.detectAndCompute(small(stack[0]), mask_for(q, band, w, h))
     if dr is None or len(kr) < MIN_MATCHES:
         raise BadInput('too little texture around the screen to track the camera (fill less of the frame with it)')
-    for path in (a.out, a.check):
-        try:
-            if path:
-                os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
-        except OSError as e:
-            raise BadInput(f'{path}: {e.strerror or e}')
+    try:
+        os.makedirs(os.path.dirname(a.out) or '.', exist_ok=True)
+    except OSError as e:
+        raise BadInput(f'{a.out}: {e.strerror or e}')
     enc = subprocess.Popen(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'bgr24', '-s',
                             f'{ow}x{oh}', '-r', f'{a.fps:g}', '-i', '-', '-c:v', 'libx264', '-crf', '14', '-pix_fmt',
                             'yuv420p', '-an', a.out], stdin=subprocess.PIPE)
-    dst = np.float32([[0, 0], [ow, 0], [ow, oh], [0, oh]])
-    hm, n, tracked, first = np.eye(3), 0, 0, None
+    dst = corners_to(size)
+    hm, n, tracked = np.eye(3), 0, 0
     for fr in frames(a.src, w, h, a.fps, a.start, a.end):
         k, d = sift.detectAndCompute(small(fr), mask_for(cv2.perspectiveTransform(q[None], hm)[0], band, w, h))
         if d is not None and len(k) > MIN_MATCHES:
@@ -186,14 +214,11 @@ def run(a):
         cur = cv2.perspectiveTransform(q[None], hm)[0]
         flat = cv2.warpPerspective(fr, cv2.getPerspectiveTransform(cur, dst), (ow, oh), flags=cv2.INTER_CUBIC)
         enc.stdin.write(flat.tobytes())
-        first = flat if first is None else first
         n += 1
     enc.stdin.close()
     if enc.wait() != 0 or not n:
         raise BadInput(f'{a.src}: no frames from --from {a.start:g}' + (f' to --to {a.end:g}' if a.end else '')
                        if not n else f'ffmpeg could not write {a.out}')
-    if a.check:
-        check_image(a.check, stack[0], q, first)
     share = tracked / n
     print(f'wrote {a.out}: {n} frames at {a.fps:g} fps, {ow}x{oh}, tracked {share:.0%}')
     if share < TRACKED_WARN:
