@@ -67,6 +67,11 @@ describe("checkSpec", () => {
     }
   });
 
+  it("runs film folders on the skill's own engine files, so coverage counts them", async () => {
+    const blocks = await load(filmFolder("starter"), "blocks.js");
+    expect(blocks.Words).toBe(Words);
+  });
+
   it("passes a clean spec", () => {
     expect(checkSpec(base())).toEqual([]);
   });

@@ -1,8 +1,17 @@
 // A film folder for the vitest suites: the engine plus one example, as new_film.sh lays it out, so an
-// example's `import ... from './blocks.js'` and the engine share one module instance. The folders sit
-// under node_modules/.cache: inside the project, where vite resolves them in every environment, and
-// out of git.
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "fs";
+// example's `import ... from './blocks.js'` and the engine share one module instance. The engine files
+// are symlinks: vite resolves them to the skill's own files, so coverage counts the engine the tests
+// run. The example is copied, since its imports resolve beside its real path. The folders sit under
+// node_modules/.cache: inside the project, where vite resolves them in every environment, and out of
+// git.
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+} from "fs";
 import path from "path";
 
 export const SKILL = path.resolve(
@@ -25,7 +34,8 @@ export function filmFolder(example: string): string {
   mkdirSync(CACHE, { recursive: true });
   const dir = mkdtempSync(path.join(CACHE, `${example}-`));
   made.push(dir);
-  cpSync(ENGINE, dir, { recursive: true });
+  for (const file of readdirSync(ENGINE))
+    symlinkSync(path.join(ENGINE, file), path.join(dir, file));
   cpSync(path.join(SKILL, "assets/examples", example), dir, {
     recursive: true,
   });
