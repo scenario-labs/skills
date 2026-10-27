@@ -236,7 +236,8 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
   `engine/`, then reapply any engine fix the project made to them. Its old `render.mjs` drops
   `--blur` without a word, and §8 needs `delivery_check.py`.
 - **Motion blur:** decide it in the look pass. Render the fastest 5 s twice at `--fps 60 --scale 1`,
-  with `--blur` and without, and show the pair (unattended: leave it off). Once approved, set
+  with `--blur` and without, and show the pair (unattended: leave it off, unless the user asked for
+  blur where it helps; then judge the pair yourself and say why). Once approved, set
   `export const BLUR = { on: true }` in `engine/timeline.js`, so every later render carries it
   (`ENGINE_API.md`, Motion blur). Then run a sheet of frames at each hard cut inside a scene
   (`still.mjs --blur`): a double exposure there needs an `E.cut(t)`, and `render.mjs` lists the

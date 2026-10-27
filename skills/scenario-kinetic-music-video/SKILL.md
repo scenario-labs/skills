@@ -199,7 +199,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
     band.
 - **Global look pass:** a still sheet across all sections, then tune `POST`, the palette and the HUD
   theme. Decide motion blur from an A/B of the fastest 5 s (`--blur`, `references/pipeline.md` §7;
-  unattended: off).
+  unattended: off unless the user asked for it, then judge the pair yourself).
 - **Revisions:** map each director note (they arrive as timestamps) to its section and send it back
   to the owning agent via SendMessage. Resuming keeps its context. Fix a weak shot by replacing it
   with a new generation in a different look, or with code, never by adding effects. Offer

@@ -250,6 +250,8 @@ settings (`on`, `samples`, `shutter`, `max`, `beatCuts`, `wordCuts`), so `load()
   A cut inside the shutter slides it back, so the frame before it still blurs. Call `E.cut(t)` in
   `load()` for every other hard switch inside your section (a clip, a color field, a layout).
   `BLUR.beatCuts: true` adds every beat; `BLUR.wordCuts: false` drops the word switches.
+- **Fast fades:** an opacity ramp over a frame or two averages into a gray copy of the whole word.
+  Under blur, slam a word in fully opaque on its word switch instead.
 - **Undeclared clip switch:** a sample drawing a clip that `prepare()` did not advance this frame
   makes that frame render without blur. `render.mjs` lists those frames at the end; add the `E.cut`.
   Roto materials and custom textures are not checked.
