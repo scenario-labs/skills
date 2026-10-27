@@ -90,6 +90,14 @@ class FilmInfoTest(unittest.TestCase):
         self.assertIn("did not load", str(e.exception.code))
         self.assertIn("error: fonts missing", err.getvalue())
 
+    def test_no_metadata_exits_with_a_message(self):
+        for printed in ("", "not json"):
+            self.env["FAKE_NODE_INFO"] = printed
+            with self.subTest(printed=printed), mock.patch.dict(os.environ, self.env, clear=True), redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as e:
+                    filmserver.film_info(self.dir)
+                self.assertIn("printed no film metadata", str(e.exception.code))
+
     def test_no_node(self):
         with mock.patch.dict(os.environ, {"PATH": str(self.dir / "empty")}, clear=True):
             with self.assertRaises(SystemExit) as e:

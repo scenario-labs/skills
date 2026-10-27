@@ -3,6 +3,7 @@
 // Playwright loads only when launch() runs, so the other scripts print their usage without it.
 import { createRequire } from "module";
 import { execSync } from "child_process";
+import { realpathSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -89,5 +90,12 @@ export async function openFilm(b, dsf = 1, render = true) {
     .catch(() => []);
   return { pg, errs, problems };
 }
-export const isMain = (url) =>
-  !!process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(url);
+// real paths on both sides: node resolves the module's URL through symlinks but keeps them in argv[1],
+// and a skill installed as a link (or a script under macOS /tmp) would otherwise exit 0 doing nothing
+export const isMain = (url) => {
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(url));
+  } catch {
+    return false;
+  }
+};

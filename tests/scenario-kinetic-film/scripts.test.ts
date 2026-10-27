@@ -1,7 +1,7 @@
 // The node scripts without a browser: finding Playwright, the shutter window, info.mjs's verdict, snap
 // times, and the usage messages render.mjs and snap.mjs print before they load anything.
 import { spawnSync } from "child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "fs";
 import os from "os";
 import path from "path";
 import { afterAll, describe, expect, it } from "vitest";
@@ -152,25 +152,33 @@ describe("snap.mjs times", () => {
 
 describe("usage, before any browser", () => {
   // run from an empty folder with no Playwright anywhere it would look first
-  const run = (script: string) =>
-    spawnSync(process.execPath, [path.join(SCRIPTS, script)], {
+  const run = (script: string, dir = SCRIPTS) =>
+    spawnSync(process.execPath, [path.join(dir, script)], {
       cwd: tmp,
       env: { PATH: process.env.PATH },
       encoding: "utf8",
     });
+  // the skills CLI installs a skill as a symlink for some agents
+  const linked = path.join(tmp, "linked-scripts");
+  symlinkSync(SCRIPTS, linked, "dir");
 
-  it("render.mjs", () => {
-    const r = run("render.mjs");
-    expect(r.status).toBe(1);
-    expect(r.stderr).toContain(
-      "usage: node render.mjs <dsf> <frame0> <frame1>",
-    );
-    expect(r.stderr).not.toContain("Playwright");
-  });
+  for (const [where, dir] of [
+    ["", SCRIPTS],
+    [" through a symlinked folder", linked],
+  ]) {
+    it(`render.mjs${where}`, () => {
+      const r = run("render.mjs", dir);
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain(
+        "usage: node render.mjs <dsf> <frame0> <frame1>",
+      );
+      expect(r.stderr).not.toContain("Playwright");
+    });
 
-  it("snap.mjs", () => {
-    const r = run("snap.mjs");
-    expect(r.status).toBe(1);
-    expect(r.stderr).toContain(USAGE);
-  });
+    it(`snap.mjs${where}`, () => {
+      const r = run("snap.mjs", dir);
+      expect(r.status).toBe(1);
+      expect(r.stderr).toContain(USAGE);
+    });
+  }
 });

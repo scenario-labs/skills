@@ -57,7 +57,10 @@ def film_info(folder, info_file=None):
     sys.stderr.write(result.stderr)
     if result.returncode != 0:
         sys.exit(f"the film in {os.path.abspath(folder)} did not load: fix the problems above")
-    return json.loads(result.stdout)
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        sys.exit(f"info.mjs exited 0 but printed no film metadata (stdout: {result.stdout[:200]!r})")
 
 
 if __name__ == "__main__":
