@@ -40,7 +40,7 @@ proceed from tool schemas and flag the gap.
 ```bash
 bash $K/scripts/new_film.sh my-film --example starter   # or kaiju-postal, tour; --force finishes or refreshes a folder
 cd my-film && python3 -m http.server 5671                # preview: space plays, arrows step one beat
-node $K/scripts/snap.mjs stills 0.5 b4 b12 b20           # stills at beats (or seconds), from a second shell
+node $K/scripts/snap.mjs stills 0.5 b4 b12 b20           # half-size stills at beats (or seconds), from a second shell
 .venv/bin/python $K/scripts/beat_grid.py audio/music.mp3 --bpm 172 --window 40
 .venv/bin/python $K/scripts/mix.py .                     # out/mix.wav from the film's own cue list
 .venv/bin/python $K/scripts/render.py . --res 1080       # out/video_1080.mp4, workers sized to memory
@@ -61,8 +61,8 @@ Rules:
   `rgb()`.
 - A pure function of `t`: no `Math.random`, `Date` or state kept between frames, since motion blur
   renders sub-frames out of order.
-- On-screen numbers come from the film (`{lines}`, `{frames}`, `{seconds}`) or the user, never
-  invented.
+- On-screen numbers come from the film (`{lines}`, `{frames}`, `{seconds}`, the HUD's frame count
+  and timecode) or the user, never invented.
 - 4K masters stay at H.264 Level 5.2 or lower and under 1 GB.
 
 | Asset                | Capability           | Inputs to look for in `model_schema_get` |

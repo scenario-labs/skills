@@ -56,8 +56,9 @@ with `asset_download` (no `format` for audio), then measure:
 `recommend` with `"capability": "txt2audio"` and "short isolated sound effects for motion graphics".
 
 - Prefer a dedicated sound-effects model with a duration control and a negative prompt.
-- One run per sound, `"wait": false` for all of them, then one `jobs_wait` with every job id (at
-  most 32; call it again with `pending_job_ids`).
+- One run and one output per sound (some members default to 2 outputs: set the count to 1),
+  `"wait": false` for all of them, then one `jobs_wait` with every job id (at most 32; call it again
+  with `pending_job_ids`).
 - Short durations: each second costs.
 - A negative prompt such as `music, speech, voice, reverb wash, background noise` keeps one-shots
   clean.

@@ -38,6 +38,25 @@ class ServeTest(unittest.TestCase):
         with urllib.request.urlopen(url + "index.html") as r:
             self.assertEqual(r.read(), b"<!doctype html><p>film")
 
+    def test_listens_with_a_backlog_for_parallel_workers(self):
+        url, server = filmserver.serve(self.folder)
+        self.addCleanup(filmserver.stop, server)
+        self.assertGreaterEqual(server.request_queue_size, 128)
+        self.assertTrue(server.daemon_threads)
+
+    def test_answers_a_burst_of_parallel_requests(self):
+        url, server = filmserver.serve(self.folder)
+        self.addCleanup(filmserver.stop, server)
+        (self.folder / "big.bin").write_bytes(os.urandom(1 << 20))
+        from concurrent.futures import ThreadPoolExecutor
+
+        def get(i):
+            with urllib.request.urlopen(url + ("big.bin" if i % 2 else "index.html"), timeout=30) as r:
+                return r.status
+
+        with ThreadPoolExecutor(64) as pool:
+            self.assertEqual(set(pool.map(get, range(256))), {200})
+
     def test_stays_inside_the_folder(self):
         url, server = filmserver.serve(self.folder)
         self.addCleanup(filmserver.stop, server)

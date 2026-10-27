@@ -21,11 +21,17 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+class FilmServer(socketserver.ThreadingTCPServer):
+    daemon_threads = True
+    # Python's default backlog of 5 overflowed when several render workers booted at once: the
+    # extra connections were reset (net::ERR_CONNECTION_RESET) and those workers timed out.
+    request_queue_size = 128
+
+
 def serve(folder):
     """Serve folder on 127.0.0.1 at a free port. Returns (url, server); call stop(server) after."""
     handler = functools.partial(QuietHandler, directory=os.path.abspath(folder))
-    server = socketserver.ThreadingTCPServer(("127.0.0.1", 0), handler)
-    server.daemon_threads = True
+    server = FilmServer(("127.0.0.1", 0), handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return f"http://127.0.0.1:{server.server_address[1]}/", server
 
