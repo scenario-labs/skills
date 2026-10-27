@@ -49,13 +49,18 @@ function dropElement(n) {
   if (ANIMATIONS.has(n.localName) && /href|^on|^style$/i.test(n.getAttribute('attributeName') || '')) return true;
   return n.localName === 'style' && remoteCss(n.textContent);
 }
+// title and desc are HTML integration points: the HTML parser reads their children as HTML, where a <style>
+// is raw text that a "</style>" inside it closes. So they keep text only, and CDATA becomes plain text,
+// which the serializer escapes (a CDATA section is written out raw).
+const TEXT_ONLY = new Set(['title', 'desc']);
 function scrub(n) {
   for (const a of [...n.attributes]) if (dropAttribute(n, a)) n.removeAttributeNode(a);
   for (const c of [...n.childNodes]) {
     if (c.nodeType === 1) {
-      if (dropElement(c)) c.remove();
+      if (TEXT_ONLY.has(n.localName) || dropElement(c)) c.remove();
       else scrub(c);
-    } else if (c.nodeType !== 3 && c.nodeType !== 4) c.remove(); // keep text and CDATA only
+    } else if (c.nodeType === 4) c.replaceWith(c.ownerDocument.createTextNode(c.data));
+    else if (c.nodeType !== 3) c.remove(); // keep text only
   }
 }
 // inertSvg(text) returns the cleaned <svg> markup, or '' when the file is not a well-formed SVG.

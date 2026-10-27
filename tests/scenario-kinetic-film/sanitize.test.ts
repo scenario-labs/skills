@@ -127,6 +127,34 @@ describe("inertSvg", () => {
     expect(host.querySelector("rect")).not.toBeNull();
   });
 
+  it("keeps no markup inside title or desc, where the HTML parser takes over", () => {
+    // a <style> inside svg:title is HTML raw text: a raw CDATA "</style>" would close it early
+    for (const holder of ["title", "desc"]) {
+      const text = svg(
+        `<${holder}><style><![CDATA[</style><img src=x onerror=alert(1)>]]></style>Logo</${holder}><rect/>`,
+      );
+      const host = inlined(text);
+      expect(host.querySelector("img"), holder).toBeNull();
+      expect(host.querySelector(`${holder} *`), holder).toBeNull();
+      expect(host.querySelector(holder)?.textContent, holder).toBe("Logo");
+      expect(host.querySelector("rect"), holder).not.toBeNull();
+    }
+  });
+
+  it("turns CDATA into escaped text, so a style block keeps its rules", () => {
+    const text = svg(
+      "<style><![CDATA[.a > .b{fill:#fff}]]></style><text><![CDATA[</text><img src=x onerror=alert(1)>]]></text>",
+    );
+    const out = inertSvg(text);
+    expect(out).not.toContain("CDATA");
+    const host = inlined(text);
+    expect(host.querySelector("img")).toBeNull();
+    expect(host.querySelector("style")?.textContent).toBe(".a > .b{fill:#fff}");
+    expect(host.querySelector("text")?.textContent).toBe(
+      "</text><img src=x onerror=alert(1)>",
+    );
+  });
+
   it("inlines with no element or handler that could run", () => {
     const host = inlined(
       svg(
