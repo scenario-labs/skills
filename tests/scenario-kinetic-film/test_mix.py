@@ -202,5 +202,117 @@ class MixTest(unittest.TestCase):
         self.assertNotIn("Traceback", r.stderr)
 
 
+def burst(at, total, seconds=0.03):
+    """Silence of total seconds with one flat block of signal starting at at: one clean edge, no ripple."""
+    x = np.zeros((int(total * SR), 2))
+    s = int(at * SR)
+    x[s : s + int(seconds * SR)] = 0.8
+    return x
+
+
+def bursts(x):
+    """Start times (s) of the separate bursts in a mix."""
+    envelope = np.abs(x).max(1)
+    on = envelope > 0.5 * envelope.max()
+    return list((np.flatnonzero(on[1:] & ~on[:-1]) + 1) / SR)
+
+
+class MixAlignmentTest(unittest.TestCase):
+    """Music offset, end-aligned risers, looped ticks and onset sounds cut to a cue's dur."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.film = Path(self.tmp.name) / "film"
+        (self.film / "audio").mkdir(parents=True)
+
+    def kit(self, name, **sounds):
+        folder = Path(self.tmp.name) / name
+        folder.mkdir()
+        for stem, x in sounds.items():
+            media.write_wav(folder / f"{stem}.wav", x, SR)
+        return str(folder)
+
+    def info(self, cues, music=None):
+        return {"title": "Align", "dur": 4.0, "fps": 60, "bpm": 120, "music": music, "cues": cues}
+
+    def test_music_offset_moves_the_track(self):
+        # a marker 2.0 s into the track: offset 0.75 plays it at 1.25 s of the film
+        media.write_wav(self.film / "audio" / "marker.wav", burst(2.0, 6.0), SR)
+        kit = self.kit("none")
+        for offset, want in ((0, 2.0), (0.75, 1.25)):
+            music = {"file": "audio/marker.wav", "offset": offset, "gain": 0}
+            x, report = mix.build_mix(self.info([], music), str(self.film), kit, True)
+            self.assertIsNone(report["music"])
+            self.assertAlmostEqual(bursts(x)[0], want, delta=0.002, msg=f"offset {offset}")
+
+    def test_a_riser_ends_on_its_end(self):
+        riser = np.stack([np.linspace(0, 0.8, int(1.0 * SR))] * 2, 1)  # 1 s swell, cut off sharp
+        kit = self.kit("risers", riser=riser)
+        x, report = mix.build_mix(self.info([{"t": 1.0, "name": "riser", "gain": 1, "end": 2.5}]), str(self.film), kit, False)
+        self.assertEqual(report["missing"], [])
+        loud = np.flatnonzero(np.abs(x).max(1) > 1e-3) / SR
+        self.assertAlmostEqual(loud[-1], 2.5, delta=0.002)
+        self.assertAlmostEqual(loud[0], 1.5, delta=0.01)
+
+    def test_a_tick_run_repeats_for_its_dur(self):
+        # tick_run repeats at its own length (0.1 s here); 0.45 s of dur is 5 ticks
+        kit = self.kit("ticks", tick_run=burst(0, 0.1, 0.02))
+        x, _ = mix.build_mix(self.info([{"t": 1.0, "name": "tick_run", "gain": 1, "dur": 0.45}]), str(self.film), kit, False)
+        found = bursts(x)
+        self.assertEqual(len(found), 5, found)
+        np.testing.assert_allclose(np.diff(found), 0.1, atol=0.002)
+        # without a tick_run file, the tick plays every 0.075 s: 0.4 s is 6 ticks
+        kit = self.kit("tick_only", tick=burst(0, 0.25, 0.02))
+        x, _ = mix.build_mix(self.info([{"t": 1.0, "name": "tick_run", "gain": 1, "dur": 0.4}]), str(self.film), kit, False)
+        found = bursts(x)
+        self.assertEqual(len(found), 6, found)
+        np.testing.assert_allclose(np.diff(found), 0.075, atol=0.002)
+
+    def test_an_onset_sound_stops_after_its_dur(self):
+        # a 2 s sustained sound on a cue of 0.5 s: it fades out by 0.5 s, silent after
+        long = np.full((int(2.0 * SR), 2), 0.5)
+        kit = self.kit("long", scroll=long)
+        x, _ = mix.build_mix(self.info([{"t": 1.0, "name": "scroll", "gain": 1, "dur": 0.5}]), str(self.film), kit, False)
+        loud = np.flatnonzero(np.abs(x).max(1) > 1e-4) / SR
+        self.assertAlmostEqual(loud[0], 1.0, delta=0.002)
+        self.assertAlmostEqual(loud[-1], 1.5, delta=0.002)
+        self.assertGreater(level_db(x[int(1.05 * SR) : int(1.2 * SR)]), -40)
+
+
+CORE_KIT = {"whoosh", "whoosh_big", "impact", "impact_big", "hit", "slash", "key", "pop", "tick", "riser", "glitch", "logo_hit"}
+
+
+class CoreKitTest(unittest.TestCase):
+    """sound.md's 12 core sounds play every cue the engine registers."""
+
+    def test_sound_md_lists_the_core_kit(self):
+        text = (media.SKILL / "references" / "sound.md").read_text()
+        kit = text[text.index("The core kit") : text.index("Those 12 cover every cue")]
+        files = re.findall(r"`(\w+?)(?:_\d)?\.wav`", kit)
+        self.assertEqual(set(files), CORE_KIT)
+
+    def test_every_engine_cue_has_a_core_sound(self):
+        engine = media.SKILL / "assets" / "engine"
+        names = set()
+        for js in engine.glob("*.js"):
+            names |= set(re.findall(r"\bcue\([^,]+,\s*'(\w+)'", js.read_text()))
+        self.assertGreater(len(names), 20)
+        self.assertIn("scroll", names)
+        for name in sorted(names | set(mix.MAP)):
+            with self.subTest(cue=name):
+                self.assertIn(name, mix.MAP, "a cue with no MAP entry plays only a file of its own name")
+                for names_, *_ in mix.MAP[name]:
+                    self.assertTrue(set(names_.split("|")) & CORE_KIT, f"{name}: {names_} has no core sound")
+
+    def test_a_core_kit_mix_misses_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for stem in CORE_KIT:
+                media.write_wav(Path(tmp) / f"{stem}.wav", click(1000), SR)
+            cues = [{"t": 0.1 + 0.05 * i, "name": n, "gain": 1, "dur": 0.2, "end": 1.0} for i, n in enumerate(mix.MAP)]
+            _, report = mix.build_mix({"dur": 3.0, "bpm": 120, "cues": cues}, tmp, tmp, False)
+        self.assertEqual(report["missing"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

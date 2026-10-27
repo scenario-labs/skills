@@ -62,23 +62,30 @@ with `asset_download` (no `format` for audio), then measure:
 - A negative prompt such as `music, speech, voice, reverb wash, background noise` keeps one-shots
   clean.
 
-| File                           | Duration | Prompt that worked                                                                    |
-| ------------------------------ | -------- | ------------------------------------------------------------------------------------- |
-| `whoosh_1.wav`, `whoosh_2.wav` | 0.7 s    | A fast, airy whoosh as something whips past the camera, single pass, clean            |
-| `whoosh_big.wav`               | 1.3 s    | A deep cinematic whoosh with a sub-bass swell, a heavy object rushing past the camera |
-| `impact.wav`                   | 1.2 s    | Punchy cinematic impact hit with a tight low end and a short tail, single hit         |
-| `impact_big.wav`               | 2.2 s    | Huge movie trailer impact: a deep boom with a metallic crunch and a long tail         |
-| `hit.wav`                      | 0.5 s    | Snappy percussive hit, a whip crack layered with a tight snare, very short            |
-| `slash.wav`                    | 0.6 s    | Sharp sword slash, a fast metallic swipe through the air, single swipe                |
-| `key_1.wav`, `key_2.wav`       | 0.3 s    | One mechanical keyboard key press, close and dry, a single click                      |
-| `pop.wav`                      | 0.3 s    | Short bubbly user interface pop, soft and clean                                       |
-| `tick.wav`                     | 0.25 s   | Tiny crisp user interface tick, a short digital click                                 |
-| `riser.wav`                    | 2.2 s    | Reverse cymbal swell riser building tension, cutting off sharply at the very end      |
-| `glitch.wav`                   | 0.6 s    | Short digital glitch stutter, a burst of data corruption                              |
-| `logo_hit.wav`                 | 3 s      | Deep cinematic logo hit: a sub-bass boom with a long shimmering tail                  |
+The core kit, each with its length and a prompt that worked:
 
-- Those 12 cover every cue the blocks register. The others fall back to them: a missing `thock`
-  plays `pop`, `drop` plays `impact_big`, `rewind` plays `whoosh_big`.
+- **`whoosh_1.wav`, `whoosh_2.wav`** (0.7 s): A fast, airy whoosh as something whips past the
+  camera, single pass, clean.
+- **`whoosh_big.wav`** (1.3 s): A deep cinematic whoosh with a sub-bass swell, a heavy object
+  rushing past the camera.
+- **`impact.wav`** (1.2 s): Punchy cinematic impact hit with a tight low end and a short tail,
+  single hit.
+- **`impact_big.wav`** (2.2 s): Huge movie trailer impact: a deep boom with a metallic crunch and a
+  long tail.
+- **`hit.wav`** (0.5 s): Snappy percussive hit, a whip crack layered with a tight snare, very short.
+- **`slash.wav`** (0.6 s): Sharp sword slash, a fast metallic swipe through the air, single swipe.
+- **`key_1.wav`, `key_2.wav`** (0.3 s): One mechanical keyboard key press, close and dry, a single
+  click.
+- **`pop.wav`** (0.3 s): Short bubbly user interface pop, soft and clean.
+- **`tick.wav`** (0.25 s): Tiny crisp user interface tick, a short digital click.
+- **`riser.wav`** (2.2 s): Reverse cymbal swell riser building tension, cutting off sharply at the
+  very end.
+- **`glitch.wav`** (0.6 s): Short digital glitch stutter, a burst of data corruption.
+- **`logo_hit.wav`** (3 s): Deep cinematic logo hit: a sub-bass boom with a long shimmering tail.
+
+Those 12 cover every cue the blocks register: a missing `thock` plays `pop`, `drop` plays
+`impact_big`, `rewind` plays `whoosh_big`, `scroll` plays `whoosh`.
+
 - Add the film's own sounds and play them with `spec.cues` (`[[beat, 'stomp', gain], ...]`) or as a
   shot's `cue`. Set their level in `spec.sounds` (`{ stomp: -1 }` in dB).
 - Kaiju Postal added `stomp` (a giant footstep with debris), `roar`, `bell` (a bicycle bell double

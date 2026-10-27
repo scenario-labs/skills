@@ -33,7 +33,7 @@ MAP = {
     'power_down': [('power_down|glitch', 'onset', 0, -12)], 'draw': [('draw|whoosh', 'onset', 0, -14)], 'riser': [('riser', 'end', 0, -9)],
     'drop': [('drop|impact_big|impact', 'onset', 0, -4)], 'stretch': [('stretch|whoosh', 'onset', 0, -12)], 'squeeze': [('stretch|whoosh', 'onset', 0, -15)],
     'send': [('send|key', 'onset', 0, -3), ('whoosh', 'peak', .1, -14)], 'click': [('click|key', 'onset', 0, -1.5), ('impact', 'onset', 0, -10)],
-    'scroll': [('scroll', 'onset', 0, -17)], 'tick_run': [('tick_run|tick', 'loop', 0, -21)], 'ding': [('ding|tick', 'onset', 0, -15)],
+    'scroll': [('scroll|whoosh', 'onset', 0, -17)], 'tick_run': [('tick_run|tick', 'loop', 0, -21)], 'ding': [('ding|tick', 'onset', 0, -15)],
     'rewind': [('rewind|whoosh_big|whoosh', 'onset', 0, -11)], 'suck': [('suck|riser', 'end', 0, -9)],
     'logo_hit': [('logo_hit|impact_big|impact', 'onset', 0, -3)],
 }
