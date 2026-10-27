@@ -135,6 +135,8 @@ The Craft agent in step 2 measures each motion reference the user gives:
 1. Download it into `assets/refs/`. A phone filming a screen is flattened first (§6).
 2. Find its sections by watching it, then measure them, naming each span's energy:
    `.venv/bin/python tools/dynamism_check.py measure assets/refs/ref_a.mp4 --span verse=12:30:calm --span chorus=45:62:high --write-targets analysis/targets.json --json analysis/refs/ref_a.json --sheets analysis/refs/ref_a`
+   - Label each span with the energy of the user's song section it stands in for (verse, pre-chorus,
+     chorus, drop: §2), never by how busy it looks.
 3. Read the busiest and calmest sheets beside the numbers: they show what "fast" means there.
 4. `--write-targets` writes each energy's targets from the loosest of its spans:
    - `still_max`: the still share plus 0.10;
@@ -146,6 +148,9 @@ The Craft agent in step 2 measures each motion reference the user gives:
 6. Copy the numbers into `analysis/research_craft.md` next to the moves, so scene agents see them.
 
 - `measure` never fails a video, and its times are video times.
+- `WARN targets out of order` names each pair of energies where a written target loosens from calm
+  to mid to high: `motion_min` falls, or `still_max` or `hold_max_s` rises. Check the span labels
+  first. When they hold, measure other spans for that energy, or set the key by hand.
 - Burnt-in captions and platform UI count as motion. Keep them out with `--crop W:H:X:Y`.
 - Take the register from a reference, never its frames, logo or script.
 

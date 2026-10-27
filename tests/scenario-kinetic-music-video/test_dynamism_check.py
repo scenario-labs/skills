@@ -161,6 +161,15 @@ class PureTest(unittest.TestCase):
                 with self.assertRaises(dc.BadInput):
                     dc.load_targets(str(p))
 
+    def test_targets_out_of_order_across_energies(self):
+        self.assertEqual(dc.out_of_order(dc.DEFAULT_TARGETS), [])
+        inverted = {"high": {"still_max": 0.178, "hold_max_s": 0.3, "motion_min": 1.67},
+                    "calm": {"still_max": 0.344, "hold_max_s": 0.3, "motion_min": 1.01},
+                    "mid": {"still_max": 0.333, "hold_max_s": 0.3, "motion_min": 0.9}, "from": {}}
+        self.assertEqual(dc.out_of_order(inverted), ["motion_min calm 1.01 > mid 0.9"])
+        partial = {"calm": {"hold_max_s": 1.2}, "high": {"hold_max_s": 1.5, "motion_min": 2.0}}
+        self.assertEqual(dc.out_of_order(partial), ["hold_max_s calm 1.2 < high 1.5"])
+
     def test_documented_targets_example_parses(self):
         doc = (SKILL / "references" / "dynamism.md").read_text()
         block = re.search(r"```json\n(.*?)```", doc, re.S).group(1)
@@ -386,6 +395,7 @@ class MeasureTest(unittest.TestCase):
         r, _ = p.measure(self.two, "--span", "high=0:3", "--span", "end=3:5:calm", "--write-targets",
                          "analysis/targets.json")
         self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("WARN", r.stdout)
         tg = json.loads((p.dir / "analysis" / "targets.json").read_text())
         self.assertEqual(set(tg), {"high", "calm", "from"})
         self.assertEqual(set(tg["from"]), {"high", "calm"})
@@ -409,6 +419,17 @@ class MeasureTest(unittest.TestCase):
         self.assertIn("chorus 0.5-2.5 s", src["high"])
         self.assertNotIn("high 0-3 s", src["high"])  # the replaced span no longer reads as the source
         self.assertEqual(src["calm"], tg["from"]["calm"])
+
+    def test_write_targets_warns_when_energies_run_backwards(self):
+        p = Project(self)
+        r, _ = p.measure(self.two, "--span", "verse=0:3:calm", "--span", "pre=3:5:mid", "--write-targets",
+                         "analysis/targets.json")
+        self.assertEqual(r.returncode, 0, r.stderr)  # a warning, never a failure
+        self.assertTrue((p.dir / "analysis" / "targets.json").exists())
+        warn = re.search(r"WARN targets out of order across energies: (.+)", r.stdout)
+        self.assertIsNotNone(warn, r.stdout)
+        for k in ("motion_min calm", "still_max calm", "hold_max_s calm"):
+            self.assertIn(k, warn.group(1))
 
     def test_write_targets_keeps_a_note_until_an_energy_is_replaced(self):
         p = Project(self)

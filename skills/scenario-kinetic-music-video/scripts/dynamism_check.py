@@ -593,6 +593,18 @@ def write_targets(path, existing, rows, video):
     return out
 
 
+def out_of_order(targets):
+    """Each step from calm to mid to high where a target loosens: motion_min falls, still_max or hold_max_s rises.
+    Energies or keys the targets omit are skipped."""
+    found = []
+    for k, sign in (('motion_min', '>'), ('still_max', '<'), ('hold_max_s', '<')):
+        seq = [(e, targets[e][k]) for e in ('calm', 'mid', 'high') if k in (targets.get(e) or {})]
+        for (e0, v0), (e1, v1) in zip(seq, seq[1:]):
+            if (v0 > v1) if sign == '>' else (v0 < v1):
+                found.append(f'{k} {e0} {v0:g} {sign} {e1} {v1:g}')
+    return found
+
+
 def fmt_row(r):
     cpb = '-' if r.get('cuts_per_bar') is None else f"{r['cuts_per_bar']:.2f}"
     res = r['result'] + (' [' + '; '.join(r['failures']) + ']' if r.get('failures') else '')
@@ -744,6 +756,11 @@ def run_measure(a):
     if a.write_targets:
         tg = write_targets(a.write_targets, existing, rows[:-1], a.video)
         print(f'wrote {a.write_targets}: ' + json.dumps({k: v for k, v in tg.items() if k != 'from'}))
+        bad = out_of_order(tg)
+        if bad:
+            print('WARN targets out of order across energies: ' + '; '.join(bad) + '. From calm to mid to high, '
+                  'motion_min should not fall, nor still_max or hold_max_s rise. Label each span with the energy of '
+                  'the song section it stands in for')
     if a.json:
         save_json({'video': a.video, 'seconds': round(dur, 3), 'size': m['size'], 'crop': a.crop, 'method': method(),
                    'spans': rows, 'photosensitivity': photo, 'per_second': ps, 'busiest': busiest,
