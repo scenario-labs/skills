@@ -302,8 +302,8 @@ and command lines.
   `.claude/skills/`, so agents working in a clone pick them up automatically:
   - [skill-creator](https://www.skills.sh/anthropics/skills/skill-creator) (Apache-2.0, from
     anthropics/skills);
-  - [skill-development](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development)
-    (MIT per the plugin-dev README, from anthropics/claude-code).
+  - [skill-development](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev/skills/skill-development)
+    (MIT per the plugin-dev README, vendored from anthropics/claude-code before the plugin moved).
 - `skills-lock.json` records each source and hash; refresh with `npx skills update`. Their entries
   there exclude them from CLI discovery. Agent directories alone do not, since the CLI also scans
   `.agents/skills/` and `.claude/skills/`.
