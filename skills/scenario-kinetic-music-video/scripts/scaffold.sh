@@ -89,7 +89,6 @@ npm ci --ignore-scripts --no-audit --no-fund >/dev/null
 export UV_NATIVE_TLS=1 # uv ignores the system certificate store by default and fails behind a TLS-inspecting proxy
 # Rebuilt from the lock on every run: uv refuses an existing .venv without a prompt, and leftovers would survive.
 UV_VENV_CLEAR=1 uv venv .venv -q --python 3.11
-.venv/bin/python -m ensurepip >/dev/null 2>&1 || true
 uv pip install -q --require-hashes --only-binary :all: --python .venv/bin/python -r "$SKILL/assets/python/$PY_LOCK.txt"
 echo "scaffolded. master: audio/master.${MASTER_SRC##*.}"
 echo "next: .venv/bin/python tools/audio_analysis.py audio/master.${MASTER_SRC##*.}"

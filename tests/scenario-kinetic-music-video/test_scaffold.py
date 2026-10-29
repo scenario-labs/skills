@@ -67,7 +67,7 @@ class ScaffoldTest(unittest.TestCase):
                 "        sys.exit('error: A virtual environment already exists at `.venv`')\n"
                 "    python = Path('.venv/bin/python')\n"
                 "    python.parent.mkdir(parents=True, exist_ok=True)\n"
-                "    python.write_text('#!/bin/sh\\nexit 0\\n')\n"
+                "    python.write_text('#!/bin/sh\\nprintf \\'[\\\"python\\\"]\\\\n\\' >> \\\"$SCAFFOLD_TEST_LOG\\\"\\n')\n"
                 "    python.chmod(0o755)\n"
             )
             path.chmod(0o755)
@@ -162,6 +162,8 @@ class ScaffoldTest(unittest.TestCase):
                 self.assertEqual(install[install.index("--only-binary") + 1], ":all:")
                 self.assertEqual(install[install.index("-r") + 1], str(SKILL / f"assets/python/{lock}.txt"))
                 self.assertEqual(len([a for a in install if not a.startswith("-")]), 6, install)
+                # Nothing but the lock installs into .venv (ensurepip would add unlocked pip).
+                self.assertFalse(any(call[0] == "python" for call in self.calls()))
 
     def test_unlocked_platform_stops_before_touching_the_project(self):
         for system, arch in (("Linux", "aarch64"), ("Darwin", "x86_64"), ("MINGW64_NT", "x86_64")):

@@ -59,11 +59,12 @@ What the setup and analysis scripts fetch, and how each source is pinned:
 
 - **npm**: exact direct versions and a v3 lock with integrity hashes, installed with
   `npm ci --ignore-scripts`.
-- **Python**: each run rebuilds `.venv`, then `assets/python/<platform>.txt` pins every package,
-  transitives included, by version and SHA-256, wheels only. Installing builds nothing, so no build
-  backend or compiler toolchain is fetched. Only macOS arm64 and Linux x86_64 (manylinux 2.28, so
-  glibc 2.28+) have locks: on Linux aarch64, `demucs` needs `sphn`, which has no wheel there, and
-  its source build fetched a Rust toolchain and failed.
+- **Python**: `assets/python/<platform>.txt` pins every package, transitives included, by version
+  and SHA-256, wheels only. Installing builds nothing, so no build backend or compiler toolchain is
+  fetched. Each run rebuilds `.venv` from the lock alone, with no `ensurepip`, so no unlocked pip.
+  Only macOS arm64 and Linux x86_64 (manylinux 2.28, so glibc 2.28+) have locks: on Linux aarch64,
+  `demucs` needs `sphn`, which has no wheel there, and its source build fetched a Rust toolchain and
+  failed.
 - **beat-this**: PyPI 1.1.0. Its provenance attestation names CPJKU/beat_this commit
   `ad7974846029835307ba19a3d5cefbf40b243041` (tag v1.1.0), and the wheel's package files are
   identical to that commit. uv refuses a Git requirement in hash-checking mode, so the attested
