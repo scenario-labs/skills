@@ -28,8 +28,8 @@ platform, never locally: `model_run` on the compose tool models, `model_scenario
 stills and `model_scenario-compose-video` for video (fixed ids: each is Scenario's single
 deterministic compositor for its medium, so discovery would only re-derive them), whose layer
 contract lives in `scenario-video-assembly`. If a sibling skill named here is missing from your
-available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it; unattended,
+proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

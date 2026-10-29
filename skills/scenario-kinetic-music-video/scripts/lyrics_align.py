@@ -32,7 +32,8 @@ def raw_paths(prompt):
 
 def transcribe(prompt):
     from faster_whisper import WhisperModel
-    m = WhisperModel('large-v3', device='cpu', compute_type='int8')
+    # Systran/faster-whisper-large-v3 at a fixed Hugging Face commit, not whatever main points to.
+    m = WhisperModel('large-v3', device='cpu', compute_type='int8', revision='edaa852ec7e145841d8ffdb056a99866b5f0a478')
     segs, _ = m.transcribe(stem(), language='en', word_timestamps=True, beam_size=5, condition_on_previous_text=False, initial_prompt=prompt or None, temperature=0)
     out = []
     for s in segs:

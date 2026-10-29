@@ -198,8 +198,10 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
 - Cross-reference the `scenario` skill for connection setup; never repeat it.
 - A skill that names a sibling skill carries the sibling-install invitation, byte-identical across
   skills (copy it from any SKILL.md: "If a sibling skill named here is missing from your available
-  skills, ask the user to install it..."). Neither the Agent Skills spec nor the skills CLI resolves
-  dependencies (issue #49 tracks the upstream work), so this sentence is the mechanism.
+  skills, load it with `skill_get`..."). Neither the Agent Skills spec nor the skills CLI resolves
+  dependencies (issue #49 tracks the upstream work), so this sentence is the mechanism. It names no
+  install command; `pnpm style` fails on one in a skill
+  ([why](docs/decisions.md#no-install-commands-in-skills)).
 - No disclosure marks: a skill never tells an agent to burn AI-disclosure marks, badges, or
   compliance overlays into generated content, by default or as an option. The skills serve
   professionals who own their distribution compliance; the pipeline does not decide it for them.

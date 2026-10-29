@@ -97,6 +97,23 @@ elif [ "$grep_status" -ge 2 ]; then
   fail=1
 fi
 
+# An installed skill must not tell an agent to install this repository: an
+# unversioned installer resolves a mutable package and revision, and scanners
+# read it as an untrusted source. Siblings load through skill_get instead.
+# Family READMEs sit outside every skill folder, so no install ships them.
+grep_status=0
+install_hits=$(grep -rnE -e 'skills(@[^ ]*)? add +scenario-labs/skills' skills) || grep_status=$?
+if [ "$grep_status" -ge 2 ]; then
+  echo "check-style: grep failed (exit $grep_status); a checked path is probably missing"
+  fail=1
+fi
+install_hits=$(printf '%s\n' "$install_hits" | grep -vE '^skills/(dcc|game-engines)/[^/]+/README\.md:' | grep . || true)
+if [ -n "$install_hits" ]; then
+  echo 'Skill files must not carry an install command for this repository; point to skill_get or ask the user, per AGENTS.md "Scope and surface". Found:'
+  printf '%s\n' "$install_hits" | sed 's/^/  /'
+  fail=1
+fi
+
 for f in $skill_files; do
   # Prettier single-quotes a description that itself holds double quotes.
   grep -Eq "^description: [\"']?Use when" "$f" || {

@@ -28,8 +28,8 @@ collection rename or deletion, workflow authoring and usage stay on mcp.scenario
 `scenario` skill, and connect both servers when a task needs both. Modeling, sculpting, rigging or
 shading through bpy is the `scenario-blender-expert` skill's work; exporting for an engine is
 `scenario-blender-export`'s. If a sibling skill named here is missing from your available skills,
-ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
-proceed from tool schemas and flag the gap.
+load it with `skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool
+schemas and flag the gap.
 
 ## Setup
 
