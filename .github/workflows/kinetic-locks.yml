@@ -1,22 +1,25 @@
-name: Kinetic Python lock
+name: Kinetic dependency locks
 
 # Proves the kinetic music-video Python locks reproduce from requirements.in, then installs
 # each on its platform with hash checks and wheels only, and imports what the tools import.
-# The script-tests job in CI already runs the offline lock checks; this one needs the network.
+# It also installs the npm lock the way scaffold.sh does. The script-tests job in CI already
+# runs the offline lock checks; this one needs the network.
 on:
   pull_request:
     paths:
       - "skills/scenario-kinetic-music-video/assets/python/**"
+      - "skills/scenario-kinetic-music-video/assets/npm/**"
       - "skills/scenario-kinetic-music-video/scripts/scaffold.sh"
       - "tests/scenario-kinetic-music-video/test_python_lock.py"
-      - ".github/workflows/kinetic-python.yml"
+      - ".github/workflows/kinetic-locks.yml"
   push:
     branches: [main]
     paths:
       - "skills/scenario-kinetic-music-video/assets/python/**"
+      - "skills/scenario-kinetic-music-video/assets/npm/**"
       - "skills/scenario-kinetic-music-video/scripts/scaffold.sh"
       - "tests/scenario-kinetic-music-video/test_python_lock.py"
-      - ".github/workflows/kinetic-python.yml"
+      - ".github/workflows/kinetic-locks.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,7 +27,7 @@ permissions:
 
 jobs:
   lock:
-    name: Python lock on ${{ matrix.lock }}
+    name: Locks on ${{ matrix.lock }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -38,15 +41,24 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           # The lock headers were written by this uv; another version may format them differently.
           version: "0.13.0"
+      - name: Install the npm lock as scaffold.sh does
+        run: |
+          mkdir -p "$RUNNER_TEMP/npm" && cd "$RUNNER_TEMP/npm"
+          cp "$GITHUB_WORKSPACE"/skills/scenario-kinetic-music-video/assets/npm/package{,-lock}.json .
+          npm ci --ignore-scripts --no-audit --no-fund
+          node --input-type=module -e "await import('playwright'); await import('three'); await import('opentype.js')"
       - name: Locks reproduce from requirements.in
         env:
           KINETIC_LOCK_RESOLVE: "1"
         run: python3 -B -m unittest tests/scenario-kinetic-music-video/test_python_lock.py -v
-      - name: Install the lock with hashes, wheels only
+      - name: Install the Python lock with hashes, wheels only
         run: |
           uv venv .venv -q --python 3.11
           uv pip install -q --require-hashes --only-binary :all: --python .venv/bin/python \

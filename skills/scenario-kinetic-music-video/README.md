@@ -81,8 +81,9 @@ What the setup and analysis scripts fetch, and how each source is pinned:
 Regenerate the locks after any change to `requirements.in`, with uv 0.13.0: run the command in each
 lock's header, moving `--exclude-newer` to the date you resolve on. The offline checks in
 `tests/scenario-kinetic-music-video/test_python_lock.py` run in `pnpm test`.
-`.github/workflows/kinetic-python.yml` re-resolves both locks to prove they reproduce, then installs
-each on its platform and imports the tools' modules.
+`.github/workflows/kinetic-locks.yml` re-resolves both Python locks to prove they reproduce, then
+installs each on its platform and imports the tools' modules. It also installs the npm lock with
+`npm ci --ignore-scripts` and imports its three packages.
 
 Verified on 2026-10-29, with no Scenario calls:
 
