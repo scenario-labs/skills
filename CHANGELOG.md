@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.60.1](https://github.com/scenario-labs/skills/compare/skills-v0.60.0...skills-v0.60.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **skills:** drop unversioned installs and pin the kinetic setup ([#340](https://github.com/scenario-labs/skills/issues/340)) ([b8544b9](https://github.com/scenario-labs/skills/commit/b8544b9c86e0685844cc6effbb27f3885f744d3a))
+
+
+### Documentation
+
+* **agents:** point skill-development at its new upstream home ([b8544b9](https://github.com/scenario-labs/skills/commit/b8544b9c86e0685844cc6effbb27f3885f744d3a))
+* **docs:** list the setup prerequisites, uv included ([#335](https://github.com/scenario-labs/skills/issues/335)) ([d44410f](https://github.com/scenario-labs/skills/commit/d44410f058991f677ccf733a8e86ce95110857eb))
+
 ## [0.60.0](https://github.com/scenario-labs/skills/compare/skills-v0.59.0...skills-v0.60.0) (2026-10-26)
 
 
