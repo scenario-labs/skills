@@ -15,8 +15,8 @@ Only `workflows_list`, `workflow_get` and `workflow_run` are listed by default; 
 run through `scenario_tools_search` plus their executor lane. Connection and the core loop: the
 `scenario` skill. Creating, editing and publishing graphs: the `scenario-workflow-authoring` skill.
 If a sibling skill named here is missing from your available skills, load it with `skill_get`
-(Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the
-gap.
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

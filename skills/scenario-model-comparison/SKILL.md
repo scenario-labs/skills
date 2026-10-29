@@ -15,7 +15,8 @@ from. `recommend` shortlists, `dry_run` prices, the `jobs_wait` rows carry the b
 tool puts the results side by side, and a table delivers. Connection and the core loop: see the
 `scenario` skill; a rubric for judging output against a brief: `scenario-refine-loop`. If a sibling
 skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
-ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 ## Quick reference
 

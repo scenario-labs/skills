@@ -14,7 +14,8 @@ than text-to-3D (`txt23d`). Per-family contracts: `scenario-meshy`, `scenario-ro
 finished mesh or scene: `scenario-patina-retexture`. Inside Blender, through the Scenario for
 Blender extension: `scenario-blender`. Connection and the core loop: the `scenario` skill. If a
 sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
-MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

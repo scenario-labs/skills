@@ -15,8 +15,9 @@ model repaint each layout from the original picture. The mesh fixes silhouette, 
 perspective; the picture supplies identity, colors, and finish. Connection and the core generation
 loop: see the `scenario` skill. Image-to-3D model choice: `scenario-3d`. The background panorama:
 `scenario-skyboxes`. If a sibling skill named here is missing from your available skills, load it
-with `skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas
-and flag the gap.
+with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 The Blender steps run locally in a shell with Blender 4.x or later; everything that generates goes
 through MCP tools. Check for Blender before the first paid step (on macOS it is usually

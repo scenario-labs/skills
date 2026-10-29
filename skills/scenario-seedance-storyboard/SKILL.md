@@ -21,7 +21,8 @@ character sheet: the `scenario-consistency` and `scenario-identity-library` skil
 page that is itself the deliverable: the `scenario-storyboards` skill; splitting and rejoining
 shots: the `scenario-video-editing` and `scenario-video-assembly` skills. If a sibling skill named
 here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user
-to install it; unattended, proceed from tool schemas and flag the gap.
+to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 ## Quick reference
 

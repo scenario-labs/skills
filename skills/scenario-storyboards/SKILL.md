@@ -15,7 +15,8 @@ garble. The unit of generation is the panel, never the page. Script first, lock 
 Connection and the core loop: see the `scenario` skill. Character lock: `scenario-consistency`.
 Per-model image contracts: `scenario-image`. Lettering: `scenario-text-overlay`. If a sibling skill
 named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
-user to install it; unattended, proceed from tool schemas and flag the gap.
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 ## Quick reference
 

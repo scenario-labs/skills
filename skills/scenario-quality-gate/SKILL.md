@@ -20,7 +20,8 @@ through `scenario_tool_execute_write` with `{name: "asset_quality_gate_run", par
 scope ids inside `parameters` (the read executor rejects it by lane and names the right one). Or
 reconnect with `?toolsets=full`. Connection and scope: see the `scenario` skill. If a sibling skill
 named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
-user to install it; unattended, proceed from tool schemas and flag the gap.
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 ## Quick reference: what a call costs
 

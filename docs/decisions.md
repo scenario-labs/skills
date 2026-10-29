@@ -60,7 +60,9 @@ skills carrying it as possibly loading code from an untrusted or mutable source 
 the scan names no line, so that sentence is a suspect, not a proven cause.
 
 - A pin cannot live in the skill: a skill cannot name the commit it ships in.
-- `skill_get` serves the core skills from the connected Scenario MCP, with no local install.
+- `skill_get` serves the core skills from the connected Scenario MCP, with no local install. It
+  returns markdown only and does not serve the expert tools, so the sentence also links the README's
+  Install section. A link is not an instruction to run, and that section carries the pinned form.
 - The pinned form `npx skills@<version> add scenario-labs/skills#<commit>` works: skills 1.7.4
   clones that commit and records it in `skills-lock.json` (checked in a container, October 2026). It
   lives in the README, where a person runs it.

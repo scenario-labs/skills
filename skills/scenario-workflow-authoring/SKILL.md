@@ -22,8 +22,9 @@ copy and delete live in the tool catalog (`scenario_tools_search` plus the match
 the `scenario` skill). `workflows_list`, `workflow_get` and `workflow_run` are direct tools: scope
 and `dry_run` go in their top-level arguments, never an executor wrapper. Running and pricing: the
 `scenario-workflows` skill. If a sibling skill named here is missing from your available skills,
-load it with `skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool
-schemas and flag the gap.
+load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

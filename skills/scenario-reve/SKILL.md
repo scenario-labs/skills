@@ -16,8 +16,9 @@ prompt caps, and ratio lists.
 
 Connection and the core loop: see the `scenario` skill in this repo; model-agnostic image work: the
 `scenario-image` skill. If a sibling skill named here is missing from your available skills, load it
-with `skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas
-and flag the gap.
+with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

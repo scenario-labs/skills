@@ -24,8 +24,9 @@ belong to `scenario-textures`. Repainting a whole mesh with a 3D-to-3D texturing
 own steps stay on MCP; the bundled scripts (Blender 4.2 or newer, Python 3 with Pillow and numpy,
 ffmpeg) do the local repetition and never call Scenario. Connection and the core loop: the
 `scenario` skill. If a sibling skill named here is missing from your available skills, load it with
-`skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and
-flag the gap.
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

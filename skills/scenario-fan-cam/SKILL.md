@@ -18,7 +18,8 @@ Use only photos of the user or of people who gave them permission; refuse celebr
 insertions. Real faces also trip provider filters more than most subjects: on a block, see
 `scenario-moderation`. Connection and the core loop: see the `scenario` skill in this repo. If a
 sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
-MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

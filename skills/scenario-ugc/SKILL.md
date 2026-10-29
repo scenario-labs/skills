@@ -13,8 +13,8 @@ brand talking through a camera crew. Everything in this skill serves that regist
 failures come from importing ad craft into it. This skill routes the production; mechanics live in
 the sibling skills named per lane. Connection and the core loop: see the `scenario` skill in this
 repo. If a sibling skill named here is missing from your available skills, load it with `skill_get`
-(Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the
-gap.
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 Two rules are non-negotiable. The product is never generated: demo shots start from an uploaded
 photo or footage of the real product (`scenario-product-shots` for stills). And the words are never

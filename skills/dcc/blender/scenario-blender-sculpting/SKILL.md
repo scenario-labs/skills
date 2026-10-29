@@ -12,7 +12,8 @@ the final test, not the mesh numbers. The agent builds blockout and primary form
 ([`scripts/bx_sculpt.py`](scripts/bx_sculpt.py): smooth-blend `Clay`, plane cuts, numpy brushes) and
 does client-quality surface work with Blender's real brushes in a live GUI session (`bx_gui`). If a
 sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
-MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 

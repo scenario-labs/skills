@@ -14,8 +14,8 @@ the server and drawn by each client. Expert audio is a wired graph proven connec
 before anyone listens. The agent builds effects as data, freezes and captures them over time, and
 checks audio through `Wire.Connected`, `GetAudibilityFor` and analyzers; a person's ear judges the
 mix. If a sibling skill named here is missing from your available skills, load it with `skill_get`
-(Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the
-gap.
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-roblox-expert (channels, review loop, toolkit, current-Roblox
 traps).

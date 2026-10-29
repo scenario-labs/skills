@@ -30,7 +30,8 @@ Connection, scope and the core loop: the `scenario` skill. Frame tools, GIF prev
 slicing: `scenario-sprite-animation`. Pixel cleanup and other statics: `scenario-game-assets`. Clip
 model families: `scenario-video`. Music and sound effects are outside this image skill. If a sibling
 skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
-ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 The agent runs the scripts locally (Python 3, Pillow, NumPy; `side_sprites.py` also needs ffmpeg):
 [reframe_stills.py](scripts/reframe_stills.py) makes the clip first frames,

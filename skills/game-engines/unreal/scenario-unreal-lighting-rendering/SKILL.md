@@ -10,8 +10,9 @@ Expert lighting in Unreal is a calibrated camera, physical light values, and a r
 the same scene you do; everything else is art direction layered on top and listed as such. Each step
 is proved with a representation view and a number before the lit image is trusted; noise is fixed in
 the system that owns it. If a sibling skill named here is missing from your available skills, load
-it with `skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool
-schemas and flag the gap.
+it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 

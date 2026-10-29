@@ -16,7 +16,8 @@ tools. Per-family contracts: `scenario-kling`, `scenario-veo`, `scenario-seedanc
 
 Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is
 missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it; unattended, proceed from tool schemas and flag the gap.
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 ## Quick reference
 

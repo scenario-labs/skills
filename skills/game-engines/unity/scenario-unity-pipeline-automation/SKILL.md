@@ -11,8 +11,8 @@ applied at import time, edits made through serialization, content packed by when
 that gate the build, and a build that CI runs from a clean checkout. The stance: nothing is done by
 hand twice, nothing is trusted without a count, a test or a frame, and a second run changes nothing.
 If a sibling skill named here is missing from your available skills, load it with `skill_get`
-(Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the
-gap.
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, job protocol, review loop, 6.3 traps).
 Import its toolkit; this skill adds [`scripts/ut_pipeline.py`](scripts/ut_pipeline.py) and

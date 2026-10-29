@@ -19,7 +19,8 @@ the other tool models: see `scenario-image-editing`. Holding one look across a s
 `scenario-consistency`. One image from several references, each with one job:
 `scenario-multi-reference`. Sprites, icons, and tilesets: see `scenario-game-assets`. If a sibling
 skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
-ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 ## Quick reference
 

@@ -14,8 +14,8 @@ track wins each joint, when each marker fires, what the server sees, and that th
 matches its source. An agent cannot drive the Animation Editor, so it builds clips in code, steps
 them in Edit, plays them in a playtest and measures joints and tracks before it calls anything done.
 If a sibling skill named here is missing from your available skills, load it with `skill_get`
-(Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the
-gap.
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-roblox-expert (channels, review loop, toolkit, current-Roblox
 traps).

@@ -12,7 +12,8 @@ The experts disagree on method (n-gons and booleans vs quad cages and subdivisio
 checks: order of operations, cutter hygiene, planar faces, a shiny matcap orbit. The agent builds
 the stack with the toolkit and lets the measurable gates find what a human finds by orbiting. If a
 sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
-MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 Toolkit: [`scripts/bx_hardsurface.py`](scripts/bx_hardsurface.py)

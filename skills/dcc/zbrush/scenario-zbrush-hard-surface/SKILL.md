@@ -12,7 +12,8 @@ could be built (Plouffe, Klimer). The agent builds that language from determinis
 (primitives, Live Boolean stacks, polygroups as the crease plan, Dynamic Subdivision numbers,
 ArrayMesh, Panel Loops) and uses clicks and strokes only where nothing else exists. If a sibling
 skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
-ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 Toolkit: [`scripts/zb_hardsurface.py`](scripts/zb_hardsurface.py)

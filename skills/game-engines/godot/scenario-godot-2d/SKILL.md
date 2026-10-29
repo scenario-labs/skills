@@ -14,7 +14,8 @@ and a coyote window in ticks, a camera has a lag in pixels, a pixel-art screen h
 and a fringe count. The agent builds tiles, controllers and cameras in code, proves them with
 deterministic physics runs and frame read-backs, and only then calls them done. If a sibling skill
 named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
-user to install it; unattended, proceed from tool schemas and flag the gap.
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, review loop, toolkit `gd_env`, `gd_run`,
 `gd_review`, 4.x traps).

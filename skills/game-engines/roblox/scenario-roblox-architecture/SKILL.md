@@ -15,7 +15,8 @@ mirror, and tags bind behavior to instances with an owner for every connection. 
 those rules from the sources, corrected by live tests in Studio 0.743, plus a tested arena core
 (round loop, teams, maps, HUD, shop, sword) and the tools that build and audit it. If a sibling
 skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
-ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-roblox-expert (channels, review loop, toolkit, current-Roblox
 traps).

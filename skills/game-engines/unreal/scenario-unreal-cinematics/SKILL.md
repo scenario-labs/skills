@@ -11,7 +11,8 @@ on its files and frames, not the viewport. The core stance: plan offline, build 
 lock timing against the music before animating, light from approved masters, render per shot through
 one template graph, hand linear EXRs, an edit and a color note to the grade. If a sibling skill
 named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
-user to install it; unattended, proceed from tool schemas and flag the gap.
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 

@@ -27,8 +27,9 @@ Needs Node 18 or newer, ffmpeg 5.1 or newer with ffprobe, and Playwright where t
 Chrome installed). Connection, model discovery, uploads and pricing: see the `scenario` skill. The
 cut-out: `scenario-image-editing`. The video shot: `scenario-video`, and its background removal:
 `scenario-video-editing`. If a sibling skill named here is missing from your available skills, load
-it with `skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool
-schemas and flag the gap.
+it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

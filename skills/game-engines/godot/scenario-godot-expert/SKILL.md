@@ -14,8 +14,8 @@ at it, fix it, advance. An agent without a mouse gets there by picking the right
 only on a machine-readable result, and never trusting one signal alone. This skill is that protocol,
 the shared toolkit every scenario-godot-* skill calls ([`scripts/`](scripts/)), and the map of the
 team. If a sibling skill named here is missing from your available skills, load it with `skill_get`
-(Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the
-gap.
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 **Status (2026-10-02):** every toolkit function below ran in Godot 4.7.2 here (23 live tests, 17
 offline, all pass; [`references/procedures.md`](references/procedures.md)).

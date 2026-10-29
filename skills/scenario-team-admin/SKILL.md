@@ -19,8 +19,8 @@ the opposite thing in blocklist and allowlist mode. `teams_list` already tells y
 row carries `modelsManagement`, its model lists, `plan`, and `context.userRole`. A credential that
 reaches one team and one project has its scope; more than one is a stop-and-list, per the `scenario`
 skill. If a sibling skill named here is missing from your available skills, load it with `skill_get`
-(Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the
-gap.
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

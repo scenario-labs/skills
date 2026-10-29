@@ -13,8 +13,9 @@ captioner is a deterministic model run through `model_run`. The compositor, conc
 ids are fixed and named below; Scenario ships two captioners, so that one is discovered with
 `recommend`. Connection and the core loop: see the `scenario` skill; the clips themselves: see
 `scenario-video`. If a sibling skill named here is missing from your available skills, load it with
-`skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and
-flag the gap.
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference: pick the backend first
 

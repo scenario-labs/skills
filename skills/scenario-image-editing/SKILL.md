@@ -13,8 +13,9 @@ more assets out, nothing to prompt on most of them. Generating a new image, prom
 masked inpainting are `scenario-image`; the same effects on footage are `scenario-video-editing`;
 stacking layers is `scenario-video-assembly` (Image Studio). Connection and the core loop:
 `scenario`. If a sibling skill named here is missing from your available skills, load it with
-`skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and
-flag the gap.
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

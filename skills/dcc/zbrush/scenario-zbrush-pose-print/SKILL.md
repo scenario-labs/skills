@@ -11,7 +11,8 @@ level, and print parts whose size, walls, fits and cavities were measured in mil
 exported files. The stance: turn every decision into a number the agent can check (scale, point
 order, joint angles, walls, gaps), keep the pose reversible, use strokes only for cleanup. If a
 sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
-MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the gap.
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 

@@ -26,8 +26,9 @@ working folder, and read the contract before generating a row or writing directi
 skill's loop and model order (`model_openai-gpt-image-2-5-sunburst`, then
 `model_google-gemini-nano-banana-2-1`, then `recommend` only when both are blocked); connection and
 scope: the `scenario` skill. If a sibling skill named here is missing from your available skills,
-load it with `skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool
-schemas and flag the gap.
+load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

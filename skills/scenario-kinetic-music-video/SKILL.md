@@ -25,7 +25,8 @@ The work splits by what each tool does best:
 Connection and the core generation loop: see the `scenario` skill in this repo. For a song-to-video
 cut without the engine, see `scenario-seedance-music-video`. If a sibling skill named here is
 missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it; unattended, proceed from tool schemas and flag the gap.
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 Read `references/lessons.md` before starting. Every item in it cost real time or money once.
 `references/motion_library.md` is the design menu.

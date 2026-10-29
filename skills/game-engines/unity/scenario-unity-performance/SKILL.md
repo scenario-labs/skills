@@ -13,7 +13,8 @@ fix proven with before/after numbers from a development player. An agent does al
 `PerfCapture` to attribute costs from a Profiler capture, `metal_trace` for GPU time, `PerfBuild`
 for size. Target: Unity 6000.3.21f1, URP 17.3, macOS Apple Silicon. If a sibling skill named here is
 missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it; unattended, proceed from tool schemas and flag the gap.
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps, `ut_*` toolkit).
 

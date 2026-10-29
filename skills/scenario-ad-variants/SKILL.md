@@ -13,7 +13,8 @@ does not change, and keep every output traceable to the same source. A new story
 still belongs to `scenario-video-ads`; single-clip utilities to `scenario-video-editing`.
 Connection, discovery, submission and recovery follow `scenario`. If a sibling skill named here is
 missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it; unattended, proceed from tool schemas and flag the gap.
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 Resolve only missing decisions: source, requested variants, exact copy, destination, runtime, audio
 policy and spend ceiling. Reuse answers already supplied. Distinguish a controlled comparison, where

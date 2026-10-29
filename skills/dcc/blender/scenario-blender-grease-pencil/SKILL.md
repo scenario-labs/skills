@@ -11,7 +11,8 @@ Expert Grease Pencil work keeps every drawing editable and redrawable, puts mean
 data API (drawings are curves with attributes), builds characters the way 2D studios rig them, and
 reviews rendered frames instead of a viewport it cannot flip. If a sibling skill named here is
 missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it; unattended, proceed from tool schemas and flag the gap.
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 Shot planning, boards and animatics: scenario-blender-previs-storyboard. Mesh animation principles:

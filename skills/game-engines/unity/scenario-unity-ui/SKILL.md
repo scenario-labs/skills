@@ -12,8 +12,8 @@ sits still. An agent gets there by building from code or text, then proving each
 capture at every device size, a layout assertion on the same frame, an audit, behavior tests and
 counters. Target: Unity 6000.3.21f1, uGUI 2.0 (TextMeshPro inside), UI Toolkit, Input System 1.20.
 If a sibling skill named here is missing from your available skills, load it with `skill_get`
-(Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas and flag the
-gap.
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps). Toolkit:
 [`scripts/ut_ui.py`](scripts/ut_ui.py) (imports `ut_env`, `ut_run`, `ut_review`), jobs in

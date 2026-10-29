@@ -24,7 +24,8 @@ than rendered.
 Seedance modes, conditioning and sound: `scenario-seedance`. Connection and the core loop:
 `scenario`. Music over the finals: `scenario-video-assembly`. If a sibling skill named here is
 missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it; unattended, proceed from tool schemas and flag the gap.
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 ## Quick reference
 

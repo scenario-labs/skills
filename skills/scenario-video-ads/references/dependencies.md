@@ -17,8 +17,8 @@ gap removes the procedures its stage depends on.
 | `scenario-video-assembly` | Stage 8 timeline cut and captions on Scenario tool models         |
 
 Load a missing sibling with the Scenario MCP `skill_get` tool (`name` set to the sibling), or ask
-the user to install it. Never run an installer yourself. A sibling that ships scripts still needs
-the user's install to run them.
+the user to install it ([install options](https://github.com/scenario-labs/skills#install)). Never
+run an installer yourself. A sibling that ships scripts still needs the user's install to run them.
 
 When the user declines an install, or no one is there to answer, state which stage degrades and how
 (the procedures you would be guessing at) before improvising.

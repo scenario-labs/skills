@@ -14,8 +14,9 @@ over look. Ambiguity ruins the pass; crudeness does not: a bent lamppost comes b
 loose limb blocks as extra people, an unmarked car driving backward. Fix identity in geometry first,
 in prompt text second, and judge the result on a synced side-by-side of playblast and video, never
 in the viewport alone. If a sibling skill named here is missing from your available skills, load it
-with `skill_get` (Scenario MCP) or ask the user to install it; unattended, proceed from tool schemas
-and flag the gap.
+with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 Video generation: `scenario-blender` (the plugin's quote, generate and place flow), the `scenario`

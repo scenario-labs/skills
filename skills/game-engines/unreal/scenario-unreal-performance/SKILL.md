@@ -12,7 +12,8 @@ in the order of measured size, and prove the result with repeated runs on the sa
 hitches judged apart from the average. The performance engineer owns measurement, diagnosis and
 proof; most fixes go back to the teammate who owns the content. If a sibling skill named here is
 missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it; unattended, proceed from tool schemas and flag the gap.
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 
