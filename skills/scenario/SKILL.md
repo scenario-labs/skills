@@ -34,7 +34,7 @@ Two tool kinds:
   - The executor drops a misplaced key silently: `arguments` surfaces as a false scope error, and a
     top-level `dry_run` runs the job, billed.
   - The lane is the result's own `permission`, not the verb: `asset_analyze` is write-class, since
-    it starts a billed job. Direct tools such as `asset_download` never go through an executor.
+    it starts a billed job.
 
 ## Scope first
 
