@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.60.2](https://github.com/scenario-labs/skills/compare/skills-v0.60.1...skills-v0.60.2) (2026-10-30)
+
+
+### Documentation
+
+* **scenario:** stop calling asset_download write-class ([#341](https://github.com/scenario-labs/skills/issues/341)) ([5d68b48](https://github.com/scenario-labs/skills/commit/5d68b48b70db3388e1ac3e064810d72d8fc3f7ac))
+
 ## [0.60.1](https://github.com/scenario-labs/skills/compare/skills-v0.60.0...skills-v0.60.1) (2026-10-29)
 
 
