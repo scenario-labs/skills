@@ -63,6 +63,25 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
 
+      # Claude Code users add the marketplace from the stable branch
+      # (`/plugin marketplace add scenario-labs/skills#stable`), so the plugin
+      # catalog and the skill files it points at both move only at releases.
+      # Fast-forward only: a refused update means stable went somewhere a
+      # release never did, which needs a person, not a force push.
+      - name: Move the stable branch to the release
+        if: ${{ steps.release-please.outputs.release_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SHA: ${{ steps.release-please.outputs.sha }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stable" >/dev/null 2>&1; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/stable" \
+              -f sha="$SHA" -F force=false
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref=refs/heads/stable -f sha="$SHA"
+          fi
+
       # Checkout runs on the App token so the job keeps its empty
       # GITHUB_TOKEN permissions.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

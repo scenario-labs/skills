@@ -2,6 +2,8 @@
 name: scenario-unity-expert
 description: "Use when an agent drives Unity 6.3 (6000.3) on a Mac for any task: batch mode and -executeMethod jobs, a running editor (the user's GUI editor or a headless one), the Unity CLI and com.unity.pipeline, MCP servers, the Test Framework, command-line builds; when a batch run fails silently, 'Scripts have compiler errors', a capture comes back black or pink, or a result must be proven with numbers and a frame; or when a Unity brief must go to the right scenario-unity-* specialist."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Unity expert (technical director and agent protocol)

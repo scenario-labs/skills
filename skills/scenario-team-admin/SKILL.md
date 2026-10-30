@@ -2,6 +2,8 @@
 name: scenario-team-admin
 description: "Use when administering a Scenario team from an agent through MCP: restricting which models a team or project can run (model access control, allowlist, blocklist), inviting or removing team and project members, changing roles, capping a member's Creative Unit spend, creating or deleting projects, auditing API keys and their roles or scopes, or attributing consumption per user or model. Keywords: governance, model control, consumption cap, spend limit, API key hygiene, team admin, enterprise."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Team Administration

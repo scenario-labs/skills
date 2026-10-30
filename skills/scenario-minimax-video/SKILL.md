@@ -2,6 +2,8 @@
 name: scenario-minimax-video
 description: "Use when generating or editing video with MiniMax Hailuo models on Scenario via MCP: text-to-video, image-to-video, first and last frame anchors, reference images, videos, or audio, native stereo audio, bracketed camera commands, extending a clip, inserting a new scene into one, or recasting the people in it from photos. Keywords: MiniMax, Hailuo 3.0, H3, H3 Max, Turbo, Extend Video, Insert Video, Recast, Hailuo 2.3, T2V, I2V, V2V, 2K."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario MiniMax Video

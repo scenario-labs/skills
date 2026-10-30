@@ -2,6 +2,8 @@
 name: scenario-unreal-expert
 description: "Use when an agent drives Unreal Engine 5.8 on a Mac for any task: Editor Python (the unreal module), headless UnrealEditor-Cmd -run=pythonscript jobs, Epic's Unreal MCP server, the Remote Control API, console commands and cvars; when a script breaks on 5.8 (EditorLevelLibrary, Remote Control calls refused, Substrate materials black, MRQ presets); when a level, material, shot or build must be judged by numbers and a screenshot before it is called done; or when a brief must go to the right scenario-unreal-* specialist."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Unreal expert (technical director and agent protocol)

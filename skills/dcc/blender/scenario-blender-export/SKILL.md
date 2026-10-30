@@ -2,6 +2,8 @@
 name: scenario-blender-export
 description: "Use when exporting a model, character or animation from Blender to a game engine, the web or a 3D printer: FBX, glTF/GLB, USD/USDZ or STL for Unity, Unreal Engine, Godot, Roblox, three.js or Apple AR Quick Look. Also when an export arrives at the wrong scale (100x, 0.01), rotated 90 degrees, facing backwards, with extra leaf bones, without its animation, blend shapes or textures; when an FBX loses its metallic or roughness map; when a generated model needs its real size and its pivot on the floor; when making LODs or collision meshes (UCX_, -colonly) for an engine; when converting a folder of models in batch; or when checking an exported file by re-importing it."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Blender export (engine-ready files)

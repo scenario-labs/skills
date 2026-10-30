@@ -2,6 +2,8 @@
 name: scenario-zbrush-pose-print
 description: 'Use when posing a sculpt or preparing it for 3D printing in ZBrush: "pose this character", Transpose Master, TPoseMesh, Gizmo posing with masks, ZSphere rig, Proxy Pose, weapon in the hand, stretching after posing, "3D print this", 1/6 scale statue, miniature, resin or FDM, hollowing, wall thickness, drain holes, keys and pins, cutting into parts, 3D Print Hub, Scale Master, Decimation Master, STL or 3MF, size in millimeters.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # ZBrush posing and 3D print

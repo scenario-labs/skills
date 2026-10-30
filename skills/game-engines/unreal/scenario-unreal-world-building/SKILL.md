@@ -2,6 +2,8 @@
 name: scenario-unreal-world-building
 description: 'Use when building or fixing an Unreal Engine 5 level or open world: World Partition, OFPA, Data Layers, Level Instances, Packed Level Actors, HLOD, landscape size, heightmap import or clipping, edit layers, terrain material rules, foliage and grass, a PCG forest or rock scatter, runtime GPU grass, Nanite and tessellation choices, modular kits, a river or village, streaming pop-in, cells not loading, landscape black spots, "PCG shows nothing in the editor", or a world too heavy to hand to lighting.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Unreal world building (levels, open worlds, landscape, PCG)

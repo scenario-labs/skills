@@ -2,6 +2,8 @@
 name: scenario-godot-2d
 description: "Use when building a 2D game in Godot 4.7: make a platformer or top-down controller that feels right (coyote time, jump buffer, jump height), TileMapLayer and TileSet in code, terrains and autotiles that pick wrong tiles, a dual grid, a camera that jitters or stutters, pixel art that looks blurry or uneven, stretch and integer scaling, 2D lights and shadows, y-sort order wrong, parallax gaps, or importing AI-generated sprites and tilesets from Scenario."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Godot 2D (developer and artist)

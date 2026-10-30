@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/franck/Developments/github.com/scenario-labs/skills/.claude/worktrees/skill-version-stamp-616aaf/.codex/hooks/ensure-husky.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}

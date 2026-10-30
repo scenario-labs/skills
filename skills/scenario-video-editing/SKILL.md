@@ -2,6 +2,8 @@
 name: scenario-video-editing
 description: "Use when editing footage already on Scenario through MCP with a tool model, not a new generation: LUT grading, color correction, grain, vignette, blur, sharpen, glow, tint, desaturate, posterize, solarize, oilify, cubism, chromatic aberration, dodge and burn on a clip; trimming, splitting, reversing, resizing, re-encoding, frame extraction, image sequences; chroma key, green or blue screen removal to transparent WebM or ProRes MOV, background removal, segmentation masks, subjects as layers."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Video Editing

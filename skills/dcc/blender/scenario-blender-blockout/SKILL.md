@@ -2,6 +2,8 @@
 name: scenario-blender-blockout
 description: "Use when a text brief or a reference image must become a Blender blockout whose playblast guides a render-to-real video pass (a video model that takes a reference clip, such as Seedance, or the Render Video lane of the Scenario Blender Plugin): graybox or previs built for a video model, color-coded proxies at metric scale from rough to detailed, density levels from a simple shot to an expert scene with crowds, traffic and many cuts, character stand-ins chosen per video model (colored capsules, capsules with signature features, rigged gray mannequins), a camera locked to the timeline, rail or tracking camera rigs, lens per shot, framing and occlusion checks, a playblast, a hand-off sheet for the video prompt. Also when a render-to-real pass renders the proxies as boxes, reads one figure as two people, gives runners a stiff, lockstep or sliding gait, swaps a car's front and rear, drifts at the end, or the guide camera pops on a cut."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Blender blockout for a render-to-real video pass

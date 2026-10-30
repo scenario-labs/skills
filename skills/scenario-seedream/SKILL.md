@@ -2,6 +2,8 @@
 name: scenario-seedream
 description: "Use when generating or editing images with Seedream models on Scenario via MCP: text-to-image, image-to-image editing with reference images, posters or packaging with exact in-image text (non-Latin scripts too), subject-preserving edits, sets of related images in one run, editing a transparent asset without losing its alpha, or splitting an image into transparent PNG layers with Layerize. Keywords: Seedream 5.0 Pro, Lite, Flash, 4.5, Layerize, ByteDance, txt2img, img2img, layer extraction."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Seedream Images

@@ -2,6 +2,8 @@
 name: scenario-godot-vfx
 description: "Use when making or fixing particle effects and game feel in Godot 4.7: GPUParticles3D or GPUParticles2D explosion, fireball projectile with trail, impact, sparks, smoke, shockwave, ribbon trails, sub-emitters, particle collision, color curve does nothing, particles pop out or vanish, effect too heavy on mobile, CPUParticles fallback for Compatibility or web, overdraw, hit-stop, freeze frame, screen shake, juice."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Godot VFX

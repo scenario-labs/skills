@@ -2,6 +2,8 @@
 name: scenario-zbrush-character-creature
 description: 'Use when sculpting a realistic head, face, portrait, body or creature in ZBrush (anatomy, landmarks, proportions, "the face looks off", eyes, lips, jaw), adding skin, pores, wrinkles or reptile and dragon scales with alphas, Surface Noise, layers or morph targets, planning subdivision or HD Geometry for a film close-up, reprojecting detail, sculpting cloth folds or running Dynamics cloth, growing FiberMesh fur or hair, making horns, or judging a character sculpt the way a senior character artist would.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Realistic characters and creatures (ZBrush 2026)

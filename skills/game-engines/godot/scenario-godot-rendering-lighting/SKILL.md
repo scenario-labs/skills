@@ -2,6 +2,8 @@
 name: scenario-godot-rendering-lighting
 description: "Use when lighting or rendering a Godot 4.7 3D scene: pick a renderer (Forward+, Mobile, Compatibility), choose GI (SDFGI, VoxelGI, LightmapGI, reflection probes), bake lightmaps without a mouse, tune WorldEnvironment, tonemapper (AgX, ACES, Filmic), glow, fog, volumetric fog and god rays, shadows and shadow acne, quality presets for PC and phones, Compositor post effects, or when 'my scene looks flat', 'too dark indoors', 'light leaks', 'lightmap is black', 'looks different on mobile'."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Godot rendering and lighting (lighter / graphics technical artist)

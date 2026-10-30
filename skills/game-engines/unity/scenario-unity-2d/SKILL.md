@@ -2,6 +2,8 @@
 name: scenario-unity-2d
 description: 'Use when building a 2D game in Unity 6.3 URP: pixel-art or HD sprite import and PPU, sprite atlases, Tilemaps, Rule Tiles and reskins, the 2D Renderer and 2D lights with normal maps, 2D animation, a platformer or top-down controller ("make a platformer controller that feels good", coyote time, jump buffer, one-way platforms, spikes), Pixel Perfect Camera, a follow or room camera, hit stop and screen shake; or when pixel art looks blurry or shimmers, tiles show seams, 2D lights do nothing or cost too much, the jump feels floaty, or the camera loses the player when falling.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Unity 2D (developer and artist)

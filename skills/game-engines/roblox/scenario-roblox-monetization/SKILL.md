@@ -2,6 +2,8 @@
 name: scenario-roblox-monetization
 description: "Use when a Roblox game sells something or plans live ops: Developer Products, game passes, experience subscriptions, Roblox Plus perks, ProcessReceipt or BindReceiptHandler, \"bought it but didn't get it\", a purchase granted twice, shop UI prices, eggs, crates or loot boxes with odds (paid random items, PolicyService), rewarded video ads, AnalyticsService funnels, economy or custom events, ConfigService live config, A/B experiments, price optimization or regional pricing, game thumbnails and icons, play-through rate, Creator Rewards, Ads Manager campaigns, or a launch and update plan."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Roblox Monetization and Live Ops

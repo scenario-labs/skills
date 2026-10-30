@@ -2,6 +2,8 @@
 name: scenario-seedance
 description: "Use when generating or editing video with Seedance models on Scenario via MCP: text-to-video, image-to-video, first and last frame anchors, reference-to-video from identity, product, or world references, prompt-based editing, extending a clip, audio-conditioned motion or voice, shot sound without music, first-frame versus reference conditioning, or an output blocked by moderation. Keywords: Seedance 2.5 and 2.0, ByteDance, T2V, I2V, V2V, native audio, OutputVideoSensitiveContentDetected."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Seedance Video

@@ -2,6 +2,8 @@
 name: scenario-textures
 description: "Use when a task involves game textures or materials through the Scenario MCP: seamless or tileable textures, themed texture packs (brick, wood, stone, floors, hand-painted), PBR materials (albedo, metallic, roughness, normal) on 3D assets, retexturing a mesh, material iteration from reference images, texture upscaling that must preserve tiling, or sizing textures for game engines. Keywords: seamless texture, tileable, PBR, material, retexture, texture upscale, surface."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario texture and material workflows

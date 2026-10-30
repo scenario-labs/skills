@@ -2,6 +2,8 @@
 name: scenario-unreal-cinematics
 description: 'Use when making a trailer, cutscene, cinematic or short film in Unreal Engine 5.8 with Sequencer: shot lists, master and shot sequences, cameras, lenses, depth of field, camera cuts, spawnables, character animation in shots, per-shot lighting, Movie Render Graph or Movie Render Queue EXR renders, "render darker than the viewport", "first frames pop", "last frame missing", ACES or OCIO to DaVinci Resolve, the 180-degree rule, Sequencer Python, or reviewing a cut.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Cinematics in Unreal Engine 5.8 (Sequencer and Movie Render Graph)

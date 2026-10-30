@@ -2,6 +2,8 @@
 name: scenario-roblox-vfx-audio
 description: "Use when making or fixing Roblox visual effects or game audio: ParticleEmitter, Beam, Trail, flipbook sprite sheets, slash, hit, impact, explosion, fireball, aura or projectile VFX; effects only one player sees, effects that lag or pile up, particles invisible, popping or too bright; the Audio API (AudioPlayer, Wire, AudioEmitter, AudioListener, AudioDeviceOutput, effects), \"no sound\", \"3D sound not working\", music, ducking, footsteps, SoundGroup volumes; or importing Scenario-generated sound effects, music, voice or VFX sheets into a Roblox game."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Roblox VFX and audio

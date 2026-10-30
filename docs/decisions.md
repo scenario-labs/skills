@@ -52,6 +52,32 @@ The README once offered `--skill "*"`. It takes every skill, the expert tools in
 loads every installed skill's description at startup: a reader who never opens a DCC tool carried 57
 expert descriptions at the time. The default command names the core skills instead.
 
+## Skill and plugin versions
+
+- Each SKILL.md carries `metadata.version`, the release it shipped in. The spec has no version
+  field, but its own example uses `metadata.version`, as do other public skill repositories. An
+  earlier draft put the version in a body HTML comment so Claude Code agents would see it (Claude
+  Code strips frontmatter). It was dropped: no other project does it, and updates belong to the
+  distribution layer, not to the agent.
+- One release-wide version, not one per skill: `npx skills update` and plugin updates refresh
+  everything at once, so a per-skill version adds bookkeeping without changing what a user does.
+- Plugins release through a `stable` branch, not pinned versions. Every plugin here has
+  `source: "./"`, and without a `version` Claude Code versions it by commit, so every merge to
+  `main` was an update for all of them. Pinning the entry version to the release was tried and
+  failed in a real install: the catalog follows the branch while the cached files stay at the old
+  version. A fresh install then labeled unreleased files with the old release, and a skill added to
+  a group between releases broke the whole plugin ("Path not found") until the next release. The
+  `stable` branch moves catalog and files together, only at releases, and unpinned entries keep a
+  marketplace added from `main` consistent too.
+- Plugin names carry a fixed three-digit number, assigned once with gaps and stored in
+  `scripts/plugin-names.json` (`030-images`). The skills CLI picker sorts groups by plugin name, so
+  a number is what keeps it in `skills.sh.json` order, a deliberate path from getting started to the
+  expert tools. The earlier `NN.-` prefix was recomputed from position, so every inserted grouping
+  renamed install keys: three times between September and October 2026, once for 16 plugins.
+- The README recommends per-role plugin sets over installing everything. Every installed skill puts
+  its name and description in every session: the 16 core plugins measured about 10,100 tokens, the
+  role sets 700 to 4,000.
+
 ## No install commands in skills
 
 The sibling-install sentence once carried `npx skills add scenario-labs/skills --skill <name>`. That

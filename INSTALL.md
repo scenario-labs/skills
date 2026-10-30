@@ -7,6 +7,43 @@ Commands can overlap, and installing two is fine. To install every Scenario skil
 [README](README.md#install). The Scenario skills need the Scenario MCP server connected (setup in
 the README).
 
+## Claude Code plugins by role
+
+In Claude Code, the recommended install is the plugin marketplace, added from its `stable` branch
+and set to auto-update: see the [README](README.md#install). Its plugins are the topic groups of the
+README Skills list, so each role installs `010-getting-started`, `110-troubleshooting`, and the
+groups holding its lead skills. Every installed skill puts its name and description in every
+session, so each line states that always-on cost, measured with `claude plugin details` on Claude
+Code 2.1.303 in October 2026. Run these in a shell:
+
+```bash
+claude plugin marketplace add scenario-labs/skills#stable
+# 2D Artist: about 3,400 tokens in every session
+for p in 010-getting-started 020-finding-a-direction 030-images 040-game-art-and-3d 070-consistency-and-custom-models 110-troubleshooting; do claude plugin install "$p@scenario-skills"; done
+# 3D Artist: about 2,400 tokens in every session
+for p in 010-getting-started 040-game-art-and-3d 110-troubleshooting 160-3d-model-families; do claude plugin install "$p@scenario-skills"; done
+# Environment Artist: about 3,400 tokens in every session
+for p in 010-getting-started 030-images 040-game-art-and-3d 110-troubleshooting 160-3d-model-families; do claude plugin install "$p@scenario-skills"; done
+# Art Director: about 2,200 tokens in every session
+for p in 010-getting-started 030-images 070-consistency-and-custom-models 080-reviewing-and-organizing-output 110-troubleshooting; do claude plugin install "$p@scenario-skills"; done
+# Sound Designer: about 2,400 tokens in every session
+for p in 010-getting-started 050-video-and-audio 110-troubleshooting 150-audio-model-families; do claude plugin install "$p@scenario-skills"; done
+# Video Producer: about 4,000 tokens in every session
+for p in 010-getting-started 050-video-and-audio 060-socials 090-formats-and-placements 110-troubleshooting 140-video-model-families; do claude plugin install "$p@scenario-skills"; done
+# Marketing Artist: about 2,300 tokens in every session
+for p in 010-getting-started 020-finding-a-direction 030-images 060-socials 090-formats-and-placements 110-troubleshooting; do claude plugin install "$p@scenario-skills"; done
+# Technical Director: about 700 tokens in every session
+for p in 010-getting-started 100-workflows-and-apps 110-troubleshooting; do claude plugin install "$p@scenario-skills"; done
+# Producer: about 1,100 tokens in every session
+for p in 010-getting-started 080-reviewing-and-organizing-output 110-troubleshooting 120-team-administration; do claude plugin install "$p@scenario-skills"; done
+```
+
+A game developer installs an engine's expert-tools plugin, such as
+`claude plugin install 200-expert-tools-unreal-engine@scenario-skills`.
+
+The commands below use the skills CLI instead and work in any agent. Use one route, not both: a
+skill installed both ways loads twice.
+
 ## By role
 
 ### 2D Artist

@@ -2,6 +2,8 @@
 name: scenario-unreal-pipeline-automation
 description: "Use when importing FBX, USD, OBJ or glTF from Maya, ZBrush or Blender into Unreal Engine 5.8 in bulk or reimporting changed files, writing Editor Python tools, Interchange pipelines or import presets, enforcing naming conventions, assigning material instances by script, setting Nanite, collision and LODs per asset class, writing data validators or automation tests, fixing redirectors, or cooking and packaging from the command line (BuildCookRun, RunUAT, CI, Perforce). Also when a scripted import ignores its settings or names, a Python validator never runs, or a Mac build will not package."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Unreal pipeline automation (pipeline and tools TD)

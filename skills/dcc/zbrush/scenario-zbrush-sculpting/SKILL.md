@@ -2,6 +2,8 @@
 name: scenario-zbrush-sculpting
 description: "Use when an agent sculpts organic forms in ZBrush 2026 (sculpt a head, bust or creature in ZBrush from a sphere, ZSpheres or primitives); when blocking primary and secondary forms, choosing DynaMesh, Sculptris Pro or subdivision levels, or setting ClayBuildup, Dam_Standard, Move or TrimDynamic; when using masks, polygroups, Morph Targets or layers; or when scripted strokes miss, do nothing, come out too strong or leave marks, or a re-DynaMesh does nothing or loses polygroups."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # ZBrush sculpting (core forms, scripted strokes)

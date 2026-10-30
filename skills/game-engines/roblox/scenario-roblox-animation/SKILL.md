@@ -2,6 +2,8 @@
 name: scenario-roblox-animation
 description: "Use when animating Roblox characters, NPCs or creatures: animation not playing, wrong animation wins, animation priority or weight, blending, animation events and markers, hit timing, import from Blender or FBX, custom rig or creature rig, Motor6D or AnimationConstraint joints, procedural animation, IKControl look-at or foot and hand IK, FaceControls and dynamic head expressions, replacing the default Animate animations, KeyframeSequence or CurveAnimation built in code, Animator replication, AnimationController NPCs, Character Controller Library abilities, adaptive animation for custom humanoids."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Roblox animation and characters

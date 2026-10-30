@@ -2,6 +2,8 @@
 name: scenario-sonilo
 description: "Use when adding sound to a video or generating standalone audio with Sonilo models on Scenario via MCP: text-to-sound-effects, text-to-music, video-to-sound-effects or video-to-music from a clip, scoring silent AI video, foley, ambience, muxed video-to-video variants returning the clip with the new track mixed in, keeping speech while replacing music, or per-segment sound control. Keywords: Sonilo V1.1, SFX, soundtrack, score, keepSpeechVocal, segments, royalty-free."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Sonilo Audio

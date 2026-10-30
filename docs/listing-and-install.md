@@ -18,11 +18,25 @@ How skills.sh, the installer picker, and the install commands work. [AGENTS.md](
   - The manifest gives the `npx skills add` picker its group headers. The skills CLI groups the
     picker by the manifest's plugin entries and never reads `skills.sh.json`, which only drives the
     skills.sh repo page.
-  - Plugin names carry a two-digit position prefix (`01.-getting-started`, shown as "01. Getting
-    Started"), because the picker sorts group names alphabetically. The prefix makes it follow the
-    `skills.sh.json` order, so inserting or merging a grouping renumbers the plugin ids on
-    regeneration.
-  - The manifest also makes the repo a Claude Code plugin marketplace, one plugin per grouping.
+  - The manifest also makes the repo a Claude Code plugin marketplace, `scenario-skills`, one plugin
+    per grouping. A plugin's name is its install key (`<plugin>@scenario-skills`) and the namespace
+    of its skills (`/030-images:scenario-image`).
+  - Plugin names come from `scripts/plugin-names.json`, keyed by grouping title: a fixed three-digit
+    number assigned once, with gaps, then the slug (`030-images`). The picker sorts groups by name
+    and shows them title-cased ("030 Images"), so the numbers keep it in `skills.sh.json` order. The
+    old position-derived prefix renumbered install keys whenever a grouping was inserted.
+  - A new grouping takes a free number between its neighbors' (`035-...` between `030` and `040`).
+    `pnpm manifest:check` fails on a grouping without a name, an unused name, a name out of
+    `skills.sh.json` order, or a retired name. Renaming or removing a grouping breaks every install
+    of its plugin, so its old name moves to `retired` in the same reviewed change.
+  - Plugin entries carry no `version`, so Claude Code versions each plugin by commit and its catalog
+    entry and files always come from the same commit. Users add the marketplace from the `stable`
+    branch, which the release workflow fast-forwards to each release, so plugins change only at
+    releases ([docs/ci-and-releases.md](ci-and-releases.md#releases)).
+  - Every installed skill costs always-on context, so the README recommends the getting-started
+    plugin plus the per-role sets in `INSTALL.md`, each with its cost measured by
+    `claude plugin details`. `pnpm readme` checks that every plugin those commands name exists, and
+    that the README's install-everything loop lists exactly the plugins holding core skills.
 - Install commands:
   - `npx skills add scenario-labs/skills` opens a picker with nothing preselected, so a reader who
     runs the bare command and hits enter installs nothing. The README says so on the command.

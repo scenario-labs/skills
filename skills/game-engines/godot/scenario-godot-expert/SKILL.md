@@ -2,6 +2,8 @@
 name: scenario-godot-expert
 description: "Use when an agent drives Godot 4.7 on macOS or Windows for any task: headless --script jobs, --import, --check-only, command-line exports, GUT tests, windowed screenshots, the headless editor (-e) or an MCP server into a running editor; when a run hangs or fails silently, a capture is black, Godot 3 code breaks in 4.x, 'Identifier not found', export templates are missing; or when a Godot brief (2D, 3D, shaders, VFX, UI, multiplayer, export) must go to the right scenario-godot-* specialist."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Godot expert (technical director and agent protocol)
