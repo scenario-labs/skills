@@ -179,6 +179,15 @@ class DeliveryGate(unittest.TestCase):
         r = self.verdict("speck_under_the_weld")
         self.assertFalse(any("no faces" in e for e in r["errors"]), r["errors"])
 
+    def test_pieces_on_the_ground_stand_together(self):
+        self.assertEqual(self.verdict("stones")["errors"], ["StoneB: floating, 1.65 from the nearest part"])
+        r = self.verdict("stones_ground")
+        self.assertTrue(r["pass"], r["errors"])
+        self.assertEqual(r["warnings"], [])
+
+    def test_part_off_the_ground_floats_however_large(self):
+        self.assertEqual(self.verdict("board_ground")["errors"], ["Board: floating, 0.863 from the nearest part"])
+
 
 if __name__ == "__main__":
     unittest.main()
