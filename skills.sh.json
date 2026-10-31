@@ -46,7 +46,7 @@
     },
     {
       "title": "Video and audio",
-      "description": "Video generation, editing, and color grading, seamless motion loops, music, sound effects, voice, and speech.",
+      "description": "Video generation, editing, and color grading, kinetic-type launch films, seamless motion loops, music, sound effects, voice, and speech.",
       "skills": [
         "scenario-video",
         "scenario-video-editing",
@@ -59,6 +59,7 @@
         "scenario-audio",
         "scenario-video-assembly",
         "scenario-motion-loops",
+        "scenario-kinetic-film",
         "scenario-caption-studio"
       ]
     },

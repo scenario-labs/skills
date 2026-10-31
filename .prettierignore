@@ -29,3 +29,7 @@ skills/game-engines/godot/*/scripts/
 # Roblox files the Roblox Studio expert tools copy into a project (Rojo model
 # and place JSON, a GitHub Actions template), kept as they were built and run
 skills/game-engines/roblox/*/scripts/
+# The kinetic film shows its own source (the Counters block, {lines}), so a
+# reformat of the engine or an example would change what the film renders
+skills/scenario-kinetic-film/assets/engine/
+skills/scenario-kinetic-film/assets/examples/

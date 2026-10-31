@@ -78,11 +78,14 @@ which commit types release and which files release-please owns.
 - Dependabot (`.github/dependabot.yml`) proposes one grouped PR a week per ecosystem, for releases
   at least seven days old:
   - `ci(deps)` for GitHub Actions;
-  - `chore(deps)` for the npm dev tooling in `pnpm-lock.yaml` and the kinetic music-video scaffold's
-    `assets/npm/package-lock.json`;
+  - `chore(deps)` for the npm dev tooling in `pnpm-lock.yaml` and the kinetic music-video and
+    kinetic film scaffolds' `assets/npm/package-lock.json`;
   - `chore(deps)` for the Python requirements and CI locks in `tests/` and `tests/*/`. It raises the
     floors too, since advisory scanners such as OpenSSF Scorecard read a requirement's lower bound,
     not the version CI installs.
+  - the kinetic film scaffold's `assets/requirements.txt` in the same Python group: its pins must
+    equal `tests/requirements-ci.txt` (a test checks), and a bump of that shipped file releases only
+    under a `fix` PR title.
   - It skips release-please-action and the `release-please` CLI, which move by hand together: the
     `package.json` pin must stay the version the action bundles.
 - The kinetic music-video scaffold uses `npm ci` with its shipped package lock. Keep `opentype.js`
