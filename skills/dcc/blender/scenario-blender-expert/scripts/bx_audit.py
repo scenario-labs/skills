@@ -421,7 +421,7 @@ def _samples_image(tree, seen=None):
                for nd in tree.nodes)
 
 
-def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=True):
+def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=True, ground=None):
     """Gate the parts of ONE asset before export or handoff.
 
     objs: the mesh objects (or names) that make up the asset. Gate separate props one by
@@ -430,6 +430,10 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
     part farther than this from the rest floats (an error); between tol and gap it is a
     warning, an error for print. Defaults: 0.01%, 0.2% and 1% of the bounding diagonal.
     evaluated: check the mesh with modifiers applied, as exporters write it by default.
+    ground: height of the floor the asset stands on (e.g. 0.0), off by default. Parts that
+    reach it (lowest point at or below ground + tol) stand on it together, so separate pieces
+    each on the floor (bike-rack hoops, a scatter of stones) do not float, and the group on the
+    floor is the asset: a part not connected to it floats, however large.
     Returns {"pass", "errors", "warnings", "per_object", "profile", "eps", "tol", "gap",
     "skipped"}.
     """
@@ -568,8 +572,9 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
         else:
             flag("back_to_back", {a, b}, f"{where}: {_n(k, 'back-to-back touching face')}")
 
-    # Floating and enclosed parts: union every pair that touches; the component with the
-    # most surface is the asset, every other component floats.
+    # Floating and enclosed parts: union every pair that touches, and every part on the ground;
+    # the component on the ground, else the one with the most surface, is the asset, every
+    # other component floats.
     if len(parts) > MAX_PARTS:
         out["warnings"].append(f"{len(parts)} parts: floating and enclosed checks skipped")
     elif len(parts) > 1:
@@ -598,10 +603,14 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
                 elif _inside(a, b) or _inside(b, a):
                     enclosed.add(i if _inside(a, b) else j)
                     root[find(i)] = find(j)
+        standing = [] if ground is None else [i for i, p in enumerate(parts) if p["lo"][2] <= ground + tol]
+        for i in standing[1:]:
+            root[find(i)] = find(standing[0])
         groups = {}
         for i in range(len(parts)):
             groups.setdefault(find(i), []).append(i)
-        main = max(groups.values(), key=lambda g: sum(parts[i]["area"] for i in g))
+        main = (groups[find(standing[0])] if standing
+                else max(groups.values(), key=lambda g: sum(parts[i]["area"] for i in g)))
         coords, polys = [], []
         for i in main:
             polys += [[k + len(coords) for k in poly] for poly in parts[i]["polys"]]

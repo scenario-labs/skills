@@ -269,6 +269,16 @@ box("Base", (1, 1, 1), (0, 0, 0.5))
 box("Speck", (1e-6, 1e-6, 1e-6), (0, 0, 1.0))
 cases["speck_under_the_weld"] = gate(["Base", "Speck"])
 
+# Pieces that each stand on the floor, one sunk 5 cm into it: given the ground they stand
+# together, and a part off the floor floats even when it is the largest.
+empty()
+box("StoneA", (0.4, 0.3, 0.2), (-1, 0, 0.1))
+box("StoneB", (0.3, 0.3, 0.2), (1, 0, 0.05))
+cases["stones"] = gate(["StoneA", "StoneB"])
+cases["stones_ground"] = bx_audit.deliverable(["StoneA", "StoneB"], ground=0.0)
+box("Board", (2.0, 0.05, 1.0), (0, 0.5, 1.5))
+cases["board_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Board"], ground=0.0)
+
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
 print("GATE CASES", len(cases))
