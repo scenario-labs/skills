@@ -353,7 +353,7 @@ def _islands(bm, flip):
                     if g.index not in done:
                         done.add(g.index)
                         stack.append(g)
-        local, coords, polys = {}, [], []
+        local, coords, polys, edges = {}, [], [], set()
         closed, vol, area = True, 0.0, 0.0
         for f in faces:
             ids = []
@@ -363,12 +363,13 @@ def _islands(bm, flip):
                     coords.append(v.co.copy())
                 ids.append(local[v.index])
             polys.append(ids)
+            edges.update((min(a, b), max(a, b)) for a, b in zip(ids, ids[1:] + ids[:1]))
             closed = closed and all(len(e.link_faces) == 2 for e in f.edges)
             co = [v.co for v in f.verts]
             vol += sum(co[0].dot(co[i].cross(co[i + 1])) for i in range(1, len(co) - 1)) / 6.0
             area += f.calc_area()
         out.append({
-            "coords": coords, "polys": polys, "closed": closed, "volume": vol * flip,
+            "coords": coords, "polys": polys, "edges": sorted(edges), "closed": closed, "volume": vol * flip,
             "area": area, "faces": len(faces),
             "centers": [f.calc_center_median() for f in faces],
             "normals": [f.normal.copy() for f in faces],
@@ -379,12 +380,51 @@ def _islands(bm, flip):
     return out
 
 
+def _clip(p, q, lo, hi):
+    """Parameter range (t0, t1) of segment p-q inside the box lo-hi, or None (Liang-Barsky)."""
+    t0, t1 = 0.0, 1.0
+    for k in range(3):
+        d = q[k] - p[k]
+        if abs(d) < 1e-12:
+            if p[k] < lo[k] or p[k] > hi[k]:
+                return None
+            continue
+        ta, tb = (lo[k] - p[k]) / d, (hi[k] - p[k]) / d
+        if ta > tb:
+            ta, tb = tb, ta
+        t0, t1 = max(t0, ta), min(t1, tb)
+        if t0 > t1:
+            return None
+    return t0, t1
+
+
+def _edge_samples(x, lo, hi):
+    """Points along the edges of part x, clipped to the box lo-hi: the ends and middle of each clipped piece."""
+    co = x["coords"]
+    for i, j in x["edges"]:
+        p, q = co[i], co[j]
+        if any(min(p[k], q[k]) > hi[k] or max(p[k], q[k]) < lo[k] for k in range(3)):
+            continue
+        t = _clip(p, q, lo, hi)
+        if t is not None:
+            for s in (t[0], (t[0] + t[1]) / 2, t[1]):
+                yield p.lerp(q, s)
+
+
 def _attached(a, b, tol):
-    """True when parts a and b intersect or come within tol of each other."""
+    """True when parts a and b intersect or come within tol of each other. Where two parts cross face
+    to face (a rail across a post) no vertex lies near the other part, and a hairline gap hides the
+    contact from the overlap test, so points along each part's edges inside the overlap of the two
+    bounding boxes are tested too."""
     if a["tree"].overlap(b["tree"]):
         return True
     for x, y in ((a, b), (b, a)):
         if any(y["tree"].find_nearest(c, tol)[0] is not None for c in x["coords"]):
+            return True
+    lo = [max(a["lo"][k], b["lo"][k]) - tol for k in range(3)]
+    hi = [min(a["hi"][k], b["hi"][k]) + tol for k in range(3)]
+    for x, y in ((a, b), (b, a)):
+        if any(y["tree"].find_nearest(c, tol)[0] is not None for c in _edge_samples(x, lo, hi)):
             return True
     return False
 
