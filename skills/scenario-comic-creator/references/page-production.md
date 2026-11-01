@@ -31,39 +31,44 @@ twice.
 ## Page prompt anatomy
 
 A page prompt runs about 300 to 1,700 words, median near 1,000 on a long project. Length is the
-checklist the model follows. Short prompts leave cast, state and geometry to chance.
+checklist the model follows. Short prompts leave light, camera, acting, cast, state and geometry to
+chance, and chance returns the stock look. Aim for 600 to 1,000 words once a book has a template.
 
-| Section    | Holds                                                         |
-| ---------- | ------------------------------------------------------------- |
-| Style      | The look in concrete terms. Reference 1 is the anchor         |
-| Anatomy    | Rules for bodies, hands, faces, creatures that failed before  |
-| Setting    | Place, light, time, fixed landmarks, what must never appear   |
-| Cast       | Who is on the page, which sheet is theirs, their state        |
-| Equipment  | What each character wears or holds, per panel when it changes |
-| Layout     | Panel count, arrangement, reading order and direction         |
-| Panels     | Camera, action phase, gaze, expression, exact words, speaker  |
-| References | What each attached image is for, numbered in attachment order |
-| Rules      | A short list of what must not be drawn                        |
+| Section       | Holds                                                                     |
+| ------------- | ------------------------------------------------------------------------- |
+| Art direction | Named influences, hard rules, a FORBIDDEN list. Reference 1 is the anchor |
+| Anatomy       | Rules for bodies, hands, faces, creatures that failed before              |
+| Setting       | Place, time, fixed landmarks, what must never appear                      |
+| Light         | The motivated source, its color, where shadows fall, the darkest area     |
+| Cast          | Who is on the page, which sheet is theirs, their state                    |
+| Equipment     | What each character wears or holds, per panel when it changes             |
+| Layout        | Panel count, arrangement, reading order and direction                     |
+| Panels        | Camera, action phase, gaze, expression, exact words, speaker              |
+| References    | What each attached image is for, numbered in attachment order             |
+| Rules         | A short list of what must not be drawn                                    |
 
 Excerpt, a three-panel page:
 
 ```
 Create a finished comic page. Reference 1 sets line, color, paper and
-lettering only, never its characters or composition: soft watercolor, warm
-paper grain, thin brown ink contours, rounded white balloons with
-hand-lettered capitals. References 2 and 3 set identity only: Mila and the
-cat, never their pose, expression or backdrop. No title, no page number.
-Three panels, one tall panel on the left, two stacked on the right. All in
-the same kitchen at dawn: window on the left wall, stove at the back, table
-in the foreground. It is a small room, not a hall.
-P1 (tall, left): wide, eye level. Mila, back to us, at the stove, steam
-rising. Caption: "Her eighth birthday began like any other."
-P2 (top right): medium from the table. Mila turns, mug in her LEFT hand,
-puzzled. The cat on the chair, mouth open, says: "You are late for your own
-party."
-P3 (bottom right): close on Mila, eyes wide, mug slipping from her hand.
-She says: "You TALK?"
-References: 1 style anchor, 2 Mila sheet, 3 cat sheet.
+lettering only, never its characters or composition: dry-brush ink on warm
+paper, four colors (slate blue, rust, ochre, paper white), rounded white
+balloons with narrow hand-lettered capitals. References 2 and 3 set
+identity only: Ines and her grandfather, never their pose, expression or
+backdrop. No title, no page number.
+Light: one oil lamp at the far end of the table, warm, left of frame.
+Beyond its reach everything falls to near black. The window is a flat cold
+gray rectangle with no sky detail. No glow, no gradients.
+Three panels. P1 fills the top two thirds. Below it, two small panels.
+P1 (dominant): wide, from the doorway, low camera. A narrow night kitchen.
+Ines, small, foreground, back to us, her shadow reaching the table. Her
+grandfather sits at the lamp, hands flat on a letter. No balloons.
+P2 (bottom left): insert on the letter under his hands, thumbs pressing the
+corners. Caption: "Eleven stamps, none of them ours."
+P3 (bottom right): close on Ines, lamplight on one cheek, the other half
+of her face dark. She wants to ask and is afraid of the answer, lips
+pressed. She says: "Who is it from?"
+References: 1 style anchor, 2 Ines sheet, 3 grandfather sheet.
 Rules: no extra people, no lettering outside the balloons.
 ```
 
@@ -82,6 +87,10 @@ Rules: no extra people, no lettering outside the balloons.
   behind") or leave them uncounted.
 - State relative sizes against the body: "the cat is about half the height of her torso".
 - State a costume or object in the scene block and again in each panel that shows it.
+- Write printed words in the case that will print. A direction that calls for capitals returns
+  capitals, so a script line in mixed case prints in capitals and fails an exact-text check.
+- Open every page prompt with the one-line style command from [style-library.md](style-library.md),
+  and end the art direction with the FORBIDDEN list.
 
 ## Fix through the prompt first
 

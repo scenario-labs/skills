@@ -1,6 +1,7 @@
 # Story and script
 
-Write the whole script before any page art. Style tests may use two sample pages from it.
+Write the whole script before any page art. Style tests may use two sample pages from it. Finding
+the specific story and voice comes first: [art-direction.md](art-direction.md).
 
 ## From premise to pages
 
@@ -50,19 +51,20 @@ chapters, each with its own landing.
 ## Page script format
 
 ```
-PAGE 7   place: kitchen   time: dawn   layout: 4 panels, 2 over 2
-In: Mila in pajamas, empty hands, cat asleep on the chair
-Must be visible: the blue mug on the table, the cat on the chair
+PAGE 7   place: kitchen   time: night   layout: 3 panels, one dominant (P1)
+Light: oil lamp at the far end of the table, warm; window left, flat cold gray
+In: Ines in a nightgown, empty hands; grandfather seated, hands flat on a letter
+Must be visible: the letter, the lamp, Ines's shadow on the floor
 
-P1  wide, eye level. Mila at the stove, back to us, steam rising.
-    Caption: "Her eighth birthday began like any other."
-P2  medium, from the table. Mila turns, mug in her LEFT hand, puzzled.
-    Cat (on chair, mouth open): "You are late for your own party."
-P3  close on Mila, eyes wide, mug slipping.
-    Mila: "You TALK?"
-P4  insert on the mug hitting the tile, milk spreading.
-    SFX: CRASH
-Out: Mila in pajamas, mug broken on the floor, cat awake on the chair
+P1  wide, low camera from the doorway. Ines small in the foreground, back to
+    us, her shadow reaching the table. Grandfather at the lamp.
+P2  insert on the letter under his hands, thumbs pressing the corners.
+    Caption: "Eleven stamps, none of them ours."
+P3  close on Ines, lamplight on one cheek. She wants to ask and is afraid
+    of the answer, lips pressed.
+    Ines: "Who is it from?"
+Out: Ines in a nightgown, one hand on the table edge; grandfather seated,
+     letter still under his hands
 ```
 
 - Each panel names the camera, the action phase, who is present, gaze, expression and object state.

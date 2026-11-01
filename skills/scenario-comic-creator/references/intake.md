@@ -7,12 +7,13 @@ each assumption into the brief card.
 ## The questions
 
 1. **Story**: a premise in one sentence, or a source text. Who is it for, and what should the last
-   page leave them feeling? Default: propose three loglines, the user picks one.
+   page leave them feeling? Default: write five loglines, cut the ones the average would write, and
+   offer the best three.
 2. **Length**: story pages, plus cover and extras. Default: Quick lane, 8 story pages and a cover.
 3. **Format**: trim, reading direction, color or black and white, panels per page. Default:
    portrait, left to right, color, four to six panels.
-4. **Look**: images, titles or eras the user loves, or "show me options". Default: a style round
-   with four directions.
+4. **Look**: one comic, film or painting they love and one they dislike, or "show me options".
+   Default: a style round with four directions that differ by concept.
 5. **Cast**: who appears, and a photo or a description for each. Default: invent the cast from the
    premise.
 6. **Language**: the language of the printed words, and whether other languages follow. Default: the
@@ -44,9 +45,11 @@ Album and Book lanes add:
 
 - Images the user supplies steer the style round only. The approved style anchor replaces them from
   then on.
-- A named comic, film or era: describe its traits instead (line weight, ink or paint, palette,
-  grain, panel density, lettering). Traits transfer better than names. Names of living artists also
-  invite moderation blocks (`scenario-moderation`).
+- A named comic, film or era: name the artists in the prompt and add the traits and one hard rule
+  ([art-direction.md](art-direction.md)). The name sets the family and the traits do the work. If a
+  team has IP detection on artist styles, or a model refuses a name, keep the traits and drop the
+  name (`scenario-moderation`). For a commercial deliverable, the buyer decides whether to name
+  living artists. Movements and long-published masters give the same families.
 - For published or commercial work, the user confirms they hold the rights to any art they upload as
   a reference.
 
