@@ -171,6 +171,9 @@ listings, timestamps, or `search`.
   pixelate tool (grid size, palette) for the first and the snapper for the second, both found with
   `search` (`target: "models"`, `public: true`, `filters` `tags: ["tool"]`, `query: "pixel"` returns
   both; the descriptions tell them apart).
+- Quantizing each frame to its own colors: the cycle shimmers as shades swap between frames. Pass
+  one palette from the approved key frame to every frame
+  ([references/lane-schemas.md](references/lane-schemas.md)).
 - Photo upscalers on pixel frames: they invent texture; use the pixel-preserving routes in
   `scenario-game-assets`.
 - Shipping a sheet unstepped: per-frame steps return new ids and order lives only in the lists you

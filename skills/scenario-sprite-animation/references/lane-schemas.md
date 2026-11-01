@@ -143,6 +143,21 @@ snapper collapses a sheet to one global grid and loses per-frame detail. The sna
 tile (5 CU at authoring time, so a 16-frame set is 80 CU): `dry_run` one tile and multiply before
 committing the set.
 
+A color count alone does not hold colors across frames: each frame is reduced to its own palette, so
+a cloak's shade swaps from frame to frame and the cycle shimmers even when the grid holds. Lock one
+palette for the whole set instead:
+
+- Take the colors from the approved key frame: download it and list its most-used colors locally, or
+  use the hex values the brief names.
+- Run Pixelate (`model_sc-pixelate`) on every frame with that list as `colorPalette` (hex strings,
+  an array) and one `pixelGridSize` for the set. `colorPaletteSize` is ignored once a palette is
+  set.
+- The snapper has no palette field, only a count: use it for grid cleanup, then the shared-palette
+  Pixelate pass, never the snapper alone on an animated set.
+- Scale the finished frames by whole multiples (2x, 3x, 4x) to their delivery size: a fractional
+  factor gives pixels uneven widths that crawl as the sprite moves. The resize tool below exposes no
+  interpolation control, so check one scaled frame.
+
 Skip the pass altogether when the frames already sit on the art's native grid. The snapper
 re-detects a grid of its own, and on frames that were already pixel-native it regridded 384x288 down
 to 69x52 and took the scene with it. Probe one frame before running the set. On emulated pixel art
