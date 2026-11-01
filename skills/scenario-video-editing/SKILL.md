@@ -131,6 +131,30 @@ decision before any spend, between two routes an order of magnitude apart in pri
 `dry_run` prices a payload without validating it, so either route can bill for a run that fails
 outright or returns a mis-composed frame at exactly the right dimensions.
 
+## Reworking a finished video
+
+A request to reorder, drop, or lengthen shots in a video already rendered is an edit, not a new
+generation. Regenerate only the shot whose content must change.
+
+1. Find the shot boundaries. `asset_get` the master for `duration` and `frameRate`, extract frames
+   at a short `frameInterval`, and sheet them with `model_scenario-grid-maker`. Each cut shows as a
+   jump between neighbors; convert its frame index to seconds.
+2. `model_scenario-video-split` with those times as `cutPoints` (an array, sorted, in seconds; N
+   points give N+1 segments) and `video` as a scalar.
+3. Confirm each segment before reordering: `asset_get` its `duration` and `asset_display` its
+   `firstFrame`. Never take the row's id order as the timeline order.
+4. Rebuild:
+   - **Reorder or drop**: `model_scenario-video-concat` with `videos` in the new order (2 to 50
+     ids), leaving out any dropped shot. Hard cuts are the default; `transitions` holds one entry
+     per seam.
+   - **Lengthen a shot**: no tool model retimes or slows a clip. Extend it from its `lastFrame` with
+     a video model (the last-frame chain in `scenario-video`), then concat the extension after it.
+   - **Change what a shot shows**: regenerate that shot alone in `scenario-video`, then concat it
+     back in its slot.
+5. Check sync on the result: concat has drifted audio against picture (see
+   `scenario-video-assembly`). With a music bed, extract the audio before the split and lay it back
+   over the rebuilt cut there.
+
 ## Worked example: a graded cutdown
 
 Launch every `model_run` below with `wait=false` and retire it with `jobs_wait` before the next step
