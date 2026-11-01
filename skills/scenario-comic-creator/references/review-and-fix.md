@@ -8,18 +8,19 @@ where needed. A score proves nothing: crop and compare against the sheet.
 
 ## Three tiers
 
-| Tier         | Examples                                                           | Who acts                                 |
-| ------------ | ------------------------------------------------------------------ | ---------------------------------------- |
-| Obvious      | Wrong or missing character, extra limbs, broken or wrong lettering | Redraw at once                           |
-| Worth a look | State drift (a ring, a coat), geography, a doubtful pose           | The user decides (unattended: keep, log) |
-| Small detail | A button, a finger count in a small panel, a prop proportion       | Batched into a fix round                 |
+| Tier         | Examples                                                                                         | Who acts                                                                        |
+| ------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Obvious      | Wrong or missing character, extra limbs, broken lettering, a stock verdict from the taste review | Redraw at once                                                                  |
+| Worth a look | State drift (a ring, a coat), geography, a doubtful pose                                         | The user decides (unattended: redraw within budget, then keep the best and log) |
+| Small detail | A button, a finger count in a small panel, a prop proportion                                     | Batched into a fix round                                                        |
 
 On one 900-page project, 482 pages were reviewed this way: 11 obvious defects, 94 worth a look, 297
 small details. The tiers kept the human on the findings that mattered.
 
 ## Review order
 
-1. Story: does the page deliver its beat and every "must be visible" item?
+1. Story: does the page deliver its beat and every "must be visible" item? Then the taste review in
+   [art-direction.md](art-direction.md): the stock twin and the seven questions.
 2. Identity, anatomy, costume and prop construction against the sheets.
 3. State and geography across the previous, current and next page.
 4. Lettering: every word once, in order, right speaker, tails pointing at the speaker, accents
@@ -66,7 +67,8 @@ Editing an edit melts faces and costumes. Rendered pages are evidence, not refer
 
 ## Attempt caps
 
-- Default budget per page: the first generation plus one fresh alternative.
+- Budget per page while the template matures: up to four fresh generations. Once pages pass on the
+  first try, the first generation plus one fresh alternative.
 - Later rounds contain only pages with a confirmed defect, each with a changed remedy.
 - A cap stops paid retries, not diagnosis. Report what is unresolved and what the next attempt
   should change.

@@ -8,15 +8,18 @@ reaches every sheet and page.
 1. Pick two pages from the script: one dialogue page and one establishing or action page.
 2. Write one prompt skeleton for each page. Only the style paragraph changes between directions.
    Draw the hero from a written description, not from the user's photo.
-3. Draw three to five directions on those two pages. Run them on the model the book will use. A
-   different model changes the look.
+3. Draw three to five directions on those two pages. They come from
+   [style-library.md](style-library.md) or the same formula, each with two named influences, hard
+   rules and a FORBIDDEN list. Add a plain-prompt stock twin of the same page and run the taste
+   review in [art-direction.md](art-direction.md). Run them on the model the book will use. A
+   different model changes the look, so when two models rank close, draw the round on both.
 4. Show every direction side by side on a contact sheet and let the user pick.
 5. Record the winning pages' asset IDs. That page set is the style anchor, and it is reference 1 on
    every later page. Each page prompt says it sets line, color, paper and lettering only, never its
    characters, poses or compositions.
 6. Never reference a page from a rejected direction.
 
-A direction is written in concrete terms:
+A direction is written in concrete terms, never as a genre name:
 
 - Line: weight, continuity, ink or pencil or none.
 - Tone: flat color, painted, screentone, watercolor, grain.

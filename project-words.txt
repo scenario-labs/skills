@@ -908,6 +908,8 @@ bboxes
 betweener
 bigonial
 biharmonic
+bilal
+bilibin
 binet
 binormals
 birp
@@ -967,6 +969,7 @@ devforum
 diegetic
 differenced
 directionals
+ditko
 dmrq
 dnach
 dsdiv
@@ -1006,6 +1009,7 @@ grilme
 gular
 hailuo
 hasattr
+hergé
 hitem
 hlsl
 hsgrey
@@ -1028,14 +1032,18 @@ interruptible
 interstitials
 ints
 iridesce
+jansson
 jitspoe
 jobified
 jonze
+josé
 jsdotlua
 jslib
+junji
 kabuto
 kaiju
 kampfkarren
+katsuhiro
 kbps
 kenzo
 kling
@@ -1053,6 +1061,7 @@ libmp
 libvorbis
 libvpx
 libx264
+ligne
 limboai
 lkfs
 lmbake
@@ -1074,9 +1083,11 @@ mila
 misaligns
 mispredict
 misregistration
+miura
 mixamo
 mlsd
 mocap
+moebius
 movflags
 mscorlib
 mtex
@@ -1085,11 +1096,14 @@ mult
 mux
 muxed
 muxes
+muñoz
 mvdan
+naoki
 nasojugal
 nasolabial
 nativization
 ngons
+nihei
 nlapinski
 noice
 nori
@@ -1108,6 +1122,8 @@ onready
 orbicularis
 ordinally
 oris
+osamu
+otomo
 outpainting
 outsourcers
 pano
@@ -1205,6 +1221,8 @@ scipy
 scons
 scroller
 sdfgi
+sempé
+sfar
 shengshu
 shfmt
 shiboken
@@ -1228,13 +1246,17 @@ swiftc
 symbolicated
 symbolicates
 taiko
+taiyō
 tampo
+tardi
 texel
 texturer
+tezuka
 theodox
 thresholded
 ticka
 toon
+tove
 traj
 tranek
 tranek's
@@ -1244,6 +1266,7 @@ triplanar
 tripo
 tris
 tscn
+tsutomu
 tugcantopaloglu
 tugcantopaloglu's
 tweens
@@ -1285,6 +1308,7 @@ unkeyed
 unmarking
 unmelts
 unmirrored
+unmodulated
 unoccluded
 unorm
 unpaced
@@ -1321,6 +1345,7 @@ unwired
 upgrader
 upscales
 upvalue
+urasawa
 ustwo
 utrace
 uxml
@@ -1344,6 +1369,7 @@ webtoon
 webtoons
 wflow
 wght
+winsor
 wltp
 xcarchive
 xcframework

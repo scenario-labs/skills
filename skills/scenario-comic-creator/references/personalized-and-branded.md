@@ -14,6 +14,8 @@ company's message. The Quick lane covers both. This file adds what each needs on
 - Offer the buyer creative directions for title and plot, not only a style. Three loglines with
   titles is enough.
 - Keep the story to one clear arc and a last page that lands on the person.
+- Build the story on one true detail from the facts supplied, and take an angle on it that a
+  template would not. See [art-direction.md](art-direction.md).
 - Check the printed name on every page. A name is the one word a reader will not forgive.
 - A child's photo: the buyer is the parent or guardian.
 
@@ -33,6 +35,8 @@ A change at the storyboard costs a line in the script. The same change after the
 
 ### Brand fidelity
 
+- A brand's palette and logo rules are constraints on the look bible, not the look itself. The comic
+  still needs its own light, camera and voice.
 - A logo, a product, a packaging label or a uniform is never drawn freehand. Use the product photo
   as a reference, check the label at crop, and composite exact brand assets over the art
   (`scenario-product-shots` for products, `scenario-text-overlay` for exact text).
