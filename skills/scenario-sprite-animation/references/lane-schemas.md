@@ -25,7 +25,7 @@ The `image` reference is converted to RGB without transparency, so flatten a tra
 a plain field deliberately.
 
 Retro Diffusion Plus takes a reference palette image via `inputPalette` for palette-guided
-generation, which is the one palette control outside the pixel snapper's color count.
+generation. After generation, a shared palette is the Pixelate pass under Packaging pixel frames.
 
 The style enum is the whole motion vocabulary: given an attack brief and a character reference
 through `image`, `small_sprites` returned a 20-frame generic cycle (arms up, turn, walk, collapse)
@@ -149,9 +149,10 @@ palette for the whole set instead:
 
 - Take the colors from the approved key frame: download it and list its most-used colors locally, or
   use the hex values the brief names.
-- Run Pixelate (`model_sc-pixelate`) on every frame with that list as `colorPalette` (hex strings,
-  an array) and one `pixelGridSize` for the set. `colorPaletteSize` is ignored once a palette is
-  set.
+- Find the Pixelate tool model with `search` (`target: "models"`, `public: true`, `filters`
+  `tags: ["tool"]`, `query: "pixel"`), then run it on every frame with that list as `colorPalette`
+  (hex strings, an array) and one `pixelGridSize` for the set. `colorPaletteSize` is ignored once a
+  palette is set.
 - The snapper has no palette field, only a count: use it for grid cleanup, then the shared-palette
   Pixelate pass, never the snapper alone on an animated set.
 - Scale the finished frames by whole multiples (2x, 3x, 4x) to their delivery size: a fractional
