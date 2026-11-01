@@ -46,9 +46,9 @@ proceed from tool schemas and flag the gap.
    visible and clear of the body: top-down hides leg undersides and body height. A biped headed for
    a rig takes the pose in Rigging and animation. If the user has a reference, `upload_asset` it
    (plus `upload_asset_complete` when multipart) and pass that asset ID instead. Keep a reference on
-   a plain background as is; remove the background first only when it is busy. An isolated subject
-   matters, a transparent cutout does not, and the image field's `background_note` in
-   `model_schema_get` says the same.
+   a plain background as is; remove the background first (`recommend` the removal) only when it is
+   busy. An isolated subject matters, a transparent cutout does not, and the image field's
+   `background_note` in `model_schema_get` says the same.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
    the Hunyuan 3D, Meshy, Tripo, and Trellis families, and Scenario's own LLM-based 3D generation:
    GPT-6 Astra 3D and Claude Opus 5.5 3D (the cheaper at authoring time; compare both with
