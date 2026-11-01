@@ -92,6 +92,11 @@ class DeliveryGate(unittest.TestCase):
         self.assertEqual(len(r["warnings"]), 1)
         self.assertIn("Core: 1 part enclosed", r["warnings"][0])
 
+    def test_part_beside_a_thin_shell_is_not_enclosed(self):
+        r = self.verdict("beside_thin_shell")
+        self.assertEqual(r["errors"], ["Plate: floating, 0.0985 from the nearest part"])
+        self.assertEqual(r["warnings"], [])
+
     def test_negative_scale_fails(self):
         r = self.verdict("negative_scale")
         self.assertEqual(len(r["errors"]), 1)
