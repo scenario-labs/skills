@@ -50,8 +50,9 @@ Run this on the finished script, before any art:
 - Every page names one dominant panel.
 - Showpiece mode adds: a panel with no words on every page, no two consecutive pages sharing a grid
   or a camera setup, and a silent page in a book of six pages or more.
-- Clear-first mode adds: every page has a caption rectangle and one learning beat, and the last page
-  holds the takeaways ([clear-first.md](clear-first.md)).
+- Clear-first mode adds: every page has one learning beat, every caption has a job written beside
+  it, captions sit in fewer than half of a page's panels, and the last page holds the takeaways
+  ([clear-first.md](clear-first.md)).
 
 ## Dialogue
 
