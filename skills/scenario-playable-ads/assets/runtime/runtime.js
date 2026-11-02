@@ -72,10 +72,7 @@
     if (netHold === on) return;
     netHold = on;
     PA.emit(on ? "netHold" : "netResume");
-    if (PA.audio && PA.audio.ctx) {
-      if (on) PA.audio.ctx.suspend();
-      else PA.audio.ctx.resume();
-    }
+    syncAudio();
   }
   PA.net = {
     name: NET,
@@ -474,6 +471,8 @@
   };
   function onDown(e) {
     e.preventDefault();
+    // before the container shows the ad, or while it hides it, a tap must not start sound or play
+    if (!live || netHold || paused) return;
     audio.unlock();
     // the mute button is a control, not a move: it neither starts the game nor the music
     if (
@@ -1167,7 +1166,8 @@
 
   // ---------- main loop ----------
   let last = 0,
-    paused = false;
+    paused = false,
+    live = false; // set once the container says the ad is viewable
   function frame(now) {
     requestAnimationFrame(frame);
     if (paused || netHold || QA.pause) {
@@ -1212,12 +1212,15 @@
     hits = hitsNext;
     ctx.restore();
   }
+  // a hidden page and a container hold are separate flags: sound resumes only when both are clear
+  function syncAudio() {
+    if (!audio.ctx) return;
+    if (paused || netHold) audio.ctx.suspend();
+    else audio.ctx.resume();
+  }
   document.addEventListener("visibilitychange", function () {
     paused = document.hidden;
-    if (audio.ctx) {
-      if (paused) audio.ctx.suspend();
-      else audio.ctx.resume();
-    }
+    syncAudio();
   });
 
   // ---------- boot ----------
@@ -1269,6 +1272,7 @@
       };
       PA.emit("start");
       PA.net.whenViewable(function () {
+        live = true;
         requestAnimationFrame(frame);
       });
     });

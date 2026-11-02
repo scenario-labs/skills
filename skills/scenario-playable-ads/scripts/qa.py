@@ -45,7 +45,7 @@ import time
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 ap = argparse.ArgumentParser()
 ap.add_argument("project")
@@ -307,28 +307,40 @@ def cta_check(browser, net):
 def gate_check(browser, net):
     """MRAID and Mintegral containers say when the ad may start: nothing may run before, it must run after, it
     must pause when the container hides the ad and resume when it shows it again (fake container timings:
-    ready at 0.6 s, viewable or gameStart at 2.5 s)."""
+    ready at 0.6 s, viewable or gameStart at 2.5 s). A tap before the start must do nothing, and a tab that turns
+    visible while the container still hides the ad must not bring the sound back."""
     ctx, page, log = open_page(browser, net, speed=2)
+    cx, cy = page.viewport_size["width"] / 2, page.viewport_size["height"] / 2
     page.wait_for_timeout(800)
+    page.mouse.click(cx, cy)
+    page.wait_for_timeout(100)
     before = {"real_time": page.evaluate("PA.realTime"),
+              "touched": page.evaluate("PA.input.touched"),
               "viewable_event": any(e["name"] == "viewable" for e in events(page)),
               "audio_ctx_null": page.evaluate("PA.audio.ctx === null")}
-    try:  # a runtime without the gate never emits 'viewable'; it starts at once, which the checks below report
+    try:
         page.wait_for_function("window.__events.some(e => e.name === 'viewable') || PA.realTime > 0", timeout=15000)
-    except Exception:
-        pass
+    except PlaywrightTimeoutError:
+        pass  # the ad never started: t_run stays 0 and gate_*_runs_after_viewable fails below
     page.wait_for_timeout(800)
     t_run = page.evaluate("PA.realTime")
+    page.mouse.click(cx, cy)  # creates the AudioContext, so the hold below can be read on it
+    page.wait_for_timeout(300)
     page.evaluate("window.__fake.setViewable(false)")
     page.wait_for_timeout(200)
     t_hold_a = page.evaluate("PA.realTime")
+    page.evaluate("Object.defineProperty(document, 'hidden', {configurable: true, get: () => false});"
+                  "document.dispatchEvent(new Event('visibilitychange'))")
     page.wait_for_timeout(800)
     t_hold_b = page.evaluate("PA.realTime")
+    audio_held = page.evaluate("PA.audio.ctx ? PA.audio.ctx.state : null")
     page.evaluate("window.__fake.setViewable(true)")
     page.wait_for_timeout(800)
     t_resume = page.evaluate("PA.realTime")
+    audio_resumed = page.evaluate("PA.audio.ctx ? PA.audio.ctx.state : null")
     ctx.close()
     return {"before": before, "t_run": t_run, "t_hold_a": t_hold_a, "t_hold_b": t_hold_b, "t_resume": t_resume,
+            "audio_held": audio_held, "audio_resumed": audio_resumed,
             "errors": log["errors"], "requests": [u for u in log["requests"] if u not in ALLOWED_EXTERNAL]}
 
 
@@ -487,10 +499,11 @@ for net in GATED:
     g = R.get(f"gate_{net}")
     if g:
         C[f"gate_{net}_nothing_runs_before_viewable"] = (g["before"]["real_time"] == 0 and not g["before"]["viewable_event"]
-                                                         and g["before"]["audio_ctx_null"])
+                                                         and g["before"]["audio_ctx_null"] and not g["before"]["touched"])
         C[f"gate_{net}_runs_after_viewable"] = g["t_run"] > 0.3
-        C[f"gate_{net}_pauses_when_hidden"] = abs(g["t_hold_b"] - g["t_hold_a"]) < 0.02
-        C[f"gate_{net}_resumes"] = g["t_resume"] > g["t_hold_b"] + 0.3
+        C[f"gate_{net}_pauses_when_hidden"] = (abs(g["t_hold_b"] - g["t_hold_a"]) < 0.02
+                                               and g["audio_held"] == "suspended")
+        C[f"gate_{net}_resumes"] = g["t_resume"] > g["t_hold_b"] + 0.3 and g["audio_resumed"] == "running"
 C["zero_network_requests"] = all(not r.get("requests") for r in R.values())
 C["no_console_errors"] = all(not r.get("errors") for r in R.values())
 # size: meta's HTML <= 2 MB, google's ZIP <= 5 MB, every other built network's deliverable <= 5 MB

@@ -22,6 +22,8 @@ Answer these at the top of `analysis/brief.md` before using any frame:
 
 - **Rights.** An ad for a game needs the owner's assets or written permission. Ask the user to
   confirm they own or license the game. Write the answer, or "not confirmed".
+- Unattended, write "not confirmed", build, and open `notes.md` with it: the build is a test until
+  the user confirms the rights.
 - **First-party capture or third-party video?** A video found online is a reference only. Ask for a
   raw device capture, the logo, the store links and the font.
 - **Platform UI is never art.** Do not copy player controls, captions, overlays or face-cams,
@@ -48,23 +50,24 @@ Answer these at the top of `analysis/brief.md` before using any frame:
 
 Connection, uploads and the core loop are in the `scenario` skill. For each asset:
 
-1. `recommend` with the capability and the user's words; read `next_step`.
+1. `recommend` with the table's `capability` value and the user's words as `prompt`; read
+   `next_step`. The `prompt` carries what the value cannot: edit, transparent, music or SFX.
 2. `model_schema_get` on the pick: sizes, reference slots, transparent background, take count.
 3. `dry_run` with the references attached, since references can change the price.
 4. `model_run` with `wait=false`, then `jobs_wait`. Keep at most 4 jobs in flight.
 5. `asset_download` (`png` for images; omit the format for audio), then
    `curl -fsSL -o <file> "<url>"`.
 
-| Asset                             | Capability                         | Settings that worked                                      |
-| --------------------------------- | ---------------------------------- | --------------------------------------------------------- |
-| Plate                             | image edit with references         | 2 to 3 frames as references, high quality, 1152 x 2048    |
-| Sprite sheets                     | image edit, transparent background | 1536 x 1024, 3 x 2 cells, the frames that show each piece |
-| Logo, only when none was supplied | image generation                   | transparent background, frames as style references        |
-| Clean render for 3D               | image edit                         | 1024 x 1024, one object, plain mid-gray background        |
-| 3D model                          | image-to-3D                        | low poly; see [3d-games.md](3d-games.md)                  |
-| Seamless texture                  | image generation                   | 1024 x 1024, tiles in both directions                     |
-| SFX                               | text-to-audio, sound effects       | 0.3 to 2.5 s, one take each                               |
-| Music                             | text-to-music                      | 30 s instrumental loop                                    |
+| Asset                             | `capability` | Settings that worked                                                              |
+| --------------------------------- | ------------ | --------------------------------------------------------------------------------- |
+| Plate                             | `img2img`    | 2 to 3 frames as references, high quality, 1152 x 2048                            |
+| Sprite sheets                     | `img2img`    | transparent background, 1536 x 1024, 3 x 2 cells, the frames that show each piece |
+| Logo, only when none was supplied | `img2img`    | transparent background, frames as style references                                |
+| Clean render for 3D               | `img2img`    | 1024 x 1024, one object, plain mid-gray background                                |
+| 3D model                          | `img23d`     | low poly; see [3d-games.md](3d-games.md)                                          |
+| Seamless texture                  | `txt2img`    | 1024 x 1024, tiles in both directions                                             |
+| SFX                               | `txt2audio`  | 0.3 to 2.5 s, one take each                                                       |
+| Music                             | `txt2audio`  | 30 s instrumental loop                                                            |
 
 Detail per lane: `scenario-image` (edits, references), `scenario-game-assets` (sheets, cut-outs),
 `scenario-audio` (SFX, music), `scenario-3d` (image-to-3D), `scenario-sprite-animation` (walk

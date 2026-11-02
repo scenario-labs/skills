@@ -165,7 +165,6 @@
   }
   function endCard() {
     G.phase = "end";
-    PA.net.gameEnd();
     PA.emit("endcard", { result: G.result });
   }
   function hitPiece(x, y) {

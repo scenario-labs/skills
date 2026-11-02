@@ -26,16 +26,16 @@ preview tool (see [networks.md](networks.md)).
 
 Run for every network built into `dist/`, on top of the base 19:
 
-| Check                                     | Rule                                                                  |
-| ----------------------------------------- | --------------------------------------------------------------------- |
-| `cta_{net}_{endcard,pill}_calls_{api}`    | the exact CTA call of that network, from both buttons                 |
-| `cta_{net}_first_tap_never_opens_store`   | applovin, unity, mraid: the first tap on PLAY FREE opens nothing      |
-| `cta_mintegral_load_calls_gameReady`      | plus `..._endcard_signals_gameEnd` and `..._replay_signals_gameRetry` |
-| `cta_liftoff_endcard_posts_complete`      | Liftoff gets `complete` at the end card                               |
-| `gate_{net}_nothing_runs_before_viewable` | applovin, unity, mraid, mintegral: no clock, no audio before go       |
-| `gate_{net}_runs_after_viewable`          | plus `..._pauses_when_hidden` and `..._resumes`                       |
-| `{net}_size_ok`                           | the deliverable is under that network's cap                           |
-| `package_ok_{net}`                        | ZIP targets hold `index.html` at the root; pangle also `config.json`  |
+| Check                                     | Rule                                                                    |
+| ----------------------------------------- | ----------------------------------------------------------------------- |
+| `cta_{net}_{endcard,pill}_calls_{api}`    | the exact CTA call of that network, from both buttons                   |
+| `cta_{net}_first_tap_never_opens_store`   | applovin, unity, mraid: the first tap on PLAY FREE opens nothing        |
+| `cta_mintegral_load_calls_gameReady`      | plus `..._endcard_signals_gameEnd` and `..._replay_signals_gameRetry`   |
+| `cta_liftoff_endcard_posts_complete`      | Liftoff gets `complete` at the end card                                 |
+| `gate_{net}_nothing_runs_before_viewable` | applovin, unity, mraid, mintegral: no clock, no audio, no tap before go |
+| `gate_{net}_runs_after_viewable`          | plus `..._pauses_when_hidden` (clock and sound) and `..._resumes`       |
+| `{net}_size_ok`                           | the deliverable is under that network's cap                             |
+| `package_ok_{net}`                        | ZIP targets hold `index.html` at the root; pangle also `config.json`    |
 
 ## The QA bot (`qa_bot.py`)
 

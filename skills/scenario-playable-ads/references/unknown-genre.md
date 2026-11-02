@@ -87,7 +87,8 @@ Don't rebuild the pad. Collapse it to one finger:
 | joystick + action button | tap a target to walk there and act on arrival                                                                   |
 
 - The collapsed verb is drift from the real controls. Write it in `analysis/brief.md` and ask the
-  user whether the ad must keep the real pad.
+  user whether the ad must keep the real pad. Unattended, ship the one-finger verb and record the
+  drift in `notes.md`.
 - Keep everything else real: the jump arcs, air jump, bounce and trail from the recording.
 
 ## Landscape games in a portrait ad

@@ -25,15 +25,15 @@ network takes, and a bundle of all of them. A build ships only when it passes th
 plus the per-network checks.
 
 **What was tested.** The nine-network packaging ran against fake containers in headless Chromium: 64
-of 64 checks on a copy of one game. The scripts in this skill, with the first-tap guard and the
-Pangle SDK placement added since, pass 67 of 67 checks on the template's placeholder game in the
-same fake containers. That game also passed AppLovin's playable preview (portrait) and Google's
-HTML5 validator on the App Campaigns profile (2 November 2026). Google's Campaign Manager and
-Display & Video 360 policies reject the `google` ZIP, which needs a `clickTag` there. Meta's
-playable preview took the `meta` ZIP, passed its spec checks and registered the CTA tap. No other
-network's own tool was run. Say which tools were run when you hand a build over, and run each
-network's own preview first ([references/networks.md](references/networks.md)). Each archetype guide
-comes from one build that passed the 19 base checks.
+of 64 checks on a copy of one game. The scripts in this skill, with the first-tap guard, the Pangle
+SDK placement and the input and sound holds added since, pass 67 of 67 checks on the template's
+placeholder game in the same fake containers. That game also passed AppLovin's playable preview
+(portrait) and Google's HTML5 validator on the App Campaigns profile (2 November 2026). Google's
+Campaign Manager and Display & Video 360 policies reject the `google` ZIP, which needs a `clickTag`
+there. Meta's playable preview took the `meta` ZIP, passed its spec checks and registered the CTA
+tap. No other network's own tool was run. Say which tools were run when you hand a build over, and
+run each network's own preview first ([references/networks.md](references/networks.md)). Each
+archetype guide comes from one build that passed the 19 base checks.
 
 Requirements: a local shell, Python 3 with Pillow, numpy, scipy, fontTools and brotli; Playwright
 for Python with Chromium; ffmpeg. Install with
@@ -132,10 +132,11 @@ Answer both in `analysis/brief.md`.
 6. **Networks:** ask which ones the user runs. Per-network contracts, confirmed facts and the
    unconfirmed list: [references/networks.md](references/networks.md).
 7. **3D games:** ask before generating. A fixed or side camera means 2.5D from frames; a free 3D
-   camera means considering three.js with an image-to-3D model. See
-   [references/3d-games.md](references/3d-games.md).
+   camera means considering three.js with an image-to-3D model. Unattended, build 2.5D and say so.
+   See [references/3d-games.md](references/3d-games.md).
 8. **Orientation:** portrait first. Re-slice a landscape level along the portrait axis instead of
-   letterboxing it, and collapse an on-screen pad to one finger (say it is drift and ask the user).
+   letterboxing it, and collapse an on-screen pad to one finger (say it is drift and ask the user;
+   unattended, ship the one-finger verb and record the drift in `notes.md`).
 
 ## Archetype index
 
@@ -195,8 +196,8 @@ game contract: [references/qa-checks.md](references/qa-checks.md).
    near-fail with one jar left, and a tease of a locked level 25 on the end card.
 3. Upload three frames. Generate the plate (an image edit that removes jars, liquids and HUD), one
    transparent sheet of jars and the mascot, five SFX and a 30 s music loop, each via `recommend`,
-   `dry_run`, `model_run` with `wait=false`, and `jobs_wait`. Key the user's logo with
-   `"key": true`.
+   `model_schema_get`, `dry_run`, `model_run` with `wait=false`, and `jobs_wait`. Key the user's
+   logo with `"key": true`.
 4. Write the solver and the game from [references/archetype-sort.md](references/archetype-sort.md).
    Run `prep_assets.py`, then `build.py --networks all`.
 5. `qa.py --speed 2` fails `idle_never_autoplays`: a demo pour moved `progress` before the first
