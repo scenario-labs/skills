@@ -80,6 +80,10 @@ Rules: no extra people, no lettering outside the balloons.
   gaze. A copied pose reads as marching.
 - Say what is absent as well as present.
 - Say the panel count and the arrangement outright.
+- Write each text container as its own object, so the model never picks the shape: "a round white
+  balloon, tail to Mara, reading: ...", "a square-cornered cream caption rectangle at the top left
+  of panel 1, reading: ...", "a label rectangle beside Teo reading: Teo, security reviewer". A
+  screen message is an enlarged card at page size ([clear-first.md](clear-first.md)).
 - For a silent page, write "no balloons, no text, no captions".
 - Put a TIME line before panel 1. Repeat it in any panel it affects, and name the sky seen through
   windows.
@@ -133,8 +137,9 @@ of the clause leave a defect in place, record it as a residual and ship the stro
 
 1. Write each prompt to a file before sending it. The file is the record of what was asked.
 2. Run the two lettering-test pages together and review both. Tune the template.
-3. Then submit independent pages in bounded parallel batches with `wait: false`, and collect with
-   `jobs_wait`. It takes no timeout. A return of `in_progress` is not a failure: call it again with
+3. Then submit every independent page at once, up to the team's concurrency limit, with
+   `wait: false`, and collect with `jobs_wait`. Never review one page while the others wait to be
+   submitted. It takes no timeout. A return of `in_progress` is not a failure: call it again with
    the returned `pending_job_ids`, and never relaunch or cancel a launched job.
 4. A 429 with `actionName` and `actionLimit` in `details` means the team's concurrency ceiling. Hold
    that many jobs in flight.

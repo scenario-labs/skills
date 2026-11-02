@@ -73,7 +73,9 @@ the influences.
   from above.
 - Personalized comics live on one true detail from the supplied facts: a habit, an object, a phrase,
   a street. Use it where it counts. Never invent it.
-- Write each line in the speaker's voice. Cut any line that states a moral.
+- Write each line in the speaker's voice. In showpiece mode, cut any line that states a moral. In
+  clear-first mode, state the lesson once per page in plain words
+  ([clear-first.md](clear-first.md)).
 - End on an image the reader keeps.
 
 ## The look bible
@@ -89,12 +91,16 @@ Write one page before the style round. Every later prompt reads it.
 | Light logic | One motivated source per scene and where its shadows fall                                   |
 | Value plan  | Where the darkest dark and the brightest light go                                           |
 | Palette     | At most four named colors plus the paper, and a spot color if any                           |
+| Ground      | Clear-first only: paper or a light flat is the largest area, text sits on it                |
 
 Ask the user for one comic, film or painting they love and one they dislike. Both are style
 information. Unattended with none given, take both from the story's own place, period and audience,
 and write them into the brief as assumptions.
 
 ## Camera and rhythm
+
+These rules serve a reader who chose a comic. Clear-first mode keeps the dominant panel and trades
+variety for clarity ([clear-first.md](clear-first.md)).
 
 - Each page has one dominant panel that holds the beat. Equal-size grids read as filler.
 - Each page mixes an insert (a hand, an object, an eye), a wide shot that fixes geography, and a
@@ -116,7 +122,8 @@ and write them into the brief as assumptions.
 
 This gate decides whether a page is worth publishing. Run it on the style round, on the first
 finished page, and on the assembled book. A vision model reads with the look bible, and the user
-sees the same sheet.
+sees the same sheet. In clear-first mode run it on the style anchor and on the finished book's
+contact sheet, and render the stock twin for page 1 only.
 
 **The stock twin.** Render the same page from a plain prompt (story facts and the genre label only),
 with the same model and quality. Put it beside the directed page. The directed page must differ at a
@@ -141,12 +148,13 @@ page, the look bible and the questions below, never the prompt, and writes the v
 6. Thumbnail: at 200 pixels wide, do the shapes and the mood survive?
 7. Memory: can the reviewer describe the page in one sentence of images?
 
-**Verdicts.** Exceptional ships. Familiar gets one rewrite of the direction paragraph and a redraw.
-Stock is redrawn from a rewritten paragraph that names the failing rule. The style anchor and the
-first finished page should reach Exceptional before any other page runs. When their attempt cap runs
-out first, follow the cap rules in [review-and-fix.md](review-and-fix.md). Unattended, the separate
-reviewer writes the verdict for every page and the stock twin of page 1 stays in the deliverables
-folder.
+**Verdicts.** Exceptional ships. In showpiece mode, Familiar gets one rewrite of the direction
+paragraph and a redraw. In clear-first mode, a Familiar page ships when it reads. Stock is redrawn
+once from a rewritten paragraph that names the failing rule. In showpiece mode the style anchor and
+the first finished page should reach Exceptional before any other page runs. When their attempt cap
+runs out first, follow the cap rules in [review-and-fix.md](review-and-fix.md). Unattended, the
+separate reviewer writes the verdict for every page and the stock twin of page 1 stays in the
+deliverables folder.
 
 ## Strongest settings
 

@@ -4,6 +4,11 @@ Paste-ready directions, each tested on the same page: a quiet night scene, a lam
 three panels. Take one as a starting point and adapt the hard rules to the story. Keep the FORBIDDEN
 list. Pick the quadrant first (see [art-direction.md](art-direction.md)).
 
+Clear-first mode picks from the light, open directions: Hergé and Chaland, Blake and Sempé, Harper,
+Bass and Ware, and Blain and Sfar. Keep paper or a light flat as the largest area, and use the dark
+color for shapes, never for the ground. Mignola, Pratt and Muñoz, and Tardi swallow lettering in
+black or dense hatching, so they suit showpiece mode.
+
 Every paragraph goes under an "ART DIRECTION" heading in the page prompt, after the page layout, the
 scene and the panels. The page prompt opens with one line: "The drawing style decides everything.
 Commit to it with the confidence, limits and imperfections of a real artist's hand, never a generic

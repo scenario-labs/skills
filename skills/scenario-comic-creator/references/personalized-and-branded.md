@@ -24,6 +24,11 @@ company's message. The Quick lane covers both. This file adds what each needs on
 Use cases: onboarding, safety and compliance, brand history, sales aids, sustainability and CSR,
 recruiting, explainers for a complex topic. Typical length is 8 to 48 pages.
 
+The readers are staff or customers who must understand a message, not comic fans. Work in
+clear-first mode ([clear-first.md](clear-first.md)): at most three takeaways in the client's words,
+plain dialogue, caption rectangles beside the balloons, light pages, and a cold read before
+delivery. The client reads the script's captions and balloons alone before any art is drawn.
+
 ### Approve in this order
 
 1. **Brief**: audience, one message, must-say, must-avoid, tone, language, length, delivery date.

@@ -33,8 +33,9 @@ chapters, each with its own landing.
 - Open a sequence on a wide panel that fixes the geography. Climb to closer shots as tension rises.
   Add an insert for a key object and a reaction for the listener.
 - Hold one side of the axis in a scene so screen direction never flips without a reason.
-- Add silent pages. A full-page illustration with no balloons gives rhythm. Plan at least two per
-  chapter in a long book.
+- In showpiece mode, add silent pages. A full-page illustration with no balloons gives rhythm. Plan
+  at least two per chapter in a long book. In clear-first mode a silent page carries its beat in a
+  caption.
 - Four to six panels per page is the reliable range. Past seven, panels shrink and lettering
   suffers.
 - Assign emotion per panel from what just happened. A reference smile is not an instruction.
@@ -43,18 +44,24 @@ chapters, each with its own landing.
 
 Run this on the finished script, before any art:
 
-- Every page has at least one panel with no words.
-- No two consecutive pages share a grid or a camera setup.
-- Every page names one dominant panel.
-- A book of six pages or more has a silent page.
 - Every printable word is in the script file, spelled as it will print.
+- Cover the art and read only the captions and balloons, in order. A newcomer can say what happens,
+  why it matters and what to do. If not, rewrite the words before any page runs.
+- Every page names one dominant panel.
+- Showpiece mode adds: a panel with no words on every page, no two consecutive pages sharing a grid
+  or a camera setup, and a silent page in a book of six pages or more.
+- Clear-first mode adds: every page has a caption rectangle and one learning beat, and the last page
+  holds the takeaways ([clear-first.md](clear-first.md)).
 
 ## Dialogue
 
 - Short balloons read faster and letter more reliably. Aim for about 15 words per balloon, two or
-  three balloons per panel, authoring-time defaults.
+  three balloons per panel, authoring-time defaults. Clear-first mode keeps to two.
+- Write full sentences that say the thing: the action, the object and the reason. A clipped line
+  that only makes sense with the art fails a reader who is not a comic fan.
 - One speaker per balloon. Say who speaks and in which order they are read.
-- Narration goes in captions, kept apart from speech.
+- Narration goes in caption rectangles, kept apart from speech. A caption sets the place, the time
+  and the stake. Balloons carry speech only.
 - Sound effects are lettering too. Write each one into the script or leave it out.
 - Printable words live in the script file and are pasted unchanged into every redraw.
 

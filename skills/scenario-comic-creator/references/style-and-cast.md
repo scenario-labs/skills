@@ -10,7 +10,8 @@ reaches every sheet and page.
    staging of the same beat: a different layout, camera height and dominant panel, each chosen for
    that direction. One shared skeleton comes back as one composition in four surfaces. Draw the hero
    from a written description, not from the user's photo.
-3. Draw three to five directions on those two pages. They come from
+3. Quick lane: draw three directions (two in clear-first mode) on the page with the most words, all
+   at once, one image each. Album and Book: three to five directions on both pages. They come from
    [style-library.md](style-library.md) or the same formula, each with two named influences, hard
    rules and a FORBIDDEN list. Add a plain-prompt stock twin of the same page and run the taste
    review in [art-direction.md](art-direction.md). Run them on the model the book will use, the
@@ -67,7 +68,10 @@ Rules:
 
 Before page 1, reconcile the script with the cast list. Every principal and every recurring figure
 has an inspected sheet. A gap found after page 20 costs those pages. A sheet passes when its face is
-no longer generic and its costume reads as designed. It does not need an Exceptional verdict.
+no longer generic and its costume reads as designed. It does not need an Exceptional verdict. Draw
+all the sheets at once, one try each and one redo for a sheet that fails. In clear-first mode a
+sheet also passes only when the character differs from the others by silhouette and one costume
+color at thumbnail size.
 
 ## Photos as identity
 
