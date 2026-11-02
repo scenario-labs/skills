@@ -45,6 +45,11 @@ never picks the container.
 - Use roles and plain nouns. A codename or an in-joke goes only where a caption explains it.
 - Keep each balloon under about 15 words and each panel at two balloons or fewer.
 - Banter sits beside facts, never in place of them.
+- One name per thing. A character, a bot or a tool keeps the same name in captions, cards and
+  balloons.
+- A reply needs its question on the page. A "No." that answers nothing reads as a mistake.
+- Earn every takeaway: an event in the story causes it. A takeaway the plot never touches reads as a
+  loose analogy.
 
 Before and after, the same panel:
 
