@@ -86,7 +86,8 @@ Rules: no extra people, no lettering outside the balloons.
   screen message is an enlarged card at page size ([clear-first.md](clear-first.md)).
 - For a silent page, write "no balloons, no text, no captions".
 - Put a TIME line before panel 1. Repeat it in any panel it affects, and name the sky seen through
-  windows.
+  windows. Pages that share a place and hour paste the same setting block and TIME line word for
+  word.
 - Counts above about four are unreliable in small panels. Stage them in rows ("three in front, three
   behind") or leave them uncounted.
 - State relative sizes against the body: "the cat is about half the height of her torso".
@@ -146,8 +147,9 @@ schema: the middle of its range (`medium` on the model tested), never the lowest
 - Fix what they show in the prompt text: a wrong word, a missing beat, a confusing panel, a hand
   over a label ("her finger stays below the button label").
 - The final is a fresh generation from the same prompt and references at the highest quality value.
-  Never attach a proof as a reference and never edit one. The model has no seed, so framing and
-  faces are judged on the finals.
+  Never attach a proof as a reference and never edit one. A seed, where the schema has one,
+  reproduces a run only with every other field unchanged, and the quality value changes, so judge
+  framing and faces on the finals.
 - Sheets and the style round skip the proof: faces and line are what they decide.
 
 ## Running pages
