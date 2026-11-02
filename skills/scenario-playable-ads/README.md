@@ -53,8 +53,9 @@ rewritten to name no game.
   registered) and Google's HTML5 validator on the App Campaigns profile (all checks passed, the CTA
   opened the validator's "using the ExitApi" dialog). Google's Campaign Manager and Display & Video
   360 policies reject the `google` ZIP (they require a `clickTag`). Meta's playable preview also
-  took the `meta` ZIP and passed its six spec checks (the CTA tap was not recorded). No other
-  network's tool was run. `references/networks.md` has the details and what was not covered.
+  took the `meta` ZIP, passed its six spec checks and reported `FbPlayableAd.onCTAClick()` activated
+  after a CTA tap. No other network's tool was run. `references/networks.md` has the details and
+  what was not covered.
 - Network facts were read from each network's public pages in November 2026.
   `references/networks.md` cites the page for each confirmed fact and marks the rest unconfirmed.
 

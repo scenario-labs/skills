@@ -30,8 +30,8 @@ Pangle SDK placement added since, pass 67 of 67 checks on the template's placeho
 same fake containers. That game also passed AppLovin's playable preview (portrait) and Google's
 HTML5 validator on the App Campaigns profile (2 November 2026). Google's Campaign Manager and
 Display & Video 360 policies reject the `google` ZIP, which needs a `clickTag` there. Meta's
-playable preview took the `meta` ZIP and passed its spec checks (the CTA tap was not recorded). No
-other network's own tool was run. Say which tools were run when you hand a build over, and run each
+playable preview took the `meta` ZIP, passed its spec checks and registered the CTA tap. No other
+network's own tool was run. Say which tools were run when you hand a build over, and run each
 network's own preview first ([references/networks.md](references/networks.md)). Each archetype guide
 comes from one build that passed the 19 base checks.
 

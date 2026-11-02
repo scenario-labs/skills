@@ -7,10 +7,10 @@ November 2026; networks change their specs, so re-read the page before a first d
 
 What was tested: every target was exercised against fake containers in headless Chromium (`qa.py`).
 On 2 November 2026 the template's placeholder game was also run in AppLovin's playable preview and
-in Google's HTML5 validator (see those two sections), and uploaded to Meta's playable preview, whose
-spec checks passed (the CTA tap was not recorded). No other network's own tool was run. Say which
-tools were run when you hand a build over, and run the network's own preview or validator before the
-first upload.
+in Google's HTML5 validator (see those two sections), and in Meta's playable preview, where the spec
+checks passed and the CTA tap registered. No other network's own tool was run. Say which tools were
+run when you hand a build over, and run the network's own preview or validator before the first
+upload.
 
 ## What each network gets (`build.py --networks all`)
 
@@ -54,8 +54,9 @@ uploaded to it. The preview showed the game, and the specification panel passed 
 asset is HTML5, the file size is within 5 MB, the bundle has at most 100 files, the size of
 `index.html` is within 5 MB, no JavaScript redirects were found, and no viruses were found. The
 panel states 5 MB for `index.html`, where the docs page above states 2 MB; `build.py` keeps the
-stricter 2 MB. A seventh line warns that `FbPlayableAd.onCTAClick()` is "not yet activated" until
-the CTA is tapped; the result of tapping it was not recorded.
+stricter 2 MB. A seventh line reads that `FbPlayableAd.onCTAClick()` is "not yet activated" until
+the CTA is tapped. After a tap on the end card's CTA it read "FbPlayableAd.onCTAClick() activated
+successfully".
 
 ### Google
 
