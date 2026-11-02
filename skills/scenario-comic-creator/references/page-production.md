@@ -125,7 +125,8 @@ Do not answer every failure with more references or a longer list of prohibition
 1. Write each prompt to a file before sending it. The file is the record of what was asked.
 2. Run the two lettering-test pages together and review both. Tune the template.
 3. Then submit independent pages in bounded parallel batches with `wait: false`, and collect with
-   `jobs_wait`.
+   `jobs_wait`. It takes no timeout. A return of `in_progress` is not a failure: call it again with
+   the returned `pending_job_ids`, and never relaunch or cancel a launched job.
 4. A 429 with `actionName` and `actionLimit` in `details` means the team's concurrency ceiling. Hold
    that many jobs in flight.
 5. After a transport error with no HTTP status, call `jobs_list` before any re-run. The job may have

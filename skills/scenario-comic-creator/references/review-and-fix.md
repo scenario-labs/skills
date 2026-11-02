@@ -59,6 +59,8 @@ observable, not automatically right.
 2. Replace the clause that caused the defect. Keep the printed words identical.
 3. Keep the same references. Add one only where text cannot carry the fact, and say why.
 4. Make one fresh generation from the originals. Never edit a rendered page, and never edit an edit.
+   Run `jobs_wait` on its job (re-call with `pending_job_ids` while it is `in_progress`) before the
+   comparison, so the new asset is the one you compare.
 5. Compare old and new at reading scale and at native scale. Keep the new page if the fix landed and
    nothing regressed. A partial fix with no regression is kept, and the residual is recorded. A fix
    that regressed something leaves the old page in place.

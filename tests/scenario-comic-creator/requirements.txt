@@ -1,2 +1,2 @@
 img2pdf
-pillow
+Pillow>=13,<14

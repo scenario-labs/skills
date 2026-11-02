@@ -22,7 +22,9 @@ each assumption into the brief card.
 6. **Language**: the language of the printed words, and whether other languages follow. Default: the
    user's language, one edition.
 7. **Deliverable**: reading PDF, print file, web strip. Default: reading PDF.
-8. **Budget**: a ceiling on spend and time. Default: price the plan, state the number, proceed.
+8. **Budget**: a ceiling on spend and time. Default: price the plan and state the number. With the
+   user present, wait for a yes. Unattended, proceed when the instructions give a ceiling the
+   estimate fits or say to spend, and otherwise stop at the brief card with the estimate.
 
 A number the user gave beats every default. A dedication, cover or back cover is an extra: offer it,
 and add it only when the user asks or the page budget allows. Unattended, where the user would pick
@@ -90,9 +92,12 @@ Album and Book lanes add:
 
 ## Estimate before starting
 
-1. `model_schema_get` on the chosen page model, then `model_run` with `dry_run: true` on a
-   representative page payload: the real size, the real number of references, a placeholder prompt
-   of realistic length. Real references change the price slightly.
+1. Upload the photo and any sheet you already have first. `model_schema_get` on the chosen page
+   model, then `model_run` with `dry_run: true` on a representative page payload that uses real
+   asset ids: the real size, a placeholder prompt of realistic length, and the uploaded id as the
+   reference (repeated up to the real count where the schema allows it). A made-up id fails the dry
+   run and prices nothing. With nothing uploaded yet, price the payload without references and price
+   it again once the first sheet exists. Real references change the price slightly.
 2. Estimate = pages x per-page price x (1 + redraw share), plus sheets and the style round.
 3. Plan one extra attempt on about a third of the pages in a first book. A mature prompt template
    needs fewer.
