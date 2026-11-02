@@ -17,7 +17,8 @@ reaches every sheet and page.
    review in [art-direction.md](art-direction.md). Run them on the model the book will use, the
    top-ranked one at its highest quality. A different model changes the look, so add a second model
    to the round only when the user asks or the first fails the stock twin twice.
-4. Show every direction side by side on a contact sheet and let the user pick.
+4. Show every direction side by side on a contact sheet and let the user pick. Unattended, pick and
+   log two reasons in the brief card.
 5. Record the winning pages' asset IDs. That page set is the style anchor, and it is reference 1 on
    every later page. Each page prompt says it sets line, color, paper and lettering only, never its
    characters, poses or compositions. An anchor page that is also a story page repeats its staging
@@ -76,7 +77,7 @@ color at thumbnail size.
 ## Photos as identity
 
 - Derive the stylized sheet from the photo once, check the likeness at crop size, and get the user's
-  approval.
+  approval. Unattended, log the check and continue.
 - Use the approved sheet, not the raw photo, as the identity reference on pages. A photo pulls pages
   toward photographic rendering.
 - Say what the reference sets: "sets face, hair and build, never pose, clothes or background".
@@ -87,7 +88,9 @@ color at thumbnail size.
   landmarks, scale.
 - Derive each camera from the plan. A reverse shot flips screen sides and the depth order of
   landmarks. It does not move people through walls.
-- Write architecture, not cast, into the shared setting text.
+- Write architecture, not cast, into the shared setting text, once per location. Paste it unchanged
+  into every page set there, with the TIME line, and change it only where the script changes the
+  place or the hour.
 - When prose keeps failing on geometry, use a plain diagram or a simple blockout as a reference, and
   name which parts to take from it.
 
@@ -114,6 +117,7 @@ self-correction, alarm. Compare the faces side by side. Keep adult proportions o
 - Each extra sheet can shift the style. Add one only where text cannot carry the fact, and note why.
 - Give every reference a role in the prompt and number them in attachment order.
 - Read the reference field's name, limit and array rule from `model_schema_get`. A bare value where
-  `array: true` is silently dropped.
+  `array: true` is silently dropped. A model whose schema has no image reference field cannot carry
+  the sheets: pick another before the style round.
 - Siblings: `scenario-multi-reference` for roles and leaks, `scenario-consistency` for identity and
   trained-model decisions, `scenario-identity-library` for filing a character as a collection.

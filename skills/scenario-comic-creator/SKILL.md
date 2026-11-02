@@ -130,10 +130,13 @@ Record the mode in the brief card. Never switch silently.
    Sunday, French, ink and gouache, PDF", and attaches Ines's photo.
 2. `recommend` with capability `img2img` and the user's own words: one complete comic page, several
    panels, readable dialogue, several reference sheets. Read `next_step.type`. On `ask_user`, show
-   the options (unattended: take the top-ranked entry and log the options). On `no_match`, stop and
-   report `unmet_requirements`, and do not generate. On `proceed`, take `specialty` if present, else
-   the top-ranked entry. Never run an entry flagged `requires_plan_upgrade`. `model_schema_get` on
-   the pick for the reference field, its cap and array rule, and page sizes.
+   the options (unattended: apply the `proceed` rule and log the options). On `no_match`, stop and
+   report `unmet_requirements`, and do not generate. On `proceed`, take `specialty` unless its
+   `caveats` or `when_general_better` name this task, else the first ranked entry not marked
+   deprecated in its `caveats`, `tradeoff` or `explanation`. Never run an entry flagged
+   `requires_plan_upgrade`. `model_schema_get` on the pick for the reference field, its cap and
+   array rule, and page sizes. A pick whose schema has no image reference field cannot carry the
+   photo or the sheets: take the next entry.
 3. Resize the photo to about 2,000 px on its long side and upload it with `upload_asset`.
 4. Price a representative page payload with `dry_run: true`, using the uploaded asset id as the
    reference: the real size, a prompt of realistic length. Write the brief card with the estimate:
@@ -145,12 +148,12 @@ Record the mode in the brief card. Never switch silently.
 6. Style round on the page with the most words. Draw the hero from a written description, not the
    photo. Three directions from the style library, each with two named influences and hard rules and
    its own staging of the same beat, run at once with a plain-prompt stock twin of the same page.
-   Show them side by side and run the taste review. The user picks one. Record its asset IDs as the
-   style anchor.
+   Show them side by side and run the taste review. The user picks one (unattended: pick and log two
+   reasons). Record its asset IDs as the style anchor.
 7. Cast: settle outfit details first (coat, scarf, helmet, the bicycle's colors). Draw Ines's sheet
-   from the photo in the chosen style, then her grandfather's. The user approves the likeness. From
-   here pages use the sheet, not the photo. With no photo, draw the sheet from the written
-   description.
+   from the photo in the chosen style, then her grandfather's. The user approves the likeness
+   (unattended: compare it with the photo at crop size and log the check). From here pages use the
+   sheet, not the photo. With no photo, draw the sheet from the written description.
 8. Proof the two densest pages together at a middle quality value and apply the lettering test. Then
    submit all the other proofs at once with `wait: false` and collect them with `jobs_wait`. A
    return of `in_progress` is not a failure: call it again with the returned `pending_job_ids`, and
