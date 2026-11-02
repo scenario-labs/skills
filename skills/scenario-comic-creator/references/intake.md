@@ -6,9 +6,10 @@ each assumption into the brief card.
 
 ## The questions
 
-1. **Story**: a premise in one sentence, or a source text. Who is it for, and what should the last
-   page leave them feeling? Default: write five loglines, cut the ones the average would write, and
-   offer the best three.
+1. **Story and reader**: a premise in one sentence, or a source text. Who reads it, and what should
+   they know, do or feel afterwards? Employees, customers, students or a board make it clear-first
+   mode, with at most three takeaways in the client's words ([clear-first.md](clear-first.md)).
+   Default: write five loglines, cut the ones the average would write, and offer the best three.
 2. **Length**: story pages, plus cover and extras. Default: Quick lane, 8 story pages and a cover.
 3. **Format**: trim, reading direction, color or black and white, panels per page. Default:
    portrait, left to right, color, four to six panels. A PDF-only book with no trim keeps the
@@ -22,9 +23,11 @@ each assumption into the brief card.
 6. **Language**: the language of the printed words, and whether other languages follow. Default: the
    user's language, one edition.
 7. **Deliverable**: reading PDF, print file, web strip. Default: reading PDF.
-8. **Budget**: a ceiling on spend and time. Default: price the plan and state the number. With the
-   user present, wait for a yes. Unattended, proceed when the instructions give a ceiling the
-   estimate fits or say to spend, and otherwise stop at the brief card with the estimate.
+8. **Budget and time**: a ceiling on spend and on duration. Default: price the plan, state the
+   number and the expected duration (Quick lane about 75 minutes,
+   [budget-and-gates.md](budget-and-gates.md)). With the user present, wait for a yes. Unattended,
+   proceed when the instructions give a ceiling the estimate fits or say to spend, and otherwise
+   stop at the brief card with the estimate.
 
 A number the user gave beats every default. A dedication, cover or back cover is an extra: offer it,
 and add it only when the user asks or the page budget allows. Unattended, where the user would pick
@@ -110,7 +113,10 @@ Write it to a file. Every later phase reads it.
 ```
 Title (working):
 Lane: Quick | Album | Book
+Mode: showpiece | clear-first
 Logline:
+Reader, and what they know or do afterwards:
+Takeaways (clear-first, at most three, in the client's words):
 Audience and tone:
 Ending feeling:
 Pages: story __ + cover __ + extras __
@@ -122,5 +128,6 @@ Places:
 Source text (Book): edition, chapters in scope, what may be cut
 Deliverables:
 Budget and estimate:
+Clock: started __ ; target __ ; gate log in the project folder
 Assumptions made without asking:
 ```

@@ -84,4 +84,4 @@ stay filed and are excluded from the manifest.
 2. The PDF page count matches.
 3. The user opens the PDF and reads a few pages at full size.
 4. Report where each deliverable is: the PDF, the page folder, the collection. State which pages
-   carry known residual findings.
+   carry known residual findings, and add the clock log with the elapsed time at each gate.

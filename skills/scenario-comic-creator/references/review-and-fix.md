@@ -5,7 +5,8 @@
 A strong vision model reads every page for defects with the page prompt, the script and the cast
 sheets in context. It writes findings, crops included. Taste is graded by a separate reviewer who
 sees only the page, the look bible and the questions in [art-direction.md](art-direction.md), never
-the prompt. Run the reviewers of one round in parallel, one per page. The user reads the top two
+the prompt. Review is one pass over every page: the reviewers run in parallel, one per page, with
+one cold reader for the sequence. A second pass follows only a fix round. The user reads the top two
 tiers and adds one sentence where needed. A score proves nothing: crop and compare against the
 sheet.
 
@@ -13,7 +14,7 @@ sheet.
 
 | Tier         | Examples                                                                                         | Who acts                                                                        |
 | ------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| Obvious      | Wrong or missing character, extra limbs, broken lettering, a stock verdict from the taste review | Redraw at once                                                                  |
+| Obvious      | Wrong or missing character, extra limbs, broken lettering, a page the cold read could not follow | Redraw at once                                                                  |
 | Worth a look | State drift (a ring, a coat), geography, a doubtful pose                                         | The user decides (unattended: redraw within budget, then keep the best and log) |
 | Small detail | A button, a finger count in a small panel, a prop proportion                                     | Batched into a fix round                                                        |
 
@@ -23,17 +24,30 @@ small details. The tiers kept the human on the findings that mattered.
 ## Review order
 
 1. Story: does the page deliver its beat and every "must be visible" item? Then the taste review in
-   [art-direction.md](art-direction.md): the stock twin and the seven questions.
+   [art-direction.md](art-direction.md): the stock twin and the seven questions. A Stock verdict is
+   an obvious finding in showpiece mode and a worth-a-look finding in clear-first mode.
 2. Identity, anatomy, costume and prop construction against the sheets.
 3. State and geography across the previous, current and next page.
 4. Lettering: every word once, in order, right speaker, tails pointing at the speaker, accents
    intact.
 5. Native fidelity: crop faces, hands, thin lines and lettering at 100%.
-6. The assembled sequence, read in order at reading size.
+6. The assembled sequence, read in order at reading size, then the cold read below.
 
 Record each finding with page, panel, the source requirement, the exact asset ID and what is
 observed. Mark each check pass, fail or not observable. A hidden or cropped detail is not
 observable, not automatically right.
+
+## Cold read
+
+A reviewer who has seen neither the script nor the brief gets the finished pages in order and writes
+one sentence per page, the point of the comic, who each character is, and every place they had to
+guess. Compare it with the beats and the takeaways in the brief card. A page fails when its sentence
+misses its beat or the reviewer guessed.
+
+- Fix with words first: rewrite or add a caption through a text repair, and redraw only when the art
+  hides the beat.
+- After two failed cold reads, show the user the sentences and ask.
+- Details and the clear-first bar: [clear-first.md](clear-first.md).
 
 ## Mechanism checks
 
@@ -73,8 +87,10 @@ Editing an edit melts faces and costumes. Rendered pages are evidence, not refer
 
 ## Attempt caps
 
-- Budget per page while the template matures: up to four fresh generations. Once pages pass on the
-  first try, the first generation plus one fresh alternative.
+- Quick lane: the first generation plus one fresh alternative per page, at most four generations per
+  page across the whole job ([budget-and-gates.md](budget-and-gates.md)).
+- Album and Book while the template matures: up to four fresh generations per page. Once pages pass
+  on the first try, the first generation plus one fresh alternative.
 - Later rounds contain only pages with a confirmed defect, each with a changed remedy.
 - A cap stops paid retries, not diagnosis. Report what is unresolved and what the next attempt
   should change.
@@ -84,8 +100,8 @@ Editing an edit melts faces and costumes. Rendered pages are evidence, not refer
 - When the cap runs out below Exceptional, with the user present show the best try and ask whether
   to accept it or change the direction. Unattended, ship the strongest try, record its verdict and
   residual defects, and report the gap. Do not start the next page on the hope of a later pass.
-- An unattended run states a stop rule in the brief card: at most three fix rounds, then the
-  strongest tries ship with their residual list.
+- An unattended run states a stop rule in the brief card: one fix round in the Quick lane and at
+  most three in the others, then the strongest tries ship with their residual list.
 
 ## Fix rounds
 
