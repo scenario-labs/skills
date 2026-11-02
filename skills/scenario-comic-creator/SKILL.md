@@ -49,10 +49,10 @@ instead of asking an open question.
 | Phase        | Do                                                                   |
 | ------------ | -------------------------------------------------------------------- |
 | 1. Brief     | Brief card with a priced estimate: lane, pages, format, language     |
-| 2. Story     | Five loglines cut to one, beats, one script per page, before any art |
+| 2. Story     | Five loglines cut to one, beats, one script per page, script check   |
 | 3. Direction | Look bible: two named influences, hard rules, FORBIDDEN list, camera |
-| 4. Style     | Three to five directions plus a plain-prompt stock twin; user picks  |
-| 5. Cast      | One sheet per recurring character, inspected beside the style anchor |
+| 4. Style     | Three to five directions, each staged differently, plus a stock twin |
+| 5. Cast      | One sheet per character, taste-reviewed: its face is on every page   |
 | 6. Pages     | One request per page: long prompt, about five references             |
 | 7. Review    | Three tiers plus the taste review, with crops                        |
 | 8. Fix       | Redraw only flagged pages, fresh from the originals                  |

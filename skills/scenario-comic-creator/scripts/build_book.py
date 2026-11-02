@@ -195,8 +195,23 @@ def manifest_items(manifest):
     return [(f"p. {entry['page']}", page_path(manifest, entry)) for entry in manifest["pages"]]
 
 
-def build_light_pdf(manifest, pdf_path, max_edge, quality, grayscale=False):
-    """Downsized JPEG proof copy. Returns the output size in bytes."""
+def _original_size_layout(original_points):
+    """img2pdf layout that gives page n the size recorded for the original image n."""
+    calls = iter(range(10**9))
+
+    def layout(imgwidthpx, imgheightpx, ndpi):
+        width, height = original_points[next(calls)]
+        return width, height, width, height
+
+    return layout
+
+
+def build_light_pdf(manifest, pdf_path, max_edge, quality, grayscale=False, dpi=300):
+    """Downsized JPEG proof copy. Returns the output size in bytes.
+
+    Page size matches the lossless PDF: the trim size when the manifest has one,
+    otherwise each original image's pixel size at dpi.
+    """
     import img2pdf
     from PIL import Image
 
@@ -207,11 +222,16 @@ def build_light_pdf(manifest, pdf_path, max_edge, quality, grayscale=False):
             page_points, fit=img2pdf.FitMode.into, auto_orient=False
         )
     else:
-        layout = img2pdf.get_fixed_dpi_layout_fun((150, 150))
+        original_points = []
+        layout = _original_size_layout(original_points)
     with tempfile.TemporaryDirectory() as scratch:
         sources = []
         for index, entry in enumerate(manifest["pages"]):
             with Image.open(page_path(manifest, entry)) as image:
+                if not trim:
+                    original_points.append(
+                        (image.width / dpi * POINTS_PER_INCH, image.height / dpi * POINTS_PER_INCH)
+                    )
                 rgba = image.convert("RGBA")
                 canvas = Image.new("RGB", rgba.size, (255, 255, 255))
                 canvas.paste(rgba, mask=rgba.getchannel("A"))
@@ -316,7 +336,12 @@ def main(argv=None):
         print(f"note: flattened transparency onto white on pages {flattened}")
     if args.light_pdf:
         size = build_light_pdf(
-            manifest, args.light_pdf, args.light_max_edge, args.light_quality, args.grayscale
+            manifest,
+            args.light_pdf,
+            args.light_max_edge,
+            args.light_quality,
+            args.grayscale,
+            dpi=args.dpi,
         )
         print(f"light pdf: {args.light_pdf} ({size / 1e6:.1f} MB, re-encoded proof copy, not the archive)")
     if args.contact_sheet:

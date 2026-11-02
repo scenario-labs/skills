@@ -80,17 +80,19 @@ the influences.
 
 Write one page before the style round. Every later prompt reads it.
 
-| Item        | Decide                                                            |
-| ----------- | ----------------------------------------------------------------- |
-| Influences  | Two named artists or movements, and what to take from each        |
-| Hard rules  | Three facts about line, color and tone                            |
-| Forbidden   | What this book never does                                         |
-| Light logic | One motivated source per scene and where its shadows fall         |
-| Value plan  | Where the darkest dark and the brightest light go                 |
-| Palette     | At most four named colors plus the paper, and a spot color if any |
+| Item        | Decide                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| Influences  | Two named artists or movements, and what to take from each                                  |
+| Hard rules  | Three facts about line, color and tone                                                      |
+| Forbidden   | What this book never does                                                                   |
+| Faces       | One trait taken from each influence (nose, eyes, jaw, hair) and the generic face you refuse |
+| Light logic | One motivated source per scene and where its shadows fall                                   |
+| Value plan  | Where the darkest dark and the brightest light go                                           |
+| Palette     | At most four named colors plus the paper, and a spot color if any                           |
 
 Ask the user for one comic, film or painting they love and one they dislike. Both are style
-information.
+information. Unattended with none given, take both from the story's own place, period and audience,
+and write them into the brief as assumptions.
 
 ## Camera and rhythm
 
@@ -121,9 +123,17 @@ with the same model and quality. Put it beside the directed page. The directed p
 glance in at least four of six: line, palette, value structure, composition, surface, acting. If it
 does not, the direction did not take. Rewrite the hard rules and redraw.
 
+**The trend check.** The twin catches the model's default. Each genre also has a look of the moment,
+such as grainy flat-color print for a picture-book night or dark cinematic paint for fantasy. Write
+that look in one line, then name one visible choice on the page a trend-follower would not make. If
+there is none, rewrite the direction.
+
+**Fresh eyes.** The agent that wrote the prompt does not grade the page. A separate pass sees the
+page, the look bible and the questions below, never the prompt, and writes the verdict.
+
 **Seven questions,** each answered yes or no with a crop as evidence:
 
-1. Hand: can you name two influences visible on the page?
+1. Hand: can you name two influences visible on the page, faces included?
 2. Rules: does every hard rule hold, and is anything from the FORBIDDEN list present?
 3. Only here: is there one choice that comes from this story and could not move to another book?
 4. Value plan: is there a true dark and a true light, placed on purpose?
@@ -133,8 +143,9 @@ does not, the direction did not take. Rewrite the hard rules and redraw.
 
 **Verdicts.** Exceptional ships. Familiar gets one rewrite of the direction paragraph and a redraw.
 Stock is redrawn from a rewritten paragraph that names the failing rule. The style anchor and the
-first finished page must reach Exceptional before any other page runs. Unattended, the reviewer
-writes the verdict for every page and keeps the stock twin of page 1 in the deliverables folder.
+first finished page must reach Exceptional before any other page runs. Unattended, the separate
+reviewer writes the verdict for every page and the stock twin of page 1 stays in the deliverables
+folder.
 
 ## Strongest settings
 
@@ -142,4 +153,6 @@ writes the verdict for every page and keeps the stock twin of page 1 in the deli
   from `recommend` can be a lower tier, so read the schema and raise it.
 - Size for the deliverable and write prompts of 600 to 1,000 words once a book has a template.
   Length carries light, camera and acting.
-- When two models rank close, draw the style round on both and keep the one with the stronger pages.
+- Draw on the top-ranked model. Add a second model to the style round only when the user asks or the
+  top model fails the stock twin twice. Drop a model after one failure on its output limit. Log the
+  choice and the runner-up.
