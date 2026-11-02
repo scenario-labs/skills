@@ -13,7 +13,8 @@ communication, explainers for a complex topic.
 The brief names the reader, what they should know or do afterwards, and at most three takeaways. Ask
 for them at intake. Take them from the client's words and invent no procedure.
 
-- Every page carries one learning beat, stated in plain words in a caption.
+- Every page carries one learning beat, stated once in plain words: by a character when it sounds
+  natural, otherwise in a caption.
 - The last page ends on a takeaway rectangle: the rules, in the client's words.
 - A joke or an image may carry feeling, never the information.
 
@@ -28,8 +29,8 @@ never picks the container.
 | Caption rectangle | Square corners, cream fill, top-left of the panel     | Narration: where, when, what and why  |
 | Label rectangle   | Small square box beside a figure, or a card on screen | A name and role, a message, a button  |
 
-- Every page has at least one caption rectangle. A scene opens with one that says the place and the
-  time.
+- A scene opens with a caption that says the place and the time, unless the picture already shows
+  both. How many more: see the next section.
 - Name each character in a label at first appearance, with the role the reader needs ("Mara, growth
   lead").
 - Show a chat message, an alert or a button as a large readable card at page size. Small screen text
@@ -37,6 +38,24 @@ never picks the container.
 - Reading order is caption, then balloons, top left to bottom right.
 - Aim for 40 to 70 printed words per page, captions included. Under 25, the page explains nothing.
   Over 90, the lettering shrinks. These are authoring-time defaults.
+
+## How many rectangles
+
+Captions are a budget you assess page by page, never a slot in every panel. With none, a reader who
+is not a comic fan gets lost. With too many, the page reads like slides with pictures.
+
+- Most panels carry no caption. A typical page has one or two. One caption per panel is almost never
+  right.
+- A caption earns its place only with a job the picture and the balloons cannot do:
+  - a new place, or a jump in time;
+  - a term the reader does not know;
+  - the page's learning beat, when no character can say it naturally.
+- Cut a caption that repeats what the picture shows or a balloon says. Prefer a character saying it.
+- Count every rectangle together: captions, labels and screen cards. A panel that already holds a
+  screen card or a name label needs no caption.
+- Assess it in the script. For each page, list each caption with its job, and cut any caption with
+  none. Captions in more than half of a page's panels are too many: keep the one or two that carry
+  the most.
 
 ## Plain dialogue
 
@@ -59,8 +78,10 @@ Cryptic    MARA: "Tomorrow. The launch first."
 
 Clear      Caption: "Thursday, 1:10 a.m. A security update has waited on Mara's laptop for six days."
            MARA: "I'll restart after the launch. It can wait one more night."
-           Caption: "A laptop that skips updates is the easiest way into a company."
 ```
+
+One caption sets the time and the stake, and Mara's line says the choice. The lesson lands later on
+the page, in one line from the colleague who has to clean up, not in a second caption.
 
 ## Cover-the-art test
 
@@ -96,6 +117,7 @@ gets the finished pages in order and writes:
 2. The point of the comic.
 3. Who each character is.
 4. Every place they guessed: a balloon they could not read, a missing step, a joke they missed.
+5. Every caption that told them what they could already see, or that they skipped.
 
 Compare it with the beats and takeaways in the brief card. A page fails when the sentence misses its
 beat or the reviewer guessed. Fix with words first: rewrite or add a caption through a text repair

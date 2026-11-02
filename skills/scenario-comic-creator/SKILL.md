@@ -88,8 +88,9 @@ question.
 - Direct before drawing. Name two influences, a material, three hard rules and a FORBIDDEN list. A
   mood or a bare genre label returns stock.
 - Name one light source per scene and where its shadows fall. Even light is stock.
-- Make every page readable cold. Write plain full sentences, add a caption rectangle beside the
-  balloons, label each character at first appearance, and keep pages mostly light
+- Make every page readable cold. Write plain full sentences, add caption rectangles only where they
+  carry what the picture and balloons cannot (usually one or two a page, almost never one per
+  panel), label each character at first appearance, and keep pages mostly light
   ([clear-first.md](references/clear-first.md)). Cover the art and read the words alone: the story
   must survive. This matters most in clear-first mode and still applies to a gift.
 - Run the taste review. In showpiece mode aim to ship only distinctive pages, anchor first. In

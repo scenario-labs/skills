@@ -26,8 +26,8 @@ recruiting, explainers for a complex topic. Typical length is 8 to 48 pages.
 
 The readers are staff or customers who must understand a message, not comic fans. Work in
 clear-first mode ([clear-first.md](clear-first.md)): at most three takeaways in the client's words,
-plain dialogue, caption rectangles beside the balloons, light pages, and a cold read before
-delivery. The client reads the script's captions and balloons alone before any art is drawn.
+plain dialogue, a few caption rectangles where the balloons need them, light pages, and a cold read
+before delivery. The client reads the script's captions and balloons alone before any art is drawn.
 
 ### Approve in this order
 
