@@ -89,6 +89,14 @@ Rules: no extra people, no lettering outside the balloons.
 - State a costume or object in the scene block and again in each panel that shows it.
 - Write printed words in the case that will print. A direction that calls for capitals returns
   capitals, so a script line in mixed case prints in capitals and fails an exact-text check.
+- A word in the prompt draws what it names. A rule like "no gray" written with the word gray, a
+  season word that adds colored foliage, or "faintly" that asks for a third tone will show in the
+  image. State the rule once in positive terms ("two inks, black and orange, on white paper") and
+  remove every contrary word.
+- A limited-ink style may finish with one deterministic print pass that thresholds every pixel to
+  the inks. Run it once on the original render, never chained, and log the threshold.
+- Before the first page runs, read the shared light clause against every panel clause. A shadow that
+  climbs a wall the same prompt calls solid black loses the story beat.
 - Open every page prompt with the one-line style command from [style-library.md](style-library.md),
   and end the art direction with the FORBIDDEN list.
 
@@ -118,7 +126,8 @@ A defect usually traces to one clause. Replace that clause. Do not append a hist
 Before blaming one clause, search the whole prompt for words that contradict the fix. A "night" in
 the style paragraph defeats a morning TIME line.
 
-Do not answer every failure with more references or a longer list of prohibitions.
+Do not answer every failure with more references or a longer list of prohibitions. When two rewrites
+of the clause leave a defect in place, record it as a residual and ship the stronger try.
 
 ## Running pages
 

@@ -2,9 +2,12 @@
 
 ## Who reviews
 
-A strong vision model reads every page with the page prompt, the script and the cast sheets in
-context. It writes findings, crops included. The user reads the top two tiers and adds one sentence
-where needed. A score proves nothing: crop and compare against the sheet.
+A strong vision model reads every page for defects with the page prompt, the script and the cast
+sheets in context. It writes findings, crops included. Taste is graded by a separate reviewer who
+sees only the page, the look bible and the questions in [art-direction.md](art-direction.md), never
+the prompt. Run the reviewers of one round in parallel, one per page. The user reads the top two
+tiers and adds one sentence where needed. A score proves nothing: crop and compare against the
+sheet.
 
 ## Three tiers
 
@@ -58,9 +61,10 @@ observable, not automatically right.
 1. Read the page's lineage: exact prompt, exact references, job, asset ID.
 2. Replace the clause that caused the defect. Keep the printed words identical.
 3. Keep the same references. Add one only where text cannot carry the fact, and say why.
-4. Make one fresh generation from the originals. Never edit a rendered page, and never edit an edit.
-   Run `jobs_wait` on its job (re-call with `pending_job_ids` while it is `in_progress`) before the
-   comparison, so the new asset is the one you compare.
+4. Make one fresh generation from the originals. Never edit a rendered page (one deterministic print
+   pass for a limited-ink style is the exception, see [page-production.md](page-production.md)), and
+   never edit an edit. Run `jobs_wait` on its job (re-call with `pending_job_ids` while it is
+   `in_progress`) before the comparison, so the new asset is the one you compare.
 5. Compare old and new at reading scale and at native scale. Keep the new page if the fix landed and
    nothing regressed. A partial fix with no regression is kept, and the residual is recorded. A fix
    that regressed something leaves the old page in place.
@@ -75,6 +79,13 @@ Editing an edit melts faces and costumes. Rendered pages are evidence, not refer
 - A cap stops paid retries, not diagnosis. Report what is unresolved and what the next attempt
   should change.
 - Keep the stronger earlier candidate. No hidden rollback and no budget reset when a label changes.
+- The one rewrite a Familiar verdict allows is one of the page's tries. Style-round images do not
+  count against a page. The anchor pages' tries are counted apart from the book's.
+- When the cap runs out below Exceptional, with the user present show the best try and ask whether
+  to accept it or change the direction. Unattended, ship the strongest try, record its verdict and
+  residual defects, and report the gap. Do not start the next page on the hope of a later pass.
+- An unattended run states a stop rule in the brief card: at most three fix rounds, then the
+  strongest tries ship with their residual list.
 
 ## Fix rounds
 
