@@ -1,6 +1,6 @@
 ---
 name: scenario-comic-creator
-description: "Use when a user wants to make their own comic, manga, BD, graphic novel or illustrated book with Scenario: a short personalized story from a photo or an idea, a branded or training comic, an album, or a book of hundreds of pages adapted from a text. Keywords: comic book, manga, graphic novel, personalized comic, book adaptation, comic pages, speech balloons."
+description: "Use when a user wants to make their own comic, manga, BD, graphic novel or illustrated book with Scenario: a short personalized story from a photo or an idea, a branded or training comic, an album, or a book of hundreds of pages adapted from a text. Keywords: comic book, manga, webtoon, graphic novel, personalized comic, book adaptation, comic pages, speech balloons."
 license: MIT
 ---
 
@@ -41,8 +41,9 @@ Ask every question in one message, each with a default, then run without asking 
 length, format, look, cast, language, deliverable, budget. A number the user gave beats every
 default: a title and a dedication fit inside the pages they asked for. Unattended, take the
 defaults, pick where the user would pick (style, likeness) and choose the bolder option, then log
-each choice with two reasons in the brief card. If the user has no story or no look, propose options
-instead of asking an open question.
+each choice with two reasons in the brief card. Spend is the exception: proceed past the estimate
+only when the user gave a ceiling it fits or said to spend; otherwise stop at the brief card with
+the number. If the user has no story or no look, propose options instead of asking an open question.
 
 ## Quick reference
 
@@ -98,30 +99,34 @@ Record the mode in the brief card. Never switch silently.
 1. Intake. The user answers: "Ines turns 8, she rides her grandfather's old yellow bicycle every
    Sunday, French, ink and gouache, PDF", and attaches Ines's photo.
 2. `recommend` with capability `img2img` and the user's own words: one complete comic page, several
-   panels, readable dialogue, several reference sheets. On `next_step.type` of `ask_user`, show the
-   options. `model_schema_get` on the pick for the reference field, its cap and array rule, and page
-   sizes.
-3. Price a representative page payload with `dry_run: true`: the real size, the real number of
-   references, a prompt of realistic length. Write the brief card with the estimate: pages, sheets,
-   style round and a redraw margin.
-4. Resize the photo to about 2,000 px on its long side and upload it with `upload_asset`.
+   panels, readable dialogue, several reference sheets. Read `next_step.type`. On `ask_user`, show
+   the options (unattended: take the top-ranked entry and log the options). On `no_match`, stop and
+   report `unmet_requirements`, and do not generate. On `proceed`, take `specialty` if present, else
+   the top-ranked entry. Never run an entry flagged `requires_plan_upgrade`. `model_schema_get` on
+   the pick for the reference field, its cap and array rule, and page sizes.
+3. Resize the photo to about 2,000 px on its long side and upload it with `upload_asset`.
+4. Price a representative page payload with `dry_run: true`, using the uploaded asset id as the
+   reference: the real size, a prompt of realistic length. Write the brief card with the estimate:
+   pages, sheets, style round and a redraw margin.
 5. Script: five loglines cut to one that keeps every fact given (the bicycle, her grandfather,
    Sundays), six beats, six page scripts in her grandfather's voice with the exact French words,
    accents included. Write the look bible: one light source per scene, a four-color palette, a
    refuse list, a camera plan.
 6. Style round on two script pages, one dialogue page and one establishing page. Draw the hero from
    a written description, not the photo. Four directions from the style library, each with two named
-   influences and hard rules, one skeleton, plus a plain-prompt stock twin of the same page. Show
-   them side by side and run the taste review. The user picks one. Record its asset IDs as the style
-   anchor.
+   influences and hard rules and its own staging of the same beat, plus a plain-prompt stock twin of
+   the same page. Show them side by side and run the taste review. The user picks one. Record its
+   asset IDs as the style anchor.
 7. Cast: settle outfit details first (coat, scarf, helmet, the bicycle's colors). Draw Ines's sheet
    from the photo in the chosen style, then her grandfather's. The user approves the likeness. From
    here pages use the sheet, not the photo. With no photo, draw the sheet from the written
    description.
 8. Run the two densest pages together and apply the lettering test. Then submit the other pages with
-   `wait: false` and collect them with `jobs_wait`.
+   `wait: false` and collect them with `jobs_wait`. A return of `in_progress` is not a failure: call
+   it again with the returned `pending_job_ids`, and never relaunch or cancel.
 9. Review every page in three tiers plus the taste review, with crops of hands, faces and balloons,
-   and counts of repeated objects. Redraw each flagged page by replacing the guilty clause.
+   and counts of repeated objects. Redraw each flagged page by replacing the guilty clause, and
+   `jobs_wait` on each redraw before comparing it with the old page.
 10. Build the manifest, then the lossless PDF, a light PDF to send and a contact sheet with
     `scripts/build_book.py`. Read the contact sheet in order. Report where the PDF, the page files
     and the collection are.
