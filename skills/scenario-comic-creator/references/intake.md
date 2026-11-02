@@ -11,9 +11,12 @@ each assumption into the brief card.
    offer the best three.
 2. **Length**: story pages, plus cover and extras. Default: Quick lane, 8 story pages and a cover.
 3. **Format**: trim, reading direction, color or black and white, panels per page. Default:
-   portrait, left to right, color, four to six panels.
+   portrait, left to right, color, four to six panels. A PDF-only book with no trim keeps the
+   proportions of the art, and both PDFs get the same page size.
 4. **Look**: one comic, film or painting they love and one they dislike, or "show me options".
-   Default: a style round with four directions that differ by concept.
+   Default: a style round with four directions that differ by concept. Unattended with none given,
+   take a loved and a disliked reference from the story's place, period and audience, and record
+   them as assumptions.
 5. **Cast**: who appears, and a photo or a description for each. Default: invent the cast from the
    premise.
 6. **Language**: the language of the printed words, and whether other languages follow. Default: the

@@ -39,6 +39,16 @@ chapters, each with its own landing.
   suffers.
 - Assign emotion per panel from what just happened. A reference smile is not an instruction.
 
+## Script check
+
+Run this on the finished script, before any art:
+
+- Every page has at least one panel with no words.
+- No two consecutive pages share a grid or a camera setup.
+- Every page names one dominant panel.
+- A book of six pages or more has a silent page.
+- Every printable word is in the script file, spelled as it will print.
+
 ## Dialogue
 
 - Short balloons read faster and letter more reliably. Aim for about 15 words per balloon, two or

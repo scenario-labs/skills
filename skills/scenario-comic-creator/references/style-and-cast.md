@@ -6,17 +6,22 @@ reaches every sheet and page.
 ## Style round
 
 1. Pick two pages from the script: one dialogue page and one establishing or action page.
-2. Write one prompt skeleton for each page. Only the style paragraph changes between directions.
-   Draw the hero from a written description, not from the user's photo.
+2. Write a prompt for each page and each direction. The style paragraph changes, and so does the
+   staging of the same beat: a different layout, camera height and dominant panel, each chosen for
+   that direction. One shared skeleton comes back as one composition in four surfaces. Draw the hero
+   from a written description, not from the user's photo.
 3. Draw three to five directions on those two pages. They come from
    [style-library.md](style-library.md) or the same formula, each with two named influences, hard
    rules and a FORBIDDEN list. Add a plain-prompt stock twin of the same page and run the taste
-   review in [art-direction.md](art-direction.md). Run them on the model the book will use. A
-   different model changes the look, so when two models rank close, draw the round on both.
+   review in [art-direction.md](art-direction.md). Run them on the model the book will use, the
+   top-ranked one at its highest quality. A different model changes the look, so add a second model
+   to the round only when the user asks or the first fails the stock twin twice.
 4. Show every direction side by side on a contact sheet and let the user pick.
 5. Record the winning pages' asset IDs. That page set is the style anchor, and it is reference 1 on
    every later page. Each page prompt says it sets line, color, paper and lettering only, never its
-   characters, poses or compositions.
+   characters, poses or compositions. An anchor page that is also a story page repeats its staging
+   only on purpose: the page script says whether to keep it or restage, and the prompt says the
+   same.
 6. Never reference a page from a rejected direction.
 
 A direction is written in concrete terms, never as a genre name:
@@ -42,7 +47,8 @@ Procedure:
    clothes, disguise). Give each state its own row. Then generate the sheet in the approved style,
    from the brief or from the photo.
 2. Inspect it beside the style anchor and beside the other sheets. Drop a sheet that changes the
-   style.
+   style. Run the taste review on the sheet: the face on it is the face on every page, so a generic
+   face is redrawn before the book locks it.
 3. When two characters look alike, check they stay distinguishable on one page.
 4. File each sheet with its asset ID and a name.
 

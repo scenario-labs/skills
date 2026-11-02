@@ -32,7 +32,8 @@ stay filed and are excluded from the manifest.
   review accepted. At 3,500 px a page, six pages weighed 120 MB.
 - Send the light PDF (`--light-pdf`): downsized JPEG pages, labeled as a proof copy.
 - A black-and-white book embeds as gray (`--grayscale`), a third of the size.
-- Set the PDF page size to the trim size.
+- Set the PDF page size to the trim size. With no trim, both PDFs use the art's own proportions at
+  `--dpi` (default 300), so the archive and the light copy have the same page size.
 - Right-to-left books: files stay in reading order. Tell the printer the binding is on the right.
 - [scripts/build_book.py](../scripts/build_book.py) builds the PDFs from a manifest, writes a
   contact sheet, fills and checks page hashes, and builds a labeled contact sheet from any images

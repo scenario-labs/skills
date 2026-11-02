@@ -197,6 +197,30 @@ class LightPdfTests(unittest.TestCase):
             self.assertIn("re-encoded proof copy", out)
 
 
+    def test_light_and_lossless_pdfs_share_page_sizes_without_a_trim(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            manifest = self._noisy_book(root)
+            data = json.loads(manifest.read_text())
+            data.pop("trim_mm")
+            manifest.write_text(json.dumps(data))
+            full, light = root / "full.pdf", root / "light.pdf"
+            code, out, _ = run(
+                ["build", str(manifest), "--pdf", str(full), "--light-pdf", str(light),
+                 "--light-max-edge", "600"]
+            )
+            self.assertEqual(code, 0, out)
+            pattern = rb"/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]"
+            full_boxes = re.findall(pattern, full.read_bytes())
+            light_boxes = re.findall(pattern, light.read_bytes())
+            self.assertEqual(len(full_boxes), 2)
+            self.assertEqual(len(light_boxes), 2)
+            for a, b in zip(full_boxes, light_boxes):
+                self.assertAlmostEqual(float(a[0]), float(b[0]), delta=0.5)
+                self.assertAlmostEqual(float(a[1]), float(b[1]), delta=0.5)
+            self.assertAlmostEqual(float(full_boxes[0][0]), 1200 / 300 * 72, delta=0.5)
+
+
 class SheetAndColumnsTests(unittest.TestCase):
     def test_sheet_command_labels_any_images_without_a_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
