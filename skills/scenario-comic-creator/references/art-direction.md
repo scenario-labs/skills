@@ -148,13 +148,19 @@ page, the look bible and the questions below, never the prompt, and writes the v
 6. Thumbnail: at 200 pixels wide, do the shapes and the mood survive?
 7. Memory: can the reviewer describe the page in one sentence of images?
 
-**Verdicts.** Exceptional ships. In showpiece mode, Familiar gets one rewrite of the direction
-paragraph and a redraw. In clear-first mode, a Familiar page ships when it reads. Stock is redrawn
-once from a rewritten paragraph that names the failing rule. In showpiece mode the style anchor and
-the first finished page should reach Exceptional before any other page runs. When their attempt cap
-runs out first, follow the cap rules in [review-and-fix.md](review-and-fix.md). Unattended, the
-separate reviewer writes the verdict for every page and the stock twin of page 1 stays in the
-deliverables folder.
+**Verdicts.** Three labels, worded neutrally because a client may read them:
+
+- **Distinctive**: the page has a hand, and one choice that could not move to another book. It
+  ships.
+- **Competent**: well made, with no choice of its own. In showpiece mode it gets one rewrite of the
+  direction paragraph and a redraw. In clear-first mode it ships when it reads.
+- **Generic**: nothing ties the page to this story, so it is stock. It is redrawn once from a
+  rewritten paragraph that names the failing rule.
+
+In showpiece mode the style anchor and the first finished page should reach Distinctive before any
+other page runs. When their attempt cap runs out first, follow the cap rules in
+[review-and-fix.md](review-and-fix.md). Unattended, the separate reviewer writes the verdict for
+every page and the stock twin of page 1 stays in the deliverables folder.
 
 ## Strongest settings
 

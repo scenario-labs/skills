@@ -24,8 +24,8 @@ small details. The tiers kept the human on the findings that mattered.
 ## Review order
 
 1. Story: does the page deliver its beat and every "must be visible" item? Then the taste review in
-   [art-direction.md](art-direction.md): the stock twin and the seven questions. A Stock verdict is
-   an obvious finding in showpiece mode and a worth-a-look finding in clear-first mode.
+   [art-direction.md](art-direction.md): the stock twin and the seven questions. A Generic verdict
+   is an obvious finding in showpiece mode and a worth-a-look finding in clear-first mode.
 2. Identity, anatomy, costume and prop construction against the sheets.
 3. State and geography across the previous, current and next page.
 4. Lettering: every word once, in order, right speaker, tails pointing at the speaker, accents
@@ -95,9 +95,9 @@ Editing an edit melts faces and costumes. Rendered pages are evidence, not refer
 - A cap stops paid retries, not diagnosis. Report what is unresolved and what the next attempt
   should change.
 - Keep the stronger earlier candidate. No hidden rollback and no budget reset when a label changes.
-- The one rewrite a Familiar verdict allows is one of the page's tries. Style-round images do not
+- The one rewrite a Competent verdict allows is one of the page's tries. Style-round images do not
   count against a page. The anchor pages' tries are counted apart from the book's.
-- When the cap runs out below Exceptional, with the user present show the best try and ask whether
+- When the cap runs out below Distinctive, with the user present show the best try and ask whether
   to accept it or change the direction. Unattended, ship the strongest try, record its verdict and
   residual defects, and report the gap. Do not start the next page on the hope of a later pass.
 - An unattended run states a stop rule in the brief card: one fix round in the Quick lane and at

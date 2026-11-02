@@ -102,4 +102,4 @@ a second cold read from that person is worth more than any score.
 
 - Run the taste review twice: on the style anchor, and on the finished book's contact sheet.
 - Render the stock twin for page 1 only.
-- A Familiar page ships when it reads. A Stock page is redrawn once.
+- A Competent page ships when it reads. A Generic page is redrawn once.

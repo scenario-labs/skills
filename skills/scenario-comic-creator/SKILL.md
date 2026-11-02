@@ -92,9 +92,9 @@ question.
   balloons, label each character at first appearance, and keep pages mostly light
   ([clear-first.md](references/clear-first.md)). Cover the art and read the words alone: the story
   must survive. This matters most in clear-first mode and still applies to a gift.
-- Run the taste review. In showpiece mode aim to ship only exceptional pages, anchor first. In
-  clear-first mode a Familiar page ships when it reads. When the attempt cap runs out below the bar,
-  show the best try and ask, or unattended ship the strongest and record the gap.
+- Run the taste review. In showpiece mode aim to ship only distinctive pages, anchor first. In
+  clear-first mode a competent page ships when it reads. When the attempt cap runs out below the
+  bar, show the best try and ask, or unattended ship the strongest and record the gap.
 - Keep a clock. Quick lane: about 75 minutes for six to eight pages. Run independent work at once,
   check each gate, and take the cuts when one runs late. Never answer a late gate with a longer run
   ([budget-and-gates.md](references/budget-and-gates.md)).
