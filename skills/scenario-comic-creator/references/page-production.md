@@ -133,14 +133,33 @@ the style paragraph defeats a morning TIME line.
 Do not answer every failure with more references or a longer list of prohibitions. When two rewrites
 of the clause leave a defect in place, record it as a residual and ship the stronger try.
 
+## Proof pass
+
+Draw every page once at a low-cost quality value before the final pass. Take the value from the
+schema: the middle of its range (`medium` on the model tested), never the lowest.
+
+- In one test, a proof kept the final's panel layout, scene content, balloon placement and every
+  printed word. Figure scale, faces and some hand positions changed. The proof cost about a tenth of
+  the final and took nearly the same time.
+- Read the proofs for words, beats, layout and reading order. Run the lettering check and the cold
+  read on them.
+- Fix what they show in the prompt text: a wrong word, a missing beat, a confusing panel, a hand
+  over a label ("her finger stays below the button label").
+- The final is a fresh generation from the same prompt and references at the highest quality value.
+  Never attach a proof as a reference and never edit one. The model has no seed, so framing and
+  faces are judged on the finals.
+- Sheets and the style round skip the proof: faces and line are what they decide.
+
 ## Running pages
 
 1. Write each prompt to a file before sending it. The file is the record of what was asked.
-2. Run the two lettering-test pages together and review both. Tune the template.
-3. Then submit every independent page at once, up to the team's concurrency limit, with
-   `wait: false`, and collect with `jobs_wait`. Never review one page while the others wait to be
-   submitted. It takes no timeout. A return of `in_progress` is not a failure: call it again with
-   the returned `pending_job_ids`, and never relaunch or cancel a launched job.
+2. Proof the two pages with the most words first, together, and apply the lettering test on them.
+   Tune the template.
+3. Then submit every other proof at once, up to the team's concurrency limit, with `wait: false`,
+   and collect with `jobs_wait`, which takes no timeout. A return of `in_progress` is not a failure:
+   call it again with the returned `pending_job_ids`, and never relaunch or cancel a launched job.
+   Never review one page while the others wait to be submitted. After the proof fixes, submit all
+   finals at once the same way.
 4. A 429 with `actionName` and `actionLimit` in `details` means the team's concurrency ceiling. Hold
    that many jobs in flight.
 5. After a transport error with no HTTP status, call `jobs_list` before any re-run. The job may have

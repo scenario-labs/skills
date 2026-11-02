@@ -164,8 +164,9 @@ every page and the stock twin of page 1 stays in the deliverables folder.
 
 ## Strongest settings
 
-- Use the top-ranked model and set the highest quality value its schema offers. The suggested input
-  from `recommend` can be a lower tier, so read the schema and raise it.
+- Use the top-ranked model and set the highest quality value its schema offers for the style round,
+  sheets and final pages. The suggested input from `recommend` can be a lower tier, so read the
+  schema and raise it. Page proofs run at a middle value ([page-production.md](page-production.md)).
 - Size for the deliverable and write prompts of 600 to 1,000 words once a book has a template.
   Length carries light, camera and acting.
 - Draw on the top-ranked model. Add a second model to the style round only when the user asks or the

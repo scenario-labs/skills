@@ -15,7 +15,7 @@ locked and recorded, never the order. A comic can pass every check and still be 
 nothing ties to this story or this hand. Taste is a phase here, with a gate:
 [art-direction.md](references/art-direction.md). Taste serves the reader: a comic that employees or
 customers must understand puts clarity first ([clear-first.md](references/clear-first.md)). A short
-comic is also about an hour of work, held there by gates:
+comic is also under an hour of work, held there by gates:
 [budget-and-gates.md](references/budget-and-gates.md).
 
 Three lanes cover a three-page gift and a nine-hundred-page adaptation. Connection and the core
@@ -68,7 +68,7 @@ question.
 | 3. Direction | Look bible: two named influences, hard rules, FORBIDDEN list      | Rules are facts about pages |
 | 4. Style     | Two or three directions, each staged differently, run at once     | Lettering readable at 100%  |
 | 5. Cast      | One sheet per character, all at once: its face is on every page   | Faces differ, not generic   |
-| 6. Pages     | One request per page, all at once: long prompt, about five refs   | Every page generated once   |
+| 6. Pages     | Proofs at a low-cost quality, then finals, each batch at once     | Proofs read, finals drawn   |
 | 7. Review    | One pass: defects in tiers, the cold read, the taste review       | Cold reader follows it      |
 | 8. Fix       | Redraw only flagged pages, fresh from the originals, one round    | Residuals listed            |
 | 9. Deliver   | Manifest, PDF, collection, clock log                              | PDF read in order           |
@@ -95,15 +95,20 @@ question.
 - Run the taste review. In showpiece mode aim to ship only distinctive pages, anchor first. In
   clear-first mode a competent page ships when it reads. When the attempt cap runs out below the
   bar, show the best try and ask, or unattended ship the strongest and record the gap.
-- Keep a clock. Quick lane: about 75 minutes for six to eight pages. Run independent work at once,
-  check each gate, and take the cuts when one runs late. Never answer a late gate with a longer run
-  ([budget-and-gates.md](references/budget-and-gates.md)).
-- Use the top-ranked model at the highest quality value its schema offers, even when `recommend`
-  suggests a lower tier. Prompts run 600 to 1,000 words once a template exists.
-- Cap attempts by lane. Quick: the first generation plus one fresh alternative per page, at most
-  four generations per page across the job. Album and Book: up to four fresh tries per page until
-  pages pass on the first try, then the first plus one alternative. Later rounds hold only pages
-  with a confirmed defect.
+- Keep a clock. Quick lane: about 50 minutes for six to eight pages. Run independent work at once,
+  give each reviewer an evidence pack, check each gate, and take the cuts when one runs late. Never
+  answer a late gate with a longer run ([budget-and-gates.md](references/budget-and-gates.md)).
+- Use the top-ranked model at the highest quality value its schema offers for the style round,
+  sheets and final pages, even when `recommend` suggests a lower tier. Prompts run 600 to 1,000
+  words once a template exists.
+- Proof before the final. Draw every page once at a middle quality value, read words, beats and
+  layout, fix the prompt text, then submit the same prompt and references at the top value. A final
+  is a fresh generation: never edit a proof or attach it as a reference
+  ([page-production.md](references/page-production.md)).
+- Cap attempts by lane. Quick: one proof, the final plus one fresh alternative per page, at most
+  four top-quality generations per page across the job. Album and Book: up to four fresh tries per
+  page until pages pass on the first try, then the first plus one alternative. Later rounds hold
+  only pages with a confirmed defect.
 - Settle style before sheets, and sheets before pages. A late style change reaches everything.
 - Keep the model validated on the first pages. Switching mid-book shifts the look.
 
@@ -145,9 +150,11 @@ Record the mode in the brief card. Never switch silently.
    from the photo in the chosen style, then her grandfather's. The user approves the likeness. From
    here pages use the sheet, not the photo. With no photo, draw the sheet from the written
    description.
-8. Run the two densest pages together and apply the lettering test. Then submit all the other pages
-   at once with `wait: false` and collect them with `jobs_wait`. A return of `in_progress` is not a
-   failure: call it again with the returned `pending_job_ids`, and never relaunch or cancel.
+8. Proof the two densest pages together at a middle quality value and apply the lettering test. Then
+   submit all the other proofs at once with `wait: false` and collect them with `jobs_wait`. A
+   return of `in_progress` is not a failure: call it again with the returned `pending_job_ids`, and
+   never relaunch or cancel. Read the proofs, fix the prompt text, then submit every final at once
+   at the top quality value from the same prompts and references.
 9. One review pass over all pages: three tiers plus the taste review, with crops of hands, faces and
    balloons and counts of repeated objects, then a cold read of the pages in order. Redraw each
    flagged page once by replacing the guilty clause, and `jobs_wait` on each redraw before comparing

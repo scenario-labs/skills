@@ -24,7 +24,7 @@ each assumption into the brief card.
    user's language, one edition.
 7. **Deliverable**: reading PDF, print file, web strip. Default: reading PDF.
 8. **Budget and time**: a ceiling on spend and on duration. Default: price the plan, state the
-   number and the expected duration (Quick lane about 75 minutes,
+   number and the expected duration (Quick lane about 50 minutes,
    [budget-and-gates.md](budget-and-gates.md)). With the user present, wait for a yes. Unattended,
    proceed when the instructions give a ceiling the estimate fits or say to spend, and otherwise
    stop at the brief card with the estimate.

@@ -6,9 +6,10 @@ A strong vision model reads every page for defects with the page prompt, the scr
 sheets in context. It writes findings, crops included. Taste is graded by a separate reviewer who
 sees only the page, the look bible and the questions in [art-direction.md](art-direction.md), never
 the prompt. Review is one pass over every page: the reviewers run in parallel, one per page, with
-one cold reader for the sequence. A second pass follows only a fix round. The user reads the top two
-tiers and adds one sentence where needed. A score proves nothing: crop and compare against the
-sheet.
+one cold reader for the sequence. A second pass follows only a fix round. Each reviewer reads only
+an evidence pack you prepared: the page, a few crops, the look bible and the questions
+([budget-and-gates.md](budget-and-gates.md)). The user reads the top two tiers and adds one sentence
+where needed. A score proves nothing: crop and compare against the sheet.
 
 ## Three tiers
 
@@ -87,8 +88,9 @@ Editing an edit melts faces and costumes. Rendered pages are evidence, not refer
 
 ## Attempt caps
 
-- Quick lane: the first generation plus one fresh alternative per page, at most four generations per
-  page across the whole job ([budget-and-gates.md](budget-and-gates.md)).
+- Quick lane: one proof, then the final plus one fresh alternative per page, at most four
+  top-quality generations per page across the whole job
+  ([budget-and-gates.md](budget-and-gates.md)).
 - Album and Book while the template matures: up to four fresh generations per page. Once pages pass
   on the first try, the first generation plus one fresh alternative.
 - Later rounds contain only pages with a confirmed defect, each with a changed remedy.
