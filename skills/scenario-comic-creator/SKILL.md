@@ -74,7 +74,8 @@ the number. If the user has no story or no look, propose options instead of aski
 - Direct before drawing. Name two influences, a material, three hard rules and a FORBIDDEN list. A
   mood or a bare genre label returns stock.
 - Name one light source per scene and where its shadows fall. Even light is stock.
-- Run the taste review. Only exceptional pages ship, and the style anchor must be one.
+- Run the taste review. Aim to ship only exceptional pages, anchor first. When the attempt cap runs
+  out below that, show the best try and ask, or unattended ship the strongest and record the gap.
 - Use the top-ranked model at the highest quality value its schema offers, even when `recommend`
   suggests a lower tier. Prompts run 600 to 1,000 words once a template exists.
 - Cap attempts by maturity. Until pages pass on the first try, allow up to four fresh tries per

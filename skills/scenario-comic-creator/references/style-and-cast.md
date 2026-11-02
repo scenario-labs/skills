@@ -66,7 +66,8 @@ Rules:
 ## Cast gate
 
 Before page 1, reconcile the script with the cast list. Every principal and every recurring figure
-has an inspected sheet. A gap found after page 20 costs those pages.
+has an inspected sheet. A gap found after page 20 costs those pages. A sheet passes when its face is
+no longer generic and its costume reads as designed. It does not need an Exceptional verdict.
 
 ## Photos as identity
 

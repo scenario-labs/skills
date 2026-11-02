@@ -143,7 +143,8 @@ page, the look bible and the questions below, never the prompt, and writes the v
 
 **Verdicts.** Exceptional ships. Familiar gets one rewrite of the direction paragraph and a redraw.
 Stock is redrawn from a rewritten paragraph that names the failing rule. The style anchor and the
-first finished page must reach Exceptional before any other page runs. Unattended, the separate
+first finished page should reach Exceptional before any other page runs. When their attempt cap runs
+out first, follow the cap rules in [review-and-fix.md](review-and-fix.md). Unattended, the separate
 reviewer writes the verdict for every page and the stock twin of page 1 stays in the deliverables
 folder.
 

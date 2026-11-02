@@ -39,6 +39,17 @@ stay filed and are excluded from the manifest.
   contact sheet, fills and checks page hashes, and builds a labeled contact sheet from any images
   (the style round). An agent runs it:
   `uv run --with img2pdf --with pillow python3 scripts/build_book.py --help`.
+- The manifest is a JSON file. `trim_mm` is optional, `sha256` is filled by
+  `build_book.py hash --write`, and page numbers run in order (0 is allowed for a cover):
+
+  ```json
+  {
+    "title": "The Shortcut",
+    "trim_mm": [170, 240],
+    "pages": [{ "page": 1, "file": "pages/001.png", "asset_id": "asset_...", "sha256": "..." }]
+  }
+  ```
+
 - Open the finished PDF page by page, or read a contact sheet, in order. A complete manifest is not
   proof the PDF is right.
 
