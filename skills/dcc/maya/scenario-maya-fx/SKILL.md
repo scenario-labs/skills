@@ -9,9 +9,9 @@ license: MIT
 An expert FX TD fixes scale and inputs before touching a knob, changes few settings one at a time,
 never judges a live solve, and proves the result on the cache in numbers (penetration, stretch,
 pops, convergence) and in renders from the shot camera. If a sibling skill named here is missing
-from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 

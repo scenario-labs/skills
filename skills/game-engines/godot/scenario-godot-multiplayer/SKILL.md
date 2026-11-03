@@ -13,8 +13,9 @@ before anyone plays it: authority is a written decision per object, every client
 request the server checks, and replication cost is measured in KiB/s. This skill builds the
 replication in code, runs a server and 2 to 3 clients headless on localhost (plus a browser client),
 and passes only on numbers from those runs. If a sibling skill named here is missing from your
-available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, `gd_run`, review loop, 4.7 traps).
 

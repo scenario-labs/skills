@@ -11,9 +11,9 @@ destroyed object mid-await, a relaunch of the built player, a class rename, a me
 a prefab dropped into an empty scene. Data lives in assets, state lives in plain C# and files,
 systems talk through events they do not own, and every claim is pinned by a test the agent can run
 without a mouse. Target: Unity 6000.3.21f1, Input System 1.20.0, Test Framework 1.6.0, macOS. If a
-sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps). Toolkit:
 `ut_env`, `ut_run`, `ut_live` plus this skill's [`scripts/ut_arch.py`](scripts/ut_arch.py),

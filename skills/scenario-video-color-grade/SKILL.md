@@ -18,8 +18,9 @@ Scenario supplies two preset LUT tool models and the segmentation masks that mak
 exact. New footage is out of scope. Connection and the core loop: the `scenario` skill. Running the
 LUT tool models on long clips (cost follows the clip, `wait=false`): `scenario-video-editing`. Music
 for a reel: `scenario-audio`. If a sibling skill named here is missing from your available skills,
-ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
-proceed from tool schemas and flag the gap.
+load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 The scripts run locally with `python3` and need ffmpeg, numpy, scipy, and Pillow. Each prints its
 usage when run without arguments, refuses to overwrite outputs without `--force`, and never calls

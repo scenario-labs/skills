@@ -33,8 +33,8 @@ Two tool kinds:
   - Direct tools take scope, and `model_run` its `dry_run`, at top level.
   - The executor drops a misplaced key silently: `arguments` surfaces as a false scope error, and a
     top-level `dry_run` runs the job, billed.
-  - The lane is the result's own `permission`, not the verb: `asset_download` and `asset_analyze`
-    are write-class.
+  - The lane is the result's own `permission`, not the verb: `asset_analyze` is write-class, since
+    it starts a billed job.
 
 ## Scope first
 

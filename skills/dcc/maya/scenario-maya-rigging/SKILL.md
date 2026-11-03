@@ -10,9 +10,9 @@ Expert rigging means every value is explained and every behavior measured: joint
 with computed orientation, controls at zero with their placement in offsetParentMatrix, IK/FK and
 space switches that move nothing, and a rig that survives scale, distance, several characters per
 shot and an animator keying everything. The rig is the output of a build script and data. If a
-sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 

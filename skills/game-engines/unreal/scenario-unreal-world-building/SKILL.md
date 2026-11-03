@@ -10,9 +10,9 @@ Expert level here means a world sized by rule, placed by tier of importance, str
 from the first map, and changed by script region by region, never by hand-selecting thousands of
 actors. The environment artist decides what stays manual, what is baked and what is generated at
 runtime, then proves every choice with a count, a trace or a screenshot. If a sibling skill named
-here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user
+to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps). Toolkit:
 [`scripts/ue_world.py`](scripts/ue_world.py)

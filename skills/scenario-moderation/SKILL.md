@@ -16,9 +16,9 @@ on, and no model switch clears it. Plan and blocklist restrictions remove models
 is judged. Treat a block as a routing problem first and a wording problem second. This skill is
 about false positives on content a team is entitled to make; it is not a way to produce content a
 provider prohibits. Core loop: see the `scenario` skill. If a sibling skill named here is missing
-from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

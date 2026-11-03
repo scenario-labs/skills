@@ -13,9 +13,10 @@ prompt and re-rolling until the budget dies. Both skip the same two artifacts, a
 a diagnosis. The loop that converges: rubric before generating, a small batch, a recorded verdict
 per asset, the cheapest targeted fix per failure, a hard round cap. Connection and the core loop:
 see the `scenario` skill. Critic tool contracts: `scenario-asset-analysis`. Baseline discipline:
-`scenario-consistency`. If a sibling skill named here is missing from your available skills, ask the
-user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from
-tool schemas and flag the gap.
+`scenario-consistency`. If a sibling skill named here is missing from your available skills, load it
+with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

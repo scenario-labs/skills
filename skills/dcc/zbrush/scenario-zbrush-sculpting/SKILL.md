@@ -11,9 +11,9 @@ ask, clay built across the form in thin low-intensity layers, sharpness last and
 shapes. An agent has no pen: it uses exact operations first (primitives, ZSpheres, DynaMesh, masks
 plus Deformation sliders), then strokes planned from model-space forms, aimed through the view,
 measured in volume and reviewed after every pass ([`scripts/zb_sculpt.py`](scripts/zb_sculpt.py)).
-If a sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+If a sibling skill named here is missing from your available skills, load it with `skill_get`
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 

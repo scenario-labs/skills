@@ -20,9 +20,9 @@ traps, and sound lanes: the `scenario-seedance` skill; identity across stills an
 character sheet: the `scenario-consistency` and `scenario-identity-library` skills; a board or comic
 page that is itself the deliverable: the `scenario-storyboards` skill; splitting and rejoining
 shots: the `scenario-video-editing` and `scenario-video-assembly` skills. If a sibling skill named
-here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user
+to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 ## Quick reference
 

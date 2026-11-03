@@ -10,9 +10,9 @@ Expert pipeline work in Unreal is policy as data plus proof: the import policy i
 pipeline asset, names come from a plan, every rule that matters is a validator that also guards
 human edits, and a build counts once it cooked with fatal validation and booted. Bulk work runs
 headless; anything visual goes to a screenshot someone actually looks at. If a sibling skill named
-here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user
+to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 

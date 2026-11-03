@@ -15,9 +15,10 @@ objects, a Portrait line human heads and busts, each in 2.1 and 2.0 generations.
 values are spelled.
 
 Connection and the core loop: the `scenario` skill in this repo; model-agnostic 3D work: the
-`scenario-3d` skill. If a sibling skill named here is missing from your available skills, ask the
-user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from
-tool schemas and flag the gap.
+`scenario-3d` skill. If a sibling skill named here is missing from your available skills, load it
+with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

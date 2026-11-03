@@ -10,8 +10,9 @@ Expert modeling is purposeful topology: every loop exists for the silhouette, a 
 UV seam or a joint, and the model arrives downstream with nothing the next person has to clean. The
 agent works big to small, measures each stage with the toolkit, and looks at a metal highlight
 render before believing a surface. If a sibling skill named here is missing from your available
-skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 Toolkit: [`scripts/mx_modeling.py`](scripts/mx_modeling.py)

@@ -15,8 +15,9 @@ relight) and generative scene placement with an instruction-editing model. Conne
 loop: see the `scenario` skill. Edit-model contracts: `scenario-image`. Deterministic tools:
 `scenario-image-editing`. Reading assets back: `scenario-asset-analysis`. Animating an approved
 still into an ad: `scenario-video-ads`. If a sibling skill named here is missing from your available
-skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

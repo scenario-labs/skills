@@ -10,9 +10,9 @@ Expert stylized work is anatomy simplified on purpose: real landmarks and propor
 baseline, a few named exaggerations, and shape-language rules an agent can measure on a silhouette.
 Curves are the agent's best tool: strands, clumps, straps and scarf tails come from computed 3D
 paths, so a "tweak" regenerates a path instead of sculpting it. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 

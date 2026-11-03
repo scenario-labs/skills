@@ -10,9 +10,9 @@ Expert-level Blender work is a loop, not a script: build big to small, and at ev
 model, measure it and fix it before adding detail. This skill is the protocol every Blender task
 follows and the map to the domain skills distilled from Blender Studio artists, Blender Conference
 talks and top instructors (sources in each skill). If a sibling skill named here is missing from
-your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## 1. Execution channel
 

@@ -3,10 +3,13 @@ section, and each transcription pass keeps its own copy."""
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
+from unittest import mock
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[2] / "skills" / "scenario-kinetic-music-video" / "scripts" / "lyrics_align.py"
@@ -92,6 +95,33 @@ class RawPathsTest(unittest.TestCase):
         spec.loader.exec_module(mod)
         self.assertEqual(mod.raw_paths(""), ["analysis/lyrics_raw.json", "analysis/lyrics_raw_plain.json"])
         self.assertEqual(mod.raw_paths("names"), ["analysis/lyrics_raw.json", "analysis/lyrics_raw_hints.json"])
+
+
+class TranscribeModelTest(unittest.TestCase):
+    def test_whisper_model_is_pinned_to_a_commit(self):
+        spec = importlib.util.spec_from_file_location("lyrics_align", SCRIPT)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        loaded = []
+
+        class WhisperModel:
+            def __init__(self, *args, **kwargs):
+                loaded.append((args, kwargs))
+
+            def transcribe(self, *args, **kwargs):
+                return [], None
+
+        mod.stem = lambda: "vocals.wav"
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(sys.modules, {"faster_whisper": types.SimpleNamespace(WhisperModel=WhisperModel)}):
+            cwd = os.getcwd()
+            os.chdir(tmp)
+            try:
+                mod.transcribe("")
+            finally:
+                os.chdir(cwd)
+        (args, kwargs), = loaded
+        self.assertEqual(args, ("large-v3",))
+        self.assertRegex(kwargs["revision"], r"^[0-9a-f]{40}$")
 
 
 if __name__ == "__main__":

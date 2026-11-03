@@ -12,9 +12,10 @@ Expert architecture in Godot means scenes that run alone, data in Resources, beh
 components, and every boundary (save file, input, export) proven by a test. This skill holds the
 expert rules from the sources, corrected where Godot 4.7.2 behaves differently, plus a tested G1
 core (inventory, health and damage, save and load, input with rebinding) and the tools that build
-and audit it. If a sibling skill named here is missing from your available skills, ask the user to
-install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+and audit it. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, `gd_run`, the review loop, 4.7 traps).
 

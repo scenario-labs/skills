@@ -11,8 +11,9 @@ Expert look dev is a material that holds under any light a lighter throws at it:
 (measured metal colors, glass tinted by depth, scattering at real scale), then deliberate
 imperfection, judged on a neutral turntable with reference balls, one change per render. Nothing is
 done before a render has been looked at. If a sibling skill named here is missing from your
-available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 

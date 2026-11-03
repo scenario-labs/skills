@@ -11,9 +11,9 @@ honest capture, explain the worst frame by the thread that works rather than the
 in the order of measured size, and prove the result with repeated runs on the same route and build,
 hitches judged apart from the average. The performance engineer owns measurement, diagnosis and
 proof; most fixes go back to the teammate who owns the content. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 

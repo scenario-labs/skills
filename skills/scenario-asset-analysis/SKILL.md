@@ -19,9 +19,10 @@ through the executor matching the returned `permission`: `read` uses `scenario_t
 `write` uses `scenario_tool_execute_write`. Use that live result for both estimates and runs; do not
 infer the lane from an unchanged input asset. Put the tool name in `name` and its inputs under
 `parameters`. Or reconnect with `?toolsets=full`. Connection and scope: see the `scenario` skill in
-this repo. If a sibling skill named here is missing from your available skills, ask the user to
-install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+this repo. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

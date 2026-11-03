@@ -18,9 +18,9 @@ OAuth and refuse API keys, and the list mode the team runs, since the same model
 the opposite thing in blocklist and allowlist mode. `teams_list` already tells you both: each team
 row carries `modelsManagement`, its model lists, `plan`, and `context.userRole`. A credential that
 reaches one team and one project has its scope; more than one is a stop-and-list, per the `scenario`
-skill. If a sibling skill named here is missing from your available skills, ask the user to install
-it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+skill. If a sibling skill named here is missing from your available skills, load it with `skill_get`
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

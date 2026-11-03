@@ -11,9 +11,9 @@ clearly curved, planes carry an even highlight, edges are wide enough to catch l
 could be built (Plouffe, Klimer). The agent builds that language from deterministic operations
 (primitives, Live Boolean stacks, polygroups as the crease plan, Dynamic Subdivision numbers,
 ArrayMesh, Panel Loops) and uses clicks and strokes only where nothing else exists. If a sibling
-skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 Toolkit: [`scripts/zb_hardsurface.py`](scripts/zb_hardsurface.py)

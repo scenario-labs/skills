@@ -10,9 +10,9 @@ Expert previs conveys an idea well enough to be judged, as cheaply as possible: 
 every shot designed for what the audience must feel, timing found in the edit from stills. The
 camera is the audience's body; where it stands, how high and through which lens decides the emotion,
 so every non-neutral choice needs a stated reason. If a sibling skill named here is missing from
-your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 

@@ -11,9 +11,9 @@ from art to camera, atlases judged by what they save, tiles and lights authored 
 a camera that moves in whole pixels, and a controller whose feel is measured, not asserted.
 Everything below was run in Unity 6000.3.21f1 through batch jobs and PlayMode tests
 ([`references/procedures.md`](references/procedures.md)). If a sibling skill named here is missing
-from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps).
 

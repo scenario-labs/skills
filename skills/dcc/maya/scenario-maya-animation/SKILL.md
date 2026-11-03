@@ -11,9 +11,9 @@ and snaps placed on purpose, designed spacing, weight shown by resistance and a 
 big to small (story, body, face, detail); never add detail to a stage that does not read yet. An
 agent cannot scrub, so it measures (world and screen tracks, spacing, holds, contacts, a ballistic
 fit, overlap lags), then looks at a playblast or a headless sheet before calling anything done. If a
-sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 

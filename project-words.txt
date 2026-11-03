@@ -254,6 +254,7 @@ CGNAT
 CGPROGRAM
 CIELAB
 COEP
+CPJKU
 CTEO
 Caillaud
 Caillaud's
@@ -982,6 +983,7 @@ esac
 executability
 explants
 explorable
+fbaipublicfiles
 fcurve
 fcurves
 ffprobe
@@ -1212,6 +1214,7 @@ spammy
 spctl
 specularly
 speculars
+sphn
 ssel
 steamcmd
 sternocleidomastoid
@@ -1287,6 +1290,8 @@ unpaced
 unparent
 unparented
 unpartitioned
+unpickle
+unpickles
 unpooled
 unproject
 unpublishing

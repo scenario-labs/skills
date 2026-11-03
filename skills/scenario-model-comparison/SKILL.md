@@ -14,9 +14,9 @@ normalization: what is held fixed, what each schema forces to differ, and where 
 from. `recommend` shortlists, `dry_run` prices, the `jobs_wait` rows carry the billed cost, the grid
 tool puts the results side by side, and a table delivers. Connection and the core loop: see the
 `scenario` skill; a rubric for judging output against a brief: `scenario-refine-loop`. If a sibling
-skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 ## Quick reference
 

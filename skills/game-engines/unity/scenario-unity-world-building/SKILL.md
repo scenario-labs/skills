@@ -12,9 +12,10 @@ space and walk back, the edge of the world holds content, and the worst viewpoin
 budget in a Player. An agent without a mouse does all of it through `TerrainData`, the ProBuilder
 API, `PrefabUtility` and scene APIs, then checks with raycasts, NavMesh paths, captures, a profiling
 tour and a Player probe. Target: Unity 6000.3.21f1, URP 17.3, ProBuilder 6.1.2, Splines 2.9.0, AI
-Navigation 2.0.14. If a sibling skill named here is missing from your available skills, ask the user
-to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+Navigation 2.0.14. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps). Import its
 toolkit; this skill adds [`scripts/ut_world.py`](scripts/ut_world.py), C# jobs in

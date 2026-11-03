@@ -12,8 +12,9 @@ At expert level, the mix is designed as data and then measured. Bus layouts, mus
 voice limits are written as specs. Every claim gets checked with numbers read from the mixer, since
 an agent cannot listen. Experts spend more effort deciding which sounds not to play than on playing
 them. That is the core of combat audio. If a sibling skill named here is missing from your available
-skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, `gd_run`, the review loop, 4.7 traps).
 

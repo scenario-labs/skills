@@ -24,9 +24,9 @@ The work splits by what each tool does best:
 
 Connection and the core generation loop: see the `scenario` skill in this repo. For a song-to-video
 cut without the engine, see `scenario-seedance-music-video`. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 Read `references/lessons.md` before starting. Every item in it cost real time or money once.
 `references/motion_library.md` is the design menu.
@@ -71,7 +71,8 @@ before the first paid step and say what is missing.
 
 ### 1. Scaffold and analyze the song
 
-Run `bash <skill>/scripts/scaffold.sh <song>` inside a new project folder, then follow
+Run `bash <skill>/scripts/scaffold.sh <song>` inside a new project folder (macOS on Apple Silicon or
+Linux x86_64 with glibc 2.28+: the Python lock covers those two), then follow
 `references/pipeline.md` §2:
 
 - `audio_analysis.py` writes stems and `engine/data/audio.json`: beats, downbeats, kick/snare/vocal
@@ -234,6 +235,10 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   [plot_lyrics.py](scripts/plot_lyrics.py)
 - Locked JavaScript dependencies copied by scaffold.sh into new projects:
   [package.json](assets/npm/package.json), [package-lock.json](assets/npm/package-lock.json)
+- Hashed, wheels-only Python locks scaffold.sh installs, one per platform:
+  [macos-arm64.txt](assets/python/macos-arm64.txt),
+  [linux-x86_64.txt](assets/python/linux-x86_64.txt), resolved from
+  [requirements.in](assets/python/requirements.in)
 - Approved-master stem lookup for transcription, plots and vocal slices:
   [audio_paths.py](scripts/audio_paths.py)
 - Footage generation helpers: [synth_beat.py](scripts/synth_beat.py),

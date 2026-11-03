@@ -2,7 +2,7 @@
 usage: python scripts/audio_analysis.py audio/master.mp3
 Writes: stems/<name>/vocals.wav + no_vocals.wav (Demucs), engine/data/audio.json (with "master" = the input path).
 The master itself is never modified."""
-import sys, os, json, subprocess, numpy as np, librosa
+import sys, os, json, hashlib, subprocess, urllib.request, numpy as np, librosa
 
 if len(sys.argv) < 2: sys.exit(__doc__)
 master = sys.argv[1]; name = os.path.splitext(os.path.basename(master))[0]
@@ -23,7 +23,37 @@ def save_json(obj, path, **kw):
         json.dump(obj, f, **kw)
 
 
-beats, downbeats = File2Beats(checkpoint_path='final0', device='cpu', dbn=False)(master)
+# beat_this would fetch 'final0' unverified and unpickle it; a checked local copy loads with weights_only.
+CKPT = 'models/beat_this-final0.ckpt'
+CKPT_URL = 'https://cloud.cp.jku.at/public.php/dav/files/7ik4RrBKTS273gp/final0.ckpt'
+CKPT_SHA256 = '8c328b45f59d8dd3dff219253ff6a8d6482be57d0133a29140e2febbf8eb8331'
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for block in iter(lambda: f.read(1 << 20), b''):
+            h.update(block)
+    return h.hexdigest()
+
+
+def beat_checkpoint():
+    if not os.path.exists(CKPT):
+        os.makedirs(os.path.dirname(CKPT), exist_ok=True)
+        try:
+            urllib.request.urlretrieve(CKPT_URL, CKPT + '.part')
+        except BaseException:
+            if os.path.exists(CKPT + '.part'):
+                os.remove(CKPT + '.part')
+            raise
+        os.replace(CKPT + '.part', CKPT)
+    if sha256(CKPT) != CKPT_SHA256:
+        os.remove(CKPT)
+        sys.exit(f'Checksum mismatch for the beat_this checkpoint from {CKPT_URL}: removed {CKPT}.')
+    return CKPT
+
+
+beats, downbeats = File2Beats(checkpoint_path=beat_checkpoint(), device='cpu', dbn=False)(master)
 beats = [float(b) for b in beats]; downbeats = [float(b) for b in downbeats]
 bpm = float(60 / np.median(np.diff(beats)))
 voc, sr = librosa.load(f'{stem_dir}/vocals.wav', sr=22050, mono=True)

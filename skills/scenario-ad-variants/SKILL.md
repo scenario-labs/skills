@@ -12,9 +12,9 @@ One supplied source becomes an ordered set of independently specified edits. Pre
 does not change, and keep every output traceable to the same source. A new storyboard from a product
 still belongs to `scenario-video-ads`; single-clip utilities to `scenario-video-editing`.
 Connection, discovery, submission and recovery follow `scenario`. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 Resolve only missing decisions: source, requested variants, exact copy, destination, runtime, audio
 policy and spend ceiling. Reuse answers already supplied. Distinguish a controlled comparison, where

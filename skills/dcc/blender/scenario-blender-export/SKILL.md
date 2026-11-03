@@ -10,8 +10,9 @@ An export is done when the file has been re-imported and measured, not when the 
 `FINISHED`. Gate the asset first, export with a preset, then round-trip the file. This skill builds
 on `scenario-blender-expert` (execution channels, the delivery gate) and imports its scripts, so
 install the two side by side. If a sibling skill named here is missing from your available skills,
-ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
-proceed from tool schemas and flag the gap.
+load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 Toolkit: [`scripts/bx_export.py`](scripts/bx_export.py). Per-engine facts with their sources:
 [`references/engines.md`](references/engines.md).

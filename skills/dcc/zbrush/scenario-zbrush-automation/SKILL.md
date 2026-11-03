@@ -10,9 +10,9 @@ An expert ZBrush TD automates with contracts and proof: every file is its own to
 separate call with a time limit, every output is read back from disk, and a hung plugin costs one
 file, never the batch. ZBrush has no timeout, no undo control from Python and dialogs that code
 cannot answer, so the safety lives on the agent side: the runner, the checkpoints, the report. If a
-sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, zb_launch, zb_ops, zb_audit, review loop,
 2026 traps).

@@ -33,9 +33,9 @@ procedurally built humanoid, so nothing needs a download.
 - **Silent failures are the norm here.** A BoneMap naming bones that do not exist, an expression
   transition at advance mode Enabled, a missing RESET key: each produced no error in 4.7.2. Audit
   after every import and every tree change. If a sibling skill named here is missing from your
-  available skills, ask the user to install it
-  (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-  flag the gap.
+  available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+  (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+  the gap.
 
 ## Establish first
 

@@ -10,9 +10,9 @@ Expert lighting is a story decision made measurable: know where the eye must lan
 with one dominant light, structure values back to front, prove it with light groups and numbers
 before the eye signs off. Rendering is engineering: find the noise in the AOVs before touching a
 sampler, deliver scene-linear EXRs whose passes rebuild the beauty, judge through a tone-mapping
-view. If a sibling skill named here is missing from your available skills, ask the user to install
-it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+view. If a sibling skill named here is missing from your available skills, load it with `skill_get`
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 

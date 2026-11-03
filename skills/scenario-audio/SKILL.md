@@ -11,9 +11,9 @@ license: MIT
 Scenario generates audio through the same loop as images. The live catalog covers three generation
 lanes (music, sound effects, voice/speech) plus video-to-audio soundtrack models and audio
 utilities. Connection and the core generation loop: see the `scenario` skill. If a sibling skill
-named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 ## Quick reference
 

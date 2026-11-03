@@ -29,8 +29,9 @@ Steps 1 and 7 are the agent's own work on downloaded files; every generation in 
 call. Connection, uploads, and the core loop: see the `scenario` skill. Edits: `scenario-image` or
 `scenario-gemini-image`. Worlds: `scenario-3d-worlds`. 3D models: `scenario-3d`. Sound:
 `scenario-audio` or `scenario-sonilo`. If a sibling skill named here is missing from your available
-skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

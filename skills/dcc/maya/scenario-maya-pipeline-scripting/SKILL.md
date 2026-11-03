@@ -10,8 +10,9 @@ Expert pipeline work is contracts plus proof: every file that leaves Maya goes t
 names, explicit export settings and a re-import check, and no batch trusts one Maya process with two
 hundred files. The pipeline TD never types what can be generated, never trusts a default, and
 verifies by reading the output back. If a sibling skill named here is missing from your available
-skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 

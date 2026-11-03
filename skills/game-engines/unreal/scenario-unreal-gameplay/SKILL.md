@@ -11,9 +11,9 @@ it, logic is text (C++ or small functions) under data-only Blueprints and data a
 configures, and every mechanic is proven in isolation (injected input, debug commands, traces)
 before it is judged in play. The agent does not pretend to author graphs it cannot reach: it states
 which surface each piece lands on and escalates only the residue. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 

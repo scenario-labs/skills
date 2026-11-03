@@ -12,9 +12,9 @@ Expert level here means every claim about speed comes with a before and after nu
 harness, every build is verified as a file before anyone calls it shipped, and the agent knows which
 numbers Godot reports wrongly. The stance: measure, classify the bound, fix the biggest cost,
 re-measure, compare pictures, then ship builds you have opened, run and listed. If a sibling skill
-named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, the review loop, toolkit, 4.7 traps).
 

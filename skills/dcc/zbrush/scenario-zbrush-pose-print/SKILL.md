@@ -10,9 +10,9 @@ Expert level means a pose that stands and reads, transferred onto every SubTool 
 level, and print parts whose size, walls, fits and cavities were measured in millimeters on the
 exported files. The stance: turn every decision into a number the agent can check (scale, point
 order, joint angles, walls, gaps), keep the pose reversible, use strokes only for cleanup. If a
-sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 

@@ -11,9 +11,9 @@ around eyes and mouth, three loops per joint, poles where nothing moves, a bend 
 fault a bad crease is. Expert UVs spend texels where the camera looks, at a density derived from the
 closest shot, with padding that survives mips. Without a mouse the agent reuses approved topology,
 builds from data, and measures then renders every stage. If a sibling skill named here is missing
-from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 Toolkit: [`scripts/mx_retopology_uv.py`](scripts/mx_retopology_uv.py)

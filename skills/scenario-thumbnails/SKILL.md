@@ -13,9 +13,9 @@ finished image at the requested dimensions, with exact supplied copy and preserv
 Connection and the generation loop follow `scenario`; image/reference contracts follow
 `scenario-image`. Exact type uses `scenario-text-overlay`, placement specifications use
 `scenario-formats`, and a set that must share a look uses `scenario-consistency`. If a sibling skill
-named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 Resolve the destination, topic or title, supplied assets, exact copy, desired count and budget from
 the request. Ask only for missing decisions that affect the result. Do not invent a person, logo,

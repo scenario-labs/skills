@@ -19,9 +19,9 @@ The tool is catalog-only and write-class: get the schema with `scenario_tools_se
 through `scenario_tool_execute_write` with `{name: "asset_quality_gate_run", parameters: {...}}`,
 scope ids inside `parameters` (the read executor rejects it by lane and names the right one). Or
 reconnect with `?toolsets=full`. Connection and scope: see the `scenario` skill. If a sibling skill
-named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 ## Quick reference: what a call costs
 

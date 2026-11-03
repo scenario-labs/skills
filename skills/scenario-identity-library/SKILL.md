@@ -14,8 +14,9 @@ hero image, file approved shots in a named collection, assemble a sheet, and pul
 out for new images. The per-image mechanics live in siblings and are not repeated here: connection
 and the core loop in `scenario`, holding a look with references in `scenario-consistency`, pass/fail
 verdicts in `scenario-quality-gate`. If a sibling skill named here is missing from your available
-skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

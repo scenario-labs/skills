@@ -11,9 +11,10 @@ costs what its gameplay class allows across the whole world, and is proven by pe
 the target core count plus captures scored against a written rubric. Python cannot author Niagara
 emitters or modules (5.8 API): the agent works through templates with a User parameter contract,
 Material Instances, Effect Types and Dataflow recipes, and escalates the few graph edits as precise
-GUI requests. If a sibling skill named here is missing from your available skills, ask the user to
-install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+GUI requests. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 

@@ -23,8 +23,9 @@ every frame.
 
 Connection, scope and the core loop: the `scenario` skill. Changing a pet that already has a sheet:
 `scenario-chatgpt-pet-update`. If a sibling skill named here is missing from your available skills,
-ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
-proceed from tool schemas and flag the gap.
+load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 Scripts, run by the agent with Python 3, Pillow and NumPy (`pip install pillow numpy`, in a virtual
 environment outside the run folder when the system Python refuses), by their path in this skill's

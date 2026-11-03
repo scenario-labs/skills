@@ -10,9 +10,9 @@ Expert deformation is decided before the first weight: joint pivots and edge loo
 can do. Weights are then built region by region, judged in motion at extremes with numbers and
 renders, and every fault is fixed where it originates. Stance: block rigid, diagnose, smooth and
 shape, correct what weights cannot, and keep everything regenerable as data. If a sibling skill
-named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 

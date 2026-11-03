@@ -9,9 +9,10 @@ license: MIT
 Expert shading is layered masks feeding physically plausible values: a clean base (scanned set or
 flat colors), then contrasty black/white masks that place color, roughness, height and subsurface,
 all editable in nodes. Values are judged under honest light in both engines, and baking comes last,
-for portability. If a sibling skill named here is missing from your available skills, ask the user
-to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+for portability. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 Baking maps: scenario-blender-uv-baking. Lighting and final renders:

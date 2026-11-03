@@ -12,9 +12,9 @@ Expert level here means effects built as layers of small systems, every silent p
 caught by a script before anyone looks, and every claim about look or cost backed by frames captured
 at exact times and by measured overdraw and GPU time per renderer. The agent builds effects in code,
 renders them windowed, and looks at contact sheets. If a sibling skill named here is missing from
-your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (gd_env, gd_run, gd_review, AgentKit, GD_MAX slots,
 windowed vs headless).

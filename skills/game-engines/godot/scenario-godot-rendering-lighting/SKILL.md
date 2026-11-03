@@ -13,9 +13,9 @@ at a time, a rendered image looked at after every change, numbers on that image,
 every effect. The renderer and the GI method are chosen first, because they decide what the other
 settings can do. The art direction (value pattern, warm and cool, focal contrast) is judged on
 pixels the agent actually opened, never on the inspector. If a sibling skill named here is missing
-from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, `gd_run`, the review loop, 4.7 traps).
 

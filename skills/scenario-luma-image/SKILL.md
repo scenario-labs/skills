@@ -18,9 +18,9 @@ tiers share every field name and disagree on caps and price. Luma's video models
 
 Connection and the core loop: see the `scenario` skill in this repo; model-agnostic image work
 (sizing families, masks, batch fields): the `scenario-image` skill. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 ## Quick reference
 

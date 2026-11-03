@@ -9,9 +9,9 @@ license: MIT
 Target: Godot 4.7.2.stable, macOS Apple Silicon, Jolt Physics, Forward+.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, `gd_run`, the review loop, 4.7 traps). If
-a sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+a sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **Status (2026-10-02):** all 14 live test groups in `tests/code/godot-3d-world/test_world_live.py`
 passed (`live_20261002-215949.json`); L8 and L12 were extended and passed again in round 2

@@ -13,9 +13,9 @@ tilesets, isometric scenes, pixel art, concept art) plus utilities for backgroun
 upscaling, and pixel cleanup. Discover by asset type, inspect the schema, generate, post-process,
 export. A sheet whose cells are one character's animation frames, and any walk cycle, loop, or GIF,
 belongs to `scenario-sprite-animation`. Connection and core loop: see the `scenario` skill. If a
-sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 ## Quick reference
 

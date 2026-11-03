@@ -11,9 +11,9 @@ license: MIT
 Turn Scenario MCP usage data into answers, CSV, Markdown, a PDF with charts, or an offline
 dashboard. All Scenario data collection stays on MCP. No direct API, SDK, browser scraping, or
 credentials in reporting scripts. Use the `scenario` skill for connection setup. If a sibling skill
-named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 Resolve the customer through `teams_list` and, when needed, `projects_list({team_id})`. Reuse the
 user's selected scope. If several names match, ask using the discovered choices; unattended, use the

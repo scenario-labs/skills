@@ -10,9 +10,9 @@ Expert level here means every form has a cause (skull, mass, tension, compressio
 exists, and every detail pass is reversible, regional and judged in renders from several views and
 lights. The agent works the way Kingslien and Costa do: find the upstream cause, fix it at the
 lowest level that holds it, and keep detail on layers or behind a stored morph target. If a sibling
-skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 Toolkit: [`scripts/zb_character.py`](scripts/zb_character.py) (stroke plans, ZBrush-side wrappers

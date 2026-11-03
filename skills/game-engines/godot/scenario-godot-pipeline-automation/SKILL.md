@@ -12,8 +12,9 @@ Expert level here means every step a human would click is a command that CI can 
 same result, and every result is checked by a test that has been seen failing. The tools engineer
 owns the path from an art drop or a commit to a tested export: ingest, import, editor tooling,
 tests, CI, native extensions and agent channels. If a sibling skill named here is missing from your
-available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, `gd_run` and `gd_env`, the review loop,
 4.7 traps). This skill adds [`scripts/gd_pipeline.py`](scripts/gd_pipeline.py) and the AgentKit

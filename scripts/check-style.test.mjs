@@ -314,3 +314,29 @@ test("fails on an em dash in SUPPORT.md", (t) => {
     return true;
   });
 });
+
+const INSTALL = "must not carry an install command";
+
+test("fails on an install command in a skill file", (t) => {
+  for (const command of [
+    "npx skills add scenario-labs/skills --skill <name>",
+    "npx skills@1.7.4 add scenario-labs/skills#abc --skill <name>",
+  ]) {
+    const { write, style } = repo(t);
+    write(REFERENCE, `Install it:\n\n${command}\n`);
+    assert.throws(style, (error) => {
+      assert.ok(error.stdout.includes(INSTALL), error.stdout);
+      assert.ok(error.stdout.includes(`${REFERENCE}:3:`), error.stdout);
+      return true;
+    });
+  }
+});
+
+test("allows install commands in a family README outside every skill", (t) => {
+  const { write, style } = repo(t);
+  write(
+    "skills/dcc/demo/README.md",
+    "npx skills add scenario-labs/skills --skill scenario-demo\n",
+  );
+  assert.ok(!style().includes(INSTALL));
+});

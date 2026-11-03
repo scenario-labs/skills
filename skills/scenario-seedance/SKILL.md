@@ -16,8 +16,9 @@ the shape and disagreeing on every number.
 Connection and the core loop: see the `scenario` skill in this repo; model-agnostic video work: the
 `scenario-video` skill; choreography held across cuts from a storyboard: the
 `scenario-seedance-storyboard` skill. If a sibling skill named here is missing from your available
-skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

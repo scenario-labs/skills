@@ -14,9 +14,9 @@ camera, terrain and materials made from code with their silent failures checked,
 from a mood with the sun aimed first and post effects last. This skill carries those rules from the
 sources, corrected by live tests in Studio 0.743 on a village, terrain and interior built for the
 purpose, plus kit modules that build, light, measure and audit a scene. If a sibling skill named
-here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user
+to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-roblox-expert (channels, review loop, toolkit, current-Roblox
 traps).

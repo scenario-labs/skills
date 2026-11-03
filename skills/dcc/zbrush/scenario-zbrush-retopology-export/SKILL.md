@@ -10,9 +10,9 @@ Expert level means the sculpt leaves ZBrush as a light, clean exchange mesh at i
 detail kept on a rebuilt subdivision stack or in maps, at real size, every file proved by parsing
 it. Most of it is deterministic palette work an agent does well; click-by-click topology, modifier
 clicks and a few dialogs stay with a human or computer-use agent. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 

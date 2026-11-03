@@ -1,5 +1,55 @@
 # Changelog
 
+## [0.60.1](https://github.com/scenario-labs/skills/compare/skills-v0.60.0...skills-v0.60.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **skills:** drop unversioned installs and pin the kinetic setup ([#340](https://github.com/scenario-labs/skills/issues/340)) ([b8544b9](https://github.com/scenario-labs/skills/commit/b8544b9c86e0685844cc6effbb27f3885f744d3a))
+
+
+### Documentation
+
+* **agents:** point skill-development at its new upstream home ([b8544b9](https://github.com/scenario-labs/skills/commit/b8544b9c86e0685844cc6effbb27f3885f744d3a))
+* **docs:** list the setup prerequisites, uv included ([#335](https://github.com/scenario-labs/skills/issues/335)) ([d44410f](https://github.com/scenario-labs/skills/commit/d44410f058991f677ccf733a8e86ce95110857eb))
+
+## [0.60.0](https://github.com/scenario-labs/skills/compare/skills-v0.59.0...skills-v0.60.0) (2026-10-26)
+
+
+### Features
+
+* **scenario-3d:** teach prompt-only 3D builds ([#316](https://github.com/scenario-labs/skills/issues/316)) ([b3cf5a4](https://github.com/scenario-labs/skills/commit/b3cf5a41efe603f93f5307b5bb7c7dad9fcd7925))
+* **scenario-motion-loops:** add seamless brand-color loops in code ([#283](https://github.com/scenario-labs/skills/issues/283)) ([6e7b8c3](https://github.com/scenario-labs/skills/commit/6e7b8c30f3589c57cf515a00820ddef7c81cc11f))
+* **scenario-video-editing:** teach green and blue screen keying ([#323](https://github.com/scenario-labs/skills/issues/323)) ([cf5b911](https://github.com/scenario-labs/skills/commit/cf5b911cee12a7542651cb374c0db3a0f27986fa))
+* **scenario-video-to-motion:** add video motion capture skill ([#324](https://github.com/scenario-labs/skills/issues/324)) ([0c853cf](https://github.com/scenario-labs/skills/commit/0c853cf79194bc07b6c4a19202d10e048b527150))
+
+
+### Bug Fixes
+
+* **deps:** lock installs and patch fast-uri ([#328](https://github.com/scenario-labs/skills/issues/328)) ([0158ff7](https://github.com/scenario-labs/skills/commit/0158ff76f771f3d11fa2714da67331cda498d9e0))
+* **scenario-3d:** apply game face budgets across image-to-3D ([#297](https://github.com/scenario-labs/skills/issues/297)) ([8cc9e9b](https://github.com/scenario-labs/skills/commit/8cc9e9b6a2848b6a16f7a6a727a937dab24b7cc6))
+* **scenario-3d:** keep a stored GLB as is on download ([#296](https://github.com/scenario-labs/skills/issues/296)) ([e0a051c](https://github.com/scenario-labs/skills/commit/e0a051cd6e3a7ce3b27b607f4f859611de0c49df)), closes [#289](https://github.com/scenario-labs/skills/issues/289)
+* **scenario-blender-blockout:** document headless build stages ([#295](https://github.com/scenario-labs/skills/issues/295)) ([e77c6fa](https://github.com/scenario-labs/skills/commit/e77c6fad59669ea2c6f2cc1a0f7c91d5a95bc9eb))
+* **scenario-blender-blockout:** take a hero's color from the brief ([#294](https://github.com/scenario-labs/skills/issues/294)) ([3d88cf5](https://github.com/scenario-labs/skills/commit/3d88cf53276c6f281e0314a021c76d67b044e123))
+* **scenario-blender-expert:** fail the gate on a mesh with no faces ([#291](https://github.com/scenario-labs/skills/issues/291)) ([9e052fa](https://github.com/scenario-labs/skills/commit/9e052fae613898464d52b93e3e947073c6934613))
+* **scenario-blender-expert:** look inside node groups for image textures ([#293](https://github.com/scenario-labs/skills/issues/293)) ([1662b7b](https://github.com/scenario-labs/skills/commit/1662b7b9f7b1f8a6061f3e2bacd9cf13c55a6975)), closes [#287](https://github.com/scenario-labs/skills/issues/287)
+* **scenario-blender-export:** close the gaps an application test found ([#302](https://github.com/scenario-labs/skills/issues/302)) ([06ba725](https://github.com/scenario-labs/skills/commit/06ba72576050043795aaad82184ba540a700e674))
+* **scenario-blender-export:** keep LODs of a glTF import closed ([#331](https://github.com/scenario-labs/skills/issues/331)) ([7598531](https://github.com/scenario-labs/skills/commit/759853164460184e7076097f938d93b9e954987f))
+* **scenario-kinetic-music-video:** document still plates and bloom ([#332](https://github.com/scenario-labs/skills/issues/332)) ([5ea59b5](https://github.com/scenario-labs/skills/commit/5ea59b5d664eb531e02ae15f4b38dbb21a68e979))
+* **scenario-workflow-authoring:** require only an output pin to publish ([#322](https://github.com/scenario-labs/skills/issues/322)) ([57754ca](https://github.com/scenario-labs/skills/commit/57754ca2d58d11e7675f16b87bbdf41358687a98))
+* **scenario:** bring the body back under the word cap ([#333](https://github.com/scenario-labs/skills/issues/333)) ([2fa1407](https://github.com/scenario-labs/skills/commit/2fa140761199a105bdd5c78d0c9a7eabde7ec2e6))
+* **scenario:** clarify payload-specific Relax-mode waits ([#321](https://github.com/scenario-labs/skills/issues/321)) ([059185f](https://github.com/scenario-labs/skills/commit/059185f954282d9981a7204a8cc72e1636506b50))
+* **scenario:** fit core guidance within the word budget ([cf5b911](https://github.com/scenario-labs/skills/commit/cf5b911cee12a7542651cb374c0db3a0f27986fa))
+* **scenario:** fit shared guidance within its word budget ([0c853cf](https://github.com/scenario-labs/skills/commit/0c853cf79194bc07b6c4a19202d10e048b527150))
+* **scenario:** route inline upload decode errors to the file_size path ([#320](https://github.com/scenario-labs/skills/issues/320)) ([78c951e](https://github.com/scenario-labs/skills/commit/78c951e280c1ad78a477907d713fa378702a52f9))
+* **scenario:** stop generation on unmatched recommendations ([b3cf5a4](https://github.com/scenario-labs/skills/commit/b3cf5a41efe603f93f5307b5bb7c7dad9fcd7925))
+* **skills:** repair dead links in the Roblox expert references ([#326](https://github.com/scenario-labs/skills/issues/326)) ([26aa322](https://github.com/scenario-labs/skills/commit/26aa3223461ca8688f7e8e1abfc981ae69968787))
+
+
+### Documentation
+
+* add SUPPORT.md and the release, Scorecard and license badges ([3102ff9](https://github.com/scenario-labs/skills/commit/3102ff980b454417132d3f69f1cc04b5b330afbc))
+
 ## [0.59.0](https://github.com/scenario-labs/skills/compare/skills-v0.58.0...skills-v0.59.0) (2026-10-20)
 
 

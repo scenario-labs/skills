@@ -12,9 +12,9 @@ numbers taken from the clips. An agent without the Animator, Timeline or Scene w
 everything from data (AnimatorController, TimelineAsset, Cinemachine and Rigging components), steps
 it deterministically, measures it, and looks at contact sheets. Target: Unity 6000.3.21f1,
 Cinemachine 3.1.7, Animation Rigging 1.4.1, Timeline 1.8.12. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps). Toolkit:
 [`scripts/ut_animation.py`](scripts/ut_animation.py) and C# jobs in

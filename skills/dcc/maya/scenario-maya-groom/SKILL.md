@@ -12,9 +12,9 @@ side-lit renders with the real hair shader. Interactive Groom brushes have no st
 agent grooms with data (guides from a flow sheet wired into the stack, masks written as images,
 modifiers set by value) and judges with numbers from exported strands plus renders. Code:
 [`scripts/mx_groom.py`](scripts/mx_groom.py) (`import mx_groom as G`). If a sibling skill named here
-is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-maya-expert (execution channel, review loop, 2027 version traps).
 

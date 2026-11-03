@@ -23,9 +23,10 @@ belong to `scenario-textures`. Repainting a whole mesh with a 3D-to-3D texturing
 `scenario-3d` lane; this one keeps per-material control and editable Blender shaders. The agent's
 own steps stay on MCP; the bundled scripts (Blender 4.2 or newer, Python 3 with Pillow and numpy,
 ffmpeg) do the local repetition and never call Scenario. Connection and the core loop: the
-`scenario` skill. If a sibling skill named here is missing from your available skills, ask the user
-to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+`scenario` skill. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

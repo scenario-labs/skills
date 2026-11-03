@@ -10,8 +10,9 @@ Expert rigging means the rig is specified by bone placement, proven by deformati
 poses, and shaped around what the animator will actually use. The stance of every source expert:
 place joints precisely, generate or build the simplest mechanism that works, then pose it, measure
 it, render it and fix it before calling it done. If a sibling skill named here is missing from your
-available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 

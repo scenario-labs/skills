@@ -10,9 +10,10 @@ Expert paint in ZBrush is observation made systematic: color zones placed by wha
 skin, pushed enough to survive the shader, judged on neutral and flat views, and baked at a
 resolution the mesh can hold. For an agent without a tablet most of it is buttons: fills at a chosen
 intensity through generated masks, zone images projected onto the mesh, and renders that are both
-measured and looked at. If a sibling skill named here is missing from your available skills, ask the
-user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from
-tool schemas and flag the gap.
+measured and looked at. If a sibling skill named here is missing from your available skills, load it
+with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-zbrush-expert (bridge, stroke engine, review loop, 2026 traps).
 

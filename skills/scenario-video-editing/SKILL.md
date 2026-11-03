@@ -12,9 +12,10 @@ Every image post-processing effect has a video twin, and each is a `model_run` o
 clip in, a few numbers, one clip out. Generating or restyling footage, lipsync, dubbing and
 upscaling are `scenario-video`; concatenating, compositing and captioning a cut are
 `scenario-video-assembly`; the still-image side is `scenario-image-editing`. Connection and the core
-loop: `scenario`. If a sibling skill named here is missing from your available skills, ask the user
-to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+loop: `scenario`. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## The twin rule
 

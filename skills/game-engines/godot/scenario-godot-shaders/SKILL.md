@@ -13,9 +13,10 @@ Expert level here means every shader is text the agent can diff, compiled under 
 renderer, drawn on a real mesh in a window, swept across its parameters and looked at on a contact
 sheet, with its GPU cost measured against a StandardMaterial3D baseline. Compiling is not the same
 as working: several 4.7.2 failures only appear when the backend draws, and several bugs produce no
-error at all. If a sibling skill named here is missing from your available skills, ask the user to
-install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool
-schemas and flag the gap.
+error at all. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, `gd_run`, the review loop, 4.7 traps).
 

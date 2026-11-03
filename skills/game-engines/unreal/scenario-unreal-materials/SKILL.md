@@ -11,8 +11,9 @@ permutation count, cost proven in milliseconds on a fixed camera, and physically
 before any artistic push. The graph is authored once (scripted build or template); everything else
 is instances, Custom Primitive Data and textures that follow a role policy. Never trust the
 instruction count or a pretty preview. If a sibling skill named here is missing from your available
-skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-unreal-expert (channels, review loop, 5.8 traps).
 

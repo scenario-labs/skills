@@ -11,9 +11,9 @@ phone, starts fast, installs from the store, and never double-charges or double-
 budget the sustained frame, prove every setting on the data the device gets (imported format, built
 bundle, exported Xcode project), and treat stores, SDKs and money code as contracts with ugly event
 orders. Target: Unity 6000.3.21f1, URP 17.3, Input System 1.20, macOS with Xcode 26.6. If a sibling
-skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps). Toolkit:
 [`scripts/ut_mobile.py`](scripts/ut_mobile.py) (imports `ut_env`, `ut_run`, `ut_stat`), editor jobs

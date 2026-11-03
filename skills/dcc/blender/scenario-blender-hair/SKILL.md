@@ -10,9 +10,9 @@ Expert grooming means a few evenly spaced guides that set direction and silhouet
 procedural layers add density, clumping, frizz, length variation and strays, judged in a lit render
 at full density and in pose. Write guides as data (no curve brush stroke can be scripted in 5.2.1)
 and make every look decision through the Essentials hair node-group assets. If a sibling skill named
-here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user
+to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 

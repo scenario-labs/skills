@@ -11,8 +11,9 @@ declarative (data and instructions come in from outside), and shipping tools tha
 modifier inputs without opening the tree. For an agent it also means proving every tree with numbers
 read from the evaluated geometry and a render, because the node editor's red links and warnings are
 invisible from Python unless you ask for them. If a sibling skill named here is missing from your
-available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-blender-expert (execution channel, review loop, 5.2 API changes).
 Hair node groups (Interpolate, Clump, Curl, Hair Dynamics grooms): scenario-blender-hair.

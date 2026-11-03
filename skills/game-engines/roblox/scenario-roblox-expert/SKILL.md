@@ -14,9 +14,9 @@ at it, fix it, advance. An agent without a mouse gets there through Studio's bui
 offline checks and text files, passing only on a parsed result and never on one signal alone. This
 skill is that protocol, the shared toolkit every scenario-roblox-* skill calls
 ([`scripts/`](scripts/)), and the map of the team. If a sibling skill named here is missing from
-your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **Status (2026-10-18):** the toolkit ran live in Studio 0.743, 36 live tests and 16 offline tests,
 all pass ([`references/procedures.md`](references/procedures.md)). `run_headless` is live run

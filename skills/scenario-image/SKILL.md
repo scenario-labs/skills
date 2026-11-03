@@ -18,9 +18,9 @@ between two models that do the same job, so read `model_schema_get` every time. 
 the other tool models: see `scenario-image-editing`. Holding one look across a set: see
 `scenario-consistency`. One image from several references, each with one job:
 `scenario-multi-reference`. Sprites, icons, and tilesets: see `scenario-game-assets`. If a sibling
-skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
+ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
+from tool schemas and flag the gap.
 
 ## Quick reference
 

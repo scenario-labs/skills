@@ -10,9 +10,9 @@ Expert lighting in Unity is a measured loop: fix exposure, light to anchors, bak
 every stage from the same camera bookmarks with numbers (gray cards, clipping, bake memory, native
 passes) before taste. This skill drives URP 17.3 on Unity 6.3 from code; everything here ran in
 Unity 6000.3.21f1 on an Apple M5 Max (Metal) on 2026-09-24. If a sibling skill named here is missing
-from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, `ut_run`, `AgentCapture`, `AgentProfile`,
 `ut_review`, 6.3 traps).

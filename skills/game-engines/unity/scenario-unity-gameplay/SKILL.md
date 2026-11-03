@@ -11,9 +11,9 @@ someone chose, and is proven by a measurement: steps per frame, a tunneling test
 a path query through the real door, a timed transition, the worst frame at the real agent count.
 This skill carries the expert delta from the 6.3 manuals, AI Navigation 2, NGO and shipped games
 (Survival Kids, Very Very Valet), with jobs and tests run in 6000.3.21f1. If a sibling skill named
-here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user
+to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps). Install:
 `ut_gameplay.install(P)` (core AgentKit + `AgentKit.Gameplay` jobs + the `AgentKit.Gameplay.Runtime`

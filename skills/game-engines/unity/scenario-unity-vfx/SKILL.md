@@ -11,8 +11,9 @@ ends, on the target device, with the real number of copies on screen. Craft (lay
 motion, textures) and budget (fill, particles, draw calls, memory) are both measured here: every
 effect is stepped frame by frame offscreen, looked at, and counted. Target: Unity 6000.3.21f1, URP
 17.3, VFX Graph 17.3.0, macOS Apple Silicon. If a sibling skill named here is missing from your
-available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps, `ut_run`,
 `ut_review`, `ut_stat`, AgentKit).

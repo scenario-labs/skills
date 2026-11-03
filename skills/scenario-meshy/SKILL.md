@@ -18,8 +18,9 @@ Image to 3D, false on Multi Image and Retexture at authoring time).
 
 Connection and the core loop: see the `scenario` skill in this repo; model-agnostic 3D work (viewer,
 capture, engine import): the `scenario-3d` skill. If a sibling skill named here is missing from your
-available skills, ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`);
-unattended, proceed from tool schemas and flag the gap.
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

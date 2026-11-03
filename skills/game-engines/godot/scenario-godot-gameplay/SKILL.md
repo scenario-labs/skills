@@ -12,9 +12,9 @@ At expert level, gameplay systems are small contracts that can be tested without
 decision functions, Resources for data, groups for discovery. Their cost is measured at the agent
 count the game needs before anyone argues about it. The core stance: build the rule as data, run it
 headless at `--fixed-fps 60`, then look at one capture. If a sibling skill named here is missing
-from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-godot-expert (channels, `gd_run`, the review loop, 4.7 traps).
 

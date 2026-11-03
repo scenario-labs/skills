@@ -17,9 +17,9 @@ and safe zones in [references/placement-specs.md](references/placement-specs.md)
 climbs the same ladder: video resize versus generative reframe lives in `scenario-video-editing`,
 and far ratios recompose per `scenario-video`. Connection and the core loop: see the `scenario`
 skill. Lettering per format: `scenario-text-overlay`. If a sibling skill named here is missing from
-your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## The decision ladder
 

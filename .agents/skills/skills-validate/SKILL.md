@@ -20,6 +20,12 @@ the run directory.
 Live runs spend Scenario credits. Keep every generation the smallest one that still proves the
 point.
 
+Determine the context (step 6) before anything else. A PR from a fork (`isCrossRepository: true`) is
+quarantined: follow step 1 of `.agents/skills/skills-pr-handle/SKILL.md` for what may run, where,
+and with which tools. Read its skill from `refs/pr/$PR`, take its mechanical results from the PR's
+CI, never a local run, and install it in step 4 from `git archive "refs/pr/$PR"`, never the working
+tree.
+
 ## 1. Review the objective
 
 Read the skill's `SKILL.md` and every file it links; `node scripts/lib/skills.mjs --dir <name>`
@@ -90,12 +96,13 @@ Then pick the strongest isolation available. If the Claude Code CLI is installed
   spaces become underscores, so `claude.ai Scenario` is `mcp__claude_ai_Scenario`. The child loads
   the skills from `$RUN/.claude/skills/` and never sees this repository, though
   `--setting-sources user,project` (which a user-scope connector needs) also carries the user's
-  plugins and hooks into it; watch the transcript for injected noise.
+  plugins and hooks into it; watch the transcript for injected noise. A quarantined fork drops
+  `Bash` from `--allowedTools`: its scripts run in the container.
 
 - **Subagent** when the CLI is unavailable or the list has no connected Scenario server. Spawn a
   fresh agent with the contract, the task, and the run directory path (Claude Code can use its
   `skill-tester` agent). Isolation is weaker: it can still see repository context, which is why the
-  contract tells it to ignore it.
+  contract tells it to ignore it. Never for a quarantined fork: `skill-tester` has a shell.
 
 Say in the report which mode ran. With `--plan-only`, the same setup applies but the task asks for a
 numbered tool-call plan with exact tool names and argument shapes, executing nothing.
@@ -141,9 +148,9 @@ its own mistake.
 ## 6. Determine the context
 
 `git rev-parse --abbrev-ref HEAD`, then look for an open PR with that head branch:
-`gh pr view --json number,url,title` when `gh` is available, otherwise the GitHub MCP tools
-(`list_pull_requests` with `head: <owner>:<branch>`). `--pr` overrides the detection. Say which
-context you found before acting on it.
+`gh pr view --json number,url,title,isCrossRepository` when `gh` is available, otherwise the GitHub
+MCP tools (`list_pull_requests` with `head: <owner>:<branch>`). `--pr` overrides the detection. This
+runs before step 1. Say which context you found before acting on it.
 
 ## 7. Report
 

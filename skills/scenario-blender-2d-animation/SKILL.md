@@ -31,9 +31,9 @@ and quote the rest from `recommend`, since a `dry_run` naming an asset that does
 returns 404. Then `dry_run` each later payload once its input exists, before running it.
 
 Connection, uploads and the core loop: the `scenario` skill. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 The scripts run locally and never call Scenario. Blender 5.x runs the scene script, headless or in
 an open session (through a Blender MCP connection, for example); in a session, start from File >

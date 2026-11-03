@@ -12,9 +12,9 @@ toolkit.
 At expert level, a gameplay system is a pure rule tested in Lune, wired to the engine by one server
 scheduler, and proven in a playtest with measured server cost. The core stance: the client sends
 intent, the server decides every hit with a spatial query, and no number ships unmeasured. If a
-sibling skill named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+sibling skill named here is missing from your available skills, load it with `skill_get` (Scenario
+MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install); unattended,
+proceed from tool schemas and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-roblox-expert (channels, review loop, toolkit, current-Roblox
 traps).

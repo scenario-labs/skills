@@ -10,8 +10,9 @@ Expert Maya work is a loop, not a script: block big to small, and at every stage
 look and fix before adding detail. This skill is the protocol every Maya task follows, the shared
 toolkit the other scenario-maya-* skills call, and the map to them. Target: Maya 2027 on macOS Apple
 Silicon, driven through Python. If a sibling skill named here is missing from your available skills,
-ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
-proceed from tool schemas and flag the gap.
+load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **Status (2026-09-24):** Maya 2027 is not installed yet. Every Maya call in [`scripts/`](scripts/)
 and `references/` is **not yet run in Maya**. The pure-Python parts and the Maya-layer logic ran

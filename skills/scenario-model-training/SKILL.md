@@ -23,9 +23,9 @@ feeds `recommend_training`) and [references/dataset-curation.md](references/data
 (dataset size, image rules, captions, and review per training type).
 
 Connection and the core generation loop: see the `scenario` skill. If a sibling skill named here is
-missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 Training tools are not in the default toolset: get schemas with `scenario_tools_search`, run reads
 (`recommend_training`, `model_get`) via `scenario_tool_execute_read` and writes (`model_create`,

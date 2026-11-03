@@ -17,9 +17,9 @@ the exact text. The reader has no access to the user's account, so the report mu
 needed to reproduce from outside.
 
 Connection and the core generation loop: see the `scenario` skill in this repo. If a sibling skill
-named here is missing from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the
+user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 Account, billing, credit, quota, sign-in, and security problems never go in a public issue: send
 those to `support@scenario.com` or in-app support at `app.scenario.com`.

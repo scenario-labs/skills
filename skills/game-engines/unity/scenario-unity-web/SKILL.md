@@ -12,8 +12,9 @@ API ran, how big the heap grew, and that the page and the game talk. The stance:
 compression, the budget is measured to the first playable moment, and nothing counts until a served
 build loads headless with zero errors and a screenshot you looked at. Target: Unity 6000.3.21f1, URP
 17.3, Chrome headless on macOS. If a sibling skill named here is missing from your available skills,
-ask the user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended,
-proceed from tool schemas and flag the gap.
+load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **REQUIRED BACKGROUND:** scenario-unity-expert (channels, review loop, 6.3 traps). Toolkit:
 `ut_env`, `ut_run` (incl. `build(P, "web")`, `run_tests`), `ut_review`, plus this skill's

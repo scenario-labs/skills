@@ -16,9 +16,9 @@ which skeleton comes back, and which file formats they write.
 Siblings: `scenario` (connection, scope, upload, `jobs_wait`), `scenario-3d` (making or rigging the
 mesh first), `scenario-video` (generating a reference performance when no footage exists), and
 `scenario-video-editing` (trimming and resizing the clip). If a sibling skill named here is missing
-from your available skills, ask the user to install it
-(`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from tool schemas and
-flag the gap.
+from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 ## Quick reference
 

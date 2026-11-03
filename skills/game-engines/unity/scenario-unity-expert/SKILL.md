@@ -11,9 +11,10 @@ at it, fix it, then advance. An agent without a mouse gets there by choosing the
 each action, editing through serialization with explicit saves, and never trusting its own eyes
 alone. This skill is that protocol, the shared toolkit every scenario-unity-* skill imports
 ([`scripts/`](scripts/)), and the map of the team. Target: Unity 6000.3.21f1 (6.3 LTS), URP 17.3,
-macOS Apple Silicon. If a sibling skill named here is missing from your available skills, ask the
-user to install it (`npx skills add scenario-labs/skills --skill <name>`); unattended, proceed from
-tool schemas and flag the gap.
+macOS Apple Silicon. If a sibling skill named here is missing from your available skills, load it
+with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 **Status (2026-09-24, after blind grading and the refactor):** every toolkit function ran in Unity
 6000.3.21f1 here (`tests/code/unity-expert/run_all.sh --live --builds`; results in
