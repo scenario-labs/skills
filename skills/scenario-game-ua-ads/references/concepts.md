@@ -10,16 +10,23 @@ square app icon of the hero for every end card.
 
 ## 1. Rescue with a fail tease (pin-pull puzzle)
 
-- **Board**: stone-wall cutaway with four glass chambers: hazard (lava), treasure (gold), a trapped
-  character, an empty bin. Golden pins block golden pipes.
-- **Clips**: two from the same still. Fail take 5 s: wrong pin slides out, hazard floods the
-  character. Payoff take 10 s, first 6 s used: other pin slides out, treasure fills the bin.
+- **Board**: two tall glass shafts side by side in a stone frame. Left: hazard (lava) above the
+  trapped character. Right: treasure (gold) above an empty cart. One golden pin is the floor of each
+  top compartment, so a pull drops the contents straight down. No pipes, bends, or second pins: the
+  model routes contents outside a pipe and pours through a closed pin. Keep the top 15% free for the
+  HUD and hook.
+- **End still**: for the payoff, edit the board into its solved state with the same gold amount in
+  the cart, the lava still held, the character cheering.
+- **Clips**: two from the same still. Fail take 5 s: wrong pin slides out, hazard drops onto the
+  character. Payoff take 10 s, first and last frame pinned to the end still: the other pin slides
+  out, treasure drops into the cart.
 - **Timeline**: 0 to 3 s hook. 0 to 5.2 s fail take, FAIL and red flash at 3.7 s. 5.2 to 11.1 s
   payoff take, counter climbing, NICE at 9 s. 11.1 to 15 s end card.
 - **UI**: hook, level badge, coin counter (5 values), hand on each pin ring, FAIL, red flash, NICE,
   end card.
-- **Notes**: the character reads as worried in the still, so the fail needs no extra acting. Do not
-  ask for a push-in on the payoff take: the pipes warp.
+- **Notes**: the character reads as worried in the still, so the fail needs no extra acting. Pinning
+  the last frame also locks the camera; an unpinned payoff take drifted into a push-in even when
+  told not to.
 
 ## 2. Number gates (crowd runner)
 

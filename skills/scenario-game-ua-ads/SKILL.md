@@ -48,7 +48,18 @@ the board still. Then run without stopping.
 - Prompt each clip as one locked camera. No push-in over a busy board: pipes, gates, and slots warp
   in the last seconds. Ask for a longer clip than needed and use only the clean first part.
 - Render the clips at final quality. Draft tiers are for motion tests only.
-- Look at the board still before animating: every chamber, gate, or card must read at phone size.
+- The game logic must hold, because players spot a cheat at once. Video models ignore barriers: lava
+  and coins flow through a closed pin. So design the still with exactly one visible move per path
+  and no second pin, gate, or wall the clip does not open.
+- Prefer straight drops and straight lanes. Contents sitting right above their target fall in a line
+  the model keeps; a pipe or a bend invites a shortcut outside it.
+- When the payoff has a fixed end state, edit the board into that state with the same counts, then
+  pin it as the clip's last frame. Pinning also locks the camera.
+- Keep the top 15% of the still free of play pieces: the HUD and hook sit there.
+- Name every barrier's state in the clip prompt ("the pipe opens straight into the chamber", "coins
+  stay inside the glass") and what stays still.
+- Look at the board still before animating: every chamber, gate, or card must read at phone size,
+  and the puzzle must be solvable as drawn.
 - Use the `compose-video` timeline model for assembly: it is Scenario's one deterministic
   compositor, so its id is fixed (`model_scenario-compose-video`; confirm with `search`).
 - Sound is two jobs. Run a video-to-audio model on the silent cut for effects (its effect prompt is
@@ -60,21 +71,29 @@ the board still. Then run without stopping.
 
 1. Timeline: hook 0 to 3 s. Fail take 0 to 5.2 s, FAIL burst and red flash at 3.7 s. Payoff take 5.2
    to 11.1 s, NICE burst at 9 s. End card 11.1 to 15 s.
-2. Board: `recommend` an image model for polished casual game art. Four chambers (lava, gold,
-   trapped miner, empty bin), pins and pipes, text-free. Also generate a square app icon of the
-   hero.
-3. Clips: `model_schema_get`, then two runs from the same still with `wait: false`, final tier. Fail
-   take 5 s: pin slides out at second 1, lava floods the miner. Payoff take 10 s: the other pin
-   slides out, gold pours into the bin, the miner cheers. State what stays still.
+2. Board: `recommend` an image model for polished casual game art. Two glass shafts, text-free: lava
+   above the trapped miner, gold above an empty cart, one pin as the floor of each top compartment.
+   Edit it into the solved state (same gold amount in the cart, lava held, miner cheering). Also
+   generate a square app icon of the hero.
+3. Clips: `model_schema_get`, then two runs with `wait: false`, final tier. Fail take 5 s from the
+   board: the left pin slides out at second 1, lava drops onto the miner. Payoff take 10 s, board as
+   first frame and solved still as last: the right pin slides out, gold drops into the cart. State
+   what stays still.
 4. UI with `scenario-text-overlay`: hook, level badge, one counter pill per value, FAIL, NICE, red
    flash, end card. Measure pin ring positions on the still and place the hand there in two steps.
 5. Assemble: clips at their `startTime`s with `fit: "cover"`, `mute: true`, payoff trimmed to the
    clean part. Overlays above, `durationMode: "custom"`, `duration: 15`. Run it silent first.
 6. Sound as the rules say, one final compose run, then probe length and levels.
-7. Check: sweep at 2 fps into one contact sheet and apply the reject list.
+7. Check: before assembling, extract full-resolution frames every 0.5 s around each clip's action
+   and inspect crops at 540 px or wider for logic. After assembling, sweep at 2 fps into one contact
+   sheet for timing and overlays. Apply the reject list.
 
 ## Reject list
 
+- Anything passing through a closed pin, gate, wall, glass, or floor, or leaving its container. A
+  small contact sheet hides this: judge it on full-resolution crops.
+- An action that does not follow from the move the hand shows, or a HUD count that contradicts what
+  is visible.
 - Hook, badge, and counter overlap, or any text under 6% of frame height.
 - A black frame at a cut: the end card starts exactly when the last clip ends, with no fade.
 - The board shifting between takes, or pipes and slots warping near a clip's end: trim earlier.
