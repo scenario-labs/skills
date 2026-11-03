@@ -27,6 +27,11 @@ invented gameplay is the fallback for a user with nothing to give, never an over
   `model_scenario-video-cut` (its `startTime` and `endTime` are source in and out points) and place
   them as clip layers. Real gameplay needs no logic check of its own, but the overlays must match
   it: the hand on the real touch point, the counter on the real event.
+- **Beats from footage.** Build the timeline from the marked moments, not the fail-tease table.
+  - The hook plays over the strongest opening moment.
+  - Three or four escalation moments follow, each with a counter step read off its own event.
+  - The biggest moment is the payoff, then the end card.
+  - A fail tease needs a real fail in the footage. Never fake one with generated video.
 - **Footage as a source.** When the ratio differs, or the moment is too short, extract frames
   (`scenario-video-editing`) and use them as first frames or references for generated takes at the
   delivery ratio. A landscape recording cropped to 9:16 usually loses the action.

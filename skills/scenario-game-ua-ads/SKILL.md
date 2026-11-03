@@ -58,6 +58,9 @@ user has none to give.
 | 20 s   | 5 s                        | 6 s, then a 5 s escalation | 4 s      |
 | 30 s   | two rounds of fail and win | or three escalations       | 4 s      |
 
+From the user's footage, setup and payoff become the footage's own beats
+([inputs](references/inputs.md)).
+
 - Compose each ratio natively: generate the board at the delivery canvas (1080x1920 for 9:16,
   1080x1350 for 4:5, 1080x1080 for 1:1, 1920x1080 for 16:9). Never crop one ratio out of another.
 - Plan the board still in the placement's bands: background only under the platform UI, the HUD and
@@ -88,15 +91,26 @@ user has none to give.
     take's last frame. Pinning also locks the camera.
   - A precise move a model cannot do cleanly (a two-piece swap) is built as layers from the still;
     the model animates only the consequence.
+  - A board whose every move must be exact (tile match, sort, merge, screw puzzle) is scripted
+    whole: cut the pieces from the board still or the user's screenshot and animate them as layers.
+    The rules stay exact, and a video model adds only ambient motion behind them.
 - Assembly runs on `model_scenario-compose-video`, Scenario's one deterministic compositor, so its
   id is fixed (confirm with `search`).
-- Anything that moves on the UI layer (the hand, rewards flying to the counter, a burst) is one
-  transparent video layer, never a run of stepped image layers: compose can show two of them on one
-  boundary frame ([ui](references/ui-layers.md)).
+- Anything that moves on the UI layer (the hand, the counter pop, rewards flying to the counter, a
+  burst) is one transparent ProRes 4444 `.mov`, cropped to its motion box. Never use a run of
+  stepped image layers, which compose can show two at a time, and never WebM alpha, which comes out
+  black ([ui](references/ui-layers.md)).
 - Sound: a hit on every visible event (tap, impact, pickup, counter step) on its frame, louder than
   the music. A video-to-audio pass on the silent cut adds incidental sound but misses events; its
   effect prompt is capped near 200 characters. Generate the bed separately, banning ambient pads,
   and shift it so its lift lands on the payoff.
+- Compose takes at most 50 layers and has no limiter, so assembly runs in passes:
+  - picture: clips and overlays, muted, into a silent master;
+  - sound: the silent master as the one video layer under every audio layer, times to the
+    millisecond;
+  - loudness, only when the sound pass misses -16 to -14 LUFS or peaks above -1 dBTP:
+    `model_scenario-audio-extract` with `normalizeLoudness: true`, then the silent master plus that
+    one track. Scenario ships one tool for each of these jobs, so the ids are fixed.
 - End on the payoff, then a living end card: the icon pops, the hero bounces in, stars twinkle. The
   call to action follows the placement: a label on social feeds, which ban fake buttons, and a
   button only on clickable ad-network cards.
@@ -118,11 +132,11 @@ user has none to give.
 5. UI with `scenario-text-overlay`: hook, level badge, counter values, FAIL, NICE, red flash, end
    card with a "PLAY FREE" label. The hand is one transparent video following the pin ring, and a
    coin burst flies to the counter on each step.
-6. Assemble silent: clips at their `startTime`s, `fit: "cover"`, `mute: true`. Overlays above,
+6. Picture pass: clips at their `startTime`s, `fit: "cover"`, `mute: true`. Overlays above,
    `durationMode: "custom"`, `duration: 15`.
-7. Sound: hits on the pin pulls, the lava, the coins, each counter step, and the end card; the
-   video-to-audio pass under them; the bed with its lift at 5.2 s. One final compose run.
-8. Check: probe, `volumedetect` per section, a 2 fps sheet for timing, then the reject list.
+7. Sound pass on the silent master: hits on the pin pulls, the lava, the coins, each counter step,
+   and the end card; the video-to-audio pass under them; the bed with its lift at 5.2 s.
+8. Check: probe, loudness per section, a 2 fps sheet for timing, then the reject list.
 
 ## Reject list
 
@@ -130,12 +144,18 @@ user has none to give.
   small contact sheet hides this: judge it on full-resolution crops.
 - A hand gesture with no matching action, an action with no gesture, or a count that contradicts the
   screen.
+- A win that leaves a piece on the board ("cleared" with one car still parked), even half under the
+  HUD.
+- A timer or meter that runs faster than real seconds.
 - A character or item off-model against the user's assets, or a board that no longer matches their
   screenshots.
-- UI outside the placement's safe zone, overlapping elements, or HUD text under 70 px on 1080 wide.
+- UI outside the placement's safe zone, overlapping elements, or HUD digits under 72 px on 1080
+  wide.
 - A black frame at a cut: the end card starts exactly when the last clip ends, with no fade.
 - The board shifting between takes, or pieces warping near a take's end: trim earlier.
-- An event with no hit, a hit more than 0.1 s off its frame, or a quiet first second.
+- An event with no hit, a hit more than 0.1 s off its frame, a quiet first second, or a peak above
+  -1 dBTP.
+- A counter step, reward, burst, or star with no event on screen to cause it.
 
 ## Common mistakes
 

@@ -1,9 +1,9 @@
 # Concept beat sheets
 
 Six proven mobile UA concepts, each planned as a 15 second ad: a setup or tease take, a payoff take,
-and a 4 second end card. Every board is a text-free 9:16 still, and every number, label, button, and
-hand in the UI column is a composited layer (see [ui-layers.md](ui-layers.md)). Shorter ads drop the
-setup take's second half, never the end card.
+and a 4 second end card. Every board is a text-free still at the delivery ratio, and every number,
+label, button, and hand in the UI column is a composited layer (see [ui-layers.md](ui-layers.md)).
+Shorter ads drop the setup take's second half, never the end card.
 
 Invent a fictional game name when the user gives none, and use it on the end card only. Generate a
 square app icon of the hero for every end card.

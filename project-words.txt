@@ -975,6 +975,7 @@ dval
 dynamesh
 dynres
 dyntopo
+ebur
 edemaistre
 elttob
 emissives
@@ -1355,6 +1356,7 @@ xgen
 xhigh
 xpcall
 xxxhdpi
+yuva
 zbrush
 zmodeler
 zremesh
