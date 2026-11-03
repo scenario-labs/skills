@@ -1,6 +1,6 @@
 ---
 name: scenario-game-ua-ads
-description: "Use when making a finished mobile game user-acquisition (UA) video ad with Scenario at an exact length for TikTok, Reels, Stories, Meta feed, YouTube Shorts, or ad networks: from a one-line concept or the game's own screenshots, screen recording, gameplay video, characters, icon, or UI kit. Pin-pull rescue, number gates, sort, gacha summon, merge story, only-1% puzzle. Also hook, hand cursor, HUD counter, win burst, end card. Not for ads from a product photo."
+description: "Use when making a finished mobile game user-acquisition (UA) video ad with Scenario at an exact length for TikTok, Reels, Stories, Meta feed, YouTube Shorts, or ad networks: from a one-line concept or the game's own screenshots, screen recording, gameplay video, characters, icon, or UI kit. Pin-pull, parking jam, match-3, swallow hole, evolution runner, stacker, draw to protect, odd one out, gacha, merge. Also hook, hand, HUD counter, end card. Not for ads from a product photo."
 license: MIT
 ---
 
@@ -11,9 +11,10 @@ license: MIT
 A UA ad that plays like gameplay: Scenario generates or adapts the board art and the motion, and
 every piece of game UI is composited on top. The user gives a concept and a placement, not a shot
 list. The deliverable is the requested length and format at final render quality, never a draft or a
-single clip. For ads from a product photo, use `scenario-video-ads`; for hook, CTA, or end-card
-variants of a finished ad, `scenario-ad-variants`. Connection, discovery, and recovery follow
-`scenario`. If a sibling skill named here is missing from your available skills, load it with
+single clip. The test of every beat: a stranger who has never heard of the game thinks "I really
+want to try this". For ads from a product photo, use `scenario-video-ads`; for hook, CTA, or
+end-card variants of a finished ad, `scenario-ad-variants`. Connection, discovery, and recovery
+follow `scenario`. If a sibling skill named here is missing from your available skills, load it with
 `skill_get` (Scenario MCP) or ask the user to install it
 (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
 the gap.
@@ -68,6 +69,22 @@ From the user's footage, setup and payoff become the footage's own beats
   too.
 - Several placements: one board per ratio and one assembly run each, from the same plan.
 
+## Make the viewer want to play
+
+A board that changes correctly sells nothing. Plan every concept around its fantasy (power,
+cleverness, order, growth, rescue) and its **Fun** line in [concepts](references/concepts.md):
+
+- The input reads within 2 s: the hand and the piece move together, and the game answers at once.
+- Every input gets a satisfying reaction in the motion itself: anticipation, contact, reaction. A
+  piece wobbles on an edge, tips, then drops with a spin; a stack sways and settles. Write it beat
+  by beat in the clip prompt.
+- Show a limit, then overcome it: a too-big object rattles across the rim until the hole grows.
+- Escalate: each beat bigger or faster than the last, a near-fail, one clever move nobody expected,
+  then the biggest moment near the end of gameplay.
+- Never simplify the mechanic until the model cannot break it. Build a rich one in chained stages:
+  one state still per step, each edited from the last, each take pinned from one state to the next
+  with one visible move. Or script it from cut pieces (below).
+
 ## Rules that carry the ad
 
 - Probe the final file for length and canvas, never trust the plan.
@@ -75,7 +92,8 @@ From the user's footage, setup and payoff become the footage's own beats
   logo intro.
 - Never let a model draw text, numbers, gate values, buttons, or the hand. Leave slots blank in the
   still and composite them.
-- One mechanic, one escalation. Counters only climb, in 4 or 5 visible steps.
+- One mechanic, escalating. Counters only climb, in 4 or 5 visible steps, each proportional to the
+  event that causes it: one pickup never jumps a level from 30 to 99.
 - A fail tease is two takes from one still: the wrong move and its consequence, then the right move.
   Cut on a burst word.
 - One locked camera per take, at final quality. No push-in over a busy board: pipes, gates, and
@@ -115,6 +133,21 @@ From the user's footage, setup and payoff become the footage's own beats
   call to action follows the placement: a label on social feeds, which ban fake buttons, and a
   button only on clickable ad-network cards.
 
+## Scripts
+
+The agent runs these locally with Python 3, Pillow, numpy, and ffmpeg. They render and plan; uploads
+and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fields.
+
+- [render_tracks.py](scripts/render_tracks.py): renders the hand, counter pops, progress bar,
+  floaters, reward flights, bursts, win stars, icon pop, bounce-in, and label pulse as cropped
+  ProRes 4444 tracks, plus `layers.json` with floored times and safe-zone warnings.
+- [build_passes.py](scripts/build_passes.py): `simulate` sums the cue sheet locally and prints
+  loudness, true peak, and each hit's margin; `picture` and `sound` write the two compose payloads.
+- [check_master.py](scripts/check_master.py): run on the downloaded master: canvas, length,
+  loudness, true peak, levels per section, a 2 fps sheet, and each hit's onset.
+- [make_patch.py](scripts/make_patch.py): builds a clean-plate image layer that hides a static piece
+  contradicting the count, and checks every take it covers.
+
 ## Worked example: rescue with a fail tease, 15 seconds, TikTok 9:16
 
 1. Plan: 1080x1920, TikTok safe zone: shafts in the middle band, HUD from y 280. Hook 0 to 3 s. Fail
@@ -130,16 +163,19 @@ From the user's footage, setup and payoff become the footage's own beats
 4. Logic: frames every 0.25 s around each pin pull, crops at 540 px or wider. Nothing passes the
    other pin or the glass, and the gold in the cart matches the gold that fell.
 5. UI with `scenario-text-overlay`: hook, level badge, counter values, FAIL, NICE, red flash, end
-   card with a "PLAY FREE" label. The hand is one transparent video following the pin ring, and a
-   coin burst flies to the counter on each step.
-6. Picture pass: clips at their `startTime`s, `fit: "cover"`, `mute: true`. Overlays above,
-   `durationMode: "custom"`, `duration: 15`.
+   card with a "PLAY FREE" label. `render_tracks.py` renders the hand following the pin ring and a
+   coin flight to the counter on each step.
+6. Picture pass: `build_passes.py picture` lays the clips at their `startTime`s, `fit: "cover"`,
+   `mute: true`, overlays above, `durationMode: "custom"`, `duration: 15`.
 7. Sound pass on the silent master: hits on the pin pulls, the lava, the coins, each counter step,
-   and the end card; the video-to-audio pass under them; the bed with its lift at 5.2 s.
-8. Check: probe, loudness per section, a 2 fps sheet for timing, then the reject list.
+   and the end card; the video-to-audio pass under them; the bed with its lift at 5.2 s. Run
+   `simulate` first and trim until the peak sits under -1 dBTP.
+8. Check: `check_master.py`, then the reject list on full-resolution frames.
 
 ## Reject list
 
+- A beat where the board changes with no readable player input, or an input with no satisfying
+  reaction: correct, but nobody wants to play it.
 - Anything passing through a closed pin, gate, wall, glass, or floor, or leaving its container. A
   small contact sheet hides this: judge it on full-resolution crops.
 - A hand gesture with no matching action, an action with no gesture, or a count that contradicts the
