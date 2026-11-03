@@ -43,7 +43,7 @@ user has none to give.
 | 1. Plan     | Ratio, safe zones, second-by-second timeline ([concepts](references/concepts.md)) |                                          |
 | 2. Board    | One text-free still per mechanic at the delivery ratio, from the user's material  | `scenario-game-assets`, `scenario-image` |
 | 3. Clips    | Final-quality takes from the still, or cuts of the user's footage                 | `scenario-video`, `scenario-seedance`    |
-| 4. Logic    | Full-resolution frames around every action, before any assembly                   |                                          |
+| 4. Logic    | One tiled sheet of native-resolution crops per action, before any assembly        |                                          |
 | 5. UI       | Hook, HUD, hand, bursts, effects, end card ([ui](references/ui-layers.md))        | `scenario-text-overlay`                  |
 | 6. Assemble | One timeline at the exact length and canvas                                       | `scenario-video-assembly`                |
 | 7. Sound    | A hit on every event, a separate music bed, mixed in assembly                     | `scenario-audio`                         |
@@ -160,8 +160,10 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
 3. Clips: `model_schema_get`, then two runs with `wait: false`, final tier. Fail take 5 s from the
    board: the left pin slides out, lava drops onto the miner. Payoff take 10 s, board as first
    frame, solved still as last: the right pin slides out, gold drops into the cart.
-4. Logic: frames every 0.25 s around each pin pull, crops at 540 px or wider. Nothing passes the
-   other pin or the glass, and the gold in the cart matches the gold that fell.
+4. Logic: one sheet per pin pull, read in one look:
+   `ffmpeg -ss 3.2 -t 2 -i take.mp4 -vf "fps=4,crop=540:540:270:600,tile=4x2" -frames:v 1 pull.jpg`
+   tiles eight native-resolution crops of the action on one image. Nothing passes the other pin or
+   the glass, and the gold in the cart matches the gold that fell.
 5. UI with `scenario-text-overlay`: hook, level badge, counter values, FAIL, NICE, red flash, end
    card with a "PLAY FREE" label. `render_tracks.py` renders the hand following the pin ring and a
    coin flight to the counter on each step.
@@ -170,14 +172,15 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
 7. Sound pass on the silent master: hits on the pin pulls, the lava, the coins, each counter step,
    and the end card; the video-to-audio pass under them; the bed with its lift at 5.2 s. Run
    `simulate` first and trim until the peak sits under -1 dBTP.
-8. Check: `check_master.py`, then the reject list on full-resolution frames.
+8. Check: `check_master.py`, then the reject list on one tiled crop sheet per action.
 
 ## Reject list
 
 - A beat where the board changes with no readable player input, or an input with no satisfying
   reaction: correct, but nobody wants to play it.
 - Anything passing through a closed pin, gate, wall, glass, or floor, or leaving its container. A
-  small contact sheet hides this: judge it on full-resolution crops.
+  downscaled contact sheet hides this: judge it on native-resolution crops of the action, tiled into
+  one sheet. Read single frames only where a sheet leaves a doubt.
 - A hand gesture with no matching action, an action with no gesture, or a count that contradicts the
   screen.
 - A win that leaves a piece on the board ("cleared" with one car still parked), even half under the
