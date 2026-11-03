@@ -83,6 +83,16 @@ def video_stream(path):
     return json.loads(out)["streams"][0]
 
 
+def encode(path, frames, fps=30, crf=23, gop=None):
+    """An H.264 yuv420p clip from a list of HxWx3 uint8 frames, like a downloaded take."""
+    h, w = frames[0].shape[:2]
+    cmd = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-r", str(fps),
+           "-i", "-", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", str(crf)]
+    cmd += ["-g", str(gop)] if gop else []
+    subprocess.run([*cmd, str(path)], input=b"".join(f.tobytes() for f in frames), check=True)
+    return path
+
+
 def mux(path, audio, size=(64, 112), seconds=2):
     """A black clip at 30 fps carrying audio as PCM, a stand-in for a composed master."""
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", f"color=black:s={size[0]}x{size[1]}:r=30:d={seconds}",
