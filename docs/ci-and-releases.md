@@ -85,6 +85,9 @@ which commit types release and which files release-please owns.
     not the version CI installs.
   - It skips release-please-action and the `release-please` CLI, which move by hand together: the
     `package.json` pin must stay the version the action bundles.
+  - `pr-name-linter` skips its PRs. A group holding one dependency gets a title past the
+    120-character header cap, and `dependabot.yml` sets only the prefix. Its commit messages stay
+    short and still pass the `commitlint` job.
 - The kinetic music-video scaffold uses `npm ci` with its shipped package lock. Keep `opentype.js`
   on 1.x while the engine's import map names `dist/opentype.module.js`. Version 2 renamed that
   module to `dist/opentype.mjs`. Dependabot ignores major updates for this dependency until the
