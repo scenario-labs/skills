@@ -79,7 +79,7 @@ disagree, AGENTS.md wins.
 ```bash
 pnpm format   # prettier reflows markdown, so run it before validate
 pnpm validate # house style, formatting, supporting files, groupings, README table, spelling, spec
-pnpm test     # only needed when a shipped script changed; suites live in tests/<name>/
+pnpm test     # only needed when a shipped script changed; suites live in tests/<name>/ (one per expert family)
 ```
 
 A new or changed skill also needs the application test from

@@ -37,3 +37,20 @@ The test every new or changed skill passes before merging. `/skills:validate <na
    a new fresh agent: a failed agent is contaminated by its own mistake.
 6. Baseline probe, once per new skill (not per edit): run the same task with no skill installed, to
    confirm the skill earns its context cost.
+
+## Rules learned from past runs
+
+- Catalog-only MCP tools (`collection_*`, `asset_quality_gate_run`) take their arguments under
+  `parameters`, not `arguments`, in `scenario_tool_execute_read/write`. The wrong key fails with a
+  misleading "team_id and project_id are required".
+- `usage` accepts inclusive date bounds and defaults to the last 31 days when both dates are
+  omitted. Set explicit dates and scope for attribution.
+  - Overall consumed CU is `totals.totalCU` (the sum of `consumption.value`). Model CU is generation
+    activity and can differ. Both are already after discounts.
+  - Never substitute job billing snapshots, or a sum of your own calls, for consumed CU.
+- Verify a delivered video by sweeping it into contact sheets (`ffmpeg -vf "fps=2"`), not one frame
+  per shot: a defect that fades in mid-shot passes a spot check.
+- Before a paid run, pre-register what each outcome would mean, so conclusions are not fitted to
+  results afterwards.
+- Stop hunting a mechanism after roughly two inconclusive controlled runs: ship the rule that holds
+  regardless and record the open question.
