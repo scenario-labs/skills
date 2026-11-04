@@ -20,7 +20,8 @@ change are three PRs. See CONTRIBUTING.md and AGENTS.md.
       (`/skills:validate <name>`), and the result is summarized below
 
 <!-- Application test result: the task used, pass or fail, what was fixed.
-     For docs or tooling changes, write "not applicable" instead. -->
+     When docs/application-test.md "When to run it" lets you skip it, write
+     "not applicable" and the criterion that applies instead. -->
 
 ## Public content
 

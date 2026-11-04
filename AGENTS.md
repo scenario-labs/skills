@@ -374,6 +374,9 @@ and command lines.
   - `/pr-squash-message` drafts the squash message;
   - `/pr-summary` refreshes the PR body;
   - `/pr-handle-comments` answers review threads.
+- `/skills:pr-handle <PR>` (`.claude/commands/skills/`) handles a whole PR: it adds the fork
+  quarantine, the discovery and script audits, and the validation decision to `/pr-handle-comments`.
+- Update a pushed PR branch by merging its base into it. Never rebase or force-push a pushed branch.
 - `/skills:validate <name>` (`.claude/commands/skills/`) runs the application test for one skill and
   reports it to the PR; see Validation and testing.
 - release-please cuts releases (`.github/workflows/release-please.yml`, configured in
@@ -422,7 +425,8 @@ and command lines.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the
-  format; the application test checks whether the skill actually teaches.
+  format; the application test checks whether the skill actually teaches. When it may be skipped:
+  [docs/application-test.md](docs/application-test.md#when-to-run-it).
 - `/skills:validate <name>` (`.claude/commands/skills/`) drives that test:
   - it writes a use case for the skill;
   - installs the working-tree copy into a clean-room agent with no repository context;

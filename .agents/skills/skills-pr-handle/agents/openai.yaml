@@ -1,5 +1,5 @@
 interface:
-  short_description: "Finalize a PR: <PR_number> [--plan-only]. It will conduct a detailed review of the target PR."
+  short_description: "Finalize a PR: <PR_number> [--plan-only] [--resolve]. It will conduct a detailed review of the target PR."
   default_prompt: "$skills-pr-handle <PR_number>."
 
 policy:
