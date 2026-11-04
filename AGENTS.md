@@ -48,9 +48,9 @@ tests/<name>/                                  # test suite for any script shipp
   - It is the one supporting file exempt from the link rule (`pnpm skill-files` skips it).
   - Leave it unlinked: linking it spends body words and invites a runtime agent to read maintainer
     notes as instructions, which once made an agent discount a fact it needed.
-- Every script shipped with a skill has a test suite in `tests/<name>/` at the repo root, never in
-  the skill directory: a published skill directory carries only what an agent needs at runtime. See
-  Validation and testing.
+- Every script shipped with a core skill has a test suite in `tests/<name>/` at the repo root, never
+  in the skill directory: a published skill directory carries only what an agent needs at runtime.
+  Expert tools test per family instead (see Expert tools). See Validation and testing.
 
 ## Public content only
 
@@ -92,8 +92,9 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
   summary of the skill's steps. Under 500 characters, rich in keywords an agent would search for.
 - Body: 1000 words is the target; the build fails past 2500 (`pnpm style`). Structure: Overview,
   Quick reference, one excellent worked example, Common mistakes.
-- Measure before trimming: `awk '/^---$/{c++; next} c>=2' skills/<name>/SKILL.md | wc -w` is the
-  exact number `pnpm style` checks.
+- Measure before trimming:
+  `awk '/^---$/{c++; next} c>=2' skills/<name>/SKILL.md | LC_ALL=C.UTF-8 wc -w` is the exact number
+  `pnpm style` checks. The pinned locale makes a local count equal CI's.
 - Why a budget: agents load only `name` and `description` at startup. The body enters context only
   when the skill triggers, and then every word competes with the user's task. Spend words on facts
   an agent would otherwise guess wrong, not on prose.
@@ -293,8 +294,8 @@ and command lines.
   releases do.
 - Before editing anything under `skills/dcc/` or `skills/game-engines/`, read
   [docs/expert-tools.md](docs/expert-tools.md). The authoring contract applies there with
-  differences: no MCP rules, longer descriptions and bodies, family-level tests, and the expert
-  groupings last.
+  differences: no MCP rules, longer descriptions and bodies, family-level tests instead of a suite
+  per skill, and the expert groupings last.
 
 ## Authoring aids
 
@@ -338,49 +339,14 @@ and command lines.
   2. `pnpm manifest`: regenerates `.claude-plugin/marketplace.json` from `skills.sh.json` and the
      skill folders, and stages the copy rendered from their staged versions, so unstaged moves and
      edits never reach the commit.
-  3. `pnpm validate`: the checks below, which CI runs as separate steps.
-- What `pnpm validate` runs:
-  - **`pnpm style`**: house style, the body budget, the `AGENTS.md` size cap, and the fan-out,
-    table-cell, sentence-length, and wording notices.
-  - **`pnpm format:check`**: prettier.
-  - **`pnpm sync:agent-commands:check`**: the command links and metadata (see
-    [docs/agent-commands.md](docs/agent-commands.md)).
-  - **`pnpm skill-files`**: supporting files next to a SKILL.md are linked and runnable, a skill's
-    own `README.md` excepted.
-  - **`pnpm lint:py`**: ruff's pyflakes rules over every Python script, configured in `ruff.toml`,
-    the vendored dev skills excluded.
-  - **`pnpm groupings`**: every skill sits in a `skills.sh.json` grouping, every listed skill
-    exists, and the file satisfies the published skills.sh schema.
-  - **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
-  - **`pnpm readme`**: the README Skills section mirrors `skills.sh.json`, one subsection per
-    grouping in the same order with the same title, description, and rows, and every skill has
-    exactly one non-stale row. It also checks the install commands (see Adding a skill).
-  - **`pnpm words:check`**: `project-words.txt` is sorted and deduplicated.
-  - **`pnpm spell`**: cspell.
-  - **`pnpm spec`**: spec validation.
-- Each command is defined once in `package.json`. Most run a script in `scripts/`; `format` and
-  `format:check` invoke prettier directly.
-- A commit hook runs with git's location variables (`GIT_DIR`, `GIT_INDEX_FILE`, and the rest)
-  pointing at this repository, and hook steps read the index through them. Never unset them for the
-  whole hook. A tool a step runs that issues its own git commands must run without them, as
-  `scripts/validate-skills.sh` does for uvx: from a linked worktree, uv's inherited git commands
-  reset the worktree's branch and set `core.bare` on this repository.
+  3. `pnpm validate`: the checks CI runs as separate steps.
+- Read [docs/ci-and-releases.md](docs/ci-and-releases.md#checks) when a check fails unexpectedly, or
+  before changing a check script, a hook step, or the prettier config. It lists what each check
+  covers, the prettier settings, and the git variables a hook step must not leak.
 
 ### Formatting and spelling
 
-- prettier enforces formatting with the config committed in `.prettierrc.json`, so the CLI and the
-  VS Code extension agree. `pnpm format` rewrites the repo; `pnpm format:check` only verifies.
-- Coverage: everything prettier can parse (markdown, JSON, YAML, JS/TS), plus shell scripts via
-  `prettier-plugin-sh`, which formats with mvdan-sh, the engine behind shfmt. `.prettierignore`
-  excludes generated files and the vendored dev skills.
-- Markdown prose wraps at 100 columns (`proseWrap: "always"`), so a GitHub diff shows the changed
-  lines rather than one paragraph-long line. Tables and code never wrap.
-- SKILL.md files and `.claude/` agents and commands also set `embeddedLanguageFormatting: "off"`. It
-  is the one setting that stops prettier folding a frontmatter `description` across lines, so the
-  description stays on the one line `pnpm style` reads and every skill has shipped with. Their
-  fenced code is therefore left as written.
-- A merged commit that only reformats, like the one that introduced the wrap, goes in
-  `.git-blame-ignore-revs` so blame skips it.
+- Markdown prose wraps at 100 columns. Tables and code never wrap.
 - After authoring markdown, run `pnpm format` before `pnpm validate`: prettier reflows prose and
   rewrites tables, so `format:check` rejects correct hand-written markdown.
 - Add legitimate project terms to `project-words.txt`; never disable cspell inline. The file stays
@@ -437,15 +403,20 @@ and command lines.
 
 - `skills-ref validate` must pass for every published skill before any commit: the pre-commit hook
   and CI both run it via `pnpm spec`.
-- Every script shipped with a skill has a test suite in `tests/<name>/` (see Layout). Python scripts
-  use stdlib `unittest` (files named `test_*.py`), TypeScript scripts vitest (files named
+- Every script shipped with a core skill has a test suite in `tests/<name>/` (see Layout). Expert
+  tools are exempt: one suite per family ([docs/expert-tools.md](docs/expert-tools.md)). Python
+  scripts use stdlib `unittest` (files named `test_*.py`), TypeScript scripts vitest (files named
   `*.test.ts`).
-- `pnpm test` runs every suite and fails when a shipped script has no suite; CI runs it on every
-  push and PR, on two ffmpeg versions ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)). It is
-  not in the pre-commit hook, since suites may need system tools such as ffmpeg, so run it by hand
-  when touching a script. A `tests/<name>/requirements.txt` declares extra Python dependencies. CI
-  installs them with pip. Locally, `pnpm test` runs that suite under uv with them on the `python3`
-  on PATH, and falls back to the bare `python3` only when uv is missing.
+- `pnpm test` runs every suite and fails when a core skill's script has no suite; CI runs it on
+  every push and PR, on two ffmpeg versions ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
+  It is not in the pre-commit hook, since suites may need system tools such as ffmpeg, so run it by
+  hand when touching a script.
+- A `tests/<name>/requirements.txt` declares extra Python dependencies.
+  - Locally, `pnpm test` runs that suite under uv with them on the `python3` on PATH, and falls back
+    to the bare `python3` only when uv is missing.
+  - CI installs none of them directly: it installs the hashed lock `tests/requirements-ci.txt`, and
+    Blender's job its own. After changing a suite's requirements, regenerate the locks that cover it
+    ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci) has the commands).
 - `pnpm test` runs the command, plugin-manifest, style, readme, and test-runner regression suites as
   well as the shipped-script suites.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
@@ -459,25 +430,9 @@ and command lines.
   - grades the transcript;
   - posts the report to the current branch's PR, or asks what to do with it when there is none.
   - `--plan-only` runs the zero-cost planning variant of the protocol instead of live generation.
-
-Rules learned from past runs:
-
-- Catalog-only MCP tools (`collection_*`, `asset_quality_gate_run`) take their arguments under
-  `parameters`, not `arguments`, in `scenario_tool_execute_read/write`. The wrong key fails with a
-  misleading "team_id and project_id are required".
-- `usage` accepts inclusive date bounds and defaults to the last 31 days when both dates are
-  omitted. Set explicit dates and scope for attribution.
-  - Overall consumed CU is `totals.totalCU` (the sum of `consumption.value`). Model CU is generation
-    activity and can differ. Both are already after discounts.
-  - Never substitute job billing snapshots, or a sum of your own calls, for consumed CU.
-- Verify a delivered video by sweeping it into contact sheets (`ffmpeg -vf "fps=2"`), not one frame
-  per shot: a defect that fades in mid-shot passes a spot check.
-- Before a paid run, pre-register what each outcome would mean, so conclusions are not fitted to
-  results afterwards.
-- Stop hunting a mechanism after roughly two inconclusive controlled runs: ship the rule that holds
-  regardless and record the open question.
-
-The protocol itself: [docs/application-test.md](docs/application-test.md).
+- Before running or grading an application test, read
+  [docs/application-test.md](docs/application-test.md): the protocol, plus the rules learned from
+  past runs (MCP argument traps, `usage` and CU attribution, video checks, paid-run discipline).
 
 ## Codex commit attribution
 
@@ -495,6 +450,7 @@ The protocol itself: [docs/application-test.md](docs/application-test.md).
 
 - PRs target `main`. Commit types and squash merges: see Repo tooling.
 - `CLAUDE.md` is a symlink to this file, so Claude Code and Codex read the same conventions.
-- This file stays under 32 KiB, all Codex reads by default (`pnpm style` fails past it). Content
-  only some tasks need goes in `docs/`, behind a pointer saying when to read it.
+- This file stays under 32 KiB, all Codex reads by default (`pnpm style` fails past it, and prints a
+  notice past 30 KiB). Content only some tasks need goes in `docs/`, behind a pointer saying when to
+  read it.
 - Shared Codex defaults live in `.codex/config.toml`; model selection stays in user configuration.

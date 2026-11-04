@@ -18,27 +18,26 @@ than the MCP server:
   - One suite per family, `tests/scenario-<app>-expert/` (the same file in each), imports every
     script with system Python and checks that each skill name a script uses to find the lead's
     `scripts/` exists. `pnpm skill-files` still parses every Python script.
+  - Blender, Godot, Unity, and Roblox each have a workflow, `.github/workflows/<app>.yml`. It runs
+    on a PR or a push to `main` that changes the family's scripts, its
+    `tests/scenario-<app>-expert/` suite, or the workflow file itself, and on manual dispatch.
   - Blender's `tests/scenario-blender-expert/test_live_gate.py` runs the delivery gate in a real
-    Blender against planted defects. `.github/workflows/blender.yml` runs it on Linux whenever a
-    Blender script changes; the gate has no per-OS branch. Without Blender installed it skips.
+    Blender against planted defects. `blender.yml` runs it on Linux only; the gate has no per-OS
+    branch. Without Blender installed it skips.
   - Godot also runs the application, on every OS: its toolkit branches per OS (locks, the process
     table, copies). `tests/scenario-godot-expert/test_toolkit_live.py` runs against a real Godot on
-    Linux, macOS, and Windows in `.github/workflows/godot.yml` whenever a Godot script changes.
-    Without Godot installed its live tests skip; its lock and GUI-check tests still run in
-    `pnpm test`.
+    Linux, macOS, and Windows in `godot.yml`. Without Godot installed its live tests skip; its lock
+    and GUI-check tests still run in `pnpm test`.
   - Blender's live suites (`tests/scenario-blender-expert/test_live_*.py`) run Blender headless
-    against fixtures with known answers. `.github/workflows/blender.yml` installs the release the
-    skills were verified on, on Linux, whenever a Blender script or test changes, and fails if a
-    live suite skips. Without Blender they skip in `pnpm test`.
+    against fixtures with known answers. `blender.yml` installs the release the skills were verified
+    on, and fails if a live suite skips. Without Blender they skip in `pnpm test`.
   - Unity's `tests/scenario-unity-expert/test_toolkit_offline.py` needs no application: it runs the
-    toolkit's lock probe, process-table parsing, and signal handling in `pnpm test`.
-    `.github/workflows/unity.yml` runs it on macOS, the OS the toolkit targets, whenever a Unity
-    script changes.
+    toolkit's lock probe, process-table parsing, and signal handling in `pnpm test`. `unity.yml`
+    runs it on macOS, the OS the toolkit targets.
   - Roblox has no Studio in CI. `tests/scenario-roblox-expert/` runs AgentKit modules under Lune
     with fake engine services (`lune/`), and builds places with Rojo to read back with Lune
-    (`test_live_rojo.py`). `.github/workflows/roblox.yml` installs the Lune and Rojo versions the
-    tooling skill pins, whenever a Roblox script or test changes, and fails if those suites skip.
-    Without the tools they skip in `pnpm test`.
+    (`test_live_rojo.py`). `roblox.yml` installs the Lune and Rojo versions the tooling skill pins,
+    and fails if those suites skip. Without the tools they skip in `pnpm test`.
 - A link to a subfolder (`scripts/AgentKit/`, never `scripts/` itself) covers the files under it:
   these skills ship code trees an agent copies into a project whole.
 - cspell skips code, fenced and inline, and YouTube video ids. Prose is checked as everywhere else

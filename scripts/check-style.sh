@@ -123,8 +123,10 @@ for f in $skill_files; do
 
   # 1000-word target, 2500-word hard cap; AGENTS.md "Authoring contract" carries
   # the why. Body is everything after the closing frontmatter ---.
+  # The locale is pinned so a local count equals CI's: under LC_ALL=C, GNU wc
+  # skips a word made only of non-ASCII bytes (a lone arrow), and BSD wc does not.
   body=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f")
-  words=$(printf '%s\n' "$body" | wc -w | tr -d ' ')
+  words=$(printf '%s\n' "$body" | LC_ALL=C.UTF-8 wc -w | tr -d ' ')
   if [ "$words" -gt 2500 ]; then
     echo "$f: body is $words words, over the 2500-word hard cap"
     fail=1
@@ -133,11 +135,15 @@ done
 
 # Codex reads 32 KiB of AGENTS.md by default and silently drops the rest; an
 # untrusted checkout ignores the .codex/config.toml that could raise it.
+# The notice gives warning while a change still fits, before the cap fails one.
 agents_limit=32768
+agents_notice_at=30720
 agents_bytes=$(wc -c <AGENTS.md | tr -d ' ')
 if [ "$agents_bytes" -gt "$agents_limit" ]; then
   echo "AGENTS.md is $agents_bytes bytes, over the $agents_limit Codex reads by default. Move content only some tasks need into docs/, behind a pointer, per AGENTS.md \"Conventions\"."
   fail=1
+elif [ "$agents_bytes" -gt "$agents_notice_at" ]; then
+  echo "Notice (not a failure): AGENTS.md is $agents_bytes bytes, past the $agents_notice_at-byte early warning; the check fails past $agents_limit. Move content only some tasks need into docs/, behind a pointer, per AGENTS.md \"Conventions\"."
 fi
 
 # Context fan-out: a skill plus the siblings it names in backticks, weighed
