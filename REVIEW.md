@@ -2,8 +2,8 @@
 
 This repository publishes Agent Skills: Markdown that teaches AI agents to use the Scenario MCP
 server, plus the scripts some skills ship. The rules live in `AGENTS.md`. This file says what to
-report and at what severity, in text that reads alone: Cursor Bugbot gets it as `.cursor/BUGBOT.md`
-and follows no link.
+report and at what severity, in text that reads alone: Cursor Bugbot gets it as `.cursor/BUGBOT.md`,
+a copy the pre-commit hook writes, and follows no link.
 
 ## Important
 
@@ -52,7 +52,7 @@ Everything else is a Nit: wording, style, structure, refactoring.
 - A wrong-arguments finding on a call into a test suite's `helpers.py`. Each suite in
   `tests/<name>/` runs alone (`unittest discover -s`), so `import helpers` loads that suite's file,
   never another suite's file of the same name.
-- Generated or vendored files: `.claude-plugin/marketplace.json`, `CHANGELOG.md`, `version.txt`,
-  `.release-please-manifest.json`, `pnpm-lock.yaml`, `skills-lock.json`, and the vendored skills in
-  `.agents/skills/` (skill-creator, skill-development, pr-summary, pr-squash-message,
-  pr-handle-comments).
+- Generated or vendored files: `.claude-plugin/marketplace.json`, `.cursor/BUGBOT.md`,
+  `CHANGELOG.md`, `version.txt`, `.release-please-manifest.json`, `pnpm-lock.yaml`,
+  `skills-lock.json`, and the vendored skills in `.agents/skills/` (skill-creator,
+  skill-development, pr-summary, pr-squash-message, pr-handle-comments).

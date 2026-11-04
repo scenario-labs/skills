@@ -58,6 +58,9 @@ of its checks as a separate step:
 - **`pnpm groupings`**: every skill sits in a `skills.sh.json` grouping, every listed skill exists,
   and the file satisfies the published skills.sh schema.
 - **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
+- **`pnpm bugbot:check`**: `.cursor/BUGBOT.md` is a regular file identical to `REVIEW.md`. Cursor
+  Bugbot reads a symlink as its target path, so the copy is generated: edit `REVIEW.md`, never the
+  copy, and run `pnpm bugbot` (the pre-commit hook does).
 - **`pnpm readme`**: the README Skills section mirrors `skills.sh.json`, one subsection per grouping
   in the same order with the same title, description, and rows, and every skill has exactly one
   non-stale row. It also checks the install commands (see AGENTS.md "Adding a skill").
