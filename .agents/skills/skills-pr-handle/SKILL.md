@@ -123,6 +123,9 @@ Tests:
 - A behavior change (a new option, a fixed bug, a changed output) comes with a test that fails
   without it. A pure refactor needs only the existing suite green.
 - On a same-repo PR, run `pnpm test`. On a quarantined fork, read the PR's `script-tests` CI job.
+- An expert-tool script change also needs its family's CI job green on the PR (`blender.yml`,
+  `godot.yml`, `roblox.yml`, `unity.yml`), on a same-repo PR too. Those jobs install the application
+  or tools whose absence makes `pnpm test` skip the live suites.
 
 Runtime pins come first: what a skill installs or downloads on the user's machine. Marketplace scans
 flag code loaded from a mutable source. The kinetic music-video scaffold is the model (its
@@ -136,9 +139,11 @@ flag code loaded from a mutable source. The kinetic music-video scaffold is the 
   `.github/dependabot.yml`.
 - **Downloads** (fonts, model weights, checkpoints): a fixed commit or revision, checked against
   SHA-256 before use. A mismatch deletes the file and stops.
-- **Install hints**: no unversioned `pip install`, `npm install`, `npx`, or `uvx` line, and no PEP
-  723 `dependencies` block without a version. Never an install command for this repository
-  (`pnpm style` fails on one).
+- **Install hints**: no file a skill ships carries an unversioned `pip install`, `npm install`,
+  `npx`, or `uvx` line, or a PEP 723 `dependencies` block without a version. Never an install
+  command for this repository (`pnpm style` fails on one). Family READMEs (`skills/dcc/*/README.md`,
+  `skills/game-engines/*/README.md`) sit outside every skill folder and carry the family install
+  command by design: skip them.
 
 Test pins (`docs/ci-and-releases.md`, CI section):
 
