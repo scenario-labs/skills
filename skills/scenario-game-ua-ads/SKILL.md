@@ -90,7 +90,6 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
 
 ## Rules that carry the ad
 
-- Probe the final file for length and canvas, never trust the plan.
 - The first frame holds the premise: board, hook line, stakes. A sound at 0.0, motion by 0.3 s, no
   logo intro.
 - Never let a model draw text, numbers, gate values, buttons, or the hand. Leave slots blank in the
@@ -134,9 +133,11 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
   - loudness, only when the sound pass misses -16 to -14 LUFS or peaks above -1 dBTP:
     `model_scenario-audio-extract` with `normalizeLoudness: true`, then the silent master plus that
     one track. Scenario ships one tool for each of these jobs, so the ids are fixed.
-- End on the payoff, then a living end card: the icon pops, the hero bounces in, stars twinkle. The
-  call to action follows the placement: a label on social feeds, which ban fake buttons, and a
-  button only on clickable ad-network cards.
+- End on the payoff, then an end card designed in the plan, like the hook, from this game's world:
+  its level-complete screen with the label where "next level" sits, the next harder board frozen
+  under "CAN YOU SOLVE IT?", or the hero carrying the label. Words from the game (SAVE HIM, DIG NOW,
+  TRY LEVEL 2), not "PLAY NOW" every time ([ui](references/ui-layers.md)). Social feeds ban fake
+  buttons, so the call to action is a label there; a button only on clickable ad-network cards.
 
 ## Scripts
 
@@ -169,17 +170,17 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
    15 s.
 2. Board: `recommend` an image model for polished casual game art. Glass chambers, text-free: water
    and gold on golden pins, lava below, the miner locked beside it, an empty cart. Then one state
-   still per step, each edited from the last: stone ramp, gold in the cart, miner in the cart. A
-   square app icon of the hero.
+   still per step, each edited from the last: stone ramp, gold in the cart, miner in the cart.
 3. Clips: `model_schema_get`, then one run per step with `wait: false`, final tier, first and last
    frame pinned to consecutive states, one visible move each. The fail take starts from the board.
 4. Logic, with `check_take.py` on each take, never frame by frame: `sheet` for timing;
    `action --at 4.5 --box 270 600 540 540` tiles eight native-resolution crops of the water hitting
    the lava; `ends` for counts; `motion --allow` the chamber boxes flags anything else moving.
    Nothing passes a closed pin or the glass, steam included.
-5. UI with `scenario-text-overlay`: hook, level badge, counter values, FAIL, RESCUED!, end card with
-   a "PLAY FREE" label. `render_tracks.py` renders the hand on each ring, coins flying to the
-   counter, and the stars.
+5. UI with `scenario-text-overlay`: hook, level badge, counter values, FAIL, RESCUED!. The end card:
+   the full cart rolls in with the icon on its side, the next miner locked behind, under a "FREE HIM
+   NEXT" label. `render_tracks.py` renders the hand on each ring, coins flying to the counter, and
+   the stars.
 6. Picture pass: `build_passes.py picture` lays the takes at their `startTime`s, `fit: "cover"`,
    `mute: true`, overlays above, `durationMode: "custom"`, `duration: 15`.
 7. Sound pass on the silent master: hits on each pull, the melt, the steam, the coins, each counter
@@ -191,9 +192,8 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
 
 - A beat where the board changes with no readable player input, or an input with no satisfying
   reaction: correct, but nobody wants to play it.
-- Anything passing through a closed pin, gate, wall, glass, or floor, or leaving its container. A
-  downscaled contact sheet hides this: judge it on native-resolution crops of the action, tiled into
-  one sheet. Read single frames only where a sheet leaves a doubt.
+- Anything passing through a closed pin, gate, wall, glass, or floor, or leaving its container,
+  judged on tiled native-resolution crops of the action, never a downscaled sheet.
 - Anything moving that the beat does not move: a crowd reacting in unison, a second copy of the
   hero, a piece shifting elsewhere (`check_take.py motion`).
 - A hand gesture with no matching action, an action with no gesture, or a count that contradicts the
@@ -206,6 +206,7 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
 - UI outside the placement's safe zone, overlapping elements, or HUD digits under 72 px on 1080
   wide.
 - A black frame at a cut: the end card starts exactly when the last clip ends, with no fade.
+- An end card another game could carry: the same layout and "PLAY NOW" from ad to ad.
 - The board shifting between takes, or pieces warping near a take's end: trim earlier.
 - An event with no hit, a hit more than 0.1 s off its frame, a quiet first second, or a peak above
   -1 dBTP.
@@ -213,11 +214,9 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
 
 ## Common mistakes
 
-- Prompting "with the number 10 on the gate": the number changes every frame. Blank gate, overlay.
 - A label fixed to a moving object slides off it. Keep it to the static second or use the HUD.
 - Scaling a full-canvas overlay in the compose run: it scales from the corner and can leave the
   frame. Render each element at final size; offsetting with `x` or `y` is fine.
-- Leaving clip audio on: mute clips or turn generated audio off.
 - Stretching a screenshot to the canvas.
 - Naming a real game, studio, or character in invented gameplay, or letting an archetype drift into
   one: an angry driver came back in a red cap, mustache, and blue shirt. Name an original look and

@@ -16,6 +16,10 @@ motions the clips must show, and the limit the player overcomes. Plan the clips 
 Invent a fictional game name when the user gives none, and use it on the end card only. Generate a
 square app icon of the hero for every end card.
 
+Each concept's **End card** line is one idea from that game's world, with its own call-to-action
+words. Design a new one per ad from the same patterns ([ui-layers.md](ui-layers.md)); never carry a
+card from one ad to the next.
+
 | #   | Concept                  | Group                  | Core mechanic                 | Hook                  |
 | --- | ------------------------ | ---------------------- | ----------------------------- | --------------------- |
 | 1   | Rescue with a fail tease | Puzzle and logic       | Pull the pins in order        | WATER OR GOLD?        |
@@ -55,6 +59,8 @@ square app icon of the hero for every end card.
   card.
 - **UI**: hook, level badge, coin counter, hand on each of 4 rings, FAIL, rewind wipe, punch-in,
   RESCUED!, stars, end card.
+- **End card**: the hero carries it. The full cart rolls in with the miner waving from it and the
+  icon on its side, while the next miner bangs on a locked cell behind. Label "FREE HIM NEXT".
 - **Notes**:
   - Name what stays inside the glass, steam included. Steam that leaked out was hidden with a patch
     cut from the take.
@@ -73,6 +79,8 @@ square app icon of the hero for every end card.
 - **Timeline**: 0 to 3 s gate labels over the gates. 0 to 5 s setup. 5 to 11 s payoff, counter steps
   through 4 values (18, 115, 480, 803). 11 to 15 s end card.
 - **UI**: two gate labels, four counter pills, a hand choosing a gate, end card.
+- **End card**: the payoff keeps going. The crowd keeps pouring over the castle wall behind the
+  icon, the counter still climbing. Label "GROW YOUR ARMY".
 - **Notes**: gates move when the camera advances, so labels live only while the gates are nearly
   static. The counter never moves, so it carries the story.
 
@@ -86,6 +94,8 @@ square app icon of the hero for every end card.
 - **Timeline**: 0 to 7 s sorting, combo badge steps x3, x8, x15, x25. 7 to 11 s reveal with a short
   word line. 11 to 15 s end card.
 - **UI**: combo badges, word line, end card.
+- **End card**: the game's own screen. The finished picture becomes the level-complete panel, the
+  label where its next button sits: "SORT THE NEXT SHELF".
 - **Notes**: lead with sound. Tactile clicks and a rising tone under each combo step carry the ad.
 
 ## 4. Legendary pull (gacha summon)
@@ -99,6 +109,8 @@ square app icon of the hero for every end card.
 - **Timeline**: 0 to 5 s anticipation with a hook line. 5 to 8 s burst, rarity banner at the peak. 8
   to 11 s hero hold. 11 to 15 s end card.
 - **UI**: hook line, rarity banner, end card.
+- **End card**: the hero carries it. The summoned hero plants a blank banner beside the icon while
+  the shockwave still ripples; the label sits on the banner: "SUMMON YOURS".
 - **Notes**: pin the last frame or the model invents a different hero. A blank card face can show
   during the flip; the burst hides it.
 
@@ -111,6 +123,8 @@ square app icon of the hero for every end card.
 - **Timeline**: 0 to 5 s crisis, two choice buttons, hand on one. 5 to 11 s merge grid combines
   items, multiplier badge steps up. 11 to 15 s restored room with the end card.
 - **UI**: two choice buttons, hand, multiplier badge, end card.
+- **End card**: the payoff keeps going. The restored room stays live, the family waves from the
+  window, and the label hangs on the door as a welcome sign: "FIX THEIR HOME".
 - **Notes**: keep the same characters across stills by generating the room from the story still as a
   reference.
 
@@ -124,6 +138,8 @@ square app icon of the hero for every end card.
 - **Timeline**: 0 to 5 s headline over the puzzle with a score meter, hand showing the move. 5 to 11
   s solving take. 9 to 11 s challenge line ("CAN YOU DO IT?"). 11 to 15 s end card.
 - **UI**: headline banner, score meter, hand, challenge line, end card.
+- **End card**: cliffhanger. The next, harder puzzle frozen in its wrong state, under "CAN YOU SOLVE
+  IT?".
 - **Notes**: the headline and meter are layers; never ask the model for a score number.
 
 ## 7. Draw to protect (line-drawing puzzle)
@@ -141,6 +157,8 @@ square app icon of the hero for every end card.
   at 0, SAFE!, stars. 11 to 15 s end card.
 - **UI**: hook, level badge, countdown, line track, hand, FAIL, BONK! words, red edge, SAFE!, stars,
   end card.
+- **End card**: cliffhanger. The next level frozen: the pet on a ledge between a lava flow and a
+  teetering boulder, the pen waiting at its tip. Label "SAVE HIM".
 - **Notes**:
   - Generated bees bunched against a dome slightly lower than the drawn line, inside it for 74
     frames. Run a per-frame mask check inside every locally drawn barrier, with a size filter so a
@@ -162,6 +180,8 @@ square app icon of the hero for every end card.
   Close-up insert. 11 to 15 s end card.
 - **UI**: hook, level badge, found counter, timer, hand, X ring, magnifier, FOUND!, NICE!, TOP 1%!,
   end card.
+- **End card**: the game's own screen. The results card with a TOP 1% rank badge, the odd cat
+  sitting on it, the label where "next level" sits: "TRY LEVEL 4".
 - **Notes**:
   - A take cannot be aimed at one grid cell. Zoom the first frame on the cell, then scale the take
     back into the grid.
@@ -185,6 +205,8 @@ square app icon of the hero for every end card.
   CLEARED!, stars. 11 to 15 s end card.
 - **UI**: hook, level badge, cars-out counter, timer, combo badge, hand, puffs, GRIDLOCK!, CLEARED!,
   stars, end card.
+- **End card**: cliffhanger. The next, tighter lot frozen, the driver honking at it from the cab.
+  Label "CLEAR THE NEXT LOT".
 - **Notes**:
   - A generic angry driver drifted into a famous game character: red cap, mustache, blue shirt. Name
     an original look (beard, knit beanie, flannel) and check the still before animating.
@@ -205,6 +227,8 @@ square app icon of the hero for every end card.
   100%, LEGENDARY!, stars. Reaction insert. 11 to 15 s end card.
 - **UI**: hook, dig badge, progress pill, tool tiles, hand on each tool, unlock bursts, CAREFUL!,
   LEGENDARY!, stars, end card.
+- **End card**: the hero carries it. The golden skull rises from the tray as a full skeleton and
+  holds up a blank slab carrying the label "DIG NOW", the tools resting below.
 - **Notes**:
   - Step the progress at the midpoint between measured values. Stepping when a value is reached
     lagged one step behind the board.
@@ -226,6 +250,8 @@ square app icon of the hero for every end card.
   clear all 64 cells, x22. 9 s BOARD CLEAR!, +10,000. A short rain refill. 11 to 15 s end card.
 - **UI**: hook, level badge, moves, score, combo badge, hand, COLOR BOMB!, BOARD CLEAR!, stars, end
   card.
+- **End card**: the game's own screen. The level-complete board, stars filling one by one over the
+  final score, the label where "next level" sits: "TRY LEVEL 2".
 - **Notes**:
   - The hover over the obvious move sells the clever one.
   - Step the combo only on a visible clear. Beams that clear nothing are cut.
@@ -245,6 +271,8 @@ square app icon of the hero for every end card.
   15 s end card.
 - **UI**: hook, day badge, cash counter, upgrade bubbles, patience ring, hand, bills to the counter,
   NO SALE!, VIP!, end card.
+- **End card**: the hero carries it. The worker flips the blank door sign to the label "OPEN YOUR
+  CAFE" while the queue outside keeps growing.
 - **Notes**:
   - Cash comes only from handovers the viewer sees. Generated customers walked in already holding
     cups; they pay nothing.
@@ -266,6 +294,8 @@ square app icon of the hero for every end card.
   block tumbles in, HUGE! at 10.3 s. 11 to 15 s end card.
 - **UI**: hook, SIZE counter, level badge, hand on the rim, TOO BIG!, NICE!, impact burst, HUGE!,
   end card.
+- **End card**: the payoff keeps going. The hole keeps swallowing the city behind the icon as the
+  camera pulls back further. Label "SWALLOW THE CITY".
 - **Notes**:
   - Plan the hole's on-screen width per beat, and pull the camera back as it grows. It reached 51%
     of the frame after the taxi, too big too early.
@@ -286,6 +316,8 @@ square app icon of the hero for every end card.
 - **Timeline**: 0.3 to 2.8 s swipes, pickups, evolve. 3.5 s cut under a white wipe. 9 to 10.7 s
   SMASH IT! taps, then impact. 11.5 to 15 s end card.
 - **UI**: hook, level bar, hand, evolve bursts, SMASH IT!, end card.
+- **End card**: the hero carries it. The final form stomps out of the rubble toward the camera and
+  slams down a blank stone slab carrying the label "EVOLVE YOURS".
 - **Notes**:
   - Spread collectibles across lanes. Orbs in a row gave the swipes no reason.
   - End on the last solid frame before impact, flash opaque, resume on rubble. The creature ghosted
@@ -308,6 +340,8 @@ square app icon of the hero for every end card.
   MOON!. 11 to 15 s end card.
 - **UI**: hook, floor counter, level badge, hand per tap, FAIL, PERFECT! words, warning, SAVED!,
   stars, end card.
+- **End card**: the payoff keeps going. The tower sways against the moon, the resident waves, and
+  the crane swings in the next module, the label on its side: "STACK HIGHER".
 - **Notes**:
   - Video members lower a block onto the stack and let go. Script any drop that must fall after
     release.
@@ -328,6 +362,8 @@ square app icon of the hero for every end card.
   pop, three balls drain, the smug one pops last. 9.5 s ALL CLEAR!, stars. 11 to 15 s end card.
 - **UI**: hook, robot counter, shots, aim line, hand, bumper numbers, WAVE 2!, x5!, ALL CLEAR!,
   stars, end card.
+- **End card**: cliffhanger. The next wave beams in, a giant robot behind it, the aim line waiting
+  at the nozzle. Label "TAKE THE SHOT".
 - **Notes**:
   - The ball is the fantasy, so it must read on a phone. 36 px on a 1080 frame was lost; 42 px with
     a white core, a dark rim, and a 7-frame comet trail read.

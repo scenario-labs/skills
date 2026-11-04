@@ -109,14 +109,29 @@ Values below are for a 1080-wide canvas.
 - **Icon pop**: render the pop into an alpha video, at scales 0.4, 0.82, 1.1, 1.05, and 1.0 on five
   frames, ending exactly where the static icon layer takes over. `zoomin` on a rounded app icon
   showed black corners on its first frame.
-- **Living end card**: opaque from its first frame, starting the frame the last clip ends.
-  - The background is a gradient with slowly turning rays: an H.264 video, or a PNG.
-  - The icon pops at +0. The name follows at +0.2 s, and the stars pop one by one, then glint.
-  - The hero cut-out bounces in from below, squashes on landing, and hops about every 1.2 s.
-  - The call to action breathes (scale 1 to 1.035 over 0.9 s) and takes a light sweep.
-  - On social placements it is a label with no button shape, and no hand taps it. On a clickable
-    ad-network card it is a button in two states, tapped twice by the hand.
-  - Center the content in the safe band, not on the canvas: on 9:16 social, between y 270 and 1248.
+- **End card**: designed per game in the plan, like the hook, from this game's world and this ad's
+  payoff. Never reuse a layout, typeface, motion, or call-to-action line from another ad: eleven
+  test ads that shared one template all ended on the same "PLAY NOW" card.
+  - Start from one of these and make it the game's own:
+    - **The game's own screen**: its level-complete or results screen, with the call to action where
+      "next level" would sit.
+    - **Cliffhanger**: the next, harder board frozen, under a challenge line ("CAN YOU SOLVE IT?").
+    - **The hero carries it**: the payoff's character pushes, holds up, or wears the label: a cart,
+      a sign, a banner. Generate the prop blank and composite the words on it.
+    - **The payoff keeps going**: the final state stays alive behind the icon: the crowd still
+      pours, the hole still eats.
+  - The words come from the game's fantasy: SAVE HIM, DIG NOW, TRY LEVEL 2. Use "PLAY NOW" only when
+    nothing in the game fits.
+  - Typeface and colors come from the game's UI kit or the hook, not a shared kit.
+  - Every design keeps these:
+    - opaque from its first frame, starting the frame the last clip ends;
+    - the real icon and the game name, readable;
+    - something moving until the last frame: a card static for 4 s read as the ad being over;
+    - content centered in the safe band, not on the canvas: on 9:16 social, between y 270 and 1248;
+    - on social placements, a label with no button shape that no hand taps; on a clickable
+      ad-network card, a button in two states, tapped twice by the hand.
+  - The icon pop, bounce-in, label pulse, rays, and stars from `render_tracks.py` are parts to pick
+    from, not a set every card uses. A breathing label scales 1 to 1.035 over 0.9 s.
 - **Anchoring**: a layer is fixed in screen space, so a label on a moving object slides off it. Keep
   such a label to the seconds when the object barely moves, or put the value on the HUD.
 

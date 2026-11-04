@@ -45,8 +45,8 @@ Without a length from the user, make 15 s, and 15 plus 30 s for ad networks.
 - **Skippable at 5 s.** The hook, the stakes, and the game name land before the skip button.
 - **End card call to action.** Social placements show their own call to action button, and TikTok,
   Google, and in-app network policies ban non-working button-like elements and fake play buttons.
-  - On social placements, the call to action is a label (a ribbon or a bold line), never a pressable
-    button shape, and the hand never taps it.
+  - On social placements, the call to action is a label (a ribbon, a bold line, a sign in the
+    scene), never a pressable button shape, and the hand never taps it.
   - Ad-network end cards are clickable, so a button works there. Networks also take a separate
     end-card image: check its size in the network's spec.
 - **Music.** Reels ads may not use licensed music. Generate the bed.
