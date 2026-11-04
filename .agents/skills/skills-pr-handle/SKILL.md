@@ -124,7 +124,23 @@ Tests:
   without it. A pure refactor needs only the existing suite green.
 - On a same-repo PR, run `pnpm test`. On a quarantined fork, read the PR's `script-tests` CI job.
 
-Pins, matching what the repository already pins (`docs/ci-and-releases.md`, CI section):
+Runtime pins come first: what a skill installs or downloads on the user's machine. Marketplace scans
+flag code loaded from a mutable source. The kinetic music-video scaffold is the model (its
+`README.md` records each pin):
+
+- **Python packages**: a hashed lock per platform, installed with
+  `--require-hashes --only-binary :all:`, with a CI job that re-resolves it byte for byte
+  (`.github/workflows/kinetic-locks.yml`).
+- **npm packages**: exact versions (no `^` or `~`), a committed `package-lock.json` installed with
+  `npm ci --ignore-scripts`, and the folder listed under the npm `directories` in
+  `.github/dependabot.yml`.
+- **Downloads** (fonts, model weights, checkpoints): a fixed commit or revision, checked against
+  SHA-256 before use. A mismatch deletes the file and stops.
+- **Install hints**: no unversioned `pip install`, `npm install`, `npx`, or `uvx` line, and no PEP
+  723 `dependencies` block without a version. Never an install command for this repository
+  (`pnpm style` fails on one).
+
+Test pins (`docs/ci-and-releases.md`, CI section):
 
 - **Python test dependencies**: each sits in `tests/<name>/requirements.txt` with a floor and a
   major cap (`Pillow>=13,<14`).
@@ -132,12 +148,6 @@ Pins, matching what the repository already pins (`docs/ci-and-releases.md`, CI s
   for its suite) is regenerated with the command in that doc. Rerun it and require
   `git diff --exit-code` on the lock. On a quarantined fork, read the lock diff instead: resolving
   can build its packages.
-- **npm dependencies**: a `package.json` a skill ships names exact versions (no `^` or `~`), commits
-  its `package-lock.json` for `npm ci`, and has its folder listed under the npm `directories` in
-  `.github/dependabot.yml`, like the kinetic music-video scaffold.
-- **Install lines**: a `pip install` or `npm install` the PR adds to a SKILL.md, and a PEP 723
-  `dependencies` block in a script, name the range the suite tests.
-- **Tools**: a tool run through `uvx` or `npx` names an exact version (`uvx ruff@0.16.10`).
 
 Judge and fix as in step 3: only lines this PR adds or changes, pre-existing gaps noted. Writing a
 missing test is a fix when the expected behavior is clear from the script and the PR. Otherwise
