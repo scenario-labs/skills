@@ -15,9 +15,10 @@ Run it for each skill a PR changes when any of these hold:
 - A supporting file linked from `SKILL.md` was added, removed, or materially reworked: a script
   whose behavior changed, a reference, an asset that changes agent behavior.
 
-Skip it only when the change cannot alter agent behavior:
+Skip it only when the change cannot alter agent behavior, or leaves no skill to test:
 
 - only paths outside every skill folder changed;
+- the PR deletes the skill: nothing is left to install;
 - a typo-only, whitespace-only, or formatting edit;
 - README table rows, or `skills.sh.json` grouping churn with no `SKILL.md` change.
 
