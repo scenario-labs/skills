@@ -397,8 +397,9 @@ and command lines.
   comment (`actions/checkout@<sha> # v7.0.1`), never a tag: a tag is a pointer its publisher can
   move.
 - The `skill-files-reviewer` agent (`.claude/agents/`) reviews supporting files added or changed
-  next to a SKILL.md: justified, linked from SKILL.md, runnable, MCP for the agent's own steps,
-  public content only, house style.
+  next to a SKILL.md, core or expert: justified, linked from SKILL.md, runnable, MCP for the agent's
+  own steps (core skills only), text that matches the code, gates that fail closed, public content
+  only, house style.
 - The `skill-tester` agent in the same directory is the clean-room runner `/skills:validate` spawns
   when a separate process cannot reach the MCP server. It is not for ordinary work.
 
