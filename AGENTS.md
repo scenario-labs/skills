@@ -413,6 +413,10 @@ and command lines.
 - The `skill-tester` agent in the same directory is the clean-room runner `/skills:validate` spawns
   when a separate process cannot reach the MCP server. It is not for ordinary work.
 
+### Review guidelines
+
+Follow [REVIEW.md](REVIEW.md): what is Important, how to report, and what not to report.
+
 ## Validation and testing
 
 - `skills-ref validate` must pass for every published skill before any commit: the pre-commit hook

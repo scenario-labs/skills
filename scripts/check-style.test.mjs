@@ -42,6 +42,7 @@ function repo(t) {
     "README.md",
     "INSTALL.md",
     "AGENTS.md",
+    "REVIEW.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
     "SUPPORT.md",
@@ -378,6 +379,15 @@ test("fails on an em dash in SUPPORT.md", (t) => {
   write("SUPPORT.md", `Ask here ${String.fromCodePoint(0x2014)} or there.\n`);
   assert.throws(style, (error) => {
     assert.ok(error.stdout.includes("SUPPORT.md:1:10:"), error.stdout);
+    return true;
+  });
+});
+
+test("fails on an em dash in REVIEW.md", (t) => {
+  const { write, style } = repo(t);
+  write("REVIEW.md", `Report it ${String.fromCodePoint(0x2014)} or not.\n`);
+  assert.throws(style, (error) => {
+    assert.ok(error.stdout.includes("REVIEW.md:1:11:"), error.stdout);
     return true;
   });
 });
