@@ -285,19 +285,17 @@ def place_slot(timeout: float = 3600):
     deadline = time.time() + timeout
     while True:
         for i in range(RBX_MAX):
-            f = open(lock_dir / f"slot{i}.lock", "w")
-            try:
-                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                f.close()
-                continue
-            f.write(f"{os.getpid()}\n")
-            f.flush()
-            try:
-                yield i
-            finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
-                f.close()
+            with open(lock_dir / f"slot{i}.lock", "w") as f:
+                try:
+                    fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    continue
+                f.write(f"{os.getpid()}\n")
+                f.flush()
+                try:
+                    yield i
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
             return
         if time.time() > deadline:
             raise TimeoutError(f"no free Studio slot in {timeout:.0f}s (RBX_MAX={RBX_MAX})")
