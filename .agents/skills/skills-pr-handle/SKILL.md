@@ -79,10 +79,16 @@ git merge-tree --write-tree "origin/$BASE" "$HEAD_REF"
 gh pr view "$PR" --json mergeable,mergeStateStatus
 ```
 
-Update only when `pr-handle-comments` step 7 calls for it: a conflict, `BEHIND`, or a fix that needs
-code since landed on the base. Then update as its step 1 does: merge the base, never rebase, then a
-plain `git push` (AGENTS.md "Pull requests and releases"). If the intents of both sides clash,
-`git merge --abort` and ask.
+Update only for the cases of `pr-handle-comments` step 7 that are known before triage:
+
+- a conflict (`CONFLICTING`);
+- `BEHIND`, only when the base requires branches to be up to date. Being behind alone is not a
+  reason.
+
+A fix that needs code since landed on the base is known only after triage: step 5 handles it. Update
+as `pr-handle-comments` step 1 does: merge the base, never rebase, then a plain `git push`
+(AGENTS.md "Pull requests and releases"). If the intents of both sides clash, `git merge --abort`
+and ask.
 
 A quarantined fork is never updated: report the conflicts instead. Never force-push, merge the PR,
 enable auto-merge, or mark a draft ready.
@@ -171,6 +177,9 @@ threads, verify each point against the current code, and classify it (fix, alrea
 disagree, decide, follow-up). Read each comment body and the minimum location needed to act. Do not
 dump the full JSON into the conversation.
 
+When a fix needs code that has since landed on the base, update the branch as in step 2 before step
+6 commits it. A quarantined fork is never updated: say so in the review that carries the fix.
+
 ## 6. Fix and reply in thread
 
 Follow `pr-handle-comments` steps 5 and 6 for fixes, replies, and resolving, with these rules on
@@ -207,7 +216,10 @@ git diff --name-only "origin/$BASE"..."$HEAD_REF"
 
 Map each changed path to its skill: `skills/<name>/` for a core skill,
 `skills/<category>/<family>/<name>/` for an expert tool (`node scripts/lib/skills.mjs --dir <name>`
-prints either). A family `README.md` belongs to no skill.
+prints either). A family `README.md` belongs to no skill. A skill the PR deletes is gone from the
+head, so `--dir` finds nothing: take its name from the deleted path
+(`git diff --name-only --diff-filter=D "origin/$BASE"..."$HEAD_REF"`), the folder name under
+`skills/` or under the family.
 
 Apply the criteria in `docs/application-test.md` "When to run it" to each skill. When they call for
 the test, run `$skills-validate` (Claude: `/skills:validate`) for the skill name, following
