@@ -10,8 +10,9 @@ Usage:
 
 Boxes are X Y W H in source pixels; times are in seconds.
 
-- sheet: the whole take as one contact sheet, scaled tiles left to right then top to bottom. Prints
-  the tile spacing and the time each row starts. For timing and end-of-take drift only.
+- sheet: the whole take as one contact sheet, scaled tiles left to right then top to bottom, tile k
+  being the frame nearest k / --fps seconds. Prints the tile spacing and the time of each row's
+  first tile. For timing and end-of-take drift only.
 - action: crops of the box at native resolution, evenly spaced over --span seconds centered on --at
   (the contact moment), tiled into one image. Prints the time and frame of each tile.
 - ends: OUTDIR/first.png and OUTDIR/last.png at native resolution. The last is the last frame that
@@ -90,12 +91,14 @@ def grid(tiles, cols):
 
 
 def cmd_sheet(a):
-    W, H, _, _ = probe(a.take)
+    W, H, fps, count = probe(a.take)
     size = (a.width, max(1, round(a.width * H / W)))
-    tiles = list(frames(a.take, f"fps={a.fps},scale={size[0]}:{size[1]}", size))
+    # The fps filter picks frames up to half a tile late; selecting by index keeps tiles and labels on the same frames.
+    idx = sorted({round(k * fps / a.fps) for k in range(math.ceil(count * a.fps / fps) + 1)} & set(range(count)))
+    tiles = list(frames(a.take, f"{select(idx)},scale={size[0]}:{size[1]}", size))
     cols = min(a.cols, len(tiles))
     Image.fromarray(grid(tiles, cols)).save(a.out, quality=90)
-    starts = ", ".join(f"{r * cols / a.fps:g}" for r in range(math.ceil(len(tiles) / cols)))
+    starts = ", ".join(f"{idx[r * cols] / fps:.3g}" for r in range(math.ceil(len(tiles) / cols)))
     print(f"wrote {a.out}: {len(tiles)} tiles of {size[0]}x{size[1]}, {1 / a.fps:g} s apart, {cols} per row")
     print(f"rows start at {starts} s")
 

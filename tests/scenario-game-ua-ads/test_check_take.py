@@ -173,6 +173,18 @@ class LookTests(unittest.TestCase):
         self.assertIn(n, (4, 5))  # 2 s at 2 fps; the last tile depends on the ffmpeg version
         self.assertEqual(size(self.dir / "sheet.jpg"), (min(10, n) * 216, math.ceil(n / 10) * 384))
 
+    def test_sheet_tiles_are_the_frames_their_labels_name(self):
+        take = indexed(self.dir / "take.mp4", 45)
+        result = helpers.run("check_take.py", "sheet", take, self.dir / "sheet.png", "--cols", "1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("rows start at 0, 0.5, 1 s", result.stdout)
+        im = pixels(self.dir / "sheet.png")
+        self.assertEqual(im.shape[:2], (3 * 384, 216))
+        self.assertEqual([index_of(im[r * 384:(r + 1) * 384]) for r in range(3)], [0, 15, 30])  # not 7, 22, 37
+        result = helpers.run("check_take.py", "sheet", take, self.dir / "row.png")
+        self.assertIn("3 tiles", result.stdout)
+        self.assertIn("rows start at 0 s", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

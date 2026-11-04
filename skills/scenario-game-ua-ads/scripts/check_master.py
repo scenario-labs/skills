@@ -1,23 +1,48 @@
 #!/usr/bin/env python3
-"""Check a composed master against the cue sheet of its sound pass.
+"""Check a composed master against the cue sheet of its sound pass and against its simulation.
 
-Usage: python3 check_master.py master.mp4 cues.json [-o OUTDIR] [--sections 0 5 11]
+Usage: python3 check_master.py master.mp4 cues.json [--sim sim.wav] [-o OUTDIR] [--sections 0 5 11]
 
-cues.json is the file `build_passes.py sound` writes. Prints:
+cues.json is the file `build_passes.py sound` writes; sim.wav is what `build_passes.py simulate`
+wrote from the same plan. Needs numpy and ffmpeg, not Pillow. Prints:
 - the ffprobe summary, against the planned length and canvas;
 - integrated loudness and true peak (ffmpeg ebur128=peak=true);
 - the mean (RMS) and max level of each section (cues.json "sections", or --sections);
+- with --sim: how closely the master follows the simulation, overall, per 0.5 s window, and in
+  each hit's window;
 - an onset table: where each hit landed in the master against its planned time.
 Writes OUTDIR/sheet_2fps.jpg (a 2 fps contact sheet, for timing only: judge game logic on
-full-resolution frames) and OUTDIR/onsets.json. OUTDIR defaults to <master>_check beside it.
+full-resolution frames), OUTDIR/onsets.json and, with --sim, OUTDIR/sim.json. OUTDIR defaults to
+check_<master name> beside cues.json, the build folder, so nothing lands beside a delivered master.
 
-Each hit is found by cross-correlating the master with the hit's own sound, read from its
-trimStart. The search runs from 0.15 s before to 0.35 s after the planned time, but never past
+Compose plays the platform's 128 kbps mp3 copy of each upload, which removes everything above
+16 kHz, so the master, the simulation and every hit are low-passed at 16 kHz before matching.
+
+--sim (use it whenever the simulation exists): the master is aligned on the simulation within
+0.1 s, and levels are compared after their overall gain difference, which a loudness pass changes.
+It passes with:
+- an overall correlation of 0.95 or more;
+- every 0.5 s window with sound correlating 0.7 or more, within 2 dB;
+- each hit's window, from 20 ms before the hit to 0.25 s after (to its end when shorter, at least
+  0.1 s), found within 5 ms of its place, correlating 0.75 or more, within 2 dB;
+- each hit's "miss" at 1 or under: in the 100 ms from the hit, the master's error to the simulation
+  over its error to the simulation without that hit (rendered from cues.json). Over 1, the master
+  is closer to a mix without the hit: missing, moved or much quieter. No miss is shown for a hit too
+  quiet to tell from codec noise.
+A hit masked by other sounds, a ramping or noise-like sound, or a repeat of the same sound passes
+when the master follows the simulation in its window: the onset table is then information only.
+Four accepted masters measured 0.984 to 0.994 overall, 0.85 or more per hit window, within 1.1 dB,
+with every miss under 0.86.
+
+Onset table: each hit is found by cross-correlating the master with the hit's own sound, read from
+its trimStart. The search runs from 0.15 s before to 0.35 s after the planned time, but never past
 halfway to a repeat of the same sound, so a hit repeated within 0.35 s is not matched to its
-neighbor. A hit more than 0.1 s off, or matching under 0.3, reads CHECK.
+neighbor. A hit more than 0.1 s off, or matching under 0.3, reads CHECK. Without --sim, a masked,
+ramping or repeated hit can read CHECK while on time.
 
-Exit status 1 when a hit reads CHECK, the true peak is over -1 dBTP, the loudness is outside
--16 to -14 LUFS, or the file's length or canvas differs from the plan.
+Exit status 1 when the file's length or canvas differs from the plan, the true peak is over
+-1 dBTP, the loudness is outside -16 to -14 LUFS, or, with --sim, the master departs from the
+simulation; without --sim, when a hit reads CHECK.
 """
 
 import argparse
@@ -33,6 +58,7 @@ import build_passes as bp
 
 SR = bp.SR
 PRE, POST, REF = 0.15, 0.35, 0.25
+SIM_ALL, SIM_WINDOW, SIM_HIT, SIM_DB, SIM_OFFSET = 0.95, 0.7, 0.75, 2.0, 0.005
 
 
 def probe(path):
@@ -44,14 +70,18 @@ def probe(path):
 
 
 def mono(path):
-    return bp.load_audio(path).mean(axis=1)
+    return bp.load_audio(path, low=True).mean(axis=1)
+
+
+def rms_db(x):
+    return bp.db(float(np.sqrt(np.mean(np.asarray(x, np.float64) ** 2)))) if len(x) else float("-inf")
 
 
 def levels(x, start, end):
     seg = x[round(start * SR):round(end * SR)]
     if not seg.size:
         return float("-inf"), float("-inf")
-    return bp.db(float(np.sqrt(np.mean(seg.astype(np.float64) ** 2)))), bp.db(float(np.abs(seg).max()))
+    return rms_db(seg), bp.db(float(np.abs(seg).max()))
 
 
 def search_windows(hits):
@@ -92,6 +122,83 @@ def onset_table(render, hits):
     return rows
 
 
+def correlation(a, b):
+    a, b = np.asarray(a, np.float64), np.asarray(b, np.float64)
+    d = math.sqrt(float(a @ a) * float(b @ b))
+    return float(a @ b) / d if d > 0 else 0.0
+
+
+def align(master, sim, max_lag=0.1):
+    """Samples the master runs late on the simulation (negative: early), within max_lag seconds."""
+    n = min(len(master), len(sim))
+    nf = 1 << (2 * n - 1).bit_length()
+    xc = np.fft.irfft(np.fft.rfft(master[:n], nf) * np.conj(np.fft.rfft(sim[:n], nf)), nf)
+    m = round(max_lag * SR)
+    lags = np.r_[0:m + 1, -m:0]
+    return int(lags[int(np.argmax(np.r_[xc[:m + 1], xc[-m:]]))])
+
+
+def missing_ratio(m, s, h, gain):
+    """In the 100 ms from a hit: the master's error to the simulation over its error to the simulation without the hit.
+
+    Under 1 the master holds the hit as planned; over 1 it is closer to a mix without it (missing, moved,
+    or much quieter). None when the hit carries under a quarter of the error, below what codec noise allows.
+    """
+    p, n = round(h["t"] * SR), min(len(m), len(s))
+    b = min(n, p + round(0.1 * SR))
+    if b <= p:
+        return None
+    x = mono(h["file"])[round(h.get("trimStart", 0) * SR):]
+    own = np.zeros(b - p)
+    seg = x[:min(b - p, round((h.get("end", h["t"] + 0.1) - h["t"]) * SR))] * h.get("volume", 1.0) * gain
+    own[:len(seg)] = seg
+    err = m[p:b].astype(np.float64) - gain * s[p:b]
+    with_hit, without = float(err @ err), float((err + own) @ (err + own))
+    if float(own @ own) < 0.25 * with_hit or without <= 0:
+        return None
+    return with_hit / without
+
+
+def compare(master, sim, hits):
+    """The master against the simulation: an overall summary, the 0.5 s windows, and one row per hit."""
+    lag = align(master, sim)
+    n = min(len(master), len(sim))
+    m = np.zeros(n, np.float32)
+    if lag >= 0:
+        m[:max(0, n - lag)] = master[lag:n]
+    else:
+        m[-lag:] = master[:n + lag]
+    s = sim[:n]
+    gain = rms_db(m) - rms_db(s)
+    windows = []
+    for k in range(0, n, SR // 2):
+        a, b = m[k:k + SR // 2], s[k:k + SR // 2]
+        if len(b) >= SR // 10 and rms_db(b) > -50:
+            match, level = correlation(a, b), rms_db(a) - rms_db(b) - gain
+            windows.append({"t": k / SR, "match": round(match, 4), "level_db": round(level, 2),
+                            "ok": match >= SIM_WINDOW and abs(level) <= SIM_DB})
+    rows = []
+    for h in hits:
+        t = h["t"]
+        a = max(0, round((t - 0.02) * SR))
+        b = min(n, round(max(min(h.get("end", t + 0.25), t + 0.25), t + 0.1) * SR))
+        row = {"label": h["label"], "t": t, "sim_offset": None, "sim_match": None, "sim_level_db": None, "sim_miss": None,
+               "sim_ok": True}
+        if b - a > SR // 100 and rms_db(s[a:b]) > -60:
+            off, match = onset(m, s[a:b], a / SR, -0.02, 0.02)
+            k = a + round(off * SR)
+            level = rms_db(m[k:k + b - a]) - rms_db(s[a:b]) - gain
+            miss = missing_ratio(m, s, h, 10 ** (gain / 20)) if "file" in h else None
+            row.update({"sim_offset": off, "sim_match": round(match, 4), "sim_level_db": round(level, 2),
+                        "sim_miss": None if miss is None else round(miss, 3),
+                        "sim_ok": abs(off) <= SIM_OFFSET and match >= SIM_HIT and abs(level) <= SIM_DB
+                        and (miss is None or miss <= 1)})
+        rows.append(row)
+    summary = {"lag_ms": round(1000 * lag / SR, 2), "match": round(correlation(m, s), 4), "gain_db": round(gain, 2),
+               "windows": windows}
+    return summary, rows
+
+
 def contact_sheet(master, out, duration):
     rows = math.ceil((int(duration * 2) + 1) / 10)
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(master), "-vf", f"fps=2,scale=216:-2,tile=10x{rows}",
@@ -102,11 +209,12 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("master", type=Path)
     ap.add_argument("cues", type=Path)
-    ap.add_argument("-o", "--out", type=Path)
+    ap.add_argument("--sim", type=Path, help="the wav build_passes.py simulate wrote from the same plan")
+    ap.add_argument("-o", "--out", type=Path, help="default: check_<master name> beside cues.json")
     ap.add_argument("--sections", type=float, nargs="+", help="section start times in seconds")
     args = ap.parse_args(argv)
     plan = json.loads(args.cues.read_text())
-    out = args.out or args.master.with_name(f"{args.master.stem}_check")
+    out = args.out or args.cues.parent / f"check_{args.master.stem}"
     out.mkdir(parents=True, exist_ok=True)
     failed = []
 
@@ -139,11 +247,39 @@ def main(argv=None):
         for a, b in zip(starts, list(starts[1:]) + [duration]):
             mean, peak = levels(render, a, b)
             print(f"section {a:g}-{b:g} s: mean {mean:.1f} dB, max {peak:.1f} dB")
-        rows = onset_table(render, [c for c in plan["cues"] if c.get("role", "hit") == "hit"])
+        hits = [c for c in plan["cues"] if c.get("role", "hit") == "hit"]
+        rows = onset_table(render, hits)
+        sim = None
+        if args.sim:
+            summary, sim = compare(render, mono(args.sim), hits)
+            bad = [w for w in summary["windows"] if not w["ok"]]
+            low = min(summary["windows"], key=lambda w: w["match"], default=None)
+            print(f"simulation: master {summary['lag_ms']:+.1f} ms on it, overall match {summary['match']:.3f}, gain "
+                  f"{summary['gain_db']:+.2f} dB" + (f"; lowest 0.5 s window {low['match']:.3f} at {low['t']:g} s" if low else ""))
+            if summary["match"] < SIM_ALL:
+                failed.append(f"the master follows the simulation at {summary['match']:.3f} overall, under {SIM_ALL}: "
+                              "compare the payload with the plan")
+            failed += [f"the master departs from the simulation at {w['t']:g} s: match {w['match']:.2f}, "
+                       f"level {w['level_db']:+.1f} dB" for w in bad]
+            (out / "sim.json").write_text(json.dumps(summary, indent=1) + "\n")
+            for r, s in zip(rows, sim):
+                r.update({k: v for k, v in s.items() if k.startswith("sim_")})
         for r in rows:
             landed = "no match" if r["offset"] is None else f"{r['offset'] * 1000:+6.1f} ms"
-            print(f"  {r['t']:7.3f} s  {r['label']:24s} lands {landed}  match {r['score']:.2f}  {'CHECK' if r['check'] else ''}")
-        failed += [f"hit {r['label']} at {r['t']} s" for r in rows if r["check"]]
+            line = f"  {r['t']:7.3f} s  {r['label']:24s} lands {landed}  match {r['score']:.2f}"
+            if sim is None:
+                line += "  CHECK" if r["check"] else ""
+            elif r["sim_match"] is None:
+                line += "  sim: silent there"
+            else:
+                miss = "" if r["sim_miss"] is None else f", miss {r['sim_miss']:.2f}"
+                line += (f"  sim {r['sim_offset'] * 1000:+5.1f} ms, match {r['sim_match']:.2f}, {r['sim_level_db']:+5.1f} dB"
+                         f"{miss}{'' if r['sim_ok'] else '  DEPARTS'}")
+            print(line)
+        if sim is None:
+            failed += [f"hit {r['label']} at {r['t']} s" for r in rows if r["check"]]
+        else:
+            failed += [f"hit {r['label']} at {r['t']} s departs from the simulation" for r in rows if not r["sim_ok"]]
 
     contact_sheet(args.master, out / "sheet_2fps.jpg", duration)
     (out / "onsets.json").write_text(json.dumps(rows, indent=1) + "\n")

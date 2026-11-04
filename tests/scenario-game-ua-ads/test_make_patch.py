@@ -30,10 +30,11 @@ class PatchTests(unittest.TestCase):
         result = self.make([{"dest": [350, 10, 390, 50], "offset": [-100, 0]}], start=0, end=333)
         self.assertEqual(result.returncode, 0, result.stderr)
         layer = json.loads((self.dir / "patch.png.layer.json").read_text())
-        self.assertEqual([layer[k] for k in ("x", "y", "width", "height")], ["100", "0", "300", "300"])
-        self.assertEqual((layer["type"], layer["fit"], layer["startTime"], layer["endTime"]), ("image", "fill", 0.0, 11.1))
+        self.assertEqual([layer[k] for k in ("x", "y", "width", "height")], ["96", "0", "304", "304"])
+        # Ends half a frame before frame 333 (11.1 s): compose draws a layer on its endTime frame.
+        self.assertEqual((layer["type"], layer["fit"], layer["startTime"], layer["endTime"]), ("image", "fill", 0.0, 11.083))
         patch = np.asarray(Image.open(self.dir / "patch.png"))
-        inside = patch[10:50, 250:290]
+        inside = patch[10:50, 350 - 96:390 - 96]
         self.assertTrue((inside[..., 3] == 255).all())
         np.testing.assert_array_equal(inside[..., :3], self.src[10:50, 250:290])
         self.assertEqual(int(patch[..., 3].astype(bool).sum()), 40 * 40)

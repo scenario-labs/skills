@@ -1,9 +1,13 @@
-"""check_master.py: the onset search with repeated hits and trims, and the end-to-end report."""
+"""check_master.py: the onset search, the end-to-end report, and the comparison with the simulation."""
 
+import io
 import json
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
 import numpy as np
@@ -11,6 +15,7 @@ import numpy as np
 import helpers
 
 cm = helpers.load("check_master")
+bp = helpers.load("build_passes")
 SR = helpers.SR
 
 
@@ -101,6 +106,100 @@ class ReportTests(unittest.TestCase):
         result = self.check(late)
         self.assertIn("CHECK", result.stdout)
         self.assertIn("FAIL hit tap 0.5 at 0.35 s", result.stderr)
+
+    def test_the_default_folder_sits_beside_the_cues_never_beside_the_master(self):
+        (self.dir / "deliver").mkdir()
+        (self.dir / "build").mkdir()
+        shutil.move(self.dir / "master.mov", self.dir / "deliver/master.mov")
+        helpers.write_json(self.dir / "build/cues.json", self.cues)
+        result = helpers.run("check_master.py", self.dir / "deliver/master.mov", self.dir / "build/cues.json")
+        self.assertIn("lands", result.stdout, result.stderr)
+        self.assertTrue((self.dir / "build/check_master/sheet_2fps.jpg").exists())
+        self.assertEqual([p.name for p in (self.dir / "deliver").iterdir()], ["master.mov"])
+
+
+class CompareTests(unittest.TestCase):
+    def test_the_master_is_aligned_and_judged_after_its_overall_gain(self):
+        rng = np.random.default_rng(0)
+        sim = np.zeros(2 * SR, np.float32)
+        sim += 0.05 * np.sin(2 * np.pi * 220 * np.arange(2 * SR) / SR).astype(np.float32)
+        tap = helpers.burst(0.12, amp=0.5, seed=1).astype(np.float32)
+        for t in (0.5, 1.2):
+            place(sim, tap, t)
+        master = np.concatenate([np.zeros(10, np.float32), sim[:-10]]) * np.float32(10 ** (-3 / 20))
+        master += np.float32(0.001) * rng.standard_normal(len(master)).astype(np.float32)
+        summary, rows = cm.compare(master, sim, [{"label": "a", "t": 0.5, "end": 0.62}, {"label": "b", "t": 1.2, "end": 1.32}])
+        self.assertAlmostEqual(summary["lag_ms"], 1000 * 10 / SR, places=2)
+        self.assertAlmostEqual(summary["gain_db"], -3, delta=0.1)
+        self.assertGreater(summary["match"], 0.99)
+        for r in rows:
+            self.assertTrue(r["sim_ok"], r)
+            self.assertLess(abs(r["sim_offset"]), 0.0005, r)
+            self.assertLess(abs(r["sim_level_db"]), 0.2, r)
+
+
+@unittest.skipUnless(helpers.HAS_FFMPEG, "needs ffmpeg and ffprobe")
+class SimulationTests(unittest.TestCase):
+    """Masters built from build_passes.py simulate, through AAC at 128 kbps like compose."""
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.dir)
+        bp._audio.clear()
+        helpers.write_wav(self.dir / "music.wav", helpers.tone(2.0, amp=0.1))
+        helpers.write_wav(self.dir / "boom.wav", helpers.burst(0.25, amp=0.6, seed=3))
+        helpers.write_wav(self.dir / "tap.wav", helpers.burst(0.12, amp=0.5, seed=1))
+        self.hits = [{"label": "boom", "file": "boom.wav", "t": 0.5},
+                     {"label": "masked", "file": "tap.wav", "t": 0.5, "gain_db": -14},
+                     *({"label": f"tap {k}", "file": "tap.wav", "t": t} for k, t in enumerate((1.0, 1.2, 1.4)))]
+        assets = {"music.wav": "M", "boom.wav": "B", "tap.wav": "T"}
+        plan = self.plan("plan.json", self.hits, assets=assets)
+        _, cues, _ = bp.sound_payload(plan, "SILENT")
+        helpers.write_json(self.dir / "cues.json", cues)
+        with redirect_stdout(io.StringIO()):
+            bp.simulate(plan, self.dir / "sim.wav")
+
+    def plan(self, name, hits, **raw):
+        helpers.write_json(self.dir / name, {"duration": 2.0, "canvas": [64, 112], "sound": {
+            "music": [{"file": "music.wav", "gains": [[0, 0]]}], "hits": hits}, **raw})
+        return bp.Plan(self.dir / name)
+
+    def master(self, hits):
+        with redirect_stdout(io.StringIO()):
+            bp.simulate(self.plan("render.json", hits), self.dir / "render.wav")
+        return helpers.mux(self.dir / "master.mp4", self.dir / "render.wav", aac=True)
+
+    def check(self, *extra):
+        return helpers.run("check_master.py", self.dir / "master.mp4", self.dir / "cues.json", "-o", self.dir / "qa", *extra)
+
+    def test_masked_and_repeated_hits_pass_when_the_master_follows_the_simulation(self):
+        self.master(self.hits)
+        alone = self.check()
+        self.assertIn("FAIL hit masked at 0.5 s", alone.stderr)  # the template match alone misreads it
+        result = self.check("--sim", self.dir / "sim.wav")
+        self.assertNotIn("FAIL hit", result.stderr)
+        self.assertNotIn("departs", result.stderr)
+        self.assertNotIn("DEPARTS", result.stdout)
+        self.assertRegex(result.stdout, r"overall match 0\.9[5-9]")
+        rows = json.loads((self.dir / "qa/onsets.json").read_text())
+        self.assertEqual(len(rows), 5)
+        self.assertTrue(all(r["sim_ok"] for r in rows), rows)
+        self.assertTrue((self.dir / "qa/sim.json").exists())
+
+    def test_a_missing_hit_departs_from_the_simulation(self):
+        self.master([h for h in self.hits if h["label"] != "boom"])
+        result = self.check("--sim", self.dir / "sim.wav")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("FAIL hit boom at 0.5 s departs from the simulation", result.stderr)
+        self.assertIn("DEPARTS", result.stdout)
+
+    def test_audio_checks_run_without_pillow(self):
+        code = ("import sys; sys.modules['PIL'] = None; sys.path.insert(0, sys.argv[1]); import check_master, build_passes; "
+                "sys.exit(build_passes.main(['simulate', sys.argv[2], '-o', sys.argv[3]]))")
+        result = subprocess.run([sys.executable, "-c", code, str(helpers.SCRIPTS), str(self.dir / "plan.json"),
+                                 str(self.dir / "nopil.wav")], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.dir / "nopil.wav").exists())
 
 
 if __name__ == "__main__":

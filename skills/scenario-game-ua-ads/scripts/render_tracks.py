@@ -4,12 +4,14 @@
 Usage: python3 render_tracks.py spec.json OUTDIR [--only NAME ...]
 
 Each element becomes OUTDIR/<name>.mov, cropped to the box it moves in, and gets an entry in
-OUTDIR/layers.json: a compose layer with string x, y, width, height, fit "fill", mute true, and
-startTime and endTime floored to the millisecond from its frame numbers. Its "source" is the file
-name until the upload: build_passes.py maps it to the asset id. --only re-renders the named
-elements and keeps the other entries of layers.json.
+OUTDIR/layers.json: a compose layer with string x, y, width, height, fit "fill", mute true, a
+startTime floored to the millisecond from its first frame, and an endTime half a frame before its
+end frame, since compose draws a layer on the frame at exactly its endTime. Its "source" is the
+file name until the upload: build_passes.py maps it to the asset id. --only re-renders the named
+elements, keeps the entries of the other elements in the spec, and drops entries of elements no
+longer in it.
 
-Spec (paths relative to the spec; every time is a frame number at "fps", "_s" keys are seconds):
+Spec (paths relative to the spec file; every time is a frame number at "fps", "_s" keys are seconds):
 {
   "fps": 30, "canvas": [1080, 1920],
   "safe_zone": {"top": 270, "bottom": 1248, "left": 65, "right": 1015, "text_right": 940},
@@ -21,29 +23,51 @@ check, and "qscale" (ProRes -qscale:v, higher is smaller) to shrink a large trac
 
 Element types, required keys first, defaults in parentheses:
   hand_tap     png, tip [x, y] (fingertip on the PNG), at [x, y], in, press, out; height (220),
-               hold (7 frames on the target after the press), approach ([80, 100]), retreat ([60, 70])
+               hold (7 frames on the target after the press), approach ([80, 100]), retreat
+               ([60, 70]), ring (true), fade ([3, out - press - hold]: it fades over the retreat)
   hand_drag    png, tip, keys [[frame, x, y], ...] (fingertip path, linear; a 4th item "out" eases
-               into that key), press [frame for a 0.15 s tap, or [from, to] held]; height (220)
-  counter      values [PNG per value], steps [frame of each new value], start, end; at ([0, 0],
-               top-left of every PNG), bump (1.12), bump_s (0.15), glow ("#FFFFFF", null for none),
-               bumps (a bumped PNG per value, drawn as given instead of scaling). A pop that would
-               leave the safe zone is shifted inside it; layers.json then gives "bump_shift"
+               into that key), press (list: a frame for a 0.15 s tap, or [from, to] held); height
+               (220), ring (true), fade ([3, 6]: frames fading in from the first key and out at the
+               end), linger (6: frames the hand stays on the last key while it fades; 0 fades it
+               before the last key)
+               Every press: the hand shrinks to 92% while pressed, and a white ring grows from the
+               fingertip for 0.3 s unless ring is false. Each press falls between the first and
+               last key.
+  counter      values [PNG per value, null for an empty state], steps [frame of each new value],
+               start, end; at ([0, 0], top-left of every PNG), bump (1.12), bump_s (0.15), glow
+               ("#FFFFFF", null for none), bumps (a bumped PNG per value, drawn as given instead of
+               scaling). A pop that would leave the safe zone is shifted inside it; layers.json
+               then gives "bump_shift", and the note gives where the counter must sit for a
+               centered pop
   progress     box [x, y, w, h], fractions [one per value], steps, start, end; colors {rim, track,
                fill_top, fill_bottom}, fill_s (0.27)
-  floater      png, events [[frame, cx, cy], ...]; rise (120), dur_s (0.6)
+  floater      png, events [[frame, cx, cy], ...]; rise (120), dur_s (0.6). Two floaters that meet
+               on screen, in one element or across elements, are warned
   fly_to_hud   icon, frame, from [x, y], to [x, y]; count (3), icon_px (120), flight_s (0.4),
                stagger_s (0.045), spread (130), outline (7), seed (3). layers.json gives "land",
-               the frame the first icon lands: step the counter on it
+               the first frame with the first icon gone into the HUD, frame + ceil(flight_s * fps):
+               step the counter on it
   burst        center [x, y], frame; scale (1.0), dur_s (0.42), colors, spikes (12), seed (1)
   stars        centers [[x, y], ...], size or sizes, fills [frame per star], end; show (frame the
                empty slots appear, for win stars; omit for stars that pop in), glint_s (null, 0.42
                on an end card), fill, stroke
   icon_pop     png (tight), x, y, frame; curve ([0.4, 0.82, 1.1, 1.05, 1.0]), until (frame: adds
-               the still PNG layer from the pop's endTime, with no overlap frame)
+               the still PNG layer from the pop's end, with no overlap frame) or exit (frame: holds
+               the icon, then plays the curve backward to nothing, ending on that frame). A still
+               under 304 px a side is written padded into OUTDIR/<name>_still.png, placed so its
+               pixels stay put: upload that file. Compose shows an image layer one or two frames
+               after its startTime, so the still can blink in late
   bounce_in    png, center [x, y], height, start, end; rise (260), dur_s (0.42), angle (0),
                hop_every_s (1.2), hop (22)
   label_pulse  png (tight), x, y, start, end; period_s (0.9), amp (0.035), sweeps [frames],
                sweep_s (0.5)
+  flash        frames [frame, ...]: a flash at alpha on each frame, fading out over dur_s; color
+               ("#FFFFFF"), box ([x, y, w, h], the canvas), alpha (0.7), dur_s (0.25), or png with
+               x, y: the PNG flashes instead of a box (an edge glow; spaced frames pulse a label)
+  ring         center [x, y], radius (or [rx, ry] for an ellipse), start, end; width (10), color
+               ("#FFFFFF"), alpha (1.0), timer (false: true empties the ring clockwise from 12
+               o'clock between start and end, a patience timer), pulse (0.04, scale amplitude of a
+               0.9 s breathing; 0 for none)
   rays         background (plain PNG), center [x, y], start, end; speed (7 deg/s), ray_deg (9),
                alpha (0.12). An opaque full-canvas H.264 .mp4, not a ProRes track
   group        elements [...]: children drawn into one track, to save compose layers. Their
@@ -65,6 +89,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 SOCIAL_9X16 = {"top": 270, "bottom": 1248, "left": 65, "right": 1015, "text_right": 940}
 VISIBLE = 8  # alpha above this counts for the safe zone: a soft glow tail below it is invisible
+MIN_IMAGE = 304  # compose draws an image under about 300 px on a side at the wrong scale
 PRORES = ["-c:v", "prores_ks", "-profile:v", "4444", "-pix_fmt", "yuva444p10le", "-alpha_bits", "16",
           "-vendor", "apl0"]
 
@@ -76,6 +101,11 @@ class SpecError(Exception):
 def floor_ms(frame, fps):
     """Compose time of a frame. Rounded up (185 / 30 as 6.167), a layer starts one frame late."""
     return frame * 1000 // fps / 1000
+
+
+def end_ms(frame, fps):
+    """endTime of a layer that stops before frame: half a frame early, as compose draws a layer on its endTime."""
+    return (frame * 1000 // fps - round(500 / fps)) / 1000
 
 
 def ease_out(u):
@@ -238,7 +268,7 @@ def r_hand_tap(el, ctx):
     press, out = el["press"], el["out"]
     release = press + el.get("hold", 7)
     keys = [[el["in"], x + ax, y + ay], [press - 1, x, y, "out"], [release, x, y], [out, x + rx, y + ry, "out"]]
-    return r_hand_drag({**el, "keys": keys, "press": [press], "fade": el.get("fade", [3, out - release])}, ctx)
+    return r_hand_drag({**el, "keys": keys, "press": [press], "fade": el.get("fade", [3, out - release]), "linger": 0}, ctx)
 
 
 def r_hand_drag(el, ctx):
@@ -254,6 +284,7 @@ def r_hand_drag(el, ctx):
     if any(not first <= p0 <= last for p0, _ in presses):
         raise SpecError(f"{el['name']}: every press must fall between the first and last key")
     fade_in, fade_out = el.get("fade", [3, 6])
+    end = last + el.get("linger", fade_out)
 
     def pos(n):
         for a, b in zip(keys, keys[1:]):
@@ -262,6 +293,7 @@ def r_hand_drag(el, ctx):
                 if len(b) > 3 and b[3] == "out":
                     u = ease_out(u)
                 return a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u
+        return keys[-1][1], keys[-1][2]
 
     def draw(canvas, n):
         if el.get("ring", True):
@@ -271,11 +303,11 @@ def r_hand_drag(el, ctx):
                     ring(canvas, *pos(p0), 18 + 77 * ease_out(u), 9, (255, 255, 255), (1 - u) ** 1.3)
         s = 0.92 if any(p0 <= n < p1 for p0, p1 in presses) else 1.0
         # Squared: a plain ramp leaves a ghost glove on screen for the last frames of the retreat.
-        a = min(1.0, (n - first + 1) / fade_in if fade_in else 1.0, ((last - n) / fade_out) ** 3 if fade_out else 1.0) ** 2
+        a = min(1.0, (n - first + 1) / fade_in if fade_in else 1.0, ((end - n) / fade_out) ** 3 if fade_out else 1.0) ** 2
         x, y = pos(n)
         paste(canvas, faded(scaled(hand, s), a), x - tip_x * s, y - tip_y * s)
 
-    return first, last + 1, draw, {}
+    return first, end + 1, draw, {}
 
 
 def clamp_into(im, x, y, zone):
@@ -290,7 +322,10 @@ def clamp_into(im, x, y, zone):
 
 
 def bump_image(im, ox, oy, scale, glow, zone):
-    bb = im.getbbox()
+    """The popped image, where it goes, and the shift that keeps it in zone; (None, ...) for an empty state."""
+    bb = im.getbbox() if im is not None else None
+    if not bb:
+        return None, (ox, oy), (0, 0)
     big = scaled(im.crop(bb), scale)
     pad = 40 if glow else 0
     out = Image.new("RGBA", (big.width + 2 * pad, big.height + 2 * pad), (0, 0, 0, 0))
@@ -307,29 +342,42 @@ def bump_image(im, ox, oy, scale, glow, zone):
     return out, (cx, cy), (cx - x, cy - y)
 
 
+def centered_pop_needs(rest, ox, oy, shift):
+    """Where the counter's visible pixels must sit for its pop to stay centered in the safe zone."""
+    bb = visible_bbox(rest, VISIBLE) if rest is not None else None
+    if not bb:
+        return []
+    (dx, dy), (x0, y0, x1, y1) = shift, (ox + bb[0], oy + bb[1], ox + bb[2], oy + bb[3])
+    return ([f"top at y {y0 + dy} or more"] if dy > 0 else [f"bottom at y {y1 + dy} or less"] if dy < 0 else []) + \
+        ([f"left at x {x0 + dx} or more"] if dx > 0 else [f"right at x {x1 + dx} or less"] if dx < 0 else [])
+
+
 def r_counter(el, ctx):
     ox, oy = el.get("at", (0, 0))
-    rest = [ctx.png(p) for p in el["values"]]
+    rest = [ctx.png(p) if p else None for p in el["values"]]
+    rest = [im if im is not None and im.getbbox() else None for im in rest]
     steps, bumps = el.get("steps", []), el.get("bumps")
     if len(steps) != len(rest) - 1 or (bumps and len(bumps) != len(rest)):
         raise SpecError(f"{el['name']}: give one step frame per value after the first, and one bump PNG per value")
     zone = ctx.zone(el, "text")
     if bumps:
-        bumped = [bump_image(ctx.png(p), ox, oy, 1.0, None, zone) for p in bumps]
+        bumped = [bump_image(ctx.png(p) if p else None, ox, oy, 1.0, None, zone) for p in bumps]
     else:
         bumped = [bump_image(im, ox, oy, el.get("bump", 1.12), el.get("glow", "#FFFFFF"), zone) for im in rest]
     hold = ctx.frames(el.get("bump_s", 0.15))
 
     def draw(canvas, n):
         v = sum(n >= s for s in steps)
-        if v and n - steps[v - 1] < hold:
-            im, (x, y), _ = bumped[v]
+        im, (x, y), _ = bumped[v] if v and n - steps[v - 1] < hold else (rest[v], (ox, oy), None)
+        if im is not None:
             paste(canvas, im, x, y)
-        else:
-            paste(canvas, rest[v], ox, oy)
 
-    shift = max((b[2] for b in bumped), key=lambda d: abs(d[0]) + abs(d[1]))
-    return el["start"], el["end"], draw, {"bump_shift": list(shift)} if any(shift) else {}
+    worst = max(range(len(bumped)), key=lambda v: abs(bumped[v][2][0]) + abs(bumped[v][2][1]))
+    shift = bumped[worst][2]
+    if not any(shift):
+        return el["start"], el["end"], draw, {}
+    return el["start"], el["end"], draw, {"bump_shift": list(shift),
+                                          "bump_needs": centered_pop_needs(rest[worst], ox, oy, shift)}
 
 
 def bar_image(w, h, frac, colors, flash):
@@ -394,6 +442,50 @@ def r_floater(el, ctx):
     return min(e[0] for e in events), max(e[0] for e in events) + dur, draw, {}
 
 
+def floater_boxes(el, ctx):
+    """Per event, its first frame and the visible box it covers on each frame while mostly opaque."""
+    im = ctx.png(el["png"])
+    bb = visible_bbox(im, VISIBLE) or (0, 0, im.width, im.height)
+    dur, rise, pop = ctx.frames(el.get("dur_s", 0.6)), el.get("rise", 120), (0.7, 1.08, 1.0)
+    out = []
+    for f0, cx, cy in el["events"]:
+        boxes = {}
+        for k in range(dur):
+            u, s = k / dur, pop[k] if k < len(pop) else 1.0
+            if u < 0.9:  # the last tenth fades under 30%: a touch there reads as a hand-off, not a collision
+                x0, y0 = cx - im.width * s / 2, cy - rise * ease_out(u) - im.height * s / 2
+                boxes[f0 + k] = (x0 + bb[0] * s, y0 + bb[1] * s, x0 + bb[2] * s, y0 + bb[3] * s)
+        out.append((f0, boxes))
+    return out
+
+
+def floater_overlaps(elements, ctx):
+    """(top-level names, warning) for every two floater events whose boxes meet on a frame."""
+    items = []
+
+    def walk(els, top=None, prefix=""):
+        for el in els:
+            name = prefix + str(el.get("name", el.get("type")))
+            if el.get("type") == "group":
+                walk(el.get("elements", []), top or name, name + "/")
+            elif el.get("type") == "floater":
+                try:
+                    items.extend((top or name, name, f0, boxes) for f0, boxes in floater_boxes(el, ctx))
+                except (KeyError, OSError, ValueError, TypeError):
+                    pass  # render() reports a broken element with its name
+
+    walk(elements)
+    found = []
+    for i, (ta, na, fa, ba) in enumerate(items):
+        for tb, nb, fb, bb in items[i + 1:]:
+            hit = next((n for n in sorted(set(ba) & set(bb)) if ba[n][0] < bb[n][2] and bb[n][0] < ba[n][2]
+                        and ba[n][1] < bb[n][3] and bb[n][1] < ba[n][3]), None)
+            if hit is not None:
+                found.append(({ta, tb}, f"floaters {na} (frame {fa}) and {nb} (frame {fb}) overlap on frame {hit}: "
+                                        "space them in time or on screen"))
+    return found
+
+
 def outlined(icon, width):
     """White rim around an icon, so a small one reads over any board."""
     pad = Image.new("RGBA", (icon.width + 4 * width, icon.height + 4 * width), (0, 0, 0, 0))
@@ -454,7 +546,8 @@ def r_fly_to_hud(el, ctx):
                 paste_center(canvas, sparkle(44 * (1 - v) + 8, color, 90 * v, 1 - v), tx + 26, ty - 26)
 
     end = f0 + ctx.frames((count - 1) * stagger + flight + 0.24)
-    return f0, end, draw, {"land": f0 + ctx.frames(flight)}
+    # The first frame where draw() has the first icon past p = 1: ceil, so 12.3 frames lands on 13.
+    return f0, end, draw, {"land": f0 + math.ceil(round(flight * ctx.fps, 6))}
 
 
 def r_burst(el, ctx):
@@ -556,22 +649,99 @@ def r_icon_pop(el, ctx):
     im, x, y, f0 = ctx.png(el["png"]), el["x"], el["y"], el["frame"]
     curve = el.get("curve", [0.4, 0.82, 1.1, 1.05, 1.0])
     cx, cy = x + im.width / 2, y + im.height / 2
+    if "until" in el and "exit" in el:
+        raise SpecError(f"{el['name']}: give until (a still after the pop) or exit, not both")
+    leave = list(reversed(curve[:-1]))
+    end, meta = f0 + len(curve), {}
+    if "exit" in el:
+        if el["exit"] < end + len(leave):
+            raise SpecError(f"{el['name']}: exit must be frame {end + len(leave)} or later")
+        end = el["exit"]
 
     def draw(canvas, n):
-        s = curve[n - f0]
+        k, back = n - f0, n - (end - len(leave))
+        s = curve[k] if k < len(curve) else leave[back] if "exit" in el and back >= 0 else 1.0
         if abs(s - 1) < 1e-3:  # the last frame matches the still layer pixel for pixel
             paste(canvas, im, x, y)
         else:
             paste_center(canvas, scaled(im, s), cx, cy)
 
-    end, meta = f0 + len(curve), {}
     if "until" in el:
         if abs(curve[-1] - 1) > 1e-3:
             raise SpecError(f"{el['name']}: a pop that hands over to the still must end on scale 1.0")
         meta["still"] = {"type": "image", "source": Path(el["png"]).name, "x": str(x), "y": str(y),
                          "width": str(im.width), "height": str(im.height), "fit": "fill",
-                         "startTime": floor_ms(end, ctx.fps), "endTime": floor_ms(el["until"], ctx.fps)}
+                         "startTime": floor_ms(end, ctx.fps), "endTime": end_ms(el["until"], ctx.fps), "_png": el["png"]}
     return f0, end, draw, meta
+
+
+def pad_span(pos, size, limit):
+    """Margin before and after a span shorter than MIN_IMAGE, kept inside 0..limit when it fits."""
+    need = max(0, MIN_IMAGE - size)
+    lo = max(0, min(pos - need // 2, limit - size - need))
+    before = min(max(pos - lo, 0), need)
+    return before, need - before
+
+
+def pad_stills(meta, ctx, outdir, name):
+    """Write every still under MIN_IMAGE a side padded into outdir, and point its layer at the copy."""
+    for child, sub in meta.get("parts", {}).items():
+        pad_stills(sub, ctx, outdir, f"{name}/{child}")
+    still = meta.get("still")
+    if not still or "_png" not in still:
+        return
+    im = ctx.png(still.pop("_png"))
+    if min(im.size) >= MIN_IMAGE:
+        return
+    x, y = int(still["x"]), int(still["y"])
+    (left, right), (top, bottom) = pad_span(x, im.width, ctx.size[0]), pad_span(y, im.height, ctx.size[1])
+    out = Image.new("RGBA", (im.width + left + right, im.height + top + bottom), (0, 0, 0, 0))
+    out.paste(im, (left, top))
+    file = f"{name.replace('/', '_')}_still.png"
+    out.save(outdir / file)
+    still.update({"source": file, "x": str(x - left), "y": str(y - top), "width": str(out.width),
+                  "height": str(out.height)})
+
+
+def r_flash(el, ctx):
+    frames, peak = sorted(el["frames"]), el.get("alpha", 0.7)
+    dur = ctx.frames(el.get("dur_s", 0.25))
+    if "png" in el:
+        im, x, y = ctx.png(el["png"]), el["x"], el["y"]
+    else:
+        x, y, w, h = el.get("box", [0, 0, *ctx.size])
+        im = Image.new("RGBA", (w, h), hexrgb(el.get("color", "#FFFFFF")))
+
+    def draw(canvas, n):
+        a = max([peak * (1 - (n - f) / dur) ** 2 for f in frames if 0 <= n - f < dur], default=0.0)
+        if a > 0:
+            paste(canvas, faded(im, a), x, y)
+
+    return frames[0], frames[-1] + dur, draw, {}
+
+
+def r_ring(el, ctx):
+    (cx, cy), r, f0, f1 = el["center"], el["radius"], el["start"], el["end"]
+    rx, ry = (r, r) if isinstance(r, (int, float)) else r
+    width, pulse = el.get("width", 10), el.get("pulse", 0.04)
+    color = hexrgb(el.get("color", "#FFFFFF"))[:3] + (int(255 * el.get("alpha", 1.0)),)
+    S = 2
+
+    def draw(canvas, n):
+        s = 1 + pulse * math.sin(2 * math.pi * (n - f0) / ctx.fps / 0.9)
+        a, b = rx * s, ry * s
+        w, h = int(2 * (a + width) + 4), int(2 * (b + width) + 4)
+        big = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0))
+        box = [(w / 2 - a) * S, (h / 2 - b) * S, (w / 2 + a) * S, (h / 2 + b) * S]
+        if el.get("timer"):
+            done = (n - f0) / max(1, f1 - 1 - f0)  # 0 on the first frame, 1 (empty) on the last
+            if done < 1:  # PIL angles run clockwise from 3 o'clock: -90 is 12 o'clock
+                ImageDraw.Draw(big).arc(box, -90 + 360 * done, 270, fill=color, width=int(width * S))
+        else:
+            ImageDraw.Draw(big).ellipse(box, outline=color, width=int(width * S))
+        paste_center(canvas, big.resize((w, h), Image.LANCZOS), cx, cy)
+
+    return f0, f1, draw, {}
 
 
 def r_bounce_in(el, ctx):
@@ -639,7 +809,8 @@ RENDERERS = {
     "hand_tap": (r_hand_tap, "none"), "hand_drag": (r_hand_drag, "none"), "counter": (r_counter, "text"),
     "progress": (r_progress, "meaning"), "floater": (r_floater, "text"), "fly_to_hud": (r_fly_to_hud, "none"),
     "burst": (r_burst, "none"), "stars": (r_stars, "meaning"), "icon_pop": (r_icon_pop, "meaning"),
-    "bounce_in": (r_bounce_in, "meaning"), "label_pulse": (r_label_pulse, "text"),
+    "bounce_in": (r_bounce_in, "meaning"), "label_pulse": (r_label_pulse, "text"), "flash": (r_flash, "none"),
+    "ring": (r_ring, "none"),
 }
 
 
@@ -733,7 +904,7 @@ def encode_track(name, first, frames, ctx, outdir, qscale=None):
         shutil.move(tmp / "out.mov", outdir / f"{name}.mov")
     return {"type": "video", "source": f"{name}.mov", "x": str(x0), "y": str(y0), "width": str(w), "height": str(h),
             "fit": "fill", "mute": True, "startTime": floor_ms(first, ctx.fps),
-            "endTime": floor_ms(first + len(frames), ctx.fps)}
+            "endTime": end_ms(first + len(frames), ctx.fps)}
 
 
 def render_rays(el, ctx, outdir):
@@ -761,7 +932,7 @@ def render_rays(el, ctx, outdir):
     return {"file": f"{name}.mp4", "frames": [el["start"], el["end"]],
             "layer": {"type": "video", "source": f"{name}.mp4", "x": "0", "y": "0", "width": str(W),
                       "height": str(H), "fit": "cover", "mute": True, "startTime": floor_ms(el["start"], ctx.fps),
-                      "endTime": floor_ms(el["end"], ctx.fps)}}
+                      "endTime": end_ms(el["end"], ctx.fps)}}
 
 
 def build(el, ctx, outdir):
@@ -772,10 +943,19 @@ def build(el, ctx, outdir):
             raise SpecError(f"{el['name']}: missing key {e}") from None
     first, frames, meta, warnings = render(el, ctx)
     layer = encode_track(el["name"], first, frames, ctx, outdir, el.get("qscale"))
+    pad_stills(meta, ctx, outdir, el["name"])
     entry = {"file": f"{el['name']}.mov", "frames": [first, first + len(frames)], "layer": layer, **meta}
     if warnings:
         entry["warnings"] = warnings
     return entry
+
+
+def bump_notes(meta):
+    notes = [f"{child}: {n}" for child, sub in meta.get("parts", {}).items() for n in bump_notes(sub)]
+    if "bump_shift" in meta:
+        needs = " and ".join(meta.get("bump_needs", [])) or "the counter further inside"
+        notes.append(f"the pop moves {meta['bump_shift']} px to stay in the safe zone; a centered pop needs its {needs}")
+    return notes
 
 
 def main(argv=None):
@@ -791,16 +971,27 @@ def main(argv=None):
     if None in names or len(set(names)) != len(names):
         print("every element needs a unique name", file=sys.stderr)
         return 2
+    unknown = sorted(set(args.only or []) - set(names))
+    if unknown:
+        print(f"--only names no element in the spec: {', '.join(unknown)}", file=sys.stderr)
+        return 2
     args.outdir.mkdir(parents=True, exist_ok=True)
     index_path = args.outdir / "layers.json"
     index = {"fps": ctx.fps, "canvas": list(ctx.size), "layers": {}}
     if args.only and index_path.exists():
-        index["layers"] = json.loads(index_path.read_text()).get("layers", {})
+        kept = json.loads(index_path.read_text()).get("layers", {})
+        for gone in sorted(set(kept) - set(names)):
+            print(f"NOTE dropped {gone} from layers.json: no element of that name in the spec", file=sys.stderr)
+        index["layers"] = {k: v for k, v in kept.items() if k in names}
+    overlaps = [(tops, w) for tops, w in floater_overlaps(elements, ctx) if not args.only or tops & set(args.only)]
     try:
         for el in elements:
             if args.only and el["name"] not in args.only:
                 continue
             entry = build(el, ctx, args.outdir)
+            entry["warnings"] = entry.get("warnings", []) + [w for tops, w in overlaps if el["name"] in tops]
+            if not entry["warnings"]:
+                del entry["warnings"]
             index["layers"][el["name"]] = entry
             lay = entry["layer"]
             extra = "".join(f", {k} {entry[k]}" for k in ("land", "bump_shift") if k in entry)
@@ -808,9 +999,12 @@ def main(argv=None):
                   f"{lay['width']}x{lay['height']}, {lay['startTime']}-{lay['endTime']} s{extra}")
             for w in entry.get("warnings", []):
                 print(f"WARN {w}", file=sys.stderr)
-            if "bump_shift" in entry:
-                print(f"NOTE {el['name']}: the pop moves {entry['bump_shift']} px to stay in the safe zone; "
-                      "move the counter inward for a centered pop", file=sys.stderr)
+            for n in bump_notes(entry):
+                print(f"NOTE {el['name']}: {n}", file=sys.stderr)
+            still = entry.get("still", {}).get("source", "")
+            if still.endswith("_still.png"):
+                print(f"NOTE {el['name']}: the still is padded to {MIN_IMAGE} px a side in {args.outdir / still}: "
+                      "upload that file", file=sys.stderr)
     except SpecError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2

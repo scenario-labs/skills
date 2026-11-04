@@ -79,6 +79,9 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
   piece wobbles on an edge, tips, then drops with a spin; a stack sways and settles. Write it beat
   by beat in the clip prompt.
 - Show a limit, then overcome it: a too-big object rattles across the rim until the hole grows.
+- What the fantasy rides on (a ball, a car, the hole) reads at phone size: about 4% of the frame
+  width or more, with a trail when it moves fast. A growing subject follows a size curve planned per
+  beat, and the camera pulls back so it stays about a third of the frame.
 - Escalate: each beat bigger or faster than the last, a near-fail, one clever move nobody expected,
   then the biggest moment near the end of gameplay.
 - Never simplify the mechanic until the model cannot break it. Build a rich one in chained stages:
@@ -107,22 +110,24 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
   - Name every barrier's state in the prompt ("coins stay inside the glass") and what stays still.
   - A fixed end state is its own still, edited from the board with the same counts, pinned as the
     take's last frame. Pinning also locks the camera.
-  - A precise move a model cannot do cleanly (a two-piece swap) is built as layers from the still;
-    the model animates only the consequence.
+  - A precise move a model cannot do cleanly (a two-piece swap, a free drop) is built as layers from
+    the still; the model animates only the consequence. Video members lower a block onto a stack
+    instead of dropping it.
+  - A barrier drawn locally over a generated take (a drawn line, a patch) gets a mask check inside
+    it on every frame: bees sat inside a drawn dome for 74 frames.
   - A board whose every move must be exact (tile match, sort, merge, screw puzzle) is scripted
     whole: cut the pieces from the board still or the user's screenshot and animate them as layers.
     The rules stay exact, and a video model adds only ambient motion behind them.
 - Assembly runs on `model_scenario-compose-video`, Scenario's one deterministic compositor, so its
   id is fixed (confirm with `search`).
 - Anything that moves on the UI layer (the hand, the counter pop, rewards flying to the counter, a
-  burst) is one transparent ProRes 4444 `.mov`, cropped to its motion box. Never use a run of
-  stepped image layers, which compose can show two at a time, and never WebM alpha, which comes out
-  black ([ui](references/ui-layers.md)).
+  burst) is one transparent ProRes 4444 `.mov`, cropped to its motion box, never stepped image
+  layers or WebM alpha ([ui](references/ui-layers.md)).
 - Sound: a hit on every visible event (tap, impact, pickup, counter step) on its frame, louder than
-  the music. A video-to-audio pass on the silent cut adds incidental sound but misses events; its
-  effect prompt is capped near 200 characters. Generate the bed separately, banning ambient pads,
-  and shift it so its lift lands on the payoff.
-- Compose takes at most 50 layers and has no limiter, so assembly runs in passes:
+  the music. A video-to-audio pass on the silent cut adds incidental sound but misses events.
+  Generate the bed separately, banning ambient pads, and shift it so its lift lands on the payoff.
+- Compose takes at most 50 layers (49 audio, so premix a dense run of hits into one stem) and has no
+  limiter, so assembly runs in passes:
   - picture: clips and overlays, muted, into a silent master;
   - sound: the silent master as the one video layer under every audio layer, times to the
     millisecond;
@@ -139,44 +144,48 @@ The agent runs these locally with Python 3, Pillow, numpy, and ffmpeg. They rend
 and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fields.
 
 - [render_tracks.py](scripts/render_tracks.py): renders the hand, counter pops, progress bar,
-  floaters, reward flights, bursts, win stars, icon pop, bounce-in, and label pulse as cropped
-  ProRes 4444 tracks, plus `layers.json` with floored times and safe-zone warnings.
+  floaters, reward flights, bursts, win stars, icon pop, bounce-in, label pulse, flash, and ring as
+  cropped ProRes 4444 tracks, plus `layers.json` with floored times and safe-zone warnings.
 - [build_passes.py](scripts/build_passes.py): `simulate` sums the cue sheet locally and prints
-  loudness, true peak, and each hit's margin; `picture` and `sound` write the two compose payloads.
+  loudness, true peak against -1.8 dBTP, and each hit's margin and masking; `picture` and `sound`
+  write the two compose payloads, ending layers half a frame early and padding small images.
 - [check_master.py](scripts/check_master.py): run on the downloaded master: canvas, length,
-  loudness, true peak, levels per section, a 2 fps sheet, and each hit's onset.
+  loudness, true peak, levels per section, a 2 fps sheet, and each hit's onset. With `--sim`, the
+  `simulate` mix, masked and repeated hits stop reading as late.
+- [put_parts.py](scripts/put_parts.py): PUTs a file to the part URLs `upload_asset` returned, read
+  from the saved response, and prints what `upload_asset_complete` needs. It only fetches URLs the
+  MCP tool returned.
 - [check_take.py](scripts/check_take.py): run on each take before assembly: `sheet` for timing,
   `action` crops around each contact, `ends` for counts, `motion` flags movement outside the boxes
   allowed to move (locked camera only).
 - [make_patch.py](scripts/make_patch.py): builds a clean-plate image layer that hides a static piece
   contradicting the count, and checks every take it covers.
 
-## Worked example: rescue with a fail tease, 15 seconds, TikTok 9:16
+## Worked example: pin-pull rescue in chained stages, 15 seconds, TikTok 9:16
 
-1. Plan: 1080x1920, TikTok safe zone: shafts in the middle band, HUD from y 280. Hook 0 to 3 s. Fail
-   take 0 to 5.2 s, FAIL burst and red flash at 3.7 s. Payoff take 5.2 to 11.1 s, NICE at 9 s. End
-   card 11.1 to 15 s.
-2. Board: `recommend` an image model for polished casual game art. Two glass shafts, text-free: lava
-   above the trapped miner, gold above an empty cart, one pin as the floor of each top compartment.
-   Edit it into the solved state (same gold in the cart, lava held, miner cheering). A square app
-   icon of the hero.
-3. Clips: `model_schema_get`, then two runs with `wait: false`, final tier. Fail take 5 s from the
-   board: the left pin slides out, lava drops onto the miner. Payoff take 10 s, board as first
-   frame, solved still as last: the right pin slides out, gold drops into the cart.
-4. Logic, with `check_take.py` on each take, never frame by frame: `sheet` for timing and drift;
-   `action --at 3.4 --box 270 600 540 540` tiles eight native-resolution crops of the pin pull into
-   one image; `ends` for the gold counts; `motion --allow` the shaft boxes flags anything else that
-   moves. Nothing passes the other pin or the glass, and the gold in the cart matches the gold that
-   fell.
-5. UI with `scenario-text-overlay`: hook, level badge, counter values, FAIL, NICE, red flash, end
-   card with a "PLAY FREE" label. `render_tracks.py` renders the hand following the pin ring and a
-   coin flight to the counter on each step.
-6. Picture pass: `build_passes.py picture` lays the clips at their `startTime`s, `fit: "cover"`,
+1. Plan: 1080x1920, TikTok safe zone, HUD from y 280. Hook over the wrong pull: gold melts in the
+   lava, FAIL at 2.5 s, rewind. Water pin at 3.8 s sets the lava into a stone ramp under a punch-in;
+   gold pin at 5.8 s; cell pin at 8.3 s, the miner runs up the ramp into the cart. End card 11.2 to
+   15 s.
+2. Board: `recommend` an image model for polished casual game art. Glass chambers, text-free: water
+   and gold on golden pins, lava below, the miner locked beside it, an empty cart. Then one state
+   still per step, each edited from the last: stone ramp, gold in the cart, miner in the cart. A
+   square app icon of the hero.
+3. Clips: `model_schema_get`, then one run per step with `wait: false`, final tier, first and last
+   frame pinned to consecutive states, one visible move each. The fail take starts from the board.
+4. Logic, with `check_take.py` on each take, never frame by frame: `sheet` for timing;
+   `action --at 4.5 --box 270 600 540 540` tiles eight native-resolution crops of the water hitting
+   the lava; `ends` for counts; `motion --allow` the chamber boxes flags anything else moving.
+   Nothing passes a closed pin or the glass, steam included.
+5. UI with `scenario-text-overlay`: hook, level badge, counter values, FAIL, RESCUED!, end card with
+   a "PLAY FREE" label. `render_tracks.py` renders the hand on each ring, coins flying to the
+   counter, and the stars.
+6. Picture pass: `build_passes.py picture` lays the takes at their `startTime`s, `fit: "cover"`,
    `mute: true`, overlays above, `durationMode: "custom"`, `duration: 15`.
-7. Sound pass on the silent master: hits on the pin pulls, the lava, the coins, each counter step,
-   and the end card; the video-to-audio pass under them; the bed with its lift at 5.2 s. Run
-   `simulate` first and trim until the peak sits under -1 dBTP.
-8. Check: `check_master.py`, then the reject list on one tiled crop sheet per action.
+7. Sound pass on the silent master: hits on each pull, the melt, the steam, the coins, each counter
+   step, the leap, and the end card; the bed with its lift on the steam. Run `simulate` first and
+   trim until the peak sits near -1.8 dBTP, the margin the final encode needs.
+8. Check: `check_master.py --sim`, then the reject list on one tiled crop sheet per action.
 
 ## Reject list
 
@@ -204,11 +213,12 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
 
 ## Common mistakes
 
-- Calling a 5 or 10 second render a 15 second ad: probe the file.
 - Prompting "with the number 10 on the gate": the number changes every frame. Blank gate, overlay.
 - A label fixed to a moving object slides off it. Keep it to the static second or use the HUD.
 - Scaling a full-canvas overlay in the compose run: it scales from the corner and can leave the
   frame. Render each element at final size; offsetting with `x` or `y` is fine.
 - Leaving clip audio on: mute clips or turn generated audio off.
-- Cropping a 16:9 ad to 9:16, or stretching a screenshot to the canvas.
-- Naming a real game, studio, or character in invented gameplay.
+- Stretching a screenshot to the canvas.
+- Naming a real game, studio, or character in invented gameplay, or letting an archetype drift into
+  one: an angry driver came back in a red cap, mustache, and blue shirt. Name an original look and
+  check the still before animating.

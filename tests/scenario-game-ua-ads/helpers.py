@@ -71,8 +71,15 @@ def tone(seconds, amp=0.1, freq=440.0):
 
 
 def burst(seconds=0.12, amp=0.5, seed=0):
-    """A decaying noise hit whose sound starts at sample 0, normalized to peak at amp."""
-    x = np.random.default_rng(seed).standard_normal(round(seconds * SR)) * np.exp(-np.arange(round(seconds * SR)) / (0.02 * SR))
+    """A decaying noise hit whose sound starts at sample 0, normalized to peak at amp.
+
+    The noise is band-limited under 12 kHz before the envelope, so the 16 kHz low-pass of the
+    simulation and of check_master.py leaves it whole.
+    """
+    n = round(seconds * SR)
+    noise = np.fft.rfft(np.random.default_rng(seed).standard_normal(2 * n))
+    noise[np.fft.rfftfreq(2 * n, 1 / SR) > 12000] = 0
+    x = np.fft.irfft(noise, 2 * n)[n // 2:n // 2 + n] * np.exp(-np.arange(n) / (0.02 * SR))
     return amp * x / np.abs(x).max()
 
 
@@ -93,9 +100,9 @@ def encode(path, frames, fps=30, crf=23, gop=None):
     return path
 
 
-def mux(path, audio, size=(64, 112), seconds=2):
-    """A black clip at 30 fps carrying audio as PCM, a stand-in for a composed master."""
+def mux(path, audio, size=(64, 112), seconds=2, aac=False):
+    """A black clip at 30 fps carrying audio as PCM, or AAC at 128 kbps like compose, a stand-in for a master."""
+    codec = ["-c:a", "aac", "-b:a", "128k"] if aac else ["-c:a", "pcm_s16le"]
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", f"color=black:s={size[0]}x{size[1]}:r=30:d={seconds}",
-                    "-i", str(audio), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "pcm_s16le", "-shortest",
-                    str(path)], check=True)
+                    "-i", str(audio), "-c:v", "libx264", "-pix_fmt", "yuv420p", *codec, "-shortest", str(path)], check=True)
     return path

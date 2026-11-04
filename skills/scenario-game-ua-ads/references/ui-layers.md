@@ -23,8 +23,12 @@ Values below are for a 1080-wide canvas.
 - Crop each video to the box its element moves in, and place it with `x`, `y`, `width`, and `height`
   equal to that box, `fit: "fill"`, `mute: true`. An 8 s hand track was 24.5 MB at full canvas and
   6.6 MB cropped to 400x450.
-- Uploads go out in 6 MB parts: `upload_asset` returns one presigned URL per part. PUT each chunk to
-  its URL in order, then call `upload_asset_complete`.
+- Uploads go out in parts of 6,000,000 bytes (not 6 MiB): `upload_asset` returns one presigned URL
+  per part. Save the response, run `put_parts.py FILE response.json`, then call
+  `upload_asset_complete`. By hand: write each part to a file and PUT it in order; piping into the
+  request failed.
+- A compose output is already an asset: use its id as the silent master of the next pass, with no
+  download and re-upload.
 - Never animate with a run of stepped image layers. Compose can draw the outgoing and the incoming
   layer on one boundary frame, which shows a double hand or two counters.
 - An element animated by a video model on a flat color, such as a hero dancing on the end card,
@@ -32,20 +36,32 @@ Values below are for a 1080-wide canvas.
   output, never WebM.
 - Compose reads layer times to the millisecond. Write a frame time (frame n / 30) rounded down: 185
   / 30 written as 6.1667 starts the layer one frame late.
+- Compose also draws a layer on the frame at its exact `endTime`. End every layer half a frame
+  before its cut, or it shows on the next shot's first frame: a HUD and a win word sat over an
+  insert this way.
+- Video layers start on their frame; image layers can start one or two frames late. A word that must
+  land on a contact frame is a video track.
 - A track that hands over to a static PNG (an icon pop, then the still icon) ends on the PNG's
   `startTime`, with no overlap: one shared frame draws soft shadows twice and darkens them.
 - Give every image layer an explicit `width` and `height` at its natural size. A 750x107 PNG with no
-  size was drawn about 2.5 times too large. Pad very small PNGs to about 300 px on the short side.
+  size was drawn about 2.5 times too large. Pad small PNGs with transparent margin to at least 304
+  px on the short side, and shift `x` and `y` so the content stays put. `build_passes.py picture`
+  writes these as `<name>.pad.png` copies: upload the copies.
 
 ## Static recipes
 
 - **Burst word** (FAIL, NICE, HUGE!): a heavy rounded display face at 250 px or more, gold for wins,
   red for fails.
-  - The working gradient with an outline is a span with a `linear-gradient` background,
-    `-webkit-background-clip: text`, `-webkit-text-fill-color: transparent`, `-webkit-text-stroke`
-    about 8% of the size, and `paint-order: stroke fill`.
-  - Shadows go in `filter: drop-shadow(...)`: a hard offset in the stroke color, then a soft one.
-    `text-shadow` shows through the transparent fill and floods the word with the outline color.
+  - Stack two copies of the word in the same box. The back copy is solid in the outline color, with
+    `-webkit-text-stroke` about 8 to 10% of the size and the shadows. The front copy carries the
+    fill: a `linear-gradient` background with `-webkit-background-clip: text` and
+    `-webkit-text-fill-color: transparent`, and no stroke.
+  - Never put the stroke on the gradient copy. On clipped text the stroke paints over the fill and
+    `paint-order` does not help: a smaller second line lost the bars of its E, A, and F.
+  - Shadows go in `filter: drop-shadow(...)` on the back copy: a hard offset in the stroke color,
+    then a soft one. `text-shadow` shows through a transparent fill.
+  - Scale the stroke with the size, about 5 px minimum. A fixed 12 px stroke filled in words under
+    about 90 px.
   - Crop the PNG tight with 24 px padding, so `transitionIn: "zoomin"` grows from the word's own
     center.
   - Keep it inside the placement's text zone: under 800 px wide on TikTok, clear of the right rail,
@@ -68,6 +84,10 @@ Values below are for a 1080-wide canvas.
 - **Counter values**: name the unit (coins, size, army) and tie every step to an event the clip
   shows. Use 4 or 5 steps that only climb, with values a viewer can believe: five cars swallowed
   never adds 300 m.
+  - When a value is measured on the board (percent dug, cars out), step at the midpoint between two
+    values. Stepping when a value is reached lagged one step behind the board.
+  - Cash, coins, and score come only from events the viewer sees: a customer who walked in already
+    holding a cup pays nothing.
 - **Score floater**: "+N" at about 90 px, white with a dark stroke. It rises 120 px from the event
   point over 0.6 s and fades in its last third.
 - **Reward fly-to-HUD**: 3 to 10 of the game's own reward icons burst from the event point. They arc
@@ -75,6 +95,10 @@ Values below are for a 1080-wide canvas.
   lands. Rewards fly only from events the clip shows.
 - **Impact burst**: radial spikes, a shockwave ring, and sparkles, about 0.4 s. It is centered on
   the 1 to 3 biggest impacts of the ad, never on every event.
+- **Repeated words** (BONK!, PERFECT!): two copies never overlap in time and space. Shorten them, or
+  move the second.
+- **Punch-in**: the same take re-layered at about 130% for about 0.5 s on the key contact, with a
+  short local slow motion before it. It sells the clever move in every ad that used it.
 - **Win stars**: three slots under the win word fill one by one with a sparkle each, over about 0.9
   s, with the payoff still visible.
 - **Hand**: one glove generated once on a transparent background. Measure the fingertip's offset on
@@ -104,7 +128,14 @@ Values below are for a 1080-wide canvas.
   theme hits (crash, gulp, gem burst).
   - Generate each hit with a sound-effect model (`recommend` one).
   - Trim each so its onset sits at 0.0, which makes the cue time the hit time.
-  - Each hit's peak sits at least 4 dB over the music's peak in the same 50 ms.
+  - Each hit's peak sits at least 4 dB over the music's peak in the same 50 ms, and over any hit
+    playing on top of it. A star under the win sting vanished although it cleared the music.
+  - Upload every sound as 48 kHz WAV. One master came out at 44.1 kHz, and a 192 kHz extract made a
+    96 kHz one.
+- Compose plays a 128 kbps copy of each uploaded sound, which drops everything above 16 kHz.
+  - A sparkle or star with most of its energy up there plays about 8 dB quieter than planned.
+  - Low-pass each hit at 16 kHz before judging it, and pitch such hits down.
+- Animal sounds come from a sound-effect model: speech models cannot bark or meow.
 - The music bed comes back at its own length (a 10 s request returned 19 s). Trim it with `trimEnd`
   and measure its energy every 0.1 s.
   - Offset it so its lift lands within 0.3 s of the payoff start.
@@ -115,13 +146,20 @@ Values below are for a 1080-wide canvas.
   Before the sound pass, sum the cue sheet locally and trim the master volume and the few hits that
   make the peaks. A test ad reached -14.4 LUFS and -2.0 dBTP this way, and the render matched the
   local sum within 0.3 dB.
+- The final encode moves true peak by -0.3 to +0.8 dB against the local sum, across ten ads. Aim the
+  sum at about -1.8 dBTP and -15.5 LUFS, so the master lands inside both limits.
 - Sound pass: the silent master as the only video layer, plus the music, the video-to-audio track,
   and every hit as audio layers.
   - A test pass took 40 audio layers. Every hit landed within 1 ms, and 0.15 s layers, exact
     volumes, and 10 ms fades all held.
-  - Past 49 audio layers, drop the video-to-audio track first.
+  - Compose takes at most 49 audio layers. Premix a dense run of hits (a 16-car flood, a combo of
+    ticks) into one stem, and drop the video-to-audio track first.
+  - End the music on a bar or fade its tail locally: compose ignored an `audioFadeOut` on the last
+    music layer.
 - Loudness pass, only when the sound pass misses the target: run `model_scenario-audio-extract` on
   the sound pass with `normalizeLoudness: true` and `outputFormat: "wav"`. Then compose the silent
   master with that track as the only audio layer.
   - Measured on two test masters: about -16 LUFS integrated, true peak -1.5 dBTP, no time shift.
+  - The extract has no limiter, so it cannot fix a true peak. Trim the master volume or the few hits
+    that make the peaks, and resample the track to 48 kHz before composing it.
   - Check with ffmpeg's `ebur128` filter (`-af ebur128=peak=true`).

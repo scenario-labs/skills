@@ -5,8 +5,10 @@ and an end card of about 4 seconds. Every board is a text-free still at the deli
 every number, label, button, and hand in the UI column is a composited layer (see
 [ui-layers.md](ui-layers.md)). Shorter ads drop the setup take's second half, never the end card.
 
-Concepts 1 and 7 to 16 were produced and reviewed as 15 second ads. Their Notes record the faults
-that review caught and the rule that avoids each.
+Concepts 1 and 7 to 16 were produced as 15 second ads, then rebuilt to pass one test: a stranger
+wants to play. Their beat sheets describe the rebuilt ads, and their Notes record the faults review
+caught and the rule that avoids each. Each names its **Build**: chained stages, a scripted board, or
+generated takes.
 
 Each concept's **Fun** line names the player fantasy, the input a viewer must read within 2 s, the
 motions the clips must show, and the limit the player overcomes. Plan the clips from it.
@@ -16,44 +18,49 @@ square app icon of the hero for every end card.
 
 | #   | Concept                  | Group                  | Core mechanic                 | Hook                  |
 | --- | ------------------------ | ---------------------- | ----------------------------- | --------------------- |
-| 1   | Rescue with a fail tease | Puzzle and logic       | Pull the right pin            | CAN YOU SAVE HIM?     |
+| 1   | Rescue with a fail tease | Puzzle and logic       | Pull the pins in order        | WATER OR GOLD?        |
 | 6   | Only 1% can solve        |                        | Fix a wrong state             | ONLY 1% CAN SOLVE     |
-| 7   | Draw to protect          |                        | Draw a shield line            | PROTECT THE DOG!      |
-| 8   | Find the odd one         |                        | Tap the one that differs      | FIND THE ODD CAT!     |
-| 9   | Parking jam escape       |                        | Free the blocker first        | ONLY 1 WAY OUT!       |
+| 7   | Draw to protect          |                        | Draw a shield line            | SAVE HIM!             |
+| 8   | Find the odd one         |                        | Tap the one that differs      | ONLY 1%               |
+| 9   | Parking jam escape       |                        | Free the key car first        | ONLY 1 CAR            |
 | 3   | Satisfying sort          | Satisfying and ASMR    | Items click into slots        | Tactile sound first   |
-| 10  | Excavation reveal        |                        | Brush sand off a fossil       | WHAT'S INSIDE?        |
-| 11  | Cascade combo            |                        | One swap sets off a chain     | ONE SWAP CHANGES ALL  |
+| 10  | Excavation reveal        |                        | Bigger tool per layer         | 3 LAYERS              |
+| 11  | Cascade combo            |                        | Build and combine boosters    | 3 MOVES               |
 | 2   | Number gates             | Growth and progression | Run through the better gate   | Two labeled gates     |
 | 4   | Legendary pull           |                        | Flip the glowing card         | One card glows        |
 | 5   | Crisis to restore        |                        | Merge to rebuild a room       | A crisis and a choice |
-| 12  | Broke to cozy            |                        | Tap upgrade, the room changes | FROM BROKE TO RICH?   |
-| 13  | Swallow and grow         |                        | A hole eats ever bigger items | EAT THE WHOLE CITY    |
+| 12  | Broke to cozy            |                        | Tap upgrade, the room changes | 3 TAPS                |
+| 13  | Swallow and grow         |                        | A hole eats ever bigger items | TINY HOLE             |
 | 14  | Evolve and smash         |                        | Collect, evolve, smash a wall | HOW BIG CAN HE GET?   |
-| 15  | Perfect stack            | Skill shots            | Time each drop                | STACK IT PERFECTLY    |
-| 16  | Trick shot               |                        | Bank one shot off bumpers     | ONE SHOT. 3 ROBOTS.   |
+| 15  | Perfect stack            | Skill shots            | Time each drop                | TO THE MOON           |
+| 16  | Trick shot               |                        | Bank one shot off bumpers     | ONE PERFECT SHOT      |
 
 ## 1. Rescue with a fail tease (pin-pull puzzle)
 
-- **Fun**: rescue through cleverness. One finger pulls one pin, the pin slides free, and gold pours
-  and piles into the cart. The wrong pin dropping lava is the limit the right pull overcomes.
-- **Board**: two tall glass shafts side by side in a stone frame. Left: hazard (lava) above the
-  trapped character. Right: treasure (gold) above an empty cart. One golden pin is the floor of each
-  top compartment, so a pull drops the contents straight down. No pipes, bends, or second pins: the
-  model routes contents outside a pipe and pours through a closed pin. Keep the top 15% free for the
-  HUD and hook.
-- **End still**: for the payoff, edit the board into its solved state with the same gold amount in
-  the cart, the lava still held, the character cheering.
-- **Clips**: two from the same still. Fail take 5 s: wrong pin slides out, hazard drops onto the
-  character. Payoff take 10 s, first and last frame pinned to the end still: the other pin slides
-  out, treasure drops into the cart.
-- **Timeline**: 0 to 3 s hook. 0 to 5.2 s fail take, FAIL and red flash at 3.7 s. 5.2 to 11.1 s
-  payoff take, counter climbing, NICE at 9 s. 11.1 to 15 s end card.
-- **UI**: hook, level badge, coin counter (5 values), hand on each pin ring, FAIL, red flash, NICE,
-  end card.
-- **Notes**: the character reads as worried in the still, so the fail needs no extra acting. Pinning
-  the last frame also locks the camera; an unpinned payoff take drifted into a push-in even when
-  told not to.
+- **Fun**: rescue through cleverness. The order nobody tries first wins: water poured on the lava
+  sets it into a stone ramp, the gold slides down it into the cart, and the miner runs up it to
+  safety. Gold melting in the lava is the limit.
+- **Board**: glass chambers in a stone frame. Water top left, gold top right, lava in the shared
+  floor chamber, the miner in a locked cell beside it, an empty cart at the exit. One golden pin
+  floors each top chamber, and a fourth locks the cell. No pipes or bends: the model routes contents
+  outside a pipe. Keep the top 15% free for the HUD and hook.
+- **Build**: chained stages. One state still per step, each edited from the last: the board, the
+  lava set to stone, the gold in the cart, the miner in the cart. Each take is pinned from one state
+  to the next with one visible move. The fail take starts from the board.
+- **Timeline**: 0 to 1.8 s hook, the gold pin pulled at 0.3 s, gold melting at 1.0 s. 1.8 s panic
+  insert. 2.5 s FAIL on a frozen, desaturated frame, 3.3 s rewind wipe. 3.8 s water pin, 4.5 s water
+  hits the lava under a punch-in, steam, stone by 5.0 s with the music lift. 5.8 s gold pin, gold
+  slides into the cart, coins fly to the counter in four steps. 8.3 s cell pin, the miner runs up
+  the ramp and leaps into the cart at 10.1 s. RESCUED!, stars, laughing insert. 11.2 to 15 s end
+  card.
+- **UI**: hook, level badge, coin counter, hand on each of 4 rings, FAIL, rewind wipe, punch-in,
+  RESCUED!, stars, end card.
+- **Notes**:
+  - Name what stays inside the glass, steam included. Steam that leaked out was hidden with a patch
+    cut from the take.
+  - A pin the take cannot pull cleanly can vanish in a local puff, with the hand covering the ring.
+  - Leave headroom for every leap. The miner clipped an overhead beam and was shifted locally.
+  - Pinning the last frame also locks the camera; an unpinned take drifted into a push-in.
 
 ## 2. Number gates (crowd runner)
 
@@ -121,132 +128,151 @@ square app icon of the hero for every end card.
 
 ## 7. Draw to protect (line-drawing puzzle)
 
-- **Fun**: rescue. A finger draws one arc, bees slam into it and bounce off in sparks, and the pet
-  stays calm underneath. The fail take's sting is the limit the line beats.
-- **Board**: a pet in open ground, a beehive in a top corner. A second still is an edit adding "only
-  ONE new element": a glowing line arcing over the pet.
-- **Clips**: two of 6 s, first frame only. Fail take: the swarm stings the pet. Payoff take from the
-  line still: every bee "hits the OUTSIDE of the glowing blue line and bounces back".
-- **Timeline**: 0 to 3.8 s fail take, FAIL on the sting. 3.8 to 4.6 s the line draws. 4.6 to 11.1 s
-  payoff take, a 5 s countdown to SAFE!. 11.1 to 15 s end card.
-- **UI**: hook, line reveal, hand, countdown, FAIL, bounce sparks, SAFE!, end card.
+- **Fun**: rescue through cleverness. One stroke holds back two threats at once, a bee swarm and a
+  flood, and the pet stays dry underneath. The short wrong line that fails first is the limit.
+- **Board**: side view. The pet on open ground, a cliff with a wooden dam holding water on one side,
+  a tree with a hive on the other. The line is never generated.
+- **Build**: generated takes for the loose physics (bees, water), from stills that already show the
+  drawn shape. The stroke is a local track revealed along its path, the fingertip on its head.
+- **Timeline**: 0 s hook, the short line drawn. 0.3 s the dam bursts and bees pour out. 1.2 s a bee
+  bonks the pet, FAIL. 1.6 s white rewind. 1.6 to 2.3 s the dome is drawn, with snap puffs at both
+  feet. 2.1 s an 8 s countdown starts. Bees bonk the dome, the flood rises, the timer turns red at
+  3, slow motion, then a wave slams the dome under a punch-in at 8.3 s. Pet close-up insert, timer
+  at 0, SAFE!, stars. 11 to 15 s end card.
+- **UI**: hook, level badge, countdown, line track, hand, FAIL, BONK! words, red edge, SAFE!, stars,
+  end card.
 - **Notes**:
-  - Count real seconds. A timer reaching 10 in 5 s read as a lie.
-  - Reveal the line along its path, the fingertip on its head. A wipe between the stills read as a
-    wipe.
-  - Scan payoff frames for bee color inside the arc.
+  - Generated bees bunched against a dome slightly lower than the drawn line, inside it for 74
+    frames. Run a per-frame mask check inside every locally drawn barrier, with a size filter so a
+    small static prop (a collar tag) neither hides nor fakes a leak.
+  - Hide a leak with a clean patch cut from the take's own clean frames.
+  - Count real seconds, through slow motion and inserts too.
+  - Two burst words never overlap: shorten them.
 
 ## 8. Find the odd one (spot-the-difference grid)
 
-- **Fun**: cleverness. A tapped wrong cat puffs up and hisses, and the tapped odd one leaps off its
-  cushion. The hiss is the limit a sharper second look overcomes.
-- **Board**: a 4 by 5 grid of cats on cushions, "perfect identical copies", with "Exactly ONE"
-  different by one color cue. Top 30% empty. The odd one sits in the middle band, clear of the
-  bottom unsafe band.
-- **Clips**: two from the same still, first frame only. Wrong-tap take 6 s: one cat hisses. Payoff
-  take 8 s: only the odd one jumps.
-- **Timeline**: 2.3 s wrong tap, FAIL. 3.6 to 4.4 s a magnifier finds the odd one. 5 to 11 s payoff
-  take, FOUND IT! on the jump, counter to 3/3. 11 to 15 s end card.
-- **UI**: hook, found counter, hand, tap rings, FAIL, magnifier, FOUND IT!, end card.
+- **Fun**: sharp eyes. Three boards, each difference smaller than the last, and the last needs a
+  magnifier only 1% would think of. A wrong tap's hiss is the limit.
+- **Board**: a 4 by 5 grid of identical cats on cushions, top 30% empty. One state still per level,
+  each with exactly one odd cat: a collar color, then a folded ear, then two eye colors.
+- **Build**: one generated take per level from its still. Only the odd cat reacts.
+- **Timeline**: 0 to 2 s level 1, found fast. 2 to 4.5 s level 2 HARD: tap, the odd cat leaps and
+  flips, NICE!. 5 s level 3 at 1%, a 5 s timer in real seconds. A wrong tap gets a red X and an
+  angry puff, the magnifier sweeps and enlarges the eyes, tap, the odd cat leaps, TOP 1%!, stars.
+  Close-up insert. 11 to 15 s end card.
+- **UI**: hook, level badge, found counter, timer, hand, X ring, magnifier, FOUND!, NICE!, TOP 1%!,
+  end card.
 - **Notes**:
-  - Put the hand on the cell that reacts on frames. The model made a different cat hiss than the one
-    named.
+  - A take cannot be aimed at one grid cell. Zoom the first frame on the cell, then scale the take
+    back into the grid.
+  - Animal sounds come from a sound-effect model; speech models cannot meow.
   - Prompt "every other cat stays perfectly still in its idle pose". Every cat celebrated in unison.
-  - Show a timer only in real time.
-  - A ring follows a jumping cat, or it circles an empty cushion.
+  - Put the hand on the cell that reacts on frames, not the one named in the prompt.
 
 ## 9. Parking jam escape (car puzzle)
 
-- **Fun**: order. A tap frees the one blocker, it pulls away, and the cars stream out in a chain
-  until the lot is empty. The wrong car's crash is the limit the right tap unlocks.
-- **Board**: a top-down lot built for the rule: one straight aisle to one exit, six cars a side
-  nosed toward it, a blocker in the aisle. A tangled first layout was unsolvable.
-- **End still**: the lot edited to empty.
-- **Clips**: fail take 6 s, first frame only: a side car bumps the blocker. Payoff take 7 s, first
-  and last frame pinned: the blocker leaves, then the rest, nearest the exit first.
-- **Timeline**: 2.4 s crash, FAIL. 3.7 s cut, tap on the blocker. 4.5 to 9.9 s exits, the counter
-  steps as cars cross the exit. 10 s CLEARED!. 11.1 to 15 s end card.
-- **UI**: hook, cars-out counter, hand, crash burst, FAIL, CLEARED!, end card.
+- **Fun**: cleverness, then order. One tiny car nobody looks at unlocks the jam, and sixteen
+  vehicles pour out in a combo. Three wrong taps that bonk and a GRIDLOCK! are the limit.
+- **Board**: a packed top-down lot with one exit road: a truck, a bus, cars, and one tiny key car.
+  Build it for the rule and check every move with a small board simulator: no overlaps, no vehicle
+  passing through another.
+- **Build**: scripted. Pieces cut from the still, animated locally from the move list, rendered as
+  full-frame H.264. Only the driver insert is generated.
+- **Timeline**: 0 s packed lot, a 3 s timer. 0.3, 1.2, and 1.7 s fail taps: each vehicle lurches,
+  bonks, bounces back, angry puff. 2.1 s driver insert pounding the horn. 3.0 s GRIDLOCK!, the timer
+  refills. 4.1 s tap on the tiny car under a punch-in, it exits, 1/16. Two more exits, a truck
+  U-turn in slow motion. 6.8 to 9.6 s the flood: 13 taps, 16 exits, combo x4, x8, x16. 9.7 s
+  CLEARED!, stars. 11 to 15 s end card.
+- **UI**: hook, level badge, cars-out counter, timer, combo badge, hand, puffs, GRIDLOCK!, CLEARED!,
+  stars, end card.
 - **Notes**:
-  - Count cars on the board, not in the plan. CLEARED 12/12 shipped with a car under the HUD.
-  - State "no car fades, vanishes or teleports".
-  - Plan a retime: 12 exits took 9.5 s and were sped up 1.5 times.
-  - Give cars a readable front, or the blocker seems to reverse.
+  - A generic angry driver drifted into a famous game character: red cap, mustache, blue shirt. Name
+    an original look (beard, knit beanie, flannel) and check the still before animating.
+  - Premix the flood's 55 sound events into one stem: compose takes at most 49 audio layers.
+  - Pitch each exit's squeal up a semitone, so the flood climbs.
+  - Count vehicles on the board, never in the plan. A win shipped with one car under the HUD.
 
 ## 10. Excavation reveal (dig ASMR)
 
-- **Fun**: order. A hand brushes sand off in sheets, a chisel cracks a hard crust, and the bones
-  gleam as they appear. The crust the brush cannot move is the limit.
-- **Board**: a top-down tray of packed sand, no bone visible, a brush and a chisel below.
-- **End still**: the tray edited to a complete skeleton, nothing else changed.
-- **Clips**: generate the payoff first: 8 s, first and last frame pinned, the brush working top to
-  bottom. Then the setup take, 6 s, its last frame pinned to the payoff's frame at 2 s.
-- **Timeline**: 0.4 to 5.5 s setup take. 5.5 to 11.1 s payoff take, progress steps on visible bone,
-  burst at 100%. 11.1 to 15 s end card.
-- **UI**: hook, progress pill, hand on the tool, dust puffs, win burst, end card.
+- **Fun**: power and discovery. Every layer hands over a bigger tool, brush on sand, chisel on rock,
+  drill on ice, until the ice plates lift off a golden skull. A drill bite too close is the scare.
+- **Board**: a top-down tray in a wooden frame, the three tools below. One state still per layer:
+  sand, rock, ice with the skull showing through, clean skull. The skull keeps one shape.
+- **Build**: chained stages, one take per tool, pinned from one layer's still to the next.
+- **Timeline**: 0 to 2.5 s the brush sweeps, progress in 8% steps, the brush is dropped. 2.5 s a tap
+  unlocks the chisel, two strikes crack the rock, gold glints. 5.1 s the drill: first bite, CAREFUL!
+  with a red edge pulse, second bite under a punch-in. The crack rings the skull, the plates lift,
+  100%, LEGENDARY!, stars. Reaction insert. 11 to 15 s end card.
+- **UI**: hook, dig badge, progress pill, tool tiles, hand on each tool, unlock bursts, CAREFUL!,
+  LEGENDARY!, stars, end card.
 - **Notes**:
-  - Hit at 0.0 and on every tool contact. The opening averaged -31 dB over 5 s.
-  - Pin the setup's last frame. Unpinned, it uncovered a bone missing from the skeleton.
-  - State "sand never disappears by itself" and "bones are only uncovered, they never move, grow, or
-    change shape".
-  - Glue the hand to the tool: tools move on their own.
+  - Step the progress at the midpoint between measured values. Stepping when a value is reached
+    lagged one step behind the board.
+  - Say where a crack runs. A drill crack touched the skull.
+  - Each unlock tap lands on the tool used next, and the hand rides each tool.
+  - State "sand never disappears by itself" and "the skull is only uncovered, it never moves".
 
 ## 11. Cascade combo (match-3)
 
-- **Fun**: cleverness that turns into power. A swipe swaps two gems, three burst, and the column
-  drops and bounces into place. The small first clear is the limit the chain breaks.
-- **Board**: an 8 by 8 grid of five gem types, each with its own color and cut, a locked front
-  camera.
-- **Clips**: swaps are layers drawn from the still. No take swapped two gems cleanly: rows shifted,
-  gems doubled. Generate each take from the post-swap board. Setup take 5 s, first frame only: three
-  gems burst, the column falls. Payoff take 7 s, first and last frame pinned to a fresh full board:
-  chain clears, then a rainbow wave.
-- **Timeline**: 0.3 to 3.2 s first swap, burst, refill. 3.7 to 4.4 s second swap. 4.4 to 7.9 s
-  cascade, combo x2 to x32. 8.1 s MEGA COMBO!. 11.1 to 15 s end card.
-- **UI**: hook, score, combo badge, swap layers, hand, MEGA COMBO!, end card.
+- **Fun**: cleverness and order. Three moves: build a color bomb, blow up the biggest color, then
+  the one swap nobody tries, the bomb onto a stripe, clears the whole board.
+- **Board**: an 8 by 8 grid of five gem types in a gold frame, a locked front camera.
+- **Build**: scripted whole. Gems cut from the still, every move simulated, the render checked cell
+  by cell against the simulation (18,165 checks, 0 mismatches). No video take swapped two gems
+  cleanly.
+- **Timeline**: 0.3 s move 1, five in a row, COLOR BOMB!. 2 s move 2, the bomb onto a ruby: a vortex
+  pulls 16 rubies in and implodes, cascades to x5. 5.6 s a near-fail hover over the obvious swap,
+  MOVES 1 turns red, heartbeats. 6.5 s move 3, the bomb onto the stripe under a punch-in, 17 beams
+  clear all 64 cells, x22. 9 s BOARD CLEAR!, +10,000. A short rain refill. 11 to 15 s end card.
+- **UI**: hook, level badge, moves, score, combo badge, hand, COLOR BOMB!, BOARD CLEAR!, stars, end
+  card.
 - **Notes**:
-  - State "A gem either stays in its cell, slides straight down its own column, or bursts in place."
-  - Cut a hang over a gap to under 0.3 s. Gems hung 1.3 s.
-  - Step the combo only on a visible clear. Trim beams that clear nothing.
+  - The hover over the obvious move sells the clever one.
+  - Step the combo only on a visible clear. Beams that clear nothing are cut.
+  - Gems never hang over a gap for more than 0.3 s.
 
 ## 12. Broke to cozy (idle tycoon makeover)
 
-- **Fun**: growth. A tap on UPGRADE pops decor in with a bounce, customers stream in and sit, and
-  coins fly up. The customer walking out is the limit the upgrade fixes.
-- **Board**: a shabby isometric room cutaway: one table, a bored worker, a door.
-- **End still**: walls, door, counter, and worker at the same pixel positions, decor upgraded, five
-  full tables. Count them: the first edit had four.
-- **Clips**: setup take 6 s, first frame only: a customer enters, waits, and leaves. Payoff take 7
-  s, first and last frame pinned: upgrades pop in, customers sit.
-- **Timeline**: 2.6 s NO SALE!. 4.5 s tap on UPGRADE. 4.9 s cut. Cash steps on each seated customer,
-  SO COZY! at 10.3 s. 11.2 to 15 s end card.
-- **UI**: hook, cash counter, NO SALE!, UPGRADE button, hand, coins, SO COZY!, end card.
+- **Fun**: growth. Three taps turn a dead cafe into the busiest spot in town. The customer who
+  stomps out of the broke cafe is the limit.
+- **Board**: an isometric cafe cutaway. One state still per upgrade, each edited from the last: the
+  broke room, the counter rebuilt, tables, the patio. Walls, door, and worker keep their pixels.
+- **Build**: chained stages, with generated takes for the customers.
+- **Timeline**: 0.6 s the machine sputters, NO SALE!, the customer stomps out, sad worker insert.
+  2.4 s tap 1 on a cup bubble, the counter rebuilds on music lift 1, first sale. A waiting
+  customer's patience ring drains, tap 2, tables poof in. 7.2 s tap 3, the patio rebuilds on music
+  lift 2. A rush, happy insert, then a VIP takes a golden cup: VIP!, gold bills, the big jump. 11 to
+  15 s end card.
+- **UI**: hook, day badge, cash counter, upgrade bubbles, patience ring, hand, bills to the counter,
+  NO SALE!, VIP!, end card.
 - **Notes**:
-  - Land the music lift on the tap. It came 4 s late.
-  - Time the setup prompt second by second. Without timecodes, it spread over 8 s.
-  - State that customers use "only the open floor" and the door.
-  - Seat customers early. Cash held at zero, then crammed four steps into 1 s.
+  - Cash comes only from handovers the viewer sees. Generated customers walked in already holding
+    cups; they pay nothing.
+  - Crowd figures drift: a beanie changed shape, one figure split in two. Cover them with an insert.
+  - Land each music lift on its tap.
 
 ## 13. Swallow and grow (hole game)
 
-- **Fun**: growth into power. A finger drags the hole, objects teeter on the rim and tip in, and the
-  rim wobbles. A too-big object rattles across the rim until the hole grows and takes it.
-- **Board**: a toy city block, high three-quarter view, a black hole about 13% of the frame width. A
-  tinier hole made the camera push in. A second still: a bigger hole, cars and houses at its rim,
-  each narrower than the hole.
-- **Clips**: two, first frame only. Setup take 7 s: the hole glides a short path, growing after each
-  prop. Payoff take 8 s: it grows in place through cars, houses, and a tower.
-- **Timeline**: 2 s cut on a white flash. 2 to 11 s payoff, SIZE steps after each swallow, HUGE! at
-  8.9 s. 11 to 15 s end card.
-- **UI**: hook, SIZE counter, hand on the rim, HUGE!, end card.
+- **Fun**: power and growth: start as a manhole, end by swallowing the block. The taxi that rattles
+  across the rim under TOO BIG! is the limit: eat small things, grow, come back, and it drops in.
+- **Board**: a toy city, high three-quarter view. A row of sidewalk props (cones, hydrant, can,
+  mailbox, bench), a taxi at the curb, houses, a tower.
+- **Build**: generated takes for the loose physics. The taxi beat is scripted from plates and
+  cut-outs: every take grew the hole before the bench was eaten.
+- **Timeline**: 0 s a tiny hole, the finger on its near rim. 0.4 to 1.2 s five props tip in, SIZE 2
+  to 6. 1.5 s the taxi bridges the rim and rattles, TOO BIG!. A drag away, the bench tips in, the
+  rim widens. 2.9 s back to the taxi: its nose dips, it falls in, punch-in, NICE!. Cars, houses,
+  then the tower, with a stunned office worker insert and slow motion. The camera pulls back as the
+  block tumbles in, HUGE! at 10.3 s. 11 to 15 s end card.
+- **UI**: hook, SIZE counter, level badge, hand on the rim, TOO BIG!, NICE!, impact burst, HUGE!,
+  end card.
 - **Notes**:
-  - The produced ad failed its Fun line: objects vanished, but the drag, the rim wobble, and the
-    too-big-then-fits beat were missing.
-  - Keep the hole's on-screen size growing across the cut. It fell from 60% to 34% of the frame
-    width; zooming the payoff in and easing out fixed it.
-  - Step SIZE only after an object is inside. The hole swelled with nothing eaten.
-  - State "exactly ONE black hole" that "never splits, never duplicates". Sideways travel duplicated
-    it.
+  - Plan the hole's on-screen width per beat, and pull the camera back as it grows. It reached 51%
+    of the frame after the taxi, too big too early.
+  - Video members balloon or shrink a growing subject against pinned frames. Script the growth, or
+    pin a still for every size.
+  - State "exactly ONE black hole" that "never splits, never duplicates".
+  - Step SIZE only after an object is inside.
 
 ## 14. Evolve and smash (evolution runner)
 
@@ -269,37 +295,42 @@ square app icon of the hero for every end card.
 
 ## 15. Perfect stack (timing tower)
 
-- **Fun**: order through timing. A tap releases the swinging block, it thuds down, and the tower
-  sways and settles. The off-center block that teeters and falls is the limit the timed drops
-  overcome.
-- **Board**: a toy skyline, a three-block tower low in the frame, a block hanging from a crane hook.
-- **Clips**: two from the same still, first frame only. Fail take 6 s: the block lands on a corner,
-  tips, and crashes. Payoff take 10 s: blocks land centered, the camera rising with the tower.
-- **Timeline**: 0.45 s release, 3.6 s crash and FAIL. 4.4 s cut. Landings near 5, 7.1, 8.9, and 10.7
-  s, each with a counter step. 11.1 to 15 s end card.
-- **UI**: hook, height counter, tap per release, FAIL, PERFECT!, shockwaves, end card.
+- **Fun**: growth through timing: from three floors on a street to a tower that touches the moon,
+  one tap per floor. The first module that misses and topples is the limit.
+- **Board**: a toy city street, a three-floor tower of colored modules, a module swinging from a
+  crane. Sky stills for the clouds, the sunset, and the moon as the camera rises.
+- **Build**: generated takes for the swing and the landings. The last drop is scripted as a 2D
+  board: both takes lowered the penthouse onto the tower instead of dropping it.
+- **Timeline**: 0.2 s tap, the module misses and topples to the street, FAIL, rewind. Three PERFECT
+  drops, x2, x3, the camera rising. 5.3 s an off-center landing: the tower sways, red edge pulse.
+  6.5 s the next floor recenters it: SAVED!. A rush of three drops into the clouds, sunset, moon.
+  The golden penthouse falls in slow motion, PERFECT x4!, a resident waves from its balcony, TO THE
+  MOON!. 11 to 15 s end card.
+- **UI**: hook, floor counter, level badge, hand per tap, FAIL, PERFECT! words, warning, SAVED!,
+  stars, end card.
 - **Notes**:
-  - Write the same release in both prompts. The fail hook dropped the block; the payoff crane
-    lowered blocks and let go.
-  - Speed up or trim a teeter: one block balanced 2.4 s.
-  - Trim before any morph. The fallen block turned into a ghost, and a block appeared from nowhere.
-  - Add the same height per block. 10 to 250 m in four blocks is not believable.
+  - Video members lower a block onto the stack and let go. Script any drop that must fall after
+    release.
+  - A near-topple saved by the next drop is the escalation beat.
+  - Trim before any morph. A fallen block turned into a ghost.
 
 ## 16. Trick shot (ricochet puzzle)
 
-- **Fun**: cleverness. A finger aims along a dotted line, the ball banks off each bumper in a spark,
-  and robots pop into bolts. The missed direct shot is the limit the bank shot gets around.
-- **Board**: a top-down corridor loop around one solid block, 45 degree bumpers in three corners,
-  the hero in the bottom corridor, a robot target in each other corridor. Give positions in percent.
-  Free-form angled walls gave no clear path.
-- **Clips**: two from the same still, first frame only. Miss take 5 s. Payoff take 10 s, its path as
-  numbered steps: bumper, then target, three times.
-- **Timeline**: 0.65 s shot, 3.4 s FAIL. 4.6 s cut. 5.1 s shot, hits near 6.6, 8.5, and 10.1 s. 10.3
-  s TRICK SHOT!. 11.5 to 15 s end card.
-- **UI**: hook, target counter, aim line, hand, FAIL, impact bursts, TRICK SHOT!, end card.
+- **Fun**: cleverness. The one shot nobody would try: fire behind you into the crystal, and five
+  balls clear the wave. The first shot that grazes the last robot is the limit.
+- **Board**: a top-down lab with walls, 45 degree bumpers, the hero at the bottom, robots, and a
+  crystal. Give positions in percent.
+- **Build**: scripted. A path simulator gives exact reflections and contact times; pieces cut from
+  the still move on it. Only the robot close-up is generated.
+- **Timeline**: 0.5 s shot 1 banks off five numbered bumpers, two robots pop, the ball grazes the
+  third and drains in slow motion. 3.5 s smug robot insert. 4.3 s six robots beam in, WAVE 2!. 5.9 s
+  shot 2 fires backwards into the crystal, slow motion and punch-in, the ball splits, x5!. Robots
+  pop, three balls drain, the smug one pops last. 9.5 s ALL CLEAR!, stars. 11 to 15 s end card.
+- **UI**: hook, robot counter, shots, aim line, hand, bumper numbers, WAVE 2!, x5!, ALL CLEAR!,
+  stars, end card.
 - **Notes**:
-  - State "The ball always skims flat along the floor and can never fly over anything". Four miss
-    takes flew over the block.
+  - The ball is the fantasy, so it must read on a phone. 36 px on a 1080 frame was lost; 42 px with
+    a white core, a dark rim, and a 7-frame comet trail read.
+  - Draw each contact at the surface, never inside the wall.
+  - A pop counts on the counter when its icon lands, about 0.3 s after the pop.
   - Start the aim line at the nozzle, along the real path.
-  - Put the burst and counter on the contact frame, and state "Each robot reacts only at the exact
-    moment the ball touches it". Targets burst 0.3 s late.

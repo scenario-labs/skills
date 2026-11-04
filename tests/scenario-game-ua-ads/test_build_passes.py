@@ -10,10 +10,12 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 import numpy as np
+from PIL import Image
 
 import helpers
 
 bp = helpers.load("build_passes")
+SR = helpers.SR
 
 TRACKS = {"fps": 30, "canvas": [1080, 1920], "layers": {
     "hand": {"file": "hand.mov", "frames": [3, 28], "layer": {
@@ -42,6 +44,14 @@ class TimeTests(unittest.TestCase):
         self.assertEqual(bp.floor_ms(6.1667), 6.166)
         self.assertEqual(bp.floor_ms(0.3), 0.3)
 
+    def test_layers_end_half_a_frame_before_their_end_frame(self):
+        self.assertEqual(bp.frame_end(156, 30), 5.183)  # 5.2 s exactly: compose would draw frame 156 too
+        self.assertEqual(bp.frame_end(24, 24), 0.979)
+        self.assertEqual(bp.early_end(5.2, 30), 5.183)
+        self.assertEqual(bp.early_end(6.166, 30), 6.149)  # a floored frame time is pulled back the same way
+        self.assertEqual(bp.early_end(5.183, 30), 5.183)  # already early: unchanged
+        self.assertEqual(bp.early_end(1.25, 30), 1.25)  # between frames: unchanged
+
     def test_volume_is_linear_with_three_decimals_and_capped(self):
         self.assertEqual(bp.volume(-6), 0.501)
         self.assertEqual(bp.volume(-10), 0.316)
@@ -58,7 +68,7 @@ class PictureTests(Case):
 
     def test_picture_payload_maps_uploads_and_mutes_every_video(self):
         plan = self.plan(tracks="layers.json", assets={"fail.mp4": "A1", "hand.mov": "A2", "fail.png": "A3", "icon.png": "A4",
-                                                         "small.png": "A5"},
+                                                         "small.pad.png": "A5"},
                          picture=[{"file": "clips/fail.mp4", "type": "video", "start": 0, "end": 185, "trimEnd": 2.8},
                                   {"track": "hand", "zIndex": 20},
                                   {"file": "fail.png", "type": "image", "x": 244, "y": 400, "start": 72, "end": 108,
@@ -67,16 +77,51 @@ class PictureTests(Case):
                                   {"file": "small.png", "type": "image", "x": 165, "y": 659, "start": 339, "end": 450}])
         payload, notes = bp.picture_payload(plan)
         clip, hand, word, still, small = payload["layers"]
-        self.assertEqual(clip, {"source": "A1", "startTime": 0.0, "endTime": 6.166, "x": "0", "y": "0", "width": "1080",
+        self.assertEqual(clip, {"source": "A1", "startTime": 0.0, "endTime": 6.149, "x": "0", "y": "0", "width": "1080",
                                 "height": "1920", "fit": "cover", "type": "video", "trimEnd": 2.8, "mute": True, "zIndex": 0})
-        self.assertEqual((hand["source"], hand["zIndex"], hand["startTime"], hand["mute"]), ("A2", 20, 0.1, True))
+        # Every end, the tracks' and stills' from layers.json included, sits half a frame before its end frame.
+        self.assertEqual((hand["source"], hand["zIndex"], hand["startTime"], hand["endTime"], hand["mute"]),
+                         ("A2", 20, 0.1, 0.916, True))
         self.assertEqual([word[k] for k in ("source", "x", "y", "width", "height", "fit", "startTime", "endTime")],
-                         ["A3", "244", "400", "591", "355", "fill", 2.4, 3.6])
-        self.assertEqual((still["source"], still["startTime"], still["zIndex"]), ("A4", 11.266, 3))
-        self.assertEqual((small["width"], small["height"]), ("750", "107"))
-        self.assertTrue(any("under 300 px" in n for n in notes))
+                         ["A3", "244", "400", "591", "355", "fill", 2.4, 3.583])
+        self.assertEqual((still["source"], still["startTime"], still["endTime"], still["zIndex"]), ("A4", 11.266, 14.983, 3))
+        # 107 px tall: padded to 304 with 98 px above, so the word stays at y 659.
+        self.assertEqual([small[k] for k in ("source", "x", "y", "width", "height")], ["A5", "165", "561", "750", "304"])
+        self.assertTrue(any("padded to 750x304" in n for n in notes), notes)
+        self.assertFalse(any("under 304 px" in n for n in notes), notes)
         self.assertEqual((payload["compressionLevel"], payload["duration"], payload["canvasHeight"]), (15, 15.0, 1920))
         self.assertFalse(any(lay["type"] == "audio" for lay in payload["layers"]))
+
+    def test_a_small_image_is_padded_beside_its_file_with_its_pixels_in_place(self):
+        helpers.rect_png(self.dir / "tag.png", (100, 40), (0, 0, 100, 40), (200, 30, 30, 255))
+        plan = self.plan(assets={"tag.pad.png": "P"},
+                         picture=[{"file": "tag.png", "type": "image", "x": 10, "y": 900, "start": 0, "end": 30}])
+        (lay,) = bp.picture_payload(plan)[0]["layers"]
+        # Near the left edge the margin goes right, keeping the padded image inside the canvas.
+        self.assertEqual([lay[k] for k in ("x", "y", "width", "height")], ["0", "768", "304", "304"])
+        padded = np.asarray(Image.open(self.dir / "tag.pad.png"))
+        self.assertEqual(padded.shape, (304, 304, 4))
+        self.assertTrue((padded[132:172, 10:110] == (200, 30, 30, 255)).all())
+        self.assertEqual(int((padded[..., 3] > 0).sum()), 100 * 40)
+
+    def test_an_explicitly_sized_small_image_is_left_alone_with_a_note(self):
+        helpers.rect_png(self.dir / "tag.png", (100, 40), (0, 0, 100, 40))
+        plan = self.plan(assets={"tag.png": "T"}, picture=[{"file": "tag.png", "type": "image", "x": 10, "y": 900,
+                                                              "width": 100, "height": 40, "start": 0, "end": 30}])
+        payload, notes = bp.picture_payload(plan)
+        (lay,) = payload["layers"]
+        self.assertEqual((lay["source"], lay["height"]), ("T", "40"))
+        self.assertTrue(any("under 304 px" in n for n in notes), notes)
+        self.assertFalse((self.dir / "tag.pad.png").exists())
+
+    def test_missing_uploads_are_listed_together(self):
+        helpers.write_json(self.dir / "plan.json", {"duration": 15, "tracks": "layers.json", "assets": {},
+                                                    "picture": [{"track": "hand"},
+                                                                {"file": "small.png", "type": "image", "x": 165, "y": 659,
+                                                                 "start": 0, "end": 30}]})
+        result = helpers.run("build_passes.py", "picture", self.dir / "plan.json")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("no asset id for hand.mov, small.pad.png", result.stderr)
 
     def test_a_layer_with_no_upload_fails_with_its_name(self):
         helpers.write_json(self.dir / "plan.json", {"duration": 15, "tracks": "layers.json", "assets": {},
@@ -153,7 +198,95 @@ class SoundTests(Case):
         peak = float(np.abs(bp.load_audio(self.dir / "sim.wav")).max())
         self.assertAlmostEqual(peak, 1.2, delta=0.01)
         self.assertGreater(report["true_peak"], 1.0)
-        self.assertIn("over -1 dBFS at   0.50 s: a, b", out.getvalue())
+        self.assertIn("over the -1.8 dBTP target", out.getvalue())
+        self.assertRegex(out.getvalue(), r"\+\d\.\d dBTP at   0\.50 s: a, b")
+
+    def test_windows_are_listed_when_only_the_true_peak_is_over(self):
+        t = np.arange(round(0.3 * SR)) / SR  # 12 kHz at 45 degrees: samples at 0.707 of the waveform's peak
+        helpers.write_wav(self.dir / "zing.wav", 0.9 * np.sin(2 * np.pi * 12000 * t + np.pi / 4))
+        plan = self.plan(duration=2.0, sound={"hits": [{"label": "zing", "file": "zing.wav", "t": 1.0}]})
+        out = io.StringIO()
+        with redirect_stdout(out):
+            report = bp.simulate(plan, self.dir / "sim.wav")
+        self.assertLess(report["sample_peak"], -1.8)
+        self.assertGreater(report["true_peak"], -1.8)
+        self.assertRegex(out.getvalue(), r"dBTP at   1\.(00|05|10|15|20|25) s: zing")
+        quiet = io.StringIO()
+        with redirect_stdout(quiet):
+            bp.simulate(plan, self.dir / "sim.wav", tp_target=1.0)
+        self.assertNotIn("dBTP at", quiet.getvalue())
+
+    def test_a_hit_under_another_hit_reads_masked(self):
+        helpers.write_wav(self.dir / "chime.wav", helpers.burst(0.2, amp=0.5, seed=7))
+        plan = self.plan(duration=2.0, sound={"music": [{"file": "music.wav", "gains": [[0, -20]]}], "hits": [
+            {"label": "boom", "file": "hit.wav", "t": 1.0},
+            {"label": "chime", "file": "chime.wav", "t": 1.0, "gain_db": -9}]})
+        out = io.StringIO()
+        with redirect_stdout(out):
+            boom, chime = bp.simulate(plan, self.dir / "sim.wav")["hits"]
+        self.assertGreater(chime["margin_db"], 4)  # well over the music alone
+        self.assertLess(chime["margin_all_db"], 0)
+        self.assertEqual(chime["masked_by"], ["boom"])
+        self.assertGreater(boom["margin_all_db"], 4)
+        lines = {line.split()[2]: line for line in out.getvalue().splitlines() if line.startswith("    1.000 s")}
+        self.assertIn("MASKED by boom", lines["chime"])
+        self.assertNotIn("MASKED", lines["boom"])
+
+    def test_a_premixed_stem_is_checked_at_every_attack_with_its_trim(self):
+        stem = np.zeros(round(0.8 * SR))
+        stem[:round(0.2 * SR)] += helpers.burst(0.2, amp=0.5, seed=1)
+        stem[round(0.5 * SR):round(0.7 * SR)] += helpers.burst(0.2, amp=0.2, seed=2)  # 8 dB under the first
+        helpers.write_wav(self.dir / "stem.wav", stem)
+        plan = self.plan(duration=2.0, sound={"music": [{"file": "music.wav", "gains": [[0, 0]]}], "hits": [
+            {"label": "stem", "file": "stem.wav", "t": 0.5, "trim_db": -3}]})
+        out = io.StringIO()
+        with redirect_stdout(out):
+            (hit,) = bp.simulate(plan, self.dir / "sim.wav")["hits"]
+        # The second attack, 0.5 s in, sits 2x over the 0.1 tone, minus the 3 dB trim.
+        self.assertAlmostEqual(hit["margin_db"], 20 * math.log10(0.2 / 0.1) - 3, delta=0.3)
+        self.assertIn("LOW", out.getvalue())
+
+    def test_onsets_pass_a_soft_lead_in_and_flag_silence_or_a_late_attack(self):
+        lead = 0.003 * helpers.burst(0.012, amp=1.0, seed=4)  # about -50 dB under the hit, like a kit fade-in
+        helpers.write_wav(self.dir / "kit.wav", np.concatenate([lead, helpers.burst(0.2, amp=0.5)]))
+        helpers.write_wav(self.dir / "gap.wav", np.concatenate([np.zeros(round(0.03 * SR)), helpers.burst(0.2, amp=0.5)]))
+        swell = helpers.tone(0.06, amp=0.01, freq=200)  # 34 dB under the hit: sound, but no attack yet
+        helpers.write_wav(self.dir / "swell.wav", np.concatenate([swell, helpers.burst(0.2, amp=0.5)]))
+        plan = self.plan(duration=2.0, sound={"hits": [{"label": "kit", "file": "kit.wav", "t": 0.2},
+                                                       {"label": "gap", "file": "gap.wav", "t": 0.8},
+                                                       {"label": "swell", "file": "swell.wav", "t": 1.4}]})
+        out = io.StringIO()
+        with redirect_stdout(out):
+            kit, gap, swell = bp.simulate(plan, self.dir / "sim.wav")["hits"]
+        self.assertLess(kit["onset_ms"], 10)
+        self.assertAlmostEqual(kit["attack_ms"], 12, delta=1.5)
+        self.assertAlmostEqual(gap["onset_ms"], 30, delta=1)
+        self.assertGreater(swell["attack_ms"] - swell["onset_ms"], 50)
+        lines = {line.split()[2]: line for line in out.getvalue().splitlines() if line.startswith("  ") and " s  " in line}
+        self.assertNotIn("ms in", lines["kit"])
+        self.assertIn("sound starts 30 ms in", lines["gap"])
+        self.assertIn("attack 60 ms in", lines["swell"])
+
+    def test_a_hit_mostly_above_16_khz_is_low_passed_and_warned(self):
+        helpers.write_wav(self.dir / "sparkle.wav", helpers.tone(0.3, amp=0.5, freq=18000))
+        plan = self.plan(duration=1.0, sound={"hits": [{"label": "sparkle", "file": "sparkle.wav", "t": 0.2}]})
+        out = io.StringIO()
+        with redirect_stdout(out):
+            report = bp.simulate(plan, self.dir / "sim.wav")
+        self.assertGreater(report["hits"][0]["high_share"], 0.99)
+        self.assertLess(report["sample_peak"], -40)
+        self.assertIn("above 16 kHz", out.getvalue())
+
+    def test_music_start_key_and_the_first_gains_time(self):
+        def layers(**music):
+            plan = self.plan(assets=self.assets, sound={"music": [{"file": "music.wav", "offset": 0.5, "end": 3.0, **music}]})
+            return [(lay["startTime"], lay["endTime"], lay["trimStart"], lay["volume"]) for _, _, _, lay in bp.sound_rows(plan)[0]]
+
+        self.assertEqual(layers(gains=[[1.0, -6]]), [(1.0, 3.0, 1.5, 0.501)])  # no start: the first gains time
+        self.assertEqual(layers(start=1.5, gains=[[0, -6], [1.0, -12], [2.0, 0]]),
+                         [(1.5, 2.0, 2.0, 0.251), (2.0, 3.0, 2.5, 1.0)])
+        with self.assertRaises(bp.PlanError):
+            layers(start=0.5, gains=[[1.0, -6]])
 
     def test_sound_command_writes_the_payload_and_cues(self):
         helpers.write_json(self.dir / "plan.json", {"duration": 5, "sections": [0, 2], "assets": self.assets, "sound": {

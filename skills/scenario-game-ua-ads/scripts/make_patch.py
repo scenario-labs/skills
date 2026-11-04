@@ -24,16 +24,17 @@ config.json (paths relative to it):
   exclusive); the donor pixel is the dest pixel plus offset. feather is a soft edge per side in
   pixels, 0 for hard.
 - gain: an optional per-channel tone match, measured, never guessed.
-- start and end: optional frames the layer covers, written into the layer.
+- start and end: optional frames the layer covers, written into the layer. Its endTime is half a
+  frame before the end frame, since compose draws a layer on the frame at exactly its endTime.
 - checks: frames written back as <name>_patched.png for full-resolution review.
 - takes: every take the patch covers. Per take it prints the largest share of patch pixels that
   change by more than 40 levels against the take's first frame (anything moving through the box
   reads CHECK), and the mean level of a ring around the box, which should match across takes
   within about 2 levels for one patch to cover them all.
 
-The PNG is padded with transparent pixels to at least 300 px a side, kept inside the canvas,
-because compose resamples small images. It writes <out> and <out>.layer.json, an image layer with
-string x, y, width, height and fit "fill".
+The PNG is padded with transparent pixels to at least 304 px a side, kept inside the canvas,
+because compose draws an image under about 300 px on a side at the wrong scale. It writes <out>
+and <out>.layer.json, an image layer with string x, y, width, height and fit "fill".
 """
 
 import argparse
@@ -45,7 +46,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-MIN_SIDE = 300
+MIN_SIDE = 304
 MOVED = 40
 RING = 12
 
@@ -107,9 +108,10 @@ def build(cfg, base):
     layer = {"type": "image", "source": Path(cfg["out"]).name, "x": str(X0), "y": str(Y0),
              "width": str(X1 - X0), "height": str(Y1 - Y0), "fit": "fill"}
     fps = cfg.get("fps", 30)
-    for key, name in (("start", "startTime"), ("end", "endTime")):
-        if key in cfg:
-            layer[name] = cfg[key] * 1000 // fps / 1000
+    if "start" in cfg:
+        layer["startTime"] = cfg["start"] * 1000 // fps / 1000
+    if "end" in cfg:
+        layer["endTime"] = (cfg["end"] * 1000 // fps - round(500 / fps)) / 1000
     return out, layer, union
 
 
