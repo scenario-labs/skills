@@ -49,6 +49,11 @@ class PartsError(Exception):
     pass
 
 
+def same_file(a, b):
+    """True when two paths name one file, so an output would overwrite an input."""
+    return a is not None and b is not None and Path(a).resolve() == Path(b).resolve()
+
+
 def check_url(k, url, allow=()):
     """The URL's host, when it is a presigned S3 part URL this script may send a file to."""
     u = urllib.parse.urlsplit(url)
@@ -146,6 +151,9 @@ def main(argv=None):
     ap.add_argument("--allow-host", action="append", default=[], metavar="HOST",
                     help=f"also accept part URLs on this host, besides *{S3_HOST_SUFFIX} (repeatable)")
     args = ap.parse_args(argv)
+    if any(same_file(args.out, p) for p in (args.file, args.parts)):
+        print(f"error: -o {args.out} is an input; write the result elsewhere", file=sys.stderr)
+        return 2
     try:
         upload_id, size, parts = read_parts(json.loads(args.parts.read_text()), {h.lower() for h in args.allow_host})
         result = upload(args.file, upload_id, int(size or args.part_size or PART_SIZE), parts)

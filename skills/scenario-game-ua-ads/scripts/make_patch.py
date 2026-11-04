@@ -139,12 +139,21 @@ def take_stats(video, union, size):
     return float(moved[k]), k, float(frames[:, ~inner].mean()) if (~inner).any() else float("nan")
 
 
+
+def same_file(a, b):
+    """True when two paths name one file, so an output would overwrite an input."""
+    return a is not None and b is not None and Path(a).resolve() == Path(b).resolve()
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("config", type=Path)
     args = ap.parse_args(argv)
     cfg = json.loads(args.config.read_text())
     base = args.config.parent
+    inputs = [args.config, *(base / n for n in [cfg.get("source"), *cfg.get("checks", []), *cfg.get("takes", [])] if n)]
+    if "out" in cfg and any(same_file(base / cfg["out"], p) for p in inputs):
+        print(f"error: out {cfg['out']} is one of the patch's inputs; name another file", file=sys.stderr)
+        return 2
     try:
         patch, layer, union = build(cfg, base)
     except (KeyError, PatchError) as e:

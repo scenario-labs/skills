@@ -534,6 +534,11 @@ def sound_payload(plan, silent_id):
     return {"layers": layers, **plan.settings(18)}, cues, notes
 
 
+
+def same_file(a, b):
+    """True when two paths name one file, so an output would overwrite an input."""
+    return a is not None and b is not None and Path(a).resolve() == Path(b).resolve()
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -546,6 +551,12 @@ def main(argv=None):
             p.add_argument("--tp-target", type=float, default=TP_TARGET, help="true-peak target in dBTP")
         p.add_argument("-o", "--out", type=Path)
     args = ap.parse_args(argv)
+    default = {"picture": "payload_picture.json", "simulate": "sim.wav", "sound": "payload_sound.json"}[args.cmd]
+    out = args.out or args.plan.parent / default
+    outs = [out, out.parent / "cues.json"] if args.cmd == "sound" else [out]
+    if any(same_file(o, args.plan) for o in outs):
+        print(f"error: this run would overwrite the plan {args.plan}; pass -o elsewhere", file=sys.stderr)
+        return 2
     try:
         plan = Plan(args.plan)
         if args.cmd == "picture":

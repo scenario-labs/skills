@@ -221,6 +221,11 @@ def cmd_motion(a):
     return 1 if spans else 0
 
 
+
+def same_file(a, b):
+    """True when two paths name one file, so an output would overwrite an input."""
+    return a is not None and b is not None and Path(a).resolve() == Path(b).resolve()
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="command", required=True)
@@ -261,6 +266,10 @@ def main(argv=None):
     p.set_defaults(run=cmd_motion)
 
     args = ap.parse_args(argv)
+    for name in ("out", "outdir", "sheet"):
+        if same_file(getattr(args, name, None), args.take):
+            print(f"error: {getattr(args, name)} is the take itself; write the {name} elsewhere", file=sys.stderr)
+            return 2
     return args.run(args) or 0
 
 
