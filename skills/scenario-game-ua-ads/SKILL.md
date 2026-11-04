@@ -30,11 +30,14 @@ Ask in one round, then run without stopping:
 - **Exact length** in seconds. Without one, use the placement's recommended UA length.
 - **The game's own material**, all optional ([inputs](references/inputs.md)): screenshots, a screen
   recording or gameplay video, characters and items, the app icon, logo, or UI kit.
-- Palette and spend ceiling.
+- Palette and **spend ceiling**.
 
 With the game's own material, the ad must look and play like that game: boards built from its
 screenshots, its characters on-model, its real icon on the end card. Invent gameplay only when the
 user has none to give.
+
+`dry_run` every paid payload before the first billed run, plus retakes; over the ceiling, cut takes
+or ask. Unattended with no ceiling, stop at the plan and estimate.
 
 ## Quick reference
 
@@ -144,18 +147,14 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
 The agent runs these locally with Python 3, Pillow, numpy, and ffmpeg. They render and plan; uploads
 and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fields.
 
-- [render_tracks.py](scripts/render_tracks.py): renders the hand, counter pops, progress bar,
-  floaters, reward flights, bursts, win stars, icon pop, bounce-in, label pulse, flash, and ring as
-  cropped ProRes 4444 tracks, plus `layers.json` with floored times and safe-zone warnings.
-- [build_passes.py](scripts/build_passes.py): `simulate` sums the cue sheet locally and prints
-  loudness, true peak against -1.8 dBTP, and each hit's margin and masking; `picture` and `sound`
-  write the two compose payloads, ending layers half a frame early and padding small images.
-- [check_master.py](scripts/check_master.py): run on the downloaded master: canvas, length,
-  loudness, true peak, levels per section, a 2 fps sheet, and each hit's onset. With `--sim`, the
-  `simulate` mix, masked and repeated hits stop reading as late.
-- [put_parts.py](scripts/put_parts.py): PUTs a file to the part URLs `upload_asset` returned, read
-  from the saved response, and prints what `upload_asset_complete` needs. It only fetches URLs the
-  MCP tool returned.
+- [render_tracks.py](scripts/render_tracks.py): renders the hand, counters, rewards, bursts, and
+  stars as cropped ProRes 4444 tracks, plus `layers.json` with floored times and safe-zone warnings.
+- [build_passes.py](scripts/build_passes.py): `simulate` mixes the cue sheet locally and prints
+  loudness, true peak, and each hit's margin; `picture` and `sound` write the two compose payloads.
+- [check_master.py](scripts/check_master.py): on the downloaded master, checks canvas, length,
+  loudness, true peak, a 2 fps sheet, and each hit's onset (`--sim` reads them against the mix).
+- [put_parts.py](scripts/put_parts.py): PUTs a file to the signed S3 part URLs `upload_asset`
+  returned, refusing any other URL, and prints what `upload_asset_complete` needs.
 - [check_take.py](scripts/check_take.py): run on each take before assembly: `sheet` for timing,
   `action` crops around each contact, `ends` for counts, `motion` flags movement outside the boxes
   allowed to move (locked camera only).
@@ -174,6 +173,8 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
    the last: stone ramp, gold in the cart, miner in the cart.
 3. Clips: `model_schema_get`, then one run per step with `wait: false`, final tier, first and last
    frame pinned to consecutive states, one visible move each. The fail take starts from the board.
+   Then `jobs_wait` every job id, retrying `pending_job_ids`; a `parallel-custom-jobs` 429 created
+   no job: relaunch it after the wave (`scenario`).
 4. Logic, with `check_take.py` on each take, never frame by frame: `sheet` for timing;
    `action --at 4.5 --box 270 600 540 540` tiles eight native-resolution crops of the water hitting
    the lava; `ends` for counts; `motion --allow` the chamber boxes flags anything else moving.

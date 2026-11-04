@@ -61,10 +61,12 @@ PRE, POST, REF = 0.15, 0.35, 0.25
 SIM_ALL, SIM_WINDOW, SIM_HIT, SIM_DB, SIM_OFFSET = 0.95, 0.7, 0.75, 2.0, 0.005
 
 
+PROBE_ENTRIES = "stream=codec_type,codec_name,width,height,r_frame_rate,pix_fmt,sample_rate,channels:format=duration"
+
+
 def probe(path):
-    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
-                          "stream=codec_type,codec_name,width,height,r_frame_rate,pix_fmt,sample_rate,channels"
-                          ":format=duration", "-of", "json", str(path)], capture_output=True, text=True, check=True)
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", PROBE_ENTRIES, "-of", "json", str(path)],
+                         capture_output=True, text=True, check=True)
     info = json.loads(out.stdout)
     return info.get("streams", []), float(info["format"]["duration"])
 
@@ -231,7 +233,7 @@ def main(argv=None):
         failed.append(f"length {duration:.3f} s, planned {plan['duration']} s")
     if not any(s["codec_type"] == "audio" for s in streams):
         failed.append("no audio stream")
-        lufs = tp = None
+        lufs = None
     else:
         lufs, tp = bp.loudness(args.master)
         print(f"loudness: {lufs:.1f} LUFS integrated, true peak {tp:+.1f} dBTP")

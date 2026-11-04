@@ -86,7 +86,7 @@ class ReportTests(unittest.TestCase):
         self.assertIn("video: h264 64x112", result.stdout)
         self.assertIn("section 0-1 s: mean", result.stdout)
         self.assertIn("true peak", result.stdout)
-        self.assertTrue((self.dir / "qa/sheet_2fps.jpg").stat().st_size > 0)
+        self.assertGreater((self.dir / "qa/sheet_2fps.jpg").stat().st_size, 0)
         rows = json.loads((self.dir / "qa/onsets.json").read_text())
         self.assertEqual(len(rows), 2)
         for r in rows:

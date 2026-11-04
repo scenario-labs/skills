@@ -122,6 +122,33 @@ class PutPartsTests(unittest.TestCase):
         self.assertEqual(len(self.server.requests), 2)  # no retry on a 4xx, and nothing after the failed part
         self.assertEqual(result.stdout, "")
 
+    def test_only_signed_s3_part_urls_are_accepted_before_any_put(self):
+        s3 = "https://bucket.s3-accelerate.amazonaws.com/uploads/clip.mp4?partNumber=1&X-Amz-Signature=s1"
+        self.assertEqual(len(pp.read_parts([s3])[2]), 1)
+        refused = {
+            "http://bucket.s3-accelerate.amazonaws.com/up?X-Amz-Signature=s1": "not an https URL",
+            "https://collector.example.com/up?X-Amz-Signature=s1": "not an S3 upload host",
+            "https://bucket.s3.amazonaws.com.example.com/up?X-Amz-Signature=s1": "not an S3 upload host",
+            "https://bucket.s3-accelerate.amazonaws.com/up?partNumber=1": "carries no X-Amz-Signature",
+        }
+        for url, message in refused.items():
+            with self.subTest(url=url):
+                with self.assertRaises(pp.PartsError) as caught:
+                    pp.read_parts([url])
+                self.assertIn(message, str(caught.exception))
+        with self.assertRaises(pp.PartsError) as caught:
+            pp.read_parts([s3, "https://other.s3.amazonaws.com/up?X-Amz-Signature=s2"])
+        self.assertIn("2 hosts", str(caught.exception))
+        result = self.run_cli(["https://collector.example.com/up?X-Amz-Signature=s1",
+                               "https://collector.example.com/up?X-Amz-Signature=s2"], "--part-size", "6000")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("pass --allow-host", result.stderr)
+        self.assertEqual(self.server.requests, [])
+
+    def test_allow_host_accepts_a_moved_upload_host(self):
+        url = "https://uploads.example.com/up?X-Amz-Signature=s1"
+        self.assertEqual(pp.read_parts([url], {"uploads.example.com"})[2][0][1], url)
+
 
 if __name__ == "__main__":
     unittest.main()
