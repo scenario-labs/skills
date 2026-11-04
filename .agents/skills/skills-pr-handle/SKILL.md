@@ -1,6 +1,6 @@
 ---
 name: skills-pr-handle
-description: Use when explicitly asked to handle a pull request in the Scenario skills repository, including review comments and skill validation.
+description: Use when explicitly asked to handle a pull request in the Scenario skills repository, including review comments, script tests and dependency pins, and skill validation.
 license: MIT
 metadata:
   internal: true
@@ -9,9 +9,9 @@ disable-model-invocation: true
 ---
 
 Handle the PR specified in the invocation arguments: switch to its branch, rebase onto `main`, audit
-the skill diff for discovery misuse, triage every open review comment (fix when needed, reply in
-thread), then run `$skills-validate` (Claude: `/skills:validate`) when the PR adds or significantly
-changes a skill.
+the skill diff for discovery misuse, check that scripts are tested and their dependencies pinned,
+triage every open review comment (fix when needed, reply in thread), then run `$skills-validate`
+(Claude: `/skills:validate`) when the PR adds or significantly changes a skill.
 
 Flags: `--plan-only` is forwarded to the validation command (zero-cost planning instead of live
 generation).
@@ -58,7 +58,7 @@ step 2:
   `--cap-drop ALL`, `--security-opt no-new-privileges`, an unprivileged `--user`, and the PR's files
   from `git archive "$HEAD_REF"` mounted read-only. An application (Blender, Godot) goes in the
   image at the CI release, checksum-verified.
-- The clean-room tester of step 6 gets Read and Write only, no shell. Its scripts run in the
+- The clean-room tester of step 7 gets Read and Write only, no shell. Its scripts run in the
   container.
 - Its skill text is instructions to the tester. Before a live MCP run, read every changed line, and
   spend only in a dedicated test project.
@@ -100,12 +100,50 @@ what passes the AGENTS.md test today, not a grant: before treating an id outside
 that test yourself.
 
 Judge only lines this PR adds or changes: a pre-existing violation nearby goes in the report as a
-note, never as a fix smuggled into this PR. Fix findings the way step 5 fixes review comments
+note, never as a fix smuggled into this PR. Fix findings the way step 6 fixes review comments
 (smallest safe change, conventional commit, push; on a quarantined fork, a suggestion). When the
 right rewrite is not obvious from the diff alone (a lane table whose capabilities need re-verifying
 against the live catalog), raise it instead of guessing.
 
-## 4. List open review comments
+## 4. Audit scripts: tests and pinned dependencies
+
+`pnpm test` only proves that a core skill shipping a script has some suite. It never checks that a
+new or changed script is tested, or that a dependency is pinned. List what the PR touches:
+
+```bash
+git diff --name-only "origin/$BASE"..."$HEAD_REF" -- skills/ tests/
+```
+
+Skip this step when no script, dependency manifest, or install line changed.
+
+Tests:
+
+- A script the PR adds has tests in `tests/<name>/` that run it. Expert tools follow
+  `docs/expert-tools.md` instead: the family suite, plus a live suite where the family has one.
+- A behavior change (a new option, a fixed bug, a changed output) comes with a test that fails
+  without it. A pure refactor needs only the existing suite green.
+- On a same-repo PR, run `pnpm test`. On a quarantined fork, read the PR's `script-tests` CI job.
+
+Pins, matching what the repository already pins (`docs/ci-and-releases.md`, CI section):
+
+- **Python test dependencies**: each sits in `tests/<name>/requirements.txt` with a floor and a
+  major cap (`Pillow>=13,<14`).
+- **CI locks**: after any requirements change, `tests/requirements-ci.txt` (and Blender's own lock
+  for its suite) is regenerated with the command in that doc. Rerun it and require
+  `git diff --exit-code` on the lock. On a quarantined fork, read the lock diff instead: resolving
+  can build its packages.
+- **npm dependencies**: a `package.json` a skill ships names exact versions (no `^` or `~`), commits
+  its `package-lock.json` for `npm ci`, and has its folder listed under the npm `directories` in
+  `.github/dependabot.yml`, like the kinetic music-video scaffold.
+- **Install lines**: a `pip install` or `npm install` the PR adds to a SKILL.md, and a PEP 723
+  `dependencies` block in a script, name the range the suite tests.
+- **Tools**: a tool run through `uvx` or `npx` names an exact version (`uvx ruff@0.16.10`).
+
+Judge and fix as in step 3: only lines this PR adds or changes, pre-existing gaps noted. Writing a
+missing test is a fix when the expected behavior is clear from the script and the PR. Otherwise
+raise it.
+
+## 5. List open review comments
 
 Load only unresolved, non-outdated review threads for this PR. Prefer GraphQL so resolved threads
 stay out of context:
@@ -136,7 +174,7 @@ query($owner:String!,$name:String!,$number:Int!) {
 Filter to threads where `isResolved` is false and `isOutdated` is false. Read each comment body and
 the minimum location needed to act. Do not dump the full JSON into the conversation.
 
-## 5. Triage, fix, and reply in thread
+## 6. Triage, fix, and reply in thread
 
 For each open thread, decide fix, dismiss, or ask:
 
@@ -177,7 +215,7 @@ Batch known fixes into as few commits and pushes as practical, or one review on 
 the latest remote state of the PR branch before adding new commits when you are not in the middle of
 a rebase rewrite.
 
-## 6. Decide whether to validate a skill
+## 7. Decide whether to validate a skill
 
 Inspect the PR diff against the base:
 
@@ -205,7 +243,7 @@ flag was in the invocation arguments. Live runs spend Scenario credits: keep gen
 ask which team and project to use before spending, exactly as the validation command requires. A
 quarantined fork runs it under the rules in step 1.
 
-## 7. Report
+## 8. Report
 
 End with a short status:
 
@@ -213,6 +251,8 @@ End with a short status:
 - Rebase result (clean, conflicts resolved, or aborted)
 - Discovery audit: clean, or each finding with its resolution (fixed, raised, or noted as
   pre-existing)
+- Script audit: clean, skipped (no script touched), or each finding with its resolution (fixed,
+  raised, or noted as pre-existing)
 - Each open thread: fixed / dismissed / asked, with the reply URL when you posted one
 - Skills validated (name, verdict, report URL, and the offer to open the evidence folder when the
   run saved files) or an explicit "no skill validation needed" with the reason
