@@ -168,9 +168,10 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
    lava, FAIL at 2.5 s, rewind. Water pin at 3.8 s sets the lava into a stone ramp under a punch-in;
    gold pin at 5.8 s; cell pin at 8.3 s, the miner runs up the ramp into the cart. End card 11.2 to
    15 s.
-2. Board: `recommend` an image model for polished casual game art. Glass chambers, text-free: water
-   and gold on golden pins, lava below, the miner locked beside it, an empty cart. Then one state
-   still per step, each edited from the last: stone ramp, gold in the cart, miner in the cart.
+2. Board: `recommend` an image model for polished casual game art; if two rank close, run both on
+   one prompt and keep the better. Glass chambers, text-free: water and gold on golden pins, lava
+   below, the miner locked beside it, an empty cart. Then one state still per step, each edited from
+   the last: stone ramp, gold in the cart, miner in the cart.
 3. Clips: `model_schema_get`, then one run per step with `wait: false`, final tier, first and last
    frame pinned to consecutive states, one visible move each. The fail take starts from the board.
 4. Logic, with `check_take.py` on each take, never frame by frame: `sheet` for timing;
@@ -185,13 +186,13 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
    `mute: true`, overlays above, `durationMode: "custom"`, `duration: 15`.
 7. Sound pass on the silent master: hits on each pull, the melt, the steam, the coins, each counter
    step, the leap, and the end card; the bed with its lift on the steam. Run `simulate` first and
-   trim until the peak sits near -1.8 dBTP, the margin the final encode needs.
+   trim until the peak sits near -1.8 dBTP.
 8. Check: `check_master.py --sim`, then the reject list on one tiled crop sheet per action.
 
 ## Reject list
 
 - A beat where the board changes with no readable player input, or an input with no satisfying
-  reaction: correct, but nobody wants to play it.
+  reaction.
 - Anything passing through a closed pin, gate, wall, glass, or floor, or leaving its container,
   judged on tiled native-resolution crops of the action, never a downscaled sheet.
 - Anything moving that the beat does not move: a crowd reacting in unison, a second copy of the
