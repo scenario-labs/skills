@@ -228,6 +228,22 @@ test("finds every way to skip the hooks", () => {
   ]);
 });
 
+test("carries a HUSKY=0 set earlier in the command", () => {
+  for (const [command, found] of [
+    ["export HUSKY=0 && git commit -m x", ["export HUSKY=0"]],
+    ["export FOO=1 HUSKY=0; git commit -m x", ["export HUSKY=0"]],
+    ["declare -x HUSKY=0\ngit commit -m x", ["declare HUSKY=0"]],
+    ["HUSKY=0; export HUSKY; git commit -m x", ["HUSKY=0"]],
+    ["export HUSKY=0; sh -c 'git commit -m x'", ["export HUSKY=0"]],
+    ["git commit -m x; export HUSKY=0", []],
+    ["export HUSKY=1 && git commit -m x", []],
+    ["HUSKY=0 git status; git commit -m x", []],
+    ['echo "export HUSKY=0"; git commit -m x', []],
+  ]) {
+    assert.deepEqual(bypasses(command), found, command);
+  }
+});
+
 test("reads a flag-like word inside a message as text", () => {
   for (const command of [
     'git commit -m "refuse --no-verify"',
@@ -353,6 +369,7 @@ test("resolves a git alias before reading the subcommand", () => {
       ["c2", "cin"],
       ["sh", '!f() { git commit "$@"; }; f'],
       ["lg", "!git log --oneline"],
+      ["run", "!git"],
     ]);
   const look = (command) => inspect(command, aliases);
   assert.deepEqual(look("git ci -n -m x").bypasses, ["-n"]);
@@ -375,6 +392,11 @@ test("resolves a git alias before reading the subcommand", () => {
     );
   }
   assert.deepEqual(look("git sh -n").unreadable, ["the git alias sh"]);
+  // A shell alias gets the words after it, so `!git` runs the commit they name.
+  assert.deepEqual(look("git run commit -n -m x").unreadable, [
+    "the git alias run",
+  ]);
+  assert.deepEqual(look("git run status").unreadable, []);
   assert.deepEqual(look("git c2 -m x").unreadable, [
     "the git alias c2, which names another alias",
   ]);

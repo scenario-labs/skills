@@ -16,9 +16,9 @@ import struct
 import sys
 import tempfile
 import unittest
+import unittest.mock as mock
 import warnings
 import wave
-from unittest import mock
 
 FAMILY = pathlib.Path(__file__).resolve().parents[2] / "skills/dcc/maya"
 _saved_path = list(sys.path)

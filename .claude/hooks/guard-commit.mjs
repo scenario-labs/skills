@@ -433,10 +433,25 @@ const mentionsCommit = (words) =>
 // to value, or null when git config cannot be read.
 export function inspect(command, aliases = () => new Map()) {
   const result = { commit: false, bypasses: [], unreadable: [] };
+  // A HUSKY=0 set as a command of its own reaches every command after it.
+  const carried = [];
   for (const words of simpleCommands(command)) {
-    inspectWords([...words], result, aliases);
+    inspectWords([...words], result, aliases, carried);
+    const setting = setsHusky(words);
+    if (setting && !carried.includes(setting)) carried.push(setting);
   }
   return result;
+}
+
+const DECLARES = ["export", "declare", "typeset", "readonly", "local"];
+
+// The bypass a command sets for the rest of the shell: "export HUSKY=0" for a
+// declaration, "HUSKY=0" for assignments alone (exported if HUSKY already is).
+function setsHusky(words) {
+  if (!words.includes("HUSKY=0")) return null;
+  if (DECLARES.includes(words[0])) return `${words[0]} HUSKY=0`;
+  const assignment = /^[A-Za-z_][A-Za-z0-9_]*=/;
+  return words.every((word) => assignment.test(word)) ? "HUSKY=0" : null;
 }
 
 // Inspects src as a command run with the bypasses found around it.
@@ -450,8 +465,8 @@ function inspectNested(src, bypasses, result, aliases) {
   return inner.commit;
 }
 
-function inspectWords(words, result, aliases) {
-  const bypasses = [];
+function inspectWords(words, result, aliases, carried = []) {
+  const bypasses = [...carried];
   const unreadable = (what, rest) => {
     if (mentionsCommit(rest)) result.unreadable.push(what);
   };
@@ -534,7 +549,11 @@ function inspectWords(words, result, aliases) {
       return;
     }
     if (value === undefined || value.startsWith("!")) {
-      if (value === undefined || /commit/.test(value)) {
+      // git appends the words after a shell alias to it: `!git` runs any of them.
+      if (
+        value === undefined ||
+        /commit/.test([value, ...words.slice(k + 1)].join(" "))
+      ) {
         result.unreadable.push(`the git alias ${sub}`);
       }
       return;

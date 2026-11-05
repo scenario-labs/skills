@@ -305,10 +305,15 @@ class PlaceSlot(unittest.TestCase):
     def test_body_raising_releases_the_lock_and_closes_the_file(self):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always", ResourceWarning)
-            with self.assertRaisesRegex(ValueError, "boom"), rbx_env.place_slot(timeout=0) as i:
-                self.assertEqual(i, 0)
-                raise ValueError("boom")
+            raised = None
+            try:
+                with rbx_env.place_slot(timeout=0) as i:
+                    self.assertEqual(i, 0)
+                    raise ValueError("boom")
+            except ValueError as e:
+                raised = str(e)
             gc.collect()
+        self.assertEqual(raised, "boom")
         self.assert_no_unclosed_slot(caught)
         self.assertTrue(self.lockable(0))
 

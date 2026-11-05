@@ -101,7 +101,7 @@ class Start(unittest.TestCase):
         try:
             os.waitpid(pid, 0)
         except ChildProcessError:
-            pass
+            pass  # subprocess already reaped it: start() drops its Popen, and a later Popen collects it.
 
     def test_returns_started_and_appends_header(self):
         self.stdout_log.parent.mkdir()

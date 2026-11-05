@@ -14,9 +14,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock as mock
 import warnings
 from pathlib import Path
-from unittest import mock
 
 FAMILY = Path(__file__).parents[2] / "skills" / "game-engines" / "godot"
 sys.path[:0] = [

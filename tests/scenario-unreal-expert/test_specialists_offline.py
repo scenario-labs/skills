@@ -19,8 +19,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock as mock
 import warnings
-from unittest import mock
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 FAMILY = REPO / "skills" / "game-engines" / "unreal"

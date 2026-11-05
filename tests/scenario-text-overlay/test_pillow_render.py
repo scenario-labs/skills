@@ -12,10 +12,10 @@ import pathlib
 import sys
 import tempfile
 import unittest
+import unittest.mock as mock
 import warnings
 import weakref
 from contextlib import redirect_stderr
-from unittest import mock
 
 SCRIPTS = (
     pathlib.Path(__file__).resolve().parents[2] / "skills" / "scenario-text-overlay" / "scripts"
