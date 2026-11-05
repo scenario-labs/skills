@@ -176,68 +176,314 @@ const LONG_WITH_VALUE = [
 ];
 const overridesHooks = (setting) => /^core\.hookspath=/i.test(setting);
 
-// { commit, bypasses }: whether the command runs git commit, and every way
-// it skips the hooks.
-export function inspect(command) {
-  const result = { commit: false, bypasses: [] };
-  for (const words of simpleCommands(command)) {
-    const bypasses = [];
-    let k = 0;
-    while (k < words.length) {
-      if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(words[k])) {
-        if (words[k] === "HUSKY=0") bypasses.push("HUSKY=0");
-      } else if (words[k] !== "env" && words[k] !== "command") {
-        break;
-      }
+// Commands that run the command after their options, with those options in
+// getopt terms: flags, flags taking a value (attached or the next word), flags
+// whose value can only be attached, long forms. A long option written with "="
+// carries its value either way, and an unambiguous prefix of one counts, as
+// getopt_long allows. An option missing here leaves the wrapped command unread.
+const WRAPPERS = {
+  command: { flags: "p", prints: "vV" },
+  env: {
+    flags: "0iv",
+    values: "aCLPSUu",
+    long: [
+      "--ignore-environment",
+      "--null",
+      "--debug",
+      "--block-signal",
+      "--default-signal",
+      "--ignore-signal",
+      "--list-signal-handling",
+    ],
+    longValues: ["--unset", "--chdir", "--split-string", "--argv0"],
+    dash: true,
+  },
+  exec: { flags: "cl", values: "a" },
+  nice: { values: "n", longValues: ["--adjustment"], numeric: true },
+  nohup: {},
+  sudo: {
+    flags: "AbBEeHiKklNnPSsVv",
+    values: "aCcDgpRrTtUu",
+    attached: "h",
+    long: [
+      "--askpass",
+      "--background",
+      "--bell",
+      "--edit",
+      "--help",
+      "--list",
+      "--login",
+      "--no-update",
+      "--non-interactive",
+      "--preserve-env",
+      "--preserve-groups",
+      "--remove-timestamp",
+      "--reset-timestamp",
+      "--set-home",
+      "--shell",
+      "--stdin",
+      "--validate",
+      "--version",
+    ],
+    longValues: [
+      "--auth-type",
+      "--chdir",
+      "--chroot",
+      "--close-from",
+      "--command-timeout",
+      "--group",
+      "--host",
+      "--login-class",
+      "--other-user",
+      "--prompt",
+      "--role",
+      "--type",
+      "--user",
+    ],
+  },
+  time: {
+    flags: "ahlpqvV",
+    values: "fo",
+    long: ["--append", "--portability", "--quiet", "--verbose"],
+    longValues: ["--format", "--output"],
+  },
+  timeout: {
+    flags: "fpv",
+    values: "ks",
+    long: ["--foreground", "--preserve-status", "--verbose"],
+    longValues: ["--kill-after", "--signal"],
+    operands: 1,
+  },
+};
+const SHELLS = ["sh", "bash", "dash", "ksh", "mksh", "zsh"];
+const SHELL_LONG = [
+  "--debugger",
+  "--dump-po-strings",
+  "--dump-strings",
+  "--login",
+  "--noediting",
+  "--noprofile",
+  "--norc",
+  "--posix",
+  "--pretty-print",
+  "--restricted",
+  "--verbose",
+];
+const SHELL_LONG_VALUES = ["--init-file", "--rcfile"];
+// Reserved words a command can follow.
+const RESERVED = [
+  "!",
+  "{",
+  "if",
+  "then",
+  "else",
+  "elif",
+  "while",
+  "until",
+  "do",
+];
+
+// Where the wrapped command starts: { k }, { unknown } naming an option the
+// table lacks, or { prints } for command -v, which runs nothing. env -S splits
+// its value into words, spliced into `words` after it.
+function skipOptions(words, k, spec) {
+  while (k < words.length) {
+    const word = words[k];
+    if (word === "--") {
       k += 1;
+      break;
     }
-    if (!/(^|\/)git$/.test(words[k] ?? "")) continue;
-    for (k += 1; k < words.length && words[k].startsWith("-"); k += 1) {
-      const [name, value] = words[k].split(/=(.*)/s);
-      const setting =
-        value ?? (GIT_WITH_VALUE.includes(name) ? words[++k] : undefined);
-      if (
-        (name === "-c" || name === "--config-env") &&
-        overridesHooks(setting ?? "")
-      ) {
-        bypasses.push(`-c ${setting}`);
+    // A lone "-" is env's old spelling of -i.
+    if (word === "-" && spec.dash) {
+      k += 1;
+      continue;
+    }
+    if (!word.startsWith("-") || word === "-") break;
+    if (spec.numeric && /^--?\d+$/.test(word)) {
+      k += 1;
+      continue;
+    }
+    if (word.startsWith("--")) {
+      const [given, value] = word.split(/=(.*)/s);
+      const known = [...(spec.long ?? []), ...(spec.longValues ?? [])];
+      const matches = known.filter((name) => name.startsWith(given));
+      const name = known.includes(given)
+        ? given
+        : matches.length === 1
+          ? matches[0]
+          : null;
+      if (!name) return { unknown: word };
+      let split = value;
+      if (value === undefined && spec.longValues?.includes(name)) {
+        k += 1;
+        split = words[k];
       }
+      if (name === "--split-string") splitInto(words, k, split);
+      k += 1;
+      continue;
     }
-    if (words[k] !== "commit") continue;
-    result.commit = true;
-    let noVerify = null;
-    for (let j = k + 1; j < words.length; j += 1) {
-      const word = words[j];
-      if (word === "--") break;
-      if (word.startsWith("--")) {
-        const name = word.split("=")[0];
-        // git accepts any unambiguous prefix; --no-ve could still be --no-verbose.
-        if (
-          name.length >= "--no-veri".length &&
-          "--no-verify".startsWith(name)
-        ) {
-          noVerify = word;
-        } else if (name === "--verify") {
-          noVerify = null;
-        } else if (!word.includes("=") && LONG_WITH_VALUE.includes(name)) {
-          j += 1;
-        }
-      } else if (word.startsWith("-")) {
-        for (let p = 1; p < word.length; p += 1) {
-          if (word[p] === "n") noVerify = "-n";
-          if (SHORT_WITH_VALUE.includes(word[p])) {
-            if (p === word.length - 1) j += 1;
-            break;
-          }
-          // -S and -u take an optional value attached to the flag.
-          if (word[p] === "S" || word[p] === "u") break;
-        }
+    for (let p = 1; p < word.length; p += 1) {
+      const flag = word[p];
+      if (spec.prints?.includes(flag)) return { prints: true };
+      if (spec.flags?.includes(flag)) continue;
+      if (spec.attached?.includes(flag)) break;
+      if (!spec.values?.includes(flag)) return { unknown: word };
+      let value = word.slice(p + 1);
+      if (value === "") {
+        k += 1;
+        value = words[k];
       }
+      if (flag === "S" && spec.dash) splitInto(words, k, value);
+      break;
     }
-    if (noVerify) bypasses.push(noVerify);
-    result.bypasses.push(...bypasses);
+    k += 1;
+  }
+  return { k: k + (spec.operands ?? 0) };
+}
+
+function splitInto(words, k, value) {
+  words.splice(k + 1, 0, ...simpleCommands(value ?? "").flat());
+}
+
+// The string a shell runs with -c: { src, k } with k at the word after it,
+// { unknown } for an option missing from the lists, or null when the shell
+// reads a script or stdin instead.
+function shellString(words, k) {
+  let c = false;
+  for (; k < words.length; k += 1) {
+    const word = words[k];
+    if (word === "--" || word === "-") {
+      k += 1;
+      break;
+    }
+    if (!/^[-+]./.test(word)) break;
+    if (word.startsWith("--")) {
+      if (SHELL_LONG_VALUES.includes(word)) k += 1;
+      else if (!SHELL_LONG.includes(word)) return { unknown: word };
+      continue;
+    }
+    if (!/^[-+][A-Za-z]+$/.test(word)) return { unknown: word };
+    if (word.includes("c")) c = true;
+    // -o and -O name an option in the next word.
+    if (/[oO]/.test(word)) k += 1;
+  }
+  return c ? { src: words[k] ?? "", k: k + 1 } : null;
+}
+
+// Whether words a wrapper would run may hold a git commit.
+const mentionsCommit = (words) =>
+  /(^|[\s/;&|(`])git\s[\s\S]*\bcommit\b/.test(words.join(" "));
+
+// { commit, bypasses, unreadable }: whether the command runs git commit, every
+// way it skips the hooks, and every wrapper the guard cannot read past that
+// may run one.
+export function inspect(command) {
+  const result = { commit: false, bypasses: [], unreadable: [] };
+  for (const words of simpleCommands(command)) {
+    inspectWords([...words], result);
   }
   return result;
+}
+
+// Inspects src as a command run with the bypasses found around it.
+function inspectNested(src, bypasses, result) {
+  const inner = inspect(src);
+  if (inner.commit) {
+    result.commit = true;
+    result.bypasses.push(...bypasses, ...inner.bypasses);
+  }
+  result.unreadable.push(...inner.unreadable);
+  return inner.commit;
+}
+
+function inspectWords(words, result) {
+  const bypasses = [];
+  const unreadable = (what, rest) => {
+    if (mentionsCommit(rest)) result.unreadable.push(what);
+  };
+  let k = 0;
+  while (k < words.length) {
+    const word = words[k];
+    const name = word.replace(/^.*\//, "");
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(word)) {
+      if (word === "HUSKY=0") bypasses.push("HUSKY=0");
+      k += 1;
+    } else if (RESERVED.includes(word)) {
+      k += 1;
+    } else if (name === "eval") {
+      inspectNested(words.slice(k + 1).join(" "), bypasses, result);
+      return;
+    } else if (name === "xargs") {
+      // xargs adds arguments read from stdin, which the guard never sees.
+      unreadable("xargs", words.slice(k + 1));
+      return;
+    } else if (SHELLS.includes(name)) {
+      const run = shellString(words, k + 1);
+      if (run?.unknown) {
+        unreadable(`${name} ${run.unknown}`, words.slice(k + 1));
+      } else if (
+        run &&
+        inspectNested(run.src, bypasses, result) &&
+        run.k < words.length
+      ) {
+        // Words after the string become $0, $1..., which it may expand.
+        result.unreadable.push(`${name} -c with arguments`);
+      }
+      return;
+    } else if (Object.hasOwn(WRAPPERS, name)) {
+      const next = skipOptions(words, k + 1, WRAPPERS[name]);
+      if (next.prints) return;
+      if (next.unknown) {
+        unreadable(`${name} ${next.unknown}`, words.slice(k + 1));
+        return;
+      }
+      k = next.k;
+    } else {
+      break;
+    }
+  }
+  if (!/(^|\/)git$/.test(words[k] ?? "")) return;
+  for (k += 1; k < words.length && words[k].startsWith("-"); k += 1) {
+    const [name, value] = words[k].split(/=(.*)/s);
+    const setting =
+      value ?? (GIT_WITH_VALUE.includes(name) ? words[++k] : undefined);
+    if (
+      (name === "-c" || name === "--config-env") &&
+      overridesHooks(setting ?? "")
+    ) {
+      bypasses.push(`-c ${setting}`);
+    }
+  }
+  if (words[k] !== "commit") return;
+  result.commit = true;
+  let noVerify = null;
+  for (let j = k + 1; j < words.length; j += 1) {
+    const word = words[j];
+    if (word === "--") break;
+    if (word.startsWith("--")) {
+      const name = word.split("=")[0];
+      // git accepts any unambiguous prefix; --no-ve could still be --no-verbose.
+      if (name.length >= "--no-veri".length && "--no-verify".startsWith(name)) {
+        noVerify = word;
+      } else if (name === "--verify") {
+        noVerify = null;
+      } else if (!word.includes("=") && LONG_WITH_VALUE.includes(name)) {
+        j += 1;
+      }
+    } else if (word.startsWith("-")) {
+      for (let p = 1; p < word.length; p += 1) {
+        if (word[p] === "n") noVerify = "-n";
+        if (SHORT_WITH_VALUE.includes(word[p])) {
+          if (p === word.length - 1) j += 1;
+          break;
+        }
+        // -S and -u take an optional value attached to the flag.
+        if (word[p] === "S" || word[p] === "u") break;
+      }
+    }
+  }
+  if (noVerify) bypasses.push(noVerify);
+  result.bypasses.push(...bypasses);
 }
 
 function hooksPath(dir) {
@@ -263,11 +509,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (typeof command !== "string") {
     refuse("guard-commit: no command in the hook input, so it is refused.");
   }
-  const { commit, bypasses } = inspect(command);
-  if (!commit) process.exit(0);
+  const { commit, bypasses, unreadable } = inspect(command);
+  if (!commit && unreadable.length === 0) process.exit(0);
   if (bypasses.length > 0) {
     refuse(
       `git commit refused: ${bypasses.join(", ")} skips the husky hooks (commitlint and pnpm validate, the checks CI runs). Commit without it and fix what the hooks report. If a hook cannot run, run \`pnpm install\`.`,
+    );
+  }
+  if (unreadable.length > 0) {
+    refuse(
+      `git commit refused: the guard cannot read past ${unreadable.join(", ")}, so it cannot tell whether the commit skips the husky hooks. Run git commit as a command of its own.`,
     );
   }
   const dir = process.env.CLAUDE_PROJECT_DIR || payload.cwd || ".";
