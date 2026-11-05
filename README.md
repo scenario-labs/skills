@@ -507,11 +507,11 @@ run `pnpm install` (installs commitlint, cspell, prettier, and the husky git hoo
 linted separately with commitlint. PRs welcome; PR titles follow Conventional Commits since they
 become the squash commit header on `main`.
 
-Every script shipped with a skill has a test suite in `tests/<name>/`; `pnpm test` runs them all (CI
-does too). Suites need Python 3.11+, plus ffmpeg on PATH where a suite uses it. With uv installed,
-`pnpm test` gives each suite the dependencies in its `tests/<name>/requirements.txt`; without uv,
-install them into `python3` first. Python suites use stdlib `unittest`, TypeScript suites use
-vitest.
+Every script shipped with a core skill has a test suite in `tests/<name>/`; expert tools have one
+suite per family instead. `pnpm test` runs them all (CI does too). Suites need Python 3.11+, plus
+ffmpeg on PATH where a suite uses it. With uv installed, `pnpm test` gives each suite the
+dependencies in its `tests/<name>/requirements.txt`; without uv, install them into `python3` first.
+Python suites use stdlib `unittest`, TypeScript suites use vitest.
 
 ## License
 

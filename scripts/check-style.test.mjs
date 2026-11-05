@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -21,9 +22,13 @@ const env = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")),
 );
 
-function repo(t) {
+function repo(t, { modules = true } = {}) {
   const root = mkdtempSync(join(tmpdir(), "skills-style-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
+  // The frontmatter check imports `yaml` from the repository root.
+  if (modules) {
+    symlinkSync(join(scripts, "../node_modules"), join(root, "node_modules"));
+  }
   for (const file of ["check-style.sh", "lib/skills.mjs"]) {
     mkdirSync(dirname(join(root, "scripts", file)), { recursive: true });
     copyFileSync(join(scripts, file), join(root, "scripts", file));
@@ -71,10 +76,10 @@ function repo(t) {
   git("commit", "-q", "-m", "base");
   // Throws on a non-zero exit, so every passing test also proves the notice
   // never fails the check.
-  const style = () =>
+  const style = (extra = {}) =>
     execFileSync(join(root, "scripts/check-style.sh"), {
       cwd: root,
-      env,
+      env: { ...env, ...extra },
       encoding: "utf8",
       stdio: "pipe",
     });
@@ -306,6 +311,73 @@ test("accepts AGENTS.md of exactly 32 KiB", (t) => {
   assert.ok(!style().includes(AGENTS_CAP));
 });
 
+const AGENTS_NOTICE = "Notice (not a failure): AGENTS.md is";
+
+test("notices AGENTS.md past 30 KiB without failing", (t) => {
+  const { write, style } = repo(t);
+  write("AGENTS.md", "x".repeat(30721));
+  const out = style();
+  assert.ok(out.includes(`${AGENTS_NOTICE} 30721 bytes`), out);
+  assert.ok(!out.includes(AGENTS_CAP), out);
+});
+
+test("stays quiet for AGENTS.md of exactly 30 KiB", (t) => {
+  const { write, style } = repo(t);
+  write("AGENTS.md", "x".repeat(30720));
+  assert.ok(!style().includes(AGENTS_NOTICE));
+});
+
+test("fails past 32 KiB without the early notice", (t) => {
+  const { write, style } = repo(t);
+  write("AGENTS.md", "x".repeat(32769));
+  assert.throws(style, (error) => {
+    assert.ok(!error.stdout.includes(AGENTS_NOTICE), error.stdout);
+    return true;
+  });
+});
+
+const SKILL = "skills/scenario-demo/SKILL.md";
+const skill = (body) =>
+  `---\nname: scenario-demo\ndescription: Use when testing.\nlicense: MIT\n---\n\n${body}\n`;
+const WORD_CAP = "over the 2500-word hard cap";
+
+test("accepts a body of exactly 2500 words", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(words(2500)));
+  assert.ok(!style().includes(WORD_CAP));
+});
+
+test("fails a body of 2501 words", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(words(2501)));
+  assert.throws(style, (error) => {
+    assert.ok(
+      error.stdout.includes(`${SKILL}: body is 2501 words`),
+      error.stdout,
+    );
+    return true;
+  });
+});
+
+// GNU wc under LC_ALL=C skips a word made only of non-ASCII bytes, so this
+// body read 2500 words there and 2501 on macOS before the count pinned a locale.
+test("counts a non-ASCII word whatever the caller's locale", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(`${words(2500)} \u2192`));
+  for (const LC_ALL of ["C", "C.UTF-8"]) {
+    assert.throws(
+      () => style({ LC_ALL }),
+      (error) => {
+        assert.ok(
+          error.stdout.includes(`${SKILL}: body is 2501 words`),
+          error.stdout,
+        );
+        return true;
+      },
+    );
+  }
+});
+
 test("fails on an em dash in SUPPORT.md", (t) => {
   const { write, style } = repo(t);
   write("SUPPORT.md", `Ask here ${String.fromCodePoint(0x2014)} or there.\n`);
@@ -339,4 +411,143 @@ test("allows install commands in a family README outside every skill", (t) => {
     "npx skills add scenario-labs/skills --skill scenario-demo\n",
   );
   assert.ok(!style().includes(INSTALL));
+});
+
+const NEAR_CAP = "Notice (not a failure): a skill body is within 100 words";
+
+test("notices a body within 100 words of the cap without failing", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(words(2400)));
+  const out = style();
+  assert.ok(out.includes(NEAR_CAP), out);
+  assert.ok(out.includes(`  ${SKILL}: 2400 words\n`), out);
+});
+
+test("stays quiet for a body of 2399 words", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(words(2399)));
+  assert.ok(!style().includes(NEAR_CAP));
+});
+
+test("fails past the cap without the near-cap notice", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(words(2501)));
+  assert.throws(style, (error) => {
+    assert.ok(!error.stdout.includes(NEAR_CAP), error.stdout);
+    return true;
+  });
+});
+
+const FRONTMATTER =
+  "Frontmatter holds name, description, and license: MIT only";
+const EXPERT = "skills/dcc/demo/scenario-demo-expert/SKILL.md";
+const frontmatter = (name, lines) =>
+  ["---", `name: ${name}`, ...lines, "---", "", "Body.", ""].join("\n");
+// "Use when " is 9 characters. The astral character is one code point but two
+// UTF-16 units, and four UTF-8 bytes, so only a code-point count reads n.
+const description = (n) =>
+  `description: "Use when ${"x".repeat(n - 10)}\u{1F3A8}"`;
+const failsWith = (style, ...expected) =>
+  assert.throws(style, (error) => {
+    assert.ok(error.stdout.includes(FRONTMATTER), error.stdout);
+    for (const text of expected) {
+      assert.ok(error.stdout.includes(text), error.stdout);
+    }
+    return true;
+  });
+
+test("accepts a core description of 499 code points", (t) => {
+  const { write, style } = repo(t);
+  write(
+    SKILL,
+    frontmatter("scenario-demo", [description(499), "license: MIT"]),
+  );
+  assert.ok(!style().includes(FRONTMATTER));
+});
+
+test("fails a core description of 500 code points", (t) => {
+  const { write, style } = repo(t);
+  write(
+    SKILL,
+    frontmatter("scenario-demo", [description(500), "license: MIT"]),
+  );
+  failsWith(style, `${SKILL}: description is 500 characters`);
+});
+
+test("allows an expert description up to the spec's 1024", (t) => {
+  const { write, style } = repo(t);
+  write(
+    EXPERT,
+    frontmatter("scenario-demo-expert", [description(1024), "license: MIT"]),
+  );
+  assert.ok(!style().includes(FRONTMATTER));
+});
+
+test("fails an expert description of 1025 code points", (t) => {
+  const { write, style } = repo(t);
+  write(
+    EXPERT,
+    frontmatter("scenario-demo-expert", [description(1025), "license: MIT"]),
+  );
+  failsWith(style, `${EXPERT}: description is 1025 characters`);
+});
+
+test("fails a frontmatter key beyond name, description, and license", (t) => {
+  const { write, style } = repo(t);
+  write(
+    SKILL,
+    frontmatter("scenario-demo", [
+      "description: Use when testing.",
+      "license: MIT",
+      "compatibility: any",
+    ]),
+  );
+  failsWith(style, `${SKILL}: frontmatter key "compatibility"`);
+});
+
+test("fails a license other than MIT", (t) => {
+  const { write, style } = repo(t);
+  write(
+    SKILL,
+    frontmatter("scenario-demo", [
+      "description: Use when testing.",
+      "license: Apache-2.0",
+    ]),
+  );
+  failsWith(style, `${SKILL}: frontmatter needs license: MIT`);
+});
+
+test("fails a frontmatter it cannot parse", (t) => {
+  const { write, style } = repo(t);
+  write(
+    SKILL,
+    frontmatter("scenario-demo", [
+      'description: "Use when testing.',
+      "license: MIT",
+    ]),
+  );
+  failsWith(style, `${SKILL}: frontmatter is not valid YAML`);
+});
+
+test("fails a SKILL.md with no frontmatter", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, "Use when testing.\n");
+  failsWith(style, `${SKILL}: no frontmatter mapping`);
+});
+
+test("fails when the YAML parser cannot load", (t) => {
+  const { style } = repo(t, { modules: false });
+  failsWith(style, "Cannot find package 'yaml'");
+});
+
+test("leaves the repository's own dev skills alone", (t) => {
+  const { write, style } = repo(t);
+  write(
+    ".agents/skills/demo/SKILL.md",
+    frontmatter("demo", [
+      "description: Use when testing.",
+      "argument-hint: <name>",
+    ]),
+  );
+  assert.ok(!style().includes(FRONTMATTER));
 });

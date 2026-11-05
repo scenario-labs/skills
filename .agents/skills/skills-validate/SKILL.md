@@ -18,7 +18,7 @@ the use case instead of writing one, `--no-post` stops before publishing anythin
 the run directory.
 
 Live runs spend Scenario credits. Keep every generation the smallest one that still proves the
-point.
+point. Before step 1, read "Rules learned from past runs" in docs/application-test.md.
 
 Determine the context (step 6) before anything else. A PR from a fork (`isCrossRepository: true`) is
 quarantined: follow step 1 of `.agents/skills/skills-pr-handle/SKILL.md` for what may run, where,

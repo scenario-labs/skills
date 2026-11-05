@@ -40,6 +40,7 @@ import shutil
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.dirname(HERE)
@@ -303,7 +304,7 @@ def yaml_merge(base, theirs, mine, out, report=None, resolve=None, premerge=Fals
         cmd.append("-r")
     cmd += ["--fallback", "none", "-o", report, base, theirs, mine, out]
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    text = open(report).read() if os.path.isfile(report) else ""
+    text = Path(report).read_text() if os.path.isfile(report) else ""
     conflicts = parse_merge_report(text)
     fields = sorted({l.split()[1] for l in conflicts if l.startswith(("Left ", "Right ")) and len(l.split()) > 1})
     return {"exit_code": p.returncode, "clean": p.returncode == 0, "out_exists": os.path.isfile(out), "report": report,

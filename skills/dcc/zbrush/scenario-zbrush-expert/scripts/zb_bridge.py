@@ -31,5 +31,9 @@ if __name__ == "__main__":
     port = 7788
     if "--port" in args:
         i = args.index("--port"); port = int(args[i + 1]); args = args[:i] + args[i + 2:]
-    code = open(args[1]).read() if args[0] == "-f" else args[0]
+    if args[0] == "-f":
+        with open(args[1]) as fh:
+            code = fh.read()
+    else:
+        code = args[0]
     print(json.dumps(send(code, mode, port), indent=1))
