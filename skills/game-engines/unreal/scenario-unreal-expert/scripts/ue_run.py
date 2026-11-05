@@ -408,36 +408,39 @@ def _spawn(cmd, log_file, timeout, env=None, echo=False, until_file=None, grace=
     file appears (the editor should quit by itself; if not, the group we spawned is
     terminated). Returns (exit_code, seconds, timed_out)."""
     t0 = time.time()
-    fh = open(log_file, "w", encoding="utf-8", errors="replace")
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            env=env, start_new_session=True)
+    with open(log_file, "w", encoding="utf-8", errors="replace") as fh:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                env=env, start_new_session=True)
 
-    def pump():
-        for raw in iter(proc.stdout.readline, b""):
-            line = raw.decode("utf-8", "replace")
-            fh.write(line)
-            if echo:
-                sys.stdout.write(line)
-        fh.flush()
+        def pump():
+            for raw in iter(proc.stdout.readline, b""):
+                line = raw.decode("utf-8", "replace")
+                fh.write(line)
+                if echo:
+                    sys.stdout.write(line)
+            fh.flush()
 
-    th = threading.Thread(target=pump, daemon=True)
-    th.start()
-    timed_out, seen_at = False, None
-    while proc.poll() is None:
-        now = time.time()
-        if timeout and now - t0 > timeout:
-            timed_out = True
-            break
-        if until_file and os.path.isfile(until_file):
-            seen_at = seen_at or now
-            if now - seen_at > grace:
-                break
-        time.sleep(0.2)
-    if proc.poll() is None:
-        _terminate_group(proc)
-    th.join(timeout=10)
-    fh.close()
-    return proc.returncode, round(time.time() - t0, 2), timed_out
+        th = threading.Thread(target=pump, daemon=True)
+        th.start()
+        timed_out, seen_at = False, None
+        try:
+            while proc.poll() is None:
+                now = time.time()
+                if timeout and now - t0 > timeout:
+                    timed_out = True
+                    break
+                if until_file and os.path.isfile(until_file):
+                    seen_at = seen_at or now
+                    if now - seen_at > grace:
+                        break
+                time.sleep(0.2)
+        finally:
+            # Also on Ctrl-C: the editor's own session never sees it, and once fh closes
+            # nothing drains its pipe, so a caller that survives would leave it blocked.
+            if proc.poll() is None:
+                _terminate_group(proc)
+            th.join(timeout=10)
+        return proc.returncode, round(time.time() - t0, 2), timed_out
 
 
 def _terminate_group(proc, wait=20.0):

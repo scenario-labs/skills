@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.dirname(HERE)
@@ -115,7 +116,7 @@ def write_rules(project, rules=None, **overrides):
     path = os.path.join(root, RULES_PATH)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     text = json.dumps(data, indent=2, sort_keys=True) + "\n"
-    old = open(path).read() if os.path.isfile(path) else None
+    old = Path(path).read_text() if os.path.isfile(path) else None
     if old != text:
         with open(path, "w") as f:
             f.write(text)

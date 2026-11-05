@@ -432,8 +432,8 @@ and command lines.
     to the bare `python3` only when uv is missing.
   - CI installs only hashed locks: after changing a suite's requirements, regenerate the locks
     covering it ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
-- `pnpm test` runs the command, plugin-manifest, style, readme, and test-runner regression suites as
-  well as the shipped-script suites.
+- `pnpm test` runs the command, plugin-manifest, style, hook, readme, and test-runner regression
+  suites as well as the shipped-script suites.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the

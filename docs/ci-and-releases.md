@@ -43,8 +43,13 @@ Each command is defined once in `package.json`. Most run a script in `scripts/`;
 `format:check` invoke prettier directly. The pre-commit hook runs `pnpm validate`, and CI runs each
 of its checks as a separate step:
 
-- **`pnpm style`**: house style, the body budget, the `AGENTS.md` size cap, and the fan-out,
-  table-cell, sentence-length, and wording notices.
+- **`pnpm style`**: house style, the frontmatter contract, the body budget, the `AGENTS.md` size
+  cap, and the near-cap, fan-out, table-cell, sentence-length, and wording notices.
+  - It fails a frontmatter key other than `name`, `description`, and `license: MIT`, and a
+    description of 500 characters or more (past 1024 for expert tools). It counts code points, as
+    `pnpm groupings` does, and parses with `yaml`, so it needs `pnpm install` first.
+  - It prints a notice, never a failure, for a body within 100 words of the 2500-word cap: two PRs
+    that each pass can still push a skill past it together.
   - It counts body words under `LC_ALL=C.UTF-8`. GNU `wc` under `LC_ALL=C` skips a word made only of
     non-ASCII characters (a lone `→`), so an unpinned count drifted between machines.
   - It prints a notice, never a failure, once `AGENTS.md` passes 30 KiB, ahead of the 32 KiB cap.
@@ -53,8 +58,14 @@ of its checks as a separate step:
   [agent-commands.md](agent-commands.md)).
 - **`pnpm skill-files`**: supporting files next to a SKILL.md are linked and runnable, a skill's own
   `README.md` excepted.
-- **`pnpm lint:py`**: ruff's pyflakes rules over every Python script, configured in `ruff.toml`, the
-  vendored dev skills excluded.
+- **`pnpm lint:py`**: ruff over every Python script, configured in `ruff.toml`, the vendored dev
+  skills excluded.
+  - The pyflakes rules, plus SIM115 for a file opened outside a `with` block. A handle no `with` can
+    hold, such as a lock returned to its caller, carries `# noqa: SIM115` and the reason.
+  - S110 for an `except` whose body is only `pass`. A comment beside the `pass` does not satisfy it:
+    a deliberate one carries `# noqa: S110` and the reason on the `except` line.
+  - Expert scripts that predate S110 keep a per-file waiver with their count of hits, never a
+    per-folder one, so a new file is checked. `ruff.toml` says how to review and recount them.
 - **`pnpm groupings`**: every skill sits in a `skills.sh.json` grouping, every listed skill exists,
   and the file satisfies the published skills.sh schema.
 - **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
