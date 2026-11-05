@@ -1,7 +1,30 @@
 # Application test protocol
 
-The test every new or changed skill passes before merging. `/skills:validate <name>` drives it;
-[AGENTS.md](../AGENTS.md) "Validation and testing" covers when to run it.
+The test every new or changed skill passes before merging. `/skills:validate <name>` drives it.
+
+## When to run it
+
+This is the one home of these criteria: [AGENTS.md](../AGENTS.md) "Validation and testing" and
+`/skills:pr-handle` point here.
+
+Run it for each skill a PR changes when any of these hold:
+
+- The skill folder is new.
+- `SKILL.md` changed in substance: description, steps, tool names, parameters, examples, or common
+  mistakes.
+- A supporting file linked from `SKILL.md` was added, removed, or materially reworked: a script
+  whose behavior changed, a reference, an asset that changes agent behavior.
+
+Skip it only when the change cannot alter agent behavior, or leaves no skill to test:
+
+- only paths outside every skill folder changed;
+- the PR deletes the skill: nothing is left to install;
+- a typo-only, whitespace-only, or formatting edit;
+- README table rows, or `skills.sh.json` grouping churn with no `SKILL.md` change.
+
+A skipped test is still recorded: the PR template's "not applicable" line names the criterion.
+
+## Protocol
 
 1. Spawn a fresh agent with no conversation history. Give it only:
    - a framing line ("you are an agent connected to the Scenario MCP server; the skill document

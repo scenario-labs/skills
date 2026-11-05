@@ -374,6 +374,9 @@ and command lines.
   - `/pr-squash-message` drafts the squash message;
   - `/pr-summary` refreshes the PR body;
   - `/pr-handle-comments` answers review threads.
+- `/skills:pr-handle <PR>` (`.claude/commands/skills/`) handles a whole PR: it adds the fork
+  quarantine, the discovery and script audits, and the validation decision to `/pr-handle-comments`.
+- Update a pushed PR branch by merging its base into it. Never rebase or force-push a pushed branch.
 - `/skills:validate <name>` (`.claude/commands/skills/`) runs the application test for one skill and
   reports it to the PR; see Validation and testing.
 - release-please cuts releases (`.github/workflows/release-please.yml`, configured in
@@ -394,8 +397,9 @@ and command lines.
   comment (`actions/checkout@<sha> # v7.0.1`), never a tag: a tag is a pointer its publisher can
   move.
 - The `skill-files-reviewer` agent (`.claude/agents/`) reviews supporting files added or changed
-  next to a SKILL.md: justified, linked from SKILL.md, runnable, MCP for the agent's own steps,
-  public content only, house style.
+  next to a SKILL.md, core or expert: justified, linked from SKILL.md, runnable, MCP for the agent's
+  own steps (core skills only), text that matches the code, gates that fail closed, public content
+  only, house style.
 - The `skill-tester` agent in the same directory is the clean-room runner `/skills:validate` spawns
   when a separate process cannot reach the MCP server. It is not for ordinary work.
 
@@ -422,7 +426,8 @@ and command lines.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the
-  format; the application test checks whether the skill actually teaches.
+  format; the application test checks whether the skill actually teaches. When it may be skipped:
+  [docs/application-test.md](docs/application-test.md#when-to-run-it).
 - `/skills:validate <name>` (`.claude/commands/skills/`) drives that test:
   - it writes a use case for the skill;
   - installs the working-tree copy into a clean-room agent with no repository context;
