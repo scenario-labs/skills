@@ -84,16 +84,20 @@ test("the sync runs as a post-commit hook", (t) => {
   assert.equal(r.status(), "");
 });
 
-test("an unstaged edit to the copy is left alone", (t) => {
+test("a worktree copy that differs from the commit is kept", (t) => {
   const r = repo(t);
   pathLimitedCommit(r);
-  r.write(COPY, "hand edit\n");
-  assert.equal(r.sync(), "");
-  assert.equal(r.git("show", `:${COPY}`), "v1\n");
+  // The manifest's case: an unstaged input changed the worktree copy too.
+  r.write(COPY, "worktree edit\n");
+  assert.match(r.sync(), /Re-synced/);
+  assert.equal(r.git("show", `:${COPY}`), "v2\n");
+  assert.equal(r.status(), ` M ${COPY}`);
 });
 
 test("a staged edit to the copy is left alone", (t) => {
   const r = repo(t);
+  r.write("REVIEW.md", "v2\n");
+  r.git("commit", "-qam", "change");
   r.write(COPY, "staged edit\n");
   r.git("add", COPY);
   assert.equal(r.sync(), "");

@@ -8,8 +8,10 @@
 // shows a staged rollback plus an unstaged reapplication (MM). post-commit
 // runs on the real index with no lock held, so it can set the entry back.
 //
-// An entry changes only when the worktree file equals HEAD's blob, so a later
-// edit to the file, staged or not, is never touched.
+// The rollback shows as an index entry equal to HEAD^'s blob for a file the
+// commit changed. Any other entry is the user's staged state and stays. The
+// worktree is never written, so an unstaged edit survives (the manifest has
+// several inputs, so its worktree copy may hold changes the commit left out).
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,19 +33,19 @@ const git = (...args) =>
 
 const synced = [];
 for (const file of GENERATED) {
-  let head, indexed, worktree;
+  let head, parent, indexed;
   try {
-    // "<mode> blob <sha>\t<path>", empty when HEAD lacks the file.
+    // "<mode> blob <sha>\t<path>", empty when the commit lacks the file.
     head = git("ls-tree", "HEAD", "--", file).split(/\s/);
+    parent = git("ls-tree", "HEAD^", "--", file).split(/\s/);
     // "<mode> <sha> <stage>\t<path>", empty when the index lacks it.
     indexed = git("ls-files", "--stage", "--", file).split(/\s/);
-    worktree = git("hash-object", "--", file);
   } catch {
-    // No HEAD yet, not a git repository, or the file is missing on disk.
+    // Not a git repository, or a first commit with no parent.
     continue;
   }
   const [mode, , blob] = head;
-  if (!blob || indexed[1] === blob || worktree !== blob) continue;
+  if (!blob || blob === parent[2] || indexed[1] !== parent[2]) continue;
   git("update-index", "--add", "--cacheinfo", `${mode},${blob},${file}`);
   synced.push(file);
 }
