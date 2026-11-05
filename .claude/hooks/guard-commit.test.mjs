@@ -14,22 +14,49 @@ const env = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")),
 );
 
+// A throwaway repository whose global config is a file of its own, so no
+// test reads or changes the developer's git config. run.config(file, ...args)
+// writes "local" or "global" config.
 function project(t, hooksPath) {
   const root = mkdtempSync(join(tmpdir(), "guard-commit-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  execFileSync("git", ["init", "-q"], { cwd: root, env });
-  if (hooksPath) {
-    execFileSync("git", ["config", "core.hooksPath", hooksPath], {
-      cwd: root,
-      env,
-    });
-  }
-  return (command, extra = {}) =>
+  const gitEnv = {
+    ...env,
+    GIT_CONFIG_GLOBAL: join(root, ".git", "global-config"),
+    GIT_CONFIG_NOSYSTEM: "1",
+  };
+  const config = (scope, ...args) =>
+    execFileSync(
+      "git",
+      ["config", ...(scope === "global" ? ["--global"] : []), ...args],
+      { cwd: root, env: gitEnv },
+    );
+  execFileSync("git", ["init", "-q"], { cwd: root, env: gitEnv });
+  if (hooksPath) config("local", "core.hooksPath", hooksPath);
+  const run = (command, extra = {}) =>
     spawnSync(hook, {
       input: JSON.stringify({ tool_name: "Bash", tool_input: { command } }),
-      env: { ...env, CLAUDE_PROJECT_DIR: root, ...extra },
+      env: { ...gitEnv, CLAUDE_PROJECT_DIR: root, ...extra },
       encoding: "utf8",
     });
+  run.config = config;
+  return run;
+}
+
+// A PATH holding only the given tools, found on the current PATH.
+function pathWith(t, tools) {
+  const bin = mkdtempSync(join(tmpdir(), "guard-commit-bin-"));
+  t.after(() => rmSync(bin, { recursive: true, force: true }));
+  for (const tool of tools) {
+    const found =
+      tool === "node"
+        ? process.execPath
+        : execFileSync("/bin/sh", ["-c", `command -v ${tool}`], {
+            encoding: "utf8",
+          }).trim();
+    symlinkSync(found, join(bin, tool));
+  }
+  return bin;
 }
 
 test("allows a commit when the husky hooks are installed", (t) => {
@@ -101,17 +128,58 @@ test("allows commands that are not commits, hooks or not", (t) => {
 test("refuses when the check cannot run", (t) => {
   const run = project(t, ".husky/_");
   // A PATH with the shell tools the hook needs, but no node.
-  const bin = mkdtempSync(join(tmpdir(), "guard-commit-bin-"));
-  t.after(() => rmSync(bin, { recursive: true, force: true }));
-  for (const tool of ["bash", "cat", "dirname"]) {
-    const found = execFileSync("/bin/sh", ["-c", `command -v ${tool}`], {
-      encoding: "utf8",
-    }).trim();
-    symlinkSync(found, join(bin, tool));
-  }
+  const bin = pathWith(t, ["bash", "cat", "dirname"]);
   const result = run("git commit -m x", { PATH: bin });
   assert.equal(result.status, 2);
   assert.match(result.stderr, /the check could not run/);
+});
+
+test("refuses a commit spelled with quotes", (t) => {
+  const run = project(t, ".husky/_");
+  const result = run('git com"mit" --no-verify -m x');
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /--no-verify skips the husky hooks/);
+});
+
+test("refuses a git alias that skips the hooks", (t) => {
+  for (const [scope, alias, command, flag] of [
+    ["local", "commit", "git ci -n -m x", "-n"],
+    ["global", "commit -n", "git ci -m x", "-n"],
+    ["local", "commit", "git ci --no-verify -m x", "--no-verify"],
+  ]) {
+    const run = project(t, ".husky/_");
+    run.config(scope, "alias.ci", alias);
+    const result = run(command);
+    assert.equal(result.status, 2, `${scope} ${alias}: ${command}`);
+    assert.match(result.stderr, new RegExp(`${flag} skips the husky hooks`));
+  }
+});
+
+test("refuses a shell alias that mentions commit", (t) => {
+  const run = project(t, ".husky/_");
+  run.config("local", "alias.ci", "!git commit -n");
+  const result = run("git ci -m x");
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /cannot read past the git alias ci/);
+});
+
+test("allows a git alias for a commit that keeps the hooks", (t) => {
+  const run = project(t, ".husky/_");
+  run.config("local", "alias.ci", "commit");
+  run.config("local", "alias.st", "status");
+  for (const command of ["git ci -m x", "git st", "git lg"]) {
+    assert.equal(run(command).status, 0, command);
+  }
+});
+
+test("refuses an unknown git command when the aliases cannot be read", (t) => {
+  const run = project(t, ".husky/_");
+  // node but no git: a git command the guard knows needs no alias lookup.
+  const bin = pathWith(t, ["bash", "cat", "dirname", "node"]);
+  assert.equal(run("git status", { PATH: bin }).status, 0);
+  const result = run("git ci -n", { PATH: bin });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /git config could not be read/);
 });
 
 test("refuses malformed hook input that mentions a commit", (t) => {
@@ -273,6 +341,46 @@ test("marks a commit behind a wrapper it cannot read", () => {
   ]) {
     assert.deepEqual(inspect(command).unreadable, [wrapper], command);
   }
+});
+
+test("resolves a git alias before reading the subcommand", () => {
+  const aliases = () =>
+    new Map([
+      ["ci", "commit"],
+      ["cin", "commit -n"],
+      ["hp", "-c core.hooksPath=/dev/null commit"],
+      ["st", "status"],
+      ["c2", "cin"],
+      ["sh", '!f() { git commit "$@"; }; f'],
+      ["lg", "!git log --oneline"],
+    ]);
+  const look = (command) => inspect(command, aliases);
+  assert.deepEqual(look("git ci -n -m x").bypasses, ["-n"]);
+  assert.deepEqual(look("git CI -n").bypasses, ["-n"]);
+  assert.deepEqual(look("git -C repo cin -m x").bypasses, ["-n"]);
+  assert.deepEqual(look("git hp -m x").bypasses, [
+    "-c core.hooksPath=/dev/null",
+  ]);
+  assert.deepEqual(look("git -c alias.x='commit -n' x").bypasses, ["-n"]);
+  assert.deepEqual(look("git ci -m x"), {
+    commit: true,
+    bypasses: [],
+    unreadable: [],
+  });
+  for (const command of ["git st", "git lg", "git absorb", "git status"]) {
+    assert.deepEqual(
+      look(command),
+      { commit: false, bypasses: [], unreadable: [] },
+      command,
+    );
+  }
+  assert.deepEqual(look("git sh -n").unreadable, ["the git alias sh"]);
+  assert.deepEqual(look("git c2 -m x").unreadable, [
+    "the git alias c2, which names another alias",
+  ]);
+  const unreadable = inspect("git ci -n", () => null).unreadable;
+  assert.deepEqual(unreadable, ["git ci, as git config could not be read"]);
+  assert.deepEqual(inspect("git status", () => null).unreadable, []);
 });
 
 test("lets a wrapper through when it runs no commit", () => {

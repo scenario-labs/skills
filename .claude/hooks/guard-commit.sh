@@ -5,14 +5,20 @@
 # session continue when pnpm install fails. guard-commit.mjs holds the logic.
 # Exit 2 blocks the command and shows stderr to the agent. Any other failure
 # blocks it too, so a check that cannot run never lets a commit through.
+# Scope: it catches the ways an agent commonly skips the hooks. Variables,
+# command substitution in place of git, and scripts fed to a shell stay out;
+# husky and CI are the enforcement.
 set -uo pipefail
 
 input=$(cat) || exit 2
-# A command that never says "commit" cannot run git commit; skip node for it.
-case "$input" in
-  *commit*) ;;
-  *) exit 0 ;;
-esac
+# A command with no word spelling git, quotes and backslashes removed, cannot
+# run git (a git alias may run commit); skip node for it. JSON escapes go
+# first: "\\" is one backslash, and "\n" or "\t" ends a word.
+text=${input//\\\\/}
+text=${text//\\[nrt]/ }
+text=${text//[\"\'\\]/}
+word_git='(^|[^A-Za-z0-9_])git($|[^A-Za-z0-9_])'
+[[ $text =~ $word_git ]] || exit 0
 
 status=0
 printf '%s' "$input" | node "$(dirname "$0")/guard-commit.mjs" || status=$?

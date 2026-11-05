@@ -1,6 +1,6 @@
 // The logic behind guard-commit.sh, which carries the why. Reads the PreToolUse
 // payload on stdin; exits 2 with the reason on stderr to refuse the command.
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -175,6 +175,59 @@ const LONG_WITH_VALUE = [
   "--pathspec-from-file",
 ];
 const overridesHooks = (setting) => /^core\.hookspath=/i.test(setting);
+// git ignores an alias named after one of its own commands, so these need no
+// alias lookup. A command missing here costs one read of git config.
+const GIT_COMMANDS = [
+  "add",
+  "am",
+  "apply",
+  "bisect",
+  "blame",
+  "branch",
+  "cat-file",
+  "checkout",
+  "cherry-pick",
+  "clean",
+  "clone",
+  "commit",
+  "commit-tree",
+  "config",
+  "describe",
+  "diff",
+  "fetch",
+  "for-each-ref",
+  "format-patch",
+  "grep",
+  "help",
+  "init",
+  "log",
+  "ls-files",
+  "ls-remote",
+  "ls-tree",
+  "merge",
+  "merge-base",
+  "mv",
+  "notes",
+  "pull",
+  "push",
+  "rebase",
+  "reflog",
+  "remote",
+  "reset",
+  "restore",
+  "rev-list",
+  "rev-parse",
+  "revert",
+  "rm",
+  "shortlog",
+  "show",
+  "stash",
+  "status",
+  "submodule",
+  "switch",
+  "tag",
+  "worktree",
+];
 
 // Commands that run the command after their options, with those options in
 // getopt terms: flags, flags taking a value (attached or the next word), flags
@@ -376,18 +429,19 @@ const mentionsCommit = (words) =>
 
 // { commit, bypasses, unreadable }: whether the command runs git commit, every
 // way it skips the hooks, and every wrapper the guard cannot read past that
-// may run one.
-export function inspect(command) {
+// may run one. aliases() returns the git aliases as a Map from lowercase name
+// to value, or null when git config cannot be read.
+export function inspect(command, aliases = () => new Map()) {
   const result = { commit: false, bypasses: [], unreadable: [] };
   for (const words of simpleCommands(command)) {
-    inspectWords([...words], result);
+    inspectWords([...words], result, aliases);
   }
   return result;
 }
 
 // Inspects src as a command run with the bypasses found around it.
-function inspectNested(src, bypasses, result) {
-  const inner = inspect(src);
+function inspectNested(src, bypasses, result, aliases) {
+  const inner = inspect(src, aliases);
   if (inner.commit) {
     result.commit = true;
     result.bypasses.push(...bypasses, ...inner.bypasses);
@@ -396,7 +450,7 @@ function inspectNested(src, bypasses, result) {
   return inner.commit;
 }
 
-function inspectWords(words, result) {
+function inspectWords(words, result, aliases) {
   const bypasses = [];
   const unreadable = (what, rest) => {
     if (mentionsCommit(rest)) result.unreadable.push(what);
@@ -411,7 +465,7 @@ function inspectWords(words, result) {
     } else if (RESERVED.includes(word)) {
       k += 1;
     } else if (name === "eval") {
-      inspectNested(words.slice(k + 1).join(" "), bypasses, result);
+      inspectNested(words.slice(k + 1).join(" "), bypasses, result, aliases);
       return;
     } else if (name === "xargs") {
       // xargs adds arguments read from stdin, which the guard never sees.
@@ -423,7 +477,7 @@ function inspectWords(words, result) {
         unreadable(`${name} ${run.unknown}`, words.slice(k + 1));
       } else if (
         run &&
-        inspectNested(run.src, bypasses, result) &&
+        inspectNested(run.src, bypasses, result, aliases) &&
         run.k < words.length
       ) {
         // Words after the string become $0, $1..., which it may expand.
@@ -443,16 +497,51 @@ function inspectWords(words, result) {
     }
   }
   if (!/(^|\/)git$/.test(words[k] ?? "")) return;
-  for (k += 1; k < words.length && words[k].startsWith("-"); k += 1) {
-    const [name, value] = words[k].split(/=(.*)/s);
-    const setting =
-      value ?? (GIT_WITH_VALUE.includes(name) ? words[++k] : undefined);
-    if (
-      (name === "-c" || name === "--config-env") &&
-      overridesHooks(setting ?? "")
-    ) {
-      bypasses.push(`-c ${setting}`);
+  // Aliases set with -c on this command line, by lowercase name. --config-env
+  // takes the value from a variable, so it maps to undefined: unreadable.
+  const inline = new Map();
+  let expanded = null;
+  for (;;) {
+    for (k += 1; k < words.length && words[k].startsWith("-"); k += 1) {
+      const [name, value] = words[k].split(/=(.*)/s);
+      const setting =
+        value ?? (GIT_WITH_VALUE.includes(name) ? words[++k] : undefined);
+      if (name !== "-c" && name !== "--config-env") continue;
+      if (overridesHooks(setting ?? "")) bypasses.push(`-c ${setting}`);
+      const alias = /^alias\.([^=]+)=(.*)$/is.exec(setting ?? "");
+      if (alias) {
+        inline.set(
+          alias[1].toLowerCase(),
+          name === "-c" ? alias[2] : undefined,
+        );
+      }
     }
+    const sub = words[k];
+    if (sub === undefined || GIT_COMMANDS.includes(sub)) break;
+    // Expand one alias as git would, then read the words it becomes.
+    const key = sub.toLowerCase();
+    const config = inline.has(key) ? inline : aliases();
+    if (config === null) {
+      result.unreadable.push(`git ${sub}, as git config could not be read`);
+      return;
+    }
+    if (!config.has(key)) break;
+    const value = config.get(key);
+    if (expanded) {
+      result.unreadable.push(
+        `the git alias ${expanded}, which names another alias`,
+      );
+      return;
+    }
+    if (value === undefined || value.startsWith("!")) {
+      if (value === undefined || /commit/.test(value)) {
+        result.unreadable.push(`the git alias ${sub}`);
+      }
+      return;
+    }
+    words.splice(k, 1, ...simpleCommands(value).flat());
+    k -= 1;
+    expanded = sub;
   }
   if (words[k] !== "commit") return;
   result.commit = true;
@@ -498,6 +587,23 @@ function hooksPath(dir) {
   }
 }
 
+// The aliases git would use in dir, local and global: a Map from lowercase
+// name to value, or null when git cannot read its config. Exit 1 means none.
+function readAliases(dir) {
+  const run = spawnSync("git", ["config", "-z", "--get-regexp", "^alias\\."], {
+    cwd: dir,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+  if (run.error || (run.status !== 0 && run.status !== 1)) return null;
+  const aliases = new Map();
+  for (const entry of run.stdout.split("\0")) {
+    const match = /^alias\.([^\n]*)(?:\n([\s\S]*))?$/.exec(entry);
+    if (match) aliases.set(match[1].toLowerCase(), match[2] ?? "");
+  }
+  return aliases;
+}
+
 function refuse(message) {
   process.stderr.write(`${message}\n`);
   process.exit(2);
@@ -509,7 +615,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (typeof command !== "string") {
     refuse("guard-commit: no command in the hook input, so it is refused.");
   }
-  const { commit, bypasses, unreadable } = inspect(command);
+  const dir = process.env.CLAUDE_PROJECT_DIR || payload.cwd || ".";
+  let aliases;
+  const { commit, bypasses, unreadable } = inspect(command, () => {
+    if (aliases === undefined) aliases = readAliases(dir);
+    return aliases;
+  });
   if (!commit && unreadable.length === 0) process.exit(0);
   if (bypasses.length > 0) {
     refuse(
@@ -521,7 +632,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       `git commit refused: the guard cannot read past ${unreadable.join(", ")}, so it cannot tell whether the commit skips the husky hooks. Run git commit as a command of its own.`,
     );
   }
-  const dir = process.env.CLAUDE_PROJECT_DIR || payload.cwd || ".";
   const current = hooksPath(dir);
   if (current !== HOOKS_PATH) {
     const found = current === null ? "unset or unreadable" : `"${current}"`;
