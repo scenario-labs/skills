@@ -10,9 +10,15 @@ than the MCP server:
 - The MCP rules (MCP as the surface, `recommend` discovery, model ids) do not apply. The rest does,
   including the frontmatter, the 2500-word cap, house style, public content only, and the
   sibling-install sentence.
-- Descriptions follow the spec's 1024-character cap, not the 500-character target. Bodies run near
-  the cap, not the 1000-word target. Both are the author's choice, kept until a live run shows what
-  to trim.
+- In place of the tool reference, an application fact comes from the application's own documentation
+  or source, or a plugin's public guide.
+  - Read a value or feature-detect a call rather than assert a version or a default.
+  - Code not yet run in the application carries the family's marker (`[verify]`, or "not yet run in
+    <app>").
+- Descriptions follow the spec's 1024-character cap, not the 500-character target. Bodies may pass
+  the 1000-word target. Both are the author's choice, kept until a live run shows what to trim.
+  - Draft a body to about 2300 words, so review fixes fit under the 2500 cap. A body already past
+    2300 trims before it grows.
 - Shipped scripts need no suite of their own under `tests/<name>/`: the behavior suites live in the
   author's build project and run against the application.
   - One suite per family, `tests/scenario-<app>-expert/` (the same file in each), imports every
