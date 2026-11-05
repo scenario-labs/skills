@@ -35,7 +35,8 @@ pnpm install
 ```
 
 `pnpm install` sets up commitlint, cspell, prettier, and the husky git hooks, so every commit runs
-the same checks CI runs.
+the same checks CI runs. In Claude Code, a hook refuses a commit when they are missing or skipped
+with `--no-verify`.
 
 ## Authoring a skill
 
@@ -81,6 +82,10 @@ pnpm format   # prettier reflows markdown, so run it before validate
 pnpm validate # house style, formatting, supporting files, groupings, README table, spelling, spec
 pnpm test     # only needed when a shipped script changed; suites live in tests/<name>/ (one per expert family)
 ```
+
+Run `pnpm format && pnpm validate` before every push. A commit made without the git hooks (a clone
+where `pnpm install` never ran, or `--no-verify`) skips their checks, and CI then fails on what they
+would have caught.
 
 A new or changed skill also needs the application test from
 [docs/application-test.md](docs/application-test.md): a clean-room agent runs a realistic task with

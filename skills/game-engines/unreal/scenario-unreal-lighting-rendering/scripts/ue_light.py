@@ -55,6 +55,7 @@ import re
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 try:  # numpy is optional for the photometry and lint layers, required for frames
     import numpy as np
@@ -2736,23 +2737,23 @@ def main(argv=None):
         cd = to_candela(a.value, a.units, a.kind, a.cone)
         r = {"candelas": cd, "lumens": candela_to_lumens(cd, a.kind, a.cone), "unitless": cd * UNITLESS_PER_CANDELA}
     elif a.cmd == "frame":
-        brief = json.load(open(a.brief)) if a.brief else {}
+        brief = json.loads(Path(a.brief).read_text()) if a.brief else {}
         r = frame_report(a.image, brief, a.reference)
         r["brief_regions"] = brief.get("regions")
         if a.out:
             write_report(r, a.out, a.image)
     elif a.cmd == "compare":
-        brief = json.load(open(a.brief)) if a.brief else {}
+        brief = json.loads(Path(a.brief).read_text()) if a.brief else {}
         r = compare_ground_truth(a.realtime, a.pathtraced, brief.get("regions"), a.diff)
     elif a.cmd == "still-plan":
         pl = still_plan(a.renderer, a.quality, a.delivery, a.motion_blur, a.glass)
         r = {"plan": pl, "lint": mrg_lint(pl), "variables": mrg_variables(pl)}
     elif a.cmd == "lint-lights":
-        r = light_lint(json.load(open(a.lights_json)), json.load(open(a.context)) if a.context else None)
+        r = light_lint(json.loads(Path(a.lights_json).read_text()), json.loads(Path(a.context).read_text()) if a.context else None)
     elif a.cmd == "lint-ini":
-        r = render_settings_report(open(a.ini).read(), tuple(a.wants.split(",")))
+        r = render_settings_report(Path(a.ini).read_text(), tuple(a.wants.split(",")))
     elif a.cmd == "budget":
-        r = pass_budget(profilegpu_passes(open(a.log, errors="ignore").read()), a.fps)
+        r = pass_budget(profilegpu_passes(Path(a.log).read_text(errors="ignore")), a.fps)
     elif a.cmd == "albedo":
         r = albedo_check(a.image, renderer=a.renderer)
     print(json.dumps(r, indent=1, default=str))

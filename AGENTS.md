@@ -160,8 +160,9 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
   - `dry_run` still prices the exact payload: `recommend`'s figures are modeled, and one quoted 48.2
     CU where 55 was billed.
   - Leave the `next_step` discipline to the `scenario` skill and reference it. A worked example runs
-    its loop whole: `model_schema_get` before `model_run`, `dry_run` only once inputs exist, at most
-    `actionLimit` jobs in flight, `jobs_wait` until no `pending_job_ids`, a stop on `no_match`.
+    its loop whole: `model_schema_get` before `model_run`, `dry_run` only once inputs exist, jobs in
+    flight within the task's count (after a `parallel-custom-jobs` 429, within its `actionLimit`),
+    `jobs_wait` until no `pending_job_ids`, a stop on `no_match`.
 
 ### Scope and surface
 
@@ -434,7 +435,7 @@ never its copy `.cursor/BUGBOT.md`.
     to the bare `python3` only when uv is missing.
   - CI installs only hashed locks: after changing a suite's requirements, regenerate the locks
     covering it ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
-- `pnpm test` runs the command, plugin-manifest, Bugbot-copy, style, readme, and test-runner
+- `pnpm test` runs the command, plugin-manifest, Bugbot-copy, style, hook, readme, and test-runner
   regression suites as well as the shipped-script suites.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
