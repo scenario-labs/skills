@@ -348,6 +348,8 @@ and command lines.
      edits never reach the commit.
   3. `pnpm bugbot`: the same for `.cursor/BUGBOT.md`, a copy of `REVIEW.md`.
   4. `pnpm validate`: the checks CI runs as separate steps.
+- The husky `post-commit` hook runs `pnpm index:sync`. A path-limited commit (`git commit <paths>`)
+  stages those files in a temporary index, and this step copies them into the real one.
 - Read [docs/ci-and-releases.md](docs/ci-and-releases.md#checks) when a check fails unexpectedly, or
   before changing a check script, a hook step, or the prettier config. It lists what each check
   covers, the prettier settings, and the git variables a hook step must not leak.
@@ -435,8 +437,8 @@ never its copy `.cursor/BUGBOT.md`.
     to the bare `python3` only when uv is missing.
   - CI installs only hashed locks: after changing a suite's requirements, regenerate the locks
     covering it ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
-- `pnpm test` runs the command, plugin-manifest, Bugbot-copy, style, hook, readme, and test-runner
-  regression suites as well as the shipped-script suites.
+- `pnpm test` runs the command, plugin-manifest, Bugbot-copy, index-sync, style, hook, readme, and
+  test-runner regression suites as well as the shipped-script suites.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the
