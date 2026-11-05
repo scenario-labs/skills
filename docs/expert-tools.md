@@ -38,6 +38,10 @@ than the MCP server:
     with fake engine services (`lune/`), and builds places with Rojo to read back with Lune
     (`test_live_rojo.py`). `roblox.yml` installs the Lune and Rojo versions the tooling skill pins,
     and fails if those suites skip. Without the tools they skip in `pnpm test`.
+  - Offline suites (`test_*_offline.py`) in every family run host-side helpers with no application
+    installed: file and log handling, locks, CLI entry points. A stand-in child process replaces the
+    editor where one is spawned. Their leak checks fail on a handle left open, so a later edit
+    cannot reopen one unnoticed.
 - A link to a subfolder (`scripts/AgentKit/`, never `scripts/` itself) covers the files under it:
   these skills ship code trees an agent copies into a project whole.
 - cspell skips code, fenced and inline, and YouTube video ids. Prose is checked as everywhere else

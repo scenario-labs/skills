@@ -818,12 +818,9 @@ def audio_envelope(path, fps=24.0, start_frame=1):
     """Per-frame RMS loudness (0..1) of a PCM WAV: [(frame, level)]. Pure Python (wave)."""
     import wave
     import struct as _st
-    w = wave.open(path, "rb")
-    try:
+    with wave.open(path, "rb") as w:
         n, ch, sw, rate = w.getnframes(), w.getnchannels(), w.getsampwidth(), w.getframerate()
         raw = w.readframes(n)
-    finally:
-        w.close()
     if sw != 2:
         raise ValueError("16-bit PCM expected, got %d bytes per sample" % sw)
     vals = _st.unpack("<%dh" % (len(raw) // 2), raw)
