@@ -423,19 +423,23 @@ def _spawn(cmd, log_file, timeout, env=None, echo=False, until_file=None, grace=
         th = threading.Thread(target=pump, daemon=True)
         th.start()
         timed_out, seen_at = False, None
-        while proc.poll() is None:
-            now = time.time()
-            if timeout and now - t0 > timeout:
-                timed_out = True
-                break
-            if until_file and os.path.isfile(until_file):
-                seen_at = seen_at or now
-                if now - seen_at > grace:
+        try:
+            while proc.poll() is None:
+                now = time.time()
+                if timeout and now - t0 > timeout:
+                    timed_out = True
                     break
-            time.sleep(0.2)
-        if proc.poll() is None:
-            _terminate_group(proc)
-        th.join(timeout=10)
+                if until_file and os.path.isfile(until_file):
+                    seen_at = seen_at or now
+                    if now - seen_at > grace:
+                        break
+                time.sleep(0.2)
+        finally:
+            # Also on Ctrl-C: the editor's own session never sees it, and once fh closes
+            # nothing drains its pipe, so a caller that survives would leave it blocked.
+            if proc.poll() is None:
+                _terminate_group(proc)
+            th.join(timeout=10)
         return proc.returncode, round(time.time() - t0, 2), timed_out
 
 
