@@ -59,9 +59,13 @@ of its checks as a separate step:
 - **`pnpm skill-files`**: supporting files next to a SKILL.md are linked and runnable, a skill's own
   `README.md` excepted.
 - **`pnpm lint:py`**: ruff over every Python script, configured in `ruff.toml`, the vendored dev
-  skills excluded: the pyflakes rules, plus SIM115 for a file opened outside a `with` block. A
-  handle no `with` can hold, such as a lock returned to its caller, carries `# noqa: SIM115` and the
-  reason.
+  skills excluded.
+  - The pyflakes rules, plus SIM115 for a file opened outside a `with` block. A handle no `with` can
+    hold, such as a lock returned to its caller, carries `# noqa: SIM115` and the reason.
+  - S110 for an `except` whose body is only `pass`. A comment beside the `pass` does not satisfy it:
+    a deliberate one carries `# noqa: S110` and the reason on the `except` line.
+  - Expert scripts that predate S110 keep a per-file waiver with their count of hits, never a
+    per-folder one, so a new file is checked. `ruff.toml` says how to review and recount them.
 - **`pnpm groupings`**: every skill sits in a `skills.sh.json` grouping, every listed skill exists,
   and the file satisfies the published skills.sh schema.
 - **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
