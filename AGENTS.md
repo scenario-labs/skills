@@ -347,7 +347,7 @@ and command lines.
      skill folders, and stages the copy rendered from their staged versions, so unstaged moves and
      edits never reach the commit.
   3. `pnpm bugbot`: the same for `.cursor/BUGBOT.md`, a copy of `REVIEW.md`.
-  4. `pnpm validate`: the checks CI runs as separate steps.
+  4. `pnpm validate`: the checks CI runs as separate steps, spec validation on staged skills only.
 - The husky `post-commit` hook runs `scripts/sync-generated-index.mjs`. A path-limited commit
   (`git commit <paths>`) stages those files in a temporary index, and this step copies them into the
   real one.
@@ -422,8 +422,8 @@ never its copy `.cursor/BUGBOT.md`.
 
 ## Validation and testing
 
-- `skills-ref validate` must pass for every published skill before any commit: the pre-commit hook
-  and CI both run it via `pnpm spec`.
+- `skills-ref validate` must pass for every published skill: CI runs it on every skill via
+  `pnpm spec`, the pre-commit hook on the skills a commit changes.
 - Python suites use stdlib `unittest` (`test_*.py`), TypeScript ones vitest (`*.test.ts`).
 - Unless the user asks, a shipped script never overwrites a file it did not create (its inputs, a
   project file, the user's saved scene) and keeps the user's document open. It writes a new file or

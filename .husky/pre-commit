@@ -1,4 +1,4 @@
 pnpm words:sort
 pnpm manifest
 pnpm bugbot
-pnpm validate
+SPEC_STAGED_ONLY=1 pnpm validate

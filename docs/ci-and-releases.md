@@ -77,14 +77,16 @@ of its checks as a separate step:
   non-stale row. It also checks the install commands (see AGENTS.md "Adding a skill").
 - **`pnpm words:check`**: `project-words.txt` is sorted and deduplicated.
 - **`pnpm spell`**: cspell.
-- **`pnpm spec`**: spec validation.
+- **`pnpm spec`**: spec validation of every skill, in one `uv run` (a `uvx` call per skill took over
+  100 s). `SPEC_STAGED_ONLY=1`, set by the pre-commit hook, limits it to skills with staged changes
+  and skips uv when there are none.
 
 A commit hook runs with git's location variables (`GIT_DIR`, `GIT_INDEX_FILE`, and the rest)
 pointing at this repository, and hook steps read the index through them.
 
 - Never unset them for the whole hook.
 - A tool a step runs that issues its own git commands must run without them, as
-  `scripts/validate-skills.sh` does for uvx: from a linked worktree, uv's inherited git commands
+  `scripts/validate-skills.sh` does for uv: from a linked worktree, uv's inherited git commands
   reset the worktree's branch and set `core.bare` on this repository.
 
 ### Formatting
