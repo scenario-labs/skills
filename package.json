@@ -14,7 +14,6 @@
     "manifest": "node ./scripts/generate-plugin-manifest.mjs",
     "manifest:check": "node ./scripts/generate-plugin-manifest.mjs --check",
     "bugbot": "node ./scripts/generate-bugbot.mjs",
-    "index:sync": "node ./scripts/sync-generated-index.mjs",
     "bugbot:check": "node ./scripts/generate-bugbot.mjs --check",
     "readme": "node ./scripts/check-readme.mjs",
     "spell": "./scripts/check-spelling.sh",

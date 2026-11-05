@@ -348,8 +348,9 @@ and command lines.
      edits never reach the commit.
   3. `pnpm bugbot`: the same for `.cursor/BUGBOT.md`, a copy of `REVIEW.md`.
   4. `pnpm validate`: the checks CI runs as separate steps.
-- The husky `post-commit` hook runs `pnpm index:sync`. A path-limited commit (`git commit <paths>`)
-  stages those files in a temporary index, and this step copies them into the real one.
+- The husky `post-commit` hook runs `scripts/sync-generated-index.mjs`. A path-limited commit
+  (`git commit <paths>`) stages those files in a temporary index, and this step copies them into the
+  real one.
 - Read [docs/ci-and-releases.md](docs/ci-and-releases.md#checks) when a check fails unexpectedly, or
   before changing a check script, a hook step, or the prettier config. It lists what each check
   covers, the prettier settings, and the git variables a hook step must not leak.
