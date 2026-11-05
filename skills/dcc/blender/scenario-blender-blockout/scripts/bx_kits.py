@@ -277,19 +277,74 @@ def tree(name, location, height=6.0, fidelity="shaped", pal=None, kind="broadlea
     return p.to_object(name, location, 0.0, coll)
 
 
-def vehicle(name, kind="car", location=(0.0, 0.0, 0.0), facing_deg=0.0, fidelity="shaped", rgb=None, pal=None, coll=None, rear_rgb=REAR_RED):
-    """Car, van, bus or scooter facing local -Y, front marked in geometry: pale headlight
-    blocks and a darker grille at the front, `rear_rgb` blocks at the rear (a dark red that
-    never reads as the red hero), so the model cannot drive it backward. Wheels are one
-    mesh here; spin a separate wheel object only for a close shot that reads rotation.
+def _tube(p, a, b, thick, rgb, x=0.0):
+    """A square tube from (y, z) point `a` to `b` in the plane x = `x`."""
+    dy, dz = b[0] - a[0], b[1] - a[1]
+    p.add("box", (thick, thick, math.hypot(dy, dz)), (x, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2), rgb,
+          rot=(math.atan2(-dy, dz), 0.0, 0.0))
+
+
+def _bicycle(name, location, facing_deg, lvl, body, pal, coll, rear_rgb, size):
+    """A bicycle 1.75 m long at size 1 (wheel radius 0.34 m), front at local -Y, and its
+    cranks as a child object, NAME_cranks, spinning on local X so K.pedal can key them."""
+    r, tire, dark = 0.34, 0.05, (0.08, 0.08, 0.09)
+    bb, seat, head_top, head_bot = (0.02, 0.29), (0.18, 0.80), (-0.38, 0.80), (-0.42, 0.62)
+    rear, front, bars, crank = (0.535, r), (-0.535, r), (-0.40, 0.98), 0.17
+    p = Parts()
+    for y in (front[0], rear[0]):
+        p.add("cylinder", (2 * r, 2 * r, tire), (0, y, r), dark, rot=(0, math.pi / 2, 0), segments=20)
+        if lvl == 2:
+            p.add("cylinder", (0.12, 0.12, 0.1), (0, y, r), pal["metal"], rot=(0, math.pi / 2, 0), segments=10)
+    for a, b in ((bb, seat), (bb, head_bot), (seat, head_top), (bb, rear)):
+        _tube(p, a, b, 0.045, body)
+    if lvl >= 1:
+        _tube(p, head_bot, head_top, 0.06, body)
+        for x in (-0.05, 0.05):
+            _tube(p, (0.16, 0.76), rear, 0.03, body, x)  # seat stays
+            _tube(p, head_bot, front, 0.035, body, x)  # fork
+    _tube(p, head_top, bars, 0.04, pal["metal"])  # stem
+    p.add("box", (0.56, 0.04, 0.04), (0, bars[0], bars[1]), pal["metal"])  # handlebar
+    p.add("box", (0.14, 0.26, 0.06), (0, seat[0] + 0.04, seat[1] + 0.03), dark)  # saddle, top at 0.86
+    p.add("box", (0.1, 0.06, 0.08), (0, head_top[0] - 0.07, 0.76), pal["light"])  # lamp
+    p.add("box", (0.08, 0.04, 0.06), (0, seat[0] + 0.12, 0.74), rear_rgb)  # rear reflector
+    q = Parts()
+    for x, z in ((0.07, crank), (-0.07, -crank)):  # L arm up at rest, R arm down
+        q.add("box", (0.03, 0.03, crank), (x, 0, z / 2), pal["metal"])
+        q.add("box", (0.09, 0.06, 0.025), (x * 1.6, 0, z), dark)
+    if lvl == 2:
+        q.add("cylinder", (0.2, 0.2, 0.01), (-0.05, 0, 0), pal["metal"], rot=(0, math.pi / 2, 0), segments=16)
+    for parts in (p, q):
+        if size != 1.0:
+            bmesh.ops.scale(parts.bm, vec=(size, size, size), verts=list(parts.bm.verts))
+    obj = p.to_object(name, location, facing_deg, coll)
+    cranks = q.to_object(f"{name}_cranks", (0, bb[0] * size, bb[1] * size), 0.0, coll, parent=obj)
+    cranks.rotation_mode = "XYZ"
+    cranks["vehicle_part"] = True  # spins with K.pedal but counts with the bike
+    obj["saddle"] = (seat[0] * size + 0.04 * size, 0.86 * size)
+    obj["bars"] = (bars[0] * size, bars[1] * size)
+    obj["crank"] = (bb[0] * size, bb[1] * size, crank * size)
+    return obj
+
+
+def vehicle(name, kind="car", location=(0.0, 0.0, 0.0), facing_deg=0.0, fidelity="shaped", rgb=None, pal=None, coll=None, rear_rgb=REAR_RED,
+            size=1.0):
+    """Car, van, bus, scooter or bicycle facing local -Y, front marked in geometry: pale
+    headlight blocks and a darker grille at the front, `rear_rgb` blocks at the rear (a dark
+    red that never reads as the red hero), so the model cannot drive it backward. Wheels are
+    one mesh here; spin a separate wheel object only for a close shot that reads rotation.
     rough: body, cabin, wheels. shaped: bevels, glass band, bumpers. detailed: mirrors,
-    seats, wheel hubs, number plates."""
+    seats, wheel hubs, number plates. A bicycle is a frame of tubes with a lamp in front and
+    a reflector behind; its cranks are a child object, NAME_cranks, spinning on local X.
+    `size` scales the whole build: a bicycle for a rider of height h takes about h / 1.75."""
     pal = pal or scheme("category")
     lvl = _fidelity(fidelity)
     body = rgb or pal["vehicle"]
-    dims = {"car": (1.8, 4.4, 1.45, 0.32), "van": (2.0, 5.2, 2.2, 0.34), "bus": (2.5, 11.0, 3.1, 0.5), "scooter": (0.7, 1.8, 1.15, 0.22)}
+    dims = {"car": (1.8, 4.4, 1.45, 0.32), "van": (2.0, 5.2, 2.2, 0.34), "bus": (2.5, 11.0, 3.1, 0.5), "scooter": (0.7, 1.8, 1.15, 0.22),
+            "bicycle": None}
     if kind not in dims:
         raise ValueError(f"kind must be one of {sorted(dims)}")
+    if kind == "bicycle":
+        return _bicycle(name, location, facing_deg, lvl, body, pal, coll, rear_rgb, size)
     w, l, h, r = dims[kind]
     bev = 0.06 if lvl else 0.0
     p = Parts()
@@ -325,6 +380,8 @@ def vehicle(name, kind="car", location=(0.0, 0.0, 0.0), facing_deg=0.0, fidelity
         p.add("box", (0.5, 0.04, 0.12), (0, l / 2 + 0.1, r * 0.9 + 0.05), pal["trim"], base=True)
         for s in (-1, 1):
             p.add("box", (w * 0.36, 0.5, 0.5), (s * w * 0.22, l * 0.02, r * 0.9 + h * 0.5), pal["fabric"], base=True)
+    if size != 1.0:
+        bmesh.ops.scale(p.bm, vec=(size, size, size), verts=list(p.bm.verts))
     return p.to_object(name, location, facing_deg, coll)
 
 
@@ -1018,6 +1075,77 @@ def drive(obj, path, scene=None):
     return {"vehicle": obj.name, "keys": keys}
 
 
+def pedal(fig, bike, frames, rpm=70.0, lean_deg=25.0, scene=None):
+    """Seat a figure on a K.vehicle bicycle and pedal it over `frames` (first, last): the root
+    is parented to the bike with the pelvis on the saddle and the torso leans `lean_deg`
+    forward. A jointed figure or a mannequin also puts its hands on the bars and keys its legs
+    on the cranks every frame at `rpm`, feet level on the pedals; a capsule or featured rider
+    has no legs, so it only sits and leans (its root tips). A featured rider's arm_L and arm_R
+    hang: pose them onto the bars with K.pose. The bike's cranks spin either way. Drive the
+    bike with K.drive: the rider travels with it and counts with it in K.movers. It clears the
+    figure's earlier keys, a K.walk_path included, so key gestures with K.pose after it. Returns
+    key counts and `overreach_m`, how far the legs fall short of the lowest pedal; above 0,
+    build the bike smaller (size about rider height / 1.75)."""
+    root = bpy.data.objects[fig] if isinstance(fig, str) else fig
+    bike = bpy.data.objects[bike] if isinstance(bike, str) else bike
+    if "crank" not in bike:
+        raise ValueError(f"{bike.name} is not a K.vehicle bicycle")
+    cranks = bpy.data.objects[f"{bike.name}_cranks"]
+    h = root.get("height", 1.75)
+    (sy, sz), (by, bz), (cy, cz, c) = bike["saddle"], bike["bars"], bike["crank"]
+    lean = math.radians(lean_deg)
+    legs = bool(root.get("jointed") or root.get("rigged"))
+    seat = (_JOINTED["pelvis"][1][2] - _JOINTED["pelvis"][0][2] / 2) * h  # pelvis bottom above the root
+    # World-space travel keys would keep playing in bike space once parented: the rider slid off.
+    for obj in (root, *root.children_recursive):
+        obj.animation_data_clear()
+    root.parent = bike
+    root.matrix_parent_inverse = Matrix.Identity(4)
+    if legs:
+        root.location, root.rotation_euler = (0.0, sy, sz - seat), (0.0, 0.0, 0.0)
+    else:
+        # A capsule tips at its feet: move the root back so the seat stays on the saddle.
+        root.location = (0.0, sy + seat * math.sin(lean), sz - seat * math.cos(lean))
+        root.rotation_euler = (lean, 0.0, 0.0)
+    f0, f1 = frames
+    joints = _joints(root)
+    if legs:
+        torso = _JOINTED["torso"][1][2] * h
+        arm = _JOINTED["uparm_L"][1][2] * h - torso
+        sh_y, sh_z = sy - arm * math.sin(lean), sz - seat + torso + arm * math.cos(lean)
+        la = (_JOINTED["uparm_L"][1][2] - _JOINTED["forearm_L"][1][2]) * h
+        lf = (_JOINTED["forearm_L"][1][2] - _BONE_TAILS["forearm_L"][2]) * h
+        # The leg solver bends the knee forward; mirrored, it bends the elbow back.
+        up, fore = _leg_ik(by - sh_y, sh_z - bz, la, lf)
+        arms = {"uparm_L": up - lean, "uparm_R": up - lean, "forearm_L": fore - up, "forearm_R": fore - up}
+        pose(root, f0, torso=lean_deg, head=-0.75 * lean_deg, **{k: math.degrees(v) for k, v in arms.items()})
+        hip, knee, ankle = (_JOINTED[k][1][2] * h for k in ("thigh_L", "shin_L", "foot_L"))
+        lt, ls = hip - knee, knee - ankle
+        hip_z = sz - seat + hip
+    fps = (scene or bpy.context.scene).render.fps
+    over, keys = 0.0, 0
+    for f in range(f0, f1 + 1):
+        a = 2.0 * math.pi * rpm / 60.0 * (f - f0) / fps
+        _key_rot(cranks, f, math.degrees(a))
+        keys += 1
+        if not legs:
+            continue
+        for side, off in (("L", 0.0), ("R", math.pi)):
+            py, pz = cy - c * math.sin(a + off), cz + c * math.cos(a + off)
+            # Ball of the foot on the pedal: the ankle sits behind and above it.
+            x, v = sy - (py + 0.05 * h), hip_z - (pz + ankle)
+            over = max(over, math.hypot(x, v) - (lt + ls))
+            thigh, shin = _leg_ik(x, v, lt, ls)
+            _key_rot(joints[f"thigh_{side}"], f, -math.degrees(thigh))
+            _key_rot(joints[f"shin_{side}"], f, -math.degrees(shin - thigh))
+            _key_rot(joints[f"foot_{side}"], f, math.degrees(shin))  # sole level
+    for obj in [cranks, root, *(j for j in joints.values() if isinstance(j, bpy.types.Object))]:
+        for fc in B.fcurves(obj):
+            for kp in fc.keyframe_points:
+                kp.interpolation = "LINEAR"
+    return {"figure": root.name, "bike": bike.name, "frames": [f0, f1], "keys": keys, "overreach_m": round(max(0.0, over), 3)}
+
+
 # -- budgets ---------------------------------------------------------------------------------
 
 # Targets per density level (references/levels.md explains each row). heroes are movers the
@@ -1058,19 +1186,19 @@ def elements(scene=None):
     """Scene elements as a viewer counts them: every tagged mesh, with a figure counted once
     (its root) and not once per limb, arm or held prop."""
     sc = scene or bpy.context.scene
-    return [o.name for o in sc.objects if o.get(B.TAG) and o.visible_get() and not _in_figure(o)
+    return [o.name for o in sc.objects if o.get(B.TAG) and o.visible_get() and not _in_figure(o) and not o.get("vehicle_part")
             and (o.type == "MESH" or o.get("figure") or o.get("jointed"))]
 
 
 def movers(scene=None):
     """(heroes, extras): animated objects that move on their own, limbs, riders parented to
-    a vehicle, cameras and rigs excluded."""
+    a vehicle, a bicycle's cranks, cameras and rigs excluded."""
     sc = scene or bpy.context.scene
     heroes, extras = [], []
     for o in sc.objects:
         if not o.get(B.TAG) or not o.visible_get() or o.name.startswith(("CAM_", "RIG_", "NULL_", "CRV_")):
             continue
-        if _in_figure(o):
+        if _in_figure(o) or o.get("vehicle_part"):
             continue
         if o.parent is not None and _animated(o.parent):
             continue  # a rider or a carried prop travels with its mover and counts with it

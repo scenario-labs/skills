@@ -1,7 +1,7 @@
 # CI and releases
 
-Release mechanics and CI pinning. [AGENTS.md](../AGENTS.md) "Pull requests and releases" states
-which commit types release and which files release-please owns.
+Release mechanics, the checks `pnpm validate` runs, and CI. [AGENTS.md](../AGENTS.md) "Pull requests
+and releases" states which commit types release and which files release-please owns.
 
 ## Releases
 
@@ -53,6 +53,59 @@ which commit types release and which files release-please owns.
   its GitHub release move with it. The next changelog then replays every commit since
   `bootstrap-sha`.
 
+## Checks
+
+Each command is defined once in `package.json`. Most run a script in `scripts/`; `format` and
+`format:check` invoke prettier directly. The pre-commit hook runs `pnpm validate`, and CI runs each
+of its checks as a separate step:
+
+- **`pnpm style`**: house style, the body budget, the `AGENTS.md` size cap, and the fan-out,
+  table-cell, sentence-length, and wording notices.
+  - It counts body words under `LC_ALL=C.UTF-8`. GNU `wc` under `LC_ALL=C` skips a word made only of
+    non-ASCII characters (a lone `→`), so an unpinned count drifted between machines.
+  - It prints a notice, never a failure, once `AGENTS.md` passes 30 KiB, ahead of the 32 KiB cap.
+- **`pnpm format:check`**: prettier.
+- **`pnpm sync:agent-commands:check`**: the command links and metadata (see
+  [agent-commands.md](agent-commands.md)).
+- **`pnpm skill-files`**: supporting files next to a SKILL.md are linked and runnable, a skill's own
+  `README.md` excepted.
+- **`pnpm lint:py`**: ruff's pyflakes rules over every Python script, configured in `ruff.toml`, the
+  vendored dev skills excluded.
+- **`pnpm groupings`**: every skill sits in a `skills.sh.json` grouping, every listed skill exists,
+  and the file satisfies the published skills.sh schema.
+- **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
+- **`pnpm stamp:check`**: every SKILL.md carries `metadata.version`, no newer than `version.txt`.
+- **`pnpm readme`**: the README Skills section mirrors `skills.sh.json`, one subsection per grouping
+  in the same order with the same title, description, and rows, and every skill has exactly one
+  non-stale row. It also checks the install commands (see AGENTS.md "Adding a skill").
+- **`pnpm words:check`**: `project-words.txt` is sorted and deduplicated.
+- **`pnpm spell`**: cspell.
+- **`pnpm spec`**: spec validation.
+
+A commit hook runs with git's location variables (`GIT_DIR`, `GIT_INDEX_FILE`, and the rest)
+pointing at this repository, and hook steps read the index through them.
+
+- Never unset them for the whole hook.
+- A tool a step runs that issues its own git commands must run without them, as
+  `scripts/validate-skills.sh` does for uvx: from a linked worktree, uv's inherited git commands
+  reset the worktree's branch and set `core.bare` on this repository.
+
+### Formatting
+
+- prettier enforces formatting with the config committed in `.prettierrc.json`, so the CLI and the
+  VS Code extension agree. `pnpm format` rewrites the repo; `pnpm format:check` only verifies.
+- Coverage: everything prettier can parse (markdown, JSON, YAML, JS/TS), plus shell scripts via
+  `prettier-plugin-sh`, which formats with mvdan-sh, the engine behind shfmt. `.prettierignore`
+  excludes generated files and the vendored dev skills.
+- Markdown prose wraps at 100 columns (`proseWrap: "always"`), so a GitHub diff shows the changed
+  lines rather than one paragraph-long line.
+- SKILL.md files and `.claude/` agents and commands also set `embeddedLanguageFormatting: "off"`. It
+  is the one setting that stops prettier folding a frontmatter `description` across lines, so the
+  description stays on the one line `pnpm style` reads and every skill has shipped with. Their
+  fenced code is therefore left as written.
+- A merged commit that only reformats, like the one that introduced the wrap, goes in
+  `.git-blame-ignore-revs` so blame skips it.
+
 ## CI
 
 - `script-tests` runs once on `ubuntu-24.04` and once on `ubuntu-26.04`, which install ffmpeg 6.1
@@ -101,6 +154,9 @@ which commit types release and which files release-please owns.
     not the version CI installs.
   - It skips release-please-action and the `release-please` CLI, which move by hand together: the
     `package.json` pin must stay the version the action bundles.
+  - `pr-name-linter` skips its PRs. A group holding one dependency gets a title past the
+    120-character header cap, and `dependabot.yml` sets only the prefix. Its commit messages stay
+    short and still pass the `commitlint` job.
 - The kinetic music-video scaffold uses `npm ci` with its shipped package lock. Keep `opentype.js`
   on 1.x while the engine's import map names `dist/opentype.module.js`. Version 2 renamed that
   module to `dist/opentype.mjs`. Dependabot ignores major updates for this dependency until the

@@ -71,10 +71,10 @@ function repo(t) {
   git("commit", "-q", "-m", "base");
   // Throws on a non-zero exit, so every passing test also proves the notice
   // never fails the check.
-  const style = () =>
+  const style = (extra = {}) =>
     execFileSync(join(root, "scripts/check-style.sh"), {
       cwd: root,
-      env,
+      env: { ...env, ...extra },
       encoding: "utf8",
       stdio: "pipe",
     });
@@ -304,6 +304,73 @@ test("accepts AGENTS.md of exactly 32 KiB", (t) => {
   const { write, style } = repo(t);
   write("AGENTS.md", "x".repeat(32768));
   assert.ok(!style().includes(AGENTS_CAP));
+});
+
+const AGENTS_NOTICE = "Notice (not a failure): AGENTS.md is";
+
+test("notices AGENTS.md past 30 KiB without failing", (t) => {
+  const { write, style } = repo(t);
+  write("AGENTS.md", "x".repeat(30721));
+  const out = style();
+  assert.ok(out.includes(`${AGENTS_NOTICE} 30721 bytes`), out);
+  assert.ok(!out.includes(AGENTS_CAP), out);
+});
+
+test("stays quiet for AGENTS.md of exactly 30 KiB", (t) => {
+  const { write, style } = repo(t);
+  write("AGENTS.md", "x".repeat(30720));
+  assert.ok(!style().includes(AGENTS_NOTICE));
+});
+
+test("fails past 32 KiB without the early notice", (t) => {
+  const { write, style } = repo(t);
+  write("AGENTS.md", "x".repeat(32769));
+  assert.throws(style, (error) => {
+    assert.ok(!error.stdout.includes(AGENTS_NOTICE), error.stdout);
+    return true;
+  });
+});
+
+const SKILL = "skills/scenario-demo/SKILL.md";
+const skill = (body) =>
+  `---\nname: scenario-demo\ndescription: Use when testing.\nlicense: MIT\n---\n\n${body}\n`;
+const WORD_CAP = "over the 2500-word hard cap";
+
+test("accepts a body of exactly 2500 words", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(words(2500)));
+  assert.ok(!style().includes(WORD_CAP));
+});
+
+test("fails a body of 2501 words", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(words(2501)));
+  assert.throws(style, (error) => {
+    assert.ok(
+      error.stdout.includes(`${SKILL}: body is 2501 words`),
+      error.stdout,
+    );
+    return true;
+  });
+});
+
+// GNU wc under LC_ALL=C skips a word made only of non-ASCII bytes, so this
+// body read 2500 words there and 2501 on macOS before the count pinned a locale.
+test("counts a non-ASCII word whatever the caller's locale", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, skill(`${words(2500)} \u2192`));
+  for (const LC_ALL of ["C", "C.UTF-8"]) {
+    assert.throws(
+      () => style({ LC_ALL }),
+      (error) => {
+        assert.ok(
+          error.stdout.includes(`${SKILL}: body is 2501 words`),
+          error.stdout,
+        );
+        return true;
+      },
+    );
+  }
 });
 
 test("fails on an em dash in SUPPORT.md", (t) => {
