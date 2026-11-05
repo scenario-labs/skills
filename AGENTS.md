@@ -423,8 +423,8 @@ and command lines.
   - CI installs none of them directly: it installs the hashed lock `tests/requirements-ci.txt`, and
     Blender's job its own. After changing a suite's requirements, regenerate the locks that cover it
     ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci) has the commands).
-- `pnpm test` runs the command, plugin-manifest, style, readme, and test-runner regression suites as
-  well as the shipped-script suites.
+- `pnpm test` runs the command, plugin-manifest, style, hook, readme, and test-runner regression
+  suites as well as the shipped-script suites.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the

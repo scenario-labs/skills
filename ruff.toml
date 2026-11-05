@@ -1,7 +1,9 @@
 # Lint for every Python script the skills ship, run by `pnpm lint:py` (AGENTS.md, "Repo tooling").
-# Pyflakes rules only: unused imports and variables, undefined names, broken f-strings. Formatting
-# and style stay with each script's author.
+# Pyflakes rules (unused imports and variables, undefined names, broken f-strings), plus SIM115: a
+# file opened outside a `with` block, which the code-quality bot kept finding in review. A handle
+# no `with` can hold, such as a lock returned to its caller, carries `# noqa: SIM115` and the reason.
+# Formatting and style stay with each script's author.
 extend-exclude = [".agents"] # vendored dev skills, refreshed by `npx skills update`
 
 [lint]
-select = ["F"]
+select = ["F", "SIM115"]

@@ -34,6 +34,7 @@ import os
 import re
 import shutil
 import sys
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.dirname(HERE)
@@ -100,7 +101,7 @@ def _copy_tree(src, dst, exts):
                 continue
             s = os.path.join(dirpath, fn)
             d = os.path.normpath(os.path.join(dst, rel, fn))
-            if os.path.isfile(d) and open(s, "rb").read() == open(d, "rb").read():
+            if os.path.isfile(d) and Path(s).read_bytes() == Path(d).read_bytes():
                 continue
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copyfile(s, d)
