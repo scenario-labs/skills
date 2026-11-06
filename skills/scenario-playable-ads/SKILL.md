@@ -39,9 +39,9 @@ archetype guide comes from one build that passed the 19 base checks.
 
 Requirements: a local shell, Python 3 with Pillow, numpy, scipy, fontTools and brotli; Playwright
 for Python with Chromium; ffmpeg. Install with
-`pip install pillow numpy scipy fonttools brotli playwright` then `playwright install chromium`;
-check with `ffmpeg -version`. The scripts, runtime and template sit in this skill's `scripts/` and
-`assets/` folders, so the agent needs file access to the skill.
+`pip install "pillow>=13,<14" "numpy>=2.5,<3" "scipy>=1.18,<2" "fonttools>=4.60,<5" "brotli>=1.1,<2" "playwright>=1.64,<2"`
+then `playwright install chromium`; check with `ffmpeg -version`. The scripts, runtime and template
+sit in this skill's `scripts/` and `assets/` folders, so the agent needs file access to the skill.
 
 Connection, uploads and the core loop: the `scenario` skill. Image edits: `scenario-image`. Sheets
 and cut-outs: `scenario-game-assets`. SFX and music: `scenario-audio`. Image-to-3D: `scenario-3d`.

@@ -106,7 +106,8 @@ import {
 window.THREE = { WebGLRenderer, Scene, PerspectiveCamera, /* ...the same list... */ LinearFilter };
 ```
 
-Build (from the project, after `npm ci --prefix vendor`):
+Build from the project. Install first: `npm install --ignore-scripts --prefix vendor` on the first
+build, which writes the lock file, then `npm ci --ignore-scripts --prefix vendor`.
 
 ```bash
 ESB=$(ls vendor/node_modules/@esbuild/*/bin/esbuild | head -1)
@@ -174,4 +175,4 @@ Keep the music short and images small: a 3D ad has little room left.
 - The bots can't see the 3D scene. Expose what they need in `qa()` (the best lateral line, whether a
   boost is good now) and the client-px positions of the 2D controls.
 - Archive rule: keep `vendor/package.json`, the lock file and the built `src/three.min.js`; drop
-  `node_modules` (38 MB; `npm ci` restores it).
+  `node_modules` (38 MB; `npm ci --ignore-scripts` restores it).
