@@ -43,8 +43,13 @@ Each command is defined once in `package.json`. Most run a script in `scripts/`;
 `format:check` invoke prettier directly. The pre-commit hook runs `pnpm validate`, and CI runs each
 of its checks as a separate step:
 
-- **`pnpm style`**: house style, the body budget, the `AGENTS.md` size cap, and the fan-out,
-  table-cell, sentence-length, and wording notices.
+- **`pnpm style`**: house style, the frontmatter contract, the body budget, the `AGENTS.md` size
+  cap, and the near-cap, fan-out, table-cell, sentence-length, and wording notices.
+  - It fails a frontmatter key other than `name`, `description`, and `license: MIT`, and a
+    description of 500 characters or more (past 1024 for expert tools). It counts code points, as
+    `pnpm groupings` does, and parses with `yaml`, so it needs `pnpm install` first.
+  - It prints a notice, never a failure, for a body within 100 words of the 2500-word cap: two PRs
+    that each pass can still push a skill past it together.
   - It counts body words under `LC_ALL=C.UTF-8`. GNU `wc` under `LC_ALL=C` skips a word made only of
     non-ASCII characters (a lone `→`), so an unpinned count drifted between machines.
   - It prints a notice, never a failure, once `AGENTS.md` passes 30 KiB, ahead of the 32 KiB cap.
@@ -53,24 +58,35 @@ of its checks as a separate step:
   [agent-commands.md](agent-commands.md)).
 - **`pnpm skill-files`**: supporting files next to a SKILL.md are linked and runnable, a skill's own
   `README.md` excepted.
-- **`pnpm lint:py`**: ruff's pyflakes rules over every Python script, configured in `ruff.toml`, the
-  vendored dev skills excluded.
+- **`pnpm lint:py`**: ruff over every Python script, configured in `ruff.toml`, the vendored dev
+  skills excluded.
+  - The pyflakes rules, plus SIM115 for a file opened outside a `with` block. A handle no `with` can
+    hold, such as a lock returned to its caller, carries `# noqa: SIM115` and the reason.
+  - S110 for an `except` whose body is only `pass`. A comment beside the `pass` does not satisfy it:
+    a deliberate one carries `# noqa: S110` and the reason on the `except` line.
+  - Expert scripts that predate S110 keep a per-file waiver with their count of hits, never a
+    per-folder one, so a new file is checked. `ruff.toml` says how to review and recount them.
 - **`pnpm groupings`**: every skill sits in a `skills.sh.json` grouping, every listed skill exists,
   and the file satisfies the published skills.sh schema.
 - **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
+- **`pnpm bugbot:check`**: `.cursor/BUGBOT.md` is a regular file identical to `REVIEW.md`. Cursor
+  Bugbot reads a symlink as its target path, so the copy is generated: edit `REVIEW.md`, never the
+  copy, and run `pnpm bugbot` (the pre-commit hook does).
 - **`pnpm readme`**: the README Skills section mirrors `skills.sh.json`, one subsection per grouping
   in the same order with the same title, description, and rows, and every skill has exactly one
   non-stale row. It also checks the install commands (see AGENTS.md "Adding a skill").
 - **`pnpm words:check`**: `project-words.txt` is sorted and deduplicated.
 - **`pnpm spell`**: cspell.
-- **`pnpm spec`**: spec validation.
+- **`pnpm spec`**: spec validation of every skill, in one `uv run` (a `uvx` call per skill took over
+  100 s). `SPEC_STAGED_ONLY=1`, set by the pre-commit hook, limits it to skills with staged changes
+  and skips uv when there are none.
 
 A commit hook runs with git's location variables (`GIT_DIR`, `GIT_INDEX_FILE`, and the rest)
 pointing at this repository, and hook steps read the index through them.
 
 - Never unset them for the whole hook.
 - A tool a step runs that issues its own git commands must run without them, as
-  `scripts/validate-skills.sh` does for uvx: from a linked worktree, uv's inherited git commands
+  `scripts/validate-skills.sh` does for uv: from a linked worktree, uv's inherited git commands
   reset the worktree's branch and set `core.bare` on this repository.
 
 ### Formatting
@@ -95,6 +111,9 @@ pointing at this repository, and hook steps read the index through them.
   and 8.0 from apt.
   - Each runner is the coverage for one ffmpeg version, so both stay named, never `ubuntu-latest`.
   - When a newer LTS runner ships, add it as a new entry rather than renaming an existing one.
+  - The runner's apt mirror sometimes stalls for half an hour, so each leg caches its ffmpeg .debs.
+    The key hashes the exact package list, so an Ubuntu update downloads only what changed.
+  - The job stops after 20 minutes, against a normal run under 11, so a stall fails fast.
   - Never hardcode a count derived from a probed duration in a test. ffmpeg 8 reports an MP3's
     gapless duration, while 6.1 and 7.1 include the encoder padding.
   - The `ubuntu-24.04` leg runs with `COVERAGE=1` and posts the Python table to its job summary. The

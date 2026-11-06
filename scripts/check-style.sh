@@ -66,7 +66,7 @@ grep_status=0
 # CODE_OF_CONDUCT.md is excluded on purpose: it is the published Contributor
 # Covenant text kept byte-identical to its source, like the vendored dev skills.
 # tests/ is searched for the evidence READMEs that skills link as review records.
-em_dash_hits=$(grep -rn --include='*.md' -e '—' skills README.md INSTALL.md AGENTS.md CONTRIBUTING.md SECURITY.md SUPPORT.md docs tests .github .claude/commands .claude/agents) || grep_status=$?
+em_dash_hits=$(grep -rn --include='*.md' -e '—' skills README.md INSTALL.md AGENTS.md REVIEW.md CONTRIBUTING.md SECURITY.md SUPPORT.md docs tests .github .claude/commands .claude/agents) || grep_status=$?
 if [ "$grep_status" -eq 0 ]; then
   echo 'Em dashes are forbidden (house style). Each hit below is path:line:column (column counts from 1) with the offending em dash (U+2014) wrapped in >>> <<<; a leading "- " list bullet is an ASCII hyphen, never the match.'
   annotate_em_dashes "$em_dash_hits"
@@ -114,6 +114,13 @@ if [ -n "$install_hits" ]; then
   fail=1
 fi
 
+# 1000-word target, 2500-word hard cap; AGENTS.md "Authoring contract" carries
+# the why. The notice exists because two PRs that each pass can break main
+# together: #320 and #321 took skills/scenario/SKILL.md to 2548 words.
+word_cap=2500
+word_notice_at=2400
+near_cap_hits=""
+
 for f in $skill_files; do
   # Prettier single-quotes a description that itself holds double quotes.
   grep -Eq "^description: [\"']?Use when" "$f" || {
@@ -121,17 +128,85 @@ for f in $skill_files; do
     fail=1
   }
 
-  # 1000-word target, 2500-word hard cap; AGENTS.md "Authoring contract" carries
-  # the why. Body is everything after the closing frontmatter ---.
+  # Body is everything after the closing frontmatter ---.
   # The locale is pinned so a local count equals CI's: under LC_ALL=C, GNU wc
   # skips a word made only of non-ASCII bytes (a lone arrow), and BSD wc does not.
   body=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f")
   words=$(printf '%s\n' "$body" | LC_ALL=C.UTF-8 wc -w | tr -d ' ')
-  if [ "$words" -gt 2500 ]; then
-    echo "$f: body is $words words, over the 2500-word hard cap"
+  if [ "$words" -gt "$word_cap" ]; then
+    echo "$f: body is $words words, over the $word_cap-word hard cap"
     fail=1
+  elif [ "$words" -ge "$word_notice_at" ]; then
+    near_cap_hits="${near_cap_hits}  $f: $words words
+"
   fi
 done
+
+if [ -n "$near_cap_hits" ]; then
+  echo "Notice (not a failure): a skill body is within $((word_cap - word_notice_at)) words of the $word_cap-word cap. Two changes that each pass can still break main together, so trim before adding, per AGENTS.md \"Frontmatter and budget\". Bodies found:"
+  printf '%s' "$near_cap_hits"
+fi
+
+# The frontmatter contract, AGENTS.md "Frontmatter and budget": name,
+# description, and license: MIT, nothing else, and a description under 500
+# characters. Expert tools follow the spec's 1024 (docs/expert-tools.md).
+# skills-ref checks only 1024, for every skill. Lengths count code points, as
+# scripts/check-groupings.mjs does. It runs from the repository root so `yaml`
+# resolves from node_modules; when it cannot run or parse, it fails.
+frontmatter_check=$(
+  cat <<'EOF'
+import { readFileSync } from "node:fs";
+import { parse } from "yaml";
+import { listSkills } from "./scripts/lib/skills.mjs";
+
+const KEYS = ["name", "description", "license"];
+const problems = [];
+for (const skill of listSkills()) {
+  const file = `${skill.dir}/SKILL.md`;
+  const text = readFileSync(file, "utf8");
+  const block = text.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
+  let frontmatter;
+  try {
+    frontmatter = block ? parse(block[1]) : null;
+  } catch (error) {
+    problems.push(`${file}: frontmatter is not valid YAML (${error.message.split("\n")[0]})`);
+    continue;
+  }
+  if (frontmatter === null || typeof frontmatter !== "object" || Array.isArray(frontmatter)) {
+    problems.push(`${file}: no frontmatter mapping between --- lines`);
+    continue;
+  }
+  for (const key of Object.keys(frontmatter)) {
+    if (!KEYS.includes(key)) {
+      problems.push(`${file}: frontmatter key "${key}"; only ${KEYS.join(", ")} are allowed`);
+    }
+  }
+  if (frontmatter.license !== "MIT") {
+    problems.push(`${file}: frontmatter needs license: MIT`);
+  }
+  const { description } = frontmatter;
+  if (typeof description !== "string") {
+    problems.push(`${file}: frontmatter needs a description string`);
+    continue;
+  }
+  const length = [...description].length;
+  if (skill.expert && length > 1024) {
+    problems.push(`${file}: description is ${length} characters, over the spec's 1024`);
+  } else if (!skill.expert && length >= 500) {
+    problems.push(`${file}: description is ${length} characters; a core skill's stays under 500`);
+  }
+}
+for (const problem of problems) console.log(problem);
+process.exit(problems.length > 0 ? 1 : 0);
+EOF
+)
+frontmatter_status=0
+frontmatter_out=$(node --input-type=module -e "$frontmatter_check" 2>&1) || frontmatter_status=$?
+if [ "$frontmatter_status" -ne 0 ]; then
+  echo 'Frontmatter holds name, description, and license: MIT only, and a description under 500 characters (1024 for expert tools), per AGENTS.md "Frontmatter and budget". Found:'
+  printf '%s\n' "$frontmatter_out" | sed 's/^/  /'
+  fail=1
+fi
 
 # Codex reads 32 KiB of AGENTS.md by default and silently drops the rest; an
 # untrusted checkout ignores the .codex/config.toml that could raise it.

@@ -18,11 +18,10 @@ skyboxes, 3D, and custom models, for games, entertainment, and any creative vert
 
 ## Quick start
 
-- `pnpm install`: once after cloning. It installs the git hooks.
+- `pnpm install`: once after cloning.
 - `pnpm format && pnpm validate`: before committing. `format` rewrites files locally; `validate`
   runs the checks CI runs, `format:check` included.
-- `pnpm test`: after touching a script. Through uv, each Python suite gets the packages its
-  `tests/<name>/requirements.txt` lists.
+- `pnpm test`: after touching a script.
 
 - `/skills:validate <name>` (`$skills-validate` in Codex): the application test, before merging a
   skill change.
@@ -75,8 +74,7 @@ publicly shareable language only.
 CI enforces the mechanical parts on every push and PR: the spec rules through
 [`skills-ref validate`](https://github.com/agentskills/agentskills/tree/main/skills-ref) (the Agent
 Skills reference validator), plus house-style greps, prettier, cspell, and supporting-file checks.
-Run the content checks locally with `pnpm run validate`; commitlint checks commit messages and PR
-titles separately. Spec-validate one skill with:
+Spec-validate one skill with:
 
 ```bash
 uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
@@ -161,7 +159,10 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
   - Lane tables carry capabilities (`img2video`), not query strings.
   - `dry_run` still prices the exact payload: `recommend`'s figures are modeled, and one quoted 48.2
     CU where 55 was billed.
-  - Leave the `next_step` discipline to the `scenario` skill and reference it.
+  - Leave the `next_step` discipline to the `scenario` skill and reference it. A worked example runs
+    its loop whole: `model_schema_get` before `model_run`, `dry_run` only once inputs exist, jobs in
+    flight within the task's count (after a `parallel-custom-jobs` 429, within its `actionLimit`),
+    `jobs_wait` until no `pending_job_ids`, a stop on `no_match`.
 
 ### Scope and surface
 
@@ -203,6 +204,11 @@ uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skil
   dependencies (issue #49 tracks the upstream work), so this sentence is the mechanism. It names no
   install command; `pnpm style` fails on one in a skill
   ([why](docs/decisions.md#no-install-commands-in-skills)).
+- Every ask, approval, and paid step says what happens unattended: the task's answer, else a named
+  default or stop and report.
+  - Unattended, billed work starts only inside a budget or count the task states; otherwise report
+    the price and stop.
+  - Never claim a confirmation the host or server does not enforce: the agent then spends unasked.
 - No disclosure marks: a skill never tells an agent to burn AI-disclosure marks, badges, or
   compliance overlays into generated content, by default or as an option. The skills serve
   professionals who own their distribution compliance; the pipeline does not decide it for them.
@@ -225,6 +231,8 @@ These rules cover skill bodies and references, scripts, commit messages, PR text
   serves, and link to a rule in this file rather than restate it.
 - Before cutting a passage as a duplicate, compare the two item by item. Topic overlap is not
   content overlap, and nothing tests whether a fact that used to be present still is.
+- Changing a rule: search the skill's folder (and the `scenario` skill, for a shared rule) for the
+  topic, and update or delete every other statement of it in the same PR.
 - A comment records only what the code cannot say: a constraint, a trap that already bit someone, a
   why not visible in the lines below. Never narrate the next line. A stale comment costs more than a
   missing one.
@@ -317,8 +325,7 @@ and command lines.
 
 ### Setup
 
-- After cloning, run `pnpm install`. It installs commitlint, cspell, prettier, and the husky git
-  hooks.
+- `pnpm install` installs commitlint, cspell, prettier, and the husky git hooks.
 - The prerequisites are listed in [CONTRIBUTING.md](CONTRIBUTING.md#setup). Without uv, every commit
   fails.
 - In Claude Code, a SessionStart hook (`.claude/hooks/ensure-husky.sh`) runs it when the hooks are
@@ -331,15 +338,19 @@ and command lines.
 - Commit messages and PR titles follow Conventional Commits. commitlint (`commitlint.config.js`)
   enforces them in three places: the husky `commit-msg` hook, a commitlint job on PR commits, and
   the `pr-name-linter` workflow on the PR title.
-- Valid scopes: the skill directory names (derived automatically from `skills/`) plus `skills`,
-  `agents`, `ci`, `deps`, `docs`, and `tooling`.
+- Valid scopes: the skill directory names (derived from `skills/`) plus `skills`, `agents`, `ci`,
+  `deps`, `docs`, and `tooling`.
 - The husky `pre-commit` hook runs, in order:
   1. `pnpm words:sort`: sorts `project-words.txt` in place, re-staging it only when it is part of
      the commit.
   2. `pnpm manifest`: regenerates `.claude-plugin/marketplace.json` from `skills.sh.json` and the
      skill folders, and stages the copy rendered from their staged versions, so unstaged moves and
      edits never reach the commit.
-  3. `pnpm validate`: the checks CI runs as separate steps.
+  3. `pnpm bugbot`: the same for `.cursor/BUGBOT.md`, a copy of `REVIEW.md`.
+  4. `pnpm validate`: the checks CI runs as separate steps, spec validation on staged skills only.
+- The husky `post-commit` hook runs `scripts/sync-generated-index.mjs`. A path-limited commit
+  (`git commit <paths>`) stages those files in a temporary index, and this step copies them into the
+  real one.
 - Read [docs/ci-and-releases.md](docs/ci-and-releases.md#checks) when a check fails unexpectedly, or
   before changing a check script, a hook step, or the prettier config. It lists what each check
   covers, the prettier settings, and the git variables a hook step must not leak.
@@ -361,24 +372,25 @@ and command lines.
   outcome bullet when it leads one), and any goal it leads or serves. Add any sibling it names that
   a command lacks, then update the "N skills." counts.
 - An expert skill joins its family README's install command.
-- Never edit `.claude-plugin/marketplace.json`: the pre-commit hook regenerates it from
-  `skills.sh.json`.
 - How skills.sh, the installer picker, and the install commands work:
   [docs/listing-and-install.md](docs/listing-and-install.md).
 
 ### Pull requests and releases
 
-- PRs are squash-merged, so the PR title becomes the commit header on `main`. Shared Scenario PR
-  skills, vendored like the Anthropic dev skills (pinned in `skills-lock.json`, never edited here,
-  refreshed with `npx skills update`), handle the routine:
+- PRs are squash-merged, so the PR title becomes the commit header on `main`: title a new PR with
+  it, under 72 characters (commitlint's cap is 120). Shared Scenario PR skills, vendored like the
+  Anthropic dev skills (pinned in `skills-lock.json`, never edited here, refreshed with
+  `npx skills update`), handle the routine:
   - `/pr-squash-message` drafts the squash message;
   - `/pr-summary` refreshes the PR body;
   - `/pr-handle-comments` answers review threads.
 - `/skills:pr-handle <PR>` (`.claude/commands/skills/`) handles a whole PR: it adds the fork
   quarantine, the discovery and script audits, and the validation decision to `/pr-handle-comments`.
+- A PR body follows the template, "What and why" in two sentences at most. It links the report
+  `/skills:validate` posts as a PR comment.
 - Update a pushed PR branch by merging its base into it. Never rebase or force-push a pushed branch.
-- `/skills:validate <name>` (`.claude/commands/skills/`) runs the application test for one skill and
-  reports it to the PR; see Validation and testing.
+- A branch built on an open PR's branch targets that branch, never `main`, and its body names the
+  parent. After the parent lands, merge `main` into it.
 - release-please cuts releases (`.github/workflows/release-please.yml`, configured in
   `release-please-config.json`).
   - feat, fix, docs, perf, and revert commits squash-merged to `main` land in the next release,
@@ -403,26 +415,31 @@ and command lines.
 - The `skill-tester` agent in the same directory is the clean-room runner `/skills:validate` spawns
   when a separate process cannot reach the MCP server. It is not for ordinary work.
 
+### Review guidelines
+
+Follow [REVIEW.md](REVIEW.md): what is Important, how to report, and what not to report. Edit it,
+never its copy `.cursor/BUGBOT.md`.
+
 ## Validation and testing
 
-- `skills-ref validate` must pass for every published skill before any commit: the pre-commit hook
-  and CI both run it via `pnpm spec`.
-- Every script shipped with a core skill has a test suite in `tests/<name>/` (see Layout). Expert
-  tools are exempt: one suite per family ([docs/expert-tools.md](docs/expert-tools.md)). Python
-  scripts use stdlib `unittest` (files named `test_*.py`), TypeScript scripts vitest (files named
-  `*.test.ts`).
+- `skills-ref validate` must pass for every published skill: CI runs it on every skill via
+  `pnpm spec`, the pre-commit hook on the skills a commit changes.
+- Python suites use stdlib `unittest` (`test_*.py`), TypeScript ones vitest (`*.test.ts`).
+- Unless the user asks, a shipped script never overwrites a file it did not create (its inputs, a
+  project file, the user's saved scene) and keeps the user's document open. It writes a new file or
+  folder; its suite tests that.
+- Scripts run on macOS, Linux, and Windows unless the skill names an OS: text opened as UTF-8, a
+  fallback for every POSIX-only call, shell under Bash 3.2, the oldest Python documented for it.
 - `pnpm test` runs every suite and fails when a core skill's script has no suite; CI runs it on
   every push and PR, on two ffmpeg versions ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
-  It is not in the pre-commit hook, since suites may need system tools such as ffmpeg, so run it by
-  hand when touching a script.
+  It is not in the pre-commit hook, since suites may need system tools such as ffmpeg.
 - A `tests/<name>/requirements.txt` declares extra Python dependencies.
   - Locally, `pnpm test` runs that suite under uv with them on the `python3` on PATH, and falls back
     to the bare `python3` only when uv is missing.
-  - CI installs none of them directly: it installs the hashed lock `tests/requirements-ci.txt`, and
-    Blender's job its own. After changing a suite's requirements, regenerate the locks that cover it
-    ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci) has the commands).
-- `pnpm test` runs the command, plugin-manifest, style, readme, and test-runner regression suites as
-  well as the shipped-script suites.
+  - CI installs only hashed locks: after changing a suite's requirements, regenerate the locks
+    covering it ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
+- `pnpm test` runs the command, plugin-manifest, Bugbot-copy, index-sync, style, hook, readme, and
+  test-runner regression suites as well as the shipped-script suites.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the
@@ -453,7 +470,7 @@ and command lines.
 
 ## Conventions
 
-- PRs target `main`. Commit types and squash merges: see Repo tooling.
+- PRs target `main`, unless stacked; see Repo tooling.
 - `CLAUDE.md` is a symlink to this file, so Claude Code and Codex read the same conventions.
 - This file stays under 32 KiB, all Codex reads by default (`pnpm style` fails past it, and prints a
   notice past 30 KiB). Content only some tasks need goes in `docs/`, behind a pointer saying when to

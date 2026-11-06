@@ -43,6 +43,7 @@ import os
 import re
 import shutil
 import time
+from pathlib import Path
 from typing import List
 
 __version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor after the U5 blind grade)
@@ -1609,7 +1610,7 @@ def apply_ini_plan(config_dir, plan, backup_dir=None, dry_run=False):
     backup_dir = backup_dir or os.path.join(os.path.dirname(os.path.abspath(config_dir)), "Saved", "AgentBackups")
     for fname, entries in plan.items():
         path = os.path.join(config_dir, fname)
-        text = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+        text = Path(path).read_text(encoding="utf-8") if os.path.exists(path) else ""
         new = text
         rows = []
         for sec, key, val in entries:
