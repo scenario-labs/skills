@@ -386,6 +386,7 @@ Guruz
 Gwizz
 HDRI
 HDRP
+HFOV
 HLOD
 HLODs
 HLSL
@@ -487,6 +488,7 @@ Lerping
 Leszek
 Lfen
 Lfoot
+Lilita
 Lombardo
 Lookdev
 Loomis
@@ -666,6 +668,7 @@ RTBF
 RTGI
 RTPC
 Raffaele
+Rajdhani
 Rakan
 Ratti
 Rawb
@@ -716,6 +719,7 @@ SDFGI
 SMAA
 SMRT
 SPIR
+SRGB
 SSAO
 SSGI
 SSIL
@@ -897,6 +901,7 @@ aniso
 anthropics
 apad
 appleid
+applovin
 archs
 areaa
 areab
@@ -939,6 +944,7 @@ coveragerc
 criss
 csound
 cycs
+dapi
 dargelos
 davide
 debuff
@@ -1073,13 +1079,16 @@ mayapy
 mazlov
 mcpt
 mikk
+mintegral
 misaligns
 mispredict
 misregistration
 mixamo
 mlsd
 mocap
+moloco
 movflags
+mraid
 mscorlib
 mtex
 mtoa
@@ -1093,6 +1102,7 @@ nasolabial
 nativization
 ngons
 nlapinski
+nobuy
 noice
 noqa
 nori
@@ -1113,6 +1123,7 @@ ordinally
 oris
 outpainting
 outsourcers
+pangle
 pano
 pcall
 pdftoppm
@@ -1204,6 +1215,7 @@ rileyb
 riso
 risograph
 roas
+rrect
 scipy
 scons
 scroller
@@ -1211,6 +1223,7 @@ sdfgi
 shengshu
 shfmt
 shiboken
+shmup
 sleitnick
 slerp
 smin
@@ -1232,6 +1245,7 @@ symbolicated
 symbolicates
 taiko
 tampo
+tappable
 texel
 texturer
 theodox

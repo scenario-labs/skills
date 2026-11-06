@@ -41,7 +41,8 @@
         "scenario-blender",
         "scenario-patina-retexture",
         "scenario-orbit-views",
-        "scenario-walkable-room"
+        "scenario-walkable-room",
+        "scenario-playable-ads"
       ]
     },
     {

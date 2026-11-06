@@ -59,7 +59,8 @@
         "./skills/scenario-blender",
         "./skills/scenario-patina-retexture",
         "./skills/scenario-orbit-views",
-        "./skills/scenario-walkable-room"
+        "./skills/scenario-walkable-room",
+        "./skills/scenario-playable-ads"
       ]
     },
     {
