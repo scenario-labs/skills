@@ -401,12 +401,12 @@ def start(port=DEFAULT_PORT, plugin_dir=PLUGIN_DIR, timeout=120, stall_timeout=6
     locked = screen_locked()
     offset = _bridge_log_size()
     os.makedirs(LOGS, exist_ok=True)
-    out = open(STDOUT_LOG, "a")
-    out.write(f"\n--- zb_launch.start {time.strftime('%Y-%m-%d %H:%M:%S')} locked={locked}\n")
-    out.flush()
-    proc = subprocess.Popen([ZBRUSH_BIN], env=build_env(port, plugin_dir, extra_env),
-                            stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-                            start_new_session=True)
+    with open(STDOUT_LOG, "a") as out:   # ZBrush keeps its own copy of the descriptor
+        out.write(f"\n--- zb_launch.start {time.strftime('%Y-%m-%d %H:%M:%S')} locked={locked}\n")
+        out.flush()
+        proc = subprocess.Popen([ZBRUSH_BIN], env=build_env(port, plugin_dir, extra_env),
+                                stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                start_new_session=True)
     stages = {"spawned": 0.0}
     try:
         while True:

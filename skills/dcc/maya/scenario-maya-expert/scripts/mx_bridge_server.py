@@ -248,7 +248,7 @@ def handle(job_id, root=None, undo=None, echo=True):
     ns["result"] = None
     ns["MX_JOB_ID"] = job_id
     try:
-        live = open(os.path.join(root, job_id + ".out"), "w", encoding="utf-8")
+        live = open(os.path.join(root, job_id + ".out"), "w", encoding="utf-8")  # noqa: SIM115 (optional, closed in the finally below)
     except OSError:
         live = None
     out = _Tee(sys.stdout if echo else None, live)

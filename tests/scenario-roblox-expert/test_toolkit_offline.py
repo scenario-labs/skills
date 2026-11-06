@@ -1,13 +1,22 @@
 """Offline checks of the Roblox toolkit: window binding, playtest kits, and merging a user's place.
 
 No Studio runs here: a fake replaces the StudioMCP proxy and lists the windows a test sets.
+The place_slot tests take real flock locks in a temp cache, one of them from a second Python process.
+A watchdog ends the run after 60 s, so a place_slot that blocks fails instead of holding the runner.
 """
 
 import base64
+import faulthandler
+import gc
+import os
 import pathlib
+import subprocess
 import sys
 import tempfile
+import time
+import types
 import unittest
+import warnings
 from unittest import mock
 
 FAMILY = pathlib.Path(__file__).parents[2] / "skills/game-engines/roblox"
@@ -189,6 +198,170 @@ class PlaytestKit(unittest.TestCase):
             pt.server("return 1", kit=["Spec"])
             pt.client("return 2", kit=["Stats"])
         self.assertEqual([(c[2], tuple(c[4])) for c in calls], [("Server", ("Spec",)), ("Client", ("Stats",))])
+
+
+@unittest.skipIf(sys.platform == "win32", "place_slot locks with flock")
+class PlaceSlot(unittest.TestCase):
+    """Studio slots are flock locks on files in CACHE/slots, one per slot."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.cache = pathlib.Path(tmp.name)
+        self.slots = self.cache / "slots"
+        faulthandler.dump_traceback_later(60, exit=True)
+        self.addCleanup(faulthandler.cancel_dump_traceback_later)
+        import fcntl
+
+        self.fcntl = fcntl
+        self.sleeps = 0
+        # Replacing the module rbx_env sees, not time.sleep itself, keeps Popen.wait sleeping normally.
+        fake_time = types.SimpleNamespace(time=time.time, sleep=self.sleep)
+        fake_fcntl = types.SimpleNamespace(flock=self.nonblocking_flock, LOCK_EX=fcntl.LOCK_EX, LOCK_NB=fcntl.LOCK_NB,
+                                           LOCK_UN=fcntl.LOCK_UN)
+        for patch in (mock.patch.object(rbx_env, "CACHE", self.cache), mock.patch.object(rbx_env, "RBX_MAX", 2),
+                      mock.patch.object(rbx_env, "time", fake_time), mock.patch.object(rbx_env, "fcntl", fake_fcntl)):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def sleep(self, _s):
+        self.sleeps += 1
+        if self.sleeps > 20:
+            raise AssertionError("place_slot kept waiting past its deadline")
+
+    def nonblocking_flock(self, f, op):
+        # A blocking flock on a slot this process holds never returns, so it fails here instead.
+        if op & self.fcntl.LOCK_EX and not op & self.fcntl.LOCK_NB:
+            raise AssertionError("place_slot took a blocking lock")
+        return self.fcntl.flock(f, op)
+
+    def lockable(self, i):
+        import fcntl
+
+        # flock locks belong to the open file, so a second open in this process contends like another process.
+        with open(self.slots / f"slot{i}.lock", "a") as f:
+            try:
+                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return False
+            fcntl.flock(f, fcntl.LOCK_UN)
+            return True
+
+    def hold_all(self):
+        import fcntl
+
+        self.slots.mkdir(parents=True, exist_ok=True)
+        for i in range(2):
+            f = open(self.slots / f"slot{i}.lock", "w")  # noqa: SIM115 (held until cleanup)
+            self.addCleanup(f.close)
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+    def assert_no_unclosed_slot(self, caught):
+        leaks = [str(w.message) for w in caught if issubclass(w.category, ResourceWarning) and "slot" in str(w.message)]
+        self.assertEqual(leaks, [])
+
+    def test_a_second_process_holding_a_slot_leaves_the_other_one(self):
+        code = ("import sys; sys.path.insert(0, sys.argv[1]); import rbx_env\n"
+                "with rbx_env.place_slot(timeout=0) as i:\n    print(i, flush=True); sys.stdin.read()")
+        env = dict(os.environ, RBX_SKILLS_CACHE=str(self.cache), RBX_MAX="2")
+        child = subprocess.Popen([sys.executable, "-B", "-c", code, str(pathlib.Path(rbx_env.__file__).parent)],
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, env=env)
+        try:
+            self.assertEqual(child.stdout.readline().strip(), "0")
+            with rbx_env.place_slot(timeout=0) as i:
+                self.assertEqual(i, 1)
+                self.assertFalse(self.lockable(1))
+                self.assertEqual((self.slots / "slot1.lock").read_text(), f"{os.getpid()}\n")
+            self.assertTrue(self.lockable(1))
+            self.assertFalse(self.lockable(0))
+        finally:
+            child.stdin.close()
+            try:
+                child.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                child.kill()
+                child.wait()
+            child.stdout.close()
+        self.assertEqual(child.returncode, 0)
+        self.assertTrue(self.lockable(0))
+
+    def test_all_slots_busy_raises_timeout(self):
+        self.hold_all()
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ResourceWarning)
+            with self.assertRaisesRegex(TimeoutError, r"RBX_MAX=2"), rbx_env.place_slot(timeout=0):
+                self.fail("acquired a busy slot")
+            gc.collect()
+        self.assert_no_unclosed_slot(caught)
+
+    def test_a_reused_slot_holds_only_the_current_pid(self):
+        with rbx_env.place_slot(timeout=0) as i:
+            self.assertEqual(i, 0)
+        with rbx_env.place_slot(timeout=0) as i:
+            self.assertEqual(i, 0)
+            self.assertEqual((self.slots / "slot0.lock").read_text(), f"{os.getpid()}\n")
+        self.assertEqual(self.sleeps, 0)
+
+    def test_body_raising_releases_the_lock_and_closes_the_file(self):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ResourceWarning)
+            raised = None
+            try:
+                with rbx_env.place_slot(timeout=0) as i:
+                    self.assertEqual(i, 0)
+                    raise ValueError("boom")
+            except ValueError as e:
+                raised = str(e)
+            gc.collect()
+        self.assertEqual(raised, "boom")
+        self.assert_no_unclosed_slot(caught)
+        self.assertTrue(self.lockable(0))
+
+    def test_flock_error_closes_the_slot_file(self):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ResourceWarning)
+            try:
+                with mock.patch("rbx_env.fcntl.flock", side_effect=OSError(9, "Bad file descriptor")), \
+                        rbx_env.place_slot(timeout=0):
+                    self.fail("acquired a slot without a lock")
+            except OSError as e:
+                self.assertEqual(e.errno, 9)
+            gc.collect()
+        self.assert_no_unclosed_slot(caught)
+
+    def test_failed_pid_write_closes_the_file_and_frees_the_slot(self):
+        real_open = open
+
+        class NoWrite:
+            def __init__(self, f):
+                self.f = f
+
+            def fileno(self):
+                return self.f.fileno()
+
+            def write(self, _s):
+                raise OSError(28, "No space left on device")
+
+            def close(self):
+                self.f.close()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                self.f.close()
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ResourceWarning)
+            try:
+                with mock.patch.object(rbx_env, "open", lambda *a, **k: NoWrite(real_open(*a, **k)), create=True), \
+                        rbx_env.place_slot(timeout=0):
+                    self.fail("entered the body after a failed write")
+            except OSError as e:
+                self.assertEqual(e.errno, 28)
+            gc.collect()
+        self.assert_no_unclosed_slot(caught)
+        self.assertTrue(self.lockable(0))
 
 
 if __name__ == "__main__":

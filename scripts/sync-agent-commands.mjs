@@ -15,7 +15,7 @@ export const commands = [
   {
     name: "skills-pr-handle",
     path: "skills/pr-handle.md",
-    argumentHint: "<PR_number> [--plan-only]",
+    argumentHint: "<PR_number> [--plan-only] [--resolve]",
     explicitOnly: true,
   },
   {
