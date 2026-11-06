@@ -131,3 +131,17 @@ test("a missing uv fails with an install hint", (t) => {
   assert.equal(result.status, 1);
   assert.match(result.stderr, /uv not found; install uv/);
 });
+
+// skills-ref needs Python 3.11 or later, and a machine's default python can be older.
+test("pins the validator to Python 3.11 or later", (t) => {
+  const { spec } = repo(t);
+  const result = spec();
+  assert.equal(result.status, 0, result.stderr);
+  const args = result.stdout
+    .match(/^uv-arg .*$/gm)
+    .map((line) => line.slice("uv-arg ".length));
+  assert.ok(args.includes("--python"), args.join(" "));
+  const pinned = args[args.indexOf("--python") + 1];
+  const [major, minor] = pinned.split(".").map(Number);
+  assert.ok(major === 3 && minor >= 11, `pinned ${pinned}`);
+});
