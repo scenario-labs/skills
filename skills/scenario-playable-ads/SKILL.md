@@ -1,6 +1,6 @@
 ---
 name: scenario-playable-ads
-description: "Use when a mobile game's gameplay recording or screenshots should become a playable ad: an HTML5 interactive ad or interactive end card for Meta, Google Ads App campaigns, AppLovin, Unity Ads, Mintegral, Moloco, Liftoff, TikTok Pangle or any MRAID network, with a hint hand, a CTA, a mute button and an end card, packaged per network and QA-tested in headless Chromium. Keywords: playable ad, HTML5 playable, MRAID, FbPlayableAd, ExitApi, end card, CTA, hypercasual ad."
+description: "Use when a mobile game's gameplay recording, screenshots or existing art and sound should become a playable ad: an HTML5 interactive ad or interactive end card for Meta, Google Ads App campaigns, AppLovin, Unity Ads, Mintegral, Moloco, Liftoff, TikTok Pangle or any MRAID network, with a hint hand, a CTA and a mute button, packaged per network and QA-tested in headless Chromium. Keywords: playable ad, HTML5 playable, MRAID, FbPlayableAd, ExitApi, end card, CTA, hypercasual ad."
 license: MIT
 ---
 
@@ -18,7 +18,9 @@ A playable is a 35 to 45 s slice of a real game that runs inside an ad network's
 - a win or an honest near-fail, then an end card with an install button.
 
 **Input:** a gameplay recording and/or screenshots of the user's game, plus a logo, store links, a
-description and a genre pick when the user has them.
+description and a genre pick when the user has them. When the studio already has art, 3D, sound or
+music, the build uses those files as they are, generates only what is missing in their style, or
+derives the rest from one key art ([references/existing-assets.md](references/existing-assets.md)).
 
 **Output:** `dist/<network>/index.html` for nine networks and a local preview, the ZIP each ZIP
 network takes, and a bundle of all of them. A build ships only when it passes the 19 base QA checks
@@ -53,7 +55,7 @@ unattended, proceed from tool schemas and flag the gap.
 | ----------- | ------------------------------------------------------------------------------------------- |
 | 1. Intake   | `intake/`: recording and/or screenshots, logo, `intake.json` (store links, networks, genre) |
 | 2. Analysis | contact sheet, key frames, `analysis/brief.md` and `analysis/design.md` (beats, asset map)  |
-| 3. Assets   | plate, transparent sheets, HUD crops, logo, SFX, music in `assets/raw/`                     |
+| 3. Assets   | plate, transparent sheets, HUD crops, logo, SFX, music in `assets/raw/`, or studio files    |
 | 4. Build    | `src/game.js` on the runtime; `assets/manifest.json`, then `prep_assets.py`                 |
 | 5. Package  | `build.py --networks all` (the default is `meta,google`)                                    |
 | 6. QA       | `qa.py --speed 2`, then look at every frame it writes                                       |
@@ -63,6 +65,7 @@ unattended, proceed from tool schemas and flag the gap.
 SKILL=<path to this skill>; P=<project dir>
 cp -Rn "$SKILL/assets/template/." "$P/" && mkdir -p "$P/runtime" && cp "$SKILL/assets/runtime/runtime.js" "$P/runtime/"
 python3 "$P/make_placeholders.py" "$P" --font "$SKILL/assets/fonts/fredoka/Fredoka-Bold.woff2"  # optional
+python3 "$SKILL/scripts/asset_inventory.py" "$P"    # only with the studio's own files: analysis/assets_inventory.md
 python3 "$SKILL/scripts/prep_assets.py" "$P"        # assets/raw and intake/ to assets/web/
 python3 "$SKILL/scripts/build.py" "$P" --networks all
 python3 "$SKILL/scripts/qa.py" "$P" --speed 2       # qa/report.json and qa/*.png
@@ -86,12 +89,15 @@ once, in one message, for everything the build needs, then wait. Do not generate
    player does.
 3. The ad networks they run, or "not sure" (the build covers nine).
 4. Whether the game is 3D with a free camera (see the decision points below).
+5. Any art, 3D, sound or music they already have for the game, and whether they own it for ads
+   ([references/existing-assets.md](references/existing-assets.md)).
 
 Say in two lines what they will get: the game's core loop rebuilt as code from the recording, with
-generated art and sound, never the recording itself, so side features are simplified. Then watch the
-recording and ask the genre question below. Those are the only two rounds of questions the user
-needs to answer; the Scenario team and project, when the `scenario` skill asks for them, go in the
-first round.
+their own art and sound where they sent some and generated art and sound for the rest, never the
+recording itself, so side features are simplified. Then watch the recording and ask the genre
+question below; when they sent files, ask in the same message how to use each kind (as supplied,
+complement or derive). Those are the only two rounds of questions the user needs to answer; the
+Scenario team and project, when the `scenario` skill asks for them, go in the first round.
 
 ## Two questions before generating anything
 
@@ -183,9 +189,10 @@ it built in `genres.md`.
 - **Replay** calls `PA.clearTweens()` before `reset()`, and the game waits again.
 
 Asset sourcing, prompts and model discovery:
-[references/scenario-assets.md](references/scenario-assets.md). Lessons and known runtime gaps:
-[references/build-lessons.md](references/build-lessons.md). Every QA check, build refusal and the
-game contract: [references/qa-checks.md](references/qa-checks.md).
+[references/scenario-assets.md](references/scenario-assets.md). Starting from the studio's own
+files: [references/existing-assets.md](references/existing-assets.md). Lessons and known runtime
+gaps: [references/build-lessons.md](references/build-lessons.md). Every QA check, build refusal and
+the game contract: [references/qa-checks.md](references/qa-checks.md).
 
 ## Worked example: a sort puzzle from a 40 s recording
 
@@ -220,11 +227,13 @@ game contract: [references/qa-checks.md](references/qa-checks.md).
 - **Decorative buttons that look live.** Make them work, or make them a CTA.
 - **Units or zeros the game never shows** on the end card.
 - **An asset with no source frame** in the asset map.
+- **Editing the studio's files in place,** or generating a piece they supplied.
 - **Claiming a network passed** when only `qa.py` ran.
 
 ## Files
 
-- Scripts, run by the agent: [scripts/prep_assets.py](scripts/prep_assets.py) (crop, cut out, key,
+- Scripts, run by the agent: [scripts/asset_inventory.py](scripts/asset_inventory.py) (catalog the
+  studio's own files), [scripts/prep_assets.py](scripts/prep_assets.py) (crop, cut out, key,
   compress, subset fonts), [scripts/build.py](scripts/build.py) (inline and package per network),
   [scripts/qa.py](scripts/qa.py) (Playwright QA in fake containers),
   [scripts/pack_glb.py](scripts/pack_glb.py) (a GLB into a JS include for three.js).

@@ -27,6 +27,14 @@ rewritten to name no game.
   developer's own JS. `build.py` inserts it right before the first script in `<body>`.
 - **Optional hand image.** The hint hand is drawn as a vector unless a project supplies
   `assets/web/hand.webp`.
+- **The studio's own files.** Studios often have the art, 3D, sound and music already, so the skill
+  does not only start from a recording. `references/existing-assets.md` covers the intake (files in
+  `intake/assets/`, never edited there), three modes per kind of asset (as supplied, complement,
+  derive), style matching with the supplied art as references, the size budget, rights and the
+  report. `scripts/asset_inventory.py` catalogs the files (sizes, transparency, sprite count,
+  colors, audio levels and loop seam, GLB skin and clips, font embedding), flags what needs a fix
+  and estimates the inlined size against the cap. The script runs on synthetic files in its tests;
+  no playable was built end to end from a studio's files with this version.
 
 ## Design choices
 
@@ -62,7 +70,8 @@ rewritten to name no game.
 ## Tests
 
 `tests/scenario-playable-ads/` builds the template's placeholder game (no real game art) and checks
-`prep_assets.py`, `build.py` (every target, every refusal) and `pack_glb.py` (a synthetic GLB).
+`prep_assets.py`, `build.py` (every target, every refusal), `pack_glb.py` (a synthetic GLB) and
+`asset_inventory.py` (a synthetic folder of images, sounds, GLBs, a font and an unknown file).
 `test_qa.py` runs the full Playwright QA and skips when Playwright or a Chromium build is missing,
 as in CI.
 

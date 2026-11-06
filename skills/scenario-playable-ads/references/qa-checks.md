@@ -59,6 +59,11 @@ Run for every network built into `dist/`, on top of the base 19:
 - A deliverable over its network's size cap (exit code 1, `OVER LIMIT` in the log).
 - An unknown network name.
 
+Files the studio supplied get the same refusals, caps and checks as generated ones: `qa.py` cannot
+tell them apart. Read the size estimate in `analysis/assets_inventory.md` before the first build,
+and check by eye that compression did not damage the supplied art
+([existing-assets.md](existing-assets.md), section 6).
+
 ## What the game must do
 
 - Emit `result` with `{result: 'win' | 'close'}` when play ends, then `endcard`.

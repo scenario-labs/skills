@@ -1,8 +1,9 @@
 # Assets from the game's own frames
 
 Every asset in a playable comes from what the user supplied: a gameplay recording, screenshots, a
-logo, a font, store links. Scenario rebuilds what the frames show at full detail; it never invents
-the game.
+logo, a font, store links, and any art, 3D, sound or music the studio already has
+([existing-assets.md](existing-assets.md)). Scenario rebuilds what the frames show at full detail;
+it never invents the game.
 
 ## Inputs
 
@@ -11,6 +12,7 @@ the game.
 | Recording only (preferred) | the recording                          | its frames                                                         |
 | Screenshots only           | the genre guide and `game_description` | the screenshots                                                    |
 | Both                       | the recording                          | the screenshots; frames for poses and effects the screenshots lack |
+| The studio's own files     | the recording                          | the supplied files ([existing-assets.md](existing-assets.md))      |
 
 - Where a recording and a screenshot disagree, the recording wins for behavior, the screenshot for
   art.
@@ -24,6 +26,8 @@ Answer these at the top of `analysis/brief.md` before using any frame:
   confirm they own or license the game. Write the answer, or "not confirmed".
 - Unattended, write "not confirmed", build, and open `notes.md` with it: the build is a test until
   the user confirms the rights.
+- **Supplied files** need the same answer, and a license for the game does not always cover ads
+  ([existing-assets.md](existing-assets.md), section 7).
 - **First-party capture or third-party video?** A video found online is a reference only. Ask for a
   raw device capture, the logo, the store links and the font.
 - **Platform UI is never art.** Do not copy player controls, captions, overlays or face-cams,
@@ -101,5 +105,5 @@ cycles).
 
 ## Report
 
-`notes.md` lists every Scenario job id, the source frame of every asset, the tuning, and what to
-look at first.
+`notes.md` lists every Scenario job id, the source frame or supplied file of every asset, the
+tuning, and what to look at first.
