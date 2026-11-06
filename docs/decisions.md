@@ -75,7 +75,7 @@ expert descriptions at the time. The default command names the core skills inste
   expert tools. The earlier `NN.-` prefix was recomputed from position, so every inserted grouping
   renamed install keys: three times between September and October 2026, once for 16 plugins.
 - The README recommends per-role plugin sets over installing everything. Every installed skill puts
-  its name and description in every session: the 16 core plugins measured about 10,100 tokens, the
+  its name and description in every session: the 16 core plugins measured about 10,300 tokens, the
   role sets 700 to 4,000.
 
 ## No install commands in skills

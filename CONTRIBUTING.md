@@ -23,8 +23,8 @@ overlap.
 Prerequisites:
 
 - Node.js at the version in `.nvmrc`, which CI reads too, and pnpm.
-- [uv](https://docs.astral.sh/uv/). The pre-commit hook runs ruff and the spec validator through
-  `uvx`, so every commit fails without it.
+- [uv](https://docs.astral.sh/uv/). The pre-commit hook runs ruff and the spec validator through uv,
+  so every commit fails without it.
 - For `pnpm test` only: Python 3.11+ as the `python3` on PATH, and ffmpeg. The runner uses that
   `python3` even under uv, and macOS's `/usr/bin/python3` (3.9) fails the suites.
 
@@ -99,7 +99,7 @@ application test checks whether the skill actually teaches.
   enforced by commitlint. Valid scopes are the skill directory names plus `skills`, `agents`, `ci`,
   `deps`, `docs`, and `tooling`.
 - PRs target `main` and are squash-merged: the PR title becomes the commit header, so write it as
-  one.
+  one, under 72 characters. A PR built on another open PR targets that PR's branch instead.
 - Merged PRs land in the next release, staged by release-please as an open release PR. Merging it
   tags a release, updates `CHANGELOG.md`, and posts the notes to the
   [Scenario changelog](https://www.scenario.com/changelog). Your commit type decides the listing:

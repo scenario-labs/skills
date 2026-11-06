@@ -14,15 +14,15 @@ and set to auto-update: see the [README](README.md#install). Its plugins are the
 README Skills list, so each role installs `010-getting-started`, `110-troubleshooting`, and the
 groups holding its lead skills. Every installed skill puts its name and description in every
 session, so each line states that always-on cost, measured with `claude plugin details` on Claude
-Code 2.1.303 in October 2026. Run these in a shell:
+Code 2.1.319 in November 2026. Run these in a shell:
 
 ```bash
 claude plugin marketplace add scenario-labs/skills#stable
-# 2D Artist: about 3,400 tokens in every session
+# 2D Artist: about 3,500 tokens in every session
 for p in 010-getting-started 020-finding-a-direction 030-images 040-game-art-and-3d 070-consistency-and-custom-models 110-troubleshooting; do claude plugin install "$p@scenario-skills"; done
-# 3D Artist: about 2,400 tokens in every session
+# 3D Artist: about 2,500 tokens in every session
 for p in 010-getting-started 040-game-art-and-3d 110-troubleshooting 160-3d-model-families; do claude plugin install "$p@scenario-skills"; done
-# Environment Artist: about 3,400 tokens in every session
+# Environment Artist: about 3,500 tokens in every session
 for p in 010-getting-started 030-images 040-game-art-and-3d 110-troubleshooting 160-3d-model-families; do claude plugin install "$p@scenario-skills"; done
 # Art Director: about 2,200 tokens in every session
 for p in 010-getting-started 030-images 070-consistency-and-custom-models 080-reviewing-and-organizing-output 110-troubleshooting; do claude plugin install "$p@scenario-skills"; done
@@ -162,7 +162,7 @@ npx skills add scenario-labs/skills --skill scenario scenario-moderation scenari
 
 ### Marketing Artist
 
-Store art and ads that stay on brand at every size. 25 skills.
+Store art and ads that stay on brand at every size. 28 skills.
 
 - **Store Art for Every Platform** (`scenario-formats`, `scenario-brand-kit`,
   `scenario-text-overlay`). Try: "Turn this key art into every storefront size, with our logo and
@@ -175,9 +175,11 @@ Store art and ads that stay on brand at every size. 25 skills.
   character reference and the exact headline ONE HIT LEFT."
 - **Fan-Cam Moments** (`scenario-fan-cam`). Try: "Put the person in this photo on the stadium
   jumbotron, cheering, then animate it."
+- **Playable Ads** (`scenario-playable-ads`). Try: "Turn this gameplay recording into a playable ad
+  for Meta, Google and AppLovin."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam scenario-playable-ads scenario-game-assets scenario-3d
 ```
 
 ### Technical Director
@@ -221,11 +223,11 @@ expert tools: each family installs as one set, with its command in the family RE
 
 ### Game art and 3D
 
-Sprites, tilesets, textures, skyboxes, 3D props, and walkable spaces in one consistent style. 23
+Sprites, tilesets, textures, skyboxes, 3D props, and walkable spaces in one consistent style. 24
 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-textures scenario-skyboxes scenario-3d scenario-image scenario-patina-retexture scenario-walkable-room scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-moderation scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-gemini-image scenario-audio scenario-sonilo
+npx skills add scenario-labs/skills --skill scenario scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-textures scenario-skyboxes scenario-3d scenario-image scenario-patina-retexture scenario-walkable-room scenario-playable-ads scenario-video scenario-consistency scenario-model-training scenario-refine-loop scenario-moderation scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-gemini-image scenario-audio scenario-sonilo
 ```
 
 ### Marketing and brand visuals

@@ -1,16 +1,18 @@
 <!--
 The PR title becomes the squash commit header on main, so write it as a
-Conventional Commit: type(scope): summary. Valid scopes are the skill
-directory names plus skills, agents, ci, deps, docs, and tooling.
+Conventional Commit under 72 characters: type(scope): summary. Valid
+scopes are the skill directory names plus skills, agents, ci, deps, docs,
+and tooling.
 Example: feat(scenario-luma-video): teach the keyframe reframe workflow
 
 One concern per PR. A new skill, a fix to another skill, and a tooling
 change are three PRs. See CONTRIBUTING.md and AGENTS.md.
 -->
 
-## What and why
+## What and why (two sentences at most)
 
-<!-- One or two sentences: what changes, and the problem it solves. -->
+<!-- What changes, and the problem it solves. Put detail, such as the
+     evidence behind the change, under a heading of its own after this one. -->
 
 ## Validation
 
@@ -19,7 +21,8 @@ change are three PRs. See CONTRIBUTING.md and AGENTS.md.
 - [ ] For a new or changed skill: the application test from docs/application-test.md ran
       (`/skills:validate <name>`), and the result is summarized below
 
-<!-- Application test result: the task used, pass or fail, what was fixed.
+<!-- Application test result: the task used, pass or fail, what was fixed,
+     and a link to the report comment /skills:validate posted.
      When docs/application-test.md "When to run it" lets you skip it, write
      "not applicable" and the criterion that applies instead. -->
 
