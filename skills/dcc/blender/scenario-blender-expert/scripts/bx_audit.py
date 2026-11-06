@@ -42,6 +42,7 @@ import sys
 
 import bmesh
 import bpy
+import numpy as np
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
@@ -389,15 +390,35 @@ def _attached(a, b, tol):
     return False
 
 
+def _winding_number(b, pts):
+    """Winding numbers of closed part b about the points: +-1 inside, 0 outside (the solid angles of its
+    triangles, Van Oosterom and Strackee, summed)."""
+    if "tris" not in b:
+        co = np.array([tuple(c) for c in b["coords"]], float)
+        b["tris"] = co[np.array([(p[0], p[i], p[i + 1]) for p in b["polys"] for i in range(1, len(p) - 1)], int)]
+    out = []
+    for c in pts:
+        A, B, C = (b["tris"][:, k] - np.array(tuple(c)) for k in range(3))
+        la, lb, lc = (np.linalg.norm(X, axis=1) for X in (A, B, C))
+        num = np.einsum("ij,ij->i", A, np.cross(B, C))
+        den = (la * lb * lc + np.einsum("ij,ij->i", A, B) * lc + np.einsum("ij,ij->i", A, C) * lb
+               + np.einsum("ij,ij->i", B, C) * la)
+        out.append(float(np.arctan2(num, den).sum()) / (2 * math.pi))
+    return out
+
+
 def _inside(a, b):
-    """True when sampled vertices of part a all lie inside closed part b."""
+    """True when sampled vertices of part a all lie inside closed part b. Behind b's nearest face is the quick
+    test; past the rim of a thin shell the nearest point is an edge or corner, whose face can look away from a
+    point far outside, so b's winding number about the samples decides."""
     if not b["closed"] or b["volume"] <= 0:
         return False
-    for c in a["coords"][::max(1, len(a["coords"]) // 64)]:
+    pts = a["coords"][::max(1, len(a["coords"]) // 64)]
+    for c in pts:
         loc, normal, _, _ = b["tree"].find_nearest(c)
         if loc is None or (c - loc).dot(normal) >= 0:
             return False
-    return True
+    return all(abs(w) > 0.5 for w in _winding_number(b, pts))
 
 
 def _scale_owner(o):
