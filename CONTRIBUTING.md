@@ -22,7 +22,8 @@ overlap.
 
 Prerequisites:
 
-- Node.js at the version in `.nvmrc`, which CI reads too, and pnpm.
+- Node.js 22.18 or later, and pnpm. CI reads `.nvmrc`; cspell needs 22.18, so an older 22 fails
+  `pnpm spell`.
 - [uv](https://docs.astral.sh/uv/). The pre-commit hook runs ruff and the spec validator through uv,
   so every commit fails without it.
 - For `pnpm test` only: Python 3.11+ as the `python3` on PATH, and ffmpeg. The runner uses that
@@ -37,6 +38,20 @@ pnpm install
 `pnpm install` sets up commitlint, cspell, prettier, and the husky git hooks, so every commit runs
 the same checks CI runs. In Claude Code, a hook refuses a commit when they are missing or skipped
 with `--no-verify`.
+
+On Windows, enable symlinks before cloning. The repository tracks a few (`CLAUDE.md` and the agent
+command and dev-skill links under `.claude/`), and Git otherwise checks them out as plain text
+files, which `pnpm validate` rejects.
+
+1. Turn on Developer Mode (Settings > System > For developers), so Git can create symlinks without
+   admin rights.
+2. Clone with symlinks enabled:
+
+   ```bash
+   git clone -c core.symlinks=true https://github.com/scenario-labs/skills.git
+   ```
+
+A clone made without them needs a fresh clone after step 1.
 
 ## Authoring a skill
 
