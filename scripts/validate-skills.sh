@@ -6,6 +6,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SKILLS_REF="git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref"
+# skills-ref needs Python 3.11 or later. uv downloads this version when it is missing, so the
+# machine's default python never decides whether a commit passes. 3.12 matches CI's Python jobs.
+SPEC_PYTHON=3.12
 
 # Listed with a trailing slash; skill paths never hold spaces.
 skill_dirs=$(node scripts/lib/skills.mjs)
@@ -59,4 +62,4 @@ sys.exit(1 if failed else 0)
 # shellcheck disable=SC2086 # skill_dirs word-splits on purpose
 env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_PREFIX -u GIT_COMMON_DIR \
   -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
-  uv run --quiet --no-project --with "$SKILLS_REF" -- python -I -c "$validate_all" $skill_dirs
+  uv run --quiet --no-project --python "$SPEC_PYTHON" --with "$SKILLS_REF" -- python -I -c "$validate_all" $skill_dirs
