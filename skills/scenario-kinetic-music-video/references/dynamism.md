@@ -58,13 +58,14 @@ Why this method:
   - the HUD and entries ending at 9999 or later never are.
 - `--only id,id` judges only those entries and skips the variant filter, as `render.mjs --only`
   does.
-- Each entry may set `energy`:
+- Each entry may set `energy`, by the section's role in the song, never by a word describing it (an
+  intro that builds is still `calm`):
   - `calm`: intro, verse, breakdown, a bridge that breathes on a long shot;
   - `mid`: pre-chorus, a second verse with footage;
-  - `high`: chorus, drop, build, chant;
+  - `high`: chorus, drop, a build into a drop, chant;
   - `showcase`: a logo build, an end card, a character turn at 0.35-0.5× speed.
-- An outro takes its music's energy. Split an end card inside it into its own `showcase` entry, with
-  `file` naming the same scene.
+- An outro is `mid`, or `high` when it reprises the chorus at full arrangement. Split an end card
+  inside it into its own `showcase` entry, with `file` naming the same scene.
 - An untagged section takes its energy from the song: its mean `env.mix` in `audio.json` against the
   song's mean. Under 0.8 is calm, 1.15 or more is high, the rest is mid.
 - A section that starts after the song ends (a silent extended end card) is `showcase`.
