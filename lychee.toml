@@ -9,6 +9,10 @@ exclude = [
   '^https://discussions\.unity\.com/',
   '^https://polycount\.com/',
   '^https://x\.com/',
+  # Ad network help centers behind the same kind of bot protection.
+  '^https://help\.moloco\.com/',
+  '^https://support\.accelerate\.liftoff\.io/',
+  '^https://support\.vungle\.com/',
   # A URL pattern named in prose, read as a link.
   '^https://devforum\.roblox\.com/t/$',
   # A bare URL whose id holds two underscores, which Markdown reads as emphasis

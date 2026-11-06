@@ -74,8 +74,7 @@ publicly shareable language only.
 CI enforces the mechanical parts on every push and PR: the spec rules through
 [`skills-ref validate`](https://github.com/agentskills/agentskills/tree/main/skills-ref) (the Agent
 Skills reference validator), plus house-style greps, prettier, cspell, and supporting-file checks.
-Run the content checks locally with `pnpm run validate`; commitlint checks commit messages and PR
-titles separately. Spec-validate one skill with:
+Spec-validate one skill with:
 
 ```bash
 uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
@@ -347,7 +346,11 @@ and command lines.
   2. `pnpm manifest`: regenerates `.claude-plugin/marketplace.json` from `skills.sh.json` and the
      skill folders, and stages the copy rendered from their staged versions, so unstaged moves and
      edits never reach the commit.
-  3. `pnpm validate`: the checks CI runs as separate steps.
+  3. `pnpm bugbot`: the same for `.cursor/BUGBOT.md`, a copy of `REVIEW.md`.
+  4. `pnpm validate`: the checks CI runs as separate steps, spec validation on staged skills only.
+- The husky `post-commit` hook runs `scripts/sync-generated-index.mjs`. A path-limited commit
+  (`git commit <paths>`) stages those files in a temporary index, and this step copies them into the
+  real one.
 - Read [docs/ci-and-releases.md](docs/ci-and-releases.md#checks) when a check fails unexpectedly, or
   before changing a check script, a hook step, or the prettier config. It lists what each check
   covers, the prettier settings, and the git variables a hook step must not leak.
@@ -369,8 +372,6 @@ and command lines.
   outcome bullet when it leads one), and any goal it leads or serves. Add any sibling it names that
   a command lacks, then update the "N skills." counts.
 - An expert skill joins its family README's install command.
-- Never edit `.claude-plugin/marketplace.json`: the pre-commit hook regenerates it from
-  `skills.sh.json`.
 - How skills.sh, the installer picker, and the install commands work:
   [docs/listing-and-install.md](docs/listing-and-install.md).
 
@@ -414,10 +415,15 @@ and command lines.
 - The `skill-tester` agent in the same directory is the clean-room runner `/skills:validate` spawns
   when a separate process cannot reach the MCP server. It is not for ordinary work.
 
+### Review guidelines
+
+Follow [REVIEW.md](REVIEW.md): what is Important, how to report, and what not to report. Edit it,
+never its copy `.cursor/BUGBOT.md`.
+
 ## Validation and testing
 
-- `skills-ref validate` must pass for every published skill before any commit: the pre-commit hook
-  and CI both run it via `pnpm spec`.
+- `skills-ref validate` must pass for every published skill: CI runs it on every skill via
+  `pnpm spec`, the pre-commit hook on the skills a commit changes.
 - Python suites use stdlib `unittest` (`test_*.py`), TypeScript ones vitest (`*.test.ts`).
 - Unless the user asks, a shipped script never overwrites a file it did not create (its inputs, a
   project file, the user's saved scene) and keeps the user's document open. It writes a new file or
@@ -426,15 +432,14 @@ and command lines.
   fallback for every POSIX-only call, shell under Bash 3.2, the oldest Python documented for it.
 - `pnpm test` runs every suite and fails when a core skill's script has no suite; CI runs it on
   every push and PR, on two ffmpeg versions ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
-  It is not in the pre-commit hook, since suites may need system tools such as ffmpeg, so run it by
-  hand when touching a script.
+  It is not in the pre-commit hook, since suites may need system tools such as ffmpeg.
 - A `tests/<name>/requirements.txt` declares extra Python dependencies.
   - Locally, `pnpm test` runs that suite under uv with them on the `python3` on PATH, and falls back
     to the bare `python3` only when uv is missing.
   - CI installs only hashed locks: after changing a suite's requirements, regenerate the locks
     covering it ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
-- `pnpm test` runs the command, plugin-manifest, style, hook, readme, and test-runner regression
-  suites as well as the shipped-script suites.
+- `pnpm test` runs the command, plugin-manifest, Bugbot-copy, index-sync, style, hook, readme, and
+  test-runner regression suites as well as the shipped-script suites.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the
