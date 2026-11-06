@@ -92,6 +92,11 @@ class DeliveryGate(unittest.TestCase):
         self.assertEqual(len(r["warnings"]), 1)
         self.assertIn("Core: 1 part enclosed", r["warnings"][0])
 
+    def test_parts_crossing_face_to_face_touch(self):
+        r = self.verdict("crossing")
+        self.assertTrue(r["pass"], r["errors"])
+        self.assertEqual(r["warnings"], [])
+
     def test_negative_scale_fails(self):
         r = self.verdict("negative_scale")
         self.assertEqual(len(r["errors"]), 1)
