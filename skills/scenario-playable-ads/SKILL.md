@@ -37,8 +37,8 @@ tap. No other network's own tool was run. Say which tools were run when you hand
 run each network's own preview first ([references/networks.md](references/networks.md)). Each
 archetype guide comes from one build that passed the 19 base checks.
 
-Requirements: a local shell, Python 3 with Pillow, numpy, scipy, fontTools and brotli; Playwright
-for Python with Chromium; ffmpeg. Install with
+Requirements: a local shell, Python 3.12 or later with Pillow, numpy, scipy, fontTools and brotli;
+Playwright for Python with Chromium; ffmpeg. Install with
 `pip install "pillow>=13,<14" "numpy>=2.5,<3" "scipy>=1.18,<2" "fonttools>=4.60,<5" "brotli>=1.1,<2" "playwright>=1.64,<2"`
 then `playwright install chromium`; check with `ffmpeg -version`. The scripts, runtime and template
 sit in this skill's `scripts/` and `assets/` folders, so the agent needs file access to the skill.
