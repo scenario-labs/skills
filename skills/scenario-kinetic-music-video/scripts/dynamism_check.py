@@ -188,7 +188,8 @@ def measure(video, crop=None, workers=None):
         moved = float((d > STILL_DIFF).mean()) >= STILL_AREA
         if int(d.max()) <= REPEAT_MAX:
             return a1, moved, 0.0, False
-        return (a1, moved, *pair(prev, g, a1))
+        v, c = pair(prev, g, a1)
+        return a1, moved, v, c
 
     lum, gray, area, motion, runs, onsets = [], [], [0.0], [np.nan], [], []
     state = {'s': 0, 'anchor': None, 'acc': 0.0, 'cut': -99, 'open': None}
