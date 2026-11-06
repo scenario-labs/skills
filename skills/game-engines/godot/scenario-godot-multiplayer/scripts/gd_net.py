@@ -171,7 +171,7 @@ def session(master, roles: list[dict], timeout: float = 90, clone_root=None, env
             out = gd_run._ensure_out(clone, None)
             rt = r["timeout"] or timeout
             cmd, rf, lp = _role_cmd(clone, r, out, rt)
-            fh = open(lp, "w")
+            fh = stack.enter_context(open(lp, "w"))
             fh.write(f"# {shlex.join(cmd)}\n")
             fh.flush()
             p = subprocess.Popen(cmd, cwd=str(clone), stdin=subprocess.DEVNULL, stdout=fh, stderr=subprocess.STDOUT,

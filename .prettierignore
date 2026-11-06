@@ -2,6 +2,7 @@
 pnpm-lock.yaml
 skills-lock.json
 .claude-plugin/marketplace.json
+.cursor/BUGBOT.md
 .husky/_/
 
 # Rewritten by release-please, which emits `*` bullets prettier would rewrite.

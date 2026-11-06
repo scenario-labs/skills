@@ -22,9 +22,10 @@ overlap.
 
 Prerequisites:
 
-- Node.js at the version in `.nvmrc`, which CI reads too, and pnpm.
-- [uv](https://docs.astral.sh/uv/). The pre-commit hook runs ruff and the spec validator through
-  `uvx`, so every commit fails without it.
+- Node.js 22.18 or later, and pnpm. CI reads `.nvmrc`; cspell needs 22.18, so an older 22 fails
+  `pnpm spell`.
+- [uv](https://docs.astral.sh/uv/). The pre-commit hook runs ruff and the spec validator through uv,
+  so every commit fails without it.
 - For `pnpm test` only: Python 3.11+ as the `python3` on PATH, and ffmpeg. The runner uses that
   `python3` even under uv, and macOS's `/usr/bin/python3` (3.9) fails the suites.
 
@@ -35,7 +36,22 @@ pnpm install
 ```
 
 `pnpm install` sets up commitlint, cspell, prettier, and the husky git hooks, so every commit runs
-the same checks CI runs.
+the same checks CI runs. In Claude Code, a hook refuses a commit when they are missing or skipped
+with `--no-verify`.
+
+On Windows, enable symlinks before cloning. The repository tracks a few (`CLAUDE.md` and the agent
+command and dev-skill links under `.claude/`), and Git otherwise checks them out as plain text
+files, which `pnpm validate` rejects.
+
+1. Turn on Developer Mode (Settings > System > For developers), so Git can create symlinks without
+   admin rights.
+2. Clone with symlinks enabled:
+
+   ```bash
+   git clone -c core.symlinks=true https://github.com/scenario-labs/skills.git
+   ```
+
+A clone made without them needs a fresh clone after step 1.
 
 ## Authoring a skill
 
@@ -48,7 +64,7 @@ Repository commands are available in Codex and Claude Code from the same instruc
 | `$pr-summary`             | `/pr-summary`             | Refresh the current PR description  |
 | `$pr-squash-message`      | `/pr-squash-message`      | Prepare the squash commit message   |
 | `$pr-handle-comments`     | `/pr-handle-comments`     | Fix and answer review comments      |
-| `$skills-pr-handle <PR>`  | `/skills:pr-handle <PR>`  | Handle a PR and its review comments |
+| `$skills-pr-handle <PR>`  | `/skills:pr-handle <PR>`  | Comments plus audits and validation |
 | `$skills-validate <name>` | `/skills:validate <name>` | Run a skill's application test      |
 
 Pass flags after the command, for example `$skills-validate scenario --plan-only --no-post`. Both
@@ -79,8 +95,12 @@ disagree, AGENTS.md wins.
 ```bash
 pnpm format   # prettier reflows markdown, so run it before validate
 pnpm validate # house style, formatting, supporting files, groupings, README table, spelling, spec
-pnpm test     # only needed when a shipped script changed; suites live in tests/<name>/
+pnpm test     # only needed when a shipped script changed; suites live in tests/<name>/ (one per expert family)
 ```
+
+Run `pnpm format && pnpm validate` before every push. A commit made without the git hooks (a clone
+where `pnpm install` never ran, or `--no-verify`) skips their checks, and CI then fails on what they
+would have caught.
 
 A new or changed skill also needs the application test from
 [docs/application-test.md](docs/application-test.md): a clean-room agent runs a realistic task with
@@ -94,7 +114,7 @@ application test checks whether the skill actually teaches.
   enforced by commitlint. Valid scopes are the skill directory names plus `skills`, `agents`, `ci`,
   `deps`, `docs`, and `tooling`.
 - PRs target `main` and are squash-merged: the PR title becomes the commit header, so write it as
-  one.
+  one, under 72 characters. A PR built on another open PR targets that PR's branch instead.
 - Merged PRs land in the next release, staged by release-please as an open release PR. Merging it
   tags a release, updates `CHANGELOG.md`, and posts the notes to the
   [Scenario changelog](https://www.scenario.com/changelog). Your commit type decides the listing:
