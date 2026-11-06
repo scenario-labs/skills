@@ -73,7 +73,7 @@ Working in Unreal Engine, Unity, or Godot? Add the expert tools for it:
 
 ### Art Director
 
-One look held across every asset, checked before it ships. 15 skills.
+One look held across every asset, checked before it ships. 19 skills.
 
 - **One Character, Every Shot** (`scenario-consistency`, `scenario-identity-library`). Try: "Keep
   this heroine identical across these twelve shots, poses and outfits included."
@@ -81,9 +81,11 @@ One look held across every asset, checked before it ships. 15 skills.
   "Check this batch against the brief and flag anything off-model."
 - **Our Style, Trained** (`scenario-model-training`). Try: "Train a model on our 40 approved
   illustrations and generate new props in that style."
+- **Comics and Graphic Novels** (`scenario-comic-creator`, `scenario-storyboards`). Try: "Turn this
+  photo and idea into a six-page watercolor comic, then a PDF."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-consistency scenario-identity-library scenario-quality-gate scenario-asset-analysis scenario-model-training scenario-image scenario-image-editing scenario-sprite-animation scenario-video scenario-refine-loop scenario-seedream scenario-gemini-image
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-consistency scenario-identity-library scenario-quality-gate scenario-asset-analysis scenario-model-training scenario-image scenario-image-editing scenario-sprite-animation scenario-video scenario-refine-loop scenario-seedream scenario-gemini-image scenario-comic-creator scenario-multi-reference scenario-text-overlay scenario-storyboards
 ```
 
 ### Sound Designer
@@ -220,10 +222,10 @@ npx skills add scenario-labs/skills --skill scenario scenario-consistency scenar
 
 ### Images and editing
 
-Images generated and edited, exact text overlays, and a sequence storyboarded. 26 skills.
+Images generated and edited, exact text overlays, and a sequence storyboarded. 27 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-image scenario-multi-reference scenario-image-editing scenario-text-overlay scenario-storyboards scenario-game-assets scenario-textures scenario-skyboxes scenario-video scenario-video-editing scenario-seedance-storyboard scenario-video-ads scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-ad-variants scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario scenario-image scenario-multi-reference scenario-image-editing scenario-text-overlay scenario-storyboards scenario-comic-creator scenario-game-assets scenario-textures scenario-skyboxes scenario-video scenario-video-editing scenario-seedance-storyboard scenario-video-ads scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-ad-variants scenario-thumbnails
 ```
 
 ### ChatGPT and Codex pets
