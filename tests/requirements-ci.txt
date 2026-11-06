@@ -510,6 +510,7 @@ numpy==2.5.4 \
     #   -r tests/scenario-blender-2d-animation/requirements.txt
     #   -r tests/scenario-blender-expert/requirements.txt
     #   -r tests/scenario-chatgpt-pet-create/requirements.txt
+    #   -r tests/scenario-kinetic-film/requirements.txt
     #   -r tests/scenario-kinetic-music-video/requirements.txt
     #   -r tests/scenario-orbit-views/requirements.txt
     #   -r tests/scenario-patina-retexture/requirements.txt
@@ -531,7 +532,9 @@ opencv-python-headless==5.0.0.93 \
     --hash=sha256:b82f9831daab90b725c7c1ee1b36cb5732c367096ac76d119e64e14eb70d5f3c \
     --hash=sha256:c6bcd96b185975ea240d22cfdb15a1f6d080cc95264cfbe2621f21bb144d89b9 \
     --hash=sha256:ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37
-    # via -r tests/scenario-kinetic-music-video/requirements.txt
+    # via
+    #   -r tests/scenario-kinetic-film/requirements.txt
+    #   -r tests/scenario-kinetic-music-video/requirements.txt
 pillow==13.0.0 \
     --hash=sha256:02464da86f561f410e13b061ec37c3068a9cb557a095494157742d07b3c24a27 \
     --hash=sha256:04a63720f79e22fd54d897c233a68314c50ca0603360f54ce2bd5db8f0f43782 \

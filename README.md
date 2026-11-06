@@ -59,7 +59,7 @@ through the Scenario MCP.
 
 ```bash
 # Every Scenario skill, without the expert tools
-npx skills add scenario-labs/skills --skill scenario scenario-inspiration scenario-image scenario-multi-reference scenario-product-shots scenario-brand-kit scenario-image-editing scenario-text-overlay scenario-storyboards scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-textures scenario-skyboxes scenario-3d scenario-video-to-motion scenario-blender scenario-patina-retexture scenario-orbit-views scenario-walkable-room scenario-video scenario-video-editing scenario-video-color-grade scenario-seedance-music-video scenario-kinetic-music-video scenario-chatgpt-pet-create scenario-chatgpt-pet-update scenario-seedance-storyboard scenario-seedance-drafts scenario-video-ads scenario-ugc scenario-fan-cam scenario-reel-recast scenario-audio scenario-video-assembly scenario-motion-loops scenario-caption-studio scenario-consistency scenario-identity-library scenario-model-training scenario-asset-analysis scenario-quality-gate scenario-refine-loop scenario-model-comparison scenario-formats scenario-workflows scenario-workflow-authoring scenario-moderation scenario-report scenario-team-admin scenario-admin-analytics scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-ad-variants scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario scenario-inspiration scenario-image scenario-multi-reference scenario-product-shots scenario-brand-kit scenario-image-editing scenario-text-overlay scenario-storyboards scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-textures scenario-skyboxes scenario-3d scenario-video-to-motion scenario-blender scenario-patina-retexture scenario-orbit-views scenario-walkable-room scenario-video scenario-video-editing scenario-video-color-grade scenario-seedance-music-video scenario-kinetic-music-video scenario-chatgpt-pet-create scenario-chatgpt-pet-update scenario-seedance-storyboard scenario-seedance-drafts scenario-video-ads scenario-ugc scenario-fan-cam scenario-reel-recast scenario-audio scenario-video-assembly scenario-motion-loops scenario-kinetic-film scenario-caption-studio scenario-consistency scenario-identity-library scenario-model-training scenario-asset-analysis scenario-quality-gate scenario-refine-loop scenario-model-comparison scenario-formats scenario-workflows scenario-workflow-authoring scenario-moderation scenario-report scenario-team-admin scenario-admin-analytics scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-ad-variants scenario-thumbnails
 ```
 
 **By role or goal.** [INSTALL.md](INSTALL.md) groups the skills by job, from 2D artist to producer,
@@ -177,8 +177,8 @@ interactive scenes.
 
 ### Video and audio
 
-Video generation, editing, and color grading, seamless motion loops, music, sound effects, voice,
-and speech.
+Video generation, editing, and color grading, kinetic-type launch films, seamless motion loops,
+music, sound effects, voice, and speech.
 
 | Skill                                                                          | Use it for                                                                                                                                  |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -193,6 +193,7 @@ and speech.
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                                           |
 | [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions                            |
 | [scenario-motion-loops](skills/scenario-motion-loops/SKILL.md)                 | Seamless brand-color motion loops in code (backgrounds, bumpers, shape animations) rendered to MP4, with a Scenario cut-out over them       |
+| [scenario-kinetic-film](skills/scenario-kinetic-film/SKILL.md)                 | Kinetic-type launch films and teasers from a brief, in code: tempo-set music, sound kit and key art from Scenario, 4K with motion blur      |
 | [scenario-caption-studio](skills/scenario-caption-studio/SKILL.md)             | Captioning a finished video per destination: styled burn-in or SRT, transcription hints, translation, per-platform placement                |
 
 ### Socials
