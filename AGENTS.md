@@ -77,7 +77,7 @@ Skills reference validator), plus house-style greps, prettier, cspell, and suppo
 Spec-validate one skill with:
 
 ```bash
-uvx --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
+uvx --python 3.12 --from "git+https://github.com/agentskills/agentskills.git#subdirectory=skills-ref" skills-ref validate skills/<name>
 ```
 
 ### Frontmatter and budget
