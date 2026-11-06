@@ -24,11 +24,15 @@ Values below are for a 1080-wide canvas.
   equal to that box, `fit: "fill"`, `mute: true`. An 8 s hand track was 24.5 MB at full canvas and
   6.6 MB cropped to 400x450.
 - Uploads go out in parts of 6,000,000 bytes (not 6 MiB): `upload_asset` returns one presigned URL
-  per part. Save the response, run `put_parts.py FILE response.json`, then call
-  `upload_asset_complete`. By hand: write each part to a file and PUT it in order; piping into the
-  request failed.
-- A compose output is already an asset: use its id as the silent master of the next pass, with no
-  download and re-upload.
+  per part. Write the response, or its part URLs in order, to a file, run
+  `put_parts.py FILE parts.json`, then call `upload_asset_complete`. By hand: write each part to a
+  file and PUT it in order; piping into the request failed.
+- Every upload means copying its URLs into that file, and one test ad took 25 uploads. Keep the
+  count down:
+  - a generated sound goes in by its own asset id, with `trimStart` at its onset (see Sound);
+  - the end card's alpha parts (icon pop, label, stars) render as one `group` track;
+  - a compose output is already an asset: use its id as the silent master of the next pass, with no
+    download and re-upload.
 - Never animate with a run of stepped image layers. Compose can draw the outgoing and the incoming
   layer on one boundary frame, which shows a double hand or two counters.
 - An element animated by a video model on a flat color, such as a hero dancing on the end card,
@@ -101,8 +105,8 @@ Values below are for a 1080-wide canvas.
   short local slow motion before it. It sells the clever move in every ad that used it.
 - **Win stars**: three slots under the win word fill one by one with a sparkle each, over about 0.9
   s, with the payoff still visible.
-- **Hand**: one glove generated once on a transparent background. Measure the fingertip's offset on
-  the PNG.
+- **Hand**: one glove sprite on a transparent background, generated or drawn once, never inside a
+  still or a take. Measure the fingertip's offset on the PNG.
   - A tap presses for 0.15 s at 92% scale.
   - A drag follows the object's position, measured on extracted frames of the take. The fingertip
     stays on the object or just behind it, never ahead of it.
@@ -141,12 +145,14 @@ Values below are for a 1080-wide canvas.
   plan.
 - Build a kit once: tap, whoosh, counter tick, fail buzz, win sting, end-card chime. Add 2 to 4
   theme hits (crash, gulp, gem burst).
-  - Generate each hit with a sound-effect model (`recommend` one).
-  - Trim each so its onset sits at 0.0, which makes the cue time the hit time.
+  - Generate each hit with a sound-effect model (`recommend` one), as 48 kHz WAV when its schema
+    offers that output.
+  - Place each by its own asset id with `trimStart` at its onset, which makes the cue time the hit
+    time. Upload a local copy only after changing its sound, such as a pitch shift.
   - Each hit's peak sits at least 4 dB over the music's peak in the same 50 ms, and over any hit
     playing on top of it. A star under the win sting vanished although it cleared the music.
-  - Upload every sound as 48 kHz WAV. One master came out at 44.1 kHz, and a 192 kHz extract made a
-    96 kHz one.
+  - Keep every sound at 48 kHz, generated or uploaded, and upload as WAV. One master came out at
+    44.1 kHz, and a 192 kHz extract made a 96 kHz one.
 - Compose plays a 128 kbps copy of each uploaded sound, which drops everything above 16 kHz.
   - A sparkle or star with most of its energy up there plays about 8 dB quieter than planned.
   - Low-pass each hit at 16 kHz before judging it, and pitch such hits down.

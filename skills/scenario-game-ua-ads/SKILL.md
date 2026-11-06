@@ -62,14 +62,13 @@ or ask. Unattended with no ceiling, stop at the plan and estimate.
 | 20 s   | 5 s                        | 6 s, then a 5 s escalation | 4 s      |
 | 30 s   | two rounds of fail and win | or three escalations       | 4 s      |
 
-From the user's footage, setup and payoff become the footage's own beats
-([inputs](references/inputs.md)).
+With footage, its own beats replace this split ([inputs](references/inputs.md)).
 
 - Compose each ratio natively: generate the board at the delivery canvas (1080x1920 for 9:16,
   1080x1350 for 4:5, 1080x1080 for 1:1, 1920x1080 for 16:9). Never crop one ratio out of another.
 - Plan the board still in the placement's bands: background only under the platform UI, the HUD and
-  hook just below it, every key action in the safe middle. Overlays with text stay in the safe zone
-  too.
+  hook just below it, every key action in the safe middle. Overlays with text and anything the hand
+  taps (a pin ring, a lever) stay in the safe zone, clear of TikTok's right rail.
 - Several placements: one board per ratio and one assembly run each, from the same plan.
 
 ## Make the viewer want to play
@@ -95,8 +94,8 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
 
 - The first frame holds the premise: board, hook line, stakes. A sound at 0.0, motion by 0.3 s, no
   logo intro.
-- Never let a model draw text, numbers, gate values, buttons, or the hand. Leave slots blank in the
-  still and composite them.
+- Never let a board or video model draw text, numbers, gate values, buttons, or the hand into a
+  still or a take: leave the slots blank and composite them.
 - One mechanic, escalating. Counters only climb, in 4 or 5 visible steps, each proportional to the
   event that causes it: one pickup never jumps a level from 30 to 99.
 - A fail tease is two takes from one still: the wrong move and its consequence, then the right move.
@@ -144,8 +143,8 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
 
 ## Scripts
 
-The agent runs these locally with Python 3, Pillow, numpy, and ffmpeg. They render and plan; uploads
-and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fields.
+The agent runs these locally with Python 3.11+, Pillow 13, numpy 2, and ffmpeg. They render and
+plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fields.
 
 - [render_tracks.py](scripts/render_tracks.py): renders the hand, counters, rewards, bursts, and
   stars as cropped ProRes 4444 tracks, plus `layers.json` with floored times and safe-zone warnings.
@@ -155,9 +154,8 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
   loudness, true peak, a 2 fps sheet, and each hit's onset (`--sim` reads them against the mix).
 - [put_parts.py](scripts/put_parts.py): PUTs a file to the signed S3 part URLs `upload_asset`
   returned, refusing any other URL, and prints what `upload_asset_complete` needs.
-- [check_take.py](scripts/check_take.py): run on each take before assembly: `sheet` for timing,
-  `action` crops around each contact, `ends` for counts, `motion` flags movement outside the boxes
-  allowed to move (locked camera only).
+- [check_take.py](scripts/check_take.py): the logic checks on each take before assembly; `motion`
+  needs a locked camera.
 - [make_patch.py](scripts/make_patch.py): builds a clean-plate image layer that hides a static piece
   contradicting the count, and checks every take it covers.
 
@@ -218,8 +216,7 @@ and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fiel
 
 - A label fixed to a moving object slides off it. Keep it to the static second or use the HUD.
 - Scaling a full-canvas overlay in the compose run: it scales from the corner and can leave the
-  frame. Render each element at final size; offsetting with `x` or `y` is fine.
-- Stretching a screenshot to the canvas.
+  frame. Render it at final size.
 - Naming a real game, studio, or character in invented gameplay, or letting an archetype drift into
   one: an angry driver came back in a red cap, mustache, and blue shirt. Name an original look and
-  check the still before animating.
+  check the still before animating. A take still flagged for IP: reword it generically and rerun.

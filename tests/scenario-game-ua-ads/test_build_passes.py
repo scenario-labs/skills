@@ -254,18 +254,23 @@ class SoundTests(Case):
         helpers.write_wav(self.dir / "swell.wav", np.concatenate([swell, helpers.burst(0.2, amp=0.5)]))
         plan = self.plan(duration=2.0, sound={"hits": [{"label": "kit", "file": "kit.wav", "t": 0.2},
                                                        {"label": "gap", "file": "gap.wav", "t": 0.8},
-                                                       {"label": "swell", "file": "swell.wav", "t": 1.4}]})
+                                                       {"label": "swell", "file": "swell.wav", "t": 1.4},
+                                                       {"label": "trimmed", "file": "gap.wav", "t": 1.7,
+                                                        "trimStart": 0.03}]})
         out = io.StringIO()
         with redirect_stdout(out):
-            kit, gap, swell = bp.simulate(plan, self.dir / "sim.wav")["hits"]
+            kit, gap, swell, trimmed = bp.simulate(plan, self.dir / "sim.wav")["hits"]
         self.assertLess(kit["onset_ms"], 10)
         self.assertAlmostEqual(kit["attack_ms"], 12, delta=1.5)
         self.assertAlmostEqual(gap["onset_ms"], 30, delta=1)
         self.assertGreater(swell["attack_ms"] - swell["onset_ms"], 50)
+        # A generated hit placed by its asset id: trimStart at its onset measures from the trim point.
+        self.assertLess(trimmed["onset_ms"], 1)
         lines = {line.split()[2]: line for line in out.getvalue().splitlines() if line.startswith("  ") and " s  " in line}
         self.assertNotIn("ms in", lines["kit"])
-        self.assertIn("sound starts 30 ms in", lines["gap"])
+        self.assertIn("sound starts 30 ms in: raise its trimStart by that much", lines["gap"])
         self.assertIn("attack 60 ms in", lines["swell"])
+        self.assertNotIn("ms in", lines["trimmed"])
 
     def test_a_hit_mostly_above_16_khz_is_low_passed_and_warned(self):
         helpers.write_wav(self.dir / "sparkle.wav", helpers.tone(0.3, amp=0.5, freq=18000))

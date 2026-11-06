@@ -3,7 +3,7 @@
 
 Usage: python3 put_parts.py FILE PARTS.json [--part-size 6000000] [-o etags.json] [--allow-host HOST]
 
-Save the upload_asset response as PARTS.json; the URLs are long and never need retyping. It reads:
+Write the upload_asset response, or just its part URLs, to PARTS.json, copied exactly. It reads:
 - the response object: its "parts" list, each part a URL or an object holding it under "upload_url"
   or "url", with "part_number" and "content_length" when present, and "part_size" and "upload_id"
   when the response has them;

@@ -499,7 +499,7 @@ def simulate(plan, out, tp_target=TP_TARGET):
         if over_all is not None and over_all < 0 and masked:
             flags.append(f"MASKED by {', '.join(masked)} at +{at:.2f} s")
         if start is not None and start > 10:
-            flags.append(f"sound starts {start:.0f} ms in: trim the file to start at 0")
+            flags.append(f"sound starts {start:.0f} ms in: raise its trimStart by that much")
         if attack is not None and attack - start > 1000 / plan.fps:
             flags.append(f"attack {attack:.0f} ms in: place the hit {attack:.0f} ms earlier or trim the lead")
         if share > 0.5 and file not in warned:
