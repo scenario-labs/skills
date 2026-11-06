@@ -174,14 +174,18 @@ def gui_editor_pids(project) -> list[int]:
 
 def _flock_try(path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
-    fh = open(path, "a+")
-    if not _lock_nb(fh):
+    fh = open(path, "a+")  # noqa: SIM115 (returned: the caller holds the lock)
+    try:
+        if not _lock_nb(fh):
+            fh.close()
+            return None
+        fh.seek(0)
+        fh.truncate()
+        fh.write(f"{os.getpid()} {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        fh.flush()
+    except BaseException:
         fh.close()
-        return None
-    fh.seek(0)
-    fh.truncate()
-    fh.write(f"{os.getpid()} {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-    fh.flush()
+        raise
     return fh
 
 

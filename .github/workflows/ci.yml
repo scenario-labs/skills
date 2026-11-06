@@ -31,12 +31,14 @@ jobs:
         run: pnpm sync:agent-commands:check
       - name: Skill supporting files
         run: pnpm skill-files
-      - name: Python lint (ruff, pyflakes rules)
+      - name: Python lint (ruff)
         run: pnpm lint:py
       - name: skills.sh.json grouping coverage
         run: pnpm groupings
       - name: Plugin marketplace manifest in sync
         run: pnpm manifest:check
+      - name: Bugbot rules match REVIEW.md
+        run: pnpm bugbot:check
       - name: README skills table coverage
         run: pnpm readme
       - name: project-words.txt sorted
@@ -54,6 +56,9 @@ jobs:
       matrix:
         os: [ubuntu-24.04, ubuntu-26.04]
     runs-on: ${{ matrix.os }}
+    # A normal run takes under 11 minutes. Without a cap, a stalled apt mirror holds the job for up
+    # to GitHub's 6-hour default.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -68,8 +73,45 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      # The runner's apt mirror sometimes serves the ffmpeg .debs at a few kB/s (one install took 33
+      # minutes), so they are cached. The key hashes the exact .deb list, so an Ubuntu update
+      # downloads only the changed packages and saves a new cache.
+      - name: Resolve ffmpeg packages
+        id: apt
+        run: |
+          sudo apt-get update -o Acquire::Retries=3 -o Acquire::http::Timeout=30
+          echo "key=$(sudo apt-get install --print-uris -qq ffmpeg | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore ffmpeg packages
+        id: apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/apt-archives
+          key: apt-ffmpeg-${{ matrix.os }}-${{ steps.apt.outputs.key }}
+          restore-keys: apt-ffmpeg-${{ matrix.os }}-
       - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg && ffmpeg -version | head -n 1
+        # The archives directory belongs to the runner user, which apt's _apt sandbox cannot write.
+        run: |
+          mkdir -p ~/apt-archives/partial
+          sudo apt-get install -y \
+            -o Dir::Cache::archives="$HOME/apt-archives" \
+            -o APT::Keep-Downloaded-Packages=true \
+            -o APT::Sandbox::User=root \
+            -o Acquire::Retries=3 -o Acquire::http::Timeout=30 \
+            ffmpeg
+          ffmpeg -version | head -n 1
+      - name: Prune ffmpeg packages
+        if: steps.apt-cache.outputs.cache-hit != 'true'
+        # autoclean drops .debs the index no longer offers, so a restored older cache stops growing.
+        run: |
+          sudo apt-get autoclean -o Dir::Cache::archives="$HOME/apt-archives"
+          sudo rm -rf ~/apt-archives/partial ~/apt-archives/lock
+          sudo chown -R "$USER" ~/apt-archives
+      - name: Save ffmpeg packages
+        if: steps.apt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/apt-archives
+          key: ${{ steps.apt-cache.outputs.cache-primary-key }}
       - name: Install locked Python test dependencies
         run: |
           pip install --require-hashes --only-binary=:all: -r tests/requirements-ci.txt
