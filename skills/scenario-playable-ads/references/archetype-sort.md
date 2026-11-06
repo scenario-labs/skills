@@ -50,7 +50,8 @@ idle: 10.9 s). Meta 699 KB.
   multi-pours.
 - **The near-fail is for a player who plays badly.** A ball-sort board keeps its free space
   constant, so the pressure comes from the MOVES limit and the round timer. The MOVES limit is not
-  in the intake: confirm it with the user.
+  in the intake: confirm it with the user. Unattended, use the limit the recording shows; with none,
+  only the round timer applies, and `notes.md` says so.
 - **Last move:** `finalMove()` picks the winning pour with the fewest jellies into the fullest jar,
   so the highlight shows the lone red going into the three reds.
 - **Honest result text**, always computed from the board:

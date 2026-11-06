@@ -53,7 +53,8 @@ uninstall on day 1.
 
 The recording may show only menus, a cutscene, or a mechanic too fast to read. Then:
 
-- ask the user for a second clip of raw gameplay (a phone screen recording is fine);
+- ask the user for a second clip of raw gameplay (a phone screen recording is fine). Unattended,
+  stop and report what the recording shows;
 - never invent a mechanic the recording does not show. A guessed mechanic is the classic expectation
   mismatch.
 
