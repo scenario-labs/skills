@@ -203,8 +203,10 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   with a new generation in a different look, or with code, never by adding effects. Offer
   alternatives as timeline `variant`s (render with `--variant b`) instead of guessing.
 - **Older projects:** without `tools/dynamism_check.py`, copy it and `rectify_screen.py` from
-  `<skill>/scripts/` into `tools/`, replace `ENGINE_API.md` with `references/engine_api.md`, and add
-  the template's dynamism check to `AGENTS_BRIEF.md`.
+  `<skill>/scripts/` into `tools/`, and add the template's dynamism check to `AGENTS_BRIEF.md`.
+  Replace `ENGINE_API.md` with `references/engine_api.md` only when `engine/canvas.js` exists;
+  otherwise add its `energy` line. Then tag each `TIMELINE` entry's `energy` from TREATMENT.md
+  (`references/dynamism.md` §2).
 
 ### 7. Deliver
 
