@@ -166,7 +166,8 @@ describe("a film built from the tour spec", () => {
         expect(again.ops, `t=${t} after ${path}`).toEqual(fresh.ops);
       }
     }
-  });
+    // 18 film builds: about 1 s alone, 11.5 s on a CI runner shared with parallel modules and coverage
+  }, 60000);
 
   it("the HUD counts frames at the film's rate", () => {
     const hud = film.hud;
