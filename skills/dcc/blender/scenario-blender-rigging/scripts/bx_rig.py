@@ -27,9 +27,9 @@ move_points, transform_bones, set_limb_roll, check_metarig, upgrade_face, genera
 placement_sheet (bones over an X-ray render), closeup, tile_images.
 Weights: bind, weight_report, weight_matrix, write_weights, strip_opposite_side,
 clean_weights, remove_non_deform_groups, smooth_weights, transfer_weights,
-proxy_weights, assign_rigid, armature_first.
+robust_weights, proxy_weights, assign_rigid, armature_first.
 Poses and review: RIGIFY_POSES, JOINTS, apply_pose, reset_pose, aim, hinge, twist,
-rotate_world, deformation_report, flag_report, pose_sheet, joint_sheet.
+rotate_world, deformation_report, garment_depth, flag_report, pose_sheet, joint_sheet.
 Manual / scripted rigs (DEF/MCH/CTRL): new_armature, new_bone, copy_bone, reparent,
 con, twist_chain, twist_angles, ik_chain, solve_pole_angle, foot_roll, settings_prop,
 drive, remap_driver, fk_ik_switch, mirror_drivers, make_def_layer, widget, set_shape,
@@ -1432,26 +1432,41 @@ def _parent(rig, objs, kind):
     bpy.ops.object.parent_set(type=kind)
 
 
-def transfer_weights(src, dst, rig=None, apply=True, mapping="POLYINTERP_NEAREST"):
+def transfer_weights(src, dst, rig=None, apply=True, mapping="POLYINTERP_NEAREST", max_dist=None,
+                     max_angle=35.0):
     """Copy vertex-group weights from src to dst with a Data Transfer modifier, applied.
 
     Dikko / CGDive: garments and accessories get weights from the SAME source as the
     body so they deform identically, and the transfer is applied so weights do not
-    change while animating. dst keeps (or gets) an Armature modifier to rig."""
+    change while animating. dst keeps (or gets) an Armature modifier to rig.
+
+    mapping='ROBUST' (no modifier, always applied): each vertex copies the weights of
+    its closest point on src only when that point is within max_dist (default 5% of
+    dst's bounding-box diagonal) and the normals are within max_angle degrees; the
+    other vertices are inpainted from the copied ones over dst's edges, then lightly
+    smoothed (Abdrashitov et al., "Robust Skin Weights Transfer via Weight Inpainting",
+    SIGGRAPH Asia 2023). Nearest-face copies every vertex, so the loose part of a skirt
+    or coat takes whichever leg is closest and tears between them. Sets dst["bx_matched"]
+    and dst["bx_inpainted"] (vertex counts)."""
     for g in src.vertex_groups:
         if g.name not in dst.vertex_groups:
             dst.vertex_groups.new(name=g.name)
-    m = dst.modifiers.new("BX_weights", "DATA_TRANSFER")
-    m.object = src
-    m.use_vert_data = True
-    m.data_types_verts = {"VGROUP_WEIGHTS"}
-    m.vert_mapping = mapping
-    m.layers_vgroup_select_src = "ALL"
-    m.layers_vgroup_select_dst = "NAME"
-    with bpy.context.temp_override(object=dst, active_object=dst):
-        bpy.ops.object.modifier_move_to_index(modifier=m.name, index=0)
-        if apply:
-            bpy.ops.object.modifier_apply(modifier=m.name)
+    if mapping == "ROBUST":
+        W, names, ok = robust_weights(src, dst, max_dist=max_dist, max_angle=max_angle)
+        write_weights(dst, W, names)
+        dst["bx_matched"], dst["bx_inpainted"] = int(ok.sum()), int((~ok).sum())
+    else:
+        m = dst.modifiers.new("BX_weights", "DATA_TRANSFER")
+        m.object = src
+        m.use_vert_data = True
+        m.data_types_verts = {"VGROUP_WEIGHTS"}
+        m.vert_mapping = mapping
+        m.layers_vgroup_select_src = "ALL"
+        m.layers_vgroup_select_dst = "NAME"
+        with bpy.context.temp_override(object=dst, active_object=dst):
+            bpy.ops.object.modifier_move_to_index(modifier=m.name, index=0)
+            if apply:
+                bpy.ops.object.modifier_apply(modifier=m.name)
     if rig is not None and not any(md.type == "ARMATURE" for md in dst.modifiers):
         am = dst.modifiers.new("Armature", "ARMATURE")
         am.object = rig
@@ -1461,6 +1476,136 @@ def transfer_weights(src, dst, rig=None, apply=True, mapping="POLYINTERP_NEAREST
         dst.matrix_world = mw
         armature_first(dst)
     return dst
+
+
+def _triangles(obj):
+    """(T, 3) vertex indices of the mesh's loop triangles."""
+    me = obj.data
+    me.calc_loop_triangles()
+    T = np.empty(len(me.loop_triangles) * 3, dtype=np.int64)
+    me.loop_triangles.foreach_get("vertices", T)
+    return T.reshape(-1, 3)
+
+
+def _edges(obj):
+    me = obj.data
+    ed = np.empty(len(me.edges) * 2, dtype=np.int64)
+    me.edges.foreach_get("vertices", ed)
+    return ed.reshape(-1, 2)
+
+
+def _diffuse(F, edges, iterations, step, fixed=None):
+    """Move each row of F toward the mean of its edge neighbours (rows in `fixed` stay)."""
+    n = len(F)
+    a = np.r_[edges[:, 0], edges[:, 1]]
+    b = np.r_[edges[:, 1], edges[:, 0]]
+    order = np.argsort(a, kind="stable")
+    a, b = a[order], b[order]
+    deg = np.bincount(a, minlength=n)
+    has = np.nonzero(deg)[0]
+    if not len(has):
+        return F
+    starts = np.searchsorted(a, has)
+    move = np.zeros(n, dtype=bool)
+    move[has] = True
+    if fixed is not None:
+        move &= ~fixed
+    for _ in range(iterations):
+        avg = np.add.reduceat(F[b], starts, axis=0) / deg[has, None]
+        new = F.copy()
+        new[has] = (1.0 - step) * F[has] + step * avg
+        F = np.where(move[:, None], new, F)
+    return F
+
+
+def robust_weights(src, dst, max_dist=None, max_angle=35.0, inpaint=200, smooth=10):
+    """Weights for dst from src by closest point, distance and normal gates, then
+    inpainting (see transfer_weights mapping='ROBUST'). Both meshes in their rest
+    shape. Returns (W, names, matched) without writing anything."""
+    from mathutils.bvhtree import BVHTree
+    S = world_coords(src, evaluated=False)
+    T = _triangles(src)
+    tree = BVHTree.FromPolygons([tuple(v) for v in S], T.tolist())
+    Ws, names = weight_matrix(src)
+    used = np.nonzero(Ws.any(axis=0))[0]
+    Ws, names = Ws[:, used], [names[j] for j in used]
+    D = world_coords(dst, evaluated=False)
+    nv = np.empty(len(dst.data.vertices) * 3)
+    dst.data.vertex_normals.foreach_get("vector", nv)
+    N = nv.reshape(-1, 3) @ np.linalg.inv(np.array(dst.matrix_world)[:3, :3])
+    N /= np.maximum(np.linalg.norm(N, axis=1, keepdims=True), 1e-12)
+    if max_dist is None:
+        max_dist = 0.05 * float(np.linalg.norm(np.ptp(D, axis=0)))
+    cos_gate = math.cos(math.radians(max_angle))
+    W = np.zeros((len(D), len(names)))
+    ok = np.zeros(len(D), dtype=bool)
+    for i, p in enumerate(D):
+        loc, nrm, ti, dist = tree.find_nearest(Vector(p))
+        if loc is None:
+            continue
+        a, b, c = S[T[ti]]
+        v0, v1, v2 = b - a, c - a, np.array(loc) - a
+        d00, d01, d11, d20, d21 = v0 @ v0, v0 @ v1, v1 @ v1, v2 @ v0, v2 @ v1
+        den = d00 * d11 - d01 * d01
+        if abs(den) < 1e-18:
+            bary = np.array([1.0, 0.0, 0.0])
+        else:
+            v = (d11 * d20 - d01 * d21) / den
+            w = (d00 * d21 - d01 * d20) / den
+            bary = np.clip([1.0 - v - w, v, w], 0.0, 1.0)
+            bary /= bary.sum()
+        W[i] = bary @ Ws[T[ti]]
+        # abs: a garment's inner wall faces the skin the other way and still matches
+        ok[i] = dist <= max_dist and abs(float(N[i] @ np.array(nrm))) >= cos_gate
+    ed = _edges(dst)
+    if (~ok).any():
+        W = _diffuse(W, ed, inpaint, 1.0, fixed=ok)
+    W = _diffuse(W, ed, smooth, 0.1)
+    s = W.sum(axis=1, keepdims=True)
+    W = np.where(s > 1e-9, W / np.maximum(s, 1e-9), W)
+    return W, names, ok
+
+
+def garment_depth(rig, body, garments, poses=None, limit=0.005):
+    """Per pose, how much deeper each garment vertex sits inside the body than in the
+    rest pose (scene units; overlap already there at rest is not counted). weight_report
+    and deformation_report each read one mesh, so a sleeve sinking into the arm passes
+    both. Subdivision is disabled while measuring; the body's normals must face out
+    (model_check). Returns {"limit", "rest_inside": {garment: vertices inside at rest},
+    "poses": {pose: {garment: {"max", "over"}}}, "fail": [(pose, garment)]}."""
+    from mathutils.bvhtree import BVHTree
+    poses = poses or RIGIFY_POSES
+    T = _triangles(body)
+
+    def depth(PB, PG):
+        tree = BVHTree.FromPolygons([tuple(v) for v in PB], T.tolist())
+        out = np.zeros(len(PG))
+        for i, p in enumerate(PG):
+            loc, nrm, _ti, _d = tree.find_nearest(Vector(p))
+            if loc is not None:
+                out[i] = max(0.0, -float((np.array(p) - np.array(loc)) @ np.array(nrm)))
+        return out
+
+    reset_pose(rig)
+    PB = world_coords(body, no_subdiv=True)
+    H = float(np.ptp(PB[:, 2]))
+    rest = {g.name: depth(PB, world_coords(g, no_subdiv=True)) for g in garments}
+    rep = {"limit": limit, "rest_inside": {k: int((v > 1e-6).sum()) for k, v in rest.items()}, "poses": {},
+           "fail": []}
+    try:
+        for p in poses:
+            apply_pose(rig, p, H)
+            PB = world_coords(body, no_subdiv=True)
+            r = {}
+            for g in garments:
+                d = depth(PB, world_coords(g, no_subdiv=True)) - rest[g.name]
+                r[g.name] = {"max": round(float(d.max(initial=0.0)), 5), "over": int((d > limit).sum())}
+                if r[g.name]["over"]:
+                    rep["fail"].append((p["name"], g.name))
+            rep["poses"][p["name"]] = r
+    finally:
+        reset_pose(rig)
+    return rep
 
 
 def islands(obj):
@@ -1585,13 +1730,15 @@ def proxy_weights(rig, targets, voxel=None, keep_proxy=False):
 
 
 def bind(rig, body, garments=(), rigid=None, fallback="proxy", voxel=None, clean=0.01,
-         max_influences=None, subdivision_last=True, symmetric=True, route="auto"):
+         max_influences=None, subdivision_last=True, symmetric=True, route="auto",
+         garment_mapping="POLYINTERP_NEAREST"):
     """Bind a character to a (generated) rig and PROVE the weights are usable.
 
     1 body: automatic weights (bone heat); parent_set returns FINISHED even when heat
       fails, so the result is measured (unweighted verts, empty deform groups inside).
     2 on failure: proxy route (voxel-remeshed copy, auto weights, Data Transfer back).
-    3 garments: weights transferred from the body and applied (identical deformation).
+    3 garments: weights transferred from the body and applied (identical deformation);
+      garment_mapping='ROBUST' for loose or hanging parts (transfer_weights).
     4 rigid: {obj: bone_name or None}; islands assigned 1.0 (None = nearest bone).
     5 clean (< clean), optional max_influences, normalize; Armature modifier first.
     symmetric=True strips .L weights from the right half and .R from the left before
@@ -1622,7 +1769,7 @@ def bind(rig, body, garments=(), rigid=None, fallback="proxy", voxel=None, clean
     if symmetric:
         rep["stripped_cross_side"] = strip_opposite_side(body, rig)
     for g in garments:
-        transfer_weights(body, g, rig=rig)
+        transfer_weights(body, g, rig=rig, mapping=garment_mapping)
     for o, bone in (rigid or {}).items():
         assign_rigid(o, rig, bone)
     for o in [body, *garments]:
