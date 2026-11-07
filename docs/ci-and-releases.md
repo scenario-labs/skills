@@ -107,6 +107,12 @@ pointing at this repository, and hook steps read the index through them.
 
 ## CI
 
+- `scripts/test-skill-scripts.sh` runs each Python test module, and each vitest suite, as a job of
+  its own, one per CPU at a time (`SKILLS_TEST_JOBS` overrides the count).
+  - So a test module never depends on another's side effects, and writes only under a temporary
+    directory.
+  - Each job prints one status line with its duration as it ends, then its full log once all end,
+    failures last.
 - `script-tests` runs once on `ubuntu-24.04` and once on `ubuntu-26.04`, which install ffmpeg 6.1
   and 8.0 from apt.
   - Each runner is the coverage for one ffmpeg version, so both stay named, never `ubuntu-latest`.
