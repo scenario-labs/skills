@@ -9,7 +9,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
-from unittest import mock
+import unittest.mock as mock
 
 import numpy as np
 from PIL import Image, ImageDraw

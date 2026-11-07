@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from unittest import mock
+import unittest.mock as mock
 
 import numpy as np
 from helpers import SCRIPTS, ffmpeg, make_clip, make_master, write_edit

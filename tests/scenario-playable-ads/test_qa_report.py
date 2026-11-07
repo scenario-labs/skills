@@ -16,7 +16,7 @@ import types
 import unittest
 import zipfile
 from pathlib import Path
-from unittest import mock
+import unittest.mock as mock
 
 from PIL import Image
 

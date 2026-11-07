@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr
 from pathlib import Path
-from unittest import mock
+import unittest.mock as mock
 
 import numpy as np
 from PIL import Image, ImageFont

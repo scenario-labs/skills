@@ -12,7 +12,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
-from unittest import mock
+import unittest.mock as mock
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "skills" / "scenario-kinetic-music-video" / "scripts"
 SCRIPT = SCRIPTS / "lyrics_align.py"
