@@ -182,9 +182,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 ### 6. Assemble, watch, iterate
 
 - **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac, 2.5 times that with
-  motion blur on). Wait for it in the foreground (or poll until it prints `wrote`) and carry on to
-  verification and delivery: never end the run while a render or encode is still going, because a
-  headless session that stops kills it.
+  motion blur). Wait for it in the foreground (or poll until it prints `wrote`), then verify and
+  deliver: never end the run mid-render or mid-encode, since a headless session that stops kills it.
 - **Verify:**
   - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual. Below a correlation of about
     0.15 the visual lag means nothing (type leading by `E.LEAD` reads as up to -3 frames): check
@@ -212,13 +211,13 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 ### 7. Deliver
 
-- **4K master:** only on request (`--scale 2`, `references/pipeline.md` §8). Render it first, since
-  every other file is then made from it.
-- **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready 2-pass 21 Mb/s
-  file under 512 MB for X; portrait: the vertical upload in `references/pipeline.md` §8), a teaser
-  (verse plus first chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and
-  `_9x16`, when both were asked for. Use distinct filenames, because macOS is case-insensitive.
-- **Checks:** run `delivery_check.py` on every file, last, before handing it over.
+- **4K master:** only on request (`--scale 2`, `references/pipeline.md` §8), rendered first: every
+  other file is made from it.
+- **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready file under 512
+  MB; portrait: the vertical upload in `references/pipeline.md` §8), a teaser (verse plus first
+  chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and `_9x16`, when
+  both were asked for. Use distinct filenames, because macOS is case-insensitive.
+- **Checks:** run `delivery_check.py` last, on every file.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet,
   source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
@@ -249,7 +248,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - Setup and analysis: [scaffold.sh](scripts/scaffold.sh),
   [audio_analysis.py](scripts/audio_analysis.py), [lyrics_align.py](scripts/lyrics_align.py),
   [plot_lyrics.py](scripts/plot_lyrics.py)
-- Locked JavaScript dependencies copied by scaffold.sh into new projects:
+- Locked npm dependencies scaffold.sh copies into new projects:
   [package.json](assets/npm/package.json), [package-lock.json](assets/npm/package-lock.json)
 - Hashed, wheels-only Python locks scaffold.sh installs, one per platform:
   [macos-arm64.txt](assets/python/macos-arm64.txt),
@@ -271,7 +270,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - Rendering and review: [render.mjs](scripts/render.mjs), [render_lib.mjs](scripts/render_lib.mjs),
   [still.mjs](scripts/still.mjs), [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py),
   [delivery_check.py](scripts/delivery_check.py)
-- Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html),
+- Engine, copied by scaffold.sh: [index.html](assets/engine/index.html),
   [main.js](assets/engine/main.js), [blur.js](assets/engine/blur.js),
   [canvas.js](assets/engine/canvas.js), [core.js](assets/engine/core.js),
   [plate.js](assets/engine/plate.js), [roto.js](assets/engine/roto.js),
@@ -281,9 +280,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - [references/pipeline.md](references/pipeline.md): every command and Scenario call, step by step
 - [references/engine_api.md](references/engine_api.md): the scene contract and the full `E` API
   (canvas and safe band, plates, mattes, tracking, post, HUD, variants)
-- [references/motion_library.md](references/motion_library.md): looks, type system, a 40-move
-  technique library, integration ideas, transitions, timing, easing and springs, sync and cut
-  density
+- [references/motion_library.md](references/motion_library.md): looks, type system, 40 techniques,
+  integration ideas, transitions, timing, easing, sync and cut density
 - [references/agent_brief_template.md](references/agent_brief_template.md): the brief each scene
   agent reads
 - [references/lessons.md](references/lessons.md): production gotchas and direction defaults that

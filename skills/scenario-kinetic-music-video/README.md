@@ -154,8 +154,13 @@ unchanged.
     It relies only on the uniforms UnrealBloomPass feeds, and boot refuses `--scale` above 1 if one
     goes missing. Seven 4K stills match the text-patched version byte for byte.
 - **Grain and scanlines** keep 1080p cells (string substitution in the final shader).
-- **Encoder:** above 1080p, `-level` from H.264 Table A-1 and `-threads 4`; `render.mjs` caps the
-  workers to memory and refuses a 4K master past Level 5.2.
+- **Encoder:** above 1080p, `-level` from H.264 Table A-1, a VBV cap from that level, and
+  `-threads 4`; `render.mjs` caps the workers to memory and refuses a 4K master past Level 5.2.
+  - CRF alone has no ceiling. On a real project with grain 0.06 over footage, 3 s of 4K60 at CRF 17
+    peaked at 296.6 Mb/s in its busiest second, against the 300 Mb/s Level 5.2 High allows.
+  - The cap is the level's Main MaxBR (80% of the High limit) with a buffer of a quarter of it, so
+    no second inside a chunk passes the High limit. The same 3 s then peaked at 262.2 Mb/s (252.7
+    average), at 41.5 dB against the uncapped file.
 
 Evidence (an M-series Mac, ANGLE Metal, three 0.186.1, ffmpeg 7.1.1, a synthetic project with a
 footage plate, matte and tracking, 2D and 3D type, grain, scanlines and the HUD):
@@ -177,6 +182,15 @@ footage plate, matte and tracking, 2D and 3D type, grain, scanlines and the HUD)
 - **Cost:** a 4K frame took 3.3 times as long. Peak footprint per worker (Chrome, its GPU process
   and x264) was 2.5 GB at 1080p and 5.3 GB at 4K; `workerGB` adds about a gigabyte for real footage
   caches.
+- **three 0.187.0**, which main moved to while this work was open, on 2026-11-07: the bloom,
+  composer and shader addons are byte-identical to 0.186.1. On a real project with footage, mattes,
+  3D type, bloom, grain and scanlines, 9 stills at scales 1 and 2, and 3 with blur, are
+  byte-identical on both versions; at 0.5, one pixel of one still differs by one level. Repeat runs
+  were identical on each version.
+- **Older project:** on a project made before the portrait canvas, the `pipeline.md` §7 copy without
+  `canvas.js` crashed the page, since `main.js` imports it. With it, a landscape still matched the
+  old engine at 48 dB. The same project's 4K stills showed the per-section check working: its
+  `THREE.LineSegments` edges stay one device pixel wide, so they glowed less than at 1080p.
 
 ## Motion blur
 

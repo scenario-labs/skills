@@ -11,6 +11,7 @@ import {
   engineQuery,
   h264Level,
   parseArgs,
+  vbvArgs,
   workerCap,
   x264Args,
 } from "../../skills/scenario-kinetic-music-video/scripts/render_lib.mjs";
@@ -85,6 +86,8 @@ describe("engineQuery", () => {
 describe("motion blur on the engine", () => {
   it("refuses a blur flag on an engine without blur, naming the files to copy", () => {
     expect(blurRefusal({ blur: true }, false)).toMatch(/^--blur: .*blur\.js/);
+    // main.js imports canvas.js, which projects made before the portrait canvas lack
+    expect(blurRefusal({ blur: true }, false)).toMatch(/canvas\.js/);
     expect(blurRefusal({ "blur-max": "8" }, false)).toMatch(/^--blur-max/);
     expect(blurRefusal({ blur: true }, true)).toBeNull();
     expect(blurRefusal({}, false)).toBeNull();
@@ -145,6 +148,19 @@ describe("x264Args", () => {
     ]);
   });
 
+  it("caps the bitrate to the pinned level, peaks included", () => {
+    const a = x264Args({ w: 3840, h: 2160, fps: 60, scale: 2 });
+    expect(a.slice(a.indexOf("-maxrate"), a.indexOf("-maxrate") + 4)).toEqual([
+      "-maxrate",
+      "240000k",
+      "-bufsize",
+      "60000k",
+    ]);
+    // a second holds at most maxrate + bufsize: 300 Mb/s, what Level 5.2 High allows
+    expect(vbvArgs("5")).toEqual(["-maxrate", "135000k", "-bufsize", "33750k"]);
+    expect(vbvArgs("5.1")).toEqual(vbvArgs("5.2"));
+  });
+
   it("refuses a 4K master past Level 5.2, naming what to change", () => {
     expect(() => x264Args({ w: 3840, h: 2160, fps: 120, scale: 2 })).toThrow(
       /60 fps or less/,
@@ -157,6 +173,7 @@ describe("x264Args", () => {
   it("still renders a large custom canvas at scale 1, without a level pin", () => {
     const a = x264Args({ w: 5120, h: 2880, fps: 30, scale: 1 });
     expect(a).not.toContain("-level");
+    expect(a).not.toContain("-maxrate");
     expect(a).toContain("-threads");
   });
 });

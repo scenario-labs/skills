@@ -41,7 +41,7 @@ export function blurRefusal(args, engineHasBlur) {
     (k) => args[k] !== undefined,
   );
   if (!asked.length || engineHasBlur) return null;
-  return `--${asked[0]}: this project's engine predates motion blur; copy main.js, blur.js, core.js, plate.js, typekit.js and scenes/hud.js from the skill's assets/engine into engine/ first`;
+  return `--${asked[0]}: this project's engine predates motion blur; copy main.js, blur.js, canvas.js, core.js, plate.js, typekit.js and scenes/hud.js from the skill's assets/engine into engine/ first`;
 }
 
 // One line on the blur a render uses
@@ -53,27 +53,28 @@ export const describeBlur = (b) =>
       : "motion blur: off";
 
 const mbs = (w, h) => Math.ceil(w / 16) * Math.ceil(h / 16);
-// H.264 Table A-1: [level, max macroblocks per second, per frame, decoded picture buffer]
+// H.264 Table A-1: [level, max macroblocks per second, per frame, decoded picture buffer, MaxBR in kb/s (Main; High
+// allows 1.25x)]
 const LEVELS = [
-  ["1", 1485, 99, 396],
-  ["1.1", 3000, 396, 900],
-  ["1.2", 6000, 396, 2376],
-  ["1.3", 11880, 396, 2376],
-  ["2", 11880, 396, 2376],
-  ["2.1", 19800, 792, 4752],
-  ["2.2", 20250, 1620, 8100],
-  ["3", 40500, 1620, 8100],
-  ["3.1", 108000, 3600, 18000],
-  ["3.2", 216000, 5120, 20480],
-  ["4", 245760, 8192, 32768],
-  ["4.1", 245760, 8192, 32768],
-  ["4.2", 522240, 8704, 34816],
-  ["5", 589824, 22080, 110400],
-  ["5.1", 983040, 36864, 184320],
-  ["5.2", 2073600, 36864, 184320],
-  ["6", 4177920, 139264, 696320],
-  ["6.1", 8355840, 139264, 696320],
-  ["6.2", 16711680, 139264, 696320],
+  ["1", 1485, 99, 396, 64],
+  ["1.1", 3000, 396, 900, 192],
+  ["1.2", 6000, 396, 2376, 384],
+  ["1.3", 11880, 396, 2376, 768],
+  ["2", 11880, 396, 2376, 2000],
+  ["2.1", 19800, 792, 4752, 4000],
+  ["2.2", 20250, 1620, 8100, 4000],
+  ["3", 40500, 1620, 8100, 10000],
+  ["3.1", 108000, 3600, 18000, 14000],
+  ["3.2", 216000, 5120, 20480, 20000],
+  ["4", 245760, 8192, 32768, 20000],
+  ["4.1", 245760, 8192, 32768, 50000],
+  ["4.2", 522240, 8704, 34816, 50000],
+  ["5", 589824, 22080, 110400, 135000],
+  ["5.1", 983040, 36864, 184320, 240000],
+  ["5.2", 2073600, 36864, 184320, 240000],
+  ["6", 4177920, 139264, 696320, 240000],
+  ["6.1", 8355840, 139264, 696320, 480000],
+  ["6.2", 16711680, 139264, 696320, 800000],
 ];
 // x264 medium keeps 4 frames in the buffer and caps each side at sqrt(8 * max frame size)
 const fits = ([, mbps, fs, dpb], w, h, fps) => {
@@ -91,9 +92,17 @@ export function h264Level(w, h, fps) {
 export const above1080p = (w, h) => mbs(w, h) > mbs(1920, 1080);
 const MAX = LEVELS.find(([l]) => l === "5.2");
 
+// The pinned level's bitrate as a VBV cap. CRF alone has no ceiling: grain over footage at CRF 17 peaked at 296.6 of
+// Level 5.2's 300 Mb/s. The Main MaxBR is 80% of what High allows, and a buffer of a quarter of it keeps every
+// one-second window within the High limit, the peak delivery_check.py measures.
+export function vbvArgs(level) {
+  const br = LEVELS.find(([l]) => l === level)[4];
+  return ["-maxrate", `${br}k`, "-bufsize", `${br / 4}k`];
+}
+
 // Encoder arguments for one chunk. At or below 1080p they are exactly the ones every earlier render used, so those files
 // stay byte-identical. Above it the level is pinned (a slower preset or a later x264 would signal more than 4K60 players
-// decode) and x264 keeps to 4 threads (about 1.8 GB at 4K instead of 3.2).
+// decode), its bitrate caps the encode, and x264 keeps to 4 threads (about 1.8 GB at 4K instead of 3.2).
 export function x264Args({ w, h, fps, crf = 16, scale = 1 }) {
   const head = ["-c:v", "libx264", "-preset", "medium", "-crf", String(crf)];
   const tail = ["-pix_fmt", "yuv420p", "-r", String(fps)];
@@ -101,7 +110,8 @@ export function x264Args({ w, h, fps, crf = 16, scale = 1 }) {
   const level = h264Level(w, h, fps);
   const ok = fits(MAX, w, h, fps);
   if (!ok && scale > 1) throw new Error(levelProblem(w, h, fps));
-  return [...head, ...(ok ? ["-level", level] : []), "-threads", "4", ...tail];
+  const pin = ok ? ["-level", level, ...vbvArgs(level)] : [];
+  return [...head, ...pin, "-threads", "4", ...tail];
 }
 
 // Why a frame does not fit Level 5.2, naming the constraint that failed

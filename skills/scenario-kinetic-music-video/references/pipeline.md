@@ -232,9 +232,10 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
   HUD theme before the final render.
 - **Older project:** when revising a project scaffolded before motion blur (no `engine/blur.js`),
   copy the skill's `scripts/*.mjs` and `scripts/delivery_check.py` into `tools/`, and `main.js`,
-  `blur.js`, `core.js`, `plate.js`, `typekit.js` and `scenes/hud.js` from `assets/engine/` into
-  `engine/`, then reapply any engine fix the project made to them. Its old `render.mjs` drops
-  `--blur` without a word, and §8 needs `delivery_check.py`.
+  `blur.js`, `canvas.js`, `core.js`, `plate.js`, `typekit.js` and `scenes/hud.js` from
+  `assets/engine/` into `engine/`. Reapply any engine fix the project made to them, then replace
+  `ENGINE_API.md` with `references/engine_api.md`. Its old `render.mjs` drops `--blur` without a
+  word, and §8 needs `delivery_check.py`.
 - **Motion blur:** decide it in the look pass. Render the fastest 5 s twice at `--fps 60 --scale 1`,
   with `--blur` and without, and show the pair (unattended: leave it off, unless the user asked for
   blur where it helps; then judge the pair yourself and say why). Once approved, set
@@ -246,8 +247,8 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
 ## 8. Delivery
 
 ```bash
-# 4K master, on request, first: the same cut at --scale 2 (render.mjs pins Level 5.2 and runs only as many workers as fit
-# in memory). Every encode below then reads vN_4k.mp4, with -vf scale=-2:1080:flags=lanczos (portrait: scale=1080:-2:flags=lanczos) right after -i
+# 4K master, on request, first: the same cut at --scale 2 (render.mjs pins Level 5.2, caps the bitrate to it, and runs
+# only as many workers as fit in memory). Every encode below then reads vN_4k.mp4, with -vf scale=-2:1080:flags=lanczos (portrait: scale=1080:-2:flags=lanczos) right after -i
 node tools/render.mjs --fps 60 --scale 2 --workers 3 --crf 17 --out out/final/vN_4k.mp4
 # landscape canvas: the X-ready file (YouTube takes the master itself)
 ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
