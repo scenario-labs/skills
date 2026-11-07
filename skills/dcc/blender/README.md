@@ -118,5 +118,11 @@ collision mesh, and three.js. Its findings were fixed:
 - `references/engines.md` quotes Epic on Auto Generate Collision with a UCX mesh and on sRGB for
   masks.
 
+On 2026-11-07 `export()` gained `skipped_settings`: a preset setting listed in `OPTIONAL` that the
+running exporter lacks is skipped and reported, and any other missing setting still raises. The
+`web` preset's meshopt option arrived with Blender 5.2, and the Scenario Blender Plugin also runs on
+5.0 and 5.1. `web` exported a cube on Blender 5.0.1 and 5.1.2 without meshopt and passed the round
+trip; on 5.2.1 it still writes `EXT_meshopt_compression`.
+
 Paths such as `tests/...` inside the references point to the test evidence on the build machine.
 They are provenance only; the skills do not need them to run.

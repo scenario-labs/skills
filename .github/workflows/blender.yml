@@ -56,5 +56,6 @@ jobs:
           set -o pipefail
           pip install --require-hashes --only-binary=:all: -r tests/scenario-blender-expert/requirements-ci.txt
           python -B -m unittest discover -s tests/scenario-blender-expert -v 2>&1 | tee tests.log
-          # A live suite that skips here means Blender did not start: fail instead.
-          if grep -q "skipped 'Blender is not installed'" tests.log; then exit 1; fi
+          # A live suite that skips here means Blender did not start, or the release
+          # fell below the family's floor (tests/scenario-blender-expert/live_blender.py).
+          if grep -qE "skipped .Blender (is not installed|.* is below the family floor)" tests.log; then exit 1; fi

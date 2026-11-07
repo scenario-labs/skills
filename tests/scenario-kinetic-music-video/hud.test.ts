@@ -420,6 +420,11 @@ describe("visibility", () => {
     expect(r.targets).toEqual(["rt"]);
     expect(r.blits).toEqual([1]);
   });
+
+  it("opts out of motion blur, so its digits stay sharp", async () => {
+    const hud = (await loadHud()) as Hud & { blur?: unknown };
+    expect(hud.blur).toBe(false);
+  });
 });
 
 describe("subtitles", () => {

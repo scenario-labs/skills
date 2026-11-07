@@ -181,9 +181,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 ### 6. Assemble, watch, iterate
 
-- **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac). Wait for it in the
-  foreground (or poll until it prints `wrote`) and carry on to verification and delivery: never end
-  the run while a render or encode is still going, because a headless session that stops kills it.
+- **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac, 2.5 times that with
+  motion blur). Wait for it in the foreground (or poll until it prints `wrote`), then verify and
+  deliver: never end the run mid-render or mid-encode, since a headless session that stops kills it.
 - **Verify:**
   - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual. Below a correlation of about
     0.15 the visual lag means nothing (type leading by `E.LEAD` reads as up to -3 frames): check
@@ -197,7 +197,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - On portrait, `still.mjs --safe` sheets, 20 s each: no word, logo or face outside the outlined
     band.
 - **Global look pass:** a still sheet across all sections, then tune `POST`, the palette and the HUD
-  theme.
+  theme. Decide motion blur from an A/B of the fastest 5 s (`--blur`, `references/pipeline.md` §7;
+  unattended: off unless the user asked for it, then judge the pair yourself).
 - **Revisions:** map each director note (they arrive as timestamps) to its section and send it back
   to the owning agent via SendMessage. Resuming keeps its context. Fix a weak shot by replacing it
   with a new generation in a different look, or with code, never by adding effects. Offer
@@ -210,10 +211,13 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 ### 7. Deliver
 
-- **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready 2-pass 21 Mb/s
-  file under 512 MB for X; portrait: the vertical upload in `references/pipeline.md` §8), a teaser
-  (verse plus first chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and
-  `_9x16`, when both were asked for. Use distinct filenames, because macOS is case-insensitive.
+- **4K master:** only on request (`--scale 2`, `references/pipeline.md` §8), rendered first: every
+  other file is made from it.
+- **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready file under 512
+  MB; portrait: the vertical upload in `references/pipeline.md` §8), a teaser (verse plus first
+  chorus), plus one file per variant. With both canvases asked for, one set per canvas, suffixed
+  `_16x9` and `_9x16`. Use distinct filenames, because macOS is case-insensitive.
+- **Checks:** run `delivery_check.py` last, on every file.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet,
   source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
@@ -244,7 +248,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - Setup and analysis: [scaffold.sh](scripts/scaffold.sh),
   [audio_analysis.py](scripts/audio_analysis.py), [lyrics_align.py](scripts/lyrics_align.py),
   [plot_lyrics.py](scripts/plot_lyrics.py)
-- Locked JavaScript dependencies copied by scaffold.sh into new projects:
+- Locked npm dependencies scaffold.sh copies into new projects:
   [package.json](assets/npm/package.json), [package-lock.json](assets/npm/package-lock.json)
 - Hashed, wheels-only Python locks scaffold.sh installs, one per platform:
   [macos-arm64.txt](assets/python/macos-arm64.txt),
@@ -263,20 +267,21 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - Dynamism: [dynamism_check.py](scripts/dynamism_check.py),
   [rectify_screen.py](scripts/rectify_screen.py) (flattens a phone-filmed screen),
   [references/dynamism.md](references/dynamism.md)
-- Rendering and review: [render.mjs](scripts/render.mjs), [still.mjs](scripts/still.mjs),
-  [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py)
-- Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html),
-  [main.js](assets/engine/main.js), [canvas.js](assets/engine/canvas.js),
-  [core.js](assets/engine/core.js), [plate.js](assets/engine/plate.js),
-  [roto.js](assets/engine/roto.js), [typekit.js](assets/engine/typekit.js),
-  [hud.js](assets/engine/scenes/hud.js), plus [timeline.template.js](assets/timeline.template.js)
-  and [scene.template.js](assets/scene.template.js)
+- Rendering and review: [render.mjs](scripts/render.mjs), [render_lib.mjs](scripts/render_lib.mjs),
+  [still.mjs](scripts/still.mjs), [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py),
+  [delivery_check.py](scripts/delivery_check.py)
+- Engine, copied by scaffold.sh: [index.html](assets/engine/index.html),
+  [main.js](assets/engine/main.js), [blur.js](assets/engine/blur.js),
+  [canvas.js](assets/engine/canvas.js), [core.js](assets/engine/core.js),
+  [plate.js](assets/engine/plate.js), [roto.js](assets/engine/roto.js),
+  [typekit.js](assets/engine/typekit.js), [hud.js](assets/engine/scenes/hud.js), plus
+  [timeline.template.js](assets/timeline.template.js) and
+  [scene.template.js](assets/scene.template.js)
 - [references/pipeline.md](references/pipeline.md): every command and Scenario call, step by step
 - [references/engine_api.md](references/engine_api.md): the scene contract and the full `E` API
   (canvas and safe band, plates, mattes, tracking, post, HUD, variants)
-- [references/motion_library.md](references/motion_library.md): looks, type system, a 40-move
-  technique library, integration ideas, transitions, timing, easing and springs, sync and cut
-  density
+- [references/motion_library.md](references/motion_library.md): looks, type system, 40 techniques,
+  integration ideas, transitions, timing, easing, sync and cut density
 - [references/agent_brief_template.md](references/agent_brief_template.md): the brief each scene
   agent reads
 - [references/lessons.md](references/lessons.md): production gotchas and direction defaults that

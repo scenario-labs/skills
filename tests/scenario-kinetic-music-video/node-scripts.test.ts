@@ -12,7 +12,7 @@ import {
 } from "node:fs";
 import http from "node:http";
 import { syncBuiltinESMExports } from "node:module";
-import { tmpdir } from "node:os";
+import os, { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -34,6 +34,8 @@ const pw = vi.hoisted(() => {
     launches: [] as unknown[],
     urls: [] as string[],
     viewports: [] as unknown[],
+    // launch, viewport and close in the order they happen, to see how many chunks run at once
+    events: [] as string[],
     emit: [] as [string, unknown][],
     makeWin: (): Record<string, unknown> => ({}),
     queue: Promise.resolve() as Promise<unknown>,
@@ -41,6 +43,7 @@ const pw = vi.hoisted(() => {
       state.launches = [];
       state.urls = [];
       state.viewports = [];
+      state.events = [];
       state.emit = [];
       state.queue = Promise.resolve();
     },
@@ -69,13 +72,20 @@ const pw = vi.hoisted(() => {
         }),
       evaluate: (fn: (a: unknown) => unknown, arg: unknown) =>
         serial(() => fn(arg)),
-      setViewportSize: async (v: unknown) => state.viewports.push(v),
+      setViewportSize: async (v: unknown) => {
+        state.viewports.push(v);
+        state.events.push("viewport");
+      },
     };
   };
   const chromium = {
     launch: async (opts: unknown) => {
       state.launches.push(opts);
-      return { newPage: async () => newPage(), close: async () => undefined };
+      state.events.push("launch");
+      return {
+        newPage: async () => newPage(),
+        close: async () => void state.events.push("close"),
+      };
     },
   };
   return { state, chromium };
@@ -281,6 +291,21 @@ describe("serve.mjs", () => {
     },
   );
 
+  // Called directly: over a socket, the throw would be an uncaught exception that ends the test worker.
+  it.fails(
+    "answers a malformed percent-encoding with a 4xx (fails: decodeURIComponent throws inside the request handler, which ends the process)",
+    () => {
+      const handler = servers[0].listeners("request")[0] as (
+        req: unknown,
+        rsp: unknown,
+      ) => void;
+      const rsp = { writeHead: vi.fn(), end: vi.fn() };
+      expect(() => handler({ url: "/%E0%A4%A" }, rsp)).not.toThrow();
+      expect(rsp.writeHead.mock.calls[0][0]).toBeGreaterThanOrEqual(400);
+      expect(rsp.writeHead.mock.calls[0][0]).toBeLessThan(500);
+    },
+  );
+
   it("serves on the port given on the command line when run directly", async () => {
     await runScript("serve.mjs", ["0"], SKILL);
     const line = logs.find((l) => l.startsWith("serving on"));
@@ -331,12 +356,46 @@ describe("render.mjs gates", () => {
     ).rejects.toThrow("timeline.js: bad scene");
     expect(readdirSync(path.join(cwd, "out"))).toEqual([]);
   });
+
+  it("refuses a motion-blur flag on an engine that predates blur", async () => {
+    const cwd = mkProject();
+    pw.state.makeWin = () => engineWindow({});
+    await expect(
+      runScript(
+        "render.mjs",
+        ["--to", "1", "--shutter", "90", "--out", "out/clip.mp4"],
+        cwd,
+      ),
+    ).rejects.toThrow(
+      /^--shutter: this project's engine predates motion blur; copy main\.js, blur\.js/,
+    );
+    expect(readdirSync(path.join(cwd, "out"))).toEqual([]);
+  });
+
+  it("refuses a 4K master whose frame is past Level 5.2, before encoding", async () => {
+    const cwd = mkProject();
+    pw.state.makeWin = () => engineWindow({ E: { W: 7680, H: 4320 } });
+    await expect(
+      runScript(
+        "render.mjs",
+        ["--to", "1", "--scale", "2", "--out", "out/clip.mp4"],
+        cwd,
+      ),
+    ).rejects.toThrow(
+      "7680x4320 is larger than H.264 Level 5.2 allows (4K is 3840x2160): use a smaller canvas or --scale",
+    );
+    expect(query(pw.state.urls[0])).toEqual({ scale: "2" });
+    expect(readdirSync(path.join(cwd, "out"))).toEqual([]);
+  });
 });
 
 describe.skipIf(!hasFfmpeg)("render.mjs encoding", () => {
   let jpegs: Buffer[] = [];
   let big: Buffer | null = null;
   let useBig = false;
+  let engine: Record<string, unknown> = {};
+  // frame -> the stale clip the engine reports when that frame's blur falls back to sharp
+  let sharp: Record<number, string> = {};
   const frames: [number, number][] = [];
   const grabs: unknown[][] = [];
 
@@ -385,11 +444,15 @@ describe.skipIf(!hasFfmpeg)("render.mjs encoding", () => {
     frames.length = 0;
     grabs.length = 0;
     useBig = false;
+    engine = {};
+    sharp = {};
     pw.state.makeWin = () => {
-      const win: Record<string, unknown> = engineWindow({});
+      const win: Record<string, unknown> = engineWindow(engine);
       win.renderFrame = async (f: number, fps: number) => {
         frames.push([f, fps]);
         win.cur = f;
+        if (f in sharp)
+          ((win.__blurFallbacks ??= []) as unknown[]).push([f, sharp[f]]);
       };
       win.grab = async (...a: unknown[]) => {
         grabs.push(a);
@@ -550,7 +613,9 @@ describe.skipIf(!hasFfmpeg)("render.mjs encoding", () => {
     expect(logs).toContain("[w2] warning: slow frame");
     expect(logs).toContain("[w1] pageerror: boom");
     expect(logs.some((l) => l.includes("chatter"))).toBe(false);
-    expect(logs.at(-1)).toBe("wrote out/clip.mp4");
+    expect(logs.some((l) => l.startsWith("motion blur"))).toBe(false);
+    expect(logs.some((l) => l.startsWith("note:"))).toBe(false);
+    expect(logs.at(-1)).toBe("wrote out/clip.mp4 (10 frames)");
   });
 
   it("skips idle workers and leaves audio out with --noaudio", async () => {
@@ -657,6 +722,152 @@ describe.skipIf(!hasFfmpeg)("render.mjs encoding", () => {
     );
   });
 
+  it("passes the blur flags, names the blur once and lists the frames it rendered sharp", async () => {
+    const cwd = project();
+    engine = {
+      E: { W: 64, H: 48, blur: { on: true, samples: 8, shutter: 90, max: 16 } },
+    };
+    sharp = { 4: "drop", 1: "intro" };
+    await runScript(
+      "render.mjs",
+      [
+        "--to",
+        "0.6",
+        "--fps",
+        "10",
+        "--workers",
+        "2",
+        "--noaudio",
+        "--blur",
+        "--shutter",
+        "90",
+        "--blur-max",
+        "16",
+        "--out",
+        "out/blur.mp4",
+      ],
+      cwd,
+    );
+    for (const u of pw.state.urls)
+      expect(query(u)).toEqual({
+        scale: "1",
+        blur: "on",
+        shutter: "90",
+        blurmax: "16",
+      });
+    expect(logs.filter((l) => l.startsWith("motion blur"))).toEqual([
+      "motion blur: 8 samples over a 90 degree shutter, up to 16 in fast windows",
+      "motion blur: 2 frames rendered sharp, because a sample drew a clip prepare() had not advanced (a cut inside a scene): 1 (intro), 4 (drop). Register those cuts with E.cut(t) in load().",
+    ]);
+    expect(logs.at(-1)).toBe("wrote out/blur.mp4 (6 frames)");
+  });
+
+  it("counts a single sharp frame in the singular", async () => {
+    const cwd = project();
+    engine = { E: { W: 64, H: 48, blur: { on: false } } };
+    sharp = { 2: "verse" };
+    await runScript(
+      "render.mjs",
+      ["--to", "0.3", "--fps", "10", "--noaudio", "--out", "out/one.mp4"],
+      cwd,
+    );
+    expect(logs.filter((l) => l.startsWith("motion blur"))).toEqual([
+      "motion blur: off",
+      "motion blur: 1 frame rendered sharp, because a sample drew a clip prepare() had not advanced (a cut inside a scene): 2 (verse). Register those cuts with E.cut(t) in load().",
+    ]);
+  });
+
+  it("pins the 4K master's level and bitrate, running chunk 0 alone until it knows the frame size", async () => {
+    const cwd = project();
+    engine = { E: { W: 3840, H: 2160 } };
+    vi.spyOn(os, "totalmem").mockReturnValue(1024 * 2 ** 30);
+    await runScript(
+      "render.mjs",
+      [
+        "--to",
+        "0.3",
+        "--fps",
+        "10",
+        "--workers",
+        "3",
+        "--scale",
+        "2",
+        "--noaudio",
+        "--out",
+        "out/master.mp4",
+      ],
+      cwd,
+    );
+    expect(query(pw.state.urls[0])).toEqual({ scale: "2" });
+    // the other chunks launch only once chunk 0 has sized its page, then run alongside it
+    expect(pw.state.events.slice(0, 4)).toEqual([
+      "launch",
+      "viewport",
+      "launch",
+      "launch",
+    ]);
+    expect(logs.some((l) => l.includes("lowered"))).toBe(false);
+    expect(logs.some((l) => l.startsWith("note:"))).toBe(false);
+    const out = path.join(cwd, "out/master.mp4");
+    expect(probe(out)[0]).toMatchObject({ nb_read_frames: "3" });
+    const level = spawnSync(
+      "ffprobe",
+      ["-v", "error", "-show_entries", "stream=level", "-of", "csv=p=0", out],
+      { encoding: "utf8" },
+    );
+    expect(level.stdout.trim()).toBe("51");
+    const sei = readFileSync(out);
+    expect(sei.includes("vbv_maxrate=240000")).toBe(true);
+    expect(sei.includes("vbv_bufsize=60000")).toBe(true);
+  });
+
+  it("lowers 4K workers to what memory holds, keeping the chunks of --workers", async () => {
+    const cwd = project();
+    engine = { E: { W: 3840, H: 2160 } };
+    vi.spyOn(os, "totalmem").mockReturnValue(16 * 2 ** 30);
+    await runScript(
+      "render.mjs",
+      [
+        "--to",
+        "0.3",
+        "--fps",
+        "10",
+        "--workers",
+        "3",
+        "--scale",
+        "2",
+        "--noaudio",
+        "--out",
+        "out/master.mp4",
+      ],
+      cwd,
+    );
+    expect(logs).toContain(
+      "--scale 2: 3 workers lowered to 1 at once (16 GB RAM, about 6.5 GB per worker)",
+    );
+    expect(pw.state.events).toEqual(
+      Array(3).fill(["launch", "viewport", "close"]).flat(),
+    );
+    expect(frames.map(([f]) => f).sort((a, b) => a - b)).toEqual([0, 1, 2]);
+    expect(probe(path.join(cwd, "out/master.mp4"))[0].nb_read_frames).toBe("3");
+  });
+
+  it("renders a canvas past Level 5.2 at scale 1 without a level, saying so", async () => {
+    const cwd = project();
+    engine = { E: { W: 7680, H: 4320 } };
+    await runScript(
+      "render.mjs",
+      ["--to", "0.2", "--fps", "10", "--noaudio", "--out", "out/big.mp4"],
+      cwd,
+    );
+    expect(logs).toContain(
+      "note: 7680x4320 is larger than H.264 Level 5.2 allows (4K is 3840x2160): use a smaller canvas or --scale; rendering anyway",
+    );
+    const sei = readFileSync(path.join(cwd, "out/big.mp4"));
+    expect(sei.includes("vbv_maxrate")).toBe(false);
+    expect(sei.includes("threads=4")).toBe(true);
+  });
+
   it.fails(
     "writes an --out that is not .mp4 (fails: the chunk shares the output's path, so the cleanup deletes the output)",
     async () => {
@@ -735,6 +946,7 @@ describe("still.mjs", () => {
       variant: "b",
       canvas: "1080x1350",
       safe: "1",
+      blur: "off",
     });
     expect(pw.state.viewports).toEqual([{ width: 64, height: 48 }]);
     expect(logs.at(-1)).toBe("shots/t_0001.50.png\nshots/t_0002.00.png");
@@ -758,7 +970,11 @@ describe("still.mjs", () => {
       "t_0000.50.png",
       "t_0001.00.png",
     ]);
-    expect(query(pw.state.urls[0])).toEqual({ scale: "0.5", variant: "x" });
+    expect(query(pw.state.urls[0])).toEqual({
+      scale: "0.5",
+      variant: "x",
+      blur: "off",
+    });
     expect(logs).toContain("console.error: missing font");
     expect(logs).toContain("pageerror: boom");
     expect(logs.some((l) => l.includes("ignored"))).toBe(false);
@@ -772,6 +988,48 @@ describe("still.mjs", () => {
     );
     expect(logs).toContain("scene.js: no plate");
   });
+
+  it("blurs a still only when --blur asks, on an engine with blur", async () => {
+    const cwd = mkProject();
+    const make = pw.state.makeWin;
+    pw.state.makeWin = () => {
+      const win = make();
+      win.E = { W: 64, H: 48, blur: { on: true } };
+      return win;
+    };
+    await runScript(
+      "still.mjs",
+      ["--t", "1", "--blur", "4", "--shutter", "270"],
+      cwd,
+    );
+    expect(query(pw.state.urls[0])).toEqual({
+      scale: "0.5",
+      blur: "4",
+      shutter: "270",
+    });
+    expect(frames).toEqual([[60, 60]]);
+  });
+
+  it("exits 1 when --blur meets an engine that predates blur", async () => {
+    const cwd = mkProject();
+    await expect(
+      runScript("still.mjs", ["--t", "1", "--blur"], cwd),
+    ).rejects.toEqual(new Exit(1));
+    expect(logs).toEqual([
+      expect.stringMatching(
+        /^--blur: this project's engine predates motion blur; copy main\.js/,
+      ),
+    ]);
+    expect(frames).toEqual([]);
+  });
+
+  it.fails(
+    "reports a --sheet without the project's .venv instead of crashing (fails: spawnSync returns no stdout, so stdout.toString() throws a TypeError)",
+    async () => {
+      const cwd = mkProject();
+      await runScript("still.mjs", ["--t", "1", "--sheet", "contact"], cwd);
+    },
+  );
 
   it.skipIf(process.platform === "win32")(
     "builds a --sheet from this run's stills with the project's Python, filtering objc noise",

@@ -29,6 +29,29 @@ fail=0
 coverage=${COVERAGE:-}
 # 7.10 added patch = subprocess, which follows the scripts suites spawn.
 COVERAGE_PY="coverage>=7.10"
+# CI's Python. A suite's requirements can need more than the machine's python3
+# (numpy 2.5 needs 3.12), so everything uv runs uses this version.
+TEST_PYTHON=3.12
+
+# The interpreter uv runs, always pinned by path: given a bare version, uv
+# prefers an active conda or virtual environment of that version, whose
+# packages leak into the suite, and `--system` skips them. With no such Python
+# installed, uv installs TEST_PYTHON first; failing that, the run fails.
+uv_python() {
+  uv python find --system "$TEST_PYTHON" 2>/dev/null && return
+  uv python install --quiet "$TEST_PYTHON" >&2 &&
+    uv python find --system "$TEST_PYTHON" && return
+  echo "uv could not provide Python ${TEST_PYTHON}" >&2
+  return 1
+}
+
+# Whether the modules of suite directory $1 run under uv: they need packages
+# beyond the stdlib. CI uses its hash-checked environment even when the runner
+# has uv installed.
+uses_uv() {
+  [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] && command -v uv >/dev/null &&
+    { [ -n "$coverage" ] || [ -f "${1}requirements.txt" ]; }
+}
 
 # Runs one Python test module (tests/<name>/test_x.py).
 python_module() {
@@ -36,18 +59,19 @@ python_module() {
   dir=${1%/*}/
   file=${1##*/}
   # uv installs a suite's requirements into a cached environment of its
-  # own, so a local run needs no pip step. python3 is pinned by path
-  # because uv otherwise prefers an active conda or virtual environment.
-  # CI uses its hash-checked environment even when the runner has uv installed.
+  # own, so a local run needs no pip step.
   python=(python3)
-  req="${dir}requirements.txt"
-  with=()
-  [ ! -f "$req" ] || with+=(--with-requirements "$req")
-  [ -z "$coverage" ] || with+=(--with "$COVERAGE_PY")
-  if [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] &&
-    [ "${#with[@]}" -gt 0 ] && command -v uv >/dev/null; then
-    python=(uv run --quiet --no-project --python "$(command -v python3)"
-    "${with[@]}" python)
+  if uses_uv "$dir"; then
+    if [ -z "${SKILLS_TEST_UV_PYTHON:-}" ]; then
+      echo "uv could not provide Python ${TEST_PYTHON}"
+      return 1
+    fi
+    req="${dir}requirements.txt"
+    with=()
+    [ ! -f "$req" ] || with+=(--with-requirements "$req")
+    [ -z "$coverage" ] || with+=(--with "$COVERAGE_PY")
+    python=(uv run --quiet --no-project --python "$SKILLS_TEST_UV_PYTHON"
+      "${with[@]}" python)
   fi
   # No -t: hyphenated skill names are not importable as packages, so each
   # suite directory is its own top level and modules load as bare names.
@@ -149,6 +173,17 @@ if [ "${#jobs[@]}" -eq 0 ] && [ "${#ts_dirs[@]}" -eq 0 ]; then
   echo "No skill-script test suites to run."
 fi
 
+# Resolved once, before the jobs start, so parallel jobs never race to install
+# it. A failure here fails the run; the uv jobs then fail too.
+SKILLS_TEST_UV_PYTHON=
+for target in "${jobs[@]+"${jobs[@]}"}"; do
+  case "$target" in *.py) ;; *) continue ;; esac
+  uses_uv "${target%/*}/" || continue
+  SKILLS_TEST_UV_PYTHON=$(uv_python) || fail=1
+  break
+done
+export SKILLS_TEST_UV_PYTHON
+
 # The coverage run starts first and in the background: it is one long call.
 vitest_log="$SKILLS_TEST_LOGS/vitest-coverage.log"
 if [ "${#ts_dirs[@]}" -gt 0 ]; then
@@ -214,9 +249,10 @@ done
 if [ -n "$coverage" ] && compgen -G 'coverage/.coverage.*' >/dev/null; then
   echo "== python coverage =="
   report=(python3)
-  if [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] && command -v uv >/dev/null; then
-    report=(uv run --quiet --no-project --python "$(command -v python3)"
-    --with "$COVERAGE_PY" python)
+  if uses_uv ./; then
+    [ -n "$SKILLS_TEST_UV_PYTHON" ] || exit 1
+    report=(uv run --quiet --no-project --python "$SKILLS_TEST_UV_PYTHON"
+      --with "$COVERAGE_PY" python)
   fi
   report+=(-m coverage)
   "${report[@]}" combine --rcfile=.coveragerc -q &&

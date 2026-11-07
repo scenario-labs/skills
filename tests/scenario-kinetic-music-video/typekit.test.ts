@@ -401,8 +401,11 @@ describe("drawSubtitle", () => {
     ],
   };
   const T = makeTimeline(A, L);
+  // atFrame is the identity outside a motion-blur sample, as main.js's is in the frame pass
+  const frame = (t: number) => t;
   const landscape = (S = 1) => ({
     lineAt: T.lineAt,
+    atFrame: frame,
     SAFE: { x: 0, y: 0, w: 1920 * S, h: 1080 * S },
     SCALE: S,
     CANVAS: [1920, 1080],
@@ -412,6 +415,7 @@ describe("drawSubtitle", () => {
   });
   const portrait = {
     lineAt: T.lineAt,
+    atFrame: frame,
     SAFE: { x: 0, y: 200, w: 1080, h: 1400 },
     SCALE: 1,
     CANVAS: [1080, 1920],
@@ -485,6 +489,21 @@ describe("drawSubtitle", () => {
     drawSubtitle(ctx, landscape(2), 1.2, { x: 100, y: 200 });
     expect(bar(ctx)[0].slice(1, 3)).toEqual([200 - 36, 400 - 52 * 0.55]);
     expect(fills(ctx)[0].ty).toBe(400);
+  });
+
+  it("draws at the output frame's time inside a motion-blur sample", () => {
+    const at = (t: number) => t + 1;
+    const ctx = new FakeContext2D();
+    drawSubtitle(ctx, { ...landscape(), atFrame: at }, 0.2);
+    const sharp = new FakeContext2D();
+    drawSubtitle(sharp, landscape(), 1.2);
+    expect(ctx.draws).toEqual(sharp.draws);
+    expect(ctx.calls).toEqual(sharp.calls);
+    expect(fills(ctx).map((d) => d.text)).toEqual(["GO", "NOW"]);
+    const gone = new FakeContext2D();
+    drawSubtitle(gone, { ...landscape(), atFrame: at }, 1.6);
+    expect(gone.draws).toEqual([]);
+    expect(gone.calls).toEqual([]);
   });
 
   it("dims the accent bar with o.alpha", () => {

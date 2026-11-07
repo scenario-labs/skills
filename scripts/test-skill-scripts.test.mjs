@@ -74,6 +74,8 @@ function run(
     coverageData,
     systemPython,
     track,
+    pythonFound,
+    pythonInstall = 0,
     jobs,
     files = {},
   },
@@ -108,15 +110,27 @@ function run(
     const log = join(root, `${tool}.log`);
     executable(
       join(bin, tool),
-      `printf '%s\\n' "$@" --- >> "${log}"\n${extra}exit ${code}`,
+      `${extra}printf '%s\\n' "$@" --- >> "${log}"\nexit ${code}`,
     );
   };
+  // `uv python find` and `uv python install` log to uv-find.log and
+  // uv-install.log, so uv.log holds only the runs. Find prints bin/python3,
+  // unless `pythonFound` is false and no install has succeeded yet; install
+  // exits with `pythonInstall`.
+  const installed = join(root, "uv-installed");
+  const found = pythonFound === false ? `[ -e "${installed}" ]` : "true";
+  const find = [
+    `if [ "$1 $2" = "python find" ]; then printf '%s\\n' "$@" --- >> "${join(root, "uv-find.log")}"; ${found} || exit 2; echo "${join(bin, "python3")}"; exit 0; fi`,
+    `if [ "$1 $2" = "python install" ]; then printf '%s\\n' "$@" --- >> "${join(root, "uv-install.log")}"; [ ${pythonInstall} -ne 0 ] || : > "${installed}"; exit ${pythonInstall}; fi`,
+    "",
+  ].join("\n");
   stub(
     "uv",
     uv,
-    coverageData
-      ? `case "$*" in *unittest*) "${which("mkdir")}" -p coverage && : > coverage/.coverage.stub ;; esac\n`
-      : "",
+    find +
+      (coverageData
+        ? `case "$*" in *unittest*) "${which("mkdir")}" -p coverage && : > coverage/.coverage.stub ;; esac\n`
+        : ""),
   );
   stub("pnpm", pnpm);
   stub(
@@ -152,13 +166,15 @@ function run(
     result,
     uvArgs: uvCalls[0] ?? null,
     uvCalls,
+    findCalls: calls("uv-find"),
+    installCalls: calls("uv-install"),
     pnpmCalls: calls("pnpm"),
     pythonCalls: calls("python3"),
     output: result.stdout + result.stderr,
   };
 }
 
-test("a suite with a requirements.txt runs under uv on the PATH's python3", (t) => {
+test("a suite with a requirements.txt runs under uv on the Python uv finds", (t) => {
   const { bin, result, uvArgs, output } = run(t, {
     requirements: "numpy\n",
     uv: 0,
@@ -182,6 +198,47 @@ test("a suite with a requirements.txt runs under uv on the PATH's python3", (t) 
     "-p",
     "test_demo.py",
   ]);
+});
+
+test("uv looks for Python 3.12 outside any virtual environment", (t) => {
+  const { result, findCalls, installCalls, output } = run(t, {
+    requirements: "numpy\n",
+    uv: 0,
+  });
+  assert.equal(result.status, 0, output);
+  assert.deepEqual(findCalls, [["python", "find", "--system", "3.12"]]);
+  assert.deepEqual(installCalls, []);
+});
+
+// A bare version would let uv reuse an active 3.12 virtual environment.
+test("with no Python 3.12 found, uv installs it and runs on its path", (t) => {
+  const { bin, result, uvArgs, findCalls, installCalls, output } = run(t, {
+    requirements: "numpy\n",
+    uv: 0,
+    pythonFound: false,
+  });
+  assert.equal(result.status, 0, output);
+  assert.deepEqual(installCalls, [["python", "install", "--quiet", "3.12"]]);
+  assert.equal(findCalls.length, 2);
+  assert.deepEqual(uvArgs.slice(0, 5), [
+    "run",
+    "--quiet",
+    "--no-project",
+    "--python",
+    join(bin, "python3"),
+  ]);
+});
+
+test("when uv cannot install Python 3.12, the suite fails without running", (t) => {
+  const { result, uvCalls, output } = run(t, {
+    requirements: "numpy\n",
+    uv: 0,
+    pythonFound: false,
+    pythonInstall: 1,
+  });
+  assert.equal(result.status, 1, output);
+  assert.deepEqual(uvCalls, []);
+  assert.match(output, /uv could not provide Python 3\.12/);
 });
 
 test("a failing uv run fails the runner", (t) => {

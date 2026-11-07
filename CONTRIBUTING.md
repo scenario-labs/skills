@@ -27,8 +27,9 @@ Prerequisites:
 - [uv](https://docs.astral.sh/uv/). The pre-commit hook runs ruff and the spec validator through uv,
   so every commit fails without it. The spec validator runs on Python 3.12, which uv downloads on
   first use when it is missing, so the system Python's version does not matter there.
-- For `pnpm test` only: Python 3.11+ as the `python3` on PATH, and ffmpeg. The runner uses that
-  `python3` even under uv, and macOS's `/usr/bin/python3` (3.9) fails the suites.
+- For `pnpm test` only: ffmpeg, and Python 3.11+ as the `python3` on PATH. Under uv, the suites with
+  a `requirements.txt` run on Python 3.12, which uv downloads when missing (numpy's pins need it).
+  macOS's `/usr/bin/python3` (3.9) fails the other suites.
 
 ```bash
 git clone https://github.com/scenario-labs/skills.git

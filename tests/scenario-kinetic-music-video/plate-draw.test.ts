@@ -151,6 +151,20 @@ describe("drawPlate", () => {
     expect(renders[2].mesh).toBe(a);
     expect(renders[2].uniforms.uMatte).toBe(1);
   });
+
+  it("restarts the pool for each motion-blur sample of the same frame", () => {
+    const { E, renders } = engine(1);
+    Object.assign(E, { pass: 0 });
+    plate.drawPlate(E, clip, {});
+    plate.drawPlate(E, clip, {});
+    Object.assign(E, { pass: 1 });
+    plate.drawPlate(E, clip, {});
+    plate.drawPlate(E, clip, {});
+    const [a, b, c, d] = renders.map((r) => r.mesh);
+    expect(a).not.toBe(b);
+    expect(c).toBe(a);
+    expect(d).toBe(b);
+  });
 });
 
 describe("plateMaterialFor", () => {
