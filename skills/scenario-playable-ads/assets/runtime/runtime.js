@@ -266,7 +266,8 @@
         minGap || 0,
         PA.cfg.soundGap == null ? 0.3 : PA.cfg.soundGap,
       );
-      if (gap && audio.last[name] && now - audio.last[name] < gap) return;
+      if (gap && audio.last[name] != null && now - audio.last[name] < gap)
+        return;
       audio.last[name] = now;
       const src = audio.ctx.createBufferSource();
       src.buffer = b;

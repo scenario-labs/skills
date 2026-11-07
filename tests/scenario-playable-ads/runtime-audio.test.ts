@@ -140,9 +140,7 @@ describe("play", () => {
     expect(n()).toBe(3);
   });
 
-  // runtime.js line 269 tests audio.last[name] for truthiness, so a clip first played at
-  // currentTime 0 (a fresh context in the first tap) is not rate-limited on its next play
-  it.fails("rate-limits a clip first played at currentTime 0", async () => {
+  it("rate-limits a clip first played at currentTime 0", async () => {
     const { audio, ctx } = await unlocked();
     ctx.currentTime = 0;
     audio.play("pop");

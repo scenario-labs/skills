@@ -216,7 +216,8 @@
       p.y -= p.vy * dt;
       if (p.y < 140) G.pieces.splice(i, 1);
     }
-    if (G.t >= ROUND_S) finish("time");
+    if (G.score >= GOAL) finish("goal");
+    else if (G.t >= ROUND_S) finish("time");
   }
 
   // ---------- input (one verb, acted on at pointerdown so quick taps are never lost) ----------

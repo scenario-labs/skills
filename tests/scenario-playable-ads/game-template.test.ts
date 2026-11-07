@@ -617,9 +617,7 @@ describe("endings", () => {
     });
   });
 
-  // SKILL.md and the file header list the goal as one of three endings; the template only ends on
-  // the round timer or idle, so a player at 40 pops keeps playing until 34 s.
-  it.fails("ends the round as soon as the goal is reached", () => {
+  it("ends the round as soon as the goal is reached", () => {
     while (game.qa().score < 40) popOne();
     step(STEP);
     expect(game.qa().phase).toBe("result");
