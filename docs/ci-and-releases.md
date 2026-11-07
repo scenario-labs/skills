@@ -147,8 +147,27 @@ pointing at this repository, and hook steps read the index through them.
     -o tests/scenario-blender-expert/requirements-ci.txt
   ```
 
+  The Blender core job's `bpy` lock targets Python 3.13, the only version `bpy` 5.x ships wheels
+  for. Regenerate it with:
+
+  ```bash
+  uv pip compile --generate-hashes --python-version 3.13 --python-platform linux \
+    tests/scenario-patina-retexture/requirements.txt \
+    tests/scenario-patina-retexture/requirements-bpy.in \
+    -o tests/scenario-patina-retexture/requirements-bpy-ci.txt
+  ```
+
   Add `--upgrade-package <name>` when updating a locked package without changing its requirement.
 
+- `blender-core.yml` runs the core skills' Blender-hosted scripts in a real Blender: blender-2d's
+  `build_scene.py` and orbit-views' `render_grounded.py` through the binary, patina-retexture's
+  pipeline through the `bpy` module.
+  - The `script-tests` suites reach those scripts through a stand-in `bpy`, and coverage.py cannot
+    follow into Blender, so this job is the one check that they still run in Blender.
+  - It triggers only on changes to those scripts, their tests, or the Blender setup.
+  - It installs Blender through `.github/actions/install-blender`, shared with `blender.yml`. Keep
+    both workflows on the same `BLENDER_RELEASE`.
+  - A skip fails the job, since a skipped suite means Blender or `bpy` never started.
 - `upload-coverage` sends both Cobertura reports to GitHub code coverage (part of Code Quality),
   which shows each PR's percentage against `main`.
   - It needs code coverage enabled in the repository's Code Quality settings.
