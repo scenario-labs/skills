@@ -12,7 +12,7 @@ import unittest
 import zlib
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest import mock
+import unittest.mock as mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "skills/scenario-admin-analytics/scripts/analytics.py"
