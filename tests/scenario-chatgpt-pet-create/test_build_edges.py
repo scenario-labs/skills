@@ -55,9 +55,7 @@ class BuildGuardTests(unittest.TestCase):
         pc.write_json(review_path, review)
         fails_with(self, [str(self.run_dir), "--rows", "idle"], "idle: 5 frames, the row needs 6")
 
-    @unittest.expectedFailure
     def test_pixel_mode_without_pixel_json_names_the_missing_step(self):
-        # Known bug: pixel.json is read before its existence check, so FileNotFoundError escapes instead.
         req = pc.read_json(self.run_dir / "request.json")
         req["pixel"] = True
         pc.write_json(self.run_dir / "request.json", req)
