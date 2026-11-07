@@ -147,8 +147,27 @@ pointing at this repository, and hook steps read the index through them.
     -o tests/scenario-blender-expert/requirements-ci.txt
   ```
 
+  The browser job's lock adds Playwright for Python to the playable-ads requirements. Regenerate it
+  with:
+
+  ```bash
+  uv pip compile --generate-hashes --python-version 3.12 --python-platform linux \
+    tests/scenario-playable-ads/requirements.txt \
+    tests/scenario-playable-ads/requirements-browser.in \
+    -o tests/scenario-playable-ads/requirements-browser-ci.txt
+  ```
+
   Add `--upgrade-package <name>` when updating a locked package without changing its requirement.
 
+- `browser.yml` runs the suites that skip without a real browser: the playable-ads QA run on the
+  shipped template (`test_qa.py`) and the motion-loops page checks and render.
+  - The in-process suites reach those scripts through stand-ins (a fake Playwright, a fake page), so
+    this job is the one check against a real Chromium.
+  - It triggers only on changes to those skills, their tests, the Playwright locks, or itself.
+  - Python takes Playwright from `requirements-browser-ci.txt`. Node takes it from the kinetic
+    scaffold's `assets/npm` lock, the repository's one locked npm Playwright. Keep both on the same
+    release, so one Chromium build serves them.
+  - A skip fails the job, since a skipped suite means the browser never started.
 - `upload-coverage` sends both Cobertura reports to GitHub code coverage (part of Code Quality),
   which shows each PR's percentage against `main`.
   - It needs code coverage enabled in the repository's Code Quality settings.
