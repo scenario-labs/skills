@@ -1,4 +1,5 @@
-// Kinetic-music-video engine: compositor, post pipeline, deterministic frame API.
+// Kinetic-music-video engine: compositor, post pipeline, deterministic frame API. With motion blur on, each frame's
+// pass is followed by sub-frame samples of its blurred layers, averaged in a float target before post (blur.js).
 import * as THREE from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { TexturePass } from "three/addons/postprocessing/TexturePass.js";
@@ -11,6 +12,7 @@ import * as roto from "./roto.js";
 import * as typekit from "./typekit.js";
 import * as plate from "./plate.js";
 import * as cv from "./canvas.js";
+import * as blur from "./blur.js";
 
 const Q = new URLSearchParams(location.search);
 const SCALE = parseFloat(Q.get("scale") ?? "1");
@@ -29,6 +31,22 @@ const W = even(CANVAS[0] * SCALE),
 const ORIENT = cv.orientation(CANVAS[0], CANVAS[1]);
 const SAFE = cv.safeRect(W, H, cv.safeInsets(CANVAS[0], CANVAS[1], TL.SAFE));
 const ONLY = Q.get("only") ? Q.get("only").split(",") : null;
+const PLAY = Q.get("play");
+let BLUR = blur.DEFAULTS,
+  blurError = null;
+try {
+  BLUR = blur.resolveBlur(
+    {
+      blur: Q.get("blur"),
+      shutter: Q.get("shutter"),
+      blurmax: Q.get("blurmax"),
+    },
+    TL.BLUR,
+    SCALE,
+  );
+} catch (e) {
+  blurError = e;
+}
 
 const canvas = document.getElementById("c");
 canvas.width = W;
@@ -100,7 +118,54 @@ composer.setSize(W, H);
 const texPass = new TexturePass(accum.texture);
 composer.addPass(texPass);
 const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 1.0, 0.55, 1.05);
+// Above scale 1 (the 4K master) the bloom runs at the scale-1 size, since UnrealBloomPass blurs in texels of its own
+// targets; its bright pass then averages each SCALE x SCALE cell instead of reading only its middle, so a thin line keeps
+// a steady glow as it moves. The engine supplies that whole bright pass (three's LuminosityHighPassShader with the
+// averaged read), so a three release that reformats its shader text cannot break it; it relies only on the uniforms
+// UnrealBloomPass feeds. Three's shaders run untouched at scale 1 or below.
+let scaleError = null;
+if (SCALE > 1) {
+  const setSize = bloom.setSize.bind(bloom);
+  bloom.setSize = (w, h) =>
+    setSize(Math.round(w / SCALE), Math.round(h / SCALE));
+  const hp = bloom.materialHighPassFilter,
+    fed = [
+      "tDiffuse",
+      "luminosityThreshold",
+      "smoothWidth",
+      "defaultColor",
+      "defaultOpacity",
+    ];
+  if (hp?.uniforms && fed.every((k) => k in hp.uniforms)) {
+    hp.vertexShader = `varying vec2 vUv;
+      void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+    hp.fragmentShader = `uniform sampler2D tDiffuse; uniform vec3 defaultColor;
+      uniform float defaultOpacity, luminosityThreshold, smoothWidth; varying vec2 vUv;
+      void main(){
+        vec2 o = ${(SCALE / 2).toFixed(4)} / vec2(textureSize(tDiffuse, 0));
+        vec4 texel = 0.25 * (texture2D(tDiffuse, vUv - o) + texture2D(tDiffuse, vUv + o)
+          + texture2D(tDiffuse, vUv + vec2(o.x, -o.y)) + texture2D(tDiffuse, vUv + vec2(-o.x, o.y)));
+        float v = luminance(texel.xyz);
+        vec4 outputColor = vec4(defaultColor.rgb, defaultOpacity);
+        float alpha = smoothstep(luminosityThreshold, luminosityThreshold + smoothWidth, v);
+        gl_FragColor = mix(outputColor, texel, alpha);
+      }`;
+    hp.needsUpdate = true;
+  } else
+    scaleError = new Error(
+      `--scale ${SCALE}: this three.js changed UnrealBloomPass's bright pass uniforms; update the 4K bloom fix in main.js`,
+    );
+}
 composer.addPass(bloom);
+// Above scale 1, grain and scanlines keep their scale-1 cells, so the 4K master carries the approved texture
+const FC =
+  SCALE > 1
+    ? `(floor(gl_FragCoord.xy / ${SCALE.toFixed(4)}) + 0.5)`
+    : "gl_FragCoord.xy";
+const FCY =
+  SCALE > 1
+    ? `(floor(gl_FragCoord.y / ${SCALE.toFixed(4)}) + 0.5)`
+    : "gl_FragCoord.y";
 const FinalShader = {
   uniforms: {
     tDiffuse: { value: null },
@@ -163,10 +228,10 @@ const FinalShader = {
       }
       col += uFlashCol * uFlash;
       col *= 1.0 - uVig * smoothstep(0.15, 0.85, r2*2.2);
-      if(uScan>0.) col *= 1.0 - uScan*0.5*(0.5+0.5*sin(gl_FragCoord.y*3.14159*0.5));
+      if(uScan>0.) col *= 1.0 - uScan*0.5*(0.5+0.5*sin(${FCY}*3.14159*0.5));
       col = clamp(col,0.,1.);
       col = toSRGB(col);
-      col += (h(gl_FragCoord.xy + fract(uFrame*0.61803)*100.) - 0.5) * uGrain;
+      col += (h(${FC} + fract(uFrame*0.61803)*100.) - 0.5) * uGrain;
       float lb = uLetterbox * 0.5 * (1.0 - (uRes.x/uRes.y)/2.39);
       if (vUv.y < lb || vUv.y > 1.0-lb) col = vec3(0.);
       gl_FragColor = vec4(col*uFade, 1.0);
@@ -221,6 +286,19 @@ const E = {
   hud: { ...HUD_DEFAULT },
   frame: 0,
   fps: 60,
+  // motion blur (ENGINE_API.md, Motion blur): E.t is the sample's time inside a sample, E.frameT the output frame's
+  frameT: 0,
+  pass: 0, // 0 in the frame pass, 1 and up in its samples
+  blur: BLUR, // the resolved settings
+  blurring: false, // true while a layer that blurs this frame renders
+  atFrame: (t) =>
+    E.pass === 0 ? t : t === E.t ? E.frameT : t + (E.frameT - E.t),
+  // registered in load(), in global seconds
+  cut: (t) => mark("cut", [t], () => BL.extra.push(t)),
+  fast: (a, b, n) => mark("fast", [a, b, n], () => BL.fasts.push([a, b, n])),
+  shutter: (a, b, k) =>
+    mark("shutter", [a, b, k], () => BL.shutters.push([a, b, k])),
+  sharp: (a, b) => mark("sharp", [a, b], () => BL.sharps.push([a, b])),
   ...core,
   ...roto,
   ...typekit,
@@ -229,9 +307,35 @@ const E = {
   typekit,
 };
 window.E = E;
+const BL = {
+  cuts: [],
+  extra: [],
+  fasts: [],
+  shutters: [],
+  sharps: [],
+  sealed: false,
+};
+let floatBlend = false, // EXT_float_blend: samples add by blending into one float target
+  acc = null; // the accumulation targets, made on the first frame that blurs
+function mark(name, args, add) {
+  if (BL.sealed) throw new Error(`E.${name}() belongs in load()`);
+  const [a, b, x] = args;
+  const ok =
+    args.every(Number.isFinite) &&
+    (args.length < 2 || a < b) &&
+    (name !== "fast" || (Number.isInteger(x) && x >= 2)) &&
+    (name !== "shutter" || x >= 1);
+  if (!ok)
+    throw new Error(
+      `E.${name}(${args.join(", ")}): use seconds with start before end${name === "fast" ? ", and a sample count of 2 or more" : name === "shutter" ? ", and a multiplier of 1 or more" : ""}`,
+    );
+  add();
+}
 
 async function boot() {
   if (canvasError) throw canvasError;
+  if (scaleError) throw scaleError;
+  if (blurError) throw blurError;
   const [A, L] = await Promise.all([
     fetch("/engine/data/audio.json").then((r) => r.json()),
     fetch("/engine/data/lyrics.json").then((r) => r.json()),
@@ -283,6 +387,34 @@ async function boot() {
       l.loaded = true;
     }),
   );
+  for (const l of E.layers) {
+    const { sharp, floor } = blur.layerBlur(l.blur, l.scene.blur, l.id);
+    l.sharp = sharp;
+    if (floor) BL.fasts.push([l.start, l.end, floor]);
+  }
+  // cuts come from every entry on this canvas and variant, so an --only preview slides its shutters like the full render
+  BL.cuts = blur.cutList(
+    blur.cutEntries(TIMELINE, {
+      onCanvas: (e) => cv.onCanvas(e, ORIENT),
+      variant: Q.get("variant") || Q.get("ending"),
+      loaded: E.layers,
+    }),
+    {
+      beats: E.A.beats,
+      words: E.words,
+      lead: typekit.LEAD,
+      extra: BL.extra,
+      o: BLUR,
+    },
+  );
+  BL.sealed = true;
+  if (BLUR.on) {
+    if (!renderer.extensions.has("EXT_color_buffer_float"))
+      throw new Error(
+        "motion blur needs float render targets (EXT_color_buffer_float): render with --blur off",
+      );
+    floatBlend = !!renderer.getContext().getExtension("EXT_float_blend");
+  }
   window.__ready = true;
 }
 const bootP = boot().catch((e) => {
@@ -290,35 +422,163 @@ const bootP = boot().catch((e) => {
   window.__error = String(e.stack || e);
 });
 
+// Composite the active layers at time t into accum. In a sample, a sharp layer keeps the frame pass's render target.
+function composite(active, t, sample, blurred) {
+  blur.clock.pass++;
+  renderer.setRenderTarget(accum);
+  renderer.setClearColor(0x000000, 1);
+  renderer.clear(true, true, true);
+  active.forEach((l, i) => {
+    const rt = getLayerRT(i);
+    if (!(sample && l.sharp)) {
+      renderer.setRenderTarget(rt);
+      renderer.setClearColor(0x000000, 0);
+      renderer.clear(true, true, true);
+      E.blurring = blurred && !l.sharp;
+      blur.clock.layer = i; // trackAt records and replays per layer
+      const op = l.scene.render(E, t, rt, l);
+      blur.clock.layer = null;
+      renderer.setRenderTarget(rt);
+      renderer.render(_emptyScene, _emptyCam); // force MSAA resolve even if the scene drew nothing
+      l._op = typeof op === "number" ? op : 1;
+    }
+    blendFor(l.blend ?? "normal");
+    compMat.uniforms.tex.value = rt.texture;
+    compMat.uniforms.opacity.value = l._op;
+    quad.render(renderer, accum, false);
+  });
+}
+
+// ---- motion blur: float sums of the sample composites, made only when a frame blurs
+const _fq = `varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }`;
+const fetchMat = (body, uniforms, blending) =>
+  new THREE.ShaderMaterial({
+    uniforms,
+    vertexShader: _fq,
+    fragmentShader: `uniform sampler2D tex, tSum; uniform float uN; void main(){ ivec2 p = ivec2(gl_FragCoord.xy); ${body} }`,
+    depthTest: false,
+    depthWrite: false,
+    blending,
+    ...(blending === THREE.CustomBlending && {
+      blendSrc: THREE.OneFactor,
+      blendDst: THREE.OneFactor,
+      blendSrcAlpha: THREE.OneFactor,
+      blendDstAlpha: THREE.OneFactor,
+      blendEquation: THREE.AddEquation,
+    }),
+  });
+function accumulator() {
+  const rt = () =>
+    new THREE.WebGLRenderTarget(W, H, {
+      type: THREE.FloatType,
+      depthBuffer: false,
+    });
+  const u = () => ({
+    tex: { value: null },
+    tSum: { value: null },
+    uN: { value: 1 },
+  });
+  return {
+    sums: floatBlend ? [rt()] : [rt(), rt()], // without EXT_float_blend, ping-pong instead of blending
+    keep: mkRT(0),
+    add: new core.FSQuad(
+      floatBlend
+        ? fetchMat(
+            "gl_FragColor = texelFetch(tex, p, 0);",
+            u(),
+            THREE.CustomBlending,
+          )
+        : fetchMat(
+            "gl_FragColor = texelFetch(tSum, p, 0) + texelFetch(tex, p, 0);",
+            u(),
+            THREE.NoBlending,
+          ),
+    ),
+    // sum / n, exact for identical samples: a still frame comes out bit-identical to one without blur
+    div: new core.FSQuad(
+      fetchMat(
+        "gl_FragColor = texelFetch(tex, p, 0) / uN;",
+        u(),
+        THREE.NoBlending,
+      ),
+    ),
+  };
+}
+function addInto(a, tex) {
+  const m = a.add.material.uniforms;
+  m.tex.value = tex;
+  if (floatBlend) return a.add.render(renderer, a.sums[0]);
+  m.tSum.value = a.sums[0].texture;
+  a.add.render(renderer, a.sums[1]);
+  a.sums.reverse();
+}
+function copyInto(a, tex, target, n = 1) {
+  const m = a.div.material.uniforms;
+  m.tex.value = tex;
+  m.uN.value = n;
+  a.div.render(renderer, target);
+}
+// The frame pass already sits in accum. Render the other samples (footage, the HUD, grain and E.post stay on the frame),
+// average them into accum, and restore the frame's state even if a scene throws.
+function accumulate(active, t, times, frameIdx) {
+  const { n, reuse, render } = blur.passes(times, t);
+  const a = (acc ??= accumulator()),
+    C = blur.clock,
+    P = E.post,
+    HU = E.hud;
+  copyInto(a, accum.texture, a.keep);
+  for (const s of a.sums) {
+    renderer.setRenderTarget(s);
+    renderer.setClearColor(0x000000, 0);
+    renderer.clear(true, false, false);
+  }
+  if (reuse) addInto(a, accum.texture);
+  C.sub = true;
+  C.stale = null;
+  try {
+    render.forEach((ts, j) => {
+      E.t = ts;
+      E.pass = j + 1;
+      C.shift = ts - t;
+      E.post = JSON.parse(JSON.stringify(POST_DEFAULT)); // a sample's post and HUD writes are dropped
+      E.hud = { ...HUD_DEFAULT };
+      composite(active, ts, true, true);
+      addInto(a, accum.texture);
+    });
+  } finally {
+    C.sub = false;
+    C.shift = 0;
+    E.t = t;
+    E.pass = 0;
+    E.post = P;
+    E.hud = HU;
+  }
+  if (C.stale) {
+    copyInto(a, a.keep.texture, accum);
+    (window.__blurFallbacks ??= []).push([frameIdx, C.stale]);
+  } else copyInto(a, a.sums[0].texture, accum, n);
+  renderer.setClearColor(0x000000, 0);
+}
+
 // Render global time t. Returns when the frame is on the canvas.
 async function renderTime(t, frameIdx = Math.round(t * E.fps)) {
   await bootP;
   if (window.__error) throw new Error(window.__error);
   E.t = t;
+  E.frameT = t;
+  E.pass = 0;
   E.frame = frameIdx;
   E.post = JSON.parse(JSON.stringify(POST_DEFAULT));
   E.hud = { ...HUD_DEFAULT };
   const active = E.layers
     .filter((l) => t >= l.start && t < l.end)
     .sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+  const times = PLAY ? null : blur.framePlan(t, E.fps, BLUR, BL);
+  blur.clock.id++;
+  core.trackFrame(times !== null);
   for (const l of active) if (l.scene.prepare) await l.scene.prepare(E, t, l);
-  renderer.setRenderTarget(accum);
-  renderer.setClearColor(0x000000, 1);
-  renderer.clear(true, true, true);
-  active.forEach((l, i) => {
-    const rt = getLayerRT(i);
-    renderer.setRenderTarget(rt);
-    renderer.setClearColor(0x000000, 0);
-    renderer.clear(true, true, true);
-    const op = l.scene.render(E, t, rt, l);
-    renderer.setRenderTarget(rt);
-    renderer.render(_emptyScene, _emptyCam); // force MSAA resolve even if the scene drew nothing
-    const opacity = typeof op === "number" ? op : 1;
-    blendFor(l.blend ?? "normal");
-    compMat.uniforms.tex.value = rt.texture;
-    compMat.uniforms.opacity.value = opacity;
-    quad.render(renderer, accum, false);
-  });
+  composite(active, t, false, times !== null);
+  if (times) accumulate(active, t, times, frameIdx);
   const P = E.post,
     U = finalPass.uniforms;
   bloom.strength = P.bloom;

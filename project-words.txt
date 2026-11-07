@@ -1049,6 +1049,7 @@ krea
 kuaishou
 lacunarity
 laggy
+lanczos
 layerize
 lerp
 lerped
