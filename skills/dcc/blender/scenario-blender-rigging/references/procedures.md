@@ -332,3 +332,22 @@ hair and brows.
   `chest`, `hips`, `neck`, `head`, `shoulder.L`, `root`; deform bones all start with `DEF-`, ORG
   bones follow IK and FK. (From the rigify_studio digest probes, `archive/tests/rigify_probe/`, and
   this skill's tests.)
+
+## P16. A body on an existing skeleton
+
+When clips, an engine skeleton or other characters already share a skeleton, the body has to join it
+before those clips play on it. It keeps its own rig and bind, then moves onto the shared skeleton's
+names and hierarchy, not onto its proportions.
+
+- **Map, per bone of the body's rig:** rename to the shared name; merge (add the weights into the
+  target's group, re-parent the children); split a long segment into the shared one's parts, its
+  weights shared by tent functions along the segment; add the shared skeleton's extra bones
+  unweighted, at their rest place. Keep the map as data, one file per skeleton.
+- **Keep the body's joints.** Each body keeps its own heads, tails and rolls; only names and
+  hierarchy change. Clips then move by per-bone pose deltas, not by copying world positions.
+- **Weights.** Every vertex group must end with a bone; no group may name a bone that is gone. Check
+  sums, unweighted vertices and the influence count with `weight_report`.
+- **Gate.** Compare every vertex of the moved body against the source rig: in the rest pose and in a
+  seeded sweep that turns each source bone by up to 25 degrees, with each new bone taking its source
+  bone's pose delta. The worst distance is a rounding error, well under 0.1 mm. Run the same check
+  again on the exported file read back: the file, not the scene, is what ships.
