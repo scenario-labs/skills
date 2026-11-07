@@ -128,6 +128,9 @@ pointing at this repository, and hook steps read the index through them.
     vitest table stays in the step log.
   - Coverage spans core skills only (`.coveragerc`). Expert-tool scripts mostly run inside their
     host application, which coverage.py cannot follow.
+  - Both reports list every core script, a file no test runs at 0%. coverage.py needs
+    `include_namespace_packages`, since skill script folders hold no `__init__.py`. vitest takes the
+    JavaScript and TypeScript of every core skill shipping some, suite or not.
   - It reports without a threshold, so a drop never fails CI.
 - Python CI installs `tests/requirements-ci.txt` with hash checks and wheels only.
   `SKILLS_TEST_USE_SYSTEM_PYTHON=1` keeps tests and coverage in that verified environment. Local
