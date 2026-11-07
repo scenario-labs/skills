@@ -169,9 +169,31 @@ prints the report here instead.
 skill covers the forms and the redaction rules), save it to a file, post it to a PR number they
 name, or leave it in this conversation. Post nothing until they pick.
 
-Finally, delete the run directory except `$RUN/assets/` (keep all of it with `--keep`). When the run
-saved files there, end by asking whether to open that folder so the files can be dragged into the
-report comment, and open it (`open` on macOS, `xdg-open` on Linux) only on a yes.
+Finally, delete the run directory except `$RUN/assets/` (keep all of it with `--keep`). Save there
+any comparison image you built while grading: it backs a claim in the report.
+
+When `$RUN/assets/` holds files, end by recommending which to upload, if any, in a table of file,
+size, and the report claim it backs:
+
+- Pick the few that prove the verdict: a contact sheet or the key output, a before and after behind
+  a defect or a gate result, and one short delivered file a reader can play.
+- Leave out inputs, files a smaller pick already proves, and files past GitHub's attachment limits:
+  10 MB for an image, and 10 MB for a video unless the repository's owner has a paid plan (100 MB).
+
+Then ask whether to open the folder so the files can be dragged into the report comment, and open it
+(`open` on macOS, `xdg-open` on Linux) only on a yes.
+
+After the user says the files are uploaded, offer to format the comment. On a yes:
+
+1. Fetch its body with `gh api repos/<owner>/<repo>/issues/comments/<id> --jq .body`. Keep every
+   attachment URL GitHub inserted, and change nothing outside the attachment block.
+2. Move each attachment under the Evidence table, below a heading naming what it shows.
+3. Size each image with an `<img width="...">` tag, and replace the alt text GitHub derived from the
+   file name with a description.
+4. Leave each video URL alone on its line, with a one-line caption above it: GitHub renders a bare
+   URL on its own line as a player.
+5. Update the comment with `gh api --method PATCH repos/<owner>/<repo>/issues/comments/<id>`,
+   passing the new body as `-F body=@<file>`.
 
 ```markdown
 ## Skill validation: `<name>` (<verdict>)
