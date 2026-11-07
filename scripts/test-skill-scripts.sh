@@ -23,6 +23,16 @@ fail=0
 coverage=${COVERAGE:-}
 # 7.10 added patch = subprocess, which follows the scripts suites spawn.
 COVERAGE_PY="coverage>=7.10"
+# CI's Python. A suite's requirements can need more than the machine's python3
+# (numpy 2.5 needs 3.12), so everything uv runs uses this version.
+TEST_PYTHON=3.12
+
+# The interpreter uv runs, pinned by path: uv otherwise prefers an active conda
+# or virtual environment, whose packages leak into the suite, and `--system`
+# skips them. With no such Python installed, uv downloads TEST_PYTHON.
+uv_python() {
+  uv python find --system "$TEST_PYTHON" 2>/dev/null || echo "$TEST_PYTHON"
+}
 [ -z "$coverage" ] || rm -rf coverage
 
 has_tests() {
@@ -68,9 +78,8 @@ for dir in tests/*/; do
     ran=1
     echo "== ${name}: python unittest =="
     # uv installs a suite's requirements into a cached environment of its
-    # own, so a local run needs no pip step. python3 is pinned by path
-    # because uv otherwise prefers an active conda or virtual environment.
-    # CI uses its hash-checked environment even when the runner has uv installed.
+    # own, so a local run needs no pip step. CI uses its hash-checked
+    # environment even when the runner has uv installed.
     python=(python3)
     req="${dir}requirements.txt"
     with=()
@@ -78,7 +87,7 @@ for dir in tests/*/; do
     [ -z "$coverage" ] || with+=(--with "$COVERAGE_PY")
     if [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] &&
       [ "${#with[@]}" -gt 0 ] && command -v uv >/dev/null; then
-      python=(uv run --quiet --no-project --python "$(command -v python3)"
+      python=(uv run --quiet --no-project --python "$(uv_python)"
       "${with[@]}" python)
     fi
     # No -t: hyphenated skill names are not importable as packages, so each
@@ -116,7 +125,7 @@ if [ -n "$coverage" ] && compgen -G 'coverage/.coverage.*' >/dev/null; then
   echo "== python coverage =="
   report=(python3)
   if [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] && command -v uv >/dev/null; then
-    report=(uv run --quiet --no-project --python "$(command -v python3)"
+    report=(uv run --quiet --no-project --python "$(uv_python)"
     --with "$COVERAGE_PY" python)
   fi
   report+=(-m coverage)
