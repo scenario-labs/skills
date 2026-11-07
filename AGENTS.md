@@ -434,8 +434,8 @@ never its copy `.cursor/BUGBOT.md`.
   every push and PR, on two ffmpeg versions ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
   It is not in the pre-commit hook, since suites may need system tools such as ffmpeg.
 - A `tests/<name>/requirements.txt` declares extra Python dependencies.
-  - Locally, `pnpm test` runs that suite under uv with them on the `python3` on PATH, and falls back
-    to the bare `python3` only when uv is missing.
+  - Locally, `pnpm test` runs that suite under uv with them on Python 3.12, CI's version, and falls
+    back to the bare `python3` only when uv is missing.
   - CI installs only hashed locks: after changing a suite's requirements, regenerate the locks
     covering it ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - `pnpm test` runs the command, plugin-manifest, Bugbot-copy, index-sync, style, hook, readme, and
