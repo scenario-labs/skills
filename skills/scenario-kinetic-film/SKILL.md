@@ -113,10 +113,12 @@ lands on the last hit.
    { "model_id": "<id from recommend>", "dry_run": true, "parameters": { "prompt": "<the prompt pattern in sound.md>", "instrumental": true, "duration": 40, "bpm": 172, "numOutputs": 2 } }
    ```
 
-   After the user's go: run, `jobs_wait`, `asset_download`, `curl -L -o`. `beat_grid.py --bpm 172`
-   on each take; keep the clearest grid and the strongest drop. Take B held 172.0 BPM with a drop at
-   10.74 s, so the film starts 8 beats earlier (`music: { offset: 7.95, stopBeat: 58 }`): the drop
-   lands on the first key art and the music stops dead on the title.
+   After the user's go (unattended, every step: run only inside a budget the task states, else
+   report the prices and stop): run, `jobs_wait`, `asset_download`, `curl -L -o`.
+   `beat_grid.py --bpm 172` on each take; keep the clearest grid and the strongest drop. Take B held
+   172.0 BPM with a drop at 10.74 s, so the film starts 8 beats earlier
+   (`music: { offset: 7.95, stopBeat: 58 }`): the drop lands on the first key art and the music
+   stops dead on the title.
 
 4. **The sound kit.** The 12 core sounds of sound.md, plus the film's own jokes (`stomp`, `roar`,
    `bell`, `knock`): a dry run each and one total. After the user's go: one run each,
