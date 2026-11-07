@@ -109,6 +109,15 @@ box("Shell", (1, 1, 1), (0, 0, 0.5))
 box("Core", (0.2, 0.2, 0.2), (0, 0, 0.5))
 cases["enclosed"] = gate(["Shell", "Core"])
 
+# Parts that cross face to face, a rail across the post's side and a beam across its top: no
+# vertex of either lies near the other part, and the hairline gap float rounding leaves between
+# faces that meet (0.1 mm here, under the contact tolerance) hides them from the overlap test.
+empty()
+box("Post", (0.2, 0.2, 1.0), (0, 0, 0.5))
+box("Rail", (1.5, 0.04, 0.08), (0.5, -0.1201, 0.7))
+box("Beam", (2.0, 0.06, 0.1), (0.8, 0.05, 1.0501))
+cases["crossing"] = gate(["Post", "Rail", "Beam"])
+
 empty()
 box("Mirror", (1, 1, 1), (0, 0, 0.5), scale=(-1, 1, 1))
 cases["negative_scale"] = gate(["Mirror"])

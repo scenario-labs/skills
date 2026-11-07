@@ -9,8 +9,9 @@ it held as well as the simple scene in the test below. A brief that names only i
 is silent on density, even when two heroes and two shots also fit the medium row: take advanced. Go
 down only when the brief is genuinely small (one actor, one place, one move); go up to expert when
 it asks for scale, a crowd or a cut sequence. Record the choice in the build plan. The brief's own
-length overrides the `seconds` and `shot_s` columns of `K.audit_budget`: a 6 s advanced brief fails
-only that row, and the rest of the budget still holds.
+length overrides the `seconds` and `shot_s` columns of `K.audit_budget`, and its shot count
+overrides `shots`. A 6 s advanced brief fails only `seconds`; a single 8 s shot fails `shots` and
+`shot_s`. The rest of the budget still holds.
 
 ## Density: how much scene
 

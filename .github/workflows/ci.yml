@@ -56,7 +56,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, ubuntu-26.04]
     runs-on: ${{ matrix.os }}
-    # A normal run takes under 11 minutes. Without a cap, a stalled apt mirror holds the job for up
+    # A normal run takes under 5 minutes. Without a cap, a stalled apt mirror holds the job for up
     # to GitHub's 6-hour default.
     timeout-minutes: 20
     steps:
@@ -71,6 +71,8 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/requirements-ci.txt
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       # The runner's apt mirror sometimes serves the ffmpeg .debs at a few kB/s (one install took 33

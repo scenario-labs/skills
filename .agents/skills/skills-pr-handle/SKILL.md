@@ -242,6 +242,7 @@ End with a short status:
   raised, or noted as pre-existing)
 - Each open thread: its class and action, with the reply URL when you posted one, and the threads
   `--resolve` would close when it was not passed
-- Skills validated (name, verdict, report URL, and the offer to open the evidence folder when the
-  run saved files) or an explicit "no skill validation needed" with the skip criterion that applies
+- Skills validated (name, verdict, report URL, and, when the run saved files, the upload pick and
+  the offer to open the evidence folder from the validation command's step 7) or an explicit "no
+  skill validation needed" with the skip criterion that applies
 - Anything still blocked on the user

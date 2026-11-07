@@ -99,7 +99,8 @@ Launch two sub-agents with web access while you work on other things:
   a verified fact, its iconic visual form, an insert idea and a short on-screen string.
 - **Craft:** study the user's motion references (download them, contact-sheet them, read the
   frames), plus genre direction techniques. Extract timing numbers, color hex values and
-  implementable JS moves.
+  implementable JS moves. Measure each reference per section into `analysis/targets.json`
+  ([references/dynamism.md](references/dynamism.md) §5).
 
 Save the condensed results as `analysis/research_*.md`. Scene agents read them alongside
 `references/motion_library.md`.
@@ -163,8 +164,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 ### 5. Engine and scene agents
 
 - **Smoke-test first:**
-  - Set `PAL` in `core.js`, and in `engine/timeline.js` set `CANVAS`, the sections on downbeats,
-    `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by default).
+  - Set `PAL` in `core.js`, and in `engine/timeline.js` set `CANVAS`, the sections on downbeats with
+    their `energy`, `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by
+    default).
   - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label.
   - Render one still and a 5 s clip, then confirm audio and flashes line up with `av_sync_check.py`.
 - **Brief the agents.** Fill in `AGENTS_BRIEF.md` from the template, then launch one background
@@ -179,31 +181,43 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 
 ### 6. Assemble, watch, iterate
 
-- **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac). Wait for it in the
-  foreground (or poll until it prints `wrote`) and carry on to verification and delivery: never end
-  the run while a render or encode is still going, because a headless session that stops kills it.
+- **Render the full cut** (3 workers, about 5 min for 2:00 on an M-series Mac, 2.5 times that with
+  motion blur). Wait for it in the foreground (or poll until it prints `wrote`), then verify and
+  deliver: never end the run mid-render or mid-encode, since a headless session that stops kills it.
 - **Verify:**
   - `av_sync_check.py`: expect 0.0 ms audio and 0 to +1 frame visual. Below a correlation of about
     0.15 the visual lag means nothing (type leading by `E.LEAD` reads as up to -3 frames): check
     onset stills instead.
+  - `dynamism_check.py gate` on each delivered render: exit 0. On exit 1, fix and re-gate (`--force`
+    replaces its JSON); unattended, after 3 rounds on a section or at the budget, deliver and report
+    the failing sections.
   - `freezedetect`: no frozen footage.
   - Contact sheets at 0.5 s steps, 20 s per sheet.
   - Every section boundary, frame by frame.
   - On portrait, `still.mjs --safe` sheets, 20 s each: no word, logo or face outside the outlined
     band.
 - **Global look pass:** a still sheet across all sections, then tune `POST`, the palette and the HUD
-  theme.
+  theme. Decide motion blur from an A/B of the fastest 5 s (`--blur`, `references/pipeline.md` §7;
+  unattended: off unless the user asked for it, then judge the pair yourself).
 - **Revisions:** map each director note (they arrive as timestamps) to its section and send it back
   to the owning agent via SendMessage. Resuming keeps its context. Fix a weak shot by replacing it
   with a new generation in a different look, or with code, never by adding effects. Offer
   alternatives as timeline `variant`s (render with `--variant b`) instead of guessing.
+- **Older projects:** without `tools/dynamism_check.py`, copy it and `rectify_screen.py` from
+  `<skill>/scripts/` into `tools/`, and add the template's dynamism check to `AGENTS_BRIEF.md`.
+  Replace `ENGINE_API.md` with `references/engine_api.md` only when `engine/canvas.js` exists;
+  otherwise add its `energy` line. Then tag each `TIMELINE` entry's `energy` from TREATMENT.md
+  (`references/dynamism.md` §2).
 
 ### 7. Deliver
 
-- **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready 2-pass 21 Mb/s
-  file under 512 MB for X; portrait: the vertical upload in `references/pipeline.md` §8), a teaser
-  (verse plus first chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and
-  `_9x16`, when both were asked for. Use distinct filenames, because macOS is case-insensitive.
+- **4K master:** only on request (`--scale 2`, `references/pipeline.md` §8), rendered first: every
+  other file is made from it.
+- **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready file under 512
+  MB; portrait: the vertical upload in `references/pipeline.md` §8), a teaser (verse plus first
+  chorus), plus one file per variant. With both canvases asked for, one set per canvas, suffixed
+  `_16x9` and `_9x16`. Use distinct filenames, because macOS is case-insensitive.
+- **Checks:** run `delivery_check.py` last, on every file.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet,
   source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
@@ -225,7 +239,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - **Section variance.** Mix the looks, 2D and 3D, poster slams and quiet subtitles. Never use the
   same type treatment on two consecutive lines. Cut density climbs with the song's energy, and
   showcase moments (logo, end card) get time.
-- **Photosensitivity.** At most 3 full-frame luminance flips per second.
+- **Photosensitivity.** At most 3 full-frame flashes per second, end card included (WCAG flashes:
+  pairs of opposing luminance changes).
 - **Watch it yourself** before calling it done, then take a second look at the first 3 seconds.
 
 ## Files in this skill
@@ -233,7 +248,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - Setup and analysis: [scaffold.sh](scripts/scaffold.sh),
   [audio_analysis.py](scripts/audio_analysis.py), [lyrics_align.py](scripts/lyrics_align.py),
   [plot_lyrics.py](scripts/plot_lyrics.py)
-- Locked JavaScript dependencies copied by scaffold.sh into new projects:
+- Locked npm dependencies scaffold.sh copies into new projects:
   [package.json](assets/npm/package.json), [package-lock.json](assets/npm/package-lock.json)
 - Hashed, wheels-only Python locks scaffold.sh installs, one per platform:
   [macos-arm64.txt](assets/python/macos-arm64.txt),
@@ -249,20 +264,24 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   [track.py](scripts/track.py)
 - Sync checks: [lipsync_check.py](scripts/lipsync_check.py),
   [dance_sync_check.py](scripts/dance_sync_check.py), [av_sync_check.py](scripts/av_sync_check.py)
-- Rendering and review: [render.mjs](scripts/render.mjs), [still.mjs](scripts/still.mjs),
-  [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py)
-- Engine, copied into the project by scaffold.sh: [index.html](assets/engine/index.html),
-  [main.js](assets/engine/main.js), [canvas.js](assets/engine/canvas.js),
-  [core.js](assets/engine/core.js), [plate.js](assets/engine/plate.js),
-  [roto.js](assets/engine/roto.js), [typekit.js](assets/engine/typekit.js),
-  [hud.js](assets/engine/scenes/hud.js), plus [timeline.template.js](assets/timeline.template.js)
-  and [scene.template.js](assets/scene.template.js)
+- Dynamism: [dynamism_check.py](scripts/dynamism_check.py),
+  [rectify_screen.py](scripts/rectify_screen.py) (flattens a phone-filmed screen),
+  [references/dynamism.md](references/dynamism.md)
+- Rendering and review: [render.mjs](scripts/render.mjs), [render_lib.mjs](scripts/render_lib.mjs),
+  [still.mjs](scripts/still.mjs), [serve.mjs](scripts/serve.mjs), [sheet.py](scripts/sheet.py),
+  [delivery_check.py](scripts/delivery_check.py)
+- Engine, copied by scaffold.sh: [index.html](assets/engine/index.html),
+  [main.js](assets/engine/main.js), [blur.js](assets/engine/blur.js),
+  [canvas.js](assets/engine/canvas.js), [core.js](assets/engine/core.js),
+  [plate.js](assets/engine/plate.js), [roto.js](assets/engine/roto.js),
+  [typekit.js](assets/engine/typekit.js), [hud.js](assets/engine/scenes/hud.js), plus
+  [timeline.template.js](assets/timeline.template.js) and
+  [scene.template.js](assets/scene.template.js)
 - [references/pipeline.md](references/pipeline.md): every command and Scenario call, step by step
 - [references/engine_api.md](references/engine_api.md): the scene contract and the full `E` API
   (canvas and safe band, plates, mattes, tracking, post, HUD, variants)
-- [references/motion_library.md](references/motion_library.md): looks, type system, a 40-move
-  technique library, integration ideas, transitions, timing, easing and springs, sync and cut
-  density
+- [references/motion_library.md](references/motion_library.md): looks, type system, 40 techniques,
+  integration ideas, transitions, timing, easing, sync and cut density
 - [references/agent_brief_template.md](references/agent_brief_template.md): the brief each scene
   agent reads
 - [references/lessons.md](references/lessons.md): production gotchas and direction defaults that
