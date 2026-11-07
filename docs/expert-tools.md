@@ -36,7 +36,8 @@ than the MCP server:
     and GUI-check tests still run in `pnpm test`.
   - Blender's live suites (`tests/scenario-blender-expert/test_live_*.py`) run Blender headless
     against fixtures with known answers. `blender.yml` installs the release the skills were verified
-    on, and fails if a live suite skips. Without Blender they skip in `pnpm test`.
+    on, and fails if a live suite skips. Without Blender, or with a release below the family's 5.2
+    floor, they skip in `pnpm test`, naming the version found.
   - Unity's `tests/scenario-unity-expert/test_toolkit_offline.py` needs no application: it runs the
     toolkit's lock probe, process-table parsing, and signal handling in `pnpm test`. `unity.yml`
     runs it on macOS, the OS the toolkit targets.
