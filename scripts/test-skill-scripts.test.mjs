@@ -421,6 +421,23 @@ test("a failing module fails the runner, and the other modules still run", (t) =
   assert.ok(output.indexOf("AssertionError: boom") > failing, output);
 });
 
+test("a nested Python test module fails the runner instead of being skipped", (t) => {
+  const { result, output } = run(t, {
+    files: {
+      [`${SUITE}unit/__init__.py`]: "",
+      [`${SUITE}unit/test_x.py`]: PASSING,
+    },
+  });
+  assert.equal(result.status, 1, output);
+  assert.match(
+    output,
+    new RegExp(
+      `${SUITE}unit/test_x\\.py: test modules sit at the top of ${SUITE}`,
+    ),
+  );
+  assert.match(output, new RegExp(`ok ${SUITE}test_demo\\.py`));
+});
+
 test("a vitest suite runs as a job beside the Python modules", (t) => {
   const { result, pnpmCalls, output } = run(t, {
     pnpm: 0,

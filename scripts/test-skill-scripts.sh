@@ -118,6 +118,15 @@ for dir in tests/*/; do
     fail=1
     continue
   fi
+  # Each module runs as `discover -p <basename>` from the suite root, so a
+  # nested one would never be queued: refuse it rather than skip it.
+  nested=$(find "$dir" -mindepth 2 -type f -name 'test_*.py')
+  if [ -n "$nested" ]; then
+    echo "$nested" | while IFS= read -r file; do
+      echo "$file: test modules sit at the top of tests/${name}/"
+    done
+    fail=1
+  fi
   for file in "$dir"test_*.py; do
     [ ! -f "$file" ] || jobs+=("$file")
   done

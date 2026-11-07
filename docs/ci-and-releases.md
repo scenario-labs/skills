@@ -111,6 +111,8 @@ pointing at this repository, and hook steps read the index through them.
   its own, one per CPU at a time (`SKILLS_TEST_JOBS` overrides the count).
   - So a test module never depends on another's side effects, and writes only under a temporary
     directory.
+  - Python test modules sit at the top of `tests/<name>/`. A nested `test_*.py` fails the run, since
+    no job would pick it up.
   - Each job prints one status line with its duration as it ends, then its full log once all end,
     failures last.
 - `script-tests` runs once on `ubuntu-24.04` and once on `ubuntu-26.04`, which install ffmpeg 6.1
