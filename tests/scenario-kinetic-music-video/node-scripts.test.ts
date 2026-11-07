@@ -301,6 +301,18 @@ describe("serve.mjs", () => {
     expect(rsp.end).toHaveBeenCalledOnce();
   });
 
+  // Called directly for the same reason: fs.stat throws synchronously on a NUL byte.
+  it("answers an encoded NUL byte with 400", () => {
+    const handler = servers[0].listeners("request")[0] as (
+      req: unknown,
+      rsp: unknown,
+    ) => void;
+    const rsp = { writeHead: vi.fn(), end: vi.fn() };
+    expect(() => handler({ url: "/SKILL.md%00.png" }, rsp)).not.toThrow();
+    expect(rsp.writeHead).toHaveBeenCalledWith(400);
+    expect(rsp.end).toHaveBeenCalledOnce();
+  });
+
   it("serves on the port given on the command line when run directly", async () => {
     await runScript("serve.mjs", ["0"], SKILL);
     const line = logs.find((l) => l.startsWith("serving on"));

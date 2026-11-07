@@ -30,7 +30,9 @@ export function serve(port = 0) {
       let p;
       try {
         p = decodeURIComponent(new URL(req.url, "http://x").pathname);
-      } catch {
+      } catch {}
+      // fs throws synchronously on a NUL byte, which would end the process like a bad escape does.
+      if (p === undefined || p.includes("\0")) {
         rsp.writeHead(400);
         return rsp.end();
       }
