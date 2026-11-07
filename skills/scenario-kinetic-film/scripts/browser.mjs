@@ -73,9 +73,18 @@ export async function openFilm(b, dsf = 1, render = true) {
     errs.push("PAGE " + e.message);
     crashed();
   });
+  // a failed load logs a console line without its URL: report it from the response instead
   pg.on("console", (m) => {
-    if (m.type() === "error" && !/favicon|404/.test(m.text()))
+    if (
+      m.type() === "error" &&
+      !/favicon|Failed to load resource/.test(m.text())
+    )
       errs.push("CONSOLE " + m.text());
+  });
+  // a misspelled Picture src would otherwise render a blank scene in silence
+  pg.on("response", (r) => {
+    if (r.status() >= 400 && !/\/favicon\.ico$/.test(r.url()))
+      errs.push(`HTTP ${r.status()} ${r.url()}`);
   });
   await pg.goto(FILM_URL + "index.html" + (render ? "?render=1" : ""));
   const ready = pg

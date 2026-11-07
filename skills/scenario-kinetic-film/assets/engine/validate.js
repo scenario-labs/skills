@@ -29,7 +29,7 @@ export function checkSpec(spec) {
     if (!(num(spec.fps) && spec.fps > 0)) error(`fps must be a number above 0, not ${show(spec.fps)}`);
     else if (spec.fps !== 60) warn(`fps is ${spec.fps}: the HUD and finish.py's motion target assume 60`);
   }
-  // the engine mixes palette colors channel by channel, which only works on #RRGGBB and rgb()
+  // the palette is mixed into derived colors, and only #RRGGBB and rgb() parse without a canvas
   for (const [k, v] of Object.entries(spec.palette || {}))
     if (!(typeof v === 'string' && (HEX6.test(v) || RGB.test(v)))) error(`palette.${k} is ${show(v)}: use a 6-digit hex color (#RRGGBB) or rgb()`);
 

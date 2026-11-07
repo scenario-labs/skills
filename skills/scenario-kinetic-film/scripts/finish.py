@@ -51,9 +51,9 @@ def gate_still_share(share):
 
 
 def gate_holds(found, end_card, bpm):
-    """FAIL on any still stretch over 0.6 s that starts before the end card."""
+    """FAIL on any still stretch over 0.6 s before the end card; the part inside the card is free."""
     beat = 60 / bpm
-    long = [h for h in found if h[1] > 0.6 and h[0] < end_card]
+    long = [h for h in found if min(h[1], end_card - h[0]) > 0.6]
     lines = [f"{s:.2f}s (beat {s / beat:.1f})  {d:.2f}s  mean change {m * 100:.2f}%" for s, d, m in long[:4]]
     return (FAIL if long else PASS), ("; ".join(lines) if long else "none")
 

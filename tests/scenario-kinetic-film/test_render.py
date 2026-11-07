@@ -79,6 +79,14 @@ class RenderRunTest(unittest.TestCase):
         self.assertIn("part0.mp4", r.stderr)
         self.assertFalse((self.film / "out" / "video_720.mp4").exists())
 
+    def test_a_short_joined_file_fails_the_render(self):
+        probe = self.dir / "bin" / "ffprobe"
+        probe.write_text("#!/bin/sh\necho 5\n")
+        probe.chmod(0o755)
+        r = self.run_render("--res", "720", "--workers", 2, "--info", self.info)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("holds 5 frames, not 6", r.stderr)
+
     def test_asks_the_film_without_info(self):
         self.env["FAKE_NODE_INFO"] = json.dumps(INFO)
         r = self.run_render("--res", "720", "--workers", 1, "--from", 2, "--to", 4, "--out", self.dir / "clip.mp4")

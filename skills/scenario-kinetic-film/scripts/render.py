@@ -89,6 +89,9 @@ def main(argv=None):
     count = ["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", out]
     n = subprocess.run(count, capture_output=True, text=True).stdout.strip()
     print(f"{out}: {n} frames (expected {f1 - f0})")
+    # the workers count frames sent, not frames in the joined file
+    if n != str(f1 - f0):
+        sys.exit(f"{out} holds {n or 'no readable'} frames, not {f1 - f0}: the join or the encode lost frames")
 
 
 if __name__ == "__main__":

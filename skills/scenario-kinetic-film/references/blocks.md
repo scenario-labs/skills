@@ -20,8 +20,8 @@ export default {
 
 - Palette names (`'bg'`, `'paper'`, `'accent'`, `'hot'`, `'ink'`) work anywhere a color does. Any
   CSS color works outside the palette.
-- Palette values must be 6-digit hex (`#RRGGBB`) or `rgb()`: the engine mixes them channel by
-  channel, and `#fff` or `white` breaks every derived color.
+- Palette values must be 6-digit hex (`#RRGGBB`) or `rgb()`, the two forms the engine parses without
+  a browser: `validate.js` rejects `#fff` or `white` there.
 - `bg` is the dark ground, `paper` the light ground and light type, `ink` type on light grounds,
   `accent` the brand color. Grounds other than `bg` switch the HUD and caption to ink.
 - Keep `fps: 60`. The HUD and the checks in finish.py assume 60.

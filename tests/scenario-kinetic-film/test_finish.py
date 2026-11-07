@@ -63,6 +63,9 @@ class GateTest(unittest.TestCase):
         self.assertEqual(detail, "3.00s (beat 6.0)  0.61s  mean change 1.23%")
         # a hold inside the end card is the design: ignored
         self.assertEqual(self.status(finish.gate_holds([(20.5, 3.0, 0.0)], 20, 120)), PASS)
+        # only the part before the card counts: 0.1 s of a hold that runs into the card is no stall
+        self.assertEqual(self.status(finish.gate_holds([(19.9, 3.0, 0.0)], 20, 120)), PASS)
+        self.assertEqual(self.status(finish.gate_holds([(19.3, 3.0, 0.0)], 20, 120)), FAIL)
 
     def test_motion(self):
         self.assertEqual(self.status(finish.gate_motion(2.5)), PASS)

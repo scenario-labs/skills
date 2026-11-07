@@ -49,7 +49,16 @@ export function rng(seed) {
   let s = (seed * 2654435761) >>> 0 || 1;
   return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
 }
-const hex = h => h[0] === '#' ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : h.match(/[\d.]+/g).slice(0, 3).map(Number);
+// shot colors may be any CSS color: a canvas normalizes the rest to #rrggbb or rgba()
+let probe;
+const css = h => {
+  probe ??= document.createElement('canvas').getContext('2d');
+  probe.fillStyle = '#000';
+  probe.fillStyle = h;
+  return probe.fillStyle;
+};
+const hex = h => /^#[\da-f]{6}$/i.test(h) ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))
+  : /^rgba?\(/.test(h) ? h.match(/[\d.]+/g).slice(0, 3).map(Number) : hex(css(h));
 export function mixc(a, b, u) {
   const A = hex(a), Bc = hex(b);
   return '#' + A.map((v, i) => Math.round(lerp(v, Bc[i], clamp(u))).toString(16).padStart(2, '0')).join('');

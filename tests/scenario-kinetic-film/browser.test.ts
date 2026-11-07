@@ -283,5 +283,13 @@ describe.skipIf(!withPlaywright)("the film in a browser", () => {
       (57 * 60) / 172,
       9,
     );
+    // a key-art scene without its file names the missing file instead of rendering blank in silence
+    const still = await node(
+      "snap.mjs",
+      [path.join(tmp, "kaiju-stills"), "0.5", "b10"],
+      kaiju.url,
+    );
+    expect(still.code, still.err).toBe(0);
+    expect(still.out.toString()).toMatch(/HTTP 404 [^"]*art\/key1\.png/);
   }, 60000);
 });

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   B,
   configure,
@@ -65,7 +65,30 @@ describe("colors", () => {
     expect(rgba("#FF8000", 0.5)).toBe("rgba(255,128,0,0.5)");
   });
 
-  it("cannot mix a 3-digit hex, which is why validate.js rejects one in the palette", () => {
-    expect(mixc("#fff", "#000000", 0.5)).toContain("NaN");
+  it("normalizes any other CSS color through a canvas, so a shot color may be a name", () => {
+    // a canvas reads back an opaque color as #rrggbb and keeps the last valid one
+    const known: Record<string, string> = {
+      "#000": "#000000",
+      white: "#ffffff",
+      "#fff": "#ffffff",
+    };
+    let style = "#000000";
+    const ctx = {
+      get fillStyle() {
+        return style;
+      },
+      set fillStyle(v: string) {
+        style = known[v] ?? style;
+      },
+    };
+    vi.stubGlobal("document", {
+      createElement: () => ({ getContext: () => ctx }),
+    });
+    try {
+      expect(rgba("white", 0.5)).toBe("rgba(255,255,255,0.5)");
+      expect(mixc("#fff", "#000000", 0.5)).toBe("#808080");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

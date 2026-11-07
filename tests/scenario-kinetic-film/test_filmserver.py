@@ -8,11 +8,11 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 import urllib.error
 import urllib.request
 from contextlib import redirect_stderr
 from pathlib import Path
-from unittest import mock
 
 import fakes
 import media
@@ -96,14 +96,14 @@ class FilmInfoTest(unittest.TestCase):
     def test_asks_the_film_and_passes_warnings_on(self):
         self.env["FAKE_NODE_INFO"] = json.dumps({"dur": 2, "fps": 60})
         err = io.StringIO()
-        with mock.patch.dict(os.environ, self.env, clear=True), redirect_stderr(err):
+        with unittest.mock.patch.dict(os.environ, self.env, clear=True), redirect_stderr(err):
             self.assertEqual(filmserver.film_info(self.dir), {"dur": 2, "fps": 60})
         self.assertIn("warning: a test warning", err.getvalue())
 
     def test_a_failed_film_exits_with_its_reasons(self):
         self.env["FAKE_NODE_ERROR"] = "error: fonts missing"
         err = io.StringIO()
-        with mock.patch.dict(os.environ, self.env, clear=True), redirect_stderr(err):
+        with unittest.mock.patch.dict(os.environ, self.env, clear=True), redirect_stderr(err):
             with self.assertRaises(SystemExit) as e:
                 filmserver.film_info(self.dir)
         self.assertIn("did not load", str(e.exception.code))
@@ -112,13 +112,13 @@ class FilmInfoTest(unittest.TestCase):
     def test_no_metadata_exits_with_a_message(self):
         for printed in ("", "not json"):
             self.env["FAKE_NODE_INFO"] = printed
-            with self.subTest(printed=printed), mock.patch.dict(os.environ, self.env, clear=True), redirect_stderr(io.StringIO()):
+            with self.subTest(printed=printed), unittest.mock.patch.dict(os.environ, self.env, clear=True), redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit) as e:
                     filmserver.film_info(self.dir)
                 self.assertIn("printed no film metadata", str(e.exception.code))
 
     def test_no_node(self):
-        with mock.patch.dict(os.environ, {"PATH": str(self.dir / "empty")}, clear=True):
+        with unittest.mock.patch.dict(os.environ, {"PATH": str(self.dir / "empty")}, clear=True):
             with self.assertRaises(SystemExit) as e:
                 filmserver.film_info(self.dir)
         self.assertIn("node was not found", str(e.exception.code))
