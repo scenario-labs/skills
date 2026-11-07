@@ -25,7 +25,8 @@ Prerequisites:
 - Node.js 22.18 or later, and pnpm. CI reads `.nvmrc`; cspell needs 22.18, so an older 22 fails
   `pnpm spell`.
 - [uv](https://docs.astral.sh/uv/). The pre-commit hook runs ruff and the spec validator through uv,
-  so every commit fails without it.
+  so every commit fails without it. The spec validator runs on Python 3.12, which uv downloads on
+  first use when it is missing, so the system Python's version does not matter there.
 - For `pnpm test` only: Python 3.11+ as the `python3` on PATH, and ffmpeg. The runner uses that
   `python3` even under uv, and macOS's `/usr/bin/python3` (3.9) fails the suites.
 
