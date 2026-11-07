@@ -22,13 +22,18 @@ const REQUIREMENTS = `${SUITE}requirements.txt`;
 // Every tool the runner calls: a PATH holding only these hides the real uv.
 const TOOLS = [
   "basename",
+  "cat",
   "dirname",
   "find",
+  "getconf",
   "git",
   "grep",
+  "mkdir",
+  "mktemp",
   "node",
   "python3",
   "rm",
+  "xargs",
 ];
 
 // Under a git hook, GIT_DIR and friends would point every call at this repo.
@@ -67,6 +72,7 @@ function run(
     coverage,
     coverageData,
     systemPython,
+    jobs,
     files = {},
   },
 ) {
@@ -124,6 +130,7 @@ function run(
       PATH: bin,
       ...(coverage ? { COVERAGE: "1" } : {}),
       ...(systemPython ? { SKILLS_TEST_USE_SYSTEM_PYTHON: "1" } : {}),
+      ...(jobs ? { SKILLS_TEST_JOBS: String(jobs) } : {}),
     },
     encoding: "utf8",
   });
@@ -169,6 +176,8 @@ test("a suite with a requirements.txt runs under uv on the PATH's python3", (t) 
     "discover",
     "-s",
     SUITE,
+    "-p",
+    "test_demo.py",
   ]);
 });
 
@@ -181,13 +190,13 @@ test("a suite without a requirements.txt runs on python3, not uv", (t) => {
   const { result, uvArgs, output } = run(t, { uv: 0 });
   assert.equal(result.status, 0, output);
   assert.equal(uvArgs, null);
-  assert.match(result.stderr, /Ran 1 test/);
+  assert.match(output, /Ran 1 test/);
 });
 
 test("without uv, a suite with a requirements.txt runs on python3", (t) => {
   const { result, output } = run(t, { requirements: "numpy\n" });
   assert.equal(result.status, 0, output);
-  assert.match(result.stderr, /Ran 1 test/);
+  assert.match(output, /Ran 1 test/);
 });
 
 test("CI uses the installed Python environment even when uv is available", (t) => {
@@ -198,7 +207,7 @@ test("CI uses the installed Python environment even when uv is available", (t) =
   });
   assert.equal(result.status, 0, output);
   assert.deepEqual(uvCalls, []);
-  assert.match(result.stderr, /Ran 1 test/);
+  assert.match(output, /Ran 1 test/);
 });
 
 test("CI uses the installed coverage package for suites and reports", (t) => {
@@ -226,7 +235,15 @@ const UV_RUN = (bin) => [
   join(bin, "python3"),
 ];
 const COVERAGE_RUN = ["-m", "coverage", "run", "--rcfile=.coveragerc"];
-const UNITTEST = ["-m", "unittest", "discover", "-s", SUITE];
+const UNITTEST = [
+  "-m",
+  "unittest",
+  "discover",
+  "-s",
+  SUITE,
+  "-p",
+  "test_demo.py",
+];
 
 test("COVERAGE=1 runs a suite under coverage with its requirements", (t) => {
   const { bin, result, uvCalls, output } = run(t, {
@@ -367,4 +384,67 @@ test("without COVERAGE, vitest runs without coverage", (t) => {
   });
   assert.equal(result.status, 0, output);
   assert.deepEqual(pnpmCalls, [["exec", "vitest", "run", SUITE]]);
+});
+
+const PASSING =
+  "import unittest\n\n\nclass Other(unittest.TestCase):\n    def test_other(self):\n        pass\n";
+const FAILING =
+  "import unittest\n\n\nclass Broken(unittest.TestCase):\n    def test_broken(self):\n        self.fail('boom')\n";
+
+// The stubs log one line per write, so a test that reads their calls runs one
+// job at a time.
+test("each Python test module runs as a job of its own", (t) => {
+  const { bin, result, uvCalls, output } = run(t, {
+    requirements: "numpy\n",
+    uv: 0,
+    jobs: 1,
+    files: { [`${SUITE}test_other.py`]: PASSING },
+  });
+  assert.equal(result.status, 0, output);
+  const modules = uvCalls.map((call) => call.at(-1));
+  assert.deepEqual(modules, ["test_demo.py", "test_other.py"]);
+  assert.ok(uvCalls.every((call) => call[4] === join(bin, "python3")));
+});
+
+test("a failing module fails the runner, and the other modules still run", (t) => {
+  const { result, output } = run(t, {
+    jobs: 2,
+    files: { [`${SUITE}test_broken.py`]: FAILING },
+  });
+  assert.equal(result.status, 1, output);
+  assert.match(output, new RegExp(`ok ${SUITE}test_demo\\.py`));
+  assert.match(output, new RegExp(`FAIL ${SUITE}test_broken\\.py`));
+  // The failing log comes last, after every passing one.
+  const passing = output.indexOf(`== ${SUITE}test_demo.py ==`);
+  const failing = output.indexOf(`== FAILED: ${SUITE}test_broken.py ==`);
+  assert.ok(passing !== -1 && passing < failing, output);
+  assert.ok(output.indexOf("AssertionError: boom") > failing, output);
+});
+
+test("a nested Python test module fails the runner instead of being skipped", (t) => {
+  const { result, output } = run(t, {
+    files: {
+      [`${SUITE}unit/__init__.py`]: "",
+      [`${SUITE}unit/test_x.py`]: PASSING,
+    },
+  });
+  assert.equal(result.status, 1, output);
+  assert.match(
+    output,
+    new RegExp(
+      `${SUITE}unit/test_x\\.py: test modules sit at the top of ${SUITE}`,
+    ),
+  );
+  assert.match(output, new RegExp(`ok ${SUITE}test_demo\\.py`));
+});
+
+test("a vitest suite runs as a job beside the Python modules", (t) => {
+  const { result, pnpmCalls, output } = run(t, {
+    pnpm: 0,
+    jobs: 2,
+    files: { [`${SUITE}demo.test.ts`]: "" },
+  });
+  assert.equal(result.status, 0, output);
+  assert.deepEqual(pnpmCalls, [["exec", "vitest", "run", SUITE]]);
+  assert.match(output, /Ran 1 test/);
 });

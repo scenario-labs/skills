@@ -107,13 +107,21 @@ pointing at this repository, and hook steps read the index through them.
 
 ## CI
 
+- `scripts/test-skill-scripts.sh` runs each Python test module, and each vitest suite, as a job of
+  its own, one per CPU at a time (`SKILLS_TEST_JOBS` overrides the count).
+  - So a test module never depends on another's side effects, and writes only under a temporary
+    directory.
+  - Python test modules sit at the top of `tests/<name>/`. A nested `test_*.py` fails the run, since
+    no job would pick it up.
+  - Each job prints one status line with its duration as it ends, then its full log once all end,
+    failures last.
 - `script-tests` runs once on `ubuntu-24.04` and once on `ubuntu-26.04`, which install ffmpeg 6.1
   and 8.0 from apt.
   - Each runner is the coverage for one ffmpeg version, so both stay named, never `ubuntu-latest`.
   - When a newer LTS runner ships, add it as a new entry rather than renaming an existing one.
   - The runner's apt mirror sometimes stalls for half an hour, so each leg caches its ffmpeg .debs.
     The key hashes the exact package list, so an Ubuntu update downloads only what changed.
-  - The job stops after 20 minutes, against a normal run under 11, so a stall fails fast.
+  - The job stops after 20 minutes, against a normal run under 5, so a stall fails fast.
   - Never hardcode a count derived from a probed duration in a test. ffmpeg 8 reports an MP3's
     gapless duration, while 6.1 and 7.1 include the encoder padding.
   - The `ubuntu-24.04` leg runs with `COVERAGE=1` and posts the Python table to its job summary. The
