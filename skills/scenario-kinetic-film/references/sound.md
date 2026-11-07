@@ -4,7 +4,8 @@ The film's motion is free to render; the soundtrack and pictures are the paid st
 skill owns the generation loop. What this film adds:
 
 - Price each step (the music, the sound kit, the pictures) with `model_run` and `dry_run: true`.
-  Tell the user the step's total and wait for a go before its paid runs.
+  Tell the user the step's total and wait for a go before its paid runs. Unattended, run only inside
+  a budget the task states; otherwise report the totals and stop.
 - Choose each model with `recommend`: `txt2audio` for music and sound effects, `txt2img` for
   pictures, `img2img` from the user's own art (uploaded first).
 - Read the inputs with `model_schema_get`. Input names below (`bpm`, `instrumental`, `duration`,
@@ -18,9 +19,9 @@ skill owns the generation loop. What this film adds:
 `recommend` with `"capability": "txt2audio"`, the genre, the tempo, the structure and "no vocals",
 plus `duration` (a minimum, in seconds). Choose a model whose schema has a **tempo input** (often
 `bpm`), an **instrumental** switch and a **duration**: a tempo the model is told beats a tempo you
-hope for. `features: ["bpm"]` asks `recommend` for that input by name; an unknown name returns
-`no_match` with a hint. In the Kaiju Postal build two takes at 172 BPM both measured 172.0 BPM with
-a strong grid.
+hope for. `features: ["bpm"]` asks `recommend` for that input by name. `no_match` is a stop: report
+that no member takes a tempo, never generate from a partial match. In the Kaiju Postal build two
+takes at 172 BPM both measured 172.0 BPM with a strong grid.
 
 Prompt pattern (keep it under the schema's length limit):
 
@@ -58,7 +59,8 @@ with `asset_download` (no `format` for audio), then measure:
 - Prefer a dedicated sound-effects model with a duration control and a negative prompt.
 - One run and one output per sound (some members default to 2 outputs: set the count to 1),
   `"wait": false` for all of them, then one `jobs_wait` with every job id (at most 32; call it again
-  with `pending_job_ids`).
+  with `pending_job_ids`). A `429` `parallel-custom-jobs` starts no job: send the refused sounds in
+  waves within its `actionLimit`.
 - Short durations: each second costs.
 - A negative prompt such as `music, speech, voice, reverb wash, background noise` keeps one-shots
   clean.
@@ -122,7 +124,8 @@ as an art director: style, shot, subject, light, palette, what is in each third 
 - 16:9 at 2K or more: the Picture block needs at least 2048 px of width. Download with
   `"format": "png"` into `art/`.
 
-The second Kaiju Postal key art, as a dry run:
+Price and run the pictures one at a time: the second's dry run needs the first's real asset id, and
+a stand-in id fails. The second Kaiju Postal key art, as a dry run:
 
 ```json
 {

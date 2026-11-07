@@ -123,9 +123,9 @@ lands on the last hit.
 4. **The sound kit.** The 12 core sounds of sound.md, plus the film's own jokes (`stomp`, `roar`,
    `bell`, `knock`): a dry run each and one total. After the user's go: one run each,
    `"wait": false`, one `jobs_wait`.
-5. **Key art.** Two pictures, priced the same way before the user's go. The first is passed as a
-   reference for the second so the courier and the city match. The scooter came back with a maker's
-   logo, painted out before use.
+5. **Key art.** Two pictures, each priced before the user's go, the second only once the first
+   exists: it passes the first's asset id as a reference so the courier and the city match. The
+   scooter came back with a maker's logo, painted out before use.
 6. **spec.js**, an excerpt:
 
    ```js
