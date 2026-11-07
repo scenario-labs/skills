@@ -76,9 +76,10 @@ proceed from tool schemas and flag the gap.
      floor.
 
 4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `dry_run=true` to price it. Then
-   run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`).
-   A downstream step (rig, retexture) has no payload to `dry_run` until its input mesh exists: quote
-   it from `recommend`, then re-price with `dry_run` on the real asset before launching.
+   run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`)
+   until no `pending_job_ids` remain. A downstream step (rig, retexture) has no payload to `dry_run`
+   until its input mesh exists: quote it from `recommend`, then re-price with `dry_run` on the real
+   asset before launching.
 5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
    Omit `format` when `asset_get` shows `properties.format` `glb`: it returns the stored original
    byte for byte. `format` converts to `glb`, `fbx`, or `obj`; pass `glb` for the LLM-based members,
