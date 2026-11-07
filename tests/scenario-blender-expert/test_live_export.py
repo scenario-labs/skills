@@ -6,29 +6,19 @@ it. Without Blender every test skips; .github/workflows/blender.yml installs Ble
 """
 
 import json
-import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
+from live_blender import BLENDER, SKIP
+
 HERE = Path(__file__).parent
 SCRIPTS = HERE.parents[1] / "skills" / "dcc" / "blender" / "scenario-blender-export" / "scripts"
 
 
-def find_blender():
-    for path in (os.environ.get("BLENDER"), shutil.which("blender"),
-                 "/Applications/Blender.app/Contents/MacOS/Blender"):
-        if path and Path(path).is_file():
-            return path
-    return None
-
-
-BLENDER = find_blender()
-
-
-@unittest.skipUnless(BLENDER, "Blender is not installed")
+@unittest.skipIf(SKIP, SKIP)
 class Presets(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -172,6 +162,20 @@ class Presets(unittest.TestCase):
         self.assertEqual(s["path_mode"], "COPY")
         self.assertTrue(s["embed_textures"])
         self.assertTrue(s["use_armature_deform_only"])
+
+    def test_web_keeps_meshopt_on_a_blender_that_has_it(self):
+        self.assertEqual(self.c["exports"]["web"]["skipped_settings"], [])
+        self.assertTrue(self.c["exports"]["web"]["settings"]["export_meshopt_compression_enable"])
+
+    def test_an_optional_setting_the_exporter_lacks_is_skipped_and_reported(self):
+        p = self.c["probe"]
+        self.assertEqual(p["skipped"], ["no_such_setting"])
+        self.assertNotIn("no_such_setting", p["settings"])
+        self.assertGreater(p["bytes"], 0)
+        self.assertIn("no_such_setting", self.c["probe_override"])
+
+    def test_a_missing_setting_outside_optional_still_raises(self):
+        self.assertIn("no_such_setting", self.c["probe_required"])
 
     def test_round_trip_reports_maps_an_fbx_drops(self):
         self.assertEqual(self.c["maps_gltf_import"], {"M_Crate": ["Base Color", "Metallic", "Roughness"]})
