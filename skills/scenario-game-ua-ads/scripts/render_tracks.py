@@ -9,7 +9,9 @@ startTime floored to the millisecond from its first frame, and an endTime half a
 end frame, since compose draws a layer on the frame at exactly its endTime. Its "source" is the
 file name until the upload: build_passes.py maps it to the asset id. --only re-renders the named
 elements, keeps the entries of the other elements in the spec, and drops entries of elements no
-longer in it.
+longer in it. An element whose file is byte-identical to an earlier one (taps with the same
+relative timing can be) gets "same_as" that file in its entry: upload only the earlier file, and
+build_passes.py reuses its asset id.
 
 Spec (paths relative to the spec file; every time is a frame number at "fps", "_s" keys are seconds):
 {
@@ -32,7 +34,9 @@ Element types, required keys first, defaults in parentheses:
                before the last key)
                Every press: the hand shrinks to 92% while pressed, and a white ring grows from the
                fingertip for 0.3 s unless ring is false. Each press falls between the first and
-               last key.
+               last key. The glove may leave the safe zone, but a press is warned where it touches
+               down outside the text zone (clear of the right rail), and a held press where it
+               lifts, unless safe is "none".
   counter      values [PNG per value, null for an empty state], steps [frame of each new value],
                start, end; at ([0, 0], top-left of every PNG), bump (1.12), bump_s (0.15), glow
                ("#FFFFFF", null for none), bumps (a bumped PNG per value, drawn as given instead of
@@ -60,7 +64,8 @@ Element types, required keys first, defaults in parentheses:
   bounce_in    png, center [x, y], height, start, end; rise (260), dur_s (0.42), angle (0),
                hop_every_s (1.2), hop (22)
   label_pulse  png (tight), x, y, start, end; period_s (0.9), amp (0.035), sweeps [frames],
-               sweep_s (0.5)
+               sweep_s (0.5). It pops in from 60% over 4 frames, unless it starts on frame 0, the
+               ad's first impression: then it shows at full size
   flash        frames [frame, ...]: a flash at alpha on each frame, fading out over dur_s; color
                ("#FFFFFF"), box ([x, y, w, h], the canvas), alpha (0.7), dur_s (0.25), or png with
                x, y: the PNG flashes instead of a box (an edge glow; spaced frames pulse a label)
@@ -75,6 +80,7 @@ Element types, required keys first, defaults in parentheses:
 """
 
 import argparse
+import hashlib
 import json
 import math
 import random
@@ -307,7 +313,14 @@ def r_hand_drag(el, ctx):
         x, y = pos(n)
         paste(canvas, faded(scaled(hand, s), a), x - tip_x * s, y - tip_y * s)
 
-    return first, end + 1, draw, {}
+    # The tap target, not the glove: a target under the platform UI cannot read as tapped.
+    zone = None if el.get("safe") == "none" else ctx.zone({}, "text")
+    points = {}  # a quick tap lands where it touches down, a held press also where it lifts
+    for f in (f for p in el.get("press", []) for f in ((p,) if isinstance(p, (int, float)) else (p[0], p[1] - 1))):
+        points.setdefault(tuple(round(v) for v in pos(f)), f)
+    warnings = [w for (x, y), f in points.items()
+                for w in safe_warnings(f"{el['name']} press on frame {f}", (x, y, x, y), zone)]
+    return first, end + 1, draw, {"warnings": warnings} if warnings else {}
 
 
 def clamp_into(im, x, y, zone):
@@ -787,6 +800,7 @@ def r_label_pulse(el, ctx):
     rgba = np.asarray(im, np.float32)
     alpha = rgba[..., 3] / 255
     slant = math.tan(math.radians(24)) * im.height
+    pop = (0.6, 0.92, 1.08, 1.0) if f0 else ()
 
     def draw(canvas, n):
         base = im
@@ -799,7 +813,8 @@ def r_label_pulse(el, ctx):
                 arr[..., :3] += (255 - arr[..., :3]) * band[..., None]
                 base = Image.fromarray(arr.astype(np.uint8), "RGBA")
         i = n - f0
-        s = (0.6, 0.92, 1.08, 1.0)[i] if i < 4 else 1 + amp * (0.5 - 0.5 * math.cos(2 * math.pi * (i - 4) / ctx.fps / period))
+        k = len(pop)
+        s = pop[i] if i < k else 1 + amp * (0.5 - 0.5 * math.cos(2 * math.pi * (i - k) / ctx.fps / period))
         paste_center(canvas, scaled(base, s), cx, cy)
 
     return f0, el["end"], draw, {}
@@ -873,7 +888,8 @@ def render(el, ctx):
         if end <= first:
             raise SpecError(f"{name}: ends before it starts")
         frames = capture(ctx, first, end, draw)
-        return first, frames, meta, safe_warnings(name, union(frames, VISIBLE), ctx.zone(el, default_safe))
+        own = meta.pop("warnings", [])
+        return first, frames, meta, own + safe_warnings(name, union(frames, VISIBLE), ctx.zone(el, default_safe))
     except KeyError as e:
         raise SpecError(f"{name}: missing key {e}") from None
 
@@ -958,6 +974,24 @@ def bump_notes(meta):
     return notes
 
 
+def mark_twins(layers, outdir):
+    """Give each entry whose file is byte-identical to an earlier entry's "same_as" that file."""
+    seen = {}
+    for name, entry in layers.items():
+        entry.pop("same_as", None)
+        path = outdir / entry["file"]
+        if not path.exists():
+            continue
+        with path.open("rb") as f:
+            digest = hashlib.file_digest(f, "sha256").hexdigest()
+        if digest in seen:
+            entry["same_as"] = seen[digest]
+            print(f"NOTE {name}: {entry['file']} is the same file as {seen[digest]}: upload that one only",
+                  file=sys.stderr)
+        else:
+            seen[digest] = entry["file"]
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("spec", type=Path)
@@ -1008,6 +1042,7 @@ def main(argv=None):
     except SpecError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
+    mark_twins(index["layers"], args.outdir)
     index_path.write_text(json.dumps(index, indent=1) + "\n")
     print(f"wrote {index_path}")
     return 0

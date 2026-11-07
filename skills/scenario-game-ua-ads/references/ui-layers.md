@@ -31,6 +31,8 @@ Values below are for a 1080-wide canvas.
   count down:
   - a generated sound goes in by its own asset id, with `trimStart` at its onset (see Sound);
   - the end card's alpha parts (icon pop, label, stars) render as one `group` track;
+  - a track whose `layers.json` entry has `same_as` (taps with the same relative timing can) is not
+    uploaded: `build_passes.py` reuses that file's asset id;
   - a compose output is already an asset: use its id as the silent master of the next pass, with no
     download and re-upload.
 - Never animate with a run of stepped image layers. Compose can draw the outgoing and the incoming

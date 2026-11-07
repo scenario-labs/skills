@@ -60,9 +60,10 @@ plan.json (paths relative to it; picture times are frame numbers, sound times se
 - assets maps each uploaded file (its name or its path in the plan) to its asset id. A layer may
   give "source" directly instead of "file".
 - picture: list order is the stacking order unless a layer sets zIndex. "track" and "still" take
-  the layer render_tracks.py wrote ("group/child" for a still inside a group). Other compose keys
-  pass through. A video defaults to the full canvas with fit "cover"; an image gets its natural
-  width and height from the file, since compose draws an unsized image at the wrong scale.
+  the layer render_tracks.py wrote ("group/child" for a still inside a group); a track marked
+  "same_as" takes that file's asset id when its own file has none. Other compose keys pass through.
+  A video defaults to the full canvas with fit "cover"; an image gets its natural width and height
+  from the file, since compose draws an unsized image at the wrong scale.
 - music: one read of the file, file time = ad time + offset. It starts at "start", or at the first
   "gains" time when start is omitted (gains [[2.0, -6]] alone starts the music at 2 s). "gains"
   steps the gain in dB at each time, the last entry at or before start setting the level at start.
@@ -71,7 +72,8 @@ plan.json (paths relative to it; picture times are frame numbers, sound times se
 - beds: video-to-audio tracks, "t" or "frame", gain_db, optional trimStart and end. Past 49
   audio layers they are dropped first.
 - hits: "frame" or "t", gain_db, trim_db (a per-hit trim against peaks), trimStart (seconds into
-  the file), dur_s. Every hit file starts its sound at 0, so its time is the event's time.
+  the file), dur_s. A hit's sound starts at 0 in its file, or at its trimStart, so its time is the
+  event's time.
 - master_db trims every audio layer. Volumes are linear (10^(dB/20), 3 decimals, at most 2).
 """
 
@@ -259,13 +261,21 @@ def picture_payload(plan):
             missing.append(name)
             return None
 
+    def track_asset(entry):
+        if "same_as" in entry:
+            try:
+                return plan.asset(entry["file"])
+            except PlanError:
+                return asset(entry["same_as"])
+        return asset(entry["file"])
+
     for i, e in enumerate(plan.raw["picture"]):
         extra = {k: v for k, v in e.items() if k not in PICTURE_KEYS}
         if "track" in e:
             entry = tracks.get(e["track"]) or {}
             if "layer" not in entry:
                 raise PlanError(f"no track {e['track']!r} in {plan.raw.get('tracks')}")
-            lay = {**entry["layer"], "source": asset(entry["file"])}
+            lay = {**entry["layer"], "source": track_asset(entry)}
         elif "still" in e:
             group, _, child = e["still"].partition("/")
             entry = tracks.get(group, {})

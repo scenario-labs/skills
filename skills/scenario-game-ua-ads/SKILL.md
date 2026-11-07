@@ -9,13 +9,12 @@ license: MIT
 ## Overview
 
 A UA ad that plays like gameplay: Scenario generates or adapts the board art and the motion, and
-every piece of game UI is composited on top. The user gives a concept and a placement, not a shot
-list. The deliverable is the requested length and format at final render quality, never a draft or a
-single clip. The test of every beat: a stranger who has never heard of the game thinks "I really
-want to try this". For ads from a product photo, use `scenario-video-ads`; for hook, CTA, or
-end-card variants of a finished ad, `scenario-ad-variants`. Connection, discovery, and recovery
-follow `scenario`. If a sibling skill named here is missing from your available skills, load it with
-`skill_get` (Scenario MCP) or ask the user to install it
+every piece of game UI is composited on top. The deliverable is the requested length and format at
+final render quality, never a draft or a single clip. The test of every beat: a stranger who has
+never heard of the game thinks "I really want to try this". For ads from a product photo, use
+`scenario-video-ads`; for hook, CTA, or end-card variants of a finished ad, `scenario-ad-variants`.
+Connection, discovery, and recovery follow `scenario`. If a sibling skill named here is missing from
+your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
 (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
 the gap.
 
@@ -67,8 +66,9 @@ With footage, its own beats replace this split ([inputs](references/inputs.md)).
 - Compose each ratio natively: generate the board at the delivery canvas (1080x1920 for 9:16,
   1080x1350 for 4:5, 1080x1080 for 1:1, 1920x1080 for 16:9). Never crop one ratio out of another.
 - Plan the board still in the placement's bands: background only under the platform UI, the HUD and
-  hook just below it, every key action in the safe middle. Overlays with text and anything the hand
-  taps (a pin ring, a lever) stay in the safe zone, clear of TikTok's right rail.
+  hook just below it, every key action in the safe middle. Overlays with text and every tap target
+  (a pin ring, a lever) stay in the safe zone, clear of TikTok's right rail: measure the targets on
+  the board still before any take.
 - Several placements: one board per ratio and one assembly run each, from the same plan.
 
 ## Make the viewer want to play
@@ -110,7 +110,8 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
     Collectibles in one line make the swipe pointless.
   - Name every barrier's state in the prompt ("coins stay inside the glass") and what stays still.
   - A fixed end state is its own still, edited from the board with the same counts, pinned as the
-    take's last frame. Pinning also locks the camera.
+    take's last frame. Pinning also locks the camera. Edits can change pixels outside the mask:
+    paste only the masked region onto the source.
   - A precise move a model cannot do cleanly (a two-piece swap, a free drop) is built as layers from
     the still; the model animates only the consequence. Video members lower a block onto a stack
     instead of dropping it.
@@ -121,9 +122,8 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
     The rules stay exact, and a video model adds only ambient motion behind them.
 - Assembly runs on `model_scenario-compose-video`, Scenario's one deterministic compositor, so its
   id is fixed (confirm with `search`).
-- Anything that moves on the UI layer (the hand, the counter pop, rewards flying to the counter, a
-  burst) is one transparent ProRes 4444 `.mov`, cropped to its motion box, never stepped image
-  layers or WebM alpha ([ui](references/ui-layers.md)).
+- Anything that moves on the UI layer is one transparent ProRes 4444 `.mov`, cropped to its motion
+  box, never stepped image layers or WebM alpha ([ui](references/ui-layers.md)).
 - Sound: a hit on every visible event (tap, impact, pickup, counter step) on its frame, louder than
   the music. A video-to-audio pass on the silent cut adds incidental sound but misses events.
   Generate the bed separately, banning ambient pads, and shift it so its lift lands on the payoff.
@@ -137,9 +137,9 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
     one track. Scenario ships one tool for each of these jobs, so the ids are fixed.
 - End on the payoff, then an end card designed in the plan, like the hook, from this game's world:
   its level-complete screen with the label where "next level" sits, the next harder board frozen
-  under "CAN YOU SOLVE IT?", or the hero carrying the label. Words from the game (SAVE HIM, DIG NOW,
-  TRY LEVEL 2), not "PLAY NOW" every time ([ui](references/ui-layers.md)). Social feeds ban fake
-  buttons, so the call to action is a label there; a button only on clickable ad-network cards.
+  under "CAN YOU SOLVE IT?", or the hero carrying the label. Words from the game: SAVE HIM, DIG NOW,
+  TRY LEVEL 2 ([ui](references/ui-layers.md)). Social feeds ban fake buttons, so the call to action
+  is a label there; a button only on clickable ad-network cards.
 
 ## Scripts
 
@@ -153,7 +153,7 @@ plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` 
 - [check_master.py](scripts/check_master.py): on the downloaded master, checks canvas, length,
   loudness, true peak, a 2 fps sheet, and each hit's onset (`--sim` reads them against the mix).
 - [put_parts.py](scripts/put_parts.py): PUTs a file to the signed S3 part URLs `upload_asset`
-  returned, refusing any other URL, and prints what `upload_asset_complete` needs.
+  returned and prints what `upload_asset_complete` needs.
 - [check_take.py](scripts/check_take.py): the logic checks on each take before assembly; `motion`
   needs a locked camera.
 - [make_patch.py](scripts/make_patch.py): builds a clean-plate image layer that hides a static piece
@@ -219,4 +219,5 @@ plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` 
   frame. Render it at final size.
 - Naming a real game, studio, or character in invented gameplay, or letting an archetype drift into
   one: an angry driver came back in a red cap, mustache, and blue shirt. Name an original look and
-  check the still before animating. A take still flagged for IP: reword it generically and rerun.
+  check the still before animating. A take flagged for IP: reword it generically and rerun; flagged
+  again, build that beat as layers from the stills.

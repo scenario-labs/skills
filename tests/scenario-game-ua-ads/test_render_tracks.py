@@ -108,6 +108,32 @@ class GeometryTests(Case):
         self.assertAlmostEqual(np.asarray(frames[0][0])[..., 3].max(), 255 / 9, delta=1)
         self.assertAlmostEqual(np.asarray(frames[17][0])[..., 3].max(), 255 * 0.6 ** 6, delta=1)
 
+    def test_a_press_outside_the_safe_zone_warns_but_the_glove_may_leave_it(self):
+        red_tip_hand(self.dir / "hand.png")
+        el = {"type": "hand_tap", "name": "tap", "png": "hand.png", "tip": [30, 20], "height": 100, "in": 0, "press": 8,
+              "out": 20}
+        # Inside the text zone; the glove itself runs past the safe bottom (360) on its approach.
+        self.assertEqual(rt.render({**el, "at": [150, 300]}, self.ctx())[3], [])
+        # Inside the safe right edge (230) but past the text edge (200), under the right rail.
+        _, _, _, warnings = rt.render({**el, "at": [215, 300]}, self.ctx())
+        self.assertEqual(warnings, ["tap press on frame 8: reaches x 215, right of the safe edge 200"])
+        self.assertEqual(rt.render({**el, "at": [5, 250], "safe": "none"}, self.ctx())[3], [])
+        drag = {"type": "hand_drag", "name": "drag", "png": "hand.png", "tip": [30, 20], "height": 100,
+                "keys": [[0, 100, 200], [10, 100, 380]], "press": [2, 9]}
+        _, _, _, warnings = rt.render(drag, self.ctx())
+        self.assertEqual(warnings, ["drag press on frame 9: reaches y 362, below the safe bottom 360"])
+        # A held press is checked where it lifts too: dragged from y 200 down to y 362 by frame 9.
+        _, _, _, warnings = rt.render({**drag, "press": [[1, 10]]}, self.ctx())
+        self.assertEqual(warnings, ["drag press on frame 9: reaches y 362, below the safe bottom 360"])
+
+    def test_label_pulse_pops_in_unless_it_starts_on_frame_0(self):
+        helpers.rect_png(self.dir / "hook.png", (100, 40), (0, 0, 100, 40))
+        el = {"type": "label_pulse", "name": "hook", "png": "hook.png", "x": 60, "y": 100, "end": 30}
+        _, frames, _, _ = rt.render({**el, "start": 0}, self.ctx())
+        self.assertEqual(frames[0][0].size, (100, 40))
+        _, frames, _, _ = rt.render({**el, "start": 5}, self.ctx())
+        self.assertEqual(frames[0][0].size, (60, 24))
+
     def test_icon_pop_ends_on_the_still_with_no_overlap(self):
         helpers.rect_png(self.dir / "icon.png", (40, 30), (0, 0, 40, 30), (250, 200, 0, 255))
         layers, _ = self.render_cli([{"type": "icon_pop", "name": "pop", "png": "icon.png", "x": 100, "y": 150,
@@ -323,6 +349,18 @@ class EncodeTests(Case):
                                            "events": [[0, 120, 300], [4, 130, 290]]}])
         self.assertTrue(any("overlap on frame 9" in w for w in layers["bonk"]["warnings"]), layers["bonk"])
         self.assertIn("WARN floaters bonk", result.stderr)
+
+    def test_identical_tracks_are_marked_for_one_upload(self):
+        red_tip_hand(self.dir / "hand.png")
+        # Without the ring, each tap's motion stays clear of the small canvas's edges, so nothing crops it.
+        tap = {"type": "hand_tap", "png": "hand.png", "tip": [30, 20], "height": 100, "in": 0, "press": 8, "out": 20,
+               "ring": False}
+        els = [{**tap, "name": "tap1", "at": [40, 60]}, {**tap, "name": "tap2", "at": [80, 200]},
+               {**tap, "name": "tap3", "at": [80, 200], "press": 9}]
+        layers, result = self.render_cli(els)
+        self.assertEqual([layers[n].get("same_as") for n in ("tap1", "tap2", "tap3")], [None, "tap1.mov", None])
+        self.assertNotEqual(layers["tap1"]["layer"]["x"], layers["tap2"]["layer"]["x"])
+        self.assertIn("NOTE tap2: tap2.mov is the same file as tap1.mov", result.stderr)
 
     def test_rays_background_is_opaque_h264(self):
         Image.new("RGB", CANVAS, (20, 60, 200)).save(self.dir / "bg.png")

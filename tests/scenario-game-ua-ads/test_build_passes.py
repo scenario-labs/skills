@@ -114,6 +114,17 @@ class PictureTests(Case):
         self.assertTrue(any("under 304 px" in n for n in notes), notes)
         self.assertFalse((self.dir / "tag.pad.png").exists())
 
+    def test_a_twin_track_takes_the_asset_id_of_the_file_it_matches(self):
+        tracks = json.loads((self.dir / "layers.json").read_text())
+        tracks["layers"]["hand2"] = {**tracks["layers"]["hand"], "file": "hand2.mov", "same_as": "hand.mov"}
+        helpers.write_json(self.dir / "layers.json", tracks)
+        plan = self.plan(tracks="layers.json", assets={"hand.mov": "A2"}, picture=[{"track": "hand"}, {"track": "hand2"}])
+        self.assertEqual([lay["source"] for lay in bp.picture_payload(plan)[0]["layers"]], ["A2", "A2"])
+        plan = self.plan(tracks="layers.json", assets={"hand.mov": "A2", "hand2.mov": "B2"}, picture=[{"track": "hand2"}])
+        self.assertEqual(bp.picture_payload(plan)[0]["layers"][0]["source"], "B2")
+        plan = self.plan(tracks="layers.json", assets={}, picture=[{"track": "hand2"}])
+        self.assertRaisesRegex(bp.PlanError, "no asset id for hand.mov", bp.picture_payload, plan)
+
     def test_missing_uploads_are_listed_together(self):
         helpers.write_json(self.dir / "plan.json", {"duration": 15, "tracks": "layers.json", "assets": {},
                                                     "picture": [{"track": "hand"},
