@@ -28,8 +28,10 @@ def level_cap(w, h):
 
 
 def level_floor(w, h, fps):
-    """Lowest level_idc whose frame size and macroblock rate hold this video: a file signaling less is mislabeled."""
-    return next((k for k, (rate, fs, _) in LEVELS.items() if mbs(w, h) <= fs and mbs(w, h) * fps <= rate), 99)
+    """Lowest level_idc whose frame size, frame sides and macroblock rate hold this video: a file signaling less is
+    mislabeled. Each side, in macroblocks, stays within sqrt(8 x the frame size) (H.264 A.3.1)."""
+    n, side = mbs(w, h), max(-(-w // 16), -(-h // 16))
+    return next((k for k, (rate, fs, _) in LEVELS.items() if n <= fs and side * side <= 8 * fs and n * fps <= rate), 99)
 
 
 def max_br_kbps(level, profile):

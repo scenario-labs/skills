@@ -188,6 +188,11 @@ class Helpers(unittest.TestCase):
         self.assertEqual(dc.level_floor(3840, 2160, 60), 52)
         self.assertEqual(dc.level_floor(3840, 2160, 30), 51)
 
+    def test_level_floor_holds_each_side(self):
+        # 5000x256 fits Level 3.2 by area and rate, but its 313-macroblock side needs a frame size of 12247
+        self.assertEqual(dc.level_floor(5000, 256, 30), 50)
+        self.assertEqual(dc.level_floor(256, 5000, 30), 50)
+
     def test_max_bitrate_scales_for_high(self):
         self.assertEqual(dc.max_br_kbps(42, "High"), 62500)
         self.assertEqual(dc.max_br_kbps(52, "Main"), 240000)

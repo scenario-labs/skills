@@ -248,19 +248,24 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
 
 ```bash
 # 4K master, on request, first: the same cut at --scale 2 (render.mjs pins Level 5.2, caps the bitrate to it, and runs
-# only as many workers as fit in memory). Every encode below then reads vN_4k.mp4, with -vf scale=-2:1080:flags=lanczos (portrait: scale=1080:-2:flags=lanczos) right after -i
+# only as many workers as fit in memory)
 node tools/render.mjs --fps 60 --scale 2 --workers 3 --crf 17 --out out/final/vN_4k.mp4
+# SRC is what every encode below reads, FIT how it gets to 1080p
+SRC=out/final/vN.mp4; FIT=()
+# with a 4K master, every file below is made from it instead (portrait: scale=1080:-2:flags=lanczos):
+# SRC=out/final/vN_4k.mp4; FIT=(-vf scale=-2:1080:flags=lanczos)
 # landscape canvas: the X-ready file (YouTube takes the master itself)
-ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
-ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 2 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_x_1080p60.mp4
+ffmpeg -i "$SRC" "${FIT[@]}" -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
+ffmpeg -i "$SRC" "${FIT[@]}" -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 2 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_x_1080p60.mp4
 # portrait canvas: one vertical upload for TikTok, Reels and Shorts (the platforms re-encode, so keep quality high)
-ffmpeg -i out/final/vN.mp4 -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
+ffmpeg -i "$SRC" "${FIT[@]}" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
 # teaser: END is the teaser length in seconds, FADE = END - 0.6
-ffmpeg -i out/final/vN.mp4 -t "$END" -af "afade=t=out:st=$FADE:d=0.6" -movflags +faststart out/final/vN_teaser.mp4
+ffmpeg -i "$SRC" "${FIT[@]}" -t "$END" -af "afade=t=out:st=$FADE:d=0.6" -movflags +faststart out/final/vN_teaser.mp4
 # last, every delivered file: --frames as render.mjs printed it on a master (vN.mp4, vN_4k.mp4), --max-mb 512 on the X file
 .venv/bin/python tools/delivery_check.py out/final/vN.mp4 --frames <N>
 .venv/bin/python tools/delivery_check.py out/final/vN_4k.mp4 --frames <N>
 .venv/bin/python tools/delivery_check.py out/final/vN_x_1080p60.mp4 --max-mb 512
+.venv/bin/python tools/delivery_check.py out/final/vN_vertical_1080x1920.mp4
 .venv/bin/python tools/delivery_check.py out/final/vN_teaser.mp4
 ```
 
