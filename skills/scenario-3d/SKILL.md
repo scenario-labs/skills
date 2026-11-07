@@ -45,7 +45,10 @@ proceed from tool schemas and flag the gap.
    background. Show a non-biped creature at eye level, from the side or three-quarters, every leg
    visible and clear of the body: top-down hides leg undersides and body height. A biped headed for
    a rig takes the pose in Rigging and animation. If the user has a reference, `upload_asset` it
-   (plus `upload_asset_complete` when multipart) and pass that asset ID instead.
+   (plus `upload_asset_complete` when multipart) and pass that asset ID instead. Keep a reference on
+   a plain background as is. Remove a busy one's background first (`recommend` the removal) and pass
+   that output's id instead. An isolated subject matters, a transparent cutout does not; an image
+   field's `background_note`, when present, says the same.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
    the Hunyuan 3D, Meshy, Tripo, and Trellis families, and Scenario's own LLM-based 3D generation:
    GPT-6 Astra 3D and Claude Opus 5.5 3D (the cheaper at authoring time; compare both with
@@ -73,19 +76,16 @@ proceed from tool schemas and flag the gap.
      floor.
 
 4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `dry_run=true` to price it. Then
-   run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`);
-   a dry run creates no job. Re-call `jobs_wait` with the returned `pending_job_ids` if it times
-   out. A downstream step (rig, retexture) has no payload to `dry_run` until its input mesh exists:
-   quote it from `recommend`, then re-price with `dry_run` on the real asset before launching. Never
-   `dry_run` it with a placeholder id: file ids resolve before plan access is checked, so it returns
-   404 and proves nothing.
+   run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`)
+   until no `pending_job_ids` remain. A downstream step (rig, retexture) has no payload to `dry_run`
+   until its input mesh exists: quote it from `recommend`, then re-price with `dry_run` on the real
+   asset before launching.
 5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
    Omit `format` when `asset_get` shows `properties.format` `glb`: it returns the stored original
    byte for byte. `format` converts to `glb`, `fbx`, or `obj`; pass `glb` for the LLM-based members,
-   which store a Blender file. On a stored GLB, `format: "glb"` re-exports it: at authoring time the
-   same textures and triangles, smaller indices, a different file. Ask for `fbx` for a Unity project
-   without a glTF importer, and keep the GLB too: at authoring time the FBX embedded only two
-   images, so it may miss PBR maps.
+   which store a Blender file. On a stored GLB, `format: "glb"` re-exports it as a different file.
+   Ask for `fbx` for a Unity project without a glTF importer, and keep the GLB too: at authoring
+   time the FBX embedded only two images, so it may miss PBR maps.
 
 **Prompt-only build.** Both LLM-based members support `txt23d`. When the user wants no concept to
 approve, skip step 1. In step 2, `recommend` with `capability="txt23d"` and the user's words as
