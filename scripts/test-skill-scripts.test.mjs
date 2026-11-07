@@ -61,7 +61,8 @@ const executable = (file, body) => {
 // the runner's tools. A numeric `uv` or `pnpm` adds a stub that records each
 // call's arguments and exits with that code. The uv stub also leaves coverage
 // data behind a unittest call when `coverageData` is set, as coverage.py
-// would. `files` adds files to the repository before the run.
+// would. `files` adds files to the repository before the run, and `track`
+// stages them, since the runner finds shipped scripts with git ls-files.
 function run(
   t,
   {
@@ -72,6 +73,7 @@ function run(
     coverage,
     coverageData,
     systemPython,
+    track,
     pythonFound,
     pythonInstall = 0,
     jobs,
@@ -97,6 +99,7 @@ function run(
     writeFileSync(join(root, file), body);
   }
   execFileSync("git", ["init", "-q"], { cwd: root, env });
+  if (track) execFileSync("git", ["add", "-A"], { cwd: root, env });
   const bin = join(root, "bin");
   mkdirSync(bin);
   for (const tool of TOOLS) {
@@ -389,7 +392,9 @@ const VITEST_COVERAGE = (suites, skills) => [
   "run",
   ...suites,
   "--coverage",
-  ...skills.map((skill) => `--coverage.include=skills/${skill}/**`),
+  ...skills.map(
+    (skill) => `--coverage.include=skills/${skill}/**/*.{js,mjs,cjs,ts}`,
+  ),
   "--coverage.reporter=text",
   "--coverage.reporter=cobertura",
   "--coverage.reportsDirectory=coverage/vitest",
@@ -422,6 +427,23 @@ test("COVERAGE=1 runs every core TypeScript suite in one vitest call", (t) => {
   assert.deepEqual(pnpmCalls, [
     VITEST_COVERAGE([SUITE, `tests/${OTHER}/`], [NAME, OTHER]),
   ]);
+});
+
+test("COVERAGE=1 also measures a core skill shipping JavaScript without a suite", (t) => {
+  const JS = "scenario-js";
+  const { result, pnpmCalls, output } = run(t, {
+    uv: 0,
+    pnpm: 0,
+    coverage: true,
+    track: true,
+    files: {
+      [`${SUITE}demo.test.ts`]: "",
+      [`skills/${JS}/SKILL.md`]: "",
+      [`skills/${JS}/assets/app.js`]: "",
+    },
+  });
+  assert.equal(result.status, 0, output);
+  assert.deepEqual(pnpmCalls, [VITEST_COVERAGE([SUITE], [NAME, JS])]);
 });
 
 test("a failing vitest coverage run fails the runner", (t) => {
