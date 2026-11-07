@@ -163,6 +163,20 @@ class Presets(unittest.TestCase):
         self.assertTrue(s["embed_textures"])
         self.assertTrue(s["use_armature_deform_only"])
 
+    def test_web_keeps_meshopt_on_a_blender_that_has_it(self):
+        self.assertEqual(self.c["exports"]["web"]["skipped_settings"], [])
+        self.assertTrue(self.c["exports"]["web"]["settings"]["export_meshopt_compression_enable"])
+
+    def test_an_optional_setting_the_exporter_lacks_is_skipped_and_reported(self):
+        p = self.c["probe"]
+        self.assertEqual(p["skipped"], ["no_such_setting"])
+        self.assertNotIn("no_such_setting", p["settings"])
+        self.assertGreater(p["bytes"], 0)
+        self.assertIn("no_such_setting", self.c["probe_override"])
+
+    def test_a_missing_setting_outside_optional_still_raises(self):
+        self.assertIn("no_such_setting", self.c["probe_required"])
+
     def test_round_trip_reports_maps_an_fbx_drops(self):
         self.assertEqual(self.c["maps_gltf_import"], {"M_Crate": ["Base Color", "Metallic", "Roughness"]})
         self.assertEqual(self.c["maps_fbx"], ["Crate: material M_Crate lost its Metallic, Roughness maps"])
