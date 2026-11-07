@@ -1057,4 +1057,24 @@ describe("still.mjs", () => {
       );
     },
   );
+
+  it.skipIf(process.platform === "win32")(
+    "exits 1 when sheet.py fails, so an older sheet never passes for this run's",
+    async () => {
+      const cwd = mkProject();
+      mkdirSync(path.join(cwd, ".venv/bin"), { recursive: true });
+      writeFileSync(
+        path.join(cwd, ".venv/bin/python"),
+        '#!/bin/sh\necho "ZeroDivisionError" >&2\nexit 3\n',
+        { mode: 0o755 },
+      );
+      await expect(
+        runScript("still.mjs", ["--t", "1", "--sheet", "contact"], cwd),
+      ).rejects.toEqual(new Exit(1));
+      expect(errors).toEqual([
+        "--sheet: sheet.py failed (exit 3); no new sheet. The stills are in out/stills.",
+      ]);
+      expect(existsSync(path.join(cwd, "out/stills/t_0001.00.png"))).toBe(true);
+    },
+  );
 });

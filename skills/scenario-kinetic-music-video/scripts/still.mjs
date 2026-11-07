@@ -84,5 +84,12 @@ if (args.sheet) {
       .filter((l) => !l.includes("objc"))
       .join("\n"),
   );
+  // A sheet from an earlier run with the same name would otherwise pass for this run's.
+  if (r.status !== 0) {
+    console.error(
+      `--sheet: sheet.py failed (exit ${r.status ?? r.signal}); no new sheet. The stills are in ${dir}.`,
+    );
+    process.exit(1);
+  }
 }
 console.log(files.join("\n"));
