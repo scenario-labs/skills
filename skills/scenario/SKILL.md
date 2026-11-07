@@ -99,6 +99,8 @@ Generating a stylized game prop image:
    - Run: inline assets (`status: success`) need no wait; otherwise pass `job_id` to `jobs_wait`.
    - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
      `in-progress`, or `warming-up`. All need `jobs_wait`.
+   - A 429: stop launching and find its class under Errors and recovery before the next call.
+     Re-sending the same payload at once never clears it.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
@@ -184,7 +186,7 @@ Uploading and filing alone are not publication.
 - **429 with `details.actionName` = `parallel-custom-jobs`**: the per-team generation concurrency
   ceiling. Keep at most `actionLimit` jobs in flight: launch with `wait=false`, and retire jobs with
   `jobs_wait` before launching more. An immediate retry repeats the error.
-- **429 `custom-generation`, or naming a quota, balance, or seat limit**:
+- **429 `custom-generation`, or naming a quota, plan limit, balance, or seat limit**:
   - `actionLimit` is the period's CU allowance (Free: 50 a day), `actionValue` what is already
     consumed. A run priced above the gap is refused, so a low `actionValue` means this payload costs
     too much, not that credits ran out.

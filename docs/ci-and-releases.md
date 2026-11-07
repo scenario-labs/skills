@@ -128,6 +128,9 @@ pointing at this repository, and hook steps read the index through them.
     vitest table stays in the step log.
   - Coverage spans core skills only (`.coveragerc`). Expert-tool scripts mostly run inside their
     host application, which coverage.py cannot follow.
+  - Both reports list every core script, a file no test runs at 0%. coverage.py needs
+    `include_namespace_packages`, since skill script folders hold no `__init__.py`. vitest takes the
+    JavaScript and TypeScript of every core skill shipping some, suite or not.
   - It reports without a threshold, so a drop never fails CI.
 - Python CI installs `tests/requirements-ci.txt` with hash checks and wheels only.
   `SKILLS_TEST_USE_SYSTEM_PYTHON=1` keeps tests and coverage in that verified environment. Local
@@ -147,6 +150,16 @@ pointing at this repository, and hook steps read the index through them.
     -o tests/scenario-blender-expert/requirements-ci.txt
   ```
 
+  The browser job's lock adds Playwright for Python to the playable-ads requirements. Regenerate it
+  with:
+
+  ```bash
+  uv pip compile --generate-hashes --python-version 3.12 --python-platform linux \
+    tests/scenario-playable-ads/requirements.txt \
+    tests/scenario-playable-ads/requirements-browser.in \
+    -o tests/scenario-playable-ads/requirements-browser-ci.txt
+  ```
+
   The Blender core job's `bpy` lock targets Python 3.13, the only version `bpy` 5.x ships wheels
   for. Regenerate it with:
 
@@ -159,6 +172,15 @@ pointing at this repository, and hook steps read the index through them.
 
   Add `--upgrade-package <name>` when updating a locked package without changing its requirement.
 
+- `browser.yml` runs the suites that skip without a real browser: the playable-ads QA run on the
+  shipped template (`test_qa.py`) and the motion-loops page checks and render.
+  - The in-process suites reach those scripts through stand-ins (a fake Playwright, a fake page), so
+    this job is the one check against a real Chromium.
+  - It triggers only on changes to those skills, their tests, the Playwright locks, or itself.
+  - Python takes Playwright from `requirements-browser-ci.txt`. Node takes it from the kinetic
+    scaffold's `assets/npm` lock, the repository's one locked npm Playwright. Keep both on the same
+    release, so one Chromium build serves them.
+  - A skip fails the job, since a skipped suite means the browser never started.
 - `blender-core.yml` runs the core skills' Blender-hosted scripts in a real Blender: blender-2d's
   `build_scene.py` and orbit-views' `render_grounded.py` through the binary, patina-retexture's
   pipeline through the `bpy` module.
