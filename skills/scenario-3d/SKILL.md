@@ -46,9 +46,11 @@ proceed from tool schemas and flag the gap.
    visible and clear of the body: top-down hides leg undersides and body height. A biped headed for
    a rig takes the pose in Rigging and animation. If the user has a reference, `upload_asset` it
    (plus `upload_asset_complete` when multipart) and pass that asset ID instead. Keep a reference on
-   a plain background as is. Remove a busy one's background first (`recommend` the removal) and pass
-   that output's id instead. An isolated subject matters, a transparent cutout does not; an image
-   field's `background_note`, when present, says the same.
+   a plain background as is, and prefer it to a busy shot: removal keeps a glossy subject's
+   reflections of the scene, which image-to-3D bakes into the texture. Remove a busy one's
+   background first (`recommend` the removal) and pass that output's id instead. An isolated subject
+   matters, a transparent cutout does not; an image field's `background_note`, when present, says
+   the same.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
    the Hunyuan 3D, Meshy, Tripo, and Trellis families, and Scenario's own LLM-based 3D generation:
    GPT-6 Astra 3D and Claude Opus 5.5 3D (the cheaper at authoring time; compare both with
@@ -116,14 +118,14 @@ before promising a look. Authoring-time examples from the Tripo members:
   `textureSeed` for texture variants on one shape.
 - `autoSize` scales the output to real-world meters and defaulted to off: set `true` for a
   real-scale import. `dimensions` still reads the unit-normalized mesh (longest side 1.0), since the
-  meters sit in the GLB's node scale: not a failure.
+  meters sit in the GLB's node transform: not a failure.
 
 ## Inspecting results
 
 Hosts without MCP Apps get the `app_url` link instead of the viewer. The viewer's capture button
-calls `capture_3d_view`, an app-only tool: it uploads the current view as an image asset and posts
-its `asset_id` into the conversation. Reuse it as a generation reference or a similarity `search`
-image. Never call `capture_3d_view` yourself: it needs PNG canvas data only the viewer has.
+calls `capture_3d_view`, an app-only tool that posts an image `asset_id` of the current view into
+the conversation. Reuse it as a generation reference or a similarity `search` image. Never call
+`capture_3d_view` yourself: it needs PNG canvas data only the viewer has.
 
 ## Refining meshes
 
@@ -149,14 +151,13 @@ The LLM-based members of step 2 also edit an existing mesh, prop or character:
   UV re-unwraps, and modular kits, so it competes in those `recommend` calls.
 
 Splitting a finished mesh into parts is a contested lane, so it stays a `recommend` pick. At
-authoring time several vendors offered segmentation with a granularity control, one combined it with
-a PBR retexture, and image-to-parts members built parts from the picture instead. A convincing mesh
-is not a game-ready one: part separation, joints, materials, and animation are each their own pass.
-Polygon caps differ by topology (a quad cap sat well under the triangle cap on one member): read the
-slider's `max` instead of promising a count. A named provider feature is a valid `search` target,
-but an empty result or one member's enum does not prove a capability absent platform-wide.
-`recommend` the unmet need (a hinged prop), inspect the returned schemas, and report it unverified
-if none exposes it. Never invent a call from the provider's site.
+authoring time vendors offered granularity controls or a bundled PBR retexture, and image-to-parts
+members built parts from the picture instead. A convincing mesh is not a game-ready one: part
+separation, joints, materials, and animation are each their own pass. Polygon caps differ by
+topology: read the slider's `max` instead of promising a count. A named provider feature is a valid
+`search` target, but an empty result or one member's enum does not prove a capability absent
+platform-wide. `recommend` the unmet need (a hinged prop), inspect the returned schemas, and report
+it unverified if none exposes it. Never invent a call from the provider's site.
 
 ## A staged chain toward game-ready
 
