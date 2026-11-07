@@ -70,6 +70,12 @@ if (args.sheet) {
     ...files,
     "--force",
   ]);
+  if (r.error) {
+    console.error(
+      `--sheet: cannot run .venv/bin/python (${r.error.code}): scaffold.sh creates the project's Python environment there. The stills are in ${dir}.`,
+    );
+    process.exit(1);
+  }
   console.log(
     r.stdout.toString(),
     r.stderr

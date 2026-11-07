@@ -27,10 +27,17 @@ const MIME = {
 export function serve(port = 0) {
   return new Promise((res) => {
     const srv = http.createServer((req, rsp) => {
-      let p = decodeURIComponent(new URL(req.url, "http://x").pathname);
+      let p;
+      try {
+        p = decodeURIComponent(new URL(req.url, "http://x").pathname);
+      } catch {
+        rsp.writeHead(400);
+        return rsp.end();
+      }
       if (p === "/") p = "/engine/index.html";
       const f = path.join(ROOT, p);
-      if (!f.startsWith(ROOT)) {
+      // A bare prefix test would also pass a sibling named like the root plus a suffix.
+      if (f !== ROOT && !f.startsWith(ROOT + path.sep)) {
         rsp.writeHead(403);
         return rsp.end();
       }
