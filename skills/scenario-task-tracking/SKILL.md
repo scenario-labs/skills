@@ -32,8 +32,9 @@ and flag the gap.
 
 The tools that take `task_id` are the ones that offer `dry_run`: `model_run`, `workflow_run`,
 `train`, `prompt_spark`, `asset_analyze`, `asset_caption`, `asset_describe`, `asset_detect`, and
-`asset_quality_gate_run`. `project_tasks_list` is catalog-only: run it through
-`scenario_tool_execute_read`.
+`asset_quality_gate_run`. `task_id` sits beside `dry_run`: at top level on a direct call, inside
+`parameters` when the tool runs through `scenario_tool_execute_write`. `project_tasks_list` is
+catalog-only: run it through `scenario_tool_execute_read`.
 
 ## The id comes from the user, never from you
 
@@ -55,7 +56,8 @@ Ask once per piece of work, not once per call and not once per conversation.
 - **Other work**: a new subject, a new deliverable, a different stage of production, or the user
   saying they are moving on ("now the environment", "next, the trailer"). Ask one short question
   before the first billed call of it: keep the current task or pick another.
-- **Another project or team**: a task belongs to one project. Drop the `task_id` there; the first
+- **Another project or team**: each project has its own task list, so a task belongs to one project,
+  even when the same id appears in another project's list. Drop the `task_id` there; the first
   billed call either goes through (the project enforces nothing) or is refused with the list.
 - In doubt, ask. A question costs the user a second; a charge on the wrong task costs a correction
   in their tracker.
