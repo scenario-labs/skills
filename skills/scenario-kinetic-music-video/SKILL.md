@@ -215,8 +215,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   other file is made from it.
 - **Videos:** a master, an upload file (landscape: the master for YouTube, an X-ready file under 512
   MB; portrait: the vertical upload in `references/pipeline.md` §8), a teaser (verse plus first
-  chorus), plus one file per variant, and one set per canvas, suffixed `_16x9` and `_9x16`, when
-  both were asked for. Use distinct filenames, because macOS is case-insensitive.
+  chorus), plus one file per variant. With both canvases asked for, one set per canvas, suffixed
+  `_16x9` and `_9x16`. Use distinct filenames, because macOS is case-insensitive.
 - **Checks:** run `delivery_check.py` last, on every file.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet,
