@@ -10,7 +10,8 @@
 #   suite declares a requirements.txt and uv is installed
 # - TypeScript suites (*.test.ts) run with vitest
 # - COVERAGE=1 also measures core skills' scripts, Python through
-#   .coveragerc and TypeScript through vitest's v8 provider, and writes
+#   .coveragerc and JavaScript/TypeScript through vitest's v8 provider
+#   (every core skill shipping either, suite or not), and writes
 #   Cobertura reports (coverage/python.xml,
 #   coverage/vitest/cobertura-coverage.xml) plus the Python table in
 #   coverage/report.md; no threshold fails a run
@@ -50,6 +51,7 @@ done
 # Every suite needs a skill, at least one test file, and a green run.
 ran=0
 ts_dirs=()
+ts_skills=()
 ts_include=()
 for dir in tests/*/; do
   [ -d "$dir" ] || continue
@@ -95,7 +97,7 @@ for dir in tests/*/; do
     # suite would overwrite the one Cobertura report the upload takes.
     if [ -n "$coverage" ] && grep -qx "${skill}/" <<<"$core_dirs"; then
       ts_dirs+=("$dir")
-      ts_include+=(--coverage.include="${skill}/**")
+      ts_skills+=("$skill")
     else
       echo "== ${name}: vitest =="
       pnpm exec vitest run "$dir" || fail=1
@@ -106,6 +108,20 @@ done
 [ "$ran" -eq 1 ] || echo "No skill-script test suites to run."
 
 if [ "${#ts_dirs[@]}" -gt 0 ]; then
+  # Every core skill shipping JavaScript counts too, suite or not, so an
+  # untested file shows at 0% instead of dropping out. The extensions keep
+  # markdown, HTML and JSON beside the scripts out of the report.
+  for dir in $core_dirs; do
+    if git ls-files -- "$dir" | grep -qE '\.(c|m)?js$|\.ts$'; then
+      ts_skills+=("${dir%/}")
+    fi
+  done
+  seen=" "
+  for skill in "${ts_skills[@]}"; do
+    case "$seen" in *" $skill "*) continue ;; esac
+    seen="$seen$skill "
+    ts_include+=(--coverage.include="${skill}/**/*.{js,mjs,cjs,ts}")
+  done
   echo "== vitest with coverage: ${ts_dirs[*]} =="
   pnpm exec vitest run "${ts_dirs[@]}" --coverage "${ts_include[@]}" \
     --coverage.reporter=text --coverage.reporter=cobertura \
