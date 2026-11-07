@@ -7,6 +7,14 @@
 //   E.drawPlate(E, v, { matte:true });                                   // only the subject (alpha = matte), same framing
 //   const p = E.plateToScreen(E, v, [u,v], opts)  -> pixel coords (E.W x E.H, y down) of a video-UV point (e.g. a pose landmark)
 import * as THREE from "three";
+import { clock } from "./blur.js";
+
+// A motion-blur sample drawing a moving clip that prepare() did not advance this frame would mix in a stale frame;
+// main.js then renders the frame without blur and render.mjs lists it
+function checkClip(v) {
+  if (clock.sub && v.meta?.n > 1 && v.prepared !== clock.id)
+    clock.stale = v.name ?? "a clip";
+}
 
 const VS = `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`;
 const FS = `
@@ -92,10 +100,13 @@ export function drawPlate(E, v, o = {}) {
     _pl.pool = [];
     _pl.frame = -1;
   }
-  if (_pl.frame !== E.frame) {
+  // a new frame, or a motion-blur sample of this one, reuses the pool (E.pass is 0 without blur)
+  if (_pl.frame !== E.frame || _pl.pass !== E.pass) {
     _pl.frame = E.frame;
+    _pl.pass = E.pass;
     _pl.used = 0;
   }
+  checkClip(v);
   let m = _pl.pool[_pl.used];
   if (!m) {
     m = new THREE.Mesh(_pl.geo, makePlateMaterial());
@@ -129,6 +140,7 @@ export function drawPlate(E, v, o = {}) {
 export function plateMaterialFor(v, o = {}) {
   const m = makePlateMaterial(o);
   m.onBeforeRender = () => {
+    checkClip(v);
     m.uniforms.tVideo.value = v.tex;
     m.uniforms.tMatte.value = v.mtex;
   };
