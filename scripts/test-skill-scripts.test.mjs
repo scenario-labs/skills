@@ -67,6 +67,7 @@ function run(
     coverage,
     coverageData,
     systemPython,
+    pythonFound,
     files = {},
   },
 ) {
@@ -99,15 +100,20 @@ function run(
     const log = join(root, `${tool}.log`);
     executable(
       join(bin, tool),
-      `printf '%s\\n' "$@" --- >> "${log}"\n${extra}exit ${code}`,
+      `${extra}printf '%s\\n' "$@" --- >> "${log}"\nexit ${code}`,
     );
   };
+  // `uv python find` logs to uv-find.log and prints `found`, or fails when it
+  // is null, so uv.log holds only the runs.
+  const found = pythonFound === undefined ? join(bin, "python3") : pythonFound;
+  const find = `if [ "$1 $2" = "python find" ]; then printf '%s\\n' "$@" --- >> "${join(root, "uv-find.log")}"; ${found === null ? "exit 2" : `echo "${found}"; exit 0`}; fi\n`;
   stub(
     "uv",
     uv,
-    coverageData
-      ? `case "$*" in *unittest*) "${which("mkdir")}" -p coverage && : > coverage/.coverage.stub ;; esac\n`
-      : "",
+    find +
+      (coverageData
+        ? `case "$*" in *unittest*) "${which("mkdir")}" -p coverage && : > coverage/.coverage.stub ;; esac\n`
+        : ""),
   );
   stub("pnpm", pnpm);
   stub(
@@ -142,13 +148,14 @@ function run(
     result,
     uvArgs: uvCalls[0] ?? null,
     uvCalls,
+    findCalls: calls("uv-find"),
     pnpmCalls: calls("pnpm"),
     pythonCalls: calls("python3"),
     output: result.stdout + result.stderr,
   };
 }
 
-test("a suite with a requirements.txt runs under uv on the PATH's python3", (t) => {
+test("a suite with a requirements.txt runs under uv on the Python uv finds", (t) => {
   const { bin, result, uvArgs, output } = run(t, {
     requirements: "numpy\n",
     uv: 0,
@@ -169,6 +176,31 @@ test("a suite with a requirements.txt runs under uv on the PATH's python3", (t) 
     "discover",
     "-s",
     SUITE,
+  ]);
+});
+
+test("uv looks for Python 3.12 outside any virtual environment", (t) => {
+  const { result, findCalls, output } = run(t, {
+    requirements: "numpy\n",
+    uv: 0,
+  });
+  assert.equal(result.status, 0, output);
+  assert.deepEqual(findCalls, [["python", "find", "--system", "3.12"]]);
+});
+
+test("with no Python 3.12 found, uv runs on the version, downloading it", (t) => {
+  const { result, uvArgs, output } = run(t, {
+    requirements: "numpy\n",
+    uv: 0,
+    pythonFound: null,
+  });
+  assert.equal(result.status, 0, output);
+  assert.deepEqual(uvArgs.slice(0, 5), [
+    "run",
+    "--quiet",
+    "--no-project",
+    "--python",
+    "3.12",
   ]);
 });
 
