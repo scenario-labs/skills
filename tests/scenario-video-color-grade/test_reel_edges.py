@@ -124,6 +124,12 @@ class EndCardTests(unittest.TestCase):
         first = list(showreel.endcard(self.W, self.H, 40, None, "Made by Test Studio"))[0]
         self.assertTrue((first == BG).all())
 
+    def test_credit_is_partly_in_halfway_through_its_fade(self):
+        frames = list(showreel.endcard(self.W, self.H, 60, None, "Made by Test Studio"))
+        mid, full = (int(frames[i].max()) for i in (15, 30))
+        self.assertGreater(mid, BG.max() + 20)
+        self.assertLess(mid, full - 40)
+
     def test_credit_centers_on_a_solid_logo(self):
         center = self.credit_center(self.frames(gap=False)[30])
         self.assertLess(abs(center - self.W / 2), 4)
