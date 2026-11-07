@@ -14,6 +14,7 @@ import unittest
 from pathlib import Path
 
 import media
+import numpy as np
 
 SCRIPT = media.SCRIPTS / "beat_grid.py"
 SR = 22050
@@ -91,8 +92,21 @@ class BeatGridTest(unittest.TestCase):
             with self.subTest(bpm=bpm, kick=kick):
                 g = self.grid(bpm, kick, lead_in=0.5, seconds=40, drop_beat=32)
                 drop = 0.5 + 32 * 60 / bpm
-                self.assertLessEqual(min(abs(d["music_s"] - drop) for d in g["drops"]), 4 * 60 / bpm)
-                self.assertTrue(all(d["rise"] > 5 for d in g["drops"]), g["drops"])
+                top = max(g["drops"], key=lambda d: d["rise"])
+                self.assertLessEqual(abs(top["music_s"] - drop), 4 * 60 / bpm, g["drops"])
+                self.assertGreater(top["rise"], 5, g["drops"])
+
+    def test_a_step_in_loudness_scores_its_own_downbeat_not_the_one_a_bar_before(self):
+        sys.path.insert(0, str(media.SCRIPTS))
+        import beat_grid
+
+        bpm, bar = 120, 2.0
+        rms = np.full(int(20 * beat_grid.FR), 0.05)
+        rms[int(10 * beat_grid.FR) :] = 0.2  # the drop, on the downbeat at 10 s
+        rises = dict(beat_grid.drop_rises(rms, np.arange(bar, 18.1, bar), bpm))
+        self.assertAlmostEqual(rises[10.0], 4, delta=0.1)
+        self.assertAlmostEqual(rises[8.0], 1, delta=0.1)
+        self.assertAlmostEqual(rises[12.0], 1, delta=0.1)
 
     def test_start_skips_the_intro(self):
         g = self.grid(172, seconds=40, extra=("--start", 12, "--window", 20))

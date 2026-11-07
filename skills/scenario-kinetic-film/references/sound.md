@@ -40,7 +40,8 @@ with `asset_download` (no `format` for audio), then measure:
 - It prints the tempo, the first strong downbeat (`offset`), downbeats, drop candidates, and
   `grid_strength`. Each drop gives how much louder the music gets (`rise`) and its film beat from
   that offset.
-- Pick the take with the clearest grid and the biggest rise.
+- Pick the take with the clearest grid and the biggest rise. That take's biggest rise is its drop:
+  each rise compares the bar after a downbeat with the bar before it.
 - Choose `music.offset` so the drop lands on the beat you planned:
   `offset = drop_seconds - planned_drop_beat * 60 / bpm`, and check it is one of the listed
   downbeats.
@@ -65,7 +66,8 @@ with `asset_download` (no `format` for audio), then measure:
 - A negative prompt such as `music, speech, voice, reverb wash, background noise` keeps one-shots
   clean.
 
-The core kit, each with its length and a prompt that worked:
+The core kit, 12 sounds in 14 runs (`whoosh` and `key` take two variants), each with its length and
+a prompt that worked:
 
 - **`whoosh_1.wav`, `whoosh_2.wav`** (0.7 s): A fast, airy whoosh as something whips past the
   camera, single pass, clean.

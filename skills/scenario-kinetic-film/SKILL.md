@@ -120,9 +120,9 @@ lands on the last hit.
    (`music: { offset: 7.95, stopBeat: 58 }`): the drop lands on the first key art and the music
    stops dead on the title.
 
-4. **The sound kit.** The 12 core sounds of sound.md, plus the film's own jokes (`stomp`, `roar`,
-   `bell`, `knock`): a dry run each and one total. After the user's go: one run each,
-   `"wait": false`, one `jobs_wait`.
+4. **The sound kit.** The 12 core sounds of sound.md (14 runs with the `_1`/`_2` variants), plus the
+   film's own jokes (`stomp`, `roar`, `bell`, `knock`): a dry run each and one total. After the
+   user's go: one run each, `"wait": false`, one `jobs_wait`.
 5. **Key art.** Two pictures, each priced before the user's go, the second only once the first
    exists: it passes the first's asset id as a reference so the courier and the city match. The
    scooter came back with a maker's logo, painted out before use.
@@ -146,8 +146,9 @@ lands on the last hit.
 
 7. **Mix and check render.** `mix.py` lists any hit quieter than the music: raise it in
    `spec.sounds`. The first `finish.py` failed on two pictures that held 1.5 s and 1.2 s; the
-   Picture block now pushes, pans, punches in and cuts in on the beat. The teaser passed with 24%
-   still frames, no hold over 0.6 s and 12.5 cuts per 10 s.
+   Picture block now pushes, pans, punches in and cuts in on the beat. Its `rain` carries each
+   picture between words; under `snow`, `dust` or no weather, give every beat a word or a cut-in.
+   The teaser passed with 24% still frames, no hold over 0.6 s and 12.5 cuts per 10 s.
 8. **Master.** `render.py . --res 4k` and `finish.py`: a 4K master under 1 GB, a 1080p version and a
    9:16 version (the film centered on black), each checked.
 

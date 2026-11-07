@@ -94,6 +94,20 @@ def fit_grid(e, k0, period, hint):
     return best_period, best_phase
 
 
+def drop_rises(rms, down, bpm):
+    """(downbeat, rise) pairs: how much louder the bar after each downbeat is than the bar before.
+
+    A wider look-ahead scored the downbeat a bar early as high as the drop itself.
+    """
+    bar_s = 4 * 60 / bpm
+    end_s = len(rms) / FR
+
+    def level(a, b):
+        return float(rms[int(a * FR) : int(b * FR)].mean())
+
+    return [(t, level(t, t + bar_s) / (level(t - bar_s, t) + 1e-9)) for t in down if bar_s < t <= end_s - bar_s]
+
+
 def analyze(x, hint=None, start=0.0, window=0.0):
     flux, low, rms = onset_envelopes(x)
     k0 = int(start * FR)
@@ -116,15 +130,7 @@ def analyze(x, hint=None, start=0.0, window=0.0):
     if not len(down):
         return None
     strength = min(1, float(e[beats.astype(int)].mean() / (e.mean() + 1e-9) / 4))
-    # drops: the biggest rises in loudness at a downbeat, two bars after against one bar before
-    ev = np.convolve(rms, np.ones(int(FR)) / int(FR), "same")
-
-    def level(t):
-        return ev[min(len(ev) - 1, int(t * FR))]
-
-    bar_s = 4 * 60 / bpm
-    rises = [(t, level(t + 2 * bar_s) / (level(t - bar_s) + 1e-9)) for t in down if t > bar_s]
-    drops = sorted(rises, key=lambda q: -q[1])[:3]
+    drops = sorted(drop_rises(rms, down, bpm), key=lambda q: -q[1])[:3]
     offset = float(down[0])
     return {
         "bpm": round(bpm, 2),

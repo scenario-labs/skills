@@ -8,7 +8,8 @@ reason you can see on screen.
 - The camera always moves. Every block has a default drift (a 6 % push and a little roll over the
   block); stills the eye could count are where a film starts to look like slides.
 - After a word lands, keep it alive: a slow scale (2 to 5 % per second), a slide (70 px/s for type
-  rows), ghost rows scrolling past, particles, a weather layer on pictures.
+  rows), ghost rows scrolling past, particles, `rain` on pictures (or a word or cut-in on every
+  beat).
 - A picture is the easiest place to park. Push it fast, pan it, tilt it, punch in on each word, and
   cut in to a detail on a beat.
 - The only rest is the logo card, and even it pushes in slowly with a light sweep.
