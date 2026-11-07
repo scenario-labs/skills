@@ -8,7 +8,7 @@ All coordinates are client pixels; the game's qa() snapshot already converts its
 """
 _last = {"active": -1.0, "fail": -1.0}
 PACE = 0.3        # seconds between taps for the good player (game time)
-FAIL_PACE = 1.6   # a slow, distracted player: about half the pops the goal needs
+FAIL_PACE = 1.6   # a slow, distracted player: ends about 10 pops short of the goal
 
 
 def _ready(key, t, gap):
@@ -43,7 +43,7 @@ STORYBOARD = [
     ("1-hook", {"time": 0.3}),
     ("2-core-loop", {"event": "pop", "nth": 3, "delay": 0.2}),
     ("3-payoff", {"event": "payoff", "delay": 0.3}),
-    ("3b-past-goal", {"event": "pop", "data": {"score": {">=": 40}}, "delay": 0.2}),   # comparison filter
+    ("3b-late-play", {"event": "pop", "data": {"score": {">=": 30}}, "delay": 0.2}),   # comparison filter
     ("4-result", {"event": "result", "delay": 0.8}),
     ("5-end-card", {"event": "endcard", "delay": 1.0}),
 ]

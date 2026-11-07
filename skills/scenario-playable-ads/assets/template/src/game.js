@@ -11,7 +11,8 @@
   const D = PA.draw;
   const INK = "#13244d";
   const GOAL = 40; // pops to win
-  const ROUND_S = 34; // time cap after the first touch: an active run ends at about 37 s
+  const ROUND_S = 40; // time cap after the first touch; the goal ends a good run first, at about 32 s
+  const SPAWN_S = 0.9; // seconds between pieces: the supply paces the goal, so a good run lasts about 35 s
   const PAYOFF_AT = 10; // the genre's signature moment fires at this score
   const CONFETTI = [
     "#ff4f6d",
@@ -209,7 +210,7 @@
     G.spawnT -= dt;
     if (G.spawnT <= 0) {
       spawn();
-      G.spawnT = 0.55;
+      G.spawnT = SPAWN_S;
     }
     for (let i = G.pieces.length - 1; i >= 0; i--) {
       const p = G.pieces[i];
