@@ -286,9 +286,7 @@ class MarkdownAndCsvTests(unittest.TestCase):
         self.assertEqual(A.safe_cell("Model 1"), "Model 1")
         self.assertEqual(A.safe_cell(-1), -1)
 
-    @unittest.expectedFailure
     def test_safe_cell_prefixes_a_leading_tab_or_carriage_return(self):
-        # Known bug: lstrip() removes the tab and CR before the prefix check, so those entries never match.
         for value in ("\tx", "\rx"):
             self.assertTrue(A.safe_cell(value).startswith("'"), repr(value))
 
