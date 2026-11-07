@@ -104,7 +104,6 @@ class AlignTest(unittest.TestCase):
         (line,) = self.align("# section: verse\noh baby\n", [word("oh", 1.0, 1.2), word("baby", 3.0, 3.5)], [5.0])
         self.assertEqual(line["words"][0]["s"], 2.72)
 
-    @unittest.expectedFailure  # bug: with no --chant, chant_sec is None and drops every line before a section header
     def test_lines_before_any_section_header_are_aligned(self):
         (line,) = self.align("one two\n", [word("one", 1.0, 1.4), word("two", 1.5, 1.9)], [])
         self.assertEqual([w["w"] for w in line["words"]], ["one", "two"])

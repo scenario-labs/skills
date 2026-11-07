@@ -84,7 +84,6 @@ class PureTest(Tmp):
             with self.assertRaisesRegex(dc.BadInput, "expected name=start:end"):
                 dc.parse_spans([spec], names_free=True)
 
-    @unittest.expectedFailure  # bug: a span without an end raises IndexError, so the CLI dies with a traceback, exit 1
     def test_a_span_without_an_end_is_bad_input(self):
         with self.assertRaisesRegex(dc.BadInput, "expected name=start:end"):
             dc.parse_spans(["verse=1"], names_free=True)

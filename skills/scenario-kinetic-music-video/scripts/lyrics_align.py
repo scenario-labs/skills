@@ -5,6 +5,7 @@ usage:
 Each transcribe pass also keeps its own copy (lyrics_raw_plain.json without --prompt, lyrics_raw_hints.json with it), so the
 plain and hinted passes can be compared; align reads lyrics_raw.json, the latest pass.
 lyrics.txt format: '# section: name' lines, then one sung line per row (you correct the transcript by hand; supplied lyrics always win).
+A line before any section header is aligned with no section.
 --chant: that section's lines are counted, not aligned. Each vocal peak between the lines around the section becomes one chant
 word, up to as many words as the section's lines hold (all peaks to the next line when it has none).
 Method (what held up on sung vocals): faster-whisper large-v3 word timestamps on the Demucs vocal stem, sequence-matched onto the
@@ -55,7 +56,9 @@ def align(path, chant=None, no_fix=()):
         if L.startswith('# section:'): sec = L.split(':', 1)[1].strip(); sec_at.setdefault(sec, len(lines)); continue
         lines.append({'section': sec, 'text': L, 'words': L.split()})
     chant_sec, chant_word = (chant.split(':') + ['GO'])[:2] if chant else (None, None)
-    C = [(li, wi, norm(w)) for li, l in enumerate(lines) if l['section'] != chant_sec for wi, w in enumerate(l['words'])]
+    # without --chant no line is chanted, not even one before any section header (its section is None too)
+    chanted = lambda l: chant and l['section'] == chant_sec
+    C = [(li, wi, norm(w)) for li, l in enumerate(lines) if not chanted(l) for wi, w in enumerate(l['words'])]
     sm = difflib.SequenceMatcher(a=[c[2] for c in C], b=[norm(w['w']) for w in W], autojunk=False)
     T = [None] * len(C)
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
@@ -77,7 +80,7 @@ def align(path, chant=None, no_fix=()):
         lines[li].setdefault('_w', []).append({'w': lines[li]['words'][wi], 's': round(s, 3), 'e': round(max(e, s + 0.06), 3)})
     out = []
     for l in lines:
-        if l['section'] == chant_sec: continue
+        if chanted(l): continue
         ws = l.pop('_w')
         for i in range(len(ws) - 1):  # short first word pulled early by the previous held note
             if ws[i + 1]['s'] - ws[i]['s'] > 0.9 and len(ws[i]['w'].strip(',.?!')) <= 4 and ws[i]['w'].strip(',.?!') not in no_fix:
@@ -91,13 +94,13 @@ def align(path, chant=None, no_fix=()):
         from scipy.signal import find_peaks
         env = np.array(A['env']['vocal']); fps = A['env_fps']; t = np.arange(len(env)) / fps
         at = sec_at.get(chant_sec, len(lines))  # a section missing from lyrics.txt chants after the last line
-        before = sum(1 for li, l in enumerate(lines) if li < at and l['section'] != chant_sec)
+        before = sum(1 for li, l in enumerate(lines) if li < at and not chanted(l))
         t0 = out[before - 1]['e'] if before else 0
         t1 = out[before]['s'] if before < len(out) else np.inf
         m = (t > t0) & (t < t1)  # contiguous: dropping silent samples would pull peaks together and the distance rule then drops words
         pk, _ = find_peaks(env[m], height=0.3, distance=int(0.17 * fps), prominence=0.15)
         gos = [round(float(t[m][p]) - 0.06, 3) for p in pk]
-        n = sum(len(l['words']) for l in lines if l['section'] == chant_sec)
+        n = sum(len(l['words']) for l in lines if chanted(l))
         if n: gos = gos[:n]
         if gos: out.insert(before, {'section': chant_sec, 'text': (chant_word + ' ') * len(gos), 'words': [{'w': chant_word, 's': g, 'e': round(g + 0.18, 3)} for g in gos], 's': gos[0], 'e': gos[-1] + 0.3})
     os.makedirs('engine/data', exist_ok=True); save_json({'lines': out}, 'engine/data/lyrics.json', indent=1)

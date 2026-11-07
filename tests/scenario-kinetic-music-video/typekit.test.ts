@@ -512,8 +512,7 @@ describe("drawSubtitle", () => {
     expect(bar(ctx)[0][6]).toBe(0.5);
   });
 
-  // drawText assigns globalAlpha outright, so the words ignore the subtitle's o.alpha
-  it.fails("dims the words with o.alpha too", () => {
+  it("dims the words with o.alpha too", () => {
     const ctx = new FakeContext2D();
     drawSubtitle(ctx, landscape(), 1.2, { alpha: 0.5 });
     for (const d of fills(ctx)) expect(d.globalAlpha).toBeCloseTo(0.5);

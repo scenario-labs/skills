@@ -202,6 +202,7 @@ export function drawSubtitle(ctx, E, t, o = {}) {
     dimColor: "rgba(255,176,0,0.35)",
     lineLead: 0.25,
     tail: 0.35,
+    alpha: o.alpha, // drawText sets globalAlpha outright, so the words need o.alpha passed, not just set above
     maxW:
       o.maxW ??
       (E.ORIENT === "landscape"

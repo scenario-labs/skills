@@ -409,9 +409,11 @@ def parse_spans(specs, names_free):
         try:
             name, rng = spec.split('=', 1)
             parts = rng.split(':')
+            if not name or len(parts) not in (2, 3):
+                raise ValueError
             a, b = float(parts[0]), float(parts[1])
             energy = parts[2] if len(parts) > 2 else None
-            if len(parts) > 3 or not name or b <= a:
+            if b <= a:
                 raise ValueError
         except ValueError:
             raise BadInput(f'--span {spec}: expected name=start:end[:energy] with end > start')
