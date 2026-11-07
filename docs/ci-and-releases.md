@@ -176,6 +176,12 @@ pointing at this repository, and hook steps read the index through them.
   - It is never a required check.
   - Publishing rejects a workflow-level `env` or `defaults`, write permissions above the job, and
     actions outside upstream's approved list in the job.
+- `codeql.yml` runs CodeQL on every pull request, each push to `main`, and weekly.
+  - The `main` ruleset requires its results, so it replaces default setup, which never analyzed fork
+    PRs and left them blocked. Keep default setup off: it rejects uploads from a workflow.
+  - Its `/language:<name>` categories match default setup's, so alert history carries over.
+  - Code Quality still runs as GitHub's own analysis, but the ruleset does not require it: it never
+    runs on fork PRs either.
 - `links.yml` runs lychee over tracked Markdown, without the vendored dev skills and `CHANGELOG.md`:
   - on every pull request, the relative links and anchors of every file offline, since moving any
     file, Markdown or not, can break a link to it;
