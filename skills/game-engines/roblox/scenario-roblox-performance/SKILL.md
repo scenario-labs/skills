@@ -2,6 +2,8 @@
 name: scenario-roblox-performance
 description: "Use when a Roblox experience is slow, laggy, stuttering, crashing or out of memory, or before shipping or updating one: my game lags on mobile, low FPS, frame spikes, server lag or low heartbeat, physics lag, network lag or high KB/s, memory leaks or memory that keeps growing, crashes on phones, long join or load times, too many parts, instances, draw calls or triangles, MicroProfiler, Script Profiler, Luau heap, Developer Console memory, Scene Analysis, StreamingEnabled tuning, performance budgets, and publishing, releasing an update, restarting servers or rolling back a version."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Roblox Performance and Release

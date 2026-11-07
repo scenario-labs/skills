@@ -18,6 +18,11 @@
 //   command (the line after "# Every Scenario skill, without the expert tools")
 //   lists exactly the core skills, and each family README's command lists
 //   exactly its family, so a new skill cannot be left out of them
+// - the Claude Code loop (the line after "# Every Scenario plugin, without
+//   the expert tools") installs exactly the marketplace plugins that hold core
+//   skills, so a new or renamed grouping cannot be left out of it
+// - every plugin a `claude plugin install` command or loop names, in README.md
+//   and INSTALL.md, exists in the marketplace manifest
 // - every core skill appears in at least one INSTALL.md role command, and
 //   each role's and goal's "N skills." count matches its command
 import { existsSync, readFileSync } from "node:fs";
@@ -258,6 +263,60 @@ if (defaults.length !== 1) {
     defaults[0].names,
     skills.filter((skill) => !skill.expert).map((skill) => skill.name),
   );
+}
+
+const PLUGIN_MARKER = "# Every Scenario plugin, without the expert tools";
+const manifestPlugins = JSON.parse(
+  readFileSync(".claude-plugin/marketplace.json", "utf8"),
+).plugins;
+for (const file of ["README.md", "INSTALL.md"]) {
+  if (!existsSync(file)) continue;
+  readFileSync(file, "utf8")
+    .split("\n")
+    .forEach((line, index) => {
+      const loop = line.match(/^for p in (.+); do claude plugin install /);
+      const named = loop
+        ? loop[1].trim().split(/\s+/)
+        : [...line.matchAll(/plugin install ([\w.-]+)@scenario-skills/g)].map(
+            (match) => match[1],
+          );
+      for (const name of named) {
+        if (!manifestPlugins.some((plugin) => plugin.name === name)) {
+          errors.push(
+            `${file}:${index + 1}: names plugin "${name}", which is not in .claude-plugin/marketplace.json`,
+          );
+        }
+      }
+    });
+}
+const pluginLoops = readme
+  .split("\n")
+  .map((line, index, all) => ({ line, after: (all[index - 1] ?? "").trim() }))
+  .filter(({ after }) => after === PLUGIN_MARKER);
+if (pluginLoops.length !== 1) {
+  errors.push(
+    `README.md: expected one plugin install loop right after "${PLUGIN_MARKER}", found ${pluginLoops.length}`,
+  );
+} else {
+  const match = pluginLoops[0].line.match(
+    /^for p in (.+); do claude plugin install "\$p@scenario-skills"; done$/,
+  );
+  if (!match) {
+    errors.push(
+      `README.md: the line after "${PLUGIN_MARKER}" must read: for p in <plugins>; do claude plugin install "$p@scenario-skills"; done`,
+    );
+  } else {
+    const expertDirs = new Set(
+      skills.filter((skill) => skill.expert).map((skill) => `./${skill.dir}`),
+    );
+    compareSets(
+      "README.md: the plugin install loop",
+      match[1].trim().split(/\s+/),
+      manifestPlugins
+        .filter((plugin) => !plugin.skills.some((dir) => expertDirs.has(dir)))
+        .map((plugin) => plugin.name),
+    );
+  }
 }
 
 // Until the skills CLI can install a group from the command line

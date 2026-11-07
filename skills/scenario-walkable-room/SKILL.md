@@ -2,6 +2,8 @@
 name: scenario-walkable-room
 description: "Use when one interior photo, uploaded or generated on Scenario, should become a room a visitor walks into in a web browser and plays with: props lifted out of the photo and rebuilt as 3D objects to grab, throw, and hear land, inside a Gaussian splat world, or restyled variants of one room. Keywords: image-blaster, walkable room, photo to 3D room, clean plate, object cut-out, splat world, physics props, grab and throw, impact sounds, heightfield collision."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Walkable Room

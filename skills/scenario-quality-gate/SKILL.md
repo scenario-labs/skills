@@ -2,6 +2,8 @@
 name: scenario-quality-gate
 description: "Use when a generated Scenario image needs a quality check or a brand-brief compliance verdict before it ships: pass/warn/fail scoring, on-brand review against a configured brief, QA gating a batch, pricing or refreshing a stored verdict, or iterating a generation until it clears the gate. Keywords: quality gate, quality check, QA, verdict, brief compliance, on-brand, brand brief, pass fail, score, review, asset_quality_gate_run."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Quality Gate

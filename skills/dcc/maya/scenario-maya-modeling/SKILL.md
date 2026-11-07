@@ -2,6 +2,8 @@
 name: scenario-maya-modeling
 description: 'Use when modeling in Autodesk Maya, such as hard-surface props, weapons, vehicles, a sci-fi crate, a game-ready or SubD film model, or a character or creature base mesh, or when asked to "clean up this model" or a scene before rigging or UVs. Also for support loops vs bevels vs creases, Smart Bevel, weighted normals, hard edges, pinching or wobbly highlights, a faceted cage, flipped faces, a triangle budget, n-gons, non-manifold geometry, mirroring a half, a low poly from a high poly, or deformation-ready topology.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Maya modeling (hard surface, organic, props)

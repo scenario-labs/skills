@@ -159,7 +159,8 @@ import { readFileSync } from "node:fs";
 import { parse } from "yaml";
 import { listSkills } from "./scripts/lib/skills.mjs";
 
-const KEYS = ["name", "description", "license"];
+// metadata holds only version, which scripts/version-stamp.mjs writes.
+const KEYS = ["name", "description", "license", "metadata"];
 const problems = [];
 for (const skill of listSkills()) {
   const file = `${skill.dir}/SKILL.md`;
@@ -180,6 +181,15 @@ for (const skill of listSkills()) {
     if (!KEYS.includes(key)) {
       problems.push(`${file}: frontmatter key "${key}"; only ${KEYS.join(", ")} are allowed`);
     }
+  }
+  const { metadata } = frontmatter;
+  if (
+    metadata !== undefined &&
+    (metadata === null ||
+      typeof metadata !== "object" ||
+      Object.keys(metadata).some((key) => key !== "version"))
+  ) {
+    problems.push(`${file}: frontmatter metadata holds only version`);
   }
   if (frontmatter.license !== "MIT") {
     problems.push(`${file}: frontmatter needs license: MIT`);
@@ -203,7 +213,7 @@ EOF
 frontmatter_status=0
 frontmatter_out=$(node --input-type=module -e "$frontmatter_check" 2>&1) || frontmatter_status=$?
 if [ "$frontmatter_status" -ne 0 ]; then
-  echo 'Frontmatter holds name, description, and license: MIT only, and a description under 500 characters (1024 for expert tools), per AGENTS.md "Frontmatter and budget". Found:'
+  echo 'Frontmatter holds name, description, license: MIT, and metadata.version only, and a description under 500 characters (1024 for expert tools), per AGENTS.md "Frontmatter and budget". Found:'
   printf '%s\n' "$frontmatter_out" | sed 's/^/  /'
   fail=1
 fi

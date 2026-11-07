@@ -2,6 +2,8 @@
 name: scenario-blender-hair
 description: "Use when grooming hair or fur in Blender with hair curves, such as a character hairstyle, animal fur, procedural fur in geometry nodes, or hair cards and mesh hair for games. Also covers the Essentials hair node assets (Interpolate, Clump, Curl, Frizz, Noise, Trim), density masks, bald spots, parting lines, strand shading in Cycles or EEVEE, and slow grooms. Use it too when a hair script misbehaves headless, for example stale modifier inputs or curve sculpt brushes that do nothing."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Hair and fur grooming (hair curves, Blender 5.2)

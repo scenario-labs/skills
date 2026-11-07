@@ -111,3 +111,18 @@ since the server refuses API keys there. To get an origin allowlisted, contact
 [support](https://www.scenario.com/contact-us?intent=scenario-mcp-issue) with the bare `https`
 origin (the port if any, no path), whether it is needed on production or a preview environment, and
 the tools the application will call.
+
+## Installing and updating these skills
+
+Each `SKILL.md` names the release it comes from in its frontmatter, as `metadata.version`. Releases
+are listed at
+[github.com/scenario-labs/skills/releases](https://github.com/scenario-labs/skills/releases).
+
+When the user asks to install or update these skills, point them to the README's
+[Install section](https://github.com/scenario-labs/skills#install) rather than running an installer:
+
+- In Claude Code it recommends the `scenario-skills` plugin marketplace from its `stable` branch,
+  with auto-update turned on once, and a per-role set of plugins.
+- Other agents use the skills CLI.
+- Each installed skill costs context in every session, so a role set beats installing every group.
+- One route, not both: a skill installed both ways loads twice.

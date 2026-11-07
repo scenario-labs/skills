@@ -2,6 +2,8 @@
 name: scenario-godot-performance-export
 description: "Use when a Godot game stutters, drops frames, hitches when entering new areas, overheats a phone, or must ship: profiling and Performance monitors, CPU or GPU bound, draw calls, MultiMesh, occlusion culling, LOD, shader compilation hitches, export to macOS, Windows, Linux, Steam, Android (APK, AAB, keystore), iOS (Xcode), web (itch.io, COOP/COEP headers, SharedArrayBuffer, JavaScript interop), build size budgets, demo and DLC builds, signing and notarization."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Godot performance and release

@@ -2,6 +2,8 @@
 name: scenario-maya-lighting-rendering
 description: 'Use when lighting or rendering in Maya with Arnold: a product hero shot, a character close-up or a sequence (master and shot lighting), key, fill and rim placement, "the Arnold render is noisy" or fireflies, render settings and time budgets, AOVs, light groups and EXRs for Nuke, OIDN or noice denoising, ACES or OCIO color, renders that look flat or too dark, Render Setup layers, batch or command-line renders, or judging a lit frame like a lighting supervisor.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Lighting and rendering in Maya 2027 (Arnold)

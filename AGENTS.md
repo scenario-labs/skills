@@ -82,9 +82,9 @@ uvx --python 3.12 --from "git+https://github.com/agentskills/agentskills.git#sub
 
 ### Frontmatter and budget
 
-- Published skill frontmatter: `name`, `description`, and `license: MIT`, nothing else. The spec
-  caps `name` at 64 characters and `description` at 1024. The other spec-optional fields
-  (`compatibility`, `metadata`, `allowed-tools`) are unused here.
+- Published skill frontmatter: `name`, `description`, `license: MIT`, and last a `metadata` block
+  holding only `version`, which `pnpm stamp` writes and releases update. The spec caps `name` at 64
+  characters and `description` at 1024. `compatibility` and `allowed-tools` are unused here.
 - `name`: lowercase letters, numbers, and hyphens, equal to the directory name.
 - `description`: third person, starting "Use when". It names triggering conditions only, never a
   summary of the skill's steps. Under 500 characters, rich in keywords an agent would search for.
@@ -372,6 +372,9 @@ and command lines.
   outcome bullet when it leads one), and any goal it leads or serves. Add any sibling it names that
   a command lacks, then update the "N skills." counts.
 - An expert skill joins its family README's install command.
+- Run `pnpm stamp` to add `metadata.version` to its frontmatter
+  ([docs/ci-and-releases.md](docs/ci-and-releases.md#releases)).
+- A new grouping adds its plugin name to `scripts/plugin-names.json`.
 - How skills.sh, the installer picker, and the install commands work:
   [docs/listing-and-install.md](docs/listing-and-install.md).
 

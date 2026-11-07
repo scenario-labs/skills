@@ -17,6 +17,22 @@ and releases" states which commit types release and which files release-please o
 - Merging the release PR tags `skills-vX.Y.Z`, titles the GitHub release `skills: vX.Y.Z`, rewrites
   `CHANGELOG.md`, `version.txt`, and `.release-please-manifest.json`, and publishes the GitHub
   release.
+- The `extra-files` entry `skills/**/SKILL.md` (`generic`, `"glob": true`) rewrites
+  `metadata.version` in every skill ([docs/decisions.md](decisions.md#skill-and-plugin-versions)
+  records why). The updater only touches a line holding `x-release-please-version`, which rides as a
+  YAML comment: `version: "X.Y.Z" # x-release-please-version`. release-please expands the glob over
+  `main` each time it rebuilds the release PR, so new skills are included.
+- After a release, the workflow fast-forwards the `stable` branch to the released commit, creating
+  it the first time. Claude Code users add the marketplace from `stable`, so plugin catalog and
+  skill files move together and only at releases. The update is fast-forward only: a refusal means
+  `stable` holds a commit no release made, which needs a person, never a force push.
+- `pnpm stamp` writes `metadata.version` from `version.txt`. `pnpm stamp:check` fails validation and
+  CI on a missing, misplaced, or malformed version, one newer than `version.txt`, or a missing
+  `extra-files` entry for the skills.
+- An older `metadata.version` passes on purpose. `main` does not require branches to be up to date,
+  so a new skill stamped before a release can merge after it, and the next release PR rewrites it.
+- `scripts/version-stamp.test.mjs` runs release-please's own pinned updater and glob matcher, so a
+  format, marker, or layout change fails before a release does.
 - `.github/workflows/publish-changelog.yml` then posts the notes to the public changelog at
   [scenario.com/changelog](https://www.scenario.com/changelog). It hangs off the
   `release: published` event, not the release-please run, because release-please reports a created
@@ -69,6 +85,7 @@ of its checks as a separate step:
 - **`pnpm groupings`**: every skill sits in a `skills.sh.json` grouping, every listed skill exists,
   and the file satisfies the published skills.sh schema.
 - **`pnpm manifest:check`**: the plugin marketplace manifest matches `skills.sh.json`.
+- **`pnpm stamp:check`**: every SKILL.md carries `metadata.version`, no newer than `version.txt`.
 - **`pnpm bugbot:check`**: `.cursor/BUGBOT.md` is a regular file identical to `REVIEW.md`. Cursor
   Bugbot reads a symlink as its target path, so the copy is generated: edit `REVIEW.md`, never the
   copy, and run `pnpm bugbot` (the pre-commit hook does).

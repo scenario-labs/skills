@@ -2,6 +2,8 @@
 name: scenario-video
 description: "Use when generating or editing video on Scenario via MCP: text-to-video, a music video from a song, image-to-video (still animation, frame anchors), motion prompting, lipsync and talking avatars, dubbing a clip, video upscale to 4K, prompt-based editing, trim, split, concat, extend, reframe, resize, background removal, frame or audio extraction, long video jobs, or a clip over a duration limit. Keywords: txt2video, img2video, video2video, audio2video, I2V, T2V, V2V, localization."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Video Generation and Editing

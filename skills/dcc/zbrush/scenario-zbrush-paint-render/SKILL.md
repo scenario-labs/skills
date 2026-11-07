@@ -2,6 +2,8 @@
 name: scenario-zbrush-paint-render
 description: "Use when polypainting in ZBrush (skin color zones, fills, cavity or AO passes, Spotlight), baking polypaint to a texture or vertex color, rendering a ZBrush model with BPR or Redshift, making render passes, a turntable or portfolio shots, or when paint looks like uniform beige or clown makeup, is blurry, is hidden under a texture or in Redshift, or a render is noisy, clipped, orthographic or bruised."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # ZBrush paint and render (texture and presentation artist)

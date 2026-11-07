@@ -2,6 +2,8 @@
 name: scenario-game-assets
 description: "Use when creating game art through Scenario MCP: sprites, sprite sheets, icons, props, loot, tilesets and autotile terrain transitions, seamless tiles, isometric buildings, top-down maps, pixel art, UI buttons and panels, parallax background layers or depth planes for side-scrollers, and character or concept art; or when assets need transparent backgrounds, background removal, style-consistent variation batches, upscaling, pixel-grid cleanup, or PNG export for Unity, Godot, or Unreal."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Game Assets

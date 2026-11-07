@@ -2,6 +2,8 @@
 name: scenario-zbrush-retopology-export
 description: 'Use when a ZBrush sculpt, scan or AI-generated mesh must become production topology and files (ZRemesher and guides, the 2026 Retopo brush, reprojecting detail with Project All, rebuilding subdivision levels, UV Master or native unwrap, normal and displacement maps with Multi Map Exporter, GoZ, OBJ or FBX export, scale and axes, Decimation Master, "clean up an AI mesh in ZBrush"), or when detail is lost after ZRemesher, a map is upside down or an export arrives at the wrong size.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # ZBrush retopology and export (pipeline sculptor)

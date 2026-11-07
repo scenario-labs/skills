@@ -449,7 +449,7 @@ test("fails past the cap without the near-cap notice", (t) => {
 });
 
 const FRONTMATTER =
-  "Frontmatter holds name, description, and license: MIT only";
+  "Frontmatter holds name, description, license: MIT, and metadata.version only";
 const EXPERT = "skills/dcc/demo/scenario-demo-expert/SKILL.md";
 const frontmatter = (name, lines) =>
   ["---", `name: ${name}`, ...lines, "---", "", "Body.", ""].join("\n");
@@ -513,6 +513,28 @@ test("fails a frontmatter key beyond name, description, and license", (t) => {
     ]),
   );
   failsWith(style, `${SKILL}: frontmatter key "compatibility"`);
+});
+
+test("accepts metadata holding only version, and fails any other metadata key", (t) => {
+  const { write, style } = repo(t);
+  const lines = ["description: Use when testing.", "license: MIT", "metadata:"];
+  write(
+    SKILL,
+    frontmatter("scenario-demo", [
+      ...lines,
+      '  version: "1.2.3" # x-release-please-version',
+    ]),
+  );
+  assert.ok(!style().includes(FRONTMATTER));
+  write(
+    SKILL,
+    frontmatter("scenario-demo", [
+      ...lines,
+      '  version: "1.2.3"',
+      "  author: x",
+    ]),
+  );
+  failsWith(style, `${SKILL}: frontmatter metadata holds only version`);
 });
 
 test("fails a license other than MIT", (t) => {

@@ -2,6 +2,8 @@
 name: scenario-zbrush-automation
 description: "Use when automating ZBrush 2026: batch processing a folder of OBJ or ZTL files, a ZBrush Python script or ZScript, recording a macro to learn a palette path, the ZBrush -script command line, scripting UV Master, Decimation Master or Multi Map Exporter, exporting every SubTool, GoZ or GoB round trips with Maya or Blender, renaming SubTools, or batch reports. Also when a plugin press never returns, a dialog stalls a batch, one file kills the whole run, or GoZ updates the wrong SubTool."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # ZBrush automation (tools and pipeline TD)

@@ -2,6 +2,8 @@
 name: scenario-roblox-architecture
 description: "Use when structuring Roblox game code: where scripts go (ServerScriptService, ReplicatedStorage, StarterPlayerScripts), Script vs LocalScript and RunContext, a module loader or framework (Knit or none), services and controllers, how systems talk (signals, BindableEvents, attributes), CollectionService tags, cleanup with Trove or Janitor, Rojo project layout, or a round-based game core. Also when code is spaghetti, a script runs twice, require errors with 'required recursively', a module is nil on the client, a tool stops working after respawn, or memory climbs from leaked connections."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Roblox architecture (gameplay programmer and architect)

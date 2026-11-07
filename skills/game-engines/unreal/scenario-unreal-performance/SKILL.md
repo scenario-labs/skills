@@ -2,6 +2,8 @@
 name: scenario-unreal-performance
 description: 'Use when an Unreal Engine 5.8 project misses its frame rate or stutters: "optimize to 60 fps", "we run at 38 fps", CPU or GPU bound, game or render thread too long, hitches, traversal or shader stutter (PSO), GC spikes, camera-cut spikes, Lumen, Nanite, VSM, ray tracing, foliage, crowds or Niagara too expensive, async compute, stat unit, ProfileGPU, Unreal Insights, TraceQuery, snapshothitches, scalability and device profiles, dynamic resolution and TSR, streaming budgets, or proving a fix with before and after captures.'
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Performance engineering in Unreal Engine 5.8

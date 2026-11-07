@@ -2,6 +2,8 @@
 name: scenario-motion-loops
 description: "Use when someone wants seamless looping motion graphics for video in their own brand colors: animated backgrounds behind titles, filler for the dead seconds between AI shots, bumpers, transitions or shape animations, built as code and rendered to MP4, optionally with their mascot, product or character from Scenario composited over the loop. Keywords: seamless loop, motion background, canvas animation, motion graphics, loop seam, motion blur, H.264 export, alpha composite."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Motion Loops

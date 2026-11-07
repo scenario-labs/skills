@@ -2,6 +2,8 @@
 name: scenario-playable-ads
 description: "Use when a mobile game's gameplay recording, screenshots or existing art and sound should become a playable ad: an HTML5 interactive ad or interactive end card for Meta, Google Ads App campaigns, AppLovin, Unity Ads, Mintegral, Moloco, Liftoff, TikTok Pangle or any MRAID network, with a hint hand, a CTA and a mute button, packaged per network and QA-tested in headless Chromium. Keywords: playable ad, HTML5 playable, MRAID, FbPlayableAd, ExitApi, end card, CTA, hypercasual ad."
 license: MIT
+metadata:
+  version: "0.60.1" # x-release-please-version
 ---
 
 # Scenario Playable Ads

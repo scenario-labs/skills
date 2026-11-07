@@ -9,11 +9,16 @@
 //   expert tools under skills/<category>/<family>/),
 //   which also makes the repo installable as a Claude Code plugin marketplace,
 //   one plugin per grouping
-// - plugin names carry a two-digit position prefix (01.-getting-started,
-//   displayed by the picker as "01. Getting Started") because the picker sorts
-//   group names alphabetically, so the prefix is what makes it follow
-//   skills.sh.json order; inserting or merging a grouping renumbers the plugin
-//   identifiers on the next regeneration
+// - plugin names come from scripts/plugin-names.json, keyed by grouping
+//   title, never from position: a name is its Claude Code install key, so a
+//   renumbered name breaks every install of it. Each name starts with a fixed
+//   three-digit number assigned once, with gaps (010-getting-started), because
+//   the picker sorts groups by name and shows them title-cased ("010 Getting
+//   Started"). A new grouping takes a free number between its neighbors.
+//   --check fails on a missing, unused, out-of-order or retired name.
+// - entries carry no version: Claude Code then versions a plugin by commit, so
+//   its catalog entry and its files always come from the same commit. Releases
+//   reach plugin users through the stable branch the release workflow moves.
 // Never edit the manifest by hand; edit skills.sh.json and run `pnpm manifest`.
 // By default regenerates the file in place and, for the pre-commit hook, its
 // staged copy from the staged skills.sh.json and skill folders. --check
@@ -34,14 +39,11 @@ const bail = (message) => {
   process.exit(1);
 };
 
-const pluginNameOf = (title) =>
-  title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+const NAMES_PATH = "scripts/plugin-names.json";
+const NAME_PATTERN = /^\d{3}-[a-z0-9]+(-[a-z0-9]+)*$/;
 
 // `source` names the skills.sh.json being read in error messages.
-function render(source, read, skills) {
+function render(source, read, skills, names) {
   let config;
   try {
     config = JSON.parse(read());
@@ -61,22 +63,23 @@ function render(source, read, skills) {
       );
     }
     const title = String(group.title ?? "");
-    const slug = pluginNameOf(title);
-    if (slug === "") {
-      bail(`${source}: grouping "${title}" produces an empty plugin name`);
-    }
-    if (seen.has(slug)) {
+    const name = names[title];
+    if (typeof name !== "string") {
       bail(
-        `${source}: groupings "${seen.get(slug)}" and "${title}" both map to plugin name "${slug}"`,
+        `${NAMES_PATH}: grouping "${title}" has no plugin name; add one whose number sits between its neighbors' (a new grouping between 030 and 040 takes 035)`,
       );
     }
-    seen.set(slug, title);
+    if (seen.has(name)) {
+      bail(
+        `${NAMES_PATH}: groupings "${seen.get(name)}" and "${title}" share plugin name "${name}"`,
+      );
+    }
+    seen.set(name, title);
     if (!Array.isArray(group.skills)) {
       bail(
         `${source}: grouping "${title}" needs a skills array (see pnpm groupings)`,
       );
     }
-    const name = `${String(index + 1).padStart(2, "0")}.-${slug}`;
     const plugin = { name };
     if (group.description) plugin.description = group.description;
     plugin.source = "./";
@@ -104,13 +107,16 @@ function render(source, read, skills) {
   return {
     rendered: `${JSON.stringify(manifest, null, 2)}\n`,
     groups: plugins.length,
+    names: plugins.map((plugin) => plugin.name),
   };
 }
 
-const { rendered, groups } = render(
+const registry = JSON.parse(readFileSync(NAMES_PATH, "utf8"));
+const { rendered, groups, names } = render(
   "skills.sh.json",
   () => readFileSync("skills.sh.json", "utf8"),
   listSkills(),
+  registry.plugins ?? {},
 );
 
 const existing = existsSync(MANIFEST_PATH)
@@ -118,6 +124,39 @@ const existing = existsSync(MANIFEST_PATH)
   : null;
 
 if (process.argv.includes("--check")) {
+  const listed = Object.values(registry.plugins ?? {});
+  const retired = registry.retired ?? [];
+  const problems = [
+    ...listed
+      .filter((name) => !NAME_PATTERN.test(name))
+      .map(
+        (name) => `"${name}" is not a three-digit number, a hyphen, and a slug`,
+      ),
+    ...listed
+      .filter((name) => !names.includes(name))
+      .map(
+        (name) =>
+          `"${name}" names no grouping: existing installs of it break; move it to "retired" only if that is intended`,
+      ),
+    ...names
+      .filter((name) => retired.includes(name))
+      .map((name) => `"${name}" is retired: pick another name`),
+    ...names
+      .slice(1)
+      .filter((name, i) => name.localeCompare(names[i]) <= 0)
+      .map(
+        (name) =>
+          `"${name}" sorts before the grouping above it, so the picker would leave skills.sh.json order`,
+      ),
+  ];
+  if (problems.length > 0) {
+    bail(
+      [
+        `${NAMES_PATH}: plugin names are install keys, so every change is deliberate.`,
+        ...problems.map((problem) => `  ${problem}`),
+      ].join("\n"),
+    );
+  }
   if (existing !== rendered) {
     bail(
       `${MANIFEST_PATH} is out of sync with skills.sh.json; run pnpm manifest`,
@@ -148,6 +187,7 @@ let index;
 try {
   index = {
     config: git(["show", ":skills.sh.json"]),
+    names: JSON.parse(git(["show", `:${NAMES_PATH}`])).plugins ?? {},
     paths: git(["ls-files", "-z", "--", "skills"]).split("\0"),
   };
 } catch {
@@ -158,6 +198,7 @@ if (index) {
     "staged skills.sh.json",
     () => index.config,
     listSkillsFromPaths(index.paths),
+    index.names,
   ).rendered;
   let indexed = null;
   try {
