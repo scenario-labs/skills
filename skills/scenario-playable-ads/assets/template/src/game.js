@@ -11,8 +11,8 @@
   const D = PA.draw;
   const INK = "#13244d";
   const GOAL = 40; // pops to win
-  const ROUND_S = 40; // time cap after the first touch; the goal ends a good run first, at about 32 s
-  const SPAWN_S = 0.9; // seconds between pieces: the supply paces the goal, so a good run lasts about 35 s
+  const ROUND_S = 40; // time cap after the first touch; a good run reaches the goal first, after about 32 s of play
+  const SPAWN_S = 0.9; // seconds between pieces: the supply paces the goal, so a good run shows its end card about 35 s after load
   const PAYOFF_AT = 10; // the genre's signature moment fires at this score
   const CONFETTI = [
     "#ff4f6d",
