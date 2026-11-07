@@ -125,13 +125,15 @@ npx skills add scenario-labs/skills --skill scenario scenario-moderation scenari
 
 ### Marketing Artist
 
-Store art and ads that stay on brand at every size. 28 skills.
+Store art and ads that stay on brand at every size. 29 skills.
 
 - **Store Art for Every Platform** (`scenario-formats`, `scenario-brand-kit`,
   `scenario-text-overlay`). Try: "Turn this key art into every storefront size, with our logo and
   the game's title."
 - **Ads From One Shot** (`scenario-product-shots`, `scenario-video-ads`, `scenario-ugc`). Try: "From
   this product shot, make a 15-second video ad and three UGC-style variants."
+- **Mobile Game UA Ads** (`scenario-game-ua-ads`). Try: "Make a 10-second vertical UA ad with a fail
+  tease for a pin-pull rescue puzzle, with hook text, win bursts, and an end card."
 - **Campaign Variants** (`scenario-ad-variants`). Try: "Make three hook-copy variants from this
   gameplay clip, preserving its action and audio."
 - **Video Thumbnails** (`scenario-thumbnails`). Try: "Make a readable boss-fight thumbnail with this
@@ -142,7 +144,7 @@ Store art and ads that stay on brand at every size. 28 skills.
   for Meta, Google and AppLovin."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam scenario-playable-ads scenario-game-assets scenario-3d
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-game-ua-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam scenario-playable-ads scenario-game-assets scenario-3d
 ```
 
 ### Technical Director
