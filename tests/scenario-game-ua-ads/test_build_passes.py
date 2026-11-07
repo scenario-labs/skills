@@ -15,6 +15,7 @@ from PIL import Image
 import helpers
 
 bp = helpers.load("build_passes")
+rt = helpers.load("render_tracks")
 SR = helpers.SR
 
 TRACKS = {"fps": 30, "canvas": [1080, 1920], "layers": {
@@ -77,9 +78,9 @@ class PictureTests(Case):
                                   {"file": "small.png", "type": "image", "x": 165, "y": 659, "start": 339, "end": 450}])
         payload, notes = bp.picture_payload(plan)
         clip, hand, word, still, small = payload["layers"]
-        self.assertEqual(clip, {"source": "A1", "startTime": 0.0, "endTime": 6.149, "x": "0", "y": "0", "width": "1080",
+        self.assertEqual(clip, {"source": "A1", "startTime": 0.0, "endTime": 6.158, "x": "0", "y": "0", "width": "1080",
                                 "height": "1920", "fit": "cover", "type": "video", "trimEnd": 2.8, "mute": True, "zIndex": 0})
-        # Every end, the tracks' and stills' from layers.json included, sits half a frame before its end frame.
+        # An end from layers.json that sits on a frame time, a track's or a still's, is pulled back half a frame.
         self.assertEqual((hand["source"], hand["zIndex"], hand["startTime"], hand["endTime"], hand["mute"]),
                          ("A2", 20, 0.1, 0.916, True))
         self.assertEqual([word[k] for k in ("source", "x", "y", "width", "height", "fit", "startTime", "endTime")],
@@ -91,6 +92,37 @@ class PictureTests(Case):
         self.assertFalse(any("under 304 px" in n for n in notes), notes)
         self.assertEqual((payload["compressionLevel"], payload["duration"], payload["canvasHeight"]), (15, 15.0, 1920))
         self.assertFalse(any(lay["type"] == "audio" for lay in payload["layers"]))
+
+    def test_a_video_layer_gets_the_times_that_show_its_frames(self):
+        plan = self.plan(assets={"fail.mp4": "A1"},
+                         picture=[{"file": "clips/fail.mp4", "type": "video", "start": 170, "end": 240}])
+        (lay,) = bp.picture_payload(plan)[0]["layers"]
+        self.assertEqual((lay["startTime"], lay["endTime"]), (5.65, 7.991))
+        for fps in (24, 25, 30, 60):
+            for first in range(120):
+                self.assertEqual(bp.video_times(first, first + 45, fps), rt.video_times(first, first + 45, fps))
+        # Running to the ad's last frame, it still ends inside the ad.
+        plan = self.plan(assets={"fail.mp4": "A1"},
+                         picture=[{"file": "clips/fail.mp4", "type": "video", "start": 336, "end": 450}])
+        payload, notes = bp.picture_payload(plan)
+        self.assertLess(payload["layers"][0]["endTime"], 15.0)
+        self.assertFalse(any("past the" in n for n in notes), notes)
+
+    @unittest.skipUnless(helpers.HAS_FFMPEG, "needs ffmpeg")
+    def test_a_clip_shorter_than_its_window_is_noted(self):
+        (self.dir / "clips").mkdir()
+        helpers.encode(self.dir / "clips/short.mp4", [np.full((32, 32, 3), 90, np.uint8)] * 30)
+        plan = self.plan(assets={"short.mp4": "S"},
+                         picture=[{"file": "clips/short.mp4", "type": "video", "start": 10, "end": 55, "trimStart": 0.2}])
+        notes = bp.picture_payload(plan)[1]
+        self.assertTrue(any("has 0.800 s after its trims for a 1.500 s window" in n for n in notes), notes)
+        plan = self.plan(assets={"short.mp4": "S"},
+                         picture=[{"file": "clips/short.mp4", "type": "video", "start": 10, "end": 34, "trimStart": 0.2}])
+        self.assertFalse(any("window" in n for n in bp.picture_payload(plan)[1]))
+        plan = self.plan(assets={"short.mp4": "S"}, picture=[{"file": "clips/short.mp4", "type": "video", "start": 10,
+                                                               "end": 34, "trimStart": 0.2, "trimEnd": 0.3}])
+        notes = bp.picture_payload(plan)[1]
+        self.assertTrue(any("has 0.500 s after its trims for a 0.800 s window" in n for n in notes), notes)
 
     def test_a_small_image_is_padded_beside_its_file_with_its_pixels_in_place(self):
         helpers.rect_png(self.dir / "tag.png", (100, 40), (0, 0, 100, 40), (200, 30, 30, 255))

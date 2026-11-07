@@ -40,15 +40,18 @@ Values below are for a 1080-wide canvas.
 - An element animated by a video model on a flat color, such as a hero dancing on the end card,
   becomes alpha through a chroma-key tool model (`recommend` one). Ask for its MOV (ProRes 4444)
   output, never WebM.
-- Compose reads layer times to the millisecond. Write a frame time (frame n / 30) rounded down: 185
-  / 30 written as 6.1667 starts the layer one frame late.
-- Compose also draws a layer on the frame at its exact `endTime`. End every layer half a frame
-  before its cut, or it shows on the next shot's first frame: a HUD and a win word sat over an
+- Compose reads layer times to the millisecond. A video layer starting on a frame time rounded down
+  (185 / 30 as 6.166) can lose its last frame, a black frame at a hard cut; rounded up (6.167), it
+  starts a frame late. `build_passes.py` and `render_tracks.py` start each video layer half a frame
+  early and end it a quarter frame early, which shows exactly the planned frames.
+- An image layer starts on its frame time rounded down and ends half a frame before its cut. Ended
+  exactly on the cut, it shows on the next shot's first frame: a HUD and a win word sat over an
   insert this way.
 - Video layers start on their frame; image layers can start one or two frames late. A word that must
   land on a contact frame is a video track.
-- A track that hands over to a static PNG (an icon pop, then the still icon) ends on the PNG's
-  `startTime`, with no overlap: one shared frame draws soft shadows twice and darkens them.
+- A track that hands over to a static PNG (an icon pop, then the still icon) shows its last frame
+  just before the PNG's first, with no overlap: one shared frame draws soft shadows twice and
+  darkens them.
 - Give every image layer an explicit `width` and `height` at its natural size. A 750x107 PNG with no
   size was drawn about 2.5 times too large. Pad small PNGs with transparent margin to at least 304
   px on the short side, and shift `x` and `y` so the content stays put. `build_passes.py picture`
@@ -73,6 +76,8 @@ Values below are for a 1080-wide canvas.
   - Keep it inside the placement's text zone: under 800 px wide on TikTok, clear of the right rail,
     and inside the 6% side margins elsewhere.
   - Put a full-canvas red flash (about 40% alpha, 0.5 s) under FAIL.
+  - Desaturate a freeze frame locally before its upload. Compose's `saturation` 0.35 and
+    `brightness` 0.9 rendered one at 44% of its brightness.
 - **Hook line**: the same recipe, tilted 2 to 4 degrees, on two lines: the key words at 150 to 190
   px, and a longer second line at 70 px or more ("ONLY 1%" big, "CAN CLEAR THIS BOARD" small). A
   newline in a plain `{{variable}}` is lost, so put `<br>` in the value and use `{{{variable}}}`. It
@@ -161,6 +166,8 @@ Values below are for a 1080-wide canvas.
 - Animal sounds come from a sound-effect model: speech models cannot bark or meow.
 - The music bed comes back at its own length (a 10 s request returned 19 s). Trim it with `trimEnd`
   and measure its energy every 0.1 s.
+  - Ask for a few seconds more than the ad, then trim: one 10 s bed faded out from 7.5 s, leaving
+    the end card nearly silent.
   - Offset it so its lift lands within 0.3 s of the payoff start.
   - Start it in a section with energy. A quiet intro under a quiet fail left one test's first 5 s 10
     dB under the rest.

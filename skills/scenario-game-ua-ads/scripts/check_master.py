@@ -10,7 +10,10 @@ wrote from the same plan. Needs numpy and ffmpeg, not Pillow. Prints:
 - the mean (RMS) and max level of each section (cues.json "sections", or --sections);
 - with --sim: how closely the master follows the simulation, overall, per 0.5 s window, and in
   each hit's window;
-- an onset table: where each hit landed in the master against its planned time.
+- an onset table: where each hit landed in the master against its planned time;
+- any frame, or pair of frames, under half the level of the frames on both sides when both sit at
+  mean gray level 24 or more: a layer that ended a frame early, a black frame at a cut. A fade, or a
+  dip inside a dim shot, passes.
 Writes OUTDIR/sheet_2fps.jpg (a 2 fps contact sheet, for timing only: judge game logic on
 full-resolution frames), OUTDIR/onsets.json and, with --sim, OUTDIR/sim.json. OUTDIR defaults to
 check_<master name> beside cues.json, the build folder, so nothing lands beside a delivered master.
@@ -41,8 +44,8 @@ neighbor. A hit more than 0.1 s off, or matching under 0.3, reads CHECK. Without
 ramping or repeated hit can read CHECK while on time.
 
 Exit status 1 when the file's length or canvas differs from the plan, the true peak is over
--1 dBTP, the loudness is outside -16 to -14 LUFS, or, with --sim, the master departs from the
-simulation; without --sim, when a hit reads CHECK.
+-1 dBTP, the loudness is outside -16 to -14 LUFS, a frame reads dark, or, with --sim, the master
+departs from the simulation; without --sim, when a hit reads CHECK.
 """
 
 import argparse
@@ -59,6 +62,7 @@ import build_passes as bp
 SR = bp.SR
 PRE, POST, REF = 0.15, 0.35, 0.25
 SIM_ALL, SIM_WINDOW, SIM_HIT, SIM_DB, SIM_OFFSET = 0.95, 0.7, 0.75, 2.0, 0.005
+DARK_FLOOR = 24  # mean gray level the frames around a dip need, so a dark scene never reads as one
 
 
 PROBE_ENTRIES = "stream=codec_type,codec_name,width,height,r_frame_rate,pix_fmt,sample_rate,channels:format=duration"
@@ -201,6 +205,25 @@ def compare(master, sim, hits):
     return summary, rows
 
 
+def dark_frames(master):
+    """(first frame, run of 1 or 2, its level, level before, level after) for each short dip."""
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(master), "-vf", "scale=32:56:flags=area,format=gray",
+                          "-f", "rawvideo", "-"], capture_output=True, check=True).stdout
+    levels = np.frombuffer(raw, np.uint8).reshape(-1, 32 * 56).mean(axis=1)
+    found, n = [], 1
+    while n < len(levels) - 1:
+        for run in (1, 2):
+            if n + run < len(levels):
+                around = min(levels[n - 1], levels[n + run])
+                if around >= DARK_FLOOR and levels[n:n + run].max() < around / 2:
+                    found.append((n, run, float(levels[n:n + run].max()), float(levels[n - 1]), float(levels[n + run])))
+                    n += run
+                    break
+        else:
+            n += 1
+    return found
+
+
 def contact_sheet(master, out, duration):
     rows = math.ceil((int(duration * 2) + 1) / 10)
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(master), "-vf", f"fps=2,scale=216:-2,tile=10x{rows}",
@@ -221,6 +244,8 @@ def main(argv=None):
     failed = []
 
     streams, duration = probe(args.master)
+    if not any(s["codec_type"] == "video" for s in streams):
+        failed.append("no video stream")
     for s in streams:
         if s["codec_type"] == "video":
             print(f"video: {s['codec_name']} {s['width']}x{s['height']} {s.get('pix_fmt', '')} {s['r_frame_rate']} fps")
@@ -283,6 +308,13 @@ def main(argv=None):
         else:
             failed += [f"hit {r['label']} at {r['t']} s departs from the simulation" for r in rows if not r["sim_ok"]]
 
+    fps = plan.get("fps", 30)
+    dips = dark_frames(args.master)
+    for n, run, level, before, after in dips:
+        frames = f"frame {n}" if run == 1 else f"frames {n}-{n + 1}"
+        failed.append(f"{frames} ({n / fps:.3f} s) dips dark: level {level:.0f} against {before:.0f} and {after:.0f}; "
+                      "check them at full size")
+    print(f"picture: {len(dips)} dark frame dip{'' if len(dips) == 1 else 's'}")
     contact_sheet(args.master, out / "sheet_2fps.jpg", duration)
     (out / "onsets.json").write_text(json.dumps(rows, indent=1) + "\n")
     print(f"wrote {out / 'sheet_2fps.jpg'} and {out / 'onsets.json'}")

@@ -10,10 +10,15 @@ Needs numpy and ffmpeg; picture also needs Pillow.
 
 picture: the picture-pass payload for model_scenario-compose-video. Every video layer is muted,
   no audio layer goes in, compressionLevel is 15. Composed, it gives the silent master.
-  - Compose draws a layer on the frame at exactly its endTime, so every layer ends half a frame
-    before its end frame (frame 156 at 30 fps ends at 5.183 s) and never shows on the next shot.
-    An endTime from layers.json or the plan that sits on a frame time is pulled back the same way.
-    Starts stay on the frame time, rounded down to the millisecond.
+  - A video layer gets the times that show exactly its start to end frames: half a frame early in
+    (frame 0 starts on 0), a quarter frame early out (frames 170 to 240 at 30 fps: 5.65 to 7.991
+    s). A start rounded down to the millisecond can lose the clip's last frame, a black frame at a
+    hard cut. A local clip more than half a frame shorter than its window after its trims is noted,
+    since compose freezes its last frame.
+  - An image layer starts on its frame time, rounded down to the millisecond, and ends half a
+    frame before its end frame (frame 156 at 30 fps ends at 5.183 s): compose draws an image on
+    the frame at exactly its endTime.
+  - Any endTime from layers.json or the plan that sits on a frame time is pulled back half a frame.
   - Image layers appear one or two frames after their startTime; video layers appear on it. An
     image that must show on a cut's first frame starts a frame or two early, or becomes a track.
   - Compose draws an image under about 300 px on a side at the wrong scale. An image layer under
@@ -109,8 +114,32 @@ def frame_ms(n, fps):
 
 
 def frame_end(n, fps):
-    """endTime of a layer that stops before frame n: half a frame early, as compose draws a layer on its endTime."""
+    """endTime of an image layer that stops before frame n: half a frame early, as compose draws an image on its endTime."""
     return (n * 1000 // fps - round(500 / fps)) / 1000
+
+
+def video_times(first, end, fps):
+    """startTime and endTime of a video layer showing frames first to end - 1.
+
+    Compose can drop the last frame of a video layer whose start falls just before a frame, as a
+    frame time rounded down to the millisecond does (185 / 30 as 6.166): a black frame at a hard
+    cut. Half a frame early in and a quarter frame early out shows exactly these frames whichever
+    way compose rounds, and frame 0 starts on 0.
+    """
+    start = 0.0 if first == 0 else math.floor((first - 0.5) * 1000 / fps) / 1000
+    return start, math.floor((end - 0.25) * 1000 / fps) / 1000
+
+
+def video_seconds(path):
+    """Length of the first video stream: a container's own length follows its longest stream."""
+    for entry in ("stream=duration", "format=duration"):
+        out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", entry, "-of", "csv=p=0",
+                              str(path)], capture_output=True, text=True).stdout.strip()
+        try:
+            return float(out)
+        except ValueError:
+            continue
+    raise PlanError(f"ffprobe could not read the length of {path}")
 
 
 def early_end(t, fps):
@@ -286,10 +315,20 @@ def picture_payload(plan):
         else:
             if "start" not in e or "end" not in e:
                 raise PlanError(f"picture layer {i} needs start and end frames")
-            lay = {"startTime": frame_ms(e["start"], plan.fps), "endTime": frame_ms(e["end"], plan.fps)}
+            if extra.get("type") == "video":
+                start, end = video_times(e["start"], e["end"], plan.fps)
+            else:
+                start, end = frame_ms(e["start"], plan.fps), frame_ms(e["end"], plan.fps)
+            lay = {"startTime": start, "endTime": end}
             source = e.get("source")
             if extra.get("type") == "video":
                 lay.update({"x": "0", "y": "0", "width": str(plan.canvas[0]), "height": str(plan.canvas[1]), "fit": "cover"})
+                if "file" in e and plan.file(e["file"]).is_file():
+                    have = video_seconds(plan.file(e["file"])) - extra.get("trimStart", 0) - extra.get("trimEnd", 0)
+                    need = (e["end"] - e["start"]) / plan.fps
+                    if have < need - 0.5 / plan.fps:
+                        notes.append(f"layer {i}: {e['file']} has {have:.3f} s after its trims for a {need:.3f} s "
+                                     "window; compose freezes its last frame for the rest: shorten the window")
             elif extra.get("type") == "image":
                 sized = "width" in extra or "height" in extra
                 if not sized and "file" not in e:

@@ -48,7 +48,8 @@ card from one ad to the next.
   floor chamber, the miner in a locked cell beside it, an empty cart at the exit. One golden pin
   floors each top chamber, and a fourth locks the cell. Nothing solid sits between a pin and the
   chamber below it: say so in the prompt, since boards drew a stone band there. No pipes or bends:
-  the model routes contents outside a pipe. Keep the top 15% free for the HUD and hook.
+  the model routes contents outside a pipe. Keep the top third free: the platform band, then the HUD
+  and the hook.
 - **Build**: chained stages. One state still per step, each edited from the last: the board, the
   lava set to stone, the gold in the cart, the miner in the cart. Each take is pinned from one state
   to the next with one visible move. The fail take starts from the board.

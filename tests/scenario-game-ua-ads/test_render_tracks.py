@@ -1,9 +1,11 @@
 """render_tracks.py: frame timing, crop boxes, alpha, fresh renders, safe zone, and element geometry."""
 
 import json
+import math
 import shutil
 import tempfile
 import unittest
+from fractions import Fraction
 from pathlib import Path
 
 import numpy as np
@@ -41,7 +43,38 @@ class Case(unittest.TestCase):
         return json.loads((self.dir / "out/layers.json").read_text())["layers"], result
 
 
+def drawn(start, end, fps):
+    """Frames compose shows for a video layer, as measured: ceil((end - start) * fps) of them from the
+    frame holding start, less any before start."""
+    start, end = Fraction(str(start)), Fraction(str(end))
+    first = math.floor(start * fps)
+    return [n for n in range(first, first + math.ceil((end - start) * fps)) if Fraction(n, fps) >= start]
+
+
+def drawn_on_time(start, end, fps):
+    """The same layer where compose shows every frame whose time lies within [start, end], as a newer
+    build of its video stack did locally: video_times must hold under both."""
+    start, end = Fraction(str(start)), Fraction(str(end))
+    return [n for n in range(math.floor(end * fps) + 1) if start <= Fraction(n, fps) <= end]
+
+
 class TimingTests(unittest.TestCase):
+    def test_video_times_match_the_times_compose_showed_frame_exact(self):
+        self.assertEqual(rt.video_times(0, 40, 30), (0.0, 1.325))
+        self.assertEqual(rt.video_times(30, 70, 30), (0.983, 2.325))
+        self.assertEqual(rt.video_times(31, 71, 30), (1.016, 2.358))
+        self.assertEqual(rt.video_times(170, 240, 30), (5.65, 7.991))
+
+    def test_video_times_show_every_planned_frame_and_no_other(self):
+        for fps in (24, 25, 30, 60):
+            for first in range(200):
+                for end in (first + 1, first + 2, first + 37, first + 90):
+                    times = rt.video_times(first, end, fps)
+                    for model in (drawn, drawn_on_time):
+                        self.assertEqual(model(*times, fps), list(range(first, end)), (model.__name__, fps, first, end))
+        # The times used before: a start rounded down to the millisecond lost the last frame.
+        self.assertEqual(drawn(rt.floor_ms(170, 30), rt.end_ms(240, 30), 30), list(range(170, 239)))
+
     def test_frame_times_floor_to_the_millisecond(self):
         self.assertEqual(rt.floor_ms(185, 30), 6.166)
         self.assertEqual(rt.floor_ms(3, 30), 0.1)
@@ -140,8 +173,10 @@ class GeometryTests(Case):
                                       "frame": 10, "until": 40}])
         pop = layers["pop"]
         self.assertEqual(pop["frames"], [10, 15])
-        # The still starts on frame 15; the pop ends half a frame before it, so no frame shows both or neither.
-        self.assertEqual((pop["layer"]["endTime"], pop["still"]["startTime"], pop["still"]["endTime"]), (0.483, 0.5, 1.316))
+        # The pop shows frames 10 to 14 and the still (an image, on its frame time) starts on 15: no frame
+        # shows both or neither.
+        self.assertEqual(drawn(pop["layer"]["startTime"], pop["layer"]["endTime"], 30), list(range(10, 15)))
+        self.assertEqual((pop["still"]["startTime"], pop["still"]["endTime"]), (0.5, 1.316))
         # 40x30 is padded to 304 a side, kept inside the 240x400 canvas where it can be, the icon still at 100,150.
         self.assertEqual([pop["still"][k] for k in ("source", "x", "y", "width", "height")],
                          ["pop_still.png", "0", "13", "304", "304"])
@@ -298,10 +333,10 @@ class EncodeTests(Case):
         helpers.rect_png(self.dir / "c.png", CANVAS, (41, 51, 61, 63))
         return [{"type": "counter", "name": "counter", "values": ["c.png"], "steps": [], "start": start, "end": end}]
 
-    def test_layer_is_floored_and_cropped_to_the_even_box(self):
+    def test_layer_times_show_its_frames_and_it_is_cropped_to_the_even_box(self):
         layers, _ = self.render_cli(self.counter(185, 298))
         lay = layers["counter"]["layer"]
-        self.assertEqual((lay["startTime"], lay["endTime"]), (6.166, 9.916))
+        self.assertEqual((lay["startTime"], lay["endTime"]), rt.video_times(185, 298, 30))
         self.assertEqual([lay[k] for k in ("x", "y", "width", "height")], ["40", "50", "22", "14"])
         self.assertEqual((lay["type"], lay["fit"], lay["mute"], lay["source"]), ("video", "fill", True, "counter.mov"))
 
@@ -369,8 +404,8 @@ class EncodeTests(Case):
         stream = helpers.video_stream(self.dir / "out/rays.mp4")
         self.assertEqual((stream["codec_name"], stream["pix_fmt"], int(stream["nb_read_frames"])), ("h264", "yuv420p", 6))
         lay = layers["rays"]["layer"]
-        self.assertEqual((lay["fit"], lay["width"], lay["height"], lay["startTime"], lay["endTime"]),
-                         ("cover", "240", "400", 1.0, 1.183))
+        self.assertEqual((lay["fit"], lay["width"], lay["height"]), ("cover", "240", "400"))
+        self.assertEqual((lay["startTime"], lay["endTime"]), rt.video_times(30, 36, 30))
 
     def test_missing_key_fails_with_the_element_name(self):
         helpers.write_json(self.dir / "spec.json", {"canvas": CANVAS, "elements": [{"type": "burst", "name": "boom", "frame": 3}]})

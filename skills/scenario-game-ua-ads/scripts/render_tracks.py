@@ -4,9 +4,10 @@
 Usage: python3 render_tracks.py spec.json OUTDIR [--only NAME ...]
 
 Each element becomes OUTDIR/<name>.mov, cropped to the box it moves in, and gets an entry in
-OUTDIR/layers.json: a compose layer with string x, y, width, height, fit "fill", mute true, a
-startTime floored to the millisecond from its first frame, and an endTime half a frame before its
-end frame, since compose draws a layer on the frame at exactly its endTime. Its "source" is the
+OUTDIR/layers.json: a compose layer with string x, y, width, height, fit "fill", mute true, and
+the times that make compose show exactly its frames (video_times: half a frame early in, a quarter
+frame early out). An icon_pop still is an image layer: it starts on its frame time rounded down
+and ends half a frame before its end frame. Its "source" is the
 file name until the upload: build_passes.py maps it to the asset id. --only re-renders the named
 elements, keeps the entries of the other elements in the spec, and drops entries of elements no
 longer in it. An element whose file is byte-identical to an earlier one (taps with the same
@@ -110,8 +111,20 @@ def floor_ms(frame, fps):
 
 
 def end_ms(frame, fps):
-    """endTime of a layer that stops before frame: half a frame early, as compose draws a layer on its endTime."""
+    """endTime of an image layer that stops before frame: half a frame early, as compose draws an image on its endTime."""
     return (frame * 1000 // fps - round(500 / fps)) / 1000
+
+
+def video_times(first, end, fps):
+    """startTime and endTime of a video layer showing frames first to end - 1.
+
+    Compose can drop the last frame of a video layer whose start falls just before a frame, as a
+    frame time rounded down to the millisecond does (185 / 30 as 6.166): a black frame at a hard
+    cut. Half a frame early in and a quarter frame early out shows exactly these frames whichever
+    way compose rounds, and frame 0 starts on 0.
+    """
+    start = 0.0 if first == 0 else math.floor((first - 0.5) * 1000 / fps) / 1000
+    return start, math.floor((end - 0.25) * 1000 / fps) / 1000
 
 
 def ease_out(u):
@@ -918,9 +931,9 @@ def encode_track(name, first, frames, ctx, outdir, qscale=None):
             cmd += ["-qscale:v", str(qscale)]
         subprocess.run(cmd + [str(tmp / "out.mov")], check=True)
         shutil.move(tmp / "out.mov", outdir / f"{name}.mov")
+    start, end = video_times(first, first + len(frames), ctx.fps)
     return {"type": "video", "source": f"{name}.mov", "x": str(x0), "y": str(y0), "width": str(w), "height": str(h),
-            "fit": "fill", "mute": True, "startTime": floor_ms(first, ctx.fps),
-            "endTime": end_ms(first + len(frames), ctx.fps)}
+            "fit": "fill", "mute": True, "startTime": start, "endTime": end}
 
 
 def render_rays(el, ctx, outdir):
@@ -945,10 +958,10 @@ def render_rays(el, ctx, outdir):
         if enc.wait():
             raise SpecError(f"{name}: ffmpeg failed")
         shutil.move(out, outdir / f"{name}.mp4")
+    start, end = video_times(el["start"], el["end"], ctx.fps)
     return {"file": f"{name}.mp4", "frames": [el["start"], el["end"]],
             "layer": {"type": "video", "source": f"{name}.mp4", "x": "0", "y": "0", "width": str(W),
-                      "height": str(H), "fit": "cover", "mute": True, "startTime": floor_ms(el["start"], ctx.fps),
-                      "endTime": end_ms(el["end"], ctx.fps)}}
+                      "height": str(H), "fit": "cover", "mute": True, "startTime": start, "endTime": end}}
 
 
 def build(el, ctx, outdir):

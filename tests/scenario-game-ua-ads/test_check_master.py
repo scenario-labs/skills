@@ -118,6 +118,27 @@ class ReportTests(unittest.TestCase):
         self.assertEqual([p.name for p in (self.dir / "deliver").iterdir()], ["master.mov"])
 
 
+@unittest.skipUnless(helpers.HAS_FFMPEG, "needs ffmpeg")
+class DarkFrameTests(unittest.TestCase):
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.dir)
+
+    def test_a_short_dip_between_shots_fails_and_a_fade_or_a_dip_in_a_dim_shot_passes(self):
+        level = lambda v: np.full((112, 64, 3), v, np.uint8)
+        frames = ([level(120)] * 20 + [level(0)] + [level(110)] * 20 + [level(25)] * 2 + [level(110)] * 10
+                  + [level(v) for v in range(110, 0, -11)] + [level(5)] * 10 + [level(14)] + [level(5)] * 5
+                  + [level(20)] * 5 + [level(2)] + [level(20)] * 5)
+        master = helpers.encode(self.dir / "master.mp4", frames, crf=10)
+        dips = cm.dark_frames(master)
+        self.assertEqual([(n, run) for n, run, *_ in dips], [(20, 1), (41, 2)])
+        helpers.write_json(self.dir / "cues.json", {"fps": 30, "cues": []})
+        result = helpers.run("check_master.py", master, self.dir / "cues.json", "-o", self.dir / "qa")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("frame 20 (0.667 s) dips dark", result.stderr)
+        self.assertIn("frames 41-42 (1.367 s) dips dark", result.stderr)
+
+
 class CompareTests(unittest.TestCase):
     def test_the_master_is_aligned_and_judged_after_its_overall_gain(self):
         rng = np.random.default_rng(0)

@@ -25,7 +25,7 @@ config.json (paths relative to it):
   pixels, 0 for hard.
 - gain: an optional per-channel tone match, measured, never guessed.
 - start and end: optional frames the layer covers, written into the layer. Its endTime is half a
-  frame before the end frame, since compose draws a layer on the frame at exactly its endTime.
+  frame before the end frame, since compose draws an image layer on the frame at exactly its endTime.
 - checks: frames written back as <name>_patched.png for full-resolution review.
 - takes: every take the patch covers. Per take it prints the largest share of patch pixels that
   change by more than 40 levels against the take's first frame (anything moving through the box

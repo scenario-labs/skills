@@ -69,7 +69,7 @@ With footage, its own beats replace this split ([inputs](references/inputs.md)).
   hook just below it, every key action in the safe middle. Overlays with text and every tap target
   (a pin ring, a lever) stay in the safe zone, clear of TikTok's right rail: measure the targets on
   the board still before any take.
-- Several placements: one board per ratio and one assembly run each, from the same plan.
+- Several placements: one board and one assembly run per ratio, from the same plan.
 
 ## Make the viewer want to play
 
@@ -85,7 +85,7 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
   width or more, with a trail when it moves fast. A growing subject follows a size curve planned per
   beat, and the camera pulls back so it stays about a third of the frame.
 - Escalate: each beat bigger or faster than the last, a near-fail, one clever move nobody expected,
-  then the biggest moment near the end of gameplay.
+  then the biggest moment near gameplay's end.
 - Never simplify the mechanic until the model cannot break it. Build a rich one in chained stages:
   one state still per step, each edited from the last, each take pinned from one state to the next
   with one visible move. Or script it from cut pieces (below).
@@ -113,8 +113,7 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
     take's last frame. Pinning also locks the camera. Edits can change pixels outside the mask:
     paste only the masked region onto the source.
   - A precise move a model cannot do cleanly (a two-piece swap, a free drop) is built as layers from
-    the still; the model animates only the consequence. Video members lower a block onto a stack
-    instead of dropping it.
+    the still; the model animates only the consequence.
   - A barrier drawn locally over a generated take (a drawn line, a patch) gets a mask check inside
     it on every frame: bees sat inside a drawn dome for 74 frames.
   - A board whose every move must be exact (tile match, sort, merge, screw puzzle) is scripted
@@ -147,11 +146,13 @@ The agent runs these locally with Python 3.11+, Pillow 13, numpy 2, and ffmpeg. 
 plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` lists its fields.
 
 - [render_tracks.py](scripts/render_tracks.py): renders the hand, counters, rewards, bursts, and
-  stars as cropped ProRes 4444 tracks, plus `layers.json` with floored times and safe-zone warnings.
+  stars as cropped ProRes 4444 tracks, plus `layers.json` with compose-exact times and safe-zone
+  warnings.
 - [build_passes.py](scripts/build_passes.py): `simulate` mixes the cue sheet locally and prints
   loudness, true peak, and each hit's margin; `picture` and `sound` write the two compose payloads.
 - [check_master.py](scripts/check_master.py): on the downloaded master, checks canvas, length,
-  loudness, true peak, a 2 fps sheet, and each hit's onset (`--sim` reads them against the mix).
+  loudness, true peak, dark frames, a 2 fps sheet, and each hit's onset (`--sim` reads them against
+  the mix).
 - [put_parts.py](scripts/put_parts.py): PUTs a file to the signed S3 part URLs `upload_asset`
   returned and prints what `upload_asset_complete` needs.
 - [check_take.py](scripts/check_take.py): the logic checks on each take before assembly; `motion`
@@ -184,7 +185,7 @@ plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` 
 6. Picture pass: `build_passes.py picture` lays the takes at their `startTime`s, `fit: "cover"`,
    `mute: true`, overlays above, `durationMode: "custom"`, `duration: 15`.
 7. Sound pass on the silent master: hits on each pull, the melt, the steam, the coins, each counter
-   step, the leap, and the end card; the bed with its lift on the steam. Run `simulate` first and
+   step, the leap, and the end card; the bed with its lift on the payoff. Run `simulate` first and
    trim until the peak sits near -1.8 dBTP.
 8. Check: `check_master.py --sim`, then the reject list on one tiled crop sheet per action.
 
@@ -207,7 +208,8 @@ plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` 
   wide.
 - A black frame at a cut: the end card starts exactly when the last clip ends, with no fade.
 - An end card another game could carry: the same layout and "PLAY NOW" from ad to ad.
-- The board shifting between takes, or pieces warping near a take's end: trim earlier.
+- The board shifting between takes, or pieces warping near a take's end: trim earlier, and prompt
+  pinned takes to settle a second early (steam gone, pieces still).
 - An event with no hit, a hit more than 0.1 s off its frame, a quiet first second, or a peak above
   -1 dBTP.
 - A counter step, reward, burst, or star with no event on screen to cause it.
