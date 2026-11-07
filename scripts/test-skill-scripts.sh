@@ -27,11 +27,16 @@ COVERAGE_PY="coverage>=7.10"
 # (numpy 2.5 needs 3.12), so everything uv runs uses this version.
 TEST_PYTHON=3.12
 
-# The interpreter uv runs, pinned by path: uv otherwise prefers an active conda
-# or virtual environment, whose packages leak into the suite, and `--system`
-# skips them. With no such Python installed, uv downloads TEST_PYTHON.
+# The interpreter uv runs, always pinned by path: given a bare version, uv
+# prefers an active conda or virtual environment of that version, whose
+# packages leak into the suite, and `--system` skips them. With no such Python
+# installed, uv installs TEST_PYTHON first; failing that, the run fails.
 uv_python() {
-  uv python find --system "$TEST_PYTHON" 2>/dev/null || echo "$TEST_PYTHON"
+  uv python find --system "$TEST_PYTHON" 2>/dev/null && return
+  uv python install --quiet "$TEST_PYTHON" >&2 &&
+    uv python find --system "$TEST_PYTHON" && return
+  echo "uv could not provide Python ${TEST_PYTHON}" >&2
+  return 1
 }
 [ -z "$coverage" ] || rm -rf coverage
 
@@ -87,8 +92,11 @@ for dir in tests/*/; do
     [ -z "$coverage" ] || with+=(--with "$COVERAGE_PY")
     if [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] &&
       [ "${#with[@]}" -gt 0 ] && command -v uv >/dev/null; then
-      python=(uv run --quiet --no-project --python "$(uv_python)"
-      "${with[@]}" python)
+      py=$(uv_python) || {
+        fail=1
+        continue
+      }
+      python=(uv run --quiet --no-project --python "$py" "${with[@]}" python)
     fi
     # No -t: hyphenated skill names are not importable as packages, so each
     # suite directory is its own top level and modules load as bare names.
@@ -125,8 +133,8 @@ if [ -n "$coverage" ] && compgen -G 'coverage/.coverage.*' >/dev/null; then
   echo "== python coverage =="
   report=(python3)
   if [ "${SKILLS_TEST_USE_SYSTEM_PYTHON:-}" != 1 ] && command -v uv >/dev/null; then
-    report=(uv run --quiet --no-project --python "$(uv_python)"
-    --with "$COVERAGE_PY" python)
+    py=$(uv_python) || exit 1
+    report=(uv run --quiet --no-project --python "$py" --with "$COVERAGE_PY" python)
   fi
   report+=(-m coverage)
   "${report[@]}" combine --rcfile=.coveragerc -q &&
