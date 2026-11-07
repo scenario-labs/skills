@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.61.0](https://github.com/scenario-labs/skills/compare/skills-v0.60.1...skills-v0.61.0) (2026-11-07)
+
+
+### Features
+
+* **scenario-blender-blockout:** add a bicycle kind and a rider recipe ([#315](https://github.com/scenario-labs/skills/issues/315)) ([d12e237](https://github.com/scenario-labs/skills/commit/d12e237c7fbdb5ac15024252af0b4b327997f770))
+* **scenario-kinetic-music-video:** gate renders on per-section dynamism ([#336](https://github.com/scenario-labs/skills/issues/336)) ([e7e19d5](https://github.com/scenario-labs/skills/commit/e7e19d5f7cf14f3b84a16a261dfb6f77724bd637))
+* **scenario-playable-ads:** add playable ads skill ([#354](https://github.com/scenario-labs/skills/issues/354)) ([754d1ce](https://github.com/scenario-labs/skills/commit/754d1ceea270f1bf59651671b3471f385a5a80f9))
+
+
+### Bug Fixes
+
+* **scenario-blender-blockout:** a brief's shot count overrides shots ([#383](https://github.com/scenario-labs/skills/issues/383)) ([bf08a74](https://github.com/scenario-labs/skills/commit/bf08a746530ea87b160ee9555a36b008d59cc8bc)), closes [#305](https://github.com/scenario-labs/skills/issues/305)
+* **scenario-blender-blockout:** use K.REAR_RED for rear markers in example 2 ([#306](https://github.com/scenario-labs/skills/issues/306)) ([#377](https://github.com/scenario-labs/skills/issues/377)) ([f97b34e](https://github.com/scenario-labs/skills/commit/f97b34e726356b80f55666ea696cde36a3c9fa5c))
+* **scenario-blender-expert:** count parts that cross face to face as touching ([#345](https://github.com/scenario-labs/skills/issues/345)) ([3590932](https://github.com/scenario-labs/skills/commit/3590932e327a4dd1f52d606576b5006b313002f9))
+* **scenario-workflow-authoring:** document the sticky note data contract ([#374](https://github.com/scenario-labs/skills/issues/374)) ([dc7b262](https://github.com/scenario-labs/skills/commit/dc7b262a20666a20285955b7f5f0faf63f305c8a))
+* **skills:** close the file handles skill scripts left open ([#368](https://github.com/scenario-labs/skills/issues/368)) ([340a715](https://github.com/scenario-labs/skills/commit/340a715e3424c54b46a799980ee80f3075530fea))
+
+
+### Documentation
+
+* **docs:** require Node 22.18 and document Windows symlinks ([#361](https://github.com/scenario-labs/skills/issues/361)) ([3f397a5](https://github.com/scenario-labs/skills/commit/3f397a5abb4da500da3d9c8c7b60a7e603429c0b))
+* **scenario:** stop calling asset_download write-class ([#341](https://github.com/scenario-labs/skills/issues/341)) ([5d68b48](https://github.com/scenario-labs/skills/commit/5d68b48b70db3388e1ac3e064810d72d8fc3f7ac))
+
 ## [0.60.1](https://github.com/scenario-labs/skills/compare/skills-v0.60.0...skills-v0.60.1) (2026-10-29)
 
 
