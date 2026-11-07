@@ -435,10 +435,11 @@ describe("--qa", () => {
     clip("matrix-only.mp4", 0.5, 48, "colorspace=bt709");
     clip("near-jump.mp4", 0.48, 48);
     clip("near-close.mp4", 0.495, 48);
+    const literal = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     for (const [name, flags, verdict, code] of cases) {
       const r = await main(["--qa", ...flags, path.join(tmp, name)]);
       expect(r.out, name).toMatch(
-        new RegExp(`^${name}: .* -> ${verdict.replace(/[?()]/g, "\\$&")}$`),
+        new RegExp(`^${literal(name)}: .* -> ${literal(verdict)}$`),
       );
       expect(r.code, name).toBe(code);
     }
