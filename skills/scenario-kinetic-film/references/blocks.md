@@ -198,9 +198,9 @@ window and lands on its first frame as the window fills the screen.
 - It punches in on every word and hard-cuts in to details: `cutIns: [[beat, scale, [fx, fy], cue]]`,
   positions 0 to 1 of the image. A cut-in's cue plays at a fixed level: a hit that needs its own
   level goes in `spec.cues` (`[beat, name, gain]`) instead, since `spec.sounds` raises every use.
-- A weather layer rides over it: `rain`, `snow`, `dust`, or `null`. Only `rain` keeps the picture
-  moving between words. Under the others, put a word or a cut-in on every beat: two words and one
-  cut-in over 8 beats held 0.88 s under `snow` or `dust` and failed `finish.py`.
+- A weather layer rides over it: `rain`, `snow`, `dust` (the default), or `null`. Only `rain` keeps
+  the picture moving between words. Under the others, put a word or a cut-in on every beat: two
+  words and one cut-in over 8 beats held 0.88 s under `snow` or `dust` and failed `finish.py`.
 - `tint` darkens it for type. `x`/`y` place the words (off center when a face is in the middle).
 - Use images at least 2048 px wide. Cut-ins above 1.7x look soft at 4K.
 

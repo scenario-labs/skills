@@ -40,8 +40,10 @@ with `asset_download` (no `format` for audio), then measure:
 - It prints the tempo, the first strong downbeat (`offset`), downbeats, drop candidates, and
   `grid_strength`. Each drop gives how much louder the music gets (`rise`) and its film beat from
   that offset.
-- Pick the take with the clearest grid and the biggest rise. That take's biggest rise is its drop:
-  each rise compares the bar after a downbeat with the bar before it.
+- Pick the take with the clearest grid and the biggest rise. Each rise compares the bar after a
+  downbeat with the bar before it, so the biggest rise is the likeliest drop, not a certain one.
+- Rises within about 10% of each other are a tie the tool cannot break. Take the one that matches
+  the intro length the music prompt asked for, or use both when the track has two drops.
 - Choose `music.offset` so the drop lands on the beat you planned:
   `offset = drop_seconds - planned_drop_beat * 60 / bpm`, and check it is one of the listed
   downbeats.
@@ -49,6 +51,8 @@ with `asset_download` (no `format` for audio), then measure:
   1080p check render, with sound, before the 4K master.
 - `--window` fits only the stretch the film uses: generated music can drift, and the film only needs
   that stretch to be exact. Without `--bpm` the fit can lock to half or two thirds of the tempo.
+- When the window and the whole track disagree, trust the window: on one take the whole-track grid
+  sat 2.5 beats off both drops.
 - `music.stopBeat` cuts the music dead on a beat (the logo hit); without it the music fades at the
   end.
 - `music.gain` (dB, default -3.5) sets the bed under the effects.
