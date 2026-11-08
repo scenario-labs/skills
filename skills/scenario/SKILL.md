@@ -39,13 +39,13 @@ Two tool kinds:
 ## Scope first
 
 - Resolve scope first, then pass `team_id` and `project_id` on every call.
-- `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`, so it
-  cannot come first.
+- A team is the organization, the company or studio account; its projects sit inside it. "My
+  organization" or "my studio" names the team.
+- `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`.
 - Confirm the pair with the user: a guess writes into someone else's project. Unattended, take the
   pair from the task; if it names none, stop and list the choices.
-- The server fills scope only for read-only tools with one candidate. Otherwise it fails, naming the
-  wrong half.
-- Scope omissions commonly fail when a second team or project becomes available.
+- The server fills scope only for read-only tools with one candidate, so an omission fails once a
+  second team or project appears. The error names the wrong half.
 
 ## Quick reference
 

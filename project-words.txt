@@ -180,6 +180,7 @@ ARPPU
 ARPU
 ARVID
 ASIS
+ASMR
 ASTC
 ASWF
 AZERTY
@@ -980,6 +981,7 @@ dval
 dynamesh
 dynres
 dyntopo
+ebur
 edemaistre
 elttob
 emissives
@@ -996,6 +998,7 @@ ffprobe
 floreo
 fract
 frontalis
+gacha
 gdext
 gdshader
 gdshaderinc
@@ -1126,6 +1129,7 @@ pano
 pcall
 pdftoppm
 pheomelanin
+phonk
 pixol
 pixols
 pluggnsb
@@ -1247,6 +1251,7 @@ tappable
 texel
 texturer
 theodox
+thock
 thresholded
 ticka
 toon
@@ -1369,6 +1374,7 @@ xgen
 xhigh
 xpcall
 xxxhdpi
+yuva
 zbrush
 zmodeler
 zremesh
