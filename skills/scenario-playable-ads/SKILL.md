@@ -224,7 +224,8 @@ the game contract: [references/qa-checks.md](references/qa-checks.md).
 - **Paying for sound variants.** A rising or alternate version of a sound is the same take played at
   another `rate` (`PA.audio.play(name, vol, rate)`), not a new job. Generate one take per event
   group, and a second only for a take you reject: the archetype tables' "2 takes each" records past
-  builds, not a target. `dry_run` the whole sound set and state its total before launching it.
+  builds, not a target. `dry_run` each sound payload and state the sum before launching any
+  (unattended: launch only within a stated budget, else report and stop).
 - **Hard-coded near-fail text,** which lies to players who lost by a lot.
 - **Copying recording glitches or platform UI,** or baked HUD numbers. Redraw numbers live.
 - **Cutting a sheet by grid math.** Sprites cross the cells: use `"blob": n` and check `--blobs`.
