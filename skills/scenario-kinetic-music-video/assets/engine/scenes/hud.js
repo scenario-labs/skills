@@ -237,6 +237,9 @@ function drawSub(c, E, t, H, dark, ink, bar) {
     lineLead: 0.25,
     tail: 0.35,
     maxW,
+    // drawText sets globalAlpha outright, so the words need the HUD's alpha passed; not `fade`, which
+    // drawKaraoke's own line fade (lineLead, tail) already applies
+    alpha: H.alpha,
   });
   c.restore();
 }

@@ -67,10 +67,10 @@ class PureTest(unittest.TestCase):
         pentagon = np.int32(np.stack([160 + 70 * np.cos(a), 90 + 70 * np.sin(a)], 1))
         self.assertIsNone(rs.find_screen(stack_with(lambda f, v: cv2.fillPoly(f, [pentagon], (v,) * 3)), 320, 180))
 
-    @unittest.expectedFailure  # bug: on a 45-degree diamond, argmin ties give TL and TR the same point and drop one
     def test_a_diamond_keeps_four_distinct_corners(self):
         q = rs.order([[50, 0], [100, 50], [50, 100], [0, 50]])
         self.assertEqual(len({tuple(p) for p in q.tolist()}), 4)
+        self.assertEqual(q.tolist(), [[50, 0], [100, 50], [50, 100], [0, 50]])  # clockwise from the top
 
     def test_a_check_image_under_a_file_is_bad_input(self):
         with tempfile.TemporaryDirectory() as tmp:

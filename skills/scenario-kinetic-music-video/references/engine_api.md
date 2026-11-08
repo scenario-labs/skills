@@ -132,6 +132,8 @@ unreadable value stops the render with an error.
     and washes the whole frame gray. Go higher only for a deliberate glow.
 - **Type**
   - `E.drawText(ctx, text, x, y, {font, size, weight, stretch:'125%'|'extra-condensed'…, tracking(em), color, alpha, align, s|sx|sy, rot, skewX, stroke, strokeOnly, glow, italic})`.
+    `alpha` replaces the context's `globalAlpha` rather than multiplying it, so pass a fade as
+    `alpha`.
   - `E.measure(ctx, text, o)`.
   - `E.drawStagger(ctx, text, x, y, t, s, {stagger, dy, spring, e})`.
   - `E.drawKaraoke(ctx, E, line, t, {x, y, size, align, font, litColor, dimColor, maxW})`: `maxW`
