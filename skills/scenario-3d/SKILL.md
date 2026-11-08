@@ -44,13 +44,12 @@ proceed from tool schemas and flag the gap.
    `prompt`, then `model_schema_get` and `model_run`. Prompt a single centered subject on a plain
    background. Show a non-biped creature at eye level, from the side or three-quarters, every leg
    visible and clear of the body: top-down hides leg undersides and body height. A biped headed for
-   a rig takes the pose in Rigging and animation. If the user has a reference, `upload_asset` it
-   (plus `upload_asset_complete` when multipart) and pass that asset ID instead. Keep a reference on
-   a plain background as is, and prefer it to a busy shot: removal keeps a glossy subject's
-   reflections of the scene, which image-to-3D bakes into the texture. Remove a busy one's
-   background first (`recommend` the removal) and pass that output's id instead. An isolated subject
-   matters, a transparent cutout does not; an image field's `background_note`, when present, says
-   the same.
+   a rig takes the pose in Rigging and animation. Upload a user's reference with `upload_asset` and
+   pass its asset ID instead. Keep a reference on a plain background as is, and prefer it to a busy
+   shot: removal keeps a glossy subject's reflections of the scene, which image-to-3D bakes into the
+   texture. Remove a busy one's background first (`recommend` the removal) and pass that output's id
+   instead. An isolated subject matters, a transparent cutout does not; an image field's
+   `background_note`, when present, says the same.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
    the Hunyuan 3D, Meshy, Tripo, and Trellis families, and Scenario's own LLM-based 3D generation:
    GPT-6 Astra 3D and Claude Opus 5.5 3D (the cheaper at authoring time; compare both with
@@ -85,9 +84,8 @@ proceed from tool schemas and flag the gap.
 5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
    Omit `format` when `asset_get` shows `properties.format` `glb`: it returns the stored original
    byte for byte. `format` converts to `glb`, `fbx`, or `obj`; pass `glb` for the LLM-based members,
-   which store a Blender file. On a stored GLB, `format: "glb"` re-exports it as a different file.
-   Ask for `fbx` for a Unity project without a glTF importer, and keep the GLB too: at authoring
-   time the FBX embedded only two images, so it may miss PBR maps.
+   which store a Blender file. Ask for `fbx` for a Unity project without a glTF importer, and keep
+   the GLB too: at authoring time the FBX embedded only two images, so it may miss PBR maps.
 
 **Prompt-only build.** Both LLM-based members support `txt23d`. When the user wants no concept to
 approve, skip step 1. In step 2, `recommend` with `capability="txt23d"` and the user's words as
@@ -111,9 +109,11 @@ before promising a look. Authoring-time examples from the Tripo members:
 - `delight` strips lighting baked into the reference so the mesh relights in the engine. It
   defaulted to on; turn it off only when painted shading is the art style. The export stays a lit
   material either way: for no relighting at all, the user sets an unlit shader on import.
-- `pbr`, on by default, ignored the texture parameters per its description. A requested texture
-  setting holds only with `pbr: false` there: read that description on the chosen member and say
-  which won.
+- `pbr`: the P2 generators defaulted it off (on forces texturing, billed as such); the 3.1
+  generators and the texturing member defaulted it on, then ignored the texture parameters. Read its
+  description and say which won.
+- No Tripo member exposed symmetry: a result unlike the vendor's own app may come from an app-only
+  setting.
 - Geometry and texture take separate seeds (`seed`, `textureSeed`): hold `seed` and the image, vary
   `textureSeed` for texture variants on one shape.
 - `autoSize` scales the output to real-world meters and defaulted to off: set `true` for a

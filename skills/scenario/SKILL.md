@@ -41,13 +41,13 @@ Two tool kinds:
 ## Scope first
 
 - Resolve scope first, then pass `team_id` and `project_id` on every call.
-- `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`, so it
-  cannot come first.
+- A team is the organization, the company or studio account; its projects sit inside it. "My
+  organization" or "my studio" names the team.
+- `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`.
 - Confirm the pair with the user: a guess writes into someone else's project. Unattended, take the
   pair from the task; if it names none, stop and list the choices.
-- The server fills scope only for read-only tools with one candidate. Otherwise it fails, naming the
-  wrong half.
-- Scope omissions commonly fail when a second team or project becomes available.
+- The server fills scope only for read-only tools with one candidate, so an omission fails once a
+  second team or project appears. The error names the wrong half.
 
 ## Quick reference
 
@@ -77,10 +77,11 @@ Two tool kinds:
 Generating a stylized game prop image:
 
 1. Discover the model:
-   - `recommend` with the user's own words as `prompt` for a capability.
-   - `search` with `target="models"`, `query="<model name>"`, `public=true` for a known name. It
-     ranks by keyword and its `filters` hold no capability key, so a capability-worded query can
-     rank the wrong output type first.
+   - `recommend` with the user's own words as `prompt` for a capability. Unscoped, it ranks models
+     the team cannot run.
+   - `search` requires `target` (`models`, `assets`, `workflows`); for a known name:
+     `target="models"`, `query="<model name>"`, `public=true`. It ranks by keyword and its `filters`
+     hold no capability key, so a capability-worded query can rank the wrong output type first.
    - The user's own trained models: omit `public` on `search` (it has no private flag); pass
      `include_private_models: true` on `recommend`.
    - Re-discover ids each time: availability differs per team.
@@ -130,8 +131,8 @@ Local inputs go up with `upload_asset`:
 - Always `file_name`, `content_type`, and `kind` (`image`, `audio`, `video`, `3d`), plus exactly one
   of `file_size` or `data`. Without either it fails with
   `Either 'file_size' … or 'data' is required`.
-- Prefer `file_size`, the exact byte count read from disk, and omit `data`. The reply carries
-  presigned part URLs and `instructions`.
+- Prefer `file_size` (exact bytes on disk) and omit `data`; the reply carries presigned part URLs
+  and `instructions`.
 - PUT each part's raw bytes to its URL with no added headers: a checksum header makes the store
   answer 403. Check every PUT returned 200, then `upload_asset_complete` with the `upload_id`.
 - Inline base64 `data` only under 100KB, and only when no shell can PUT parts. It returns the asset
@@ -151,8 +152,7 @@ Local inputs go up with `upload_asset`:
     `upload_asset` and raw PUTs. Never re-complete the same `upload_id`.
 - A phone's HEIC photo uploads as is (`content_type: "image/heic"`): do not convert it.
   `Unhandled image format` lists what `kind: "image"` accepts; convert any other type locally.
-- A host with no shell cannot PUT parts. The user uploads at app.scenario.com and the agent
-  continues from the asset id.
+- Without a shell, the user uploads at app.scenario.com; continue from the asset id.
 
 Filing is part of delivering, not a tidy-up:
 

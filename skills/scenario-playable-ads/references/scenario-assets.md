@@ -70,7 +70,7 @@ Connection, uploads and the core loop are in the `scenario` skill. For each asse
 | Clean render for 3D               | `img2img`    | 1024 x 1024, one object, plain mid-gray background                                |
 | 3D model                          | `img23d`     | low poly; see [3d-games.md](3d-games.md)                                          |
 | Seamless texture                  | `txt2img`    | 1024 x 1024, tiles in both directions                                             |
-| SFX                               | `txt2audio`  | 0.3 to 2.5 s, one take each                                                       |
+| SFX                               | `txt2audio`  | 0.3 to 2.5 s, one take per event group; vary pitch with `rate`, not a new take    |
 | Music                             | `txt2audio`  | 30 s instrumental loop                                                            |
 
 Detail per lane: `scenario-image` (edits, references), `scenario-game-assets` (sheets, cut-outs),
