@@ -45,11 +45,11 @@ or ask. Unattended with no ceiling, stop at the plan and estimate.
 | 1. Plan     | Ratio, safe zones, second-by-second timeline ([concepts](references/concepts.md)) |                                          |
 | 2. Board    | One text-free still per mechanic at the delivery ratio, from the user's material  | `scenario-game-assets`, `scenario-image` |
 | 3. Clips    | Final-quality takes from the still, or cuts of the user's footage                 | `scenario-video`, `scenario-seedance`    |
-| 4. Logic    | Per take: timing sheet, one crop sheet per action, end frames, motion check       |                                          |
+| 4. Logic    | Per take: timing, action crops, end frames, motion                                |                                          |
 | 5. UI       | Hook, HUD, hand, bursts, effects, end card ([ui](references/ui-layers.md))        | `scenario-text-overlay`                  |
 | 6. Assemble | One timeline at the exact length and canvas                                       | `scenario-video-assembly`                |
 | 7. Sound    | A hit on every event, a separate music bed, mixed in assembly                     | `scenario-audio`                         |
-| 8. Check    | Probe, levels, a 2 fps sheet, then the reject list                                |                                          |
+| 8. Check    | Probe, levels, a 2 fps sheet, the reject list                                     |                                          |
 
 ## Length and format
 
@@ -68,7 +68,7 @@ With footage, its own beats replace this split ([inputs](references/inputs.md)).
 - Plan the board still in the placement's bands: background only under the platform UI, the HUD and
   hook just below it, every key action in the safe middle. Overlays with text and every tap target
   (a pin ring, a lever) stay in the safe zone, clear of TikTok's right rail: measure the targets on
-  the board still before any take.
+  the board still before any take, and regenerate a board that misses.
 - Several placements: one board and one assembly run per ratio, from the same plan.
 
 ## Make the viewer want to play
@@ -102,7 +102,7 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
   Cut on a burst word.
 - One locked camera per take, at final quality. No push-in over a busy board: pipes, gates, and
   slots warp. Ask for a longer take and keep the clean first part.
-- The game logic must hold, because players spot a cheat at once:
+- The game logic must hold; players spot a cheat at once:
   - Video models ignore barriers: lava and coins flow through a closed pin. Design one visible move
     per path, with no pin, gate, or wall the take does not open.
   - Prefer straight drops and straight lanes. A pipe or a bend invites a shortcut outside it.
@@ -110,15 +110,16 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
     Collectibles in one line make the swipe pointless.
   - Name every barrier's state in the prompt ("coins stay inside the glass") and what stays still.
   - A fixed end state is its own still, edited from the board with the same counts, pinned as the
-    take's last frame. Pinning also locks the camera. Edits can change pixels outside the mask:
-    paste only the masked region onto the source.
+    take's last frame. Pinning also locks the camera. Mask only what changes: a prop inside the mask
+    can be redrawn. An edit can also change pixels outside it: paste only the masked region onto the
+    source.
   - A precise move a model cannot do cleanly (a two-piece swap, a free drop) is built as layers from
     the still; the model animates only the consequence.
   - A barrier drawn locally over a generated take (a drawn line, a patch) gets a mask check inside
     it on every frame: bees sat inside a drawn dome for 74 frames.
   - A board whose every move must be exact (tile match, sort, merge, screw puzzle) is scripted
     whole: cut the pieces from the board still or the user's screenshot and animate them as layers.
-    The rules stay exact, and a video model adds only ambient motion behind them.
+    A video model adds only ambient motion behind them.
 - Assembly runs on `model_scenario-compose-video`, Scenario's one deterministic compositor, so its
   id is fixed (confirm with `search`).
 - Anything that moves on the UI layer is one transparent ProRes 4444 `.mov`, cropped to its motion
@@ -175,15 +176,15 @@ plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` 
    Then `jobs_wait` every job id, retrying `pending_job_ids`; a `parallel-custom-jobs` 429 created
    no job: relaunch it after the wave (`scenario`).
 4. Logic, with `check_take.py` on each take, never frame by frame: `sheet` for timing;
-   `action --at 4.5 --box 270 600 540 540` tiles eight native-resolution crops of the water hitting
-   the lava; `ends` for counts; `motion --allow` the chamber boxes flags anything else moving.
-   Nothing passes a closed pin or the glass, steam included.
+   `action --at 4.5 --box 270 600 540 540` tiles crops of the water hitting the lava; `ends` for
+   counts; `motion --allow` the chamber boxes flags anything else moving. Nothing passes a closed
+   pin or the glass, steam included.
 5. UI with `scenario-text-overlay`: hook, level badge, counter values, FAIL, RESCUED!. The end card:
    the full cart rolls in with the icon on its side, the next miner locked behind, under a "FREE HIM
    NEXT" label. `render_tracks.py` renders the hand on each ring, coins flying to the counter, and
    the stars.
-6. Picture pass: `build_passes.py picture` lays the takes at their `startTime`s, `fit: "cover"`,
-   `mute: true`, overlays above, `durationMode: "custom"`, `duration: 15`.
+6. Picture pass: `build_passes.py picture` lays the takes at their frame times, muted, overlays
+   above, 15 s long.
 7. Sound pass on the silent master: hits on each pull, the melt, the steam, the coins, each counter
    step, the leap, and the end card; the bed with its lift on the payoff. Run `simulate` first and
    trim until the peak sits near -1.8 dBTP.
@@ -201,7 +202,7 @@ plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` 
   screen.
 - A win that leaves a piece on the board ("cleared" with one car still parked), even half under the
   HUD.
-- A timer or meter that runs faster than real seconds.
+- A timer or meter faster than real seconds.
 - A character or item off-model against the user's assets, or a board that no longer matches their
   screenshots.
 - UI outside the placement's safe zone, overlapping elements, or HUD digits under 72 px on 1080
