@@ -38,14 +38,14 @@ Element types, required keys first, defaults in parentheses:
                last key. The glove may leave the safe zone, but a press is warned where it touches
                down outside the text zone (clear of the right rail), and a held press where it
                lifts, unless safe is "none".
-  counter      values [PNG per value, null for an empty state], steps [frame of each new value],
-               start, end; at ([0, 0], top-left of every PNG), bump (1.12), bump_s (0.15), glow
-               ("#FFFFFF", null for none), bumps (a bumped PNG per value, drawn as given instead of
-               scaling). A pop that would leave the safe zone is shifted inside it; layers.json
-               then gives "bump_shift", and the note gives where the counter must sit for a
-               centered pop
-  progress     box [x, y, w, h], fractions [one per value], steps, start, end; colors {rim, track,
-               fill_top, fill_bottom}, fill_s (0.27)
+  counter      values [PNG per value, null for an empty state], steps [frame of each value after
+               the first], start, end; at ([0, 0], top-left of every PNG), bump (1.12), bump_s
+               (0.15), glow ("#FFFFFF", null for none), bumps (a bumped PNG per value, drawn as given
+               instead of scaling). A pop that would leave the safe zone is shifted inside it;
+               layers.json then gives "bump_shift", and the note gives where the counter must sit
+               for a centered pop
+  progress     box [x, y, w, h], fractions [one per value], steps [frame of each fraction after the
+               first], start, end; colors {rim, track, fill_top, fill_bottom}, fill_s (0.27)
   floater      png, events [[frame, cx, cy], ...]; rise (120), dur_s (0.6). Two floaters that meet
                on screen, in one element or across elements, are warned
   fly_to_hud   icon, frame, from [x, y], to [x, y]; count (3), icon_px (120), flight_s (0.4),
