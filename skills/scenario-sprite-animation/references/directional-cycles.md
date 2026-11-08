@@ -103,10 +103,12 @@ screen for each facing.
    clips rather than stretching them. Seam scores (seam over motion baseline): under 0.5 is clean,
    0.5 to 0.8 check the GIF, over 0.8 on walk or run usually means the stride outgrew the search
    window, so widen that hero's `ranges` before regenerating (one heavy character went from 1.08 to
-   0.29). Idle often scores near 1.0 on tiny motion; accept it after a look. A key warning means the
-   backdrop drifted off the key color and stayed in the frame: regenerate that clip. A size warning
-   means the figure walked toward or away from the camera during the clip: one shared scale would
-   ship that row too big or too small, so regenerate that clip rather than widening its range.
+   0.29). Idle often scores near 1.0 on tiny motion; accept it after a look. A no-motion warning
+   means the model returned a still: its loop scores 1.0 even on idle, so regenerate it. A key
+   warning means the backdrop drifted off the key color and stayed in the frame: regenerate that
+   clip. A size warning means the figure walked toward or away from the camera during the clip: one
+   shared scale would ship that row too big or too small, so regenerate that clip rather than
+   widening its range.
 6. Deliver. `upload_asset` each sheet and preview GIF and add them to the collection. `upload_asset`
    takes images, video, audio and 3D only, so `meta.json` ships beside the sheets rather than in the
    collection. `meta.json` carries what an engine needs: `cell` [w, h], `rows` (row order, SE, SW,
