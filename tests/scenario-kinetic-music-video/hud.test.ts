@@ -470,6 +470,17 @@ describe("subtitles", () => {
     expect((await frame({}, t)).karaoke).toEqual([]);
   });
 
+  it("dims the words with the scene's HUD alpha, not only the bar", async () => {
+    const { karaoke } = await frame({}, 1.5, { hud: { alpha: 0.4 } });
+    expect(karaoke[0].alpha).toBeCloseTo(0.4);
+    expect(karaoke[0].o.alpha).toBeCloseTo(0.4);
+  });
+
+  it("leaves the line fade to drawKaraoke, so the words do not fade twice", async () => {
+    const { karaoke } = await frame({}, 0.79);
+    expect(karaoke[0].o.alpha).toBe(1);
+  });
+
   it("stays off when the scene shows the lyric itself", async () => {
     expect((await frame({}, 1.5, { hud: { sub: false } })).karaoke).toEqual([]);
   });
