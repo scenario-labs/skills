@@ -109,9 +109,9 @@ before promising a look. Authoring-time examples from the Tripo members:
 - `delight` strips lighting baked into the reference so the mesh relights in the engine. It
   defaulted to on; turn it off only when painted shading is the art style. The export stays a lit
   material either way: for no relighting at all, the user sets an unlit shader on import.
-- `pbr`: the P2 generators defaulted it off (on forces texturing, billed as such); the texturing
-  member defaulted it on and then ignored the texture parameters. Read its description and say which
-  won.
+- `pbr`: the P2 generators defaulted it off (on forces texturing, billed as such); the 3.1
+  generators and the texturing member defaulted it on, then ignored the texture parameters. Read its
+  description and say which won.
 - No Tripo member exposed symmetry: a result unlike the vendor's own app may come from an app-only
   setting.
 - Geometry and texture take separate seeds (`seed`, `textureSeed`): hold `seed` and the image, vary
