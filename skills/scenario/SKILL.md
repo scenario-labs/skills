@@ -172,8 +172,10 @@ Uploading and filing alone are not publication.
 ## Errors and recovery
 
 - **`context_missing`**: nothing resolved. `teams_list`, `projects_list` if necessary.
-- **`context_ambiguous`**: several fit. Present the options; the user picks (unattended: the task
-  names the pair, else stop and list).
+- **`context_ambiguous`**: scope omitted. Write-class tools (`search`, `model_run`, uploads) never
+  fill it. Unattended, use the task's pair, else stop and list.
+  - The reply names one pair ("Resolved for you"): confirm, retry with both ids; no lookup.
+  - It lists several: the user picks.
 - **403 Forbidden**: usually wrong scope, not missing; re-check the id pair. A private asset input
   reads only from its own project:
   - ask which project holds it (unattended: the task names it, else stop);
@@ -211,17 +213,17 @@ Uploading and filing alone are not publication.
 - **Other 429, including an unfamiliar `actionName`**: never infer its behavior from the name.
   Report it and run `diagnostics_run` in the same scope before choosing a recovery.
 - **Transport error on `model_run` (no HTTP status)**: the request may still have landed. Run
-  `jobs_list` before any re-run, or a lost response becomes a double charge. A `dry_run` creates no
-  job and always retries safely.
-- **400 `Cannot cancel this type of job`**: a launched job is committed spend. `job_cancel` rejects
-  most generation jobs, so plan batches with no abort path.
-- **404 on `asset_get`**: the id does not exist, and no retry makes it appear. Re-read `assetIds`
-  off the `jobs_wait` or `job_get` row: a guessed or mistyped id is the usual cause.
+  `jobs_list` before any re-run, or a lost response becomes a double charge. A `dry_run` retries
+  safely.
+- **400 `Cannot cancel this type of job`**: `job_cancel` rejects most generation jobs, so plan
+  batches with no abort path.
+- **404 on `asset_get`**: a guessed or mistyped id; no retry fixes it. Re-read `assetIds` off the
+  `jobs_wait` or `job_get` row.
 - **400 `At least one of query, filter, image, or images must be provided`**: `search` never lists
   bare. A newest-first asset listing is `target="assets"`, `filter="createdAt EXISTS"`,
   `sort_by=["createdAt:desc"]`.
-- **`recommend` client-side timeout**: it ranks on live data and commonly runs 30 seconds, sometimes
-  over a minute. Wait or re-call it; never fall back to `search` for a capability.
+- **`recommend` client-side timeout**: it commonly runs 30 seconds, sometimes over a minute. Wait or
+  re-call it; never fall back to `search` for a capability.
 
 ## Common mistakes
 
