@@ -39,6 +39,7 @@
         "./skills/scenario-image-editing",
         "./skills/scenario-text-overlay",
         "./skills/scenario-storyboards",
+        "./skills/scenario-comic-creator",
         "./skills/scenario-thumbnails"
       ]
     },
