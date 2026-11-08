@@ -39,13 +39,13 @@ Two tool kinds:
 ## Scope first
 
 - Resolve scope first, then pass `team_id` and `project_id` on every call.
-- `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`, so it
-  cannot come first.
+- A team is the organization, the company or studio account; its projects sit inside it. "My
+  organization" or "my studio" names the team.
+- `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`.
 - Confirm the pair with the user: a guess writes into someone else's project. Unattended, take the
   pair from the task; if it names none, stop and list the choices.
-- The server fills scope only for read-only tools with one candidate. Otherwise it fails, naming the
-  wrong half.
-- Scope omissions commonly fail when a second team or project becomes available.
+- The server fills scope only for read-only tools with one candidate, so an omission fails once a
+  second team or project appears. The error names the wrong half.
 
 ## Quick reference
 
@@ -75,10 +75,11 @@ Two tool kinds:
 Generating a stylized game prop image:
 
 1. Discover the model:
-   - `recommend` with the user's own words as `prompt` for a capability.
-   - `search` with `target="models"`, `query="<model name>"`, `public=true` for a known name. It
-     ranks by keyword and its `filters` hold no capability key, so a capability-worded query can
-     rank the wrong output type first.
+   - `recommend` with the user's own words as `prompt` for a capability. Unscoped, it ranks models
+     the team cannot run.
+   - `search` requires `target` (`models`, `assets`, `workflows`); for a known name:
+     `target="models"`, `query="<model name>"`, `public=true`. It ranks by keyword and its `filters`
+     hold no capability key, so a capability-worded query can rank the wrong output type first.
    - The user's own trained models: omit `public` on `search` (it has no private flag); pass
      `include_private_models: true` on `recommend`.
    - Re-discover ids each time: availability differs per team.
@@ -99,6 +100,8 @@ Generating a stylized game prop image:
    - Run: inline assets (`status: success`) need no wait; otherwise pass `job_id` to `jobs_wait`.
    - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
      `in-progress`, or `warming-up`. All need `jobs_wait`.
+   - A 429: stop launching and find its class under Errors and recovery before the next call.
+     Re-sending the same payload at once never clears it.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
@@ -126,8 +129,8 @@ Local inputs go up with `upload_asset`:
 - Always `file_name`, `content_type`, and `kind` (`image`, `audio`, `video`, `3d`), plus exactly one
   of `file_size` or `data`. Without either it fails with
   `Either 'file_size' … or 'data' is required`.
-- Prefer `file_size`, the exact byte count read from disk, and omit `data`. The reply carries
-  presigned part URLs and `instructions`.
+- Prefer `file_size` (exact bytes on disk) and omit `data`; the reply carries presigned part URLs
+  and `instructions`.
 - PUT each part's raw bytes to its URL with no added headers: a checksum header makes the store
   answer 403. Check every PUT returned 200, then `upload_asset_complete` with the `upload_id`.
 - Inline base64 `data` only under 100KB, and only when no shell can PUT parts. It returns the asset
@@ -147,8 +150,7 @@ Local inputs go up with `upload_asset`:
     `upload_asset` and raw PUTs. Never re-complete the same `upload_id`.
 - A phone's HEIC photo uploads as is (`content_type: "image/heic"`): do not convert it.
   `Unhandled image format` lists what `kind: "image"` accepts; convert any other type locally.
-- A host with no shell cannot PUT parts. The user uploads at app.scenario.com and the agent
-  continues from the asset id.
+- Without a shell, the user uploads at app.scenario.com; continue from the asset id.
 
 Filing is part of delivering, not a tidy-up:
 
@@ -184,7 +186,7 @@ Uploading and filing alone are not publication.
 - **429 with `details.actionName` = `parallel-custom-jobs`**: the per-team generation concurrency
   ceiling. Keep at most `actionLimit` jobs in flight: launch with `wait=false`, and retire jobs with
   `jobs_wait` before launching more. An immediate retry repeats the error.
-- **429 `custom-generation`, or naming a quota, balance, or seat limit**:
+- **429 `custom-generation`, or naming a quota, plan limit, balance, or seat limit**:
   - `actionLimit` is the period's CU allowance (Free: 50 a day), `actionValue` what is already
     consumed. A run priced above the gap is refused, so a low `actionValue` means this payload costs
     too much, not that credits ran out.

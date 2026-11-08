@@ -44,7 +44,7 @@ class BlenderPipelineTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.folder = tempfile.TemporaryDirectory()
-        cls.root = Path(cls.folder.name)
+        cls.root = Path(cls.folder.name).resolve()
         cls.common = helpers.load("common")
         cls.inventory = helpers.load("inventory")
         cls.apply_materials = helpers.load("apply_materials")

@@ -75,6 +75,13 @@ runs changed:
 - `K.vehicle`: dark red rear blocks.
 - `B.solid_view`: Material by default.
 
+The bicycle kind and `K.pedal` came from issue 304: the application tests on PR 294 had no bike
+build or rider recipe to follow. They were checked headless in Blender 5.2.1: the bike's length,
+ground contact and marked front at every fidelity and at size 0.8, the feet on the pedals every
+frame, the pelvis on the saddle and the hands on the bars for 1.75 m and 1.4 m riders, and one hero
+per ridden bike in `K.movers`. Which cast style holds a pedaling motion in a video model is not yet
+tested.
+
 The delivery gate in `bx_audit.py` was written for this repository on 2026-10-18. A comparison with
 [EL4CTEO/blender-skills](https://github.com/EL4CTEO/blender-skills) (MIT) prompted it: that
 repository's QA check catches deliverability defects (floating parts, z-fighting, inside-out parts,
@@ -110,6 +117,12 @@ collision mesh, and three.js. Its findings were fixed:
 - `collision()` caps a convex hull at `max_verts=64`; the full hull of the table had 12,270 faces;
 - `references/engines.md` quotes Epic on Auto Generate Collision with a UCX mesh and on sRGB for
   masks.
+
+On 2026-11-07 `export()` gained `skipped_settings`: a preset setting listed in `OPTIONAL` that the
+running exporter lacks is skipped and reported, and any other missing setting still raises. The
+`web` preset's meshopt option arrived with Blender 5.2, and the Scenario Blender Plugin also runs on
+5.0 and 5.1. `web` exported a cube on Blender 5.0.1 and 5.1.2 without meshopt and passed the round
+trip; on 5.2.1 it still writes `EXT_meshopt_compression`.
 
 Paths such as `tests/...` inside the references point to the test evidence on the build machine.
 They are provenance only; the skills do not need them to run.

@@ -82,6 +82,9 @@ what to avoid>". Treat this as your showreel.
   leaves the footage and becomes type, a 3D object that comes out of a 2D drawing, a match cut on
   shape, or a tile explosion.
 - Set `E.hud.theme` for your look (`'light'` on white or color frames).
+- **Cuts and motion blur:** in `load()`, register every hard switch inside your section with
+  `E.cut(t)`, and slams or whips with `E.fast` or `E.shutter` (ENGINE_API.md, Motion blur). Keep
+  `render()` free of state between calls; it runs once per blur sample.
 - **Lay out from `E.W`, `E.H` and `E.SAFE`,** never from 1920 or 1080 constants. On a portrait
   canvas, every word, logo and face stays inside `E.SAFE` (`motion_library.md` §10).
 
@@ -94,9 +97,12 @@ what to avoid>". Treat this as your showreel.
   `node tools/render.mjs --only <id>,hud --from <a> --to <b> --fps 30 --scale 0.5 --out out/<id>/preview.mp4 --force`.
 - **Perf:**
   `node tools/render.mjs --only <id> --from <a> --to <a+2> --fps 60 --scale 1 --out out/<id>/perf.mp4 --force`,
-  and read the printed fps.
+  and read the printed fps (it includes motion blur when the project has it on).
 - **Freeze check:**
   `ffmpeg -i out/<id>/preview.mp4 -vf "freezedetect=n=0.003:d=0.25" -map 0:v -f null - 2>&1 | grep freeze_`.
+- **Dynamism check:**
+  `.venv/bin/python tools/dynamism_check.py gate out/<id>/preview.mp4 --only <id> --start <a>`: your
+  section against its energy's targets and the flash limit (exit 0).
 - A process boot takes about 10 s, so batch many times into one still call. Other agents render at
   the same time, so stay at scale 0.5 except for final checks.
 
@@ -109,7 +115,7 @@ what to avoid>". Treat this as your showreel.
 3. **Onset check:** stills at `w.s + 0.03` for every hero word (legible and at its peak) and at
    `w.s − 0.10` (not fully in yet).
 4. **Preview mp4** at 30 fps with audio. Confirm the cuts land on beat frames, and run the freeze
-   check.
+   and dynamism checks.
 5. **Iterate at least 3 times on the look:**
    - Would a top motion designer repost this?
    - Is there one focal point?
@@ -126,4 +132,4 @@ what to avoid>". Treat this as your showreel.
 - What you built, moment by moment (time → visual → layer), and which footage you used.
 - Measured 1080p fps.
 - Paths to your 4 best full-res stills (`--scale 1`).
-- Engine issues, lyric-timing doubts and freeze-check results.
+- Engine issues, lyric-timing doubts, and freeze- and dynamism-check results.

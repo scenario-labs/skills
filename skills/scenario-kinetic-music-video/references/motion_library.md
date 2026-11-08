@@ -92,9 +92,11 @@ Never use the same treatment on two consecutive lines.
 
 1. **Smear Slam.** A word hits center from scale 1.6 with 3 trailing ghosts (offset −6/−12/−18% W,
    alpha .35/.2/.1) that collapse into it. 8 fr outExpo, ghosts gone by fr 6, 1 fr flash
-   `post.flash=0.08`. _Use:_ the first word of a hook line, or chant words.
+   `post.flash=0.08`. _Use:_ the first word of a hook line, or chant words. Under engine motion
+   blur, draw the ghosts only while `E.blurring` is false.
 2. **Directional Blur Slide.** Slides in from off-frame with motion blur made of 8 stacked draws at
-   1/8 alpha, spaced by `v*dt`. 6 fr outQuart. _Use:_ call-and-response words.
+   1/8 alpha, spaced by `v*dt`. 6 fr outQuart. _Use:_ call-and-response words. While `E.blurring`,
+   draw it once: the engine blurs it.
 3. **Letter Rise Stagger.** Letters rise from a baseline clip mask. 14 fr per letter outQuint,
    stagger 2 fr (1 fr for fast words). _JS:_
    `ctx.rect(0,base-cap*1.1,W,cap*1.1); ctx.clip(); y=base+cap*(1-e)`.
@@ -177,7 +179,8 @@ Never use the same treatment on two consecutive lines.
 37. **Kick Scale-Punch.** `E.post.punch = 0.035*E.pulse('kicks',t,0.09)`, plus small shake on
     snares.
 38. **Whip Pan with Smear Frame.** Exit 5 fr inQuart, 1 smear frame (a stretched copy), then entry 6
-    fr outQuart, centered on the kick.
+    fr outQuart, centered on the kick. Under motion blur, register the whip in `load()` with
+    `E.shutter(t0, t1, 2 to 3)`, and in `render()` skip the stretched copy while `E.blurring`.
 39. **HUD Frame.** Corner brackets, title, section code, bar and beat squares, a spine counter and a
     progress line, for the whole video (`scenes/hud.js`).
 40. **Chant Metronome Grid.** Each chant syllable fills the next cell of a 4×4 grid on its onset, a
@@ -263,9 +266,10 @@ Settle time is about 4/(z·√k) s.
 - **Cut discipline:** section changes on `downbeats`, word cuts on `vocal_onsets`, color flips and
   punches on `kicks`, shakes on `snares`.
 - **Cut density should climb with energy.** A shape that worked: intro and verse a cut every 2 bars
-  → pre-chorus 1 bar, then 1 beat in its last bar → drop 1 bar with beat events inside → build 1
-  beat, then a half-beat → chant a half-beat with 16th flashes. Let the bridge breathe with a long
-  held shot.
+  → pre-chorus 1 bar, then 1 beat in its last bar → drop 1 bar with beat events inside. Then build 1
+  beat, then a half-beat → chant a half-beat with 16th flashes on shapes or bands. Let the bridge
+  breathe with a long held shot. `dynamism_check.py gate` reports cuts per bar per section and warns
+  when they fall as the energy rises.
 - **Showcase moments need time.** A brand or logo reveal, a character turn or a sprite moment reads
   at 0.35-0.5× speed with few cuts. Directors rejected fast cut rates on these twice.
 - **A spine:** let the edit carry the song's meaning, with a counter, clock or countdown that
@@ -273,8 +277,11 @@ Settle time is about 4/(z·√k) s.
 
 ## 9. Safety and default bans
 
-- **Photosensitivity:** at most 3 full-frame luminance flips per second. Color-to-color flips of
-  similar luminance can run faster; keep white↔black flips to ≤ 2/s.
+- **Photosensitivity:** at most 3 full-frame flashes per second, end card included. A flash is a
+  pair of opposing changes in relative luminance (WCAG 2.x general flash: 10% or more, the darker
+  state under 0.80), so a flash in and out is one. `dynamism_check.py gate` counts them over the
+  whole video. Full-frame 16ths or 8ths at 120 BPM are 8 or 4 flashes per second. Color-to-color
+  swaps of similar luminance can run faster; keep white↔black to 1 flash per second.
 - **Banned unless the director asks:** any filter, glow, grain, outline, halftone or color change on
   generated footage; lens flares; generic HUD clutter with no meaning; "AI slop" nebula or particle
   soup; glossy Pixar-style 3D graphics; cyberpunk cyan/magenta; real people's faces; logos other

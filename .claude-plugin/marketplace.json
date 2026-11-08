@@ -59,12 +59,13 @@
         "./skills/scenario-blender",
         "./skills/scenario-patina-retexture",
         "./skills/scenario-orbit-views",
-        "./skills/scenario-walkable-room"
+        "./skills/scenario-walkable-room",
+        "./skills/scenario-playable-ads"
       ]
     },
     {
       "name": "05.-video-and-audio",
-      "description": "Video generation, editing, and color grading, seamless motion loops, music, sound effects, voice, and speech.",
+      "description": "Video generation, editing, and color grading, kinetic-type launch films, seamless motion loops, music, sound effects, voice, and speech.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -75,10 +76,12 @@
         "./skills/scenario-seedance-storyboard",
         "./skills/scenario-seedance-drafts",
         "./skills/scenario-video-ads",
+        "./skills/scenario-game-ua-ads",
         "./skills/scenario-ad-variants",
         "./skills/scenario-audio",
         "./skills/scenario-video-assembly",
         "./skills/scenario-motion-loops",
+        "./skills/scenario-kinetic-film",
         "./skills/scenario-caption-studio"
       ]
     },
