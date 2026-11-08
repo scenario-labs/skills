@@ -151,22 +151,29 @@ palette for the whole set instead:
   most-used colors across the set locally, or use the hex values the brief names. A custom palette
   restricts output to its colors, so a flash, projectile, or effect color that appears only in later
   frames must be in the list or it is remapped.
+- Cover every material, thin props included: a most-used count under-weights a staff or a buckle (a
+  wooden staff once came back gray). Check the probe frame for any part that changed color before
+  running the set.
 - Find the Pixelate tool model with `search` (`target: "models"`, `public: true`, `filters`
   `tags: ["tool"]`, `query: "pixel"`), then run it on every frame with that list as `colorPalette`
   (hex strings, an array) and one `pixelGridSize` for the set. `colorPaletteSize` is ignored once a
   palette is set.
 - The snapper has no palette field, only a count, so never ship its output alone on an animated set.
-  Order the passes: snapper for grid cleanup, rescale the snapped frames to one common size (below),
-  the shared-palette Pixelate pass on that common size, then one upscale.
-- Upscale the finished frames by one whole multiple (2x, 3x, 4x) to their delivery size: a
-  fractional factor gives pixels uneven widths that crawl as the sprite moves. The resize tool below
-  exposes no interpolation control, so check one scaled frame.
+  Run Pixelate on frames that already share one size: the sliced tiles, or the snapped frames after
+  the common-size rescale below.
+- Pick a `pixelGridSize` that divides that size evenly (128 on a 512 px tile gave exact 4x blocks).
+  Output size is not always input size: a 96 px input came back 256 px on uneven blocks. Read one
+  output's size with `asset_get` and check its blocks are whole pixels before running the set.
+- Upscale only when that output is smaller than the delivery size, by one whole multiple (2x, 3x,
+  4x): a fractional factor gives pixels uneven widths that crawl as the sprite moves. The resize
+  tool below exposes no interpolation control, so check one scaled frame.
 
 Skip the pass altogether when the frames already sit on the art's native grid. The snapper
 re-detects a grid of its own, and on frames that were already pixel-native it regridded 384x288 down
 to 69x52 and took the scene with it. Probe one frame before running the set. On emulated pixel art
-it is the right move: a 512 px tile from a general image model came back 104 px at 32 colors with
-the character intact.
+the probe decides: one 512 px tile from a general image model came back 104 px at 32 colors with the
+character intact, another collapsed to 23x23 and lost it. On a failed probe, skip the snapper and
+let the Pixelate pass set the grid.
 
 Where snapping does apply, the snapped frames land on their own native grids a few pixels apart and
 need rescaling to one common size before assembly, since padding without rescaling leaves the
