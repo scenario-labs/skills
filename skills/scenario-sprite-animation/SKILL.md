@@ -53,14 +53,14 @@ through the reference-image field; with no `seed` a re-run is a new character, s
 from the sample-count parameter and one sheet is approved before slicing. Read the delivered sheet
 before slicing: count the cells, read the cell edges, and count distinct poses, since a beat range
 naming a single end state can come back as one held pose. Then slice, seam-check the tiles per step
-5, align the body across tiles, snap every kept tile with the same seed, lock one palette across
-them (Packaging pixel frames in [references/lane-schemas.md](references/lane-schemas.md)), check
-that the snapped tiles share one size, and assemble. Alignment is a post step, not a prompt: the
-body drifts between rows (in one run the grounded feet sat 87 px higher in the last row than in the
-first, and neither anchoring language nor a layout template passed as reference image moved that),
-so measure each tile's body box, shift it onto one baseline and one horizontal center on a wider
-canvas so nothing clips, then `upload_asset` the re-laid sheet and slice it, since frames edited
-locally never become assets.
+5, align the body across tiles, snap every kept tile with the same seed, bring the snapped tiles to
+one size, lock one palette across them (Packaging pixel frames in
+[references/lane-schemas.md](references/lane-schemas.md)), and assemble. Alignment is a post step,
+not a prompt: the body drifts between rows (in one run the grounded feet sat 87 px higher in the
+last row than in the first, and neither anchoring language nor a layout template passed as reference
+image moved that), so measure each tile's body box, shift it onto one baseline and one horizontal
+center on a wider canvas so nothing clips, then `upload_asset` the re-laid sheet and slice it, since
+frames edited locally never become assets.
 
 For reusable layouts, read the [grid manifest](grid-templates.json) and
 [template usage guide](grid-templates.md). Resolve uploaded assets and publish new versions through
@@ -173,7 +173,7 @@ listings, timestamps, or `search`.
   `search` (`target: "models"`, `public: true`, `filters` `tags: ["tool"]`, `query: "pixel"` returns
   both; the descriptions tell them apart).
 - Quantizing each frame to its own colors: the cycle shimmers as shades swap between frames. Pass
-  one palette from the approved key frame to every frame
+  one palette, built from all approved frames, to every frame
   ([references/lane-schemas.md](references/lane-schemas.md)).
 - Photo upscalers on pixel frames: they invent texture; use the pixel-preserving routes in
   `scenario-game-assets`.
