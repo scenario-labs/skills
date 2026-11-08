@@ -27,10 +27,12 @@ Two tool kinds:
 - **Catalog**: the rest (collections, tagging, analysis, training, members, keys).
   - `scenario_tools_search` takes only `query` (tool name or keywords) and `limit`; returns schema
     and lane.
-  - `scenario_tool_execute_read` / `write` / `delete` runs the tool with `{name, parameters}`.
-  - Every input goes inside `parameters`, scope ids and `dry_run` included. Nearly every catalog
-    tool declares scope ids; `plan_generation` takes only `description`.
-  - Direct tools take scope, and `model_run` its `dry_run`, at top level.
+  - `scenario_tool_execute_read` / `write` / `delete` take a required `name` and `parameters`, which
+    holds every input, scope ids and `dry_run` included:
+    `{"name": "collection_add_assets", "parameters": {"team_id": "…", "project_id": "…", "collection_id": "…", "asset_ids": ["…"]}}`.
+    `plan_generation` takes only `description`.
+  - Direct tools take scope, and `model_run` its `dry_run`, at top level. Never route them through
+    an executor.
   - The executor drops a misplaced key silently: `arguments` surfaces as a false scope error, and a
     top-level `dry_run` runs the job, billed.
   - The lane is the result's own `permission`, not the verb: `asset_analyze` is write-class, since
@@ -155,11 +157,10 @@ Local inputs go up with `upload_asset`:
 Filing is part of delivering, not a tidy-up:
 
 - `collection_create` takes a name and the scope pair only. `asset_ids` sent there is silently
-  ignored, so adding is always a second call: `collection_add_assets` with `collection_id` and
-  `asset_ids`.
+  ignored, so adding is always a second call: `collection_add_assets`.
 - It accepts any number of ids, batches by 49, and skips duplicates. Results separate
   `already_present_asset_ids` from `added_asset_ids`.
-- After failure, safely resend the whole list: the error counts additions; retries add the rest.
+- After a failure, resend the whole list: duplicates are skipped.
 - Confirm from that reply: `search` `filters={"collection_ids": [...]}` lags on a fresh write.
 - `asset_add_tags` is additive, one `asset_id` per call. A tag the asset already carries returns 400
   `Duplicated tag`: read `tags` via `assets_get_bulk` first and send only the missing ones.
