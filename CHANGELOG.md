@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.61.0](https://github.com/scenario-labs/skills/compare/skills-v0.60.1...skills-v0.61.0) (2026-11-08)
+
+
+### Features
+
+* **scenario-blender-blockout:** add a bicycle kind and a rider recipe ([#315](https://github.com/scenario-labs/skills/issues/315)) ([d12e237](https://github.com/scenario-labs/skills/commit/d12e237c7fbdb5ac15024252af0b4b327997f770))
+* **scenario-comic-creator:** add comic creation skill ([#353](https://github.com/scenario-labs/skills/issues/353)) ([7cde6f7](https://github.com/scenario-labs/skills/commit/7cde6f7c8434f6468c3b3c304065a2defce97273))
+* **scenario-game-ua-ads:** add mobile game UA ad skill ([#363](https://github.com/scenario-labs/skills/issues/363)) ([f38c3e8](https://github.com/scenario-labs/skills/commit/f38c3e8995a2a31681f37ef0039435a89f54f5ef))
+* **scenario-kinetic-film:** add kinetic-type launch films and teasers ([#338](https://github.com/scenario-labs/skills/issues/338)) ([adc5af0](https://github.com/scenario-labs/skills/commit/adc5af00c86754a2afe16b7e4cc7e688f5fdab0c))
+* **scenario-kinetic-music-video:** add a 4K master and motion blur ([#337](https://github.com/scenario-labs/skills/issues/337)) ([8e63f9a](https://github.com/scenario-labs/skills/commit/8e63f9a991c41ea362e5b136f1dc11656013f543))
+* **scenario-kinetic-music-video:** gate renders on per-section dynamism ([#336](https://github.com/scenario-labs/skills/issues/336)) ([e7e19d5](https://github.com/scenario-labs/skills/commit/e7e19d5f7cf14f3b84a16a261dfb6f77724bd637))
+* **scenario-playable-ads:** add playable ads skill ([#354](https://github.com/scenario-labs/skills/issues/354)) ([754d1ce](https://github.com/scenario-labs/skills/commit/754d1ceea270f1bf59651671b3471f385a5a80f9))
+* **scenario-video-editing:** teach reworking a finished video ([#347](https://github.com/scenario-labs/skills/issues/347)) ([a4a8409](https://github.com/scenario-labs/skills/commit/a4a8409b546f03e248ac52fb98507a35864fd900))
+
+
+### Bug Fixes
+
+* **scenario-3d:** correct the Tripo pbr defaults ([#404](https://github.com/scenario-labs/skills/issues/404)) ([a8520cc](https://github.com/scenario-labs/skills/commit/a8520cc6ea6b2327a1fcaaa55c5b58b7cc30d6d0))
+* **scenario-3d:** keep plain-background references as they are ([#348](https://github.com/scenario-labs/skills/issues/348)) ([f2d38db](https://github.com/scenario-labs/skills/commit/f2d38db44e8981b89bb7784676f038348462d58f))
+* **scenario-3d:** prefer plain-background shots of glossy subjects ([#392](https://github.com/scenario-labs/skills/issues/392)) ([6a51de2](https://github.com/scenario-labs/skills/commit/6a51de2113056a5848a9157411478c37a40d40c0))
+* **scenario-admin-analytics:** guard tab and CR led CSV cells ([#397](https://github.com/scenario-labs/skills/issues/397)) ([21e1afa](https://github.com/scenario-labs/skills/commit/21e1afadbe90b59337d5982f31bbeb6891bad600))
+* **scenario-blender-blockout:** a brief's shot count overrides shots ([#383](https://github.com/scenario-labs/skills/issues/383)) ([bf08a74](https://github.com/scenario-labs/skills/commit/bf08a746530ea87b160ee9555a36b008d59cc8bc)), closes [#305](https://github.com/scenario-labs/skills/issues/305)
+* **scenario-blender-blockout:** use K.REAR_RED for rear markers in example 2 ([#306](https://github.com/scenario-labs/skills/issues/306)) ([#377](https://github.com/scenario-labs/skills/issues/377)) ([f97b34e](https://github.com/scenario-labs/skills/commit/f97b34e726356b80f55666ea696cde36a3c9fa5c))
+* **scenario-blender-expert:** count parts that cross face to face as touching ([#345](https://github.com/scenario-labs/skills/issues/345)) ([3590932](https://github.com/scenario-labs/skills/commit/3590932e327a4dd1f52d606576b5006b313002f9))
+* **scenario-blender-export:** export web without meshopt before 5.2 ([#388](https://github.com/scenario-labs/skills/issues/388)) ([202c51f](https://github.com/scenario-labs/skills/commit/202c51fcb73075030bf6b8d1a4661a6b37959f01))
+* **scenario-chatgpt-pet-create:** check pixel.json before reading it ([#398](https://github.com/scenario-labs/skills/issues/398)) ([bcd35c5](https://github.com/scenario-labs/skills/commit/bcd35c553d978cee35d31d1871a30003f82c5722))
+* **scenario-game-ua-ads:** handle off-zone tap targets and masked props ([#393](https://github.com/scenario-labs/skills/issues/393)) ([632436a](https://github.com/scenario-labs/skills/commit/632436ae44057879bbb518499df6e74b73f2dd8d))
+* **scenario-kinetic-music-video:** fade subtitle words, fix edge cases ([#395](https://github.com/scenario-labs/skills/issues/395)) ([b648ebe](https://github.com/scenario-labs/skills/commit/b648ebe8d203f2dfcc5597157d36beba7005a653))
+* **scenario-kinetic-music-video:** harden serve, render and still ([#394](https://github.com/scenario-labs/skills/issues/394)) ([efbe737](https://github.com/scenario-labs/skills/commit/efbe7370f39a380db1a381b9dd668f61584876bb))
+* **scenario-playable-ads:** end the round at the goal, fix t=0 throttle ([#396](https://github.com/scenario-labs/skills/issues/396)) ([04988b5](https://github.com/scenario-labs/skills/commit/04988b52d39ff66d6ec3b6e9a0266ebcec372378))
+* **scenario-playable-ads:** stop paying for sound variants ([#405](https://github.com/scenario-labs/skills/issues/405)) ([ac71d38](https://github.com/scenario-labs/skills/commit/ac71d383c1fe149cd78864143fca0021c24aeb80))
+* **scenario-sprite-animation:** flag frozen clips with a finite score ([#399](https://github.com/scenario-labs/skills/issues/399)) ([292e974](https://github.com/scenario-labs/skills/commit/292e97495141cc12fad74c9ea5bfd3959f70b81f))
+* **scenario-sprite-animation:** lock one palette across pixel frames ([#351](https://github.com/scenario-labs/skills/issues/351)) ([b598d94](https://github.com/scenario-labs/skills/commit/b598d949d314ffcd69f0f77055becc81fd6bf4ae))
+* **scenario-video-color-grade:** fade the end card credit in ([#400](https://github.com/scenario-labs/skills/issues/400)) ([87e8862](https://github.com/scenario-labs/skills/commit/87e886297b22d1f694da37b91d1e40836de23ed1))
+* **scenario-workflow-authoring:** document the sticky note data contract ([#374](https://github.com/scenario-labs/skills/issues/374)) ([dc7b262](https://github.com/scenario-labs/skills/commit/dc7b262a20666a20285955b7f5f0faf63f305c8a))
+* **scenario:** name the discovery arguments agents leave out ([#403](https://github.com/scenario-labs/skills/issues/403)) ([51de5d7](https://github.com/scenario-labs/skills/commit/51de5d76388327d2e31d64b184df2312131be99c))
+* **scenario:** reuse the pair a write tool's scope refusal names ([#401](https://github.com/scenario-labs/skills/issues/401)) ([d4d1800](https://github.com/scenario-labs/skills/commit/d4d180077c3463d1448f10f96dc914dcf681bb30))
+* **scenario:** say that a team is the organization when resolving scope ([#350](https://github.com/scenario-labs/skills/issues/350)) ([bac5061](https://github.com/scenario-labs/skills/commit/bac506171641271edc981dffa83d3a8a873457c1))
+* **scenario:** show the catalog executor's call shape ([#402](https://github.com/scenario-labs/skills/issues/402)) ([bc5dbb7](https://github.com/scenario-labs/skills/commit/bc5dbb7842e2ee7088ccb56a4b65df8ff2331b8a))
+* **scenario:** stop on a 429 before the next model_run ([#349](https://github.com/scenario-labs/skills/issues/349)) ([77f68b8](https://github.com/scenario-labs/skills/commit/77f68b872f6f2d0d101466c11da03549b59f8114))
+* **skills:** close the file handles skill scripts left open ([#368](https://github.com/scenario-labs/skills/issues/368)) ([340a715](https://github.com/scenario-labs/skills/commit/340a715e3424c54b46a799980ee80f3075530fea))
+
+
+### Documentation
+
+* **docs:** require Node 22.18 and document Windows symlinks ([#361](https://github.com/scenario-labs/skills/issues/361)) ([3f397a5](https://github.com/scenario-labs/skills/commit/3f397a5abb4da500da3d9c8c7b60a7e603429c0b))
+* **scenario:** stop calling asset_download write-class ([#341](https://github.com/scenario-labs/skills/issues/341)) ([5d68b48](https://github.com/scenario-labs/skills/commit/5d68b48b70db3388e1ac3e064810d72d8fc3f7ac))
+
 ## [0.60.1](https://github.com/scenario-labs/skills/compare/skills-v0.60.0...skills-v0.60.1) (2026-10-29)
 
 
