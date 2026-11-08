@@ -56,7 +56,7 @@ unattended, proceed from tool schemas and flag the gap.
 | 1. Intake   | `intake/`: recording and/or screenshots, logo, `intake.json` (store links, networks, genre) |
 | 2. Analysis | contact sheet, key frames, `analysis/brief.md` and `analysis/design.md` (beats, asset map)  |
 | 3. Assets   | plate, transparent sheets, HUD crops, logo, SFX, music in `assets/raw/`, or studio files    |
-| 4. Build    | `src/game.js` on the runtime; `assets/manifest.json`, then `prep_assets.py`                 |
+| 4. Build    | `src/game.js`; `assets/manifest.json` + `sounds` in `index.src.html`; `prep_assets.py`      |
 | 5. Package  | `build.py --networks all` (the default is `meta,google`)                                    |
 | 6. QA       | `qa.py --speed 2`, then look at every frame it writes                                       |
 | 7. Report   | `notes.md`: job ids, the source frame of every asset, tuning, open questions                |
@@ -225,7 +225,9 @@ the game contract: [references/qa-checks.md](references/qa-checks.md).
   another `rate` (`PA.audio.play(name, vol, rate)`), not a new job. Generate one take per event
   group, and a second only for a take you reject: the archetype tables' "2 takes each" records past
   builds, not a target. `dry_run` each sound payload and state the sum before launching any
-  (unattended: launch only within a stated budget, else report and stop).
+  (unattended: launch only within a stated budget, else report and stop). A variant that must not
+  share its sibling's repeat limit gets its own manifest and `sounds` entry pointing at the same raw
+  file: a new name, never a new job.
 - **Hard-coded near-fail text,** which lies to players who lost by a lot.
 - **Copying recording glitches or platform UI,** or baked HUD numbers. Redraw numbers live.
 - **Cutting a sheet by grid math.** Sprites cross the cells: use `"blob": n` and check `--blobs`.
