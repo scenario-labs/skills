@@ -279,32 +279,39 @@ describe("serve.mjs", () => {
     expect(r.body.length).toBe(0);
   });
 
-  it.fails(
-    "refuses a sibling directory whose name extends the root's (fails: the guard is a string prefix test)",
-    async () => {
-      const sibling = path.basename(SKILL) + "-old";
-      const r = await get(
-        port,
-        "/" + encodeURIComponent(`../${sibling}/secret.txt`),
-      );
-      expect(r.status).toBe(403);
-    },
-  );
+  it("refuses a sibling directory whose name extends the root's", async () => {
+    const sibling = path.basename(SKILL) + "-old";
+    const r = await get(
+      port,
+      "/" + encodeURIComponent(`../${sibling}/secret.txt`),
+    );
+    expect(r.status).toBe(403);
+    expect(r.body.length).toBe(0);
+  });
 
-  // Called directly: over a socket, the throw would be an uncaught exception that ends the test worker.
-  it.fails(
-    "answers a malformed percent-encoding with a 4xx (fails: decodeURIComponent throws inside the request handler, which ends the process)",
-    () => {
-      const handler = servers[0].listeners("request")[0] as (
-        req: unknown,
-        rsp: unknown,
-      ) => void;
-      const rsp = { writeHead: vi.fn(), end: vi.fn() };
-      expect(() => handler({ url: "/%E0%A4%A" }, rsp)).not.toThrow();
-      expect(rsp.writeHead.mock.calls[0][0]).toBeGreaterThanOrEqual(400);
-      expect(rsp.writeHead.mock.calls[0][0]).toBeLessThan(500);
-    },
-  );
+  // Called directly: over a socket, a throw would be an uncaught exception that ends the test worker.
+  it("answers a malformed percent-encoding with 400", () => {
+    const handler = servers[0].listeners("request")[0] as (
+      req: unknown,
+      rsp: unknown,
+    ) => void;
+    const rsp = { writeHead: vi.fn(), end: vi.fn() };
+    expect(() => handler({ url: "/%E0%A4%A" }, rsp)).not.toThrow();
+    expect(rsp.writeHead).toHaveBeenCalledWith(400);
+    expect(rsp.end).toHaveBeenCalledOnce();
+  });
+
+  // Called directly for the same reason: fs.stat throws synchronously on a NUL byte.
+  it("answers an encoded NUL byte with 400", () => {
+    const handler = servers[0].listeners("request")[0] as (
+      req: unknown,
+      rsp: unknown,
+    ) => void;
+    const rsp = { writeHead: vi.fn(), end: vi.fn() };
+    expect(() => handler({ url: "/SKILL.md%00.png" }, rsp)).not.toThrow();
+    expect(rsp.writeHead).toHaveBeenCalledWith(400);
+    expect(rsp.end).toHaveBeenCalledOnce();
+  });
 
   it("serves on the port given on the command line when run directly", async () => {
     await runScript("serve.mjs", ["0"], SKILL);
@@ -868,18 +875,17 @@ describe.skipIf(!hasFfmpeg)("render.mjs encoding", () => {
     expect(sei.includes("threads=4")).toBe(true);
   });
 
-  it.fails(
-    "writes an --out that is not .mp4 (fails: the chunk shares the output's path, so the cleanup deletes the output)",
-    async () => {
-      const cwd = project();
-      await runScript(
-        "render.mjs",
-        ["--to", "0.2", "--fps", "10", "--noaudio", "--out", "out/clip.mov"],
-        cwd,
-      );
-      expect(existsSync(path.join(cwd, "out/clip.mov"))).toBe(true);
-    },
-  );
+  it("writes an --out that is not .mp4, with chunks named from its stem", async () => {
+    const cwd = project();
+    await runScript(
+      "render.mjs",
+      ["--to", "0.2", "--fps", "10", "--noaudio", "--out", "out/clip.mov"],
+      cwd,
+    );
+    expect(logs).toContain("wrote out/clip.mov (2 frames)");
+    expect(probe(path.join(cwd, "out/clip.mov"))[0].nb_read_frames).toBe("2");
+    expect(existsSync(path.join(cwd, "out/clip.part0.mp4"))).toBe(false);
+  });
 });
 
 describe("still.mjs", () => {
@@ -1023,13 +1029,16 @@ describe("still.mjs", () => {
     expect(frames).toEqual([]);
   });
 
-  it.fails(
-    "reports a --sheet without the project's .venv instead of crashing (fails: spawnSync returns no stdout, so stdout.toString() throws a TypeError)",
-    async () => {
-      const cwd = mkProject();
-      await runScript("still.mjs", ["--t", "1", "--sheet", "contact"], cwd);
-    },
-  );
+  it("exits 1 naming the missing Python environment when --sheet has no .venv", async () => {
+    const cwd = mkProject();
+    await expect(
+      runScript("still.mjs", ["--t", "1", "--sheet", "contact"], cwd),
+    ).rejects.toEqual(new Exit(1));
+    expect(errors).toEqual([
+      "--sheet: cannot run .venv/bin/python (ENOENT): scaffold.sh creates the project's Python environment there. The stills are in out/stills.",
+    ]);
+    expect(existsSync(path.join(cwd, "out/stills/t_0001.00.png"))).toBe(true);
+  });
 
   it.skipIf(process.platform === "win32")(
     "builds a --sheet from this run's stills with the project's Python, filtering objc noise",
@@ -1046,6 +1055,26 @@ describe("still.mjs", () => {
       expect(sheet).toBe(
         "tools/sheet.py out/stills/contact.jpg 4 out/stills/t_0001.00.png out/stills/t_0002.00.png --force\n sheet warning\n",
       );
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "exits 1 when sheet.py fails, so an older sheet never passes for this run's",
+    async () => {
+      const cwd = mkProject();
+      mkdirSync(path.join(cwd, ".venv/bin"), { recursive: true });
+      writeFileSync(
+        path.join(cwd, ".venv/bin/python"),
+        '#!/bin/sh\necho "ZeroDivisionError" >&2\nexit 3\n',
+        { mode: 0o755 },
+      );
+      await expect(
+        runScript("still.mjs", ["--t", "1", "--sheet", "contact"], cwd),
+      ).rejects.toEqual(new Exit(1));
+      expect(errors).toEqual([
+        "--sheet: sheet.py failed (exit 3); no new sheet. The stills are in out/stills.",
+      ]);
+      expect(existsSync(path.join(cwd, "out/stills/t_0001.00.png"))).toBe(true);
     },
   );
 });
