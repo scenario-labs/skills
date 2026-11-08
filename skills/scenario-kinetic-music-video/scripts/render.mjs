@@ -164,7 +164,8 @@ await Promise.all(
     const a = f0 + i * per,
       b = Math.min(f1, a + per);
     if (a >= b) return;
-    const file = out.replace(/\.mp4$/, `.part${i}.mp4`);
+    // Built from the stem, so no --out extension can make a chunk overwrite the output.
+    const file = `${out.slice(0, out.length - path.extname(out).length)}.part${i}.mp4`;
     parts.push([i, file]);
     return inSlot(() => renderChunk(a, b, file, i));
   }),
