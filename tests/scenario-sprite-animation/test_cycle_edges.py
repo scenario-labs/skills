@@ -235,14 +235,23 @@ class SheetPickEdgeTests(unittest.TestCase):
         self.assertTrue(12 <= info["length"] <= 34)
         self.assertEqual(info["size_vs_first_frame"], 1.0)
 
-    @unittest.expectedFailure  # bug: a frozen clip scores 0/0 = NaN, so it is never flagged and meta.json gets NaN
     def test_a_frozen_clip_gets_a_finite_seam_score(self):
         still = np.zeros((240, 240, 3), np.uint8)
         still[:] = MAGENTA
         still[60:200, 100:140] = (180, 170, 150)
-        with np.errstate(invalid="ignore"):
-            (_, info), _ = self.pick("t_e_walk", "walk", [still] * 40)
+        with np.errstate(invalid="raise"):
+            (_, info), out = self.pick("t_e_walk", "walk", [still] * 40)
         self.assertTrue(math.isfinite(info["seam_over_baseline"]))
+        self.assertGreater(info["seam_over_baseline"], 0.8)      # the sheet summary flags it as a weak seam
+        self.assertEqual(info["baseline"], 0.0)
+        self.assertIn("t_e_walk: no motion in the walk clip (the video model returned a still); regenerate", out)
+
+    def test_a_frozen_stretch_never_beats_a_moving_window(self):
+        moving = [(np.zeros((4, 4, 3)), np.full((4, 4), float(i % 2))) for i in range(12)]
+        frozen = [(np.zeros((4, 4, 3)), np.zeros((4, 4)))] * 12
+        score, s, P, seam, base = self.sheets.loop_window(frozen + moving, 2, 4, first=0, min_base=0)
+        self.assertGreater(base, 0)
+        self.assertTrue(math.isfinite(score))
 
     def test_a_clip_too_short_for_any_loop_stops(self):
         with self.assertRaisesRegex(SystemExit, r"t_e_walk: clip too short to find a walk loop \(8 frames\)"):
