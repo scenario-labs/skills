@@ -221,6 +221,10 @@ the game contract: [references/qa-checks.md](references/qa-checks.md).
 - **A hint on the wrong spot.** The hand must point at a real good move from the solver or the level
   script.
 - **Chattering sounds:** a tick per coin at 10 to 25 a second. One sound per event group.
+- **Paying for sound variants.** A rising or alternate version of a sound is the same take played at
+  another `rate` (`PA.audio.play(name, vol, rate)`), not a new job. Generate one take per event
+  group, and a second only for a take you reject: the archetype tables' "2 takes each" records past
+  builds, not a target. `dry_run` the whole sound set and state its total before launching it.
 - **Hard-coded near-fail text,** which lies to players who lost by a lot.
 - **Copying recording glitches or platform UI,** or baked HUD numbers. Redraw numbers live.
 - **Cutting a sheet by grid math.** Sprites cross the cells: use `"blob": n` and check `--blobs`.
