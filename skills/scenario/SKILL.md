@@ -173,9 +173,9 @@ Uploading and filing alone are not publication.
 
 - **`context_missing`**: nothing resolved. `teams_list`, `projects_list` if necessary.
 - **`context_ambiguous`**: scope omitted. Write-class tools (`search`, `model_run`, uploads) never
-  fill it.
-  - The reply names one pair ("Resolved for you"): confirm, then retry with both ids; no lookup.
-  - It lists several: the user picks (unattended: the task's pair, else stop and list).
+  fill it. Unattended, use the task's pair, else stop and list.
+  - The reply names one pair ("Resolved for you"): confirm, retry with both ids; no lookup.
+  - It lists several: the user picks.
 - **403 Forbidden**: usually wrong scope, not missing; re-check the id pair. A private asset input
   reads only from its own project:
   - ask which project holds it (unattended: the task names it, else stop);
