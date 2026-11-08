@@ -215,8 +215,8 @@ Uploading and filing alone are not publication.
 - **Transport error on `model_run` (no HTTP status)**: the request may still have landed. Run
   `jobs_list` before any re-run, or a lost response becomes a double charge. A `dry_run` retries
   safely.
-- **400 `Cannot cancel this type of job`**: a launched job is committed spend. `job_cancel` rejects
-  most generation jobs, so plan batches with no abort path.
+- **400 `Cannot cancel this type of job`**: `job_cancel` rejects most generation jobs, so plan
+  batches with no abort path.
 - **404 on `asset_get`**: a guessed or mistyped id; no retry fixes it. Re-read `assetIds` off the
   `jobs_wait` or `job_get` row.
 - **400 `At least one of query, filter, image, or images must be provided`**: `search` never lists
