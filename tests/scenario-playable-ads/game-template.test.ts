@@ -305,12 +305,12 @@ describe("boot and wait", () => {
 
   it("pops the hook in and loops the hand on the highest on-screen piece", () => {
     let hud = frame().hud;
-    expect(hud.some((c) => c.k === "text" && c.a[1] === "POP 40 IN 34S!")).toBe(
+    expect(hud.some((c) => c.k === "text" && c.a[1] === "POP 40 IN 40S!")).toBe(
       false,
     );
     step(0.6);
     hud = frame().hud;
-    expect(hud.some((c) => c.k === "text" && c.a[1] === "POP 40 IN 34S!")).toBe(
+    expect(hud.some((c) => c.k === "text" && c.a[1] === "POP 40 IN 40S!")).toBe(
       true,
     );
     const hands = hud.filter((c) => c.k === "hintHand");
@@ -385,9 +385,9 @@ describe("first touch and popping", () => {
     expect(s.progress).toBe(1);
     const pieces = drawnPieces();
     expect(pieces[0].y).toBeCloseTo(470 - 205, 3);
-    // one spawn at once, then every 0.55 s: the second one has risen for about 0.45 s
+    // one spawn at once, then every 0.9 s: the second one has risen for about 0.1 s
     expect(pieces).toHaveLength(7);
-    expect(Math.abs(pieces[6].y - (1280 + 80 - 205 * 0.45))).toBeLessThan(
+    expect(Math.abs(pieces[6].y - (1280 + 80 - 205 * 0.1))).toBeLessThan(
       205 * STEP + 0.5,
     );
   });
@@ -406,7 +406,7 @@ describe("first touch and popping", () => {
     tap(6, 576);
     step(0.4);
     const { log, hud } = frame();
-    expect(hud.some((c) => c.k === "text" && c.a[1] === "POP 40 IN 34S!")).toBe(
+    expect(hud.some((c) => c.k === "text" && c.a[1] === "POP 40 IN 40S!")).toBe(
       false,
     );
     expect(log.find((c) => c.k === "=globalAlpha")?.a[0]).toBe(1);
@@ -420,9 +420,9 @@ describe("first touch and popping", () => {
     tap(360, 470);
     let texts = frame().hud.filter((c) => c.k === "text");
     expect(texts.map((c) => c.a[1])).toEqual(
-      expect.arrayContaining(["1 / 40", "0:34"]),
+      expect.arrayContaining(["1 / 40", "0:40"]),
     );
-    step(28.5);
+    step(34.5);
     texts = frame().hud.filter((c) => c.k === "text");
     expect(texts.find((c) => c.a[1] === "0:06")?.a[4]).toMatchObject({
       color: "#fff",
@@ -555,9 +555,9 @@ describe("endings", () => {
     expect(event("endcard").data).toEqual({ result: "close" });
   });
 
-  it("ends at the round timer, 34 s after the first touch", () => {
+  it("ends at the round timer, 40 s after the first touch", () => {
     tap(6, 576);
-    step(33.9);
+    step(39.9);
     expect(game.qa().phase).toBe("play");
     step(0.15);
     expect(game.qa().phase).toBe("result");
@@ -617,12 +617,29 @@ describe("endings", () => {
     });
   });
 
-  // SKILL.md and the file header list the goal as one of three endings; the template only ends on
-  // the round timer or idle, so a player at 40 pops keeps playing until 34 s.
-  it.fails("ends the round as soon as the goal is reached", () => {
+  it("ends the round as soon as the goal is reached", () => {
     while (game.qa().score < 40) popOne();
     step(STEP);
     expect(game.qa().phase).toBe("result");
+  });
+
+  // qa.py's active_length check wants the good bot's end card at 33 to 52 s; the end card follows
+  // the result by 3 s, so a goal reached too early fails the template's own QA run
+  it("paces the goal so a player who pops every piece wins late in the round", () => {
+    tap(6, 576);
+    let last = 0;
+    while (game.qa().phase === "play") {
+      const s = game.qa();
+      if (s.t - last >= 0.3 && s.pieces.length) {
+        last = s.t;
+        const p = s.pieces.reduce((a: any, b: any) => (b.y < a.y ? b : a));
+        tap(p.x, p.y);
+      }
+      step(0.04);
+    }
+    expect(event("result").data).toMatchObject({ result: "win", why: "goal" });
+    expect(game.qa().t).toBeGreaterThan(30);
+    expect(game.qa().t).toBeLessThan(36);
   });
 
   it("ignores taps and freezes play once the round is over", () => {
@@ -678,10 +695,10 @@ describe("qa snapshot", () => {
   it("lists only pieces inside the playable band", () => {
     tap(6, 576);
     step(1.2);
-    // drawn: the first piece at 224 (above the band), two spawns below 1160; qa adds 0.03 s of rise
+    // drawn: the first piece at 224 (above the band), one spawn below 1160; qa adds 0.03 s of rise
     const drawn = drawnPieces().map((p) => p.y);
     expect(drawn.some((y) => Math.abs(y - 224) < 1)).toBe(true);
-    expect(drawn.filter((y) => y > 1160)).toHaveLength(2);
+    expect(drawn.filter((y) => y > 1160)).toHaveLength(1);
     const ys = game.qa().pieces.map((p: any) => p.y + 205 * 0.03);
     const want = [384, 544, 704, 864, 1114];
     expect(ys).toHaveLength(want.length);
