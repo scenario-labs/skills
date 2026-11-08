@@ -120,10 +120,15 @@ class EndCardTests(unittest.TestCase):
         self.assertGreater(frames[30][self.H // 2 - 30].max(), 200)  # the logo, fully in
         self.assertLessEqual(np.abs(frames[-1].astype(int) - BG).max(), 6)
 
-    @unittest.expectedFailure  # bug: text drawn on the RGBA card ignores its alpha once converted to RGB
     def test_credit_fades_in_with_the_logo(self):
         first = list(showreel.endcard(self.W, self.H, 40, None, "Made by Test Studio"))[0]
         self.assertTrue((first == BG).all())
+
+    def test_credit_is_partly_in_halfway_through_its_fade(self):
+        frames = list(showreel.endcard(self.W, self.H, 60, None, "Made by Test Studio"))
+        mid, full = (int(frames[i].max()) for i in (15, 30))
+        self.assertGreater(mid, BG.max() + 20)
+        self.assertLess(mid, full - 40)
 
     def test_credit_centers_on_a_solid_logo(self):
         center = self.credit_center(self.frames(gap=False)[30])
