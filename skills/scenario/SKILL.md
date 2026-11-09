@@ -77,8 +77,8 @@ Two tool kinds:
 Generating a stylized game prop image:
 
 1. Discover the model:
-   - `recommend` with the user's own words as `prompt` for a capability. Unscoped, it ranks models
-     the team cannot run.
+   - `recommend` for a capability, the user's own words as `prompt` (never `query`). Unscoped, it
+     ranks models the team cannot run.
    - `search` requires `target` (`models`, `assets`, `workflows`); for a known name:
      `target="models"`, `query="<model name>"`, `public=true`. It ranks by keyword and its `filters`
      hold no capability key, so a capability-worded query can rank the wrong output type first.
@@ -223,10 +223,10 @@ Uploading and filing alone are not publication.
 - **400 `At least one of query, filter, image, or images must be provided`**: `search` never lists
   bare. A newest-first asset listing is `target="assets"`, `filter="createdAt EXISTS"`,
   `sort_by=["createdAt:desc"]`.
-- **`recommend` client-side timeout**: it commonly runs 30 seconds, sometimes over a minute. Wait or
-  re-call it; never fall back to `search` for a capability.
-- **`recommend`: `Provide a prompt describing the task…`**: re-send the need as `prompt` (plus
-  `capability` when known). Other keys, `search`'s `query` included, are silently dropped.
+- **`recommend` client-side timeout**: it commonly runs 30 seconds to over a minute. Wait or re-call
+  it; never fall back to `search` for a capability.
+- **`recommend`: `Provide a prompt describing the task…`**: re-send the need as `prompt`, not
+  `query` or another key (silently dropped), plus `capability` when known.
 
 ## Common mistakes
 
