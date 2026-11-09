@@ -76,7 +76,7 @@ Verify with a free call: "List my Scenario teams" should return `teams_list` out
     server, whatever the sign-in screen said.
   - URL correct but tools missing: check Tool permissions (below) for Blocked before removing
     anything.
-  - Only a wrong URL needs the connector removed, then added again with that URL: Claude edits no
+  - URL wrong: remove the connector and add it again with the correct URL, since Claude edits no
     saved connector URL.
   - Free, Pro or Max: the user does this under Customize, Connectors.
   - Team or Enterprise: a member cannot change an organization connector. An owner removes and
