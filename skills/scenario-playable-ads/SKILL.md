@@ -28,13 +28,13 @@ network takes, and a bundle of all of them. A build ships only when it passes th
 plus the per-network checks.
 
 **What was tested.** The scripts pass 67 of 67 checks on the template's placeholder game inside fake
-containers in headless Chromium (an earlier version: 64 of 64 on a copy of one game). On 2 November
-2026 that game also passed AppLovin's playable preview (portrait), Google's HTML5 validator (App
-Campaigns profile) and Meta's playable preview (spec checks and the CTA tap). Google's Campaign
-Manager and Display & Video 360 reject the `google` ZIP, which needs a `clickTag` there. No other
-network's own tool was run. Run each network's preview first, and say which tools ran when you hand
-a build over ([references/networks.md](references/networks.md)). Each archetype guide comes from one
-build that passed the 19 base checks.
+containers in headless Chromium. On 2 November 2026 that game also passed AppLovin's playable
+preview (portrait), Google's HTML5 validator (App Campaigns profile) and Meta's playable preview
+(spec checks and the CTA tap). Google's Campaign Manager and Display & Video 360 reject the `google`
+ZIP, which needs a `clickTag` there. No other network's own tool was run. Run each network's preview
+first, and say which tools ran when you hand a build over
+([references/networks.md](references/networks.md)). Each archetype guide comes from one build that
+passed the 19 base checks.
 
 Requirements: a local shell, Python 3.12 or later with Pillow, numpy, scipy, fontTools and brotli;
 Playwright for Python with Chromium; ffmpeg. Install with
@@ -108,19 +108,21 @@ Never call those built.
 - The paragraph is the brief (`game_description`) and plays the recording's role. A genre the user
   named answers the genre question.
 - Build only what the brief and the genre guide state; motion and timing come from that guide.
-- Make two portrait concept screens, the calm first screen and the big moment, through the
-  `scenario` skill's loop (`recommend` for text-to-image). State the `dry_run` price first;
-  unattended, run them only within a stated budget, else report and stop. They serve as the
-  screenshots ([references/scenario-assets.md](references/scenario-assets.md)).
+- After the genre answer, make two portrait concept screens, the calm first screen and the big
+  moment, through the `scenario` skill's loop (`recommend` with `txt2img`). State the `dry_run`
+  price first; unattended, run them only within a stated budget, else report and stop. They serve as
+  the screenshots ([references/scenario-assets.md](references/scenario-assets.md)).
 - Unattended with no paragraph, stop and report what is missing.
-- Hand the build over as a concept, not their game, in the reply and `notes.md`.
+- Hand the build over as a concept, not their game, in the reply and `notes.md`. Store links stay
+  placeholders until sent.
 
 ## Two questions before generating anything
 
 Answer both in `analysis/brief.md`.
 
-1. **Which genre is it?** Watch the recording first (contact sheet and key frames). Then ask the
-   user one question with these options:
+1. **Which genre is it?** Watch the recording first (contact sheet and key frames). From an idea,
+   read the brief wherever this step says the recording. Then ask the user one question with these
+   options:
    - the two genres from [references/genres.md](references/genres.md) that fit best, each with a
      one-line reason from the recording (what the finger does, the most satisfying moment);
    - "I don't know, you choose": pick the best fit and say why in one line;
@@ -129,12 +131,12 @@ Answer both in `analysis/brief.md`.
    Record the answer in `intake.json`. Classify from the recording, not the label, and state your
    confidence. No guide, a hybrid, or a game too big for one verb: follow
    [references/unknown-genre.md](references/unknown-genre.md). Never invent a mechanic the recording
-   does not show (from an idea: the brief).
+   does not show.
 
 2. **Why would someone install after playing?** Plan the levers from
    [references/make-them-install.md](references/make-them-install.md): a first touch that pays off
-   at once, visible growth, one real choice, a tease from the recording, a cliffhanger ending with
-   the player's own state on the end card.
+   at once, visible growth, one real choice, a tease from the recording or the brief, a cliffhanger
+   ending with the player's own state on the end card.
 
 ## Decision points
 

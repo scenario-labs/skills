@@ -2,9 +2,9 @@
 
 Every asset in a playable comes from what the user supplied: a gameplay recording, screenshots, a
 logo, a font, store links, and any art, 3D, sound or music the studio already has
-([existing-assets.md](existing-assets.md)). With none of these, it comes from the user's
-one-paragraph brief. Scenario rebuilds what the frames show at full detail; it never invents the
-game.
+([existing-assets.md](existing-assets.md)). With no recording or screenshots, it comes from the
+user's one-paragraph brief. Scenario rebuilds what the frames show at full detail; it never invents
+the game.
 
 ## Inputs
 
@@ -25,17 +25,17 @@ game.
 The brief is one paragraph: the world, what the finger does, the big moment, how a round ends. It
 plays the recording's role.
 
-- Make two portrait concept screens from it: the calm first screen (the waiting state, the target
-  visible) and the big moment (the signature payoff).
-- Use the `scenario` skill's loop: `recommend` for text-to-image, `model_schema_get`, `dry_run`,
-  then `model_run` and `jobs_wait`. Unattended, run them only within a stated budget, else report
-  the price and stop.
-- Keep the two in one world: when the chosen model takes a reference image, pass the first screen
-  for the second.
+- After the genre answer, make two portrait concept screens from it: the calm first screen (the
+  waiting state, the target visible) and the big moment (the signature payoff).
+- Generate them like any other asset (see Generating with Scenario, the concept-screens row).
+  Unattended, run them only within a stated budget, else report the price and stop.
 - They then serve as the screenshots: plate, sprites and HUD come from them, motion and timing from
   the genre guide.
+- They are already Scenario assets: skip the contact sheet and the upload. Their source labels in
+  the asset map are `concept 1` and `concept 2`.
 - Build only what the brief and the genre guide state. A mechanic neither names stays out.
 - In `analysis/brief.md` and `notes.md`, call the build a concept, not the user's game.
+- Store links stay placeholders until the user sends them. List that first in `notes.md`.
 
 ## Rights and source check
 
@@ -45,7 +45,7 @@ Answer these at the top of `analysis/brief.md` before using any frame:
   confirm they own or license the game. Write the answer, or "not confirmed".
 - Unattended, write "not confirmed", build, and open `notes.md` with it: the build is a test until
   the user confirms the rights.
-- From an idea, write "concept, no existing game": every asset is generated for this build.
+- From an idea, write "concept, no existing game". Supplied files still need the answer below.
 - **Supplied files** need the same answer, and a license for the game does not always cover ads
   ([existing-assets.md](existing-assets.md), section 7).
 - **First-party capture or third-party video?** A video found online is a reference only. Ask for a
@@ -84,6 +84,7 @@ Connection, uploads and the core loop are in the `scenario` skill. For each asse
 
 | Asset                             | `capability` | Settings that worked                                                              |
 | --------------------------------- | ------------ | --------------------------------------------------------------------------------- |
+| Concept screens, idea only        | `txt2img`    | portrait 9:16, 2 screens; the first as a reference for the second if accepted     |
 | Plate                             | `img2img`    | 2 to 3 frames as references, high quality, 1152 x 2048                            |
 | Sprite sheets                     | `img2img`    | transparent background, 1536 x 1024, 3 x 2 cells, the frames that show each piece |
 | Logo, only when none was supplied | `img2img`    | transparent background, frames as style references                                |
