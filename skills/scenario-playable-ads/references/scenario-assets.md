@@ -2,8 +2,8 @@
 
 Every asset in a playable comes from what the user supplied: a gameplay recording, screenshots, a
 logo, a font, store links, and any art, 3D, sound or music the studio already has
-([existing-assets.md](existing-assets.md)). Scenario rebuilds what the frames show at full detail;
-it never invents the game.
+([existing-assets.md](existing-assets.md)), or, with none of these, the user's one-paragraph brief.
+Scenario rebuilds what the frames show at full detail; it never invents the game.
 
 ## Inputs
 
@@ -13,10 +13,28 @@ it never invents the game.
 | Screenshots only           | the genre guide and `game_description` | the screenshots                                                    |
 | Both                       | the recording                          | the screenshots; frames for poses and effects the screenshots lack |
 | The studio's own files     | the recording                          | the supplied files ([existing-assets.md](existing-assets.md))      |
+| An idea only               | the genre guide and the brief          | two concept screens made on Scenario                               |
 
 - Where a recording and a screenshot disagree, the recording wins for behavior, the screenshot for
   art.
 - With screenshots only, the beat sheet and timings come from the genre guide. Ask for a short clip.
+
+### From an idea
+
+The brief is one paragraph: the world, what the finger does, the big moment, how a round ends. It
+plays the recording's role.
+
+- Make two portrait concept screens from it: the calm first screen (the waiting state, the target
+  visible) and the big moment (the signature payoff).
+- Use the `scenario` skill's loop: `recommend` for text-to-image, `model_schema_get`, `dry_run`,
+  then `model_run` and `jobs_wait`. Unattended, run them only within a stated budget, else report
+  the price and stop.
+- Keep the two in one world: when the chosen model takes a reference image, pass the first screen
+  for the second.
+- They then serve as the screenshots: plate, sprites and HUD come from them, motion and timing from
+  the genre guide.
+- Build only what the brief and the genre guide state. A mechanic neither names stays out.
+- In `analysis/brief.md` and `notes.md`, call the build a concept, not the user's game.
 
 ## Rights and source check
 
@@ -26,6 +44,7 @@ Answer these at the top of `analysis/brief.md` before using any frame:
   confirm they own or license the game. Write the answer, or "not confirmed".
 - Unattended, write "not confirmed", build, and open `notes.md` with it: the build is a test until
   the user confirms the rights.
+- From an idea, write "concept, no existing game": every asset is generated for this build.
 - **Supplied files** need the same answer, and a license for the game does not always cover ads
   ([existing-assets.md](existing-assets.md), section 7).
 - **First-party capture or third-party video?** A video found online is a reference only. Ask for a
