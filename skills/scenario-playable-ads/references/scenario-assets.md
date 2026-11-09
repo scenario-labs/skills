@@ -2,8 +2,9 @@
 
 Every asset in a playable comes from what the user supplied: a gameplay recording, screenshots, a
 logo, a font, store links, and any art, 3D, sound or music the studio already has
-([existing-assets.md](existing-assets.md)), or, with none of these, the user's one-paragraph brief.
-Scenario rebuilds what the frames show at full detail; it never invents the game.
+([existing-assets.md](existing-assets.md)). With none of these, it comes from the user's
+one-paragraph brief. Scenario rebuilds what the frames show at full detail; it never invents the
+game.
 
 ## Inputs
 
