@@ -74,7 +74,10 @@ Verify with a free call: "List my Scenario teams" should return `teams_list` out
   - It must be `https://mcp.scenario.com/mcp`, the `/mcp` path included (a `?toolsets=full` query
     may follow). A domain alone (`https://mcp.scenario.com`, `https://scenario.com`) serves no MCP
     server, whatever the sign-in screen said.
-  - Claude edits no saved connector URL: the connector is removed, then added again with that URL.
+  - URL correct but tools missing: check Tool permissions (below) for Blocked before removing
+    anything.
+  - Only a wrong URL needs the connector removed, then added again with that URL: Claude edits no
+    saved connector URL.
   - Free, Pro or Max: the user does this under Customize, Connectors.
   - Team or Enterprise: a member cannot change an organization connector. An owner removes and
     re-adds it under Organization settings, Connectors; then each member clicks Connect again under
