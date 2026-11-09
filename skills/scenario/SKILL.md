@@ -63,7 +63,7 @@ Two tool kinds:
 | Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                                 |
 | Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                                           |
 | CU left           | `consumption_limit_get`                  | Catalog read: `effective_remaining`, `period.end`; plan CU can end first     |
-| CU spent          | `usage`                                  | Needs `project_id` or `scope: "team"`; never a balance                       |
+| CU spent          | `usage`                                  | `project_id` required; `scope: "team"` spans projects; not a balance         |
 | Saved preferences | `memory_recall`                          | OAuth only; before generating in a project, again after switching            |
 
 - **Multi-step request** ("product video with voiceover", "concept to 3D"): catalog
@@ -204,7 +204,7 @@ Uploading and filing alone are not publication.
     locked while a cheaper one runs. Never re-submit the same payload inside `remainingSeconds`.
   - Any team member's job restarts the team's wait, and waits lengthen as the team keeps generating,
     so a batch slows down. A refused attempt is free.
-  - Only this refusal reveals Relax mode. If no tool documents the wait, say it is unknown.
+  - Only this refusal reveals Relax mode. If no tool documents the wait, call it unknown.
   - Stop the batch. Offer a CU top-up (it ends Relax mode at once) or an upgrade; else a cheaper
     payload (`dry_run` it first), fewer outputs, or a later run (unattended: report and stop, never
     relaunch).
