@@ -63,7 +63,7 @@ Two tool kinds:
 | Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                                 |
 | Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                                           |
 | CU left           | `consumption_limit_get`                  | Catalog read: `effective_remaining`, `period.end`; plan CU can end first     |
-| CU spent          | `usage`                                  | `project_id` required; `scope: "team"` spans projects; not a balance         |
+| CU spent          | `usage`                                  | `project_id` required; `scope: "team"`: accessible projects; not a balance   |
 | Saved preferences | `memory_recall`                          | OAuth only; before generating in a project, again after switching            |
 
 - **Multi-step request** ("product video with voiceover", "concept to 3D"): catalog
