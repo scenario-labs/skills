@@ -36,8 +36,8 @@ This is the strongest install lever, and the one most ads skip.
 - **Find the tease in the recording.** In analysis, list what the recording shows that the ad
   doesn't let the player reach: a bigger boss, a new area, the next tier, a second weapon, a
   level-select map. Example: a recording shows a boss that the ad never reaches. From an idea, tease
-  only what the brief names. If it names none, ask; unattended, skip the tease and say so in
-  `notes.md`.
+  only what the brief names. If it names none, ask in the genre-question round; unattended, skip the
+  tease and say so in `notes.md`.
 - **Put a glimpse of it in the ad:**
   - a locked silhouette with a "?";
   - a "NEXT:" banner as the result fades;
