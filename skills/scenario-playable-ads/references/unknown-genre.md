@@ -11,9 +11,9 @@ ad should show. Use it to know what to look for in the recording. Where the two 
 recording wins, because the ad must match the real game. Write down the difference in
 `analysis/brief.md` and tell the user.
 
-From an idea there is no recording: in steps 1 to 3, read "the recording" as "the brief". Motion and
-timing come from the genre's guide; with no built guide, start from the nearest **built** one and
-say so.
+From an idea there is no recording: in steps 1 to 3, read "the recording" as "the brief". The guide
+fills what the brief leaves out; with no built guide, start from the nearest **built** one and say
+so.
 
 ## 1. Classify from the recording, not from the label
 
@@ -62,8 +62,8 @@ The recording may show only menus, a cutscene, or a mechanic too fast to read. T
 - never invent a mechanic the recording does not show. A guessed mechanic is the classic expectation
   mismatch.
 
-From an idea, a brief that does not say what the finger does or what the big moment is gets one
-follow-up question. Unattended, stop and report what the brief lacks.
+From an idea, a brief without what the finger does or the big moment gets one follow-up, in the
+genre round. Unattended, stop and report what the brief lacks.
 
 ## 5. Build it as a new archetype
 

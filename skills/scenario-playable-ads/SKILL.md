@@ -33,8 +33,7 @@ preview (portrait), Google's HTML5 validator (App Campaigns profile) and Meta's 
 (spec checks and the CTA tap). Google's Campaign Manager and Display & Video 360 reject the `google`
 ZIP, which needs a `clickTag` there. No other network's own tool was run. Run each network's preview
 first, and say which tools ran when you hand a build over
-([references/networks.md](references/networks.md)). Each archetype guide comes from one build that
-passed the 19 base checks.
+([references/networks.md](references/networks.md)).
 
 Requirements: a local shell, Python 3.12 or later with Pillow, numpy, scipy, fontTools and brotli;
 Playwright for Python with Chromium; ffmpeg. Install with
@@ -107,15 +106,16 @@ Never call those built.
 
 - The paragraph is the brief (`game_description`) and plays the recording's role. A genre the user
   named answers the genre question.
-- Build only what the brief and the genre guide state; motion and timing come from that guide. The
-  brief wins where they disagree.
+- Build only what the brief and the genre guide state. The brief wins where they disagree; the guide
+  fills the rest, motion and timing included.
+- A brief without what the finger does or the big moment gets one follow-up, in the genre round.
+  Unattended, or with no paragraph, stop and report what is missing.
 - After the genre answer, make two portrait concept screens, the calm first screen and the big
   moment, through the `scenario` skill's loop (`recommend` with `txt2img`). State the `dry_run`
-  price first; unattended, run them only within a stated budget, else report and stop. They serve as
-  the screenshots ([references/scenario-assets.md](references/scenario-assets.md)).
-- Unattended with no paragraph, stop and report what is missing.
-- Hand the build over as a concept, not their game, in the reply and `notes.md`. Store links stay
-  placeholders until sent.
+  price first; unattended, run them only within the build's stated budget, else report and stop.
+  They serve as the screenshots ([references/scenario-assets.md](references/scenario-assets.md)).
+- Hand the build over as a concept, not their game. Without store links, the packages are preview
+  only.
 
 ## Two questions before generating anything
 

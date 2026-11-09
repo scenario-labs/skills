@@ -14,7 +14,7 @@ the game.
 | Screenshots only           | the genre guide and `game_description` | the screenshots                                                    |
 | Both                       | the recording                          | the screenshots; frames for poses and effects the screenshots lack |
 | The studio's own files     | the recording                          | the supplied files ([existing-assets.md](existing-assets.md))      |
-| An idea only               | the genre guide and the brief          | two concept screens made on Scenario                               |
+| An idea only               | the brief, then the genre guide        | supplied art first, then two concept screens made on Scenario      |
 
 - Where a recording and a screenshot disagree, the recording wins for behavior, the screenshot for
   art.
@@ -28,16 +28,21 @@ plays the recording's role.
 - After the genre answer, make two portrait concept screens from it: the calm first screen (the
   waiting state, the target visible) and the big moment (the signature payoff).
 - Generate them like any other asset (see Generating with Scenario, the concept-screens row).
-  Unattended, run them only within a stated budget, else report the price and stop.
-- They then serve as the screenshots: plate, sprites and HUD come from them, motion and timing from
-  the genre guide.
+- The stated budget covers the whole build: count the screens against it before pricing the other
+  assets. Unattended with no budget, report the price and stop.
+- When the user also supplied art, its mode from [existing-assets.md](existing-assets.md) wins. The
+  screens fill only what that art leaves missing; with a complete set supplied as is, skip them.
+- They then serve as the screenshots: plate, sprites and HUD come from them.
 - They are already Scenario assets: skip the contact sheet and the upload. Their source labels in
   the asset map are `concept 1` and `concept 2`.
 - Build only what the brief and the genre guide state. A mechanic neither names stays out.
-- Where they disagree (one boss in the brief, a crowd clash in the guide), the brief wins for what
-  happens, the guide for motion, timing and tuning. Note the difference in `analysis/brief.md`.
+- Where they disagree (one boss in the brief, a crowd clash in the guide), the brief wins. The guide
+  fills what the brief leaves out, motion and timing included. Note the difference in
+  `analysis/brief.md`.
 - In `analysis/brief.md` and `notes.md`, call the build a concept, not the user's game.
-- Store links stay placeholders until the user sends them. List that first in `notes.md`.
+- Without store links, the template's placeholder links stay in, and the CTA would open them. The
+  packages are preview only: say so first in `notes.md` and in the handover, and never hand them
+  over for a campaign.
 
 ## Rights and source check
 
@@ -47,7 +52,8 @@ Answer these at the top of `analysis/brief.md` before using any frame:
   confirm they own or license the game. Write the answer, or "not confirmed".
 - Unattended, write "not confirmed", build, and open `notes.md` with it: the build is a test until
   the user confirms the rights.
-- From an idea, write "concept, no existing game". Supplied files still need the answer below.
+- From an idea, write "concept" and whether a game exists yet. Supplied files still need the answer
+  below.
 - **Supplied files** need the same answer, and a license for the game does not always cover ads
   ([existing-assets.md](existing-assets.md), section 7).
 - **First-party capture or third-party video?** A video found online is a reference only. Ask for a
