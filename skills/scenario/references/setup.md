@@ -71,17 +71,21 @@ Verify with a free call: "List my Scenario teams" should return `teams_list` out
 ## Claude connector symptoms
 
 - **Sign-in succeeds, then no MCP server or no tools**: check the saved connector URL first.
-  - It must be exactly `https://mcp.scenario.com/mcp`. A domain alone (`https://mcp.scenario.com`,
-    `https://scenario.com`) serves no MCP server, whatever the sign-in screen said.
-  - Free, Pro or Max: remove the custom connector and add it again with that URL.
-  - Team or Enterprise: a member cannot edit an organization connector. An owner corrects the URL
-    under Organization settings, Connectors; then each member clicks Connect again under Customize,
-    Connectors.
+  - It must be `https://mcp.scenario.com/mcp`, the `/mcp` path included (a `?toolsets=full` query
+    may follow). A domain alone (`https://mcp.scenario.com`, `https://scenario.com`) serves no MCP
+    server, whatever the sign-in screen said.
+  - Claude edits no saved connector URL: the connector is removed, then added again with that URL.
+  - Free, Pro or Max: the user does this under Customize, Connectors.
+  - Team or Enterprise: a member cannot change an organization connector. An owner removes and
+    re-adds it under Organization settings, Connectors; then each member clicks Connect again under
+    Customize, Connectors.
 - **Approval asked on every tool call**: that is the Claude app's tool permission, not the server.
   - In the prompt, "Allow always" approves that tool from then on.
   - Customize, Connectors, the Scenario connector, Tool permissions: each category or tool takes
     Always allow, Needs approval, or Blocked.
   - On Team or Enterprise, an owner's setting there restricts the connector across the organization.
+  - On Enterprise, a custom role sets the same three options per connector or tool, so an owner
+    checks the member's role too (Organization settings, Roles).
   - The agent points the user to the setting and changes nothing itself.
 
 ## Re-authenticating
