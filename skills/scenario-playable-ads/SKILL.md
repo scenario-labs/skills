@@ -107,7 +107,8 @@ Never call those built.
 
 - The paragraph is the brief (`game_description`) and plays the recording's role. A genre the user
   named answers the genre question.
-- Build only what the brief and the genre guide state; motion and timing come from that guide.
+- Build only what the brief and the genre guide state; motion and timing come from that guide. The
+  brief wins where they disagree.
 - After the genre answer, make two portrait concept screens, the calm first screen and the big
   moment, through the `scenario` skill's loop (`recommend` with `txt2img`). State the `dry_run`
   price first; unattended, run them only within a stated budget, else report and stop. They serve as

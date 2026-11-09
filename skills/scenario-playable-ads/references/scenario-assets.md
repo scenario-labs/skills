@@ -34,6 +34,8 @@ plays the recording's role.
 - They are already Scenario assets: skip the contact sheet and the upload. Their source labels in
   the asset map are `concept 1` and `concept 2`.
 - Build only what the brief and the genre guide state. A mechanic neither names stays out.
+- Where they disagree (one boss in the brief, a crowd clash in the guide), the brief wins for what
+  happens, the guide for motion, timing and tuning. Note the difference in `analysis/brief.md`.
 - In `analysis/brief.md` and `notes.md`, call the build a concept, not the user's game.
 - Store links stay placeholders until the user sends them. List that first in `notes.md`.
 
