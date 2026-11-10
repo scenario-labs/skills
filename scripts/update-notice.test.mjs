@@ -130,7 +130,7 @@ test("the check fails on a missing, newer, edited, buried, appended or doubled n
   const cases = {
     missing: SKILL,
     newer: skill("1.10.0"),
-    edited: skill("1.2.3").replace("Never run", "Always run"),
+    edited: skill("1.2.3").replace("Never update", "Always update"),
     unmarked: skill("1.2.3").replace(" <!-- x-release-please-version -->", ""),
     malformed: skill("1.2"),
     buried: `${skill("1.2.3")}\n## Common mistakes\n\nBelow.\n`,

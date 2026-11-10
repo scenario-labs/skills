@@ -109,8 +109,8 @@ skill.
 
 An installed copy never refreshes itself. Each skill ends with an update notice that states the
 release it comes from. When the Scenario MCP server names a newer release in its instructions, your
-agent says so once per session and links here. It updates nothing unless you ask: you run the
-update, with the route you installed with.
+agent says so once per session. It updates nothing unless you ask: you run the update, with the
+route you installed with.
 
 **Installed with `npx skills`.**
 

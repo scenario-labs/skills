@@ -17,11 +17,12 @@ and releases" states which commit types release and which files release-please o
 - Merging the release PR tags `skills-vX.Y.Z`, titles the GitHub release `skills: vX.Y.Z`, rewrites
   `CHANGELOG.md`, `version.txt`, and `.release-please-manifest.json`, and publishes the GitHub
   release.
-- The release PR also rewrites the release line of every skill's update notice. The `extra-files`
-  entry in `release-please-config.json` reaches each SKILL.md by glob, and release-please's generic
-  updater changes the version on the one line that carries `x-release-please-version`.
-  `scripts/update-notice.test.mjs` runs the pinned updater and glob matcher against the real line
-  and layout.
+- The release PR also rewrites the release line of every skill's update notice, so every release
+  changes every SKILL.md and the skills CLI reports each installed skill as updated. The
+  `extra-files` entry in `release-please-config.json` reaches each SKILL.md by glob, and
+  release-please's generic updater changes the version on the one line that carries
+  `x-release-please-version`. `scripts/update-notice.test.mjs` runs the pinned updater and glob
+  matcher against the real line and layout.
 - `.github/workflows/publish-changelog.yml` then posts the notes to the public changelog at
   [scenario.com/changelog](https://www.scenario.com/changelog). It hangs off the
   `release: published` event, not the release-please run, because release-please reports a created
