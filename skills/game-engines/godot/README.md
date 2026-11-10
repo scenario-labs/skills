@@ -95,7 +95,7 @@ npx skills add scenario-labs/skills --skill scenario-godot-expert scenario-godot
 The installer puts the skills side by side, which the specialists need: they import the lead skill's
 `scripts/` (Python toolkit and GDScript AgentKit). In the installer picker
 (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Godot" group. Update with
-`npx skills update`.
+`npx skills update -g -p -y`.
 
 ## Provenance
 

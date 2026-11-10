@@ -47,6 +47,9 @@ tests/<name>/                                  # test suite for any script shipp
   - It is the one supporting file exempt from the link rule (`pnpm skill-files` skips it).
   - Leave it unlinked: linking it spends body words and invites a runtime agent to read maintainer
     notes as instructions, which once made an agent discount a fact it needed.
+- Every SKILL.md ends with the update notice: its release, and the rule for telling the user the
+  copy is behind. `pnpm notice` writes it, as does `pnpm format`, and release-please rewrites its
+  release line. Never edit it or write below it ([why](docs/decisions.md#update-notice)).
 - Every script shipped with a core skill has a test suite in `tests/<name>/` at the repo root, never
   in the skill directory: a published skill directory carries only what an agent needs at runtime.
   Expert tools test per family instead (see Expert tools). See Validation and testing.
@@ -91,8 +94,9 @@ uvx --python 3.12 --from "git+https://github.com/agentskills/agentskills.git#sub
 - Body: 1000 words is the target; the build fails past 2500 (`pnpm style`). Structure: Overview,
   Quick reference, one excellent worked example, Common mistakes.
 - Measure before trimming:
-  `awk '/^---$/{c++; next} c>=2' skills/<name>/SKILL.md | LC_ALL=C.UTF-8 wc -w` is the exact number
-  `pnpm style` checks. The pinned locale makes a local count equal CI's.
+  `awk '/^---$/{c++; next} /^## Update notice$/{exit} c>=2' skills/<name>/SKILL.md | LC_ALL=C.UTF-8 wc -w`
+  is the exact number `pnpm style` checks: the update notice is not counted. The pinned locale makes
+  a local count equal CI's.
 - Why a budget: agents load only `name` and `description` at startup. The body enters context only
   when the skill triggers, and then every word competes with the user's task. Spend words on facts
   an agent would otherwise guess wrong, not on prose.

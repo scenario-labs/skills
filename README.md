@@ -107,18 +107,42 @@ skill.
 
 ## Staying up to date
 
+An installed copy never refreshes itself. Each skill ends with an update notice that states the
+release it comes from. When the Scenario MCP server names a newer release in its instructions, your
+agent says so once per session and links here. It updates nothing unless you ask: you run the
+update, with the route you installed with.
+
+**Installed with `npx skills`.**
+
+```bash
+# List what is behind, in this project and globally, without changing anything
+npx skills check -g -p
+
+# Update both
+npx skills update -g -p -y
+```
+
+Keep `-g -p`: inside a project, `npx skills update -y` alone updates that project's skills only and
+skips the global ones. A pinned install moves when you run its command again with a newer commit
+(see [Install](#install)).
+
+**Installed as Claude Code plugins.** Refresh the marketplace, update each installed plugin by the
+name `claude plugin list` shows, then restart Claude Code.
+
+```bash
+claude plugin marketplace update scenario-skills
+claude plugin list
+claude plugin update 01.-getting-started@scenario-skills
+```
+
 Releases are how changes become visible: every feature, fix, and documentation change merged to
 `main` lands in the next release, staged by release-please as an open release PR. Merging that PR
 tags a version, updates `CHANGELOG.md` in this repository, publishes a
 [GitHub release](https://github.com/scenario-labs/skills/releases), and posts the notes to the
-[Scenario changelog](https://www.scenario.com/changelog).
-
-- To learn that a skill changed, watch this repository's releases (Watch, then Custom, then Releases
-  on GitHub) or check any of the changelog pages above. An entry scoped to a single skill carries
-  that skill's name; changes spanning several skills appear under broader scopes such as `skills`.
-- To pull the changes, run `npx skills update` where you installed, or re-run your original
-  `npx skills add` command.
-- To stay on a reviewed state, pin the install (see [Install](#install)).
+[Scenario changelog](https://www.scenario.com/changelog). To learn that a skill changed without
+asking your agent, watch this repository's releases (Watch, then Custom, then Releases on GitHub) or
+read any of those pages. An entry scoped to a single skill carries that skill's name; changes
+spanning several skills appear under broader scopes such as `skills`.
 
 ## Skills
 

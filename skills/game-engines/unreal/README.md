@@ -55,7 +55,7 @@ npx skills add scenario-labs/skills --skill scenario-unreal-expert scenario-unre
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's
 `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the
-"Expert tools: Unreal Engine" group. Update with `npx skills update`.
+"Expert tools: Unreal Engine" group. Update with `npx skills update -g -p -y`.
 
 ## Provenance
 

@@ -8,11 +8,13 @@
   },
   "scripts": {
     "prepare": "husky",
-    "validate": "pnpm style && pnpm format:check && pnpm sync:agent-commands:check && pnpm skill-files && pnpm lint:py && pnpm groupings && pnpm manifest:check && pnpm bugbot:check && pnpm readme && pnpm words:check && pnpm spell && pnpm spec",
+    "validate": "pnpm style && pnpm format:check && pnpm sync:agent-commands:check && pnpm skill-files && pnpm notice:check && pnpm lint:py && pnpm groupings && pnpm manifest:check && pnpm bugbot:check && pnpm readme && pnpm words:check && pnpm spell && pnpm spec",
     "style": "./scripts/check-style.sh",
-    "format": "prettier --write . && pnpm sync:agent-commands",
+    "format": "pnpm notice && prettier --write . && pnpm sync:agent-commands",
     "format:check": "prettier --check .",
     "skill-files": "./scripts/check-skill-files.sh",
+    "notice": "node ./scripts/update-notice.mjs",
+    "notice:check": "node ./scripts/update-notice.mjs --check",
     "groupings": "node ./scripts/check-groupings.mjs",
     "manifest": "node ./scripts/generate-plugin-manifest.mjs",
     "manifest:check": "node ./scripts/generate-plugin-manifest.mjs --check",
@@ -37,6 +39,7 @@
     "test:index-sync": "node --test scripts/sync-generated-index.test.mjs",
     "test:spec": "node --test scripts/validate-skills.test.mjs",
     "test:readme": "node --test scripts/check-readme.test.mjs",
+    "test:notice": "node --test scripts/update-notice.test.mjs",
     "test:runner": "node --test scripts/test-skill-scripts.test.mjs"
   },
   "devDependencies": {

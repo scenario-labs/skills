@@ -17,6 +17,11 @@ and releases" states which commit types release and which files release-please o
 - Merging the release PR tags `skills-vX.Y.Z`, titles the GitHub release `skills: vX.Y.Z`, rewrites
   `CHANGELOG.md`, `version.txt`, and `.release-please-manifest.json`, and publishes the GitHub
   release.
+- The release PR also rewrites the release line of every skill's update notice. The `extra-files`
+  entry in `release-please-config.json` reaches each SKILL.md by glob, and release-please's generic
+  updater changes the version on the one line that carries `x-release-please-version`.
+  `scripts/update-notice.test.mjs` runs the pinned updater and glob matcher against the real line
+  and layout.
 - `.github/workflows/publish-changelog.yml` then posts the notes to the public changelog at
   [scenario.com/changelog](https://www.scenario.com/changelog). It hangs off the
   `release: published` event, not the release-please run, because release-please reports a created
@@ -50,6 +55,7 @@ of its checks as a separate step:
     `pnpm groupings` does, and parses with `yaml`, so it needs `pnpm install` first.
   - It prints a notice, never a failure, for a body within 100 words of the 2500-word cap: two PRs
     that each pass can still push a skill past it together.
+  - The word count stops at the update notice heading, which `scripts/update-notice.mjs` supplies.
   - It counts body words under `LC_ALL=C.UTF-8`. GNU `wc` under `LC_ALL=C` skips a word made only of
     non-ASCII characters (a lone `→`), so an unpinned count drifted between machines.
   - It prints a notice, never a failure, once `AGENTS.md` passes 30 KiB, ahead of the 32 KiB cap.
@@ -58,6 +64,16 @@ of its checks as a separate step:
   [agent-commands.md](agent-commands.md)).
 - **`pnpm skill-files`**: supporting files next to a SKILL.md are linked and runnable, a skill's own
   `README.md` excepted.
+- **`pnpm notice:check`**: every SKILL.md ends with the update notice, unedited, and
+  `release-please-config.json` still rewrites its release line. `pnpm notice` writes the notices
+  from `version.txt`, and `pnpm format` runs it.
+  - A release older than `version.txt` passes. A skill added from a branch cut before the last
+    release keeps its number until the next release rewrites it, and failing there would break
+    `main`, which does not require up-to-date branches. A newer release fails.
+  - `pnpm notice` only replaces a notice it recognizes. It leaves a file alone, names it, and fails
+    when anything else sits below the heading, so it never drops a line an author wrote there.
+  - After a change to the wording in `scripts/update-notice.mjs`, run `pnpm notice --force`. It
+    replaces everything from the heading down.
 - **`pnpm lint:py`**: ruff over every Python script, configured in `ruff.toml`, the vendored dev
   skills excluded.
   - The pyflakes rules, plus SIM115 for a file opened outside a `with` block. A handle no `with` can

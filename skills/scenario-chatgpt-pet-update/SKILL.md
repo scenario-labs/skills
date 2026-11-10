@@ -114,3 +114,16 @@ and adds the two look rows.
 - Changing the pet's id on a rename: Codex finds the pet by its folder, so keep the id and change
   `displayName`.
 - Handing a v2 result to someone uploading on ChatGPT web: give them `package/spritesheet-v1.png`.
+
+## Update notice
+
+This copy is skills release 0.61.0. <!-- x-release-please-version -->
+
+- Once per session, before your first step, compare it with the latest skills release named in the
+  Scenario MCP server instructions.
+- When the latest is newer, tell the user once, in one line, that their installed Scenario skills
+  are behind. Give both releases and https://github.com/scenario-labs/skills#staying-up-to-date,
+  then continue the task without waiting for an answer. Do not repeat it later in the session.
+- Otherwise, or when the server names no release, say nothing.
+- Skip the notice once the user has said to stop.
+- Never run an installer or an update unasked.

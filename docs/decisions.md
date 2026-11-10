@@ -67,6 +67,41 @@ the scan names no line, so that sentence is a suspect, not a proven cause.
   clones that commit and records it in `skills-lock.json` (checked in a container, October 2026). It
   lives in the README, where a person runs it.
 
+## Update notice
+
+An installed copy never refreshes itself, and nothing told its user so. Every skill now ends with a
+notice: the release it comes from, and a rule that has the agent say once per session when the
+Scenario MCP server names a newer release.
+
+- The agent only tells. The user runs the update, with the skills CLI or the plugin system, from the
+  README's "Staying up to date" section. The notice carries a link and no command
+  ([why](#no-install-commands-in-skills)).
+- The release is body text, not a frontmatter field: Claude Code hides the frontmatter from the
+  agent.
+- The notice is in every skill: a session that loads one task skill does not load the root skill.
+- Trials in Claude Code decided the carrier (November 2026). A rule written in the skill was
+  followed by all three models tried, and a skill on the latest release stayed silent. An
+  instruction given only in the server instructions was followed in 1 of 12 sessions.
+- "Before your first step" is there because of a second trial. On a task run without a question to
+  the user, the smallest model gave the notice in 0 of 4 sessions without those words and in 2 of 3
+  with them. "Do not repeat it" answers sessions that said it again in their closing report; one
+  still did.
+- One release for the whole repository, not one per skill: an update refreshes everything at once.
+  Every release therefore changes every SKILL.md, and the skills CLI then reports each installed
+  skill as having an update.
+- The body cap does not count the notice. It is about 100 words, the same in every skill, and
+  several bodies sit within 10 words of the cap. The cap keeps a body inside the 5000-token
+  re-attach share, and the notice comes last, so it is the part a truncation drops first. By then it
+  has already been read.
+- The marker comment on the release line is what release-please's generic updater looks for. Its
+  pattern cannot be set from `release-please-config.json`, so the line cannot go unmarked.
+- Known limits:
+  - A copy installed before the notice shipped stays silent, as does a session with no Scenario MCP
+    server.
+  - A copy installed from `main` between two releases reads as current.
+  - A skill merged from a branch cut before the last release states the older release until the next
+    one, so its user is told the copy is behind when it is not.
+
 ## Release tags
 
 Releases through 0.37.3 tagged bare `vX.Y.Z`. That is because a `release-type: node` package gets

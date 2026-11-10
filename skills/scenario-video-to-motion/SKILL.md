@@ -111,3 +111,16 @@ The user has a phone clip of a dance and a character GLB, and wants an Unreal-re
 - Converting the download to another 3D format instead of setting the export target in the run.
 - Treating a sideways or upside-down result as a failed capture before trying the axis fields.
 - Polling `job_get` instead of `jobs_wait`, or re-running a job that only timed out.
+
+## Update notice
+
+This copy is skills release 0.61.0. <!-- x-release-please-version -->
+
+- Once per session, before your first step, compare it with the latest skills release named in the
+  Scenario MCP server instructions.
+- When the latest is newer, tell the user once, in one line, that their installed Scenario skills
+  are behind. Give both releases and https://github.com/scenario-labs/skills#staying-up-to-date,
+  then continue the task without waiting for an answer. Do not repeat it later in the session.
+- Otherwise, or when the server names no release, say nothing.
+- Skip the notice once the user has said to stop.
+- Never run an installer or an update unasked.

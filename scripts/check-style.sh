@@ -117,6 +117,9 @@ fi
 # 1000-word target, 2500-word hard cap; AGENTS.md "Authoring contract" carries
 # the why. The notice exists because two PRs that each pass can break main
 # together: #320 and #321 took skills/scenario/SKILL.md to 2548 words.
+# The update notice that ends every body is the same generated text everywhere,
+# so the count stops at its heading (docs/decisions.md, "Update notice").
+update_notice_heading=$(node scripts/update-notice.mjs --heading)
 word_cap=2500
 word_notice_at=2400
 near_cap_hits=""
@@ -131,7 +134,7 @@ for f in $skill_files; do
   # Body is everything after the closing frontmatter ---.
   # The locale is pinned so a local count equals CI's: under LC_ALL=C, GNU wc
   # skips a word made only of non-ASCII bytes (a lone arrow), and BSD wc does not.
-  body=$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$f")
+  body=$(awk -v notice="$update_notice_heading" 'BEGIN { fm = 0 } /^---$/ { fm++; next } $0 == notice { exit } fm >= 2 { print }' "$f")
   words=$(printf '%s\n' "$body" | LC_ALL=C.UTF-8 wc -w | tr -d ' ')
   if [ "$words" -gt "$word_cap" ]; then
     echo "$f: body is $words words, over the $word_cap-word hard cap"

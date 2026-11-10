@@ -125,7 +125,7 @@ npx skills add scenario-labs/skills --skill scenario-roblox-expert scenario-robl
 The installer puts the skills side by side, which the specialists need: they import the lead skill's
 `scripts/` (Python toolkit and Luau AgentKit). In the installer picker
 (`npx skills add scenario-labs/skills`), the family is the "Expert tools: Roblox Studio" group.
-Update with `npx skills update`.
+Update with `npx skills update -g -p -y`.
 
 ## Provenance
 

@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { applyNotice } from "./update-notice.mjs";
 
 const scripts = dirname(fileURLToPath(import.meta.url));
 const REFERENCE = "skills/scenario-demo/references/notes.md";
@@ -29,7 +30,11 @@ function repo(t, { modules = true } = {}) {
   if (modules) {
     symlinkSync(join(scripts, "../node_modules"), join(root, "node_modules"));
   }
-  for (const file of ["check-style.sh", "lib/skills.mjs"]) {
+  for (const file of [
+    "check-style.sh",
+    "update-notice.mjs",
+    "lib/skills.mjs",
+  ]) {
     mkdirSync(dirname(join(root, "scripts", file)), { recursive: true });
     copyFileSync(join(scripts, file), join(root, "scripts", file));
   }
@@ -346,6 +351,24 @@ test("accepts a body of exactly 2500 words", (t) => {
   const { write, style } = repo(t);
   write(SKILL, skill(words(2500)));
   assert.ok(!style().includes(WORD_CAP));
+});
+
+test("leaves the update notice out of the word count", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, applyNotice(skill(words(2500)), "1.2.3"));
+  assert.ok(!style().includes(WORD_CAP));
+});
+
+test("counts words written above the update notice", (t) => {
+  const { write, style } = repo(t);
+  write(SKILL, applyNotice(skill(words(2501)), "1.2.3"));
+  assert.throws(style, (error) => {
+    assert.ok(
+      error.stdout.includes(`${SKILL}: body is 2501 words`),
+      error.stdout,
+    );
+    return true;
+  });
 });
 
 test("fails a body of 2501 words", (t) => {
