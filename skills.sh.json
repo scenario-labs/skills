@@ -23,6 +23,7 @@
         "scenario-image-editing",
         "scenario-text-overlay",
         "scenario-storyboards",
+        "scenario-comic-creator",
         "scenario-thumbnails"
       ]
     },
@@ -47,7 +48,7 @@
     },
     {
       "title": "Video and audio",
-      "description": "Video generation, editing, and color grading, seamless motion loops, music, sound effects, voice, and speech.",
+      "description": "Video generation, editing, and color grading, kinetic-type launch films, seamless motion loops, music, sound effects, voice, and speech.",
       "skills": [
         "scenario-video",
         "scenario-video-editing",
@@ -56,10 +57,12 @@
         "scenario-seedance-storyboard",
         "scenario-seedance-drafts",
         "scenario-video-ads",
+        "scenario-game-ua-ads",
         "scenario-ad-variants",
         "scenario-audio",
         "scenario-video-assembly",
         "scenario-motion-loops",
+        "scenario-kinetic-film",
         "scenario-caption-studio"
       ]
     },

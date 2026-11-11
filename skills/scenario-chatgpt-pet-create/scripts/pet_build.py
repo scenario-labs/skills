@@ -187,9 +187,9 @@ def main(argv=None) -> int:
     run = Path(args.run)
     req = pc.read_json(run / "request.json")
     key = pc.parse_key(req["chroma_key"]["hex"])
-    pixel = pc.read_json(run / "pixel.json") if req.get("pixel") else None
     if req.get("pixel") and not (run / "pixel.json").exists():
         pc.fail("pixel mode needs pixel.json: run pet_prepare.py pixel first")
+    pixel = pc.read_json(run / "pixel.json") if req.get("pixel") else None
     base_path = args.base_sheet or req.get("base_sheet")
     base = pc.load_rgba(base_path) if base_path else None
     base_version = pc.version_for_size(base.shape[1], base.shape[0]) if base is not None else None

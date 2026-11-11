@@ -68,6 +68,7 @@ function fmt(v, c) {
 }
 
 export default {
+  blur: false, // renders once per frame under motion blur, so its digits stay sharp; a TIMELINE entry's blur overrides it
   async load(E) {
     g = E.makeG2D(E.W, E.H);
     if (CFG.mark?.path) markPath = new Path2D(CFG.mark.path);
@@ -236,6 +237,9 @@ function drawSub(c, E, t, H, dark, ink, bar) {
     lineLead: 0.25,
     tail: 0.35,
     maxW,
+    // drawText sets globalAlpha outright, so the words need the HUD's alpha passed; not `fade`, which
+    // drawKaraoke's own line fade (lineLead, tail) already applies
+    alpha: H.alpha,
   });
   c.restore();
 }

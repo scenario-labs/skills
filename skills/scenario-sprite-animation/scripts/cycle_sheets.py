@@ -99,7 +99,7 @@ def loop_window(sm, pmin, pmax, first=3, min_base=0.35):
             base = np.mean(step[s:s + P])
             if base < min_base:      # not enough motion to be a cycle
                 continue
-            score = seam / base
+            score = seam / base if base > 0 else float("inf")   # a frozen window ranks behind any motion
             if best is None or score < best[0] - 1e-9:
                 best = (score, s, P, seam, base)
     return best
@@ -173,6 +173,11 @@ def pick(clip_id, cycle, frames, src_fps=24.0, attack_body_only=False):
         if found is None:
             raise SystemExit(f"{clip_id}: clip too short to find a {cycle} loop ({len(sm)} frames)")
         score, s, P, seam, base = found
+        if base == 0:
+            # 0/0: score a still as a seam no smaller than its motion, so meta.json stays valid JSON
+            score = 1.0
+            print(f"  {clip_id}: no motion in the {cycle} clip (the video model returned a still); "
+                  "regenerate this clip")
         idx = [s + round(k * P / FRAMES) for k in range(FRAMES)]
         info = {"start": s, "length": P, "mode": "loop", "seam_over_baseline": round(float(score), 3),
                 "seam": round(seam, 2), "baseline": round(float(base), 2)}

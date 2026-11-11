@@ -27,10 +27,12 @@ Two tool kinds:
 - **Catalog**: the rest (collections, tagging, analysis, training, members, keys).
   - `scenario_tools_search` takes only `query` (tool name or keywords) and `limit`; returns schema
     and lane.
-  - `scenario_tool_execute_read` / `write` / `delete` runs the tool with `{name, parameters}`.
-  - Every input goes inside `parameters`, scope ids and `dry_run` included. Nearly every catalog
-    tool declares scope ids; `plan_generation` takes only `description`.
-  - Direct tools take scope, and `model_run` its `dry_run`, at top level.
+  - `scenario_tool_execute_read` / `write` / `delete` take a required `name` and `parameters`, which
+    holds every input, scope ids and `dry_run` included:
+    `{"name": "collection_add_assets", "parameters": {"team_id": "…", "project_id": "…", "collection_id": "…", "asset_ids": ["…"]}}`.
+    `plan_generation` takes only `description`.
+  - Direct tools take scope, and `model_run` its `dry_run`, at top level. Never route them through
+    an executor.
   - The executor drops a misplaced key silently: `arguments` surfaces as a false scope error, and a
     top-level `dry_run` runs the job, billed.
   - The lane is the result's own `permission`, not the verb: `asset_analyze` is write-class, since
@@ -39,13 +41,13 @@ Two tool kinds:
 ## Scope first
 
 - Resolve scope first, then pass `team_id` and `project_id` on every call.
-- `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`, so it
-  cannot come first.
+- A team is the organization, the company or studio account; its projects sit inside it. "My
+  organization" or "my studio" names the team.
+- `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`.
 - Confirm the pair with the user: a guess writes into someone else's project. Unattended, take the
   pair from the task; if it names none, stop and list the choices.
-- The server fills scope only for read-only tools with one candidate. Otherwise it fails, naming the
-  wrong half.
-- Scope omissions commonly fail when a second team or project becomes available.
+- The server fills scope only for read-only tools with one candidate, so an omission fails once a
+  second team or project appears. The error names the wrong half.
 
 ## Quick reference
 
@@ -75,10 +77,11 @@ Two tool kinds:
 Generating a stylized game prop image:
 
 1. Discover the model:
-   - `recommend` with the user's own words as `prompt` for a capability.
-   - `search` with `target="models"`, `query="<model name>"`, `public=true` for a known name. It
-     ranks by keyword and its `filters` hold no capability key, so a capability-worded query can
-     rank the wrong output type first.
+   - `recommend` with the user's own words as `prompt` for a capability. Unscoped, it ranks models
+     the team cannot run.
+   - `search` requires `target` (`models`, `assets`, `workflows`); for a known name:
+     `target="models"`, `query="<model name>"`, `public=true`. It ranks by keyword and its `filters`
+     hold no capability key, so a capability-worded query can rank the wrong output type first.
    - The user's own trained models: omit `public` on `search` (it has no private flag); pass
      `include_private_models: true` on `recommend`.
    - Re-discover ids each time: availability differs per team.
@@ -99,6 +102,8 @@ Generating a stylized game prop image:
    - Run: inline assets (`status: success`) need no wait; otherwise pass `job_id` to `jobs_wait`.
    - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
      `in-progress`, or `warming-up`. All need `jobs_wait`.
+   - A 429: stop launching and find its class under Errors and recovery before the next call.
+     Re-sending the same payload at once never clears it.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
@@ -126,8 +131,8 @@ Local inputs go up with `upload_asset`:
 - Always `file_name`, `content_type`, and `kind` (`image`, `audio`, `video`, `3d`), plus exactly one
   of `file_size` or `data`. Without either it fails with
   `Either 'file_size' … or 'data' is required`.
-- Prefer `file_size`, the exact byte count read from disk, and omit `data`. The reply carries
-  presigned part URLs and `instructions`.
+- Prefer `file_size` (exact bytes on disk) and omit `data`; the reply carries presigned part URLs
+  and `instructions`.
 - PUT each part's raw bytes to its URL with no added headers: a checksum header makes the store
   answer 403. Check every PUT returned 200, then `upload_asset_complete` with the `upload_id`.
 - Inline base64 `data` only under 100KB, and only when no shell can PUT parts. It returns the asset
@@ -147,17 +152,15 @@ Local inputs go up with `upload_asset`:
     `upload_asset` and raw PUTs. Never re-complete the same `upload_id`.
 - A phone's HEIC photo uploads as is (`content_type: "image/heic"`): do not convert it.
   `Unhandled image format` lists what `kind: "image"` accepts; convert any other type locally.
-- A host with no shell cannot PUT parts. The user uploads at app.scenario.com and the agent
-  continues from the asset id.
+- Without a shell, the user uploads at app.scenario.com; continue from the asset id.
 
 Filing is part of delivering, not a tidy-up:
 
 - `collection_create` takes a name and the scope pair only. `asset_ids` sent there is silently
-  ignored, so adding is always a second call: `collection_add_assets` with `collection_id` and
-  `asset_ids`.
+  ignored, so adding is always a second call: `collection_add_assets`.
 - It accepts any number of ids, batches by 49, and skips duplicates. Results separate
   `already_present_asset_ids` from `added_asset_ids`.
-- After failure, safely resend the whole list: the error counts additions; retries add the rest.
+- After a failure, resend the whole list: duplicates are skipped.
 - Confirm from that reply: `search` `filters={"collection_ids": [...]}` lags on a fresh write.
 - `asset_add_tags` is additive, one `asset_id` per call. A tag the asset already carries returns 400
   `Duplicated tag`: read `tags` via `assets_get_bulk` first and send only the missing ones.
@@ -170,8 +173,10 @@ Uploading and filing alone are not publication.
 ## Errors and recovery
 
 - **`context_missing`**: nothing resolved. `teams_list`, `projects_list` if necessary.
-- **`context_ambiguous`**: several fit. Present the options; the user picks (unattended: the task
-  names the pair, else stop and list).
+- **`context_ambiguous`**: scope omitted. Write-class tools (`search`, `model_run`, uploads) never
+  fill it. Unattended, use the task's pair, else stop and list.
+  - The reply names one pair ("Resolved for you"): confirm, retry with both ids; no lookup.
+  - It lists several: the user picks.
 - **403 Forbidden**: usually wrong scope, not missing; re-check the id pair. A private asset input
   reads only from its own project:
   - ask which project holds it (unattended: the task names it, else stop);
@@ -184,7 +189,7 @@ Uploading and filing alone are not publication.
 - **429 with `details.actionName` = `parallel-custom-jobs`**: the per-team generation concurrency
   ceiling. Keep at most `actionLimit` jobs in flight: launch with `wait=false`, and retire jobs with
   `jobs_wait` before launching more. An immediate retry repeats the error.
-- **429 `custom-generation`, or naming a quota, balance, or seat limit**:
+- **429 `custom-generation`, or naming a quota, plan limit, balance, or seat limit**:
   - `actionLimit` is the period's CU allowance (Free: 50 a day), `actionValue` what is already
     consumed. A run priced above the gap is refused, so a low `actionValue` means this payload costs
     too much, not that credits ran out.
@@ -209,17 +214,17 @@ Uploading and filing alone are not publication.
 - **Other 429, including an unfamiliar `actionName`**: never infer its behavior from the name.
   Report it and run `diagnostics_run` in the same scope before choosing a recovery.
 - **Transport error on `model_run` (no HTTP status)**: the request may still have landed. Run
-  `jobs_list` before any re-run, or a lost response becomes a double charge. A `dry_run` creates no
-  job and always retries safely.
-- **400 `Cannot cancel this type of job`**: a launched job is committed spend. `job_cancel` rejects
-  most generation jobs, so plan batches with no abort path.
-- **404 on `asset_get`**: the id does not exist, and no retry makes it appear. Re-read `assetIds`
-  off the `jobs_wait` or `job_get` row: a guessed or mistyped id is the usual cause.
+  `jobs_list` before any re-run, or a lost response becomes a double charge. A `dry_run` retries
+  safely.
+- **400 `Cannot cancel this type of job`**: `job_cancel` rejects most generation jobs, so plan
+  batches with no abort path.
+- **404 on `asset_get`**: a guessed or mistyped id; no retry fixes it. Re-read `assetIds` off the
+  `jobs_wait` or `job_get` row.
 - **400 `At least one of query, filter, image, or images must be provided`**: `search` never lists
   bare. A newest-first asset listing is `target="assets"`, `filter="createdAt EXISTS"`,
   `sort_by=["createdAt:desc"]`.
-- **`recommend` client-side timeout**: it ranks on live data and commonly runs 30 seconds, sometimes
-  over a minute. Wait or re-call it; never fall back to `search` for a capability.
+- **`recommend` client-side timeout**: it commonly runs 30 seconds, sometimes over a minute. Wait or
+  re-call it; never fall back to `search` for a capability.
 
 ## Common mistakes
 

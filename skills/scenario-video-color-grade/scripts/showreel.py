@@ -193,8 +193,12 @@ def endcard(W, H, n, logo_path, credit):
             ly += logo.height
         if credit:   # credit ABOVE the logo
             top = (H // 2 - logo.height // 2 - 30) if logo else H // 2
-            ImageDraw.Draw(card).text((cx, top - int(44 * min(W, H) / 1080)), credit, font=cf,
+            # Text drawn straight onto the card writes its fill RGB and drops the fade with the alpha
+            # channel; a layer of the fill color composited over the card keeps the fade visible.
+            text = Image.new("RGBA", (W, H), (170, 170, 178, 0))
+            ImageDraw.Draw(text).text((cx, top - int(44 * min(W, H) / 1080)), credit, font=cf,
                                       fill=(170, 170, 178, int(255 * ease((i - 6) / 24))), anchor="ms")
+            card.alpha_composite(text)
         out = np.asarray(card.convert("RGB")).astype(np.float32)
         fo = ease((i - (n - 14)) / 14)
         yield (out * (1 - fo) + np.array(bg) * fo).astype(np.uint8)

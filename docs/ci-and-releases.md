@@ -107,19 +107,30 @@ pointing at this repository, and hook steps read the index through them.
 
 ## CI
 
+- `scripts/test-skill-scripts.sh` runs each Python test module, and each vitest suite, as a job of
+  its own, one per CPU at a time (`SKILLS_TEST_JOBS` overrides the count).
+  - So a test module never depends on another's side effects, and writes only under a temporary
+    directory.
+  - Python test modules sit at the top of `tests/<name>/`. A nested `test_*.py` fails the run, since
+    no job would pick it up.
+  - Each job prints one status line with its duration as it ends, then its full log once all end,
+    failures last.
 - `script-tests` runs once on `ubuntu-24.04` and once on `ubuntu-26.04`, which install ffmpeg 6.1
   and 8.0 from apt.
   - Each runner is the coverage for one ffmpeg version, so both stay named, never `ubuntu-latest`.
   - When a newer LTS runner ships, add it as a new entry rather than renaming an existing one.
   - The runner's apt mirror sometimes stalls for half an hour, so each leg caches its ffmpeg .debs.
     The key hashes the exact package list, so an Ubuntu update downloads only what changed.
-  - The job stops after 20 minutes, against a normal run under 11, so a stall fails fast.
+  - The job stops after 20 minutes, against a normal run under 5, so a stall fails fast.
   - Never hardcode a count derived from a probed duration in a test. ffmpeg 8 reports an MP3's
     gapless duration, while 6.1 and 7.1 include the encoder padding.
   - The `ubuntu-24.04` leg runs with `COVERAGE=1` and posts the Python table to its job summary. The
     vitest table stays in the step log.
   - Coverage spans core skills only (`.coveragerc`). Expert-tool scripts mostly run inside their
     host application, which coverage.py cannot follow.
+  - Both reports list every core script, a file no test runs at 0%. coverage.py needs
+    `include_namespace_packages`, since skill script folders hold no `__init__.py`. vitest takes the
+    JavaScript and TypeScript of every core skill shipping some, suite or not.
   - It reports without a threshold, so a drop never fails CI.
 - Python CI installs `tests/requirements-ci.txt` with hash checks and wheels only.
   `SKILLS_TEST_USE_SYSTEM_PYTHON=1` keeps tests and coverage in that verified environment. Local
@@ -139,8 +150,46 @@ pointing at this repository, and hook steps read the index through them.
     -o tests/scenario-blender-expert/requirements-ci.txt
   ```
 
+  The browser job's lock adds Playwright for Python to the playable-ads requirements. Regenerate it
+  with:
+
+  ```bash
+  uv pip compile --generate-hashes --python-version 3.12 --python-platform linux \
+    tests/scenario-playable-ads/requirements.txt \
+    tests/scenario-playable-ads/requirements-browser.in \
+    -o tests/scenario-playable-ads/requirements-browser-ci.txt
+  ```
+
+  The Blender core job's `bpy` lock targets Python 3.13, the only version `bpy` 5.x ships wheels
+  for. Regenerate it with:
+
+  ```bash
+  uv pip compile --generate-hashes --python-version 3.13 --python-platform linux \
+    tests/scenario-patina-retexture/requirements.txt \
+    tests/scenario-patina-retexture/requirements-bpy.in \
+    -o tests/scenario-patina-retexture/requirements-bpy-ci.txt
+  ```
+
   Add `--upgrade-package <name>` when updating a locked package without changing its requirement.
 
+- `browser.yml` runs the suites that skip without a real browser: the playable-ads QA run on the
+  shipped template (`test_qa.py`) and the motion-loops page checks and render.
+  - The in-process suites reach those scripts through stand-ins (a fake Playwright, a fake page), so
+    this job is the one check against a real Chromium.
+  - It triggers only on changes to those skills, their tests, the Playwright locks, or itself.
+  - Python takes Playwright from `requirements-browser-ci.txt`. Node takes it from the kinetic
+    scaffold's `assets/npm` lock, the repository's one locked npm Playwright. Keep both on the same
+    release, so one Chromium build serves them.
+  - A skip fails the job, since a skipped suite means the browser never started.
+- `blender-core.yml` runs the core skills' Blender-hosted scripts in a real Blender: blender-2d's
+  `build_scene.py` and orbit-views' `render_grounded.py` through the binary, patina-retexture's
+  pipeline through the `bpy` module.
+  - The `script-tests` suites reach those scripts through a stand-in `bpy`, and coverage.py cannot
+    follow into Blender, so this job is the one check that they still run in Blender.
+  - It triggers only on changes to those scripts, their tests, or the Blender setup.
+  - It installs Blender through `.github/actions/install-blender`, shared with `blender.yml`. Keep
+    both workflows on the same `BLENDER_RELEASE`.
+  - A skip fails the job, since a skipped suite means Blender or `bpy` never started.
 - `upload-coverage` sends both Cobertura reports to GitHub code coverage (part of Code Quality),
   which shows each PR's percentage against `main`.
   - It needs code coverage enabled in the repository's Code Quality settings.
@@ -149,11 +198,14 @@ pointing at this repository, and hook steps read the index through them.
 - Dependabot (`.github/dependabot.yml`) proposes one grouped PR a week per ecosystem, for releases
   at least seven days old:
   - `ci(deps)` for GitHub Actions;
-  - `chore(deps)` for the npm dev tooling in `pnpm-lock.yaml` and the kinetic music-video scaffold's
-    `assets/npm/package-lock.json`;
+  - `chore(deps)` for the npm dev tooling in `pnpm-lock.yaml` and the kinetic music-video and
+    kinetic film scaffolds' `assets/npm/package-lock.json`;
   - `chore(deps)` for the Python requirements and CI locks in `tests/` and `tests/*/`. It raises the
     floors too, since advisory scanners such as OpenSSF Scorecard read a requirement's lower bound,
     not the version CI installs.
+  - the kinetic film scaffold's `assets/requirements.txt` in the same Python group: its pins must
+    equal `tests/requirements-ci.txt` (a test checks), and a bump of that shipped file releases only
+    under a `fix` PR title.
   - It skips release-please-action and the `release-please` CLI, which move by hand together: the
     `package.json` pin must stay the version the action bundles.
   - `pr-name-linter` skips its PRs. A group holding one dependency gets a title past the
@@ -168,6 +220,12 @@ pointing at this repository, and hook steps read the index through them.
   - It is never a required check.
   - Publishing rejects a workflow-level `env` or `defaults`, write permissions above the job, and
     actions outside upstream's approved list in the job.
+- `codeql.yml` runs CodeQL on every pull request, each push to `main`, and weekly.
+  - The `main` ruleset requires its results, so it replaces default setup, which never analyzed fork
+    PRs and left them blocked. Keep default setup off: it rejects uploads from a workflow.
+  - Its `/language:<name>` categories match default setup's, so alert history carries over.
+  - Code Quality still runs as GitHub's own analysis, but the ruleset does not require it: it never
+    runs on fork PRs either.
 - `links.yml` runs lychee over tracked Markdown, without the vendored dev skills and `CHANGELOG.md`:
   - on every pull request, the relative links and anchors of every file offline, since moving any
     file, Markdown or not, can break a link to it;

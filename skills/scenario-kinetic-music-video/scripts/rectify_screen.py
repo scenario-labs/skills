@@ -56,10 +56,13 @@ def frames(src, w, h, fps, t0=0.0, t1=None):
 
 
 def order(q):
-    """Corners as top left, top right, bottom right, bottom left."""
+    """Corners as top left, top right, bottom right, bottom left: clockwise around their centroid, from the one with
+    the smallest x + y. Picking each corner by its own extreme coordinate gave one point twice on a quad turned 45
+    degrees."""
     q = np.float32(q)
-    s, d = q.sum(1), np.diff(q, axis=1)[:, 0]
-    return np.float32([q[np.argmin(s)], q[np.argmin(d)], q[np.argmax(s)], q[np.argmax(d)]])
+    c = q.mean(0)
+    q = q[np.argsort(np.arctan2(q[:, 1] - c[1], q[:, 0] - c[0]), kind='stable')]  # y points down: clockwise
+    return np.roll(q, -int(np.argmin(q.sum(1))), axis=0)
 
 
 def fills_frame(q, w, h):

@@ -73,7 +73,7 @@ Working in Unreal Engine, Unity, or Godot? Add the expert tools for it:
 
 ### Art Director
 
-One look held across every asset, checked before it ships. 15 skills.
+One look held across every asset, checked before it ships. 19 skills.
 
 - **One Character, Every Shot** (`scenario-consistency`, `scenario-identity-library`). Try: "Keep
   this heroine identical across these twelve shots, poses and outfits included."
@@ -81,9 +81,11 @@ One look held across every asset, checked before it ships. 15 skills.
   "Check this batch against the brief and flag anything off-model."
 - **Our Style, Trained** (`scenario-model-training`). Try: "Train a model on our 40 approved
   illustrations and generate new props in that style."
+- **Comics and Graphic Novels** (`scenario-comic-creator`, `scenario-storyboards`). Try: "Turn this
+  photo and idea into a six-page watercolor comic, then a PDF."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-consistency scenario-identity-library scenario-quality-gate scenario-asset-analysis scenario-model-training scenario-image scenario-image-editing scenario-sprite-animation scenario-video scenario-refine-loop scenario-seedream scenario-gemini-image
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-consistency scenario-identity-library scenario-quality-gate scenario-asset-analysis scenario-model-training scenario-image scenario-image-editing scenario-sprite-animation scenario-video scenario-refine-loop scenario-seedream scenario-gemini-image scenario-comic-creator scenario-multi-reference scenario-text-overlay scenario-storyboards
 ```
 
 ### Sound Designer
@@ -101,7 +103,7 @@ npx skills add scenario-labs/skills --skill scenario scenario-moderation scenari
 
 ### Video Producer
 
-Trailers and clips, storyboarded, generated, cut, graded, and captioned. 36 skills.
+Trailers and clips, storyboarded, generated, cut, graded, and captioned. 37 skills.
 
 - **Cinematic Trailers** (`scenario-video`, `scenario-storyboards`, `scenario-video-assembly`). Try:
   "Storyboard a 30-second trailer from this script, generate the shots, and cut them to music."
@@ -109,6 +111,8 @@ Trailers and clips, storyboarded, generated, cut, graded, and captioned. 36 skil
   word-by-word captions to this video and export 9:16, 1:1, and 16:9 versions."
 - **Lyric Videos** (`scenario-kinetic-music-video`). Try: "Turn this song into a vertical
   kinetic-typography lyric video."
+- **Launch Films and Teasers** (`scenario-kinetic-film`). Try: "Make a 20-second kinetic-type teaser
+  for our game from this brief, with generated music on the beat and our key art."
 - **Brand Motion Loops** (`scenario-motion-loops`). Try: "Make a seamless 12-second background loop
   in our brand blue with our mascot floating over it."
 - **Takes Before Finals** (`scenario-seedance-drafts`). Try: "Draft five takes of this shot cheaply,
@@ -120,29 +124,34 @@ Trailers and clips, storyboarded, generated, cut, graded, and captioned. 36 skil
   them."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-video scenario-storyboards scenario-video-assembly scenario-caption-studio scenario-formats scenario-image scenario-image-editing scenario-text-overlay scenario-video-editing scenario-video-color-grade scenario-audio scenario-seedance-music-video scenario-seedance-storyboard scenario-seedance-drafts scenario-reel-recast scenario-video-ads scenario-consistency scenario-asset-analysis scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-ad-variants scenario-thumbnails scenario-kinetic-music-video scenario-ace-step scenario-motion-loops
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-video scenario-storyboards scenario-video-assembly scenario-caption-studio scenario-formats scenario-image scenario-image-editing scenario-text-overlay scenario-video-editing scenario-video-color-grade scenario-audio scenario-seedance-music-video scenario-seedance-storyboard scenario-seedance-drafts scenario-reel-recast scenario-video-ads scenario-consistency scenario-asset-analysis scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-ad-variants scenario-thumbnails scenario-kinetic-music-video scenario-ace-step scenario-motion-loops scenario-kinetic-film
 ```
 
 ### Marketing Artist
 
-Store art and ads that stay on brand at every size. 28 skills.
+Store art and ads that stay on brand at every size. 31 skills.
 
 - **Store Art for Every Platform** (`scenario-formats`, `scenario-brand-kit`,
   `scenario-text-overlay`). Try: "Turn this key art into every storefront size, with our logo and
   the game's title."
 - **Ads From One Shot** (`scenario-product-shots`, `scenario-video-ads`, `scenario-ugc`). Try: "From
   this product shot, make a 15-second video ad and three UGC-style variants."
+- **Mobile Game UA Ads** (`scenario-game-ua-ads`). Try: "Make a 10-second vertical UA ad with a fail
+  tease for a pin-pull rescue puzzle, with hook text, win bursts, and an end card."
 - **Campaign Variants** (`scenario-ad-variants`). Try: "Make three hook-copy variants from this
   gameplay clip, preserving its action and audio."
 - **Video Thumbnails** (`scenario-thumbnails`). Try: "Make a readable boss-fight thumbnail with this
   character reference and the exact headline ONE HIT LEFT."
+- **Brand Films and Promos** (`scenario-kinetic-film`). Try: "Turn this product brief into a
+  30-second kinetic-type promo, scored with generated music and sound effects, delivered in 4K and
+  9:16."
 - **Fan-Cam Moments** (`scenario-fan-cam`). Try: "Put the person in this photo on the stadium
   jumbotron, cheering, then animate it."
 - **Playable Ads** (`scenario-playable-ads`). Try: "Turn this gameplay recording into a playable ad
   for Meta, Google and AppLovin."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam scenario-playable-ads scenario-game-assets scenario-3d
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-formats scenario-brand-kit scenario-text-overlay scenario-product-shots scenario-video-ads scenario-game-ua-ads scenario-ugc scenario-inspiration scenario-image scenario-image-editing scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-fan-cam scenario-playable-ads scenario-game-assets scenario-3d scenario-kinetic-film scenario-kinetic-music-video
 ```
 
 ### Technical Director
@@ -195,20 +204,20 @@ npx skills add scenario-labs/skills --skill scenario scenario-game-assets scenar
 
 ### Marketing and brand visuals
 
-One product shot and a brief turned into on-brand stills, ads, UGC videos, and every placement size.
-22 skills.
+One product shot and a brief turned into on-brand stills, ads, UGC videos, kinetic-type promo films,
+and every placement size. 24 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-product-shots scenario-brand-kit scenario-video-ads scenario-ugc scenario-formats scenario-inspiration scenario-image scenario-image-editing scenario-text-overlay scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario scenario-product-shots scenario-brand-kit scenario-video-ads scenario-ugc scenario-formats scenario-inspiration scenario-image scenario-image-editing scenario-text-overlay scenario-video scenario-video-editing scenario-audio scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-veo scenario-seedance scenario-kling scenario-elevenlabs scenario-ad-variants scenario-thumbnails scenario-kinetic-film scenario-kinetic-music-video
 ```
 
 ### Video, music video, and audio
 
 Video made, edited, and scored, from a single clip to a whole-song music video, with voice, music,
-and sound effects. 28 skills.
+and sound effects. 29 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-video scenario-video-editing scenario-video-color-grade scenario-audio scenario-video-assembly scenario-image-editing scenario-text-overlay scenario-seedance-music-video scenario-seedance-drafts scenario-reel-recast scenario-image scenario-kinetic-music-video scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo scenario-motion-loops
+npx skills add scenario-labs/skills --skill scenario scenario-video scenario-video-editing scenario-video-color-grade scenario-audio scenario-video-assembly scenario-image-editing scenario-text-overlay scenario-seedance-music-video scenario-seedance-drafts scenario-reel-recast scenario-image scenario-kinetic-music-video scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo scenario-motion-loops scenario-kinetic-film
 ```
 
 ### Consistent characters and custom models
@@ -222,10 +231,10 @@ npx skills add scenario-labs/skills --skill scenario scenario-consistency scenar
 
 ### Images and editing
 
-Images generated and edited, exact text overlays, and a sequence storyboarded. 26 skills.
+Images generated and edited, exact text overlays, and a sequence storyboarded. 27 skills.
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-image scenario-multi-reference scenario-image-editing scenario-text-overlay scenario-storyboards scenario-game-assets scenario-textures scenario-skyboxes scenario-video scenario-video-editing scenario-seedance-storyboard scenario-video-ads scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-ad-variants scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario scenario-image scenario-multi-reference scenario-image-editing scenario-text-overlay scenario-storyboards scenario-comic-creator scenario-game-assets scenario-textures scenario-skyboxes scenario-video scenario-video-editing scenario-seedance-storyboard scenario-video-ads scenario-video-assembly scenario-consistency scenario-asset-analysis scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-ad-variants scenario-thumbnails
 ```
 
 ### ChatGPT and Codex pets
