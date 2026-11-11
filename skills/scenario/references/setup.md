@@ -75,7 +75,7 @@ Verify with a free call: "List my Scenario teams" should return `teams_list` out
     may follow). A domain alone (`https://mcp.scenario.com`, `https://scenario.com`) serves no MCP
     server, whatever the sign-in screen said.
   - URL correct but tools missing: check Tool permissions (below) for Blocked before removing
-    anything.
+    anything. Nothing Blocked: re-authenticate (below).
   - URL wrong: remove the connector and add it again with the correct URL, since Claude edits no
     saved connector URL.
   - Free, Pro or Max: the user does this under Customize, Connectors.
@@ -99,9 +99,10 @@ handshake: clear the client's stored authorization and connect again before debu
 - Claude Code: `/mcp`, select Scenario, Clear authentication.
 - Cursor: Settings, Tools & MCP, deactivate and reactivate the server.
 - VS Code: Command Palette, `MCP: List Servers`, remove and re-add.
-- claude.ai and Claude Desktop: Customize, Connectors, remove and re-add the custom connector (Team
-  or Enterprise: reconnect instead). For Claude Desktop's `mcp-remote` config, Settings, Developer,
-  Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
+- claude.ai and Claude Desktop: when sign-in succeeds and only the tools are missing, run the
+  connector checks above first. Then Customize, Connectors, remove and re-add the custom connector
+  (Team or Enterprise: reconnect instead). For Claude Desktop's `mcp-remote` config, Settings,
+  Developer, Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
 - Codex: `codex mcp logout scenario`, then `codex mcp login scenario`.
 - OpenCode: `opencode mcp logout scenario`, then `opencode mcp auth scenario`.
 
