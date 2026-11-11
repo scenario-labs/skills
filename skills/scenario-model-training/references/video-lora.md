@@ -81,6 +81,8 @@ Tell the user, verbatim, before the go-ahead on the quote:
 - Check each clip's `description` with `asset_get` before the quote. While it names no motion, wait
   and re-check, or set your own.
 - Set a caption with `asset_update` `metadata: {"description": "..."}`.
+- A Reference pair with an `instruction` trains on it, not on the clip's `description`: make the
+  `instruction` name the motion. To correct one, re-send every pair with `set_pairs`.
 
 ## Price after the last dataset change
 
