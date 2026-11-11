@@ -79,7 +79,10 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
   assets is `filters={"tags": [...]}` with `team_id` and `project_id`, never `assets_list` with
   `tags`. The index can trail a tag write (over ten minutes at authoring time). When a lookup that
   should match returns nothing, page `assets_list` without `tags` and match each asset's `tags`
-  locally.
+  locally, along with any other structural filter in the search (`kind`, `model_id`,
+  `collection_ids`, the `created_*` dates) that the listed assets expose. A `query`, `image`, or
+  `images` criterion cannot be checked outside the index: say the fallback matched on tags and
+  structure only, not on text or similarity.
 
 ## Worked example: reviewing a batch against a brief
 
