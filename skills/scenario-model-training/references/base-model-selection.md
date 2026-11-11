@@ -10,7 +10,8 @@ build on.
 ## The interview
 
 Ask (or extract from the brief) before recommending anything, and map each answer to a
-`recommend_training` argument:
+`recommend_training` argument. Questions 1 and 2 are image-only: skip them for a video LoRA or a
+voice clone, where `subject` and `style` do not apply.
 
 1. **What must the model reproduce?** A character, a product or object, an environment, an overall
    style, or a transformation applied to existing images. Maps to `subject` (an overall style is
@@ -19,8 +20,10 @@ Ask (or extract from the brief) before recommending anything, and map each answe
 3. **What matters most: quality, speed, or cost?** Maps to `priority` (default `balanced`). Anchor
    it with expected volume: hero art and key visuals justify `quality`; thousands of assets or near
    real-time use justify `speed` or `cost`.
-4. **What does the dataset look like?** Single images or before/after pairs; audio for voice. Maps
-   to `dataset_shape` (and `modality: "voice"` for cloning, covered in SKILL.md).
+4. **What does the dataset look like?** Single images or before/after pairs; audio for voice;
+   images, clips, or clips with their references for a video LoRA. Maps to `dataset_shape` (and
+   `modality: "voice"` for cloning, covered in SKILL.md, or `modality: "video"`, covered in
+   [video-lora.md](video-lora.md)).
 5. **Any tie to an existing family?** Existing LoRAs to pair with or a pipeline pinned to an older
    base are the only reasons to set `legacy_ok: true`; the default excludes legacy families on
    purpose.
