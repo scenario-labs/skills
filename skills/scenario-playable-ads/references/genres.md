@@ -84,14 +84,15 @@ no guide yet, start from the named guide and expect design work; **new guide** =
 
 ### Other: not on the list
 
-| Genre id | What it is                                    | Ad verb            | Signature payoff                              | Status → guide                              |
-| -------- | --------------------------------------------- | ------------------ | --------------------------------------------- | ------------------------------------------- |
-| `other`  | the user says the game fits none of the above | from the recording | from the recording and the user's description | follow [unknown-genre.md](unknown-genre.md) |
+| Genre id | What it is                                    | Ad verb                         | Signature payoff                                            | Status → guide                              |
+| -------- | --------------------------------------------- | ------------------------------- | ----------------------------------------------------------- | ------------------------------------------- |
+| `other`  | the user says the game fits none of the above | from the recording or the brief | from the recording or the brief, and the user's description | follow [unknown-genre.md](unknown-genre.md) |
 
 When the user picks **Other**, their own description of the game (`intake.json` →
 `game_description`) is a first-class input. Read it before the recording. It names what they think
 the core loop and the best moment are, and the recording confirms or corrects that. Build only what
-the recording shows.
+the recording shows. From an idea, with no recording, build only what the brief and the genre guide
+state.
 
 ## Writing it into the intake
 
@@ -109,9 +110,10 @@ the recording shows.
 
 ## Choosing when the user is not sure
 
-1. Watch the recording: what does the player's finger do most of the time? That verb narrows it to a
-   family.
-2. What is the most satisfying moment in the recording? That picks the genre within the family.
+1. Watch the recording (from an idea, read the brief): what does the player's finger do most of the
+   time? That verb narrows it to a family.
+2. What is the most satisfying moment in the recording (or the brief)? That picks the genre within
+   the family.
 3. If two genres fit, pick the one with a **built** guide.
 4. If the user picks "I don't know, you choose", say in one line what you picked and why, and give
    the confidence (see [unknown-genre.md](unknown-genre.md)). When every offered row is a stretch,

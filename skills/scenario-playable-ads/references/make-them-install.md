@@ -35,7 +35,8 @@ This is the strongest install lever, and the one most ads skip.
 
 - **Find the tease in the recording.** In analysis, list what the recording shows that the ad
   doesn't let the player reach: a bigger boss, a new area, the next tier, a second weapon, a
-  level-select map. Example: a recording shows a boss that the ad never reaches.
+  level-select map. Example: a recording shows a boss that the ad never reaches. From an idea, tease
+  only what the brief names. If it names none, end without a tease and say so in `notes.md`.
 - **Put a glimpse of it in the ad:**
   - a locked silhouette with a "?";
   - a "NEXT:" banner as the result fades;
@@ -85,7 +86,8 @@ fatigue more slowly than video, but they still fatigue.
 - [ ] The first touch pays off within 1 s.
 - [ ] The viewer's growth is visible on screen.
 - [ ] There is one real choice.
-- [ ] One tease, taken from the recording, of content the game really has.
+- [ ] One tease, taken from the recording (or the brief), of content the game really has. From an
+      idea whose brief names none, no tease, noted in `notes.md`.
 - [ ] The ending is a cliffhanger (an honest near-fail, or a "next" banner on a win).
 - [ ] The end card shows the player's own stats, the tease and a dominant PLAY FREE.
 - [ ] No sound repeats faster than 3 times a second, and the mute button works.
