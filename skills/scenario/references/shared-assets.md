@@ -16,7 +16,8 @@ Otherwise discover catalog `assets_list`, then call `scenario_tool_execute_read`
 scope. Follow `nextPaginationToken` via `page_token` until a match or exhaustion. Match the returned
 tags locally against all three values: manifest `tag`, template `name`, and file role. Never pass
 `tags` to `assets_list` in a team scope: the API accepts it only on public listings. `search` takes
-`filters.tags` on team assets, but its index can trail a recent upload, so this check lists.
+`filters.tags` on team assets, but its index can trail a recent upload or tag write, so this check
+lists.
 
 If absent, `search` with `target: "assets"`, `public: true`, `query` equal to the template name, and
 the chosen `team_id`/`project_id`, then check the same tags on returned assets. Search can miss an

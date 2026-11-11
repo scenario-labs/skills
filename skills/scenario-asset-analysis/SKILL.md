@@ -77,7 +77,9 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
 - **By structure.** `filters` narrows on `kind`, `tags`, `model_id`, `collection_ids`, and
   `created_after`/`created_before`, ANDed with everything above. A tag lookup in the team's own
   assets is `filters={"tags": [...]}` with `team_id` and `project_id`, never `assets_list` with
-  `tags`.
+  `tags`. The index can trail a tag write (over ten minutes at authoring time). When a lookup that
+  should match returns nothing, page `assets_list` without `tags` and match each asset's `tags`
+  locally.
 
 ## Worked example: reviewing a batch against a brief
 
