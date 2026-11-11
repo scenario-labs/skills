@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.62.0](https://github.com/scenario-labs/skills/compare/skills-v0.61.0...skills-v0.62.0) (2026-11-11)
+
+
+### Features
+
+* **scenario-model-training:** teach MiniMax H3 video LoRA training ([#414](https://github.com/scenario-labs/skills/issues/414)) ([2e1f272](https://github.com/scenario-labs/skills/commit/2e1f272919778b3c67dd60772bf8bf18bea50823))
+* **scenario-playable-ads:** start from an idea or a genre name ([#410](https://github.com/scenario-labs/skills/issues/410)) ([0afcbaa](https://github.com/scenario-labs/skills/commit/0afcbaa2bca4dd9d5b294609726ce50c89588f07))
+* **scenario-task-tracking:** bill work to the task the user chose ([#382](https://github.com/scenario-labs/skills/issues/382)) ([11e4097](https://github.com/scenario-labs/skills/commit/11e409705a0505b9cab21206ef8ec7f327e82e61))
+
+
+### Bug Fixes
+
+* **scenario-asset-analysis:** find team assets by tag through search ([#409](https://github.com/scenario-labs/skills/issues/409)) ([a5441ad](https://github.com/scenario-labs/skills/commit/a5441ad444058d6e9c56945159ee19576b6b99e0))
+* **scenario-model-training:** let upload_images take any id count ([2e1f272](https://github.com/scenario-labs/skills/commit/2e1f272919778b3c67dd60772bf8bf18bea50823))
+* **scenario:** diagnose Claude connectors saved without /mcp ([#408](https://github.com/scenario-labs/skills/issues/408)) ([f3aa03f](https://github.com/scenario-labs/skills/commit/f3aa03f0752e63bc4f6a631ca39adaa872283c6f))
+* **scenario:** map recommend's missing-prompt error to its fix ([#412](https://github.com/scenario-labs/skills/issues/412)) ([7ca28d6](https://github.com/scenario-labs/skills/commit/7ca28d6d388220d33cdc5635e601d43f2920b2ca))
+* **scenario:** send CU-left questions to consumption_limit_get ([#411](https://github.com/scenario-labs/skills/issues/411)) ([6c0ec3d](https://github.com/scenario-labs/skills/commit/6c0ec3dd00b0f7293def6d1596f2457b451bf46d))
+
 ## [0.61.0](https://github.com/scenario-labs/skills/compare/skills-v0.60.1...skills-v0.61.0) (2026-11-08)
 
 
