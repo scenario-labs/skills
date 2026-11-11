@@ -95,8 +95,8 @@ the Scenario knowledge base):
 Underfit shows as the concept barely surfacing; overfit as training compositions reproduced
 literally and prompt changes losing effect. Per-epoch previews are how you tell the two apart before
 spending on generations: `config.sample_prompts` (at least one on any run with more than one epoch,
-per-family cap on the `train` schema, edit families also needing `sample_source_images` in the same
-order) renders every prompt at every epoch, and without them the trainer publishes no per-epoch
-checkpoints at all. Write them as off-dataset tests of the concept (trigger word, new pose, new
-setting, new framing), then pick the epoch on the model page and confirm with `model_run` on fresh
-prompts.
+per-family cap on the `train` schema, edit families and the video Reference type also needing
+`sample_source_images` in the same order) renders every prompt at every epoch, and without them the
+trainer publishes no per-epoch checkpoints at all. Write them as off-dataset tests of the concept
+(trigger word, new pose, new setting, new framing), then pick the epoch on the model page and
+confirm with `model_run` on fresh prompts.
