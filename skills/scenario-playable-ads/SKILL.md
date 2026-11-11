@@ -1,6 +1,6 @@
 ---
 name: scenario-playable-ads
-description: "Use when a mobile game's gameplay recording, screenshots or existing art and sound should become a playable ad: an HTML5 interactive ad or interactive end card for Meta, Google Ads App campaigns, AppLovin, Unity Ads, Mintegral, Moloco, Liftoff, TikTok Pangle or any MRAID network, with a hint hand, a CTA and a mute button, packaged per network and QA-tested in headless Chromium. Keywords: playable ad, HTML5 playable, MRAID, FbPlayableAd, ExitApi, end card, CTA, hypercasual ad."
+description: "Use when a mobile game's gameplay recording, screenshots, existing art and sound, or only an idea or a genre name should become a playable ad: an HTML5 interactive ad or end card for Meta, Google Ads App campaigns, AppLovin, Unity Ads, Mintegral, Moloco, Liftoff, TikTok Pangle or any MRAID network. Keywords: playable ad, HTML5 playable, MRAID, FbPlayableAd, ExitApi, crowd runner, merge, sort puzzle, survivor, tower defense, pin pull. Not for a video ad (scenario-game-ua-ads)."
 license: MIT
 ---
 
@@ -17,25 +17,23 @@ A playable is a 35 to 45 s slice of a real game that runs inside an ad network's
 - the genre's signature payoff;
 - a win or an honest near-fail, then an end card with an install button.
 
-**Input:** a gameplay recording and/or screenshots of the user's game, plus a logo, store links, a
-description and a genre pick when the user has them. When the studio already has art, 3D, sound or
-music, the build uses those files as they are, generates only what is missing in their style, or
-derives the rest from one key art ([references/existing-assets.md](references/existing-assets.md)).
+**Input:** a gameplay recording and/or screenshots of the user's game, or only an idea (see Start
+here), plus a logo, store links, a description and a genre pick when the user has them. When the
+studio already has art, 3D, sound or music, the build uses those files as they are, generates only
+what is missing in their style, or derives the rest from one key art
+([references/existing-assets.md](references/existing-assets.md)).
 
 **Output:** `dist/<network>/index.html` for nine networks and a local preview, the ZIP each ZIP
 network takes, and a bundle of all of them. A build ships only when it passes the 19 base QA checks
 plus the per-network checks.
 
-**What was tested.** The nine-network packaging ran against fake containers in headless Chromium: 64
-of 64 checks on a copy of one game. The scripts in this skill, with the first-tap guard, the Pangle
-SDK placement and the input and sound holds added since, pass 67 of 67 checks on the template's
-placeholder game in the same fake containers. That game also passed AppLovin's playable preview
-(portrait) and Google's HTML5 validator on the App Campaigns profile (2 November 2026). Google's
-Campaign Manager and Display & Video 360 policies reject the `google` ZIP, which needs a `clickTag`
-there. Meta's playable preview took the `meta` ZIP, passed its spec checks and registered the CTA
-tap. No other network's own tool was run. Say which tools were run when you hand a build over, and
-run each network's own preview first ([references/networks.md](references/networks.md)). Each
-archetype guide comes from one build that passed the 19 base checks.
+**What was tested.** The scripts pass 67 of 67 checks on the template's placeholder game inside fake
+containers in headless Chromium. On 2 November 2026 that game also passed AppLovin's playable
+preview (portrait), Google's HTML5 validator (App Campaigns profile) and Meta's playable preview
+(spec checks and the CTA tap). Google's Campaign Manager and Display & Video 360 reject the `google`
+ZIP, which needs a `clickTag` there. No other network's own tool was run. Run each network's preview
+first, and say which tools ran when you hand a build over
+([references/networks.md](references/networks.md)).
 
 Requirements: a local shell, Python 3.12 or later with Pillow, numpy, scipy, fontTools and brotli;
 Playwright for Python with Chromium; ffmpeg. Install with
@@ -51,15 +49,16 @@ unattended, proceed from tool schemas and flag the gap.
 
 ## Quick reference
 
-| Step        | What happens                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------- |
-| 1. Intake   | `intake/`: recording and/or screenshots, logo, `intake.json` (store links, networks, genre) |
-| 2. Analysis | contact sheet, key frames, `analysis/brief.md` and `analysis/design.md` (beats, asset map)  |
-| 3. Assets   | plate, transparent sheets, HUD crops, logo, SFX, music in `assets/raw/`, or studio files    |
-| 4. Build    | `src/game.js`; `assets/manifest.json` + `sounds` in `index.src.html`; `prep_assets.py`      |
-| 5. Package  | `build.py --networks all` (the default is `meta,google`)                                    |
-| 6. QA       | `qa.py --speed 2`, then look at every frame it writes                                       |
-| 7. Report   | `notes.md`: job ids, the source frame of every asset, tuning, open questions                |
+1. **Intake:** `intake/`: recording and/or screenshots (or the brief and two concept screens), logo,
+   `intake.json` (store links, networks, genre)
+2. **Analysis:** contact sheet, key frames, `analysis/brief.md` and `analysis/design.md` (beats,
+   asset map)
+3. **Assets:** plate, transparent sheets, HUD crops, logo, SFX, music in `assets/raw/`, or studio
+   files
+4. **Build:** `src/game.js`; `assets/manifest.json` + `sounds` in `index.src.html`; `prep_assets.py`
+5. **Package:** `build.py --networks all` (the default is `meta,google`)
+6. **QA:** `qa.py --speed 2`, then look at every frame it writes
+7. **Report:** `notes.md`: job ids, the source frame of every asset, tuning, open questions
 
 ```bash
 SKILL=<path to this skill>; P=<project dir>
@@ -83,8 +82,9 @@ python3 "$SKILL/scripts/qa.py" "$P" --speed 2       # qa/report.json and qa/*.pn
 When the user has not yet said what they have (for example "how do I make a playable ad?"), ask
 once, in one message, for everything the build needs, then wait. Do not generate anything yet.
 
-1. A gameplay recording of 30 s to 2 min and/or store screenshots. With neither, stop: the skill
-   rebuilds what it sees and never invents a mechanic.
+1. A gameplay recording of 30 s to 2 min and/or store screenshots. With neither (only an idea or a
+   genre name), ask instead for one paragraph: the world, what the finger does, the big moment, how
+   a round ends. Then follow "From an idea" below.
 2. The game name, the logo file, the App Store and Google Play links, and one line on what the
    player does.
 3. The ad networks they run, or "not sure" (the build covers nine).
@@ -92,19 +92,39 @@ once, in one message, for everything the build needs, then wait. Do not generate
 5. Any art, 3D, sound or music they already have for the game, and whether they own it for ads
    ([references/existing-assets.md](references/existing-assets.md)).
 
-Say in two lines what they will get: the game's core loop rebuilt as code from the recording, with
-their own art and sound where they sent some and generated art and sound for the rest, never the
-recording itself, so side features are simplified. Then watch the recording and ask the genre
-question below; when they sent files, ask in the same message how to use each kind (as supplied,
-complement or derive). Those are the only two rounds of questions the user needs to answer; the
-Scenario team and project, when the `scenario` skill asks for them, go in the first round.
+Say in two lines what they will get: the core loop rebuilt as code, their own art and sound where
+sent and generated for the rest, never the recording itself, so side features are simplified. Then
+ask the genre question below and, when they sent files, how to use each kind (as supplied,
+complement or derive). Those are the only two rounds of questions; the Scenario team and project,
+when the `scenario` skill asks for them, go in the first.
+
+Asked which genres or mechanics it can build, list the **built** rows of
+[references/genres.md](references/genres.md), then its _nearest_ rows with their starting guide.
+Never call those built.
+
+### From an idea
+
+- The paragraph is the brief (`game_description`) and plays the recording's role. A genre the user
+  named answers the genre question.
+- Build only what the brief and the genre guide state. The brief wins where they disagree; the guide
+  fills the rest, motion and timing included.
+- A brief without what the finger does or the big moment gets one follow-up, in the genre round.
+  Unattended, or with no paragraph, stop and report what is missing.
+- After the genre answer, unless supplied art replaces them, make two portrait concept screens, the
+  calm first screen and the big moment: `img2img` per section 4 of
+  [references/existing-assets.md](references/existing-assets.md) with supplied art, else `txt2img`
+  (the `scenario` skill's loop). State the `dry_run` price first; unattended, run them only within
+  the build's stated budget, else report and stop. They serve as the screenshots
+  ([references/scenario-assets.md](references/scenario-assets.md)).
+- Hand the build over as a concept, not their game. Without store links, the packages are preview
+  only.
 
 ## Two questions before generating anything
 
 Answer both in `analysis/brief.md`.
 
-1. **Which genre is it?** Watch the recording first (contact sheet and key frames). Then ask the
-   user one question with these options:
+1. **Which genre is it?** Watch the recording first (contact sheet and key frames). From an idea,
+   read the brief wherever this step says the recording. Then ask one question with these options:
    - the two genres from [references/genres.md](references/genres.md) that fit best, each with a
      one-line reason from the recording (what the finger does, the most satisfying moment);
    - "I don't know, you choose": pick the best fit and say why in one line;
@@ -117,8 +137,8 @@ Answer both in `analysis/brief.md`.
 
 2. **Why would someone install after playing?** Plan the levers from
    [references/make-them-install.md](references/make-them-install.md): a first touch that pays off
-   at once, visible growth, one real choice, a tease from the recording, a cliffhanger ending with
-   the player's own state on the end card.
+   at once, visible growth, one real choice, a tease from the recording or the brief, a cliffhanger
+   ending with the player's own state on the end card.
 
 ## Decision points
 
@@ -146,23 +166,24 @@ Answer both in `analysis/brief.md`.
 
 ## Archetype index
 
-| Archetype                       | Ad verb                                 | Guide                                                  |
-| ------------------------------- | --------------------------------------- | ------------------------------------------------------ |
-| Survivor shooter                | tap to move, auto-fire, tap a card      | [survivor](references/archetype-survivor.md)           |
-| Crowd runner with math gates    | drag left and right                     | [crowd runner](references/archetype-crowd-runner.md)   |
-| Lane shooter with gates         | drag left and right, auto-fire          | [lane shooter](references/archetype-lane-shooter.md)   |
-| Merge-2                         | drag an item onto its twin              | [merge](references/archetype-merge.md)                 |
-| Sort puzzle                     | tap source, tap target                  | [sort](references/archetype-sort.md)                   |
-| Conveyor color puzzle           | tap to dispatch a shooter               | [paint train](references/archetype-paint-train.md)     |
-| Pin pull                        | tap or swipe a pin                      | [pin pull](references/archetype-pin-pull.md)           |
-| Idle arcade                     | tap to move                             | [idle arcade](references/archetype-idle-arcade.md)     |
-| Tower defense                   | tap a pad to build or upgrade           | [tower defense](references/archetype-tower-defense.md) |
-| Platformer, as a portrait climb | tap where to land, tap again in the air | [platformer](references/archetype-platformer.md)       |
-| Racing, real 3D                 | drag to steer, tap to boost             | [racing](references/archetype-racing.md)               |
+Each built guide, with its ad verb:
+
+- [Survivor shooter](references/archetype-survivor.md): tap to move, auto-fire, tap a card
+- [Crowd runner with math gates](references/archetype-crowd-runner.md): drag left and right
+- [Lane shooter with gates](references/archetype-lane-shooter.md): drag left and right, auto-fire
+- [Merge-2](references/archetype-merge.md): drag an item onto its twin
+- [Sort puzzle](references/archetype-sort.md): tap source, tap target
+- [Conveyor color puzzle](references/archetype-paint-train.md): tap to dispatch a shooter
+- [Pin pull](references/archetype-pin-pull.md): tap or swipe a pin
+- [Idle arcade](references/archetype-idle-arcade.md): tap to move
+- [Tower defense](references/archetype-tower-defense.md): tap a pad to build or upgrade
+- [Platformer, as a portrait climb](references/archetype-platformer.md): tap where to land, tap
+  again in the air
+- [Racing, real 3D](references/archetype-racing.md): drag to steer, tap to boost
 
 A new archetype gets `references/archetype-<name>.md` with these sections: Controls, Beat sheet,
-Tuning, QA bot pattern, Asset map with source frames, Mistakes seen. Then add its row here and mark
-it built in `genres.md`.
+Tuning, QA bot pattern, Asset map with source frames, Mistakes seen. Then add it here and mark it
+built in `genres.md`.
 
 ## Rules every playable follows
 
@@ -210,9 +231,8 @@ the game contract: [references/qa-checks.md](references/qa-checks.md).
 5. `qa.py --speed 2` fails `idle_never_autoplays`: a demo pour moved `progress` before the first
    touch. Remove it, let the hand loop the pour gesture instead, and rebuild.
 6. Open every `qa/story_*.png`: a banner covers the jar it describes. Move it to the top band.
-7. Hand over the bundle ZIP with `notes.md`, and say which networks' own tools were run
-   ([references/networks.md](references/networks.md)) and that the rest were tested only in fake
-   containers.
+7. Hand over the bundle ZIP with `notes.md`, naming the networks whose own tools ran
+   ([references/networks.md](references/networks.md)); the rest ran only in fake containers.
 
 ## Common mistakes
 
@@ -221,13 +241,12 @@ the game contract: [references/qa-checks.md](references/qa-checks.md).
 - **A hint on the wrong spot.** The hand must point at a real good move from the solver or the level
   script.
 - **Chattering sounds:** a tick per coin at 10 to 25 a second. One sound per event group.
-- **Paying for sound variants.** A rising or alternate version of a sound is the same take played at
+- **Paying for sound variants.** A rising or alternate version of a sound is the same take at
   another `rate` (`PA.audio.play(name, vol, rate)`), not a new job. Generate one take per event
-  group, and a second only for a take you reject: the archetype tables' "2 takes each" records past
+  group, and a second only for a rejected take: the archetype tables' "2 takes each" records past
   builds, not a target. `dry_run` each sound payload and state the sum before launching any
-  (unattended: launch only within a stated budget, else report and stop). A variant that must not
-  share its sibling's repeat limit gets its own manifest and `sounds` entry pointing at the same raw
-  file: a new name, never a new job.
+  (unattended: only within a stated budget, else report and stop). A variant needing its own repeat
+  limit gets its own manifest and `sounds` entry on the same raw file: a new name, never a new job.
 - **Hard-coded near-fail text,** which lies to players who lost by a lot.
 - **Copying recording glitches or platform UI,** or baked HUD numbers. Redraw numbers live.
 - **Cutting a sheet by grid math.** Sprites cross the cells: use `"blob": n` and check `--blobs`.

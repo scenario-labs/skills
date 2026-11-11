@@ -36,6 +36,18 @@ rewritten to name no game.
   and estimates the inlined size against the cap. The script runs on synthetic files in its tests;
   no playable was built end to end from a studio's files with this version.
 
+- **Starting from an idea or a genre name.** The skill's public guide
+  (scenario.com/explorations/playable-ads/guide.html, step 2) tells a user with only an idea to
+  write one paragraph: the world, what the finger does, the big moment, how a round ends. They then
+  make two concept screens on Scenario to hand over as the screenshots. The guide says most games in
+  the exploration started that way. Earlier versions stopped without a recording or screenshots. The
+  brief now plays the recording's role, so the "never invent a mechanic" rule still binds: nothing
+  the brief and the genre guide do not state. A real game's recording still wins over any
+  description.
+- **Genre names in the description.** Genre-named playable requests ("a crowd runner playable")
+  carried no word that matched this skill, while `scenario-game-ua-ads` lists genres for video ads.
+  The description now names the most common built genres and points video ads at that sibling.
+
 ## Design choices
 
 - **One runtime adapter instead of a per-network shim in each file.** The alternative is a small

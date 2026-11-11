@@ -41,11 +41,11 @@ Two tool kinds:
 ## Scope first
 
 - Resolve scope first, then pass `team_id` and `project_id` on every call.
-- A team is the organization, the company or studio account; its projects sit inside it. "My
-  organization" or "my studio" names the team.
+- A team is the organization (company or studio account) holding projects. "My organization" or "my
+  studio" names it.
 - `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`.
 - Confirm the pair with the user: a guess writes into someone else's project. Unattended, take the
-  pair from the task; if it names none, stop and list the choices.
+  task's pair, else stop and list them.
 - The server fills scope only for read-only tools with one candidate, so an omission fails once a
   second team or project appears. The error names the wrong half.
 
@@ -62,7 +62,8 @@ Two tool kinds:
 | Inspect an asset  | `asset_get`                              | Free; dimensions, duration, `firstFrame` / `lastFrame` ids                   |
 | Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                                 |
 | Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                                           |
-| Quota / debugging | `usage`, `diagnostics_run`               | CU consumption; `diagnose` MCP prompt                                        |
+| CU left           | `consumption_limit_get`                  | Catalog read: `effective_remaining`, `period.end`; plan CU can end first     |
+| CU spent          | `usage`                                  | `project_id` required; `scope: "team"`: accessible projects; not a balance   |
 | Saved preferences | `memory_recall`                          | OAuth only; before generating in a project, again after switching            |
 
 - **Multi-step request** ("product video with voiceover", "concept to 3D"): catalog
@@ -77,8 +78,8 @@ Two tool kinds:
 Generating a stylized game prop image:
 
 1. Discover the model:
-   - `recommend` with the user's own words as `prompt` for a capability. Unscoped, it ranks models
-     the team cannot run.
+   - `recommend` for a capability, the user's own words as `prompt` (never `query`). Unscoped, it
+     ranks models the team cannot run.
    - `search` requires `target` (`models`, `assets`, `workflows`); for a known name:
      `target="models"`, `query="<model name>"`, `public=true`. It ranks by keyword and its `filters`
      hold no capability key, so a capability-worded query can rank the wrong output type first.
@@ -97,7 +98,7 @@ Generating a stylized game prop image:
    LoRA's own, not its base) and the draft `prompt`. Skip deliberate prompts.
 5. `model_run` with `model_id` and schema-conformant `parameters`.
    - Unless the user says cost does not matter, price first with `dry_run: true`, top level beside
-     `model_id`. No job is created, and `creativeUnitsCost` is this exact payload's price.
+     `model_id`. No job is created; `creativeUnitsCost` prices this exact payload.
    - A `recommend` quote assumes defaults; `cost_impact` fields move the real number.
    - Run: inline assets (`status: success`) need no wait; otherwise pass `job_id` to `jobs_wait`.
    - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
@@ -140,7 +141,7 @@ Local inputs go up with `upload_asset`:
 - Both calls take scope and nothing else: no parts list, no etags.
 - Inline `data` is decoded inside `upload_asset`: a decode error there (`libpng read error`,
   `Corrupt JPEG data`, `unable to read pixels`) means the base64 string broke, not the file.
-  - The agent retypes every character of `data`; a 57K-character string broke that way.
+  - The agent retypes every `data` character; a 57K-character string broke.
   - Re-sending it repeats the error. With a shell, switch to the `file_size` path, even when the
     user asked for inline, and say why.
 - On the `file_size` path the server decodes at completion: `Upload upl_… failed:` with
@@ -160,7 +161,7 @@ Filing is part of delivering, not a tidy-up:
   ignored, so adding is always a second call: `collection_add_assets`.
 - It accepts any number of ids, batches by 49, and skips duplicates. Results separate
   `already_present_asset_ids` from `added_asset_ids`.
-- After a failure, resend the whole list: duplicates are skipped.
+- After a failure, resend the whole list.
 - Confirm from that reply: `search` `filters={"collection_ids": [...]}` lags on a fresh write.
 - `asset_add_tags` is additive, one `asset_id` per call. A tag the asset already carries returns 400
   `Duplicated tag`: read `tags` via `assets_get_bulk` first and send only the missing ones.
@@ -195,7 +196,6 @@ Uploading and filing alone are not publication.
     too much, not that credits ran out.
   - Stop the batch, `dry_run` the payload, offer a cheaper member or fewer outputs, or report the
     reset or upgrade (unattended: report and stop).
-  - `usage` takes the same `project_id` (or `scope: "team"`).
   - A per-user cap goes to the team admin; a seat-cap error can also block uploads. Never change
     billing or membership yourself.
 - **429 `Too Many Requests. Please, wait N seconds` (`remainingSeconds`)**: Relax mode: the plan's
@@ -204,8 +204,7 @@ Uploading and filing alone are not publication.
     locked while a cheaper one runs. Never re-submit the same payload inside `remainingSeconds`.
   - Any team member's job restarts the team's wait, and waits lengthen as the team keeps generating,
     so a batch slows down. A refused attempt is free.
-  - Detect Relax mode from this refusal: `usage` reports consumption, not remaining CU. If no tool
-    documents how to check the wait, say it is unknown.
+  - Only this refusal reveals Relax mode. If no tool documents the wait, call it unknown.
   - Stop the batch. Offer a CU top-up (it ends Relax mode at once) or an upgrade; else a cheaper
     payload (`dry_run` it first), fewer outputs, or a later run (unattended: report and stop, never
     relaunch).
@@ -223,8 +222,10 @@ Uploading and filing alone are not publication.
 - **400 `At least one of query, filter, image, or images must be provided`**: `search` never lists
   bare. A newest-first asset listing is `target="assets"`, `filter="createdAt EXISTS"`,
   `sort_by=["createdAt:desc"]`.
-- **`recommend` client-side timeout**: it commonly runs 30 seconds, sometimes over a minute. Wait or
-  re-call it; never fall back to `search` for a capability.
+- **`recommend` client-side timeout**: it commonly runs 30 seconds to over a minute. Wait or re-call
+  it; never fall back to `search` for a capability.
+- **`recommend`: `Provide a prompt describing the task…`**: re-send the need as `prompt`, not
+  `query` or another key (silently dropped), plus `capability` when known.
 
 ## Common mistakes
 
@@ -245,7 +246,7 @@ Uploading and filing alone are not publication.
   failing call's scope pair and any `mcpt_` ids seen as `observed_trace_ids`.
 - Guessing a file field's name: 400 `Input image is required` (or `referenceImages`, `startImage`,
   `frontImage`, `video`: each model names its own) means the payload lacks the schema's `required`
-  field. Copy its name verbatim. A URL there reads as missing: file fields take asset ids only.
+  field. Copy its name verbatim. A URL there reads as missing.
 - Feeding an image field a video, audio, or 3D asset: 400 `Unhandled image format` lists the
   accepted types. `asset_get` reports the asset's `mimeType`; pull a still with the clip's
   `firstFrame` when the model wants an image.

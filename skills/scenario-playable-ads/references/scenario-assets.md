@@ -2,8 +2,9 @@
 
 Every asset in a playable comes from what the user supplied: a gameplay recording, screenshots, a
 logo, a font, store links, and any art, 3D, sound or music the studio already has
-([existing-assets.md](existing-assets.md)). Scenario rebuilds what the frames show at full detail;
-it never invents the game.
+([existing-assets.md](existing-assets.md)). With no recording or screenshots, it comes from the
+user's one-paragraph brief. Scenario rebuilds what the frames show at full detail; it never invents
+the game.
 
 ## Inputs
 
@@ -13,10 +14,44 @@ it never invents the game.
 | Screenshots only           | the genre guide and `game_description` | the screenshots                                                    |
 | Both                       | the recording                          | the screenshots; frames for poses and effects the screenshots lack |
 | The studio's own files     | the recording                          | the supplied files ([existing-assets.md](existing-assets.md))      |
+| An idea only               | the brief, then the genre guide        | supplied art first, then two concept screens made on Scenario      |
 
 - Where a recording and a screenshot disagree, the recording wins for behavior, the screenshot for
   art.
 - With screenshots only, the beat sheet and timings come from the genre guide. Ask for a short clip.
+
+### From an idea
+
+The brief is one paragraph: the world, what the finger does, the big moment, how a round ends. It
+plays the recording's role.
+
+- After the genre answer, make two portrait concept screens from it: the calm first screen (the
+  waiting state, the target visible) and the big moment (the signature payoff).
+- Generate them like any other asset (see Generating with Scenario, the concept-screens rows).
+- The stated budget covers the whole build: count the screens against it before pricing the other
+  assets.
+- Unattended, start each paid job only when its `dry_run` price fits what is left of the budget.
+  With no budget, or for a job that would exceed it, report the price and stop.
+- When the user also supplied art, its mode from [existing-assets.md](existing-assets.md) wins:
+  - **As supplied:** make no screens. A slot the game needs with no file is a question for the user
+    (unattended: report it and stop).
+  - **Complement or derive:** the screens fill only what that art leaves missing. Skip them when it
+    leaves nothing. The supplied characters and props do appear in the screens, drawn from the
+    uploaded references to match their shapes, colors and shading; the screens generate only what
+    the supplied art lacks (background, layout, effects). A supplied logo goes in as a style
+    reference and is never redrawn. Make them with `img2img`, not `txt2img`, and the supplied art as
+    references ([existing-assets.md](existing-assets.md), section 4), so they match it.
+- They then serve as the screenshots: plate, sprites and HUD come from them.
+- They are already Scenario assets: skip the contact sheet and the upload. Their source labels in
+  the asset map are `concept 1` and `concept 2`.
+- Build only what the brief and the genre guide state. A mechanic neither names stays out.
+- Where they disagree (one boss in the brief, a crowd clash in the guide), the brief wins. The guide
+  fills what the brief leaves out, motion and timing included. Note the difference in
+  `analysis/brief.md`.
+- In `analysis/brief.md` and `notes.md`, call the build a concept, not the user's game.
+- Without store links, the template's placeholder links stay in, and the CTA would open them. The
+  packages are preview only: say so first in `notes.md` and in the handover, and never hand them
+  over for a campaign.
 
 ## Rights and source check
 
@@ -26,6 +61,8 @@ Answer these at the top of `analysis/brief.md` before using any frame:
   confirm they own or license the game. Write the answer, or "not confirmed".
 - Unattended, write "not confirmed", build, and open `notes.md` with it: the build is a test until
   the user confirms the rights.
+- From an idea, write "concept" and whether a game exists yet. Supplied files still need the answer
+  below.
 - **Supplied files** need the same answer, and a license for the game does not always cover ads
   ([existing-assets.md](existing-assets.md), section 7).
 - **First-party capture or third-party video?** A video found online is a reference only. Ask for a
@@ -62,16 +99,18 @@ Connection, uploads and the core loop are in the `scenario` skill. For each asse
 5. `asset_download` (`png` for images; omit the format for audio), then
    `curl -fsSL -o <file> "<url>"`.
 
-| Asset                             | `capability` | Settings that worked                                                              |
-| --------------------------------- | ------------ | --------------------------------------------------------------------------------- |
-| Plate                             | `img2img`    | 2 to 3 frames as references, high quality, 1152 x 2048                            |
-| Sprite sheets                     | `img2img`    | transparent background, 1536 x 1024, 3 x 2 cells, the frames that show each piece |
-| Logo, only when none was supplied | `img2img`    | transparent background, frames as style references                                |
-| Clean render for 3D               | `img2img`    | 1024 x 1024, one object, plain mid-gray background                                |
-| 3D model                          | `img23d`     | low poly; see [3d-games.md](3d-games.md)                                          |
-| Seamless texture                  | `txt2img`    | 1024 x 1024, tiles in both directions                                             |
-| SFX                               | `txt2audio`  | 0.3 to 2.5 s, one take per event group; vary pitch with `rate`, not a new take    |
-| Music                             | `txt2audio`  | 30 s instrumental loop                                                            |
+| Asset                                     | `capability` | Settings that worked                                                                  |
+| ----------------------------------------- | ------------ | ------------------------------------------------------------------------------------- |
+| Concept screens, no supplied art          | `txt2img`    | portrait 9:16, 2 screens; the first as a reference for the second if accepted         |
+| Concept screens, supplied art guides them | `img2img`    | portrait 9:16, 2 screens; as in section 4 of [existing-assets.md](existing-assets.md) |
+| Plate                                     | `img2img`    | 2 to 3 frames as references, high quality, 1152 x 2048                                |
+| Sprite sheets                             | `img2img`    | transparent background, 1536 x 1024, 3 x 2 cells, the frames that show each piece     |
+| Logo, only when none was supplied         | `img2img`    | transparent background, frames as style references                                    |
+| Clean render for 3D                       | `img2img`    | 1024 x 1024, one object, plain mid-gray background                                    |
+| 3D model                                  | `img23d`     | low poly; see [3d-games.md](3d-games.md)                                              |
+| Seamless texture                          | `txt2img`    | 1024 x 1024, tiles in both directions                                                 |
+| SFX                                       | `txt2audio`  | 0.3 to 2.5 s, one take per event group; vary pitch with `rate`, not a new take        |
+| Music                                     | `txt2audio`  | 30 s instrumental loop                                                                |
 
 Detail per lane: `scenario-image` (edits, references), `scenario-game-assets` (sheets, cut-outs),
 `scenario-audio` (SFX, music), `scenario-3d` (image-to-3D), `scenario-sprite-animation` (walk
