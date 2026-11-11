@@ -82,9 +82,10 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
   complete (say every asset tagged in the last few minutes) or returns nothing, also page
   `assets_list` without `tags` and match each asset's `tags` locally, along with any other
   structural filter in the search (`kind`, `model_id`, `collection_ids`, the `created_*` dates) that
-  the listed assets expose. Merge those matches with the search hits by asset id. A `query`,
-  `image`, or `images` criterion cannot be checked outside the index: say the fallback matched on
-  tags and structure only, not on text or similarity.
+  the listed assets expose. The listing is current, so its matches replace the search hits: the
+  index trails a tag removal too, and a hit can carry a tag the asset has lost. A `query`, `image`,
+  or `images` criterion cannot be checked outside the index: say the fallback matched on tags and
+  structure only, not on text or similarity.
 
 ## Worked example: reviewing a batch against a brief
 
