@@ -28,7 +28,7 @@ and flag the gap.
 | User moves on to other work       | Ask whether it still belongs to the current task                    |
 | Project or team switch            | Drop the `task_id`, wait for the next refusal or ask                |
 | `dry_run` estimate                | No `task_id` needed                                                 |
-| Refused, unattended               | Use an id the request states, else stop and report the project      |
+| Refused, unattended               | Use the request's id for this work, else stop, report the project   |
 
 The tools that take `task_id` are the ones that offer `dry_run`: `model_run`, `workflow_run`,
 `train`, `prompt_spark`, `asset_analyze`, `asset_caption`, `asset_describe`, `asset_detect`, and
@@ -61,6 +61,9 @@ Ask once per piece of work, not once per call and not once per conversation.
   billed call either goes through (the project enforces nothing) or is refused with the list.
 - In doubt, ask. A question costs the user a second; a charge on the wrong task costs a correction
   in their tracker.
+- **Unattended**: nobody answers a question. After a refusal, retry only with an id the request
+  states for this work and project, and only inside a budget or count it also states. Otherwise stop
+  the billed steps, and report the project and the `dry_run` price.
 
 Word the switch question so a one-word answer works: name the current task and offer the list.
 
@@ -68,7 +71,8 @@ Word the switch question so a one-word answer works: name the current task and o
 
 The user asks for three concept sheets of a dragon on a project that enforces task ids.
 
-1. `model_schema_get`, then a `dry_run` of the payload: it quotes the price with no `task_id`.
+1. `recommend` picks the member (stop on `no_match`), then `model_schema_get`. A `dry_run` of the
+   payload then quotes the price with no `task_id`.
 2. `model_run` without `task_id` comes back refused: `Task id required`, with the project's tasks
    inline (`ART-12 "Dragon concept"`, `ART-14 "Castle key art"`, ...).
 3. Ask: "This project bills generations to a task. Which one is this for? ART-12 Dragon concept
