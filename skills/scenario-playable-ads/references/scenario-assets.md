@@ -27,7 +27,7 @@ plays the recording's role.
 
 - After the genre answer, make two portrait concept screens from it: the calm first screen (the
   waiting state, the target visible) and the big moment (the signature payoff).
-- Generate them like any other asset (see Generating with Scenario, the concept-screens row).
+- Generate them like any other asset (see Generating with Scenario, the concept-screens rows).
 - The stated budget covers the whole build: count the screens against it before pricing the other
   assets.
 - Unattended, start each paid job only when its `dry_run` price fits what is left of the budget.
@@ -36,8 +36,11 @@ plays the recording's role.
   - **As supplied:** make no screens. A slot the game needs with no file is a question for the user
     (unattended: report it and stop).
   - **Complement or derive:** the screens fill only what that art leaves missing. Skip them when it
-    leaves nothing. Make them with `img2img`, not `txt2img`, and the supplied art as references
-    ([existing-assets.md](existing-assets.md), section 4), so they match it.
+    leaves nothing. The supplied characters and props do appear in the screens, drawn from the
+    uploaded references to match their shapes, colors and shading; the screens generate only what
+    the supplied art lacks (background, layout, effects). A supplied logo goes in as a style
+    reference and is never redrawn. Make them with `img2img`, not `txt2img`, and the supplied art as
+    references ([existing-assets.md](existing-assets.md), section 4), so they match it.
 - They then serve as the screenshots: plate, sprites and HUD come from them.
 - They are already Scenario assets: skip the contact sheet and the upload. Their source labels in
   the asset map are `concept 1` and `concept 2`.
@@ -96,17 +99,18 @@ Connection, uploads and the core loop are in the `scenario` skill. For each asse
 5. `asset_download` (`png` for images; omit the format for audio), then
    `curl -fsSL -o <file> "<url>"`.
 
-| Asset                             | `capability` | Settings that worked                                                              |
-| --------------------------------- | ------------ | --------------------------------------------------------------------------------- |
-| Concept screens, idea only        | `txt2img`    | portrait 9:16, 2 screens; the first as a reference for the second if accepted     |
-| Plate                             | `img2img`    | 2 to 3 frames as references, high quality, 1152 x 2048                            |
-| Sprite sheets                     | `img2img`    | transparent background, 1536 x 1024, 3 x 2 cells, the frames that show each piece |
-| Logo, only when none was supplied | `img2img`    | transparent background, frames as style references                                |
-| Clean render for 3D               | `img2img`    | 1024 x 1024, one object, plain mid-gray background                                |
-| 3D model                          | `img23d`     | low poly; see [3d-games.md](3d-games.md)                                          |
-| Seamless texture                  | `txt2img`    | 1024 x 1024, tiles in both directions                                             |
-| SFX                               | `txt2audio`  | 0.3 to 2.5 s, one take per event group; vary pitch with `rate`, not a new take    |
-| Music                             | `txt2audio`  | 30 s instrumental loop                                                            |
+| Asset                                      | `capability` | Settings that worked                                                              |
+| ------------------------------------------ | ------------ | --------------------------------------------------------------------------------- |
+| Concept screens, no supplied art           | `txt2img`    | portrait 9:16, 2 screens; the first as a reference for the second if accepted     |
+| Concept screens, supplied art (complement) | `img2img`    | portrait 9:16, 2 screens; the supplied files as references                        |
+| Plate                                      | `img2img`    | 2 to 3 frames as references, high quality, 1152 x 2048                            |
+| Sprite sheets                              | `img2img`    | transparent background, 1536 x 1024, 3 x 2 cells, the frames that show each piece |
+| Logo, only when none was supplied          | `img2img`    | transparent background, frames as style references                                |
+| Clean render for 3D                        | `img2img`    | 1024 x 1024, one object, plain mid-gray background                                |
+| 3D model                                   | `img23d`     | low poly; see [3d-games.md](3d-games.md)                                          |
+| Seamless texture                           | `txt2img`    | 1024 x 1024, tiles in both directions                                             |
+| SFX                                        | `txt2audio`  | 0.3 to 2.5 s, one take per event group; vary pitch with `rate`, not a new take    |
+| Music                                      | `txt2audio`  | 30 s instrumental loop                                                            |
 
 Detail per lane: `scenario-image` (edits, references), `scenario-game-assets` (sheets, cut-outs),
 `scenario-audio` (SFX, music), `scenario-3d` (image-to-3D), `scenario-sprite-animation` (walk
