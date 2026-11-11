@@ -36,7 +36,8 @@ plays the recording's role.
   - **As supplied:** make no screens. A slot the game needs with no file is a question for the user
     (unattended: report it and stop).
   - **Complement or derive:** the screens fill only what that art leaves missing. Skip them when it
-    leaves nothing.
+    leaves nothing. Make them with `img2img`, not `txt2img`, and the supplied art as references
+    ([existing-assets.md](existing-assets.md), section 4), so they match it.
 - They then serve as the screenshots: plate, sprites and HUD come from them.
 - They are already Scenario assets: skip the contact sheet and the upload. Their source labels in
   the asset map are `concept 1` and `concept 2`.
