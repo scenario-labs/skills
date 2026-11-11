@@ -159,7 +159,8 @@
       "strict": false,
       "skills": [
         "./skills/scenario-team-admin",
-        "./skills/scenario-admin-analytics"
+        "./skills/scenario-admin-analytics",
+        "./skills/scenario-task-tracking"
       ]
     },
     {
