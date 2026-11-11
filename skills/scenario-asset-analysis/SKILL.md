@@ -75,7 +75,17 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
   matches subject and mood; 0 matches image features, the setting for hunting near-duplicates and
   crops. Add a `query` beside it for "like these, but more stylized".
 - **By structure.** `filters` narrows on `kind`, `tags`, `model_id`, `collection_ids`, and
-  `created_after`/`created_before`, ANDed with everything above.
+  `created_after`/`created_before`, ANDed with everything above. A tag lookup in the team's own
+  assets is `filters={"tags": [...]}` with `team_id` and `project_id`, never `assets_list` with
+  `tags`. The index can trail a tag write (over ten minutes at authoring time), so a nonempty result
+  can still be partial: some assets indexed, recent tag writes not yet. When the lookup must be
+  complete (say every asset tagged in the last few minutes) or returns nothing, also page
+  `assets_list` without `tags` and match each asset's `tags` locally, along with any other
+  structural filter in the search (`kind`, `model_id`, `collection_ids`, the `created_*` dates) that
+  the listed assets expose. The listing is current, so its matches replace the search hits: the
+  index trails a tag removal too, and a hit can carry a tag the asset has lost. A `query`, `image`,
+  or `images` criterion cannot be checked outside the index: say the fallback matched on tags and
+  structure only, not on text or similarity.
 
 ## Worked example: reviewing a batch against a brief
 
@@ -103,5 +113,8 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
 - Reusing a remembered executor lane: use the `permission` from fresh `scenario_tools_search`
   results, including for `dry_run`. A lane rejection means refresh discovery and use its executor,
   not retry the same call.
+- Passing `tags` to `assets_list` in a team scope. The API refuses it
+  (`Parameter "tags" can only be used when "privacy" is "public"...`): switch to `search` with
+  `filters.tags`, never retry.
 - Asking `asset_analyze` to produce an image. It returns text; control maps come from `asset_detect`
   and final renders from `model_run`.

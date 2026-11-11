@@ -14,8 +14,10 @@ public reference; confirm it is accessible before use.
 Otherwise discover catalog `assets_list`, then call `scenario_tool_execute_read` with
 `name: "assets_list"` and `parameters: {team_id, project_id, limit: 100}` in the user's chosen
 scope. Follow `nextPaginationToken` via `page_token` until a match or exhaustion. Match the returned
-tags locally against all three values: manifest `tag`, template `name`, and file role. Do not pass
-`filters.tags` on this private listing: the API rejects that combination.
+tags locally against all three values: manifest `tag`, template `name`, and file role. Never pass
+`tags` to `assets_list` in a team scope: the API accepts it only on public listings. `search` takes
+`filters.tags` on team assets, but its index can trail a recent upload or tag write, so this check
+lists.
 
 If absent, `search` with `target: "assets"`, `public: true`, `query` equal to the template name, and
 the chosen `team_id`/`project_id`, then check the same tags on returned assets. Search can miss an
