@@ -111,9 +111,10 @@ Never call those built.
 - A brief without what the finger does or the big moment gets one follow-up, in the genre round.
   Unattended, or with no paragraph, stop and report what is missing.
 - After the genre answer, unless supplied art replaces them, make two portrait concept screens, the
-  calm first screen and the big moment, through the `scenario` skill's loop (`recommend` with
-  `txt2img`, or `img2img` beside supplied art). State the `dry_run` price first; unattended, run
-  them only within the build's stated budget, else report and stop. They serve as the screenshots
+  calm first screen and the big moment: `img2img` per section 4 of
+  [references/existing-assets.md](references/existing-assets.md) with supplied art, else `txt2img`
+  (the `scenario` skill's loop). State the `dry_run` price first; unattended, run them only within
+  the build's stated budget, else report and stop. They serve as the screenshots
   ([references/scenario-assets.md](references/scenario-assets.md)).
 - Hand the build over as a concept, not their game. Without store links, the packages are preview
   only.
@@ -123,8 +124,7 @@ Never call those built.
 Answer both in `analysis/brief.md`.
 
 1. **Which genre is it?** Watch the recording first (contact sheet and key frames). From an idea,
-   read the brief wherever this step says the recording. Then ask the user one question with these
-   options:
+   read the brief wherever this step says the recording. Then ask one question with these options:
    - the two genres from [references/genres.md](references/genres.md) that fit best, each with a
      one-line reason from the recording (what the finger does, the most satisfying moment);
    - "I don't know, you choose": pick the best fit and say why in one line;

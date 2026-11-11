@@ -99,18 +99,18 @@ Connection, uploads and the core loop are in the `scenario` skill. For each asse
 5. `asset_download` (`png` for images; omit the format for audio), then
    `curl -fsSL -o <file> "<url>"`.
 
-| Asset                                      | `capability` | Settings that worked                                                              |
-| ------------------------------------------ | ------------ | --------------------------------------------------------------------------------- |
-| Concept screens, no supplied art           | `txt2img`    | portrait 9:16, 2 screens; the first as a reference for the second if accepted     |
-| Concept screens, supplied art (complement) | `img2img`    | portrait 9:16, 2 screens; the supplied files as references                        |
-| Plate                                      | `img2img`    | 2 to 3 frames as references, high quality, 1152 x 2048                            |
-| Sprite sheets                              | `img2img`    | transparent background, 1536 x 1024, 3 x 2 cells, the frames that show each piece |
-| Logo, only when none was supplied          | `img2img`    | transparent background, frames as style references                                |
-| Clean render for 3D                        | `img2img`    | 1024 x 1024, one object, plain mid-gray background                                |
-| 3D model                                   | `img23d`     | low poly; see [3d-games.md](3d-games.md)                                          |
-| Seamless texture                           | `txt2img`    | 1024 x 1024, tiles in both directions                                             |
-| SFX                                        | `txt2audio`  | 0.3 to 2.5 s, one take per event group; vary pitch with `rate`, not a new take    |
-| Music                                      | `txt2audio`  | 30 s instrumental loop                                                            |
+| Asset                                     | `capability` | Settings that worked                                                                  |
+| ----------------------------------------- | ------------ | ------------------------------------------------------------------------------------- |
+| Concept screens, no supplied art          | `txt2img`    | portrait 9:16, 2 screens; the first as a reference for the second if accepted         |
+| Concept screens, supplied art guides them | `img2img`    | portrait 9:16, 2 screens; as in section 4 of [existing-assets.md](existing-assets.md) |
+| Plate                                     | `img2img`    | 2 to 3 frames as references, high quality, 1152 x 2048                                |
+| Sprite sheets                             | `img2img`    | transparent background, 1536 x 1024, 3 x 2 cells, the frames that show each piece     |
+| Logo, only when none was supplied         | `img2img`    | transparent background, frames as style references                                    |
+| Clean render for 3D                       | `img2img`    | 1024 x 1024, one object, plain mid-gray background                                    |
+| 3D model                                  | `img23d`     | low poly; see [3d-games.md](3d-games.md)                                              |
+| Seamless texture                          | `txt2img`    | 1024 x 1024, tiles in both directions                                                 |
+| SFX                                       | `txt2audio`  | 0.3 to 2.5 s, one take per event group; vary pitch with `rate`, not a new take        |
+| Music                                     | `txt2audio`  | 30 s instrumental loop                                                                |
 
 Detail per lane: `scenario-image` (edits, references), `scenario-game-assets` (sheets, cut-outs),
 `scenario-audio` (SFX, music), `scenario-3d` (image-to-3D), `scenario-sprite-animation` (walk
