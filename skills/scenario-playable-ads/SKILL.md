@@ -110,10 +110,11 @@ Never call those built.
   fills the rest, motion and timing included.
 - A brief without what the finger does or the big moment gets one follow-up, in the genre round.
   Unattended, or with no paragraph, stop and report what is missing.
-- After the genre answer, make two portrait concept screens, the calm first screen and the big
-  moment, through the `scenario` skill's loop (`recommend` with `txt2img`). State the `dry_run`
-  price first; unattended, run them only within the build's stated budget, else report and stop.
-  They serve as the screenshots ([references/scenario-assets.md](references/scenario-assets.md)).
+- After the genre answer, unless supplied art replaces them, make two portrait concept screens, the
+  calm first screen and the big moment, through the `scenario` skill's loop (`recommend` with
+  `txt2img`). State the `dry_run` price first; unattended, run them only within the build's stated
+  budget, else report and stop. They serve as the screenshots
+  ([references/scenario-assets.md](references/scenario-assets.md)).
 - Hand the build over as a concept, not their game. Without store links, the packages are preview
   only.
 

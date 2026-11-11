@@ -29,9 +29,14 @@ plays the recording's role.
   waiting state, the target visible) and the big moment (the signature payoff).
 - Generate them like any other asset (see Generating with Scenario, the concept-screens row).
 - The stated budget covers the whole build: count the screens against it before pricing the other
-  assets. Unattended with no budget, report the price and stop.
-- When the user also supplied art, its mode from [existing-assets.md](existing-assets.md) wins. The
-  screens fill only what that art leaves missing; with a complete set supplied as is, skip them.
+  assets.
+- Unattended, start each paid job only when its `dry_run` price fits what is left of the budget.
+  With no budget, or for a job that would exceed it, report the price and stop.
+- When the user also supplied art, its mode from [existing-assets.md](existing-assets.md) wins:
+  - **As supplied:** make no screens. A slot the game needs with no file is a question for the user
+    (unattended: report it and stop).
+  - **Complement or derive:** the screens fill only what that art leaves missing. Skip them when it
+    leaves nothing.
 - They then serve as the screenshots: plate, sprites and HUD come from them.
 - They are already Scenario assets: skip the contact sheet and the upload. Their source labels in
   the asset map are `concept 1` and `concept 2`.
