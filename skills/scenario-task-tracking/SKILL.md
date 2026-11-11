@@ -28,7 +28,7 @@ and flag the gap.
 | User moves on to other work       | Ask whether it still belongs to the current task                    |
 | Project or team switch            | Drop the `task_id`, wait for the next refusal or ask                |
 | `dry_run` estimate                | No `task_id` needed                                                 |
-| Unattended, no user to ask        | Stop the billed steps and report which project needs a task         |
+| Unattended, no user to ask        | Use an id the request states, else stop and report the project      |
 
 The tools that take `task_id` are the ones that offer `dry_run`: `model_run`, `workflow_run`,
 `train`, `prompt_spark`, `asset_analyze`, `asset_caption`, `asset_describe`, `asset_detect`, and
@@ -68,13 +68,16 @@ Word the switch question so a one-word answer works: name the current task and o
 
 The user asks for three concept sheets of a dragon on a project that enforces task ids.
 
-1. `model_run` without `task_id` comes back refused: `Task id required`, with the project's tasks
+1. `model_schema_get`, then a `dry_run` of the payload: it quotes the price with no `task_id`.
+2. `model_run` without `task_id` comes back refused: `Task id required`, with the project's tasks
    inline (`ART-12 "Dragon concept"`, `ART-14 "Castle key art"`, ...).
-2. Ask: "This project bills generations to a task. Which one is this for? ART-12 Dragon concept
+3. Ask: "This project bills generations to a task. Which one is this for? ART-12 Dragon concept
    looks like the match." The user answers ART-12.
-3. Retry the same `model_run` with `task_id="ART-12"`. Pass `ART-12` on the two remaining sheets and
-   on the upscale of the chosen one, without asking.
-4. The user says "now let's do the castle". Before the first billed call: "Still on ART-12 Dragon
+4. Retry the same `model_run` with `task_id="ART-12"`, then `jobs_wait` until no `pending_job_ids`
+   remain: it takes no `task_id`.
+5. Pass `ART-12` on the two remaining sheets without asking again. The user then asks for an upscale
+   of the one they chose: same work, so pass `ART-12` there too.
+6. The user says "now let's do the castle". Before the first billed call: "Still on ART-12 Dragon
    concept, or switch to ART-14 Castle key art?" The user picks ART-14; carry it from there.
 
 ## Common mistakes
@@ -85,5 +88,5 @@ The user asks for three concept sheets of a dragon on a project that enforces ta
 - Carrying a `task_id` into another project or team, where the same id means nothing.
 - Retrying the refused call unchanged: only a `task_id` clears the refusal.
 - Asking for a task on a project that refused nothing: no `task_id` is needed until a billed call is
-  refused.
+  refused. A task the user names unprompted is still passed.
 - Saving a task id to memory as a standing default: tasks change, so confirm it each session.
