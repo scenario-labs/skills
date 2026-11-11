@@ -68,6 +68,32 @@ standard URL through their CLI or configuration file.
 Verify with a free call: "List my Scenario teams" should return `teams_list` output.
 `diagnostics_run` names the failing layer when it does not.
 
+## Claude connector symptoms
+
+These are settings in the Claude app: the agent points the user to each one and changes nothing
+itself.
+
+- **Sign-in succeeds, then no MCP server or no tools**: check the saved connector URL first.
+  - It must be `https://mcp.scenario.com/mcp`, the `/mcp` path included (a `?toolsets=full` query
+    may follow). A domain alone (`https://mcp.scenario.com`, `https://scenario.com`) serves no MCP
+    server, whatever the sign-in screen said.
+  - URL correct but tools missing: check Tool permissions (below) for Blocked before removing
+    anything. Nothing Blocked: re-authenticate (below).
+  - URL wrong: remove the connector and add it again with the correct URL, since Claude edits no
+    saved connector URL.
+  - Free, Pro or Max: the user does this under Customize, Connectors.
+  - Team or Enterprise: a member cannot change an organization connector. An owner removes and
+    re-adds it under Organization settings, Connectors; then each member clicks Connect again under
+    Customize, Connectors.
+- **Approval asked on every tool call**: that is the Claude app's tool permission, not the server.
+  - In the prompt, "Allow always" approves that tool from then on.
+  - Customize, Connectors, the Scenario connector, Tool permissions: each category or tool takes
+    Always allow, Needs approval, or Blocked.
+  - On Team or Enterprise, an owner's setting there restricts the connector across the organization,
+    and a member cannot override it.
+  - On Enterprise, a custom role sets the same three options per connector or tool, so an owner
+    checks the member's role too (Organization settings, Roles).
+
 ## Re-authenticating
 
 A connection that worked and then fails, or a server-side authentication fix, needs a fresh
@@ -76,9 +102,10 @@ handshake: clear the client's stored authorization and connect again before debu
 - Claude Code: `/mcp`, select Scenario, Clear authentication.
 - Cursor: Settings, Tools & MCP, deactivate and reactivate the server.
 - VS Code: Command Palette, `MCP: List Servers`, remove and re-add.
-- claude.ai and Claude Desktop: Customize, Connectors, remove and re-add the custom connector (Team
-  or Enterprise: reconnect instead). For Claude Desktop's `mcp-remote` config, Settings, Developer,
-  Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
+- claude.ai and Claude Desktop: when sign-in succeeds and only the tools are missing, run the
+  connector checks above first. Then Customize, Connectors, remove and re-add the custom connector
+  (Team or Enterprise: reconnect instead). For Claude Desktop's `mcp-remote` config, Settings,
+  Developer, Edit Config, remove the entry and `rm -rf ~/.mcp-auth`, then re-add and restart.
 - Codex: `codex mcp logout scenario`, then `codex mcp login scenario`.
 - OpenCode: `opencode mcp logout scenario`, then `opencode mcp auth scenario`.
 
