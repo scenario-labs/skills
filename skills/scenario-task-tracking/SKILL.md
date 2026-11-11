@@ -28,7 +28,7 @@ and flag the gap.
 | User moves on to other work       | Ask whether it still belongs to the current task                    |
 | Project or team switch            | Drop the `task_id`, wait for the next refusal or ask                |
 | `dry_run` estimate                | No `task_id` needed                                                 |
-| Unattended, no user to ask        | Use an id the request states, else stop and report the project      |
+| Refused, unattended               | Use an id the request states, else stop and report the project      |
 
 The tools that take `task_id` are the ones that offer `dry_run`: `model_run`, `workflow_run`,
 `train`, `prompt_spark`, `asset_analyze`, `asset_caption`, `asset_describe`, `asset_detect`, and
