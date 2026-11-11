@@ -75,9 +75,12 @@ Tell the user, verbatim, before the go-ahead on the quote:
 ## Captions
 
 - `start` refuses a dataset when any entry has no caption.
-- A clip is captioned 40 s to 2 min after `upload_images`, and sometimes never.
-- Check each clip's `description` with `asset_get`. Set a missing caption with `asset_update`
-  `metadata: {"description": "..."}`.
+- An uploaded clip already carries a `description`: a still-frame caption that names no motion.
+- The training caption, which describes the motion, replaces it after `upload_images`: 40 s to 2
+  min, longer in one run, and sometimes never.
+- Check each clip's `description` with `asset_get` before the quote. While it names no motion, wait
+  and re-check, or set your own.
+- Set a caption with `asset_update` `metadata: {"description": "..."}`.
 
 ## Price after the last dataset change
 
@@ -95,7 +98,7 @@ The size sweet spots, resolution floor, and parameter table in the dataset refer
 | Field                 | Default | Range                 | Note                                        |
 | --------------------- | ------- | --------------------- | ------------------------------------------- |
 | `epochs`              | 10      |                       | Cost scales linearly                        |
-| `nb_repeats`          | 5       | clips × repeats ≤ 900 |                                             |
+| `nb_repeats`          | 5       | clips × repeats ≤ 900 | Fewer repeats lower the quote               |
 | `learning_rate`       | 1e-4    |                       |                                             |
 | `rank`                | 16      | 8, 16, 32, 64         |                                             |
 | `guidance_loss_scale` | 4       | 1 to 8                | Lower for a small dataset; 1 disables it    |
@@ -104,6 +107,7 @@ The size sweet spots, resolution floor, and parameter table in the dataset refer
 | `sample_width`        | 768     | multiple of 32        | Set with `sample_height`                    |
 | `sample_height`       | 448     | multiple of 32        | 768x448 is also the largest area            |
 
+- `nb_repeats` is also capped at 100, whatever the clip count.
 - Previews are videos. The first 2 `sample_prompts` are free; each one past that costs 9 CU per
   epoch.
 - `minimax-h3-ref-lora` needs `sample_source_images`: one image asset id per sample prompt, in the

@@ -10,7 +10,8 @@ build on.
 ## The interview
 
 Ask (or extract from the brief) before recommending anything, and map each answer to a
-`recommend_training` argument:
+`recommend_training` argument. Questions 1 and 2 are image-only: skip them for a video LoRA or a
+voice clone, where `subject` and `style` do not apply.
 
 1. **What must the model reproduce?** A character, a product or object, an environment, an overall
    style, or a transformation applied to existing images. Maps to `subject` (an overall style is
