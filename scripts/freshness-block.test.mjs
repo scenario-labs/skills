@@ -36,6 +36,13 @@ test("puts the block last, moving one found elsewhere", () => {
   assert.equal(withBlock(misplaced), skill(OVERVIEW, STEPS, BLOCK));
 });
 
+// A merge where both sides appended the block leaves two.
+test("keeps one block when a skill holds two", () => {
+  const twice = skill(OVERVIEW, STEPS, BLOCK, BLOCK);
+  assert.equal(blockProblem(twice), "has more than one freshness block");
+  assert.equal(withBlock(twice), skill(OVERVIEW, STEPS, BLOCK));
+});
+
 test("does not take the heading inside fenced code for the block", () => {
   const template = `## Overview\n\n\`\`\`markdown\n${HEADING}\n\`\`\`\n`;
   assert.equal(blockProblem(skill(template, STEPS)), "has no freshness block");
@@ -110,6 +117,15 @@ test("writes the block into core and expert skills, and the check passes", (t) =
   assert.equal(read(files.core), skill(OVERVIEW, STEPS, BLOCK));
   assert.equal(read(files.expert), skill(OVERVIEW, STEPS, BLOCK));
   run("--check");
+});
+
+test("reads a skill with Windows line endings without adding a block", (t) => {
+  const { files, read, write, run } = repo(t);
+  run();
+  write(files.core, read(files.core).replaceAll("\n", "\r\n"));
+  run("--check");
+  run();
+  assert.equal(read(files.core), skill(OVERVIEW, STEPS, BLOCK));
 });
 
 test("the check fails on one skill whose block was edited", (t) => {

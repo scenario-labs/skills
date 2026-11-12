@@ -108,8 +108,8 @@ skill.
 ## Staying up to date
 
 An installed copy never refreshes itself. Each skill has your agent look at the date of its own file
-once per session and tell you, once, when that copy is more than two months old. The agent updates
-nothing: you run the update.
+before its final reply and tell you, once, when that copy is more than two months old. The agent
+updates nothing: you run the update.
 
 ```bash
 npx skills update -g -p -y

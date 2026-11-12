@@ -81,9 +81,10 @@ sessions on a file 100 days old, in a folder with no agent instructions (Novembe
 - Inline, not a pointer to a file beside the skill. Agents followed the pointer, but it trades about
   20 body words for a file read in every session and one more file in every skill folder.
 - Last in the file, under a heading that names the moment to act. Right after the first section,
-  under "Freshness check", Sonnet ran the date check in 5 of 21 sessions. In its current form it did
-  in 18 of 18. Opus followed both (5 of 6, then 8 of 9), and Haiku reminded in 8 of 12.
-- Two months: by 60 days an installed copy was behind in every case measured.
+  under "Freshness check", Sonnet reminded in 5 of 21 sessions. In its current form it did in 18
+  of 18. Opus followed both (5 of 6, then 8 of 9), and Haiku reminded in 8 of 12.
+- Two months: by 60 days an installed copy was behind in every case measured, and in 68% of them
+  leaving out three repo-wide edits.
 - The 2500-word cap counts the block. Seven bodies were trimmed to make room.
 - `ls -l` is its only command, and the README carries the update steps
   ([No install commands in skills](#no-install-commands-in-skills)). The link is `#install`: fetch

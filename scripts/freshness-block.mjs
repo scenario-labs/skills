@@ -45,27 +45,34 @@ function sectionStarts(lines) {
   return starts;
 }
 
-// { rest, own }: the text without the freshness section, and that section from
-// its heading to the next one (null when the skill has none).
-function split(text) {
+// { rest, blocks }: the text without its freshness sections, and each of those
+// sections from its heading to the next one. A merge can leave two.
+function separateBlocks(text) {
   const lines = text.split("\n");
   const starts = sectionStarts(lines);
-  const at = starts.find((index) => lines[index] === HEADING);
-  if (at === undefined) return { rest: text, own: null };
-  const end = starts.find((index) => index > at) ?? lines.length;
-  const rest = [...lines.slice(0, at), ...lines.slice(end)].join("\n");
-  return {
-    rest: `${rest.trimEnd()}\n`,
-    own: `${lines.slice(at, end).join("\n").trimEnd()}\n`,
-  };
+  const blocks = [];
+  const rest = [];
+  let from = 0;
+  for (const at of starts.filter((index) => lines[index] === HEADING)) {
+    const end = starts.find((index) => index > at) ?? lines.length;
+    blocks.push(`${lines.slice(at, end).join("\n").trimEnd()}\n`);
+    rest.push(...lines.slice(from, at));
+    from = end;
+  }
+  rest.push(...lines.slice(from));
+  return { rest: rest.join("\n"), blocks };
 }
 
-export const withBlock = (text) => `${split(text).rest.trimEnd()}\n\n${BLOCK}`;
+const isEdited = (blocks) => blocks.some((block) => block !== BLOCK);
+
+export const withBlock = (text) =>
+  `${separateBlocks(text).rest.trimEnd()}\n\n${BLOCK}`;
 
 export function blockProblem(text) {
-  const { own } = split(text);
-  if (own === null) return "has no freshness block";
-  if (own !== BLOCK) return "freshness block differs from the fixed text";
+  const { blocks } = separateBlocks(text);
+  if (blocks.length === 0) return "has no freshness block";
+  if (isEdited(blocks)) return "freshness block differs from the fixed text";
+  if (blocks.length > 1) return "has more than one freshness block";
   if (text !== withBlock(text)) {
     return "freshness block is not the last section";
   }
@@ -80,9 +87,12 @@ if (
   process.chdir(path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
   const mode = process.argv[2];
   const files = listSkills().map((skill) => path.join(skill.dir, "SKILL.md"));
+  // A Windows checkout can hold CRLF: its heading line would not match, and a
+  // write would append a second block.
+  const read = (file) => readFileSync(file, "utf8").replaceAll("\r\n", "\n");
   if (mode === "--check") {
     const problems = files
-      .map((file) => [file, blockProblem(readFileSync(file, "utf8"))])
+      .map((file) => [file, blockProblem(read(file))])
       .filter(([, problem]) => problem);
     for (const [file, problem] of problems)
       console.error(`${file}: ${problem}`);
@@ -95,14 +105,13 @@ if (
   // lines an author wrote under the heading.
   const refused = [];
   for (const file of files) {
-    const text = readFileSync(file, "utf8");
-    const { own } = split(text);
-    if (own !== null && own !== BLOCK && mode !== "--force") {
+    const text = read(file);
+    if (isEdited(separateBlocks(text).blocks) && mode !== "--force") {
       refused.push(file);
       continue;
     }
     const next = withBlock(text);
-    if (next !== text) writeFileSync(file, next);
+    if (next !== readFileSync(file, "utf8")) writeFileSync(file, next);
   }
   if (refused.length > 0) {
     for (const file of refused) {
