@@ -14,11 +14,11 @@ Scenario generates images, video, 3D, and audio across 500+ models, plus custom 
 
 - Endpoint: `https://mcp.scenario.com/mcp` (Streamable HTTP). Prefer OAuth: no credentials pass
   through the conversation.
-- Client config, headless API-key setup, and per-client re-authentication:
-  [references/setup.md](references/setup.md).
+- Client config, headless API keys, re-authentication: [references/setup.md](references/setup.md).
+  No Scenario account: the user signs up at [app.scenario.com](https://app.scenario.com) first.
 - Never ask an agent to collect, encode, or echo a secret.
-- A previously authenticated connection now failing: re-authenticate before debugging.
-  `diagnostics_run` names the layer (`auth`, `tenant-scope`, `api-unreachable`, or `healthy`).
+- A working connection now failing: re-authenticate before debugging. `diagnostics_run` names the
+  layer (`auth`, `tenant-scope`, `api-unreachable`, or `healthy`).
 
 Two tool kinds:
 

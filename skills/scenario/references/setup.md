@@ -15,7 +15,8 @@ prompts and tokens that never persist. A client that offers both takes the nativ
 ## OAuth (preferred)
 
 Add the endpoint and sign in with a Scenario account when the client prompts; no credentials pass
-through the conversation.
+through the conversation. A user without an account signs up first at
+[app.scenario.com](https://app.scenario.com).
 
 Claude apps (claude.ai, Claude Desktop, and Claude Code signed in with the same Claude account): one
 custom connector serves all three. Free, Pro or Max: on claude.ai, Customize, Connectors, Add, Add

@@ -95,7 +95,8 @@ exact skill names only, and a group flag is an open request upstream
 ([vercel-labs/skills#992](https://github.com/vercel-labs/skills/issues/992)). From a script or CI,
 run the default command above or a role command from INSTALL.md with `-y`, which skips every prompt.
 
-The Scenario skills need the Scenario MCP server connected:
+The Scenario skills need a Scenario account (sign up at
+[app.scenario.com](https://app.scenario.com)) and the Scenario MCP server connected:
 
 ```bash
 claude mcp add --transport http scenario https://mcp.scenario.com/mcp
