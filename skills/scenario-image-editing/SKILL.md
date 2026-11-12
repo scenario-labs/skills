@@ -135,3 +135,8 @@ are `array: true`, where a bare id is silently dropped and the run succeeds havi
   needs its own run.
 - Saving a traced SVG with `asset_download`: it comes back rasterized, so take the stored file from
   `asset_get`'s `url` with `curl -L`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -223,3 +223,8 @@ Observed in 4.7.2 ([`references/expert-notes.md`](references/expert-notes.md), O
 - [`scripts/gd_lighting.py`](scripts/gd_lighting.py) and
   [`scripts/agentkit/rendering/`](scripts/agentkit/rendering/): lookdev, light_audit, sweep,
   gi_bake, graphics_tiers, compositor_tools, compositor/.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

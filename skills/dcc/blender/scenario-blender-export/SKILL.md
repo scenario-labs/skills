@@ -194,3 +194,8 @@ the parts selected) for a single static prop, then gate again.
   - Godot: deliver the `godot` GLB, which keeps every map.
 - An STL at Blender scale: a 10 cm part prints at 0.1 mm.
 - LODs exported without a look: decimation can collapse thin parts.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -215,3 +215,8 @@ the song.
 - Excluding music in an audio-enabled prompt: the soundtrack is moderated on its own, and "no music"
   or a named genre or instrument trips it even inside an exclusion. Describe diegetic sound
   positively ("room tone, footsteps, one voice"), or turn the audio field off.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

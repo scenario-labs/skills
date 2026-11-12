@@ -207,3 +207,8 @@ F.
   projectile glue, `VfxTier`, `VfxSeed`); [`scripts/Shaders/`](scripts/Shaders/) (`VfxUber.shader`,
   `VfxOverdraw.shader`); [`scripts/EditorGraph/`](scripts/EditorGraph/) (unsupported graph
   authoring, SDF bake).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

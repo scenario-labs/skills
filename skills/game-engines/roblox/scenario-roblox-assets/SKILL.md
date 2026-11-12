@@ -219,3 +219,8 @@ Score the result with [critique.md](references/critique.md) before calling it do
   prep pass.
 - [scripts/agentkit/assets/](scripts/agentkit/assets/): `Payload`, `MeshBuild`, `AssetAudit`,
   `UGCCheck`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

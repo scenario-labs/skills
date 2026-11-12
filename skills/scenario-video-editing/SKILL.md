@@ -189,3 +189,8 @@ reads its asset.
 - Polling `job_get` in a loop instead of `jobs_wait`, whose timeout is not an error.
 - Trusting a Grain profile to add grain: the 22 profiles are looks, not intensities, and some soften
   the picture instead. Compare a frame against the input.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -155,3 +155,8 @@ job counts, a three-month CSV, and a PDF."
   complete usage.
 - Calling CU "adoption rate" without a denominator, exposing customer snapshots, or using a non-MCP
   fallback.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

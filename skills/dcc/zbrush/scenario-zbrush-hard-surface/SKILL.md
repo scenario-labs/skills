@@ -210,3 +210,8 @@ Toolkit: [`scripts/zb_hardsurface.py`](scripts/zb_hardsurface.py)
 - [`references/gui-paths.md`](references/gui-paths.md): palettes, hotkeys, brushes; load when a step
   is GUI only.
 - [`references/sources.md`](references/sources.md): every source, credential, URL and timestamp.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

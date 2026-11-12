@@ -114,3 +114,8 @@ face turns generic.
   Chromium-family browser installed.
 - Trusting `wrap` with a hard box: it lets text spill below; use `shrink` (fits or fails loudly) or
   `clip` when the box is binding.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

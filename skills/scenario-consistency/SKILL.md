@@ -194,3 +194,8 @@ instead of a generation per frame.
   individual approved shots.
 - Re-describing the character in a reference-to-video prompt: the images carry the look; the prompt
   carries action, camera, and timing.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

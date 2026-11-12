@@ -97,3 +97,8 @@ reproduces against a public equivalent.
 - Three problems in one issue: each needs its own reproduction and its own close.
 - Reporting the hypothesis ("the API is down") instead of the observation. Observation first,
   hypothesis last and marked as one.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

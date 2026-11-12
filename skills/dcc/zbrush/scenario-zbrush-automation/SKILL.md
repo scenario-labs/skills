@@ -197,3 +197,8 @@ own `ZResources/DXFStar.GoZ` byte for byte. Live suite: `tests/code/zbrush-autom
   Activity oracle, ZScript generators), [`scripts/zb_plugin_ops.py`](scripts/zb_plugin_ops.py)
   (inside ZBrush: per-file steps and plugins), [`scripts/zb_batch_job.py`](scripts/zb_batch_job.py)
   (`-script` entry), [`scripts/zb_goz.py`](scripts/zb_goz.py) (GoZ files and folder, any Python).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -222,3 +222,8 @@ capture taken by hand ([GUI paths](references/gui-paths.md)).
   buffer schemas.
 - [scripts/agentkit/luau/templates/Class.luau](scripts/agentkit/luau/templates/Class.luau): typed
   class with idempotent `Destroy`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

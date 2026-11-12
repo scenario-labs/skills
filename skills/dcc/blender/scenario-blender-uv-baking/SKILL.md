@@ -183,3 +183,8 @@ maps, `bake_review` sheet (high, low, low + maps), `map_problem_review` when san
 - [`references/sources.md`](references/sources.md): videos, credentials, URLs, best timestamps, web
   references.
 - `scripts/bx_uvbake.py`: the module (docstrings list every function).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

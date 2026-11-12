@@ -134,3 +134,8 @@ timeout. A world takes several minutes; a timeout is not a failure and never jus
   second run.
 - Running heavy local jobs in parallel (calibration, mesh conversion, splat level-of-detail builds):
   run them one or two at a time.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

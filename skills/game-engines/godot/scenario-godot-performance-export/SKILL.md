@@ -257,3 +257,8 @@ App Store Connect, Play Console, Steamworks, consoles, IAP products. Audit flags
 - [`scripts/gd_perf.py`](scripts/gd_perf.py) and [`scripts/agentkit/perf/`](scripts/agentkit/perf/)
   (`perf_stress`, `perf_fixes`, `perf_audit`, `perf_bench`, `perf_logger`, `ship_boot`,
   `web_bridge`, `mobile_touch`).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

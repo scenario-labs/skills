@@ -219,3 +219,8 @@ Each stage is an `ue_run` job or a live call; code in procedures (P-numbers).
 - [`references/gui-paths.md`](references/gui-paths.md): editor menus for every procedure.
 - [`references/sources.md`](references/sources.md): sources, credentials, URLs, timestamps, revision
   history.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -144,3 +144,8 @@ dropped silently, so no wording brings its job back.
   not change, and move only what should.
 - **Hardcoding a model id or price.** Discover with `recommend`, read caps off `model_schema_get`,
   price with `dry_run=true`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

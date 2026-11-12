@@ -82,3 +82,8 @@ use a model that exposes a `mask` field (see `scenario-image`).
   size control.
 - Treating a v2.1 `jobs_wait` timeout as an error: p50 latency topped a minute at authoring time;
   re-call with `pending_job_ids`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

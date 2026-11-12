@@ -242,3 +242,8 @@ recorded results are in [`references/procedures.md`](references/procedures.md).
   the Lune runners.
 - [`scripts/templates/arena/`](scripts/templates/arena/): the tested arena core and its audit
   fixtures.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

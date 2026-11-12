@@ -175,3 +175,8 @@ and optionally a version where the mascot waves.
   as `yuv420p` with `alpha_mode=1`; it still has alpha.
 - **Making the loop with a video model.** A generated clip's last frame rarely meets its first. Keep
   the loop in code; use Scenario for the subject.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

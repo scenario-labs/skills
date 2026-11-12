@@ -261,3 +261,8 @@ IK results read in `skeleton_updated` or `modification_processed`, never from `_
   [`locomotion_state.gd`](scripts/agentkit/animation/locomotion_state.gd),
   [`cutscene_director.gd`](scripts/agentkit/animation/cutscene_director.gd), `pose_persist.gd`.
 - Tests: `tests/code/godot-animation/test_anim_live.py` (A1 to A9, W) and `test_anim_offline.py`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

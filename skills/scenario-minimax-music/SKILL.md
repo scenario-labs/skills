@@ -81,3 +81,8 @@ while 3.0 scales with the sheet, so `dry_run` both when choosing.
 - Faking instrumental passages with filler words: use [Inst] or [Solo] with a parenthetical cue.
 - Sending a local path or external URL as `audioUrl`: upload first, pass the asset id.
 - Covering a track with no clear melody: the cover keeps only what it can hear.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -67,6 +67,32 @@ the scan names no line, so that sentence is a suspect, not a proven cause.
   clones that commit and records it in `skills-lock.json` (checked in a container, October 2026). It
   lives in the README, where a person runs it.
 
+## Freshness block
+
+An installed copy never refreshes itself, and nothing told the user. Every skill ends with one fixed
+block: before its final reply the agent dates the skill file with `ls -l` and, past two months,
+tells the user once, with a link to the README. The figures below come from headless Claude Code
+sessions on a file 100 days old, in a folder with no agent instructions (November 2026).
+
+- The file's date, not a version number: a release number in every skill made each release rewrite
+  every SKILL.md.
+- In every skill. With the block in the root `scenario` skill alone, no session gave the reminder (0
+  of 20): a session that loads a task skill rarely loads the root one.
+- Inline, not a pointer to a file beside the skill. Agents followed the pointer, but it trades about
+  20 body words for a file read in every session and one more file in every skill folder.
+- Last in the file, under a heading that names the moment to act. Right after the first section,
+  under "Freshness check", Sonnet reminded in 5 of 21 sessions. In its current form it did in 18
+  of 18. Opus followed both (5 of 6, then 8 of 9), and Haiku reminded in 8 of 12.
+- Two months: by 60 days an installed copy was behind in every case measured, and in 68% of them
+  leaving out three repo-wide edits.
+- The 2500-word cap counts the block. Seven bodies were trimmed to make room.
+- `ls -l` is its only command, and the README carries the update steps
+  ([No install commands in skills](#no-install-commands-in-skills)). The link is `#install`: fetch
+  tools return the whole README whatever the anchor.
+- Limits: a host without a shell stays silent, and so does a clone, where file dates are checkout
+  dates. On a recent file some sessions add a line saying the file is current. A skill unchanged
+  upstream keeps its old date after an update and can remind again.
+
 ## Release tags
 
 Releases through 0.37.3 tagged bare `vX.Y.Z`. That is because a `release-type: node` package gets

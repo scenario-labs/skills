@@ -126,3 +126,8 @@ drawn once into the mark, gated letter by letter, and reused as artwork from the
   uploading.
 - Deriving a variant from a mockup instead of the master: derivative-of-derivative compounds
   artifacts (`scenario-formats` has the order of operations).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

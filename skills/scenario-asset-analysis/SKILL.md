@@ -118,3 +118,8 @@ Retrieval is `search` with `target="assets"`, and at least one of `query`, `filt
   `filters.tags`, never retry.
 - Asking `asset_analyze` to produce an image. It returns text; control maps come from `asset_detect`
   and final renders from `model_run`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

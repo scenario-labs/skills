@@ -211,3 +211,8 @@ Delivers a diagnosis report plus JSON change requests with measured deltas and p
   history.
 - `scripts/ue_perf.py`: plans, A/B plans, trace analysis, suspect trees, parsers, config writers,
   proof, audits.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

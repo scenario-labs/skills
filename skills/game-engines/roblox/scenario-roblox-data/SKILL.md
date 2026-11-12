@@ -210,3 +210,8 @@ data:Start()
 - [scripts/rbx_data.py](scripts/rbx_data.py): budget, ProfileStore fetch, place build, probe, audit.
 - [scripts/agentkit/data/](scripts/agentkit/data/): MockDataStore, ServerSim, DataCheck, Migrate,
   KeyQueue, Receipts, Trade, PlayerData, SafeTeleport, DataAudit.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

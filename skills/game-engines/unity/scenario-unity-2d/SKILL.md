@@ -207,3 +207,8 @@ platforms; input devices. Then `ut_2d.project(P)`.
   `Hazard2D`, `FallDampingSwitch`, `PlatformerAnimatorBridge`, `HitStop`, `CameraShake2D`,
   `TopDownMover2D`; [`scripts/Runtime/TwoDCinemachine/`](scripts/Runtime/TwoDCinemachine/):
   `Cinemachine2DRig`, `CinemachineFallDamping`, `CinemachineRoomSwap` (compile only with CM3).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

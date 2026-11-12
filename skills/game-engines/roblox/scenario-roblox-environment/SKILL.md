@@ -239,3 +239,8 @@ with its background; no plastic or near-black materials; distance haze leaves si
   [`WorldCheck`](scripts/agentkit/environment/WorldCheck.luau),
   [`lune_env_audit`](scripts/agentkit/environment/lune_env_audit.luau),
   [`rbx_environment.py`](scripts/rbx_environment.py).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -12,7 +12,7 @@ and transitions land on the beats and sung syllables. Generated footage of the s
 through it where the concept wants a performer. The approved master is the only soundtrack. Preserve
 the original; an authorized audio edit produces a new, versioned master.
 
-The work splits by what each tool does best:
+The work splits by tool:
 
 - **Scenario** supplies what code can't: a consistent subject with real physics, choreography, hair
   and lip-sync, in whatever art style each section needs.
@@ -28,8 +28,7 @@ missing from your available skills, load it with `skill_get` (Scenario MCP) or a
 install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
 and flag the gap.
 
-Read `references/lessons.md` before starting. Every item in it cost real time or money once.
-`references/motion_library.md` is the design menu.
+Read `references/lessons.md` before starting. `references/motion_library.md` is the design menu.
 
 ## Before you start (ask once, then run)
 
@@ -63,9 +62,9 @@ Read `references/lessons.md` before starting. Every item in it cost real time or
 - **Lyrics:** use them if supplied (they beat any transcript). Otherwise transcribe and flag the
   uncertain words at the end.
 
-With no one around to answer, choose sensible defaults for the creative choices and write them into
-TREATMENT.md. Do not default the money: with no stated budget or no explicit team and project, stop
-before the first paid step and say what is missing.
+Unattended, choose sensible defaults for the creative choices and write them into TREATMENT.md. Do
+not default the money: with no stated budget or no explicit team and project, stop before the first
+paid step and say what is missing.
 
 ## Workflow
 
@@ -93,7 +92,7 @@ revision reuses the approved soundtrack.
 
 ### 2. Research (parallel, background)
 
-Launch two sub-agents with web access while you work on other things:
+Launch two sub-agents with web access:
 
 - **Culture:** for the song's subject, find recognizable events, memes and visual tropes, each with
   a verified fact, its iconic visual form, an insert idea and a short on-screen string.
@@ -286,3 +285,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   agent reads
 - [references/lessons.md](references/lessons.md): production gotchas and direction defaults that
   held
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

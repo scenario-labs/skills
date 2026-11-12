@@ -209,3 +209,8 @@ weights), E02, E13 and E27 to scenario-maya-rigging or scenario-maya-animation.
 - [`references/sources.md`](references/sources.md): every source with credentials, URLs and best
   timestamps.
 - `scripts/mx_pipeline.py`: the tested-offline module (docstring lists every function).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.
