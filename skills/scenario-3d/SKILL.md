@@ -171,7 +171,7 @@ usually goes further, each output's `asset_id` feeding the next tool's `kind: "3
 4. Rig last, on the topology that ships.
 
 Each step after the first is a `3d23d` `recommend` pick and its own billed run: `dry_run` it on the
-real input before launching.
+real input before launching. Along the chain:
 
 - **Retexture schemas.** Avoid a setting that rebuilds UVs, which discards the unwrap. Check the
   same `pbr` default (the Tripo texturing member defaulted to PBR at authoring time). When a schema
@@ -230,7 +230,7 @@ Three schema details decide usability:
   retarget has `properties.hasAnimations` true and an `animationFrameCount`, the plain rig false and
   null.
 
-For motion only, motion-transfer video models animate a still character image with no skeleton: see
+For motion only, motion-transfer video models animate a still character image with no skeleton:
 `scenario-video`. Video-to-motion models that auto-rig an uploaded mesh are the one place an
 `outputFormat` enum picks the engine target.
 

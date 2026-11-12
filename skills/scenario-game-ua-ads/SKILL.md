@@ -10,11 +10,11 @@ license: MIT
 
 A UA ad that plays like gameplay: Scenario generates or adapts the board art and the motion, and
 every piece of game UI is composited on top. The deliverable is the requested length and format at
-final render quality, never a draft or a single clip. The test of every beat: a stranger thinks "I
-really want to try this". For ads from a product photo, use `scenario-video-ads`; for hook, CTA, or
-end-card variants of a finished ad, `scenario-ad-variants`. Connection, discovery, and recovery
-follow `scenario`. If a sibling skill named here is missing from your available skills, load it with
-`skill_get` (Scenario MCP) or ask the user to install it
+final render quality, never a draft or a single clip. The test of every beat: a stranger to the game
+thinks "I really want to try this". For ads from a product photo, use `scenario-video-ads`; for
+hook, CTA, or end-card variants of a finished ad, `scenario-ad-variants`. Connection, discovery, and
+recovery follow `scenario`. If a sibling skill named here is missing from your available skills,
+load it with `skill_get` (Scenario MCP) or ask the user to install it
 (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
 the gap.
 

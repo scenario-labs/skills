@@ -76,7 +76,9 @@ tells the user once, with a link to the README, and carries on.
 - The file's date, not a version number. A release number in every skill made each release rewrite
   every SKILL.md, and needed the Scenario MCP server to name the latest release. Nothing in this
   block changes at a release, and the release tooling never touches a skill for it.
-- In every skill: a session that loads one task skill does not load the root `scenario` skill.
+- In every skill: a session that loads one task skill does not load the root `scenario` skill. With
+  the block in the root skill alone, 2 of 30 trial sessions loaded that skill and none gave the
+  reminder (0 of 15).
 - A titled block. Written as a plain paragraph, the rule was skipped by Sonnet in 6 of 6 trial
   sessions.
 - Last in the file, under a heading that names the moment to act. The trials below ran in a folder
@@ -84,7 +86,7 @@ tells the user once, with a link to the README, and carries on.
   - The first version sat right after the first section, under "Freshness check", and said "once per
     session". Sonnet ran the date check in 5 of 21 sessions.
   - The same text moved last: Sonnet 6 of 6, Haiku 1 of 4. Moved to the top: Sonnet 0 of 3.
-  - Under "Before your final reply", last: Sonnet 14 of 14 over two skills, Haiku 4 of 7, Opus 1 of
+  - Under "Before your final reply", last: Sonnet 18 of 18 over two skills, Haiku 8 of 12, Opus 1 of
     1, the reminder given once each time. Only the Sonnet gain is larger than chance.
   - A first-step heading at the top also reached 6 of 6 with Sonnet, but gave the reminder twice in
     3 of those sessions.
@@ -107,6 +109,9 @@ tells the user once, with a link to the README, and carries on.
 - Dropped after trials: the rule in the server instructions alone (1 of 12), a release file compared
   with GitHub (1 of 7), a revision line compared through `skill_get` (Sonnet 0 of 7), and the newest
   date among all Scenario skills (2 of 6).
+- Also dropped: a 7-word pointer to a `freshness.md` beside each skill. It worked (Sonnet 9 of 10,
+  Haiku 2 of 5), but it trades about 20 body words for a file read in every session and one more
+  file in every skill folder, since skills share no folder once installed.
 - Limits: the reminder depends on the model and on what else the session was told. A host without a
   shell stays silent. So does a clone or a team repository, where file dates are checkout dates. A
   skill unchanged upstream keeps its old date after an update and can remind again.
