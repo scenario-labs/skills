@@ -118,6 +118,8 @@ npx skills update -g -p -y
 - Run it from your project's folder: the project part reads the folder you are in. It covers that
   project's install and the global one in one run, and also updates other publishers' skills
   installed with the same tool.
+- An updated skill replaces the installed copy, so edits you made to that copy are lost. Keep a copy
+  of them first.
 - Start a new session afterwards: a running session keeps the copy it already loaded.
 - Skills that came with a plugin (ChatGPT, Codex, Claude Code): update the plugin instead. This
   command does not reach its copy.
