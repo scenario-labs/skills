@@ -25,7 +25,8 @@ Run \`ls -l\` on this file. Over two months old: tell the user once it may be ou
 (https://github.com/scenario-labs/skills#install). Otherwise say nothing.
 `;
 
-// Indexes of the "## " heading lines, frontmatter and fenced code skipped.
+// Indexes of the "## " heading lines, frontmatter and fenced code skipped. A
+// fence closes only on the same character, at least as long as its opening.
 function sectionStarts(lines) {
   const starts = [];
   let frontmatter = lines[0] === "---";
@@ -35,12 +36,14 @@ function sectionStarts(lines) {
       if (index > 0 && line === "---") frontmatter = false;
       return;
     }
-    const marker = line.trimStart().match(/^(```|~~~)/)?.[1];
-    if (marker && (fence === null || fence === marker)) {
-      fence = fence === null ? marker : null;
-      return;
+    const [, run, rest] = line.trimStart().match(/^(`{3,}|~{3,})(.*)$/) ?? [];
+    if (run && fence === null) {
+      fence = run;
+    } else if (run?.startsWith(fence) && rest.trim() === "") {
+      fence = null;
+    } else if (fence === null && line.startsWith("## ")) {
+      starts.push(index);
     }
-    if (fence === null && line.startsWith("## ")) starts.push(index);
   });
   return starts;
 }

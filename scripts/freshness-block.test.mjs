@@ -50,6 +50,8 @@ test("does not take the heading inside fenced code for the block", () => {
     withBlock(skill(template, STEPS)),
     skill(template, STEPS, BLOCK),
   );
+  const nested = "## Overview\n\n````markdown\n```\n## Not a section\n````\n";
+  assert.equal(blockProblem(skill(nested, STEPS, BLOCK)), null);
 });
 
 // `pnpm format` runs prettier after this script: a block prettier rewraps

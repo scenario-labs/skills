@@ -67,7 +67,8 @@ npx skills add scenario-labs/skills --skill scenario-unity-expert scenario-unity
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's
 `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the
-"Expert tools: Unity" group. Update with `npx skills update -g -p -y`.
+"Expert tools: Unity" group. Update with `npx skills update -g -p -y`, run from the project's
+folder.
 
 ## Provenance
 

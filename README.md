@@ -115,13 +115,15 @@ updates nothing: you run the update.
 npx skills update -g -p -y
 ```
 
-- It covers global and project installs in one run, and also updates other publishers' skills
+- Run it from your project's folder: the project part reads the folder you are in. It covers that
+  project's install and the global one in one run, and also updates other publishers' skills
   installed with the same tool.
 - Start a new session afterwards: a running session keeps the copy it already loaded.
 - Skills that came with a plugin (ChatGPT, Codex, Claude Code): update the plugin instead. This
   command does not reach its copy.
 - A skill that did not change since your install keeps its old date, so its reminder can come back
-  after an update. That copy is current.
+  after an update. That copy is current, unless you pinned the install to a commit (see
+  [Install](#install)).
 
 Releases are how changes become visible: every feature, fix, and documentation change merged to
 `main` lands in the next release, staged by release-please as an open release PR. Merging that PR

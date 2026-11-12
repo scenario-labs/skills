@@ -42,7 +42,7 @@ npx skills add scenario-labs/skills --skill scenario-maya-expert scenario-maya-a
 
 The installer puts the skills side by side, which the specialists need: they import the lead skill's
 `scripts/`. In the installer picker (`npx skills add scenario-labs/skills`), the family is the
-"Expert tools: Maya" group. Update with `npx skills update -g -p -y`.
+"Expert tools: Maya" group. Update with `npx skills update -g -p -y`, run from the project's folder.
 
 ## Provenance
 
