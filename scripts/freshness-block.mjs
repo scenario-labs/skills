@@ -14,8 +14,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { listSkills } from "./lib/skills.mjs";
 
-// The heading names the moment to act: under a label ("Freshness check") one
-// model skipped the block in most trial sessions.
+// The heading names the moment to act, and the block is the last section:
+// both decide whether an agent follows it (docs/decisions.md, "Freshness block").
 export const HEADING = "## Before your final reply";
 
 // Wrapped as prettier wraps it, so `pnpm format` and this script agree.
@@ -60,8 +60,6 @@ function split(text) {
   };
 }
 
-// The block is the last section: in trials an agent acted on it there far more
-// often than near the top (docs/decisions.md, "Freshness block").
 export const withBlock = (text) => `${split(text).rest.trimEnd()}\n\n${BLOCK}`;
 
 export function blockProblem(text) {

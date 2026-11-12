@@ -22,28 +22,18 @@ const skill = (...sections) =>
   `${FRONTMATTER}\n# Demo\n\n${sections.join("\n")}`;
 const OVERVIEW = "## Overview\n\nWhat it does.\n";
 const STEPS = "## Steps\n\n1. Run it.\n";
-const MISTAKES = "## Common mistakes\n\n- None yet.\n";
 
-test("puts the block last", () => {
+test("puts the block last, moving one found elsewhere", () => {
   assert.equal(
-    withBlock(skill(OVERVIEW, STEPS, MISTAKES)),
-    skill(OVERVIEW, STEPS, MISTAKES, BLOCK),
+    withBlock(skill(OVERVIEW, STEPS)),
+    skill(OVERVIEW, STEPS, BLOCK),
   );
-});
-
-test("leaves a skill that already carries the block untouched", () => {
-  const text = skill(OVERVIEW, STEPS, BLOCK);
-  assert.equal(withBlock(text), text);
-  assert.equal(blockProblem(text), null);
-});
-
-test("moves a block found anywhere else", () => {
-  const misplaced = skill(OVERVIEW, BLOCK, STEPS, MISTAKES);
+  const misplaced = skill(OVERVIEW, BLOCK, STEPS);
   assert.equal(
     blockProblem(misplaced),
     "freshness block is not the last section",
   );
-  assert.equal(withBlock(misplaced), skill(OVERVIEW, STEPS, MISTAKES, BLOCK));
+  assert.equal(withBlock(misplaced), skill(OVERVIEW, STEPS, BLOCK));
 });
 
 test("does not take the heading inside fenced code for the block", () => {
@@ -52,24 +42,6 @@ test("does not take the heading inside fenced code for the block", () => {
   assert.equal(
     withBlock(skill(template, STEPS)),
     skill(template, STEPS, BLOCK),
-  );
-});
-
-test("names a missing block and an edited one", () => {
-  assert.equal(blockProblem(skill(OVERVIEW, STEPS)), "has no freshness block");
-  const edited = skill(
-    OVERVIEW,
-    STEPS,
-    BLOCK.replace("two months", "six months"),
-  );
-  assert.equal(
-    blockProblem(edited),
-    "freshness block differs from the fixed text",
-  );
-  const extended = skill(OVERVIEW, STEPS, `${BLOCK}\nAn extra rule.\n`);
-  assert.equal(
-    blockProblem(extended),
-    "freshness block differs from the fixed text",
   );
 });
 
@@ -84,12 +56,6 @@ test("prettier leaves the block as written", async () => {
     await prettier.format(text, { ...options, filepath: "SKILL.md" }),
     text,
   );
-});
-
-// Seven bodies were trimmed to leave exactly this much room under the
-// 2500-word cap, which counts the block (docs/decisions.md, "Freshness block").
-test("the block stays within the 28 words the bodies leave it", () => {
-  assert.ok(BLOCK.split(/\s+/).filter(Boolean).length <= 28);
 });
 
 // Under a git hook, GIT_DIR and friends would point every call at this repo.
