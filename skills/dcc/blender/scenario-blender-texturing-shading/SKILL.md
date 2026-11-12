@@ -187,3 +187,8 @@ per-layer mute renders each add something (Price); scale against a human referen
 - [`references/critique.md`](references/critique.md): rubric for judging your own renders and node
   trees.
 - [`references/sources.md`](references/sources.md): every source video, credential, best timestamps.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -210,3 +210,8 @@ Visual (contact sheets of at most 1,600 px, `rbx_review.contact_sheet`):
   audit, FBX export, re-import and samples.
 - [`scripts/agentkit/animation/`](scripts/agentkit/animation/): AnimRig, AnimClip, AnimAudit, AnimIK
   and AnimFace Luau modules.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -85,3 +85,8 @@ batch, and re-estimate whenever `resolution`, `numOutputs`, references, or `useG
 - Several references with no roles: outputs blend them; say which image is which by position.
 - Enabling `useGoogleSearch` for stylistic work: it raises cost and earns it only on factual,
   real-world subjects.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

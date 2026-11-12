@@ -215,3 +215,8 @@ code: [`references/procedures.md`](references/procedures.md).
 - `references/sources.md`: sources, credentials, URLs, timestamps; revision history.
 - `scripts/ue_cine.py` (toolkit; its docstring lists every call) and
   `scripts/cine_render_callbacks.py` (the Execute Script class).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

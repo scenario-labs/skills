@@ -156,3 +156,8 @@ that landed can be replayed exactly on the next video.
   and extend only the last cue to the clip's end.
 - Treating a `jobs_wait` timeout as failure: re-call with `pending_job_ids`; video tool jobs outlast
   the wait window routinely.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

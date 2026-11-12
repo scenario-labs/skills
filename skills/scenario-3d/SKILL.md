@@ -40,16 +40,16 @@ proceed from tool schemas and flag the gap.
   default effort, a single-image Tripo generator 45. Past the plan's credits, each job's wait grows
   with its cost.
 
-1. Generate the concept: pick a text-to-image model via `recommend` with the user's own words as
-   `prompt`, then `model_schema_get` and `model_run`. Prompt a single centered subject on a plain
-   background. Show a non-biped creature at eye level, from the side or three-quarters, every leg
-   visible and clear of the body: top-down hides leg undersides and body height. A biped headed for
-   a rig takes the pose in Rigging and animation. Upload a user's reference with `upload_asset` and
-   pass its asset ID instead. Keep a reference on a plain background as is, and prefer it to a busy
-   shot: removal keeps a glossy subject's reflections of the scene, which image-to-3D bakes into the
-   texture. Remove a busy one's background first (`recommend` the removal) and pass that output's id
-   instead. An isolated subject matters, a transparent cutout does not; an image field's
-   `background_note`, when present, says the same.
+1. Concept: pick a text-to-image model via `recommend` with the user's own words as `prompt`, then
+   `model_schema_get` and `model_run`. Prompt a single centered subject on a plain background. Show
+   a non-biped creature at eye level, from the side or three-quarters, every leg visible and clear
+   of the body: top-down hides leg undersides and body height. A biped headed for a rig takes the
+   pose in Rigging and animation. Upload a user's reference with `upload_asset` and pass its asset
+   ID instead. Keep a reference on a plain background as is, and prefer it to a busy shot: removal
+   keeps a glossy subject's reflections of the scene, which image-to-3D bakes into the texture.
+   Remove a busy one's background first (`recommend` the removal) and pass that output's id instead.
+   An isolated subject matters, a transparent cutout does not; an image field's `background_note`,
+   when present, says the same.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
    the Hunyuan 3D, Meshy, Tripo, and Trellis families, and Scenario's own LLM-based 3D generation:
    GPT-6 Astra 3D and Claude Opus 5.5 3D (the cheaper at authoring time; compare both with
@@ -77,10 +77,10 @@ proceed from tool schemas and flag the gap.
      floor.
 
 4. `model_run` with `parameters={"image": "asset_xxx", ...}` and `dry_run=true` to price it. Then
-   run it for real with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`)
-   until no `pending_job_ids` remain. A downstream step (rig, retexture) has no payload to `dry_run`
-   until its input mesh exists: quote it from `recommend`, then re-price with `dry_run` on the real
-   asset before launching.
+   run it with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`) until no
+   `pending_job_ids` remain. A downstream step (rig, retexture) has no payload to `dry_run` until
+   its input mesh exists: quote it from `recommend`, then re-price with `dry_run` on the real asset
+   before launching.
 5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
    Omit `format` when `asset_get` shows `properties.format` `glb`: it returns the stored original
    byte for byte. `format` converts to `glb`, `fbx`, or `obj`; pass `glb` for the LLM-based members,
@@ -171,7 +171,7 @@ usually goes further, each output's `asset_id` feeding the next tool's `kind: "3
 4. Rig last, on the topology that ships.
 
 Each step after the first is a `3d23d` `recommend` pick and its own billed run: `dry_run` it on the
-real input before launching. Along the chain:
+real input before launching.
 
 - **Retexture schemas.** Avoid a setting that rebuilds UVs, which discards the unwrap. Check the
   same `pbr` default (the Tripo texturing member defaulted to PBR at authoring time). When a schema
@@ -216,7 +216,7 @@ For quads:
   in a DCC before promising quads. A rig returned as GLB is triangulated: deliver the quad FBX
   beside it and say so.
 
-Three schema details decide whether the output is usable:
+Three schema details decide usability:
 
 - **Formats.** Riggers accept GLB, often OBJ, FBX, or STL, and expose no output-format field. The
   rig comes back as GLB or FBX, mostly unannounced: expect a DCC pass when the engine needs the
@@ -230,17 +230,20 @@ Three schema details decide whether the output is usable:
   retarget has `properties.hasAnimations` true and an `animationFrameCount`, the plain rig false and
   null.
 
-When only motion is wanted, motion-transfer video models animate a still character image with no
-skeleton: see `scenario-video`. Video-to-motion models that auto-rig an uploaded mesh are the one
-place an `outputFormat` enum picks the engine target.
+For motion only, motion-transfer video models animate a still character image with no skeleton: see
+`scenario-video`. Video-to-motion models that auto-rig an uploaded mesh are the one place an
+`outputFormat` enum picks the engine target.
 
 ## Common mistakes
 
-- Running `model_run` without `model_schema_get`: 3D parameters differ far more between models than
-  image parameters do.
 - Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor).
   Re-discover each session: `recommend` for a need, `search` for a name.
 - Promising a named skeleton, an influence count, or bones for wings and extra limbs the chosen
   member does not document: pick the closest body plan, then finish in a DCC.
 - Sending a biped to a `rigType` model: the enum has no biped value; humanoids have their own
   riggers.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

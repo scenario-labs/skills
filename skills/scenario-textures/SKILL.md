@@ -97,3 +97,8 @@ schemas and flag the gap.
   defaults to 1024x1024, 1:1). The generator accepts any multiple of 16, so choose 1024 or 2048
   deliberately.
 - Hardcoding model IDs: availability differs per team. Re-discover each session.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

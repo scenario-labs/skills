@@ -90,3 +90,8 @@ established light and cast, and restate the audio.
 - Reading Extend's `duration` as total length: it counts only new footage.
 - Stacking camera moves or contradictory directions ("zoom in as the camera pulls back"): one
   dominant move per shot.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

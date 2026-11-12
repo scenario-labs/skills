@@ -229,3 +229,8 @@ the gap.
   [`shader_tools.gd`](scripts/agentkit/shaders/shader_tools.gd),
   [`dissolve_swap.gd`](scripts/agentkit/shaders/dissolve_swap.gd), `game_time.gd` and the templates
   (water HQ and LITE, dissolve, fullscreen_depth, portal writer and reader, sky_toon, hit_flash).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

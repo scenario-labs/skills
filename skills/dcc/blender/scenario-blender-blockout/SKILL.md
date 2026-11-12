@@ -10,11 +10,10 @@ The blockout is the guide clip: the video model copies the camera path, framing,
 cut points, shot lengths, the position and scale of every mass, figure facing and every trajectory,
 and it invents the rest from text and images (materials, light, weather, what each proxy really is,
 faces, wardrobe, extras, sound). So the blockout has full authority over motion and layout and none
-over look. Ambiguity ruins the pass; crudeness does not: a bent lamppost comes back as a snake,
-loose limb blocks as extra people, an unmarked car driving backward. Fix identity in geometry first,
-in prompt text second, and judge the result on a synced side-by-side of playblast and video, never
-in the viewport alone. If a sibling skill named here is missing from your available skills, load it
-with `skill_get` (Scenario MCP) or ask the user to install it
+over look. Ambiguity ruins the pass; crudeness does not: a bent lamppost comes back as a snake. Fix
+identity in geometry first, in prompt text second, and judge the result on a synced side-by-side of
+playblast and video, never in the viewport alone. If a sibling skill named here is missing from your
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
 (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
 the gap.
 
@@ -35,13 +34,13 @@ render-pass results: [examples](references/examples.md) ([harness](scripts/examp
 [1](scripts/examples/ex1_watchmaker.py), [2](scripts/examples/ex2_saltflat.py),
 [3](scripts/examples/ex3_bridge.py), [4](scripts/examples/ex4_sky_islands.py)).
 
-**Which skill.** This one: guides for a video model. Story previs and animatics judged by a director
-and an editor: scenario-blender-previs-storyboard; an approved animatic that must guide a video
-model is rebuilt here.
+**Which skill.** Story previs and animatics judged by a director and an editor:
+scenario-blender-previs-storyboard; an approved animatic that must guide a video model is rebuilt
+here.
 
 ## 1. Restate the brief as a build plan
 
-Before any call, write down:
+Before any call, write:
 
 - **Elements and their primitive**: "bus = long box with a marked front", "figures = colored
   capsules". Never model past what the brief names.
@@ -112,8 +111,8 @@ Four deliverables: the scene, a locked camera timeline, the playblast, the hand-
 
 The live channel is the plugin's local Scenario MCP server, `scenario-blender` (the guide at
 [blender.scenario.com](https://blender.scenario.com/) calls the plugin Scenario for Blender). Tool
-table, call limits and recovery after a timeout: [plugin](references/plugin.md). The two that bite
-first: `execute_python` stays off until the user enables **Allow connected agents to run Python** (a
+table, call limits and recovery after a timeout: [plugin](references/plugin.md). Two bite first:
+`execute_python` stays off until the user enables **Allow connected agents to run Python** (a
 `PermissionError` means ask), and a call stops after 120 s, so send one stage piece per call and run
 `B.stage_backup(label)` after each stage.
 
@@ -138,8 +137,7 @@ open.
 1. **Format and scaffolding**: `B.make_scene`, `B.lock_format`, `B.collection` tree, `B.park`, dark
    world.
 2. **Set**: kits at the chosen fidelity (`K.building`, `K.stall`, `K.tree`) or thick boxes (`B.box`)
-   at true scale, repeats as linked duplicates (`K.instance`). Or the plugin Blockout for a generic
-   set.
+   at true scale, repeats as linked duplicates (`K.instance`).
 3. **Figures**: `K.figure(..., style=, features=)` per hero in the chosen cast style, root at the
    feet, facing along travel ([cast](references/cast.md)). Travel with `K.walk_path` from a table of
    (frame, position), stride 0.42 x height for a walk, about 0.7 for a run; gestures with `K.pose`;
@@ -254,3 +252,8 @@ guard steps out at second 6; handheld 35 mm backing away."
   flat ground read flat.
 - **State drift**: render probes that leave resolution or file path changed; pre-existing objects
   adopted as your own; Blender 5 slotted actions hiding F-curves (use `B.fcurves`).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

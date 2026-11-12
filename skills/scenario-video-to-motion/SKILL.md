@@ -111,3 +111,8 @@ The user has a phone clip of a dance and a character GLB, and wants an Unreal-re
 - Converting the download to another 3D format instead of setting the export target in the run.
 - Treating a sideways or upside-down result as a failed capture before trying the axis fields.
 - Polling `job_get` instead of `jobs_wait`, or re-running a job that only timed out.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

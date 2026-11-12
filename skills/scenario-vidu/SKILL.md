@@ -88,3 +88,8 @@ snowstorm". Prompt length caps differ per member, 2000 to 5000 characters.
   shapes.
 - Passing `videos` to any Reference2V member: at authoring time only one took reference videos; read
   the schema first.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

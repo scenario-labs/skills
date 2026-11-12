@@ -10,17 +10,17 @@ license: MIT
 
 A UA ad that plays like gameplay: Scenario generates or adapts the board art and the motion, and
 every piece of game UI is composited on top. The deliverable is the requested length and format at
-final render quality, never a draft or a single clip. The test of every beat: a stranger who has
-never heard of the game thinks "I really want to try this". For ads from a product photo, use
-`scenario-video-ads`; for hook, CTA, or end-card variants of a finished ad, `scenario-ad-variants`.
-Connection, discovery, and recovery follow `scenario`. If a sibling skill named here is missing from
-your available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+final render quality, never a draft or a single clip. The test of every beat: a stranger thinks "I
+really want to try this". For ads from a product photo, use `scenario-video-ads`; for hook, CTA, or
+end-card variants of a finished ad, `scenario-ad-variants`. Connection, discovery, and recovery
+follow `scenario`. If a sibling skill named here is missing from your available skills, load it with
+`skill_get` (Scenario MCP) or ask the user to install it
 (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
 the gap.
 
 ## Brief: ask once, then run
 
-Ask in one round, then run without stopping:
+Ask in one round:
 
 - **Concept** or the game's core loop, and the **game name**. Invent a fictional name when none is
   given.
@@ -73,8 +73,8 @@ With footage, its own beats replace this split ([inputs](references/inputs.md)).
 
 ## Make the viewer want to play
 
-A board that changes correctly sells nothing. Plan every concept around its fantasy (power,
-cleverness, order, growth, rescue) and its **Fun** line in [concepts](references/concepts.md):
+Plan every concept around its fantasy (power, cleverness, order, growth, rescue) and its **Fun**
+line in [concepts](references/concepts.md):
 
 - The input reads within 2 s: the hand and the piece move together, and the game answers at once.
 - Every input gets a satisfying reaction in the motion itself: anticipation, contact, reaction. A
@@ -102,7 +102,7 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
   Cut on a burst word.
 - One locked camera per take, at final quality. No push-in over a busy board: pipes, gates, and
   slots warp. Ask for a longer take and keep the clean first part.
-- The game logic must hold; players spot a cheat at once:
+- The game logic must hold:
   - Video models ignore barriers: lava and coins flow through a closed pin. Design one visible move
     per path, with no pin, gate, or wall the take does not open.
   - Prefer straight drops and straight lanes. A pipe or a bend invites a shortcut outside it.
@@ -116,7 +116,7 @@ cleverness, order, growth, rescue) and its **Fun** line in [concepts](references
   - A precise move a model cannot do cleanly (a two-piece swap, a free drop) is built as layers from
     the still; the model animates only the consequence.
   - A barrier drawn locally over a generated take (a drawn line, a patch) gets a mask check inside
-    it on every frame: bees sat inside a drawn dome for 74 frames.
+    it on every frame.
   - A board whose every move must be exact (tile match, sort, merge, screw puzzle) is scripted
     whole: cut the pieces from the board still or the user's screenshot and animate them as layers.
     A video model adds only ambient motion behind them.
@@ -224,3 +224,8 @@ plan; uploads and compose runs stay MCP calls. Each takes a JSON spec; `--help` 
   one: an angry driver came back in a red cap, mustache, and blue shirt. Name an original look and
   check the still before animating. A take flagged for IP: reword it generically and rerun; flagged
   again, build that beat as layers from the stills.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

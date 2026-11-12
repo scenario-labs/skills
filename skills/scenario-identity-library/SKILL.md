@@ -109,3 +109,8 @@ slot-starved; with slots to spare, prefer the individual approved shots.
   `props: ` prefixes are the lookup contract.
 - A different model per view: reference behavior differs per family; one schema-checked model
   carries the whole identity.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

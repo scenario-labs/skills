@@ -203,3 +203,8 @@ post effects, Highlight hit flash, lag test.
   audio files).
 - [scripts/agentkit/vfx-audio/](scripts/agentkit/vfx-audio/): VfxKit, VfxAudit, AudioKit,
   AudioAudit, runtime FxReplicator and Footsteps.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

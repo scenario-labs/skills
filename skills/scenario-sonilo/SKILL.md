@@ -87,3 +87,8 @@ Video to Music and mix in post. Music comes back instrumental.
 - Packing sequenced events into one Text to SFX prompt: it has no timing control; one event per run.
 - Asking any member for speech or vocals: no member produces dialogue, narration, or singing; SFX
   and instrumental music are the whole surface.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

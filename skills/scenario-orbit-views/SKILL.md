@@ -115,3 +115,8 @@ three need Python with Pillow and numpy. Each prints its usage when run without 
 - Passing more than 32 ids to `jobs_wait`, or polling `job_get`.
 - Trusting a view without looking: check contact sheets for extra limbs, wrong sides, and leftover
   gray clay.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

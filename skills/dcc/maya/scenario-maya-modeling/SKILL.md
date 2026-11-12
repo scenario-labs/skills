@@ -216,3 +216,8 @@ two-sided lighting off or backface culling. Judge with
 - [`references/gui-paths.md`](references/gui-paths.md): menus and hotkeys for a GUI or computer-use
   session.
 - [`references/sources.md`](references/sources.md): sources, credentials, best timestamps.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

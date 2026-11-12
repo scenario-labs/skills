@@ -111,3 +111,8 @@ that would clip, or delivered audio that is not the master.
 - Trusting the beat grid: sections and cut candidates are suggestions; check them against what you
   hear.
 - Calling it done without watching the delivery with sound, then muted.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

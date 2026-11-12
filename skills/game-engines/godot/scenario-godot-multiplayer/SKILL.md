@@ -225,3 +225,8 @@ account or a signalling server. Verify against the installed release before quot
   Profiler), [`references/sources.md`](references/sources.md).
 - [`scripts/gd_net.py`](scripts/gd_net.py),
   [`scripts/agentkit/multiplayer/`](scripts/agentkit/multiplayer/): the harness and kit.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

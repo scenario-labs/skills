@@ -58,6 +58,12 @@ of its checks as a separate step:
   [agent-commands.md](agent-commands.md)).
 - **`pnpm skill-files`**: supporting files next to a SKILL.md are linked and runnable, a skill's own
   `README.md` excepted.
+- **`pnpm freshness:check`**: every SKILL.md ends with the freshness block, unedited.
+  `pnpm freshness` writes it, and `pnpm format` runs that first.
+  - `pnpm freshness` only replaces the block it recognizes. Given other text under the heading, it
+    leaves the file alone, names it, and fails, so it never drops a line an author wrote there.
+  - After a change to the wording in `scripts/freshness-block.mjs`, run `pnpm freshness --force`. It
+    replaces everything under the heading.
 - **`pnpm lint:py`**: ruff over every Python script, configured in `ruff.toml`, the vendored dev
   skills excluded.
   - The pyflakes rules, plus SIM115 for a file opened outside a `with` block. A handle no `with` can

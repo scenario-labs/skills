@@ -67,6 +67,50 @@ the scan names no line, so that sentence is a suspect, not a proven cause.
   clones that commit and records it in `skills-lock.json` (checked in a container, October 2026). It
   lives in the README, where a person runs it.
 
+## Freshness block
+
+An installed copy never refreshes itself, and nothing told the user. Every skill now ends with one
+fixed block. Before its final reply the agent dates the skill file with `ls -l`. Past two months it
+tells the user once, with a link to the README, and carries on.
+
+- The file's date, not a version number. A release number in every skill made each release rewrite
+  every SKILL.md, and needed the Scenario MCP server to name the latest release. Nothing in this
+  block changes at a release, and the release tooling never touches a skill for it.
+- In every skill: a session that loads one task skill does not load the root `scenario` skill.
+- A titled block. Written as a plain paragraph, the rule was skipped by Sonnet in 6 of 6 trial
+  sessions.
+- Last in the file, under a heading that names the moment to act. The trials below ran in a folder
+  with no agent instructions, on a file 100 days old.
+  - The first version sat right after the first section, under "Freshness check", and said "once per
+    session". Sonnet ran the date check in 5 of 21 sessions.
+  - The same text moved last: Sonnet 6 of 6, Haiku 1 of 4. Moved to the top: Sonnet 0 of 3.
+  - Under "Before your final reply", last: Sonnet 14 of 14 over two skills, Haiku 4 of 7, Opus 1 of
+    1, the reminder given once each time. Only the Sonnet gain is larger than chance.
+  - A first-step heading at the top also reached 6 of 6 with Sonnet, but gave the reminder twice in
+    3 of those sessions.
+- Two months: by 60 days an installed copy was behind in every case measured, and in 68% of them
+  leaving out three repo-wide edits (60 skills, history from August 2026).
+- The 2500-word cap counts the block like any other text. An earlier design left its block out of
+  the count; seven bodies were trimmed instead, and `scripts/check-style.test.mjs` holds the rule.
+- `ls -l` is the block's only command, and the README it links carries the update steps
+  ([No install commands in skills](#no-install-commands-in-skills)). Asked to update, agents ran
+  `npx skills add` in 6 of 6 sessions when the server instructions named it, and in none when they
+  gave only the link.
+- The link is `#install`, the one the sibling-install sentence already carries. Fetch tools ignore
+  the anchor and return the whole README: 9 trial sessions showed no difference between `#install`,
+  `#staying-up-to-date`, and no anchor. What an agent runs is the text under "Staying up to date",
+  so that section names one command and no second way to update.
+- Trials ran headless Claude Code against a stand-in MCP server (November 2026). The task went on in
+  every session, and no session with a recent file gave the reminder. On a recent file Sonnet often
+  adds a line saying the file is current (5 of 7 sessions). That is left as it is: a block that
+  tells an agent to run a command silently reads as something to hide.
+- Dropped after trials: the rule in the server instructions alone (1 of 12), a release file compared
+  with GitHub (1 of 7), a revision line compared through `skill_get` (Sonnet 0 of 7), and the newest
+  date among all Scenario skills (2 of 6).
+- Limits: the reminder depends on the model and on what else the session was told. A host without a
+  shell stays silent. So does a clone or a team repository, where file dates are checkout dates. A
+  skill unchanged upstream keeps its old date after an update and can remind again.
+
 ## Release tags
 
 Releases through 0.37.3 tagged bare `vX.Y.Z`. That is because a `release-type: node` package gets

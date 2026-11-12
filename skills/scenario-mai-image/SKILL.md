@@ -87,3 +87,8 @@ four times an Edit asset, so `dry_run` both and start with Edit.
 - Re-running for a pixel-identical result: no seed exists; keep the winning asset and edit it
   forward.
 - Shipping the 1K output to print: upscale downstream (see the `scenario-image` skill).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

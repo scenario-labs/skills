@@ -200,3 +200,8 @@ shadows from the right side). Rubric: critique.md.
 - [`scripts/gd_2d.py`](scripts/gd_2d.py): settings, import audit, pixel-grid checks, jump maths,
   placeholder atlases. [`scripts/agentkit/2d/`](scripts/agentkit/2d/): tileset, terrain, dual grid,
   bodies, cameras, pixel viewport, sprite frames, parallax, audit, light shader.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

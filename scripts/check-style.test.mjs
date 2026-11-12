@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { BLOCK } from "./freshness-block.mjs";
 
 const scripts = dirname(fileURLToPath(import.meta.url));
 const REFERENCE = "skills/scenario-demo/references/notes.md";
@@ -351,6 +352,21 @@ test("accepts a body of exactly 2500 words", (t) => {
 test("fails a body of 2501 words", (t) => {
   const { write, style } = repo(t);
   write(SKILL, skill(words(2501)));
+  assert.throws(style, (error) => {
+    assert.ok(
+      error.stdout.includes(`${SKILL}: body is 2501 words`),
+      error.stdout,
+    );
+    return true;
+  });
+});
+
+// The freshness block gets no exemption: it once sat outside the count, and
+// bodies then grew to the cap without it (docs/decisions.md, "Freshness block").
+test("counts the freshness block toward the cap", (t) => {
+  const { write, style } = repo(t);
+  const blockWords = BLOCK.split(/\s+/).filter(Boolean).length;
+  write(SKILL, skill(`${words(2501 - blockWords)}\n\n${BLOCK}`));
   assert.throws(style, (error) => {
     assert.ok(
       error.stdout.includes(`${SKILL}: body is 2501 words`),

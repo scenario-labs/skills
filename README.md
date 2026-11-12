@@ -107,6 +107,22 @@ skill.
 
 ## Staying up to date
 
+An installed copy never refreshes itself. Each skill has your agent look at the date of its own file
+once per session and tell you, once, when that copy is more than two months old. The agent updates
+nothing: you run the update.
+
+```bash
+npx skills update -g -p -y
+```
+
+- It covers global and project installs in one run, and also updates other publishers' skills
+  installed with the same tool.
+- Start a new session afterwards: a running session keeps the copy it already loaded.
+- Skills that came with a plugin (ChatGPT, Codex, Claude Code): update the plugin instead. This
+  command does not reach its copy.
+- A skill that did not change since your install keeps its old date, so its reminder can come back
+  after an update. That copy is current.
+
 Releases are how changes become visible: every feature, fix, and documentation change merged to
 `main` lands in the next release, staged by release-please as an open release PR. Merging that PR
 tags a version, updates `CHANGELOG.md` in this repository, publishes a
@@ -116,8 +132,6 @@ tags a version, updates `CHANGELOG.md` in this repository, publishes a
 - To learn that a skill changed, watch this repository's releases (Watch, then Custom, then Releases
   on GitHub) or check any of the changelog pages above. An entry scoped to a single skill carries
   that skill's name; changes spanning several skills appear under broader scopes such as `skills`.
-- To pull the changes, run `npx skills update` where you installed, or re-run your original
-  `npx skills add` command.
 - To stay on a reviewed state, pin the install (see [Install](#install)).
 
 ## Skills

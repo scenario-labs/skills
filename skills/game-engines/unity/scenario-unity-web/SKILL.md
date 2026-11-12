@@ -191,3 +191,8 @@ More measured values: [`references/expert-notes.md`](references/expert-notes.md)
 - `scripts/ut_web.py`, `scripts/AgentKit/Web/WebJobs.cs`,
   [`scripts/AgentKitOptional/`](scripts/AgentKitOptional/) (Addressables job, EditMode policy
   tests), `scripts/WebRuntime/` (bridge, error reporter, `.jslib`, AgentWeb template).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

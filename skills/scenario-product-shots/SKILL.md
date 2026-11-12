@@ -82,3 +82,8 @@ that rebuilds shadows, or name one in the edit prompt ("soft contact shadow fall
   prompt a new one.
 - One run with a batch count for "the same scene, four angles": per-angle clauses need one run each
   (`scenario-image`).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -54,16 +54,15 @@ Request: "four style-matched potion icons with transparent backgrounds for an RP
 5. Transparency, only for an opaque pick: `recommend` for background removal (Photoroom, Pixelcut,
    851 Labs at authoring time), `model_schema_get` the pick, then `model_run` with its image field
    set to the generated asset id.
-6. Optional: upscale keepers (`recommend` for upscaling, `model_schema_get` as always; upscalers go
-   2x to 8x and beyond).
+6. Optional: upscale keepers (`recommend` for upscaling, `model_schema_get` as always).
 7. `asset_download` asset_id, format="png" (PNG keeps alpha). Follow redirects:
    `curl -L -o potion.png "<url>"`.
 
 ## Style consistency
 
-- The cheap levers first: reuse one `seed` across the batch, and pin the model's prompt-expansion
-  flag off where the schema has one; an expander rewrites each prompt independently and defeats a
-  fixed template.
+- Cheap levers first: reuse one `seed` across the batch, and pin the model's prompt-expansion flag
+  off where the schema has one; an expander rewrites each prompt independently and defeats a fixed
+  template.
 - Reference images: `upload_asset` the art direction images, then pass the asset ids (never local
   paths) to the model's image or reference parameters.
 - `asset_describe` extracts a reusable style synthesis (billed; `dry_run: true` inside `parameters`
@@ -232,3 +231,8 @@ their depth order, and leave scroll speeds and looping to the engine.
 - Single-sampling lettered assets: the same recipe can render one word and fail another (dark
   embossed text, not the reference typography). Generate several samples per run (schema's
   sample-count parameter) and pin exact hex colors in the prompt when the palette drifts.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

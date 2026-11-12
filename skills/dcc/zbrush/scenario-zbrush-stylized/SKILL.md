@@ -206,3 +206,8 @@ and flag the gap.
 - [`references/sources.md`](references/sources.md): sources, credentials, URLs, timestamps.
 - [`scripts/zb_stylized.py`](scripts/zb_stylized.py): the module; reach its ZBrush side with
   `zb_stylized.call()`, not `zb_launch.call`. Tests: `tests/code/zbrush-stylized/`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

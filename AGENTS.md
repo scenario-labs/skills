@@ -47,6 +47,10 @@ tests/<name>/                                  # test suite for any script shipp
   - It is the one supporting file exempt from the link rule (`pnpm skill-files` skips it).
   - Leave it unlinked: linking it spends body words and invites a runtime agent to read maintainer
     notes as instructions, which once made an agent discount a fact it needed.
+- Every SKILL.md ends with the freshness block, fixed text under "Before your final reply".
+  `pnpm format` writes it (`pnpm freshness`), and `pnpm freshness:check` fails without it. Never
+  edit it or write under its heading; it counts toward the word cap
+  ([why](docs/decisions.md#freshness-block)).
 - Every script shipped with a core skill has a test suite in `tests/<name>/` at the repo root, never
   in the skill directory: a published skill directory carries only what an agent needs at runtime.
   Expert tools test per family instead (see Expert tools). See Validation and testing.
@@ -438,8 +442,8 @@ never its copy `.cursor/BUGBOT.md`.
     back to the bare `python3` only when uv is missing.
   - CI installs only hashed locks: after changing a suite's requirements, regenerate the locks
     covering it ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
-- `pnpm test` runs the command, plugin-manifest, Bugbot-copy, index-sync, style, hook, readme, and
-  test-runner regression suites as well as the shipped-script suites.
+- `pnpm test` runs the command, plugin-manifest, Bugbot-copy, index-sync, style, freshness-block,
+  hook, readme, and test-runner regression suites as well as the shipped-script suites.
 - `pnpm test:coverage` runs the shipped-script suites with line coverage of core skills, report only
   ([docs/ci-and-releases.md](docs/ci-and-releases.md#ci)).
 - Before merging a new or changed skill, run the application test. Mechanical validation checks the

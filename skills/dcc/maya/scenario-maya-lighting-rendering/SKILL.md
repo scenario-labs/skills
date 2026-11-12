@@ -201,3 +201,8 @@ analysis runs in plain python3. Arnold RenderView is GUI only: iterate with batc
   or a human.
 - [`references/sources.md`](references/sources.md): sources, credentials, URLs, timestamps.
 - `scripts/mx_light.py`: the toolkit; its docstring lists every call and where it runs.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -170,3 +170,8 @@ only the look rows are left, deliver v1 without them; otherwise stop and report.
   upload, which is `spritesheet-v1.png`.
 - Installing over an existing Codex pet without asking: `install` needs `--force` for that, and the
   user's yes.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

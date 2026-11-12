@@ -181,3 +181,8 @@ while the render looks wrong means the render wins.
 - [`references/sources.md`](references/sources.md): the 27 source videos with best timestamps.
 - Example: `tests/code/blender-sculpting/stylized_head_blockout.py` (13 s, renders in
   `stylized_head/stage_N/`); comparison: `tests/code/blender-sculpting/compare/compare_sheet.png`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

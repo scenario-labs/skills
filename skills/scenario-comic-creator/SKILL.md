@@ -211,3 +211,8 @@ Record the mode in the brief card. Never switch silently.
 - Letting art ambition cost the reader: clipped lines, no caption rectangles, near-black pages. A
   reader who cannot follow the page never sees the art.
 - Treating the first run as a place to chase one more verdict: a late gate triggers the cuts.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

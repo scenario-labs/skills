@@ -209,3 +209,8 @@ tests all pass in Godot 4.7.2 ([`references/procedures.md`](references/procedure
   tracking, AI intake, movie audio, pictures.
 - [`scripts/agentkit/audio/`](scripts/agentkit/audio/): `audio_meter`, `audio_buses`,
   `music_builder`, `sfx_pool`, `occluder_3d`, `tone_generator`, `audio_audit`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

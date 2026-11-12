@@ -84,3 +84,8 @@ lines work (`[00:00-00:02] Medium shot...`), spans fitting inside the chosen dur
 - Extending a 9:16 clip: Extend takes 16:9 sources with a 720p or 1080p short side only.
 - Writing the prompt as a list of negatives: describe the wanted scene, reserve `negativePrompt` for
   what to discourage.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

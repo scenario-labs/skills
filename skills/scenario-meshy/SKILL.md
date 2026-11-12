@@ -96,3 +96,8 @@ clips; go straight to Animation for a moving character, optionally setting `post
 - A bare string where the schema says array: one photo goes as `["asset_x"]`.
 - Pricing step 5 with a placeholder asset id: file ids resolve before plan access is checked, so the
   dry run returns 404 and proves neither price nor access.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

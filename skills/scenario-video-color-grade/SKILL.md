@@ -172,3 +172,8 @@ music. The grades themselves cost nothing.
   loop breaks. The scripts avoid it; keep it that way in custom commands.
 - **Grading alone.** Grading is taste: show grids and short previews, and iterate on what the user
   points at.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -199,3 +199,8 @@ lifting the foot, feet, neck, clothing; faces: mouth corners, cheek squash, lids
   Deformer menus; in the GUI.
 - [`references/sources.md`](references/sources.md): sources, credentials, URLs, timestamps; to trace
   a claim.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

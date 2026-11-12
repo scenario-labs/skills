@@ -136,3 +136,8 @@ size and position". Anything unnamed is open to change.
   others silently substitute a size for one below their floor. Generate near, then resize (Landing
   an exact size), and confirm what landed with `asset_get`, which reports `properties.width` and
   `properties.height`; `jobs_wait` returns asset ids only.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.
