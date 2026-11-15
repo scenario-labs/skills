@@ -73,7 +73,8 @@ filling it:
 - Capture the group first. Few members track several people: `recommend` with
   `capability: "video23d"`, `features: ["numPeople"]`, and the scene in the user's words ("three
   people walking, one partly behind").
-- `numPeople` is the cap (four at authoring time); split a larger crowd into several clips.
+- `numPeople` is the cap (four at authoring time). Cutting the clip shorter keeps the crowd, so
+  split a larger one into groups with the removal edit below, one clip per group.
 - The schema does not say whether people return as one file or separate skeletons: inspect the
   download.
 - A performer hidden behind others captures poorly. Isolate them:
@@ -81,7 +82,8 @@ filling it:
      of the frame", naming the kept person by frame position or look. Pick a member whose
      description lists removal, keeping the source duration so captures stay in sync.
   2. `asset_display` the edit: the kept performer must move as in the source. If not, skip their
-     capture and report it.
+     capture and report it. A video may return only a link: then ask the user to check it
+     (unattended, skip the capture and report the edit unchecked).
   3. Capture that clip as one person (`numPeople: 1`, or a single-person member).
   4. In a DCC, use it in place of that performer's group track, expecting to reposition characters.
 - At authoring time this was a proof of concept: the isolated capture kept some unwanted movement.
@@ -91,7 +93,7 @@ filling it:
   the edited clip before running.
 - Unattended, isolate only performers the task calls hidden or the group capture lost. Run what fits
   the task's budget, group capture first, and a removal only when its capture fits too. Report the
-  total of any leg left out, then stop.
+  total of any leg left out, then stop. With no stated budget, run nothing: quote the prices.
 
 ## Footage that captures well
 
