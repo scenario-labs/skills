@@ -77,17 +77,20 @@ filling it:
 - The schema does not say whether people return as one file or separate skeletons: inspect the
   download.
 - A performer hidden behind others captures poorly. Isolate them:
-  1. `recommend` with `capability: "video2video"` and "remove everyone except the person on the
-     left", naming the kept person by position or look. Pick a member whose description lists
-     removal, keeping the source duration so captures stay in sync.
-  2. `asset_display` the edit: the kept performer must move as in the source.
-  3. Capture that clip as one person.
+  1. `recommend` with `capability: "video2video"` and "remove everyone except the person on the left
+     of the frame", naming the kept person by frame position or look. Pick a member whose
+     description lists removal, keeping the source duration so captures stay in sync.
+  2. `asset_display` the edit: the kept performer must move as in the source. If not, skip their
+     capture and report it.
+  3. Capture that clip as one person (`numPeople: 1`, or a single-person member).
   4. Combine the captures in a DCC, expecting to reposition characters.
 - At authoring time this was a proof of concept: the isolated capture kept some unwanted movement.
   Promise a rough pass needing cleanup.
-- Each removal and extra capture is a separate job: `dry_run` every leg and quote the total.
-  Unattended, isolate only performers the task names or the group capture lost, within the task's
-  budget; otherwise report the total and stop.
+- Each removal and extra capture is a separate job: `dry_run` every leg and quote the total. Before
+  the edit exists, estimate the isolated capture on the source clip as one person; re-price it on
+  the edited clip before running.
+- Unattended, isolate only performers the task names or the group capture lost. Run what fits the
+  task's budget, group capture first; report the total of any leg left out, then stop.
 
 ## Footage that captures well
 
