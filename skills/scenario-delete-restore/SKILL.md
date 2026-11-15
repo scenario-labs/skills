@@ -69,10 +69,13 @@ Deletion stays a confirmed action.
 
 1. **Read the plan** off the team's `teams_list` row. On Max and above, tell the user the items stay
    recoverable for 30 days, without their tags and collections. Below it, say the delete is
-   permanent.
-2. **List the exact items** (ids plus a name or prompt) and get an explicit yes. Unattended, delete
-   only the ids the task names, or the set its stated criterion matches exactly, and report every id
-   deleted. Never widen a pattern ("old drafts") past what the task states.
+   permanent. An unfamiliar `plan` value: `assets_list` with `deleted: true` is a free read gated to
+   the same plans, so a plan refusal there settles it.
+2. **List the exact items** (ids plus a name or prompt) and get an explicit yes. A set found by tag
+   comes from `search` with `filters.tags` (see `scenario-asset-analysis`), whose index can trail a
+   tag removal: confirm each hit's `tags` on `assets_get_bulk` before deleting it. Unattended,
+   delete only the ids the task names, or the set its stated criterion matches exactly, and report
+   every id deleted. Never widen a pattern ("old drafts") past what the task states.
 3. **Record the filing** before the call: each asset row from `assets_list` or `assets_get_bulk`
    carries `tags` and `collectionIds`. Keep them in your reply or a local file, since a restore will
    not bring them back. For a collection, record its name and member ids.
