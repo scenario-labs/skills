@@ -9,13 +9,14 @@ license: MIT
 ## Overview
 
 Generate a concept image first, then run image-to-3D: it has a larger catalog and more art direction
-than text-to-3D (`txt23d`). Per-family contracts: `scenario-meshy`, `scenario-rodin`,
-`scenario-sparc3d`. Walkable scenes and Gaussian splats: `scenario-3d-worlds`. PBR retexture of a
-finished mesh or scene: `scenario-patina-retexture`. Inside Blender (the Scenario for Blender
-extension): `scenario-blender`. Connection and the core loop: the `scenario` skill. If a sibling
-skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
-ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
-from tool schemas and flag the gap.
+than text-to-3D (`txt23d`). Unattended, bill only inside the task's budget or count, else report the
+price and stop. Per-family contracts: `scenario-meshy`, `scenario-rodin`, `scenario-sparc3d`.
+Walkable scenes and Gaussian splats: `scenario-3d-worlds`. PBR retexture of a finished mesh or
+scene: `scenario-patina-retexture`. Inside Blender (the Scenario for Blender extension):
+`scenario-blender`. Connection and the core loop: the `scenario` skill. If a sibling skill named
+here is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user
+to install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool
+schemas and flag the gap.
 
 ## Quick reference
 
@@ -44,8 +45,8 @@ from tool schemas and flag the gap.
    background. Show a non-biped creature at eye level, from the side or three-quarters, every leg
    visible and clear of the body: top-down hides leg undersides and body height. A biped headed for
    a rig takes the pose in Rigging and animation. Upload a user's reference with `upload_asset` and
-   pass its asset ID instead. Keep a reference on a plain background as is, and prefer it to a busy
-   shot: removal keeps a glossy subject's reflections of the scene, which image-to-3D bakes into the
+   pass its ID instead. Keep a reference on a plain background as is, and prefer it to a busy shot:
+   removal keeps a glossy subject's reflections of the scene, which image-to-3D bakes into the
    texture. Remove a busy one's background first (`recommend` the removal) and pass that output. An
    isolated subject matters, a transparent cutout does not, as an image field's `background_note`
    says when present.
@@ -66,7 +67,7 @@ from tool schemas and flag the gap.
    - change a result by editing it (see Refining meshes).
 3. `model_schema_get`: inspect image inputs, polycount, PBR, and topology controls. Target 10k to
    50k triangles for this prop; never assume defaults meet that budget. Use only exposed controls:
-   - **Numeric field:** read `min` and `max`, or the description when they are absent.
+   - **Numeric field:** read `min` and `max`, else the description.
    - **Enum:** read `allowed_values` and their topology and count meanings (`scenario-rodin` covers
      `qualityMeshOption`). A quad count is not a triangle count.
    - **No face control, or the target is below its range:** generate, then remesh down if needed
@@ -104,7 +105,7 @@ one shell.
 
 ## Texture and lighting controls
 
-Several image-to-3D families split texture from geometry. Read each dial in `model_schema_get`
+Several image-to-3D families split texture from geometry: read each dial in `model_schema_get`
 before promising a look. Authoring-time examples from the Tripo members:
 
 - `texture: false` returns a bare mesh and is a `cost_impact` field: the cheap path when the user
@@ -139,7 +140,7 @@ a `kind: "3d"` file field, usually `model` (also `mesh`, `file3d`, `sceneFile`).
 `Input model is required` or `Provide a reference image or a 3D model` means the mesh went in under
 another name (an image field, or a URL).
 
-The LLM-based members of step 2 also edit an existing mesh, prop or character:
+Step 2's LLM-based members also edit an existing mesh, prop or character:
 
 - `sceneFile` takes its `asset_id` (any 3D model; `auto` format and topology keep its own), `prompt`
   states the change, and optional `images` guide it (a material sample, a logo, a marked-up view).
@@ -173,8 +174,8 @@ usually goes further, each output's `asset_id` feeding the next `kind: "3d"` fie
 3. Retexture the unwrapped mesh from a prompt, an image, or a style reference.
 4. Rig last, on the topology that ships.
 
-Each step after the first is a `3d23d` `recommend` pick, `dry_run` on its real input before
-launching. Along the chain:
+Each later step is a `3d23d` `recommend` pick, `dry_run` on its real input before launching. Along
+the chain:
 
 - **Retexture schemas.** Avoid a setting that rebuilds UVs, which discards the unwrap. Check the
   same `pbr` default (the Tripo texturing member defaulted to PBR at authoring time). When a schema
@@ -228,11 +229,10 @@ Three schema details decide usability:
 - **Size ceiling.** A file `max_size` is rare (one humanoid rigger capped at 30 MB): check the
   schema before decimating.
 - **Animation versus rig.** Where a rigger exposes `animation`, it retargets a preset clip; its
-  `allowed_values` are rig-type prefixed (`quadruped:walk`), so read them. By default only the
-  retarget file comes back: set `includeRiggedModel` to keep the plain rig too. The two arrive as
-  separate assets with identical `metadata`, in no set order. `asset_get` tells them apart: the
-  retarget has `properties.hasAnimations` true and an `animationFrameCount`, the plain rig false and
-  null.
+  `allowed_values` are rig-type prefixed (`quadruped:walk`). By default only the retarget file comes
+  back: set `includeRiggedModel` to keep the plain rig too. The two arrive as separate assets with
+  identical `metadata`, in no set order. `asset_get` tells them apart: the retarget has
+  `properties.hasAnimations` true and an `animationFrameCount`, the plain rig false and null.
 
 When only motion is wanted, motion-transfer video models animate a still character image with no
 skeleton: see `scenario-video`.
