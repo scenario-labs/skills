@@ -34,7 +34,7 @@ schemas and flag the gap.
 - **Plan check.** Before step 1, `recommend` every later step (step 2, any rig or retexture). An
   entry marked `requires_plan_upgrade` fails with a 403 (`ModelAccessRestrictedError`) only after
   earlier steps were paid: settle the upgrade or pick another member first. If the `img23d` call
-  asks (`ask_user`) about existing concepts, step 1 makes them.
+  asks (`ask_user`) about existing concepts, step 1 covers either answer.
 - **Batch price.** Price per asset from one real concept: `dry_run` each candidate on it (later legs
   per step 4), times the count. At authoring time one LLM-based member quoted 1,300 CU at its
   default effort, a single-image Tripo generator 45. Past the plan's credits, each job's wait grows
