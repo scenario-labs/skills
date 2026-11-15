@@ -15,9 +15,10 @@ final from the agent's side.
 - A restore brings the item back, not its filing: tags and collection membership stay lost.
 - Collections have no restore tool. A deleted collection is rebuilt by hand or not at all.
 - Recovery is per project: the deleted listings cover the project in scope only.
-- Every tool here except `models_list` is catalog-only. `scenario_tools_search` returns the schema
-  and lane; the matching executor runs it with `{name, parameters}`, scope ids inside `parameters`
-  (see the `scenario` skill).
+- The tools below marked read, write, or delete are catalog-only; those marked direct (`teams_list`,
+  `models_list`) are called as is. `scenario_tools_search` returns a catalog tool's schema and lane;
+  the matching executor runs it with `{name, parameters}`, scope ids inside `parameters` (see the
+  `scenario` skill).
 - Deleting a whole project is irreversible and belongs to `scenario-team-admin`.
 
 If a sibling skill named here is missing from your available skills, load it with `skill_get`
@@ -67,10 +68,11 @@ unattended, proceed from tool schemas and flag the gap.
 
 Deletion stays a confirmed action.
 
-1. **Read the plan** off the team's `teams_list` row. On Max and above, tell the user the items stay
-   recoverable for 30 days, without their tags and collections. Below it, say the delete is
-   permanent. An unfamiliar `plan` value: `assets_list` with `deleted: true` is a free read gated to
-   the same plans, so a plan refusal there settles it.
+1. **Read the plan** off the team's `teams_list` row. On Max and above, tell the user deleted assets
+   and models stay recoverable for 30 days, without their tags and collections. Below it, say the
+   delete is permanent. A collection is permanent on every plan. An unfamiliar `plan` value:
+   `assets_list` with `deleted: true` is a free read gated to the same plans, so a plan refusal
+   there settles it.
 2. **List the exact items** (ids plus a name or prompt) and get an explicit yes. A set found by tag
    comes from `search` with `filters.tags` (see `scenario-asset-analysis`), whose index can trail a
    tag removal: confirm each hit's `tags` on `assets_get_bulk` before deleting it. Unattended,
@@ -93,8 +95,9 @@ Deletion stays a confirmed action.
 3. `scenario_tool_execute_read` with `name: "assets_list"`,
    `parameters: {"team_id", "project_id", "deleted": true, "limit": 100}`. Follow
    `nextPaginationToken` until `deletedAt` falls before yesterday.
-4. Keep the rows whose `prompt` mentions a dragon. Fourteen match; show them with `deletedAt` and
-   confirm (unattended: the task says "dragon renders", so all fourteen).
+4. Keep the rows whose `deletedAt` falls on yesterday, in the user's time zone, and whose `prompt`
+   mentions a dragon. Fourteen match; show them with `deletedAt` and confirm (unattended: the task
+   says "dragon renders", so all fourteen).
 5. `scenario_tool_execute_write` with `name: "asset_restore"`,
    `parameters: {"team_id", "project_id", "asset_ids": [<14 ids>]}`. `restored` holds 13; `skipped`
    holds one `not-deleted`, already restored by a teammate.

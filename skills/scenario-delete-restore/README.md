@@ -4,9 +4,9 @@ Maintainer notes, not runtime instructions. SKILL.md does not link this file.
 
 ## Why a skill of its own
 
-- Agents on the MCP server deleted often in the three weeks to 2026-11-14: about 290 `asset_delete`
-  calls from 41 users, 84 `model_delete` calls from 5 users, 16 `collection_delete` calls from 7
-  users. No skill mentioned deleting or restoring.
+- Agents on the MCP server call `asset_delete`, `model_delete`, and `collection_delete` often (the
+  counts are in the pull request that added this skill), and no skill mentioned deleting or
+  restoring.
 - MCP server 0.40.0 (2026-11-13) added `asset_restore`, `model_restore`, `assets_list`
   `deleted: true`, and `models_list` `filters.status: "deleted"`.
 - The `scenario` body sits at the 2500-word cap, and `scenario-team-admin` is an admin skill whose
