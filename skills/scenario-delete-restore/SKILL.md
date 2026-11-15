@@ -44,7 +44,8 @@ unattended, proceed from tool schemas and flag the gap.
 - **Find.** `assets_list` with `deleted: true` takes no `filters`: the server refuses the pair.
   Match the user's words client-side against `deletedAt`, `kind`, `prompt`, and `modelId`, paging
   with `page_token` (`limit` up to 100). The list is newest deletion first, so stop paging once
-  `deletedAt` is older than the user's window.
+  `deletedAt` is older than the user's window. `prompt` is cut at 120 characters, so a word past the
+  cut never matches: say the selection may be incomplete.
 - **Models.** `status: "deleted"` is a key inside `filters` on `models_list`. Combined with
   `privacy: "public"` the server refuses it: deleted models are always the team's own.
 - **Confirm the set.** Show the candidates (id, `deletedAt`, prompt or name) when the match is not
@@ -75,9 +76,10 @@ Deletion stays a confirmed action.
    there settles it.
 2. **List the exact items** (ids plus a name or prompt) and get an explicit yes. A set found by tag
    comes from `search` with `filters.tags` (see `scenario-asset-analysis`), whose index can trail a
-   tag removal: confirm each hit's `tags` on `assets_get_bulk` before deleting it. Unattended,
-   delete only the ids the task names, or the set its stated criterion matches exactly, and report
-   every id deleted. Never widen a pattern ("old drafts") past what the task states.
+   tag change: confirm each hit's `tags` on `assets_get_bulk` before deleting it. When every match
+   must go, also page `assets_list` and match `tags` locally, since a fresh tag can miss the index.
+   Unattended, delete only the ids the task names, or the set its stated criterion matches exactly,
+   and report every id deleted. Never widen a pattern ("old drafts") past what the task states.
 3. **Record the filing** before the call: each asset row from `assets_list` or `assets_get_bulk`
    carries `tags` and `collectionIds`. Keep them in your reply or a local file, since a restore will
    not bring them back. For a collection, record its name and member ids.
@@ -96,8 +98,8 @@ Deletion stays a confirmed action.
    `parameters: {"team_id", "project_id", "deleted": true, "limit": 100}`. Follow
    `nextPaginationToken` until `deletedAt` falls before yesterday.
 4. Keep the rows whose `deletedAt` falls on yesterday, in the user's time zone, and whose `prompt`
-   mentions a dragon. Fourteen match; show them with `deletedAt` and confirm (unattended: the task
-   says "dragon renders", so all fourteen).
+   describes a dragon. Fourteen match; show them with `deletedAt` and confirm (unattended: restore
+   those, and list a prompt that only names one, such as "a castle, no dragon", as unresolved).
 5. `scenario_tool_execute_write` with `name: "asset_restore"`,
    `parameters: {"team_id", "project_id", "asset_ids": [<14 ids>]}`. `restored` holds 13; `skipped`
    holds one `not-deleted`, already restored by a teammate.
