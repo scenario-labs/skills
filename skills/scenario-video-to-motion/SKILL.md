@@ -70,10 +70,10 @@ filling it:
 
 ## Several performers, one hiding another
 
-- Pass the scene to `recommend` in the user's words ("three people walking, one partly behind").
-  Members differ on crowded clips, and few track several people: compare the ranked ones.
-- Capture the group first with a member that tracks several people. `numPeople` is its cap (four at
-  authoring time); split a larger crowd into several clips.
+- Capture the group first. Few members track several people: `recommend` with
+  `capability: "video23d"`, `features: ["numPeople"]`, and the scene in the user's words ("three
+  people walking, one partly behind").
+- `numPeople` is the cap (four at authoring time); split a larger crowd into several clips.
 - The schema does not say whether people return as one file or separate skeletons: inspect the
   download.
 - A performer hidden behind others captures poorly. Isolate them:
@@ -83,14 +83,15 @@ filling it:
   2. `asset_display` the edit: the kept performer must move as in the source. If not, skip their
      capture and report it.
   3. Capture that clip as one person (`numPeople: 1`, or a single-person member).
-  4. Combine the captures in a DCC, expecting to reposition characters.
+  4. In a DCC, use it in place of that performer's group track, expecting to reposition characters.
 - At authoring time this was a proof of concept: the isolated capture kept some unwanted movement.
   Promise a rough pass needing cleanup.
 - Each removal and extra capture is a separate job: `dry_run` every leg and quote the total. Before
   the edit exists, estimate the isolated capture on the source clip as one person; re-price it on
   the edited clip before running.
-- Unattended, isolate only performers the task names or the group capture lost. Run what fits the
-  task's budget, group capture first; report the total of any leg left out, then stop.
+- Unattended, isolate only performers the task calls hidden or the group capture lost. Run what fits
+  the task's budget, group capture first, and a removal only when its capture fits too. Report the
+  total of any leg left out, then stop.
 
 ## Footage that captures well
 
