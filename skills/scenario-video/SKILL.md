@@ -173,8 +173,8 @@ carries `cost_impact: true`, so trim to the shipped range before the run (Durati
 Plan gating is common here: `recommend` flags such members on their ranked entry with
 `requires_plan_upgrade: true` and names the plan in `required_plan` (unless its response says plan
 gating is `_degraded`), and running one anyway returns a 403 naming the model and the plan it needs,
-which no retry clears; pick an available member or surface the upgrade, per the `scenario` skill's
-plan row.
+which no retry clears. Pick an unflagged member before running; after a 403, follow the `scenario`
+skill's plan entry.
 
 A completed job proves the model ran, not that the mouth moved. Before shipping, download the output
 and the source and compare frames at the same timestamps (sweep both into contact sheets locally,
