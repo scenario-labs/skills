@@ -84,7 +84,8 @@ filling it:
      description lists removal, keeping the source duration so captures stay in sync.
   2. `asset_display` the edit: every kept person must be present and move as in the source. If not,
      skip the capture and report it. A video may return only a link: then ask the user to check it
-     (unattended, skip the capture and report the edit unchecked).
+     (unattended, skip the capture and report the edit unchecked). Where the source hid someone
+     fully, the edit may invent their motion: report those spans as unverified.
   3. Capture that clip with `numPeople` set to the kept count (one person: a single-person member
      also works).
   4. In a DCC, use it in place of those performers' group tracks, expecting to reposition
@@ -94,9 +95,10 @@ filling it:
 - Each removal and extra capture is a separate job: `dry_run` every leg and quote the total. Before
   the edit exists, estimate the isolated capture on the source clip at the kept count; re-price it
   on the edited clip before running. If that price no longer fits, stop and report it with the edit.
-- Unattended, isolate only performers the task calls hidden or the group capture lost. Run what fits
-  the task's budget, group capture first, and a removal only when its capture fits too. Report the
-  total of any leg left out, then stop. With no stated budget, run nothing: quote the prices.
+- Unattended, isolate only performers the task calls hidden or the group capture lost, and split
+  only a crowd past the cap. Run what fits the task's budget, group capture first, and a removal
+  only when its capture fits too. Report the total of any leg left out, then stop. With no stated
+  budget, run nothing: quote the prices.
 
 ## Footage that captures well
 
