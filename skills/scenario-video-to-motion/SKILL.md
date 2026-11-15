@@ -73,24 +73,27 @@ filling it:
 - Capture the group first. Few members track several people: `recommend` with
   `capability: "video23d"`, `features: ["numPeople"]`, and the scene in the user's words ("three
   people walking, one partly behind").
-- `numPeople` is the cap (four at authoring time). Cutting the clip shorter keeps the crowd, so
-  split a larger one into groups with the removal edit below, one clip per group.
+- Set `numPeople` to the count in frame, for the `dry_run` and the run: it defaults to one. It is
+  also the cap (four at authoring time). A shorter clip keeps the crowd, so split a larger one into
+  groups with the removal edit below, one clip per group.
 - The schema does not say whether people return as one file or separate skeletons: inspect the
   download.
-- A performer hidden behind others captures poorly. Isolate them:
+- A performer hidden behind others captures poorly. Isolate them (or a group, the same way):
   1. `recommend` with `capability: "video2video"` and "remove everyone except the person on the left
-     of the frame", naming the kept person by frame position or look. Pick a member whose
+     of the frame", naming each kept person by frame position or look. Pick a member whose
      description lists removal, keeping the source duration so captures stay in sync.
-  2. `asset_display` the edit: the kept performer must move as in the source. If not, skip their
-     capture and report it. A video may return only a link: then ask the user to check it
+  2. `asset_display` the edit: every kept person must be present and move as in the source. If not,
+     skip the capture and report it. A video may return only a link: then ask the user to check it
      (unattended, skip the capture and report the edit unchecked).
-  3. Capture that clip as one person (`numPeople: 1`, or a single-person member).
-  4. In a DCC, use it in place of that performer's group track, expecting to reposition characters.
+  3. Capture that clip with `numPeople` set to the kept count (one person: a single-person member
+     also works).
+  4. In a DCC, use it in place of those performers' group tracks, expecting to reposition
+     characters.
 - At authoring time this was a proof of concept: the isolated capture kept some unwanted movement.
   Promise a rough pass needing cleanup.
 - Each removal and extra capture is a separate job: `dry_run` every leg and quote the total. Before
-  the edit exists, estimate the isolated capture on the source clip as one person; re-price it on
-  the edited clip before running.
+  the edit exists, estimate the isolated capture on the source clip at the kept count; re-price it
+  on the edited clip before running. If that price no longer fits, stop and report it with the edit.
 - Unattended, isolate only performers the task calls hidden or the group capture lost. Run what fits
   the task's budget, group capture first, and a removal only when its capture fits too. Report the
   total of any leg left out, then stop. With no stated budget, run nothing: quote the prices.
