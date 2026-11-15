@@ -1312,6 +1312,7 @@ uncreases
 uncrop
 uncullable
 undeformed
+undelete
 undisconnected
 undisplaced
 unfetched

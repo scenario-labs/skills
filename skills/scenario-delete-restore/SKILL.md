@@ -1,0 +1,114 @@
+---
+name: scenario-delete-restore
+description: "Use when deleting Scenario assets, models, or collections through MCP, or undoing a deletion: restoring images, videos, or LoRAs deleted by mistake, finding something a user says they deleted, listing what was deleted recently, or cleaning up a project before a bulk delete. Keywords: delete, undelete, restore, recover, undo, trash, bin, recently deleted, 30 days, deleted model, deleted asset, cleanup."
+license: MIT
+---
+
+# Scenario Delete and Restore
+
+## Overview
+
+A deleted asset or model stays recoverable for 30 days, on the Max plan and above (Max, Team, legacy
+Premium, Enterprise). Below Max, the server refuses to list or restore deleted items, so a delete is
+final from the agent's side.
+
+- A restore brings the item back, not its filing: tags and collection membership stay lost.
+- Collections have no restore tool. A deleted collection is rebuilt by hand or not at all.
+- Recovery is per project: the deleted listings cover the project in scope only.
+- Every tool here except `models_list` is catalog-only. `scenario_tools_search` returns the schema
+  and lane; the matching executor runs it with `{name, parameters}`, scope ids inside `parameters`
+  (see the `scenario` skill).
+- Deleting a whole project is irreversible and belongs to `scenario-team-admin`.
+
+If a sibling skill named here is missing from your available skills, load it with `skill_get`
+(Scenario MCP) or ask the user to install it (https://github.com/scenario-labs/skills#install);
+unattended, proceed from tool schemas and flag the gap.
+
+## Quick reference
+
+| Step                | Tool                                            | Lane   | Notes                                                    |
+| ------------------- | ----------------------------------------------- | ------ | -------------------------------------------------------- |
+| Find deleted assets | `assets_list` with `deleted: true`              | read   | Most recently deleted first, each with `deletedAt`       |
+| Restore assets      | `asset_restore`                                 | write  | 1 to 100 `asset_ids`; returns `restored` and `skipped`   |
+| Find deleted models | `models_list`, `filters: {"status": "deleted"}` | direct | Your own models only; never with `privacy: "public"`     |
+| Restore a model     | `model_restore`                                 | write  | One `model_id` per call                                  |
+| Delete assets       | `asset_delete`                                  | delete | Returns `deleted`; split sets past 100 ids               |
+| Delete a model      | `model_delete`                                  | delete | One `model_id` per call                                  |
+| Delete a collection | `collection_delete`                             | delete | No restore tool exists                                   |
+| Re-file             | `asset_add_tags`, `collection_add_assets`       | write  | `model_add_tags`, `collection_add_models` for a model    |
+| Check the plan      | `teams_list`                                    | direct | The team row's `plan` decides whether a delete is undone |
+
+## Restoring
+
+- **Find.** `assets_list` with `deleted: true` takes no `filters`: the server refuses the pair.
+  Match the user's words client-side against `deletedAt`, `kind`, `prompt`, and `modelId`, paging
+  with `page_token` (`limit` up to 100). The list is newest deletion first, so stop paging once
+  `deletedAt` is older than the user's window.
+- **Models.** `status: "deleted"` is a key inside `filters` on `models_list`. Combined with
+  `privacy: "public"` the server refuses it: deleted models are always the team's own.
+- **Confirm the set.** Show the candidates (id, `deletedAt`, prompt or name) when the match is not
+  exact. Unattended, restore only items the task's description matches unambiguously, and list the
+  rest as unresolved.
+- **Read `skipped`.** Each entry carries `asset_id` and a reason:
+  - `not-found`: a wrong id, or an asset of another project;
+  - `not-deleted`: already live, nothing to do;
+  - `expired`: past the retention window. Nothing recovers it: tell the user.
+- **Models come back as they were.** `model_restore` returns the model to its prior status. An
+  interrupted training returns as `training-canceled`, so it needs a new training run. The server
+  refuses a model that is not deleted or was deleted over 30 days ago: report which.
+- **Plan refusal.** A restore or deleted listing refused with a plan message is not retryable.
+  Report that restoring needs Max or above; upgrading is the user's call (unattended: report and
+  stop).
+- **Re-file.** Re-apply tags and collections the user still needs. `asset_add_tags` takes one asset
+  per call; `collection_add_assets` takes any number of ids. A collection deleted too is recreated
+  with `collection_create` first.
+
+## Deleting
+
+Deletion stays a confirmed action.
+
+1. **Read the plan** off the team's `teams_list` row. On Max and above, tell the user the items stay
+   recoverable for 30 days, without their tags and collections. Below it, say the delete is
+   permanent.
+2. **List the exact items** (ids plus a name or prompt) and get an explicit yes. Unattended, delete
+   only the ids the task names, or the set its stated criterion matches exactly, and report every id
+   deleted. Never widen a pattern ("old drafts") past what the task states.
+3. **Record the filing** before the call: each asset row from `assets_list` or `assets_get_bulk`
+   carries `tags` and `collectionIds`. Keep them in your reply or a local file, since a restore will
+   not bring them back. For a collection, record its name and member ids.
+4. **Delete** through `scenario_tool_execute_delete`. `asset_delete` refuses more than 100 ids in
+   one call (`You can not delete more than 100 assets at once.`): send batches of 100.
+
+## Worked example: undo yesterday's cleanup
+
+"Bring back the dragon renders I deleted yesterday and put them back in Key Art."
+
+1. Scope per the `scenario` skill. The team's `teams_list` row carries `plan`: below Max, tell the
+   user restoring is not on their plan and stop. Here it reads `enterprise`, so continue.
+2. `scenario_tools_search` with `query="restore deleted assets"`: `asset_restore` (write) and
+   `assets_list` (read), with schemas.
+3. `scenario_tool_execute_read` with `name: "assets_list"`,
+   `parameters: {"team_id", "project_id", "deleted": true, "limit": 100}`. Follow
+   `nextPaginationToken` until `deletedAt` falls before yesterday.
+4. Keep the rows whose `prompt` mentions a dragon. Fourteen match; show them with `deletedAt` and
+   confirm (unattended: the task says "dragon renders", so all fourteen).
+5. `scenario_tool_execute_write` with `name: "asset_restore"`,
+   `parameters: {"team_id", "project_id", "asset_ids": [<14 ids>]}`. `restored` holds 13; `skipped`
+   holds one `not-deleted`, already restored by a teammate.
+6. `scenario_tool_execute_read` with `name: "collections_list"`: Key Art still exists. Then
+   `scenario_tool_execute_write` with `name: "collection_add_assets"`,
+   `parameters: {"team_id", "project_id", "collection_id", "asset_ids": [<all 14 ids>]}`, since it
+   skips any already present.
+7. `asset_display` on one restored asset to confirm. Report 13 restored, one already live, and all
+   14 back in Key Art.
+
+## Common mistakes
+
+- Sending `filters` with `deleted: true`: refused. List unfiltered and match client-side.
+- Expecting tags and collections back after a restore: re-apply them.
+- Promising recovery below Max: the server refuses restores there, so the delete was final.
+- Running `asset_restore` or `model_restore` through `scenario_tool_execute_delete`: both are
+  write-lane, and the delete executor rejects them.
+- Retrying a plan refusal, or an `expired` skip: neither clears.
+- Deleting a collection to tidy up and expecting to undo it: no restore tool exists.
+- Sending more than 100 ids to `asset_delete` or `asset_restore` in one call: split the set.
