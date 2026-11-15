@@ -105,10 +105,11 @@ into the conversation.
   work, or use a CEL ternary for conditional prompt text, per the reference's `ifElse` section.
 - Double-quoted CEL literals: they evaluate but corrupt the canvas editor, single quotes only.
 - Trusting the editor with a prompt a `transformText` node builds: its length counter checks only
-  text wired straight into a model, so an overrun fails when the job runs. Keep the longest result
-  (longest ternary branch, longest value per input) under the model's `prompt` `max_length` from
-  `model_schema_get`, 2,000 to 250,000 characters across members at authoring time. Report an
-  unbounded run input as a risk. Long text nodes are fine; only the model input is capped.
+  text wired straight into a model, so an overrun fails when the job runs. Keep the expression's
+  longest possible output (worst ternary branch, longest inputs) under the model's `prompt`
+  `max_length` from `model_schema_get`, 2,000 to 250,000 characters across members at authoring
+  time. Report an unbounded run input as a risk. Long text nodes are fine; only the model input is
+  capped.
 - Sending `workflow_id` to `workflow_copy`: get, update, publish, run and delete take `workflow_id`,
   but copy takes `source_workflow_id`; the copy inherits everything verbatim and needs its own
   publish.
