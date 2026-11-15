@@ -50,9 +50,9 @@ from tool schemas and flag the gap.
    isolated subject matters, a transparent cutout does not, as an image field's `background_note`
    says when present.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
-   the Hunyuan 3D, Meshy, Tripo, and Trellis families, and several of Scenario's own LLM-based
-   members, priced far apart. Their schemas share `sceneFile`, `buildEffort`, `faceBudget`,
-   `outputFormat`, and `topology`. They:
+   the Hunyuan 3D, Meshy, Tripo, and Trellis families, and several Scenario LLM-based members,
+   priced far apart. Their schemas share `sceneFile`, `buildEffort`, `faceBudget`, `outputFormat`,
+   and `topology`. They:
    - alone reconstruct one object from 1 to 8 photos or renders into an editable mesh with named
      parts and per-part PBR materials;
    - suit props and hard-surface subjects, not characters or creatures: for a prop with distinct
@@ -150,8 +150,8 @@ The LLM-based members of step 2 also edit an existing mesh, prop or character:
   it took a 4,817-triangle cat to 788,954, so plan a remesh before an engine.
 - A replaced material keeps its old name; only added parts get new ones. The edit is generated:
   check what the prompt did not name against the source.
-- Some members' tags name rigging and UV unwrap, so they surface in those `recommend` calls without
-  a schema field for either.
+- Some members surface in rigging and UV-unwrap `recommend` calls on their tags alone, with no
+  schema field for either.
 
 Splitting a finished mesh into parts is a contested lane: a `recommend` pick. At authoring time
 vendors offered granularity controls or a bundled PBR retexture; image-to-parts members built parts
@@ -173,7 +173,8 @@ usually goes further, each output's `asset_id` feeding the next `kind: "3d"` fie
 3. Retexture the unwrapped mesh from a prompt, an image, or a style reference.
 4. Rig last, on the topology that ships.
 
-Each step after the first is a `3d23d` `recommend` pick, priced per step 4. Along the chain:
+Each step after the first is a `3d23d` `recommend` pick, `dry_run` on its real input before
+launching. Along the chain:
 
 - **Retexture schemas.** Avoid a setting that rebuilds UVs, which discards the unwrap. Check the
   same `pbr` default (the Tripo texturing member defaulted to PBR at authoring time). When a schema
@@ -219,11 +220,11 @@ For quads:
   in a DCC before promising quads. A rig returned as GLB is triangulated: deliver the quad FBX
   beside it and say so.
 
-Three schema details decide whether the output is usable:
+Three schema details decide usability:
 
-- **Formats.** Riggers accept GLB, often OBJ, FBX, or STL. Only video-to-motion auto-riggers expose
-  an output-format field. The rig comes back as GLB or FBX, mostly unannounced: expect a DCC pass
-  when the engine needs the other.
+- **Formats.** Riggers accept GLB, often OBJ, FBX, or STL, and expose no output-format field
+  (video-to-motion members may: `scenario-video-to-motion`). The rig comes back as GLB or FBX,
+  mostly unannounced: expect a DCC pass when the engine needs the other.
 - **Size ceiling.** A file `max_size` is rare (one humanoid rigger capped at 30 MB): check the
   schema before decimating.
 - **Animation versus rig.** Where a rigger exposes `animation`, it retargets a preset clip; its
