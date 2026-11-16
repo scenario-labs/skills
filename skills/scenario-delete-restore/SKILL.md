@@ -15,10 +15,10 @@ final from the agent's side.
 - A restore brings the item back, not its filing: tags and collection membership stay lost.
 - Collections have no restore tool. A deleted collection is rebuilt by hand or not at all.
 - Recovery is per project: the deleted listings cover the project in scope only.
-- The tools below marked read, write, or delete are catalog-only; those marked direct (`teams_list`,
-  `models_list`) are called as is. `scenario_tools_search` returns a catalog tool's schema and lane;
-  the matching executor runs it with `{name, parameters}`, scope ids inside `parameters` (see the
-  `scenario` skill).
+- The tools below marked read, write, or delete are catalog-only. `teams_list`, `models_list`, and
+  `asset_display` are direct: called as is, scope at top level, never through an executor.
+  `scenario_tools_search` returns a catalog tool's schema and lane; the matching executor runs it
+  with `{name, parameters}`, scope ids inside `parameters` (see the `scenario` skill).
 - Deleting a whole project is irreversible and belongs to `scenario-team-admin`.
 
 If a sibling skill named here is missing from your available skills, load it with `skill_get`
