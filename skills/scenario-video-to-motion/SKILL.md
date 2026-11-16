@@ -85,8 +85,9 @@ filling it:
      description lists removal, keeping the source duration so captures stay in sync.
   2. `asset_display` the edit: every kept person must be present and move as in the source. If not,
      skip the capture and report it. A video may return only a link: then ask the user to check it
-     (unattended, skip the capture and report the edit unchecked). Where the source hid someone
-     fully, the edit may invent their motion: report those spans as unverified.
+     (unattended, skip the capture and report the edit unchecked). Where the source hides a kept
+     person fully, the edit invents that motion and nothing can verify it. Note those time ranges
+     and tell the user before capture that the motion there is unverified.
   3. Capture that clip with `numPeople` set to the kept count (one person: a single-person member
      also works).
   4. In a DCC, use it in place of those performers' group tracks, expecting to reposition
