@@ -98,17 +98,19 @@ Deletion stays a confirmed action.
    `parameters: {"team_id", "project_id", "deleted": true, "limit": 100}`. Follow
    `nextPaginationToken` until `deletedAt` falls before yesterday.
 4. Keep the rows whose `deletedAt` falls on yesterday, in the user's time zone, and whose `prompt`
-   describes a dragon. Fourteen match; show them with `deletedAt` and confirm (unattended: restore
-   those, and list a prompt that only names one, such as "a castle, no dragon", as unresolved).
+   makes a dragon the subject. A negated or incidental mention is ambiguous. Fourteen mention a
+   dragon: thirteen clearly depict one, and one reads "a castle without a dragon". Show all fourteen
+   with `deletedAt` and confirm. Unattended: keep the thirteen, and list the castle as unresolved,
+   neither restored nor filed.
 5. `scenario_tool_execute_write` with `name: "asset_restore"`,
-   `parameters: {"team_id", "project_id", "asset_ids": [<14 ids>]}`. `restored` holds 13; `skipped`
+   `parameters: {"team_id", "project_id", "asset_ids": [<13 ids>]}`. `restored` holds 12; `skipped`
    holds one `not-deleted`, already restored by a teammate.
 6. `scenario_tool_execute_read` with `name: "collections_list"`: Key Art still exists. Then
    `scenario_tool_execute_write` with `name: "collection_add_assets"`,
-   `parameters: {"team_id", "project_id", "collection_id", "asset_ids": [<all 14 ids>]}`, since it
+   `parameters: {"team_id", "project_id", "collection_id", "asset_ids": [<all 13 ids>]}`, since it
    skips any already present.
-7. `asset_display` on one restored asset to confirm. Report 13 restored, one already live, and all
-   14 back in Key Art.
+7. `asset_display` on one restored asset to confirm. Report 12 restored, one already live, all 13
+   back in Key Art, and the castle unresolved.
 
 ## Common mistakes
 
