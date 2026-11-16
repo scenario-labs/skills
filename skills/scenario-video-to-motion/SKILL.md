@@ -72,10 +72,11 @@ filling it:
 
 - Capture the group first. Few members track several people: `recommend` with
   `capability: "video23d"`, `features: ["numPeople"]`, and the scene in the user's words ("three
-  people walking, one partly behind").
-- Set `numPeople` to the count in frame, for the `dry_run` and the run: it defaults to one. It is
-  also the cap (four at authoring time). A shorter clip keeps the crowd, so split a larger one into
-  groups with the removal edit below, one clip per group.
+  people walking, one partly behind"). The feature only selects a member with the input.
+- Set `numPeople` to the count in frame on both the `dry_run` and the run. Never rely on its default
+  (read it in `model_schema_get`): it may capture one person, and the count can change the price. It
+  is also the cap (four at authoring time). A shorter clip keeps the crowd, so split a larger one
+  into groups with the removal edit below, one clip per group.
 - The schema does not say whether people return as one file or separate skeletons: inspect the
   download.
 - A performer hidden behind others captures poorly. Isolate them (or a group, the same way):
@@ -139,6 +140,7 @@ The user has a phone clip of a dance and a character GLB, and wants an Unreal-re
 - Expecting the motion on the character's existing rig: mesh members auto-rig from scratch. Use a
   motion-only member and retarget when the rig must stay.
 - Filling a field by its name: `characterFile` is a mesh on one member and an image on another.
+- Leaving `numPeople` at its default on a group clip: the capture may keep one person.
 - Sending the full source video: the price grows with the clip, and over-cap clips fail.
 - Converting the download to another 3D format instead of setting the export target in the run.
 - Treating a sideways or upside-down result as a failed capture before trying the axis fields.
