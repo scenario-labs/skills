@@ -47,7 +47,8 @@ import bx_anim as A, bx_review
 | `push_layer(idb, name, blend='ADD')`                                                                                            | NLA base strip + additive action on top                                                                                                                                               |
 | `hold_drift(idb, holds, bones)` / `overshoots(idb, bones)` / `transitions(idb, bones, data_paths)`                              | curve checks: dead holds, handle overshoot, move lengths between holds                                                                                                                |
 | `sample_world(obj, frames, bone, point)` / `motion_path(obj, f0, f1, bone)`                                                     | world positions per frame (sampling or Blender's own path)                                                                                                                            |
-| `lowest_point(objs, frames)` / `foot_slip(obj, bone, ranges)`                                                                   | floor contact and penetration; planted-foot slide and lift                                                                                                                            |
+| `lowest_point(objs, frames)` / `foot_slip(obj, bone, ranges, ball)`                                                             | floor contact and penetration; planted-foot slide and lift (`ball`: the toe, the smaller drift of the two)                                                                            |
+| `foot_contacts(obj, bones, frames, height, min_frames, onset)` / `slip_summary(slips, tolerance)`                               | planted ranges read from dense keys; median, p95 and worst slide over many ranges (P19)                                                                                               |
 | `to_camera(points, camera, res)`                                                                                                | camera-space projection; pass `res=(w, h)` for pixels before measuring angles (0..1 coordinates squeeze x by the aspect and invent sharp turns at apexes)                             |
 | `motion_report(points, frames, dims)` / `format_report(rep, table)`                                                             | spacing, velocity, holds, moves with ease shape, sharp turns, arc wobble, pops, start-stops; ASCII spacing chart                                                                      |
 | `ballistic_fit(points, frames)` / `gravity(fps)`                                                                                | parabola fit of an airborne path: `accel` (units/s^2), `accel_per_frame2`, `quad_coeff_per_frame2` (half the acceleration), `g_ratio`, residual; `gravity` gives the reference values |
@@ -533,6 +534,42 @@ converted key, an open floor plane running behind the camera showed no stray sha
 the E3 run's camera-relative setting that threw a trapezoid; the closed slab stays the default. The
 pinwheel is assigned per face, so wedge edges are stepped on a 48 x 24 sphere: fine for a playblast,
 use a UV texture for a render.
+
+## P19 Foot slip on dense clips (test_live_slip.py)
+
+Baked, captured, generated and retargeted clips carry no typed contacts. Read them from the motion,
+measure the clip that ships, and judge the spread over every range, not one range.
+
+```python
+frames = range(f0, f1 + 1)
+slips = []
+for ankle, ball in (("foot.L", "toe.L"), ("foot.R", "toe.R")):
+    ranges = A.foot_contacts(rig, (ankle, ball), frames, height=0.03, onset=0.5)
+    slips += A.foot_slip(rig, ankle, ranges, ball=ball)
+print(A.slip_summary(slips))   # ranges, median, p95, worst, the ranges over the tolerance
+```
+
+- **Contacts.** A frame is planted when the ankle or the ball is within `height` of its own lowest
+  point, so the floor must be flat. Ranges under 3 frames are dropped.
+- **Onset.** `onset` starts a range at its first frame under that speed: a swing foot skimming the
+  floor on its way down is not planted yet. Report the slip with and without it, and the share of
+  frames each stance takes. A late start can hide a skate. A height-only stance reads a skim as
+  planted, and merges two steps into one false slide when the foot lifts less than `height` between
+  them.
+- **Two points.** Pass the toe as `ball`: a heel-to-toe roll moves the ankle while the ball holds.
+- **The clip that ships.** Measure after the retarget, the bake and any blend between clips, never
+  only on the source: each later step can move the feet, and transitions slip more than the clips
+  they join.
+- **The root.** When every planted foot drifts the same way, the root is wrong, not the feet. A
+  retarget that scales the hip travel by one factor for every clip, while the legs take the target's
+  proportions, does this. Rebuild the root: per frame, take back the planted points' mean ground
+  travel; across a flight, where no foot is planted, interpolate the correction. The pose under the
+  root stays as it is.
+
+Verified: test_live_slip.py on Blender 5.2.2, a keyed two-point foot with a heel roll, a skim before
+the contact, a sliding contact and a two-frame touch. Height-only contacts (1, 10), (19, 30); with
+`onset=0.5` (1, 10), (21, 30); the touch dropped. Slide with the ankle alone 0.04 and 0.018 m, with
+the ball 0.0 and 0.018; the same contact measured from the skim reads 0.063.
 
 ## GUI-only techniques and their substitutes
 

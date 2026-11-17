@@ -1274,18 +1274,71 @@ def format_staging(rep):
     return "\n".join(L)
 
 
-def foot_slip(obj, bone, contact_ranges, point="head", up_axis=2):
+def foot_slip(obj, bone, contact_ranges, point="head", up_axis=2, ball=None):
     """Planted-foot test: for each (first, last) contact range, the largest horizontal
     drift from the first frame and the vertical range. Experts want no visible slip
-    (the digest uses about 1 mm as the tolerance)."""
+    (the digest uses about 1 mm as the tolerance). `ball` (the toe bone) reports the
+    smaller drift of the two points: a heel-to-toe roll moves the ankle while the ball
+    stays planted, and the reverse at heel strike."""
     out = []
+    h = [i for i in range(3) if i != up_axis]
     for a, b in contact_ranges:
-        pts = sample_world(obj, range(int(a), int(b) + 1), bone=bone, point=point)
-        h = [i for i in range(3) if i != up_axis]
-        slide = max(math.hypot(p[h[0]] - pts[0][h[0]], p[h[1]] - pts[0][h[1]]) for p in pts)
-        zs = [p[up_axis] for p in pts]
-        out.append({"range": (a, b), "slide": slide, "lift": max(zs) - min(zs)})
+        fr = range(int(a), int(b) + 1)
+        slides = []
+        for bn in [bone] + ([ball] if ball else []):
+            pts = sample_world(obj, fr, bone=bn, point=point)
+            slides.append(max(math.hypot(p[h[0]] - pts[0][h[0]], p[h[1]] - pts[0][h[1]]) for p in pts))
+            if bn == bone:
+                zs = [p[up_axis] for p in pts]
+        out.append({"range": (a, b), "slide": min(slides), "lift": max(zs) - min(zs)})
     return out
+
+
+def foot_contacts(obj, bones, frames, height=0.03, min_frames=3, onset=None, point="head", up_axis=2):
+    """Planted ranges of one foot read from the motion itself, for dense keys (baked,
+    captured, generated, retargeted) where nobody typed the contacts. `bones` are that
+    foot's points (ankle, ball): a frame is planted when one of them is within `height`
+    (scene units) of its own lowest point over `frames`, so the floor must be flat.
+    Ranges shorter than `min_frames` are dropped. `onset` (units per second) starts a
+    range at its first frame slower than that: a swing foot skimming the floor on its
+    way down is not planted yet. Returns [(first, last)] for `foot_slip`."""
+    fr = [int(f) for f in frames]
+    sc = bpy.context.scene
+    fps = sc.render.fps / sc.render.fps_base
+    pts = {bn: sample_world(obj, fr, bone=bn, point=point) for bn in bones}
+    low = {bn: min(p[up_axis] for p in pts[bn]) for bn in bones}
+    down = [any(pts[bn][k][up_axis] - low[bn] < height for bn in bones) for k in range(len(fr))]
+    h = [i for i in range(3) if i != up_axis]
+
+    def speed(k):
+        if k == 0:
+            return 0.0
+        return min(math.hypot(pts[bn][k][h[0]] - pts[bn][k - 1][h[0]], pts[bn][k][h[1]] - pts[bn][k - 1][h[1]])
+                   for bn in bones) * fps / max(fr[k] - fr[k - 1], 1)
+
+    out, start = [], None
+    for k, v in enumerate(down + [False]):
+        if v and start is None:
+            start = k
+        elif not v and start is not None:
+            a, b, start = start, k - 1, None
+            if onset is not None:
+                a = next((j for j in range(a, b + 1) if speed(j) < onset), a)
+            if b - a + 1 >= min_frames:
+                out.append((fr[a], fr[b]))
+    return out
+
+
+def slip_summary(slips, tolerance=0.001):
+    """One verdict over many `foot_slip` ranges (a clip, a run of clips, a blended
+    sequence): range count, median, p95 and worst slide, and the ranges over
+    `tolerance`. A median under the tolerance with a p95 far over it points at a few
+    phases (starts, stops, transitions), not at the whole clip."""
+    s = sorted(r["slide"] for r in slips)
+    if not s:
+        return {"ranges": 0, "median": None, "p95": None, "worst": None, "over": []}
+    return {"ranges": len(s), "median": s[len(s) // 2], "p95": s[int(0.95 * (len(s) - 1) + 0.5)],
+            "worst": s[-1], "over": [r["range"] for r in slips if r["slide"] > tolerance]}
 
 
 def transitions(idb, bones=None, data_paths=None, frames=None, eps=1e-4):
