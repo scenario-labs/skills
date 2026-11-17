@@ -77,8 +77,9 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
    explained.
 3. **Fit.** Rigify: `meta = R.add_metarig("basic"|"human")`, `R.fit_metarig(meta, lm)` (joints as
    shared points, pre-bends, hinge rolls, left side symmetrized; hands and face by similarity,
-   coarse). Manual: build the deform skeleton with `new_bone` from the same landmarks. GATE:
-   `R.check_metarig(meta, body) == []` AND
+   coarse). Manual: build the deform skeleton with `new_bone` from the same landmarks. A body that
+   must share an existing skeleton (clips, an engine skeleton, other characters) still gets its own
+   rig and bind, then moves onto that skeleton (P16). GATE: `R.check_metarig(meta, body) == []` AND
    `R.placement_sheet([body, eyes], out, arm_obj=meta, views=("front","right","top"))` looked at;
    zoom the head with `center=`, `size=`.
 4. **Face (Rigify Human).** Fit, then `R.upgrade_face(meta)` (irreversible; eyelid follow Z 0.3,
@@ -174,6 +175,7 @@ export [verified], so the file looks complete.
 | Neck moved without the spine tip                    | "bone position is disjoint"               | move joints as units (`move_points`)    |
 | Straight knee or elbow                              | IK bends sideways or backward             | pre-bend in the bend view               |
 | Parented to the metarig                             | mesh follows nothing useful               | bind to the generated rig               |
+| A body for shared clips left on its own skeleton    | the shared clips do not play on it        | bind, then move it onto the names (P16) |
 | Heat failure unnoticed                              | mesh does not move                        | `weight_report`; proxy route            |
 | Armature below Subdivision, or before Mirror        | slow; mirrored half copies the posed half | `armature_first`                        |
 | Left thigh weights on the right leg                 | opposite side moves                       | `strip_opposite_side`                   |
