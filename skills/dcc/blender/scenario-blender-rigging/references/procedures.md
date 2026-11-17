@@ -332,3 +332,35 @@ hair and brows.
   `chest`, `hips`, `neck`, `head`, `shoulder.L`, `root`; deform bones all start with `DEF-`, ORG
   bones follow IK and FK. (From the rigify_studio digest probes, `archive/tests/rigify_probe/`, and
   this skill's tests.)
+
+## P15. Loose garments: robust transfer and garment depth (test_live_transfer.py)
+
+```python
+R.transfer_weights(body, skirt, rig, mapping="ROBUST")    # or bind(..., garment_mapping="ROBUST")
+skirt["bx_matched"], skirt["bx_inpainted"]                 # copied vs filled in, vertex counts
+dep = R.garment_depth(rig, body, [skirt, sleeve], R.RIGIFY_POSES, limit=0.005)
+dep["fail"]                                                # [(pose, garment)] deeper than at rest
+```
+
+- **Robust transfer.** A vertex copies the closest skin point's weights only when that point is
+  within `max_dist` (default 5% of the garment's bounding-box diagonal) and the normals agree within
+  `max_angle` (35 degrees, either facing). Every other vertex is inpainted: its weights diffuse in
+  from the copied ones over the garment's edges, then 10 light smoothing passes run. Method:
+  Abdrashitov et al., "Robust Skin Weights Transfer via Weight Inpainting", SIGGRAPH Asia 2023.
+- **When.** A tight piece copies whole either way. Use it on what hangs off the skin: skirts, coat
+  tails, capes, hoods, loose sleeves. Neither route keeps a boot's inner wall off the other leg,
+  which lies just as close and faces it.
+- **Inpainted parts follow their copied band**, not the limbs under them. A leg that swings forward
+  then passes through a skirt that only follows the hips: `garment_depth` reports it.
+- **Garment depth.** Per pose, how much deeper each garment vertex sits inside the body than at
+  rest; overlap already present at rest is not counted. `weight_report` and `deformation_report`
+  read one mesh at a time, so they pass a garment sunk into the body. The body's normals must face
+  out (`model_check`).
+
+Verified: test_live_transfer.py on Blender 5.2.2. A hip cylinder and two legs, a 1,008-vertex skirt
+hanging from the hips, a sleeve 1 cm off the left leg, the left leg swung 50 degrees forward.
+Nearest-face: 244 skirt vertices led by the left thigh and 242 by the right, 51 edges outside the
+0.5 to 1.6 stretch band, worst stretch 13.3. Robust: 338 copied, 670 inpainted, 979 led by the hips,
+0 edges outside the band, worst 1.24, sums 1.0. The sleeve copied whole (0 inpainted) and stayed
+under 5 mm. `garment_depth` failed both skirts where the leg passes through: 46 robust vertices over
+5 mm (worst 7.1 cm), 7 nearest-face ones (worst 3.7 cm).

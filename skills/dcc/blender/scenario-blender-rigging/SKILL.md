@@ -37,7 +37,9 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
   limit each seam to 2 or 3 bones ("bones fighting for influence"); slight intersection is better
   than rubbery transitions; rigid parts are assigned at 1.0, never painted (CGDive, Demeter, Dikko).
 - **Everything that deforms together gets weights from the same source,** transferred and applied,
-  so garments cannot drift while animating (Dikko, CGDive).
+  so garments cannot drift while animating (Dikko, CGDive). [added, measured] Nearest-face suits
+  parts that follow the skin; a part that hangs off it (skirt, coat tail, cape) takes
+  `garment_mapping="ROBUST"`, which copies only close, aligned skin and inpaints the rest (P15).
 - **Export decides the deformation tools.** Four twist bones per segment instead of Preserve Volume;
   Preserve Volume, Corrective Smooth and B-bones are Blender-only, which is why Rigify segments its
   DEF bones (CGDive, Ivan).
@@ -96,9 +98,10 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
    islands, clean and normalize, Armature after Mirror and before Subdivision. GATE: `rep["ok"]`,
    `unweighted == 0`, no non-deform groups; for export `max_influences=4`.
 7. **Range of motion.** `dr = R.deformation_report(rig, [body, *garments], R.RIGIFY_POSES)`,
-   `R.flag_report(dr)`, then `R.pose_sheet(...)` and `R.joint_sheet(...)` close-ups and LOOK at
-   them. GATE: no leaks, no unexplained collapse, renders acceptable at armpit, elbow, wrist twist,
-   groin, knee, collar.
+   `R.flag_report(dr)`, `R.garment_depth(rig, body, garments)`, then `R.pose_sheet(...)` and
+   `R.joint_sheet(...)` close-ups and LOOK at them. GATE: no leaks, no unexplained collapse, no
+   garment sinking into the body, renders acceptable at armpit, elbow, wrist twist, groin, knee,
+   collar.
 8. **Fix, in this order.** Placement or roll problems: back to the metarig and regenerate. Weights:
    targeted data edits (`strip_opposite_side`, `assign_rigid`, `smooth_weights` with a vertex mask,
    `clean_weights`). Volume at deep bends: corrective shape keys (`volume_restore_targets`,
@@ -179,6 +182,7 @@ export [verified], so the file looks complete.
 | Left thigh weights on the right leg                 | opposite side moves                       | `strip_opposite_side`                   |
 | Eyes and teeth auto-weighted                        | drift, poke through                       | `assign_rigid`                          |
 | Live Data Transfer on clothes                       | weights change while animating            | apply it                                |
+| A loose skirt bound like a close-fitting garment    | it tears between the legs                 | `garment_mapping='ROBUST'`              |
 | Driver on an animatable bone                        | channel cannot be keyed                   | Transformation or Copy Rotation Mix Add |
 | Inherit Rotation off for isolation                  | root rotation breaks the limb             | follow bones (World Copy Loc/Rot/Scale) |
 | IK target parented inside its chain                 | jitter, flips                             | clear parent; `static_cycles`           |
