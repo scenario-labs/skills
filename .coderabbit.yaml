@@ -26,3 +26,12 @@ reviews:
         applies to all of them: report it once and list the copies. Flag only a step that does not
         work, a command or path that does not exist, or an instruction that contradicts the tool it
         describes. No wording, heading or formatting remarks.
+
+knowledge_base:
+  code_guidelines:
+    # Apply both review documents to every file; by default each governs only its own folder.
+    filePatterns:
+      - files: ".cursor/BUGBOT.md"
+        applyTo: "**/*"
+      - files: "REVIEW.md"
+        applyTo: "**/*"
