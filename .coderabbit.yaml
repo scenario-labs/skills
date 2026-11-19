@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Scenario: CodeRabbit configuration for scenario-labs/skills
+# Prepared by CodeRabbit, Thursday November 19th 2026.
+#
+# Commit this file as .coderabbit.yaml at the root of the default branch of skills. It starts with
+# "inheritance: true", so everything in the organization baseline (the organization's central
+# .coderabbit.yaml) applies here too: lists such as path instructions, checks
+# and file filters are combined, and the single values set below win over the baseline. This file
+# therefore holds only what is specific to skills: the shared agent skills, copied into other repositories.
+#
+# Pull requests opened by organization members read this file from their own branch, so a branch
+# cut before the commit picks it up once it is updated from the default branch; pull requests from
+# outside collaborators read it from the target branch at once.
+# Kept from your dashboard for this repository: assertive profile.
+# Verify with the comment "@coderabbitai configuration" on any open pull request.
+
+inheritance: true
+
+reviews:
+  profile: assertive # kept from your dashboard
+  path_instructions:
+    - path: "**/*.md"
+      instructions: >-
+        Agent skills. Each skill is copied into other repositories, so an issue found in one copy
+        applies to all of them: report it once and list the copies. Flag only a step that does not
+        work, a command or path that does not exist, or an instruction that contradicts the tool it
+        describes. No wording, heading or formatting remarks.
