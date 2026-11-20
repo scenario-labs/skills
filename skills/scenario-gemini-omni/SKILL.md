@@ -94,3 +94,8 @@ those instructions will not take.
 - Restating a first-frame `image` as a static scene: describe the motion continuing from it.
 - Packing a multi-scene story into one run: 3 to 10 seconds holds one continuous beat; carry a beat
   past 10 seconds with Extend, or sequence shots with the `scenario-video-assembly` skill.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

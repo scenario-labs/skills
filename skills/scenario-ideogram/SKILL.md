@@ -132,3 +132,8 @@ background" there yields an opaque image.
 - Setting `fontNameH1` and `fontFileH1` together on Layerize: a tier's font comes from a font name
   or a font file, never both. `upload_asset` has no font kind, so with only a local font file use
   the font name route and flag the gap.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

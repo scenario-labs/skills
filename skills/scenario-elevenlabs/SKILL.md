@@ -109,3 +109,8 @@ contract in `scenario-video-assembly`.
   take without changing `seed`: same seed and settings reproduce the same music.
 - Carrying one member's caps to another: 40,000 characters, 600 seconds, 30 sections, and 5 minutes
   of input audio are each true of one lane and false of the next.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -190,3 +190,8 @@ over the billing period, and a cap below what a member has already spent stops t
   `project_id` is tenant context.
 - Deleting a key or removing a member without listing and confirming first: the delete lane is
   irreversible, and `api_key_delete` refuses the session's own key.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

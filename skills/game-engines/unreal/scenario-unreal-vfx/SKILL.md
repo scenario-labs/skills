@@ -223,3 +223,8 @@ Unreal**; `job_00_vfx_probe.py` answers the `[verify]` names.
   revision history.
 - [`scripts/ue_vfx.py`](scripts/ue_vfx.py): offline verdicts and metrics; in-editor helpers (not yet
   run).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

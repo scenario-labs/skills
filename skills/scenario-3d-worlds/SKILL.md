@@ -87,3 +87,8 @@ cheap: best when the camera moved through a static scene with parallax.
   barely moves sharpness.
 - Expecting UVs or editable topology from a splat: for polygon assets, use the mesh generators in
   `scenario-3d`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

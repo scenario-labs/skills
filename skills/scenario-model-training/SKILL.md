@@ -153,3 +153,8 @@ pricing, and config fields differ from image training, and a license notice appl
 Voice cloning starts from the same `recommend_training` call with `modality: "voice"` and
 `dataset_shape: "short_audio"` or `"long_audio"`; the returned `type` feeds `model_create` the same
 way.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

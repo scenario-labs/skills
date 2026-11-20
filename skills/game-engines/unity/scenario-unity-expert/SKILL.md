@@ -226,3 +226,8 @@ reproduces one piece of evidence before building on it.
 - [`references/gui-paths.md`](references/gui-paths.md): windows and menus for the same tasks.
 - [`references/sources.md`](references/sources.md): every source with credentials, URLs, timestamps;
   revision history.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

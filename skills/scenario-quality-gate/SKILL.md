@@ -132,3 +132,8 @@ number.
   stricter scoring of an already-scored asset requires `rerun: true`.
 - Retrying the entitlement failure: Quality Gate is an Enterprise add-on. Degrade to the
   `asset_analyze` review in `scenario-asset-analysis` and tell the user why.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

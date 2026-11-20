@@ -166,7 +166,7 @@ Answer both in `analysis/brief.md`.
 
 ## Archetype index
 
-Each built guide, with its ad verb:
+Built guides, with the ad verb:
 
 - [Survivor shooter](references/archetype-survivor.md): tap to move, auto-fire, tap a card
 - [Crowd runner with math gates](references/archetype-crowd-runner.md): drag left and right
@@ -236,8 +236,7 @@ the game contract: [references/qa-checks.md](references/qa-checks.md).
 
 ## Common mistakes
 
-- **An ad that plays itself.** A demo takes the move away from the viewer.
-- **A dead waiting screen,** which fails `hook_moves_without_input` and looks broken.
+- **A dead waiting screen,** which fails `hook_moves_without_input`.
 - **A hint on the wrong spot.** The hand must point at a real good move from the solver or the level
   script.
 - **Chattering sounds:** a tick per coin at 10 to 25 a second. One sound per event group.
@@ -247,7 +246,6 @@ the game contract: [references/qa-checks.md](references/qa-checks.md).
   builds, not a target. `dry_run` each sound payload and state the sum before launching any
   (unattended: only within a stated budget, else report and stop). A variant needing its own repeat
   limit gets its own manifest and `sounds` entry on the same raw file: a new name, never a new job.
-- **Hard-coded near-fail text,** which lies to players who lost by a lot.
 - **Copying recording glitches or platform UI,** or baked HUD numbers. Redraw numbers live.
 - **Cutting a sheet by grid math.** Sprites cross the cells: use `"blob": n` and check `--blobs`.
 - **Decorative buttons that look live.** Make them work, or make them a CTA.
@@ -275,3 +273,8 @@ the game contract: [references/qa-checks.md](references/qa-checks.md).
   [Lilita One](assets/fonts/lilita-one/LilitaOne-Regular.woff2)
   ([OFL](assets/fonts/lilita-one/OFL.txt)),
   [Orbitron](assets/fonts/orbitron/Orbitron-ExtraBold.woff2) ([OFL](assets/fonts/orbitron/OFL.txt)).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

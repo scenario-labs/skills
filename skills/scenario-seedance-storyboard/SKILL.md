@@ -130,3 +130,8 @@ seconds. The disciplines and the repair path are in
 - Getting the ratios wrong: each panel must carry the delivery ratio, since a reframe moves the
   poses the chain depends on, and the composed board must land inside a 0.4 to 2.5 aspect ratio or
   Seedance rejects it as a reference and the run fails.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

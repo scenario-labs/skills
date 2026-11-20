@@ -94,3 +94,8 @@ The user asks for three concept sheets of a dragon on a project that enforces ta
 - Asking for a task on a project that refused nothing: no `task_id` is needed until a billed call is
   refused. A task the user names unprompted is still passed.
 - Saving a task id to memory as a standing default: tasks change, so confirm it each session.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

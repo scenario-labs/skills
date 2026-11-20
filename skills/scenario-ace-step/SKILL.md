@@ -122,3 +122,8 @@ music is `instrumental: true`, not "no vocals" in the caption. Tempo and key hav
 - Expecting Repaint to change track length: the window regenerates in place. A longer version of the
   same track is the extend lane the `scenario-audio` skill teaches, run by another family's member;
   a different length from scratch is a new Text to Music run.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

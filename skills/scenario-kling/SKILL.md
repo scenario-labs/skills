@@ -104,3 +104,8 @@ explicitly. `keepOriginalSound` decides whether the source audio survives.
   avatar cost spanned a 100x range. Iterate on a Standard tier; no V3, O1, or 2.6 schema carries a
   seed, so a 4K re-run of the keeper is a new take, while upscaling it (`scenario-video`) keeps the
   take.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

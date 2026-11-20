@@ -192,3 +192,8 @@ listings, timestamps, or `search`.
 - Softening an attack brief after a moderation block: the filter is the provider's, so try another
   general image model first per `scenario-moderation`, grid spec unchanged; rewording the beats
   loses what the lane exists to honor.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

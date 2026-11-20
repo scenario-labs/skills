@@ -209,3 +209,8 @@ flips, candy-wrapper wrists, collapsing shoulders, sliding feet.
 - `references/critique.md`: the rubric; at every gate.
 - [`references/gui-paths.md`](references/gui-paths.md): menus, Profiler, HUD; when driving the GUI.
 - [`references/sources.md`](references/sources.md): sources, URLs, timestamps.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

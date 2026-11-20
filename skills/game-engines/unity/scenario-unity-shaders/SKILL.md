@@ -221,3 +221,8 @@ PSO proof, 32 offline checks, all passing; evidence in `archive/tests/unity-shad
   `RendererFeatureJobs`, `VariantJobs`, `PsoJobs`, `ComputeJobs`, `GpuCostJobs`, `ShaderGraphJobs`.
 - [`scripts/Runtime/`](scripts/Runtime/): `AgentFullscreenFeature.cs`, `AgentPsoProbe.cs` (runtime
   assembly); `scripts/Shaders/` (templates).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

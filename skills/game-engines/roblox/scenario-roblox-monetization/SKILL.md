@@ -239,3 +239,8 @@ Score the result with [critique.md](references/critique.md) before calling it do
 - [scripts/agentkit/monetization/](scripts/agentkit/monetization/): `Catalog`, `Purchases`,
   `Entitlements`, `PriceText`, `ShopRank`, `Odds`, `Telemetry`, `LiveConfig`, `MonAudit`,
   `lune_mon_audit.luau`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

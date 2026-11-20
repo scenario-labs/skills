@@ -107,3 +107,8 @@ into the conversation.
 - Sending `workflow_id` to `workflow_copy`: get, update, publish, run and delete take `workflow_id`,
   but copy takes `source_workflow_id`; the copy inherits everything verbatim and needs its own
   publish.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

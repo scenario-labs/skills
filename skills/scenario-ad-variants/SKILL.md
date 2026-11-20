@@ -114,3 +114,8 @@ asks for sound.
   campaign experiment.
 - Source reconstruction is not byte identity after re-encoding. Check preserved content and measured
   synchronization; promise lossless delivery only when the route supports it.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

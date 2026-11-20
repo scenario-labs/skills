@@ -219,3 +219,8 @@ Full code and test results: [procedures.md](references/procedures.md). Modules:
 - [scripts/rbx_gameplay.py](scripts/rbx_gameplay.py): install, fixtures, hook, keyboard sequences,
   audits.
 - [scripts/agentkit/gameplay/](scripts/agentkit/gameplay/): the Luau modules and Lune runners.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

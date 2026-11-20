@@ -152,3 +152,8 @@ Pass `team_id` and `project_id` on every call (the `scenario` skill covers picki
 Changing `build_scene.py` itself (depths, parallax factors, physics): read
 [references/pipeline.md](references/pipeline.md) first, which records the decisions the reference
 shot paid for.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

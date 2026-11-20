@@ -160,3 +160,8 @@ back flagged.
   unrelated.
 - Reading an empty model list as moderation: a team blocklist or a plan restriction removes models
   before any prompt is judged.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

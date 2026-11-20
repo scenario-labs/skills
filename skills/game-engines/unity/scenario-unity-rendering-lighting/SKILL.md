@@ -195,3 +195,8 @@ args in `<job>/args.json`, result on the `AGENT_RESULT` line. Full code and resu
 - [`scripts/ut_lighting.py`](scripts/ut_lighting.py),
   [`scripts/AgentKit/Lighting/*.cs`](scripts/AgentKit/Lighting/),
   [`scripts/Runtime/*.cs`](scripts/Runtime/) (player helpers: verification builds only).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

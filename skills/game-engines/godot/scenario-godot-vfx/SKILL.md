@@ -233,3 +233,8 @@ explosion is oriented to the surface normal, and each tier holds up on its rende
   to_cpu, maths.
 - [`scripts/agentkit/vfx/`](scripts/agentkit/vfx/): vfx_build, vfx_recipes, vfx_audit, vfx_capture,
   vfx_jobs, vfx_selftest; `shaders/` (including `fx_smoke_lod`) and `runtime/` ship with the game.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

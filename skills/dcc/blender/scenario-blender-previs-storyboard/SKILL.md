@@ -198,3 +198,8 @@ live-shot content). Comic timing and sound stay a human call (Hjalti).
   every Look gate.
 - [`references/sources.md`](references/sources.md): the seven source videos, what each is best for,
   best timestamps.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

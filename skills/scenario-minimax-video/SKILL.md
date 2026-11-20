@@ -124,3 +124,8 @@ to the action; no audio parameter exists to switch instead.
   `scenario-video-assembly` skill), take `continuation` and cut from `startTime` 1.7: the cut tool
   steps by 0.1 s and 1.6 keeps a source frame (the `scenario-video-editing` skill).
 - Stacking camera moves: past 2 or 3 cues the background wobbles and textures flicker.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

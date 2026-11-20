@@ -189,3 +189,8 @@ held), then the cage alone: it must read without subdivision (Kaspar Finale [01:
   face, body, clothing or game mesh.
 - `references/critique.md`: the rubric to judge your own retopo. Load at every review.
 - [`references/sources.md`](references/sources.md): all 24 source videos with best timestamps.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

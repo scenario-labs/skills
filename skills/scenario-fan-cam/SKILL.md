@@ -107,3 +107,8 @@ prompting per the video family's contract keeps the turn inside one clip.
 - A flat emotional state for the whole clip: without the notice-then-react turn, the result is a
   looping portrait, not a fan cam.
 - Compound camera moves: one reframing drift; the crowd and the reaction supply the motion.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

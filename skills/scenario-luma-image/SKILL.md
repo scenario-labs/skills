@@ -84,3 +84,8 @@ pin what must not move ("Change X to Y. Keep Z exactly as it is."). One scene or
   `model_schema_get` instead of assuming.
 - Carrying the Max member's reference cap or price to the standard one: they share field names, not
   numbers.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

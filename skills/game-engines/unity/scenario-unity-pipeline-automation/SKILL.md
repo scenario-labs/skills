@@ -211,3 +211,8 @@ this Mac against a 200-FBX Blender drop: `tests/code/unity-pipeline-automation/`
   content tests), [`scripts/AgentKit/PipelineCli/`](scripts/AgentKit/PipelineCli/),
   [`scripts/Runtime/`](scripts/Runtime/),
   [`scripts/templates/PipelineAsmdef/`](scripts/templates/PipelineAsmdef/): the code.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

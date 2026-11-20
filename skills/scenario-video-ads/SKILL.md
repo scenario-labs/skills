@@ -82,3 +82,8 @@ approval.
   from one board instead.
 - Shipping without the pre-flight: a sensual perfume cut or a wrong-length CTV file dies in ad
   review, not in generation.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

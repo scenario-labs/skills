@@ -86,3 +86,8 @@ attribute the improvement, so the next failure restarts from zero.
   and answer the report after the run, not the mid-run gate.
 - Retrying a criterion a third time on the same model: two misses under two different fixes is
   evidence about the model, not bad luck.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

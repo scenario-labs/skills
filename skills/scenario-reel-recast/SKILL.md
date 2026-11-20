@@ -128,3 +128,8 @@ Outcomes at authoring time, best first:
 - Promising to keep an approved performer while changing only the room: every edit re-renders the
   performer, so a room change means new takes. Say so before spending (unattended: run the new takes
   from the approved prompt and report it).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

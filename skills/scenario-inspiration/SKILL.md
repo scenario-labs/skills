@@ -84,3 +84,8 @@ deliberately never repeated.
   the lens, posed, evenly lit, everything in focus, a processed gloss. Every axis a prompt leaves
   open (framing, moment, lens, time of day, light) is filled with the model's most average answer,
   so name each one.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

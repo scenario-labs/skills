@@ -40,7 +40,7 @@ Two tool kinds:
 
 ## Scope first
 
-- Resolve scope first, then pass `team_id` and `project_id` on every call.
+- Pass `team_id` and `project_id` on every call.
 - A team is the organization (company or studio account) holding projects. "My organization" or "my
   studio" names it.
 - `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`.
@@ -75,7 +75,7 @@ Two tool kinds:
 
 ## Worked example
 
-Generating a stylized game prop image:
+A stylized game prop image:
 
 1. Discover the model:
    - `recommend` for a capability, the user's own words as `prompt` (never `query`). Unscoped, it
@@ -104,13 +104,12 @@ Generating a stylized game prop image:
    - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
      `in-progress`, or `warming-up`. All need `jobs_wait`.
    - A 429: stop launching and find its class under Errors and recovery before the next call.
-     Re-sending the same payload at once never clears it.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
      cancel. No timeout argument exists.
    - Failed jobs are reimbursed, except xAI generations stopped by moderation.
-7. `asset_display` shows the asset inline. Its `format` picks the rendering:
+7. `asset_display` shows the asset inline; `format` picks the rendering:
    - `display` (default): inline image, links, viewer data; does not disable the host widget.
    - `viewer`: lighter payload for hosts rendering the interactive widget.
    - `json`, `markdown`: metadata and links.
@@ -155,7 +154,7 @@ Local inputs go up with `upload_asset`:
   `Unhandled image format` lists what `kind: "image"` accepts; convert any other type locally.
 - Without a shell, the user uploads at app.scenario.com; continue from the asset id.
 
-Filing is part of delivering, not a tidy-up:
+Filing is part of delivering:
 
 - `collection_create` takes a name and the scope pair only. `asset_ids` sent there is silently
   ignored, so adding is always a second call: `collection_add_assets`.
@@ -202,8 +201,8 @@ Uploading and filing alone are not publication.
   CU are spent, so every job brings a wait.
   - The wait scales with the payload's cost: a heavy job (high effort tier, long video) can stay
     locked while a cheaper one runs. Never re-submit the same payload inside `remainingSeconds`.
-  - Any team member's job restarts the team's wait, and waits lengthen as the team keeps generating,
-    so a batch slows down. A refused attempt is free.
+  - Any team member's job restarts the team's wait, and waits lengthen as the team keeps generating.
+    A refused attempt is free.
   - Only this refusal reveals Relax mode. If no tool documents the wait, call it unknown.
   - Stop the batch. Offer a CU top-up (it ends Relax mode at once) or an upgrade; else a cheaper
     payload (`dry_run` it first), fewer outputs, or a later run (unattended: report and stop, never
@@ -234,7 +233,7 @@ Uploading and filing alone are not publication.
   the real asset exists.
 - A bare value where the schema says `array: true`: silently dropped, so the run ignores your
   reference or LoRA. `asset_get` on the output echoes what the run consumed
-  (`metadata.referenceImages`, `parentId`): the cheapest proof.
+  (`metadata.referenceImages`, `parentId`).
 - Taking `recommend`'s `ranked[0]` blindly. Read `next_step.type` first:
   - `no_match`: stop generation, even with ranked partial options. Explain `unmet_requirements` and
     `suggested_action`; never silently relax requirements. Schema checks or a successful dry run do
@@ -255,3 +254,8 @@ Uploading and filing alone are not publication.
   a capability.
 - Filtering `models_list` by `type` without `privacy: "public"`: a 400 says so. A private listing
   narrows by `status` or `modality`, or goes through `search` (private by default).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

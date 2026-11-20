@@ -147,3 +147,8 @@ two minutes: wait through `jobs_wait` rather than re-running.
   succeeds at a different size, and an over-wide edit source gains white bands.
 - Leaving `inputFidelity` at its high default on 1.5 when you wanted reinterpretation: drop it to
   low and re-`dry_run`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

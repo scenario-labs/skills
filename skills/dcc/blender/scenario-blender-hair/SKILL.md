@@ -198,3 +198,8 @@ root-to-tip color, highlights.
 - [`references/sources.md`](references/sources.md): load to cite or re-watch a source, with the best
   timestamps.
 - `scripts/bx_hair.py`: the toolkit (tested on 5.2.1). Tests are in `tests/code/blender-hair/`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -126,3 +126,8 @@ generating; a cropped 16:9 master frames like television.
   assembly.
 - Cropping a landscape master to 9:16: heads and captions land outside the safe zone; compose
   vertical from the start.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

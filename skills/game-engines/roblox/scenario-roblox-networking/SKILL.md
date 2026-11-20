@@ -223,3 +223,8 @@ Score the result with [critique.md](references/critique.md) before calling it do
   helpers.
 - [scripts/agentkit/networking/](scripts/agentkit/networking/): `Guard`, `RateLimit`, `Suspicion`,
   `Net`, `HitCheck`, `MoveGuard`, `Exploit`, `NetAudit`, `lune_net_audit.luau`.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

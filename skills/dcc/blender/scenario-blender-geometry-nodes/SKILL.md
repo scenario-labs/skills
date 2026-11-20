@@ -177,3 +177,8 @@ only.
   best timestamps.
 - `scripts/bx_gn.py`: builder, modifier, evaluation, simulation, snapshot helpers and recipes
   (docstrings list the traps).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

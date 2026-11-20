@@ -189,3 +189,8 @@ lands on the last hit.
   gates), [kaiju-postal](assets/examples/kaiju-postal/spec.js) (24 s),
   [tour](assets/examples/tour/spec.js) (52 s, 13 blocks) with its placeholder
   [logo.svg](assets/examples/tour/logo.svg).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

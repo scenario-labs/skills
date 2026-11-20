@@ -251,3 +251,8 @@ modals `screen_capture` misses: ask the user ([gui-paths.md](references/gui-path
   [tools/place_versions.luau](scripts/template/tools/place_versions.luau),
   [tools/restart_servers.luau](scripts/template/tools/restart_servers.luau) and
   [tools/testkit/EngineTests.luau](scripts/template/tools/testkit/EngineTests.luau).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

@@ -167,3 +167,8 @@ so do not take that pick.
   duration, the second loses the song; the extend lane above keeps the slices the user chose.
 - Putting `dry_run` or `wait` inside `parameters`: they are `model_run`'s own arguments, so a stray
   `dry_run` still charges and a stray `wait` blocks up to 180s.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

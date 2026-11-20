@@ -212,3 +212,8 @@ call.
 - [`references/sources.md`](references/sources.md): every source, credential, URL, best timestamps,
   revision history.
 - `scripts/ue_light.py`: the toolkit; its docstring lists every call and where it runs.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

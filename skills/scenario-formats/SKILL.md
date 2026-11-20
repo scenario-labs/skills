@@ -87,3 +87,8 @@ as its own composition.
   ladder exists to be climbed.
 - Skipping `dry_run` on reframes: generative canvas work is the expensive step in the chain, tens of
   times an effect's price (`scenario-image-editing`).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

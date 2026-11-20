@@ -206,3 +206,8 @@ e-book p. 31); VSync off in release; the benchmark path between before and after
 - [`scripts/ut_perf.py`](scripts/ut_perf.py) (runner side),
   [`scripts/AgentKit/Performance/*.cs`](scripts/AgentKit/Performance/) (Editor jobs),
   [`scripts/Runtime/Performance/*.cs`](scripts/Runtime/Performance/) (PerfProbe, AllocScope).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

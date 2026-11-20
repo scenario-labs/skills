@@ -101,3 +101,8 @@ criteria and report the checks it did not get.
 - Laying music on the drafts and completing those: the completion carries only what the draft
   generated. Review copies with music are fine; lay the delivery audio once, on the completion.
 - Ranking from one look at the first take, or from contact sheets alone.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

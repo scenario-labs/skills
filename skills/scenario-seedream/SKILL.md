@@ -112,3 +112,8 @@ there is no PSD export.
 - Moving a 3000-character prompt from Pro to Lite: prompt caps are per member.
 - Setting Flash's `background` to `transparent` on a text-only run or a flattened reference: it is
   silently ignored, and the image comes back opaque.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

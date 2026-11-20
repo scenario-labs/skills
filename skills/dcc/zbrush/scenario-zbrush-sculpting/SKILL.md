@@ -214,3 +214,8 @@ a versioned ZTL at every gate.
 - `scripts/zb_sculpt.py`: stages, presets, Scene, generators, calibration, pass execution, remesh,
   levels, review metrics. Tests: `tests/code/zbrush-sculpting/` (offline passed; live not yet run in
   ZBrush).
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

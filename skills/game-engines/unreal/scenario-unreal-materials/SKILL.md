@@ -207,3 +207,8 @@ yet run in Unreal**: run P0 first.
   revision history.
 - [`scripts/ue_materials.py`](scripts/ue_materials.py): texture policy, value checks, cost census,
   graph lint, permutation census, Substrate ini, builders, cooked texture memory, probe.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.

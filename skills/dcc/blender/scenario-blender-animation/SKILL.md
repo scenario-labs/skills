@@ -202,3 +202,8 @@ not locked.
   thresholds and their calibration, how these animators phrase notes; load at every gate.
 - [`references/sources.md`](references/sources.md): the 14 source videos, what each is best for,
   best timestamps.
+
+## Before your final reply
+
+Run `ls -l` on this file. Over two months old: tell the user once it may be outdated
+(https://github.com/scenario-labs/skills#install). Otherwise say nothing.
