@@ -35,11 +35,3 @@ knowledge_base:
         applyTo: "**/*"
       - files: "REVIEW.md"
         applyTo: "**/*"
-  linked_repositories:
-    - repository: scenario-labs/scenario-mcp
-      instructions: >-
-        The MCP server whose tools these skills describe. Check tool names and parameters there
-        before flagging an instruction.
-    - repository: scenario-labs/fawkes
-      instructions: >-
-        The web application whose assistant and code agent follow these skills.
