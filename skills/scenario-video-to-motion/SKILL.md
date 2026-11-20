@@ -1,6 +1,6 @@
 ---
 name: scenario-video-to-motion
-description: "Use when turning a reference video into 3D character animation through the Scenario MCP: markerless motion capture from a phone clip or a generated performance, auto-rigging an uploaded FBX, GLB, or OBJ character and applying the captured motion, raw motion on a Mixamo or MetaHuman skeleton to retarget yourself, in-place locomotion, looping clips, facial capture, or FBX exports for Blender, Maya, Unreal, Unity, or Roblox. Keywords: mocap, video to motion, video23d, animation from video."
+description: "Use when turning a reference video into 3D character animation through the Scenario MCP: markerless motion capture from a phone clip or generated performance, auto-rigging an uploaded FBX, GLB, or OBJ character with the captured motion, raw motion on a Mixamo or MetaHuman skeleton to retarget yourself, in-place locomotion, looping clips, facial capture, several or occluded performers, or FBX exports for Blender, Maya, Unreal, Unity, or Roblox. Keywords: mocap, multi-person, video23d."
 license: MIT
 ---
 
@@ -66,12 +66,46 @@ filling it:
 - Controls worth setting when present: `moveInPlace` for game locomotion driven by code, `loop` for
   cycles, the frame rate field (named `frameRate`, `fps`, or `targetFps`), keyframe cleanup, and the
   `forward` and `up` axes when the motion arrives turned or lying down.
-- Some members track several people (`numPeople`) or capture the face; both carry `cost_impact`.
+- Face capture and multi-person tracking both carry `cost_impact`.
+
+## Several performers, one hiding another
+
+- Capture the group first. Few members track several people: `recommend` with
+  `capability: "video23d"`, `features: ["numPeople"]`, and the scene in the user's words ("three
+  people walking, one partly behind"). The feature only selects a member with the input.
+- Set `numPeople` to the count in frame on both the `dry_run` and the run. Never rely on its default
+  (read it in `model_schema_get`): it may capture one person, and the count can change the price. It
+  is also the cap (four at authoring time). A shorter clip keeps the crowd, so split a larger one
+  into groups with the removal edit below, one clip per group.
+- The schema does not say whether people return as one file or separate skeletons: inspect the
+  download.
+- A performer hidden behind others captures poorly. Isolate them (or a group, the same way):
+  1. `recommend` with `capability: "video2video"` and "remove everyone except the person on the left
+     of the frame", naming each kept person by frame position or look. Pick a member whose
+     description lists removal, keeping the source duration so captures stay in sync.
+  2. `asset_display` the edit: every kept person must be present and move as in the source. If not,
+     skip the capture and report it. A video may return only a link: then ask the user to check it
+     (unattended, skip the capture and report the edit unchecked). Where the source hides a kept
+     person fully, the edit invents that motion and nothing can verify it. Note those time ranges
+     and tell the user before capture that the motion there is unverified.
+  3. Capture that clip with `numPeople` set to the kept count (one person: a single-person member
+     also works).
+  4. In a DCC, use it in place of those performers' group tracks, expecting to reposition
+     characters.
+- At authoring time this was a proof of concept: the isolated capture kept some unwanted movement.
+  Promise a rough pass needing cleanup.
+- Each removal and extra capture is a separate job: `dry_run` every leg and quote the total. Before
+  the edit exists, estimate the isolated capture on the source clip at the kept count; re-price it
+  on the edited clip before running. If that price no longer fits, stop and report it with the edit.
+- Unattended, isolate only performers the task calls hidden or the group capture lost, and split
+  only a crowd past the cap. Run what fits the task's budget, group capture first, and a removal
+  only when its capture fits too. Report the total of any leg left out, then stop. With no stated
+  budget, run nothing: quote the prices.
 
 ## Footage that captures well
 
 - One person, full body in frame for the whole clip, feet visible, a static camera, no one crossing
-  in front. Loose clothing and props hide joints.
+  in front (else see above). Loose clothing and props hide joints.
 - Trim to the move that ships: price follows the clip, and members cap the input. At authoring time
   one capped it at 30 seconds and about 30 MB, another required even pixel width and height. Read
   `max_duration` and `max_size` when exposed by the schema. An absent cap is not a promise of
@@ -107,6 +141,7 @@ The user has a phone clip of a dance and a character GLB, and wants an Unreal-re
 - Expecting the motion on the character's existing rig: mesh members auto-rig from scratch. Use a
   motion-only member and retarget when the rig must stay.
 - Filling a field by its name: `characterFile` is a mesh on one member and an image on another.
+- Leaving `numPeople` at its default on a group clip: the capture may keep one person.
 - Sending the full source video: the price grows with the clip, and over-cap clips fail.
 - Converting the download to another 3D format instead of setting the export target in the run.
 - Treating a sideways or upside-down result as a failed capture before trying the axis fields.
