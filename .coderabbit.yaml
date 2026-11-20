@@ -17,12 +17,13 @@ inheritance: true
 reviews:
   profile: assertive
   path_instructions:
+    # Same path as the organization's documentation rule, so this entry replaces it here: that
+    # rule reports only broken commands, paths and links, too narrow where Markdown is the product.
     - path: "**/*.md"
       instructions: >-
-        Agent skills. Each skill is copied into other repositories, so an issue found in one copy
-        applies to all of them: report it once and list the copies. Flag only a step that does not
-        work, a command or path that does not exist, or an instruction that contradicts the tool it
-        describes. No wording, heading or formatting remarks.
+        Apply REVIEW.md: it says what to report on this repository's Markdown, at what severity,
+        and which generated or vendored files to skip. The published skills under skills/ are the
+        product, so a finding there is reviewed as a skill defect, not a documentation remark.
 
 knowledge_base:
   code_guidelines:
