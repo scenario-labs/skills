@@ -317,6 +317,38 @@ box("Base", (1, 1, 1), (0, 0, 0.5))
 box("Speck", (1e-6, 1e-6, 1e-6), (0, 0, 1.0))
 cases["speck_under_the_weld"] = gate(["Base", "Speck"])
 
+# Pieces that each stand on the floor, one sunk 5 cm into it: given the ground they stand
+# together, and a part off the floor floats even when it is the largest.
+empty()
+box("StoneA", (0.4, 0.3, 0.2), (-1, 0, 0.1))
+box("StoneB", (0.3, 0.3, 0.2), (1, 0, 0.05))
+cases["stones"] = gate(["StoneA", "StoneB"])
+cases["stones_ground"] = bx_audit.deliverable(["StoneA", "StoneB"], ground=0.0)
+box("Board", (2.0, 0.05, 1.0), (0, 0.5, 1.5))
+cases["board_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Board"], ground=0.0)
+# A part wholly under the floor does not stand on it, and a ground no part reaches warns.
+box("Stray", (0.2, 0.2, 0.2), (0, 0, -10))
+cases["stray_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Stray"], ground=0.0)
+cases["stones_ground_missed"] = bx_audit.deliverable(["StoneA", "StoneB"], ground=5.0)
+cases["one_part_ground"] = bx_audit.deliverable(["StoneA"], ground=0.0)
+cases["one_part_ground_missed"] = bx_audit.deliverable(["StoneA"], ground=5.0)
+
+
+def cli(*args):
+    """Exit code of the bx_audit CLI run on the open scene."""
+    argv, sys.argv = sys.argv, ["blender", "--", *args]
+    try:
+        bx_audit._cli()
+    except SystemExit as stop:
+        return stop.code
+    finally:
+        sys.argv = argv
+    return None  # the CLI must exit with a code: None fails the test
+
+
+cases["cli_ground"] = {flag: cli("--deliverable", "--objects", "StoneA", "StoneB", *extra)
+                       for flag, extra in (("without", ()), ("with", ("--ground", "0")))}
+
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
 print("GATE CASES", len(cases))
