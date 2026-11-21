@@ -63,8 +63,8 @@ Shot options:
   - `pair`: `[line1, line2]` from both sides.
   - `split`: `[small, big]`, the big word slams from the right `second` beats later.
   - `cut`: a hard-cut word, for runs of beat cuts.
-- **`ground`, `color`**: the background for the shot (a palette name); the type color (readable on
-  the ground by default).
+- **`ground`, `color`**: the background for the shot (a palette name; unset, the film's `bg`); the
+  type color (readable on the ground by default).
 - **`size`, `wdth`, `y`, `dy`, `rot`**: type size in px, width axis 62 to 125, vertical position,
   offset, rotation (cut).
   - `cut` reads `size` (px, default 400), `wdth` (default 104), `dy` (px from the frame's vertical
@@ -72,13 +72,13 @@ Shot options:
     sparks follow it (540 when unset): with `dy`, set `y` to `540 + dy` too.
   - A `cut` word wider than 1800 px shrinks to fit. A narrower one keeps its `size`.
 - **`in`**: `cut` (default), `whipX`, `whipXr`, `whipY`.
-- **`fx`**: `punch` (rays, ring, sparks, flash, shake), `hit` (flash and shake), `beat` (shake and
-  bump only, for runs of cuts), `none`.
+- **`fx`**: `punch` (rays, ring, sparks, flash, shake), `hit` (flash and shake, the default), `beat`
+  (shake and bump only, for runs of cuts), `none`.
 - **`cue`, `gain`, `big`**: the sound on the hit (default from `fx`), its gain, `big: true` for the
   heavier impact.
 - **`second`**: for stack, pair and split, beats until the second element.
 - **`scramble: [a, b]`, `glitch`, `inverts: [..]`**: a glyph scramble between beats a and b
-  (relative), an RGB glitch, invert flashes.
+  (relative; slam and split), an RGB glitch (split), invert flashes (slam).
 - **`rgb: true`** (`cut` only): a 2-frame invert flash one frame after the hit, then a red and cyan
   split that shakes and settles in about 0.5 s. The examples end their cut runs on it.
 - **`flip: { at, ground, color }`**: change ground and color mid-shot (relative beat).
@@ -206,8 +206,9 @@ window and lands on its first frame as the window fills the screen.
 - The image cuts in along a slash (or zooms in), then pushes and pans with a slight 3D tilt.
 - It punches in on every word and hard-cuts in to details: `cutIns: [[beat, scale, [fx, fy], cue]]`,
   positions 0 to 1 of the image.
-  - `scale` (1.6 to 1.65 in kaiju-postal) and `[fx, fy]` have no default: set both. The picture then
-    grows 14% per second until the next cut-in or the block's end.
+  - `scale` (1.6 to 1.65 in kaiju-postal) and `[fx, fy]` have no default: set both. The picture
+    zooms around that point, which keeps its place in the frame rather than moving to the center,
+    then grows 14% per second until the next cut-in or the block's end.
   - `cue` defaults to `hit` and always plays, at a fixed gain. `spec.sounds` levels a name for every
     use, so a cut-in that needs its own level takes a sound name of its own, leveled there.
 - `words: [[beat, text, color]]` and `cutIns` count beats from the block's start, on its 8 nominal
@@ -217,6 +218,8 @@ window and lands on its first frame as the window fills the screen.
   words and one cut-in over 8 beats held 0.88 s under `snow` or `dust` and failed `finish.py`.
 - `tint` (0 to 1, default 0.35) darkens it for type: a `bg` shade at 0.1 opacity at the top, `tint`
   at 70% of the height and `tint` + 0.25 at the bottom. From 0.75, the bottom edge is solid `bg`.
+- `focus: [x, y]` (0 to 1, default the center): the part of the image the crop keeps, and where the
+  push drifts. `frame: false` drops the accent frame that grows around the picture by default.
 - `x`/`y` place the words' center in px on the 1920x1080 frame (defaults 960 and 600; 0 counts as
   unset). Set them off center when a face is in the middle.
 - Keep `x` more than 60 px inside either side: at 60 px the fit width below reaches 0 and the words
@@ -224,7 +227,8 @@ window and lands on its first frame as the window fills the screen.
 - Words are `size` px (default 260). They shrink to fit 1600 px, or with `x` set, twice the distance
   from `x` to the nearer side minus 120 px.
 - The block's camera pushes in to 1.1x around the frame's center by its end, carrying off-center
-  words outward. Leave about 10% more room than the fit width, and check a still at the last word.
+  words outward. A word that fills the fit width ends 60 px from the frame's edge, wherever `x`
+  sits: lower `size` until the word is about 10% narrower, and check a still at the last word.
 - Use images at least 2048 px wide. Cut-ins above 1.7x look soft at 4K.
 
 ## Logo (N = 11)
@@ -236,7 +240,8 @@ window and lands on its first frame as the window fills the screen.
   logo wipes on; without a logo file `wordmark` is typed.
 - The tagline and small line follow, then a slow push, drifting particles and a light sweep until
   the end.
-- The music should stop dead on beat 1 of this block: `music.stopBeat` is the block's start + 1.
+- With a sound kit, the music stops dead on beat 1 of this block, under the logo hit:
+  `music.stopBeat` is the block's start + 1. A music-only film leaves it unset (sound.md).
 - finish.py's motion gates stop at this block's start, or 4.5 s before the end when that is earlier.
 - The logo file is inlined, so main.js rebuilds it from SVG drawing elements first. Scripts,
   embedded HTML, event handlers and references to other hosts are dropped; `#id` and same-folder

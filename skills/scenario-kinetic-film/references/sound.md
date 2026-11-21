@@ -61,7 +61,8 @@ with `asset_download` (no `format` for audio), then measure:
 
 Optional: when the user declines its price, or the task's budget does not cover it, skip this
 section and leave `audio/sfx/` empty. `mix.py` then mixes the music alone, says so, and never ducks
-it under the silent hits.
+it under the silent hits. Leave `music.stopBeat` unset: with no logo hit, a dead stop leaves the end
+card silent, while unset the music fades at the end.
 
 `recommend` with `"capability": "txt2audio"` and "short isolated sound effects for motion graphics".
 
