@@ -52,8 +52,8 @@ schemas and flag the gap.
    says when present.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
    the Hunyuan 3D, Meshy, Tripo, and Trellis families, and several Scenario LLM-based members,
-   priced far apart. Their schemas share `sceneFile`, `buildEffort`, `faceBudget`, `outputFormat`,
-   and `topology`. They:
+   priced far apart. The LLM-based members' schemas share `sceneFile`, `buildEffort`, `faceBudget`,
+   `outputFormat`, and `topology`. They:
    - alone reconstruct one object from 1 to 8 photos or renders into an editable mesh with named
      parts and per-part PBR materials;
    - suit props and hard-surface subjects, not characters or creatures: for a prop with distinct
@@ -86,17 +86,18 @@ schemas and flag the gap.
    run it with `wait=false` and pass its `job_id` to `jobs_wait` (`job_ids=["<job_id>"]`) until no
    `pending_job_ids` remain. A downstream step (rig, retexture) has no payload to `dry_run` until
    its input mesh exists: quote it from `recommend`, then `dry_run` the real asset before launching.
-5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
-   Omitting `format` returns the stored original byte for byte; `format` converts to `glb`, `fbx`,
-   or `obj`. LLM-based members store their Blender file as the original: `format` set to
-   `properties.format` (from `asset_get`) returns the delivered file, not a conversion. Ask for
-   `fbx` for a Unity project without a glTF importer, and keep the GLB too: at authoring time the
-   FBX embedded only two images, so it may miss PBR maps.
+5. `asset_display` the output `asset_id`, then `asset_download` and
+   `curl -L -o chest.<format> "<url>"`. Omitting `format` returns the stored original byte for byte;
+   `format` converts to `glb`, `fbx`, or `obj`. LLM-based members store a Blender original. At
+   authoring time, `format` set to their `glb`, `fbx`, or `obj` `properties.format` (from
+   `asset_get`) returned the delivered file, not a conversion; others had no download. Ask for `fbx`
+   for a Unity project without a glTF importer, and keep the GLB too: at authoring time the FBX
+   embedded only two images, so it may miss PBR maps.
 
 **Prompt-only build.** When the user wants no concept to approve, skip step 1 and `recommend`
-`txt23d` in step 2: every LLM-based member supports it. Follow steps 3 to 5 with `images: []`;
-describe the object and name required parts in `prompt`. A chest's `lid`, `body`, and `padlock`
-returned as those node names.
+`txt23d` in step 2: every LLM-based member supports it. Follow steps 3 to 5 with `images: []` on an
+LLM-based member; describe the object and name required parts in `prompt`. A chest's `lid`, `body`,
+and `padlock` returned as those node names.
 
 Multi-view models take several images of one subject; read the count and fields off
 `model_schema_get`. Side fields follow the subject: on the Tripo multi-view members at authoring
@@ -131,15 +132,15 @@ before promising a look. Authoring-time examples from the Tripo members:
 Hosts without MCP Apps get only the `app_url` link. The viewer's capture button calls
 `capture_3d_view`, an app-only tool that posts an image `asset_id` of the current view into the
 conversation, reusable as a generation reference or a similarity `search` image. Never call
-`capture_3d_view` yourself: it needs PNG canvas data only the viewer has.
+`capture_3d_view` yourself.
 
 ## Refining meshes
 
 3D-to-3D utilities retexture, remesh, UV-unwrap, and segment parts: `recommend` with
-`capability="3d23d"` plus the operation in the user's own words. Most take the source `asset_id` in
-a `kind: "3d"` file field, usually `model` (also `mesh`, `file3d`, `sceneFile`). A 400
-`Input model is required` or `Provide a reference image or a 3D model` means the mesh went in under
-another name (an image field, or a URL).
+`capability="3d23d"` plus the operation. Most take the source `asset_id` in a `kind: "3d"` file
+field, usually `model` (also `mesh`, `file3d`, `sceneFile`). A 400 `Input model is required` or
+`Provide a reference image or a 3D model` means the mesh went in under another name (an image field,
+or a URL).
 
 Step 2's LLM-based members also edit an existing mesh, prop or character:
 
