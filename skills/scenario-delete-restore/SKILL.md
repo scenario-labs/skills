@@ -45,10 +45,13 @@ unattended, proceed from tool schemas and flag the gap.
 - **Find.** `assets_list` with `deleted: true` takes no `filters`: the server refuses the pair.
   Match the user's words client-side against `deletedAt`, `kind`, `prompt`, `description`, and
   `modelId`, paging with `page_token` (`limit` up to 100). The list is newest deletion first, so
-  stop paging once `deletedAt` is older than the user's window. `prompt` is cut at 120 characters,
-  and a deleted asset's full record is unreadable (`asset_get` returns 404). So a row in the window
-  whose cut `prompt` shows no match is ambiguous, not a miss. An upload has no `prompt` and keeps no
-  file name: match its `description`, an automatic caption.
+  stop paging once `deletedAt` is older than the user's window. `prompt` comes in three forms:
+  - An asset id (`asset_...`): the prompt is a live text asset. Read it on `assets_get_bulk`, whose
+    record carries the full prompt text, and match that.
+  - Text, cut at 120 characters. A deleted asset's own record is unreadable (`asset_get` returns
+    404), so a row in the window whose cut text shows no match is ambiguous, not a miss.
+  - Absent, on an upload, which keeps no file name either: match its `description`, an automatic
+    caption.
 - **Models.** `status: "deleted"` is a key inside `filters` on `models_list`. Combined with
   `privacy: "public"` the server refuses it: deleted models are always the team's own.
 - **Confirm the set.** Show the candidates (id, `deletedAt`, prompt or name) when the match is not

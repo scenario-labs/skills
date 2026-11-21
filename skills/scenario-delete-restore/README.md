@@ -40,5 +40,9 @@ Maintainer notes, not runtime instructions. SKILL.md does not link this file.
   - A deleted asset's full record is unreadable: `asset_get` returns 404 and `assets_get_bulk`
     returns nothing. The cut `prompt` on its `assets_list` row is all there is, so a cut prompt that
     shows no match counts as ambiguous rather than a miss.
+  - Images generated through MCP `model_run` on 2026-11-21 carried an asset id in `prompt`, not
+    text. The id names a live `uploaded-text` asset whose record holds the whole prompt (its
+    `metadata.preview`, complete when `hasFullPreview` is true), still readable after the image is
+    deleted. The skill names no field inside that record: it is undocumented.
 - No restore tool exists for collections: `scenario_tools_search` for "restore undelete" returns
   only `asset_restore` and `model_restore`.
