@@ -31,6 +31,7 @@ jobs:
       UNITY_VERSION: 6000.3.21f1
       UNITY_REVISION: c02631ffc030
       UNITY_MD5_BASE64: mQrnkPZlVStl9Z/sQuWIKA==
+      CODEQL_OVERLAY_DATABASE_MODE: none
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
