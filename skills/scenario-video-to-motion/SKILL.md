@@ -81,16 +81,17 @@ filling it:
   motion only and with both marked optional. An image can multiply the price: at authoring time,
   1,804 CU for three people on a 5-second clip, against 60 CU per capture on a single-person member.
   If the group capture cannot run or does not fit the budget, isolate each performer below and
-  capture them one by one.
+  capture each on a single-person member.
 - The schema does not say whether people return as one file or separate skeletons: inspect the
   download.
 - A performer hidden behind others captures poorly. Isolate them (or a group, the same way):
   1. `recommend` with `capability: "video2video"` and "remove everyone except the person on the left
      of the frame", naming each kept person by frame position or look. Pick a member whose
-     description lists removal and whose schema keeps the source duration, so captures stay in sync.
+     description lists removal and whose schema keeps the source duration. Read its duration field
+     in `model_schema_get` and leave it matching the source, so captures stay in sync.
   2. Check the edit before capturing it:
-     - `asset_get` it: a duration unlike the source's warns that the member re-timed or regenerated
-       the clip. Confirm in the frames.
+     - `asset_get` it. A longer clip means the member re-timed or regenerated it: skip the capture.
+       A shorter one whose frames match the source lost its end: capture it and report the tail.
      - `asset_display` it: everyone else must be gone, and each kept person present and moving as in
        the source wherever the source shows them. If not, skip the capture and report it.
      - A video may return only a link. Then `asset_download` it and sweep its frames where a shell
@@ -99,8 +100,9 @@ filling it:
      - Where the source hides a kept person fully, the edit invents that motion and nothing can
        verify it. Note those time ranges and tell the user before capture that the motion there is
        unverified.
-  3. Capture that clip with `numPeople` set to the kept count (one person: a single-person member
-     also works).
+  3. Capture that clip. One kept person: a single-person member from `recommend` with
+     `capability: "video23d"`, which the fallback needs, since the multi-person member keeps its
+     character requirement. Several: the multi-person member with `numPeople` set to the kept count.
   4. In a DCC, use it in place of those performers' group tracks, expecting to reposition
      characters.
 - At authoring time this was a proof of concept: the isolated capture kept some unwanted movement.
