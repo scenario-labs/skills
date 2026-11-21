@@ -46,17 +46,19 @@ Extracted frames carry no index and share one `createdAt`, so their order exists
 row's `assetIds`, and that list has come back out of time order (a confirmed defect at authoring
 time). The extractor takes a scalar `video`; every frame is `extractAllFrames: true`, and
 `frameInterval` (default 24 at authoring time, about one frame a second on a 24 fps clip) applies
-only when that flag is off. Check that the row holds exactly the clip's `nbFrames` ids (`asset_get`
-reports it beside `frameRate`; a short row is a dropped frame, which no reordering fixes), then,
+only when that flag is off. Check the row's length: exactly the clip's `nbFrames` ids with the flag
+on, about `nbFrames` / `frameInterval` with it off, sampled from frame 0 (`asset_get` reports
+`nbFrames` beside `frameRate`; a short row is a dropped frame, which no reordering fixes), then,
 before reassembling with `model_scenario-image-seq-to-video` or handing frames on, lay the returned
 ids into `model_scenario-grid-maker` in that order (a fixed first-party id: Scenario's single grid
 tool; its `images` field takes an array of 1 to 100 ids and ignores a bare id while the run still
 succeeds, so past 100 frames sheet in batches or raise `frameInterval`; set `columns`, default 3 and
-up to 20, so a batch reads as a near-square sheet) and read the sheet against the clip's free
-`firstFrame` and `lastFrame` and its motion; a frame that breaks continuity is out of place, and the
-corrected order travels as your own id list from then on. Never rebuild order from listings or
-timestamps, and a preview that runs backwards on a clean sheet is the assembler's `pingpong` flag,
-not the order.
+up to 20, so a batch reads as a near-square sheet) and read the sheet with `asset_display`, not a
+download (it tiles frames at source resolution, so the file can pass 100 MB), against the clip's
+free `firstFrame` and `lastFrame` and its motion; a frame that breaks continuity is out of place,
+and the corrected order travels as your own id list from then on. Never rebuild order from listings
+or timestamps, and a preview that runs backwards on a clean sheet is the assembler's `pingpong`
+flag, not the order.
 
 A cutout with transparency never ships as mp4: at authoring time the removal models carried alpha
 only as WebM or ProRes 4444 MOV, so read the output-format enum off `model_schema_get` and agree the
@@ -130,6 +132,34 @@ decision before any spend, between two routes an order of magnitude apart in pri
 
 `dry_run` prices a payload without validating it, so either route can bill for a run that fails
 outright or returns a mis-composed frame at exactly the right dimensions.
+
+## Reworking a finished video
+
+A request to reorder, drop, or lengthen shots in a video already rendered is an edit, not a new
+generation. Regenerate only the shot whose content must change.
+
+1. With a music bed, pull it first: `model_scenario-audio-extract` on the master, before any split
+   chops it.
+2. Find the shot boundaries. `asset_get` the master for `nbFrames` and `frameRate`. Extract frames
+   at the shortest `frameInterval` that keeps the clip on one sheet (`nbFrames` / 100, rounded up),
+   and verify their order as above (count, sheet with the ids as an `images` array, correct against
+   continuity). Each cut is a jump between neighbors in the corrected order. Its time is the 0-based
+   position of the new shot's first frame × `frameInterval` / `frameRate`, accurate to one stride.
+3. `model_scenario-video-split` with those times as `cutPoints` (an array, sorted, in seconds; N
+   points give N+1 segments) and `video` as a scalar.
+4. Confirm each segment before reordering: `asset_get` its `duration` and `asset_display` its
+   `firstFrame`. Never take the row's id order as the timeline order.
+5. Rebuild with one `model_scenario-video-concat`, `videos` holding every kept segment in the new
+   order (2 to 50 ids). Hard cuts are the default; `transitions` holds one entry per seam.
+   - **Reorder or drop**: list the segments in the new order and leave out any dropped shot.
+   - **Lengthen a shot**: no tool model retimes or slows a clip. Extend it from its `lastFrame` with
+     a video model (the last-frame chain in `scenario-video`) and list the extension right after
+     that shot.
+   - **Change what a shot shows**: regenerate that shot alone in `scenario-video` and list it in the
+     shot's slot.
+6. Check sync on the result: concat has drifted audio against picture (see
+   `scenario-video-assembly`). Lay the extracted bed back over the rebuilt cut there, trimmed to its
+   new length.
 
 ## Worked example: a graded cutdown
 

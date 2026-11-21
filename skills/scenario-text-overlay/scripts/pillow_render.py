@@ -34,9 +34,8 @@ def _download(url):
 
 
 def _cache_font(data, suffix):
-    handle = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
-    handle.write(data)
-    handle.close()
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as handle:
+        handle.write(data)
     return handle.name
 
 

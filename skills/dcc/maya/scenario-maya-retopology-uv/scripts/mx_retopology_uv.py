@@ -3323,7 +3323,10 @@ def main(argv):
         rep = uv_report(a.mesh, a.map_size, a.smallest_mip, a.target, stacked_ok=a.stacked_ok,
                         profile=a.profile, images_dir=a.images)
     elif a.action == "retopo-report":
-        spec = json.load(open(a.spec)) if a.spec else {}
+        spec = {}
+        if a.spec:
+            with open(a.spec) as fh:
+                spec = json.load(fh)
         rep = retopo_report(a.mesh, a.source, spec.get("openings"), spec.get("joints"), spec.get("cavities"),
                             spec.get("regions"), profile=a.profile)
     else:
