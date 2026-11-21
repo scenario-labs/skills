@@ -45,7 +45,8 @@ export default {
       console.warn("footage missing", CLIP);
     }
     g = E.makeG2D(E.W, E.H); // one full-res 2D surface, reused for MID and FRONT
-    // 3D hero type: front face below the bloom threshold (a large face above it blurs), darker extrusion sides (a glow goes on the sides, never the front)
+    // 3D hero type: keep the front face's luminance below the bloom threshold, or a large face blurs (1.3 suits the amber accent; a near-white one needs 1 or less)
+    // these sides stay dark; for a glow, lift the side material past the threshold, never the front (ENGINE_API.md)
     scene = new THREE.Scene();
     cam = E.safeCamera(new THREE.PerspectiveCamera(40, E.W / E.H, 0.1, 200)); // origin = center of the safe band
     cam.position.set(0, 0, 10);
