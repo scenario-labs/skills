@@ -341,13 +341,41 @@ names and hierarchy, not onto its proportions.
 
 - **Map, per bone of the body's rig:** rename to the shared name; merge (add the weights into the
   target's group, re-parent the children); split a long segment into the shared one's parts, its
-  weights shared by tent functions along the segment; add the shared skeleton's extra bones
-  unweighted, at their rest place. Keep the map as data, one file per skeleton.
-- **Keep the body's joints.** Each body keeps its own heads, tails and rolls; only names and
-  hierarchy change. Clips then move by per-bone pose deltas, not by copying world positions.
+  weights shared by tent functions along the segment. Keep the map as data, one file per skeleton.
+- **Extra bones.** The shared skeleton's other bones go in unweighted. An attachment bone (weapon,
+  prop socket) sits at the shared skeleton's offset from its parent bone. Root and IK bones keep the
+  shared skeleton's rest place, so clips keyed on them keep their meaning.
+- **Keep the body's joint positions.** Each body keeps its own heads and tails; only names and
+  hierarchy change.
 - **Weights.** Every vertex group must end with a bone; no group may name a bone that is gone. Check
   sums, unweighted vertices and the influence count with `weight_report`.
-- **Gate.** Compare every vertex of the moved body against the source rig: in the rest pose and in a
-  seeded sweep that turns each source bone by up to 25 degrees, with each new bone taking its source
-  bone's pose delta. The worst distance is a rounding error, well under 0.1 mm. Run the same check
-  again on the exported file read back: the file, not the scene, is what ships.
+- **Gate, before any influence cap.** Compare every vertex of the moved body against the source rig,
+  in the rest pose and in a seeded sweep that turns each mapped unit by up to 25 degrees.
+  - Set the source's B-bone segments to 1 first: an engine skeleton carries none.
+  - Pose both rigs from one world-space delta per unit. Bones merged into one target turn together.
+    Both parts of a split take their source's delta; never repeat a local turn down the chain.
+  - The worst distance is then a rounding error, well under 0.1 mm. On a Rigify Basic body (5.2.1)
+    it measured 0.0007 mm, against 21 mm with Rigify's B-bones, 29 mm with local turns on split
+    parts and 96 mm with merged bones turned apart.
+- **Cap.** Limiting to 4 influences moves vertices (16 mm in the same sweep): judge it with
+  `deformation_report`, not with this gate.
+- **Rest pose for shared clips.** A clip stores each bone's rotation from the shared rest. On a body
+  with another rest direction or roll (an A pose under a T-pose skeleton), it plays a different
+  pose.
+  - When the shared clips must play unchanged (an engine skeleton), match the shared rest direction
+    and roll in two moves. Posing the roll itself would twist the mesh.
+  - First set each bone's edit roll so the swing to the shared direction lands on the shared roll:
+    `align_roll` with the shared Z axis turned back by that swing. A roll change at rest moves no
+    vertex.
+  - Then pose each bone, root first, by that swing only. Apply the Armature modifier to the meshes,
+    apply the pose as rest, then add the modifier back.
+  - The swing bakes its skinning into the new rest mesh (15 mm at the shoulders on an A-pose body):
+    look at the shoulders after it.
+  - The body keeps its own rolls only when every clip is re-baked for it from per-bone pose deltas.
+- **Export and read back.** Use the export skill's skeletal preset (`unreal_skeletal`,
+  `unity_skeletal`) with one override, `use_armature_deform_only=False`: the extra bones carry no
+  weights, and a deform-only export drops them.
+  - The preset writes each clip as its own take. A raw call that bakes the scene take reads back one
+    frame late (frames 2 to 25 for 1 to 24 on 5.2.1).
+  - Read the file back and compare it with the scene body at the same poses: the file, not the
+    scene, is what ships.

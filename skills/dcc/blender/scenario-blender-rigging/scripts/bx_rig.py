@@ -131,6 +131,17 @@ def side_of(name):
     return m.group(1).upper() if m else ""
 
 
+def mirror_name(name):
+    """The other side's name, on the side mark side_of reads (upper_arm.L, clavicle_l), else ''."""
+    import re
+    m = re.search(r"[._-]([LlRr])(?=$|[._-]\d*$|\.)", name)
+    if not m:
+        return ""
+    s = m.group(1)
+    other = {"L": "R", "R": "L", "l": "r", "r": "l"}[s]
+    return name[:m.start(1)] + other + name[m.end(1):]
+
+
 # ----------------------------------------------------------------------------------
 # 0. model check (CGDive: "a huge number of rigging problems ... skipping the model check")
 # ----------------------------------------------------------------------------------
@@ -1300,10 +1311,9 @@ def weight_report(obj, rig, expect_inside=True):
             continue
         pairs += 1
         for n, c in col.items():
-            s = side_of(n)
-            if not s or W[i, c] < 1e-4:
+            if W[i, c] < 1e-4:
                 continue
-            m = n.replace(".L", ".R") if s == "L" else n.replace(".R", ".L")
+            m = mirror_name(n)
             if m in col:
                 worst = max(worst, abs(W[i, c] - W[j, col[m]]))
     rep["mirror_pairs_sampled"] = pairs

@@ -30,6 +30,13 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
 - Face shape sets (`bx_rig.SHAPE_SETS`, `shape_set`, `shape_report`) have a live suite in Blender,
   `tests/scenario-blender-expert/test_live_face_shapes.py`, including FBX and GLB round trips. The
   ARKit, viseme and Roblox FACS lists were read from the vendor pages on 2026-10-18.
+- `bx_rig.weight_report`'s mirror check has a live suite in Blender,
+  `tests/scenario-blender-expert/test_live_weights.py`, with Blender (`.L`/`.R`) and engine
+  (`_l`/`_r`) side names. Before it, engine names compared each group with itself and reported 1.0.
+- The rigging P16 gate numbers (a body moved onto a shared skeleton) come from a seeded sweep on a
+  Rigify Basic mannequin, 5 poses up to 25 degrees, on 2026-11-21. It measured 0.0007 mm with B-bone
+  segments at 1, merged bones turned together and world-space deltas; 21, 29 and 96 mm with one of
+  those missing; 16 mm after a 4-influence cap. That sweep script is not in this repository.
 - Known limits: headless sculpting reaches concept quality (finished surfaces need real brushes in a
   live session); hair-curve and Grease Pencil draw strokes cannot be scripted; procedural retopology
   still needs a human pass on the finest face loops.
