@@ -46,10 +46,13 @@ class Fixtures(unittest.TestCase):
         ff(*video, *audio, *ten, "-c:v", "mpeg4", "-movflags", "+faststart", str(d / "mpeg4.mp4"))
         # the way render.mjs makes a master: canvas JPEGs through image2pipe, then a mux with the song and faststart
         ff(*video, *ten, "-c:v", "mjpeg", "-f", "image2pipe", str(d / "frames.mjpeg"))
-        ff("-f", "image2pipe", "-framerate", "60", "-c:v", "mjpeg", "-i", str(d / "frames.mjpeg"), *x264, "-r", "60",
-           str(d / "chunk.mp4"))
+        ff("-f", "image2pipe", "-framerate", "60", "-c:v", "mjpeg", "-i", str(d / "frames.mjpeg"), *x264,
+           "-vf", "scale=out_range=tv", "-r", "60", str(d / "chunk.mp4"))
         ff("-i", str(d / "chunk.mp4"), "-f", "lavfi", "-i", "sine=f=440:d=5", "-map", "0:v", "-map", "1:a", "-af", "apad",
            "-shortest", "-c:a", "aac", "-c:v", "copy", "-movflags", "+faststart", str(d / "render.mp4"))
+        # what render.mjs and the delivery encodes wrote before: ffmpeg 7 kept the JPEGs' full range under -pix_fmt yuv420p
+        ff(*video, *audio, *x264, "-vf", "scale=out_range=pc", "-color_range", "pc", "-movflags", "+faststart",
+           str(d / "full_range.mp4"))
         big = ["-f", "lavfi", "-i", "testsrc2=s=2048x1152:r=60", "-frames:v", "2", "-c:v", "libx264", "-pix_fmt",
                "yuv420p"]
         ff(*big, "-level", "5.2", "-movflags", "+faststart", str(d / "big52.mp4"))
@@ -92,10 +95,21 @@ class Fixtures(unittest.TestCase):
         self.assertTrue(line(out, "peak bitrate").startswith("PASS"), out)
 
     def test_render_master_passes(self):
-        # full-range JPEG input probes as yuvj420p on some ffmpeg versions; both are 8-bit 4:2:0
         code, out, _ = check(self.d / "render.mp4", "--frames", "10")
         self.assertEqual(code, 0, out)
-        self.assertRegex(line(out, "pixel format"), r"^PASS pixel format: yuvj?420p$")
+        self.assertEqual(line(out, "pixel format"), "PASS pixel format: yuv420p")
+
+    def test_full_range_reads_either_ffprobe_form(self):
+        self.assertTrue(dc.full_range({"pix_fmt": "yuvj420p", "color_range": "pc"}))
+        self.assertTrue(dc.full_range({"pix_fmt": "yuv420p", "color_range": "pc"}))
+        self.assertFalse(dc.full_range({"pix_fmt": "yuv420p", "color_range": "tv"}))
+        self.assertFalse(dc.full_range({"pix_fmt": "yuv420p"}))
+
+    def test_full_range_fails(self):
+        code, out, _ = check(self.d / "full_range.mp4")
+        self.assertEqual(code, 1, out)
+        self.assertRegex(line(out, "pixel format"), r"^FAIL pixel format: yuvj?420p, full range \(encode with -vf "
+                                                    r"scale=out_range=tv -pix_fmt yuv420p\)$")
 
     def test_frame_count_mismatch_fails(self):
         code, out, _ = check(self.d / "good.mp4", "--frames", "11")

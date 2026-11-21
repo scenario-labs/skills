@@ -1,5 +1,6 @@
-"""Gate a delivered video before handing it over: H.264 4:2:0 at a level players decode, the frame count, a clean
-decode, an audio track, faststart and the size. Prints PASS/FAIL per check (WARN never fails) and exits 1 on any FAIL.
+"""Gate a delivered video before handing it over: H.264 4:2:0 in limited range at a level players decode, the frame
+count, a clean decode, an audio track, faststart and the size. Prints PASS/FAIL per check (WARN never fails) and exits 1
+on any FAIL.
 usage: python tools/delivery_check.py <video.mp4> [--frames N] [--max-mb MB] [--no-audio]"""
 import argparse
 import json
@@ -75,6 +76,11 @@ def moov_first(path):
     return seen[0] == b"moov"
 
 
+def full_range(stream):
+    """True for a full-range (pc) stream: ffprobe shows it as yuvj420p, or as yuv420p with color_range pc."""
+    return stream.get("pix_fmt", "").startswith("yuvj") or stream.get("color_range") == "pc"
+
+
 def run(cmd):
     return subprocess.run(cmd, capture_output=True, text=True)
 
@@ -105,8 +111,11 @@ def main():
         sys.exit(1)
     w, h, level, profile = v["width"], v["height"], int(v.get("level", 0)), v.get("profile", "")
     check("codec", v.get("codec_name") == "h264", f"{v.get('codec_name')} {profile}")
-    # canvas JPEGs are full range, so a render can carry yuvj420p: both are 8-bit 4:2:0
-    check("pixel format", v.get("pix_fmt") in ("yuv420p", "yuvj420p"), v.get("pix_fmt"))
+    # full range (yuvj420p, or a pc range flag) plays with crushed shadows and clipped highlights where a player ignores
+    # the flag; canvas JPEGs decode full range, and -pix_fmt yuv420p alone keeps it on some ffmpeg versions
+    pix, full = v.get("pix_fmt", ""), full_range(v)
+    check("pixel format", pix == "yuv420p" and not full,
+          f"{pix}, full range (encode with -vf scale=out_range=tv -pix_fmt yuv420p)" if full else pix)
     check("size", w % 2 == 0 and h % 2 == 0, f"{w}x{h}")
     num, _, den = v.get("avg_frame_rate", "0/1").partition("/")
     fps = float(num) / float(den or 1) if float(den or 1) else 0

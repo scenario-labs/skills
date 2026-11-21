@@ -71,7 +71,8 @@ before the first paid step and say what is missing.
 
 ### 1. Scaffold and analyze the song
 
-Run `bash <skill>/scripts/scaffold.sh <song>` inside a new project folder (macOS on Apple Silicon or
+No song yet: generate one at the length the video needs first (`references/pipeline.md` §2). Run
+`bash <skill>/scripts/scaffold.sh <song>` inside a new project folder (macOS on Apple Silicon or
 Linux x86_64 with glibc 2.28+: the Python lock covers those two), then follow
 `references/pipeline.md` §2:
 
@@ -219,8 +220,7 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   `_16x9` and `_9x16`. Use distinct filenames, because macOS is case-insensitive.
 - **Checks:** run `delivery_check.py` last, on every file.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
-- **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet,
-  source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
+- **Style sheet / making-of:** an artifact or doc (`references/pipeline.md` §8).
 - **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent, summed
   from this run's successful `jobs_wait` rows (`cuCost`, logged in `analysis/jobs.md`; a failed job
   is refunded but its row keeps a `cuCost`); `usage` is project-wide and includes other work.

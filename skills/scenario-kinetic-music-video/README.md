@@ -241,6 +241,30 @@ In-engine GPU accumulation, opt-in per project (`BLUR` in timeline.js).
 - **Not covered:** camera moves made with `E.post` (punch, shake, rot) stay sharp, and roto
   materials or custom textures are not checked for stale clips.
 
+## Song length, transcription, range and backdrops
+
+From the 2026-11-21 application test (PR 431's report, defects 3 to 7), reproduced on its song:
+
+- **Song length.** `recommend`'s top `txt2audio` pick had no duration input. A 20 s request came
+  back 64.8 s with a 15 s instrumental intro. The tester's trim put fades on the source's timeline
+  before an output `-ss`; the WAV came out all zeros, and `audio_analysis.py` printed
+  `bpm nan, 0 beats` and wrote NaN into `audio.json`. It now stops on a silent input before Demucs.
+- **Whisper.** On the full song, the plain pass gave "Thank you." at 0.00 s, then jumped to the next
+  30 s window and skipped the vocals at 15.4 to 27.8 s. Tried on the real stem:
+  - `vad_filter`: both vocal blocks, no hallucination. Kept.
+  - `hallucination_silence_threshold=2`: the first block, but lost 30 to 36 s and hallucinated at 56
+    s.
+  - `clip_timestamps` from 15 s: both blocks, plus a hallucination at 56 s.
+  - On the block both passes heard, VAD moved word onsets by 0.34 s at most, and put the first word
+    on the vocal (30.88 s) rather than the window start (30.00 s).
+- **Range.** On ffmpeg 7.1.1, canvas JPEGs through `-pix_fmt yuv420p` stayed full range (probed
+  `yuvj420p`, black and white at Y 0 and 255). `scale=out_range=tv` gives 16 and 235. The render and
+  the delivery encodes now convert, and `delivery_check.py` fails full range. Renders no longer
+  match those made before this change byte for byte, unlike the 4K section's record.
+- **Backdrops.** A full-length layer under the scenes became the only dynamism section. A gate rule
+  that guessed backdrops from layer geometry would also catch a one-scene teaser with overlays, so
+  the fix is guidance: end such a layer at 9999, like the HUD.
+
 ## What the record does not cover
 
 - The skill is the creator's own document, not distilled here, so it does not follow the house

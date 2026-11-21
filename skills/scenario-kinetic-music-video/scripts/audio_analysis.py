@@ -1,11 +1,18 @@
 """Song -> engine/data/audio.json: beats, downbeats, kick/snare/vocal onsets, 60 fps envelopes. Also separates the vocal stem.
 usage: python scripts/audio_analysis.py audio/master.mp3
 Writes: stems/<name>/vocals.wav + no_vocals.wav (Demucs), engine/data/audio.json (with "master" = the input path).
-The master itself is never modified."""
+The master itself is never modified. A silent input stops the script before anything is written."""
 import sys, os, json, hashlib, subprocess, urllib.request, numpy as np, librosa
 
 if len(sys.argv) < 2: sys.exit(__doc__)
 master = sys.argv[1]; name = os.path.splitext(os.path.basename(master))[0]
+mix, _ = librosa.load(master, sr=22050, mono=True)
+peak = float(np.abs(mix).max()) if len(mix) else 0.0
+# a broken cut (fades placed on the source's timeline) once came out all zeros and was analyzed as "bpm nan, 0 beats"
+if peak < 1e-3:  # -60 dBFS
+    level = 'every sample is zero' if peak == 0 else f'peak {20 * np.log10(peak):.0f} dBFS'
+    sys.exit(f'{master} is silent ({level} over {len(mix) / 22050:.2f} s): check the edit or export that made it. '
+             'Nothing was written.')
 stem_dir = f'stems/htdemucs/{name}'
 if not os.path.exists(f'{stem_dir}/vocals.wav'):
     subprocess.run([sys.executable, '-m', 'demucs', '--two-stems=vocals', '-n', 'htdemucs', '-o', 'stems', master], check=True)
@@ -58,7 +65,6 @@ beats = [float(b) for b in beats]; downbeats = [float(b) for b in downbeats]
 bpm = float(60 / np.median(np.diff(beats)))
 voc, sr = librosa.load(f'{stem_dir}/vocals.wav', sr=22050, mono=True)
 inst, _ = librosa.load(f'{stem_dir}/no_vocals.wav', sr=22050, mono=True)
-mix, _ = librosa.load(master, sr=22050, mono=True)
 hop = sr // FPS_ENV
 def env(y):
     r = librosa.feature.rms(y=y, frame_length=hop * 2, hop_length=hop)[0]; return np.clip(r / (np.percentile(r, 99) + 1e-9), 0, 1.5)

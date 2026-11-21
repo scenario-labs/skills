@@ -24,10 +24,30 @@ project, you can symlink `.venv` and `node_modules` from it to save time.
 
 ## 2. Audio and lyrics
 
+**No song yet:** generate one before scaffolding. The `scenario-audio` skill owns song schemas
+(style and lyric fields, flags, pricing). This skill adds the length:
+
+- `recommend` with `capability: "txt2audio"`, the user's words, and the video's length as `duration`
+  (a minimum, in seconds).
+- The top pick can lack a length control; its `tradeoff` may say so, and `model_schema_get` decides.
+  Prefer a ranked member with a duration field, set to the video's length plus a few seconds.
+- Without one, the lyric sheet and a duration cue steer the length only loosely (`lessons.md`, song
+  models): a 20 s request came back 64.8 s with a 15 s instrumental intro. Write only the lines the
+  video needs, check the length with `ffprobe`, and cut a longer take.
+- The cut runs between two downbeats of the full take's analysis: the one before the first sung line
+  (where `env.vocal` in `audio.json` first rises), and one past the video's end. Trim inside the
+  filter, before the fades: with an output `-ss`, fades run on the source's timeline, and one such
+  cut came out silent.
+
 ```bash
-.venv/bin/python tools/audio_analysis.py audio/master.mp3                              # stems + engine/data/audio.json (prints BPM and downbeats)
+.venv/bin/python tools/audio_analysis.py audio/master.mp3 # stems + engine/data/audio.json (prints BPM and downbeats)
+# a take longer than the video only: cut it (A, B: the downbeats; FADE = B - A - 0.6; the braces keep zsh from reading
+# $A:e as a modifier), then analyze the cut, which audio.json then names
+ffmpeg -i audio/master.mp3 -af "atrim=start=${A}:end=${B},asetpts=PTS-STARTPTS,afade=t=in:d=0.02,afade=t=out:st=${FADE}:d=0.6" audio/master_cut.wav
+.venv/bin/python tools/audio_analysis.py audio/master_cut.wav
 .venv/bin/python tools/lyrics_align.py transcribe                                      # plain pass, also kept as analysis/lyrics_raw_plain.json
 .venv/bin/python tools/lyrics_align.py transcribe --prompt "<names, jargon, acronyms>" # hinted pass (lyrics_raw_hints.json); align reads the latest
+# → stderr lists vocal stretches of 3 s or more, 2 s clear of any word: Whisper skipped them, or they hold none
 # → hand-write analysis/lyrics.txt (sections + corrected lines; the user's lyrics win if supplied)
 .venv/bin/python tools/lyrics_align.py align analysis/lyrics.txt --no-fix <ACRONYMS >[--chant <section >: <WORD >]
 # → stderr lists the words with no transcript match and the onsets they got: check those first in the plots
@@ -251,17 +271,19 @@ ffmpeg -i out/final/v1.mp4 -vf "fps=2,scale=384:-1" -q:v 4 out/watch/f_%04d.jpg 
 # 4K master, on request, first: the same cut at --scale 2 (render.mjs pins Level 5.2, caps the bitrate to it, and runs
 # only as many workers as fit in memory)
 node tools/render.mjs --fps 60 --scale 2 --workers 3 --crf 17 --out out/final/vN_4k.mp4
-# SRC is what every encode below reads, FIT how it gets to 1080p
-SRC=out/final/vN.mp4; FIT=()
-# with a 4K master, every file below is made from it instead (portrait: scale=1080:-2:flags=lanczos):
-# SRC=out/final/vN_4k.mp4; FIT=(-vf scale=-2:1080:flags=lanczos)
+# SRC is what every encode below reads. VF converts to limited range: -pix_fmt yuv420p alone keeps a full-range
+# master full range (an older render.mjs wrote one; that master fails delivery_check itself, so re-render it).
+# From a 4K master, VF also scales to 1080p.
+SRC=out/final/vN.mp4; VF=scale=out_range=tv
+# with a 4K master, every file below is made from it instead (portrait: scale=1080:-2:flags=lanczos:out_range=tv):
+# SRC=out/final/vN_4k.mp4; VF=scale=-2:1080:flags=lanczos:out_range=tv
 # landscape canvas: the X-ready file (YouTube takes the master itself)
-ffmpeg -i "$SRC" "${FIT[@]}" -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
-ffmpeg -i "$SRC" "${FIT[@]}" -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 2 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_x_1080p60.mp4
+ffmpeg -i "$SRC" -vf "$VF" -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 1 -an -f mp4 /dev/null
+ffmpeg -i "$SRC" -vf "$VF" -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrate 25M -bufsize 42M -pass 2 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_x_1080p60.mp4
 # portrait canvas: one vertical upload for TikTok, Reels and Shorts (the platforms re-encode, so keep quality high)
-ffmpeg -i "$SRC" "${FIT[@]}" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
+ffmpeg -i "$SRC" -vf "$VF" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
 # teaser: END is the teaser length in seconds, FADE = END - 0.6
-ffmpeg -i "$SRC" "${FIT[@]}" -t "$END" -af "afade=t=out:st=$FADE:d=0.6" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_teaser.mp4
+ffmpeg -i "$SRC" -vf "$VF" -t "$END" -af "afade=t=out:st=$FADE:d=0.6" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_teaser.mp4
 # last, every delivered file: --frames as render.mjs printed it on a master (vN.mp4, vN_4k.mp4), --max-mb 512 on the X file
 .venv/bin/python tools/delivery_check.py out/final/vN.mp4 --frames <N>
 .venv/bin/python tools/delivery_check.py out/final/vN_4k.mp4 --frames <N>
@@ -278,10 +300,10 @@ ffmpeg -i "$SRC" "${FIT[@]}" -t "$END" -af "afade=t=out:st=$FADE:d=0.6" -c:v lib
   `vN_9x16_teaser.mp4`), so nothing collides.
 - **Levels:** keep `-level 4.2` on the `-preset slow` encodes. Without it x264 signals Level 5.0 at
   1080p60, above what some phones and browsers decode; with it, x264 uses fewer reference frames.
-- **Check every delivered file** with `delivery_check.py`: H.264 4:2:0, a level the frame needs and
-  devices decode (4.2 at 1080p, 5.2 at 4K), the frame count, a clean decode, the audio track,
-  faststart and the size. It warns when the busiest second outruns the level's bitrate. Hand over
-  nothing that fails.
+- **Check every delivered file** with `delivery_check.py`: H.264 4:2:0 in limited range, a level the
+  frame needs and devices decode (4.2 at 1080p, 5.2 at 4K), the frame count, a clean decode, the
+  audio track, faststart and the size. It warns when the busiest second outruns the level's bitrate.
+  Hand over nothing that fails.
 - **4K master:** only on request. `--scale 2` renders the same cut at 3840×2160 (2160×3840 on
   portrait); bloom, grain and scanlines keep their 1080p size.
   - Footage keeps its generated resolution (a 720p plate is upscaled 3×), so the gain is in type and
