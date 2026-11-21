@@ -97,7 +97,7 @@ class Fixtures(unittest.TestCase):
     def test_render_master_passes(self):
         code, out, _ = check(self.d / "render.mp4", "--frames", "10")
         self.assertEqual(code, 0, out)
-        self.assertEqual(line(out, "pixel format"), "PASS pixel format: yuv420p")
+        self.assertEqual(line(out, "pixel format"), "PASS pixel format: yuv420p, limited range")
 
     def test_full_range_reads_either_ffprobe_form(self):
         self.assertTrue(dc.full_range({"pix_fmt": "yuvj420p", "color_range": "pc"}))

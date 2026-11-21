@@ -34,10 +34,10 @@ project, you can symlink `.venv` and `node_modules` from it to save time.
 - Without one, the lyric sheet and a duration cue steer the length only loosely (`lessons.md`, song
   models): a 20 s request came back 64.8 s with a 15 s instrumental intro. Write only the lines the
   video needs, check the length with `ffprobe`, and cut a longer take.
-- The cut runs between two downbeats of the full take's analysis: the one before the first sung line
-  (where `env.vocal` in `audio.json` first rises), and one past the video's end. Trim inside the
-  filter, before the fades: with an output `-ss`, fades run on the source's timeline, and one such
-  cut came out silent.
+- The cut runs between two downbeats of the full take's analysis: the one before the first line the
+  video shows, and one past the video's end. Find the lines with a `transcribe` pass on the full
+  take: wordless singing can raise `env.vocal` before any lyric. Trim inside the filter, before the
+  fades: with an output `-ss`, fades run on the source's timeline, and one such cut came out silent.
 
 ```bash
 .venv/bin/python tools/audio_analysis.py audio/master.mp3 # stems + engine/data/audio.json (prints BPM and downbeats)

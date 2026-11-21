@@ -115,7 +115,7 @@ def main():
     # the flag; canvas JPEGs decode full range, and -pix_fmt yuv420p alone keeps it on some ffmpeg versions
     pix, full = v.get("pix_fmt", ""), full_range(v)
     check("pixel format", pix == "yuv420p" and not full,
-          f"{pix}, full range (encode with -vf scale=out_range=tv -pix_fmt yuv420p)" if full else pix)
+          f"{pix}, full range (encode with -vf scale=out_range=tv -pix_fmt yuv420p)" if full else f"{pix}, limited range")
     check("size", w % 2 == 0 and h % 2 == 0, f"{w}x{h}")
     num, _, den = v.get("avg_frame_rate", "0/1").partition("/")
     fps = float(num) / float(den or 1) if float(den or 1) else 0
