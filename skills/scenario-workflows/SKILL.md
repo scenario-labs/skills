@@ -68,7 +68,9 @@ contiguous nor ordered.
   lists and which surfaces only at run time as a 400 quoting the cap but not the input key. The dry
   run enforces the same validator at zero cost: route long texts through `dry_run=true` and shorten
   to fit rather than retrying verbatim, and with several string inputs bisect with dry runs to find
-  the offender.
+  the offender. The dry run also catches a prompt that a `transformText` node builds past the cap
+  with every input in range: shorten those inputs, or fix the graph per
+  `scenario-workflow-authoring`.
 - `workflow_get` wraps `inputs_definition`/`editor_info` in `workflow`; `workflows_list` wraps
   `inputs`/`editorInfo` in `workflows`.
 
