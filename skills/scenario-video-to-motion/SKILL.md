@@ -77,30 +77,42 @@ filling it:
   (read it in `model_schema_get`): it may capture one person, and the count can change the price. It
   is also the cap (four at authoring time). A shorter clip keeps the crowd, so split a larger one
   into groups with the removal edit below, one clip per group.
+- The multi-person member may refuse to run without a character (mesh or reference image), even for
+  motion only and with both marked optional. An image can multiply the price: at authoring time,
+  1,804 CU for three people on a 5-second clip, against 60 CU per single-person capture. If the
+  group capture cannot run or does not fit the budget, isolate each performer below and capture them
+  one by one.
 - The schema does not say whether people return as one file or separate skeletons: inspect the
   download.
 - A performer hidden behind others captures poorly. Isolate them (or a group, the same way):
   1. `recommend` with `capability: "video2video"` and "remove everyone except the person on the left
      of the frame", naming each kept person by frame position or look. Pick a member whose
      description lists removal, keeping the source duration so captures stay in sync.
-  2. `asset_display` the edit: every kept person must be present and move as in the source. If not,
-     skip the capture and report it. A video may return only a link: then ask the user to check it
-     (unattended, skip the capture and report the edit unchecked). Where the source hides a kept
-     person fully, the edit invents that motion and nothing can verify it. Note those time ranges
-     and tell the user before capture that the motion there is unverified.
+  2. Check the edit before capturing it:
+     - `asset_get` it: a duration unlike the source's warns that the member re-timed or regenerated
+       the clip. Confirm in the frames.
+     - `asset_display` it: everyone else must be gone, and each kept person present and moving as in
+       the source wherever the source shows them. If not, skip the capture and report it.
+     - A video may return only a link. Then `asset_download` it and sweep its frames where a shell
+       has ffmpeg; otherwise ask the user to check it (unattended, skip the capture and report the
+       edit unchecked).
+     - Where the source hides a kept person fully, the edit invents that motion and nothing can
+       verify it. Note those time ranges and tell the user before capture that the motion there is
+       unverified.
   3. Capture that clip with `numPeople` set to the kept count (one person: a single-person member
      also works).
   4. In a DCC, use it in place of those performers' group tracks, expecting to reposition
      characters.
 - At authoring time this was a proof of concept: the isolated capture kept some unwanted movement.
   Promise a rough pass needing cleanup.
-- Each removal and extra capture is a separate job: `dry_run` every leg and quote the total. Before
-  the edit exists, estimate the isolated capture on the source clip at the kept count; re-price it
-  on the edited clip before running. If that price no longer fits, stop and report it with the edit.
-- Unattended, isolate only performers the task calls hidden or the group capture lost, and split
-  only a crowd past the cap. Run what fits the task's budget, group capture first, and a removal
-  only when its capture fits too. Report the total of any leg left out, then stop. With no stated
-  budget, run nothing: quote the prices.
+- Each removal and extra capture is a separate job: `dry_run` every leg and quote the total. Check
+  one removal before launching the next: a rejected edit is still billed. Before the edit exists,
+  estimate the isolated capture on the source clip at the kept count; re-price it on the edited clip
+  before running. If that price no longer fits, stop and report it with the edit.
+- Unattended, isolate only performers the task calls hidden or the group capture lost (everyone,
+  when the group capture cannot run), and split only a crowd past the cap. Run what fits the task's
+  budget, group capture first, and a removal only when its capture fits too. Report the total of any
+  leg left out, then stop. With no stated budget, run nothing: quote the prices.
 
 ## Footage that captures well
 
