@@ -41,6 +41,7 @@ project, you can symlink `.venv` and `node_modules` from it to save time.
 
 ```bash
 .venv/bin/python tools/audio_analysis.py audio/master.mp3 # stems + engine/data/audio.json (prints BPM and downbeats)
+.venv/bin/python tools/lyrics_align.py transcribe         # a take longer than the video: find its lines before cutting
 # a take longer than the video only: cut it (A, B: the downbeats; FADE = B - A - 0.6; the braces keep zsh from reading
 # $A:e as a modifier), then analyze the cut, which audio.json then names
 ffmpeg -i audio/master.mp3 -af "atrim=start=${A}:end=${B},asetpts=PTS-STARTPTS,afade=t=in:d=0.02,afade=t=out:st=${FADE}:d=0.6" audio/master_cut.wav
