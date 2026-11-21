@@ -53,8 +53,8 @@ with `asset_download` (no `format` for audio), then measure:
   that stretch to be exact. Without `--bpm` the fit can lock to half or two thirds of the tempo.
 - When the window and the whole track disagree, trust the window: on one take the whole-track grid
   sat 2.5 beats off both drops.
-- `music.stopBeat` cuts the music dead on a beat (the logo hit); without it the music fades at the
-  end.
+- `music.stopBeat` cuts the music dead on a beat (the logo hit); without it the music fades over the
+  film's last 1.2 s.
 - `music.gain` (dB, default -3.5) sets the bed under the effects.
 
 ## 2. The sound kit
