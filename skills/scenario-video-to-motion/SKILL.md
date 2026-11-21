@@ -79,15 +79,15 @@ filling it:
   into groups with the removal edit below, one clip per group.
 - The multi-person member may refuse to run without a character (mesh or reference image), even for
   motion only and with both marked optional. An image can multiply the price: at authoring time,
-  1,804 CU for three people on a 5-second clip, against 60 CU per single-person capture. If the
-  group capture cannot run or does not fit the budget, isolate each performer below and capture them
-  one by one.
+  1,804 CU for three people on a 5-second clip, against 60 CU per capture on a single-person member.
+  If the group capture cannot run or does not fit the budget, isolate each performer below and
+  capture them one by one.
 - The schema does not say whether people return as one file or separate skeletons: inspect the
   download.
 - A performer hidden behind others captures poorly. Isolate them (or a group, the same way):
   1. `recommend` with `capability: "video2video"` and "remove everyone except the person on the left
      of the frame", naming each kept person by frame position or look. Pick a member whose
-     description lists removal, keeping the source duration so captures stay in sync.
+     description lists removal and whose schema keeps the source duration, so captures stay in sync.
   2. Check the edit before capturing it:
      - `asset_get` it: a duration unlike the source's warns that the member re-timed or regenerated
        the clip. Confirm in the frames.
