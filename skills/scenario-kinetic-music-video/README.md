@@ -261,6 +261,14 @@ From the 2026-11-21 application test (PR 431's report, defects 3 to 7), reproduc
   `yuvj420p`, black and white at Y 0 and 255). `scale=out_range=tv` gives 16 and 235. The render and
   the delivery encodes now convert, and `delivery_check.py` fails full range. Renders no longer
   match those made before this change byte for byte, unlike the 4K section's record.
+- **Starts in the silence before a note** (PR 442's report, defect 3). Whisper put three line starts
+  0.36 to 0.7 s early, where the vocal stem was silent (envelope about 0.03), before a sharp rise to
+  0.6 or more. `align` now moves a start past such a silence (0.1 s or more under 0.06) to the first
+  loud stretch inside the word's span. Re-aligned against both runs' hand fixes, it moved five
+  words, each toward its hand value: mean error 0.125 to 0.038 s on PR 442's cut, 0.288 to 0.213 s
+  on PR 431's, where the rest are mid-line words with no silence to find.
+- **Placeholders in `bash` blocks are quoted** (`"<skill>"`): `prettier-plugin-sh` reads a bare
+  `<skill>` as a redirection and pads it into `<skill >`.
 - **Backdrops.** A full-length layer under the scenes became the only dynamism section. A gate rule
   that guessed backdrops from layer geometry would also catch a one-scene teaser with overlays, so
   the fix is guidance: end such a layer at 9999, like the HUD.

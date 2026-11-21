@@ -75,6 +75,31 @@ class SheetTest(unittest.TestCase):
         self.assertNotEqual(clobber.returncode, 0)
         self.assertIn("also an input", clobber.stderr)
 
+    def test_labels_name_the_time_of_stills_and_of_ffmpeg_frames(self):
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("sheet", SCRIPTS / "sheet.py")
+        sheet = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sheet)
+        self.assertEqual(sheet.label("out/stills/t_000.25.png"), "0.25")
+        self.assertEqual(sheet.label("t_012.50.png"), "12.5")
+        # pipeline.md §7 writes f_%04d.jpg at 2 fps: frame 1 is the render's first frame
+        self.assertEqual(sheet.label("out/watch/f_0001.jpg", 2), "0.0")
+        self.assertEqual(sheet.label("out/watch/f_0041.jpg", 2, 20.0), "40.0")
+        self.assertEqual(sheet.label("out/watch/f_0041.jpg"), "f_0041.jpg")
+        self.assertEqual(sheet.label("cover.png", 2), "cover.png")
+
+    def test_fps_and_start_options_are_read(self):
+        from PIL import Image
+
+        for name in ("f_0001.jpg", "f_0002.jpg"):
+            Image.new("RGB", (64, 36), "blue").save(self.cwd / name)
+        r = run("sheet.py", "frames.jpg", "2", "f_0001.jpg", "f_0002.jpg", "--fps", "2", "--start", "20", cwd=self.cwd)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue((self.cwd / "frames.jpg").exists())
+        bad = run("sheet.py", "x.jpg", "2", "f_0001.jpg", "--fps", "two", cwd=self.cwd)
+        self.assertIn("--fps needs a number, not two", bad.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

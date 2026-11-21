@@ -9,7 +9,8 @@ A line before any section header is aligned with no section.
 --chant: that section's lines are counted, not aligned. Each vocal peak between the lines around the section becomes one chant
 word, up to as many words as the section's lines hold (all peaks to the next line when it has none).
 Method (what held up on sung vocals): faster-whisper large-v3 word timestamps on the Demucs vocal stem, sequence-matched onto the
-corrected lyrics, starts snapped to vocal onsets within 80 ms, then a fix for short first words pulled early by a held note.
+corrected lyrics. A start Whisper put in the silence before its note moves to where the vocal rises; starts then snap to vocal
+onsets within 80 ms, and a fix follows for short first words pulled early by a held note.
 Whisper runs with its VAD filter: without it, a song's silent 15 s intro drew a hallucinated "Thank you." and Whisper then
 skipped the rest of that 30 s window, sung lines included.
 transcribe prints on stderr each vocal stretch (the stem's envelope) of 3 s or more lying 2 s clear of any transcribed word:
@@ -40,6 +41,24 @@ VOCAL_LEVEL = 0.1   # the vocal envelope (1.0 = the stem's 99th percentile) over
 WORD_REACH = 2.0    # s: vocals this close to a transcribed word belong to it (breaths, held notes); runs merge over it
 LONE_MIN = 3.0      # s: a run of wordless vocals at least this long is reported
 
+
+SILENT = 0.06      # the vocal envelope under which the stem is silent (a breath, a rest)
+LOUD = 0.5         # ...and over which a note is sung
+GAP = 0.1          # s: a silence this long inside a word's span means Whisper started the word before its note
+
+
+def voiced_start(env, fps, s, e):
+    """Whisper can start a word in the silence before its note: three line starts in one song came 0.4 to 0.7 s early.
+    When a silence of GAP s or more separates s from the first loud stretch inside [s, e), the word starts where that
+    stretch rises. A word that starts softly and swells has no silence before its loud part, so it keeps s."""
+    i0, i1 = int(round(s * fps)), min(len(env), int(e * fps) + 1)
+    j = next((k for k in range(i0, i1) if env[k] >= LOUD), None)
+    if j is None: return s
+    k = j
+    while k > i0 and env[k - 1] >= SILENT: k -= 1
+    q = k
+    while q > i0 and env[q - 1] < SILENT: q -= 1
+    return k / fps if (k - q) / fps >= GAP else s
 
 def wordless_vocals(words):
     """Stretches of vocal-stem activity, from engine/data/audio.json, with no transcribed word near them."""
@@ -101,8 +120,10 @@ def align(path, chant=None, no_fix=()):
     for i in range(len(C)):
         if T[i] is None:
             p = next((T[j] for j in range(i - 1, -1, -1) if T[j]), (0, 0)); T[i] = (p[1], p[1] + 0.25)
+    venv, vfps = np.array(A.get('env', {}).get('vocal') or []), A.get('env_fps', 60)
     for i, (li, wi, _) in enumerate(C):
         s, e = T[i]
+        if len(venv): s = voiced_start(venv, vfps, s, e)
         if len(vo):
             j = np.argmin(abs(vo - s))
             if abs(vo[j] - s) < 0.08: s = float(vo[j])

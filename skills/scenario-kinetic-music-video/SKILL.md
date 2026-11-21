@@ -22,13 +22,13 @@ The work splits by what each tool does best:
 - **Sub-agents** give each section a dedicated designer. A shared style bible and a verification
   loop keep them coherent.
 
-Connection and the core generation loop: see the `scenario` skill in this repo. For a song-to-video
-cut without the engine, see `scenario-seedance-music-video`. If a sibling skill named here is
-missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
-and flag the gap.
+Connection and the generation loop: the `scenario` skill. For a song-to-video cut without the
+engine, see `scenario-seedance-music-video`. If a sibling skill named here is missing from your
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
-Read `references/lessons.md` before starting. Every item in it cost real time or money once.
+Read `references/lessons.md` before starting: every item in it cost real time or money.
 `references/motion_library.md` is the design menu.
 
 ## Before you start (ask once, then run)
@@ -168,7 +168,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - Set `PAL` in `core.js`, and in `engine/timeline.js` set `CANVAS`, the sections on downbeats with
     their `energy`, `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by
     default).
-  - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label.
+  - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label (graphics
+    only: backdrop → one word).
   - Render one still and a 5 s clip, then confirm audio and flashes line up with `av_sync_check.py`.
 - **Brief the agents.** Fill in `AGENTS_BRIEF.md` from the template, then launch one background
   agent per section in a single message. Each gets its file, time range, lyrics, must-have ideas and

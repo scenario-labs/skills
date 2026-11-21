@@ -96,13 +96,14 @@ class TranscribeTest(unittest.TestCase):
 
 
 class AlignTest(unittest.TestCase):
-    def align(self, lyrics, words, onsets, *args):
+    def align(self, lyrics, words, onsets, *args, vocal=None):
         with tempfile.TemporaryDirectory() as tmp:
             cwd = Path(tmp)
             (cwd / "engine" / "data").mkdir(parents=True)
             (cwd / "analysis").mkdir()
             (cwd / "engine" / "data" / "audio.json").write_text(
-                json.dumps({"vocal_onsets": onsets, "env": {}, "env_fps": 60}), encoding="utf-8")
+                json.dumps({"vocal_onsets": onsets, "env": {"vocal": vocal} if vocal else {}, "env_fps": 60}),
+                encoding="utf-8")
             (cwd / "analysis" / "lyrics_raw.json").write_text(
                 json.dumps([{"start": 0, "end": 0, "text": "", "words": words}]), encoding="utf-8")
             (cwd / "lyrics.txt").write_text(lyrics, encoding="utf-8")
@@ -111,6 +112,32 @@ class AlignTest(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             self.stderr = r.stderr
             return json.loads((cwd / "engine" / "data" / "lyrics.json").read_text(encoding="utf-8"))["lines"]
+
+    @staticmethod
+    def envelope(*spans, seconds=4.0):
+        """A 60 fps vocal envelope at 0.03 (silence) with each (start, end, level) span raised."""
+        env = [0.03] * int(seconds * 60)
+        for a, b, level in spans:
+            env[round(a * 60):round(b * 60)] = [level] * (round(b * 60) - round(a * 60))
+        return env
+
+    def test_a_start_whisper_put_in_the_silence_before_its_note_moves_to_the_note(self):
+        # a song's three line starts came 0.4 to 0.7 s early, in the silence before the note
+        # a word of five letters or more, so the held-note fix for short first words stays out of it
+        words = [word("burning", 1.0, 2.0), word("bright", 2.1, 2.5)]
+        (line,) = self.align("# section: verse\nburning bright\n", words, [1.62],
+                             vocal=self.envelope((1.6, 2.0, 0.9), (2.1, 2.5, 0.8)))
+        self.assertEqual([(w["w"], w["s"]) for w in line["words"]], [("burning", 1.62), ("bright", 2.1)])
+
+    def test_a_word_that_starts_softly_and_swells_keeps_its_start(self):
+        words = [word("hold", 1.0, 2.0)]
+        (line,) = self.align("# section: verse\nhold\n", words, [],
+                             vocal=self.envelope((1.0, 1.5, 0.2), (1.5, 2.0, 0.9)))
+        self.assertEqual(line["words"][0]["s"], 1.0)
+        # a breath under 0.1 s inside the word is not the silence before its note either
+        (line,) = self.align("# section: verse\nhold\n", words, [],
+                             vocal=self.envelope((1.0, 1.4, 0.3), (1.45, 2.0, 0.9)))
+        self.assertEqual(line["words"][0]["s"], 1.0)
 
     def test_starts_snap_to_a_vocal_onset_within_80_ms_only(self):
         words = [word("one", 1.0, 1.4), word("two", 1.5, 1.9)]
