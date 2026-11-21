@@ -44,6 +44,7 @@ expert numbers.
 | Influences      | `max_influences`, `over4`                                                                  | <= 4 for game export | major (export)                     |
 | Rigid parts     | each rigid island exactly one group at 1.0; `rigid_check` < 1e-4                           | yes                  | major                              |
 | Garments        | weights from the same source as the body, Data Transfer applied, no Armature before Mirror | yes                  | major                              |
+| Garment depth   | `garment_depth` over the test poses, against the rest pose                                 | 0 over 5 mm [added]  | major                              |
 | Symmetry        | `mirror_err` on symmetric meshes                                                           | < 0.05               | minor                              |
 | Stack           | Armature after Mirror, before Subdivision / Corrective Smooth                              | yes                  | major                              |
 
