@@ -57,6 +57,9 @@ class FootSlip(unittest.TestCase):
         self.assertEqual(self.ranges("cut_in_skim"), [(1, 10), (19, 20)])
         self.assertEqual(self.ranges("cut_in_skim_onset"), [(1, 10)])
 
+    def test_onset_reads_the_first_frame_speed(self):
+        self.assertEqual(self.ranges("start_in_skim_onset"), [(21, 30)])
+
     def test_ankle_alone_loses_the_roll(self):
         self.assertEqual(self.ranges("ankle_only"), [(1, 8), (19, 30)])
 
@@ -70,7 +73,7 @@ class FootSlip(unittest.TestCase):
 
     def test_summary(self):
         s = self.r["summary"]
-        self.assertEqual((s["ranges"], s["median"], s["p95"], s["worst"]), (2, 0.018, 0.018, 0.018))
+        self.assertEqual((s["ranges"], s["median"], s["p95"], s["worst"]), (2, 0.009, 0.018, 0.018))
         self.assertEqual([tuple(r) for r in s["over"]], [(21, 30)])
         self.assertEqual(self.r["empty"]["ranges"], 0)
 

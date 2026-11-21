@@ -41,6 +41,7 @@ test_ball_shot.py (a full ball shot with the review pack).
 __version__ = "0.1"  # Blender Expert Skills v0.1 (2026-09-24)
 import math
 import os
+import statistics
 
 import bpy
 from bpy_extras import anim_utils
@@ -1312,10 +1313,13 @@ def foot_contacts(obj, bones, frames, height=0.03, min_frames=3, onset=None, poi
     h = [i for i in range(3) if i != up_axis]
 
     def speed(k):
-        if k == 0:
+        # the first frame has no previous one: use its forward difference, so a clip
+        # cut mid-skim does not start a range at a speed of zero
+        i, j = (k, k + 1) if k == 0 else (k - 1, k)
+        if j >= len(fr):
             return 0.0
-        return min(math.hypot(pts[bn][k][h[0]] - pts[bn][k - 1][h[0]], pts[bn][k][h[1]] - pts[bn][k - 1][h[1]])
-                   for bn in bones) * fps / max(fr[k] - fr[k - 1], 1)
+        return min(math.hypot(pts[bn][j][h[0]] - pts[bn][i][h[0]], pts[bn][j][h[1]] - pts[bn][i][h[1]])
+                   for bn in bones) * fps / max(fr[j] - fr[i], 1)
 
     out, start = [], None
     for k, v in enumerate(down + [False]):
@@ -1338,7 +1342,7 @@ def slip_summary(slips, tolerance=0.001):
     s = sorted(r["slide"] for r in slips)
     if not s:
         return {"ranges": 0, "median": None, "p95": None, "worst": None, "over": []}
-    return {"ranges": len(s), "median": s[len(s) // 2], "p95": s[int(0.95 * (len(s) - 1) + 0.5)],
+    return {"ranges": len(s), "median": statistics.median(s), "p95": s[int(0.95 * (len(s) - 1) + 0.5)],
             "worst": s[-1], "over": [r["range"] for r in slips if r["slide"] > tolerance]}
 
 
