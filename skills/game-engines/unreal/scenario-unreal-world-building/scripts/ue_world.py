@@ -61,6 +61,7 @@ import math
 import os
 import struct
 import zlib
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 __version__ = "0.1"  # Unreal Engine Expert Skills v0.1 (2026-09-24; includes the refactor pass)
@@ -2775,7 +2776,7 @@ def _cli(argv: Sequence[str]) -> int:
     if a.cmd == "plan-landscape":
         print(json.dumps(plan_landscape(a.size_m, a.quad_m, a.relief_m), indent=1, default=str))
     elif a.cmd == "check-spec":
-        spec = U1_EXAMPLE_SPEC if a.spec == "u1" else json.load(open(a.spec, encoding="utf-8"))
+        spec = U1_EXAMPLE_SPEC if a.spec == "u1" else json.loads(Path(a.spec).read_text(encoding="utf-8"))
         res = check_world_spec(spec)
         print(json.dumps(res, indent=1, default=str))
         return 0 if res["ok"] else 1

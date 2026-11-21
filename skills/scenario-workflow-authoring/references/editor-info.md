@@ -73,20 +73,21 @@ round-trip.
 Common `data` fields on every node: `title` (display name), `isInput` / `isOutput` (workflow pin
 flags), `inputHandles` / `outputHandles` (arrays of `{id, name, label, type}`).
 
-| Type            | Data fields                                                                                                                                                   |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text`          | `value` (the string)                                                                                                                                          |
-| `asset`         | `type` (`image` \| `video` \| `audio` \| `3d`, note `3d` not `3d-model`), `value` (asset id, or array when `isMultiple: true`), `isRequired?`                 |
-| `model` / `llm` | `modelId`, `form` (scalar-only settings keyed by the model's input names, e.g. `{"guidance": 7.5}`; wired inputs like `prompt` never go here)                 |
-| `transformText` | `value` (a CEL expression, see below); one input handle `<id>-source-input` (type `text`) that takes any number of edges, and one output `<id>-target-output` |
-| `splitText`     | `splitDelimiter` (default `,`)                                                                                                                                |
-| `groupItems`    | `value` (a CEL list expression)                                                                                                                               |
-| `sliceAssets`   | `from`, `count`: STRINGS, not numbers (`"0"`, `"-3"`; negative `from` counts from the end)                                                                    |
-| `aspectRatio`   | `output` (exactly one of `21:9`, `16:9`, `3:2`, `4:3`, `5:4`, `1:1`, `4:5`, `3:4`, `2:3`, `9:16`, `9:21`), `quality`                                          |
-| `ifElse`        | `conditionBlocks` (see below)                                                                                                                                 |
-| `forEach`       | `isConcurrentRuns?` (parallel iterations; ignored on nested loops)                                                                                            |
-| `forEachEnd`    | `parentNodeId` (the paired `forEach` node id)                                                                                                                 |
-| `approval`      | `message` (prompt shown when paused; default "Continue ?")                                                                                                    |
+| Type            | Data fields                                                                                                                                                                  |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`          | `value` (the string)                                                                                                                                                         |
+| `asset`         | `type` (`image` \| `video` \| `audio` \| `3d`, note `3d` not `3d-model`), `value` (asset id, or array when `isMultiple: true`), `isRequired?`                                |
+| `model` / `llm` | `modelId`, `form` (scalar-only settings keyed by the model's input names, e.g. `{"guidance": 7.5}`; wired inputs like `prompt` never go here)                                |
+| `transformText` | `value` (a CEL expression, see below); one input handle `<id>-source-input` (type `text`) that takes any number of edges, and one output `<id>-target-output`                |
+| `splitText`     | `splitDelimiter` (default `,`)                                                                                                                                               |
+| `groupItems`    | `value` (a CEL list expression)                                                                                                                                              |
+| `sliceAssets`   | `from`, `count`: STRINGS, not numbers (`"0"`, `"-3"`; negative `from` counts from the end)                                                                                   |
+| `aspectRatio`   | `output` (exactly one of `21:9`, `16:9`, `3:2`, `4:3`, `5:4`, `1:1`, `4:5`, `3:4`, `2:3`, `9:16`, `9:21`), `quality`                                                         |
+| `ifElse`        | `conditionBlocks` (see below)                                                                                                                                                |
+| `forEach`       | `isConcurrentRuns?` (parallel iterations; ignored on nested loops)                                                                                                           |
+| `forEachEnd`    | `parentNodeId` (the paired `forEach` node id)                                                                                                                                |
+| `approval`      | `message` (prompt shown when paused; default "Continue ?")                                                                                                                   |
+| `stickyNote`    | `content` (Markdown), `backgroundColor` (`#RRGGBB`; the field is not `color`), `fontSize` (`small` \| `medium` \| `large`), `backgroundColorOpacity?` (0.1 to 1); no handles |
 
 Only `image` and `video` asset nodes support `isMultiple` with an array `value`; `audio` and `3d`
 asset nodes hold a single asset id, always.

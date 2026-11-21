@@ -80,7 +80,7 @@ def dirt_bike(name, body):
     p.add("box", (0.78, 0.05, 0.05), (0, -0.46, 1.12), pal["metal"])  # handlebar
     p.add("box", (0.26, 0.04, 0.22), (0, -0.67, 1.0), pal["trim"])  # number plate
     p.add("box", (0.12, 0.05, 0.08), (0, -0.7, 0.96), pal["light"])  # headlight
-    p.add("box", (0.1, 0.05, 0.06), (0, 1.06, 0.98), (0.85, 0.05, 0.05))  # tail light
+    p.add("box", (0.1, 0.05, 0.06), (0, 1.06, 0.98), K.REAR_RED)  # tail light
     return p.to_object(name, (0, 0, 0), 0.0, C["prp"])
 
 
@@ -113,7 +113,7 @@ def pickup(name, body):
     p.add("box", (W * 0.6, 0.06, 0.32), (0, -L / 2 - 0.02, r * 1.05 + 0.3), (0.12, 0.12, 0.13), base=True)  # grille
     for x in (-0.72, 0.72):
         p.add("box", (0.26, 0.08, 0.2), (x, -L / 2 - 0.04, r * 1.05 + 0.4), pal["light"], base=True)
-        p.add("box", (0.18, 0.08, 0.3), (x, L / 2 + 0.03, r * 1.05 + 0.3), (0.85, 0.05, 0.05), base=True)
+        p.add("box", (0.18, 0.08, 0.3), (x, L / 2 + 0.03, r * 1.05 + 0.3), K.REAR_RED, base=True)
     for y in (-L * 0.31, L * 0.31):
         for x in (-W / 2 + 0.16, W / 2 - 0.16):
             p.add("cylinder", (2 * r, 2 * r, 0.32), (x, y, r), (0.07, 0.07, 0.08), rot=(0, math.pi / 2, 0), segments=18)

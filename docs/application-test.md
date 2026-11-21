@@ -1,7 +1,30 @@
 # Application test protocol
 
-The test every new or changed skill passes before merging. `/skills:validate <name>` drives it;
-[AGENTS.md](../AGENTS.md) "Validation and testing" covers when to run it.
+The test every new or changed skill passes before merging. `/skills:validate <name>` drives it.
+
+## When to run it
+
+This is the one home of these criteria: [AGENTS.md](../AGENTS.md) "Validation and testing" and
+`/skills:pr-handle` point here.
+
+Run it for each skill a PR changes when any of these hold:
+
+- The skill folder is new.
+- `SKILL.md` changed in substance: description, steps, tool names, parameters, examples, or common
+  mistakes.
+- A supporting file linked from `SKILL.md` was added, removed, or materially reworked: a script
+  whose behavior changed, a reference, an asset that changes agent behavior.
+
+Skip it only when the change cannot alter agent behavior, or leaves no skill to test:
+
+- only paths outside every skill folder changed;
+- the PR deletes the skill: nothing is left to install;
+- a typo-only, whitespace-only, or formatting edit;
+- README table rows, or `skills.sh.json` grouping churn with no `SKILL.md` change.
+
+A skipped test is still recorded: the PR template's "not applicable" line names the criterion.
+
+## Protocol
 
 1. Spawn a fresh agent with no conversation history. Give it only:
    - a framing line ("you are an agent connected to the Scenario MCP server; the skill document
@@ -37,3 +60,20 @@ The test every new or changed skill passes before merging. `/skills:validate <na
    a new fresh agent: a failed agent is contaminated by its own mistake.
 6. Baseline probe, once per new skill (not per edit): run the same task with no skill installed, to
    confirm the skill earns its context cost.
+
+## Rules learned from past runs
+
+- Catalog-only MCP tools (`collection_*`, `asset_quality_gate_run`) take their arguments under
+  `parameters`, not `arguments`, in `scenario_tool_execute_read/write`. The wrong key fails with a
+  misleading "team_id and project_id are required".
+- `usage` accepts inclusive date bounds and defaults to the last 31 days when both dates are
+  omitted. Set explicit dates and scope for attribution.
+  - Overall consumed CU is `totals.totalCU` (the sum of `consumption.value`). Model CU is generation
+    activity and can differ. Both are already after discounts.
+  - Never substitute job billing snapshots, or a sum of your own calls, for consumed CU.
+- Verify a delivered video by sweeping it into contact sheets (`ffmpeg -vf "fps=2"`), not one frame
+  per shot: a defect that fades in mid-shot passes a spot check.
+- Before a paid run, pre-register what each outcome would mean, so conclusions are not fitted to
+  results afterwards.
+- Stop hunting a mechanism after roughly two inconclusive controlled runs: ship the rule that holds
+  regardless and record the open question.

@@ -10,6 +10,7 @@ pnpm exec cspell --no-progress --relative --no-must-find-files \
   'README.md' \
   'INSTALL.md' \
   'AGENTS.md' \
+  'REVIEW.md' \
   'CODE_OF_CONDUCT.md' \
   'CONTRIBUTING.md' \
   'SECURITY.md' \

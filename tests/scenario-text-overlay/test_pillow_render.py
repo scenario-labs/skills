@@ -1,7 +1,20 @@
+"""Pillow fallback renderer tests: layout, font resolution, and the font cache.
+
+Runs offline: font downloads are stubbed, so system fonts or Pillow's default render.
+Needs Pillow (requirements.txt).
+"""
+
+import errno
+import gc
 import io
+import os
 import pathlib
 import sys
+import tempfile
 import unittest
+import unittest.mock as mock
+import warnings
+import weakref
 from contextlib import redirect_stderr
 
 SCRIPTS = (
@@ -125,6 +138,98 @@ class ResolveFontTests(unittest.TestCase):
         with redirect_stderr(stream):
             self.assertIsNone(pillow_render.resolve_font_file(payload()))
         self.assertIn("system font", stream.getvalue())
+
+
+class CacheFontTests(unittest.TestCase):
+    """_cache_font keeps the file, closes its handle, and raises a failed write.
+
+    The spy wraps tempfile.NamedTemporaryFile, so a rewrite to another temp API fails it
+    even when it leaks nothing.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        # _cache_font writes into tempfile's default directory; point it at a private one.
+        patcher = mock.patch.object(pillow_render.tempfile, "tempdir", self.tmp.name)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def leaks(self, call):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ResourceWarning)
+            call()
+            gc.collect()
+        return [
+            str(w.message)
+            for w in caught
+            if issubclass(w.category, ResourceWarning) and self.tmp.name in str(w.message)
+        ]
+
+    def spy_handles(self, fail_write=False, keep=True):
+        """Record each NamedTemporaryFile handle _cache_font opens.
+
+        keep=False records weak references, so a dropped handle can still be collected.
+        fail_write=True makes write raise ENOSPC, as a full disk would.
+        """
+        handles = []
+        real = tempfile.NamedTemporaryFile
+
+        def spy(*args, **kwargs):
+            handle = real(*args, **kwargs)
+            if fail_write:
+                handle.write = mock.Mock(side_effect=OSError(errno.ENOSPC, "No space left"))
+            handles.append(handle if keep else weakref.ref(handle))
+            return handle
+
+        patcher = mock.patch.object(pillow_render.tempfile, "NamedTemporaryFile", spy)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return handles
+
+    def test_returns_a_kept_file_with_the_suffix_and_exact_bytes(self):
+        data = b"\x00\x01FONTDATA\xff"
+        path = pillow_render._cache_font(data, ".otf")
+        self.assertEqual(os.path.dirname(path), self.tmp.name)
+        self.assertTrue(path.endswith(".otf"))
+        self.assertEqual(pathlib.Path(path).read_bytes(), data)
+
+    def test_success_closes_the_handle(self):
+        handles = self.spy_handles()
+        paths = []
+        # The spy keeps the handle alive, so leaks() only sees other files left open.
+        self.assertEqual(
+            self.leaks(lambda: paths.append(pillow_render._cache_font(b"ttf", ".ttf"))), []
+        )
+        self.assertEqual(len(handles), 1)
+        self.assertTrue(handles[0].closed)
+        self.assertTrue(os.path.exists(paths[0]))
+
+    def test_write_failure_raises_and_closes_the_handle(self):
+        handles = self.spy_handles(fail_write=True)
+        with self.assertRaises(OSError) as raised:
+            pillow_render._cache_font(b"ttf", ".ttf")
+        self.assertEqual(raised.exception.errno, errno.ENOSPC)
+        self.assertEqual(len(handles), 1)
+        self.assertTrue(handles[0].closed)
+        # A failed write may leave an empty file behind; the temp dir cleanup removes it.
+        left = os.listdir(self.tmp.name)
+        self.assertLessEqual(len(left), 1)
+        self.assertTrue(all(name.endswith(".ttf") for name in left))
+
+    @unittest.skipUnless(
+        sys.version_info >= (3, 14),
+        "Python 3.13 and older drop an unclosed temp file without a ResourceWarning",
+    )
+    def test_write_failure_leaks_no_handle(self):
+        handles = self.spy_handles(fail_write=True, keep=False)
+
+        def failing_write():
+            with self.assertRaises(OSError):
+                pillow_render._cache_font(b"ttf", ".ttf")
+
+        self.assertEqual(self.leaks(failing_write), [])
+        self.assertEqual(len(handles), 1)
 
 
 if __name__ == "__main__":
