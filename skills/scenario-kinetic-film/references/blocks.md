@@ -65,7 +65,8 @@ Shot options:
 - **`size`, `wdth`, `y`, `dy`, `rot`**: type size in px, width axis 62 to 125, vertical position,
   offset, rotation (cut).
   - `cut` reads `size` (px, default 400), `dy` (px from the frame's vertical center, default 0) and
-    `rot` (degrees, default 0). It ignores `y`.
+    `rot` (degrees, default 0). The word ignores `y`, but the `fx: 'punch'` sparks follow it (540
+    when unset): with `dy`, set `y` to `540 + dy` too.
   - A `cut` word wider than 1800 px shrinks to fit. A narrower one keeps its `size`.
 - **`in`**: `cut` (default), `whipX`, `whipXr`, `whipY`.
 - **`fx`**: `punch` (rays, ring, sparks, flash, shake), `hit` (flash and shake), `beat` (shake and
@@ -207,8 +208,10 @@ window and lands on its first frame as the window fills the screen.
   the picture moving between words. Under the others, put a word or a cut-in on every beat: two
   words and one cut-in over 8 beats held 0.88 s under `snow` or `dust` and failed `finish.py`.
 - `tint` darkens it for type.
-- `x`/`y` place the words' center in px on the 1920x1080 frame: `x` 0 to 1920 (default 960), `y` 0
-  to 1080 (default 600). Set them off center when a face is in the middle.
+- `x`/`y` place the words' center in px on the 1920x1080 frame (defaults 960 and 600; 0 counts as
+  unset). Set them off center when a face is in the middle.
+- Keep `x` more than 60 px inside either side: at 60 px the fit width below reaches 0 and the words
+  vanish, and closer they render mirrored. Nothing checks it.
 - Words are `size` px (default 260). They shrink to fit 1600 px, or with `x` set, twice the distance
   from `x` to the nearer side minus 120 px.
 - Use images at least 2048 px wide. Cut-ins above 1.7x look soft at 4K.
