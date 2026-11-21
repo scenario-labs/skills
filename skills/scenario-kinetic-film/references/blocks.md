@@ -19,8 +19,9 @@ export default {
 ```
 
 - `hudOut: [start, end]` fades the HUD out between those two beats. Default: the film's last 4 beats
-  to its last 2 (`[beats - 4, beats - 2]`). `validate.js` stops on a pair outside the film or out of
-  order.
+  to its last 2 (`[beats - 4, beats - 2]`), so the HUD, the film's name included, stays over most of
+  a long end card: end the fade at the Logo's start for a card that shows the name alone.
+  `validate.js` stops on a pair outside the film or out of order.
 - Palette names (`'bg'`, `'paper'`, `'accent'`, `'hot'`, `'ink'`) work anywhere a color does. Any
   CSS color works outside the palette.
 - Palette values must be 6-digit hex (`#RRGGBB`) or `rgb()`, the two forms the engine parses without
@@ -71,6 +72,8 @@ Shot options:
     center, default 0) and `rot` (degrees, default 0). The word ignores `y`, but the `fx: 'punch'`
     sparks follow it (540 when unset): with `dy`, set `y` to `540 + dy` too.
   - A `cut` word wider than 1800 px shrinks to fit. A narrower one keeps its `size`.
+  - It slams in from 1.25x, then grows 24% and turns 6 degrees per second until the next shot: size
+    it for the end of its beat, which at 120 BPM is 12% wider than at rest.
 - **`in`**: `cut` (default), `whipX`, `whipXr`, `whipY`.
 - **`fx`**: `punch` (rays, ring, sparks, flash, shake), `hit` (flash and shake, the default), `beat`
   (shake and bump only, for runs of cuts), `none`.
@@ -230,8 +233,9 @@ window and lands on its first frame as the window fills the screen.
   from -1 to 1 degree by its end, carrying off-center words outward. A word that fills the fit width
   ends 60 px from the frame's edge before any of that: lower `size` until the word stays inside the
   frame in stills at its slam and at the block's last frame.
-- Each word also slams in from 1.4x over 0.16 s, then grows 5% per second until the next: a word
-  that must stay inside a third of the frame fits about 2 em at 180 px.
+- Each word also slams in from 1.4x over 0.16 s, then grows 5% per second until the next. A word
+  that must stay inside a third of the frame (640 px) can be about 450 px wide at rest: four
+  capitals ran near 130 px, three near 180 px.
 - Use images at least 2048 px wide. Cut-ins above 1.7x look soft at 4K.
 
 ## Logo (N = 11)
@@ -239,8 +243,9 @@ window and lands on its first frame as the window fills the screen.
 `{ mark: ['id', ...], word: ['id', ...], tagline: 'Signed. Sealed. Stomped.', small: 'AVAILABLE NOW', wordmark: 'NAME', width: 840 }`.
 
 - `tagline` and `small` are optional (unset, their line stays empty), `wordmark` defaults to the
-  film's `title`, and `width` (px) to 840.
-- Beat 1 of the block: a line, a slash and a hit.
+  film's `title`, and `width` (px, default 840) sizes an SVG logo; a typed wordmark is 150 px.
+- Beat 1 of the block: a line, a slash and a hit. Its timing scales with the span, so give the block
+  its 11 beats: over 12, the hit lands on beat 1.09 after a dark 0.55 s at 120 BPM.
 - The SVG's `mark` paths drop in one by one, then its `word` paths wipe on. Without ids the whole
   logo wipes on; without a logo file `wordmark` is typed.
 - The tagline and small line follow, then a slow push, drifting particles and a light sweep until

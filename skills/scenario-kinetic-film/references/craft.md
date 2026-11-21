@@ -18,7 +18,8 @@ reason you can see on screen.
 
 - One or two words at a size that fills the frame width (300 to 600 px type on a 1920 frame). Blocks
   scale long words down to fit; if a word has to shrink below about 200 px, split the phrase.
-  Picture words in a side third are the exception: about 2 em fits there, so they run near 180 px.
+  Picture words in a side third are the exception: a third holds a word about 450 px wide, so four
+  capitals run near 130 px (blocks.md, Picture).
 - A beat gets one new thing: a word, a color, a cut, a hit. Two at once cancel out.
 - Runs of beat cuts accelerate: 1, 1, 1, ½, ½, ¼ beat, then a flash.
 

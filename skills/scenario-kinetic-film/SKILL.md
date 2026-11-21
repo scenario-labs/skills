@@ -82,8 +82,8 @@ The steps, each with its reference:
 4. spec.js: [blocks.md](references/blocks.md), with the motion rules in
    [craft.md](references/craft.md).
 5. Preview and stills: scrub, snap the beats, fix, repeat.
-6. A 1080p check render until `finish.py` prints `ALL CHECKS PASS`, then the 4K master:
-   [render.md](references/render.md).
+6. A 1080p check render until `finish.py` prints `ALL CHECKS PASS`, then the 4K master (a 1080p-only
+   brief ends at the check render): [render.md](references/render.md).
 
 ## Worked example: a 24-second game teaser
 

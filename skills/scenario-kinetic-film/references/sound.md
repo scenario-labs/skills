@@ -51,7 +51,8 @@ one generation gets one take: keep it when its grid is clear, as below. Download
 - Reported times can run up to about 0.1 s early, an open issue in the tool. Watch the drop in the
   1080p check render, with sound, before the 4K master.
 - `--window` fits only the stretch the film uses, in seconds from `--start` (seconds into the track,
-  default 0): generated music can drift, and the film only needs that stretch to be exact. Without
+  default 0): generated music can drift, and the film only needs that stretch to be exact. Fit the
+  whole track first to place the drop and `music.offset`, then the window from that offset. Without
   `--bpm` the fit can lock to half or two thirds of the tempo.
 - When the window and the whole track disagree, trust the window: on one take the whole-track grid
   sat 2.5 beats off both drops.
