@@ -64,6 +64,9 @@ Shot options:
   the ground by default).
 - **`size`, `wdth`, `y`, `dy`, `rot`**: type size in px, width axis 62 to 125, vertical position,
   offset, rotation (cut).
+  - `cut` reads `size` (px, default 400), `dy` (px from the frame's vertical center, default 0) and
+    `rot` (degrees, default 0). It ignores `y`.
+  - A `cut` word wider than 1800 px shrinks to fit. A narrower one keeps its `size`.
 - **`in`**: `cut` (default), `whipX`, `whipXr`, `whipY`.
 - **`fx`**: `punch` (rays, ring, sparks, flash, shake), `hit` (flash and shake), `beat` (shake and
   bump only, for runs of cuts), `none`.
@@ -198,10 +201,16 @@ window and lands on its first frame as the window fills the screen.
 - It punches in on every word and hard-cuts in to details: `cutIns: [[beat, scale, [fx, fy], cue]]`,
   positions 0 to 1 of the image. A cut-in's cue plays at a fixed level: a hit that needs its own
   level goes in `spec.cues` (`[beat, name, gain]`) instead, since `spec.sounds` raises every use.
+- `words: [[beat, text, color]]` and `cutIns` count beats from the block's start, on its 8 nominal
+  beats scaled to its span. In a block from 8 to 16, `[1, 'MONSTERS']` lands on beat 9.
 - A weather layer rides over it: `rain`, `snow`, `dust` (the default), or `null`. Only `rain` keeps
   the picture moving between words. Under the others, put a word or a cut-in on every beat: two
   words and one cut-in over 8 beats held 0.88 s under `snow` or `dust` and failed `finish.py`.
-- `tint` darkens it for type. `x`/`y` place the words (off center when a face is in the middle).
+- `tint` darkens it for type.
+- `x`/`y` place the words' center in px on the 1920x1080 frame: `x` 0 to 1920 (default 960), `y` 0
+  to 1080 (default 600). Set them off center when a face is in the middle.
+- Words are `size` px (default 260). They shrink to fit 1600 px, or with `x` set, twice the distance
+  from `x` to the nearer side minus 120 px.
 - Use images at least 2048 px wide. Cut-ins above 1.7x look soft at 4K.
 
 ## Logo (N = 11)
