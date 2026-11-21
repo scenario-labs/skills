@@ -187,6 +187,8 @@ size, and the report claim it backs:
   a defect or a gate result, and one short delivered file a reader can play.
 - Leave out inputs, files a smaller pick already proves, and files past GitHub's attachment limits:
   10 MB for an image, and 10 MB for a video unless the repository's owner has a paid plan (100 MB).
+- Upload only files whose content is publicly shareable, like the report: both routes below publish
+  them, so nothing they show may be customer or internal data.
 
 Then ask how to upload them:
 
@@ -201,8 +203,9 @@ On the gist route:
    file. It is secret (unlisted) by default, so it stays off the user's profile.
 2. Clone it over HTTPS (`gh gist clone` follows gh's `git_protocol`, and SSH can fail host-key
    verification):
-   `git -c 'credential.helper=!gh auth git-credential' clone https://gist.github.com/<id>.git`. Copy
-   the files in, commit, and push.
+   `git -c 'credential.helper=!gh auth git-credential' clone https://gist.github.com/<id>.git`. The
+   `-c` covers the clone only, so set the helper in the clone too
+   (`git config credential.helper '!gh auth git-credential'`). Copy the files in, commit, and push.
 3. Link each file at its commit-pinned raw URL,
    `https://gist.githubusercontent.com/<user>/<id>/raw/<sha>/<file>`, so a later push never changes
    what the report shows. Check that each image serves `image/*` (`curl -sIL`).
@@ -211,7 +214,8 @@ On the gist route:
    gave about 3 MB for a 5-second clip).
 
 Once the files are uploaded, format the comment: offer it after a drag, and do it on the gist route,
-where nothing reaches the comment otherwise.
+where nothing reaches the comment otherwise. With no comment to update (`--no-post`, or a report
+kept out of GitHub), print the gist links under the report instead.
 
 1. Fetch its body with `gh api repos/<owner>/<repo>/issues/comments/<id> --jq .body`. Keep every
    attachment URL GitHub inserted, and change nothing but the evidence.
