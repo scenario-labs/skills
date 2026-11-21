@@ -66,7 +66,7 @@ Shot options:
 - **`ground`, `color`**: the background for the shot (a palette name; unset, the film's `bg`); the
   type color (readable on the ground by default).
 - **`size`, `wdth`, `y`, `dy`, `rot`**: type size in px, width axis 62 to 125, vertical position,
-  offset, rotation (cut).
+  offset, rotation (cut). The examples' `cut` words run 320 to 640 px, at -7 to 6 degrees.
   - `cut` reads `size` (px, default 400), `wdth` (default 104), `dy` (px from the frame's vertical
     center, default 0) and `rot` (degrees, default 0). The word ignores `y`, but the `fx: 'punch'`
     sparks follow it (540 when unset): with `dy`, set `y` to `540 + dy` too.
@@ -238,6 +238,8 @@ window and lands on its first frame as the window fills the screen.
 
 `{ mark: ['id', ...], word: ['id', ...], tagline: 'Signed. Sealed. Stomped.', small: 'AVAILABLE NOW', wordmark: 'NAME', width: 840 }`.
 
+- `tagline` and `small` are optional (unset, their line stays empty), `wordmark` defaults to the
+  film's `title`, and `width` (px) to 840.
 - Beat 1 of the block: a line, a slash and a hit.
 - The SVG's `mark` paths drop in one by one, then its `word` paths wipe on. Without ids the whole
   logo wipes on; without a logo file `wordmark` is typed.

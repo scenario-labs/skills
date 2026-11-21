@@ -30,8 +30,9 @@ Prompt pattern (keep it under the schema's length limit):
 > breakbeats, growling reese bass, bright brass stabs. Tight, loud, modern. No vocals. Ends on one
 > hard final hit.
 
-Ask for 2 takes and about 15 s more than the film (the intro and the outro are spare). Download each
-with `asset_download` (no `format` for audio), then measure:
+Ask for 2 takes and about 15 s more than the film (the intro and the outro are spare). A budget of
+one generation gets one take: keep it when its grid is clear, as below. Download each with
+`asset_download` (no `format` for audio), then measure:
 
 ```bash
 .venv/bin/python $K/scripts/beat_grid.py audio/music_a.mp3 --bpm 172
@@ -49,8 +50,9 @@ with `asset_download` (no `format` for audio), then measure:
   downbeats.
 - Reported times can run up to about 0.1 s early, an open issue in the tool. Watch the drop in the
   1080p check render, with sound, before the 4K master.
-- `--window` fits only the stretch the film uses: generated music can drift, and the film only needs
-  that stretch to be exact. Without `--bpm` the fit can lock to half or two thirds of the tempo.
+- `--window` fits only the stretch the film uses, in seconds from `--start` (seconds into the track,
+  default 0): generated music can drift, and the film only needs that stretch to be exact. Without
+  `--bpm` the fit can lock to half or two thirds of the tempo.
 - When the window and the whole track disagree, trust the window: on one take the whole-track grid
   sat 2.5 beats off both drops.
 - `music.stopBeat` cuts the music dead on a beat (the logo hit); without it the music fades over the

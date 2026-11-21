@@ -161,10 +161,10 @@ describe.skipIf(!withPlaywright)("the film in a browser", () => {
     const r = await node("snap.mjs", [out, "1", "b1", "40"], tour.url);
     expect(r.code, r.err).toBe(0);
     expect(r.out.toString()).toMatch(/no errors/);
-    expect(pngSize(readFileSync(path.join(out, "t_000.35.png")))).toEqual([
+    expect(pngSize(readFileSync(path.join(out, "t_000.350.png")))).toEqual([
       1920, 1080,
     ]);
-    expect(pngSize(readFileSync(path.join(out, "t_040.00.png")))).toEqual([
+    expect(pngSize(readFileSync(path.join(out, "t_040.000.png")))).toEqual([
       1920, 1080,
     ]);
   }, 60000);
