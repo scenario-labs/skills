@@ -183,6 +183,19 @@ class DeliveryGate(unittest.TestCase):
     def test_part_off_the_ground_floats_however_large(self):
         self.assertEqual(self.verdict("board_ground")["errors"], ["Board: floating, 0.863 from the nearest part"])
 
+    def test_part_under_the_ground_floats(self):
+        r = self.verdict("stray_ground")
+        self.assertEqual(len(r["errors"]), 1, r["errors"])
+        self.assertTrue(r["errors"][0].startswith("Stray: floating"), r["errors"])
+
+    def test_ground_no_part_reaches_warns(self):
+        r = self.verdict("stones_ground_missed")
+        self.assertIn("no part reaches the ground at z = 5.0", r["warnings"])
+        self.assertEqual(r["errors"], ["StoneB: floating, 1.65 from the nearest part"])
+
+    def test_cli_passes_the_ground(self):
+        self.assertEqual(self.verdict("cli_ground"), {"without": 2, "with": 0})
+
 
 if __name__ == "__main__":
     unittest.main()

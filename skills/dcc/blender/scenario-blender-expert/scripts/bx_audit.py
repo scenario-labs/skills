@@ -471,9 +471,10 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
     warning, an error for print. Defaults: 0.01%, 0.2% and 1% of the bounding diagonal.
     evaluated: check the mesh with modifiers applied, as exporters write it by default.
     ground: height of the floor the asset stands on (e.g. 0.0), off by default. Parts that
-    reach it (lowest point at or below ground + tol) stand on it together, so separate pieces
-    each on the floor (bike-rack hoops, a scatter of stones) do not float, and the group on the
-    floor is the asset: a part not connected to it floats, however large.
+    span it (lowest point at or below ground + tol, highest at or above ground - tol) stand on
+    it together, so separate pieces each on the floor (bike-rack hoops, a scatter of stones) do
+    not float, and the group on the floor is the asset: a part not connected to it floats,
+    however large. When no part spans it, a warning says so and the largest group is the asset.
     Returns {"pass", "errors", "warnings", "per_object", "profile", "eps", "tol", "gap",
     "skipped"}.
     """
@@ -643,7 +644,10 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
                 elif _inside(a, b) or _inside(b, a):
                     enclosed.add(i if _inside(a, b) else j)
                     root[find(i)] = find(j)
-        standing = [] if ground is None else [i for i, p in enumerate(parts) if p["lo"][2] <= ground + tol]
+        standing = [] if ground is None else [i for i, p in enumerate(parts)
+                                              if p["lo"][2] <= ground + tol and p["hi"][2] >= ground - tol]
+        if ground is not None and not standing:
+            out["warnings"].append(f"no part reaches the ground at z = {ground}")
         for i in standing[1:]:
             root[find(i)] = find(standing[0])
         groups = {}
@@ -709,13 +713,14 @@ def _cli():
     ap.add_argument("--objects", nargs="+", help="parts of the asset (default: every visible mesh)")
     ap.add_argument("--import", dest="source", help="gate this file alone (glb, fbx, obj, usd, stl, ply)")
     ap.add_argument("--profile", default="game", choices=PROFILES)
+    ap.add_argument("--ground", type=float, help="floor height the parts stand on")
     ap.add_argument("--json", help="also write the report here")
     a = ap.parse_args(argv)
     if a.deliverable:
         if a.source:
             _import(a.source)
         objs = a.objects or [o.name for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()]
-        r = deliverable(objs, profile=a.profile)
+        r = deliverable(objs, profile=a.profile, ground=a.ground)
     else:
         r = audit(bpy.data.objects[a.object], high=bpy.data.objects[a.high] if a.high else None)
         r["problems"] = verdict(r)

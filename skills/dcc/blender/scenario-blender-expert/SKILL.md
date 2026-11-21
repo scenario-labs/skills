@@ -137,9 +137,11 @@ textures).
     `print`, the Roblox 20,000-triangle mesh limit (checked 2026-10-18).
   - Returns `{pass, errors, warnings, per_object}`. Tolerances scale with the asset's diagonal.
     UV-seam splits from a glTF import are welded for the checks, so seams never read as holes.
-  - Gate separate props one by one: every prop but the largest reads as floating.
+  - Gate separate props one by one: every prop but the largest reads as floating. Pieces that each
+    rest on the floor (a rack's hoops, a scatter of stones) are one asset: pass `ground=0.0` (the
+    floor's z), and any part not connected to the floor group floats, however large.
   - CLI, exit code 2 on failure:
-    `blender -b --factory-startup --python-exit-code 1 -P bx_audit.py -- --deliverable [--import model.glb | --objects A B] --profile game [--json out.json]`.
+    `blender -b --factory-startup --python-exit-code 1 -P bx_audit.py -- --deliverable [--import model.glb | --objects A B] --profile game [--ground 0] [--json out.json]`.
   - Fixes: apply scale (`obj.data.transform(Matrix.Diagonal(obj.scale).to_4x4())`, then
     `obj.scale = (1, 1, 1)`; a scale the message puts on a parent: select the parent and its
     children, `bpy.ops.object.transform_apply(scale=True)`), `bmesh.ops.recalc_face_normals` for

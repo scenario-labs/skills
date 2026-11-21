@@ -287,6 +287,25 @@ cases["stones"] = gate(["StoneA", "StoneB"])
 cases["stones_ground"] = bx_audit.deliverable(["StoneA", "StoneB"], ground=0.0)
 box("Board", (2.0, 0.05, 1.0), (0, 0.5, 1.5))
 cases["board_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Board"], ground=0.0)
+# A part wholly under the floor does not stand on it, and a ground no part reaches warns.
+box("Stray", (0.2, 0.2, 0.2), (0, 0, -10))
+cases["stray_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Stray"], ground=0.0)
+cases["stones_ground_missed"] = bx_audit.deliverable(["StoneA", "StoneB"], ground=5.0)
+
+
+def cli(*args):
+    """Exit code of the bx_audit CLI run on the open scene."""
+    argv, sys.argv = sys.argv, ["blender", "--", *args]
+    try:
+        bx_audit._cli()
+    except SystemExit as stop:
+        return stop.code
+    finally:
+        sys.argv = argv
+
+
+cases["cli_ground"] = {flag: cli("--deliverable", "--objects", "StoneA", "StoneB", *extra)
+                       for flag, extra in (("without", ()), ("with", ("--ground", "0")))}
 
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
