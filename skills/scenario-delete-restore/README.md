@@ -35,6 +35,10 @@ Maintainer notes, not runtime instructions. SKILL.md does not link this file.
   - A deleted upload's row has no `prompt` and no file name, so `description` is what matches it.
     Rows also carry `source`, which the skill leaves out: the reference does not name it, and
     `description` already identifies an upload.
-  - `collections_list` returns member counts, not ids.
+  - `collections_list` returns member counts (`assetCount`, `modelCount`), not ids. `models_list`
+    rows carry `collectionIds` like asset rows, so model members are recorded the same way.
+  - A deleted asset's full record is unreadable: `asset_get` returns 404 and `assets_get_bulk`
+    returns nothing. The cut `prompt` on its `assets_list` row is all there is, so a cut prompt that
+    shows no match counts as ambiguous rather than a miss.
 - No restore tool exists for collections: `scenario_tools_search` for "restore undelete" returns
   only `asset_restore` and `model_restore`.

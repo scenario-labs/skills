@@ -46,8 +46,9 @@ unattended, proceed from tool schemas and flag the gap.
   Match the user's words client-side against `deletedAt`, `kind`, `prompt`, `description`, and
   `modelId`, paging with `page_token` (`limit` up to 100). The list is newest deletion first, so
   stop paging once `deletedAt` is older than the user's window. `prompt` is cut at 120 characters,
-  so a word past the cut never matches: say the selection may be incomplete. An upload has no
-  `prompt` and keeps no file name: match its `description`, an automatic caption.
+  and a deleted asset's full record is unreadable (`asset_get` returns 404). So a row in the window
+  whose cut `prompt` shows no match is ambiguous, not a miss. An upload has no `prompt` and keeps no
+  file name: match its `description`, an automatic caption.
 - **Models.** `status: "deleted"` is a key inside `filters` on `models_list`. Combined with
   `privacy: "public"` the server refuses it: deleted models are always the team's own.
 - **Confirm the set.** Show the candidates (id, `deletedAt`, prompt or name) when the match is not
@@ -87,7 +88,8 @@ Deletion stays a confirmed action.
 3. **Record the filing** before the call: each asset row from `assets_list` or `assets_get_bulk`
    carries `tags` and `collectionIds`. Keep them in your reply or a local file, since a restore may
    not bring them back. For a collection, record its name and member ids. `collections_list` gives
-   only counts, so the members are the asset rows whose `collectionIds` hold its id.
+   only `assetCount` and `modelCount`, so the members are the `assets_list` rows, and the
+   `models_list` rows when `modelCount` is above 0, whose `collectionIds` hold its id.
 4. **Delete** through `scenario_tool_execute_delete`. `asset_delete` refuses more than 100 ids in
    one call (`You can not delete more than 100 assets at once.`): send batches of 100.
 
@@ -103,10 +105,11 @@ Deletion stays a confirmed action.
    `parameters: {"team_id", "project_id", "deleted": true, "limit": 100}`. Follow
    `nextPaginationToken` until `deletedAt` falls before yesterday.
 4. Keep the rows whose `deletedAt` falls on yesterday, in the user's time zone, and whose `prompt`
-   makes a dragon the subject. A negated or incidental mention is ambiguous. Fourteen mention a
-   dragon: thirteen clearly depict one, and one reads "a castle without a dragon". Show all fourteen
-   with `deletedAt` and confirm. Unattended: keep the thirteen, and list the castle as unresolved,
-   neither restored nor filed.
+   makes a dragon the subject. A negated or incidental mention is ambiguous, and so is a cut
+   `prompt` that shows no dragon. Fourteen mention a dragon: thirteen clearly depict one, and one
+   reads "a castle without a dragon". Two more are cut before naming a subject. Show all sixteen
+   with `deletedAt` and confirm. Unattended: keep the thirteen, and list the castle and the two cut
+   prompts as unresolved, neither restored nor filed.
 5. `scenario_tool_execute_write` with `name: "asset_restore"`,
    `parameters: {"team_id", "project_id", "asset_ids": [<13 ids>]}`. `restored` holds 12; `skipped`
    holds one `not-deleted`, already restored by a teammate.
@@ -115,7 +118,7 @@ Deletion stays a confirmed action.
    `parameters: {"team_id", "project_id", "collection_id", "asset_ids": [<all 13 ids>]}`, since it
    skips any already present.
 7. `asset_display` on one restored asset to confirm. Report 12 restored, one already live, all 13
-   back in Key Art, and the castle unresolved.
+   back in Key Art, and three unresolved: the castle and the two cut prompts.
 
 ## Common mistakes
 
