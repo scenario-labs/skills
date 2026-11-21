@@ -47,6 +47,11 @@ class PoseAsRest(unittest.TestCase):
         # the reason the helper exists: if Blender lifts this, the helper is optional
         self.assertIn("shape keys", self.r["refused"])
 
+    def test_shared_mesh_data_is_refused_before_any_change(self):
+        self.assertIn("single-user", self.r["shared_error"])
+        self.assertIn("Cylinder.001", self.r["shared_error"])
+        self.assertTrue(self.r["shared_untouched"])
+
     def test_pose_becomes_rest(self):
         self.assertTrue(self.r["pose_cleared"])
         self.assertLess(self.r["rest_tail_moved"], 1e-5)

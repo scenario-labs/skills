@@ -78,10 +78,26 @@ except RuntimeError as e:
 
 before = {"basis": posed(body, 0.0), "key": posed(body, 1.0)}
 tail = rig.matrix_world @ rig.pose.bones["hi"].tail
-rewritten = R.apply_pose_as_rest(rig, [body])
+
+# a linked duplicate shares the mesh data: refused before anything changes
+dup = body.copy()
+bpy.context.scene.collection.objects.link(dup)
+rest_co = np.array([v.co[:] for v in body.data.vertices])
+shared_error = ""
+try:
+    R.apply_pose_as_rest(rig, [body, dup])
+except ValueError as e:
+    shared_error = str(e)
+shared_untouched = (bool(np.array_equal(rest_co, np.array([v.co[:] for v in body.data.vertices])))
+                    and rig.pose.bones["hi"].matrix_basis != rig.pose.bones["hi"].matrix_basis.Identity(4))
+bpy.data.objects.remove(dup)
+
+rewritten = R.apply_pose_as_rest(rig, [body, body])  # the same mesh twice is baked once
 after = {"basis": posed(body, 0.0), "key": posed(body, 1.0)}
 result = {
     "refused": refused,
+    "shared_error": shared_error,
+    "shared_untouched": shared_untouched,
     "rewritten": rewritten,
     "modifiers": [m.type for m in body.modifiers],
     "keys": [kb.name for kb in body.data.shape_keys.key_blocks],

@@ -1443,7 +1443,18 @@ def apply_pose_as_rest(rig, meshes):
     modifier_apply refuses a mesh with shape keys (5.2.1), and re-adding the Armature
     modifier appends it after Subdivision. Instead, each mesh's Basis and every key are
     evaluated through its rig Armature modifiers alone (others hidden) and written back as
-    data; the modifier stack is left as it was. Returns {mesh name: keys rewritten}."""
+    data; the modifier stack is left as it was. Returns {mesh name: keys rewritten}.
+
+    Raises ValueError, before changing anything, when two meshes share one mesh datablock
+    (linked duplicates): the first write would feed the second an already-baked input, and
+    one datablock cannot hold two results. Make them single-user first."""
+    meshes = list(dict.fromkeys(meshes))
+    owners = {}
+    for obj in meshes:
+        owners.setdefault(obj.data.as_pointer(), (obj.data.name, []))[1].append(obj.name)
+    shared = {d: names for d, names in owners.values() if len(names) > 1}
+    if shared:
+        raise ValueError(f"meshes share mesh data, make them single-user first: {shared}")
     out = {}
     dg = bpy.context.evaluated_depsgraph_get()
     for obj in meshes:
