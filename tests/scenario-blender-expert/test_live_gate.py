@@ -89,7 +89,7 @@ class DeliveryGate(unittest.TestCase):
 
     def test_part_beside_a_thin_shell_is_not_enclosed(self):
         r = self.verdict("beside_thin_shell")
-        self.assertEqual(r["errors"], ["Plate: floating, 0.0985 from the nearest part"])
+        self.assertEqual(r["errors"], ["Plate: floating, 0.0985 from Fender"])
         self.assertEqual(r["warnings"], [])
 
     def test_negative_scale_fails(self):
