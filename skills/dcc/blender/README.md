@@ -33,6 +33,10 @@ Agent skills that make Claude (Claude Code) or Codex work in Blender 5.2 like th
 - `bx_rig.weight_report`'s mirror check has a live suite in Blender,
   `tests/scenario-blender-expert/test_live_weights.py`, with Blender (`.L`/`.R`) and engine
   (`_l`/`_r`) side names. Before it, engine names compared each group with itself and reported 1.0.
+- `bx_rig.apply_pose_as_rest` has a live suite in Blender,
+  `tests/scenario-blender-expert/test_live_pose_rest.py`: a posed mesh with a shape key and a
+  Subdivision keeps both shapes within 1e-5 m and its modifier order. It also checks that 5.2.1's
+  `modifier_apply` still refuses a mesh with shape keys, the reason the helper exists.
 - The rigging P16 gate numbers (a body moved onto a shared skeleton) come from a seeded sweep on a
   Rigify Basic mannequin, 5 poses up to 25 degrees, on 2026-11-21. It measured 0.0007 mm with B-bone
   segments at 1, merged bones turned together and world-space deltas; 21, 29 and 96 mm with one of

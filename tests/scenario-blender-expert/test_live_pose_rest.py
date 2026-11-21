@@ -1,0 +1,66 @@
+"""Runs bx_rig.apply_pose_as_rest in a real Blender on a posed mesh with a shape key.
+
+pose_rest_cases.py builds the scene and writes the results to JSON; these tests read them.
+Without Blender every test skips.
+"""
+
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+HERE = Path(__file__).parent
+SCRIPTS = HERE.parents[1] / "skills" / "dcc" / "blender" / "scenario-blender-rigging" / "scripts"
+
+
+def find_blender():
+    for path in (os.environ.get("BLENDER"), shutil.which("blender"),
+                 "/Applications/Blender.app/Contents/MacOS/Blender"):
+        if path and Path(path).is_file():
+            return path
+    return None
+
+
+BLENDER = find_blender()
+
+
+@unittest.skipUnless(BLENDER, "Blender is not installed")
+class PoseAsRest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        tmp = tempfile.mkdtemp(prefix="bx_pose_rest_test_")
+        out = Path(tmp) / "cases.json"
+        run = subprocess.run(
+            [BLENDER, "-b", "--factory-startup", "--python-exit-code", "1",
+             "-P", str(HERE / "pose_rest_cases.py"), "--", str(SCRIPTS), str(out)],
+            capture_output=True, text=True, timeout=600,
+        )
+        if run.returncode != 0:
+            raise AssertionError(run.stdout[-3000:] + run.stderr[-3000:])
+        cls.r = json.loads(out.read_text())
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_modifier_apply_refuses_shape_keys(self):
+        # the reason the helper exists: if Blender lifts this, the helper is optional
+        self.assertIn("shape keys", self.r["refused"])
+
+    def test_pose_becomes_rest(self):
+        self.assertTrue(self.r["pose_cleared"])
+        self.assertLess(self.r["rest_tail_moved"], 1e-5)
+
+    def test_mesh_and_key_keep_their_posed_shape(self):
+        self.assertEqual(self.r["rewritten"], {"Cylinder": 2})
+        self.assertLess(self.r["basis_err"], 1e-5)
+        self.assertLess(self.r["key_err"], 1e-5)
+        self.assertGreater(self.r["key_moves"], 0.01)  # the key still does something
+
+    def test_stack_and_keys_unchanged(self):
+        self.assertEqual(self.r["modifiers"], ["ARMATURE", "SUBSURF"])
+        self.assertEqual(self.r["keys"], ["Basis", "bulge"])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1437,6 +1437,46 @@ def armature_first(obj):
     return [m.type for m in obj.modifiers]
 
 
+def apply_pose_as_rest(rig, meshes):
+    """Make the rig's current pose its rest pose, the meshes following, shape keys kept.
+
+    modifier_apply refuses a mesh with shape keys (5.2.1), and re-adding the Armature
+    modifier appends it after Subdivision. Instead, each mesh's Basis and every key are
+    evaluated through its rig Armature modifiers alone (others hidden) and written back as
+    data; the modifier stack is left as it was. Returns {mesh name: keys rewritten}."""
+    out = {}
+    dg = bpy.context.evaluated_depsgraph_get()
+    for obj in meshes:
+        vis = [(m, m.show_viewport) for m in obj.modifiers]
+        for m in obj.modifiers:
+            m.show_viewport = m.type == "ARMATURE" and m.object == rig
+        keys = obj.data.shape_keys.key_blocks if obj.data.shape_keys else []
+        only, active = obj.show_only_shape_key, obj.active_shape_key_index
+        coords = []
+        for i in range(max(len(keys), 1)):
+            if keys:
+                obj.show_only_shape_key, obj.active_shape_key_index = True, i
+            dg.update()
+            ev = obj.evaluated_get(dg)
+            me = ev.to_mesh()
+            co = np.empty(len(me.vertices) * 3)
+            me.vertices.foreach_get("co", co)
+            ev.to_mesh_clear()
+            coords.append(co)
+        obj.show_only_shape_key, obj.active_shape_key_index = only, active
+        for m, v in vis:
+            m.show_viewport = v
+        obj.data.vertices.foreach_set("co", coords[0])
+        for kb, co in zip(keys, coords):
+            kb.data.foreach_set("co", co)
+        obj.data.update()
+        out[obj.name] = len(keys)
+    activate(rig, "POSE")
+    bpy.ops.pose.armature_apply(selected=False)
+    activate(rig, "OBJECT")
+    return out
+
+
 def _parent(rig, objs, kind):
     activate(rig, "OBJECT", select=objs)
     bpy.ops.object.parent_set(type=kind)

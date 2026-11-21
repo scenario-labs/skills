@@ -419,14 +419,17 @@ names and hierarchy, not onto its proportions.
   - First set each bone's edit roll so the swing to the shared direction lands on the shared roll:
     `align_roll` with the shared Z axis turned back by that swing. A roll change at rest moves no
     vertex.
-  - Then pose each bone, root first, by that swing only. Apply the Armature modifier to the meshes,
-    apply the pose as rest, then add the modifier back.
+  - Then pose each bone, root first, by that swing only, and run
+    `R.apply_pose_as_rest(rig, meshes)`. It bakes the pose into each mesh's Basis and every shape
+    key, then applies the pose as rest. The modifier stack stays as it was. Never apply and re-add
+    the Armature modifier instead: `modifier_apply` refuses a mesh with shape keys, and a re-added
+    modifier lands after Subdivision.
   - The swing bakes its skinning into the new rest mesh (15 mm at the shoulders on an A-pose body):
     look at the shoulders after it.
   - The body keeps its own rolls only when every clip is re-baked for it from per-bone pose deltas.
-- **Export and read back.** Use the export skill's skeletal preset (`unreal_skeletal`,
-  `unity_skeletal`) with one override, `use_armature_deform_only=False`: the extra bones carry no
-  weights, and a deform-only export drops them.
+- **Export and read back.** Use `scenario-blender-export`'s skeletal preset with one override:
+  `bxe.export(path, "unreal_skeletal", objects, use_armature_deform_only=False)` (or
+  `"unity_skeletal"`). The extra bones carry no weights, and a deform-only export drops them.
   - The preset writes each clip as its own take. A raw call that bakes the scene take reads back one
     frame late (frames 2 to 25 for 1 to 24 on 5.2.1).
   - Read the file back and compare it with the scene body at the same poses: the file, not the
