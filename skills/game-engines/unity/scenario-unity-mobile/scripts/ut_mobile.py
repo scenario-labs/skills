@@ -32,6 +32,7 @@ import sys
 import wave
 import zipfile
 import zlib
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(HERE)
@@ -75,7 +76,7 @@ def install(project, runtime=True):
                 s = os.path.join(dp, fn)
                 d = os.path.join(dst_root, os.path.relpath(s, RUNTIME_SRC))
                 os.makedirs(os.path.dirname(d), exist_ok=True)
-                if not os.path.isfile(d) or open(s, "rb").read() != open(d, "rb").read():
+                if not os.path.isfile(d) or Path(s).read_bytes() != Path(d).read_bytes():
                     shutil.copyfile(s, d)
     return root
 
@@ -335,7 +336,7 @@ def xcode_facts(folder):
             parts[sub] = _dir_mb(p)
     out["parts_mb"] = parts
     if os.path.isfile(proj):
-        txt = open(proj, errors="replace").read()
+        txt = Path(proj).read_text(errors="replace")
         out["targets"] = sorted(set(re.findall(r"/\* (Unity-iPhone|UnityFramework|GameAssembly|Unity-iPhone Tests) \*/ = \{\s*isa = PBXNativeTarget", txt)))
         out["pbx_mentions_privacy"] = "PrivacyInfo.xcprivacy" in txt
         m = re.findall(r"IPHONEOS_DEPLOYMENT_TARGET = ([0-9.]+);", txt)
@@ -358,7 +359,7 @@ def xcode_facts(folder):
     out["sdk_privacy_manifests"] = sorted(k for k in priv if not k.startswith("UnityFramework/") and "agent_DerivedData" not in k)
     rep = os.path.join(folder, "agent_xcode_postprocess.json")
     if os.path.isfile(rep):
-        out["postprocess"] = json.load(open(rep))
+        out["postprocess"] = json.loads(Path(rep).read_text())
     return out
 
 
@@ -440,7 +441,9 @@ def app_thinning_report(path):
     a real report: it needs a signed archive): per variant the compressed (download) and uncompressed
     (install) app size, and the largest download against the 200 MB cellular limit."""
     variants, cur = [], None
-    for line in open(path, errors="replace"):
+    with open(path, errors="replace") as fh:
+        lines = fh.readlines()
+    for line in lines:
         if line.startswith("Variant:"):
             cur = {"variant": line.split(":", 1)[1].strip()}
             variants.append(cur)
@@ -466,7 +469,7 @@ def xcode_compile_unsigned(folder, scheme="Unity-iPhone", timeout=3600, log=None
            "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGN_IDENTITY=", "build"]
     with open(log, "w") as f:
         p = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, timeout=timeout)
-    full = open(log, errors="replace").read()
+    full = Path(log).read_text(errors="replace")
     tail = full[-3000:]
     apps = glob.glob(os.path.join(folder, "agent_DerivedData", "Build", "Products", "Release-iphoneos", "*.app"))
     ok = p.returncode == 0 and "BUILD SUCCEEDED" in tail
@@ -566,7 +569,7 @@ def code_scan(root):
 
     uses = {"pending": [], "confirm": False, "confirmed_handler": [], "failed_order": False, "async_load": [], "fully_drawn": False}
     for path in _cs_files(os.path.join(root, "Assets")):   # project code only (not packages, not nested projects)
-        raw = open(path, errors="replace").read()
+        raw = Path(path).read_text(errors="replace")
         text = _strip_comments(raw)
         line_of = lambda pos: text.count("\n", 0, pos) + 1
         for m in re.finditer(r"void\s+(OnApplicationPause|OnApplicationFocus)\s*\(", text):
@@ -683,9 +686,9 @@ def package_check(root):
     Assets/LevelPlay/Resources and adapter XMLs in Assets/LevelPlay/Editor (read from the 9.5.1 source),
     so only code (.cs, .dll, .jar, .aar) elsewhere under those folders counts as a leftover."""
     root = os.path.abspath(root)
-    man = json.load(open(os.path.join(root, "Packages", "manifest.json"))).get("dependencies", {})
+    man = json.loads(Path(root, "Packages", "manifest.json").read_text()).get("dependencies", {})
     lock_p = os.path.join(root, "Packages", "packages-lock.json")
-    lock = json.load(open(lock_p)).get("dependencies", {}) if os.path.isfile(lock_p) else {}
+    lock = json.loads(Path(lock_p).read_text()).get("dependencies", {}) if os.path.isfile(lock_p) else {}
     ver = lambda n: (lock.get(n) or {}).get("version") or man.get(n)
     iap, lp, ads = ver("com.unity.purchasing"), ver("com.unity.services.levelplay"), ver("com.unity.ads")
     f = []
@@ -723,7 +726,8 @@ def soak_verdict(csv_path, fps, headroom=MOBILE_HEADROOM, window_s=300, min_minu
     last-window p95 over the raw frame time); too_short below min_minutes (the provisional verdict is
     kept in `provisional`): throttling shows only after many minutes."""
     import csv as _csv
-    rows = list(_csv.DictReader(open(csv_path)))
+    with open(csv_path) as fh:
+        rows = list(_csv.DictReader(fh))
     b = budgets(fps, headroom)
     num = lambda r, k: float(r[k]) if r.get(k) not in (None, "") else None
     if not rows:

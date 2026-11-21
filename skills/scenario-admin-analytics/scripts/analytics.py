@@ -305,8 +305,12 @@ def analyze(snapshot, names=False):
     return {"query": q, "date_start": boundary(q["start_date"]).date().isoformat(), "date_end": boundary(q["end_date"]).date().isoformat(), "fetched_at": snapshot["fetched_at"], "models": sorted(models, key=lambda m: (-m["cu"], m["id"])), "users": sorted(users, key=lambda u: (-u["cu"], u["id"])), "daily": daily, "has_daily": has_daily, "total_cu": total, "model_cu": model_cu, "model_gap": model_cu - total, "jobs": sum(m["jobs"] for m in models), "notes": notes, "joint": joint, "joint_daily": joint_daily, "joint_available": joint_ok}
 
 
+FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
 def safe_cell(value):
-    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")):
+    # The raw check catches a leading tab or CR, which lstrip() would remove.
+    if isinstance(value, str) and (value.startswith(FORMULA_PREFIXES) or value.lstrip().startswith(FORMULA_PREFIXES)):
         return "'" + value
     return value
 

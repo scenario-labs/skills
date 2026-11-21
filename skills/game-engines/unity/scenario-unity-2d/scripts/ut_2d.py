@@ -27,6 +27,7 @@ import math
 import os
 import shutil
 import sys
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.dirname(HERE)
@@ -71,7 +72,7 @@ def install(project):
                 continue
             s = os.path.join(dirpath, fn)
             d = os.path.normpath(os.path.join(dst, rel, fn))
-            if os.path.isfile(d) and open(s, "rb").read() == open(d, "rb").read():
+            if os.path.isfile(d) and Path(s).read_bytes() == Path(d).read_bytes():
                 continue
             os.makedirs(os.path.dirname(d), exist_ok=True)
             shutil.copyfile(s, d)
@@ -678,7 +679,7 @@ def make_demo_art(project, bench=20):
     def save(canvas, rel):
         path = os.path.join(root, rel)
         data = ut_review.encode_png(canvas.w, canvas.h, canvas.rgb, canvas.a)
-        if not (os.path.isfile(path) and open(path, "rb").read() == data):
+        if not (os.path.isfile(path) and Path(path).read_bytes() == data):
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "wb") as f:
                 f.write(data)

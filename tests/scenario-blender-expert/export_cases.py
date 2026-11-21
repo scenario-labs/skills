@@ -425,6 +425,29 @@ r = bxe.lods("Card", ratios=(0.5,))
 cases["card_sides"] = {n: [sum(1 for p in bpy.data.objects[n].data.polygons if (p.normal.z > 0) == up)
                            for up in (True, False)] for n in r["tris"]}
 
+# An optional preset setting the running exporter lacks (meshopt before Blender 5.2) is
+# skipped and reported. The same name as an override still raises, and so does a missing
+# setting outside bxe.OPTIONAL.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+crate()
+bxe.PRESETS["probe"] = (".glb", "export_scene.gltf", dict(bxe._GLB, no_such_setting=True))
+try:
+    bxe.export(os.path.join(TMP, "probe0.glb"), "probe", ["Crate"])
+    cases["probe_required"] = "exported"
+except TypeError as exc:
+    cases["probe_required"] = str(exc)
+bxe.OPTIONAL.add("no_such_setting")
+probe = bxe.export(os.path.join(TMP, "probe.glb"), "probe", ["Crate"])
+cases["probe"] = {"skipped": probe["skipped_settings"], "bytes": probe["bytes"],
+                  "settings": sorted(probe["settings"])}
+try:
+    bxe.export(os.path.join(TMP, "probe2.glb"), "gltf", ["Crate"], no_such_setting=True)
+    cases["probe_override"] = "exported"
+except TypeError as exc:
+    cases["probe_override"] = str(exc)
+bxe.OPTIONAL.discard("no_such_setting")
+del bxe.PRESETS["probe"]
+
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
 print("EXPORT CASES", len(cases))

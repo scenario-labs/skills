@@ -145,9 +145,9 @@ open.
    (frame, position), stride 0.42 x height for a walk, about 0.7 for a run; gestures with `K.pose`;
    extras with `K.crowd(style=...)`.
 4. **Props and vehicles**: literal primitives at true position. Mark a vehicle's front in geometry
-   (light blocks and grille in front, dark red at the rear); wheels at z = radius, separate with one
-   spin channel only when a close shot reads rotation (kit wheels are body mesh). No loose blocks
-   near a figure.
+   (light blocks and grille in front, dark red behind); wheels at z = radius (kit wheels: body
+   mesh). Spinning wheels, cyclists ([contract](references/contract.md)): `K.drive` a `"bicycle"`
+   `K.vehicle`, `K.pedal` its rider, never `K.walk_path`. No loose blocks near a figure.
 5. **Light**: one area light; named key, fill, rim only when the brief designs light.
 6. **Cameras**: rigs and lenses per shot, `B.bind_cuts`.
 7. **Motion polish**: `B.key_rail` and `B.smooth_keys`, keys past cuts, handheld, vehicle travel as
