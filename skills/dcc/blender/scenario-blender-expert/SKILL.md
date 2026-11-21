@@ -157,7 +157,7 @@ textures).
   writes one contact sheet (rows = modes, cols = views) in a temporary scene, user settings
   untouched; `playblast(out_path, res_pct=50)`; `turntable(obj, out_path, frames=72, res=720)`. Only
   `review` has a command line, with names comma-separated (unlike `bx_audit`'s):
-  `blender -b f.blend --factory-startup -P bx_review.py -- --objects A,B --out review_dir [--culling 1]`.
+  `blender -b f.blend --factory-startup --python-exit-code 1 -P bx_review.py -- --objects A,B --out review_dir --res 400 [--culling 1]`.
   Call the others from a short wrapper script.
 - `bx_gui.py`: real brushes in a live session: `set_view`, `activate_brush(mode, name)`,
   `stroke(mode, world_points, size, strength)`, `run(op, **kw)`, `set_paint_color`, `screenshot`.
