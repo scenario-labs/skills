@@ -91,7 +91,7 @@ filling it:
      in `model_schema_get` and leave it matching the source, so captures stay in sync.
   2. Check the edit before capturing it:
      - `asset_get` it. A longer clip means the member re-timed or regenerated it: skip the capture.
-       A shorter one whose frames match the source lost its end: capture it and report the tail.
+       A shorter one only lost its end if the checks below pass: then report the missing tail.
      - `asset_display` it: everyone else must be gone, and each kept person present and moving as in
        the source wherever the source shows them. If not, skip the capture and report it.
      - A video may return only a link. Then `asset_download` it and sweep its frames where a shell
@@ -109,8 +109,9 @@ filling it:
   Promise a rough pass needing cleanup.
 - Each removal and extra capture is a separate job: `dry_run` every leg and quote the total. Check
   one removal before launching the next: a rejected edit is still billed. Before the edit exists,
-  estimate the isolated capture on the source clip at the kept count; re-price it on the edited clip
-  before running. If that price no longer fits, stop and report it with the edit.
+  estimate the isolated capture on the source clip, with the member and count step 3 picks; re-price
+  it on the edited clip before running. If that price no longer fits, stop and report it with the
+  edit.
 - Unattended, isolate only performers the task calls hidden or the group capture lost (everyone,
   when the group capture cannot run), and split only a crowd past the cap. Run what fits the task's
   budget, group capture first, and a removal only when its capture fits too. Report the total of any
