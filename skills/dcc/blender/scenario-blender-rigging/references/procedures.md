@@ -384,3 +384,53 @@ auto weights, plus a 1,536-vertex flared skirt 2 to 10 cm off the legs. Robust c
 inpainted 916, yet 1,273 vertices stayed led by a thigh bone. At `leg_forward.L` the worst stretch
 fell from 19.2 (nearest-face) to 1.9, with 30 edges still outside the band. `garment_depth` failed
 `leg_forward.L` (63 vertices, worst 5.9 cm) and the 90 degree knee lift (140, worst 7.9 cm).
+
+## P16. A body on an existing skeleton
+
+When clips, an engine skeleton or other characters already share a skeleton, the body has to join it
+before those clips play on it. It keeps its own rig and bind, then moves onto the shared skeleton's
+names and hierarchy, not onto its proportions.
+
+- **Map, per bone of the body's rig:** rename to the shared name; merge (add the weights into the
+  target's group, re-parent the children); split a long segment into the shared one's parts, its
+  weights shared by tent functions along the segment. Keep the map as data, one file per skeleton.
+- **Extra bones.** The shared skeleton's other bones go in unweighted. An attachment bone (weapon,
+  prop socket) sits at the shared skeleton's offset from its parent bone. Root and IK bones keep the
+  shared skeleton's rest place, so clips keyed on them keep their meaning.
+- **Keep the body's joint positions.** Each body keeps its own heads and tails; only names and
+  hierarchy change.
+- **Weights.** Every vertex group must end with a bone; no group may name a bone that is gone. Check
+  sums, unweighted vertices and the influence count with `weight_report`.
+- **Gate, before any influence cap.** Compare every vertex of the moved body against the source rig,
+  in the rest pose and in a seeded sweep that turns each mapped unit by up to 25 degrees.
+  - Set the source's B-bone segments to 1 first: an engine skeleton carries none.
+  - Pose both rigs from one world-space delta per unit. Bones merged into one target turn together.
+    Both parts of a split take their source's delta; never repeat a local turn down the chain.
+  - The worst distance is then a rounding error, well under 0.1 mm. On a Rigify Basic body (5.2.1)
+    it measured 0.0007 mm, against 21 mm with Rigify's B-bones, 29 mm with local turns on split
+    parts and 96 mm with merged bones turned apart.
+- **Cap.** Limiting to 4 influences moves vertices (16 mm in the same sweep): judge it with
+  `deformation_report`, not with this gate.
+- **Rest pose for shared clips.** A clip stores each bone's rotation from the shared rest. On a body
+  with another rest direction or roll (an A pose under a T-pose skeleton), it plays a different
+  pose.
+  - When the shared clips must play unchanged (an engine skeleton), match the shared rest direction
+    and roll in two moves. Posing the roll itself would twist the mesh.
+  - First set each bone's edit roll so the swing to the shared direction lands on the shared roll:
+    `align_roll` with the shared Z axis turned back by that swing. A roll change at rest moves no
+    vertex.
+  - Then pose each bone, root first, by that swing only, and run
+    `R.apply_pose_as_rest(rig, meshes)`. It bakes the pose into each mesh's Basis and every shape
+    key, then applies the pose as rest. The modifier stack stays as it was. Never apply and re-add
+    the Armature modifier instead: `modifier_apply` refuses a mesh with shape keys, and a re-added
+    modifier lands after Subdivision.
+  - The swing bakes its skinning into the new rest mesh (15 mm at the shoulders on an A-pose body):
+    look at the shoulders after it.
+  - The body keeps its own rolls only when every clip is re-baked for it from per-bone pose deltas.
+- **Export and read back.** Use `scenario-blender-export`'s skeletal preset with one override:
+  `bxe.export(path, "unreal_skeletal", objects, use_armature_deform_only=False)` (or
+  `"unity_skeletal"`). The extra bones carry no weights, and a deform-only export drops them.
+  - The preset writes each clip as its own take. A raw call that bakes the scene take reads back one
+    frame late (frames 2 to 25 for 1 to 24 on 5.2.1).
+  - Read the file back and compare it with the scene body at the same poses: the file, not the
+    scene, is what ships.

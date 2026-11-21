@@ -131,6 +131,17 @@ def side_of(name):
     return m.group(1).upper() if m else ""
 
 
+def mirror_name(name):
+    """The other side's name, on the side mark side_of reads (upper_arm.L, clavicle_l), else ''."""
+    import re
+    m = re.search(r"[._-]([LlRr])(?=$|[._-]\d*$|\.)", name)
+    if not m:
+        return ""
+    s = m.group(1)
+    other = {"L": "R", "R": "L", "l": "r", "r": "l"}[s]
+    return name[:m.start(1)] + other + name[m.end(1):]
+
+
 # ----------------------------------------------------------------------------------
 # 0. model check (CGDive: "a huge number of rigging problems ... skipping the model check")
 # ----------------------------------------------------------------------------------
@@ -1300,10 +1311,9 @@ def weight_report(obj, rig, expect_inside=True):
             continue
         pairs += 1
         for n, c in col.items():
-            s = side_of(n)
-            if not s or W[i, c] < 1e-4:
+            if W[i, c] < 1e-4:
                 continue
-            m = n.replace(".L", ".R") if s == "L" else n.replace(".R", ".L")
+            m = mirror_name(n)
             if m in col:
                 worst = max(worst, abs(W[i, c] - W[j, col[m]]))
     rep["mirror_pairs_sampled"] = pairs
@@ -1425,6 +1435,57 @@ def armature_first(obj):
         with bpy.context.temp_override(object=obj, active_object=obj):
             bpy.ops.object.modifier_move_to_index(modifier=arm.name, index=target)
     return [m.type for m in obj.modifiers]
+
+
+def apply_pose_as_rest(rig, meshes):
+    """Make the rig's current pose its rest pose, the meshes following, shape keys kept.
+
+    modifier_apply refuses a mesh with shape keys (5.2.1), and re-adding the Armature
+    modifier appends it after Subdivision. Instead, each mesh's Basis and every key are
+    evaluated through its rig Armature modifiers alone (others hidden) and written back as
+    data; the modifier stack is left as it was. Returns {mesh name: keys rewritten}.
+
+    Raises ValueError, before changing anything, when two meshes share one mesh datablock
+    (linked duplicates): the first write would feed the second an already-baked input, and
+    one datablock cannot hold two results. Make them single-user first."""
+    meshes = list(dict.fromkeys(meshes))
+    owners = {}
+    for obj in meshes:
+        owners.setdefault(obj.data.as_pointer(), (obj.data.name, []))[1].append(obj.name)
+    shared = {d: names for d, names in owners.values() if len(names) > 1}
+    if shared:
+        raise ValueError(f"meshes share mesh data, make them single-user first: {shared}")
+    out = {}
+    dg = bpy.context.evaluated_depsgraph_get()
+    for obj in meshes:
+        vis = [(m, m.show_viewport) for m in obj.modifiers]
+        for m in obj.modifiers:
+            m.show_viewport = m.type == "ARMATURE" and m.object == rig
+        keys = obj.data.shape_keys.key_blocks if obj.data.shape_keys else []
+        only, active = obj.show_only_shape_key, obj.active_shape_key_index
+        coords = []
+        for i in range(max(len(keys), 1)):
+            if keys:
+                obj.show_only_shape_key, obj.active_shape_key_index = True, i
+            dg.update()
+            ev = obj.evaluated_get(dg)
+            me = ev.to_mesh()
+            co = np.empty(len(me.vertices) * 3)
+            me.vertices.foreach_get("co", co)
+            ev.to_mesh_clear()
+            coords.append(co)
+        obj.show_only_shape_key, obj.active_shape_key_index = only, active
+        for m, v in vis:
+            m.show_viewport = v
+        obj.data.vertices.foreach_set("co", coords[0])
+        for kb, co in zip(keys, coords):
+            kb.data.foreach_set("co", co)
+        obj.data.update()
+        out[obj.name] = len(keys)
+    activate(rig, "POSE")
+    bpy.ops.pose.armature_apply(selected=False)
+    activate(rig, "OBJECT")
+    return out
 
 
 def _parent(rig, objs, kind):
