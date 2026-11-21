@@ -64,9 +64,9 @@ Shot options:
   the ground by default).
 - **`size`, `wdth`, `y`, `dy`, `rot`**: type size in px, width axis 62 to 125, vertical position,
   offset, rotation (cut).
-  - `cut` reads `size` (px, default 400), `dy` (px from the frame's vertical center, default 0) and
-    `rot` (degrees, default 0). The word ignores `y`, but the `fx: 'punch'` sparks follow it (540
-    when unset): with `dy`, set `y` to `540 + dy` too.
+  - `cut` reads `size` (px, default 400), `wdth` (default 104), `dy` (px from the frame's vertical
+    center, default 0) and `rot` (degrees, default 0). The word ignores `y`, but the `fx: 'punch'`
+    sparks follow it (540 when unset): with `dy`, set `y` to `540 + dy` too.
   - A `cut` word wider than 1800 px shrinks to fit. A narrower one keeps its `size`.
 - **`in`**: `cut` (default), `whipX`, `whipXr`, `whipY`.
 - **`fx`**: `punch` (rays, ring, sparks, flash, shake), `hit` (flash and shake), `beat` (shake and
@@ -214,6 +214,8 @@ window and lands on its first frame as the window fills the screen.
   vanish, and closer they render mirrored. Nothing checks it.
 - Words are `size` px (default 260). They shrink to fit 1600 px, or with `x` set, twice the distance
   from `x` to the nearer side minus 120 px.
+- The block's camera pushes in to 1.1x around the frame's center by its end, carrying off-center
+  words outward. Leave about 10% more room than the fit width, and check a still at the last word.
 - Use images at least 2048 px wide. Cut-ins above 1.7x look soft at 4K.
 
 ## Logo (N = 11)
