@@ -147,8 +147,9 @@ textures).
     children, `bpy.ops.object.transform_apply(scale=True)`), `bmesh.ops.recalc_face_normals` for
     inside-out parts, `bmesh.ops.reverse_faces` for faces pointing inward
     (`per_object[name]["inward_faces_at"]`), delete or offset the hidden face of a z-fighting pair,
-    join or move floating parts, delete fragments. A floating error names the nearest part:
-    `Sign: floating, 0.15 from Hoop_2`.
+    move floating parts until they touch, delete fragments. A floating error names the nearest part:
+    `Sign: floating, 0.15 from Hoop_2`. Joining objects does not connect them: the gate then reports
+    a floating fragment.
   - Engines cull back faces: to see what they draw, render
     `bx_review.review(parts, out, culling=True)` (magenta shows through a face pointing inward) and
     compare with a sheet without.
