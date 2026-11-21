@@ -93,6 +93,40 @@ except ValueError as e:
     zero_match = str(e)
 
 POSE = {"name": "leg_forward.L", "ops": [("rot", "thigh.L", (1, 0, 0), -50)]}
+POSE_R = {"name": "leg_forward.R", "ops": [("rot", "thigh.R", (1, 0, 0), -50)]}
+REST = {"name": "rest", "ops": []}
+
+# A hoop below the hem, not connected to the skirt and 14 cm off the legs: no vertex of it passes
+# the gates, so only the copied band may lead it, never the nearest leg.
+bm = bmesh.new()
+tube(bm, 0.24, 0.55, 1.05, 20, 48)
+tube(bm, 0.32, 0.30, 0.35, 2, 48)
+skirt_i = link("SkirtIsland", bm)
+R.transfer_weights(body, skirt_i, rig=rig, mapping="ROBUST", max_dist=0.042)
+HOOP = slice(len(skirt_r.data.vertices), None)
+
+# The hips and left leg with a live Mirror: the right leg exists only in the evaluated mesh.
+bm = bmesh.new()
+tube(bm, 0.215, 0.9, 1.1, 8, 48, caps=True)
+tube(bm, 0.08, 0.0, 0.9, 36, 24, x=0.1, caps=True)
+body_m = link("BodyMirror", bm)
+mgroups = {n: body_m.vertex_groups.new(name=n) for n in ("hips", "thigh.L", "thigh.R")}
+for v in body_m.data.vertices:
+    mgroups["hips" if v.co.z >= 0.9 - 1e-6 else "thigh.L"].add([v.index], 1.0, "REPLACE")
+mirror = body_m.modifiers.new("Mirror", "MIRROR")
+mirror.use_mirror_merge = False
+body_m.modifiers.new("Armature", "ARMATURE").object = rig
+body_m.parent = rig
+try:
+    R.robust_weights(body_m, skirt_i)
+    mirror_robust = None
+except ValueError as e:
+    mirror_robust = str(e)
+try:
+    R.garment_depth(rig, body, [skirt_r], [{"name": "fk_only", "ops": [("rot", "thigh_fk.L", (1, 0, 0), -50)]}])
+    missing_controls = None
+except ValueError as e:
+    missing_controls = str(e)
 
 
 def strain(obj):
@@ -108,10 +142,10 @@ def strain(obj):
     return {"max": round(float(ratio.max()), 3), "bad": int(((ratio < 0.5) | (ratio > 1.6)).sum())}
 
 
-def leg_share(obj):
-    """Vertices whose largest weight is a thigh."""
+def leg_share(obj, rows=slice(None)):
+    """Vertices whose largest weight is each bone."""
     W, names = R.weight_matrix(obj)
-    top = np.array(names)[W.argmax(axis=1)]
+    top = np.array(names)[W[rows].argmax(axis=1)]
     return {"thigh.L": int((top == "thigh.L").sum()), "thigh.R": int((top == "thigh.R").sum()),
             "hips": int((top == "hips").sum())}
 
@@ -127,7 +161,13 @@ out = {
                                                  R.weight_matrix(skirt_r)[0].sum(axis=1).max())],
     "report_robust": {k: v for k, v in R.weight_report(skirt_r, rig, expect_inside=False).items()
                       if k in ("unweighted", "ok")},
-    "depth": R.garment_depth(rig, body, [skirt_n, skirt_r, sleeve], poses=[{"name": "rest", "ops": []}, POSE]),
+    "depth": R.garment_depth(rig, body, [skirt_n, skirt_r, sleeve], poses=[REST, POSE]),
+    "hoop_vertices": len(skirt_i.data.vertices) - len(skirt_r.data.vertices),
+    "share_hoop": leg_share(skirt_i, HOOP),
+    "mirror_robust_error": mirror_robust,
+    "missing_controls_error": missing_controls,
+    "depth_mirror": R.garment_depth(rig, body_m, [skirt_r], poses=[REST, POSE_R])["fail"],
+    "depth_full_r": R.garment_depth(rig, body, [skirt_r], poses=[REST, POSE_R])["fail"],
 }
 
 with open(OUT, "w") as f:

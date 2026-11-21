@@ -1495,8 +1495,55 @@ def _edges(obj):
     return ed.reshape(-1, 2)
 
 
-def _diffuse(F, edges, iterations, step, fixed=None):
-    """Move each row of F toward the mean of its edge neighbours (rows in `fixed` stay)."""
+def _surface(obj):
+    """World positions and (T, 3) loop triangles from one evaluated mesh, Subdivision
+    hidden, so a live Mirror's generated half is part of the surface."""
+    hidden = [m for m in obj.modifiers if m.type in ("SUBSURF", "MULTIRES") and m.show_viewport]
+    for m in hidden:
+        m.show_viewport = False
+    try:
+        eo = obj.evaluated_get(evaluate())
+        me = eo.to_mesh()
+        co = np.empty(len(me.vertices) * 3)
+        me.vertices.foreach_get("co", co)
+        me.calc_loop_triangles()
+        T = np.empty(len(me.loop_triangles) * 3, dtype=np.int64)
+        me.loop_triangles.foreach_get("vertices", T)
+        mw = np.array(eo.matrix_world)
+        eo.to_mesh_clear()
+    finally:
+        for m in hidden:
+            m.show_viewport = True
+    return co.reshape(-1, 3) @ mw[:3, :3].T + mw[:3, 3], T.reshape(-1, 3)
+
+
+def _seed_from(ok, edges, P):
+    """For every vertex, the index of a copied vertex (ok) to start from: the nearest
+    over the mesh's edges, else (a part no edge path reaches) the nearest in space."""
+    from mathutils.kdtree import KDTree
+    src = np.where(ok, np.arange(len(ok)), -1)
+    a = np.r_[edges[:, 0], edges[:, 1]]
+    b = np.r_[edges[:, 1], edges[:, 0]]
+    while True:
+        m = (src[a] >= 0) & (src[b] < 0)
+        if not m.any():
+            break
+        src[b[m]] = src[a[m]]
+    lost = np.nonzero(src < 0)[0]
+    if len(lost):
+        idx = np.nonzero(ok)[0]
+        kd = KDTree(len(idx))
+        for j, i in enumerate(idx):
+            kd.insert(Vector(P[i]), j)
+        kd.balance()
+        for i in lost:
+            src[i] = idx[kd.find(Vector(P[i]))[1]]
+    return src
+
+
+def _diffuse(F, edges, iterations, step, fixed=None, tol=None):
+    """Move each row of F toward the mean of its edge neighbours (rows in `fixed` stay),
+    up to `iterations` passes, stopping early once no value moves more than `tol`."""
     n = len(F)
     a = np.r_[edges[:, 0], edges[:, 1]]
     b = np.r_[edges[:, 1], edges[:, 0]]
@@ -1515,16 +1562,27 @@ def _diffuse(F, edges, iterations, step, fixed=None):
         avg = np.add.reduceat(F[b], starts, axis=0) / deg[has, None]
         new = F.copy()
         new[has] = (1.0 - step) * F[has] + step * avg
-        F = np.where(move[:, None], new, F)
+        new = np.where(move[:, None], new, F)
+        done = tol is not None and float(np.abs(new - F).max(initial=0.0)) < tol
+        F = new
+        if done:
+            break
     return F
 
 
-def robust_weights(src, dst, max_dist=None, max_angle=35.0, inpaint=200, smooth=10):
+def robust_weights(src, dst, max_dist=None, max_angle=35.0, inpaint=5000, smooth=10):
     """Weights for dst from src by closest point, distance and normal gates, then
     inpainting (see transfer_weights mapping='ROBUST'). Both meshes in their rest
-    shape. Returns (W, names, matched) without writing anything."""
+    shape. Each rejected vertex starts from the weights of the nearest copied one, never
+    from the skin under it, and diffusion runs until no weight moves more than 1e-6
+    (at most `inpaint` passes). Returns (W, names, matched) without writing anything."""
     from mathutils.bvhtree import BVHTree
     S = world_coords(src, evaluated=False)
+    if len(world_coords(src, no_subdiv=True)) != len(S):
+        # the weights live on the base mesh, which lacks the generated half
+        raise ValueError(
+            f"robust transfer: modifiers on {src.name} add vertices (a live Mirror?); "
+            "apply them first or use nearest-face")
     T = _triangles(src)
     tree = BVHTree.FromPolygons([tuple(v) for v in S], T.tolist())
     Ws, names = weight_matrix(src)
@@ -1568,7 +1626,8 @@ def robust_weights(src, dst, max_dist=None, max_angle=35.0, inpaint=200, smooth=
             "raise max_dist or use nearest-face")
     ed = _edges(dst)
     if (~ok).any():
-        W = _diffuse(W, ed, inpaint, 1.0, fixed=ok)
+        W = W[_seed_from(ok, ed, D)]
+        W = _diffuse(W, ed, inpaint, 1.0, fixed=ok, tol=1e-6)
     W = _diffuse(W, ed, smooth, 0.1)
     s = W.sum(axis=1, keepdims=True)
     W = np.where(s > 1e-9, W / np.maximum(s, 1e-9), W)
@@ -1580,13 +1639,15 @@ def garment_depth(rig, body, garments, poses=None, limit=0.005):
     rest pose (scene units; overlap already there at rest is not counted). weight_report
     and deformation_report each read one mesh, so a sleeve sinking into the arm passes
     both. Subdivision is disabled while measuring; the body's normals must face out
-    (model_check). Returns {"limit", "rest_inside": {garment: vertices inside at rest},
-    "poses": {pose: {garment: {"max", "over"}}}, "fail": [(pose, garment)]}."""
+    (model_check). Raises ValueError when a pose names controls the rig lacks, since
+    the body would then be measured at rest. Returns {"limit", "rest_inside":
+    {garment: vertices inside at rest}, "poses": {pose: {garment: {"max", "over"}}},
+    "fail": [(pose, garment)]}."""
     from mathutils.bvhtree import BVHTree
     poses = poses or RIGIFY_POSES
-    T = _triangles(body)
 
-    def depth(PB, PG):
+    def depth(surface, PG):
+        PB, T = surface
         tree = BVHTree.FromPolygons([tuple(v) for v in PB], T.tolist())
         out = np.zeros(len(PG))
         for i, p in enumerate(PG):
@@ -1596,18 +1657,21 @@ def garment_depth(rig, body, garments, poses=None, limit=0.005):
         return out
 
     reset_pose(rig)
-    PB = world_coords(body, no_subdiv=True)
-    H = float(np.ptp(PB[:, 2]))
-    rest = {g.name: depth(PB, world_coords(g, no_subdiv=True)) for g in garments}
+    surf = _surface(body)
+    H = float(np.ptp(surf[0][:, 2]))
+    rest = {g.name: depth(surf, world_coords(g, no_subdiv=True)) for g in garments}
     rep = {"limit": limit, "rest_inside": {k: int((v > 1e-6).sum()) for k, v in rest.items()}, "poses": {},
            "fail": []}
     try:
         for p in poses:
-            apply_pose(rig, p, H)
-            PB = world_coords(body, no_subdiv=True)
+            skipped = apply_pose(rig, p, H)
+            if skipped:
+                raise ValueError(f"garment_depth: pose {p['name']} needs controls {rig.name} lacks: "
+                                 f"{skipped}; pass poses built for this rig")
+            surf = _surface(body)
             r = {}
             for g in garments:
-                d = depth(PB, world_coords(g, no_subdiv=True)) - rest[g.name]
+                d = depth(surf, world_coords(g, no_subdiv=True)) - rest[g.name]
                 r[g.name] = {"max": round(float(d.max(initial=0.0)), 5), "over": int((d > limit).sum())}
                 if r[g.name]["over"]:
                     rep["fail"].append((p["name"], g.name))

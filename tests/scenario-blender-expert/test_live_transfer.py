@@ -6,29 +6,19 @@ Without Blender every test skips.
 """
 
 import json
-import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
+from live_blender import BLENDER, SKIP
+
 HERE = Path(__file__).parent
 SCRIPTS = HERE.parents[1] / "skills" / "dcc" / "blender" / "scenario-blender-rigging" / "scripts"
 
 
-def find_blender():
-    for path in (os.environ.get("BLENDER"), shutil.which("blender"),
-                 "/Applications/Blender.app/Contents/MacOS/Blender"):
-        if path and Path(path).is_file():
-            return path
-    return None
-
-
-BLENDER = find_blender()
-
-
-@unittest.skipUnless(BLENDER, "Blender is not installed")
+@unittest.skipIf(SKIP, SKIP)
 class Transfer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -55,6 +45,19 @@ class Transfer(unittest.TestCase):
         self.assertIsNotNone(err)
         self.assertIn("no vertex of SkirtRobust", err)
         self.assertIn("closest gap 0.025", err)
+
+    def test_a_detached_part_follows_the_copied_band_not_the_nearest_leg(self):
+        self.assertEqual(self.r["share_hoop"]["hips"], self.r["hoop_vertices"])
+
+    def test_a_source_with_a_live_mirror_raises(self):
+        self.assertIn("Mirror", self.r["mirror_robust_error"] or "")
+
+    def test_depth_rejects_poses_with_missing_controls(self):
+        self.assertIn("thigh_fk.L", self.r["missing_controls_error"] or "")
+
+    def test_depth_sees_the_mirrored_half_of_the_body(self):
+        self.assertIn(["leg_forward.R", "SkirtRobust"], self.r["depth_full_r"])
+        self.assertEqual(self.r["depth_mirror"], self.r["depth_full_r"])
 
     def test_nearest_face_splits_the_skirt_between_the_legs(self):
         s = self.r["share_nearest"]
