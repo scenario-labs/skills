@@ -14,7 +14,8 @@ onsets within 80 ms, and a fix follows for short first words pulled early by a h
 Whisper runs with its VAD filter: without it, a song's silent 15 s intro drew a hallucinated "Thank you." and Whisper then
 skipped the rest of that 30 s window, sung lines included.
 transcribe prints on stderr each vocal stretch (the stem's envelope) of 3 s or more lying 2 s clear of any transcribed word:
-Whisper skipped it, or it holds none. A single skipped line between two heard ones is align's to report, as unmatched words.
+Whisper skipped it, or it holds none. A single skipped line between two heard ones is reported only when lyrics.txt holds it
+(align lists its words as unmatched): a sheet written from the transcript misses it, so check the plots between lines.
 align prints on stderr each lyric word with no exact transcript match, with the onset it was given: check those first.
 wav2vec/MMS forced alignment ran ~200 ms late on singing, so it is not used. Always eyeball the result with plot_lyrics.py."""
 import os, sys, json, re, difflib, argparse, numpy as np
@@ -51,7 +52,8 @@ def voiced_start(env, fps, s, e):
     """Whisper can start a word in the silence before its note: three line starts in one song came 0.4 to 0.7 s early.
     When a silence of GAP s or more separates s from the first loud stretch inside [s, e), the word starts where that
     stretch rises. A word that starts softly and swells has no silence before its loud part, so it keeps s."""
-    i0, i1 = int(round(s * fps)), min(len(env), int(e * fps) + 1)
+    # samples strictly before e: a loud one at e belongs to the next word, and moving there left a zero-length word
+    i0, i1 = int(round(s * fps)), min(len(env), int(np.ceil(e * fps)))
     j = next((k for k in range(i0, i1) if env[k] >= LOUD), None)
     if j is None: return s
     k = j

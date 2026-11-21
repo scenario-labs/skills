@@ -129,6 +129,12 @@ class AlignTest(unittest.TestCase):
                              vocal=self.envelope((1.6, 2.0, 0.9), (2.1, 2.5, 0.8)))
         self.assertEqual([(w["w"], w["s"]) for w in line["words"]], [("burning", 1.62), ("bright", 2.1)])
 
+    def test_a_loud_note_at_the_words_end_belongs_to_the_next_word(self):
+        words = [word("burning", 1.0, 2.0), word("bright", 2.0, 2.5)]
+        (line,) = self.align("# section: verse\nburning bright\n", words, [],
+                             vocal=self.envelope((2.0, 2.5, 0.9)))
+        self.assertEqual([(w["w"], w["s"]) for w in line["words"]], [("burning", 1.0), ("bright", 2.0)])
+
     def test_a_word_that_starts_softly_and_swells_keeps_its_start(self):
         words = [word("hold", 1.0, 2.0)]
         (line,) = self.align("# section: verse\nhold\n", words, [],
