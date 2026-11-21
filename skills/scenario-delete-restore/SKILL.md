@@ -93,7 +93,8 @@ Deletion stays a confirmed action.
    reply or a local file, since a restore may not bring them back. For a collection, record its name
    and member ids. `collections_list` gives only `assetCount` and `modelCount`, so the members are
    the `assets_list` rows, and the `models_list` rows when `modelCount` is above 0, whose
-   `collectionIds` hold its id.
+   `collectionIds` hold its id. Page both with `page_token` (`limit` up to 100) until the members
+   found reach those counts.
 4. **Delete** through `scenario_tool_execute_delete`. `asset_delete` refuses more than 100 ids in
    one call (`You can not delete more than 100 assets at once.`): send batches of 100.
 
