@@ -65,6 +65,9 @@ out = {
     "height_only": A.foot_contacts(rig, foot, frames),
     "onset": A.foot_contacts(rig, foot, frames, onset=0.5),
     "ankle_only": A.foot_contacts(rig, ("ankle",), frames),
+    # the clip cut at frame 20: the skim never slows under onset
+    "cut_in_skim": A.foot_contacts(rig, foot, range(1, 21), min_frames=2),
+    "cut_in_skim_onset": A.foot_contacts(rig, foot, range(1, 21), min_frames=2, onset=0.5),
 }
 ranges = out["onset"]
 out["slip_ankle"] = [round(r["slide"], 6) for r in A.foot_slip(rig, "ankle", ranges)]

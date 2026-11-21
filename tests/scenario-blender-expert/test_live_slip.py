@@ -53,6 +53,10 @@ class FootSlip(unittest.TestCase):
     def test_onset_drops_the_skim(self):
         self.assertEqual(self.ranges("onset"), [(1, 10), (21, 30)])
 
+    def test_onset_drops_a_range_that_never_slows(self):
+        self.assertEqual(self.ranges("cut_in_skim"), [(1, 10), (19, 20)])
+        self.assertEqual(self.ranges("cut_in_skim_onset"), [(1, 10)])
+
     def test_ankle_alone_loses_the_roll(self):
         self.assertEqual(self.ranges("ankle_only"), [(1, 8), (19, 30)])
 

@@ -1301,7 +1301,8 @@ def foot_contacts(obj, bones, frames, height=0.03, min_frames=3, onset=None, poi
     (scene units) of its own lowest point over `frames`, so the floor must be flat.
     Ranges shorter than `min_frames` are dropped. `onset` (units per second) starts a
     range at its first frame slower than that: a swing foot skimming the floor on its
-    way down is not planted yet. Returns [(first, last)] for `foot_slip`."""
+    way down is not planted yet, and a range that never slows (a skim at the clip's end)
+    is dropped. Returns [(first, last)] for `foot_slip`."""
     fr = [int(f) for f in frames]
     sc = bpy.context.scene
     fps = sc.render.fps / sc.render.fps_base
@@ -1323,8 +1324,8 @@ def foot_contacts(obj, bones, frames, height=0.03, min_frames=3, onset=None, poi
         elif not v and start is not None:
             a, b, start = start, k - 1, None
             if onset is not None:
-                a = next((j for j in range(a, b + 1) if speed(j) < onset), a)
-            if b - a + 1 >= min_frames:
+                a = next((j for j in range(a, b + 1) if speed(j) < onset), None)
+            if a is not None and b - a + 1 >= min_frames:
                 out.append((fr[a], fr[b]))
     return out
 

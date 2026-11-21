@@ -552,10 +552,10 @@ print(A.slip_summary(slips))   # ranges, median, p95, worst, the ranges over the
 - **Contacts.** A frame is planted when the ankle or the ball is within `height` of its own lowest
   point, so the floor must be flat. Ranges under 3 frames are dropped.
 - **Onset.** `onset` starts a range at its first frame under that speed: a swing foot skimming the
-  floor on its way down is not planted yet. Report the slip with and without it, and the share of
-  frames each stance takes. A late start can hide a skate. A height-only stance reads a skim as
-  planted, and merges two steps into one false slide when the foot lifts less than `height` between
-  them.
+  floor on its way down is not planted yet, and a range that never slows (a skim at the clip's end)
+  is dropped. Report the slip with and without it, and the share of frames each stance takes. A late
+  start can hide a skate. A height-only stance reads a skim as planted, and merges two steps into
+  one false slide when the foot lifts less than `height` between them.
 - **Two points.** Pass the toe as `ball`: a heel-to-toe roll moves the ankle while the ball holds.
 - **The clip that ships.** Measure after the retarget, the bake and any blend between clips, never
   only on the source: each later step can move the feet, and transitions slip more than the clips
@@ -566,10 +566,11 @@ print(A.slip_summary(slips))   # ranges, median, p95, worst, the ranges over the
   travel; across a flight, where no foot is planted, interpolate the correction. The pose under the
   root stays as it is.
 
-Verified: test_live_slip.py on Blender 5.2.2, a keyed two-point foot with a heel roll, a skim before
+Verified: test_live_slip.py on Blender 5.2.4, a keyed two-point foot with a heel roll, a skim before
 the contact, a sliding contact and a two-frame touch. Height-only contacts (1, 10), (19, 30); with
 `onset=0.5` (1, 10), (21, 30); the touch dropped. Slide with the ankle alone 0.04 and 0.018 m, with
-the ball 0.0 and 0.018; the same contact measured from the skim reads 0.063.
+the ball 0.0 and 0.018; the same contact measured from the skim reads 0.063. Cut at frame 20, the
+skim (19, 20) reads as a contact by height and is dropped with `onset`.
 
 ## GUI-only techniques and their substitutes
 
