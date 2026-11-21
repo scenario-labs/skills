@@ -59,6 +59,10 @@ with `asset_download` (no `format` for audio), then measure:
 
 ## 2. The sound kit
 
+Optional: when the user declines its price, or the task's budget does not cover it, skip this
+section and leave `audio/sfx/` empty. `mix.py` then mixes the music alone, says so, and never ducks
+it under the silent hits.
+
 `recommend` with `"capability": "txt2audio"` and "short isolated sound effects for motion graphics".
 
 - Prefer a dedicated sound-effects model with a duration control and a negative prompt.
@@ -109,9 +113,9 @@ Those 12 cover every cue the blocks register: a missing `thock` plays `pop`, `dr
 ```
 
 It places every cue from the film's own list, aligned on each sound's attack, peak or end. It ducks
-the music under the big hits, lists sounds with no file, and lists hits that sit under the music.
-Fix those with `spec.sounds` or `music.gain` and mix again. It cannot judge taste: listen before you
-hand the film over.
+the music under each hit that plays (a custom sound with a `spec.sounds` level counts as a hit),
+lists sounds with no file, and lists hits that sit under the music. Fix those with `spec.sounds` or
+`music.gain` and mix again. It cannot judge taste: listen before you hand the film over.
 
 ## 4. Pictures
 

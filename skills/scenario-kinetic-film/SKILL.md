@@ -77,7 +77,8 @@ The steps, each with its reference:
 1. Scaffold the film folder with `new_film.sh` (the first command above). Every later step runs in
    it, and the downloads go in its `audio/` and `art/`.
 2. Brief to beat sheet: [method.md](references/method.md).
-3. Music, sound kit and pictures on Scenario: [sound.md](references/sound.md).
+3. Music, sound kit (optional: a film can run on music alone) and pictures on Scenario:
+   [sound.md](references/sound.md).
 4. spec.js: [blocks.md](references/blocks.md), with the motion rules in
    [craft.md](references/craft.md).
 5. Preview and stills: scrub, snap the beats, fix, repeat.
@@ -149,8 +150,8 @@ lands on the last hit.
    Picture block now pushes, pans, punches in and cuts in on the beat. Its `rain` carries each
    picture between words; under `snow`, `dust` or no weather, give every beat a word or a cut-in.
    The teaser passed with 24% still frames, no hold over 0.6 s and 12.5 cuts per 10 s.
-8. **Master.** `render.py . --res 4k` and `finish.py`: a 4K master under 1 GB, a 1080p version and a
-   9:16 version (the film centered on black), each checked.
+8. **Master.** `render.py . --res 4k` and `finish.py`: a 4K master under 1 GB and a 1080p version,
+   each checked. `--vertical` adds a 9:16 version (the film centered on black) when the brief asks.
 
 ## Common mistakes
 

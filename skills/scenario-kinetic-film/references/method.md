@@ -4,6 +4,7 @@
 
 | Film                 | Length     | Tempo                                            | Beats      |
 | -------------------- | ---------- | ------------------------------------------------ | ---------- |
+| Short teaser         | 10 to 15 s | 160 to 175 BPM                                   | 27 to 44   |
 | Teaser or social cut | 15 to 25 s | 160 to 175 BPM (drum and bass, phonk, breakbeat) | 45 to 70   |
 | Launch film          | 40 to 55 s | 165 to 175 BPM                                   | 115 to 160 |
 | Calmer brand film    | 30 to 45 s | 120 to 128 BPM                                   | 60 to 95   |
@@ -11,6 +12,12 @@
 Fast tempos give more cuts per second for free: at 172 BPM a beat is 0.35 s, exactly the shot length
 the high-energy references run at. `spec.beats` is the film's length in beats; the HUD and the logo
 end card are timed from it.
+
+- The starter example is a short teaser: 13 s, 36 beats at 170 BPM, passing the gates as shipped.
+- A short teaser at a slower tempo the brief sets (12 s at 120 BPM is 24 beats of 0.5 s) parks each
+  word for most of its beat. Land shots on half beats, and use `weather: 'rain'` under a Picture.
+- One such teaser (four cuts, an 8-beat Picture, a 12-beat Logo) failed `finish.py` at 68% still
+  frames under the default `dust`. It passed at 21% with `rain`.
 
 ## 2. Write the words first
 

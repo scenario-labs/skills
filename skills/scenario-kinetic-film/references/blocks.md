@@ -18,6 +18,9 @@ export default {
 };
 ```
 
+- `hudOut: [start, end]` fades the HUD out between those two beats. Default: the film's last 4 beats
+  to its last 2 (`[beats - 4, beats - 2]`). `validate.js` stops on a pair outside the film or out of
+  order.
 - Palette names (`'bg'`, `'paper'`, `'accent'`, `'hot'`, `'ink'`) work anywhere a color does. Any
   CSS color works outside the palette.
 - Palette values must be 6-digit hex (`#RRGGBB`) or `rgb()`, the two forms the engine parses without
@@ -76,6 +79,8 @@ Shot options:
 - **`second`**: for stack, pair and split, beats until the second element.
 - **`scramble: [a, b]`, `glitch`, `inverts: [..]`**: a glyph scramble between beats a and b
   (relative), an RGB glitch, invert flashes.
+- **`rgb: true`** (`cut` only): a 2-frame invert flash one frame after the hit, then a red and cyan
+  split that shakes and settles in about 0.5 s. The examples end their cut runs on it.
 - **`flip: { at, ground, color }`**: change ground and color mid-shot (relative beat).
 - **`dot`, `glyphs`, `code`, `note`, `noteAt`**: accent the last character; a burst of code glyphs;
   the film's source as a backdrop (split); a mono line typed under the word.
@@ -200,14 +205,18 @@ window and lands on its first frame as the window fills the screen.
 
 - The image cuts in along a slash (or zooms in), then pushes and pans with a slight 3D tilt.
 - It punches in on every word and hard-cuts in to details: `cutIns: [[beat, scale, [fx, fy], cue]]`,
-  positions 0 to 1 of the image. A cut-in's cue plays at a fixed level: a hit that needs its own
-  level goes in `spec.cues` (`[beat, name, gain]`) instead, since `spec.sounds` raises every use.
+  positions 0 to 1 of the image.
+  - `scale` (1.6 to 1.65 in kaiju-postal) and `[fx, fy]` have no default: set both. The picture then
+    grows 14% per second until the next cut-in or the block's end.
+  - `cue` defaults to `hit` and always plays, at a fixed gain. `spec.sounds` levels a name for every
+    use, so a cut-in that needs its own level takes a sound name of its own, leveled there.
 - `words: [[beat, text, color]]` and `cutIns` count beats from the block's start, on its 8 nominal
   beats scaled to its span. In a block from 8 to 16, `[1, 'MONSTERS']` lands on beat 9.
 - A weather layer rides over it: `rain`, `snow`, `dust` (the default), or `null`. Only `rain` keeps
   the picture moving between words. Under the others, put a word or a cut-in on every beat: two
   words and one cut-in over 8 beats held 0.88 s under `snow` or `dust` and failed `finish.py`.
-- `tint` darkens it for type.
+- `tint` (0 to 1, default 0.35) darkens it for type: a `bg` shade at 0.1 opacity at the top, `tint`
+  at 70% of the height and `tint` + 0.25 at the bottom. From 0.75, the bottom edge is solid `bg`.
 - `x`/`y` place the words' center in px on the 1920x1080 frame (defaults 960 and 600; 0 counts as
   unset). Set them off center when a face is in the middle.
 - Keep `x` more than 60 px inside either side: at 60 px the fit width below reaches 0 and the words
