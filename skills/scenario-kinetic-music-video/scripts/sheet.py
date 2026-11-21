@@ -12,7 +12,7 @@ def label(path, fps=None, start=0.0):
         return f'{float(m.group(1)):g}'
     m = re.match(r'f_(\d+)\.\w+$', name)
     if m and fps:
-        return f'{start + (int(m.group(1)) - 1) / fps:.1f}'
+        return f'{round(start + (int(m.group(1)) - 1) / fps, 3):g}'
     return name
 
 
@@ -46,7 +46,9 @@ def main(argv):
     except OSError: font = None
     for i, (im, f) in enumerate(zip(ims, files)):
         x, y = (i % cols)*w, (i//cols)*h; S.paste(im, (x, y)); lab = label(f, fps, start)
-        d.rectangle([x, y, x+len(lab)*h//28+16, y+h//14], fill=(0,0,0)); d.text((x+6, y+2), lab, fill=(255,200,80), font=font)
+        # the box follows the text's drawn bounds: a fixed size per character let long file names run past it
+        l, t, r, b = d.textbbox((x+6, y+2), lab, font=font)
+        d.rectangle([x, y, r+6, b+3], fill=(0,0,0)); d.text((x+6, y+2), lab, fill=(255,200,80), font=font)
     S.save(out, quality=88); print(out)
 
 
