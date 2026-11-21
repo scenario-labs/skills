@@ -1,33 +1,24 @@
 """Runs bx_rig.weight_report's mirror check in a real Blender on symmetric weighted grids.
 
 weight_cases.py builds the grids, with Blender (.L/.R) and engine (_l/_r) side names, and
-writes the results to JSON; these tests read them. Without Blender every test skips.
+writes the results to JSON; these tests read them. Without Blender, or below the family's
+version floor (live_blender.py), every test skips.
 """
 
 import json
-import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
+from live_blender import BLENDER, SKIP
+
 HERE = Path(__file__).parent
 SCRIPTS = HERE.parents[1] / "skills" / "dcc" / "blender" / "scenario-blender-rigging" / "scripts"
 
 
-def find_blender():
-    for path in (os.environ.get("BLENDER"), shutil.which("blender"),
-                 "/Applications/Blender.app/Contents/MacOS/Blender"):
-        if path and Path(path).is_file():
-            return path
-    return None
-
-
-BLENDER = find_blender()
-
-
-@unittest.skipUnless(BLENDER, "Blender is not installed")
+@unittest.skipIf(SKIP, SKIP)
 class WeightMirror(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
