@@ -125,7 +125,7 @@ size and position". Anything unnamed is open to change.
 - Reusing one model's parameter block on another: `aspectRatio` and `width`/`height` rarely coexist,
   and unknown fields are rejected.
 - Retrying a 403 `ModelAccessRestrictedError`: it names `modelId` and `requiredPlan`, so surface the
-  upgrade or pick another model.
+  upgrade, and pick another model only if the user (unattended: the task) agrees.
 - Prompting "transparent background": diffusion outputs are opaque. Use a `background` field when
   the schema has one, otherwise run a background-removal model afterwards.
 - Re-running an approved frame at a higher size tier and expecting it back sharper: many models
