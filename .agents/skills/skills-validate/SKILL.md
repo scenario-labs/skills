@@ -195,27 +195,30 @@ Then ask how to upload them:
 - **Drag**: open the folder (`open` on macOS, `xdg-open` on Linux) so the user can drag the files
   into the report comment.
 - **Gist**: when nobody can drag (no screen, a locked one), host them in a gist. It publishes the
-  files under the user's GitHub account, so take it only on their yes.
+  files under the user's GitHub account, so take it only on their yes. `--no-post` publishes
+  nothing, so it skips this route.
 
 On the gist route:
 
 1. `gh gist create` refuses binary files: create the gist with a `README.md` naming the PR and each
    file. It is secret (unlisted) by default, so it stays off the user's profile.
-2. Clone it over HTTPS (`gh gist clone` follows gh's `git_protocol`, and SSH can fail host-key
+2. A video serves as `application/octet-stream` and downloads instead of playing, so first make its
+   GIF preview beside it in `$RUN/assets/`, with ffmpeg's `palettegen` and `paletteuse` (12 fps at
+   480 pixels wide gave about 3 MB for a 5-second clip).
+3. Clone the gist over HTTPS (`gh gist clone` follows gh's `git_protocol`, and SSH can fail host-key
    verification):
    `git -c 'credential.helper=!gh auth git-credential' clone https://gist.github.com/<id>.git`. The
    `-c` covers the clone only, so set the helper in the clone too
-   (`git config credential.helper '!gh auth git-credential'`). Copy the files in, commit, and push.
-3. Link each file at its commit-pinned raw URL,
+   (`git config credential.helper '!gh auth git-credential'`). Copy the files in, GIFs included,
+   commit, and push.
+4. Link each file at its commit-pinned raw URL,
    `https://gist.githubusercontent.com/<user>/<id>/raw/<sha>/<file>`, so a later push never changes
-   what the report shows. Check that each image serves `image/*` (`curl -sIL`).
-4. A video serves as `application/octet-stream` and downloads instead of playing. Link it, and
-   inline a GIF preview made with ffmpeg's `palettegen` and `paletteuse` (12 fps at 480 pixels wide
-   gave about 3 MB for a 5-second clip).
+   what the report shows. Check that each image serves `image/*` (`curl -sIL`). Inline a video's GIF
+   and link the video itself.
 
 Once the files are uploaded, format the comment: offer it after a drag, and do it on the gist route,
-where nothing reaches the comment otherwise. With no comment to update (`--no-post`, or a report
-kept out of GitHub), print the gist links under the report instead.
+where nothing reaches the comment otherwise. With no comment to update (a report kept out of
+GitHub), print the gist links under the report instead.
 
 1. Fetch its body with `gh api repos/<owner>/<repo>/issues/comments/<id> --jq .body`. Keep every
    attachment URL GitHub inserted, and change nothing but the evidence.
