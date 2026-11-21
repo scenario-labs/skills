@@ -332,3 +332,105 @@ hair and brows.
   `chest`, `hips`, `neck`, `head`, `shoulder.L`, `root`; deform bones all start with `DEF-`, ORG
   bones follow IK and FK. (From the rigify_studio digest probes, `archive/tests/rigify_probe/`, and
   this skill's tests.)
+
+## P15. Loose garments: robust transfer and garment depth (test_live_transfer.py)
+
+```python
+R.transfer_weights(body, skirt, rig, mapping="ROBUST")    # or bind(..., garment_mapping="ROBUST")
+skirt["bx_matched"], skirt["bx_inpainted"]                 # copied vs filled in, vertex counts
+KNEE_LIFT = {"name": "knee_lift_90.L", "side": "L", "joints": ["hip.L", "knee.L"],
+             "ops": [("fk",), ("aim", "thigh_fk.L", (0.05, -1.0, 0.0)), ("hinge", "shin_fk.L", 90, (0, 0, -1))]}
+dep = R.garment_depth(rig, body, [skirt, sleeve], R.RIGIFY_POSES + [KNEE_LIFT], limit=0.005)
+dep["fail"]                                                # [(pose, garment)] deeper than at rest
+```
+
+- **Robust transfer.** A vertex copies the closest skin point's weights only when that point is
+  within `max_dist` (default 5% of the garment's bounding-box diagonal) and the normals agree within
+  `max_angle` (35 degrees, either facing). Every other vertex is inpainted: it starts from the
+  nearest copied vertex (over the garment's edges, else in space for a detached part), diffuses
+  until no weight moves more than 1e-6, then 10 light smoothing passes run. Method: Abdrashitov et
+  al., "Robust Skin Weights Transfer via Weight Inpainting", SIGGRAPH Asia 2023.
+- **Errors.** No vertex passing both gates raises `ValueError` naming the closest gap: raise
+  `max_dist` past it. A body with a live Mirror raises too, since its weights cover only the base
+  half: apply the Mirror first.
+- **When.** A tight piece copies whole either way, so one `bind(..., garment_mapping="ROBUST")`
+  serves a shirt and a skirt. Use it on what hangs off the skin: skirts, coat tails, capes, hoods,
+  loose sleeves. Neither route keeps a boot's inner wall off the other leg, which lies just as close
+  and faces it.
+- **Inpainted parts follow their copied band**, not the limbs under them. A leg that swings forward
+  then passes through a skirt that only follows the hips: `garment_depth` reports it.
+- **Auto-weighted bodies.** The skin under a waistband already carries thigh weight, so the copied
+  band does too. Robust cuts the tear but lets the leg through. Gate with `garment_depth`, then add
+  skirt bones or a corrective shape key.
+- **Knee lift.** For skirts and coats, add `KNEE_LIFT` to the depth poses: `RIGIFY_POSES` has no
+  knee lift, the pose that drives a leg deepest through a skirt.
+- **Garment depth.** Per pose, how much deeper each garment vertex sits inside the body than at
+  rest; overlap already present at rest is not counted. `weight_report` and `deformation_report`
+  read one mesh at a time, so they pass a garment sunk into the body. The body's normals must face
+  out (`model_check`). A live Mirror on the body is measured whole. A pose naming controls the rig
+  lacks raises, since the body would stay at rest.
+
+Verified: test_live_transfer.py on Blender 5.2.1. A hip cylinder and two legs, a 1,008-vertex skirt
+hanging from the hips, a sleeve 1 cm off the left leg, the left leg swung 50 degrees forward.
+Nearest-face: 244 skirt vertices led by the left thigh and 242 by the right, 51 edges outside the
+0.5 to 1.6 stretch band, worst stretch 13.3. Robust: 338 copied, 670 inpainted, all 1,008 led by the
+hips, 0 edges outside the band, worst 1.0, sums 1.0. A hoop below the hem with no edge to the skirt
+followed the hips too. The sleeve copied whole (0 inpainted) and stayed under 5 mm. `garment_depth`
+failed both skirts where the leg passes through: 34 robust vertices over 5 mm (worst 6.8 cm), 7
+nearest-face ones (worst 3.7 cm).
+
+Field check (skill validation on PR 359, Blender 5.2.1): the A-pose mannequin with Rigify basic and
+auto weights, plus a 1,536-vertex flared skirt 2 to 10 cm off the legs. Robust copied 620 and
+inpainted 916, yet 1,273 vertices stayed led by a thigh bone. At `leg_forward.L` the worst stretch
+fell from 19.2 (nearest-face) to 1.9, with 30 edges still outside the band. `garment_depth` failed
+`leg_forward.L` (63 vertices, worst 5.9 cm) and the 90 degree knee lift (140, worst 7.9 cm).
+
+## P16. A body on an existing skeleton
+
+When clips, an engine skeleton or other characters already share a skeleton, the body has to join it
+before those clips play on it. It keeps its own rig and bind, then moves onto the shared skeleton's
+names and hierarchy, not onto its proportions.
+
+- **Map, per bone of the body's rig:** rename to the shared name; merge (add the weights into the
+  target's group, re-parent the children); split a long segment into the shared one's parts, its
+  weights shared by tent functions along the segment. Keep the map as data, one file per skeleton.
+- **Extra bones.** The shared skeleton's other bones go in unweighted. An attachment bone (weapon,
+  prop socket) sits at the shared skeleton's offset from its parent bone. Root and IK bones keep the
+  shared skeleton's rest place, so clips keyed on them keep their meaning.
+- **Keep the body's joint positions.** Each body keeps its own heads and tails; only names and
+  hierarchy change.
+- **Weights.** Every vertex group must end with a bone; no group may name a bone that is gone. Check
+  sums, unweighted vertices and the influence count with `weight_report`.
+- **Gate, before any influence cap.** Compare every vertex of the moved body against the source rig,
+  in the rest pose and in a seeded sweep that turns each mapped unit by up to 25 degrees.
+  - Set the source's B-bone segments to 1 first: an engine skeleton carries none.
+  - Pose both rigs from one world-space delta per unit. Bones merged into one target turn together.
+    Both parts of a split take their source's delta; never repeat a local turn down the chain.
+  - The worst distance is then a rounding error, well under 0.1 mm. On a Rigify Basic body (5.2.1)
+    it measured 0.0007 mm, against 21 mm with Rigify's B-bones, 29 mm with local turns on split
+    parts and 96 mm with merged bones turned apart.
+- **Cap.** Limiting to 4 influences moves vertices (16 mm in the same sweep): judge it with
+  `deformation_report`, not with this gate.
+- **Rest pose for shared clips.** A clip stores each bone's rotation from the shared rest. On a body
+  with another rest direction or roll (an A pose under a T-pose skeleton), it plays a different
+  pose.
+  - When the shared clips must play unchanged (an engine skeleton), match the shared rest direction
+    and roll in two moves. Posing the roll itself would twist the mesh.
+  - First set each bone's edit roll so the swing to the shared direction lands on the shared roll:
+    `align_roll` with the shared Z axis turned back by that swing. A roll change at rest moves no
+    vertex.
+  - Then pose each bone, root first, by that swing only, and run
+    `R.apply_pose_as_rest(rig, meshes)`. It bakes the pose into each mesh's Basis and every shape
+    key, then applies the pose as rest. The modifier stack stays as it was. Never apply and re-add
+    the Armature modifier instead: `modifier_apply` refuses a mesh with shape keys, and a re-added
+    modifier lands after Subdivision.
+  - The swing bakes its skinning into the new rest mesh (15 mm at the shoulders on an A-pose body):
+    look at the shoulders after it.
+  - The body keeps its own rolls only when every clip is re-baked for it from per-bone pose deltas.
+- **Export and read back.** Use `scenario-blender-export`'s skeletal preset with one override:
+  `bxe.export(path, "unreal_skeletal", objects, use_armature_deform_only=False)` (or
+  `"unity_skeletal"`). The extra bones carry no weights, and a deform-only export drops them.
+  - The preset writes each clip as its own take. A raw call that bakes the scene take reads back one
+    frame late (frames 2 to 25 for 1 to 24 on 5.2.1).
+  - Read the file back and compare it with the scene body at the same poses: the file, not the
+    scene, is what ships.

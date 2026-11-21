@@ -48,11 +48,19 @@ export async function launch() {
     "--enable-gpu",
   ];
   if (process.platform === "darwin") args.push("--use-angle=metal");
+  // stderr, never stdout: render.mjs streams frames there and info.mjs prints its JSON there
+  let b;
   try {
-    return await pw.chromium.launch({ channel: "chrome", args });
-  } catch {
-    return await pw.chromium.launch({ args });
+    b = await pw.chromium.launch({ channel: "chrome", args });
+    console.error("browser: Google Chrome");
+  } catch (e) {
+    b = await pw.chromium.launch({ args });
+    const why = String(e?.message ?? e).split("\n")[0];
+    console.error(
+      `browser: Playwright's Chromium (Google Chrome did not launch: ${why})`,
+    );
   }
+  return b;
 }
 export const FILM_URL = (
   process.env.FILM_URL || "http://127.0.0.1:5671/"
@@ -81,7 +89,8 @@ export async function openFilm(b, dsf = 1, render = true) {
     )
       errs.push("CONSOLE " + m.text());
   });
-  // a misspelled Picture src would otherwise render a blank scene in silence
+  // a misspelled Picture src would otherwise render a blank scene in silence. index.html declares an inline icon;
+  // the favicon test stays for film folders scaffolded before it, which still request /favicon.ico
   pg.on("response", (r) => {
     if (r.status() >= 400 && !/\/favicon\.ico$/.test(r.url()))
       errs.push(`HTTP ${r.status()} ${r.url()}`);
