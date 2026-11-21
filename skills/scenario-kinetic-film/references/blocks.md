@@ -226,9 +226,10 @@ window and lands on its first frame as the window fills the screen.
   vanish, and closer they render mirrored. Nothing checks it.
 - Words are `size` px (default 260). They shrink to fit 1600 px, or with `x` set, twice the distance
   from `x` to the nearer side minus 120 px.
-- The block's camera pushes in to 1.1x around the frame's center by its end, carrying off-center
-  words outward. A word that fills the fit width ends 60 px from the frame's edge, wherever `x`
-  sits: lower `size` until the word is about 10% narrower, and check a still at the last word.
+- The block's camera pushes in to 1.1x around the frame's center, pans from -25 to 25 px and rolls
+  from -1 to 1 degree by its end, carrying off-center words outward. A word that fills the fit width
+  ends 60 px from the frame's edge before any of that: lower `size` until the word stays inside the
+  frame in stills at its slam and at the block's last frame.
 - Each word also slams in from 1.4x over 0.16 s, then grows 5% per second until the next: a word
   that must stay inside a third of the frame fits about 2 em at 180 px.
 - Use images at least 2048 px wide. Cut-ins above 1.7x look soft at 4K.
