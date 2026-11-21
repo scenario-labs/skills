@@ -137,22 +137,28 @@ textures).
     `print`, the Roblox 20,000-triangle mesh limit (checked 2026-10-18).
   - Returns `{pass, errors, warnings, per_object}`. Tolerances scale with the asset's diagonal.
     UV-seam splits from a glTF import are welded for the checks, so seams never read as holes.
-  - Gate separate props one by one: every prop but the largest reads as floating.
+  - Gate separate props one by one: every prop but the largest reads as floating. Pieces that each
+    rest on the floor (a rack's hoops, a scatter of stones) are one asset: pass `ground=0.0` (the
+    floor's z), and any part not connected to the floor group floats, however large.
   - CLI, exit code 2 on failure:
-    `blender -b --factory-startup --python-exit-code 1 -P bx_audit.py -- --deliverable [--import model.glb | --objects A B] --profile game [--json out.json]`.
+    `blender -b --factory-startup --python-exit-code 1 -P bx_audit.py -- --deliverable [--import model.glb | --objects A B] --profile game [--ground 0] [--json out.json]`.
   - Fixes: apply scale (`obj.data.transform(Matrix.Diagonal(obj.scale).to_4x4())`, then
     `obj.scale = (1, 1, 1)`; a scale the message puts on a parent: select the parent and its
     children, `bpy.ops.object.transform_apply(scale=True)`), `bmesh.ops.recalc_face_normals` for
     inside-out parts, `bmesh.ops.reverse_faces` for faces pointing inward
     (`per_object[name]["inward_faces_at"]`), delete or offset the hidden face of a z-fighting pair,
-    join or move floating parts, delete fragments.
+    move floating parts until they touch, delete fragments. A floating error names the nearest part:
+    `Sign: floating, 0.15 from Hoop_2`. Joining objects does not connect them: the gate then reports
+    a floating fragment.
   - Engines cull back faces: to see what they draw, render
     `bx_review.review(parts, out, culling=True)` (magenta shows through a face pointing inward) and
     compare with a sheet without.
 - `bx_review.py`: `review(objs, out_dir, views, modes, culling=False)` takes objects or names and
   writes one contact sheet (rows = modes, cols = views) in a temporary scene, user settings
   untouched; `playblast(out_path, res_pct=50)`; `turntable(obj, out_path, frames=72, res=720)`. Only
-  `review` has a command line: call the others from a short wrapper script.
+  `review` has a command line, with names comma-separated (unlike `bx_audit`'s):
+  `blender -b f.blend --factory-startup --python-exit-code 1 -P bx_review.py -- --objects A,B --out review_dir --res 400 [--culling 1]`.
+  Call the others from a short wrapper script.
 - `bx_gui.py`: real brushes in a live session: `set_view`, `activate_brush(mode, name)`,
   `stroke(mode, world_points, size, strength)`, `run(op, **kw)`, `set_paint_color`, `screenshot`.
 

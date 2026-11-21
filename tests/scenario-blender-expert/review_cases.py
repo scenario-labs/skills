@@ -50,6 +50,16 @@ for culling in (False, True):
     }
 cases["scene_culling_after"] = bpy.context.scene.display.shading.show_backface_culling
 
+# The command line SKILL.md shows: comma-separated names, an output folder, culling on.
+cli_out = os.path.join(TMP, "cli")
+argv, sys.argv = sys.argv, ["blender", "--", "--objects", "Box", "--out", cli_out, "--views", "front",
+                            "--modes", "matcap", "--res", "96", "--culling", "1"]
+try:
+    bx_review._cli()
+finally:
+    sys.argv = argv
+cases["cli"] = {"front": magenta_share(os.path.join(cli_out, "matcap_front.png"))}
+
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)
 print("REVIEW CASES", len(cases))
