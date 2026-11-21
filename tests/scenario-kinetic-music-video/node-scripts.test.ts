@@ -241,6 +241,11 @@ describe("serve.mjs", () => {
     expect(r.body.equals(readFileSync(file))).toBe(true);
   });
 
+  it("serves an engine page with an inline icon, so Chromium requests no /favicon.ico", async () => {
+    const r = await get(port, "/assets/engine/index.html");
+    expect(r.body.toString()).toMatch(/<link rel="icon" href="data:,"/);
+  });
+
   it("maps extensions to MIME types and falls back to octet-stream", async () => {
     const cases: [string, string][] = [
       ["/assets/engine/core.js", "text/javascript"],
