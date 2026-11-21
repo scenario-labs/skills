@@ -166,8 +166,8 @@ Assemble the report with the template below. This repository is public: only pub
 language (see AGENTS.md), never a signed asset URL, which is a credential in itself, and never the
 team or project the run used. Assets travel as ids and local filenames. A run whose files never
 passed through Scenario (an expert tool working on local files) drops the Asset id, Job id and Model
-id columns and says the files were made locally. GitHub has no API for comment attachments, so
-images reach the thread only when a human drags them into the comment's edit box.
+id columns and says the files were made locally. GitHub has no API for comment attachments: files
+reach the thread when a human drags them into the comment's edit box, or from a gist (below).
 
 **In a PR context**, post it as a PR comment (`gh pr comment <n> --body-file` or the GitHub MCP
 `add_issue_comment`), ending with the attribution line, and print the comment URL. `--no-post`
@@ -187,19 +187,46 @@ size, and the report claim it backs:
   a defect or a gate result, and one short delivered file a reader can play.
 - Leave out inputs, files a smaller pick already proves, and files past GitHub's attachment limits:
   10 MB for an image, and 10 MB for a video unless the repository's owner has a paid plan (100 MB).
+- Upload only files whose content is publicly shareable, like the report: both routes below publish
+  them, so nothing they show may be customer or internal data.
 
-Then ask whether to open the folder so the files can be dragged into the report comment, and open it
-(`open` on macOS, `xdg-open` on Linux) only on a yes.
+Then ask how to upload them:
 
-After the user says the files are uploaded, offer to format the comment. On a yes:
+- **Drag**: open the folder (`open` on macOS, `xdg-open` on Linux) so the user can drag the files
+  into the report comment.
+- **Gist**: when nobody can drag (no screen, a locked one), host them in a gist. It publishes the
+  files under the user's GitHub account, so take it only on their yes. `--no-post` publishes
+  nothing, so it skips this route.
+
+On the gist route:
+
+1. `gh gist create` refuses binary files: create the gist with a `README.md` naming the PR and each
+   file. It is secret (unlisted) by default, so it stays off the user's profile.
+2. A video serves as `application/octet-stream` and downloads instead of playing, so first make its
+   GIF preview beside it in `$RUN/assets/`, with ffmpeg's `palettegen` and `paletteuse` (12 fps at
+   480 pixels wide gave about 3 MB for a 5-second clip).
+3. Clone the gist over HTTPS (`gh gist clone` follows gh's `git_protocol`, and SSH can fail host-key
+   verification):
+   `git -c 'credential.helper=!gh auth git-credential' clone https://gist.github.com/<id>.git`. The
+   `-c` covers the clone only, so set the helper in the clone too
+   (`git config credential.helper '!gh auth git-credential'`). Copy the files in, GIFs included,
+   commit, and push.
+4. Link each file at its commit-pinned raw URL,
+   `https://gist.githubusercontent.com/<user>/<id>/raw/<sha>/<file>`, so a later push never changes
+   what the report shows. Check that each image serves `image/*` (`curl -sIL`). Inline a video's GIF
+   and link the video itself.
+
+Once the files are uploaded, format the comment: offer it after a drag, and do it on the gist route,
+where nothing reaches the comment otherwise. With no comment to update (a report kept out of
+GitHub), print the gist links under the report instead.
 
 1. Fetch its body with `gh api repos/<owner>/<repo>/issues/comments/<id> --jq .body`. Keep every
-   attachment URL GitHub inserted, and change nothing outside the attachment block.
-2. Move each attachment under the Evidence table, below a heading naming what it shows.
-3. Size each image with an `<img width="...">` tag, and replace the alt text GitHub derived from the
-   file name with a description.
-4. Leave each video URL alone on its line, with a one-line caption above it: GitHub renders a bare
-   URL on its own line as a player.
+   attachment URL GitHub inserted, and change nothing but the evidence.
+2. Place each file under the Evidence table, below a heading naming what it shows.
+3. Size each image with an `<img width="...">` tag, and give it alt text describing what it shows
+   (replace any GitHub derived from the file name).
+4. Leave each dragged video URL alone on its line, with a one-line caption above it: GitHub renders
+   a bare attachment URL on its own line as a player. A gist video gets its GIF and link instead.
 5. Update the comment with `gh api --method PATCH repos/<owner>/<repo>/issues/comments/<id>`,
    passing the new body as `-F body=@<file>`.
 

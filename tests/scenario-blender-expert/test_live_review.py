@@ -45,6 +45,9 @@ class ReviewCulling(unittest.TestCase):
         # From the side the outward faces are drawn: only the background around the box shows.
         self.assertLess(self.c["culled"]["right"], self.c["culled"]["front"])
 
+    def test_command_line_renders_with_culling(self):
+        self.assertGreater(self.c["cli"]["front"], 0.2)
+
     def test_user_scene_untouched(self):
         self.assertFalse(self.c["scene_culling_after"])  # review() leaves the scene as it found it
 
