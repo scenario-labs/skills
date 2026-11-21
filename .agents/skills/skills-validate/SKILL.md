@@ -61,7 +61,8 @@ working tree, so the run tests the version under review rather than the publishe
 SKILL="<name>"
 DIR=$(node scripts/lib/skills.mjs --dir "$SKILL")
 RUN=$(mktemp -d "${TMPDIR:-/tmp}/skill-validate-$SKILL-XXXXXX")
-RESULT="$RUN-result.json" # outside $RUN: the tester may write its own result.json there
+# outside $RUN, where the tester may write its own result.json; mktemp makes it private (0600)
+RESULT=$(mktemp "${TMPDIR:-/tmp}/skill-validate-$SKILL-result-XXXXXX")
 mkdir -p "$RUN/.claude/skills" "$RUN/assets"
 cp -R skills/scenario "$RUN/.claude/skills/"
 case "$DIR" in
@@ -103,8 +104,8 @@ Then pick the strongest isolation available. If the Claude Code CLI is installed
   - `< /dev/null` keeps a stdin warning out of the JSON.
 
 - **Local-only expert run** (the task makes no Scenario call): no server is needed. Run with
-  `--setting-sources project`, drop `mcp__<server>` from `--allowedTools`, and state in the task
-  that no team and project apply, or the contract's rule 9 stops the tester.
+  `--setting-sources project`, drop `mcp__<server>` from `--allowedTools`, and name no team or
+  project in the task.
 
 - **Subagent** when the CLI is unavailable or the list has no connected Scenario server. Spawn a
   fresh agent with the contract, the task, and the run directory path (Claude Code can use its
