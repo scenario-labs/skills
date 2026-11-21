@@ -61,6 +61,8 @@ working tree, so the run tests the version under review rather than the publishe
 SKILL="<name>"
 DIR=$(node scripts/lib/skills.mjs --dir "$SKILL")
 RUN=$(mktemp -d "${TMPDIR:-/tmp}/skill-validate-$SKILL-XXXXXX")
+# outside $RUN, where the tester may write its own result.json; mktemp makes it private (0600)
+RESULT=$(mktemp "${TMPDIR:-/tmp}/skill-validate-$SKILL-result-XXXXXX")
 mkdir -p "$RUN/.claude/skills" "$RUN/assets"
 cp -R skills/scenario "$RUN/.claude/skills/"
 case "$DIR" in
@@ -88,8 +90,8 @@ Then pick the strongest isolation available. If the Claude Code CLI is installed
   ```bash
   cd "$RUN" && claude -p --setting-sources user,project \
     --append-system-prompt "$(cat "$RUN/contract.md")" \
-    --allowedTools "mcp__<server> Read Write Bash" \
-    --output-format json "$(cat "$RUN/task.md")" | tee "$RUN/result.json"
+    --allowedTools "mcp__<server> Read Write Edit Bash" \
+    --output-format json "$(cat "$RUN/task.md")" < /dev/null | tee "$RESULT"
   ```
 
   Use the server name `claude mcp list` printed, normalized the way tool prefixes are: dots and
@@ -98,6 +100,12 @@ Then pick the strongest isolation available. If the Claude Code CLI is installed
   `--setting-sources user,project` (which a user-scope connector needs) also carries the user's
   plugins and hooks into it; watch the transcript for injected noise. A quarantined fork drops
   `Bash` from `--allowedTools`: its scripts run in the container.
+  - `Edit` lets the tester fix its own run files; without it, it ships defects it already found.
+  - `< /dev/null` keeps a stdin warning out of the JSON.
+
+- **Local-only expert run** (the task makes no Scenario call): no server is needed. Run with
+  `--setting-sources project`, drop `mcp__<server>` from `--allowedTools`, and name no team or
+  project in the task.
 
 - **Subagent** when the CLI is unavailable or the list has no connected Scenario server. Spawn a
   fresh agent with the contract, the task, and the run directory path (Claude Code can use its
@@ -169,8 +177,8 @@ prints the report here instead.
 skill covers the forms and the redaction rules), save it to a file, post it to a PR number they
 name, or leave it in this conversation. Post nothing until they pick.
 
-Finally, delete the run directory except `$RUN/assets/` (keep all of it with `--keep`). Save there
-any comparison image you built while grading: it backs a claim in the report.
+Finally, delete `$RESULT` and the run directory except `$RUN/assets/` (keep all of it with
+`--keep`). Save there any comparison image you built while grading: it backs a claim in the report.
 
 When `$RUN/assets/` holds files, end by recommending which to upload, if any, in a table of file,
 size, and the report claim it backs:
