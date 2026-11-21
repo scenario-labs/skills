@@ -68,7 +68,7 @@ contiguous nor ordered.
   lists and which surfaces only at run time as a 400 quoting the cap but not the input key. The dry
   run enforces the same validator at zero cost: route long texts through `dry_run=true` and shorten
   to fit rather than retrying verbatim, and with several string inputs bisect with dry runs to find
-  the offender. A job can still fail on prompt length with every input in range when a
+  the offender. A dry run or job still fails on prompt length with every input in range when a
   `transformText` node builds the prompt from them: shorten those inputs, or fix the graph per
   `scenario-workflow-authoring`.
 - `workflow_get` wraps `inputs_definition`/`editor_info` in `workflow`; `workflows_list` wraps
