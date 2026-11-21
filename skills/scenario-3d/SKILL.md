@@ -88,10 +88,10 @@ schemas and flag the gap.
    its input mesh exists: quote it from `recommend`, then `dry_run` the real asset before launching.
 5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
    Omitting `format` returns the stored original byte for byte; `format` converts to `glb`, `fbx`,
-   or `obj`. LLM-based members store their Blender file as the original: pass the run's
-   `outputFormat` (`properties.format` in `asset_get`) as `format`. Ask for `fbx` for a Unity
-   project without a glTF importer, and keep the GLB too: at authoring time the FBX embedded only
-   two images, so it may miss PBR maps.
+   or `obj`. LLM-based members store their Blender file as the original: `format` set to
+   `properties.format` (from `asset_get`) returns the delivered file, not a conversion. Ask for
+   `fbx` for a Unity project without a glTF importer, and keep the GLB too: at authoring time the
+   FBX embedded only two images, so it may miss PBR maps.
 
 **Prompt-only build.** When the user wants no concept to approve, skip step 1 and `recommend`
 `txt23d` in step 2: every LLM-based member supports it. Follow steps 3 to 5 with `images: []`;
@@ -201,8 +201,7 @@ Fixing normals, origin, or naming by hand is DCC work, not an MCP call. The
 
 ## Rigging and animation
 
-Rigging is a separate `3d23d` step on a finished mesh, not a generator flag: `recommend` it in the
-user's own words.
+Rigging is a separate `3d23d` step on a finished mesh, not a generator flag: `recommend` it.
 
 Body plan picks the model. Humanoid riggers take the mesh plus at most a front-facing hint or an
 approximate height, and infer a biped skeleton. Non-bipeds go to a model exposing `rigType`:
