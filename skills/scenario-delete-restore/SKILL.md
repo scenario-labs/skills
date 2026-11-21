@@ -13,7 +13,7 @@ Premium, Enterprise). Below Max, the server refuses to list or restore deleted i
 final from the agent's side.
 
 - A restore brings the item back, not reliably its filing: tags and collection membership are
-  documented as lost, yet some tags survive. Read the restored rows before re-filing.
+  documented as lost, yet some tags survive. Read the restored rows before re-tagging.
 - Collections have no restore tool. A deleted collection is rebuilt by hand or not at all.
 - Recovery is per project: the deleted listings cover the project in scope only.
 - The tools below marked read, write, or delete are catalog-only. `teams_list`, `models_list`, and
@@ -43,8 +43,8 @@ unattended, proceed from tool schemas and flag the gap.
 ## Restoring
 
 - **Find.** `assets_list` with `deleted: true` takes no `filters`: the server refuses the pair.
-  Match the user's words client-side against `deletedAt`, `kind`, `source`, `prompt`, `description`,
-  and `modelId`, paging with `page_token` (`limit` up to 100). The list is newest deletion first, so
+  Match the user's words client-side against `deletedAt`, `kind`, `prompt`, `description`, and
+  `modelId`, paging with `page_token` (`limit` up to 100). The list is newest deletion first, so
   stop paging once `deletedAt` is older than the user's window. `prompt` is cut at 120 characters,
   so a word past the cut never matches: say the selection may be incomplete. An upload has no
   `prompt` and keeps no file name: match its `description`, an automatic caption.
@@ -63,10 +63,11 @@ unattended, proceed from tool schemas and flag the gap.
 - **Plan refusal.** A restore or deleted listing refused with a plan message is not retryable.
   Report that restoring needs Max or above; upgrading is the user's call (unattended: report and
   stop).
-- **Re-file.** Read the restored rows on `assets_get_bulk`, then re-apply only the missing tags and
-  collections the user still needs: a tag the asset kept is refused as a duplicate (see the
-  `scenario` skill). `asset_add_tags` takes one asset per call; `collection_add_assets` takes any
-  number of ids. A collection deleted too is recreated with `collection_create` first.
+- **Re-file.** Re-apply the tags and collections the user still needs. Before re-tagging, read the
+  restored rows on `assets_get_bulk` and send only the missing tags: a tag the asset kept is refused
+  as a duplicate (see the `scenario` skill). `asset_add_tags` takes one asset per call.
+  `collection_add_assets` takes any number of ids and skips those already present, so it needs no
+  read. A collection deleted too is recreated with `collection_create` first.
 
 ## Deleting
 
@@ -119,8 +120,8 @@ Deletion stays a confirmed action.
 ## Common mistakes
 
 - Sending `filters` with `deleted: true`: refused. List unfiltered and match client-side.
-- Assuming a restore kept or dropped the filing: read the restored rows, then re-apply only what is
-  missing.
+- Re-applying every recorded tag after a restore: some survive, and a duplicate is refused. Read the
+  restored rows, then send only the missing tags.
 - Promising recovery below Max: the server refuses restores there, so the delete was final.
 - Running `asset_restore` or `model_restore` through `scenario_tool_execute_delete`: both are
   write-lane, and the delete executor rejects them.

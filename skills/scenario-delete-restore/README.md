@@ -27,9 +27,14 @@ Maintainer notes, not runtime instructions. SKILL.md does not link this file.
   - Tags can survive a delete, even though the tool reference says a restore drops them. Two of four
     deleted assets kept their tags in the bin, and one came back from `asset_restore` with both. The
     two were members of a collection deleted right after them; the mechanism is unconfirmed. So the
-    skill says to read the restored rows before re-filing, which holds either way.
-  - A deleted upload's row has no `prompt` and no file name, but carries `source` and `description`
-    (an automatic caption).
+    skill says to read the restored rows before re-tagging, which holds either way.
+    `collection_add_assets` needs no read: its tool page says it skips ids already present.
+  - `assets_list` rows, deleted ones included, carry `kind` and `description` (an automatic
+    caption). The `assets-list` page documents neither as a row field; `kind` appears in the tool
+    reference as an `upload_asset` parameter and a `search` filter.
+  - A deleted upload's row has no `prompt` and no file name, so `description` is what matches it.
+    Rows also carry `source`, which the skill leaves out: the reference does not name it, and
+    `description` already identifies an upload.
   - `collections_list` returns member counts, not ids.
 - No restore tool exists for collections: `scenario_tools_search` for "restore undelete" returns
   only `asset_restore` and `model_restore`.
