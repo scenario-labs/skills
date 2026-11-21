@@ -39,7 +39,8 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
 - **Everything that deforms together gets weights from the same source,** transferred and applied,
   so garments cannot drift while animating (Dikko, CGDive). [added, measured] Nearest-face suits
   parts that follow the skin; a part that hangs off it (skirt, coat tail, cape) takes
-  `garment_mapping="ROBUST"`, which copies only close, aligned skin and inpaints the rest (P15).
+  `garment_mapping="ROBUST"`, which copies only close, aligned skin and inpaints the rest (P15). It
+  applies to every garment in the `bind` call, and a tight one still copies whole.
 - **Export decides the deformation tools.** Four twist bones per segment instead of Preserve Volume;
   Preserve Volume, Corrective Smooth and B-bones are Blender-only, which is why Rigify segments its
   DEF bones (CGDive, Ivan).
@@ -98,10 +99,10 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
    islands, clean and normalize, Armature after Mirror and before Subdivision. GATE: `rep["ok"]`,
    `unweighted == 0`, no non-deform groups; for export `max_influences=4`.
 7. **Range of motion.** `dr = R.deformation_report(rig, [body, *garments], R.RIGIFY_POSES)`,
-   `R.flag_report(dr)`, `R.garment_depth(rig, body, garments)`, then `R.pose_sheet(...)` and
-   `R.joint_sheet(...)` close-ups and LOOK at them. GATE: no leaks, no unexplained collapse, no
-   garment sinking into the body, renders acceptable at armpit, elbow, wrist twist, groin, knee,
-   collar.
+   `R.flag_report(dr)`, `R.garment_depth(rig, body, garments)` (skirts and coats: add P15's knee
+   lift), then `R.pose_sheet(...)` and `R.joint_sheet(...)` close-ups and LOOK at them. GATE: no
+   leaks, no unexplained collapse, no garment sinking into the body, renders acceptable at armpit,
+   elbow, wrist twist, groin, knee, collar.
 8. **Fix, in this order.** Placement or roll problems: back to the metarig and regenerate. Weights:
    targeted data edits (`strip_opposite_side`, `assign_rigid`, `smooth_weights` with a vertex mask,
    `clean_weights`). Volume at deep bends: corrective shape keys (`volume_restore_targets`,

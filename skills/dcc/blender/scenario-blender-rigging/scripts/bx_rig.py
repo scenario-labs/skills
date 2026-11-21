@@ -1447,7 +1447,8 @@ def transfer_weights(src, dst, rig=None, apply=True, mapping="POLYINTERP_NEAREST
     smoothed (Abdrashitov et al., "Robust Skin Weights Transfer via Weight Inpainting",
     SIGGRAPH Asia 2023). Nearest-face copies every vertex, so the loose part of a skirt
     or coat takes whichever leg is closest and tears between them. Sets dst["bx_matched"]
-    and dst["bx_inpainted"] (vertex counts)."""
+    and dst["bx_inpainted"] (vertex counts); raises ValueError when no vertex passes both
+    gates."""
     for g in src.vertex_groups:
         if g.name not in dst.vertex_groups:
             dst.vertex_groups.new(name=g.name)
@@ -1539,10 +1540,12 @@ def robust_weights(src, dst, max_dist=None, max_angle=35.0, inpaint=200, smooth=
     cos_gate = math.cos(math.radians(max_angle))
     W = np.zeros((len(D), len(names)))
     ok = np.zeros(len(D), dtype=bool)
+    gap = math.inf
     for i, p in enumerate(D):
         loc, nrm, ti, dist = tree.find_nearest(Vector(p))
         if loc is None:
             continue
+        gap = min(gap, dist)
         a, b, c = S[T[ti]]
         v0, v1, v2 = b - a, c - a, np.array(loc) - a
         d00, d01, d11, d20, d21 = v0 @ v0, v0 @ v1, v1 @ v1, v2 @ v0, v2 @ v1
@@ -1557,6 +1560,12 @@ def robust_weights(src, dst, max_dist=None, max_angle=35.0, inpaint=200, smooth=
         W[i] = bary @ Ws[T[ti]]
         # abs: a garment's inner wall faces the skin the other way and still matches
         ok[i] = dist <= max_dist and abs(float(N[i] @ np.array(nrm))) >= cos_gate
+    if not ok.any():
+        # inpainting from nothing silently smooths every vertex into a blur
+        raise ValueError(
+            f"robust transfer: no vertex of {dst.name} lies within max_dist={max_dist:.4f} of "
+            f"{src.name} with normals within {max_angle} degrees (closest gap {gap:.4f}); "
+            "raise max_dist or use nearest-face")
     ed = _edges(dst)
     if (~ok).any():
         W = _diffuse(W, ed, inpaint, 1.0, fixed=ok)

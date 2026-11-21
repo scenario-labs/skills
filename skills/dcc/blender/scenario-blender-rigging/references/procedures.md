@@ -338,7 +338,9 @@ hair and brows.
 ```python
 R.transfer_weights(body, skirt, rig, mapping="ROBUST")    # or bind(..., garment_mapping="ROBUST")
 skirt["bx_matched"], skirt["bx_inpainted"]                 # copied vs filled in, vertex counts
-dep = R.garment_depth(rig, body, [skirt, sleeve], R.RIGIFY_POSES, limit=0.005)
+KNEE_LIFT = {"name": "knee_lift_90.L", "side": "L", "joints": ["hip.L", "knee.L"],
+             "ops": [("fk",), ("aim", "thigh_fk.L", (0.05, -1.0, 0.0)), ("hinge", "shin_fk.L", 90, (0, 0, -1))]}
+dep = R.garment_depth(rig, body, [skirt, sleeve], R.RIGIFY_POSES + [KNEE_LIFT], limit=0.005)
 dep["fail"]                                                # [(pose, garment)] deeper than at rest
 ```
 
@@ -346,12 +348,20 @@ dep["fail"]                                                # [(pose, garment)] d
   within `max_dist` (default 5% of the garment's bounding-box diagonal) and the normals agree within
   `max_angle` (35 degrees, either facing). Every other vertex is inpainted: its weights diffuse in
   from the copied ones over the garment's edges, then 10 light smoothing passes run. Method:
-  Abdrashitov et al., "Robust Skin Weights Transfer via Weight Inpainting", SIGGRAPH Asia 2023.
-- **When.** A tight piece copies whole either way. Use it on what hangs off the skin: skirts, coat
-  tails, capes, hoods, loose sleeves. Neither route keeps a boot's inner wall off the other leg,
-  which lies just as close and faces it.
+  Abdrashitov et al., "Robust Skin Weights Transfer via Weight Inpainting", SIGGRAPH Asia 2023. When
+  no vertex passes both gates, it raises `ValueError` naming the closest gap: raise `max_dist` past
+  it.
+- **When.** A tight piece copies whole either way, so one `bind(..., garment_mapping="ROBUST")`
+  serves a shirt and a skirt. Use it on what hangs off the skin: skirts, coat tails, capes, hoods,
+  loose sleeves. Neither route keeps a boot's inner wall off the other leg, which lies just as close
+  and faces it.
 - **Inpainted parts follow their copied band**, not the limbs under them. A leg that swings forward
   then passes through a skirt that only follows the hips: `garment_depth` reports it.
+- **Auto-weighted bodies.** The skin under a waistband already carries thigh weight, so the copied
+  band does too. Robust cuts the tear but does not remove it. Gate with `garment_depth`, then add
+  skirt bones or a corrective shape key.
+- **Knee lift.** For skirts and coats, add `KNEE_LIFT` to the depth poses: `RIGIFY_POSES` has no
+  knee lift, and its `leg_forward.L` misses most of a leg passing through a skirt.
 - **Garment depth.** Per pose, how much deeper each garment vertex sits inside the body than at
   rest; overlap already present at rest is not counted. `weight_report` and `deformation_report`
   read one mesh at a time, so they pass a garment sunk into the body. The body's normals must face
@@ -364,3 +374,9 @@ Nearest-face: 244 skirt vertices led by the left thigh and 242 by the right, 51 
 0 edges outside the band, worst 1.24, sums 1.0. The sleeve copied whole (0 inpainted) and stayed
 under 5 mm. `garment_depth` failed both skirts where the leg passes through: 46 robust vertices over
 5 mm (worst 7.1 cm), 7 nearest-face ones (worst 3.7 cm).
+
+Field check (skill validation on PR 359, Blender 5.2.1): the A-pose mannequin with Rigify basic and
+auto weights, plus a 1,536-vertex flared skirt 2 to 10 cm off the legs. Robust copied 620 and
+inpainted 916, yet 1,197 vertices stayed led by a thigh. At `leg_forward.L` the worst stretch fell
+from 19.2 (nearest-face) to 3.3, with 52 edges still outside the band. `garment_depth` failed the 90
+degree knee lift (128 vertices, worst 5 cm), where `leg_forward.L` caught 1.

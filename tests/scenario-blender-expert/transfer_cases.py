@@ -86,6 +86,11 @@ body.parent = rig
 R.transfer_weights(body, skirt_n, rig=rig)
 R.transfer_weights(body, skirt_r, rig=rig, mapping="ROBUST")
 R.transfer_weights(body, sleeve, rig=rig, mapping="ROBUST")
+try:  # the skirt sits 2.5 cm off the hips, so a 1 mm gate copies nothing
+    R.robust_weights(body, skirt_r, max_dist=0.001)
+    zero_match = None
+except ValueError as e:
+    zero_match = str(e)
 
 POSE = {"name": "leg_forward.L", "ops": [("rot", "thigh.L", (1, 0, 0), -50)]}
 
@@ -115,6 +120,7 @@ out = {
     "vertices": len(skirt_r.data.vertices),
     "matched": int(skirt_r["bx_matched"]), "inpainted": int(skirt_r["bx_inpainted"]),
     "sleeve_matched": int(sleeve["bx_matched"]), "sleeve_inpainted": int(sleeve["bx_inpainted"]),
+    "zero_match_error": zero_match,
     "share_nearest": leg_share(skirt_n), "share_robust": leg_share(skirt_r),
     "strain_nearest": strain(skirt_n), "strain_robust": strain(skirt_r),
     "sums_robust": [round(float(s), 6) for s in (R.weight_matrix(skirt_r)[0].sum(axis=1).min(),

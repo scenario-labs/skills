@@ -50,6 +50,12 @@ class Transfer(unittest.TestCase):
         self.assertGreater(r["inpainted"], r["matched"])  # the skirt below the hips hangs free
         self.assertEqual(r["sleeve_inpainted"], 0)  # a tight sleeve is copied whole
 
+    def test_a_gate_that_copies_nothing_raises(self):
+        err = self.r["zero_match_error"]
+        self.assertIsNotNone(err)
+        self.assertIn("no vertex of SkirtRobust", err)
+        self.assertIn("closest gap 0.025", err)
+
     def test_nearest_face_splits_the_skirt_between_the_legs(self):
         s = self.r["share_nearest"]
         self.assertGreater(min(s["thigh.L"], s["thigh.R"]), 200)
