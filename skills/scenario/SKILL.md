@@ -184,9 +184,9 @@ Uploading and filing alone are not publication.
   - run catalog `asset_copy` (write lane) with that project as `project_id`, plus `asset_id` and
     `target_project_id`;
   - use the returned id. `asset_copy` copies only between projects of one team.
-- **403 naming a plan**: surface the upgrade or switch models; a retry never clears it. `recommend`
-  pre-flags these as `requires_plan_upgrade` (never run one) unless its response says plan gating is
-  `_degraded`; then this entry is the backstop.
+- **403 naming a plan**: never retry; relay its upgrade step; switch models or tools only if the
+  user (unattended: the task) agrees. `recommend` flags these `requires_plan_upgrade` (never run
+  one) unless its response says gating is `_degraded`.
 - **429 with `details.actionName` = `parallel-custom-jobs`**: the per-team generation concurrency
   ceiling. Keep at most `actionLimit` jobs in flight: launch with `wait=false`, and retire jobs with
   `jobs_wait` before launching more. An immediate retry repeats the error.
