@@ -38,9 +38,10 @@ project, you can symlink `.venv` and `node_modules` from it to save time.
   "sing exactly these lyrics, nothing else". The full take's transcript shows what it sang.
 - The cut runs between two downbeats of the full take's analysis: the one before the first line the
   video shows (a bar or more earlier when a title opens on music), and the first past the last line
-  it shows. Find the lines with a `transcribe` pass on the full take: wordless singing can raise
-  `env.vocal` before any lyric. Trim inside the filter, before the fades: with an output `-ss`,
-  fades run on the source's timeline, and one such cut came out silent.
+  it shows, or a later one when the video must run longer than its lines. Find the lines with a
+  `transcribe` pass on the full take: wordless singing can raise `env.vocal` before any lyric. Trim
+  inside the filter, before the fades: with an output `-ss`, fades run on the source's timeline, and
+  one such cut came out silent.
 
 ```bash
 .venv/bin/python tools/audio_analysis.py audio/master.mp3 # stems + engine/data/audio.json (prints BPM and downbeats)
@@ -288,7 +289,7 @@ ffmpeg -i "$SRC" -vf "$VF" -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxrat
 # portrait canvas: one vertical upload for TikTok, Reels and Shorts (the platforms re-encode, so keep quality high)
 ffmpeg -i "$SRC" -vf "$VF" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
 # teaser: START a downbeat rounded to a frame, n / 60 (0 opens on the hook; a verse plus first chorus starts later), LEN
-# its length in seconds, FADE = LEN - 0.6. Gate it with --start $START: the motion gate reads song times
+# its length in whole frames too (n / 60: delivery_check.py reads --frames as an integer), FADE = LEN - 0.6. Gate it with --start $START: the motion gate reads song times
 ffmpeg -ss "$START" -i "$SRC" -vf "$VF" -t "$LEN" -af "afade=t=in:d=0.05,afade=t=out:st=$FADE:d=0.6" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_teaser.mp4
 # last, every delivered file: --frames as render.mjs printed it on a master (vN.mp4, vN_4k.mp4), LEN x 60 on the teaser,
 # --max-mb 512 on the X file
