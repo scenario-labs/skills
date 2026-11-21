@@ -260,7 +260,7 @@ ffmpeg -i "$SRC" "${FIT[@]}" -c:v libx264 -preset slow -level 4.2 -b:v 21M -maxr
 # portrait canvas: one vertical upload for TikTok, Reels and Shorts (the platforms re-encode, so keep quality high)
 ffmpeg -i "$SRC" "${FIT[@]}" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_vertical_1080x1920.mp4
 # teaser: END is the teaser length in seconds, FADE = END - 0.6
-ffmpeg -i "$SRC" "${FIT[@]}" -t "$END" -af "afade=t=out:st=$FADE:d=0.6" -movflags +faststart out/final/vN_teaser.mp4
+ffmpeg -i "$SRC" "${FIT[@]}" -t "$END" -af "afade=t=out:st=$FADE:d=0.6" -c:v libx264 -preset slow -level 4.2 -crf 17 -pix_fmt yuv420p -profile:v high -c:a aac -b:a 192k -ar 44100 -movflags +faststart out/final/vN_teaser.mp4
 # last, every delivered file: --frames as render.mjs printed it on a master (vN.mp4, vN_4k.mp4), --max-mb 512 on the X file
 .venv/bin/python tools/delivery_check.py out/final/vN.mp4 --frames <N>
 .venv/bin/python tools/delivery_check.py out/final/vN_4k.mp4 --frames <N>

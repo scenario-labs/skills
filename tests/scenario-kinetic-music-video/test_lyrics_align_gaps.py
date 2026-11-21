@@ -83,6 +83,7 @@ class AlignTest(unittest.TestCase):
             r = subprocess.run([sys.executable, str(SCRIPT), "align", "lyrics.txt", *args], cwd=cwd,
                                capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stderr)
+            self.stderr = r.stderr
             return json.loads((cwd / "engine" / "data" / "lyrics.json").read_text(encoding="utf-8"))["lines"]
 
     def test_starts_snap_to_a_vocal_onset_within_80_ms_only(self):
@@ -93,6 +94,21 @@ class AlignTest(unittest.TestCase):
     def test_a_lyric_word_missing_from_the_transcript_follows_the_previous_word(self):
         (line,) = self.align("# section: verse\none extra two\n", [word("one", 1.0, 1.3), word("two", 2.0, 2.4)], [])
         self.assertEqual(line["words"], [word("one", 1.0, 1.3), word("extra", 1.3, 1.55), word("two", 2.0, 2.4)])
+
+    def test_a_word_placed_without_a_transcript_match_is_reported_on_stderr(self):
+        self.align("# section: verse\none extra two\n", [word("one", 1.0, 1.3), word("two", 2.0, 2.4)], [])
+        self.assertIn('1.300 s  line 2  "extra"', self.stderr)
+        self.assertNotIn('"one"', self.stderr)
+        self.assertNotIn('"two"', self.stderr)
+
+    def test_a_respelled_word_is_reported_with_the_onset_it_was_given(self):
+        self.align("# section: verse\nsend it to Herve\n",
+                   [word("send", 1.0, 1.3), word("it", 1.3, 1.5), word("to", 1.5, 1.7), word("AirVay", 1.8, 2.4)], [])
+        self.assertIn('1.800 s  line 2  "Herve"', self.stderr)
+
+    def test_a_fully_matched_line_prints_no_warning(self):
+        self.align("# section: verse\none two\n", [word("one", 1.0, 1.4), word("two", 1.5, 1.9)], [])
+        self.assertEqual(self.stderr, "")
 
     def test_short_first_word_moves_to_the_onset_before_the_next_word(self):
         words = [word("oh", 1.0, 1.2), word("baby", 3.0, 3.5)]

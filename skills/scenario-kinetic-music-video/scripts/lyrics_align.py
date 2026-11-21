@@ -10,8 +10,9 @@ A line before any section header is aligned with no section.
 word, up to as many words as the section's lines hold (all peaks to the next line when it has none).
 Method (what held up on sung vocals): faster-whisper large-v3 word timestamps on the Demucs vocal stem, sequence-matched onto the
 corrected lyrics, starts snapped to vocal onsets within 80 ms, then a fix for short first words pulled early by a held note.
+align prints on stderr each lyric word with no exact transcript match, with the onset it was given: check those first.
 wav2vec/MMS forced alignment ran ~200 ms late on singing, so it is not used. Always eyeball the result with plot_lyrics.py."""
-import os, json, re, difflib, argparse, numpy as np
+import os, sys, json, re, difflib, argparse, numpy as np
 
 
 def load_json(path):
@@ -50,20 +51,20 @@ def align(path, chant=None, no_fix=()):
     lines, sec, sec_at = [], None, {}
     with open(path) as fh:
         raw = fh.readlines()
-    for L in raw:
+    for row, L in enumerate(raw, 1):
         L = L.strip()
         if not L: continue
         if L.startswith('# section:'): sec = L.split(':', 1)[1].strip(); sec_at.setdefault(sec, len(lines)); continue
-        lines.append({'section': sec, 'text': L, 'words': L.split()})
+        lines.append({'section': sec, 'text': L, 'words': L.split(), '_row': row})
     chant_sec, chant_word = (chant.split(':') + ['GO'])[:2] if chant else (None, None)
     # without --chant no line is chanted, not even one before any section header (its section is None too)
     chanted = lambda l: chant and l['section'] == chant_sec
     C = [(li, wi, norm(w)) for li, l in enumerate(lines) if not chanted(l) for wi, w in enumerate(l['words'])]
     sm = difflib.SequenceMatcher(a=[c[2] for c in C], b=[norm(w['w']) for w in W], autojunk=False)
-    T = [None] * len(C)
+    T, matched = [None] * len(C), set()
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if tag == 'equal':
-            for k in range(i2 - i1): T[i1 + k] = (W[j1 + k]['s'], W[j1 + k]['e'])
+            for k in range(i2 - i1): T[i1 + k] = (W[j1 + k]['s'], W[j1 + k]['e']); matched.add(i1 + k)
         elif tag == 'replace':
             # spread over at most as many transcript words as lyric words: when the supplied lyrics cover only part of
             # the song, the tail of the transcript is not theirs (it once stretched a last word to the song's end)
@@ -78,10 +79,11 @@ def align(path, chant=None, no_fix=()):
             j = np.argmin(abs(vo - s))
             if abs(vo[j] - s) < 0.08: s = float(vo[j])
         lines[li].setdefault('_w', []).append({'w': lines[li]['words'][wi], 's': round(s, 3), 'e': round(max(e, s + 0.06), 3)})
-    out = []
-    for l in lines:
+    unmatched = {(li, wi) for i, (li, wi, _) in enumerate(C) if i not in matched}
+    out, guessed = [], []
+    for li, l in enumerate(lines):
         if chanted(l): continue
-        ws = l.pop('_w')
+        ws, row = l.pop('_w'), l.pop('_row')
         for i in range(len(ws) - 1):  # short first word pulled early by the previous held note
             if ws[i + 1]['s'] - ws[i]['s'] > 0.9 and len(ws[i]['w'].strip(',.?!')) <= 4 and ws[i]['w'].strip(',.?!') not in no_fix:
                 c = vo[(vo > ws[i + 1]['s'] - 0.55) & (vo < ws[i + 1]['s'] - 0.1)]
@@ -90,6 +92,7 @@ def align(path, chant=None, no_fix=()):
             if i + 1 < len(ws): w['e'] = round(min(max(w['e'], w['s'] + 0.12), ws[i + 1]['s']), 3)
             w['e'] = round(min(w['e'], w['s'] + 2.0), 3)  # no sung word holds past 2 s
         l['words'] = ws; l['s'] = ws[0]['s']; l['e'] = ws[-1]['e']; out.append(l)
+        guessed += [(w['s'], row, w['w']) for wi, w in enumerate(ws) if (li, wi) in unmatched]
     if chant_sec:  # repeated chant: one word per vocal-envelope peak between the lines around the chant section
         from scipy.signal import find_peaks
         env = np.array(A['env']['vocal']); fps = A['env_fps']; t = np.arange(len(env)) / fps
@@ -105,6 +108,9 @@ def align(path, chant=None, no_fix=()):
         if gos: out.insert(before, {'section': chant_sec, 'text': (chant_word + ' ') * len(gos), 'words': [{'w': chant_word, 's': g, 'e': round(g + 0.18, 3)} for g in gos], 's': gos[0], 'e': gos[-1] + 0.3})
     os.makedirs('engine/data', exist_ok=True); save_json({'lines': out}, 'engine/data/lyrics.json', indent=1)
     for l in out: print(f"{l['s']:7.2f}-{l['e']:7.2f} {l['section'] or '':8s} {l['text'][:70]}")
+    if guessed:  # their onsets are interpolated or follow the previous word, not read from the transcript
+        print(f'{len(guessed)} lyric word(s) had no exact transcript match; check their onsets in plot_lyrics.py:', file=sys.stderr)
+        for s, row, w in guessed: print(f'  {s:8.3f} s  line {row}  "{w}"', file=sys.stderr)
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); ap.add_argument('cmd'); ap.add_argument('lyrics', nargs='?'); ap.add_argument('--prompt', default='')
