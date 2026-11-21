@@ -23,5 +23,13 @@ Maintainer notes, not runtime instructions. SKILL.md does not link this file.
 - The 100-id cap on `asset_delete` comes from the server's own error text. The schema carries no
   `maxItems`, so re-check it if the server changes.
 - `collectionIds` and `tags` on `assets_list` rows: a read-only listing on 2026-11-15.
+- Live application test on 2026-11-21, with upload fixtures in a test project:
+  - Tags can survive a delete, even though the tool reference says a restore drops them. Two of four
+    deleted assets kept their tags in the bin, and one came back from `asset_restore` with both. The
+    two were members of a collection deleted right after them; the mechanism is unconfirmed. So the
+    skill says to read the restored rows before re-filing, which holds either way.
+  - A deleted upload's row has no `prompt` and no file name, but carries `source` and `description`
+    (an automatic caption).
+  - `collections_list` returns member counts, not ids.
 - No restore tool exists for collections: `scenario_tools_search` for "restore undelete" returns
   only `asset_restore` and `model_restore`.

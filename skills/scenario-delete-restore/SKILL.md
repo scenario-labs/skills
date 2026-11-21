@@ -12,7 +12,8 @@ A deleted asset or model stays recoverable for 30 days, on the Max plan and abov
 Premium, Enterprise). Below Max, the server refuses to list or restore deleted items, so a delete is
 final from the agent's side.
 
-- A restore brings the item back, not its filing: tags and collection membership stay lost.
+- A restore brings the item back, not reliably its filing: tags and collection membership are
+  documented as lost, yet some tags survive. Read the restored rows before re-filing.
 - Collections have no restore tool. A deleted collection is rebuilt by hand or not at all.
 - Recovery is per project: the deleted listings cover the project in scope only.
 - The tools below marked read, write, or delete are catalog-only. `teams_list`, `models_list`, and
@@ -42,10 +43,11 @@ unattended, proceed from tool schemas and flag the gap.
 ## Restoring
 
 - **Find.** `assets_list` with `deleted: true` takes no `filters`: the server refuses the pair.
-  Match the user's words client-side against `deletedAt`, `kind`, `prompt`, and `modelId`, paging
-  with `page_token` (`limit` up to 100). The list is newest deletion first, so stop paging once
-  `deletedAt` is older than the user's window. `prompt` is cut at 120 characters, so a word past the
-  cut never matches: say the selection may be incomplete.
+  Match the user's words client-side against `deletedAt`, `kind`, `source`, `prompt`, `description`,
+  and `modelId`, paging with `page_token` (`limit` up to 100). The list is newest deletion first, so
+  stop paging once `deletedAt` is older than the user's window. `prompt` is cut at 120 characters,
+  so a word past the cut never matches: say the selection may be incomplete. An upload has no
+  `prompt` and keeps no file name: match its `description`, an automatic caption.
 - **Models.** `status: "deleted"` is a key inside `filters` on `models_list`. Combined with
   `privacy: "public"` the server refuses it: deleted models are always the team's own.
 - **Confirm the set.** Show the candidates (id, `deletedAt`, prompt or name) when the match is not
@@ -61,17 +63,18 @@ unattended, proceed from tool schemas and flag the gap.
 - **Plan refusal.** A restore or deleted listing refused with a plan message is not retryable.
   Report that restoring needs Max or above; upgrading is the user's call (unattended: report and
   stop).
-- **Re-file.** Re-apply tags and collections the user still needs. `asset_add_tags` takes one asset
-  per call; `collection_add_assets` takes any number of ids. A collection deleted too is recreated
-  with `collection_create` first.
+- **Re-file.** Read the restored rows on `assets_get_bulk`, then re-apply only the missing tags and
+  collections the user still needs: a tag the asset kept is refused as a duplicate (see the
+  `scenario` skill). `asset_add_tags` takes one asset per call; `collection_add_assets` takes any
+  number of ids. A collection deleted too is recreated with `collection_create` first.
 
 ## Deleting
 
 Deletion stays a confirmed action.
 
 1. **Read the plan** off the team's `teams_list` row. On Max and above, tell the user deleted assets
-   and models stay recoverable for 30 days, without their tags and collections. Below it, say the
-   delete is permanent. A collection is permanent on every plan. An unfamiliar `plan` value:
+   and models stay recoverable for 30 days, possibly without their tags and collections. Below it,
+   say the delete is permanent. A collection is permanent on every plan. An unfamiliar `plan` value:
    `assets_list` with `deleted: true` is a free read gated to the same plans, so a plan refusal
    there settles it.
 2. **List the exact items** (ids plus a name or prompt) and get an explicit yes. A set found by tag
@@ -81,8 +84,9 @@ Deletion stays a confirmed action.
    Unattended, delete only the ids the task names, or the set its stated criterion matches exactly,
    and report every id deleted. Never widen a pattern ("old drafts") past what the task states.
 3. **Record the filing** before the call: each asset row from `assets_list` or `assets_get_bulk`
-   carries `tags` and `collectionIds`. Keep them in your reply or a local file, since a restore will
-   not bring them back. For a collection, record its name and member ids.
+   carries `tags` and `collectionIds`. Keep them in your reply or a local file, since a restore may
+   not bring them back. For a collection, record its name and member ids. `collections_list` gives
+   only counts, so the members are the asset rows whose `collectionIds` hold its id.
 4. **Delete** through `scenario_tool_execute_delete`. `asset_delete` refuses more than 100 ids in
    one call (`You can not delete more than 100 assets at once.`): send batches of 100.
 
@@ -115,7 +119,8 @@ Deletion stays a confirmed action.
 ## Common mistakes
 
 - Sending `filters` with `deleted: true`: refused. List unfiltered and match client-side.
-- Expecting tags and collections back after a restore: re-apply them.
+- Assuming a restore kept or dropped the filing: read the restored rows, then re-apply only what is
+  missing.
 - Promising recovery below Max: the server refuses restores there, so the delete was final.
 - Running `asset_restore` or `model_restore` through `scenario_tool_execute_delete`: both are
   write-lane, and the delete executor rejects them.
