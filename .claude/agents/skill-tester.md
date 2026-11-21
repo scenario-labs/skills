@@ -27,8 +27,9 @@ to follow it literally and report what happened, not to succeed by other means.
    exist, record the verbatim error and stop that branch.
 7. Never echo credentials or signed URLs. Refer to assets by id and local filename.
 8. Do not edit the skill or any repository file. You are testing, not fixing.
-9. Use the team and project the task names on every call that takes them. If the task names none,
-   record a blocker and stop rather than picking one.
+9. Use the team and project the task names on every call that takes them. If a call needs them and
+   the task names none, record a blocker and stop rather than picking one. A task that makes no
+   Scenario call needs neither.
 
 ## Report
 
