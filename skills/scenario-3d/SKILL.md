@@ -73,7 +73,8 @@ schemas and flag the gap.
    - **No face control, or the target is below its range:** generate, then remesh down if needed
      (Refining meshes). Never invent a face field; `scenario-sparc3d` covers members without one.
 
-   Check the output's triangle count against the budget. At authoring time:
+   Check the output's triangle count against the budget. On quad output, `asset_get` `faceCount`
+   counts quads: double it. At authoring time:
    - Tripo (`faceLimit`) and Meshy (`targetPolycount`, set where `scenario-meshy` says) reached both
      ends. At 10k, an eight-legged creature kept every leg and claw, and a chest its padlock and
      handles. Meshy's Smart Topology members capped lower, at 15k or 30k.
@@ -86,11 +87,11 @@ schemas and flag the gap.
    `pending_job_ids` remain. A downstream step (rig, retexture) has no payload to `dry_run` until
    its input mesh exists: quote it from `recommend`, then `dry_run` the real asset before launching.
 5. `asset_display` the output `asset_id`, then `asset_download` and `curl -L -o chest.glb "<url>"`.
-   Omit `format` when `asset_get` shows `properties.format` `glb`: it returns the stored original
-   byte for byte. `format` converts to `glb`, `fbx`, or `obj`. LLM-based members take `outputFormat`
-   on the run instead; pass `glb` only if `asset_get` shows a Blender file. Ask for `fbx` for a
-   Unity project without a glTF importer, and keep the GLB too: at authoring time the FBX embedded
-   only two images, so it may miss PBR maps.
+   Omitting `format` returns the stored original byte for byte; `format` converts to `glb`, `fbx`,
+   or `obj`. LLM-based members store their Blender file as the original: pass the run's
+   `outputFormat` (`properties.format` in `asset_get`) as `format`. Ask for `fbx` for a Unity
+   project without a glTF importer, and keep the GLB too: at authoring time the FBX embedded only
+   two images, so it may miss PBR maps.
 
 **Prompt-only build.** When the user wants no concept to approve, skip step 1 and `recommend`
 `txt23d` in step 2: every LLM-based member supports it. Follow steps 3 to 5 with `images: []`;
@@ -239,8 +240,7 @@ skeleton: see `scenario-video`.
 
 ## Common mistakes
 
-- Running `model_run` without `model_schema_get`: 3D parameters differ far more between models than
-  image ones.
+- Running `model_run` without `model_schema_get`: 3D parameters differ widely between models.
 - Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor).
   Re-discover each session: `recommend` for a need, `search` for a name.
 - Promising a named skeleton, an influence count, or bones for wings and extra limbs the chosen
