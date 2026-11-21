@@ -1,33 +1,23 @@
 """Runs bx_anim's foot contact and slip helpers in a real Blender on a foot with known contacts.
 
 slip_cases.py keys the foot and writes the results to JSON; these tests read them. Without
-Blender every test skips.
+Blender, or below the family's version floor (live_blender.py), every test skips.
 """
 
 import json
-import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
+from live_blender import BLENDER, SKIP
+
 HERE = Path(__file__).parent
 SCRIPTS = HERE.parents[1] / "skills" / "dcc" / "blender" / "scenario-blender-animation" / "scripts"
 
 
-def find_blender():
-    for path in (os.environ.get("BLENDER"), shutil.which("blender"),
-                 "/Applications/Blender.app/Contents/MacOS/Blender"):
-        if path and Path(path).is_file():
-            return path
-    return None
-
-
-BLENDER = find_blender()
-
-
-@unittest.skipUnless(BLENDER, "Blender is not installed")
+@unittest.skipIf(SKIP, SKIP)
 class FootSlip(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
