@@ -25,14 +25,55 @@ jobs:
       fail-fast: false
       matrix:
         language: [actions, c-cpp, csharp, javascript-typescript, python]
+    # The Unity version the Unity skills document. Revision and MD5 come from Unity's release API:
+    # services.api.unity.com/unity/editor/release/v1/releases?version=<version>
+    env:
+      UNITY_VERSION: 6000.3.21f1
+      UNITY_REVISION: c02631ffc030
+      UNITY_MD5_BASE64: mQrnkPZlVStl9Z/sQuWIKA==
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+      # The C# here is Unity scripts. Without Unity's assemblies, build-mode none resolves too few
+      # calls and types, and the status page reports low C# analysis quality. Build-mode none takes
+      # every .dll in the checkout as a reference, so the C# job adds Unity's managed assemblies and
+      # NUnit from the editor archive. Nothing is compiled, and no Unity license is needed.
+      - name: Restore Unity reference assemblies
+        id: unity-refs
+        if: matrix.language == 'csharp'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: codeql-refs
+          key: codeql-refs-unity-${{ env.UNITY_VERSION }}
+      # The archive is about 4.4 GB; only its managed assemblies are kept, cached per version.
+      - name: Download Unity reference assemblies
+        if: matrix.language == 'csharp' && steps.unity-refs.outputs.cache-hit != 'true'
+        run: |
+          archive="$RUNNER_TEMP/unity.tar.xz"
+          curl -fsSL --retry 3 -o "$archive" \
+            "https://download.unity3d.com/download_unity/${UNITY_REVISION}/LinuxEditorInstaller/Unity-${UNITY_VERSION}.tar.xz"
+          test "$(openssl md5 -binary "$archive" | base64)" = "$UNITY_MD5_BASE64"
+          managed='Editor/Data/Managed/UnityEngine'
+          nunit='Editor/Data/Resources/PackageManager/BuiltInPackages/com.unity.ext.nunit/net40/unity-custom/nunit.framework.dll'
+          mkdir -p codeql-refs "$RUNNER_TEMP/unity"
+          tar -xJf "$archive" -C "$RUNNER_TEMP/unity" --wildcards "$managed/*.dll" "$nunit"
+          rm "$archive"
+          cp "$RUNNER_TEMP/unity/$managed"/*.dll "$RUNNER_TEMP/unity/$nunit" codeql-refs/
+          test -f codeql-refs/UnityEditor.dll
+          test -f codeql-refs/UnityEngine.CoreModule.dll
+          test -f codeql-refs/nunit.framework.dll
+          find codeql-refs -name '*.dll' | wc -l
+      - name: Save Unity reference assemblies
+        if: matrix.language == 'csharp' && steps.unity-refs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: codeql-refs
+          key: ${{ steps.unity-refs.outputs.cache-primary-key }}
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           languages: ${{ matrix.language }}
           build-mode: none
-      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: /language:${{ matrix.language }}
