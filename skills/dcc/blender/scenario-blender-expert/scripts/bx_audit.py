@@ -616,6 +616,10 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
     # Floating and enclosed parts: union every pair that touches, and every part on the ground;
     # the component on the ground, else the one with the most surface, is the asset, every
     # other component floats.
+    standing = [] if ground is None else [i for i, p in enumerate(parts)
+                                          if p["lo"][2] <= ground + tol and p["hi"][2] >= ground - tol]
+    if ground is not None and parts and not standing:
+        out["warnings"].append(f"no part reaches the ground at z = {ground}")
     if len(parts) > MAX_PARTS:
         out["warnings"].append(f"{len(parts)} parts: floating and enclosed checks skipped")
     elif len(parts) > 1:
@@ -644,10 +648,6 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
                 elif _inside(a, b) or _inside(b, a):
                     enclosed.add(i if _inside(a, b) else j)
                     root[find(i)] = find(j)
-        standing = [] if ground is None else [i for i, p in enumerate(parts)
-                                              if p["lo"][2] <= ground + tol and p["hi"][2] >= ground - tol]
-        if ground is not None and not standing:
-            out["warnings"].append(f"no part reaches the ground at z = {ground}")
         for i in standing[1:]:
             root[find(i)] = find(standing[0])
         groups = {}
@@ -655,27 +655,32 @@ def deliverable(objs, profile="game", eps=None, tol=None, gap=None, evaluated=Tr
             groups.setdefault(find(i), []).append(i)
         main = (groups[find(standing[0])] if standing
                 else max(groups.values(), key=lambda g: sum(parts[i]["area"] for i in g)))
-        coords, polys = [], []
+        coords, polys, poly_part = [], [], []
         for i in main:
             polys += [[k + len(coords) for k in poly] for poly in parts[i]["polys"]]
+            poly_part += [i] * len(parts[i]["polys"])
             coords += parts[i]["coords"]
         body = BVHTree.FromPolygons(coords, polys)
         dist = {}  # part index -> its component's distance to the main component
+        near = {}  # part index -> the main component's part nearest to its component
         for g in groups.values():
             if g is main:
                 continue
-            d = min(body.find_nearest(c)[3] for i in g
-                    for c in parts[i]["coords"][::max(1, len(parts[i]["coords"]) // 64)])
-            dist.update((i, d) for i in g)
+            hit = min((body.find_nearest(c) for i in g
+                       for c in parts[i]["coords"][::max(1, len(parts[i]["coords"]) // 64)]),
+                      key=lambda h: h[3])
+            dist.update((i, hit[3]) for i in g)
+            near.update((i, poly_part[hit[2]]) for i in g)
         for n in out["per_object"]:
             for check, far in (("floating", True), ("gap", False)):
                 mine = [i for i, d in dist.items() if owner[i] == n and (d > gap) == far]
                 if not mine:
                     continue
-                d = min(dist[i] for i in mine)
+                closest = min(mine, key=dist.get)
+                d = dist[closest]
                 if len(mine) == owner.count(n):
                     what = "floating" if far else "not touching"
-                    flag(check, [n], f"{n}: {what}, {d:.3g} from the nearest part")
+                    flag(check, [n], f"{n}: {what}, {d:.3g} from {owner[near[closest]]}")
                 else:
                     pct = 100.0 * sum(parts[i]["faces"] for i in mine) / sum(
                         parts[i]["faces"] for i in range(len(parts)) if owner[i] == n)

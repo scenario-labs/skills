@@ -291,6 +291,8 @@ cases["board_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Board"], grou
 box("Stray", (0.2, 0.2, 0.2), (0, 0, -10))
 cases["stray_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Stray"], ground=0.0)
 cases["stones_ground_missed"] = bx_audit.deliverable(["StoneA", "StoneB"], ground=5.0)
+cases["one_part_ground"] = bx_audit.deliverable(["StoneA"], ground=0.0)
+cases["one_part_ground_missed"] = bx_audit.deliverable(["StoneA"], ground=5.0)
 
 
 def cli(*args):
@@ -302,6 +304,7 @@ def cli(*args):
         return stop.code
     finally:
         sys.argv = argv
+    return None  # the CLI must exit with a code: None fails the test
 
 
 cases["cli_ground"] = {flag: cli("--deliverable", "--objects", "StoneA", "StoneB", *extra)

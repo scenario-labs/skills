@@ -72,9 +72,9 @@ class DeliveryGate(unittest.TestCase):
     def test_small_gap_warns_but_fails_print(self):
         r = self.verdict("near_gap_game")
         self.assertTrue(r["pass"], r["errors"])
-        self.assertEqual(r["warnings"], ["Handle: not touching, 0.005 from the nearest part"])
+        self.assertEqual(r["warnings"], ["Handle: not touching, 0.005 from Body"])
         r = self.verdict("near_gap_print")
-        self.assertEqual(r["errors"], ["Handle: not touching, 0.005 from the nearest part"])
+        self.assertEqual(r["errors"], ["Handle: not touching, 0.005 from Body"])
 
     def test_enclosed_part_warns_without_floating(self):
         r = self.verdict("enclosed")
@@ -175,13 +175,13 @@ class DeliveryGate(unittest.TestCase):
         self.assertFalse(any("no faces" in e for e in r["errors"]), r["errors"])
 
     def test_pieces_on_the_ground_stand_together(self):
-        self.assertEqual(self.verdict("stones")["errors"], ["StoneB: floating, 1.65 from the nearest part"])
+        self.assertEqual(self.verdict("stones")["errors"], ["StoneB: floating, 1.65 from StoneA"])
         r = self.verdict("stones_ground")
         self.assertTrue(r["pass"], r["errors"])
         self.assertEqual(r["warnings"], [])
 
     def test_part_off_the_ground_floats_however_large(self):
-        self.assertEqual(self.verdict("board_ground")["errors"], ["Board: floating, 0.863 from the nearest part"])
+        self.assertEqual(self.verdict("board_ground")["errors"], ["Board: floating, 0.863 from StoneA"])
 
     def test_part_under_the_ground_floats(self):
         r = self.verdict("stray_ground")
@@ -191,7 +191,11 @@ class DeliveryGate(unittest.TestCase):
     def test_ground_no_part_reaches_warns(self):
         r = self.verdict("stones_ground_missed")
         self.assertIn("no part reaches the ground at z = 5.0", r["warnings"])
-        self.assertEqual(r["errors"], ["StoneB: floating, 1.65 from the nearest part"])
+        self.assertEqual(r["errors"], ["StoneB: floating, 1.65 from StoneA"])
+
+    def test_ground_check_covers_a_single_part(self):
+        self.assertEqual(self.verdict("one_part_ground")["warnings"], [])
+        self.assertIn("no part reaches the ground at z = 5.0", self.verdict("one_part_ground_missed")["warnings"])
 
     def test_cli_passes_the_ground(self):
         self.assertEqual(self.verdict("cli_ground"), {"without": 2, "with": 0})
