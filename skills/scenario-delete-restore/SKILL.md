@@ -88,11 +88,12 @@ Deletion stays a confirmed action.
    must go, also page `assets_list` and match `tags` locally, since a fresh tag can miss the index.
    Unattended, delete only the ids the task names, or the set its stated criterion matches exactly,
    and report every id deleted. Never widen a pattern ("old drafts") past what the task states.
-3. **Record the filing** before the call: each asset row from `assets_list` or `assets_get_bulk`
-   carries `tags` and `collectionIds`. Keep them in your reply or a local file, since a restore may
-   not bring them back. For a collection, record its name and member ids. `collections_list` gives
-   only `assetCount` and `modelCount`, so the members are the `assets_list` rows, and the
-   `models_list` rows when `modelCount` is above 0, whose `collectionIds` hold its id.
+3. **Record the filing** before the call: each asset row from `assets_list` or `assets_get_bulk`,
+   and each model row from `models_list`, carries `tags` and `collectionIds`. Keep them in your
+   reply or a local file, since a restore may not bring them back. For a collection, record its name
+   and member ids. `collections_list` gives only `assetCount` and `modelCount`, so the members are
+   the `assets_list` rows, and the `models_list` rows when `modelCount` is above 0, whose
+   `collectionIds` hold its id.
 4. **Delete** through `scenario_tool_execute_delete`. `asset_delete` refuses more than 100 ids in
    one call (`You can not delete more than 100 assets at once.`): send batches of 100.
 
@@ -109,10 +110,12 @@ Deletion stays a confirmed action.
    `nextPaginationToken` until `deletedAt` falls before yesterday.
 4. Keep the rows whose `deletedAt` falls on yesterday, in the user's time zone, and whose `prompt`
    makes a dragon the subject. A negated or incidental mention is ambiguous, and so is a cut
-   `prompt` that shows no dragon. Fourteen mention a dragon: thirteen clearly depict one, and one
-   reads "a castle without a dragon". Two more are cut before naming a subject. Show all sixteen
-   with `deletedAt` and confirm. Unattended: keep the thirteen, and list the castle and the two cut
-   prompts as unresolved, neither restored nor filed.
+   `prompt` that shows no dragon. A cut prompt that names one counts only when the row's
+   `description` shows a dragon too, since the omitted text could negate it. Fourteen mention a
+   dragon: thirteen clearly depict one, their `description` agreeing, and one reads "a castle
+   without a dragon". Two more are cut before naming a subject. Show all sixteen with `deletedAt`
+   and confirm. Unattended: keep the thirteen, and list the castle and the two cut prompts as
+   unresolved, neither restored nor filed.
 5. `scenario_tool_execute_write` with `name: "asset_restore"`,
    `parameters: {"team_id", "project_id", "asset_ids": [<13 ids>]}`. `restored` holds 12; `skipped`
    holds one `not-deleted`, already restored by a teammate.
