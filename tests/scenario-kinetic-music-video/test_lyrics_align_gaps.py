@@ -96,8 +96,9 @@ class AlignTest(unittest.TestCase):
         self.assertEqual(line["words"], [word("one", 1.0, 1.3), word("extra", 1.3, 1.55), word("two", 2.0, 2.4)])
 
     def test_a_word_placed_without_a_transcript_match_is_reported_on_stderr(self):
-        self.align("# section: verse\none extra two\n", [word("one", 1.0, 1.3), word("two", 2.0, 2.4)], [])
+        (line,) = self.align("# section: verse\none extra two\n", [word("one", 1.0, 1.3), word("two", 2.0, 2.4)], [])
         self.assertIn('1.300 s  line 2  "extra"', self.stderr)
+        self.assertEqual(set(line), {"section", "text", "words", "s", "e"})
         self.assertNotIn('"one"', self.stderr)
         self.assertNotIn('"two"', self.stderr)
 
@@ -105,6 +106,10 @@ class AlignTest(unittest.TestCase):
         self.align("# section: verse\nsend it to Herve\n",
                    [word("send", 1.0, 1.3), word("it", 1.3, 1.5), word("to", 1.5, 1.7), word("AirVay", 1.8, 2.4)], [])
         self.assertIn('1.800 s  line 2  "Herve"', self.stderr)
+
+    def test_a_moved_short_first_word_is_reported_at_its_final_onset(self):
+        self.align("# section: verse\nuh baby\n", [word("ah", 1.0, 1.2), word("baby", 3.0, 3.5)], [2.6])
+        self.assertIn('2.600 s  line 2  "uh"', self.stderr)
 
     def test_a_fully_matched_line_prints_no_warning(self):
         self.align("# section: verse\none two\n", [word("one", 1.0, 1.4), word("two", 1.5, 1.9)], [])

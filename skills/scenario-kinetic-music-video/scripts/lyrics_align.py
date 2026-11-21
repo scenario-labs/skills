@@ -108,7 +108,7 @@ def align(path, chant=None, no_fix=()):
         if gos: out.insert(before, {'section': chant_sec, 'text': (chant_word + ' ') * len(gos), 'words': [{'w': chant_word, 's': g, 'e': round(g + 0.18, 3)} for g in gos], 's': gos[0], 'e': gos[-1] + 0.3})
     os.makedirs('engine/data', exist_ok=True); save_json({'lines': out}, 'engine/data/lyrics.json', indent=1)
     for l in out: print(f"{l['s']:7.2f}-{l['e']:7.2f} {l['section'] or '':8s} {l['text'][:70]}")
-    if guessed:  # their onsets are interpolated or follow the previous word, not read from the transcript
+    if guessed:  # their onsets come from a misheard word's slot, are interpolated, or follow the previous word
         print(f'{len(guessed)} lyric word(s) had no exact transcript match; check their onsets in plot_lyrics.py:', file=sys.stderr)
         for s, row, w in guessed: print(f'  {s:8.3f} s  line {row}  "{w}"', file=sys.stderr)
 

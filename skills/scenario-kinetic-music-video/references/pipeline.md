@@ -30,6 +30,7 @@ project, you can symlink `.venv` and `node_modules` from it to save time.
 .venv/bin/python tools/lyrics_align.py transcribe --prompt "<names, jargon, acronyms>" # hinted pass (lyrics_raw_hints.json); align reads the latest
 # → hand-write analysis/lyrics.txt (sections + corrected lines; the user's lyrics win if supplied)
 .venv/bin/python tools/lyrics_align.py align analysis/lyrics.txt --no-fix <ACRONYMS >[--chant <section >: <WORD >]
+# → stderr lists the words with no transcript match and the onsets they got: check those first in the plots
 .venv/bin/python tools/plot_lyrics.py 1:12 20:30 ... # Read the PNGs; fix outliers by hand in lyrics.json
 ```
 
