@@ -173,6 +173,7 @@ export function drawKaraoke(ctx, E, line, t, o = {}) {
 // House subtitle: small mono uppercase, bottom-left of the safe band, sung words bright, upcoming words dim. The HUD
 // draws this automatically when E.hud.sub is true; scenes that show the lyric big should set E.hud.sub = false.
 export function drawSubtitle(ctx, E, t, o = {}) {
+  t = E.atFrame(t); // the output frame's time inside a motion-blur sample, so the subtitle stays sharp
   const ln = E.lineAt(t, 0.25);
   if (!ln || t > ln.e + 0.5) return;
   const R = E.SAFE,
@@ -201,6 +202,7 @@ export function drawSubtitle(ctx, E, t, o = {}) {
     dimColor: "rgba(255,176,0,0.35)",
     lineLead: 0.25,
     tail: 0.35,
+    alpha: o.alpha, // drawText sets globalAlpha outright, so the words need o.alpha passed, not just set above
     maxW:
       o.maxW ??
       (E.ORIENT === "landscape"

@@ -1,0 +1,101 @@
+name: Blender core scripts
+
+# Runs the core skills' Blender-hosted scripts in a real Blender: blender-2d-animation's
+# build_scene.py and orbit-views' render_grounded.py through the binary, patina-retexture's
+# pipeline through the bpy module. The CI workflow's script-tests job has no Blender, so these
+# suites skip there and its other suites reach the scripts through a stand-in bpy. Only changes to
+# those scripts, their tests, or the Blender setup trigger it: the download is about 380 MB.
+on:
+  pull_request:
+    paths:
+      - "skills/scenario-blender-2d-animation/scripts/**"
+      - "skills/scenario-orbit-views/scripts/**"
+      - "skills/scenario-patina-retexture/scripts/**"
+      - "tests/scenario-blender-2d-animation/**"
+      - "tests/scenario-orbit-views/**"
+      - "tests/scenario-patina-retexture/**"
+      - ".github/actions/install-blender/**"
+      - ".github/workflows/blender-core.yml"
+  push:
+    branches: [main]
+    paths:
+      - "skills/scenario-blender-2d-animation/scripts/**"
+      - "skills/scenario-orbit-views/scripts/**"
+      - "skills/scenario-patina-retexture/scripts/**"
+      - "tests/scenario-blender-2d-animation/**"
+      - "tests/scenario-orbit-views/**"
+      - "tests/scenario-patina-retexture/**"
+      - ".github/actions/install-blender/**"
+      - ".github/workflows/blender-core.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  binary:
+    name: Blender binary on Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      # Keep it on blender.yml's release, the one the Blender skills are verified on.
+      BLENDER_RELEASE: 5.2.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/requirements-ci.txt
+      - name: Install Blender
+        id: blender
+        uses: ./.github/actions/install-blender
+        with:
+          release: ${{ env.BLENDER_RELEASE }}
+      - name: Install locked Python test dependencies
+        run: |
+          pip install --require-hashes --only-binary=:all: -r tests/requirements-ci.txt
+      - name: blender-2d-animation build_scene.py
+        env:
+          BLENDER: ${{ steps.blender.outputs.path }}
+        run: |
+          set -o pipefail
+          python -B -m unittest discover -s tests/scenario-blender-2d-animation -p test_build_scene.py -v 2>&1 | tee build.log
+          # A skip here means Blender did not start: fail instead.
+          if grep -q "skipped 'Blender not found" build.log; then exit 1; fi
+      - name: orbit-views render_grounded.py
+        env:
+          BLENDER: ${{ steps.blender.outputs.path }}
+        run: |
+          set -o pipefail
+          python -B -m unittest discover -s tests/scenario-orbit-views -p test_render_grounded_blender.py -v 2>&1 | tee orbit.log
+          if grep -q "skipped 'Blender not found" orbit.log; then exit 1; fi
+
+  module:
+    name: bpy module on Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # bpy 5.x wheels exist only for Python 3.13.
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: tests/scenario-patina-retexture/requirements-bpy-ci.txt
+      - name: Install bpy and the patina test dependencies
+        run: |
+          # bpy still loads the X11 and GL libraries.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libgl1 libegl1 > /dev/null
+          pip install --require-hashes --only-binary=:all: -r tests/scenario-patina-retexture/requirements-bpy-ci.txt
+      - name: patina-retexture pipeline
+        run: |
+          set -o pipefail
+          python -B -m unittest discover -s tests/scenario-patina-retexture -p test_blender.py -v 2>&1 | tee patina.log
+          # A skip here means bpy did not import: fail instead.
+          if grep -q "skipped 'bpy module not installed'" patina.log; then exit 1; fi

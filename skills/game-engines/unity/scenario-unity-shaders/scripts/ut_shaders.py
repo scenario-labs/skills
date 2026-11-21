@@ -50,6 +50,7 @@ import json
 import math
 import os
 import re
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILLS = os.path.dirname(os.path.dirname(HERE))
@@ -732,11 +733,11 @@ def lint_project_keywords(project, roots=("Assets",)):
                 p = os.path.join(dp, fn)
                 rel = os.path.relpath(p, root)
                 if fn.endswith((".shader", ".hlsl", ".cginc")):
-                    shaders[rel] = open(p, encoding="utf-8", errors="replace").read()
+                    shaders[rel] = Path(p).read_text(encoding="utf-8", errors="replace")
                 elif fn.endswith(".shadergraph"):
                     graphs.append(p)
                 elif fn.endswith(".cs") and "Editor" not in rel.split(os.sep):
-                    cs[rel] = open(p, encoding="utf-8", errors="replace").read()
+                    cs[rel] = Path(p).read_text(encoding="utf-8", errors="replace")
     decl = keyword_declarations(shaders, graphs)
     return lint_runtime_keyword_toggles(cs, decl)
 
@@ -810,8 +811,8 @@ def run_pso_player(app, mode, out_json, gsc=None, frames=60, log=None, timeout=1
         code = subprocess.call(pso_player_command(app, mode, out_json, gsc, frames, log, extra=extra), timeout=timeout)
     except subprocess.TimeoutExpired:
         code = "timeout"
-    probe = json.load(open(out_json)) if os.path.isfile(out_json) else None
-    text = open(log, errors="replace").read() if os.path.isfile(log) else ""
+    probe = json.loads(Path(out_json).read_text()) if os.path.isfile(out_json) else None
+    text = Path(log).read_text(errors="replace") if os.path.isfile(log) else ""
     return {"mode": mode, "probe": probe, "log": log, "compiled": count_compiled_shaders(text), "exit_code": code,
             "seconds": round(time.time() - t0, 1)}
 

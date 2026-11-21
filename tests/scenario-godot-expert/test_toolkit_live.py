@@ -74,6 +74,25 @@ class Locks(unittest.TestCase):
             self.assertEqual(probe(None, GD_MAX="1"), "busy")
         self.assertEqual(probe(None, GD_MAX="1"), "free")
 
+    def test_lock_file_closes_when_stamping_it_fails(self):
+        path = LOCKS / "stamp_fails.lock"
+        files = []
+        self.addCleanup(lambda: [f.close() for f in files])
+
+        def failing_open(*args, **kwargs):
+            files.append(open(*args, **kwargs))  # noqa: SIM115 (closed by the cleanup above)
+            fh = unittest.mock.MagicMock(wraps=files[-1])
+            fh.truncate.side_effect = OSError("disk full")
+            return fh
+
+        with unittest.mock.patch.object(gd_run, "open", failing_open, create=True):
+            with self.assertRaises(OSError):
+                gd_run._flock_try(path)
+        self.assertTrue(files[0].closed)
+        fh = gd_run._flock_try(path)
+        self.assertIsNotNone(fh)
+        fh.close()
+
 
 class GuiCheck(unittest.TestCase):
     def test_gui_godot_on_the_project_blocks_a_run(self):

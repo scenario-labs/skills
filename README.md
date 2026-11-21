@@ -59,7 +59,7 @@ through the Scenario MCP.
 
 ```bash
 # Every Scenario skill, without the expert tools
-npx skills add scenario-labs/skills --skill scenario scenario-inspiration scenario-image scenario-multi-reference scenario-product-shots scenario-brand-kit scenario-image-editing scenario-text-overlay scenario-storyboards scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-textures scenario-skyboxes scenario-3d scenario-video-to-motion scenario-blender scenario-patina-retexture scenario-orbit-views scenario-walkable-room scenario-video scenario-video-editing scenario-video-color-grade scenario-seedance-music-video scenario-kinetic-music-video scenario-chatgpt-pet-create scenario-chatgpt-pet-update scenario-seedance-storyboard scenario-seedance-drafts scenario-video-ads scenario-ugc scenario-fan-cam scenario-reel-recast scenario-audio scenario-video-assembly scenario-motion-loops scenario-caption-studio scenario-consistency scenario-identity-library scenario-model-training scenario-asset-analysis scenario-quality-gate scenario-refine-loop scenario-model-comparison scenario-formats scenario-workflows scenario-workflow-authoring scenario-moderation scenario-report scenario-team-admin scenario-admin-analytics scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-ad-variants scenario-thumbnails
+npx skills add scenario-labs/skills --skill scenario scenario-inspiration scenario-image scenario-multi-reference scenario-product-shots scenario-brand-kit scenario-image-editing scenario-text-overlay scenario-storyboards scenario-comic-creator scenario-game-assets scenario-sprite-animation scenario-side-view-game-kit scenario-blender-2d-animation scenario-textures scenario-skyboxes scenario-3d scenario-video-to-motion scenario-blender scenario-patina-retexture scenario-orbit-views scenario-walkable-room scenario-playable-ads scenario-video scenario-video-editing scenario-video-color-grade scenario-seedance-music-video scenario-kinetic-music-video scenario-chatgpt-pet-create scenario-chatgpt-pet-update scenario-seedance-storyboard scenario-seedance-drafts scenario-video-ads scenario-game-ua-ads scenario-ugc scenario-fan-cam scenario-reel-recast scenario-audio scenario-video-assembly scenario-motion-loops scenario-kinetic-film scenario-caption-studio scenario-consistency scenario-identity-library scenario-model-training scenario-asset-analysis scenario-quality-gate scenario-refine-loop scenario-model-comparison scenario-formats scenario-workflows scenario-workflow-authoring scenario-moderation scenario-report scenario-team-admin scenario-admin-analytics scenario-task-tracking scenario-gpt-image scenario-mai-image scenario-seedream scenario-gemini-image scenario-reve scenario-ideogram scenario-grok-imagine-image scenario-luma-image scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-minimax-music scenario-elevenlabs scenario-ace-step scenario-sonilo scenario-meshy scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-ad-variants scenario-thumbnails
 ```
 
 **By role or goal.** [INSTALL.md](INSTALL.md) groups the skills by job, from 2D artist to producer,
@@ -144,16 +144,17 @@ batch runs from.
 Generate and edit images: model choice, sizing, references, masked edits, post-processing tools, and
 letter-perfect text overlay cards.
 
-| Skill                                                                | Use it for                                                                                                            |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| [scenario-image](skills/scenario-image/SKILL.md)                     | Text-to-image and image editing: model choice, sizing fields, prompt limits, reference images, masked inpainting      |
-| [scenario-multi-reference](skills/scenario-multi-reference/SKILL.md) | One image composed from several references, each with one job (subject, place, pose, style, palette), leaks checked   |
-| [scenario-product-shots](skills/scenario-product-shots/SKILL.md)     | Product photography from a real photo: packshots, lifestyle scenes, relighting, label-fidelity gates                  |
-| [scenario-brand-kit](skills/scenario-brand-kit/SKILL.md)             | Visual identities: SVG logos and wordmarks, palette and type specs, gated variants and applications, the filed kit    |
-| [scenario-image-editing](skills/scenario-image-editing/SKILL.md)     | Tool-model image edits: 3D LUT grades, effects, expand and reframe, resize, slicing, layers, background removal       |
-| [scenario-text-overlay](skills/scenario-text-overlay/SKILL.md)       | Letter-perfect text overlays: templated transparent PNG cards (taglines, CTAs, legal supers, rich cards) to composite |
-| [scenario-storyboards](skills/scenario-storyboards/SKILL.md)         | Comic pages, storybooks, and pre-viz storyboards: script first, one run per panel, a locked cast, lettering in post   |
-| [scenario-thumbnails](skills/scenario-thumbnails/SKILL.md)           | Finished video covers with character fidelity, exact copy and small-preview readability                               |
+| Skill                                                                | Use it for                                                                                                                      |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-image](skills/scenario-image/SKILL.md)                     | Text-to-image and image editing: model choice, sizing fields, prompt limits, reference images, masked inpainting                |
+| [scenario-multi-reference](skills/scenario-multi-reference/SKILL.md) | One image composed from several references, each with one job (subject, place, pose, style, palette), leaks checked             |
+| [scenario-product-shots](skills/scenario-product-shots/SKILL.md)     | Product photography from a real photo: packshots, lifestyle scenes, relighting, label-fidelity gates                            |
+| [scenario-brand-kit](skills/scenario-brand-kit/SKILL.md)             | Visual identities: SVG logos and wordmarks, palette and type specs, gated variants and applications, the filed kit              |
+| [scenario-image-editing](skills/scenario-image-editing/SKILL.md)     | Tool-model image edits: 3D LUT grades, effects, expand and reframe, resize, slicing, layers, background removal                 |
+| [scenario-text-overlay](skills/scenario-text-overlay/SKILL.md)       | Letter-perfect text overlays: templated transparent PNG cards (taglines, CTAs, legal supers, rich cards) to composite           |
+| [scenario-storyboards](skills/scenario-storyboards/SKILL.md)         | Comic pages, storybooks, and pre-viz storyboards: script first, one run per panel, a locked cast, lettering in post             |
+| [scenario-comic-creator](skills/scenario-comic-creator/SKILL.md)     | Comics and graphic novels from a gift story to a book: guided intake, style round, cast sheets, whole pages, tiered review, PDF |
+| [scenario-thumbnails](skills/scenario-thumbnails/SKILL.md)           | Finished video covers with character fidelity, exact copy and small-preview readability                                         |
 
 ### Game art and 3D
 
@@ -174,11 +175,12 @@ interactive scenes.
 | [scenario-patina-retexture](skills/scenario-patina-retexture/SKILL.md)         | PATINA PBR retexture of a finished mesh: material families, one map set per family, Blender apply with geometry untouched, matched before/after comparison film                                                                                                                                   |
 | [scenario-orbit-views](skills/scenario-orbit-views/SKILL.md)                   | New camera angles of one picture through a 3D intermediary: clay layouts in a grounded panorama, repaint per camera, matched transparent set                                                                                                                                                      |
 | [scenario-walkable-room](skills/scenario-walkable-room/SKILL.md)               | A room from one interior photo to walk into: clean plate, splat world, PBR props with impact sounds, splat-based calibration, physics viewer with grab and throw                                                                                                                                  |
+| [scenario-playable-ads](skills/scenario-playable-ads/SKILL.md)                 | Playable ads from a gameplay recording, screenshots or only an idea: a one-verb HTML5 game with a hint hand, mute button and end card, packaged for nine ad networks, QA in fake containers                                                                                                       |
 
 ### Video and audio
 
-Video generation, editing, and color grading, seamless motion loops, music, sound effects, voice,
-and speech.
+Video generation, editing, and color grading, kinetic-type launch films, seamless motion loops,
+music, sound effects, voice, and speech.
 
 | Skill                                                                          | Use it for                                                                                                                                  |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -189,10 +191,12 @@ and speech.
 | [scenario-seedance-storyboard](skills/scenario-seedance-storyboard/SKILL.md)   | Movement that holds across cuts: timecoded shot scripts, character sheets and boards, pose-chained shots that play as one performance       |
 | [scenario-seedance-drafts](skills/scenario-seedance-drafts/SKILL.md)           | Cheap 480p Seedance takes reviewed and ranked, only the picks finalized to 1080p, with the draft-versus-final cost math                     |
 | [scenario-video-ads](skills/scenario-video-ads/SKILL.md)                       | Producing a video ad from a product shot: brief, storyboard, cinematic grammar, fidelity gates, budget, delivery                            |
+| [scenario-game-ua-ads](skills/scenario-game-ua-ads/SKILL.md)                   | Mobile game UA video ads from a one-line concept: staged gameplay, composited game UI, fail tease, end card                                 |
 | [scenario-ad-variants](skills/scenario-ad-variants/SKILL.md)                   | Ordered independent campaign edits from existing footage, preserving original gameplay and audio                                            |
 | [scenario-audio](skills/scenario-audio/SKILL.md)                               | Music, sound effects, voice and speech generation, video scoring, audio utilities                                                           |
 | [scenario-video-assembly](skills/scenario-video-assembly/SKILL.md)             | Assembling clips into a finished video: timeline composition, concat with transitions, overlays, music, captions                            |
 | [scenario-motion-loops](skills/scenario-motion-loops/SKILL.md)                 | Seamless brand-color motion loops in code (backgrounds, bumpers, shape animations) rendered to MP4, with a Scenario cut-out over them       |
+| [scenario-kinetic-film](skills/scenario-kinetic-film/SKILL.md)                 | Kinetic-type launch films and teasers from a brief, in code: tempo-set music, sound kit and key art from Scenario, 4K with motion blur      |
 | [scenario-caption-studio](skills/scenario-caption-studio/SKILL.md)             | Captioning a finished video per destination: styled burn-in or SRT, transcription hints, translation, per-platform placement                |
 
 ### Socials
@@ -269,6 +273,7 @@ per-member spend caps, API key roles, and who spent what.
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | [scenario-team-admin](skills/scenario-team-admin/SKILL.md)           | Model access control, team and project membership, per-member Creative Unit caps, API key roles, and spend attribution |
 | [scenario-admin-analytics](skills/scenario-admin-analytics/SKILL.md) | Cached MCP usage analytics, model and user rankings, CSV exports, adoption PDFs, and a local dashboard                 |
+| [scenario-task-tracking](skills/scenario-task-tracking/SKILL.md)     | Bill each piece of work to the right task of the team's task tracker, and ask again when the work changes              |
 
 ### Image model families
 
@@ -507,11 +512,11 @@ run `pnpm install` (installs commitlint, cspell, prettier, and the husky git hoo
 linted separately with commitlint. PRs welcome; PR titles follow Conventional Commits since they
 become the squash commit header on `main`.
 
-Every script shipped with a skill has a test suite in `tests/<name>/`; `pnpm test` runs them all (CI
-does too). Suites need Python 3.11+, plus ffmpeg on PATH where a suite uses it. With uv installed,
-`pnpm test` gives each suite the dependencies in its `tests/<name>/requirements.txt`; without uv,
-install them into `python3` first. Python suites use stdlib `unittest`, TypeScript suites use
-vitest.
+Every script shipped with a core skill has a test suite in `tests/<name>/`; expert tools have one
+suite per family instead. `pnpm test` runs them all (CI does too). Suites need Python 3.11+, plus
+ffmpeg on PATH where a suite uses it. With uv installed, `pnpm test` gives each suite the
+dependencies in its `tests/<name>/requirements.txt`; without uv, install them into `python3` first.
+Python suites use stdlib `unittest`, TypeScript suites use vitest.
 
 ## License
 

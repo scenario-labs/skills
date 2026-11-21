@@ -38,6 +38,7 @@ function smoothPt(v, localT, idx) {
 
 export default {
   async load(E, layer) {
+    // under motion blur: E.cut(t) for each hard switch inside this scene, E.fast(t0, t1, 16) on slams (ENGINE_API.md)
     try {
       v = await E.loadVideo(CLIP);
     } catch (e) {

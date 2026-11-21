@@ -19,7 +19,8 @@ bx_export: engine-ready exports from Blender 5.2, checked by re-importing them.
   blender -b --factory-startup --python-exit-code 1 -P bx_export.py -- --inspect /abs/crate.glb
 
 Every preset was exported and re-imported in Blender 5.2.1 by the family's live suite
-(tests/scenario-blender-expert/test_live_export.py in the skills repository).
+(tests/scenario-blender-expert/test_live_export.py in the skills repository). Before Blender
+5.2, export() skips the web preset's meshopt option and lists it in skipped_settings.
 """
 
 import json
@@ -88,6 +89,9 @@ CARRIES = {
 MAP_INPUTS = ("Base Color", "Metallic", "Roughness", "Normal", "Emission Color")
 # Presets that rescale on the way out: STL in millimeters.
 SCALE = {"print": 1000.0}
+# Preset settings an older exporter may lack, skipped there and reported. The glTF exporter
+# gained meshopt in Blender 5.2. Any other missing setting raises: it can change the file.
+OPTIONAL = {"export_meshopt_compression_enable"}
 IMPORTERS = {
     ".glb": "import_scene.gltf", ".gltf": "import_scene.gltf", ".fbx": "import_scene.fbx",
     ".obj": "wm.obj_import", ".stl": "wm.stl_import", ".ply": "wm.ply_import",
@@ -213,6 +217,11 @@ def export(path, preset, objects=None, **overrides):
     view.objects.active = objs[0] if objs else None
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     args = dict(kw, **overrides)
+    # An override is passed as given, so a misspelled one still raises.
+    known = _op(op).get_rna_type().properties.keys()
+    skipped = sorted(k for k in kw if k in OPTIONAL and k not in known and k not in overrides)
+    for k in skipped:
+        del args[k]
     embed = ext == ".fbx" and args.get("embed_textures")
     tmp = tempfile.TemporaryDirectory() if embed else None
     swaps, copies = _pack_unsaved_images(objs, tmp.name) if embed else ([], {})
@@ -236,6 +245,7 @@ def export(path, preset, objects=None, **overrides):
     return {"path": path, "preset": preset, "bytes": os.path.getsize(path),
             "objects": [o.name for o in objs],
             "packed_unsaved_images": sorted(img.name for img in copies),
+            "skipped_settings": skipped, "blender": bpy.app.version_string,
             "settings": {k: sorted(v) if isinstance(v, set) else v for k, v in args.items()}}
 
 
@@ -662,7 +672,10 @@ def batch(src, dst, preset, profile="game", gate=True):
                 r["gate"] = {"pass": g["pass"], "errors": g["errors"], "warnings": len(g["warnings"])}
             before = inspect_scene()
             out = os.path.join(dst, name)
-            r["export"] = export(out, preset)["bytes"]
+            ex = export(out, preset)
+            r["export"] = ex["bytes"]
+            if ex["skipped_settings"]:
+                r["skipped_settings"] = ex["skipped_settings"]
             r["diffs"] = compare(before, inspect_file(out), CARRIES[preset], scale=SCALE.get(preset, 1.0),
                                  deform_only=PRESETS[preset][2].get("use_armature_deform_only", False))
         except Exception as exc:  # one bad file must not stop the folder

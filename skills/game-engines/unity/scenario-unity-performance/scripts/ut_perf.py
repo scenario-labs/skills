@@ -31,6 +31,7 @@ import signal
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(HERE)
@@ -65,7 +66,7 @@ def install(project):
         if not fn.endswith((".cs", ".asmdef")):
             continue
         s, d = os.path.join(RUNTIME_SRC, fn), os.path.join(dst, fn)
-        if os.path.isfile(d) and open(s, "rb").read() == open(d, "rb").read():
+        if os.path.isfile(d) and Path(s).read_bytes() == Path(d).read_bytes():
             continue
         shutil.copyfile(s, d)
         written.append(os.path.relpath(d, root))

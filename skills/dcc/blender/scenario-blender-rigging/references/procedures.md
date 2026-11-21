@@ -333,6 +333,58 @@ hair and brows.
   bones follow IK and FK. (From the rigify_studio digest probes, `archive/tests/rigify_probe/`, and
   this skill's tests.)
 
+## P15. Loose garments: robust transfer and garment depth (test_live_transfer.py)
+
+```python
+R.transfer_weights(body, skirt, rig, mapping="ROBUST")    # or bind(..., garment_mapping="ROBUST")
+skirt["bx_matched"], skirt["bx_inpainted"]                 # copied vs filled in, vertex counts
+KNEE_LIFT = {"name": "knee_lift_90.L", "side": "L", "joints": ["hip.L", "knee.L"],
+             "ops": [("fk",), ("aim", "thigh_fk.L", (0.05, -1.0, 0.0)), ("hinge", "shin_fk.L", 90, (0, 0, -1))]}
+dep = R.garment_depth(rig, body, [skirt, sleeve], R.RIGIFY_POSES + [KNEE_LIFT], limit=0.005)
+dep["fail"]                                                # [(pose, garment)] deeper than at rest
+```
+
+- **Robust transfer.** A vertex copies the closest skin point's weights only when that point is
+  within `max_dist` (default 5% of the garment's bounding-box diagonal) and the normals agree within
+  `max_angle` (35 degrees, either facing). Every other vertex is inpainted: it starts from the
+  nearest copied vertex (over the garment's edges, else in space for a detached part), diffuses
+  until no weight moves more than 1e-6, then 10 light smoothing passes run. Method: Abdrashitov et
+  al., "Robust Skin Weights Transfer via Weight Inpainting", SIGGRAPH Asia 2023.
+- **Errors.** No vertex passing both gates raises `ValueError` naming the closest gap: raise
+  `max_dist` past it. A body with a live Mirror raises too, since its weights cover only the base
+  half: apply the Mirror first.
+- **When.** A tight piece copies whole either way, so one `bind(..., garment_mapping="ROBUST")`
+  serves a shirt and a skirt. Use it on what hangs off the skin: skirts, coat tails, capes, hoods,
+  loose sleeves. Neither route keeps a boot's inner wall off the other leg, which lies just as close
+  and faces it.
+- **Inpainted parts follow their copied band**, not the limbs under them. A leg that swings forward
+  then passes through a skirt that only follows the hips: `garment_depth` reports it.
+- **Auto-weighted bodies.** The skin under a waistband already carries thigh weight, so the copied
+  band does too. Robust cuts the tear but lets the leg through. Gate with `garment_depth`, then add
+  skirt bones or a corrective shape key.
+- **Knee lift.** For skirts and coats, add `KNEE_LIFT` to the depth poses: `RIGIFY_POSES` has no
+  knee lift, the pose that drives a leg deepest through a skirt.
+- **Garment depth.** Per pose, how much deeper each garment vertex sits inside the body than at
+  rest; overlap already present at rest is not counted. `weight_report` and `deformation_report`
+  read one mesh at a time, so they pass a garment sunk into the body. The body's normals must face
+  out (`model_check`). A live Mirror on the body is measured whole. A pose naming controls the rig
+  lacks raises, since the body would stay at rest.
+
+Verified: test_live_transfer.py on Blender 5.2.1. A hip cylinder and two legs, a 1,008-vertex skirt
+hanging from the hips, a sleeve 1 cm off the left leg, the left leg swung 50 degrees forward.
+Nearest-face: 244 skirt vertices led by the left thigh and 242 by the right, 51 edges outside the
+0.5 to 1.6 stretch band, worst stretch 13.3. Robust: 338 copied, 670 inpainted, all 1,008 led by the
+hips, 0 edges outside the band, worst 1.0, sums 1.0. A hoop below the hem with no edge to the skirt
+followed the hips too. The sleeve copied whole (0 inpainted) and stayed under 5 mm. `garment_depth`
+failed both skirts where the leg passes through: 34 robust vertices over 5 mm (worst 6.8 cm), 7
+nearest-face ones (worst 3.7 cm).
+
+Field check (skill validation on PR 359, Blender 5.2.1): the A-pose mannequin with Rigify basic and
+auto weights, plus a 1,536-vertex flared skirt 2 to 10 cm off the legs. Robust copied 620 and
+inpainted 916, yet 1,273 vertices stayed led by a thigh bone. At `leg_forward.L` the worst stretch
+fell from 19.2 (nearest-face) to 1.9, with 30 edges still outside the band. `garment_depth` failed
+`leg_forward.L` (63 vertices, worst 5.9 cm) and the 90 degree knee lift (140, worst 7.9 cm).
+
 ## P16. A body on an existing skeleton
 
 When clips, an engine skeleton or other characters already share a skeleton, the body has to join it

@@ -1,6 +1,6 @@
 ---
 name: scenario-model-training
-description: "Use when generated assets must keep a consistent style, character, or product look and references stop scaling, or when a user asks to train a custom model through the Scenario MCP, fine-tune a LoRA, clone a voice, curate a training dataset, choose a base model, set epochs and sample prompts, estimate training cost, diagnose a trained model that lost its identity or has one epoch, or generate with a trained model. Keywords: custom model, LoRA, dataset curation, epoch previews."
+description: "Use when generated assets must keep a consistent style, character, or product look and references stop scaling, or when a user asks to train a custom model through the Scenario MCP, fine-tune an image or video LoRA (MiniMax H3), clone a voice, curate a training dataset, choose a base model, set epochs and sample prompts, estimate training cost, diagnose a trained model that lost its identity or has one epoch, or generate with a trained model. Keywords: custom model, video clips, epoch previews."
 license: MIT
 ---
 
@@ -38,7 +38,7 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
 | Pick a base architecture | `recommend_training` (LLM-powered, cost-bearing)                    |
 | Create the model shell   | `model_create` (`data.type` from the recommendation)                |
 | Upload the dataset       | `upload_asset` + `upload_asset_complete`                            |
-| Attach training images   | `train` action `upload_images`, 10 asset ids per call               |
+| Attach training images   | `train` action `upload_images`, any number of asset ids             |
 | Estimate cost            | `train` action `configure` with `dry_run: true` (a quote, no job)   |
 | Preview every epoch      | `config.sample_prompts`, at least one on any multi-epoch run        |
 | Launch                   | `train` action `start`, with the same `config` or bare for defaults |
@@ -56,10 +56,11 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
    returned model id.
 3. Curate the set first (dataset reference), matching `dataset_requirements` from step 1, then
    upload each file with `upload_asset` plus `upload_asset_complete` (see the `scenario` skill) and
-   collect the asset ids. For `image_pairs` datasets, map pairs with `train` action `set_pairs`.
-4. `train` with `action: "upload_images"`, `model_id`, `images: [<asset ids>]`, at most 10 per call
+   collect the asset ids.
+4. `train` with `action: "upload_images"`, `model_id`, `images: [<asset ids>]`, any number of ids
    (see Dataset limits); it changes data, so pass `team_id` and `project_id` (scope: the `scenario`
-   skill).
+   skill). For `image_pairs` datasets, then map pairs with `train` action `set_pairs`, all in one
+   call: it replaces every pair.
 5. `train` with `action: "configure"`,
    `config: {"epochs": 12, "sample_prompts": ["a rusty lantern icon, centered, plain field", "a blue mana potion icon, three-quarter view, plain field"]}`,
    `dry_run: true` returns the quote and starts nothing. `epochs` is the main cost lever (scales
@@ -73,14 +74,14 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
    of the training type (a style set names new subjects and never the style; a character set leads
    with the trigger word and a new pose or setting): they are the previews you pick the epoch from,
    and generic prompts return generic scenes at every epoch, which is how one run spent its whole
-   quote on twenty previews of four unrelated landscapes. Edit families take `sample_source_images`,
-   one asset id per prompt in the same order; every other family rejects the field. Show the user
-   the quote and get a go-ahead, then launch with `action: "start"` and the same `config`
-   (unattended, launch only when the task already authorized training or a budget covering it;
-   otherwise stop and report the quote). `configure` always quotes and never launches;
-   `dry_run: false` there is rejected. Only `start` launches training; `start` with `dry_run: true`
-   quotes instead. Treat `start` as spending the whole quote: do not count on `stop` returning any
-   of it.
+   quote on twenty previews of four unrelated landscapes. Edit families and the video Reference type
+   take `sample_source_images`, one asset id per prompt in the same order; every other family
+   rejects the field. Show the user the quote and get a go-ahead, then launch with `action: "start"`
+   and the same `config` (unattended, launch only when the task already authorized training or a
+   budget covering it; otherwise stop and report the quote). `configure` always quotes and never
+   launches; `dry_run: false` there is rejected. Only `start` launches training; `start` with
+   `dry_run: true` quotes instead. Treat `start` as spending the whole quote: do not count on `stop`
+   returning any of it.
 6. The launch response includes a job: `jobs_wait` with its id in `job_ids`. No job id means nothing
    launched: report it instead of retrying. Training outlasts the server wait budget, so re-call
    with the returned `pending_job_ids` until completed; never poll `job_get`.
@@ -101,14 +102,10 @@ Training tools are not in the default toolset: get schemas with `scenario_tools_
 
 Nearly every `train` failure is dataset handling, not hyper-parameters.
 
-- **Ten ids per call.** `upload_images` takes at most 10 asset ids; more returns 400
-  `Too many assetIds provided in a single request`. Call once per 10-id chunk: the model accumulates
-  the whole set.
-- **Chunks must not overlap.** Re-sending an id already attached returns 400
-  `The provided assetId is already a training image of this model`. After a partial failure, re-send
-  only the chunks that did not land.
+- **Partial uploads.** `upload_images` takes any number of asset ids. When it reports ids as not
+  confirmed, call it again with only those ids: ids already in the dataset are skipped.
 - **Two separate plan ceilings.** Dataset size is capped per team: past it, `upload_images` returns
-  429 naming `add-training-image` with the ceiling in `actionLimit`. Chunking cannot bypass it: trim
+  429 naming `add-training-image` with the ceiling in `actionLimit`. Retrying cannot bypass it: trim
   to the strongest images or surface the upgrade. Concurrent trainings are capped separately as
   `parallel-training`, and some plans set it to zero.
 - **Images before configuration.** `configure` or `start` on an empty dataset fails validation on
@@ -142,6 +139,14 @@ Nearly every `train` failure is dataset handling, not hyper-parameters.
   for diffs.
 - Expecting an older base from `recommend_training`: the default excludes legacy families; set
   `legacy_ok: true` only when a project must stay on one.
+
+## Video LoRAs
+
+A video LoRA starts from the same `recommend_training` call with `modality: "video"` and
+`dataset_shape` `"video_clips"`, `"single_images"` (images only) or `"clips_with_references"`. It
+trains on images, clips, or clips paired with their references. The dataset rules, captions,
+pricing, and config fields differ from image training, and a license notice applies: follow
+[references/video-lora.md](references/video-lora.md) before starting one.
 
 ## Voice cloning
 
