@@ -126,7 +126,9 @@ unreadable value stops the render with an error.
   - Bloom keys on luminance, not the brightest channel, so `mul` must lift the color's luminance
     past the 1.05 threshold: about 1.05 for white, 1.4 for pure cyan, 3.7 for pure magenta.
   - A large extruded face (`E.text3D`) over the threshold blooms into a blur. Keep its front face
-    below the threshold and put the glow on the side material.
+    below the threshold and put the glow on the side material. If the glow still softens the
+    letters, lower `E.post.bloom` and `bloomRadius` in that scene (0.3 and 0.12 held in one test
+    run).
 - **2D**
   - `E.makeG2D(w, h)` returns `{ctx, tex, clear(), commit()}`.
   - `E.blitG2D(E, g, intensity, blending)` draws the surface fullscreen into the current target.
