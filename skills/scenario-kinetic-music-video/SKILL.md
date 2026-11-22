@@ -223,8 +223,9 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
 - **Style sheet / making-of:** an artifact or doc (`references/pipeline.md` §8).
 - **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent, summed
-  from the `dry_run` quotes of this run's successful jobs (logged in `analysis/jobs.md`; `cuCost`
-  omits any quality-gate fee); `usage` is project-wide and includes other work.
+  from the `dry_run` quotes of this run's charged jobs (successes, plus xAI moderation stops, per
+  `scenario`; logged in `analysis/jobs.md`). `cuCost` omits any quality-gate fee; `usage` is
+  project-wide and includes other work.
 
 ## Quality bar
 

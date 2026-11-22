@@ -52,8 +52,9 @@ does not.
    the sign-off, then generate; when nobody can answer, the brief's spend ceiling stands in for the
    sign-off, so generate only while the priced board fits it.
 5. Track with `usage`; the metric is cost per usable shot (spend over accepted clips). Same-day
-   `usage` totals can lag aggregation, so ledger each successful job's `dry_run` quote as ground
-   truth (a failed job is reimbursed, per `scenario`; `cuCost` omits any quality-gate fee).
-   Re-forecast after the first shot lands: the first scene is calibration.
+   `usage` totals can lag aggregation, so ledger the `dry_run` quote of each charged job as ground
+   truth: every success, plus any xAI generation stopped by moderation, the one failure `scenario`
+   does not reimburse (`cuCost` omits any quality-gate fee). Re-forecast after the first shot lands:
+   the first scene is calibration.
 
 The per-platform shipping checklist lives in [delivery.md](delivery.md).
