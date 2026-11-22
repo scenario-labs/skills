@@ -105,7 +105,7 @@ Generating a stylized game prop image:
    - A 429: stop launching and find its class under Errors and recovery.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up. `cuCost` omits any
-     quality-gate fee a project charges: total spend from the quotes.
+     quality-gate fee a project charges: total spend from the quotes, else `usage`.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
      cancel. No timeout argument exists.
    - Failed jobs are reimbursed, except xAI generations stopped by moderation.

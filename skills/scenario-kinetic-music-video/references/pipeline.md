@@ -70,8 +70,9 @@ ffmpeg -i audio/master.mp3 -af "atrim=start=${A}:end=${B},asetpts=PTS-STARTPTS,a
 ## 3. Scenario: subject, style frames, assets
 
 - **Workspace.** Get the team and project with `teams_list`. If there is more than one, ask the
-  user. Pass `team_id` and `project_id` on every call. Log every asset and job id in
-  `analysis/jobs.md` as you go, because revisions need them.
+  user. Pass `team_id` and `project_id` on every call. Log every asset and job id, with each job's
+  `dry_run` quote, in `analysis/jobs.md` as you go: revisions need the ids, and the final report
+  sums the quotes.
 - **Upload references.** Use the multipart flow:
   `upload_asset(file_name, content_type, kind, file_size)` returns a presigned URL.
   `curl -fsS -X PUT -T file '<url>'` (no checksum headers), then `upload_asset_complete(upload_id)`.
