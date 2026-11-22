@@ -17,14 +17,16 @@ import {
 } from "../../skills/scenario-kinetic-music-video/scripts/render_lib.mjs";
 
 const GB = 2 ** 30;
-// The encoder arguments render.mjs used before 4K masters, kept literally: every render at or below 1080p must match them
-const before = (fps: number, crf = 16) => [
+// The encoder arguments of a render at or below 1080p, kept literally: no level pin, no thread cap
+const plain = (fps: number, crf = 16) => [
   "-c:v",
   "libx264",
   "-preset",
   "medium",
   "-crf",
   String(crf),
+  "-vf",
+  "scale=out_range=tv",
   "-pix_fmt",
   "yuv420p",
   "-r",
@@ -129,10 +131,10 @@ describe("x264Args", () => {
     [960, 540, 30],
     [1080, 1920, 60],
     [1920, 1080, 60],
-  ])("keeps the earlier arguments at %ix%i, %i fps", (w, h, fps) => {
+  ])("keeps the plain arguments at %ix%i, %i fps", (w, h, fps) => {
     expect(above1080p(w, h)).toBe(false);
     expect(x264Args({ w, h, fps, crf: "17", scale: 1 })).toEqual(
-      before(fps, 17),
+      plain(fps, 17),
     );
   });
 
@@ -232,17 +234,18 @@ function encode(w: number, h: number, fps: number, codec: string[]) {
     ...codec,
     out,
   ]);
-  const level = spawnSync("ffprobe", [
+  const probe = spawnSync("ffprobe", [
     "-v",
     "error",
     "-select_streams",
     "v",
     "-show_entries",
-    "stream=level",
+    "stream=level,pix_fmt,color_range",
     "-of",
-    "csv=p=0",
+    "json",
     out,
   ]);
+  const v = JSON.parse(String(probe.stdout)).streams[0];
   const stream = ff([
     "-i",
     out,
@@ -255,7 +258,8 @@ function encode(w: number, h: number, fps: number, codec: string[]) {
     "-",
   ]);
   return {
-    level: +String(level.stdout).trim() / 10,
+    level: v.level / 10,
+    range: [v.pix_fmt, v.color_range],
     sha: createHash("sha256").update(stream).digest("hex"),
   };
 }
@@ -266,11 +270,21 @@ describe("x264 on this ffmpeg", { timeout: 120000 }, () => {
     [960, 540, 30],
     [1080, 1920, 60],
     [1920, 1080, 60],
-  ])("encodes %ix%i at %i fps byte-identically to before", (w, h, fps) => {
-    const old = encode(w, h, fps, before(fps));
-    const now = encode(w, h, fps, x264Args({ w, h, fps, scale: 1 }));
-    expect(now.sha).toBe(old.sha);
-    expect(now.level).toBe(+h264Level(w, h, fps)!);
+  ])("encodes %ix%i at %i fps at the level h264Level names", (w, h, fps) => {
+    expect(encode(w, h, fps, x264Args({ w, h, fps, scale: 1 })).level).toBe(
+      +h264Level(w, h, fps)!,
+    );
+  });
+
+  // ffmpeg 7 kept the JPEGs' full range under -pix_fmt yuv420p alone, and probed the file as yuvj420p
+  it("writes limited range from the full-range canvas JPEGs", () => {
+    for (const [w, h, scale] of [
+      [1080, 1920, 1],
+      [3840, 2160, 2],
+    ])
+      expect(
+        encode(w, h, 60, x264Args({ w, h, fps: 60, scale })).range,
+      ).toEqual(["yuv420p", "tv"]);
   });
 
   it("picks Level 5.2 at 4K60 on its own, so the pin changes no bytes", () => {

@@ -1,5 +1,5 @@
-"""The audio-side checks on synthetic media: A/V sync, lip sync, the lyric plots, and audio_analysis.py's stem and
-checkpoint gates. librosa, MediaPipe, matplotlib, beat_this and Demucs are fakes (kinetic_host_stubs): the fake
+"""The audio-side checks on synthetic media: A/V sync, lip sync, the lyric plots, and audio_analysis.py's silence, stem
+and checkpoint gates. librosa, MediaPipe, matplotlib, beat_this and Demucs are fakes (kinetic_host_stubs): the fake
 librosa decodes and measures RMS for real, so the lag searches and selections under test see true signals."""
 
 import json
@@ -193,7 +193,9 @@ class AudioAnalysisTest(Workdir):
     def setUp(self):
         super().setUp()
         (self.cwd / "audio").mkdir()
-        (self.cwd / "audio" / "master.mp3").write_bytes(b"not decoded before the gates")
+        t = np.arange(22050) / 22050
+        sf.write(self.cwd / "audio" / "master.wav", (0.3 * np.sin(2 * np.pi * 440 * t)).astype(np.float32), 22050)
+        self.master = (self.cwd / "audio" / "master.wav").read_bytes()
 
     def stems(self):
         d = self.cwd / "stems" / "htdemucs" / "master"
@@ -211,12 +213,41 @@ class AudioAnalysisTest(Workdir):
         ckpt = self.cwd / "models" / "beat_this-final0.ckpt"
         ckpt.parent.mkdir()
         ckpt.write_bytes(b"tampered")
-        r = run("audio_analysis.py", "audio/master.mp3", cwd=self.cwd, env=self.env)
+        r = run("audio_analysis.py", "audio/master.wav", cwd=self.cwd, env=self.env)
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("Checksum mismatch for the beat_this checkpoint", r.stderr)
         self.assertFalse(ckpt.exists())
         self.assertFalse((self.cwd / "demucs_args.json").exists())
-        self.assertEqual((self.cwd / "audio" / "master.mp3").read_bytes(), b"not decoded before the gates")
+        self.assertEqual((self.cwd / "audio" / "master.wav").read_bytes(), self.master)
+
+    def test_a_silent_master_stops_before_demucs_and_writes_nothing(self):
+        # a cut whose fades ran on the source's timeline came out all zeros, and was analyzed as "bpm nan, 0 beats"
+        sf.write(self.cwd / "audio" / "master.wav", np.zeros(3 * 22050, np.float32), 22050)
+        r = run("audio_analysis.py", "audio/master.wav", cwd=self.cwd, env=self.env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("audio/master.wav is silent (every sample is zero over 3.00 s)", r.stderr)
+        self.assertFalse((self.cwd / "demucs_args.json").exists())
+        self.assertFalse((self.cwd / "stems").exists())
+        self.assertEqual(list((self.cwd / "engine" / "data").iterdir()), [])
+
+    def tone(self, dbfs):
+        t = np.arange(22050) / 22050
+        sf.write(self.cwd / "audio" / "master.wav", (10 ** (dbfs / 20) * np.sin(2 * np.pi * 440 * t)).astype(np.float32),
+                 22050, subtype="FLOAT")
+
+    def test_the_silence_gate_sits_at_minus_60_dbfs(self):
+        self.tone(-70)
+        r = run("audio_analysis.py", "audio/master.wav", cwd=self.cwd, env=self.env)
+        self.assertIn("audio/master.wav is silent (peak -70 dBFS over 1.00 s)", r.stderr)
+        # a quiet but audible take passes the gate and stops at the next one, the tampered checkpoint
+        self.tone(-50)
+        self.stems()
+        ckpt = self.cwd / "models" / "beat_this-final0.ckpt"
+        ckpt.parent.mkdir()
+        ckpt.write_bytes(b"tampered")
+        r = run("audio_analysis.py", "audio/master.wav", cwd=self.cwd, env=self.env)
+        self.assertNotIn("is silent", r.stderr)
+        self.assertIn("Checksum mismatch for the beat_this checkpoint", r.stderr)
 
     def test_missing_stems_run_demucs_and_a_failed_download_leaves_no_checkpoint(self):
         # The proxy is a port held bound but never listening, so the download is refused at once and no other
@@ -228,9 +259,9 @@ class AudioAnalysisTest(Workdir):
                 env.pop(k, None)
             for k in ("https_proxy", "HTTPS_PROXY", "http_proxy", "HTTP_PROXY"):
                 env[k] = f"http://127.0.0.1:{s.getsockname()[1]}"
-            r = run("audio_analysis.py", "audio/master.mp3", cwd=self.cwd, env=env)
+            r = run("audio_analysis.py", "audio/master.wav", cwd=self.cwd, env=env)
         args = json.loads((self.cwd / "demucs_args.json").read_text(encoding="utf-8"))
-        self.assertEqual(args, ["--two-stems=vocals", "-n", "htdemucs", "-o", "stems", "audio/master.mp3"])
+        self.assertEqual(args, ["--two-stems=vocals", "-n", "htdemucs", "-o", "stems", "audio/master.wav"])
         self.assertTrue((self.cwd / "stems" / "htdemucs" / "master" / "vocals.wav").exists())
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("URLError", r.stderr)

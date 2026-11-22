@@ -302,7 +302,8 @@ every lyric readable.
 - `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?, canvas?, energy?, blur?}`. One
   file per section, with hard cuts at boundaries on downbeats. `energy` (`calm`, `mid`, `high`,
   `showcase`) sets the targets `tools/dynamism_check.py gate` holds the section to; the engine
-  ignores it.
+  ignores it. A layer under every scene (a backdrop plate) takes a lower `z` and `end: 9999`, like
+  the HUD, or the gate reads it as the only section.
 - **Per-canvas entries:** `canvas:'portrait'` (or a list of orientations) renders the entry only on
   that canvas, `--only` included; tags are case-insensitive, an unknown one stops the render with an
   error, and so does an `--only` that leaves nothing to render. Use it for a section that needs its
