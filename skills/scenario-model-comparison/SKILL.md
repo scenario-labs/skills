@@ -124,8 +124,8 @@ criteria.
 
 ## Common mistakes
 
-- Quoting `recommend`'s numbers as results: they are modeled. Bill from `jobs_wait`, time from
-  `job_get`.
+- Quoting `recommend`'s numbers as results: they are modeled. Cost from the `dry_run` quote, time
+  from `job_get`.
 - Different sizes or sample counts across candidates, or one candidate's prompt expansion left on:
   the comparison then measures the payload difference.
 - One sample per candidate on a brief whose output varies wildly: run two or three where the budget

@@ -94,9 +94,10 @@ contiguous nor ordered.
   inputs; report that error, not the payload.
 - Reading cost or attribution off the parent job: a finished workflow job bills `cuCost: 0` and
   lists `assetIds` with no per-model attribution. Every node ran as its own child job carrying the
-  real `cuCost` (together they equal the dry-run quote, except inside a `forEach` loop, whose dry
-  run prices one iteration), and `job_get` `verbose=true` on the workflow job returns
-  `metadata.flow` mapping each node to its child `jobId`, `modelId` and output asset ids.
+  real `cuCost` (together they equal the dry-run quote, less any quality-gate fee, except inside a
+  `forEach` loop, whose dry run prices one iteration), and `job_get` `verbose=true` on the workflow
+  job returns `metadata.flow` mapping each node to its child `jobId`, `modelId` and output asset
+  ids.
 - Sending a batch through a `file_array` input and expecting one output per item: whether the app
   loops is in its graph, not its inputs. Look for a `forEach` node ahead of the model in
   `editorInfo` (`for-each` in the compiled `flow`; the `workflows_list` record carries both, or

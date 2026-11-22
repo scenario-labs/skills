@@ -105,7 +105,7 @@ Generating a stylized game prop image:
    - A 429: stop launching and find its class under Errors and recovery.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up. `cuCost` omits any
-     quality-gate fee a project charges.
+     quality-gate fee a project charges: total spend from the quotes.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
      cancel. No timeout argument exists.
    - Failed jobs are reimbursed, except xAI generations stopped by moderation.
@@ -242,7 +242,7 @@ Uploading and filing alone are not publication.
     not override `no_match`.
   - `ask_user`: present the options; the user's pick wins (unattended: the task, else `proceed`).
   - `proceed`: prefer `specialty.model_id`, else the first `ranked` entry not marked deprecated in
-    its `caveats`, `tradeoff`, or `explanation`. The ranking measures performance, not lifecycle.
+    its `caveats`, `tradeoff`, or `explanation`.
 - Debugging blind: the `diagnose` MCP prompt returns trace ids, as does `diagnostics_run` with the
   failing call's scope pair and any `mcpt_` ids seen as `observed_trace_ids`.
 - Guessing a file field's name: 400 `Input image is required` (or `referenceImages`, `startImage`,
