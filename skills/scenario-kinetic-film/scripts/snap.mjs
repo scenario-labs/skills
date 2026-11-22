@@ -7,7 +7,8 @@ export const USAGE = "usage: node snap.mjs <outdir> <dsf> <t|bBeat> ...";
 // '12.5' is seconds, 'b12.5' is beats; NaN for anything else
 export const toSeconds = (raw, bpm) =>
   String(raw).startsWith("b") ? (+String(raw).slice(1) * 60) / bpm : +raw;
-export const stillName = (t) => `t_${t.toFixed(2).padStart(6, "0")}.png`;
+// milliseconds: at two decimals, stills one 60 fps frame apart shared a name and overwrote each other
+export const stillName = (t) => `t_${t.toFixed(3).padStart(7, "0")}.png`;
 
 async function main([OUT, DSF = "1", ...TS]) {
   if (!OUT || !TS.length) {

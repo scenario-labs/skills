@@ -18,6 +18,10 @@ export default {
 };
 ```
 
+- `hudOut: [start, end]` fades the HUD out between those two beats. Default: the film's last 4 beats
+  to its last 2 (`[beats - 4, beats - 2]`), so the HUD, the film's name included, stays over most of
+  a long end card: end the fade at the Logo's start for a card that shows the name alone.
+  `validate.js` stops on a pair outside the film or out of order.
 - Palette names (`'bg'`, `'paper'`, `'accent'`, `'hot'`, `'ink'`) work anywhere a color does. Any
   CSS color works outside the palette.
 - Palette values must be 6-digit hex (`#RRGGBB`) or `rgb()`, the two forms the engine parses without
@@ -60,22 +64,26 @@ Shot options:
   - `pair`: `[line1, line2]` from both sides.
   - `split`: `[small, big]`, the big word slams from the right `second` beats later.
   - `cut`: a hard-cut word, for runs of beat cuts.
-- **`ground`, `color`**: the background for the shot (a palette name); the type color (readable on
-  the ground by default).
+- **`ground`, `color`**: the background for the shot (a palette name; unset, the film's `bg`); the
+  type color (readable on the ground by default).
 - **`size`, `wdth`, `y`, `dy`, `rot`**: type size in px, width axis 62 to 125, vertical position,
-  offset, rotation (cut).
+  offset, rotation (cut). The examples' `cut` words run 320 to 640 px, at -7 to 6 degrees.
   - `cut` reads `size` (px, default 400), `wdth` (default 104), `dy` (px from the frame's vertical
     center, default 0) and `rot` (degrees, default 0). The word ignores `y`, but the `fx: 'punch'`
     sparks follow it (540 when unset): with `dy`, set `y` to `540 + dy` too.
   - A `cut` word wider than 1800 px shrinks to fit. A narrower one keeps its `size`.
+  - It slams in from 1.25x, then grows 24% and turns 6 degrees per second until the next shot: size
+    it for the end of its beat, which at 120 BPM is 12% wider than at rest.
 - **`in`**: `cut` (default), `whipX`, `whipXr`, `whipY`.
-- **`fx`**: `punch` (rays, ring, sparks, flash, shake), `hit` (flash and shake), `beat` (shake and
-  bump only, for runs of cuts), `none`.
+- **`fx`**: `punch` (rays, ring, sparks, flash, shake), `hit` (flash and shake, the default), `beat`
+  (shake and bump only, for runs of cuts), `none`.
 - **`cue`, `gain`, `big`**: the sound on the hit (default from `fx`), its gain, `big: true` for the
   heavier impact.
 - **`second`**: for stack, pair and split, beats until the second element.
 - **`scramble: [a, b]`, `glitch`, `inverts: [..]`**: a glyph scramble between beats a and b
-  (relative), an RGB glitch, invert flashes.
+  (relative; slam and split), an RGB glitch (split), invert flashes (slam).
+- **`rgb: true`** (`cut` only): a 2-frame invert flash one frame after the hit, then a red and cyan
+  split that shakes and settles in about 0.5 s. The examples end their cut runs on it.
 - **`flip: { at, ground, color }`**: change ground and color mid-shot (relative beat).
 - **`dot`, `glyphs`, `code`, `note`, `noteAt`**: accent the last character; a burst of code glyphs;
   the film's source as a backdrop (split); a mono line typed under the word.
@@ -200,34 +208,56 @@ window and lands on its first frame as the window fills the screen.
 
 - The image cuts in along a slash (or zooms in), then pushes and pans with a slight 3D tilt.
 - It punches in on every word and hard-cuts in to details: `cutIns: [[beat, scale, [fx, fy], cue]]`,
-  positions 0 to 1 of the image. A cut-in's cue plays at a fixed level: a hit that needs its own
-  level goes in `spec.cues` (`[beat, name, gain]`) instead, since `spec.sounds` raises every use.
+  positions 0 to 1 of the picture as the frame shows it (`background-size: cover`). For a 16:9
+  picture that matches the image; any other shape is cropped first, so read the point off a still.
+  - `scale` (1.6 to 1.65 in kaiju-postal) and `[fx, fy]` have no default: set both. The picture
+    zooms around that point, which keeps its place in the frame rather than moving to the center,
+    then grows 14% per second until the next cut-in or the block's end.
+  - `cue` defaults to `hit` and is always registered, at a fixed gain; it plays only when the kit
+    holds that sound or its fallback. `spec.sounds` levels a name for every use, so a cut-in that
+    needs its own level takes a sound name of its own, leveled there.
 - `words: [[beat, text, color]]` and `cutIns` count beats from the block's start, on its 8 nominal
   beats scaled to its span. In a block from 8 to 16, `[1, 'MONSTERS']` lands on beat 9.
 - A weather layer rides over it: `rain`, `snow`, `dust` (the default), or `null`. Only `rain` keeps
   the picture moving between words. Under the others, put a word or a cut-in on every beat: two
   words and one cut-in over 8 beats held 0.88 s under `snow` or `dust` and failed `finish.py`.
-- `tint` darkens it for type.
+- `tint` (0 to 1, default 0.35) darkens it for type: a `bg` shade at 0.1 opacity at the top, `tint`
+  at 70% of the height and `tint` + 0.25 at the bottom. From 0.75, the bottom edge is solid `bg`.
+- `focus: [x, y]` (0 to 1, default the center): the part of the image the crop keeps, and where the
+  push drifts. `frame: false` drops the accent frame that grows around the picture by default.
 - `x`/`y` place the words' center in px on the 1920x1080 frame (defaults 960 and 600; 0 counts as
   unset). Set them off center when a face is in the middle.
 - Keep `x` more than 60 px inside either side: at 60 px the fit width below reaches 0 and the words
   vanish, and closer they render mirrored. Nothing checks it.
 - Words are `size` px (default 260). They shrink to fit 1600 px, or with `x` set, twice the distance
   from `x` to the nearer side minus 120 px.
-- The block's camera pushes in to 1.1x around the frame's center by its end, carrying off-center
-  words outward. Leave about 10% more room than the fit width, and check a still at the last word.
+- The block's camera pushes in to 1.1x around the frame's center, pans from -25 to 25 px and rolls
+  from -1 to 1 degree by its end, carrying off-center words outward. A word that fills the fit width
+  ends 60 px from the frame's edge before any of that: lower `size` until the word stays inside the
+  frame in stills at its slam and just before the next word replaces it (the block's last frame for
+  the last word). A word shows only until the next one starts, so the last frame shows only the
+  last.
+- Each word also slams in from 1.4x over 0.16 s, then grows 5% per second until the next. A word
+  that must stay inside a third of the frame (640 px) can be about 450 px wide at rest: four
+  capitals ran near 130 px, three near 180 px.
 - Use images at least 2048 px wide. Cut-ins above 1.7x look soft at 4K.
 
 ## Logo (N = 11)
 
 `{ mark: ['id', ...], word: ['id', ...], tagline: 'Signed. Sealed. Stomped.', small: 'AVAILABLE NOW', wordmark: 'NAME', width: 840 }`.
 
-- Beat 1 of the block: a line, a slash and a hit.
+- `tagline` and `small` are optional (unset, their line stays empty), `wordmark` defaults to the
+  film's `title`, and `width` (px, default 840) sizes an SVG logo; a typed wordmark is 150 px.
+- Beat 1 of the block: a line, a slash and a hit. Its timing scales with the span, so give the block
+  its 11 beats: over 12, the hit lands on beat 1.09 after a dark 0.55 s at 120 BPM.
 - The SVG's `mark` paths drop in one by one, then its `word` paths wipe on. Without ids the whole
   logo wipes on; without a logo file `wordmark` is typed.
 - The tagline and small line follow, then a slow push, drifting particles and a light sweep until
   the end.
-- The music should stop dead on beat 1 of this block: `music.stopBeat` is the block's start + 1.
+- When the kit can play the logo hit (`logo_hit`, or its `impact_big` or `impact` fallback), the
+  music stops dead under it: `music.stopBeat` is the block's start + 1, the hit's beat when the
+  block spans its 11 beats (`validate.js` warns on another value). Otherwise leave it unset, as a
+  music-only film does (sound.md).
 - finish.py's motion gates stop at this block's start, or 4.5 s before the end when that is earlier.
 - The logo file is inlined, so main.js rebuilds it from SVG drawing elements first. Scripts,
   embedded HTML, event handlers and references to other hosts are dropped; `#id` and same-folder

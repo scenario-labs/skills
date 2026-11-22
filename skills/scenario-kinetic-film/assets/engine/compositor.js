@@ -17,7 +17,8 @@ export class Film {
     this.fx = new FX(this.stage, dsf, 'fxc');
     this.sfx = new FX(this.stage, dsf, 'sfxc');
     this.flashEl = el('div', this.stage, 'flash');
-    this.invEl = el('div', this.stage, 'inv');
+    // hidden inline, never by the stylesheet: vis() shows an element by clearing its inline display
+    this.invEl = el('div', this.stage, 'inv'); vis(this.invEl, false);
     el('div', this.stage, 'vig');
     this.overlay = el('div', this.stage, 'overlay');
     for (const k of ['comets', 'bursts', 'slashes', 'dots', 'flashes', 'lights', 'fasts', 'cues', 'hardCuts', 'rays', 'rings', 'bokehs', 'stars',
