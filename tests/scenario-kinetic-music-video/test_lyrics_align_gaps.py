@@ -135,6 +135,16 @@ class AlignTest(unittest.TestCase):
                              vocal=self.envelope((2.0, 2.5, 0.9)))
         self.assertEqual([(w["w"], w["s"]) for w in line["words"]], [("burning", 1.0), ("bright", 2.0)])
 
+    def test_an_onset_at_the_words_end_never_takes_its_start(self):
+        # the rise at 1.95 s moves the start there, and the 80 ms snap would then take it to the onset at 2.0 s,
+        # the word's own end, exporting a word of zero length
+        words = [word("burning", 1.0, 2.0), word("bright", 2.0, 2.5)]
+        (line,) = self.align("# section: verse\nburning bright\n", words, [2.0],
+                             vocal=self.envelope((1.95, 2.5, 0.9)))
+        burning, bright = line["words"]
+        self.assertEqual((burning["s"], bright["s"]), (1.95, 2.0))
+        self.assertGreater(burning["e"], burning["s"])
+
     def test_a_word_that_starts_softly_and_swells_keeps_its_start(self):
         words = [word("hold", 1.0, 2.0)]
         (line,) = self.align("# section: verse\nhold\n", words, [],

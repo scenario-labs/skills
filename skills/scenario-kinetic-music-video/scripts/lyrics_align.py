@@ -128,7 +128,7 @@ def align(path, chant=None, no_fix=()):
         if len(venv): s = voiced_start(venv, vfps, s, e)
         if len(vo):
             j = np.argmin(abs(vo - s))
-            if abs(vo[j] - s) < 0.08: s = float(vo[j])
+            if abs(vo[j] - s) < 0.08 and vo[j] < e: s = float(vo[j])  # an onset at the end is the next word's
         lines[li].setdefault('_w', []).append({'w': lines[li]['words'][wi], 's': round(s, 3), 'e': round(max(e, s + 0.06), 3)})
     unmatched = {(li, wi) for i, (li, wi, _) in enumerate(C) if i not in matched}
     out, guessed = [], []
