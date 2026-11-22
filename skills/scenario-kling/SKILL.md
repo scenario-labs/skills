@@ -29,10 +29,10 @@ the gap.
   take the first hit unread.
 - Exclude them with the raw `filter` string, `filter='NOT tags = "Deprecated"'`; structured
   `filters` only include.
-- A request or saved payload names a deprecated id: run the successor, rebuilding the payload from
-  its schema. Tell the user the swap; unattended, swap and report it.
+- A request or saved payload names a deprecated id: propose the successor with the payload rebuilt
+  from its schema, and run it only once the user agrees. Unattended, stop and report the proposal.
 - The successor covers the lane, not every field: a V3 I2V payload with `elements` belongs on V4
-  R2V, since V4 I2V takes none.
+  R2V, since V4 I2V takes none. R2V takes no `endImage`, so the proposal names any field it drops.
 
 ## Quick reference
 
@@ -54,8 +54,8 @@ V4 contract (live schemas, caps at authoring time):
 
 - T2V, I2V, and R2V take `prompt` or `multiPrompt`; a set `multiPrompt` replaces the prompt. It is
   an array of `{prompt, duration}` shots (512 characters each), and the clip lasts their sum.
-- `duration` is a number, 3 to 30 (1 to 30 per shot). Video Edit alone takes a string, `""` by
-  default to match the source.
+- `duration` is a number, 3 to 30 (1 to 30 per shot; Flash 3 to 20). Video Edit alone takes a
+  string, `""` by default to match the source.
 - `resolution` is `720p` or `1080p` (default); Flash has none and outputs 720p. I2V follows the
   start image's aspect ratio and takes no `aspectRatio`.
 - R2V caps: `images` 10 (a `startImage` counts, with no stated tag number), `elements` 7,
@@ -127,8 +127,8 @@ V3 Pro and Std Motion Control require a character `image` and a driving `video`.
 
 ## Common mistakes
 
-- Porting a V3 or 2.x payload to V4: string durations, `generateAudio`, `cfgScale`,
-  `negativePrompt`, and `shotType` do not exist there. Rebuild from its schema.
+- Porting a V3 or 2.x payload to V4: `generateAudio`, `cfgScale`, `negativePrompt`, and `shotType`
+  do not exist there, and durations are numbers outside Video Edit. Rebuild from its schema.
 - Carrying one member's caps to another: 30 seconds, 4K, `elements`, and tag syntax each change
   between members.
 - Compound camera moves ("dolly in while orbiting"): one dominant move per shot; split the rest
