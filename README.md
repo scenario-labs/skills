@@ -330,7 +330,7 @@ explorable worlds and splats.
 
 | Skill                                                    | Use it for                                                                                                                                                                              |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [scenario-meshy](skills/scenario-meshy/SKILL.md)         | Meshy 3D: generate from image, multi-view, or text, then retexture, remesh, UV unwrap, rig, or animate; texture precedence, Ultra mode, polycount traps                                 |
+| [scenario-meshy](skills/scenario-meshy/SKILL.md)         | Meshy 3D: generate from image, multi-view, or text, then retexture, remesh, UV unwrap, rig, or animate bipeds and quadrupeds; texture precedence, polycount traps                       |
 | [scenario-rodin](skills/scenario-rodin/SKILL.md)         | Rodin 3D: member selection (image-to-3D, text-to-3D, Fast lanes, Bang! mesh splitting), full versus Fast parameter dialects, topology and tier traps, cost                              |
 | [scenario-sparc3d](skills/scenario-sparc3d/SKILL.md)     | Sparc3D image-to-3D: ordered multi-view input, mesh vs textured output, per-member resolution spellings, face budgets, long-job waits                                                   |
 | [scenario-3d-worlds](skills/scenario-3d-worlds/SKILL.md) | 3D worlds and splats: member choice by input (text, image, pano, multi-view, video, object), Marble draft-then-upgrade seed reuse, HY World skybox-to-splat pipeline, long-job patience |

@@ -242,5 +242,4 @@ place an `outputFormat` enum picks the engine target.
   Re-discover each session: `recommend` for a need, `search` for a name.
 - Promising a named skeleton, an influence count, or bones for wings and extra limbs the chosen
   member does not document: pick the closest body plan, then finish in a DCC.
-- Sending a biped to a `rigType` model: the enum has no biped value; humanoids have their own
-  riggers.
+- Sending a biped to a `rigType` model whose enum lacks `biped`: humanoids need their own rigger.
