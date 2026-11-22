@@ -39,7 +39,7 @@ Members and their traps (names from the live schema, caps at authoring time):
 | Retexture             | `model` + one style input         | geometry untouched; keep inputs near 30K polys; `enableOriginalUv` |
 | Remesh                | `model`                           | `targetPolycount` 100 to 300,000, `resizeHeight`, `originAt`       |
 | UV Unwrap             | `model`                           | rejects meshes above 44,000 faces; Remesh down first               |
-| Rigging               | `model`, `rigType`                | `biped` by default; `quadruped` rigs add walk and run clips        |
+| Rigging               | `model`, `rigType`                | `biped` by default; `quadruped` rigs should add walk and run clips |
 | Animation             | `model`, `rigType`, `actionId`    | the action's rig type must match `rigType`; auto-rigs first        |
 
 One silent rule runs through every texture control: an image beats text. On the generators
@@ -73,9 +73,9 @@ Animation auto-rigs internally, then applies the clip named by `actionId`, a num
 animation library (ids listed at docs.meshy.ai/en/api/animation-library). The action's rig type must
 match `rigType`; quadruped actions were ids 1055 and up at authoring time.
 
-- Run Rigging alone for a rigged GLB to drive with your own clips. A quadruped rig already carries
-  walk and run clips: an animal that only walks or runs needs no `actionId` and no Animation job.
-  The clips may arrive as separate assets: `asset_get` every id the job returned
+- Run Rigging alone for a rigged GLB to drive with your own clips. The schema says a quadruped rig
+  comes with walk and run clips, so an animal that only walks or runs may need no Animation job. The
+  clips may arrive as separate assets: `asset_get` every id the job returned
   (`properties.hasAnimations`, `animationFrameCount`). Report a clip you cannot confirm as
   unverified; Animation on the unrigged mesh is a new billed job, run only within the task's budget.
 - Go straight to Animation for one library clip, optionally setting `postProcessOperation` to
