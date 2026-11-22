@@ -79,8 +79,9 @@ sees when running one anyway is a restriction, not moderation (see `scenario-mod
 
 In allowlist mode a team-level add or removal also applies to every project's allowlist
 (`projects_updated`), so a team add opens the models in every project: say so before the call.
-Narrow a project afterwards with a `level: "project"` removal only when the user asks; unattended,
-only for projects the task names.
+Unattended, make it only when the task allows a team-wide change; otherwise stop and report the add
+it needs. Narrow a project afterwards with a `level: "project"` removal only when the user asks;
+unattended, only for projects the task names.
 
 ## Members and spend caps
 
@@ -174,9 +175,10 @@ over the billing period, and a cap below what a member has already spent stops t
    from the team list: `scenario_tool_execute_write` with `name: "model_access_update"`,
    `parameters: {"team_id", "project_id", "level": "team", "add_models": [<missing ids>]}`; this is
    the call that needs the caller to be a team admin over OAuth (`context.userRole` on the
-   `teams_list` row says whether they are). It lands them in every project too: tell the user, and
-   leave the other projects alone unless asked. Then `level: "project"`, `projects: [<project id>]`:
-   add any of the three still missing, then remove every other id on `project.models`.
+   `teams_list` row says whether they are). It lands them in every project too: tell the user first
+   (unattended, stop and report unless the task allows a team-wide change), and leave the other
+   projects alone unless asked. Then `level: "project"`, `projects: [<project id>]`: add any of the
+   three still missing, then remove every other id on `project.models`.
 4. `scenario_tool_execute_read` with `name: "team_members_list"`: the two contractors' member ids.
    `scenario_tool_execute_write` with `name: "team_members_update"`,
    `parameters: {"team_id", "project_id", "member_ids": [<two ids>], "max_consumption": 2000}`. On
