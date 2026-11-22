@@ -1,6 +1,6 @@
 ---
 name: scenario-seedream
-description: "Use when generating or editing images with Seedream models on Scenario via MCP: text-to-image, image-to-image editing with reference images, posters or packaging with exact in-image text (non-Latin scripts too), subject-preserving edits, sets of related images in one run, editing a transparent asset without losing its alpha, or splitting an image into transparent PNG layers with Layerize. Keywords: Seedream 5.0 Pro, Lite, Flash, 4.5, Layerize, ByteDance, txt2img, img2img, layer extraction."
+description: "Use when generating or editing images with Seedream models on Scenario via MCP: text-to-image, reference-image editing, posters or packaging with exact in-image text, transparent PNG output, keeping a cutout's alpha through an edit, sets of related images in one run, splitting an image into transparent PNG layers with Layerize, or replacing a retired Seedream version. Keywords: Seedream 5.5, 5.0 Pro, Lite, Flash, 4.5, 4.0, Layerize, ByteDance, txt2img, img2img, layer extraction."
 license: MIT
 ---
 
@@ -8,10 +8,9 @@ license: MIT
 
 ## Overview
 
-Seedream, ByteDance's image family on Scenario, spans generation, reference-driven editing, and one
-member that only takes images apart: Layerize splits a finished image into editable layers. The
-members agree on little else, so discover them with `search` and read `model_schema_get` before
-every run.
+Seedream, ByteDance's image family on Scenario, spans generation, reference-driven editing, and
+Layerize members that only take images apart. The members agree on little else, so discover them
+with `search` and read `model_schema_get` before every run.
 
 Connection and the core loop: see the `scenario` skill; model-agnostic image work: the
 `scenario-image` skill. If a sibling skill named here is missing from your available skills, load it
@@ -19,96 +18,147 @@ with `skill_get` (Scenario MCP) or ask the user to install it
 (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
 the gap.
 
+## Route to a current member
+
+Seedream retires whole generations. Read each `search` hit's `tags` before routing:
+
+- `Deprecated` marks a retired member: never route new work to it, even when `recommend` still ranks
+  it or the user names it.
+- `deprecated:<model id>` names the successor: switch to that id and read its schema, since fields
+  differ. A job the successor does not document follows its lane below instead.
+- A bare `Deprecated` names none: pick the current member by lane below.
+- `sc:featured` marks the current flagship.
+
+At authoring time, 5.5 replaced 5.0 Flash, 5.5 Layerize replaced 5.0 Flash Layerize, and 4.0 and
+Dreamina 3.1 point to 5.0 Pro. 4.5 carries a bare tag: its edits go to 5.5, its sequence sets to
+Lite. An alpha-keeping edit from 4.5 or 5.0 Flash goes to Pro, but only when the cutout is the sole
+reference (see Transparent output). Tell the user which member runs instead of the one they named.
+Unattended, run it only inside the task's budget or count, and report the swap; otherwise report the
+price and stop.
+
 ## Quick reference
 
 At authoring time (fields and caps are per member, read the live schema):
 
-| Member             | References                  | Sizing                                              | Notes                                                       |
-| ------------------ | --------------------------- | --------------------------------------------------- | ----------------------------------------------------------- |
-| 5.0 Pro            | `referenceImages`, up to 10 | exact `width` and `height`, 672 to 3136 px, step 16 | exact in-image text; 3500-char prompt                       |
-| 5.0 Lite           | `referenceImages`, up to 14 | `width` and `height`, up to 4K                      | fast and cheap; 2048-char prompt                            |
-| 5.0 Flash          | `referenceImages`, up to 10 | exact `width` and `height`, 672 to 3136 px, step 16 | cheapest; `background` keeps a reference's alpha            |
-| 4.5                | `referenceImages`           | `size` (2K, 4K) plus `aspectRatio` enum             | subject-preserving edits; `"auto"` ratio follows the source |
-| 5.0 Pro Layerize   | one `image`, required       | `size` tier: auto, 1K, 1.5K, 2K                     | splits, never generates; prompt optional                    |
-| 5.0 Flash Layerize | one `image`, required       | `size` tier: auto, 1K, 1.5K, 2K                     | same contract minus `optimizePromptMode`                    |
+| Member           | References                  | Sizing                                         | Notes                                                  |
+| ---------------- | --------------------------- | ---------------------------------------------- | ------------------------------------------------------ |
+| 5.5              | `referenceImages`, up to 10 | exact `width` and `height`, 672 to 4368, by 16 | default; `background`: auto, opaque, transparent       |
+| 5.0 Pro          | `referenceImages`, up to 10 | exact `width` and `height`, 672 to 3136, by 16 | `optimizePromptMode`; `background` keeps alpha         |
+| 5.0 Lite         | `referenceImages`, up to 14 | `width` and `height`, 1024 to 6240, by 16      | the only sequence member; 2048-char prompt             |
+| 5.5 Layerize     | one `image`, required       | `size` tier: auto, 1K, 1.5K, 2K                | `maxImages` 3 to 100, billed in full; text recognition |
+| 5.0 Pro Layerize | one `image`, required       | `size` tier: auto, 1K, 1.5K, 2K                | up to 16 cutouts; `optimizePromptMode`                 |
 
-On the generators, mode follows from the inputs: empty `referenceImages` is text-to-image, one or
-more is an edit or a multi-reference generation (with several, the prompt gives each reference a
-role by position), and the array shape holds even for one asset. Sequence mode
-(`sequentialImageGeneration: "auto"` plus `maxImages`) lets Lite and 4.5 return a related set in one
-run, input plus generated capped at 15 images; Pro has no sequence fields. Price per image differs
-widely: a 2048 px square quoted 4 CU on Flash, 6 on Lite, and 18 on Pro at authoring time, and Pro
-took about two minutes against under one, so iterate on the cheap members and spend Pro on finals;
-`dry_run` both before a batch (the estimate prices the run exactly as submitted, a whole sequence
-included). Pro and Pro Layerize carry `optimizePromptMode`: the default `standard` reasons about the
-prompt first and is slower; `fast` costs the same and is usually enough when a reference already
-sets the composition (on Layerize it trades some split fidelity for speed). Flash's schema says
-`width` and `height` apply only when Resolution is Custom, but Flash has no Resolution field: the
-pixels apply directly.
+- **5.5**: the default for generation and edits, 3500-char prompt. `recommend` modeled a 2K square
+  at about 6 CU and 30 s, against 9 CU and 86 s on 5.0 Pro, at authoring time.
+- **5.5 pixels**: the schema caps the total near 8.3 MP, but the catalog card says about 4.2 MP
+  (2048x2048, 2560x1440). Treat 4.2 MP as the ceiling until a run confirms more.
+- **5.0 Pro**: when the user asks for it, or to keep one cutout's alpha through an edit.
+  `optimizePromptMode` `standard` (default) reasons about the prompt first and is slower; `fast`
+  costs the same and is usually enough when a reference sets the composition.
+- **5.0 Lite**: past 10 references, or a related set in one run: `sequentialImageGeneration: "auto"`
+  plus `maxImages`, input plus generated capped at 15. The set may come back short of `maxImages`.
+- **Size fields**: the 5.5, Pro, and Lite schemas say `width` and `height` apply only under a Custom
+  resolution or size, yet none exposes that field. Send the pixels and check the delivered size on
+  the first output.
 
-## Keeping a transparent asset transparent
+On the generators, mode follows from the inputs. Empty `referenceImages` is text-to-image; one or
+more is an edit or a multi-reference generation, where the prompt gives each reference a role by
+position. The array shape holds even for one asset. `dry_run` before every batch: the estimate
+prices the run exactly as submitted, a whole sequence included.
 
-Flash's `background: "transparent"` preserves alpha through an edit; it does not cut a subject out.
-It keeps the transparent surround, not translucency inside the subject: glass at alpha 170 came back
-near-opaque in one authoring-time test, so composite a translucent part in post. The field defaults
-to `opaque`, so a restyle that omits it flattens a valid cutout: set it on every run that must stay
-transparent. It applies only with exactly one reference image that already carries an alpha channel,
-and is ignored otherwise: a text-only run, a flattened JPEG reference, or two references all come
-back opaque without an error. So restyle or recolor an existing cutout (a sprite, an icon, a prop)
-on Flash with the PNG as the one reference, and check the result's alpha on the downloaded file
-before shipping it, since `asset_display` composites transparency away: with Pillow
-(`uv run --with pillow` when it is missing), `Image.open(path).getchannel("A").getextrema()` should
-start at 0 (fully transparent pixels exist), and an image with no `A` channel was flattened. To get
-a cutout in the first place, generate on a plain field and run background removal (the
-`scenario-image-editing` skill), or split the image with Layerize.
+## Transparent output
+
+Two contracts, read from the schemas:
+
+- **5.5**: `background: "transparent"` asks for a transparent PNG from the prompt; a text-only run
+  returned a real alpha channel at authoring time. The default `auto` lets the prompt decide, so set
+  it on every run that must come back transparent, or opaque. Whether it keeps a reference's alpha
+  was not tested.
+- **5.0 Pro**: `background: "transparent"` keeps an existing cutout transparent through an edit; it
+  does not cut a subject out. It applies only with exactly one reference that already carries an
+  alpha channel, and is ignored otherwise. It defaults to `opaque`, so a restyle that omits it
+  flattens the cutout. Not run-tested at authoring time. With more references, run 5.5 with
+  `background: "transparent"` instead, and check the result.
+
+Check the alpha on the downloaded file, since `asset_display` composites transparency away. With
+Pillow (`uv run --with pillow` when it is missing), `Image.open(path).getchannel("A").getextrema()`
+should start at 0 (fully transparent pixels exist), and an image with no `A` channel was flattened.
+That check proves only a transparent surround: a translucent part (glass, a soft shadow) can come
+back opaque and still pass, so on an edit compare that region's alpha with the source's. When the
+alpha is missing, generate on a plain field and run background removal (the `scenario-image-editing`
+skill), or split the image with Layerize.
 
 ## Write the exact copy into the prompt
 
-Pro renders legible in-image text, multi-line layouts and non-Latin scripts included. Quote the
-exact strings in the prompt instead of paraphrasing them, give each a position and a size rank
-(headline across the top, date line small at the foot), and keep to a few elements at one or two
-sizes: letters are drawn, not typeset, so paragraphs and many small labels turn to shapes, and copy
-past that budget (tour dates, credits) is composited in post from the start. Proofread with
-`asset_display`; a word that garbles is spelled out letter by letter after the quoted string on the
-rerun, and one that still garbles goes to post. To swap copy on a reference, quote the new string,
-pin its position, and require the original typeface, size and color with everything else unchanged.
+5.5 and Pro render legible in-image text; Pro's catalog card also names non-Latin scripts. Lite's
+card claims no text rendering, so proofread every image of a Lite set. Quote the exact strings in
+the prompt instead of paraphrasing them, and give each a position and a size rank (headline across
+the top, date line small at the foot). Keep to a few elements at one or two sizes: letters are
+drawn, not typeset, so paragraphs and many small labels turn to shapes. Copy past that budget (tour
+dates, credits) is composited in post from the start. Proofread with `asset_display`; a word that
+garbles is spelled out letter by letter after the quoted string on the rerun, and one that still
+garbles goes to post. To swap copy on a reference, quote the new string, pin its position, and
+require the original typeface, size and color with everything else unchanged.
 
 ## Layerize: one image in, an editable stack out
 
-Layerize returns a base layer plus up to 16 transparent PNG cutouts, rebuilding the background
-behind whatever it lifts. The prompt picks the mode: empty runs a full automatic split; an
-enumerated list of parts ("Separate this poster into transparent layers: headline, product, shadow,
-background") cuts better than "all layers"; `<bbox>x1 y1 x2 y2</bbox>` on a 0 to 1000 grid, origin
-top left, confines the split to one region. Set `size` explicitly, since auto inherits the source's
-tier and the tier moves the price; cost is otherwise flat per run, not per layer. Layers come back
-cropped to their own bounds with bbox and z-index metadata, not aligned to the source canvas, and
-there is no PSD export.
+Layerize returns a base layer plus transparent PNG cutouts, rebuilding the background behind
+whatever it lifts.
+
+- **5.5 Layerize**: `maxImages` (3 to 100, base included, default 10) caps the split. Higher usually
+  splits finer, and the run is billed for `maxImages` even when fewer come back.
+- **Layerize price**: at 1K, `maxImages` 4 priced 19.75 CU and 10 priced 43.75 CU at authoring time,
+  often several times the source image. Budget the split before spending on its source.
+- **Text recognition**: `textRecognition: true` on 5.5 Layerize also returns the text, font, and
+  style of printed-text layers. It works best with no prompt and a high `maxImages`, and never reads
+  artistic or handwritten text. At `maxImages` 4, a one-line sign stayed baked into its graphic and
+  no text came back.
+- **5.0 Pro Layerize**: up to 16 cutouts; `optimizePromptMode` `fast` trades some split fidelity for
+  speed.
+
+The prompt picks the mode: empty runs a full automatic split, and an enumerated list of parts
+("Separate this poster into transparent layers: headline, product, shadow, background") cuts better
+than "all layers". On the 5.0 members, `<bbox>x1 y1 x2 y2</bbox>` (0 to 1000 grid, origin top left)
+confined the split to one region; 5.5's card names only full and named-part splits. Set `size`
+explicitly, since auto inherits the source's tier and the tier moves the price. There is no PSD
+export. On the 5.0 members, layers came back cropped to their own bounds, with bbox and z-index
+metadata. On 5.5, at authoring time:
+
+- a layer came back full-frame or cropped and rescaled (1312x799 for an 800x487 box), so place each
+  by its bounding box;
+- the base came back opaque, a rebuilt background, even from a transparent source;
+- `job_get` with `verbose: true` holds each layer's `name`, `bounding_box` (`absolute` in source
+  pixels, `normalized` on a 0 to 1000 grid), `z_index`, and `text_recognition` under
+  `metadata.output.layers`; `asset_get` on a layer holds none of them.
 
 ## Worked example: a poster, then its layers
 
-1. `search` with `target="models"`, `query="seedream"`, `public=true`. Prefer the newest
-   non-deprecated hit for the job, e.g. `model_bytedance-seedream-5-0-pro` (a live hit at authoring
-   time: re-discover each session).
+1. `search` with `target="models"`, `query="seedream"`, `public=true`. Skip hits tagged `Deprecated`
+   and prefer the `sc:featured` generator, e.g. `model_bytedance-seedream-5-5` (a live hit at
+   authoring time: re-discover each session).
 2. `model_schema_get` with that id: sizing fields, caps, defaults.
 3. `model_run` with that id, `dry_run=true`, and
-   `parameters={"prompt": "Concert poster, teal and cream, screen-print grain. Headline \"MIDNIGHT ORBIT\" across the top, date line \"Nov 14, Union Hall\" small at the foot.", "width": 1600, "height": 2368}`;
-   both sizing fields move price.
-4. Rerun `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with
-   `pending_job_ids` on timeout, never a second `model_run`.
+   `parameters={"prompt": "Concert poster, teal and cream, screen-print grain. Headline \"MIDNIGHT ORBIT\" across the top, date line \"Nov 14, Union Hall\" small at the foot.", "width": 1600, "height": 2368, "background": "opaque"}`;
+   both sizing fields move price. Unattended, continue only inside the task's budget; otherwise
+   report the price and stop.
+4. Rerun `model_run` without `dry_run` and with `wait=false`, then `jobs_wait` with the returned job
+   id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 5. `asset_display` and proofread the rendered text.
-6. `model_schema_get` on the Layerize hit, then `model_run` with that id and
-   `parameters={"image": "<poster asset id>", "prompt": "Separate this poster into transparent layers: the headline text, the date line, and the background. Clean edges, complete transparency.", "size": "2K"}`.
+6. `model_schema_get` on the 5.5 Layerize hit, then `model_run` with that id, `dry_run=true`, and
+   `parameters={"image": "<poster asset id>", "prompt": "Separate this poster into transparent layers: the headline text, the date line, and the background. Clean edges, complete transparency.", "size": "2K", "maxImages": 4}`.
+   Rerun without `dry_run` under the same budget rule.
 7. `jobs_wait`, then `asset_display` each layer and `asset_download` the keepers.
 
 ## Common mistakes
 
-- Reusing one member's parameter block on another: pixels on Pro and Lite, tier enums on 4.5 and
-  Layerize; pixels sent to an enum field are rejected.
+- Running a member tagged `Deprecated` because `recommend`, an old note, or the user named it:
+  follow its `deprecated:` successor, or the lanes above.
+- Reusing one member's parameter block on another: 5.5's 4368 px side is past Pro's 3136 cap, and
+  Layerize takes tier enums, not pixels.
 - Passing `referenceImages` to Layerize or `image` to the generators: the input field's name and
   shape differ per member.
-- Expecting Layerize layers to overlay the source directly: each is cropped to its own bounds, so
-  reposition with the returned metadata.
-- Asking Pro for a sequence: the sequence fields existed on Lite and 4.5 only.
-- Moving a 3000-character prompt from Pro to Lite: prompt caps are per member.
-- Setting Flash's `background` to `transparent` on a text-only run or a flattened reference: it is
-  silently ignored, and the image comes back opaque.
+- Expecting Layerize layers to overlay the source directly: reposition with the returned metadata.
+- Asking 5.5 or Pro for a sequence: only Lite has the sequence fields.
+- Moving a 3000-character prompt from 5.5 or Pro to Lite: prompt caps are per member.
+- Setting Pro's `background` to `transparent` on a text-only run or a flattened reference: it is
+  ignored, and the image comes back opaque.
