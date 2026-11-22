@@ -68,16 +68,17 @@ prices the run exactly as submitted, a whole sequence included.
 
 ## Transparent output
 
-Two contracts, read from the schemas and not run-tested at authoring time:
+Two contracts, read from the schemas:
 
-- **5.5**: `background: "transparent"` asks for a transparent PNG from the prompt. The default
-  `auto` lets the prompt decide, so set it on every run that must come back transparent, or opaque.
-  Whether it keeps a reference's alpha was not tested.
+- **5.5**: `background: "transparent"` asks for a transparent PNG from the prompt; a text-only run
+  returned a real alpha channel at authoring time. The default `auto` lets the prompt decide, so set
+  it on every run that must come back transparent, or opaque. Whether it keeps a reference's alpha
+  was not tested.
 - **5.0 Pro**: `background: "transparent"` keeps an existing cutout transparent through an edit; it
   does not cut a subject out. It applies only with exactly one reference that already carries an
   alpha channel, and is ignored otherwise. It defaults to `opaque`, so a restyle that omits it
-  flattens the cutout. With more references, run 5.5 with `background: "transparent"` instead, and
-  check the result.
+  flattens the cutout. Not run-tested at authoring time. With more references, run 5.5 with
+  `background: "transparent"` instead, and check the result.
 
 Check the alpha on the downloaded file, since `asset_display` composites transparency away. With
 Pillow (`uv run --with pillow` when it is missing), `Image.open(path).getchannel("A").getextrema()`
@@ -104,9 +105,12 @@ whatever it lifts.
 
 - **5.5 Layerize**: `maxImages` (3 to 100, base included, default 10) caps the split. Higher usually
   splits finer, and the run is billed for `maxImages` even when fewer come back.
+- **Layerize price**: at 1K, `maxImages` 4 priced 19.75 CU and 10 priced 43.75 CU at authoring time,
+  often several times the source image. Budget the split before spending on its source.
 - **Text recognition**: `textRecognition: true` on 5.5 Layerize also returns the text, font, and
   style of printed-text layers. It works best with no prompt and a high `maxImages`, and never reads
-  artistic or handwritten text.
+  artistic or handwritten text. At `maxImages` 4, a one-line sign stayed baked into its graphic and
+  no text came back.
 - **5.0 Pro Layerize**: up to 16 cutouts; `optimizePromptMode` `fast` trades some split fidelity for
   speed.
 
@@ -114,9 +118,15 @@ The prompt picks the mode: empty runs a full automatic split, and an enumerated 
 ("Separate this poster into transparent layers: headline, product, shadow, background") cuts better
 than "all layers". On the 5.0 members, `<bbox>x1 y1 x2 y2</bbox>` (0 to 1000 grid, origin top left)
 confined the split to one region; 5.5's card names only full and named-part splits. Set `size`
-explicitly, since auto inherits the source's tier and the tier moves the price. On the 5.0 members,
-layers came back cropped to their own bounds with bbox and z-index metadata, with no PSD export:
-read 5.5's output metadata before compositing.
+explicitly, since auto inherits the source's tier and the tier moves the price. There is no PSD
+export. On the 5.0 members, layers came back cropped to their own bounds, with bbox and z-index
+metadata. On 5.5, at authoring time:
+
+- a layer came back full-frame or cropped and rescaled (1312x799 for an 800x487 box), so place each
+  by its bounding box;
+- the base came back opaque, a rebuilt background, even from a transparent source;
+- `job_get` with `verbose: true` holds each layer's `name`, `bounding_box`, `z_index`, and
+  `text_recognition` under `metadata.output.layers`; `asset_get` on a layer holds none of them.
 
 ## Worked example: a poster, then its layers
 
