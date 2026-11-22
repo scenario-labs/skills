@@ -30,9 +30,9 @@ Seedream retires whole generations. Read each `search` hit's `tags` before routi
 - `sc:featured` marks the current flagship.
 
 At authoring time, 5.5 replaced 5.0 Flash, 5.5 Layerize replaced 5.0 Flash Layerize, and 4.0 and
-Dreamina 3.1 point to 5.0 Pro. 4.5 carries a bare tag: its edits go to 5.5, its sequence sets to
-Lite. Tell the user which member runs instead of the one they named; unattended, run it and report
-the swap.
+Dreamina 3.1 point to 5.0 Pro. 4.5 carries a bare tag: its edits go to 5.5 (Pro when a cutout must
+keep its alpha), its sequence sets to Lite. Tell the user which member runs instead of the one they
+named; unattended, run it and report the swap.
 
 ## Quick reference
 
@@ -54,7 +54,7 @@ At authoring time (fields and caps are per member, read the live schema):
   `optimizePromptMode` `standard` (default) reasons about the prompt first and is slower; `fast`
   costs the same and is usually enough when a reference sets the composition.
 - **5.0 Lite**: past 10 references, or a related set in one run: `sequentialImageGeneration: "auto"`
-  plus `maxImages`, input plus generated capped at 15.
+  plus `maxImages`, input plus generated capped at 15. The set may come back short of `maxImages`.
 - **Size fields**: the 5.5, Pro, and Lite schemas say `width` and `height` apply only under a Custom
   resolution or size, yet none exposes that field. Send the pixels and check the delivered size on
   the first output.
@@ -84,13 +84,14 @@ When the alpha is missing, generate on a plain field and run background removal 
 
 ## Write the exact copy into the prompt
 
-5.5 and Pro render legible in-image text; Pro's catalog card also names non-Latin scripts. Quote the
-exact strings in the prompt instead of paraphrasing them, and give each a position and a size rank
-(headline across the top, date line small at the foot). Keep to a few elements at one or two sizes:
-letters are drawn, not typeset, so paragraphs and many small labels turn to shapes. Copy past that
-budget (tour dates, credits) is composited in post from the start. Proofread with `asset_display`; a
-word that garbles is spelled out letter by letter after the quoted string on the rerun, and one that
-still garbles goes to post. To swap copy on a reference, quote the new string, pin its position, and
+5.5 and Pro render legible in-image text; Pro's catalog card also names non-Latin scripts. Lite's
+card claims no text rendering, so proofread every image of a Lite set. Quote the exact strings in
+the prompt instead of paraphrasing them, and give each a position and a size rank (headline across
+the top, date line small at the foot). Keep to a few elements at one or two sizes: letters are
+drawn, not typeset, so paragraphs and many small labels turn to shapes. Copy past that budget (tour
+dates, credits) is composited in post from the start. Proofread with `asset_display`; a word that
+garbles is spelled out letter by letter after the quoted string on the rerun, and one that still
+garbles goes to post. To swap copy on a reference, quote the new string, pin its position, and
 require the original typeface, size and color with everything else unchanged.
 
 ## Layerize: one image in, an editable stack out
