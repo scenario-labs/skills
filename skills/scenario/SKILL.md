@@ -41,11 +41,10 @@ Two tool kinds:
 ## Scope first
 
 - Resolve scope first, then pass `team_id` and `project_id` on every call.
-- A team is the organization (company or studio account) holding projects. "My organization" or "my
-  studio" names it.
+- A team is the organization holding projects. "My organization" or "my studio" names it.
 - `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`.
 - Confirm the pair with the user: a guess writes into someone else's project. Unattended, take the
-  task's pair, else stop and list them.
+  task's pair, else stop and list.
 - The server fills scope only for read-only tools with one candidate, so an omission fails once a
   second team or project appears. The error names the wrong half.
 
@@ -135,8 +134,8 @@ Local inputs go up with `upload_asset`:
   and `instructions`.
 - PUT each part's raw bytes to its URL with no added headers: a checksum header makes the store
   answer 403. Check every PUT returned 200, then `upload_asset_complete` with the `upload_id`.
-- Inline base64 `data` only under 100KB (the cap is enforced) and when no shell can PUT parts. It
-  returns the asset directly, with no complete step.
+- Inline base64 `data` only under 100KB (enforced) and when no shell can PUT parts. It returns the
+  asset, or an `upload_id` (`timeout`, `in_progress`) to resume with `upload_asset_complete`.
 - Both calls take scope and nothing else: no parts list, no etags.
 - Inline `data` is decoded inside `upload_asset`: a decode error there (`libpng read error`,
   `Corrupt JPEG data`, `unable to read pixels`) means the base64 string broke, not the file.
@@ -149,11 +148,12 @@ Local inputs go up with `upload_asset`:
     added headers, or hit egress policy (see `asset_download`). Confirm every PUT returned 200. A
     blocked PUT means no shell: inline `data` under 100KB, else the app.
   - `Upload upl_… failed:` with `Corrupt JPEG data`, `premature end of data segment`,
-    `bad Huffman code`, or `libpng read error`: a decode failure. Confirm the file opens under its
-    content type; check for a truncated or re-encoded body, a missing part, or a wrong `file_size`.
+    `bad Huffman code`, or `libpng read error`: confirm the file opens under its content type; check
+    for a truncated or re-encoded body, a missing part, or a wrong `file_size`.
 - A phone's HEIC photo uploads as is (`content_type: "image/heic"`): do not convert it.
   `Unhandled image format` lists what `kind: "image"` accepts; convert any other type locally.
-- Without a shell, the user uploads at app.scenario.com; continue from the asset id.
+- Without a shell, the user uploads at app.scenario.com (unattended: report and stop); continue from
+  the asset id.
 
 Filing is part of delivering, not a tidy-up:
 
