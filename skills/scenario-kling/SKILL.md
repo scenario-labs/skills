@@ -24,12 +24,15 @@ the gap.
 ## Skip deprecated members
 
 - A deprecated member carries the tag `Deprecated` plus `deprecated:<successor id>`, naming the
-  member to run instead.
+  member to run instead. `search` hits list their `tags`.
 - `search` ranks by score, and at authoring time deprecated V3 members outrank every V4 one. Never
   take the first hit unread.
-- Exclude them in the query: `filter='NOT tags = "Deprecated"'`.
+- Exclude them with the raw `filter` string, `filter='NOT tags = "Deprecated"'`; structured
+  `filters` only include.
 - A request or saved payload names a deprecated id: run the successor, rebuilding the payload from
   its schema. Tell the user the swap; unattended, swap and report it.
+- The successor covers the lane, not every field: a V3 I2V payload with `elements` belongs on V4
+  R2V, since V4 I2V takes none.
 
 ## Quick reference
 
@@ -43,7 +46,7 @@ filter above):
 | Consistent characters, products, or style | V4 R2V (`images`, `elements`, `referenceVideos`)          |
 | Edit or restyle footage by prompt         | V4 Video Edit, Omni (`videoReferenceType: "base"`)        |
 | New scene guided by a source clip         | V4 R2V, O1 Reference Video, Omni (`"feature"`)            |
-| Native 4K                                 | V3 T2V 4K / I2V 4K, Omni (`mode: "4k"`)                   |
+| Native 4K (V4 stops at 1080p: upscale)    | V3 T2V 4K / I2V 4K, Omni (`mode: "4k"`)                   |
 | Motion from a video onto a character      | Motion Control (V3 Pro / Std)                             |
 | Talking head                              | AI Avatar (image plus audio), Lipsync (video plus speech) |
 
@@ -55,11 +58,12 @@ V4 contract (live schemas, caps at authoring time):
   default to match the source.
 - `resolution` is `720p` or `1080p` (default); Flash has none and outputs 720p. I2V follows the
   start image's aspect ratio and takes no `aspectRatio`.
-- R2V caps: `images` 10 (a `startImage` counts), `elements` 7, `referenceVideos` 5 of 3 to 30 s.
-  `aspectRatio: "auto"` follows the references.
+- R2V caps: `images` 10 (a `startImage` counts, with no stated tag number), `elements` 7,
+  `referenceVideos` 5 of 3 to 30 s. `aspectRatio: "auto"` follows the references.
 - Video Edit requires `prompt` and `video` (3 to 30 s, 700 to 4553 px per side). `images` and
   `elements` keep the R2V caps.
-- A V4 element is a `frontalImage` plus 1 to 3 `referenceImages`, both required.
+- A V4 element is a `frontalImage` plus 1 to 3 `referenceImages`, both required. With one photo of
+  the subject, pass it in `images` and tag it `@Image1` instead.
 - Tags bind by order. R2V and Video Edit write `@Image1`, `@Video1` (the edited clip), `@Element1`.
   Flash writes `@image_1` and `@video_1`, counting the start image and the edited video first.
 - Flash requires `prompt`. Images total 10 with `startImage`; videos total 5 and 20 s with the
@@ -87,8 +91,10 @@ sentences beat tag lists, and complex scenes hold together near 5 seconds, not 3
 
 ## Audio differs per generation
 
-- V4 has no audio switch. The T2V, I2V, R2V, and Flash descriptions promise native audio, T2V with
-  lip-synced dialogue in many languages.
+- V4 has no audio switch. The T2V, I2V, R2V, and Flash descriptions promise native audio.
+- Only T2V's description names multilingual dialogue at authoring time. Before counting on
+  non-English speech elsewhere, read the hit's description; the fallback is Lipsync with a recorded
+  track.
 - `generateAudio` defaults true on the V3 4K lines, billed per second either way, and false on Omni,
   where a reference video refuses it.
 - V3 voice output is Chinese and English; other languages auto-translate to English.
