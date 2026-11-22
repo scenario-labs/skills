@@ -30,8 +30,9 @@ Prompt pattern (keep it under the schema's length limit):
 > breakbeats, growling reese bass, bright brass stabs. Tight, loud, modern. No vocals. Ends on one
 > hard final hit.
 
-Ask for 2 takes and about 15 s more than the film (the intro and the outro are spare). Download each
-with `asset_download` (no `format` for audio), then measure:
+Ask for 2 takes and about 15 s more than the film (the intro and the outro are spare). A budget of
+one generation gets one take: keep it when its grid is clear, as below. Download each with
+`asset_download` (no `format` for audio), then measure:
 
 ```bash
 .venv/bin/python $K/scripts/beat_grid.py audio/music_a.mp3 --bpm 172
@@ -49,15 +50,22 @@ with `asset_download` (no `format` for audio), then measure:
   downbeats.
 - Reported times can run up to about 0.1 s early, an open issue in the tool. Watch the drop in the
   1080p check render, with sound, before the 4K master.
-- `--window` fits only the stretch the film uses: generated music can drift, and the film only needs
-  that stretch to be exact. Without `--bpm` the fit can lock to half or two thirds of the tempo.
+- `--window` fits only the stretch the film uses, in seconds from `--start` (seconds into the track,
+  default 0): generated music can drift, and the film only needs that stretch to be exact. Fit the
+  whole track first to place the drop and `music.offset`, then the window from that offset. Without
+  `--bpm` the fit can lock to half or two thirds of the tempo.
 - When the window and the whole track disagree, trust the window: on one take the whole-track grid
   sat 2.5 beats off both drops.
-- `music.stopBeat` cuts the music dead on a beat (the logo hit); without it the music fades at the
-  end.
+- `music.stopBeat` cuts the music dead on a beat (the logo hit); without it the music fades over the
+  film's last 1.2 s.
 - `music.gain` (dB, default -3.5) sets the bed under the effects.
 
 ## 2. The sound kit
+
+Optional: when the user declines its price, or the task's budget does not cover it, skip this
+section and leave `audio/sfx/` empty. `mix.py` then mixes the music alone, says so, and never ducks
+it under the silent hits. Leave `music.stopBeat` unset: with no logo hit, a dead stop leaves the end
+card silent, while unset the music fades at the end.
 
 `recommend` with `"capability": "txt2audio"` and "short isolated sound effects for motion graphics".
 
@@ -109,9 +117,9 @@ Those 12 cover every cue the blocks register: a missing `thock` plays `pop`, `dr
 ```
 
 It places every cue from the film's own list, aligned on each sound's attack, peak or end. It ducks
-the music under the big hits, lists sounds with no file, and lists hits that sit under the music.
-Fix those with `spec.sounds` or `music.gain` and mix again. It cannot judge taste: listen before you
-hand the film over.
+the music under each hit that plays (a custom sound with a `spec.sounds` level counts as a hit),
+lists sounds with no file, and lists hits that sit under the music. Fix those with `spec.sounds` or
+`music.gain` and mix again. It cannot judge taste: listen before you hand the film over.
 
 ## 4. Pictures
 

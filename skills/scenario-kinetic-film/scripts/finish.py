@@ -1,12 +1,13 @@
 """Make the deliverables and check every one.
 
 usage: finish.py <film folder> --video out/video_4k.mp4 [--audio out/mix.wav] [--name NAME] [--dest DIR]
-                 [--no-vertical] [--info FILE]
+                 [--vertical] [--info FILE]
 
 Writes the master (4K or 1080p, video stream copied, never re-encoded), a 1080p version of a 4K master,
-and a 9:16 version (the 16:9 film centered on black) into out/final, replacing earlier ones. Every file
-is checked for frame count, size (under 1 GB), H.264 level (5.2 or lower, or Macs and phones refuse it),
-a full decode on the macOS hardware decoder (what QuickTime uses; SKIP on other systems) and loudness.
+and, with --vertical, a 9:16 version (the 16:9 film centered on black) into out/final, replacing earlier
+ones. Every file is checked for frame count, size (under 1 GB), H.264 level (5.2 or lower, or Macs and
+phones refuse it), a full decode on the macOS hardware decoder (what QuickTime uses; SKIP on other
+systems) and loudness.
 Then the film's dynamism, up to the end card: still frames, holds and motion. Prints ALL CHECKS PASS or
 SOME CHECKS FAILED, and exits 1 on a failure.
 """
@@ -98,8 +99,8 @@ def loudness(path):
     return float(found[-1]) if found else None
 
 
-def make_deliverables(video, audio, dest, name, title, fps, vertical=True):
-    """The master, a 1080p version of a larger master, and the 9:16 version.
+def make_deliverables(video, audio, dest, name, title, fps, vertical=False):
+    """The master, a 1080p version of a larger master, and the 9:16 version when asked for.
 
     Returns (every path, the 1080p one the dynamism gates measure: the version, or the master itself).
     """
@@ -117,11 +118,14 @@ def make_deliverables(video, audio, dest, name, title, fps, vertical=True):
         check = os.path.join(dest, f"{name}_1080p{fps}.mp4")
         subprocess.run([*run, "-vf", "scale=1920:1080:flags=lanczos", *x264, "-movflags", "+faststart", check], check=True)
         outs.append(check)
+    p = os.path.join(dest, f"{name}_9x16.mp4")
     if vertical:
-        p = os.path.join(dest, f"{name}_9x16.mp4")
         pad = "scale=1080:-2:flags=lanczos,pad=1080:1920:0:(1920-ih)/2:black"
         subprocess.run([*run, "-vf", pad, *x264, "-movflags", "+faststart", p], check=True)
         outs.append(p)
+    elif os.path.exists(p):  # an earlier --vertical run's file: never deleted, since finish.py cannot tell who made it
+        print(f"note: {os.path.basename(p)} is from an earlier run and was not checked: delete it unless the brief asks "
+              "for 9:16 (--vertical remakes it)")
     return outs, check
 
 
@@ -142,7 +146,9 @@ def main(argv=None):
     ap.add_argument("--audio", help="the mix: out/mix.wav")
     ap.add_argument("--name", help="file name stem (default: the film's title)")
     ap.add_argument("--dest", help="default: <film>/out/final")
-    ap.add_argument("--no-vertical", action="store_true", help="skip the 9:16 version")
+    ap.add_argument("--vertical", action="store_true", help="also write the 9:16 version, when the brief asks for it")
+    # the 9:16 version was made by default once; the old opt-out still parses
+    ap.add_argument("--no-vertical", dest="vertical", action="store_false", help=argparse.SUPPRESS)
     ap.add_argument("--info", help="film metadata JSON from info.mjs, instead of asking the film")
     a = ap.parse_args(argv)
     info = film_info(a.film, a.info)
@@ -151,7 +157,7 @@ def main(argv=None):
     os.makedirs(dest, exist_ok=True)
     fps = info["fps"]
     expected = round(info["dur"] * fps)
-    outs, src = make_deliverables(a.video, a.audio, dest, name, info.get("title", ""), fps, not a.no_vertical)
+    outs, src = make_deliverables(a.video, a.audio, dest, name, info.get("title", ""), fps, a.vertical)
     report = Report()
     for f in outs:
         print(os.path.basename(f))
