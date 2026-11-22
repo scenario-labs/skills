@@ -125,8 +125,9 @@ metadata. On 5.5, at authoring time:
 - a layer came back full-frame or cropped and rescaled (1312x799 for an 800x487 box), so place each
   by its bounding box;
 - the base came back opaque, a rebuilt background, even from a transparent source;
-- `job_get` with `verbose: true` holds each layer's `name`, `bounding_box`, `z_index`, and
-  `text_recognition` under `metadata.output.layers`; `asset_get` on a layer holds none of them.
+- `job_get` with `verbose: true` holds each layer's `name`, `bounding_box` (`absolute` in source
+  pixels, `normalized` on a 0 to 1000 grid), `z_index`, and `text_recognition` under
+  `metadata.output.layers`; `asset_get` on a layer holds none of them.
 
 ## Worked example: a poster, then its layers
 
