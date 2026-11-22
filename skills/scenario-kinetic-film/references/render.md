@@ -50,7 +50,9 @@ Change render.mjs, browser.mjs or post.py only after reading these:
   BT.709.
 - A 52 s 4K film with grain came to 0.96 GB at about 50 dB PSNR against lossless frames. CRF 11
   medium is 1.37 GB for 51 dB, which the eye cannot tell apart.
-- 1080p and 9:16 versions are made from the master by `finish.py` (CRF 15, preset slow, Level 4.2).
+- `finish.py` makes the 1080p version from the master, and the 9:16 version with `--vertical` (CRF
+  15, preset slow, Level 4.2). Ask for 9:16 only when the brief does: it is the 16:9 film centered
+  on black.
 - Override the encoder with the `ENC` environment variable for `post.py`, for example a lossless
   test: `ENC="-c:v libx264 -qp 0 -preset ultrafast"`. `GRAIN=0` turns the grain off.
 

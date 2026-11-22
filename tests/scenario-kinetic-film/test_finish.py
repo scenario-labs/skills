@@ -157,7 +157,7 @@ class FinishRunTest(unittest.TestCase):
 
     def test_makes_and_checks_every_deliverable(self):
         dest = self.dir / "final"
-        r = self.run_finish("--video", self.video, "--audio", self.audio, "--dest", dest)
+        r = self.run_finish("--video", self.video, "--audio", self.audio, "--dest", dest, "--vertical")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(sorted(p.name for p in dest.iterdir()), ["dynamism.json", "test-film_1080p60.mp4", "test-film_9x16.mp4"])
         self.assertEqual(media.ffprobe(dest / "test-film_9x16.mp4", "stream=width,height"), "1080,1920")
@@ -174,6 +174,23 @@ class FinishRunTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertNotIn("loudness", r.stdout)
 
+    def test_no_9x16_version_unless_asked(self):
+        # a brief that asks for a 16:9 film gets no 9:16 file it did not ask for
+        dest = self.dir / "landscape_only"
+        r = self.run_finish("--video", self.video, "--dest", dest)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(sorted(p.name for p in dest.iterdir()), ["dynamism.json", "test-film_1080p60.mp4"])
+        self.assertNotIn("9x16", r.stdout)
+
+    def test_an_earlier_9x16_version_is_named_and_kept(self):
+        dest = self.dir / "stale"
+        dest.mkdir()
+        (dest / "test-film_9x16.mp4").write_bytes(b"from an earlier --vertical run")
+        r = self.run_finish("--video", self.video, "--dest", dest)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("note: test-film_9x16.mp4 is from an earlier run and was not checked", r.stdout)
+        self.assertEqual((dest / "test-film_9x16.mp4").read_bytes(), b"from an earlier --vertical run")
+
     def test_a_4k_master_after_the_1080_check(self):
         info = self.dir / "short.json"
         info.write_text(json.dumps({"title": "Short", "dur": 0.5, "fps": 60, "bpm": 120}))
@@ -182,9 +199,9 @@ class FinishRunTest(unittest.TestCase):
         master = write_film_video(self.dir / "master_4k.mp4", 0.5, 2160)
         r = self.run_finish("--video", check, "--dest", dest, info=info)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        r = self.run_finish("--video", master, "--dest", dest, "--no-vertical", info=info)
+        r = self.run_finish("--video", master, "--dest", dest, info=info)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertEqual(sorted(p.name for p in dest.glob("*.mp4")), ["short_1080p60.mp4", "short_4k60.mp4", "short_9x16.mp4"])
+        self.assertEqual(sorted(p.name for p in dest.glob("*.mp4")), ["short_1080p60.mp4", "short_4k60.mp4"])
         self.assertEqual(media.ffprobe(dest / "short_4k60.mp4", "stream=height"), "2160")
         self.assertEqual(media.ffprobe(dest / "short_1080p60.mp4", "stream=height,level"), "1080,42")
         self.assertEqual(r.stdout.count("PASS  frames: 30 of 30"), 2)
@@ -197,7 +214,7 @@ class FinishRunTest(unittest.TestCase):
         info = self.dir / "named.json"
         info.write_text(json.dumps({"title": "Promo 1080p", "dur": 0.5, "fps": 60, "bpm": 120}))
         video = write_film_video(self.dir / "named_1080.mp4", 0.5, 1080)
-        r = self.run_finish("--video", video, "--dest", dest, info=info)
+        r = self.run_finish("--video", video, "--dest", dest, "--vertical", info=info)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         src = json.loads((dest / "dynamism.json").read_text())["summary"]["src"]
         self.assertEqual(Path(src).name, "promo-1080p_1080p60.mp4")
