@@ -35,11 +35,11 @@ Members and their traps (names from the live schema, caps at authoring time):
 | 7.1 Image to 3D       | `image` (1-4)                     | `geometryResolution` `4k` takes one image only; raw mesh default   |
 | 7.1 Multi Image to 3D | `image` (1-4, first = front view) | remeshes in-run; `savePreRemeshedModel` keeps the raw GLB          |
 | 7.1 Text-to-3D        | `prompt` (600 chars)              | `shouldRemesh` off by default                                      |
-| T2.5 Smart Topology   | `prompt` or one `image`           | builds at `targetPolycount` (100 to 30,000), no remesh step        |
+| T2.5 Smart Topology   | `prompt` or one `image`           | builds near `targetPolycount` triangles (100 to 30,000); no remesh |
 | Retexture             | `model` + one style input         | geometry untouched; keep inputs near 30K polys; `enableOriginalUv` |
 | Remesh                | `model`                           | `targetPolycount` 100 to 300,000, `resizeHeight`, `originAt`       |
 | UV Unwrap             | `model`                           | rejects meshes above 44,000 faces; Remesh down first               |
-| Rigging               | `model`, `rigType`                | `biped` by default; `quadruped` rigs should add walk and run clips |
+| Rigging               | `model`, `rigType`                | `biped` by default; `quadruped` rigs come with walk and run clips  |
 | Animation             | `model`, `rigType`, `actionId`    | the action's rig type must match `rigType`; auto-rigs first        |
 
 One silent rule runs through every texture control: an image beats text. On the generators
@@ -60,7 +60,8 @@ raw mesh at generation, then control polycount with Remesh, which owns `targetPo
 does nothing while `shouldRemesh` is off. `geometryResolution` buys finer geometry: `2k` and `4k`
 add an Ultra pass at extra cost, and `4k` accepts one input image only (Multi Image stops at `2k`).
 When hidden sides matter more than micro detail, spend the budget on up to four views instead. Costs
-spread widely across members and tiers: `dry_run` before batches.
+spread widely across members and tiers: `dry_run` before batches. T2.5 can overshoot its target
+(2,300 gave 2,426 triangles at authoring time): leave headroom under a hard polygon cap.
 
 ## Rig or animate, not both
 
@@ -73,16 +74,19 @@ Animation auto-rigs internally, then applies the clip named by `actionId`, a num
 animation library (ids listed at docs.meshy.ai/en/api/animation-library). The action's rig type must
 match `rigType`; quadruped actions were ids 1055 and up at authoring time.
 
-- Run Rigging alone for a rigged GLB to drive with your own clips. The schema says a quadruped rig
-  comes with walk and run clips, so an animal that only walks or runs may need no Animation job. The
-  clips may arrive as separate assets: `asset_get` every id the job returned
-  (`properties.hasAnimations`, `animationFrameCount`). Report a clip you cannot confirm as
-  unverified; Animation on the unrigged mesh is a new billed job, run only within the task's budget.
+- Run Rigging alone for a rigged GLB to drive with your own clips. A quadruped rig comes with walk
+  and run clips, so an animal that only walks or runs may need no Animation job.
+- A quadruped rig returns each clip as its own GLB, beside a clip-free rigged GLB and armature-only
+  files. `asset_get` every id the job returned: `properties.hasAnimations` and `animationFrameCount`
+  find the clips but never name them. The name (`Walking`, `Running`) is only in the downloaded
+  file's glTF `animations`. Report a clip you cannot confirm as unverified; Animation on the
+  unrigged mesh is a new billed job, run only within the task's budget.
 - Go straight to Animation for one library clip, optionally setting `postProcessOperation` to
   `change_fps` (`postProcessFps` 24, 25, 30, or 60) or `extract_armature`.
 - `skeletonTemplate` (Mixamo, UE5 Mannequin, Unity Humanoid, and others) and `includeFingers` are
-  biped-only: keep `meshyrig` on a quadruped. Meshy Rig comes back in centimeters unless
-  `includeFingers` is on; every other template comes back in meters.
+  biped-only: keep `meshyrig` on a quadruped. On a biped, the schema says Meshy Rig comes back in
+  centimeters unless `includeFingers` is on, and every other template in meters. A quadruped kept
+  its input units at authoring time: read the GLB's scale before engine import, never assume one.
 - `heightMeters` scales the rig: pass the character's real height. Unset, a biped assumes 1.7 and a
   quadruped keeps its own size.
 
