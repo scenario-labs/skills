@@ -54,8 +54,9 @@ catalog model then carries `access`:
   level first).
 - `override`: the team allows it but the project does not: add it at project level.
 
-Filter with `privacy` (`private` for the team's own models), `modality`, `capability`, and
-`access_status: "disabled"`; page with `nextPaginationToken` until it is absent.
+Filter with `privacy` (`public` by default, `private` for the team's own models), `modality`,
+`capability`, and `access_status: "disabled"` (unusable in the project, else team-wide); pass
+`nextPaginationToken` as `page_token` until it is absent.
 
 `model_access_update` edits whichever list the mode makes active, so `add_models` blocks in
 blocklist mode and allows in allowlist mode: read the mode first, every time. Switching the mode is
@@ -66,15 +67,15 @@ blocklist-safe partial (blocking the named unwanted models at project level), sa
 projects stay open. Narrowing a list the credential can edit is in scope when the task states the
 target set: `remove_models` runs after the adds succeed, so the list never ends empty.
 `level: "team"` needs a team admin over OAuth, and the server refuses API keys on that endpoint.
-`level: "project"` takes the projects to edit in `projects` (1 to 200) and needs the admin role on
-every one of them: one unauthorized project fails the whole request and nothing updates, and a
-single-project key can only edit its own project's list. `project_id` on the call is tenant context
-for OAuth sessions, never the target. In allowlist mode a project admin can add only models already
-on the team allowlist (a project list narrows the catalog, never widens it), removing a base model
-from a team allowlist cascade-removes the trained models built on it, and a team-level add validates
-every id, one unknown id failing the whole call. `updated: false` means the diff was a no-op, not an
-error. A blocked model disappears from what members can run, and the error a member sees when
-running one anyway is a restriction, not moderation (see `scenario-moderation`).
+`level: "project"` takes the projects to edit in `projects` (1 to 200) and needs a team admin or the
+admin role on every one of them: one unauthorized project fails the whole request and nothing
+updates, and a single-project key can only edit its own project's list. `project_id` on the call is
+tenant context for OAuth sessions, never the target. In allowlist mode a project admin can add only
+models already on the team allowlist (a project list narrows the catalog, never widens it), removing
+a base model from a team allowlist cascade-removes the trained models built on it, and a team-level
+add validates every id, one unknown id failing the whole call. `updated: false` means the diff was a
+no-op, not an error. A blocked model disappears from what members can run, and the error a member
+sees when running one anyway is a restriction, not moderation (see `scenario-moderation`).
 
 In allowlist mode a team-level add or removal also applies to every project's allowlist
 (`projects_updated`), so a team add opens the models in every project: say so before the call.
