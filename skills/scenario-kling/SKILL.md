@@ -30,7 +30,8 @@ the gap.
 - Exclude them with the raw `filter` string, `filter='NOT tags = "Deprecated"'`; structured
   `filters` only include.
 - A request or saved payload names a deprecated id: propose the successor with the payload rebuilt
-  from its schema, and run it only once the user agrees. Unattended, stop and report the proposal.
+  from its schema, and run it only once the user agrees, in the request or in reply. Unattended
+  without that approval, stop and report the proposal.
 - The successor covers the lane, not every field: a V3 I2V payload with `elements` belongs on V4
   R2V, since V4 I2V takes none. R2V takes no `endImage`, so the proposal names any field it drops.
 
@@ -58,8 +59,11 @@ V4 contract (live schemas, caps at authoring time):
   string, `""` by default to match the source.
 - `resolution` is `720p` or `1080p` (default); Flash has none and outputs 720p. I2V follows the
   start image's aspect ratio and takes no `aspectRatio`.
-- R2V caps: `images` 10 (a `startImage` counts, with no stated tag number), `elements` 7,
-  `referenceVideos` 5 of 3 to 30 s. `aspectRatio: "auto"` follows the references.
+- R2V caps: `images` 10 (a `startImage` counts toward them but takes no tag: `@Image1` stays the
+  first `images` entry), `elements` 7, `referenceVideos` 5 of 3 to 30 s. `aspectRatio: "auto"`
+  follows the references.
+- Price at authoring time, 720p: R2V about 31 CU per second (126 CU for 4 s, 3 s minimum), Flash 76
+  CU for 4 s. Flag a small budget before uploading inputs; `dry_run` still prices the exact payload.
 - Video Edit requires `prompt` and `video` (3 to 30 s, 700 to 4553 px per side). `images` and
   `elements` keep the R2V caps.
 - A V4 element is a `frontalImage` plus 1 to 3 `referenceImages`, both required. With one photo of
