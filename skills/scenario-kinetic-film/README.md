@@ -66,6 +66,14 @@ Added on 2026-10-27.
   checks), installed with `npm ci --ignore-scripts`.
 - **Scripts are written for reading**: one statement per line, usage on a bare call, messages
   instead of tracebacks.
+- **The 9:16 version is opt-in** (`finish.py --vertical`) since the 2026-11-21 application test: a
+  brief that asked for 16:9 got a 9:16 file it never asked for. `--no-vertical` still parses. A 9:16
+  file an earlier run left in out/final is named, never deleted: finish.py cannot tell who made it.
+- **Engine elements start hidden inline, never from the stylesheet.** `vis()` shows an element by
+  clearing its inline `display`, so a `display: none` rule in index.html keeps it hidden: until the
+  2026-11-21 application test, no `rgb: true` or slam `inverts` flash ever rendered.
+- **Only a cue that plays a sound ducks the music.** The same test ran on music alone (no budget for
+  the kit), and every silent hit dipped the music and was reported as weaker than it.
 
 ## Open issues
 

@@ -18,6 +18,8 @@ reason you can see on screen.
 
 - One or two words at a size that fills the frame width (300 to 600 px type on a 1920 frame). Blocks
   scale long words down to fit; if a word has to shrink below about 200 px, split the phrase.
+  Picture words in a side third are the exception: a third holds a word about 450 px wide, so four
+  capitals run near 130 px (blocks.md, Picture).
 - A beat gets one new thing: a word, a color, a cut, a hit. Two at once cancel out.
 - Runs of beat cuts accelerate: 1, 1, 1, ½, ½, ¼ beat, then a flash.
 
@@ -54,10 +56,10 @@ reason you can see on screen.
 
 ## Sound is half of the energy
 
-- Every cut has a sound: a hit on beats, a whoosh on whips, a key click per typed character, a pop
-  per element, a riser into the drop, a hard music stop on the logo hit.
+- With a sound kit, every cut has a sound: a hit on beats, a whoosh on whips, a key click per typed
+  character, a pop per element, a riser into the drop, a hard music stop on the logo hit.
 - Hits must sit above the music: `mix.py` lists any that do not. Raise them in `spec.sounds` or
-  lower `music.gain`; the music also ducks under every big hit.
+  lower `music.gain`; the music also ducks under each hit that plays.
 - A custom sound for the film's own joke (a footstep, a door knock, a bell) is worth more than
   another generic impact.
 

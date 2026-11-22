@@ -230,8 +230,10 @@ describe("snap.mjs times", () => {
     expect(toSeconds("b4", 120)).toBe(2);
     expect(toSeconds("b12.5", 172)).toBeCloseTo((12.5 * 60) / 172, 12);
     expect(toSeconds("soon", 120)).toBeNaN();
-    expect(stillName(2)).toBe("t_002.00.png");
-    expect(stillName(45.678)).toBe("t_045.68.png");
+    expect(stillName(2)).toBe("t_002.000.png");
+    expect(stillName(45.678)).toBe("t_045.678.png");
+    // one 60 fps frame apart: two decimals gave both t_001.52.png, and the second overwrote the first
+    expect(stillName(1.5167)).not.toBe(stillName(1.5167 + 1 / 60));
   });
 });
 
