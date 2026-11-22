@@ -243,4 +243,4 @@ skeleton: see `scenario-video`.
 - Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor).
 - Promising a named skeleton, an influence count, or bones for wings and extra limbs the chosen
   member does not document: pick the closest body plan, then finish in a DCC.
-- Sending a biped to a `rigType` model: the enum has no biped value.
+- Sending a biped to a `rigType` model whose enum lacks `biped`.
