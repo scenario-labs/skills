@@ -58,7 +58,7 @@ Two tool kinds:
 | Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as` and caps                          |
 | Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost                           |
 | Wait              | `jobs_wait`                              | Whenever `model_run` returns a `job_id` without assets; never loop `job_get` |
-| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs; `format` converts images, meshes                 |
+| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                                                   |
 | Inspect an asset  | `asset_get`                              | Free; dimensions, duration, `firstFrame` / `lastFrame` ids                   |
 | Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                                 |
 | Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                                           |
@@ -99,12 +99,11 @@ Generating a stylized game prop image:
 5. `model_run` with `model_id` and schema-conformant `parameters`.
    - Unless the user says cost does not matter, price first with `dry_run: true`, top level beside
      `model_id`. No job is created; `creativeUnitsCost` prices this exact payload.
-   - A `recommend` quote assumes defaults; `cost_impact` fields move the real number.
+   - A `recommend` quote assumes defaults.
    - Run: inline assets (`status: success`) need no wait; otherwise pass `job_id` to `jobs_wait`.
    - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
      `in-progress`, or `warming-up`. All need `jobs_wait`.
    - A 429: stop launching and find its class under Errors and recovery before the next call.
-     Re-sending the same payload at once never clears it.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
    - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
@@ -136,21 +135,22 @@ Local inputs go up with `upload_asset`:
   and `instructions`.
 - PUT each part's raw bytes to its URL with no added headers: a checksum header makes the store
   answer 403. Check every PUT returned 200, then `upload_asset_complete` with the `upload_id`.
-- Inline base64 `data` only under 100KB, and only when no shell can PUT parts. It returns the asset
-  directly, with no complete step; a larger file is rejected, naming the cap.
+- Inline base64 `data` only under 100KB (the cap is enforced) and when no shell can PUT parts. It
+  returns the asset directly, with no complete step.
 - Both calls take scope and nothing else: no parts list, no etags.
 - Inline `data` is decoded inside `upload_asset`: a decode error there (`libpng read error`,
   `Corrupt JPEG data`, `unable to read pixels`) means the base64 string broke, not the file.
-  - The agent retypes every `data` character; a 57K-character string broke.
+  - The agent retypes every `data` character, so a long string breaks.
   - Re-sending it repeats the error. With a shell, switch to the `file_size` path, even when the
     user asked for inline, and say why.
-- On the `file_size` path the server decodes at completion: `Upload upl_… failed:` with
-  `Corrupt JPEG data`, `premature end of data segment`, `bad Huffman code`, or `libpng read error`
-  means it could not.
-  - Check for a corrupt source, a truncated or re-encoded body, a missing part, or a wrong
-    `file_size`.
-  - Confirm the local file opens under its declared content type, then start over with a fresh
-    `upload_asset` and raw PUTs. Never re-complete the same `upload_id`.
+- Re-completing an `upload_id` never clears a completion error. Find the cause, then restart with a
+  fresh `upload_asset`:
+  - `Unable to complete upload` (400): the store got no usable part. A PUT was skipped, failed, sent
+    added headers, or hit egress policy (see `asset_download`). Confirm every PUT returned 200. A
+    blocked PUT means no shell: inline `data` under 100KB, else the app.
+  - `Upload upl_… failed:` with `Corrupt JPEG data`, `premature end of data segment`,
+    `bad Huffman code`, or `libpng read error`: a decode failure. Confirm the file opens under its
+    content type; check for a truncated or re-encoded body, a missing part, or a wrong `file_size`.
 - A phone's HEIC photo uploads as is (`content_type: "image/heic"`): do not convert it.
   `Unhandled image format` lists what `kind: "image"` accepts; convert any other type locally.
 - Without a shell, the user uploads at app.scenario.com; continue from the asset id.
