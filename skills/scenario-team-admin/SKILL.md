@@ -26,7 +26,7 @@ unattended, proceed from tool schemas and flag the gap.
 
 | Task                 | Tool                                                                | Lane                       | Notes                                                                                |
 | -------------------- | ------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------ |
-| Read model access    | `model_access_get`                                                  | read                       | Mode plus the team's active list; `project_id` adds that project's list alongside it |
+| Read model access    | `model_access_get`                                                  | read                       | Mode and active lists; `include_models` lists per-model `access` (OAuth team admins) |
 | Change model access  | `model_access_update`                                               | write                      | `level` `team` or `project`; exactly one of `add_models`, `remove_models`            |
 | Team roster          | `team_members_list`                                                 | read                       | Members and pending invitations                                                      |
 | Invite               | `team_members_add`                                                  | write                      | 1 to 32 `emails`, `role`, optional `project_ids` joined on acceptance                |
@@ -43,8 +43,20 @@ unattended, proceed from tool schemas and flag the gap.
 list is never surfaced. In blocklist mode (the default) every catalog model is available except
 those on the team or project blocklist, and the two lists block as a union. In allowlist mode a
 model is available only when it sits on both the team and the project allowlist; a project with an
-empty allowlist denies every model, and a project with no allowlist configured falls back to the
-team list.
+empty or unset allowlist denies every model.
+
+"What can I still enable" and "why can't project X run model Y" take `include_models: true` with
+that `project_id` (team admins over OAuth only; API keys and other members are refused). Each
+catalog model then carries `access`:
+
+- `team`: `enabled` or `disabled`.
+- `project`: `enabled`, `disabled`, or `locked_by_team` (the team list excludes it: add it at team
+  level first).
+- `override`: the team allows it but the project does not: add it at project level.
+
+Filter with `privacy` (`public` by default, `private` for the team's own models), `modality`,
+`capability`, and `access_status: "disabled"` (unusable in the project, else team-wide); pass
+`nextPaginationToken` as `page_token` until it is absent.
 
 `model_access_update` edits whichever list the mode makes active, so `add_models` blocks in
 blocklist mode and allows in allowlist mode: read the mode first, every time. Switching the mode is
@@ -55,15 +67,21 @@ blocklist-safe partial (blocking the named unwanted models at project level), sa
 projects stay open. Narrowing a list the credential can edit is in scope when the task states the
 target set: `remove_models` runs after the adds succeed, so the list never ends empty.
 `level: "team"` needs a team admin over OAuth, and the server refuses API keys on that endpoint.
-`level: "project"` takes the projects to edit in `projects` (1 to 200) and needs the admin role on
-every one of them: one unauthorized project fails the whole request and nothing updates, and a
-single-project key can only edit its own project's list. `project_id` on the call is tenant context
-for OAuth sessions, never the target. In allowlist mode a project admin can add only models already
-on the team allowlist (a project list narrows the catalog, never widens it), removing a base model
-from a team allowlist cascade-removes the trained models built on it, and a team-level add validates
-every id, one unknown id failing the whole call. `updated: false` means the diff was a no-op, not an
-error. A blocked model disappears from what members can run, and the error a member sees when
-running one anyway is a restriction, not moderation (see `scenario-moderation`).
+`level: "project"` takes the projects to edit in `projects` (1 to 200) and needs a team admin or the
+admin role on every one of them: one unauthorized project fails the whole request and nothing
+updates, and a single-project key can only edit its own project's list. `project_id` on the call is
+tenant context for OAuth sessions, never the target. In allowlist mode a project admin can add only
+models already on the team allowlist (a project list narrows the catalog, never widens it), removing
+a base model from a team allowlist cascade-removes the trained models built on it, and a team-level
+add validates every id, one unknown id failing the whole call. `updated: false` means the diff was a
+no-op, not an error. A blocked model disappears from what members can run, and the error a member
+sees when running one anyway is a restriction, not moderation (see `scenario-moderation`).
+
+In allowlist mode a team-level add or removal also applies to every project's allowlist
+(`projects_updated`), so a team add opens the models in every project: say so before the call.
+Unattended, make it only when the task allows a team-wide change; otherwise stop and report the add
+it needs. Narrow a project afterwards with a `level: "project"` removal only when the user asks;
+unattended, only for projects the task names.
 
 ## Members and spend caps
 
@@ -153,13 +171,15 @@ over the billing period, and a cap below what a member has already spent stops t
    models" is not expressible: tell the user to switch the team to allowlist in the web app's team
    settings, then re-read; unattended, log the gap with the calls below and stop, blocking any
    models the task names as unwanted at project level in the meantime.
-3. In allowlist mode, the team list first: `scenario_tool_execute_write` with
-   `name: "model_access_update"`,
-   `parameters: {"team_id", "project_id", "level": "team", "add_models": [<the three ids>]}`; this
-   is the call that needs the caller to be a team admin over OAuth (`context.userRole` on the
-   `teams_list` row says whether they are). Then the project: `level: "project"`,
-   `projects: [<project id>]`, the same `add_models`, which succeeds only because the team list now
-   carries them.
+3. In allowlist mode, compare the three ids with `team.models` and `project.models`. Ids missing
+   from the team list: `scenario_tool_execute_write` with `name: "model_access_update"`,
+   `parameters: {"team_id", "project_id", "level": "team", "add_models": [<missing ids>]}`; this is
+   the call that needs the caller to be a team admin over OAuth (`context.userRole` on the
+   `teams_list` row says whether they are). It lands them in every project too: tell the user first
+   (unattended, unless the task allows a team-wide change, stop here and report the missing ids),
+   and leave the other projects alone unless asked. Only once the team list holds all three:
+   `level: "project"`, `projects: [<project id>]`, add any still missing, then remove every other id
+   on `project.models`.
 4. `scenario_tool_execute_read` with `name: "team_members_list"`: the two contractors' member ids.
    `scenario_tool_execute_write` with `name: "team_members_update"`,
    `parameters: {"team_id", "project_id", "member_ids": [<two ids>], "max_consumption": 2000}`. On
@@ -177,6 +197,10 @@ over the billing period, and a cap below what a member has already spent stops t
   allows in the other.
 - Trying to lock a team to a short list while in blocklist mode: that is an allowlist job, and the
   mode switch is a web-app setting.
+- Treating an unset project allowlist as inheriting the team list: in allowlist mode it denies every
+  model.
+- Adding a model team-wide in allowlist mode as if it touched one project: every project's allowlist
+  gains it.
 - Team-level writes through an API key: refused by design; the caller is a human team admin over
   OAuth.
 - `arguments` instead of `parameters` on the executor: dropped silently and surfaced as a scope
