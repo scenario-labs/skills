@@ -232,7 +232,9 @@ window and lands on its first frame as the window fills the screen.
 - The block's camera pushes in to 1.1x around the frame's center, pans from -25 to 25 px and rolls
   from -1 to 1 degree by its end, carrying off-center words outward. A word that fills the fit width
   ends 60 px from the frame's edge before any of that: lower `size` until the word stays inside the
-  frame in stills at its slam and at the block's last frame.
+  frame in stills at its slam and just before the next word replaces it (the block's last frame for
+  the last word). A word shows only until the next one starts, so the last frame shows only the
+  last.
 - Each word also slams in from 1.4x over 0.16 s, then grows 5% per second until the next. A word
   that must stay inside a third of the frame (640 px) can be about 450 px wide at rest: four
   capitals ran near 130 px, three near 180 px.
