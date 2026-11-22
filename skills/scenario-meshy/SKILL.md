@@ -75,8 +75,9 @@ match `rigType`; quadruped actions were ids 1055 and up at authoring time.
 
 - Run Rigging alone for a rigged GLB to drive with your own clips. A quadruped rig already carries
   walk and run clips: an animal that only walks or runs needs no `actionId` and no Animation job.
-  Confirm the clips arrived (`asset_get`: `properties.hasAnimations`) before stopping; send a
-  missing one to Animation.
+  The clips may arrive as separate assets: `asset_get` every id the job returned before calling one
+  missing. Report a missing clip; Animation on the unrigged mesh is a new billed job, run only
+  within the task's budget.
 - Go straight to Animation for one library clip, optionally setting `postProcessOperation` to
   `change_fps` (`postProcessFps` 24, 25, 30, or 60) or `extract_armature`.
 - `skeletonTemplate` (Mixamo, UE5 Mannequin, Unity Humanoid, and others) and `includeFingers` are
