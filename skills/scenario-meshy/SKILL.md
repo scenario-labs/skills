@@ -75,11 +75,13 @@ match `rigType`; quadruped actions were ids 1055 and up at authoring time.
 
 - Run Rigging alone for a rigged GLB to drive with your own clips. A quadruped rig already carries
   walk and run clips: an animal that only walks or runs needs no `actionId` and no Animation job.
+  Confirm the clips arrived (`asset_get`: `properties.hasAnimations`) before stopping; send a
+  missing one to Animation.
 - Go straight to Animation for one library clip, optionally setting `postProcessOperation` to
   `change_fps` (`postProcessFps` 24, 25, 30, or 60) or `extract_armature`.
 - `skeletonTemplate` (Mixamo, UE5 Mannequin, Unity Humanoid, and others) and `includeFingers` are
-  biped-only: keep `meshyrig` on a quadruped. Meshy Rig comes back in centimeters, every other
-  template in meters.
+  biped-only: keep `meshyrig` on a quadruped. Meshy Rig comes back in centimeters unless
+  `includeFingers` is on; every other template comes back in meters.
 - `heightMeters` scales the rig: pass the character's real height. Unset, a biped assumes 1.7 and a
   quadruped keeps its own size.
 
@@ -108,8 +110,8 @@ match `rigType`; quadruped actions were ids 1055 and up at authoring time.
 - `texturePrompt` next to `textureImage` expecting a blend: the image wins, the text is ignored.
 - Two style inputs on Retexture: it takes exactly one of prompt, style image, or multi-view images.
 - `geometryResolution: "4k"` with several images: 4K takes a single input image.
-- A dog or horse on the default `rigType`: it gets a biped skeleton. Set `quadruped` and pick a
-  quadruped action.
+- A dog or horse on the default `rigType`: it gets a biped skeleton. Set `quadruped`, and on
+  Animation pick a quadruped action.
 - UV Unwrap on a dense mesh: above 44,000 faces the job is rejected; Remesh down first.
 - Rigging before Animation: Animation rigs by itself, so the chain wastes a job.
 - `targetPolycount` on Image to 3D or Text-to-3D with `shouldRemesh` off: it does not apply.
