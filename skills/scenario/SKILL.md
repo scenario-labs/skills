@@ -97,14 +97,15 @@ Generating a stylized game prop image:
    LoRA's own, not its base) and the draft `prompt`. Skip deliberate prompts.
 5. `model_run` with `model_id` and schema-conformant `parameters`.
    - Unless the user says cost does not matter, price first with `dry_run: true`, top level beside
-     `model_id`. No job is created; `creativeUnitsCost` prices this exact payload.
-   - A `recommend` quote assumes defaults.
+     `model_id`. No job is created; `creativeUnitsCost` prices this exact payload: budget by it.
+   - A `recommend` quote is a p50 of past runs.
    - Run: inline assets (`status: success`) need no wait; otherwise pass `job_id` to `jobs_wait`.
    - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
      `in-progress`, or `warming-up`. All need `jobs_wait`.
-   - A 429: stop launching and find its class under Errors and recovery before the next call.
+   - A 429: stop launching and find its class under Errors and recovery.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
-   - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
+   - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up. `cuCost` omits any
+     quality-gate fee a project charges.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
      cancel. No timeout argument exists.
    - Failed jobs are reimbursed, except xAI generations stopped by moderation.
@@ -155,7 +156,7 @@ Local inputs go up with `upload_asset`:
 - Without a shell, the user uploads at app.scenario.com (unattended: report and stop); continue from
   the asset id.
 
-Filing is part of delivering, not a tidy-up:
+Filing is part of delivering:
 
 - `collection_create` takes a name and the scope pair only. `asset_ids` sent there is silently
   ignored, so adding is always a second call: `collection_add_assets`.
@@ -234,7 +235,7 @@ Uploading and filing alone are not publication.
   the real asset exists.
 - A bare value where the schema says `array: true`: silently dropped, so the run ignores your
   reference or LoRA. `asset_get` on the output echoes what the run consumed
-  (`metadata.referenceImages`, `parentId`): the cheapest proof.
+  (`metadata.referenceImages`, `parentId`).
 - Taking `recommend`'s `ranked[0]` blindly. Read `next_step.type` first:
   - `no_match`: stop generation, even with ranked partial options. Explain `unmet_requirements` and
     `suggested_action`; never silently relax requirements. Schema checks or a successful dry run do
@@ -250,8 +251,7 @@ Uploading and filing alone are not publication.
 - Feeding an image field a video, audio, or 3D asset: 400 `Unhandled image format` lists the
   accepted types. `asset_get` reports the asset's `mimeType`; pull a still with the clip's
   `firstFrame` when the model wants an image.
-- `filters.kind` on `search` with `target="models"`: a 400 `"kind" is not a filterable field`, since
-  `kind` describes assets. Narrow models by `filters.type` (architecture) or `tags`, or `recommend`
-  a capability.
+- `filters.kind` on `search` with `target="models"`: a 400 `"kind" is not a filterable field`.
+  Narrow models by `filters.type` (architecture) or `tags`, or `recommend` a capability.
 - Filtering `models_list` by `type` without `privacy: "public"`: a 400 says so. A private listing
   narrows by `status` or `modality`, or goes through `search` (private by default).
