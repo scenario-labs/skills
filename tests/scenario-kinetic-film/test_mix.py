@@ -158,10 +158,17 @@ class MixTest(unittest.TestCase):
         self.assertEqual(float(duck[int(1.4 * SR)]), 1.0)
 
     def test_the_mix_carries_the_ducked_bed(self):
-        # a cue with a level but no file plays nothing, and still ducks the music to 0.62
-        x, _ = self.build(self.info(cues=[{"t": 1.0, "name": "boom"}], sounds={"boom": 0}), music=True)
+        # a sound with a level far below hearing still plays, so it ducks the music to 0.62
+        x, _ = self.build(self.info(cues=[{"t": 1.0, "name": "stomp"}], sounds={"stomp": -120}), music=True)
         dip = level_db(self.window(x, 1.03, 1.06)) - level_db(self.window(x, 0.5, 0.53))
         self.assertAlmostEqual(dip, 20 * np.log10(0.62), delta=1.0)
+
+    def test_a_cue_with_no_file_leaves_the_music_alone(self):
+        # a film without a sound kit is music only: ducking under silent hits would pump the music on every beat
+        x, report = self.build(self.info(cues=[{"t": 1.0, "name": "boom"}], sounds={"boom": 0}), music=True)
+        dip = level_db(self.window(x, 1.03, 1.06)) - level_db(self.window(x, 0.5, 0.53))
+        self.assertAlmostEqual(dip, 0, delta=0.5)
+        self.assertEqual((report["missing"], report["weak"], report["played"]), (["boom"], [], 0))
 
     def test_a_loud_bed_reports_weak_hits(self):
         _, report = self.build(self.info(music={"gain": 20}), music=True)
@@ -194,6 +201,26 @@ class MixTest(unittest.TestCase):
         self.assertFalse(Path(str(out) + ".raw.wav").exists())
         r = self.run_cli(self.info(), "--out", out, "--lufs", -12)
         self.assertEqual(r.returncode, 0, r.stderr)  # a re-run replaces the mix
+
+    def test_cli_without_a_kit_mixes_the_music_alone(self):
+        empty = Path(self.tmp.name) / "no_kit"
+        empty.mkdir(exist_ok=True)
+        r = self.run_cli(self.info(), "--out", Path(self.tmp.name) / "music_only.wav", "--kit", empty)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn(f"no sound kit in {empty}: a music-only mix, and the music does not duck", r.stdout)
+        self.assertNotIn("no file for these sounds", r.stdout)
+        self.assertNotIn("quieter than the music", r.stdout)
+
+    def test_cli_a_misnamed_kit_still_lists_its_missing_sounds(self):
+        # files that match no cue name are a kit to fix, not a music-only film
+        kit = Path(self.tmp.name) / "misnamed_kit"
+        kit.mkdir(exist_ok=True)
+        media.write_wav(kit / "impact-01.wav", hit(0.6, 1, 0.08), SR)
+        r = self.run_cli(self.info(), "--out", Path(self.tmp.name) / "misnamed.wav", "--kit", kit)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("no file for these sounds (their cues are silent): impact, key, logo_hit, riser, stomp, whoosh",
+                      r.stdout)
+        self.assertNotIn("music-only", r.stdout)
 
     def test_cli_nothing_to_mix(self):
         r = self.run_cli(self.info(cues=[], music=None))
