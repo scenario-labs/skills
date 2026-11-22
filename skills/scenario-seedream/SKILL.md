@@ -83,8 +83,10 @@ Two contracts, read from the schemas:
 Check the alpha on the downloaded file, since `asset_display` composites transparency away. With
 Pillow (`uv run --with pillow` when it is missing), `Image.open(path).getchannel("A").getextrema()`
 should start at 0 (fully transparent pixels exist), and an image with no `A` channel was flattened.
-When the alpha is missing, generate on a plain field and run background removal (the
-`scenario-image-editing` skill), or split the image with Layerize.
+That check proves only a transparent surround: a translucent part (glass, a soft shadow) can come
+back opaque and still pass, so on an edit compare that region's alpha with the source's. When the
+alpha is missing, generate on a plain field and run background removal (the `scenario-image-editing`
+skill), or split the image with Layerize.
 
 ## Write the exact copy into the prompt
 
