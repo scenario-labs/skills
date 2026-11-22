@@ -11,12 +11,12 @@ license: MIT
 A comparison is one brief run unchanged across several models, then judged on criteria written down
 before the first paid call. Every candidate has its own contract, so the comparison lives in the
 normalization: what is held fixed, what each schema forces to differ, and where each number came
-from. `recommend` shortlists, `dry_run` prices, the `jobs_wait` rows carry the billed cost, the grid
-tool puts the results side by side, and a table delivers. Connection and the core loop: see the
-`scenario` skill; a rubric for judging output against a brief: `scenario-refine-loop`. If a sibling
-skill named here is missing from your available skills, load it with `skill_get` (Scenario MCP) or
-ask the user to install it (https://github.com/scenario-labs/skills#install); unattended, proceed
-from tool schemas and flag the gap.
+from. `recommend` shortlists, `dry_run` prices what each run is billed, the grid tool puts the
+results side by side, and a table delivers. Connection and the core loop: see the `scenario` skill;
+a rubric for judging output against a brief: `scenario-refine-loop`. If a sibling skill named here
+is missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 ## Quick reference
 
@@ -27,7 +27,7 @@ from tool schemas and flag the gap.
 | 3. Normalize | `model_schema_get` each candidate: the shared fields, the caps that differ, the flags that rewrite prompts                                        |
 | 4. Price     | `model_run` with `dry_run: true` (top-level, beside `model_id`, never inside `parameters`) per candidate and utility model; apply the Budget gate |
 | 5. Run       | `model_run` with top-level `wait: false` per candidate, launched back to back, then one `jobs_wait` over all the job ids                          |
-| 6. Measure   | `cuCost` from the `jobs_wait` rows; `createdAt` to `updatedAt` from `job_get` for the seconds                                                     |
+| 6. Measure   | Cost from the step 4 quote; `createdAt` to `updatedAt` from `job_get` for the seconds                                                             |
 | 7. Judge     | The sheet from `model_scenario-grid-maker`, then each asset at full size, scored against the criteria                                             |
 | 8. Deliver   | One table row per candidate; the assets filed in one collection and tagged by model id                                                            |
 
@@ -65,14 +65,15 @@ CU, not remaining credits; it cannot certify a balance for this budget gate.
 ## Measurement
 
 `recommend` reports modeled cost and latency, right for the shortlist and wrong as a result:
-`dry_run` prices the exact payload, and the `jobs_wait` row's `cuCost` is what was billed. Time
-comes from `job_get`, which returns `createdAt` and `updatedAt`; their difference on a finished job
-is the wall-clock latency including queue time, comparable across candidates launched within the
-same minute. Launch every candidate before waiting on any, within the team's concurrency ceiling
-(the 429 rows in `scenario`). Use the returned `actionLimit` on a concurrency 429; never infer the
-ceiling from this comparison's batch size. Re-call `jobs_wait` with `pending_job_ids` until every
-row is terminal. Record per candidate: model id, the exact `parameters` sent, `cuCost`, seconds,
-delivered dimensions, asset ids, and any normalization it forced (a size, a cap, a flag).
+`dry_run` prices the exact payload, which is what each run is billed. The `jobs_wait` row's `cuCost`
+omits any quality-gate fee a project charges, so it can understate cost. Time comes from `job_get`,
+which returns `createdAt` and `updatedAt`; their difference on a finished job is the wall-clock
+latency including queue time, comparable across candidates launched within the same minute. Launch
+every candidate before waiting on any, within the team's concurrency ceiling (the 429 rows in
+`scenario`). Use the returned `actionLimit` on a concurrency 429; never infer the ceiling from this
+comparison's batch size. Re-call `jobs_wait` with `pending_job_ids` until every row is terminal.
+Record per candidate: model id, the exact `parameters` sent, its quote, seconds, delivered
+dimensions, asset ids, and any normalization it forced (a size, a cap, a flag).
 
 Video candidates are compared on contact sheets, never on a first frame: sweep each clip with
 `model_scenario-video-to-image-seq` (a fixed first-party id, Scenario's single deterministic frame
@@ -113,8 +114,8 @@ criteria.
    the closest 1024 square each allows, the expansion flag off; write the three prices down and
    apply the Budget gate, including the required sheet.
 5. `model_run` three times with `wait: false`, then one `jobs_wait` with the three job ids,
-   re-called with `pending_job_ids` on a timeout; read `cuCost` off each row and `createdAt` and
-   `updatedAt` off `job_get` for each job.
+   re-called with `pending_job_ids` on a timeout; read `createdAt` and `updatedAt` off `job_get` for
+   each job.
 6. `model_scenario-grid-maker` with `images` as the three asset ids in candidate order and
    `columns: 3`; `asset_display` the sheet, then each asset; score the four criteria.
 7. Deliver the table (model, parameters that differed, cost, seconds, dimensions, criteria passed,
@@ -123,8 +124,8 @@ criteria.
 
 ## Common mistakes
 
-- Quoting `recommend`'s numbers as results: they are modeled. Bill from `jobs_wait`, time from
-  `job_get`.
+- Quoting `recommend`'s numbers as results: they are modeled. Cost from the `dry_run` quote, time
+  from `job_get`.
 - Different sizes or sample counts across candidates, or one candidate's prompt expansion left on:
   the comparison then measures the payload difference.
 - One sample per candidate on a brief whose output varies wildly: run two or three where the budget
