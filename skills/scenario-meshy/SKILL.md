@@ -8,14 +8,13 @@ license: MIT
 
 ## Overview
 
-Meshy on Scenario is a toolchain rather than one model: generators (Meshy 7.1 Image to 3D, Multi
-Image to 3D, and Text-to-3D, plus Meshy T2.5 Smart Topology for text or one image) and GLB-in,
-GLB-out utilities (Retexture, Remesh, UV Unwrap, Rigging, Animation). Work runs as a pipeline:
-generate a mesh, refine it, then rig or animate, each stage its own `model_run` whose `model`
-parameter takes the 3D asset id the previous stage returned. Discover members with `search` and
-treat `model_schema_get` as the contract: members disagree on defaults as basic as `enablePbr` (true
-on Image to 3D, Text-to-3D, and Retexture, false on Multi Image and Smart Topology at authoring
-time).
+Meshy on Scenario is a toolchain rather than one model. Generators: Meshy 7.1 Image to 3D, Multi
+Image to 3D, and Text-to-3D, plus Meshy T2.5 Smart Topology for text or one image. GLB-in, GLB-out
+utilities: Retexture, Remesh, UV Unwrap, Rigging, Animation. Work runs as a pipeline: generate a
+mesh, refine it, then rig or animate, each stage its own `model_run` whose `model` parameter takes
+the 3D asset id the previous stage returned. Discover members with `search` and treat
+`model_schema_get` as the contract: members disagree on defaults as basic as `enablePbr` (true on
+Image to 3D, Text-to-3D, and Retexture, false on Multi Image and Smart Topology at authoring time).
 
 Members rotate. A hit tagged `Deprecated` also carries `deprecated:<successor id>`: run the
 successor, never the deprecated id. At authoring time the Meshy 7 generators pointed to 7.1, and T2
@@ -88,10 +87,10 @@ match `rigType`; quadruped actions were ids 1055 and up at authoring time.
 
 1. `search` with `target="models"`, `query="meshy"`, `public=true`. Single-image route:
    `model_meshy-7-1-img23d` (a live hit at authoring time: re-discover each session). `search` does
-   not flag plan access, and several Meshy members, Animation and Rigging among them, sat above the
-   entry plans at authoring time: before paying step 3, `recommend` with `capability="3d23d"` and
-   the animation need, and if the Animation entry carries `requires_plan_upgrade`, surface the
-   upgrade or stop at the static mesh, since step 5 would otherwise fail with a 403 naming the plan
+   not flag plan access, and several Meshy members, Animation and Rigging included, sat above the
+   entry plans at authoring time. Before paying step 3, `recommend` with `capability="3d23d"` and
+   the animation need. If the Animation entry carries `requires_plan_upgrade`, surface the upgrade
+   or stop at the static mesh: step 5 would otherwise fail with a 403 naming the plan
    (`ModelAccessRestrictedError`) after step 3 was billed.
 2. `model_schema_get` with that id, then `upload_asset` the character photo (see the `scenario`
    skill).
