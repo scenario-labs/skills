@@ -94,10 +94,10 @@ schemas and flag the gap.
    two images, so it may miss PBR maps. On LLM-based members, keep the Blender original: it held an
    ORM map one's FBX and `glb` conversion lacked.
 
-**Prompt-only build.** When the user wants no concept to approve, skip step 1 and `recommend`
-`txt23d` in step 2: every LLM-based member supports it. Follow steps 3 to 5 with `images: []` on an
-LLM-based member; describe the object and name required parts in `prompt`. A chest's `lid`, `body`,
-and `padlock` returned as those node names.
+**Prompt-only build.** With no reference image and no concept to approve, skip step 1 and
+`recommend` `txt23d` in step 2: every LLM-based member supports it. Follow steps 3 to 5 with
+`images: []` on an LLM-based member; describe the object and name required parts in `prompt`. A
+chest's `lid`, `body`, and `padlock` returned as those node names.
 
 Multi-view models take several images of one subject; read the count and fields off
 `model_schema_get`. Side fields follow the subject: on the Tripo multi-view members at authoring
@@ -239,7 +239,7 @@ skeleton: see `scenario-video`.
 
 ## Common mistakes
 
-- Running `model_run` without `model_schema_get`: 3D parameters differ widely between models.
+- Running `model_run` without `model_schema_get`: 3D parameters differ between models.
 - Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor).
 - Promising a named skeleton, an influence count, or bones for wings and extra limbs the chosen
   member does not document: pick the closest body plan, then finish in a DCC.
