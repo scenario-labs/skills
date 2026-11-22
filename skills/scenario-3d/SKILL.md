@@ -59,7 +59,7 @@ schemas and flag the gap.
      parts (a weapon, this chest), price one before decimating or hand modeling;
    - price by `buildEffort`: `standard`, `high` (the default), `maximum`;
    - cap triangles with `faceBudget`, whose default (250,000 at authoring time) is fine detail: set
-     it in step 3's game range, even off its `step` grid (9,000 and 15,000 ran at authoring time);
+     it in step 3's game range, even off its `step` grid (9,000 ran at authoring time);
    - pick the delivered file on the run: `outputFormat` (`glb`, `fbx`, `obj`, `usdz`, `stl`, `ply`,
      `blend`; `auto` builds a GLB, or an FBX with quads) and `topology` (`triangles`, `quads`, or
      `auto`, the member's choice);
@@ -129,10 +129,9 @@ before promising a look. Authoring-time examples from the Tripo members:
 
 ## Inspecting results
 
-Hosts without MCP Apps get only the `app_url` link. The viewer's capture button calls
-`capture_3d_view`, an app-only tool that posts an image `asset_id` of the current view into the
-conversation, reusable as a generation reference or a similarity `search` image. Never call
-`capture_3d_view` yourself.
+Hosts without MCP Apps get only the `app_url`. The viewer's capture button calls `capture_3d_view`,
+an app-only tool that posts an image `asset_id` of the current view into the conversation, reusable
+as a generation reference or a similarity `search` image. Never call `capture_3d_view` yourself.
 
 ## Refining meshes
 
@@ -176,7 +175,8 @@ usually goes further, each output's `asset_id` feeding the next `kind: "3d"` fie
 3. Retexture the unwrapped mesh from a prompt, an image, or a style reference.
 4. Rig last, on the topology that ships.
 
-Each later step is a `3d23d` `recommend` pick, priced per step 4. Along the chain:
+Each later step is a `3d23d` `recommend` pick, `dry_run` on its real input before launching. Along
+the chain:
 
 - **Retexture schemas.** Avoid a setting that rebuilds UVs, which discards the unwrap. Check the
   same `pbr` default (the Tripo texturing member defaulted to PBR at authoring time). When a schema
