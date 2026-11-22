@@ -176,9 +176,10 @@ over the billing period, and a cap below what a member has already spent stops t
    `parameters: {"team_id", "project_id", "level": "team", "add_models": [<missing ids>]}`; this is
    the call that needs the caller to be a team admin over OAuth (`context.userRole` on the
    `teams_list` row says whether they are). It lands them in every project too: tell the user first
-   (unattended, stop and report unless the task allows a team-wide change), and leave the other
-   projects alone unless asked. Then `level: "project"`, `projects: [<project id>]`: add any of the
-   three still missing, then remove every other id on `project.models`.
+   (unattended, unless the task allows a team-wide change, stop here and report the missing ids),
+   and leave the other projects alone unless asked. Only once the team list holds all three:
+   `level: "project"`, `projects: [<project id>]`, add any still missing, then remove every other id
+   on `project.models`.
 4. `scenario_tool_execute_read` with `name: "team_members_list"`: the two contractors' member ids.
    `scenario_tool_execute_write` with `name: "team_members_update"`,
    `parameters: {"team_id", "project_id", "member_ids": [<two ids>], "max_consumption": 2000}`. On
