@@ -40,16 +40,15 @@ schemas and flag the gap.
   default effort, a single-image Tripo generator 45. Past the plan's credits, each job's wait grows
   with its cost.
 
-1. Generate the concept: pick a text-to-image model via `recommend` with the user's own words as
-   `prompt`, then `model_schema_get` and `model_run`. Prompt a single centered subject on a plain
-   background. Show a non-biped creature at eye level, from the side or three-quarters, every leg
-   visible and clear of the body: top-down hides leg undersides and body height. A biped headed for
-   a rig takes the pose in Rigging and animation. Upload a user's reference with `upload_asset` and
-   pass its ID instead. Keep a reference on a plain background as is, and prefer it to a busy shot:
-   removal keeps a glossy subject's reflections of the scene, which image-to-3D bakes into the
-   texture. Remove a busy one's background first (`recommend` the removal) and pass that output. An
-   isolated subject matters, a transparent cutout does not, as an image field's `background_note`
-   says when present.
+1. Generate the concept: pick a text-to-image model via `recommend`, then `model_schema_get` and
+   `model_run`. Prompt a single centered subject on a plain background. Show a non-biped creature at
+   eye level, from the side or three-quarters, every leg visible and clear of the body: top-down
+   hides leg undersides and body height. A biped headed for a rig takes the pose in Rigging and
+   animation. Upload a user's reference with `upload_asset` and pass its ID instead. Keep a
+   reference on a plain background as is, and prefer it to a busy shot: removal keeps a glossy
+   subject's reflections of the scene, which image-to-3D bakes into the texture. Remove a busy one's
+   background first (`recommend` the removal) and pass that output. An isolated subject matters, a
+   transparent cutout does not, as an image field's `background_note` says when present.
 2. `recommend` with `capability="img23d"` and the user's own words as `prompt`. Live members include
    the Hunyuan 3D, Meshy, Tripo, and Trellis families, and several Scenario LLM-based members,
    priced far apart. The LLM-based members' schemas share `sceneFile`, `buildEffort`, `faceBudget`,
@@ -60,10 +59,10 @@ schemas and flag the gap.
      parts (a weapon, this chest), price one before decimating or hand modeling;
    - price by `buildEffort`: `standard`, `high` (the default), `maximum`;
    - cap triangles with `faceBudget`, whose default (250,000 at authoring time) is fine detail: set
-     it in step 3's game range;
+     it in step 3's game range, even off its `step` grid (9,000 and 15,000 ran at authoring time);
    - pick the delivered file on the run: `outputFormat` (`glb`, `fbx`, `obj`, `usdz`, `stl`, `ply`,
      `blend`; `auto` builds a GLB, or an FBX with quads) and `topology` (`triangles`, `quads`, or
-     `auto`, the member's choice). A Blender file always comes too;
+     `auto`, the member's choice);
    - change a result by editing it (see Refining meshes).
 3. `model_schema_get`: inspect image inputs, polycount, PBR, and topology controls. Target 10k to
    50k triangles for this prop; never assume defaults meet that budget. Use only exposed controls:
@@ -87,12 +86,13 @@ schemas and flag the gap.
    `pending_job_ids` remain. A downstream step (rig, retexture) has no payload to `dry_run` until
    its input mesh exists: quote it from `recommend`, then `dry_run` the real asset before launching.
 5. `asset_display` the output `asset_id`, then `asset_download` and
-   `curl -L -o chest.<format> "<url>"`. Omitting `format` returns the stored original byte for byte;
-   `format` converts to `glb`, `fbx`, or `obj`. LLM-based members store a Blender original. At
-   authoring time, `format` set to their `glb`, `fbx`, or `obj` `properties.format` (from
-   `asset_get`) returned the delivered file, not a conversion; others had no download. Ask for `fbx`
-   for a Unity project without a glTF importer, and keep the GLB too: at authoring time the FBX
-   embedded only two images, so it may miss PBR maps.
+   `curl -L -o chest.<format> "<url>"`. Omitting `format` returns the stored original; `format`
+   converts to `glb`, `fbx`, or `obj`. LLM-based members store a Blender original. At authoring
+   time, `format` set to their `glb`, `fbx`, or `obj` `properties.format` (from `asset_get`)
+   returned the delivered file, not a conversion; others had no download. Ask for `fbx` for a Unity
+   project without a glTF importer, and keep the GLB too: at authoring time the FBX embedded only
+   two images, so it may miss PBR maps. On LLM-based members, keep the Blender original: it held an
+   ORM map one's FBX and `glb` conversion lacked.
 
 **Prompt-only build.** When the user wants no concept to approve, skip step 1 and `recommend`
 `txt23d` in step 2: every LLM-based member supports it. Follow steps 3 to 5 with `images: []` on an
@@ -176,8 +176,7 @@ usually goes further, each output's `asset_id` feeding the next `kind: "3d"` fie
 3. Retexture the unwrapped mesh from a prompt, an image, or a style reference.
 4. Rig last, on the topology that ships.
 
-Each later step is a `3d23d` `recommend` pick, `dry_run` on its real input before launching. Along
-the chain:
+Each later step is a `3d23d` `recommend` pick, priced per step 4. Along the chain:
 
 - **Retexture schemas.** Avoid a setting that rebuilds UVs, which discards the unwrap. Check the
   same `pbr` default (the Tripo texturing member defaulted to PBR at authoring time). When a schema
@@ -242,7 +241,6 @@ skeleton: see `scenario-video`.
 
 - Running `model_run` without `model_schema_get`: 3D parameters differ widely between models.
 - Hardcoding model IDs: catalogs rotate (a `deprecated:<replacement_id>` tag names the successor).
-  Re-discover each session: `recommend` for a need, `search` for a name.
 - Promising a named skeleton, an influence count, or bones for wings and extra limbs the chosen
   member does not document: pick the closest body plan, then finish in a DCC.
 - Sending a biped to a `rigType` model: the enum has no biped value.
