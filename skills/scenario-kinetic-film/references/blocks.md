@@ -208,12 +208,14 @@ window and lands on its first frame as the window fills the screen.
 
 - The image cuts in along a slash (or zooms in), then pushes and pans with a slight 3D tilt.
 - It punches in on every word and hard-cuts in to details: `cutIns: [[beat, scale, [fx, fy], cue]]`,
-  positions 0 to 1 of the image.
+  positions 0 to 1 of the picture as the frame shows it (`background-size: cover`). For a 16:9
+  picture that matches the image; any other shape is cropped first, so read the point off a still.
   - `scale` (1.6 to 1.65 in kaiju-postal) and `[fx, fy]` have no default: set both. The picture
     zooms around that point, which keeps its place in the frame rather than moving to the center,
     then grows 14% per second until the next cut-in or the block's end.
-  - `cue` defaults to `hit` and always plays, at a fixed gain. `spec.sounds` levels a name for every
-    use, so a cut-in that needs its own level takes a sound name of its own, leveled there.
+  - `cue` defaults to `hit` and is always registered, at a fixed gain; it plays only when the kit
+    holds that sound or its fallback. `spec.sounds` levels a name for every use, so a cut-in that
+    needs its own level takes a sound name of its own, leveled there.
 - `words: [[beat, text, color]]` and `cutIns` count beats from the block's start, on its 8 nominal
   beats scaled to its span. In a block from 8 to 16, `[1, 'MONSTERS']` lands on beat 9.
 - A weather layer rides over it: `rain`, `snow`, `dust` (the default), or `null`. Only `rain` keeps
@@ -252,8 +254,10 @@ window and lands on its first frame as the window fills the screen.
   logo wipes on; without a logo file `wordmark` is typed.
 - The tagline and small line follow, then a slow push, drifting particles and a light sweep until
   the end.
-- With a sound kit, the music stops dead on beat 1 of this block, under the logo hit:
-  `music.stopBeat` is the block's start + 1. A music-only film leaves it unset (sound.md).
+- When the kit can play the logo hit (`logo_hit`, or its `impact_big` or `impact` fallback), the
+  music stops dead under it: `music.stopBeat` is the block's start + 1, the hit's beat when the
+  block spans its 11 beats (`validate.js` warns on another value). Otherwise leave it unset, as a
+  music-only film does (sound.md).
 - finish.py's motion gates stop at this block's start, or 4.5 s before the end when that is earlier.
 - The logo file is inlined, so main.js rebuilds it from SVG drawing elements first. Scripts,
   embedded HTML, event handlers and references to other hosts are dropped; `#id` and same-folder
