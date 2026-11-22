@@ -49,13 +49,13 @@ One silent rule runs through every texture control: an image beats text. On the 
 stricter: exactly one of `textStylePrompt`, `imageStyle`, or `multiviewImage` (1 to 4 views, first
 is the front). `textureResolution` runs 2k, 4k, or 8k; at 8k the PBR maps come back at 4K with no
 emission map (Meshy 7.1 never produces one), and 8k pairs only with triangle topology when
-remeshing. `poseMode` takes lowercase `"a-pose"` or `"t-pose"`: set one on any character headed for
-rigging.
+remeshing. `poseMode` takes lowercase `"a-pose"` or `"t-pose"`: set one on any biped headed for
+rigging. Both poses place arms, so leave it empty for a four-legged animal.
 
 ## Generate raw, refine on purpose
 
-Keep `shouldRemesh` off on Meshy 7.1 Image to 3D (the schema recommends it): take the raw mesh at
-generation, then control polycount with Remesh, which owns `targetPolycount`, topology,
+Leave `shouldRemesh` off on Meshy 7.1 Image to 3D (its default and the schema's advice): take the
+raw mesh at generation, then control polycount with Remesh, which owns `targetPolycount`, topology,
 `resizeHeight` in meters (0 keeps scale), and origin placement. On the generator, `targetPolycount`
 does nothing while `shouldRemesh` is off. `geometryResolution` buys finer geometry: `2k` and `4k`
 add an Ultra pass at extra cost, and `4k` accepts one input image only (Multi Image stops at `2k`).
@@ -74,7 +74,7 @@ animation library (ids listed at docs.meshy.ai/en/api/animation-library). The ac
 match `rigType`; quadruped actions were ids 1055 and up at authoring time.
 
 - Run Rigging alone for a rigged GLB to drive with your own clips. A quadruped rig already carries
-  walk and run clips, so an animal needing only those stops there.
+  walk and run clips: an animal that only walks or runs needs no `actionId` and no Animation job.
 - Go straight to Animation for one library clip, optionally setting `postProcessOperation` to
   `change_fps` (`postProcessFps` 24, 25, 30, or 60) or `extract_armature`.
 - `skeletonTemplate` (Mixamo, UE5 Mannequin, Unity Humanoid, and others) and `includeFingers` are
@@ -89,9 +89,9 @@ match `rigType`; quadruped actions were ids 1055 and up at authoring time.
    `model_meshy-7-1-img23d` (a live hit at authoring time: re-discover each session). `search` does
    not flag plan access, and several Meshy members, Animation and Rigging included, sat above the
    entry plans at authoring time. Before paying step 3, `recommend` with `capability="3d23d"` and
-   the animation need. If the Animation entry carries `requires_plan_upgrade`, surface the upgrade
-   or stop at the static mesh: step 5 would otherwise fail with a 403 naming the plan
-   (`ModelAccessRestrictedError`) after step 3 was billed.
+   the rig or animation need. If the Rigging or Animation entry you will run carries
+   `requires_plan_upgrade`, surface the upgrade or stop at the static mesh: step 5 would otherwise
+   fail with a 403 naming the plan (`ModelAccessRestrictedError`) after step 3 was billed.
 2. `model_schema_get` with that id, then `upload_asset` the character photo (see the `scenario`
    skill).
 3. `model_run` with `dry_run=true` and
