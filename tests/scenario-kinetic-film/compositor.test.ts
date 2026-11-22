@@ -5,7 +5,7 @@
 import { readFileSync } from "fs";
 import path from "path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { filmFolder, load, removeFilms } from "./film";
+import { ENGINE, filmFolder, load, removeFilms } from "./film";
 
 afterAll(removeFilms);
 
@@ -168,6 +168,29 @@ describe("a film built from the tour spec", () => {
     }
     // 18 film builds: about 1 s alone, 11.5 s on a CI runner shared with parallel modules and coverage
   }, 60000);
+
+  it("shows the invert layer while an invert runs, under index.html's stylesheet", () => {
+    // index.html once hid .inv with display none, and vis() only clears the inline style, so no
+    // `rgb: true` cut or slam `inverts` flash ever rendered
+    const html = readFileSync(path.join(ENGINE, "index.html"), "utf8");
+    const css = document.createElement("style");
+    css.textContent = html.match(/<style>([\s\S]*?)<\/style>/)![1];
+    document.head.appendChild(css);
+    try {
+      const inverts: [number, number][] = film.inverts;
+      expect(inverts.length).toBeGreaterThanOrEqual(3); // the rgb cut, and the slam's two
+      const shown = (t: number) => (
+        film.render(t),
+        getComputedStyle(film.invEl).display !== "none"
+      );
+      for (const [t0, dur] of inverts) {
+        expect(shown(t0 + dur / 2), `invert at ${t0}`).toBe(true);
+        expect(shown(t0 - 0.05), `before ${t0}`).toBe(false);
+      }
+    } finally {
+      css.remove();
+    }
+  });
 
   it("the HUD counts frames at the film's rate", () => {
     const hud = film.hud;

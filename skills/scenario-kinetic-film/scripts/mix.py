@@ -5,8 +5,9 @@ usage: mix.py <film folder> [--out out/mix.wav] [--lufs -14] [--no-music] [--kit
 Cues (whips, slams, typing, pops...) come from the film's own cue list (info.mjs, or --info). Sounds come
 from <film>/audio/sfx/: one file per kit name (whoosh.wav, impact.mp3...), variants name_1, name_2 rotate.
 The core kit is 12 sounds and every other cue name falls back to one of them. A custom sound (stomp.wav)
-plays on cues of its name from spec.cues, at the level set in spec.sounds. The music ducks under the big
-hits. Two-pass loudness normalization to the target, true peak -1 dBTP.
+plays on cues of its name from spec.cues, at the level set in spec.sounds. The music ducks under each hit that
+plays, custom sounds with a spec.sounds level included: with no kit at all, the mix is the music alone. Two-pass
+loudness normalization to the target, true peak -1 dBTP.
 """
 
 import argparse
@@ -92,10 +93,11 @@ def fade(x, n, up):
 
 
 def place_effects(info, kit, n):
-    """The effects track, how many cues of each name played, and the kit names that had no file."""
+    """The effects track, how many cues of each name played, the kit names that had no file, and the cues that
+    placed a sound."""
     levels = info.get("sounds") or {}
     sfx = np.zeros((n, 2), np.float32)
-    count, missing = {}, set()
+    count, missing, played = {}, set(), []
 
     def place(x, start, g):
         s = int(round(start * SR))
@@ -114,6 +116,8 @@ def place_effects(info, kit, n):
             if not k:
                 missing.add(names.split("|")[0])
                 continue
+            if not played or played[-1] is not c:
+                played.append(c)
             xs = kit.sounds(k)
             x, g = xs[i % len(xs)], gain * 10 ** (db / 20)
             if align == "loop":
@@ -133,7 +137,7 @@ def place_effects(info, kit, n):
             if "dur" in c and align == "onset":
                 x = fade(x[: int(c["dur"] * SR)].copy(), int(0.25 * SR), up=False)
             place(x, start, g)
-    return sfx, count, missing
+    return sfx, count, missing, played
 
 
 def music_bed(info, film, n):
@@ -158,11 +162,12 @@ def music_bed(info, film, n):
     return music, None
 
 
-def duck_curve(info, n):
-    """Gain under the music: dips to 0.5 under the biggest hits, 0.62 under other hits, back in 0.35 s."""
+def duck_curve(info, n, cues=None):
+    """Gain under the music: dips to 0.5 under the biggest hits, 0.62 under other hits, back in 0.35 s. `cues`
+    defaults to every cue; the mix passes only those that played a sound, so a silent cue never dips the music."""
     levels = info.get("sounds") or {}
     duck = np.ones(n, np.float32)
-    for c in info["cues"]:
+    for c in info["cues"] if cues is None else cues:
         if c["name"] in ("impact_big", "drop", "hit", "impact", "slash", "click", "logo_hit") or c["name"] in levels:
             s = int(c["t"] * SR)
             depth = 0.5 if c["name"] in BIG else 0.62
@@ -179,21 +184,22 @@ def rms_db(x):
 def build_mix(info, film, kit_dir, use_music=True):
     """(stereo mix before loudness normalization, report) for the film's cue list."""
     n = int((info["dur"] + 0.6) * SR)
-    sfx, count, missing = place_effects(info, Kit(kit_dir), n)
+    sfx, count, missing, played = place_effects(info, Kit(kit_dir), n)
     music, problem = music_bed(info, film, n) if use_music else (np.zeros((n, 2), np.float32), None)
-    duck = duck_curve(info, n)
+    duck = duck_curve(info, n, played)
     bed = music * duck[:, None]
     mix = (bed + sfx) * 10 ** (-6 / 20)
     levels = info.get("sounds") or {}
     weak = []
-    for c in info["cues"]:
+    for c in played:
         if c["name"] in HITS or c["name"] in levels:
             s0 = int(c["t"] * SR)
             s1 = s0 + int(0.15 * SR)
             d = rms_db(sfx[s0:s1]) - rms_db(bed[s0:s1])
             if d < 0:
                 weak.append(f"{c['name']}@{c['t']:.2f}s {d:+.1f} dB")
-    return mix, {"cues": sum(count.values()), "count": count, "missing": sorted(missing), "weak": weak, "music": problem}
+    return mix, {"cues": sum(count.values()), "count": count, "missing": sorted(missing), "weak": weak, "music": problem,
+                 "played": len(played)}
 
 
 def write_wav(path, x):
@@ -239,7 +245,10 @@ def main(argv=None):
     finally:
         os.remove(tmp)
     print(f"{out}: {report['cues']} cues, loudness target {a.lufs} LUFS")
-    if report["missing"]:
+    # only an empty folder is a music-only film: a kit whose files match no cue name still lists them below
+    if report["cues"] and not any(os.path.splitext(f)[1].lower() in AUDIO for f in glob.glob(os.path.join(kit, "*"))):
+        print(f"no sound kit in {kit}: a music-only mix, and the music does not duck")
+    elif report["missing"]:
         print("no file for these sounds (their cues are silent):", ", ".join(report["missing"]))
     if report["weak"]:
         print("hits quieter than the music (raise them in spec.sounds or lower music.gain):", "; ".join(report["weak"][:12]))
