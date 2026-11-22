@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.63.0](https://github.com/scenario-labs/skills/compare/skills-v0.62.0...skills-v0.63.0) (2026-11-22)
+
+
+### Features
+
+* **scenario-blender-animation:** measure foot slip on dense clips ([#358](https://github.com/scenario-labs/skills/issues/358)) ([bbcf395](https://github.com/scenario-labs/skills/commit/bbcf395cbfa22e2a923045d2d00201988ced9df7))
+* **scenario-blender-expert:** gate parts that stand on a ground plane ([932df75](https://github.com/scenario-labs/skills/commit/932df7551696a7c5c5381ad8be50f5214cedafc8))
+* **scenario-blender-rigging:** put a new body on an existing skeleton ([#360](https://github.com/scenario-labs/skills/issues/360)) ([cf3f0e5](https://github.com/scenario-labs/skills/commit/cf3f0e51febfa032fdbebaf2d52a450592241e94))
+* **scenario-blender-rigging:** robust garment weight transfer and a garment depth check ([#359](https://github.com/scenario-labs/skills/issues/359)) ([1338595](https://github.com/scenario-labs/skills/commit/13385958c76b956f1d4b3398e98a94479837d6f0))
+* **scenario-delete-restore:** delete safely and restore within 30 days ([31fe04f](https://github.com/scenario-labs/skills/commit/31fe04f80995f7191d1bddbf2bb7acd75c29a921))
+* **scenario-seedream:** route to Seedream 5.5 and retired successors ([0cb43a9](https://github.com/scenario-labs/skills/commit/0cb43a9d0c9ba72de8fe93b9dc5d206a26efdae3))
+* **scenario-video-to-motion:** capture performers hidden by others ([3fe4248](https://github.com/scenario-labs/skills/commit/3fe4248f5952daf823d0ff5bbdf5a59103dda4b0))
+
+
+### Bug Fixes
+
+* **scenario-3d:** set face budget and output format on LLM 3D runs ([766e7ef](https://github.com/scenario-labs/skills/commit/766e7ef0187524d410bc79e28e7c7739b3c9d637))
+* **scenario-blender-expert:** stop calling parts outside a thin shell enclosed ([#433](https://github.com/scenario-labs/skills/issues/433)) ([8907d39](https://github.com/scenario-labs/skills/commit/8907d390268a02d7d850bd9f9729814be96a26df))
+* **scenario-blender-rigging:** mirror _l/_r names in weight_report ([cf3f0e5](https://github.com/scenario-labs/skills/commit/cf3f0e51febfa032fdbebaf2d52a450592241e94))
+* **scenario-kinetic-film:** close the validation gaps ([d1265e1](https://github.com/scenario-labs/skills/commit/d1265e18fe8164c4c5c039ff67a39ae8f33ec5a4))
+* **scenario-kinetic-film:** close three gaps found by validation ([#432](https://github.com/scenario-labs/skills/issues/432)) ([5c0492a](https://github.com/scenario-labs/skills/commit/5c0492a7c923c9c2d41723d79e47cbbeae80aa2a))
+* **scenario-kinetic-music-video:** close four gaps found by validation ([#431](https://github.com/scenario-labs/skills/issues/431)) ([af157e1](https://github.com/scenario-labs/skills/commit/af157e13e2897b665bedfbe39e91a4f0cd9e4483))
+* **scenario-kinetic-music-video:** close the validation gaps ([648bad4](https://github.com/scenario-labs/skills/commit/648bad4b0ef4eee98c72428dc85e12af85128ca0))
+* **scenario-kling:** route to Kling V4 and skip deprecated members ([b9ca110](https://github.com/scenario-labs/skills/commit/b9ca11032dd8c66dbd1a14ae6ed886152a26e59e))
+* **scenario-meshy:** route to Meshy 7.1 and T2.5, rig quadrupeds ([099029a](https://github.com/scenario-labs/skills/commit/099029a0de26647bda29db1086eb2392f0747694))
+* **scenario-team-admin:** match current model access tools ([#450](https://github.com/scenario-labs/skills/issues/450)) ([db571fc](https://github.com/scenario-labs/skills/commit/db571fca39c982592a216f8bd69bc84eb1dd6874))
+* **scenario-workflow-authoring:** check CEL-built prompt length ([221ed89](https://github.com/scenario-labs/skills/commit/221ed89562795d4a7095c9530cf807062e7ad8d3))
+* **scenario:** recover from an upload completion refusal ([0bf119b](https://github.com/scenario-labs/skills/commit/0bf119bbb393d0342c8483560d8330fb4a8b34b4))
+* **scenario:** stop on a plan 403 instead of switching models ([1879dcc](https://github.com/scenario-labs/skills/commit/1879dccdfe49cfc64a2770a428717fdff7520e6d))
+* **skills:** budget on the dry-run quote, not cuCost ([8da0221](https://github.com/scenario-labs/skills/commit/8da022138ec69155f24e437ec904219c3d0ba802))
+
 ## [0.62.0](https://github.com/scenario-labs/skills/compare/skills-v0.61.0...skills-v0.62.0) (2026-11-11)
 
 
