@@ -9,7 +9,13 @@ A line before any section header is aligned with no section.
 --chant: that section's lines are counted, not aligned. Each vocal peak between the lines around the section becomes one chant
 word, up to as many words as the section's lines hold (all peaks to the next line when it has none).
 Method (what held up on sung vocals): faster-whisper large-v3 word timestamps on the Demucs vocal stem, sequence-matched onto the
-corrected lyrics, starts snapped to vocal onsets within 80 ms, then a fix for short first words pulled early by a held note.
+corrected lyrics. A start Whisper put in the silence before its note moves to where the vocal rises; starts then snap to vocal
+onsets within 80 ms, and a fix follows for short first words pulled early by a held note.
+Whisper runs with its VAD filter: without it, a song's silent 15 s intro drew a hallucinated "Thank you." and Whisper then
+skipped the rest of that 30 s window, sung lines included.
+transcribe prints on stderr each vocal stretch (the stem's envelope) of 3 s or more lying 2 s clear of any transcribed word:
+Whisper skipped it, or it holds none. A single skipped line between two heard ones is reported only when lyrics.txt holds it
+(align lists its words as unmatched): a sheet written from the transcript misses it, so check the plots between lines.
 align prints on stderr each lyric word with no exact transcript match, with the onset it was given: check those first.
 wav2vec/MMS forced alignment ran ~200 ms late on singing, so it is not used. Always eyeball the result with plot_lyrics.py."""
 import os, sys, json, re, difflib, argparse, numpy as np
@@ -32,17 +38,60 @@ def stem():
 def raw_paths(prompt):
     return ['analysis/lyrics_raw.json', f"analysis/lyrics_raw_{'hints' if prompt else 'plain'}.json"]
 
+VOCAL_LEVEL = 0.1   # the vocal envelope (1.0 = the stem's 99th percentile) over which the stem holds singing
+WORD_REACH = 2.0    # s: vocals this close to a transcribed word belong to it (breaths, held notes); runs merge over it
+LONE_MIN = 3.0      # s: a run of wordless vocals at least this long is reported
+
+
+SILENT = 0.06      # the vocal envelope under which the stem is silent (a breath, a rest)
+LOUD = 0.5         # ...and over which a note is sung
+GAP = 0.1          # s: a silence this long inside a word's span means Whisper started the word before its note
+
+
+def voiced_start(env, fps, s, e):
+    """Whisper can start a word in the silence before its note: three line starts in one song came 0.4 to 0.7 s early.
+    When a silence of GAP s or more separates s from the first loud stretch inside [s, e), the word starts where that
+    stretch rises. A word that starts softly and swells has no silence before its loud part, so it keeps s."""
+    # samples strictly before e: a loud one at e belongs to the next word, and moving there left a zero-length word
+    i0, i1 = int(round(s * fps)), min(len(env), int(np.ceil(e * fps)))
+    j = next((k for k in range(i0, i1) if env[k] >= LOUD), None)
+    if j is None: return s
+    k = j
+    while k > i0 and env[k - 1] >= SILENT: k -= 1
+    q = k
+    while q > i0 and env[q - 1] < SILENT: q -= 1
+    return k / fps if (k - q) / fps >= GAP else s
+
+def wordless_vocals(words):
+    """Stretches of vocal-stem activity, from engine/data/audio.json, with no transcribed word near them."""
+    path = 'engine/data/audio.json'
+    A = load_json(path) if os.path.isfile(path) else {}
+    if 'env' not in A: return []
+    env = np.array(A['env']['vocal']); t = np.arange(len(env)) / A['env_fps']
+    near = np.zeros(len(env), bool)
+    for w in words: near |= (t > w['s'] - WORD_REACH) & (t < w['e'] + WORD_REACH)
+    runs = []
+    for x in t[(env > VOCAL_LEVEL) & ~near]:
+        if runs and x - runs[-1][1] < WORD_REACH: runs[-1][1] = x
+        else: runs.append([x, x])
+    return [(a, b) for a, b in runs if b - a >= LONE_MIN]
+
 def transcribe(prompt):
     from faster_whisper import WhisperModel
     # Systran/faster-whisper-large-v3 at a fixed Hugging Face commit, not whatever main points to.
     m = WhisperModel('large-v3', device='cpu', compute_type='int8', revision='edaa852ec7e145841d8ffdb056a99866b5f0a478')
-    segs, _ = m.transcribe(stem(), language='en', word_timestamps=True, beam_size=5, condition_on_previous_text=False, initial_prompt=prompt or None, temperature=0)
+    segs, _ = m.transcribe(stem(), language='en', word_timestamps=True, beam_size=5, condition_on_previous_text=False, initial_prompt=prompt or None, temperature=0, vad_filter=True)
     out = []
     for s in segs:
         out.append({'start': s.start, 'end': s.end, 'text': s.text.strip(), 'words': [{'w': w.word.strip(), 's': round(w.start, 3), 'e': round(w.end, 3)} for w in s.words]})
         print(f'[{s.start:7.2f}-{s.end:7.2f}] {s.text.strip()}', flush=True)
     os.makedirs('analysis', exist_ok=True)
     for p in raw_paths(prompt): save_json(out, p, indent=1)
+    lone = wordless_vocals([w for s in out for w in s['words']])
+    if lone:
+        print(f'{len(lone)} vocal stretch(es) got no words: Whisper skipped them, or they hold none. Check them in '
+              'plot_lyrics.py, and write any sung lines there into lyrics.txt by hand:', file=sys.stderr)
+        for a, b in lone: print(f'  {a:7.2f}-{b:7.2f} s', file=sys.stderr)
 
 def align(path, chant=None, no_fix=()):
     A = load_json('engine/data/audio.json'); vo = np.array(A['vocal_onsets'])
@@ -73,11 +122,13 @@ def align(path, chant=None, no_fix=()):
     for i in range(len(C)):
         if T[i] is None:
             p = next((T[j] for j in range(i - 1, -1, -1) if T[j]), (0, 0)); T[i] = (p[1], p[1] + 0.25)
+    venv, vfps = np.array(A.get('env', {}).get('vocal') or []), A.get('env_fps', 60)
     for i, (li, wi, _) in enumerate(C):
         s, e = T[i]
+        if len(venv): s = voiced_start(venv, vfps, s, e)
         if len(vo):
             j = np.argmin(abs(vo - s))
-            if abs(vo[j] - s) < 0.08: s = float(vo[j])
+            if abs(vo[j] - s) < 0.08 and vo[j] < e: s = float(vo[j])  # an onset at the end is the next word's
         lines[li].setdefault('_w', []).append({'w': lines[li]['words'][wi], 's': round(s, 3), 'e': round(max(e, s + 0.06), 3)})
     unmatched = {(li, wi) for i, (li, wi, _) in enumerate(C) if i not in matched}
     out, guessed = [], []

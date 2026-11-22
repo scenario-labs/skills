@@ -100,12 +100,20 @@ export function vbvArgs(level) {
   return ["-maxrate", `${br}k`, "-bufsize", `${br / 4}k`];
 }
 
-// Encoder arguments for one chunk. At or below 1080p they are exactly the ones every earlier render used, so those files
-// stay byte-identical. Above it the level is pinned (a slower preset or a later x264 would signal more than 4K60 players
-// decode), its bitrate caps the encode, and x264 keeps to 4 threads (about 1.8 GB at 4K instead of 3.2).
+// Encoder arguments for one chunk. Canvas JPEGs decode full range, and -pix_fmt yuv420p alone kept that range on
+// ffmpeg 7 (yuvj420p): the scale filter converts to limited range, which players that ignore the range flag expect. Above
+// 1080p the level is pinned (a slower preset or a later x264 would signal more than 4K60 players decode), its bitrate
+// caps the encode, and x264 keeps to 4 threads (about 1.8 GB at 4K instead of 3.2).
 export function x264Args({ w, h, fps, crf = 16, scale = 1 }) {
   const head = ["-c:v", "libx264", "-preset", "medium", "-crf", String(crf)];
-  const tail = ["-pix_fmt", "yuv420p", "-r", String(fps)];
+  const tail = [
+    "-vf",
+    "scale=out_range=tv",
+    "-pix_fmt",
+    "yuv420p",
+    "-r",
+    String(fps),
+  ];
   if (!above1080p(w, h)) return [...head, ...tail];
   const level = h264Level(w, h, fps);
   const ok = fits(MAX, w, h, fps);

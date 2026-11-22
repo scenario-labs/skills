@@ -23,60 +23,87 @@ def word(w, s, e):
 
 
 class TranscribeTest(unittest.TestCase):
-    def test_writes_rounded_words_from_the_approved_stem_to_both_copies(self):
+    def transcribe(self, cwd, segments, audio, *prompts):
+        """Run transcribe once per prompt against a fake WhisperModel; return its calls, stdout and stderr."""
         spec = importlib.util.spec_from_file_location("lyrics_align_gaps", SCRIPT)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         calls = []
-
-        def w(text, s, e):
-            return types.SimpleNamespace(word=text, start=s, end=e)
 
         class WhisperModel:
             def __init__(self, *args, **kwargs):
                 pass
 
             def transcribe(self, path, **kwargs):
-                calls.append((path, kwargs["initial_prompt"]))
-                seg = types.SimpleNamespace(
-                    start=1.0, end=2.5, text="  Hello world ", words=[w(" Hello", 1.00049, 1.4), w(" world", 1.6, 2.5)]
-                )
-                return iter([seg]), None
+                calls.append((path, kwargs))
+                return iter(segments), None
 
-        fake = types.SimpleNamespace(WhisperModel=WhisperModel)
+        (cwd / "engine" / "data").mkdir(parents=True)
+        (cwd / "engine" / "data" / "audio.json").write_text(json.dumps(audio), encoding="utf-8")
+        (cwd / "stems" / "htdemucs" / "song").mkdir(parents=True)
+        (cwd / "stems" / "htdemucs" / "song" / "vocals.wav").write_bytes(b"")
+        out, err = io.StringIO(), io.StringIO()
+        here = os.getcwd()
+        os.chdir(cwd)
+        try:
+            with mock.patch.dict(sys.modules, {"faster_whisper": types.SimpleNamespace(WhisperModel=WhisperModel)}), \
+                    mock.patch.object(sys, "path", [str(SCRIPTS), *sys.path]), contextlib.redirect_stdout(out), \
+                    contextlib.redirect_stderr(err):
+                for prompt in prompts:
+                    mod.transcribe(prompt)
+        finally:
+            os.chdir(here)
+        return calls, out.getvalue(), err.getvalue()
+
+    @staticmethod
+    def seg(start, end, *words):
+        w = [types.SimpleNamespace(word=f" {x}", start=a, end=b) for x, a, b in words]
+        return types.SimpleNamespace(start=start, end=end, text=" ".join(x for x, _, _ in words), words=w)
+
+    def test_writes_rounded_words_from_the_approved_stem_to_both_copies(self):
+        segment = types.SimpleNamespace(start=1.0, end=2.5, text="  Hello world ", words=[
+            types.SimpleNamespace(word=" Hello", start=1.00049, end=1.4),
+            types.SimpleNamespace(word=" world", start=1.6, end=2.5)])
         with tempfile.TemporaryDirectory() as tmp:
             cwd = Path(tmp)
-            (cwd / "engine" / "data").mkdir(parents=True)
-            (cwd / "engine" / "data" / "audio.json").write_text(json.dumps({"master": "audio/song.mp3"}), encoding="utf-8")
-            (cwd / "stems" / "htdemucs" / "song").mkdir(parents=True)
-            (cwd / "stems" / "htdemucs" / "song" / "vocals.wav").write_bytes(b"")
-            out = io.StringIO()
-            here = os.getcwd()
-            os.chdir(cwd)
-            try:
-                with mock.patch.dict(sys.modules, {"faster_whisper": fake}), \
-                        mock.patch.object(sys, "path", [str(SCRIPTS), *sys.path]), contextlib.redirect_stdout(out):
-                    mod.transcribe("")
-                    mod.transcribe("Hervé")
-            finally:
-                os.chdir(here)
+            calls, out, err = self.transcribe(cwd, [segment], {"master": "audio/song.mp3"}, "", "Hervé")
             stem = str(Path("stems/htdemucs/song/vocals.wav"))
-            self.assertEqual(calls, [(stem, None), (stem, "Hervé")])
+            self.assertEqual([(p, kw["initial_prompt"]) for p, kw in calls], [(stem, None), (stem, "Hervé")])
             expected = [{"start": 1.0, "end": 2.5, "text": "Hello world",
                          "words": [word("Hello", 1.0, 1.4), word("world", 1.6, 2.5)]}]
             for name in ("lyrics_raw.json", "lyrics_raw_plain.json", "lyrics_raw_hints.json"):
                 self.assertEqual(json.loads((cwd / "analysis" / name).read_text(encoding="utf-8")), expected)
-            self.assertEqual(out.getvalue().splitlines(), ["[   1.00-   2.50] Hello world"] * 2)
+            self.assertEqual(out.splitlines(), ["[   1.00-   2.50] Hello world"] * 2)
+            self.assertEqual(err, "")
+
+    def test_runs_whisper_behind_its_vad_filter(self):
+        # without it, a 15 s silent intro drew a hallucinated "Thank you." and Whisper skipped that window's vocals
+        with tempfile.TemporaryDirectory() as tmp:
+            calls, _, _ = self.transcribe(Path(tmp), [], {"master": "audio/song.mp3"}, "")
+        self.assertIs(calls[0][1].get("vad_filter"), True)
+
+    def test_reports_sung_stretches_the_transcript_skipped(self):
+        fps = 60
+        env = [0.0] * (40 * fps)
+        for a, b in ((5.0, 5.5), (15.3, 28.0), (30.6, 37.0)):  # a 0.5 s breath far from any word, two blocks
+            env[int(a * fps):int(b * fps)] = [0.8] * (int(b * fps) - int(a * fps))
+        second = self.seg(30.6, 36.9, ("light", 30.6, 33.0), ("night", 33.2, 36.9))
+        with tempfile.TemporaryDirectory() as tmp:
+            _, _, err = self.transcribe(Path(tmp), [second], {"master": "audio/song.mp3", "env": {"vocal": env},
+                                                               "env_fps": fps}, "")
+        self.assertIn("1 vocal stretch(es) got no words", err)
+        self.assertEqual(err.splitlines()[1:], ["    15.30-  27.98 s"])
 
 
 class AlignTest(unittest.TestCase):
-    def align(self, lyrics, words, onsets, *args):
+    def align(self, lyrics, words, onsets, *args, vocal=None):
         with tempfile.TemporaryDirectory() as tmp:
             cwd = Path(tmp)
             (cwd / "engine" / "data").mkdir(parents=True)
             (cwd / "analysis").mkdir()
             (cwd / "engine" / "data" / "audio.json").write_text(
-                json.dumps({"vocal_onsets": onsets, "env": {}, "env_fps": 60}), encoding="utf-8")
+                json.dumps({"vocal_onsets": onsets, "env": {"vocal": vocal} if vocal else {}, "env_fps": 60}),
+                encoding="utf-8")
             (cwd / "analysis" / "lyrics_raw.json").write_text(
                 json.dumps([{"start": 0, "end": 0, "text": "", "words": words}]), encoding="utf-8")
             (cwd / "lyrics.txt").write_text(lyrics, encoding="utf-8")
@@ -85,6 +112,48 @@ class AlignTest(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             self.stderr = r.stderr
             return json.loads((cwd / "engine" / "data" / "lyrics.json").read_text(encoding="utf-8"))["lines"]
+
+    @staticmethod
+    def envelope(*spans, seconds=4.0):
+        """A 60 fps vocal envelope at 0.03 (silence) with each (start, end, level) span raised."""
+        env = [0.03] * int(seconds * 60)
+        for a, b, level in spans:
+            env[round(a * 60):round(b * 60)] = [level] * (round(b * 60) - round(a * 60))
+        return env
+
+    def test_a_start_whisper_put_in_the_silence_before_its_note_moves_to_the_note(self):
+        # a song's three line starts came 0.4 to 0.7 s early, in the silence before the note
+        # a word of five letters or more, so the held-note fix for short first words stays out of it
+        words = [word("burning", 1.0, 2.0), word("bright", 2.1, 2.5)]
+        (line,) = self.align("# section: verse\nburning bright\n", words, [1.62],
+                             vocal=self.envelope((1.6, 2.0, 0.9), (2.1, 2.5, 0.8)))
+        self.assertEqual([(w["w"], w["s"]) for w in line["words"]], [("burning", 1.62), ("bright", 2.1)])
+
+    def test_a_loud_note_at_the_words_end_belongs_to_the_next_word(self):
+        words = [word("burning", 1.0, 2.0), word("bright", 2.0, 2.5)]
+        (line,) = self.align("# section: verse\nburning bright\n", words, [],
+                             vocal=self.envelope((2.0, 2.5, 0.9)))
+        self.assertEqual([(w["w"], w["s"]) for w in line["words"]], [("burning", 1.0), ("bright", 2.0)])
+
+    def test_an_onset_at_the_words_end_never_takes_its_start(self):
+        # the rise at 1.95 s moves the start there, and the 80 ms snap would then take it to the onset at 2.0 s,
+        # the word's own end, exporting a word of zero length
+        words = [word("burning", 1.0, 2.0), word("bright", 2.0, 2.5)]
+        (line,) = self.align("# section: verse\nburning bright\n", words, [2.0],
+                             vocal=self.envelope((1.95, 2.5, 0.9)))
+        burning, bright = line["words"]
+        self.assertEqual((burning["s"], bright["s"]), (1.95, 2.0))
+        self.assertGreater(burning["e"], burning["s"])
+
+    def test_a_word_that_starts_softly_and_swells_keeps_its_start(self):
+        words = [word("hold", 1.0, 2.0)]
+        (line,) = self.align("# section: verse\nhold\n", words, [],
+                             vocal=self.envelope((1.0, 1.5, 0.2), (1.5, 2.0, 0.9)))
+        self.assertEqual(line["words"][0]["s"], 1.0)
+        # a breath under 0.1 s inside the word is not the silence before its note either
+        (line,) = self.align("# section: verse\nhold\n", words, [],
+                             vocal=self.envelope((1.0, 1.4, 0.3), (1.45, 2.0, 0.9)))
+        self.assertEqual(line["words"][0]["s"], 1.0)
 
     def test_starts_snap_to_a_vocal_onset_within_80_ms_only(self):
         words = [word("one", 1.0, 1.4), word("two", 1.5, 1.9)]
