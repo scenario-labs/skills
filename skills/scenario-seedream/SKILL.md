@@ -25,14 +25,16 @@ Seedream retires whole generations. Read each `search` hit's `tags` before routi
 - `Deprecated` marks a retired member: never route new work to it, even when `recommend` still ranks
   it or the user names it.
 - `deprecated:<model id>` names the successor: switch to that id and read its schema, since fields
-  differ.
+  differ. A job the successor does not document follows its lane below instead.
 - A bare `Deprecated` names none: pick the current member by lane below.
 - `sc:featured` marks the current flagship.
 
 At authoring time, 5.5 replaced 5.0 Flash, 5.5 Layerize replaced 5.0 Flash Layerize, and 4.0 and
-Dreamina 3.1 point to 5.0 Pro. 4.5 carries a bare tag: its edits go to 5.5 (Pro when a cutout must
-keep its alpha), its sequence sets to Lite. Tell the user which member runs instead of the one they
-named; unattended, run it and report the swap.
+Dreamina 3.1 point to 5.0 Pro. 4.5 carries a bare tag: its edits go to 5.5, its sequence sets to
+Lite. An alpha-keeping edit from 4.5 or 5.0 Flash goes to Pro, but only when the cutout is the sole
+reference (see Transparent output). Tell the user which member runs instead of the one they named.
+Unattended, run it only inside the task's budget or count, and report the swap; otherwise report the
+price and stop.
 
 ## Quick reference
 
@@ -50,7 +52,7 @@ At authoring time (fields and caps are per member, read the live schema):
   at about 6 CU and 30 s, against 9 CU and 86 s on 5.0 Pro, at authoring time.
 - **5.5 pixels**: the schema caps the total near 8.3 MP, but the catalog card says about 4.2 MP
   (2048x2048, 2560x1440). Treat 4.2 MP as the ceiling until a run confirms more.
-- **5.0 Pro**: when the user asks for it, or to keep an existing cutout's alpha through an edit.
+- **5.0 Pro**: when the user asks for it, or to keep one cutout's alpha through an edit.
   `optimizePromptMode` `standard` (default) reasons about the prompt first and is slower; `fast`
   costs the same and is usually enough when a reference sets the composition.
 - **5.0 Lite**: past 10 references, or a related set in one run: `sequentialImageGeneration: "auto"`
@@ -74,7 +76,8 @@ Two contracts, read from the schemas and not run-tested at authoring time:
 - **5.0 Pro**: `background: "transparent"` keeps an existing cutout transparent through an edit; it
   does not cut a subject out. It applies only with exactly one reference that already carries an
   alpha channel, and is ignored otherwise. It defaults to `opaque`, so a restyle that omits it
-  flattens the cutout.
+  flattens the cutout. With more references, run 5.5 with `background: "transparent"` instead, and
+  check the result.
 
 Check the alpha on the downloaded file, since `asset_display` composites transparency away. With
 Pillow (`uv run --with pillow` when it is missing), `Image.open(path).getchannel("A").getextrema()`
@@ -125,8 +128,8 @@ read 5.5's output metadata before compositing.
    `parameters={"prompt": "Concert poster, teal and cream, screen-print grain. Headline \"MIDNIGHT ORBIT\" across the top, date line \"Nov 14, Union Hall\" small at the foot.", "width": 1600, "height": 2368, "background": "opaque"}`;
    both sizing fields move price. Unattended, continue only inside the task's budget; otherwise
    report the price and stop.
-4. Rerun `model_run` with `wait=false`, then `jobs_wait` with the returned job id, re-called with
-   `pending_job_ids` on timeout, never a second `model_run`.
+4. Rerun `model_run` without `dry_run` and with `wait=false`, then `jobs_wait` with the returned job
+   id, re-called with `pending_job_ids` on timeout, never a second `model_run`.
 5. `asset_display` and proofread the rendered text.
 6. `model_schema_get` on the 5.5 Layerize hit, then `model_run` with that id, `dry_run=true`, and
    `parameters={"image": "<poster asset id>", "prompt": "Separate this poster into transparent layers: the headline text, the date line, and the background. Clean edges, complete transparency.", "size": "2K", "maxImages": 4}`.
