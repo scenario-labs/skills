@@ -61,6 +61,8 @@ working tree, so the run tests the version under review rather than the publishe
 SKILL="<name>"
 DIR=$(node scripts/lib/skills.mjs --dir "$SKILL")
 RUN=$(mktemp -d "${TMPDIR:-/tmp}/skill-validate-$SKILL-XXXXXX")
+# outside $RUN, where the tester may write its own result.json; mktemp makes it private (0600)
+RESULT=$(mktemp "${TMPDIR:-/tmp}/skill-validate-$SKILL-result-XXXXXX")
 mkdir -p "$RUN/.claude/skills" "$RUN/assets"
 cp -R skills/scenario "$RUN/.claude/skills/"
 case "$DIR" in
@@ -88,8 +90,8 @@ Then pick the strongest isolation available. If the Claude Code CLI is installed
   ```bash
   cd "$RUN" && claude -p --setting-sources user,project \
     --append-system-prompt "$(cat "$RUN/contract.md")" \
-    --allowedTools "mcp__<server> Read Write Bash" \
-    --output-format json "$(cat "$RUN/task.md")" | tee "$RUN/result.json"
+    --allowedTools "mcp__<server> Read Write Edit Bash" \
+    --output-format json "$(cat "$RUN/task.md")" < /dev/null | tee "$RESULT"
   ```
 
   Use the server name `claude mcp list` printed, normalized the way tool prefixes are: dots and
@@ -98,6 +100,12 @@ Then pick the strongest isolation available. If the Claude Code CLI is installed
   `--setting-sources user,project` (which a user-scope connector needs) also carries the user's
   plugins and hooks into it; watch the transcript for injected noise. A quarantined fork drops
   `Bash` from `--allowedTools`: its scripts run in the container.
+  - `Edit` lets the tester fix its own run files; without it, it ships defects it already found.
+  - `< /dev/null` keeps a stdin warning out of the JSON.
+
+- **Local-only expert run** (the task makes no Scenario call): no server is needed. Run with
+  `--setting-sources project`, drop `mcp__<server>` from `--allowedTools`, and name no team or
+  project in the task.
 
 - **Subagent** when the CLI is unavailable or the list has no connected Scenario server. Spawn a
   fresh agent with the contract, the task, and the run directory path (Claude Code can use its
@@ -158,8 +166,8 @@ Assemble the report with the template below. This repository is public: only pub
 language (see AGENTS.md), never a signed asset URL, which is a credential in itself, and never the
 team or project the run used. Assets travel as ids and local filenames. A run whose files never
 passed through Scenario (an expert tool working on local files) drops the Asset id, Job id and Model
-id columns and says the files were made locally. GitHub has no API for comment attachments, so
-images reach the thread only when a human drags them into the comment's edit box.
+id columns and says the files were made locally. GitHub has no API for comment attachments: files
+reach the thread when a human drags them into the comment's edit box, or from a gist (below).
 
 **In a PR context**, post it as a PR comment (`gh pr comment <n> --body-file` or the GitHub MCP
 `add_issue_comment`), ending with the attribution line, and print the comment URL. `--no-post`
@@ -169,8 +177,8 @@ prints the report here instead.
 skill covers the forms and the redaction rules), save it to a file, post it to a PR number they
 name, or leave it in this conversation. Post nothing until they pick.
 
-Finally, delete the run directory except `$RUN/assets/` (keep all of it with `--keep`). Save there
-any comparison image you built while grading: it backs a claim in the report.
+Finally, delete `$RESULT` and the run directory except `$RUN/assets/` (keep all of it with
+`--keep`). Save there any comparison image you built while grading: it backs a claim in the report.
 
 When `$RUN/assets/` holds files, end by recommending which to upload, if any, in a table of file,
 size, and the report claim it backs:
@@ -179,19 +187,46 @@ size, and the report claim it backs:
   a defect or a gate result, and one short delivered file a reader can play.
 - Leave out inputs, files a smaller pick already proves, and files past GitHub's attachment limits:
   10 MB for an image, and 10 MB for a video unless the repository's owner has a paid plan (100 MB).
+- Upload only files whose content is publicly shareable, like the report: both routes below publish
+  them, so nothing they show may be customer or internal data.
 
-Then ask whether to open the folder so the files can be dragged into the report comment, and open it
-(`open` on macOS, `xdg-open` on Linux) only on a yes.
+Then ask how to upload them:
 
-After the user says the files are uploaded, offer to format the comment. On a yes:
+- **Drag**: open the folder (`open` on macOS, `xdg-open` on Linux) so the user can drag the files
+  into the report comment.
+- **Gist**: when nobody can drag (no screen, a locked one), host them in a gist. It publishes the
+  files under the user's GitHub account, so take it only on their yes. `--no-post` publishes
+  nothing, so it skips this route.
+
+On the gist route:
+
+1. `gh gist create` refuses binary files: create the gist with a `README.md` naming the PR and each
+   file. It is secret (unlisted) by default, so it stays off the user's profile.
+2. A video serves as `application/octet-stream` and downloads instead of playing, so first make its
+   GIF preview beside it in `$RUN/assets/`, with ffmpeg's `palettegen` and `paletteuse` (12 fps at
+   480 pixels wide gave about 3 MB for a 5-second clip).
+3. Clone the gist over HTTPS (`gh gist clone` follows gh's `git_protocol`, and SSH can fail host-key
+   verification):
+   `git -c 'credential.helper=!gh auth git-credential' clone https://gist.github.com/<id>.git`. The
+   `-c` covers the clone only, so set the helper in the clone too
+   (`git config credential.helper '!gh auth git-credential'`). Copy the files in, GIFs included,
+   commit, and push.
+4. Link each file at its commit-pinned raw URL,
+   `https://gist.githubusercontent.com/<user>/<id>/raw/<sha>/<file>`, so a later push never changes
+   what the report shows. Check that each image serves `image/*` (`curl -sIL`). Inline a video's GIF
+   and link the video itself.
+
+Once the files are uploaded, format the comment: offer it after a drag, and do it on the gist route,
+where nothing reaches the comment otherwise. With no comment to update (a report kept out of
+GitHub), print the gist links under the report instead.
 
 1. Fetch its body with `gh api repos/<owner>/<repo>/issues/comments/<id> --jq .body`. Keep every
-   attachment URL GitHub inserted, and change nothing outside the attachment block.
-2. Move each attachment under the Evidence table, below a heading naming what it shows.
-3. Size each image with an `<img width="...">` tag, and replace the alt text GitHub derived from the
-   file name with a description.
-4. Leave each video URL alone on its line, with a one-line caption above it: GitHub renders a bare
-   URL on its own line as a player.
+   attachment URL GitHub inserted, and change nothing but the evidence.
+2. Place each file under the Evidence table, below a heading naming what it shows.
+3. Size each image with an `<img width="...">` tag, and give it alt text describing what it shows
+   (replace any GitHub derived from the file name).
+4. Leave each dragged video URL alone on its line, with a one-line caption above it: GitHub renders
+   a bare attachment URL on its own line as a player. A gist video gets its GIF and link instead.
 5. Update the comment with `gh api --method PATCH repos/<owner>/<repo>/issues/comments/<id>`,
    passing the new body as `-F body=@<file>`.
 

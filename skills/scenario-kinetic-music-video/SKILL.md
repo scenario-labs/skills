@@ -22,11 +22,11 @@ The work splits by tool:
 - **Sub-agents** give each section a dedicated designer. A shared style bible and a verification
   loop keep them coherent.
 
-Connection and the core generation loop: see the `scenario` skill in this repo. For a song-to-video
-cut without the engine, see `scenario-seedance-music-video`. If a sibling skill named here is
-missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
-install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
-and flag the gap.
+Connection and the generation loop: the `scenario` skill. For a song-to-video cut without the
+engine, see `scenario-seedance-music-video`. If a sibling skill named here is missing from your
+available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
+the gap.
 
 Read `references/lessons.md` before starting. `references/motion_library.md` is the design menu.
 
@@ -70,7 +70,8 @@ paid step and say what is missing.
 
 ### 1. Scaffold and analyze the song
 
-Run `bash <skill>/scripts/scaffold.sh <song>` inside a new project folder (macOS on Apple Silicon or
+No song yet: generate one at the length the video needs first (`references/pipeline.md` §2). Run
+`bash <skill>/scripts/scaffold.sh <song>` inside a new project folder (macOS on Apple Silicon or
 Linux x86_64 with glibc 2.28+: the Python lock covers those two), then follow
 `references/pipeline.md` §2:
 
@@ -166,7 +167,8 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   - Set `PAL` in `core.js`, and in `engine/timeline.js` set `CANVAS`, the sections on downbeats with
     their `energy`, `HUD` (title, mark, section codes, spine counters) and `POST` (neutral by
     default).
-  - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label.
+  - Write a tiny `_smoke.js`: plate → type behind the subject → matte → tracked label (graphics
+    only: backdrop → one word).
   - Render one still and a 5 s clip, then confirm audio and flashes line up with `av_sync_check.py`.
 - **Brief the agents.** Fill in `AGENTS_BRIEF.md` from the template, then launch one background
   agent per section in a single message. Each gets its file, time range, lyrics, must-have ideas and
@@ -218,11 +220,11 @@ Skip this for a graphics-only video, apart from any stills or 3D props. Otherwis
   `_16x9` and `_9x16`. Use distinct filenames, because macOS is case-insensitive.
 - **Checks:** run `delivery_check.py` last, on every file.
 - **Stills:** full-res PNGs rendered by the engine, never grabbed from the compressed video.
-- **Style sheet / making-of:** publish it as an artifact or doc: palette, type, subject sheet,
-  source-vs-final footage pairs, a frame index, the pipeline and iteration counts.
+- **Style sheet / making-of:** an artifact or doc (`references/pipeline.md` §8).
 - **Report:** tell the user what was verified, which lyrics you guessed, and the CU spent, summed
-  from this run's successful `jobs_wait` rows (`cuCost`, logged in `analysis/jobs.md`; a failed job
-  is refunded but its row keeps a `cuCost`); `usage` is project-wide and includes other work.
+  from the `dry_run` quotes of this run's charged jobs (successes, plus xAI moderation stops, per
+  `scenario`; logged in `analysis/jobs.md`). `cuCost` omits any quality-gate fee; `usage` is
+  project-wide and includes other work.
 
 ## Quality bar
 

@@ -84,7 +84,8 @@ smoothness, and at authoring time the values were roughness (a brushed brass map
 matte gray one), so the label is the trap, not the data: `asset_display` that map for a family whose
 finish you know before touching `roughness_is_smoothness` in the manifest, which inverts it when
 true. `asset_download` each map (PNG by default) into `textures/<family>/<role>.png`, and record
-prompt, seed, job id, asset ids, scope pair, and billed `cuCost` under the manifest's `provenance`.
+prompt, seed, job id, asset ids, scope pair, and the `dry_run` quote under the manifest's
+`provenance`.
 
 ## Applying in Blender
 

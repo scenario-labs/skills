@@ -55,7 +55,9 @@ Why this method:
   - on the video's canvas, read from its shape, and the `--variant` (default `a`), as `main.js`
     filters them;
   - an entry covered everywhere by a lower one (a lyrics layer, a flash overlay) is never a section;
-  - the HUD and entries ending at 9999 or later never are.
+  - the HUD and entries ending at 9999 or later never are. End a layer drawn under every scene (a
+    backdrop plate) at 9999 too: with a real end, it is the lowest entry everywhere and becomes the
+    only section.
 - `--only id,id` judges only those entries and skips the variant filter, as `render.mjs --only`
   does.
 - Each entry may set `energy`, by the section's role in the song, never by a word describing it (an

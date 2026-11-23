@@ -7,10 +7,10 @@ license: MIT
 # Blender rigging
 
 Expert rigging means the rig is specified by bone placement, proven by deformation under stress
-poses, and shaped around what the animator will actually use. The stance of every source expert:
-place joints precisely, generate or build the simplest mechanism that works, then pose it, measure
-it, render it and fix it before calling it done. If a sibling skill named here is missing from your
-available skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
+poses, and shaped around what the animator will use. The stance of every source expert: place joints
+precisely, generate or build the simplest mechanism that works, then pose it, measure it, render it
+and fix it before calling it done. If a sibling skill named here is missing from your available
+skills, load it with `skill_get` (Scenario MCP) or ask the user to install it
 (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
 the gap.
 
@@ -34,17 +34,20 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
   Data Transfer (CGDive; verified). They also leak across the crotch and armpits: strip .L weights
   from the right half.
 - **Weights are judged in motion, firm beats mushy.** Paint in pose or against a test animation;
-  limit each seam to 2 or 3 bones ("bones fighting for influence"); slight intersection is better
-  than rubbery transitions; rigid parts are assigned at 1.0, never painted (CGDive, Demeter, Dikko).
+  limit each seam to 2 or 3 bones ("bones fighting for influence"); slight intersection beats
+  rubbery transitions; rigid parts are assigned at 1.0, never painted (CGDive, Demeter, Dikko).
 - **Everything that deforms together gets weights from the same source,** transferred and applied,
-  so garments cannot drift while animating (Dikko, CGDive).
+  so garments cannot drift while animating (Dikko, CGDive). [added, measured] Nearest-face suits
+  parts that follow the skin; a part that hangs off it (skirt, coat tail, cape) takes
+  `garment_mapping="ROBUST"`, which copies only close, aligned skin and inpaints the rest (P15). It
+  applies to every garment in the `bind` call, and a tight one still copies whole.
 - **Export decides the deformation tools.** Four twist bones per segment instead of Preserve Volume;
-  Preserve Volume, Corrective Smooth and B-bones are Blender-only, which is why Rigify segments its
-  DEF bones (CGDive, Ivan).
+  Preserve Volume, Corrective Smooth and B-bones are Blender-only, hence Rigify's segmented DEF
+  bones (CGDive, Ivan).
 - **The animator is the client.** Cut features nobody uses, restrict only what breaks the rig, keep
   automated bones hand-animatable (constraint plus child, Mix Add, Transformation instead of
   drivers), stop when fit for purpose (Wayne Dixon, Demeter, CGDive).
-- **Faces are per-character hybrids.** There is no generic stylized face (Demeter); production faces
+- **Faces are per-character hybrids.** No generic stylized face exists (Demeter); production faces
   mix joints, ribbons, shape keys and lattices (Rik Schutte).
 
 ## Establish first
@@ -77,8 +80,9 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
    explained.
 3. **Fit.** Rigify: `meta = R.add_metarig("basic"|"human")`, `R.fit_metarig(meta, lm)` (joints as
    shared points, pre-bends, hinge rolls, left side symmetrized; hands and face by similarity,
-   coarse). Manual: build the deform skeleton with `new_bone` from the same landmarks. GATE:
-   `R.check_metarig(meta, body) == []` AND
+   coarse). Manual: build the deform skeleton with `new_bone` from the same landmarks. A body that
+   must share an existing skeleton (clips, an engine skeleton, other characters) still gets its own
+   rig and bind, then moves onto that skeleton (P16). GATE: `R.check_metarig(meta, body) == []` AND
    `R.placement_sheet([body, eyes], out, arm_obj=meta, views=("front","right","top"))` looked at;
    zoom the head with `center=`, `size=`.
 4. **Face (Rigify Human).** Fit, then `R.upgrade_face(meta)` (irreversible; eyelid follow Z 0.3,
@@ -96,9 +100,10 @@ Module: [`scripts/bx_rig.py`](scripts/bx_rig.py) (tested on 5.2.1, headless and 
    islands, clean and normalize, Armature after Mirror and before Subdivision. GATE: `rep["ok"]`,
    `unweighted == 0`, no non-deform groups; for export `max_influences=4`.
 7. **Range of motion.** `dr = R.deformation_report(rig, [body, *garments], R.RIGIFY_POSES)`,
-   `R.flag_report(dr)`, then `R.pose_sheet(...)` and `R.joint_sheet(...)` close-ups and LOOK at
-   them. GATE: no leaks, no unexplained collapse, renders acceptable at armpit, elbow, wrist twist,
-   groin, knee, collar.
+   `R.flag_report(dr)`, `R.garment_depth(rig, body, garments)` (skirts and coats: add P15's knee
+   lift), then `R.pose_sheet(...)` and `R.joint_sheet(...)` close-ups and LOOK at them. GATE: no
+   leaks, no unexplained collapse, no garment sinking into the body, renders acceptable at armpit,
+   elbow, wrist twist, groin, knee, collar.
 8. **Fix, in this order.** Placement or roll problems: back to the metarig and regenerate. Weights:
    targeted data edits (`strip_opposite_side`, `assign_rigid`, `smooth_weights` with a vertex mask,
    `clean_weights`). Volume at deep bends: corrective shape keys (`volume_restore_targets`,
@@ -174,11 +179,13 @@ export [verified], so the file looks complete.
 | Neck moved without the spine tip                    | "bone position is disjoint"               | move joints as units (`move_points`)    |
 | Straight knee or elbow                              | IK bends sideways or backward             | pre-bend in the bend view               |
 | Parented to the metarig                             | mesh follows nothing useful               | bind to the generated rig               |
+| A body for shared clips left on its own skeleton    | the shared clips do not play on it        | bind, then move it onto the names (P16) |
 | Heat failure unnoticed                              | mesh does not move                        | `weight_report`; proxy route            |
 | Armature below Subdivision, or before Mirror        | slow; mirrored half copies the posed half | `armature_first`                        |
 | Left thigh weights on the right leg                 | opposite side moves                       | `strip_opposite_side`                   |
 | Eyes and teeth auto-weighted                        | drift, poke through                       | `assign_rigid`                          |
 | Live Data Transfer on clothes                       | weights change while animating            | apply it                                |
+| A loose skirt bound like a close-fitting garment    | it tears between the legs                 | `garment_mapping='ROBUST'`              |
 | Driver on an animatable bone                        | channel cannot be keyed                   | Transformation or Copy Rotation Mix Add |
 | Inherit Rotation off for isolation                  | root rotation breaks the limb             | follow bones (World Copy Loc/Rot/Scale) |
 | IK target parented inside its chain                 | jitter, flips                             | clear parent; `static_cycles`           |

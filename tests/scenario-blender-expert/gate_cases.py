@@ -5,12 +5,14 @@ Run by test_live_gate.py:
 """
 
 import json
+import math
 import os
 import sys
 
 import bmesh
 import bpy
 from mathutils import Matrix, Vector
+from mathutils.geometry import tessellate_polygon
 
 SCRIPTS, OUT, TMP = sys.argv[sys.argv.index("--") + 1:][:3]
 sys.path.insert(0, SCRIPTS)
@@ -42,6 +44,35 @@ def box(name, dims, loc, scale=(1, 1, 1), flip=False, uv=True, material=True, ex
     ob = bpy.data.objects.new(name, me)
     bpy.context.scene.collection.objects.link(ob)
     ob.location, ob.scale = loc, scale
+    return ob
+
+
+def fender(name):
+    """A closed 2.5 mm body panel, 1.6 by 0.7, cut by a wheel arch that wraps past half a circle,
+    so the panel ends in a sharp tip either side of the opening."""
+    thick, radius, cz, seg = 0.0025, 0.35, 0.3, 48
+    tip = math.sqrt(radius ** 2 - cz ** 2)
+    a0, a1 = math.atan2(-cz, -tip) % (2 * math.pi), math.atan2(-cz, tip)
+    arch = [(radius * math.cos(a0 + (a1 - a0) * i / seg), cz + radius * math.sin(a0 + (a1 - a0) * i / seg))
+            for i in range(seg + 1)]
+    outline = [(-0.8, 0.0)] + arch + [(0.8, 0.0), (0.8, 0.7), (-0.8, 0.7)]
+    me = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    back = [bm.verts.new((x, -thick / 2, z)) for x, z in outline]
+    front = [bm.verts.new((x, thick / 2, z)) for x, z in outline]
+    for i, j, k in tessellate_polygon([[Vector((x, z, 0.0)) for x, z in outline]]):
+        bm.faces.new((back[k], back[j], back[i]))
+        bm.faces.new((front[i], front[j], front[k]))
+    for i in range(len(outline)):
+        j = (i + 1) % len(outline)
+        bm.faces.new((back[i], back[j], front[j], front[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    me.uv_layers.new(name="UVMap")
+    me.materials.append(bpy.data.materials.new("M_" + name))
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.scene.collection.objects.link(ob)
     return ob
 
 
@@ -117,6 +148,14 @@ box("Post", (0.2, 0.2, 1.0), (0, 0, 0.5))
 box("Rail", (1.5, 0.04, 0.08), (0.5, -0.1201, 0.7))
 box("Beam", (2.0, 0.06, 0.1), (0.8, 0.05, 1.0501))
 cases["crossing"] = gate(["Post", "Rail", "Beam"])
+
+# A plate in the wheel arch of a 2.5 mm panel, 10 cm from the arch's sharp tip. The tip is the
+# panel's nearest point, and the face BVHTree.find_nearest returns there can look away from the
+# plate: the plate floats, it is not enclosed. The core above still is.
+empty()
+fender("Fender")
+box("Plate", (0.01, 0.002, 0.01), (0.08, 0, 0.03))
+cases["beside_thin_shell"] = gate(["Fender", "Plate"])
 
 empty()
 box("Mirror", (1, 1, 1), (0, 0, 0.5), scale=(-1, 1, 1))
@@ -277,6 +316,38 @@ empty()
 box("Base", (1, 1, 1), (0, 0, 0.5))
 box("Speck", (1e-6, 1e-6, 1e-6), (0, 0, 1.0))
 cases["speck_under_the_weld"] = gate(["Base", "Speck"])
+
+# Pieces that each stand on the floor, one sunk 5 cm into it: given the ground they stand
+# together, and a part off the floor floats even when it is the largest.
+empty()
+box("StoneA", (0.4, 0.3, 0.2), (-1, 0, 0.1))
+box("StoneB", (0.3, 0.3, 0.2), (1, 0, 0.05))
+cases["stones"] = gate(["StoneA", "StoneB"])
+cases["stones_ground"] = bx_audit.deliverable(["StoneA", "StoneB"], ground=0.0)
+box("Board", (2.0, 0.05, 1.0), (0, 0.5, 1.5))
+cases["board_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Board"], ground=0.0)
+# A part wholly under the floor does not stand on it, and a ground no part reaches warns.
+box("Stray", (0.2, 0.2, 0.2), (0, 0, -10))
+cases["stray_ground"] = bx_audit.deliverable(["StoneA", "StoneB", "Stray"], ground=0.0)
+cases["stones_ground_missed"] = bx_audit.deliverable(["StoneA", "StoneB"], ground=5.0)
+cases["one_part_ground"] = bx_audit.deliverable(["StoneA"], ground=0.0)
+cases["one_part_ground_missed"] = bx_audit.deliverable(["StoneA"], ground=5.0)
+
+
+def cli(*args):
+    """Exit code of the bx_audit CLI run on the open scene."""
+    argv, sys.argv = sys.argv, ["blender", "--", *args]
+    try:
+        bx_audit._cli()
+    except SystemExit as stop:
+        return stop.code
+    finally:
+        sys.argv = argv
+    return None  # the CLI must exit with a code: None fails the test
+
+
+cases["cli_ground"] = {flag: cli("--deliverable", "--objects", "StoneA", "StoneB", *extra)
+                       for flag, extra in (("without", ()), ("with", ("--ground", "0")))}
 
 with open(OUT, "w") as f:
     json.dump(cases, f, indent=1)

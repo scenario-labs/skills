@@ -115,7 +115,8 @@ are `array: true`, where a bare id is silently dropped and the run succeeds havi
 
 ## Worked example: grade a key art, then export at size
 
-1. `upload_asset` the file, then `upload_asset_complete` unless it went inline under ~100KB.
+1. `upload_asset` the file, then `upload_asset_complete` unless an inline upload under ~100KB
+   returned the asset.
 2. Reshape first: Resize Image to the delivery size, with `images` as an array even for the one
    file.
 3. `model_schema_get` on `model_scenario-postprocessing-lut` (a fixed first-party id: Scenario's

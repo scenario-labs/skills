@@ -173,15 +173,17 @@ Working in Unreal Engine, Unity, or Godot? Add the expert tools for it:
 
 ### Producer
 
-The right model at the right cost, and spend under control. 9 skills.
+The right model at the right cost, and spend under control. 11 skills.
 
 - **Model Bake-Offs With Cost** (`scenario-model-comparison`). Try: "Compare three image models on
   this brief, with quality and credit cost side by side."
 - **Team Budgets** (`scenario-admin-analytics`, `scenario-team-admin`, `scenario-task-tracking`).
   Try: "Show last month's credit use by project, and cap each freelancer's spend."
+- **Cleanup and Undo** (`scenario-delete-restore`). Try: "Delete last sprint's rejected drafts, then
+  bring back the LoRA I deleted by mistake."
 
 ```bash
-npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-model-comparison scenario-admin-analytics scenario-team-admin scenario-task-tracking scenario-video-editing scenario-refine-loop
+npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-model-comparison scenario-admin-analytics scenario-team-admin scenario-task-tracking scenario-video-editing scenario-refine-loop scenario-delete-restore scenario-asset-analysis
 ```
 
 ### Game Developer

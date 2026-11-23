@@ -1,12 +1,20 @@
 // The node scripts without a browser: finding Playwright, the shutter window, info.mjs's verdict, snap
 // times, and the usage messages render.mjs and snap.mjs print before they load anything.
 import { spawnSync } from "child_process";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "fs";
 import os from "os";
 import path from "path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import {
   findPlaywright,
+  launch,
   MISSING,
   playwrightBases,
 } from "../../skills/scenario-kinetic-film/scripts/browser.mjs";
@@ -63,6 +71,63 @@ describe("findPlaywright", () => {
   it("says how to install it", () => {
     expect(MISSING).toMatch(/npm ci/);
     expect(MISSING).toMatch(/npx playwright install chromium/);
+  });
+});
+
+// a Playwright whose chromium.launch records its options, and fails for the chrome channel when chrome is false
+function fakeLauncher(name: string, chrome: boolean) {
+  const dir = path.join(tmp, name);
+  mkdirSync(path.join(dir, "node_modules", "playwright"), { recursive: true });
+  writeFileSync(
+    path.join(dir, "node_modules", "playwright", "index.js"),
+    `module.exports = { chromium: { launch: async (o) => {
+      if (o.channel === "chrome" && !${chrome}) throw new Error("Chromium distribution 'chrome' is not found\\nmore");
+      return { opts: o };
+    } } };`,
+  );
+  return dir;
+}
+
+describe("launch", () => {
+  const filmDir = process.env.FILM_DIR;
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (filmDir === undefined) delete process.env.FILM_DIR;
+    else process.env.FILM_DIR = filmDir;
+  });
+
+  it("launches Google Chrome and says so on stderr", async () => {
+    process.env.FILM_DIR = fakeLauncher("with-chrome", true);
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const b = (await launch()) as { opts: { channel?: string } };
+    expect(b.opts.channel).toBe("chrome");
+    expect(err.mock.calls).toEqual([["browser: Google Chrome"]]);
+    expect(log).not.toHaveBeenCalled();
+  });
+
+  it("falls back to Playwright's Chromium and says why on stderr", async () => {
+    process.env.FILM_DIR = fakeLauncher("without-chrome", false);
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const b = (await launch()) as { opts: { channel?: string } };
+    expect(b.opts.channel).toBeUndefined();
+    expect(err.mock.calls).toEqual([
+      [
+        "browser: Playwright's Chromium (Google Chrome did not launch: Chromium distribution 'chrome' is not found)",
+      ],
+    ]);
+    expect(log).not.toHaveBeenCalled();
+  });
+});
+
+describe("the film page", () => {
+  it("declares an inline icon, so Chromium requests no /favicon.ico", () => {
+    const page = readFileSync(
+      path.join(SCRIPTS, "..", "assets", "engine", "index.html"),
+      "utf8",
+    );
+    expect(page).toMatch(/<link rel="icon" href="data:,">/);
   });
 });
 
@@ -165,8 +230,10 @@ describe("snap.mjs times", () => {
     expect(toSeconds("b4", 120)).toBe(2);
     expect(toSeconds("b12.5", 172)).toBeCloseTo((12.5 * 60) / 172, 12);
     expect(toSeconds("soon", 120)).toBeNaN();
-    expect(stillName(2)).toBe("t_002.00.png");
-    expect(stillName(45.678)).toBe("t_045.68.png");
+    expect(stillName(2)).toBe("t_002.000.png");
+    expect(stillName(45.678)).toBe("t_045.678.png");
+    // one 60 fps frame apart: two decimals gave both t_001.52.png, and the second overwrote the first
+    expect(stillName(1.5167)).not.toBe(stillName(1.5167 + 1 / 60));
   });
 });
 

@@ -41,11 +41,10 @@ Two tool kinds:
 ## Scope first
 
 - Pass `team_id` and `project_id` on every call.
-- A team is the organization (company or studio account) holding projects. "My organization" or "my
-  studio" names it.
+- A team is the organization holding projects. "My organization" or "my studio" names it.
 - `teams_list` returns the teams with their projects. `projects_list` needs a `team_id`.
 - Confirm the pair with the user: a guess writes into someone else's project. Unattended, take the
-  task's pair, else stop and list them.
+  task's pair, else stop and list.
 - The server fills scope only for read-only tools with one candidate, so an omission fails once a
   second team or project appears. The error names the wrong half.
 
@@ -58,7 +57,7 @@ Two tool kinds:
 | Get the schema    | `model_schema_get`                       | Always before `model_run`; check `runs_as` and caps                          |
 | Generate          | `model_run`                              | Schema-conformant `parameters`; `dry_run` for cost                           |
 | Wait              | `jobs_wait`                              | Whenever `model_run` returns a `job_id` without assets; never loop `job_get` |
-| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs; `format` converts images, meshes                 |
+| View / save       | `asset_display` / `asset_download`       | Never paste raw asset URLs                                                   |
 | Inspect an asset  | `asset_get`                              | Free; dimensions, duration, `firstFrame` / `lastFrame` ids                   |
 | Upload inputs     | `upload_asset` + `upload_asset_complete` | Local files become asset_ids                                                 |
 | Refine a prompt   | `prompt_spark`                           | Advisory rewrite; needs `model_id`                                           |
@@ -98,14 +97,15 @@ A stylized game prop image:
    LoRA's own, not its base) and the draft `prompt`. Skip deliberate prompts.
 5. `model_run` with `model_id` and schema-conformant `parameters`.
    - Unless the user says cost does not matter, price first with `dry_run: true`, top level beside
-     `model_id`. No job is created; `creativeUnitsCost` prices this exact payload.
-   - A `recommend` quote assumes defaults; `cost_impact` fields move the real number.
+     `model_id`. No job is created; `creativeUnitsCost` prices this exact payload: budget by it.
+   - A `recommend` quote is a p50 of past runs.
    - Run: inline assets (`status: success`) need no wait; otherwise pass `job_id` to `jobs_wait`.
    - Unfinished status: `in_progress` after a timed-out wait; with `wait=false`, `queued`,
      `in-progress`, or `warming-up`. All need `jobs_wait`.
-   - A 429: stop launching and find its class under Errors and recovery before the next call.
+   - A 429: stop launching and find its class under Errors and recovery.
 6. `jobs_wait` with `job_ids=[...]` (up to 32).
-   - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up.
+   - Each completed row carries `assetIds` and `cuCost`: no `job_get` follow-up. `cuCost` omits any
+     quality-gate fee a project charges: sum charged jobs' quotes, else project-wide `usage`.
    - On timeout (`in_progress`), re-call with `pending_job_ids` as `job_ids`; never re-run or
      cancel. No timeout argument exists.
    - Failed jobs are reimbursed, except xAI generations stopped by moderation.
@@ -113,8 +113,7 @@ A stylized game prop image:
    - `display` (default): inline image, links, viewer data; does not disable the host widget.
    - `viewer`: lighter payload for hosts rendering the interactive widget.
    - `json`, `markdown`: metadata and links.
-8. `asset_download` returns a file URL, one call per asset; save it with `curl -L` (it may
-   redirect).
+8. `asset_download` returns a file URL, one call per asset; save it with `curl -L`.
    - `format` converts images (`png`, `webp`, `jpg`; `gif` keeps an animated GIF animated, while the
      `png` default flattens it to one frame) and meshes (`glb`, `fbx`, `obj`). Omit it for video and
      audio, or it fails with 400 `Invalid target format`.
@@ -135,24 +134,26 @@ Local inputs go up with `upload_asset`:
   and `instructions`.
 - PUT each part's raw bytes to its URL with no added headers: a checksum header makes the store
   answer 403. Check every PUT returned 200, then `upload_asset_complete` with the `upload_id`.
-- Inline base64 `data` only under 100KB, and only when no shell can PUT parts. It returns the asset
-  directly, with no complete step; a larger file is rejected, naming the cap.
-- Both calls take scope and nothing else: no parts list, no etags.
+- Inline base64 `data` only under 100KB (enforced) and when no shell can PUT parts. It returns the
+  asset, or an `upload_id` (`timeout`, `in_progress`) to resume with `upload_asset_complete`.
+- Both calls take scope only: no parts list, no etags.
 - Inline `data` is decoded inside `upload_asset`: a decode error there (`libpng read error`,
   `Corrupt JPEG data`, `unable to read pixels`) means the base64 string broke, not the file.
-  - The agent retypes every `data` character; a 57K-character string broke.
+  - The agent retypes every `data` character, so a long string breaks.
   - Re-sending it repeats the error. With a shell, switch to the `file_size` path, even when the
     user asked for inline, and say why.
-- On the `file_size` path the server decodes at completion: `Upload upl_… failed:` with
-  `Corrupt JPEG data`, `premature end of data segment`, `bad Huffman code`, or `libpng read error`
-  means it could not.
-  - Check for a corrupt source, a truncated or re-encoded body, a missing part, or a wrong
-    `file_size`.
-  - Confirm the local file opens under its declared content type, then start over with a fresh
-    `upload_asset` and raw PUTs. Never re-complete the same `upload_id`.
-- A phone's HEIC photo uploads as is (`content_type: "image/heic"`): do not convert it.
-  `Unhandled image format` lists what `kind: "image"` accepts; convert any other type locally.
-- Without a shell, the user uploads at app.scenario.com; continue from the asset id.
+- Re-completing an `upload_id` never clears a completion error. Find the cause, then restart with a
+  fresh `upload_asset`:
+  - `Unable to complete upload` (400): the store got no usable part. A PUT was skipped, failed, sent
+    added headers, or hit egress policy (see `asset_download`). Confirm every PUT returned 200. A
+    blocked PUT means no shell: inline `data` under 100KB, else the app.
+  - `Upload upl_… failed:` with `Corrupt JPEG data`, `premature end of data segment`,
+    `bad Huffman code`, or `libpng read error`: confirm the file opens under its content type; check
+    for a truncated or re-encoded body, a missing part, or a wrong `file_size`.
+- A phone's HEIC photo uploads as is (`content_type: "image/heic"`). `Unhandled image format` lists
+  what `kind: "image"` accepts; convert any other type locally.
+- Without a shell, the user uploads at app.scenario.com (unattended: report and stop); continue from
+  the asset id.
 
 Filing is part of delivering:
 
@@ -168,7 +169,7 @@ Filing is part of delivering:
 Reusable templates and reference content follow the
 [shared asset lifecycle](references/shared-assets.md): resolve existing assets, stage new versions,
 publish only through a supported operation, and verify public access before recording public ids.
-Uploading and filing alone are not publication.
+Uploading and filing are not publication.
 
 ## Errors and recovery
 
@@ -183,9 +184,9 @@ Uploading and filing alone are not publication.
   - run catalog `asset_copy` (write lane) with that project as `project_id`, plus `asset_id` and
     `target_project_id`;
   - use the returned id. `asset_copy` copies only between projects of one team.
-- **403 naming a plan**: surface the upgrade or switch models; a retry never clears it. `recommend`
-  pre-flags these as `requires_plan_upgrade` (never run one) unless its response says plan gating is
-  `_degraded`; then this entry is the backstop.
+- **403 naming a plan**: never retry; relay its upgrade step; switch models or tools only if the
+  user (unattended: the task) agrees. `recommend` flags these `requires_plan_upgrade` (never run
+  one) unless its response says gating is `_degraded`.
 - **429 with `details.actionName` = `parallel-custom-jobs`**: the per-team generation concurrency
   ceiling. Keep at most `actionLimit` jobs in flight: launch with `wait=false`, and retire jobs with
   `jobs_wait` before launching more. An immediate retry repeats the error.
@@ -216,13 +217,13 @@ Uploading and filing alone are not publication.
   safely.
 - **400 `Cannot cancel this type of job`**: `job_cancel` rejects most generation jobs, so plan
   batches with no abort path.
-- **404 on `asset_get`**: a guessed or mistyped id; no retry fixes it. Re-read `assetIds` off the
-  `jobs_wait` or `job_get` row.
+- **404 on `asset_get`**: a guessed or mistyped id. Re-read `assetIds` off the `jobs_wait` or
+  `job_get` row.
 - **400 `At least one of query, filter, image, or images must be provided`**: `search` never lists
   bare. A newest-first asset listing is `target="assets"`, `filter="createdAt EXISTS"`,
   `sort_by=["createdAt:desc"]`.
-- **`recommend` client-side timeout**: it commonly runs 30 seconds to over a minute. Wait or re-call
-  it; never fall back to `search` for a capability.
+- **`recommend` client-side timeout**: it runs 30 seconds to over a minute. Wait or re-call it;
+  never fall back to `search` for a capability.
 - **`recommend`: `Provide a prompt describing the task…`**: re-send the need as `prompt`, not
   `query` or another key (silently dropped), plus `capability` when known.
 
@@ -240,7 +241,7 @@ Uploading and filing alone are not publication.
     not override `no_match`.
   - `ask_user`: present the options; the user's pick wins (unattended: the task, else `proceed`).
   - `proceed`: prefer `specialty.model_id`, else the first `ranked` entry not marked deprecated in
-    its `caveats`, `tradeoff`, or `explanation`. The ranking measures performance, not lifecycle.
+    its `caveats`, `tradeoff`, or `explanation`.
 - Debugging blind: the `diagnose` MCP prompt returns trace ids, as does `diagnostics_run` with the
   failing call's scope pair and any `mcpt_` ids seen as `observed_trace_ids`.
 - Guessing a file field's name: 400 `Input image is required` (or `referenceImages`, `startImage`,
@@ -249,9 +250,8 @@ Uploading and filing alone are not publication.
 - Feeding an image field a video, audio, or 3D asset: 400 `Unhandled image format` lists the
   accepted types. `asset_get` reports the asset's `mimeType`; pull a still with the clip's
   `firstFrame` when the model wants an image.
-- `filters.kind` on `search` with `target="models"`: a 400 `"kind" is not a filterable field`, since
-  `kind` describes assets. Narrow models by `filters.type` (architecture) or `tags`, or `recommend`
-  a capability.
+- `filters.kind` on `search` with `target="models"`: a 400 `"kind" is not a filterable field`.
+  Narrow models by `filters.type` (architecture) or `tags`, or `recommend` a capability.
 - Filtering `models_list` by `type` without `privacy: "public"`: a 400 says so. A private listing
   narrows by `status` or `modality`, or goes through `search` (private by default).
 

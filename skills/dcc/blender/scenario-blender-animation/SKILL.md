@@ -110,10 +110,10 @@ images, one-object `bouncing_ball`; API in procedures.md, tested on 5.2.1) and
    Keys an engine or capture app reads by name (ARKit, visemes): scenario-blender-rigging's
    `shape_report` before keying. GATE: `transitions` meets those counts; accents clearly fewer than
    syllables.
-8. **Polish.** `foot_slip` under 1 mm, `lowest_point` for penetration, `rotation_flips` empty
-   (`fix_rotation_flips`), `limb_extension` under 0.99 wherever the leg should stay bent, smears 1
-   frame (Pablo), burst spacing only now (Raymond), subdivision on. GATE: critique.md rubric passes
-   on the final playblast, onion skin and graph image.
+8. **Polish.** `foot_slip` under 1 mm (dense keys: `foot_contacts`, P19), `lowest_point` for
+   penetration, `rotation_flips` empty (`fix_rotation_flips`), `limb_extension` under 0.99 wherever
+   the leg should stay bent, smears 1 frame (Pablo), burst spacing only now (Raymond), subdivision
+   on. GATE: critique.md rubric passes on the final playblast, onion skin and graph image.
 
 **Variants.** Bouncing ball (P16, P18):
 `bouncing_ball(obj=ANIM_ball, first_apex=-3, fit=False, ...)` keys ONE object: exact parabolas under

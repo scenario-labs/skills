@@ -124,7 +124,7 @@ describe.skipIf(!withPlaywright)("the film in a browser", () => {
   it("info.mjs reads the tour with no problem", async () => {
     const r = await node("info.mjs", [], tour.url);
     expect(r.code, r.err).toBe(0);
-    expect(r.err).toBe("");
+    expect(r.err).toMatch(/^browser: [^\n]+\n$/);
     const info = JSON.parse(r.out.toString());
     expect(info.title).toBe("Tour");
     expect(info.dur).toBeCloseTo((148 * 60) / 172, 9);
@@ -134,15 +134,37 @@ describe.skipIf(!withPlaywright)("the film in a browser", () => {
     expect(info.lines).toBeGreaterThan(1000);
   }, 60000);
 
+  it("the page requests no favicon", async () => {
+    process.env.FILM_URL = tour.url;
+    process.env.FILM_DIR = pwDir;
+    const { launch } =
+      await import("../../skills/scenario-kinetic-film/scripts/browser.mjs");
+    const b = await launch();
+    try {
+      const pg = await b.newPage();
+      // Chrome's favicon fetch raises no page request event, only this console error when it fails
+      const errors: string[] = [];
+      pg.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+      await pg.goto(tour.url + "index.html?render=1");
+      await pg.waitForFunction(() => (window as any).__ready, null, {
+        timeout: 20000,
+      });
+      await pg.waitForTimeout(500);
+      expect(errors).toEqual([]);
+    } finally {
+      await b.close();
+    }
+  }, 60000);
+
   it("snap.mjs writes 1920x1080 stills at beats and seconds", async () => {
     const out = path.join(tmp, "stills");
     const r = await node("snap.mjs", [out, "1", "b1", "40"], tour.url);
     expect(r.code, r.err).toBe(0);
     expect(r.out.toString()).toMatch(/no errors/);
-    expect(pngSize(readFileSync(path.join(out, "t_000.35.png")))).toEqual([
+    expect(pngSize(readFileSync(path.join(out, "t_000.349.png")))).toEqual([
       1920, 1080,
     ]);
-    expect(pngSize(readFileSync(path.join(out, "t_040.00.png")))).toEqual([
+    expect(pngSize(readFileSync(path.join(out, "t_040.000.png")))).toEqual([
       1920, 1080,
     ]);
   }, 60000);

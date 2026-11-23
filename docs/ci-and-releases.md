@@ -230,6 +230,9 @@ pointing at this repository, and hook steps read the index through them.
   - The `main` ruleset requires its results, so it replaces default setup, which never analyzed fork
     PRs and left them blocked. Keep default setup off: it rejects uploads from a workflow.
   - Its `/language:<name>` categories match default setup's, so alert history carries over.
+  - The C# job references Unity's managed assemblies, taken from the editor archive and cached.
+    Without them, too few calls resolve and the status page flags low C# analysis quality. Bump
+    `UNITY_VERSION`, its revision, and its MD5 with the version the Unity skills document.
   - Code Quality still runs as GitHub's own analysis, but the ruleset does not require it: it never
     runs on fork PRs either.
 - `links.yml` runs lychee over tracked Markdown, without the vendored dev skills and `CHANGELOG.md`:

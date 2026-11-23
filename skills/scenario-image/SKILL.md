@@ -100,8 +100,9 @@ size and position". Anything unnamed is open to change.
 
 1. `recommend` with `capability="img2img"` and the user's own words as `prompt`. Handle `next_step`
    as the `scenario` skill directs, and never run a `requires_plan_upgrade` entry.
-2. `upload_asset` the product photo, then `upload_asset_complete`, which returns the `asset_id`.
-   Only the inline path under ~100KB skips the second call.
+2. `upload_asset` the product photo, then `upload_asset_complete`, which returns the `asset_id`. An
+   inline upload under ~100KB skips the second call only when it returns the asset; an `upload_id`
+   resumes with `upload_asset_complete`.
 3. `model_schema_get` on the pick: the reference field's name and cap, which sizing family it uses,
    the prompt `max_length`, and whether a `mask` field exists.
 4. For a masked edit, read the `mask` field's own description before building anything. Masks are
@@ -125,7 +126,7 @@ size and position". Anything unnamed is open to change.
 - Reusing one model's parameter block on another: `aspectRatio` and `width`/`height` rarely coexist,
   and unknown fields are rejected.
 - Retrying a 403 `ModelAccessRestrictedError`: it names `modelId` and `requiredPlan`, so surface the
-  upgrade or pick another model.
+  upgrade, and pick another model only if the user (unattended: the task) agrees.
 - Prompting "transparent background": diffusion outputs are opaque. Use a `background` field when
   the schema has one, otherwise run a background-removal model afterwards.
 - Re-running an approved frame at a higher size tier and expecting it back sharper: many models

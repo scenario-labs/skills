@@ -125,6 +125,10 @@ unreadable value stops the render with an error.
   - `E.col(hex, mul)` gives a linear THREE.Color, scaled by `mul`.
   - Bloom keys on luminance, not the brightest channel, so `mul` must lift the color's luminance
     past the 1.05 threshold: about 1.05 for white, 1.4 for pure cyan, 3.7 for pure magenta.
+  - A large extruded face (`E.text3D`) over the threshold blooms into a blur. Keep its front face
+    below the threshold and put the glow on the side material. If the glow still softens the
+    letters, lower `E.post.bloom` and `bloomRadius` in that scene (0.3 and 0.12 held in one test
+    run).
 - **2D**
   - `E.makeG2D(w, h)` returns `{ctx, tex, clear(), commit()}`.
   - `E.blitG2D(E, g, intensity, blending)` draws the surface fullscreen into the current target.
@@ -298,7 +302,8 @@ every lyric readable.
 - `TIMELINE` entries: `{id, file?, start, end, z, blend?, variant?, canvas?, energy?, blur?}`. One
   file per section, with hard cuts at boundaries on downbeats. `energy` (`calm`, `mid`, `high`,
   `showcase`) sets the targets `tools/dynamism_check.py gate` holds the section to; the engine
-  ignores it.
+  ignores it. A layer under every scene (a backdrop plate) takes a lower `z` and `end: 9999`, like
+  the HUD, or the gate reads it as the only section.
 - **Per-canvas entries:** `canvas:'portrait'` (or a list of orientations) renders the entry only on
   that canvas, `--only` included; tags are case-insensitive, an unknown one stops the render with an
   error, and so does an `--only` that leaves nothing to render. Use it for a section that needs its
