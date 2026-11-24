@@ -43,9 +43,7 @@ Each record carries the compiled `flow` and the whole `editorInfo` node graph, a
 no compact flag: the two fields made up three quarters of the bytes in live records, which ran from
 about 1,900 to 22,000 characters, and a draft with `flow: []` still ships its `editorInfo`. Cap
 `limit` at 3 or fewer, read only `id`, `name`, `hasFlow` and `inputs`, and page with `page_token`
-set to the previous reply's `nextPaginationToken`, absent on the last page. The tool schema
-advertised a ceiling of 200 at authoring time while the API rejects anything past 100 with a 400
-naming `pageSize` and the range [1; 100], so the schema's maximum is not a value to send.
+set to the previous reply's `nextPaginationToken`, absent on the last page.
 
 Only `draft` and `ready` filter server-side; other statuses filter each page client-side (flagged
 `_workflowListStatusFilter`); there an empty page beside a `nextPaginationToken` means keep paging.
