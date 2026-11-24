@@ -13,6 +13,11 @@ exclude = [
   '^https://help\.moloco\.com/',
   '^https://support\.accelerate\.liftoff\.io/',
   '^https://support\.vungle\.com/',
+  # Vendor support articles behind bot protection, and a news site that times out from CI
+  # runners (sources of the 3ds Max expert tools).
+  '^https://www\.autodesk\.com/support/technical/article/',
+  '^https://support\.chaos\.com/',
+  '^https://www\.cgchannel\.com/',
   # A URL pattern named in prose, read as a link.
   '^https://devforum\.roblox\.com/t/$',
   # A bare URL whose id holds two underscores, which Markdown reads as emphasis
