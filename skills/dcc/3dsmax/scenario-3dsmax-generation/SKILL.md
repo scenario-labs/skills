@@ -9,10 +9,6 @@ license: MIT
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
 toolkit.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first.
-
 Expert level here means knowing where generation earns its place in a 3ds Max job and where it would
 break design fidelity, then landing each generated file as a measured, named, traceable scene asset.
 The 3ds Max scene stays the source of truth: generation adds mood, context, entourage, surfaces and

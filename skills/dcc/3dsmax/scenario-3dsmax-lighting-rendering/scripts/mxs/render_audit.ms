@@ -1,6 +1,6 @@
 -- render_audit.ms: read-only render and lighting audit, MAXScript twin of maxkit_render for mcp-safe.
 -- channel: mcp-safe | batch | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md and scripting-pipeline__maxscript-bitmap-values-2027.md
+-- checked against scripting-pipeline__pymxs-renderer-2027.md and scripting-pipeline__maxscript-bitmap-values-2027.md
 -- Changes nothing. Avoids every command on the Safe Scene Script Execution block list (no dotNet, no file ops).
 -- Returns one string (the last expression) and prints it to the Listener.
 (

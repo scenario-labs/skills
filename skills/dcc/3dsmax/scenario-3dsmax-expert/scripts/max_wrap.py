@@ -2,7 +2,7 @@
 """max_wrap: turn a chunk of pymxs or MAXScript into one self-contained, reportable script.
 
 Runner side: plain Python 3.10+, any OS, never imports pymxs. The generated script runs inside
-3ds Max. Status of the generated code: not yet run in 3ds Max; checked against the saved 2027 docs.
+3ds Max. The generated code is checked against the saved 2027 docs.
 
     wrap(code, lang="python", kit=(), result_path=None, label="agent change", undo=True,
          kit_dirs=None) -> str
@@ -116,7 +116,7 @@ def _mxs_modules(kit, kit_dirs) -> list[tuple[str, str]]:
 _PY_TEMPLATE = '''\
 # max_wrap {version}: generated pymxs script
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md and scripting-pipeline__3dsmaxbatch-2020.md
+# checked against scripting-pipeline__pymxs-using-2027.md and scripting-pipeline__3dsmaxbatch-2020.md
 # Main thread only: never call pymxs from a thread (scripting-pipeline__python-threading-2027.md).
 import json
 import sys
@@ -200,7 +200,7 @@ print("MXK_RESULT " + json.dumps(_mxk_payload, ensure_ascii=False))
 _MXS_HEAD = '''\
 -- max_wrap {version}: generated MAXScript
 -- channel: mcp-safe | batch | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__max-mcp-known-limitations-2027-3.md (block list avoided)
+-- checked against scripting-pipeline__max-mcp-known-limitations-2027-3.md (block list avoided)
 -- The value of this script is the JSON result text.
 (
 '''

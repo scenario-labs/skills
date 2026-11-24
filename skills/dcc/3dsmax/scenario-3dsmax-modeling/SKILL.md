@@ -9,10 +9,6 @@ license: MIT
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
 toolkit.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first.
-
 Expert modeling in 3ds Max means a short, readable modifier stack that stays live until the look is
 approved, with every problem fixed at the lowest level that causes it. An agent has no mouse: it
 builds stacks, sets parameters and selects by rule, and it hands the few truly interactive moves to

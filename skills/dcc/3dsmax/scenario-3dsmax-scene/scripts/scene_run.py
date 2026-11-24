@@ -10,8 +10,7 @@ CLI, headless intake audit of one .max file (channel batch):
     python scene_run.py audit <scene.max> <out_dir> [--far-cm 100000]
     python scene_run.py write-audit <out_dir>        # handoff: write the script only
 
-status: not yet run in 3ds Max; checked against the toolkit contract in
-skills/_SKILL_WRITING_BRIEF.md (wrap, run_batch, result protocol).
+checked against the toolkit contract of scenario-3dsmax-expert (wrap, run_batch, result protocol).
 """
 import pathlib
 import sys

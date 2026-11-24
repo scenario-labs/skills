@@ -1,6 +1,6 @@
 -- game_audit.ms: read-only engine-asset audit for scenario-3dsmax-game-assets.
 -- channel: mcp-safe | bridge | batch | handoff
--- status: not yet run in 3ds Max; checked against notes/game-assets digests (rules),
+-- checked against notes/game-assets digests (rules),
 --         scripting-pipeline__pymxs-using-2027.md and scenario-3dsmax-expert/references/api-names.txt (names)
 -- Changes nothing in the scene and writes no file. Uses none of the Safe Scene Script Execution
 -- blocked commands. The last expression sets `result` to a JSON string that

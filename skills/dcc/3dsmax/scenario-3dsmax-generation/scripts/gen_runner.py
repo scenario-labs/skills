@@ -3,7 +3,7 @@
 Plain Python 3.10+, any OS, never imports pymxs. Runs where the agent runs, next to the
 Scenario MCP, and prepares files for a 3ds Max channel (batch, mcp-safe, bridge, handoff).
 
-Status: not yet run against a real 3ds Max; checked against
+Checked against
 reports 05 (Scenario outputs) and 01 section 6 (formats), and sources/3dsmax-version-deltas.md.
 
     model_format(release, needs_quads=False) -> dict    which 3D file to ask Scenario for

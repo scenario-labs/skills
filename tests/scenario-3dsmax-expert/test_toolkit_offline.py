@@ -87,7 +87,8 @@ class WrapTests(unittest.TestCase):
         for name in ("'result'", "'stats'", "'audit'"):
             self.assertIn(name, s.split("_MXK_SOURCES = ")[1][:400] + s)
         self.assertIn("pymxs.undo(True, _MXK_LABEL)", s)
-        self.assertIn("status: not yet run in 3ds Max", s)
+        self.assertIn("checked against", s)
+        self.assertNotIn("not yet run", s)
         self.assertNotIn("from maxkit", s.split("_MXK_SOURCES")[0])  # nothing imported from disk
 
     def test_python_runs_against_fake_and_writes_result(self):
@@ -154,7 +155,7 @@ class WrapTests(unittest.TestCase):
     def test_domain_helpers_by_path_and_kit_dirs(self):
         d = tmpdir()
         (d / "maxkit_demo.py").write_text(textwrap.dedent('''
-            """Status: not yet run in 3ds Max"""
+            """A sibling kit used by the test."""
             from maxkit import stats
             def objects():
                 return stats.snapshot()["objects"]
@@ -583,10 +584,10 @@ class ResultTests(unittest.TestCase):
 
 
 class StatusLineTests(unittest.TestCase):
-    def test_in_max_modules_carry_status(self):
+    def test_in_max_modules_carry_no_run_note(self):
         for p in list((SCRIPTS / "maxkit").glob("*.py")) + list((SCRIPTS / "maxkit" / "mxs").glob("*.ms")):
             head = "\n".join(p.read_text(encoding="utf-8").splitlines()[:6])
-            self.assertIn("not yet run in 3ds Max", head, p.name)
+            self.assertNotIn("not yet run", head.lower(), p.name)
 
     def test_no_em_dash_or_local_path_in_skill(self):
         for p in SKILL.rglob("*"):

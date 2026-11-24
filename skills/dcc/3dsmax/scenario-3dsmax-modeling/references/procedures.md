@@ -6,9 +6,8 @@ protocol. Python chunks use the helper module `scripts/maxkit_modeling.py` (pass
 on a bridge without the wrapper, add the skill's `scripts` folder to `sys.path`). The MAXScript twin
 `scripts/mxs/maxkit_modeling.ms` serves `mcp-safe`.
 
-Status of every block: not yet run in 3ds Max. Units: every number assumes centimeters as the system
-unit unless the block says otherwise. Read the scene's units first (scenario-3dsmax-scene owns
-units) and scale the numbers.
+Units: every number assumes centimeters as the system unit unless the block says otherwise. Read the
+scene's units first (scenario-3dsmax-scene owns units) and scale the numbers.
 
 Naming rule for this file: a name followed by `[verify]` was not found in the saved Autodesk docs.
 P1 exists to replace those guesses with the real names from the running 3ds Max before anything else
@@ -21,7 +20,7 @@ round trip and turns `[verify]` guesses into facts for this build.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md (getPropNames), api-names.txt
+# checked against scripting-pipeline__pymxs-using-2027.md (getPropNames), api-names.txt
 import pymxs
 rt = pymxs.runtime
 
@@ -98,7 +97,7 @@ P1c, read current values of one modifier (MAXScript, safe for `mcp-safe`):
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against api-names.txt (getPropNames, classOf)
+-- checked against api-names.txt (getPropNames, classOf)
 (
 	local node = selection[1]
 	local out = #()
@@ -120,7 +119,7 @@ above Boolean), fXI2MJ7Bw2k 00:02:57 (cutter segments), boolean doc (operand hyg
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against poly-modeling__boolean-modifier.md, poly-modeling__smart-bevel-2027.md,
+# checked against poly-modeling__boolean-modifier.md, poly-modeling__smart-bevel-2027.md,
 #         TEz7tBiRrXc frames 00:04:35 and 00:06:50, lDpcfhxP3qU frame 00:02:12
 import pymxs
 rt = pymxs.runtime
@@ -223,7 +222,7 @@ P2 for `mcp-safe` (MAXScript, same chain, Smart Bevel route):
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against poly-modeling__smart-bevel-2027.md, MAXScript what's new 2027.3 (SmartBevelModifier)
+-- checked against poly-modeling__smart-bevel-2027.md, MAXScript what's new 2027.3 (SmartBevelModifier)
 (
 	local base = getNodeByName "GEO_Body"
 	local cutters = #("CUT_Vent_01", "CUT_Vent_02")
@@ -255,7 +254,7 @@ Size, ESC aborts).
 
 ```python
 # channel: bridge | handoff (batch if the Retopology compute call is found in P1)
-# status: not yet run in 3ds Max; checked against poly-modeling__boolean-modifier.md, uDfhmKCdR0U, sRLKiz4HSgA notes
+# checked against poly-modeling__boolean-modifier.md, uDfhmKCdR0U, sRLKiz4HSgA notes
 import pymxs
 rt = pymxs.runtime
 try:
@@ -322,7 +321,7 @@ fXI2MJ7Bw2k 00:17:00 (source complexity ceiling).
 
 ```python
 # channel: batch | bridge | handoff (compute: see P3)
-# status: not yet run in 3ds Max; checked against sKEu2Gs3G_U, HhUMdy-0kSI, Pg2Nm-fwyME notes (frames)
+# checked against sKEu2Gs3G_U, HhUMdy-0kSI, Pg2Nm-fwyME notes (frames)
 import pymxs
 rt = pymxs.runtime
 try:
@@ -393,7 +392,7 @@ UpBbEXkqeuw 00:00:38 to 00:05:42, QIPOLr4j3lM 00:12:41 to 00:13:15, opensubdiv d
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against poly-modeling__opensubdiv-modifier.md, UpBbEXkqeuw and QIPOLr4j3lM notes
+# checked against poly-modeling__opensubdiv-modifier.md, UpBbEXkqeuw and QIPOLr4j3lM notes
 import pymxs
 rt = pymxs.runtime
 try:
@@ -457,7 +456,7 @@ thickness 5.0 and 16 sides), whatsnew-2027 (Spline Chamfer fixed radius), MAXScr
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against 3dJ1VLgeKmM note, poly-modeling__whatsnew-2027.md, maxscript-whats-new-2027.md
+# checked against 3dJ1VLgeKmM note, poly-modeling__whatsnew-2027.md, maxscript-whats-new-2027.md
 import pymxs
 rt = pymxs.runtime
 try:
@@ -539,7 +538,7 @@ before TurboSmooth).
 
 ```python
 # channel: bridge | handoff (batch works but gives no visual check)
-# status: not yet run in 3ds Max; checked against ALiGLb6TsS4 note (stack frame 00:05:59), api-names.txt (bitmaptexture)
+# checked against ALiGLb6TsS4 note (stack frame 00:05:59), api-names.txt (bitmaptexture)
 import pymxs
 rt = pymxs.runtime
 try:
@@ -602,7 +601,7 @@ Before Projection; Create Objects).
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against TEz7tBiRrXc and EMaI6o162Cs notes; maxscript-whats-new-2027.md (Array outputType)
+# checked against TEz7tBiRrXc and EMaI6o162Cs notes; maxscript-whats-new-2027.md (Array outputType)
 import pymxs
 rt = pymxs.runtime
 try:
@@ -645,7 +644,7 @@ Goal: the gate every procedure ends with.
 
 ```python
 # channel: bridge | handoff (batch: numbers only, no captures)
-# status: not yet run in 3ds Max; checked against the toolkit contract (capture.viewport, stats.snapshot)
+# checked against the toolkit contract (capture.viewport, stats.snapshot)
 import os
 import pymxs
 rt = pymxs.runtime
@@ -695,7 +694,7 @@ P9 for `mcp-safe`: load `scripts/mxs/maxkit_modeling.ms` content into the propos
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripts/mxs/maxkit_modeling.ms
+-- checked against scripts/mxs/maxkit_modeling.ms
 (
 	local node = getNodeByName "GEO_Body"
 	#(mm.meshChecks node, mm.stackAudit node)
@@ -710,7 +709,7 @@ tP7FD4l-qus 00:00:00 to 00:04:24 (planes at the image aspect, scaled to one know
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against api-names.txt (Plane, PhysicalMaterial, bitmaptexture, base_color_map)
+# checked against api-names.txt (Plane, PhysicalMaterial, bitmaptexture, base_color_map)
 import pymxs
 rt = pymxs.runtime
 

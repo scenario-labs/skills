@@ -1,5 +1,5 @@
 -- maxkit/mxs/capture.ms: viewport grab and render to a new file (twin of maxkit/capture.py)
--- Status: not yet run in 3ds Max; checked against
+-- Checked against
 -- scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md (gw.getViewportDib),
 -- scripting-pipeline__maxscript-bitmap-values-2027.md (filename before save, close) and
 -- scripting-pipeline__pymxs-renderer-2027.md (render outputFile:).

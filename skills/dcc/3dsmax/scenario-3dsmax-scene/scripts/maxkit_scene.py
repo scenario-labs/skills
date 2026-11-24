@@ -1,7 +1,7 @@
 """maxkit_scene: scene-assembly helpers for 3ds Max 2027.3 (pymxs).
 
 channel: batch | bridge | handoff (prepend to a chunk, then max_wrap.wrap())
-status: not yet run in 3ds Max; checked against sources/docs
+checked against sources/docs
     (scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md,
     scripting-pipeline__maxscript-whats-new-2027.md, fundamentals-scene__*.md).
 

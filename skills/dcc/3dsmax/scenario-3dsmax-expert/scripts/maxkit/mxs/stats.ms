@@ -1,5 +1,5 @@
 -- maxkit/mxs/stats.ms: scene numbers (twin of maxkit/stats.py), read-only
--- Status: not yet run in 3ds Max; checked against
+-- Checked against
 -- scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (maxFilePath,
 -- maxFileName, getSaveRequired, doesFileExist) and scripting-pipeline__pymxs-renderer-2027.md (renderers).
 -- Needs mxk_dict from result.ms (max_wrap inlines it first). Safe for mcp-safe: no blocked command.

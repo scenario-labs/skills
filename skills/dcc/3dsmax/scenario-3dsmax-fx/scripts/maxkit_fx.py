@@ -1,7 +1,7 @@
 """maxkit_fx: FX helpers that run inside 3ds Max (pymxs), inlined by max_wrap.
 
 channel: batch | bridge | handoff (mcp-safe: use the MAXScript twin in references/procedures.md)
-status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md
+checked against scripting-pipeline__pymxs-using-2027.md
         (getPropNames, Name, render), fx-simulation__tyflow-tycache.md (cache()),
         and the fx-simulation digests. Names marked [verify] are not in a saved doc.
 

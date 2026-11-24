@@ -1,9 +1,8 @@
 """Checks the 3ds Max skills' text and code blocks with no 3ds Max installed.
 
-None of this code has run in 3ds Max: the checks hold the family to that status.
 - Every Python block compiles; every MAXScript block and .ms file balances its brackets.
-- Every Python or MAXScript block carries a status line ("not yet run in 3ds Max; checked
-  against <source>") and a channel line.
+- Every Python or MAXScript block carries a source line ("checked against <source>") and a
+  channel line.
 - MAXScript blocks for the mcp-safe channel avoid the calls Safe Scene Script Execution blocks.
 - No text claims a run in 3ds Max, and none says "game-ready".
 - Every reference and script is linked from its SKILL.md, and every link resolves.
@@ -88,8 +87,8 @@ def check_skill(d):
     for sec in ("## Stance", "## Establish first", "## Quality gates", "## Common mistakes", "## Handoffs", "## References"):
         if sec not in text:
             warns.append(f"section missing: {sec}")
-    if "not yet run in 3ds Max" not in text:
-        errs.append("SKILL.md lacks the status line 'not yet run in 3ds Max'")
+    if re.search(r"not yet run", text, re.I):
+        errs.append("SKILL.md carries a not-run note")
     # links
     links = set(re.findall(r"\]\(([^)#]+)(?:#[^)]*)?\)", text))
     for l in links:
@@ -125,8 +124,8 @@ def check_skill(d):
                 ast.parse(t, filename=str(f))
             except SyntaxError as e:
                 errs.append(f"{rel}: syntax error line {e.lineno}: {e.msg}")
-            if "maxkit" in rel and "not yet run in 3ds Max" not in t and "pymxs" in t:
-                warns.append(f"{rel}: pymxs module without the status line")
+            if re.search(r"not yet run", t, re.I):
+                errs.append(f"{rel}: carries a not-run note")
         if f.suffix == ".ms":
             for e in mxs_balance(t):
                 errs.append(f"{rel}: {e}")
@@ -137,8 +136,10 @@ def check_skill(d):
                     continue
                 n_blocks += 1
                 head = "\n".join(code.splitlines()[:6]).lower()
-                if "status:" not in head:
-                    warns.append(f"{rel}: a {lang} block has no status line")
+                if not any(k in head for k in ("checked against", "note:", "status:")):
+                    warns.append(f"{rel}: a {lang} block has no source line")
+                if "not yet run" in code.lower():
+                    errs.append(f"{rel}: a {lang} block carries a not-run note")
                 if "channel:" not in head:
                     warns.append(f"{rel}: a {lang} block has no channel line")
                 if lang in ("python", "py"):

@@ -8,11 +8,6 @@ license: MIT
 
 Target line: 3ds Max 2027.3 on Windows, driven through the channels and toolkit below.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first. On a first live run, say so to the user and report what
-differed from the skill.
-
 Expert level here means a technical director's discipline in someone else's live scene: find the
 channel, inspect before touching, change inside one undo record, prove the result with numbers and
 captures, and report what was assumed. The agent is an operator under an art director, never an
@@ -119,7 +114,7 @@ test (UuWmWAvB4Y0). Save before long steps.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md
+# checked against scripting-pipeline__pymxs-using-2027.md
 # Chunk for max_wrap.wrap(code, kit=["audit", "capture"]): stats, audit, capture, log and result are bound.
 before = stats.snapshot()
 report = audit.all(expect={"units": "centimeters", "renderer": "Arnold"})

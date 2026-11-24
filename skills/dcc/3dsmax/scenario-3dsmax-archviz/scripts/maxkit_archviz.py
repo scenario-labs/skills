@@ -1,5 +1,5 @@
 # channel: batch | bridge | handoff (prepended to a chunk by archviz_plan.chunk(), then max_wrap.wrap); mcp-safe uses scripts/mxs/archviz_audit.ms
-# status: not yet run in 3ds Max; checked against pymxs-renderer-2027 doc (renderers, renderSceneDialog), archviz digests 1 to 4
+# checked against pymxs-renderer-2027 doc (renderers, renderSceneDialog), archviz digests 1 to 4
 """Archviz helpers that run inside 3ds Max (pymxs, main thread only).
 
 Read-only:  units_info, camera_report, scatter_inventory, pivot_base_report, spline_closed_report,

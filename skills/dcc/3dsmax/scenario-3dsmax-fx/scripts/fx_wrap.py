@@ -2,7 +2,7 @@
 """fx_wrap: wrap a pymxs chunk with this skill's maxkit_fx helpers bound as `maxkit_fx`.
 
 Runner side: plain Python 3.10+, any OS, never imports pymxs.
-status: not yet run in 3ds Max; checked against scenario-3dsmax-expert/scripts/max_wrap.py 0.1.0
+checked against scenario-3dsmax-expert/scripts/max_wrap.py 0.1.0
 
 Thin call to the lead's max_wrap.wrap(code, kit=["maxkit_fx", ...], kit_dirs=[this scripts
 folder]): max_wrap inlines scripts/maxkit_fx.py as a module bound to `maxkit_fx`, adds the lead

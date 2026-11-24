@@ -68,7 +68,7 @@ Facts that change procedures:
   (Matt Hallett, j2qd-kLQY1Q 00:04:49).
 - Local install downloads tens of gigabytes of models; an SSD is recommended (D-1Vy864PtQ 00:04:05).
 
-## Third-party bridges and plugins (vendor pages; not tested here)
+## Third-party bridges and plugins (from the vendor pages)
 
 | Tool                                                         | What the source says                                                                                                                                  | Landing                                                                                                                                             |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |

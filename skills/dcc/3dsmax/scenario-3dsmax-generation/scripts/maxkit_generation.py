@@ -3,7 +3,7 @@
 Inlined into a wrapped script by the lead's max_wrap (kit list), like the shared maxkit modules.
 Runs through batch, bridge or handoff. For mcp-safe use the MAXScript in references/procedures.md.
 
-Status: not yet run in 3ds Max; checked against
+Checked against
 scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (importFile, #noPrompt,
 fileProperties.addProperty), scripting-pipeline__maxscript-whats-new-2027.md (PLYImport, SPZImport),
 scripting-pipeline__gltf-import-2027.md (glTF importer). Names marked [verify] are not in the saved docs.

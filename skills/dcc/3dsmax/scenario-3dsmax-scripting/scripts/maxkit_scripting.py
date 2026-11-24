@@ -4,7 +4,7 @@ Runs inside 3ds Max only, on the main thread. Inline it with
 max_wrap.wrap(code, kit=["maxkit_scripting"]) or import it from a package's
 Contents folder (PYTHONPATH entry in PackageContents.xml).
 
-status: not yet run in 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md,
+checked against scripting-pipeline__3dsmaxbatch-2020.md,
 scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__python-threading-2027.md,
 scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 

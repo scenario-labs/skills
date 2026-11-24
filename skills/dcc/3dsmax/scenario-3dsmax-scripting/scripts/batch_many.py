@@ -7,8 +7,8 @@ studio batch needs: a file list, skip-existing, parallel workers, one retry, a
 summary JSON and CSV. One process per file keeps a crash, a modal dialog or a leak to
 one file.
 
-status: not yet run against 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md
-and the toolkit contract in skills/_SKILL_WRITING_BRIEF.md.
+checked against scripting-pipeline__3dsmaxbatch-2020.md
+and the toolkit contract of scenario-3dsmax-expert.
 
 Usage:
     python batch_many.py --job job_chunk.py --kit audit,xio,capture,maxkit_scripting \

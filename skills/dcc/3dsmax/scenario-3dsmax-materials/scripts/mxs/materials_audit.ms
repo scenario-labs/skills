@@ -1,5 +1,5 @@
 -- channel: mcp-safe | bridge | handoff | batch
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-bitmap-values-2027.md
+-- checked against scripting-pipeline__maxscript-bitmap-values-2027.md
 -- Read-only look-dev audit: material classes, texture color spaces, file tags, debug red.
 -- No dotNet, no file writes, no INI: the result is the returned string (Safe Scene Script Execution).
 

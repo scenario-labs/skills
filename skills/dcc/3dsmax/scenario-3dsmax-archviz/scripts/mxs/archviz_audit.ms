@@ -1,5 +1,5 @@
 -- channel: mcp-safe | bridge | batch | handoff (pass through max_wrap.wrap(code, lang="maxscript"); the chunk sets result)
--- status: not yet run in 3ds Max; checked against archviz digests 1 to 4 and scripting-pipeline__safe-scene-script-execution-2027.md
+-- checked against archviz digests 1 to 4 and scripting-pipeline__safe-scene-script-execution-2027.md
 -- Read-only audit: units, cameras, lights per class, scatter and proxy objects, animation and output settings.
 -- No dotNet, no file writes, no INI, no UIAccessor: stays inside the Safe Scene Script Execution rules.
 

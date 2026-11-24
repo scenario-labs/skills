@@ -1,6 +1,6 @@
 -- scene_audit.ms: read-only scene-assembly audit for the live session.
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md and fundamentals-scene__system-unit-setup.md
+-- checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md and fundamentals-scene__system-unit-setup.md
 -- Changes nothing. Avoids dotNet, file writes and INI calls (Safe Scene Script Execution).
 -- Returns one string (JSON-like) as the last expression; the client reads it back.
 (

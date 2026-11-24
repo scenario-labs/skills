@@ -1,6 +1,6 @@
 -- maxkit_modeling.ms: MAXScript twin of maxkit_modeling.py for the mcp-safe channel.
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__safe-scene-script-execution-2027.md and api-names.txt
+-- checked against scripting-pipeline__safe-scene-script-execution-2027.md and api-names.txt
 -- Uses no dotNet, macroScript, UIAccessor, setINISetting or file delete/copy.
 -- Names marked [verify] are not in the saved docs.
 

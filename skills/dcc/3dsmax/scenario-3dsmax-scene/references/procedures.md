@@ -1,9 +1,8 @@
 # Procedures: scene assembly in 3ds Max 2027.3
 
-Every block below is **not yet run in 3ds Max**. Each names its channels and the source it was
-checked against. Names that are not in the saved 2027 docs carry `[verify]` on the same line; the
-helpers in `scripts/maxkit_scene.py` wrap those calls so a wrong name returns a finding instead of
-stopping the run.
+Each block names its channels and the source it was checked against. Names that are not in the saved
+2027 docs carry `[verify]` on the same line; the helpers in `scripts/maxkit_scene.py` wrap those
+calls so a wrong name returns a finding instead of stopping the run.
 
 Conventions:
 
@@ -37,7 +36,7 @@ Goal: know units, origin, structure, weight and missing files before touching an
 
 ```python
 # channel: batch | handoff
-# status: not yet run in 3ds Max; checked against the toolkit contract (_SKILL_WRITING_BRIEF.md) and scripting-pipeline__3dsmaxbatch-2020.md
+# checked against the toolkit contract of scenario-3dsmax-expert and scripting-pipeline__3dsmaxbatch-2020.md
 import sys
 sys.path.insert(0, sys.argv[1])            # this skill's scripts/ folder
 from scene_run import audit_script
@@ -87,7 +86,7 @@ system unit in a populated scene; the helper refuses (`fundamentals-scene__syste
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against fundamentals-scene__system-unit-setup.md and scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
+# checked against fundamentals-scene__system-unit-setup.md and scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 # Chunk body (scene_run.make prepends maxkit_scene). template_path comes from the runner.
 template_path = TEMPLATE_PATH              # set by the runner, e.g. via .format() or an args file
 rt.resetMaxFile(rt.Name("noPrompt"))
@@ -104,7 +103,7 @@ Same thing for `mcp-safe` (a blank session only):
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against fundamentals-scene__system-unit-setup.md
+-- checked against fundamentals-scene__system-unit-setup.md
 if objects.count == 0 then
 (
 	units.SystemType = #centimeters -- [verify]
@@ -127,7 +126,7 @@ false (doc). A file saved in inches merged into a centimeter template keeps its 
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (mergeMAXFile flags, layers:, ignoreFileUnits:, getLastMergedNodes, getMaxFileObjects)
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (mergeMAXFile flags, layers:, ignoreFileUnits:, getLastMergedNodes, getMaxFileObjects)
 source_path = SOURCE_PATH                  # set by the runner
 layers_wanted = LAYERS                     # [] for everything; layer names otherwise (2027+)
 before = len(list(rt.objects))
@@ -163,7 +162,7 @@ flipped normals (system-unit-setup doc; aPc02tZzj8c 08:04).
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against fundamentals-scene__system-unit-setup.md; isAnimated, setUserProp [verify]
+# checked against fundamentals-scene__system-unit-setup.md; isAnimated, setUserProp [verify]
 plan = recenter(offset=None, helper_name="REF_SiteOrigin", dry_run=True)
 result = {"plan": plan}
 # Read plan["offset"] (system units) and plan["skipped_animated"], then on the versioned copy:
@@ -196,7 +195,7 @@ Goal: no nested groups, no default names, every node on a meaningful layer.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against fundamentals-scene__scene-explorer-2027.md; isGroupHead, explodeGroup, LayerManager, layer.addNode [verify]
+# checked against fundamentals-scene__scene-explorer-2027.md; isGroupHead, explodeGroup, LayerManager, layer.addNode [verify]
 step = STEP                                # "plan" or "apply", set by the runner
 plan_groups = flatten_groups(dry_run=(step == "plan"))
 
@@ -244,7 +243,7 @@ scaled space (VizAcademy, hz07nIgm7EA 00:21:31).
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against fundamentals-scene/_digest_batch1.md (candidate procedure 1) and hz07nIgm7EA 00:21:31; node.scale, ResetXForm, collapseStack, getNodeByName [verify]
+# checked against fundamentals-scene/_digest_batch1.md (candidate procedure 1) and hz07nIgm7EA 00:21:31; node.scale, ResetXForm, collapseStack, getNodeByName [verify]
 plan = reset_scale(dry_run=True)
 result = {"plan": plan, "report": scale_report()}
 # Nodes in plan["with_modifiers"] keep their stack: reset_scale(names=..., collapse=False, dry_run=False)
@@ -267,7 +266,7 @@ Goal: one base object per repeated mesh. Instances cut file size and viewport lo
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against SRVCuw9aPI8 (method) and Y-zZn8bo1cE (semantics); instanceReplace, getPolygonCount [verify]
+# checked against SRVCuw9aPI8 (method) and Y-zZn8bo1cE (semantics); instanceReplace, getPolygonCount [verify]
 cands = copy_candidates(min_count=2)
 # Keep only rows whose nodes really are the same model: same signature AND same material.
 safe = [g for g in cands["rows"] if g["signature"][4] and len(g["nodes"]) >= 2]
@@ -311,7 +310,7 @@ Goal: zero missing assets on every team machine.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against fundamentals-scene__asset-tracking-2027.md; getClassInstances and map path properties [verify]
+# checked against fundamentals-scene__asset-tracking-2027.md; getClassInstances and map path properties [verify]
 search_dirs = SEARCH_DIRS                  # list of folders, from the user
 report = relink_maps(search_dirs, dry_run=True)
 result = {"relink_plan": report, "missing_before": missing_maps_report()["missing_count"]}
@@ -348,7 +347,7 @@ Goal: two people never edit the same objects; the lighting scene stays light.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against fundamentals-scene__xref-objects-2027.md and 2Nqp9n95pzE; saveNodes doc-confirmed; xrefs.addNewXRefFile [verify]
+# checked against fundamentals-scene__xref-objects-2027.md and 2Nqp9n95pzE; saveNodes doc-confirmed; xrefs.addNewXRefFile [verify]
 names = NODE_NAMES                         # e.g. every node on 300_walls and 400_floor
 out_path = OUT_PATH                        # new file, e.g. <project>/APT_Arch.max
 result = split_to_xref(names, out_path, dry_run=True)
@@ -385,7 +384,7 @@ Goal: an interactive viewport without changing the render.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against fundamentals-scene__controlling-display-performance-2027.md and hz07nIgm7EA 00:16:18; TurboSmooth property names [verify]
+# checked against fundamentals-scene__controlling-display-performance-2027.md and hz07nIgm7EA 00:16:18; TurboSmooth property names [verify]
 result = {"smooth": smooth_viewport_off(dry_run=True), "top": poly_report(top=20)["top"],
           "points": point_report()}
 # apply: smooth_viewport_off(dry_run=False)
@@ -429,7 +428,7 @@ names are not:
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (importFile, importer classes); FBXImporterSetParam keys [verify]
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (importFile, importer classes); FBXImporterSetParam keys [verify]
 src = SOURCE_PATH                          # .fbx, .rvt, .skp, .dwg
 ext = src.lower().rsplit(".", 1)[-1]
 importer = {"fbx": rt.FBXIMP, "rvt": rt.Revit_importer, "skp": rt.sketchUp,
@@ -477,7 +476,7 @@ renderer that supports it.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against fundamentals-scene__gaussian-splat-3dgs-in-3ds-max-2027.md and scripting-pipeline__maxscript-whats-new-2027.md (PLYImport, SPZImport, LCCImport, GaussianSplat class names); property names read at run time
+# checked against fundamentals-scene__gaussian-splat-3dgs-in-3ds-max-2027.md and scripting-pipeline__maxscript-whats-new-2027.md (PLYImport, SPZImport, LCCImport, GaussianSplat class names); property names read at run time
 src = SOURCE_PATH                          # .ply, .spz or .lcc
 ext = src.lower().rsplit(".", 1)[-1]
 importer = {"ply": rt.PLYImport, "spz": rt.SPZImport, "lcc": rt.LCCImport}[ext]
@@ -531,7 +530,7 @@ Goal: a clean `_v00N` file with numbers and captures that prove it. Build it wit
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (saveMaxFile overwrites silently, doesFileExist)
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (saveMaxFile overwrites silently, doesFileExist)
 out_path = OUT_PATH                        # <name>_v002.max, never the client file
 if rt.doesFileExist(out_path):
     result = {"saved": False, "reason": "exists"}

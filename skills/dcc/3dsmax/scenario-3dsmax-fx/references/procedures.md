@@ -1,10 +1,10 @@
 # Procedures (scenario-3dsmax-fx)
 
-Every block is not yet run in 3ds Max. Names marked `[verify]` were not found in a saved doc; check
-them on the user's install (procedure 2 does this for tyFlow) before relying on them. Chunks set
-`result`; `scripts/fx_wrap.py` calls the lead's `max_wrap.wrap()` with `kit=["maxkit_fx", ...]` and
-this skill's `scripts/` as `kit_dirs`; `max_wrap` adds the undo record and the JSON result protocol
-(`rt`, `pymxs`, `log` and kit modules are globals of the chunk). Recipe values assume 1 unit = 1 cm.
+Names marked `[verify]` were not found in a saved doc; check them on the user's install (procedure 2
+does this for tyFlow) before relying on them. Chunks set `result`; `scripts/fx_wrap.py` calls the
+lead's `max_wrap.wrap()` with `kit=["maxkit_fx", ...]` and this skill's `scripts/` as `kit_dirs`;
+`max_wrap` adds the undo record and the JSON result protocol (`rt`, `pymxs`, `log` and kit modules
+are globals of the chunk). Recipe values assume 1 unit = 1 cm.
 
 What is scriptable for tyFlow, per the saved tyFlow docs:
 
@@ -26,7 +26,7 @@ Goal: know units, timeline, renderer, lights and every FX object before touching
 
 ```python
 # channel: bridge | batch | handoff
-# status: not yet run in 3ds Max; wrapping checked on a runner against max_wrap.py 0.1.0 (script built and compiled)
+# note: wrapping checked on a runner against max_wrap.py 0.1.0 (script built and compiled)
 # Runner side. fx_wrap passes maxkit_fx to max_wrap through kit_dirs.
 import json
 import sys
@@ -49,7 +49,7 @@ MAXScript twin for `mcp-safe` (read-only, no blocked commands):
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripts/maxkit_fx.py; renderers from scripting-pipeline__pymxs-renderer-2027.md
+-- checked against scripts/maxkit_fx.py; renderers from scripting-pipeline__pymxs-renderer-2027.md
 rep = stringStream ""
 format "units: % x %\n" units.SystemScale units.SystemType to:rep -- [verify] units.SystemScale, units.SystemType
 format "fps: % range: % to %\n" frameRate animationRange.start animationRange.end to:rep -- [verify] frameRate, animationRange
@@ -79,7 +79,7 @@ names.
 
 ```python
 # channel: bridge | batch | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md (getPropNames)
+# checked against scripting-pipeline__pymxs-using-2027.md (getPropNames)
 from pymxs import runtime as rt
 
 nodes = [o for o in rt.objects if "tyflow" in str(rt.classOf(o)).lower()]
@@ -96,7 +96,7 @@ edstudios, tWhQLc5IDXQ 00:04:44).
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against GZMWapJe7eM notes; scene API names [verify]
+# checked against GZMWapJe7eM notes; scene API names [verify]
 import pymxs
 from pymxs import runtime as rt
 
@@ -120,7 +120,7 @@ Airtight check for a cutter or collider (open edges must be 0):
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against tWhQLc5IDXQ notes; polyop names [verify]
+# checked against tWhQLc5IDXQ notes; polyop names [verify]
 from pymxs import runtime as rt
 
 CUTTER = "bucket_FX_cutter"   # from the user
@@ -242,7 +242,7 @@ Goal: seconds per frame from a fresh pass, then a deadline check.
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against scripts/maxkit_fx.py; snapshotAsMesh and attime [verify]
+# checked against scripts/maxkit_fx.py; snapshotAsMesh and attime [verify]
 from pymxs import runtime as rt
 
 FLOW = "tyFlow_wall"   # from the user; reset the simulation first (GUI: tyFlow rollout, Reset)
@@ -259,7 +259,7 @@ re-measure. Re-measure after each doubling of load.
 
 ```python
 # channel: bridge | batch | handoff
-# status: not yet run in 3ds Max; checked against fx-simulation__tyflow-tycache.md (cache())
+# checked against fx-simulation__tyflow-tycache.md (cache())
 # Mode, filename and frame range must already be set on the modifier; pick a new file name.
 from pymxs import runtime as rt
 
@@ -278,7 +278,7 @@ render"); this function does not cover it.
 
 ```python
 # channel: handoff (runner side, any OS)
-# status: not yet run on a real cache; checked against scripts/sim_budget.py
+# checked against scripts/sim_budget.py
 import json
 import subprocess
 import sys
@@ -300,7 +300,7 @@ Tools > Snapshot.
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against Pgzy2_HxH2w notes; snapshot and sliderTime [verify]
+# checked against Pgzy2_HxH2w notes; snapshot and sliderTime [verify]
 import pymxs
 from pymxs import runtime as rt
 
@@ -320,7 +320,7 @@ disable the live flow (do not delete it).
 
 ```python
 # channel: bridge | handoff (an Arnold render can crash 3ds Max: save first)
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md (render outputFile)
+# checked against scripting-pipeline__pymxs-renderer-2027.md (render outputFile)
 import pymxs
 from pymxs import runtime as rt
 

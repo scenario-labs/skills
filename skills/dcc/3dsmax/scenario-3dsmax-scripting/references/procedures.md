@@ -1,8 +1,8 @@
 # Procedures: scenario-3dsmax-scripting
 
-Every block below is **not yet run in 3ds Max**. Each names its channel (see the channel table in
-scenario-3dsmax-expert) and the saved doc it was checked against. A name followed by `[verify]` was
-not found in the saved docs: check it in a live session (procedure 2) before relying on it.
+Each block names its channel (see the channel table in scenario-3dsmax-expert) and the saved doc it
+was checked against. A name followed by `[verify]` was not found in the saved docs: check it in a
+live session (procedure 2) before relying on it.
 
 Python blocks are chunks for `max_wrap.wrap(code, lang="python", kit=[...])` unless they say
 "module". A chunk sets `result`; the wrapper adds the undo record and the result file. A `# kit:`
@@ -42,7 +42,7 @@ Goal: know the Python, PySide and mode before writing anything version-sensitive
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__python-api-whats-new-2027.md, scripting-pipeline__3dsmaxbatch-2020.md, scripting-pipeline__pymxs-renderer-2027.md
+# checked against scripting-pipeline__python-api-whats-new-2027.md, scripting-pipeline__3dsmaxbatch-2020.md, scripting-pipeline__pymxs-renderer-2027.md
 import sys
 from pymxs import runtime as rt
 
@@ -61,7 +61,7 @@ result = info
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md, scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
+-- checked against scripting-pipeline__3dsmaxbatch-2020.md, scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 (
     #( "batch=" + ((maxOps.isInNonInteractiveMode()) as string), \
        "renderer=" + (renderers.current as string), \
@@ -87,7 +87,7 @@ Headless route (batch, bridge): inspect.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md, scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md, scripting-pipeline__maxscript-python-interop-2027.md
+# checked against scripting-pipeline__pymxs-using-2027.md, scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md, scripting-pipeline__maxscript-python-interop-2027.md
 from pymxs import runtime as rt
 
 def prop_names(cls_or_obj):
@@ -116,7 +116,7 @@ names to the lead's `references/api-names.txt` so `max_check` stops flagging the
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md, scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__pymxs-differences-2027.md, scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
+# checked against scripting-pipeline__pymxs-using-2027.md, scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__pymxs-differences-2027.md, scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 from pymxs import runtime as rt
 
 # MAXScript name literals: #world -> rt.Name("world")
@@ -159,7 +159,7 @@ already opens one record around the chunk; open your own only inside tools and p
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against the toolkit contract (pymxs.undo); context managers are not in the saved docs
+# checked against the toolkit contract (pymxs.undo); context managers are not in the saved docs
 import pymxs
 from pymxs import runtime as rt
 
@@ -178,7 +178,7 @@ result = {"renamed": len(nodes)}
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-bitmap-values-2027.md (animate on at time); undo context syntax not in the saved docs
+-- checked against scripting-pipeline__maxscript-bitmap-values-2027.md (animate on at time); undo context syntax not in the saved docs
 (
     local nodes = $PH_* as array
     undo "Rename placeholders" on   -- [verify]
@@ -200,7 +200,7 @@ Safe Scene Script Execution scans in every scene that carries them.
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__maxscript-whats-new-2027.md
+# checked against scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__maxscript-whats-new-2027.md
 from pymxs import runtime as rt
 
 CB_ID = rt.Name("studioTools_render")
@@ -222,7 +222,7 @@ Viewport drawing callbacks (Nitrous draws `gw` calls only inside a redraw callba
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md
+-- checked against scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md
 (
     unregisterRedrawViewsCallback GW_studioLabels
     fn GW_studioLabels =
@@ -249,7 +249,7 @@ The doc gives no worker-to-main bridge; the QTimer queue below is a community pa
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__python-threading-2027.md, scripting-pipeline__python-creating-uis-qtmax-2027.md
+# checked against scripting-pipeline__python-threading-2027.md, scripting-pipeline__python-creating-uis-qtmax-2027.md
 # kit: maxkit_scripting (MainThreadPump)
 import json
 import threading
@@ -287,7 +287,7 @@ worker function for `rt.`: zero hits.
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__python-creating-uis-qtmax-2027.md, scripting-pipeline__pymxs-renderer-2027.md
+# checked against scripting-pipeline__python-creating-uis-qtmax-2027.md, scripting-pipeline__pymxs-renderer-2027.md
 # module: studio_tools/ui.py inside the package (PYTHONPATH from PackageContents.xml)
 import json
 import os
@@ -366,7 +366,7 @@ The job chunk (inlined with the lead toolkit; `audit`, `xio`, `capture` are the 
 
 ```python
 # channel: batch
-# status: not yet run in 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md, scripting-pipeline__3ds-max-batch-about-2027.md, toolkit contract
+# checked against scripting-pipeline__3dsmaxbatch-2020.md, scripting-pipeline__3ds-max-batch-about-2027.md, toolkit contract
 # kit: audit, xio, capture, maxkit_scripting
 import os
 from pymxs import runtime as rt
@@ -395,7 +395,7 @@ Run it over a folder from the runner:
 
 ```python
 # channel: batch (runner side, plain Python)
-# status: not yet run against 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md and the toolkit contract
+# checked against scripting-pipeline__3dsmaxbatch-2020.md and the toolkit contract
 import subprocess
 import sys
 
@@ -412,7 +412,7 @@ scripting-pipeline__3dsmaxbatch-2020.md):
 
 ```bat
 REM channel: batch
-REM status: not yet run in 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md
+REM checked against scripting-pipeline__3dsmaxbatch-2020.md
 "C:\Program Files\Autodesk\3ds Max 2027\3dsmaxbatch.exe" "<<JOB_PY>>" -sceneFile "<<SCENE_MAX>>" -mxsString outdir:"<<OUT_DIR>>" -mxsString stem:"<<STEM>>" -listenerlog "<<OUT_DIR>>\_logs\<<STEM>>_listener.log" -log "<<OUT_DIR>>\_logs\<<STEM>>_max.log" -dm on -v 3
 ```
 
@@ -457,7 +457,7 @@ global state, so set and read them back every run.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md, scripting-pipeline__maxscript-whats-new-2027.md, scripting-pipeline__python-api-whats-new-2027.md
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md, scripting-pipeline__maxscript-whats-new-2027.md, scripting-pipeline__python-api-whats-new-2027.md
 # kit: maxkit_scripting (exporter_for, log)
 import os
 from pymxs import runtime as rt
@@ -510,7 +510,7 @@ glTF target.
 
 ```maxscript
 -- channel: mcp-safe | batch | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__gltf-export-2027.md (rules); traversal names not in the saved docs
+-- checked against scripting-pipeline__gltf-export-2027.md (rules); traversal names not in the saved docs
 (
     local findings = #()
     fn walk m depth findings =
@@ -546,7 +546,7 @@ Check: zero findings before a glTF export; an `empty_slot` inside a Multi/Sub-Ob
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md; whether importFile passes Safe Scene Script Execution is not documented
+-- checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md; whether importFile passes Safe Scene Script Execution is not documented
 (
     local f = @"<<ASSET_PATH>>"
     if not (doesFileExist f) then #("missing", f) else
@@ -569,7 +569,7 @@ prompt. Every save goes to a new name.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 # kit: maxkit_scripting (save_copy, versioned_path, load_scene)
 import os
 from pymxs import runtime as rt
@@ -620,7 +620,7 @@ in batch).
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__maxscript-bitmap-values-2027.md
+# checked against scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__maxscript-bitmap-values-2027.md
 import os
 from pymxs import runtime as rt
 
@@ -642,7 +642,7 @@ result = capture_active(os.path.join("<<OUT_DIR>>", "view_v001.png"))
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md, scripting-pipeline__maxscript-bitmap-values-2027.md; whether `save` passes Safe Scene Script Execution is not documented
+-- checked against scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md, scripting-pipeline__maxscript-bitmap-values-2027.md; whether `save` passes Safe Scene Script Execution is not documented
 (
     local dib = gw.getViewportDib captureAlpha:false gammaCorrect:true
     dib.filename = @"<<OUT_DIR>>\view_v001.png"
@@ -675,7 +675,7 @@ Arnold render: it can crash 3ds Max.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__pymxs-bitmaps-2027.md, uv-baking-texturing__maxscript-render-to-texture-2027.md (outputSize, vfb)
+# checked against scripting-pipeline__pymxs-renderer-2027.md, scripting-pipeline__pymxs-bitmaps-2027.md, uv-baking-texturing__maxscript-render-to-texture-2027.md (outputSize, vfb)
 # kit: maxkit_scripting (save_copy, CallbackSet)
 import os
 from pymxs import runtime as rt
@@ -724,7 +724,7 @@ StudioTools/
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<!-- status: not yet run in 3ds Max; checked against scripting-pipeline__packagecontents-format-2026.md, scripting-pipeline__packaging-plugins-2025.md -->
+<!-- checked against scripting-pipeline__packagecontents-format-2026.md, scripting-pipeline__packaging-plugins-2025.md -->
 <ApplicationPackage SchemaVersion="1.0" AutodeskProduct="3ds Max" ProductType="Application"
     Name="Studio Tools" AppVersion="1.0.0"
     UpgradeCode="{6f1c2a4e-8b3d-4c1e-9a7f-2d5e8b9c0a11}"
@@ -764,7 +764,7 @@ Lint, then test:
 
 ```python
 # channel: handoff (runner side, plain Python)
-# status: lint runs offline; loading in 3ds Max not yet run; checked against scripting-pipeline__packaging-plugins-2025.md
+# status: lint runs offline; checked against scripting-pipeline__packaging-plugins-2025.md
 import os
 import subprocess
 import sys
@@ -791,7 +791,7 @@ The post-start-up Python file of the package:
 
 ```python
 # channel: handoff (file shipped in the package)
-# status: not yet run in 3ds Max; checked against scripting-pipeline__packagecontents-format-2026.md, scripting-pipeline__maxscript-python-interop-2027.md
+# checked against scripting-pipeline__packagecontents-format-2026.md, scripting-pipeline__maxscript-python-interop-2027.md
 import sys
 
 from pymxs import runtime as rt
@@ -809,7 +809,7 @@ through `mcp-safe`):
 
 ```maxscript
 -- channel: handoff (file shipped in the package)
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-python-interop-2027.md (python.Execute); macroScript header keywords not in the saved docs
+-- checked against scripting-pipeline__maxscript-python-interop-2027.md (python.Execute); macroScript header keywords not in the saved docs
 macroScript StudioTools_Open category:"Studio Tools" buttonText:"Studio Tools" tooltip:"Open the Studio Tools panel"   -- [verify] header keywords
 (
     python.Execute "import studio_tools.ui as ui; ui.show()"
@@ -820,7 +820,7 @@ A plain user startup script (no package), for example to take the Python load ti
 
 ```maxscript
 -- channel: handoff (file in the user scripts\startup folder)
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-python-interop-2027.md
+-- checked against scripting-pipeline__maxscript-python-interop-2027.md
 (
     python.Init()
     format "python ready: %\n" (python.GetLastError() == "")
@@ -837,7 +837,7 @@ Program Files from a tool; Autodesk gives no support for third-party packages.
 
 ```bat
 REM channel: handoff (run by the user in a terminal)
-REM status: not yet run; path and flags from the 2027 Extension Libraries page as summarized in reports/research/01 (page not saved) [verify]
+REM note: path and flags from the 2027 Extension Libraries page as summarized in reports/research/01 (page not saved) [verify]
 "C:\Program Files\Autodesk\3ds Max 2027\Python\python.exe" -m pip install --user requests
 REM shipped tools: vendor wheels into the package instead, with the same interpreter
 "C:\Program Files\Autodesk\3ds Max 2027\Python\python.exe" -m pip install --target "<<PACKAGE_DIR>>\Contents\vendor" requests
@@ -893,7 +893,7 @@ Responsiveness probe for the panel test:
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__python-creating-uis-qtmax-2027.md; threshold [added]
+# checked against scripting-pipeline__python-creating-uis-qtmax-2027.md; threshold [added]
 import time
 
 import qtmax

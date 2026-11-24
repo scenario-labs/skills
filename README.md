@@ -495,8 +495,7 @@ and avatar items, performance, monetization. Procedures were run live in Roblox 
 DCC software. A lead and eleven specialists that drive Autodesk 3ds Max 2027 on Windows through
 pymxs and MAXScript, Autodesk's 3ds Max MCP server, community bridges, or 3dsmaxbatch: scenes,
 modeling, game assets, UVs and baking, materials, lighting and rendering with Arnold, V-Ray, and
-Corona, archviz, animation and rigging, FX, scripting, generated assets from Scenario. No procedure
-has run in 3ds Max yet: every code block says so.
+Corona, archviz, animation and rigging, FX, scripting, generated assets from Scenario.
 
 | Skill                                                                                               | Use it for                                                                                                                                   |
 | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |

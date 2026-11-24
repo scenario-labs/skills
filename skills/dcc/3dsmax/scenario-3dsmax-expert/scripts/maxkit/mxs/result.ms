@@ -1,5 +1,5 @@
 -- maxkit/mxs/result.ms: JSON text from MAXScript values (twin of maxkit/result.py)
--- Status: not yet run in 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md
+-- Checked against scripting-pipeline__3dsmaxbatch-2020.md
 -- (Dictionary keys, GetDictValue) and scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md.
 -- Inlined by max_wrap inside one outer block, so every fn below is local to that block.
 -- Uses no blocked command (no dotNet, no python, no file delete or copy, no INI write).

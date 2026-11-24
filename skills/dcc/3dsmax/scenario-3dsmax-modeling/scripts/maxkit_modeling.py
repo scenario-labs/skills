@@ -1,7 +1,7 @@
 """maxkit_modeling: modeling helpers for scenario-3dsmax-modeling (pymxs, runs inside 3ds Max).
 
 channel: batch | bridge | handoff (inlined through max_wrap.wrap(kit=[...]))
-status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md,
+checked against scripting-pipeline__pymxs-using-2027.md,
         scenario-3dsmax-expert/references/api-names.txt and the poly-modeling notes and digests.
 
 Names marked [verify] were not found in the saved docs. The helpers resolve modifier classes and

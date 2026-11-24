@@ -1,6 +1,6 @@
 """render_metrics: judge saved renders with numbers (runner side, plain Python, never imports pymxs).
 
-status: not yet run against 3ds Max output; the math is standard image statistics [added].
+note: the math is standard image statistics [added].
 Needs numpy and Pillow. EXR input needs imageio with an EXR plugin, or convert first with
 `magick in.exr out.tif`.
 

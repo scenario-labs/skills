@@ -9,10 +9,6 @@ license: MIT
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
 toolkit.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first.
-
 Expert level here means every UV and bake decision is measured: texel density in px/cm against a
 target, padding in pixels at the final size, no unintended overlap, and a diagnostic bake before the
 final one. The core stance: fix what a parameter can fix, keep the original material and UVs

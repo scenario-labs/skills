@@ -1,6 +1,6 @@
 """maxkit.audit: read-only scene audit with findings {severity, rule, node, message}.
 
-Status: not yet run in 3ds Max; the rules are pure Python over maxkit.stats.collect() records,
+The rules are pure Python over maxkit.stats.collect() records,
 and only collect() touches pymxs (names marked [verify] there).
 
     all(expect=None, data=None) -> {"findings": [...], "tally": {"error", "warn", "info"}}

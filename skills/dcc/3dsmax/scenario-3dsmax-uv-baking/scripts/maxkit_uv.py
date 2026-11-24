@@ -1,7 +1,7 @@
 """maxkit_uv: UV layout audit for scenario-3dsmax-uv-baking (runs inside 3ds Max).
 
 channel: batch | bridge | handoff (inline with max_wrap(code, kit=["maxkit_uv"]))
-status: not yet run in 3ds Max; checked against notes/uv-baking-texturing digests
+checked against notes/uv-baking-texturing digests
         (texel density method from sR1sAWWT2x8, padding rule from 2gv1jYDAoJc,
         overlap and mirrored-UV rules from the Autodesk normal map troubleshooting page).
 

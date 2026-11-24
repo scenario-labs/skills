@@ -1,5 +1,5 @@
 -- maxkit/mxs/audit.ms: read-only scene audit (twin of maxkit/audit.py, same rule names)
--- Status: not yet run in 3ds Max; rules follow maxkit/audit.py; scene reads marked [verify].
+-- Rules follow maxkit/audit.py; scene reads marked [verify].
 -- Needs mxk_dict from result.ms (inlined first). Safe for mcp-safe: no blocked command.
 -- Returns a Dictionary: findings (array of {severity, rule, node, message}) and tally.
 

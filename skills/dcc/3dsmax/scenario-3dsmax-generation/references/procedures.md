@@ -1,8 +1,8 @@
 # Procedures: generation to 3ds Max and back
 
-Every procedure here is not yet run in 3ds Max. Each code block names its channels and the source it
-was checked against. Names marked `[verify]` are not in the saved Autodesk docs: confirm them with
-`showProperties`, the MacroRecorder or a one-line test before relying on them.
+Each code block names its channels and the source it was checked against. Names marked `[verify]`
+are not in the saved Autodesk docs: confirm them with `showProperties`, the MacroRecorder or a
+one-line test before relying on them.
 
 Conventions:
 
@@ -54,7 +54,7 @@ Scene prep before any capture for an AI pass (VizAcademy UK, zARHVN_XN4U 00:24:3
 
 ```python
 # channel: batch (render only), bridge, handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md and the lead's capture contract
+# checked against scripting-pipeline__pymxs-renderer-2027.md and the lead's capture contract
 import json, os
 ARGS = json.loads('__ARGS__')  # {"out_dir": ..., "camera": "CAM_Hero", "size": [2048, 1152], "views": true}
 os.makedirs(ARGS["out_dir"], exist_ok=True)
@@ -72,7 +72,7 @@ Execution is not documented: run it once on a test path first).
 
 ```maxscript
 -- channel: mcp-safe, bridge, handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md, scripting-pipeline__maxscript-bitmap-values-2027.md
+-- checked against scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md, scripting-pipeline__maxscript-bitmap-values-2027.md
 outPath = @"__OUT_DIR__\viewport_capture.png"   -- filled by the agent; must not exist yet
 camName = "__CAMERA__"
 if doesFileExist outPath then throw "target exists: pick a new name"
@@ -126,7 +126,7 @@ No generation code: the Scenario skills own this. The call sequence, per the `sc
 
 ```python
 # channel: runner side (feeds batch, mcp-safe, bridge, handoff)
-# status: not yet run against a real 3ds Max; checked against scripts/gen_runner.py and the scenario skill (asset_download)
+# checked against scripts/gen_runner.py and the scenario skill (asset_download)
 import sys
 sys.path.insert(0, "__SKILL_DIR__/scripts")    # this skill's scripts folder
 import gen_runner as g
@@ -183,7 +183,7 @@ deltas).
 
 ```maxscript
 -- channel: batch
--- status: not yet run in 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md (mxsCmdLineArgs example)
+-- checked against scripting-pipeline__3dsmaxbatch-2020.md (mxsCmdLineArgs example)
 opts = maxOps.mxsCmdLineArgs
 inPath = opts[#path]                 -- dictionary key access as in the doc's loop over opts.keys
 if inPath == undefined then throw "missing -mxsString path:"
@@ -193,7 +193,7 @@ format "imported:% path:%\n" ok inPath
 
 ```python
 # channel: batch, bridge, handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md and scripts/maxkit_generation.py
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md and scripts/maxkit_generation.py
 import json
 ARGS = json.loads('__ARGS__')
 # {"path": ".../planter_01.fbx", "name": "planter_01", "layer": "GEN_props",
@@ -210,7 +210,7 @@ Runner side, building and running it:
 
 ```python
 # channel: runner side
-# status: not yet run in 3ds Max; checked against the lead's max_wrap and max_batch contract
+# checked against the lead's max_wrap and max_batch contract
 import json
 from max_wrap import wrap
 from max_batch import run_batch
@@ -227,7 +227,7 @@ for the user who approves it):
 
 ```maxscript
 -- channel: mcp-safe, bridge, handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
+-- checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 inPath  = @"__PATH__"          -- filled by the agent
 assetName = "__NAME__"
 knownSizeSys = __KNOWN_SIZE_SYS__  -- real height in system units, or 0 to skip scaling
@@ -374,7 +374,7 @@ splat support, so in those scenes ask `scenario-3dsmax-lighting-rendering` which
 
 ```python
 # channel: batch, bridge, handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-whats-new-2027.md (SPZImport, PLYImport) and fundamentals-scene__gaussian-splat-3dgs-in-3ds-max-2027.md
+# checked against scripting-pipeline__maxscript-whats-new-2027.md (SPZImport, PLYImport) and fundamentals-scene__gaussian-splat-3dgs-in-3ds-max-2027.md
 import json
 ARGS = json.loads('__ARGS__')   # {"path": ".../world.spz", "name": "site_context", "record": {...}}
 rep = maxkit_generation.land_splat(ARGS["path"], ARGS["name"], record=ARGS.get("record"))
@@ -385,7 +385,7 @@ result = rep
 
 ```maxscript
 -- channel: mcp-safe, bridge, handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
+-- checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 inPath = @"__PATH__"
 before = for o in objects collect o
 ok = importFile inPath #noPrompt
@@ -483,7 +483,7 @@ assemble it, send it as the reference video.
 
 ```python
 # channel: batch, bridge, handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md (render, outputFile)
+# checked against scripting-pipeline__pymxs-renderer-2027.md (render, outputFile)
 import json, os
 ARGS = json.loads('__ARGS__')   # {"camera": "CAM_Walk", "start": 0, "end": 143, "out_dir": ...}
 cam = rt.getNodeByName(ARGS["camera"])          # [verify] getNodeByName

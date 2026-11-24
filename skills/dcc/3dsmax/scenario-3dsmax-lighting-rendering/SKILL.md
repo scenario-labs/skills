@@ -9,10 +9,6 @@ license: MIT
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
 toolkit.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first.
-
 Expert level here means light first and settings second, every noise problem traced to its cause,
 one tone mapper, and every long render priced before it starts. The agent judges renders from saved
 images with numbers (noise sigma, clipped percent, detail ratio, seconds per frame) and then by

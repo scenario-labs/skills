@@ -10,7 +10,7 @@ spec.json keys (all optional; defaults in DEFAULT_SPEC):
     system_type, system_scale, max_far_m, max_default_named, max_group_depth,
     max_on_layer_0, max_missing_maps, max_copy_groups, max_viewport_smooth,
     max_faces_per_node, max_file_mb
-status: logic run on sample JSON only; the audit it reads is not yet run in 3ds Max.
+status: logic run on sample JSON.
 """
 import json
 import sys

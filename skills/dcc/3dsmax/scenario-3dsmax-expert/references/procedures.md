@@ -11,7 +11,7 @@ Runner side. Goal: know what the agent can do before planning.
 
 ```python
 # channel: runner (any OS)
-# status: not yet run in 3ds Max; checked against scripting-pipeline__max-mcp-connect-external-client-2027-3.md
+# checked against scripting-pipeline__max-mcp-connect-external-client-2027-3.md
 import sys
 sys.path.insert(0, "<skill>/scripts")  # the skill's scripts folder, passed in by the caller
 import max_env
@@ -32,7 +32,7 @@ Goal: numbers and findings before any change.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md (rt, main thread)
+# checked against scripting-pipeline__pymxs-using-2027.md (rt, main thread)
 snap = stats.snapshot()
 rep = audit.all(expect={"units": "centimeters", "renderer": "Arnold", "max_faces": 2000000})
 log("objects", snap["objects"], "errors", rep["tally"]["error"])
@@ -43,7 +43,7 @@ The same through mcp-safe, as MAXScript (wrap with `lang="maxscript", kit=["stat
 
 ```maxscript
 -- channel: mcp-safe | batch | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__max-mcp-known-limitations-2027-3.md (no blocked command)
+-- checked against scripting-pipeline__max-mcp-known-limitations-2027-3.md (no blocked command)
 result = mxk_dict #(#("snapshot", mxk_stats_snapshot()), #("audit", mxk_audit_all expectUnits:"centimeters" expectRenderer:"Arnold"))
 ```
 
@@ -59,7 +59,7 @@ Goal: a restore point that does not rename the open scene.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 import os
 folder, name = str(rt.maxFilePath), str(rt.maxFileName)
 if not name:
@@ -80,7 +80,7 @@ boxes `PH_*` on layers by room, taken from their name `PH_<Room>_<Item>`.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md; layer calls [verify]
+# checked against scripting-pipeline__pymxs-using-2027.md; layer calls [verify]
 before = stats.snapshot()
 moved = []
 for o in list(rt.objects):  # [verify] objects
@@ -108,7 +108,7 @@ Goal: four framed views, one contact sheet, read once.
 
 ```python
 # channel: bridge | handoff (no viewport in batch)
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md
+# checked against scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md
 shots = capture.views(capture_dir, views=("persp", "front", "left", "top"), size=1024)  # capture_dir passed by the caller
 result = {"captures": [s["path"] for s in shots]}
 ```
@@ -137,7 +137,7 @@ Max.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md (render outputFile)
+# checked against scripting-pipeline__pymxs-renderer-2027.md (render outputFile)
 out = []
 for cam_name in cameras:  # list passed by the caller; never guess camera names
     out.append(capture.render(render_dir + "/test_" + cam_name + ".png", camera=cam_name, size=1280))
@@ -154,7 +154,7 @@ Check:
 
 ```python
 # channel: batch | bridge | handoff (mcp-safe: importFile in Safe mode not documented)
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md and scripting-pipeline__gltf-import-2027.md
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md and scripting-pipeline__gltf-import-2027.md
 rep = xio.import_any(asset_path)  # suffix picks the importer; #noPrompt and quiet pass
 result = {"import": rep, "audit": audit.all(expect={"units": "centimeters"})}
 ```
@@ -179,7 +179,7 @@ it.
 
 ```python
 # channel: batch (never in a live session: loadMaxFile replaces the scene without a prompt)
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (loadMaxFile useFileUnits: quiet: allowPrompts:)
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (loadMaxFile useFileUnits: quiet: allowPrompts:)
 ok = rt.loadMaxFile(asset_path, useFileUnits=True, quiet=True, allowPrompts=False)  # asset_path passed by the caller
 result = {"ok": bool(ok), "unit": str(rt.units.SystemType), "scale": float(rt.units.SystemScale)}  # [verify] units.SystemType, units.SystemScale
 ```
@@ -204,7 +204,7 @@ applies the scale twice.
 
 ```maxscript
 -- channel: bridge | handoff | mcp-safe (mergeMAXFile under Safe mode not documented)
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (mergeMAXFile flags, mergedNodes:, ignoreFileUnits:); bounds and matrix calls [verify]
+-- checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (mergeMAXFile flags, mergedNodes:, ignoreFileUnits:); bounds and matrix calls [verify]
 -- Inputs: phName, assetFile; P7a found equal units. The asset's front faces the box's local -Y [added].
 fn fitBounds nodes tm = (  -- union of the nodes' bounds in frame tm
     local lo, hi
@@ -251,7 +251,7 @@ Runner side. Goal: the same script on each file, originals untouched, one proces
 
 ```python
 # channel: batch (runner side, Windows)
-# status: not yet run in 3ds Max; checked against scripting-pipeline__3dsmaxbatch-2020.md (options, exit codes)
+# checked against scripting-pipeline__3dsmaxbatch-2020.md (options, exit codes)
 import max_batch, max_wrap
 job = max_wrap.wrap(chunk, kit=["audit", "xio"])  # chunk reads out_dir from maxOps.mxsCmdLineArgs
 reports = []

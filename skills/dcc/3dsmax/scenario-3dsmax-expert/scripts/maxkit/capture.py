@@ -1,6 +1,6 @@
 """maxkit.capture: viewport grabs and renders to PNG for visual review (pymxs, main thread only).
 
-Status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md
+Checked against scripting-pipeline__pymxs-renderer-2027.md
 (viewport.getViewportDib, viewport.getType, render outputFile:, renderers),
 scripting-pipeline__maxscript-bitmap-values-2027.md (filename then save, close, copy) and
 scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md.

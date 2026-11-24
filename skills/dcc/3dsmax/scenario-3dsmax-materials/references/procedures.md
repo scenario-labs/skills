@@ -1,8 +1,8 @@
 # Procedures: materials and look-dev
 
-Every block is **not yet run in 3ds Max**. Names marked `[verify]` were not found in the saved docs;
-the helper resolves most of them at run time and reports what it found. Units: centimeters unless a
-block says otherwise. Renderer-specific blocks check `rt.renderers.current` first.
+Names marked `[verify]` were not found in the saved docs; the helper resolves most of them at run
+time and reports what it found. Units: centimeters unless a block says otherwise. Renderer-specific
+blocks check `rt.renderers.current` first.
 
 ## P0. How to run a chunk
 
@@ -13,7 +13,7 @@ wrapper adds the undo record and writes the JSON result file.
 
 ```python
 # channel: batch | bridge | handoff (runner side, plain Python)
-# status: not yet run in 3ds Max; checked against skills/scenario-3dsmax-expert/scripts/max_wrap.py docstring
+# checked against skills/scenario-3dsmax-expert/scripts/max_wrap.py docstring
 import os
 import sys
 
@@ -41,7 +41,7 @@ Goal: renderer, color mode, units, class counts, texture color spaces.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-bitmap-values-2027.md
+# checked against scripting-pipeline__maxscript-bitmap-values-2027.md
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -69,7 +69,7 @@ keep the result next to the project.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md (PhysicalMaterial)
+# checked against scripting-pipeline__pymxs-using-2027.md (PhysicalMaterial)
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -129,7 +129,7 @@ Goal: one material, every map in the right slot and color space, real-world mapp
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-bitmap-values-2027.md (openBitmap colorSpace:),
+# checked against scripting-pipeline__maxscript-bitmap-values-2027.md (openBitmap colorSpace:),
 #         uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md (PhysicalMaterial, base_color_map, uvwmap, addModifier)
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
@@ -178,7 +178,7 @@ the file is untouched.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-bitmap-values-2027.md
+# checked against scripting-pipeline__maxscript-bitmap-values-2027.md
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -209,7 +209,7 @@ roughness reads the same as in the reference.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against 64vzHYEWedI 00:15:01 to 00:27:26 (method), helper names resolved at run time
+# checked against 64vzHYEWedI 00:15:01 to 00:27:26 (method), helper names resolved at run time
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -232,7 +232,7 @@ Goal: base plus scratched, dirty and dusty states in a VRayBlendMtl, each mask t
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against aHgu1dwjzSo 00:06:11 to 00:13:23 and D-tB0dJp9sU 00:07:45 to 00:11:03 (frames)
+# checked against aHgu1dwjzSo 00:06:11 to 00:13:23 and D-tB0dJp9sU 00:07:45 to 00:11:03 (frames)
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -316,7 +316,7 @@ Then render. With `debug` on, every coat is red, so check placement per mask:
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against materials-lookdev__corona-physical-material.md (labels) and CxHKVjeycv0 00:01:33 to 00:03:18
+# checked against materials-lookdev__corona-physical-material.md (labels) and CxHKVjeycv0 00:01:33 to 00:03:18
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -349,7 +349,7 @@ words to whatever P2 found.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against tEUiIBApw-U (parameter semantics) and materials-lookdev__adobe-openpbr-faq.md
+# checked against tEUiIBApw-U (parameter semantics) and materials-lookdev__adobe-openpbr-faq.md
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -383,7 +383,7 @@ to 0. Coat darkening is on by design.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against the capture contract in skills/_SKILL_WRITING_BRIEF.md
+# checked against the capture contract of scenario-3dsmax-expert
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -414,7 +414,7 @@ own layer through scenario-3dsmax-scene.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against materials-lookdev__multi-sub-object-material-2027.md (behavior)
+# checked against materials-lookdev__multi-sub-object-material-2027.md (behavior)
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials
@@ -466,7 +466,7 @@ docs.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against materials-lookdev__vray7-vraymtl.md (Shading mode, BRDF, Coat, Sheen)
+# checked against materials-lookdev__vray7-vraymtl.md (Shading mode, BRDF, Coat, Sheen)
 from pymxs import runtime as rt
 from maxkit_materials import *  # noqa: F403 (inlined by max_wrap kit)
 import maxkit_materials

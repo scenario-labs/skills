@@ -1,7 +1,7 @@
 """maxkit_render: in-Max helpers for lighting and render work (pymxs, main thread only).
 
 channel: batch | bridge | handoff (inline with max_wrap.wrap(..., kit=[...]); for mcp-safe use mxs/render_audit.ms)
-status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md,
+checked against scripting-pipeline__pymxs-renderer-2027.md,
 scripting-pipeline__maxscript-bitmap-values-2027.md and the lighting-rendering digests.
 
 Stance encoded here: read before you write. Renderer property names differ between Arnold,

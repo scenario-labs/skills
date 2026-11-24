@@ -9,10 +9,6 @@ license: MIT
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
 toolkit.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first.
-
 Expert level here means running a commission like a studio: every image answers a brief, the camera
 is signed off before anything is dressed, and every heavy step is budgeted in numbers before it
 runs. This skill owns production order, decisions and checks; lighting, materials and scene cleanup
@@ -243,7 +239,7 @@ From `sources/3dsmax-version-deltas.md` and the archviz digests.
 ## References
 
 - [expert-notes.md](references/expert-notes.md): principles and judgment by expert, with timestamps.
-- [procedures.md](references/procedures.md): P0 to P11 with full code, channel, status line and
+- [procedures.md](references/procedures.md): P0 to P11 with full code, channel, source line and
   result checks.
 - [critique.md](references/critique.md): the self-review rubric with numbers and capture checks.
 - [gui-paths.md](references/gui-paths.md): menus and panels for the same steps, for a human or

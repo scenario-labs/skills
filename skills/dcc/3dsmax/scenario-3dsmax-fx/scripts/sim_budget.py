@@ -1,6 +1,6 @@
 """sim_budget: runner-side simulation time and cache checks (plain Python 3.10+, no pymxs).
 
-status: not yet run against a real 3ds Max cache; estimates are linear extrapolations [added].
+note: estimates are linear extrapolations [added].
 
 Usage
   python sim_budget.py estimate --sec-per-frame 0.8 --frames 150 --load-ratio 4

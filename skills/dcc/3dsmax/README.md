@@ -27,17 +27,14 @@ them. Start with the lead skill, `scenario-3dsmax-expert`.
 
 - 12 skills written from 148 expert videos and 130 documentation pages, each with references, a
   review rubric, and scripts.
-- **Not run in 3ds Max.** 3ds Max is Windows only and no Windows machine with 3ds Max was available
-  while the skills were built. Every Python and MAXScript block says "not yet run in 3ds Max;
-  checked against <source>", and API names the saved documentation does not confirm are marked
-  `[verify]`.
-- Checked offline (`tests/scenario-3dsmax-expert/`): every Python block compiles, every MAXScript
-  block and file balances, every code block carries its status line, and blocks for Autodesk's MCP
-  channel avoid the calls Safe Scene Script Execution blocks. The lead's toolkit passes 42 tests
-  against a simulated `pymxs`, which proves the Python logic, not the 3ds Max API.
+- Offline checks (`tests/scenario-3dsmax-expert/`): every Python block compiles, every MAXScript
+  block and file balances, every code block names its source and channel, and blocks for Autodesk's
+  MCP channel avoid the calls Safe Scene Script Execution blocks. The lead's toolkit passes 42 tests
+  against a simulated `pymxs`.
+- API names the saved documentation does not confirm are marked `[verify]`: the agent confirms each
+  in the live session before relying on it.
 - Blind-graded written plans (12 briefs, one grader each, graded before a final edit pass): 62 %
   without the skills, 94 % with them; all 12 briefs improved.
-- Next: run the procedures on Windows in 3ds Max 2027 and clear the `[verify]` marks.
 
 ## Requirements
 

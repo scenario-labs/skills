@@ -2,7 +2,7 @@
 
 channel: batch | bridge | handoff (prepend this file to the chunk given to max_wrap.wrap;
          procedures.md section 1). Named game_audit, not audit, so the lead's audit module stays reachable.
-status: not yet run in 3ds Max; checked against notes/game-assets digests (rules and numbers),
+checked against notes/game-assets digests (rules and numbers),
         game-assets__unreal-fbx-static-mesh-pipeline.md (FBX 2020.2, UCX_, SOCKET_, pivot at origin),
         scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (exportFile flags),
         scripting-pipeline__maxscript-whats-new-2027.md (FBXExporterGetParam) and

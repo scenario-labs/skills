@@ -1,8 +1,7 @@
 # Procedures: game assets in 3ds Max 2027.3
 
-Every block here is **not yet run in 3ds Max**. Each names its channels and the source it was
-checked against. Names not found in the saved docs carry `[verify]` on their line. Units:
-centimeters unless a block says otherwise.
+Each block names its channels and the source it was checked against. Names not found in the saved
+docs carry `[verify]` on their line. Units: centimeters unless a block says otherwise.
 
 Common pattern (runner side): read the domain helper, prepend it to your chunk, wrap it with the
 lead's `max_wrap.wrap`, run it with `max_batch.run_batch` or hand it to the bridge or the user, then
@@ -33,7 +32,7 @@ there instead of prepending.
 
 ```python
 # channel: runner side (any OS); produces scripts for batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scenario-3dsmax-expert/scripts/max_wrap.py (wrap signature)
+# checked against scenario-3dsmax-expert/scripts/max_wrap.py (wrap signature)
 import sys
 from pathlib import Path
 
@@ -59,7 +58,7 @@ Python form (batch, bridge, handoff), chunk for procedure 1:
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripts/mxs/game_audit.ms and scripting-pipeline__pymxs-using-2027.md
+# checked against scripts/mxs/game_audit.ms and scripting-pipeline__pymxs-using-2027.md
 rep = game_audit()                      # maxkit_game.game_audit(): selection, or all objects if none selected
 rep["snapshot"] = stats.snapshot()  # lead toolkit
 result = rep
@@ -92,7 +91,7 @@ pymxs doc.
 
 ```maxscript
 -- channel: mcp-safe | bridge | batch | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md (getPropNames)
+-- checked against scripting-pipeline__pymxs-using-2027.md (getPropNames)
 -- Adds each candidate modifier to a temporary box, lists its properties, then deletes the box (a scene node, not a file).
 local out = #()
 local b = Box()
@@ -136,7 +135,7 @@ Inside 3ds Max (chunk for procedure 1). Import with the lead's `xio.import_any`,
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against notes/game-assets digests (Ghost Pig z1ws_LOo9AU, MZONE3D 3PuxYRayJGE) and maxkit_game.py
+# checked against notes/game-assets digests (Ghost Pig z1ws_LOo9AU, MZONE3D 3PuxYRayJGE) and maxkit_game.py
 import os
 SRC = r"<path to the GLB or FBX>"
 TARGET_CM = 120.0           # real size along MEASURE, from the brief
@@ -168,7 +167,7 @@ Poly.
 
 ```maxscript
 -- channel: mcp-safe | bridge | batch | handoff
--- status: not yet run in 3ds Max; checked against notes/game-assets/3PuxYRayJGE (order and 0.001 weld); function names not in saved docs
+-- checked against notes/game-assets/3PuxYRayJGE (order and 0.001 weld); function names not in saved docs
 -- Changes the mesh: run on a copy or inside the wrapper's undo record.
 local n = selection[1]
 local rep = #()
@@ -212,7 +211,7 @@ dense original hidden as the bake source.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against notes/game-assets/Pg2Nm-fwyME and HhUMdy-0kSI (values from frames); class and property names [verify], probed at run time
+# checked against notes/game-assets/Pg2Nm-fwyME and HhUMdy-0kSI (values from frames); class and property names [verify], probed at run time
 SRC_NAME = "<dense mesh node name>"
 FACES = 6000                       # target from the budget; HhUMdy-0kSI uses 6000, small parts 150
 src = rt.getNodeByName(SRC_NAME)
@@ -281,7 +280,7 @@ Map, By Edge Angle) keeps deliberate hard edges, for example the ones on UV seam
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against game-assets__autodesk-weighted-normals-modifier.md (parameters) and notes cGQJBU2RYPA, lDpcfhxP3qU; names [verify]
+# checked against game-assets__autodesk-weighted-normals-modifier.md (parameters) and notes cGQJBU2RYPA, lDpcfhxP3qU; names [verify]
 NAME = "<prop node name>"
 CHAMFER_CM = 0.5                        # [added] start value for a 100 cm prop; judge in the capture
 n = rt.getNodeByName(NAME)
@@ -329,7 +328,7 @@ capture again).
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against notes s_RShJy4k-g (50 and 67 percent, Keep Textures and Keep UV Boundaries) and maxkit_game.make_lod
+# checked against notes s_RShJy4k-g (50 and 67 percent, Keep Textures and Keep UV Boundaries) and maxkit_game.make_lod
 LOD0 = rt.getNodeByName("<LOD0 node name>")
 PLAN = [(1, 55.0), (2, 30.0), (3, 15.0)]   # vertex percent of LOD0, tuned until each step is about 50 percent of the previous
 reports = [make_lod(LOD0, level, pct) for level, pct in PLAN]
@@ -361,7 +360,7 @@ ProOptimizer flags `missing` list empty (else the UVs may be broken).
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against game-assets__unreal-fbx-static-mesh-pipeline.md (UCX_, SOCKET_, convex, gaps) and maxkit_game.add_box_collision
+# checked against game-assets__unreal-fbx-static-mesh-pipeline.md (UCX_, SOCKET_, convex, gaps) and maxkit_game.add_box_collision
 BODY = rt.getNodeByName("SM_Crate_A")
 hull = add_box_collision(BODY, index=0)
 sock = rt.Dummy()                                # [verify] Dummy helper class
@@ -392,7 +391,7 @@ the grid step.
 
 ```python
 # channel: batch | bridge | handoff (read-only)
-# status: not yet run in 3ds Max; checked against notes/game-assets/J1lnlTbMtKs (cell 256, step 8, pivot -128,-128)
+# checked against notes/game-assets/J1lnlTbMtKs (cell 256, step 8, pivot -128,-128)
 GRID = 8.0
 CELL = 256.0
 TOL = 0.001
@@ -425,7 +424,7 @@ example a height gradient for dirt or moss blending:
 
 ```maxscript
 -- channel: mcp-safe | bridge | batch | handoff
--- status: not yet run in 3ds Max; checked against notes/game-assets/aQIQH0hZkDg (channels: Vertex Color, Illum, Alpha); polyop names [verify]
+-- checked against notes/game-assets/aQIQH0hZkDg (channels: Vertex Color, Illum, Alpha); polyop names [verify]
 -- Writes a bottom-to-top gradient into map channel 0 (vertex color) on one Editable Poly.
 local n = selection[1]
 convertToPoly n                                                     -- [verify]
@@ -452,7 +451,7 @@ then deletes the copies.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against game-assets__unreal-fbx-static-mesh-pipeline.md, notes CM3GwvoOSP4 and z1ws_LOo9AU, maxscript-file-loading-saving-importfile-exportfile-2027.md (exportFile flags)
+# checked against game-assets__unreal-fbx-static-mesh-pipeline.md, notes CM3GwvoOSP4 and z1ws_LOo9AU, maxscript-file-loading-saving-importfile-exportfile-2027.md (exportFile flags)
 OUT = r"<export folder>\SM_Crate_A.fbx"
 names = ["SM_Crate_A", "UCX_SM_Crate_A_00", "SOCKET_SM_Crate_A_00"]
 nodes = [rt.getNodeByName(x) for x in names]
@@ -482,7 +481,7 @@ documented: propose it, and fall back to `handoff` if it is blocked.
 
 ```maxscript
 -- channel: mcp-safe | bridge | batch | handoff
--- status: not yet run in 3ds Max; checked against maxscript-file-loading-saving-importfile-exportfile-2027.md (exportFile, #noPrompt, selectedOnly, using:) and maxscript-whats-new-2027.md (FBXExporterGetParam)
+-- checked against maxscript-file-loading-saving-importfile-exportfile-2027.md (exportFile, #noPrompt, selectedOnly, using:) and maxscript-whats-new-2027.md (FBXExporterGetParam)
 -- Exports the current selection as is: triangulate and Reset XForm on the export copy beforehand.
 local outPath = @"<export folder>\SM_Crate_A_v002.fbx"
 FBXExporterSetParam "ResetExport"                     -- [verify]
@@ -516,7 +515,7 @@ in File > Export, then export by script.
 
 ```maxscript
 -- channel: mcp-safe | bridge | batch | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__gltf-export-2027.md and maxscript-file-loading-saving-importfile-exportfile-2027.md
+-- checked against scripting-pipeline__gltf-export-2027.md and maxscript-file-loading-saving-importfile-exportfile-2027.md
 -- Select LOD0 render meshes only: no UCX_, no SOCKET_, no LODs.
 local outPath = @"<export folder>\Crate_A_v002.glb"
 local ok = exportFile outPath #noPrompt selectedOnly:true
@@ -535,7 +534,7 @@ by script, export in the GUI or ask the user.
 
 ```maxscript
 -- channel: mcp-safe | bridge | batch | handoff
--- status: not yet run in 3ds Max; checked against game-assets__datasmith-3dsmax-translation.md (metadata format, StatSync, UV and pivot rules)
+-- checked against game-assets__datasmith-3dsmax-translation.md (metadata format, StatSync, UV and pivot rules)
 Datasmith_SetExportOption_StatSync true                 -- documented: statistics for Direct Link Sync
 local rep = #()
 for n in selection do (

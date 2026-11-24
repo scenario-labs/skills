@@ -1,9 +1,8 @@
 # Procedures: lighting and rendering
 
-Every block: not yet run in 3ds Max. Units: centimeters for positions and light sizes unless stated.
-Renderer property names are the main risk: blocks resolve them on the live object (`resolve`,
-`prop_dump`) and never write a name the scene did not report. Run the inspect step before any
-change.
+Units: centimeters for positions and light sizes unless stated. Renderer property names are the main
+risk: blocks resolve them on the live object (`resolve`, `prop_dump`) and never write a name the
+scene did not report. Run the inspect step before any change.
 
 ## 0. How to run these blocks
 
@@ -14,7 +13,7 @@ defined inside the one undo record.
 
 ```python
 # channel: runner side (prepares scripts for batch | bridge | handoff)
-# status: not yet run in 3ds Max; checked against the max_wrap contract in skills/_SKILL_WRITING_BRIEF.md
+# checked against the max_wrap contract of scenario-3dsmax-expert
 from pathlib import Path
 
 from max_wrap import wrap          # scenario-3dsmax-expert/scripts
@@ -45,7 +44,7 @@ state before touching anything.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md and scripting-pipeline__maxscript-bitmap-values-2027.md
+# checked against scripting-pipeline__pymxs-renderer-2027.md and scripting-pipeline__maxscript-bitmap-values-2027.md
 r = rt.renderers.current
 info = renderer_info()
 result = {
@@ -71,7 +70,7 @@ Goal: confirm one tone mapper and correct texture tagging before lighting.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-bitmap-values-2027.md (colorSpace, colorSpaceSource, ColorPipelineMgr lists)
+# checked against scripting-pipeline__maxscript-bitmap-values-2027.md (colorSpace, colorSpaceSource, ColorPipelineMgr lists)
 col = color_report()
 maps = bitmap_color_spaces()
 suspect = [m for m in maps
@@ -101,7 +100,7 @@ Goal: light without material distraction, with glass still letting light through
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against x8H1CNNFPgc and 4MeUNMFxiPE notes (V-Ray names [verify]); Corona and Arnold override names unknown
+# checked against x8H1CNNFPgc and 4MeUNMFxiPE notes (V-Ray names [verify]); Corona and Arnold override names unknown
 APPLY = False  # first run dry, read the report, then set True
 r = rt.renderers.current
 fam = renderer_info()["family"]
@@ -143,7 +142,7 @@ set the confirmed names.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md (pos, Point3); light class names and matrixFromNormal [verify]
+# checked against scripting-pipeline__pymxs-using-2027.md (pos, Point3); light class names and matrixFromNormal [verify]
 import math
 
 
@@ -197,7 +196,7 @@ The sun block below uses `make_light` and `sun_position` from 4a.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against x8H1CNNFPgc and 4MeUNMFxiPE notes; VRaySun, CoronaSun, ArnoldLight [verify]
+# checked against x8H1CNNFPgc and 4MeUNMFxiPE notes; VRaySun, CoronaSun, ArnoldLight [verify]
 TARGET = (0.0, 0.0, 0.0)        # room center on the floor, cm
 fam = renderer_info()["family"]
 sun_cls = {"vray": ["VRaySun"], "corona": ["CoronaSun"], "arnold": ["ArnoldLight"]}[fam]  # Arnold: distant light type [verify]
@@ -242,7 +241,7 @@ Uses `make_light` from 4a (keep both in the same chunk).
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against hPZvijDCV-M frames 5:04, 5:22, 9:12; light classes [verify]; elevations [added]
+# checked against hPZvijDCV-M frames 5:04, 5:22, 9:12; light classes [verify]; elevations [added]
 import math
 
 SUBJECT = (0.0, 0.0, 50.0)    # subject center, cm
@@ -304,7 +303,7 @@ lighting.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; camera property names unknown, discovered here
+# note: camera property names unknown, discovered here
 cam = rt.getNodeByName("CAM_main")  # pass the shot camera name
 result = {"camera_class": str(rt.classOf(cam)),
           "exposure_props": prop_dump(cam, ("exposure", "ev", "iso", "f_number", "fnumber", "shutter",
@@ -320,7 +319,7 @@ within 0.02 [added].
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; class names from vray7-vraylightmix.md, corona-lightmix.md and notes [verify]; AddRenderElement [verify]
+# note: class names from vray7-vraylightmix.md, corona-lightmix.md and notes [verify]; AddRenderElement [verify]
 APPLY = False
 fam = renderer_info()["family"]
 want = {"vray": ["VRayLightMix", "VRayCryptomatte"],
@@ -372,7 +371,7 @@ Arnold zero test, measured:
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against lighting-rendering__arnold-removing-noise.md (zero test) and ZUEnTb6QnD4 note (property names [verify])
+# checked against lighting-rendering__arnold-removing-noise.md (zero test) and ZUEnTb6QnD4 note (property names [verify])
 import os
 
 OUT = os.path.join(str(rt.getDir(rt.Name("renderoutput"))), "triage")  # or a project path passed in
@@ -413,7 +412,7 @@ scene rather than assuming (3IZ44a70BPw 00:01:18).
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-renderer-2027.md (render outputFile, outputSize)
+# checked against scripting-pipeline__pymxs-renderer-2027.md (render outputFile, outputSize)
 import os
 
 OUT = os.path.join(str(rt.getDir(rt.Name("renderoutput"))), "estimate")  # or a project path passed in
@@ -430,7 +429,7 @@ Runner side:
 
 ```python
 # channel: runner side
-# status: not yet run against 3ds Max output; standard scaling [added]
+# note: standard scaling [added]
 from render_metrics import estimate, noise
 
 test = noise("estimate_q_v001.png")["sigma"]
@@ -486,7 +485,7 @@ resume (_biqhqTpW5c 00:13:34). V-Ray: aborting skips the denoiser, soft stop app
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; frame keyword of render() [verify]
+# note: frame keyword of render() [verify]
 import os
 
 OUT = os.path.join(str(rt.getDir(rt.Name("renderoutput"))), "flicker")  # or a project path passed in
@@ -514,7 +513,7 @@ layers; the mix is a weighted sum, additive like Photoshop Linear Dodge (Add) (c
 
 ```python
 # channel: runner side
-# status: not yet run against 3ds Max output; additive rule from corona-lightmix.md
+# note: additive rule from corona-lightmix.md
 import numpy as np
 
 
@@ -532,7 +531,7 @@ Cryptomatte matte from an EXR (Corona `.cxr` files are EXR: rename to open them,
 
 ```python
 # channel: runner side
-# status: not yet run against 3ds Max output; checked against the Cryptomatte specification (github.com/Psyop/Cryptomatte) [added]
+# checked against the Cryptomatte specification (github.com/Psyop/Cryptomatte) [added]
 import struct
 
 import mmh3

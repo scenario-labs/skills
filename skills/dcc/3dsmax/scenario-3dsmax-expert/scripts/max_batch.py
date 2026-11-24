@@ -3,7 +3,7 @@
 
 Runner side: plain Python 3.10+, never imports pymxs. Commands are argument lists, never shell
 strings, so Windows paths with spaces survive. Checked against scripting-pipeline__3dsmaxbatch-2020.md
-(options, -mxsString/-mxsValue, exit codes). Status of the batch run itself: not yet run in 3ds Max.
+(options, -mxsString/-mxsValue, exit codes).
 
     command(script, scene=None, args=None, exe=None, listener_log=None, log=None,
             verbosity=3, dialog_monitor=True) -> list[str]

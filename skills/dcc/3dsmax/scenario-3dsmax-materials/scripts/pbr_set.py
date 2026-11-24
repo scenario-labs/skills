@@ -1,7 +1,7 @@
 """Arrival check for a PBR texture set, before any of it enters 3ds Max.
 
 Runner side: plain Python 3.10+, any OS, never imports pymxs.
-status: runs outside 3ds Max; the 3ds Max side that consumes its report is not yet run in 3ds Max.
+status: runs outside 3ds Max.
 
     scan(folder)                 -> report dict (roles, color role per file, sizes, warnings)
     tagged_copy(report, out_dir) -> copies files to a NEW folder with _srgb / _raw / _lin_srgb

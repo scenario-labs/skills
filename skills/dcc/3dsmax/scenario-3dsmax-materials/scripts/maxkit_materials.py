@@ -1,7 +1,7 @@
 """maxkit_materials: look-dev helpers that run INSIDE 3ds Max (pymxs, main thread only).
 
 channel: batch | bridge | handoff (max_wrap kit=["maxkit_materials"], kit_dirs=[this folder]; mcp-safe uses mxs/materials_audit.ms)
-status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-bitmap-values-2027.md,
+checked against scripting-pipeline__maxscript-bitmap-values-2027.md,
         uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md, scripting-pipeline__pymxs-using-2027.md
 
 Stance on API names: only PhysicalMaterial, .base_color_map, Bitmaptexture filename:, openBitmap colorSpace:,

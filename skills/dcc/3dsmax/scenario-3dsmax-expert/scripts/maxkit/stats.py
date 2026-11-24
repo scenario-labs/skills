@@ -1,6 +1,6 @@
 """maxkit.stats: scene numbers before and after a change (pymxs, main thread only).
 
-Status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md and
+Checked against scripting-pipeline__pymxs-using-2027.md and
 scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md. Names not in
 the saved docs carry [verify] on their line.
 

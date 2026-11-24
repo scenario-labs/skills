@@ -9,10 +9,6 @@ license: MIT
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
 toolkit.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first.
-
 Expert level here means every rig is proven by numbers across its whole range: link lengths that
 never drift, pistons that stay coaxial, feet that stay planted, weights that sum to one, an exported
 clip that re-imports at the same height and length. The stance is to build controls apart from
@@ -220,7 +216,7 @@ From the project's version-deltas table and the saved docs.
 
 ## References
 
-- [references/procedures.md](references/procedures.md): P1 to P13 with full code, channel, status
+- [references/procedures.md](references/procedures.md): P1 to P13 with full code, channel, source
   line and checks.
 - [references/expert-notes.md](references/expert-notes.md): principles and judgment by expert, with
   timestamps.

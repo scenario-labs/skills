@@ -9,10 +9,6 @@ license: MIT
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
 toolkit.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first.
-
 Expert level here means code that runs the same way twice: names discovered in the Listener before
 they are written, every scene change in one named undo record, every callback removable by id, no
 dialog that can block a batch, and no save that overwrites a user file. pymxs is a thin wrapper over

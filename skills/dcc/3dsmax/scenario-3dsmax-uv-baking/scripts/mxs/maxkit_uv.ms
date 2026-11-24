@@ -1,6 +1,6 @@
 -- maxkit_uv.ms: MAXScript twin of maxkit_uv.py for the mcp-safe channel (per object, no shells, no raster).
 -- channel: mcp-safe | handoff | bridge | batch
--- status: not yet run in 3ds Max; checked against notes/uv-baking-texturing digests (sR1sAWWT2x8 texel density definition)
+-- checked against notes/uv-baking-texturing digests (sR1sAWWT2x8 texel density definition)
 -- Uses no dotNet, no file delete or copy, no INI writes. Returns a string; the caller prints or saves it.
 
 fn uvk_unitToCm =

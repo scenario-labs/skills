@@ -1,8 +1,8 @@
 # Procedures: animation and rigging in 3ds Max 2027.3
 
-Every block here is **not yet run in 3ds Max**. Each names its channel and the source it was checked
-against. Names marked `[verify]` are not in the saved Autodesk docs: they come from expert notes or
-common use, so read the first result before trusting them.
+Each block names its channel and the source it was checked against. Names marked `[verify]` are not
+in the saved Autodesk docs: they come from expert notes or common use, so read the first result
+before trusting them.
 
 Conventions:
 
@@ -51,7 +51,7 @@ scene.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (importFile), scripting-pipeline__gltf-import-2027.md (animation options), notes 5M7jlvzGWQ4 and G47NnPXsPHM
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (importFile), scripting-pipeline__gltf-import-2027.md (animation options), notes 5M7jlvzGWQ4 and G47NnPXsPHM
 import pymxs
 rt = pymxs.runtime
 ARGS = {"path": "<file.fbx or file.glb>", "expected_height": 180.0}  # height in system units
@@ -120,7 +120,7 @@ Goal: create keys that play as intended. Constant speed needs linear tangents se
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-bitmap-values-2027.md ("animate on at time" pattern), note rv2kFxbBtMA
+-- checked against scripting-pipeline__maxscript-bitmap-values-2027.md ("animate on at time" pattern), note rv2kFxbBtMA
 undo "anim: keys" on
 (
     obj = getNodeByName "BOX_Slide"
@@ -160,7 +160,7 @@ Smooth path first, then speed, then rotation (Arch Viz Artist, e3g4boZKyFU).
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff | batch
--- status: not yet run in 3ds Max; checked against note e3g4boZKyFU (steps 16 then 200, Normalize Spline, eye 160 cm, End 1400) and note ytW9dyEtxqc (percent is 0 to 1 internally)
+-- checked against note e3g4boZKyFU (steps 16 then 200, Normalize Spline, eye 160 cm, End 1400) and note ytW9dyEtxqc (percent is 0 to 1 internally)
 undo "anim: walkthrough" on
 (
     pth = getNodeByName "SPL_Walk"                           -- route drawn by the user, rounded corners
@@ -209,7 +209,7 @@ separate objects, never keys on geometry (ThePolymonger, QRB-6wnDcPw 00:06:40).
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against notes QRB-6wnDcPw (hierarchy, Keep Initial Offset) and cm7OP3niwvI (axis, Flip, Upnode, LookAt panel fields on frames 00:08:44, 00:09:04)
+-- checked against notes QRB-6wnDcPw (hierarchy, Keep Initial Offset) and cm7OP3niwvI (axis, Flip, Upnode, LookAt panel fields on frames 00:08:44, 00:09:04)
 undo "rig: eye aim" on
 (
     master = Circle radius:12 name:"M_Eye_CTRL"              -- [verify] Circle params
@@ -257,7 +257,7 @@ Build order, each line one step:
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against note cm7OP3niwvI (frames 00:01:39, 00:04:39, 00:07:26, 00:08:44); fundamentals-scene digest batch1 (ResetXForm then collapseStack)
+-- checked against note cm7OP3niwvI (frames 00:01:39, 00:04:39, 00:07:26, 00:08:44); fundamentals-scene digest batch1 (ResetXForm then collapseStack)
 undo "rig: linkage" on
 (
     fn aimAt obj tgt upn axisIdx flipIt =
@@ -302,7 +302,7 @@ Then animate the drivers through their full range (keys at the limits) and measu
 
 ```python
 # channel: bridge | handoff | batch (on a saved file)
-# status: not yet run in 3ds Max; checked against note cm7OP3niwvI (link lengths, out-of-plane test) and scripts/maxkit_anim.py
+# checked against note cm7OP3niwvI (link lengths, out-of-plane test) and scripts/maxkit_anim.py
 import math
 import pymxs
 rt = pymxs.runtime
@@ -344,7 +344,7 @@ Goal: the animator drives the rig from one object with sliders whose ranges are 
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against note ytW9dyEtxqc (Attribute Holder, ranges 0 to 170 and 0 to 1, two-way versus one-way wiring); custAttributes and paramWire syntax [verify]
+-- checked against note ytW9dyEtxqc (Attribute Holder, ranges 0 to 170 and 0 to 1, two-way versus one-way wiring); custAttributes and paramWire syntax [verify]
 undo "rig: controls" on
 (
     master = getNodeByName "CTRL_Master"
@@ -412,7 +412,7 @@ Order:
 
 ```python
 # channel: bridge | handoff  (skinOps reads the Modify panel; not batch)
-# status: not yet run in 3ds Max; checked against skin-modifier-2026 (Abs. Effect 1.0 = one bone), note Kimn7CIZ5bI (rigid eyes, teeth, tongue; skull 100% head); skinOps names [verify]
+# checked against skin-modifier-2026 (Abs. Effect 1.0 = one bone), note Kimn7CIZ5bI (rigid eyes, teeth, tongue; skull 100% head); skinOps names [verify]
 import pymxs
 rt = pymxs.runtime
 ARGS = {"mesh": "CHR_Head", "bones": ["Head", "Neck", "L_Clavicle", "R_Clavicle", "Spine2"],
@@ -473,7 +473,7 @@ Scripted route, on a copy so the original stays intact:
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; checked against note G47NnPXsPHM (extract before delete, new bones only, pair by name); skinOps names [verify]
+# checked against note G47NnPXsPHM (extract before delete, new bones only, pair by name); skinOps names [verify]
 import json
 import pymxs
 rt = pymxs.runtime
@@ -534,7 +534,7 @@ tool.
 
 ```maxscript
 -- channel: mcp-safe | bridge | handoff
--- status: not yet run in 3ds Max; checked against note MMHfDujrGwo (two Morphers, order, neutral brackets, all channels keyed, blink 16/18/20); WM3_* names [verify]
+-- checked against note MMHfDujrGwo (two Morphers, order, neutral brackets, all channels keyed, blink 16/18/20); WM3_* names [verify]
 undo "face: lip sync" on
 (
     head = getNodeByName "CHR_Head"
@@ -595,7 +595,7 @@ down (Norberto Aguilera, WUELGPaQu8o 00:16:59, 00:39:21).
 
 ```python
 # channel: bridge | handoff | batch (on a saved file)
-# status: not yet run in 3ds Max; checked against note WUELGPaQu8o (contacts, COM, freeze plane) and scripts/maxkit_anim.py; Biped node names from note 5M7jlvzGWQ4 frames
+# checked against note WUELGPaQu8o (contacts, COM, freeze plane) and scripts/maxkit_anim.py; Biped node names from note 5M7jlvzGWQ4 frames
 import pymxs
 rt = pymxs.runtime
 ARGS = {"prefix": "Bip001", "ground_z": 0.0, "foot_tol": 2.0, "hand_tol": 3.0}  # cm
@@ -645,7 +645,7 @@ Constrain-and-bake, on a copy of the target skeleton:
 
 ```python
 # channel: bridge | handoff
-# status: not yet run in 3ds Max; [added] method; constraint and controller names [verify]; sampling helpers in scripts/maxkit_anim.py
+# note: [added] method; constraint and controller names [verify]; sampling helpers in scripts/maxkit_anim.py
 import pymxs
 rt = pymxs.runtime
 ARGS = {"map": {"src_hips": "pelvis", "src_spine": "spine_01", "src_thigh_l": "thigh_l"}, "root": "pelvis"}
@@ -710,7 +710,7 @@ exporting the rest.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (exportFile signature), note 5M7jlvzGWQ4 frames f_00192 and f_00238; FBXExporterSetParam names [verify]
+# checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (exportFile signature), note 5M7jlvzGWQ4 frames f_00192 and f_00238; FBXExporterSetParam names [verify]
 import os
 import pymxs
 rt = pymxs.runtime

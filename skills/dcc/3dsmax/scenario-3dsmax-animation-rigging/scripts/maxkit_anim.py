@@ -1,7 +1,7 @@
 """maxkit_anim: measurement and bake helpers for rigs and animation in 3ds Max (pymxs).
 
 channel: batch | bridge | handoff (inline with max_wrap.wrap(code, kit=["maxkit_anim"]))
-status: not yet run in 3ds Max; checked against notes/animation-rigging digests 1 to 3 and
+checked against notes/animation-rigging digests 1 to 3 and
 sources/docs (pymxs-using-2027, maxscript-bitmap-values-2027 for the animate and time contexts).
 
 Rules:

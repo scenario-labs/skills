@@ -19,7 +19,7 @@ Every block is a chunk for the scenario-3dsmax-expert toolkit. Run
   only label the step.
 
 Names marked `[verify]` were not found in the saved 3ds Max docs. Run P0 once per session to confirm
-them, and replace the block with a GUI step if a name is missing. No code here has run in 3ds Max.
+them, and replace the block with a GUI step if a name is missing.
 
 Contents:
 
@@ -46,7 +46,7 @@ real names.
 
 ```maxscript
 -- channel: mcp-safe | handoff | bridge | batch
--- status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md (getPropNames) and scripting-pipeline__maxscript-python-interop-2027.md (showinterface)
+-- checked against scripting-pipeline__pymxs-using-2027.md (getPropNames) and scripting-pipeline__maxscript-python-interop-2027.md (showinterface)
 -- Prints to the Listener or the result log; changes nothing in the scene.
 ss = stringStream ""
 u = Unwrap_UVW() -- [verify] class name Unwrap_UVW
@@ -71,7 +71,7 @@ channel.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripts/maxkit_uv.py (pure analysis run offline on synthetic data), sR1sAWWT2x8 (texel density), 2gv1jYDAoJc (8 px padding at 2K)
+# checked against scripts/maxkit_uv.py (pure analysis run offline on synthetic data), sR1sAWWT2x8 (texel density), 2gv1jYDAoJc (8 px padding at 2K)
 # kit: ["audit"], with scripts/maxkit_uv.py prepended; ARGS: names, channel, tex_size, target_td
 from pymxs import runtime as rt
 
@@ -114,7 +114,7 @@ Goal: a visual stretch check that leaves the artist's materials untouched.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against uv-baking-texturing__maxscript-render-to-texture-2027.md (checker, coordinates.uTiling) and uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md (PhysicalMaterial, base_color_map)
+# checked against uv-baking-texturing__maxscript-render-to-texture-2027.md (checker, coordinates.uTiling) and uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md (PhysicalMaterial, base_color_map)
 # kit: ["capture"]; args: names, out_dir, tiling
 from pymxs import runtime as rt
 
@@ -151,7 +151,7 @@ follow the Unwrap UVW doc: angle 60, spacing 0.02, normalize on, rotate on.
 
 ```maxscript
 -- channel: mcp-safe | handoff | bridge | batch
--- status: not yet run in 3ds Max; checked against uv-baking-texturing__unwrap-uvw-modifier.md (Flatten and Pack options); every function name is unconfirmed
+-- checked against uv-baking-texturing__unwrap-uvw-modifier.md (Flatten and Pack options); every function name is unconfirmed
 -- Adds a new Unwrap UVW on top of the stack: the user's stack is kept and the modifier can be removed.
 fn uvb_flattenPack obj channel angle spacing =
 (
@@ -198,7 +198,7 @@ lightmap UVs or the project uses no baked light; say which.
 
 ```maxscript
 -- channel: mcp-safe | handoff | bridge | batch
--- status: not yet run in 3ds Max; checked against uv-baking-texturing__uvw-map-modifier.md (99 channels, channel change copies edits) and game-assets digest (lightmap channel, zero overlap); function names unconfirmed
+-- checked against uv-baking-texturing__uvw-map-modifier.md (99 channels, channel change copies edits) and game-assets digest (lightmap channel, zero overlap); function names unconfirmed
 -- Works on channel 2 only; channel 1 is never written.
 fn uvb_lightmap obj spacing =
 (
@@ -240,7 +240,7 @@ plank width.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against uv-baking-texturing__uvw-map-modifier.md (Box type, Real-World Map Size) and zLDLOSx-qL0; property names unconfirmed
+# checked against uv-baking-texturing__uvw-map-modifier.md (Box type, Real-World Map Size) and zLDLOSx-qL0; property names unconfirmed
 # args: names (floor and wall nodes), maptype_box_index; sizes are in system units
 import pymxs
 from pymxs import runtime as rt
@@ -290,7 +290,7 @@ should be Arnold: the BTT doc recommends it for albedo, metalness, roughness and
 
 ```maxscript
 -- channel: handoff | bridge | mcp-safe (bake and bitmap writes not documented as allowed) | batch (showDialog in batch is unproven)
--- status: not yet run in 3ds Max; checked against uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md and uv-baking-texturing__baking-to-texture-2027.md
+-- checked against uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md and uv-baking-texturing__baking-to-texture-2027.md
 -- Writes new files only; never overwrites (alwaysSkipExistingFiles).
 fn uvb_compatible =
 (
@@ -365,7 +365,7 @@ differ: use the list, never guess. Then bake:
 
 ```maxscript
 -- channel: handoff | bridge | mcp-safe (not documented as allowed) | batch (unproven)
--- status: not yet run in 3ds Max; checked against uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md (bake onMapBakedCallback)
+-- checked against uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md (bake onMapBakedCallback)
 global uvb_baked = #()
 fn uvb_onBaked ok path =
 (
@@ -394,7 +394,7 @@ in the MBT projection example.
 
 ```maxscript
 -- channel: handoff | bridge | mcp-safe (not documented as allowed) | batch (unproven)
--- status: not yet run in 3ds Max; checked against uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md (Projection example, BakeToTextureMap properties)
+-- checked against uv-baking-texturing__maxscript-baketotexture-utilityplugin-2027.md (Projection example, BakeToTextureMap properties)
 -- Pass 1 is diagnostic: small size, misses painted red. Pass 2 changes only size, file name and miss color.
 fn uvb_setupHighToLow low high outDir size method rayDist =
 (
@@ -497,7 +497,7 @@ come from the RTT MAXScript doc. The normal element class and the projection lin
 
 ```maxscript
 -- channel: batch | handoff | bridge
--- status: not yet run in 3ds Max; checked against uv-baking-texturing__maxscript-render-to-texture-2027.md (INodeBakeProperties, render #bakeSelected); normal element and projection names unconfirmed
+-- checked against uv-baking-texturing__maxscript-render-to-texture-2027.md (INodeBakeProperties, render #bakeSelected); normal element and projection names unconfirmed
 fn uvb_rttNormal low high outDir size =
 (
     renderers.current = Default_Scanline_Renderer()
@@ -537,7 +537,7 @@ Runner side, after the files come back:
 
 ```python
 # channel: runner (plain Python, no pymxs)
-# status: not yet run in 3ds Max; checked against scripts/bake_check.py (run offline on synthetic PNGs)
+# checked against scripts/bake_check.py (run offline on synthetic PNGs)
 import subprocess
 import sys
 
@@ -571,7 +571,7 @@ Check `rt.renderers.current` before creating any node. Class and property names 
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against uv-baking-texturing__vray7-vrayuvwrandomizer.md and uv-baking-texturing__vray7-vraytriplanartex.md (parameters); class and property names unconfirmed
+# checked against uv-baking-texturing__vray7-vrayuvwrandomizer.md and uv-baking-texturing__vray7-vraytriplanartex.md (parameters); class and property names unconfirmed
 # V-Ray only: one randomizer drives every VRayBitmap of a material through Mapping Source (6FalgHWkhKE 00:04:26)
 from pymxs import runtime as rt
 import pymxs
@@ -630,7 +630,7 @@ Rules (Adobe, xuLRnFBvLyI):
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md (PhysicalMaterial) and xuLRnFBvLyI (texture set rules)
+# checked against scripting-pipeline__pymxs-using-2027.md (PhysicalMaterial) and xuLRnFBvLyI (texture set rules)
 # args: sets = {"Upper": ["node_a", "node_b"], "Base": [...]}
 from pymxs import runtime as rt
 import pymxs

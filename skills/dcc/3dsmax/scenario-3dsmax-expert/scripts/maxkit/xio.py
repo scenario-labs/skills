@@ -1,6 +1,6 @@
 """maxkit.xio: import and export with a report of what arrived or left (pymxs, main thread only).
 
-Status: not yet run in 3ds Max; checked against
+Checked against
 scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md (importFile and
 exportFile with #noPrompt, quiet:, selectedOnly:, using:; plugin chosen by file suffix),
 scripting-pipeline__gltf-import-2027.md, scripting-pipeline__gltf-export-2027.md and

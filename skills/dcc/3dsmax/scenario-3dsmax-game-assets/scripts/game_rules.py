@@ -2,7 +2,7 @@
 
 status: runs outside 3ds Max; the rules are checked against notes/game-assets digests and
         game-assets__unreal-fbx-static-mesh-pipeline.md. The audit JSON it reads comes from
-        maxkit_game.game_audit() or mxs/game_audit.ms, which have not yet run in 3ds Max.
+        maxkit_game.game_audit() or mxs/game_audit.ms.
 
     check_report(report, target="unreal", budgets=None) -> findings list
     check_names(names, helpers=(), target="unreal")     -> findings list

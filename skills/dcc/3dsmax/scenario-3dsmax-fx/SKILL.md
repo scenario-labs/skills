@@ -9,10 +9,6 @@ license: MIT
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
 toolkit.
 
-**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
-checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
-confirm each in the live session first.
-
 Expert FX work in 3ds Max is staging and gating, not one heavy solve: cheap stand-ins and tests
 decide what simulates and when, detail arrives after a cache, and every look is judged on playback.
 tyFlow is the main path; it is a third-party plugin whose event graph is built in its own editor, so

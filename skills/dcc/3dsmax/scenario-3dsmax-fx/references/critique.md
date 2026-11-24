@@ -81,4 +81,4 @@ Measurable:
 
 - Say which steps were GUI work done by a person, which values came from sources and which were
   tuned by eye.
-- Say "not yet run in 3ds Max" for any script whose result was not returned.
+- Do not report a script as run when its result was not returned.

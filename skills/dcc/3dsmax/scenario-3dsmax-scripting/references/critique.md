@@ -95,6 +95,6 @@ Look at a contact sheet, not single images: compare files side by side for the o
 
 ## Report honesty
 
-- Say "not yet run in 3ds Max" until a run in a real 3ds Max returned `ok`.
+- Do not report a script as run until a real 3ds Max returned `ok`.
 - List every `[verify]` name the delivered code still uses.
 - Never report a batch as done from the exit code alone: read the result files.

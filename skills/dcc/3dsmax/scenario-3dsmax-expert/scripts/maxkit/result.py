@@ -1,6 +1,6 @@
 """maxkit.result: turn pymxs values into JSON-safe data and write the result envelope.
 
-Status: not yet run in 3ds Max; checked against scripting-pipeline__pymxs-using-2027.md.
+Checked against scripting-pipeline__pymxs-using-2027.md.
 
     to_jsonable(value, depth=0) -> JSON-safe value
     envelope(ok, result, error, log, max_version) -> dict

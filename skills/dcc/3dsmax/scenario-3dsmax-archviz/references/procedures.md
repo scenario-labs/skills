@@ -24,9 +24,8 @@ script = max_wrap.wrap(ap.chunk(CODE, {"out_dir": out_dir}), lang="python", kit=
 Names marked `[verify]` are not in the saved docs; the helpers look plugin property names up with
 `getPropNames` and report what they found, so read the first result before writing settings.
 
-Status of every in-Max block: not yet run in 3ds Max. Runner-side Python (`archviz_plan.py`) was
-executed locally with python3 against the source numbers (727 x 26.5 s = 5.35 h; 90 x 900 s = 22.5
-h).
+Runner-side Python (`archviz_plan.py`) was executed locally with python3 against the source numbers
+(727 x 26.5 s = 5.35 h; 90 x 900 s = 22.5 h).
 
 ## P0. Revit and DWG link decisions (GUI)
 
@@ -82,7 +81,7 @@ scenario-3dsmax-scene has cleaned the model.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against archviz digests 1 to 4, pymxs-renderer-2027 doc
+# checked against archviz digests 1 to 4, pymxs-renderer-2027 doc
 
 from collections import Counter
 result = {
@@ -118,7 +117,7 @@ Goal: 4 to 8 numeric candidates per view, compared side by side, before anything
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against oKYzIh7KfH0, f40Sszm3Bqk, JmmgSQp6FYI notes; Physical camera props [verify] via maxkit_archviz
+# checked against oKYzIh7KfH0, f40Sszm3Bqk, JmmgSQp6FYI notes; Physical camera props [verify] via maxkit_archviz
 
 # view spec in meters, world Z up; values come from the brief, not from these examples
 CANDIDATES = [
@@ -185,7 +184,7 @@ most settings are GUI (gui-paths); code checks the inputs.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against 8s2gF4vb6yk 00:02:16 and 00:04:38, mbi-7pTItcU 00:53:06
+# checked against 8s2gF4vb6yk 00:02:16 and 00:04:38, mbi-7pTItcU 00:53:06
 
 SOURCES = ARGS["source_names"]       # scatter source objects
 AREAS = ARGS["area_spline_names"]    # include and exclude splines
@@ -203,7 +202,7 @@ Fix chunk, only after the report and only on listed nodes:
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against 8s2gF4vb6yk 00:02:16 (pivot to base)
+# checked against 8s2gF4vb6yk 00:02:16 (pivot to base)
 nodes = [rt.getNodeByName(n) for n in ARGS["fix_pivots"]]
 result = {"fixed": set_pivot_base([n for n in nodes if n])}
 ```
@@ -275,7 +274,7 @@ In Max:
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against iIYYzosZ1Mo notes; primaryVisibility and camera props [verify]
+# checked against iIYYzosZ1Mo notes; primaryVisibility and camera props [verify]
 
 plan = ARGS["plan"]           # dict from archviz_plan.exif_camera
 site_xy = ARGS["site_xy_m"]   # site center in scene meters
@@ -304,7 +303,7 @@ Goal: one fps everywhere, numbered output, measured frame time.
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against ZHCVMQeWPEg 00:06:36 and 00:08:44, pymxs-renderer-2027 doc
+# checked against ZHCVMQeWPEg 00:06:36 and 00:08:44, pymxs-renderer-2027 doc
 a = ARGS
 report = set_anim_output(a["fps"], a["first"], a["last"], a["out_path"], a.get("width"), a.get("height"))
 sec = time_test_frame(a["camera"], a["test_frame"], a["test_png"])  # pick the heaviest frame
@@ -349,7 +348,7 @@ first-frame time feeds `render_budget`. Before the first Vantage render (gMUKCma
 
 ```python
 # channel: batch | bridge | handoff
-# status: not yet run in 3ds Max; checked against ZHCVMQeWPEg 00:04:06 and 00:06:36; layer API [verify]
+# checked against ZHCVMQeWPEg 00:04:06 and 00:06:36; layer API [verify]
 result = anima_layer_prep(keep_layers=ARGS["keep_layers"], fps=30)
 ```
 
