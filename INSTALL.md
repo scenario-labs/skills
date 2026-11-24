@@ -48,9 +48,9 @@ Meshes from a picture, rigged and ready to animate. 15 skills.
 npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-3d scenario-orbit-views scenario-meshy scenario-blender scenario-skyboxes scenario-patina-retexture scenario-video scenario-rodin scenario-sparc3d scenario-3d-worlds scenario-video-to-motion scenario-video-editing
 ```
 
-Working in ZBrush, Blender or Maya? Add the expert tools for it:
+Working in ZBrush, Blender, Maya or 3ds Max? Add the expert tools for it:
 [ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md),
-[Maya](skills/dcc/maya/README.md).
+[Maya](skills/dcc/maya/README.md), [3ds Max](skills/dcc/3dsmax/README.md).
 
 ### Environment Artist
 

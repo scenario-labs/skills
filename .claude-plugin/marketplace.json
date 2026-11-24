@@ -364,6 +364,26 @@
         "./skills/game-engines/roblox/scenario-roblox-ui",
         "./skills/game-engines/roblox/scenario-roblox-vfx-audio"
       ]
+    },
+    {
+      "name": "24.-expert-tools-3ds-max",
+      "description": "DCC software. A lead and eleven specialists that drive Autodesk 3ds Max 2027 on Windows through pymxs and MAXScript, Autodesk's 3ds Max MCP server, community bridges, or 3dsmaxbatch: scenes, modeling, game assets, UVs and baking, materials, lighting and rendering with Arnold, V-Ray, and Corona, archviz, animation and rigging, FX, scripting, generated assets from Scenario. No procedure has run in 3ds Max yet: every code block says so.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/dcc/3dsmax/scenario-3dsmax-expert",
+        "./skills/dcc/3dsmax/scenario-3dsmax-animation-rigging",
+        "./skills/dcc/3dsmax/scenario-3dsmax-archviz",
+        "./skills/dcc/3dsmax/scenario-3dsmax-fx",
+        "./skills/dcc/3dsmax/scenario-3dsmax-game-assets",
+        "./skills/dcc/3dsmax/scenario-3dsmax-generation",
+        "./skills/dcc/3dsmax/scenario-3dsmax-lighting-rendering",
+        "./skills/dcc/3dsmax/scenario-3dsmax-materials",
+        "./skills/dcc/3dsmax/scenario-3dsmax-modeling",
+        "./skills/dcc/3dsmax/scenario-3dsmax-scene",
+        "./skills/dcc/3dsmax/scenario-3dsmax-scripting",
+        "./skills/dcc/3dsmax/scenario-3dsmax-uv-baking"
+      ]
     }
   ]
 }

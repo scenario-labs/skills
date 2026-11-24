@@ -45,9 +45,9 @@ to create production-ready content with [Scenario](https://scenario.com) through
 assets, and custom-trained models, for games, entertainment, and any creative vertical.
 
 The expert tools at the bottom of the list work differently: teams of skills that drive DCC (digital
-content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, Unreal
-Engine, Unity, Godot, Roblox Studio), distilled from expert tutorials, conference talks, and
-official documentation. They need the application, not the Scenario MCP server, and each family
+content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, 3ds
+Max, Unreal Engine, Unity, Godot, Roblox Studio), distilled from expert tutorials, conference talks,
+and official documentation. They need the application, not the Scenario MCP server, and each family
 folder's README records how it was built and how far it was verified.
 
 Skills follow the [Agent Skills](https://agentskills.io) format.
@@ -70,7 +70,7 @@ scripts: select its "Expert tools" group in the installer menu, or run the comma
 README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md),
 [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md),
 [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md),
-[Roblox Studio](skills/game-engines/roblox/README.md)).
+[Roblox Studio](skills/game-engines/roblox/README.md), [3ds Max](skills/dcc/3dsmax/README.md)).
 
 **Pick, or install one skill.**
 
@@ -489,6 +489,29 @@ and avatar items, performance, monetization. Procedures were run live in Roblox 
 | [scenario-roblox-tooling](skills/game-engines/roblox/scenario-roblox-tooling/SKILL.md)           | Roblox team tooling: Rojo and Script Sync, Wally, Rokit, luau-lsp, Selene, StyLua, Lune and in-engine tests, GitHub Actions CI, Open Cloud publishing and Luau Execution                 |
 | [scenario-roblox-ui](skills/game-engines/roblox/scenario-roblox-ui/SKILL.md)                     | Roblox game UI and input: HUD, menus, shop grids, scaling from phone to TV, safe areas, layouts and StyleSheets, gamepad navigation, the Input Action System, localization               |
 | [scenario-roblox-vfx-audio](skills/game-engines/roblox/scenario-roblox-vfx-audio/SKILL.md)       | Roblox VFX and audio: particles, beams, trails, flipbooks, hit and explosion effects, the Audio API with wires and emitters, 3D sound, music and ducking, footsteps                      |
+
+### Expert tools: 3ds Max
+
+DCC software. A lead and eleven specialists that drive Autodesk 3ds Max 2027 on Windows through
+pymxs and MAXScript, Autodesk's 3ds Max MCP server, community bridges, or 3dsmaxbatch: scenes,
+modeling, game assets, UVs and baking, materials, lighting and rendering with Arnold, V-Ray, and
+Corona, archviz, animation and rigging, FX, scripting, generated assets from Scenario. No procedure
+has run in 3ds Max yet: every code block says so.
+
+| Skill                                                                                               | Use it for                                                                                                                                   |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-3dsmax-expert](skills/dcc/3dsmax/scenario-3dsmax-expert/SKILL.md)                         | 3ds Max lead: pymxs and MAXScript, Autodesk's MCP server, community bridges, 3dsmaxbatch, the review loop, scene audits, 2027 traps, routing |
+| [scenario-3dsmax-animation-rigging](skills/dcc/3dsmax/scenario-3dsmax-animation-rigging/SKILL.md)   | 3ds Max animation and rigging: keys by script, Curve Editor, camera paths, constraint flips, CAT and Biped, Skin, FBX clips for engines      |
+| [scenario-3dsmax-archviz](skills/dcc/3dsmax/scenario-3dsmax-archviz/SKILL.md)                       | Archviz in 3ds Max: Revit, SketchUp, or DWG intake, camera sign-off, dressing and scatter, stills and animation budgets, batch delivery      |
+| [scenario-3dsmax-fx](skills/dcc/3dsmax/scenario-3dsmax-fx/SKILL.md)                                 | 3ds Max FX: tyFlow destruction and particles, PhysX rigid bodies, cloth drapes and reveals, scatter, caches, simulation budgets              |
+| [scenario-3dsmax-game-assets](skills/dcc/3dsmax/scenario-3dsmax-game-assets/SKILL.md)               | 3ds Max models for game engines: high to low poly, smoothing groups, weighted normals, LODs, UCX collision, sockets, pivots, FBX export      |
+| [scenario-3dsmax-generation](skills/dcc/3dsmax/scenario-3dsmax-generation/SKILL.md)                 | Generated assets in 3ds Max: Scenario GLB, FBX, textures, HDRIs, and splats landed at the right scale, renders sent out for enhancement      |
+| [scenario-3dsmax-lighting-rendering](skills/dcc/3dsmax/scenario-3dsmax-lighting-rendering/SKILL.md) | 3ds Max lighting and rendering with Arnold, V-Ray 7, or Corona: noise and fireflies, exposure, ACES and OCIO, light mixes, render times      |
+| [scenario-3dsmax-materials](skills/dcc/3dsmax/scenario-3dsmax-materials/SKILL.md)                   | 3ds Max materials: OpenPBR, Physical, VRayMtl, Corona Physical, PBR texture sets, color spaces, OCIO, layered wear, material audits          |
+| [scenario-3dsmax-modeling](skills/dcc/3dsmax/scenario-3dsmax-modeling/SKILL.md)                     | 3ds Max modeling: Editable Poly, the modifier stack, Boolean cuts, chamfer and Smart Bevel, OpenSubdiv and creases, splines, cleanup         |
+| [scenario-3dsmax-scene](skills/dcc/3dsmax/scenario-3dsmax-scene/SKILL.md)                           | 3ds Max scenes: system units and scale, import and merge, far-origin objects, layers and naming, XRefs, CAD cleanup, file hygiene            |
+| [scenario-3dsmax-scripting](skills/dcc/3dsmax/scenario-3dsmax-scripting/SKILL.md)                   | pymxs and MAXScript code: translation traps, undo and performance, batch jobs, tool packaging, plugin packages, porting old scripts          |
+| [scenario-3dsmax-uv-baking](skills/dcc/3dsmax/scenario-3dsmax-uv-baking/SKILL.md)                   | UVs and baking in 3ds Max: Unwrap UVW, Peel, packing, texel density, lightmap channels, Bake to Texture, normal map checks                   |
 
 ## Example prompts
 
