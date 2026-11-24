@@ -7,7 +7,11 @@ license: MIT
 # 3ds Max Materials and Look-Dev
 
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
-toolkit. Code status: not yet run in 3ds Max.
+toolkit.
+
+**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
+checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
+confirm each in the live session first.
 
 Expert level here means every map has a declared color role before it is wired, a material is a
 stack of physical states rather than one hero shader, and every judgment is made against a

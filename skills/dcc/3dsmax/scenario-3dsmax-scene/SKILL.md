@@ -7,7 +7,11 @@ license: MIT
 # Scene Assembly in 3ds Max
 
 Target line: 3ds Max 2027.3 on Windows, driven through the scenario-3dsmax-expert channels and
-toolkit. Code status: not yet run in 3ds Max.
+toolkit.
+
+**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
+checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
+confirm each in the live session first.
 
 Expert level here means a scene a team can open, measure and render anywhere: one system unit, work
 near the origin, every node named and on a layer, repeats shared as instances or references, heavy

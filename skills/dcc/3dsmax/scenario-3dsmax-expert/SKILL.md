@@ -6,8 +6,12 @@ license: MIT
 
 # 3ds Max Expert (lead)
 
-Target line: 3ds Max 2027.3 on Windows, driven through the channels and toolkit below. Code status:
-not yet run in 3ds Max.
+Target line: 3ds Max 2027.3 on Windows, driven through the channels and toolkit below.
+
+**Status: not yet run in 3ds Max.** Nothing here has been executed in the application. Code is
+checked against the cited documentation, and unconfirmed API names carry a bracketed `verify` mark:
+confirm each in the live session first. On a first live run, say so to the user and report what
+differed from the skill.
 
 Expert level here means a technical director's discipline in someone else's live scene: find the
 channel, inspect before touching, change inside one undo record, prove the result with numbers and
