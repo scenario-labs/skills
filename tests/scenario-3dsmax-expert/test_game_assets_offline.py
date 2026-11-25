@@ -62,6 +62,8 @@ class Rules(unittest.TestCase):
         self.assertIn("collision.convex_unknown", rules(game_rules.check_report(self.report(nodes))))
         nodes[1]["convex_violations"] = 0
         self.assertNotIn("collision.convex_unknown", rules(game_rules.check_report(self.report(nodes))))
+        nodes[1] = node("UBX_SM_Crate_A_00", convex_violations=-1)  # primitives are not measured
+        self.assertNotIn("collision.convex_unknown", rules(game_rules.check_report(self.report(nodes))))
 
     def test_lod0_budget_applies_to_unsuffixed_mesh(self):
         found = game_rules.check_report(self.report([node("SM_Crate_A", tris=9000)]), budgets={"LOD0": 8000})
@@ -84,7 +86,15 @@ class Node:
     """Vertices in world space; pos is the pivot; scale is applied about the pivot."""
 
     def __init__(self, name, verts):
-        self.__dict__.update(name=name, verts=[list(v) for v in verts], _pivot=[0.0, 0.0, 0.0], _scale=1.0)
+        self.__dict__.update(name=name, verts=[list(v) for v in verts], _pivot=[0.0, 0.0, 0.0], _scale=1.0,
+                             parent=None, children=[])
+
+    def tree(self):
+        """This node and its linked descendants: a parent's move, scale or rotation carries them."""
+        out = [self]
+        for c in self.children:
+            out += c.tree()
+        return out
 
     @property
     def min(self):
@@ -99,12 +109,16 @@ class Node:
             self._pivot = [val.x, val.y, val.z]
         elif key == "pos":
             d = [val.x - self._pivot[0], val.y - self._pivot[1], val.z - self._pivot[2]]
-            self.verts = [[v[k] + d[k] for k in range(3)] for v in self.verts]
+            for n in self.tree():
+                n.verts = [[v[k] + d[k] for k in range(3)] for v in n.verts]
+                if n is not self:
+                    n._pivot = [n._pivot[k] + d[k] for k in range(3)]
             self._pivot = [val.x, val.y, val.z]
         elif key == "scale":
             f = val.x / self._scale
             p = self._pivot
-            self.verts = [[p[k] + (v[k] - p[k]) * f for k in range(3)] for v in self.verts]
+            for n in self.tree():
+                n.verts = [[p[k] + (v[k] - p[k]) * f for k in range(3)] for v in n.verts]
             self._scale = val.x
         else:
             self.__dict__[key] = val
@@ -135,7 +149,8 @@ class Runtime:
 
     def rotate(self, n, aa):  # +90 about X around the pivot
         p = n._pivot
-        n.verts = [[v[0], p[1] - (v[2] - p[2]), p[2] + (v[1] - p[1])] for v in n.verts]
+        for m in n.tree():
+            m.verts = [[v[0], p[1] - (v[2] - p[2]), p[2] + (v[1] - p[1])] for v in m.verts]
 
 
 @contextlib.contextmanager
@@ -169,6 +184,16 @@ class Normalize(unittest.TestCase):
         self.assertAlmostEqual(b.max.x - a.min.x, 60.0)
         for n in (a, b):
             self.assertEqual([n.pos.x, n.pos.y, n.pos.z], [0.0, 0.0, 0.0])
+
+    def test_linked_child_moves_once(self):
+        a = box("A", (10, 10, 5), (20, 20, 15))
+        b = box("B", (30, 10, 5), (40, 20, 15))
+        b.parent = a
+        a.children.append(b)
+        maxkit_game.normalize_group([b, a])  # bounds (10,10,5)-(40,20,15), pivot (25,15,5)
+        self.assertAlmostEqual(a.min.x, -15.0)
+        self.assertAlmostEqual(b.min.x, 5.0)
+        self.assertAlmostEqual(b.min.z, 0.0)
 
     def test_single_node_report_shape(self):
         n = box("Crate", (5, 5, 5), (15, 15, 25))

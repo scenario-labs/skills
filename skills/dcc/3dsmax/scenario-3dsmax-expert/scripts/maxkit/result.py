@@ -15,6 +15,7 @@ import contextlib
 import json
 import math
 import os
+import tempfile
 
 _MAX_DEPTH = 8
 
@@ -88,6 +89,17 @@ def write(payload: dict, path, overwrite=None) -> str:
         os.makedirs(parent, exist_ok=True)
     if os.path.exists(path) and not (overwrite or (overwrite is None and _is_envelope(path))):
         raise FileExistsError(f"{path} exists and is not a result envelope; pick a new result_path")
-    with open(path, "w" if os.path.exists(path) else "x", encoding="utf-8") as fh:
-        json.dump(payload, fh, indent=1, ensure_ascii=False)
+    # Serialize to a sibling temporary file, then publish it in one step: an interrupted write
+    # never leaves partial JSON at path, so a retry is not refused by the envelope check.
+    fd, tmp = tempfile.mkstemp(prefix=".mxk_result_", suffix=".tmp", dir=parent or None)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=1, ensure_ascii=False)
+        if overwrite is False and os.path.exists(path):
+            raise FileExistsError(f"{path} exists; pick a new result_path")
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.remove(tmp)
+        raise
     return path

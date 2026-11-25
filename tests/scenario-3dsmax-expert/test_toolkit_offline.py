@@ -689,6 +689,27 @@ class ToolkitFixTests(unittest.TestCase):
             result.write(env, q, overwrite=False)
         result.write(env, p, overwrite=True)
 
+    def test_result_write_interrupted_leaves_no_partial_file(self):
+        d = tmpdir()
+        q = d / "r.json"
+        env = result.envelope(True, 1)
+
+        def boom(obj, fh, **kw):
+            fh.write('{"ok": tr')
+            raise KeyboardInterrupt
+
+        orig = result.json.dump
+        result.json.dump = boom
+        try:
+            with self.assertRaises(KeyboardInterrupt):
+                result.write(env, q)
+        finally:
+            result.json.dump = orig
+        self.assertFalse(q.exists())
+        self.assertEqual(list(d.iterdir()), [])
+        result.write(env, q)  # the retry is not refused
+        self.assertEqual(json.loads(q.read_text())["result"], 1)
+
     def test_jsonable_vector_components_finite(self):
         out = result.to_jsonable(pymxs.Point3(float("nan"), 0, float("inf")))
         self.assertEqual(out, ["nan", 0.0, "inf"])

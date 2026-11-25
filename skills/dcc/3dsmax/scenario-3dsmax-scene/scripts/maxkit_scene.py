@@ -56,12 +56,18 @@ def _nodes():
 def _undo_run(label, fn):
     """Run fn inside one pymxs.undo record. An error rolls the record back; if the
     context manager swallows that error, raise one here so no caller reports success."""
-    finished = []
+    finished, errs = [], []
     with pymxs.undo(True, label):
-        fn()
+        try:
+            fn()
+        except Exception as exc:
+            errs.append(exc)
+            raise
         finished.append(True)
     if not finished:
-        raise RuntimeError("%s: rolled back after an error inside the undo record" % label)
+        cause = errs[0] if errs else None
+        raise RuntimeError("%s: rolled back after an error inside the undo record: %s"
+                           % (label, cause if cause is not None else "unknown")) from cause
 
 
 def _top_nodes():
@@ -253,7 +259,11 @@ def xref_report():
             continue
         scenes.append({"file": f, "exists": bool(rt.doesFileExist(f)),
                        "disabled": _try(lambda x=x: bool(x.disabled), "?")})  # [verify]
-    obj_records = _try(lambda: int(rt.objXRefMgr.recordCount), "?")  # [verify]
+    try:
+        obj_records = int(rt.objXRefMgr.recordCount)  # [verify]
+    except Exception as exc:
+        obj_records = "?"
+        errors.append("objXRefMgr.recordCount: %s" % exc)
     return {"xref_scenes": scenes, "xref_object_records": obj_records, "errors": errors}
 
 

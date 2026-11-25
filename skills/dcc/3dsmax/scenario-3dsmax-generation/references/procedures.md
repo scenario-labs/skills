@@ -206,10 +206,16 @@ report = maxkit_generation.land_model(
     place_at=ARGS.get("place_at"), record=ARGS.get("record"))
 report["renderer"] = str(rt.renderers.current)
 if ARGS.get("save_as"):
-    if os.path.exists(ARGS["save_as"]):
-        raise FileExistsError(ARGS["save_as"])  # never over an existing scene
-    rt.saveMaxFile(ARGS["save_as"], quiet=True)  # [verify] quiet: keyword
-    report["saved_scene"] = ARGS["save_as"]
+    save_as = ARGS["save_as"]
+    # saveMaxFile resolves a relative name against the scene folder, os.path against the Python
+    # working folder: only an absolute path makes the existence check test the saved file
+    if not os.path.isabs(save_as):
+        raise ValueError("save_as must be an absolute path: " + save_as)
+    if os.path.exists(save_as):
+        raise FileExistsError(save_as)  # never over an existing scene
+    if not rt.saveMaxFile(save_as, quiet=True):  # [verify] quiet: keyword
+        raise RuntimeError("saveMaxFile failed: " + save_as)
+    report["saved_scene"] = save_as
 result = report
 ```
 
@@ -219,11 +225,12 @@ Runner side, building and running it:
 # channel: runner side
 # checked against the lead's max_wrap and max_batch contract
 import json
+import os
 from max_wrap import wrap
 from max_batch import run_batch
 
 args = {"path": "__PATH__", "name": "planter_01", "known_size_m": 0.85, "record": {"model_name": "__MODEL_NAME__"},
-        "save_as": "__NEW_SCENE__.max"}  # a new name such as <scene>_v002.max; an existing file stops the chunk
+        "save_as": os.path.abspath("__NEW_SCENE__.max")}  # a new name such as <scene>_v002.max; an existing file stops the chunk
 chunk = open("__CHUNK_FILE__", encoding="utf-8").read().replace("__ARGS__", repr(json.dumps(args)))
 script = wrap(chunk, lang="python", kit=["maxkit_generation"], kit_dirs=["__GENERATION_SCRIPTS__"],
               result_path="__RESULT_JSON__")  # kit_dirs: this skill's scripts/ folder

@@ -280,7 +280,10 @@ side = max(float(bb[1][k] - bb[0][k]) for k in range(3))
 voxel = ARGS["voxel"] or round(side / 100.0, 4)  # [added] start near 1/100 of the largest side
 vr = mm.voxel_ratio(base, voxel)
 log.append(vr)
-if vr["ratio"] > 500 and not ARGS["fine_voxel_ok"]:
+if vr["verdict"] == "too coarse":
+    # stop before any change: a coarse merge loses the detail the checks below require
+    result = {"voxel": voxel, "log": log, "stopped": "voxel over 1/50 of the largest side: %s" % vr["verdict"]}
+elif vr["ratio"] > 500 and not ARGS["fine_voxel_ok"]:
     # stop before any change; unattended, report and wait
     result = {"voxel": voxel, "log": log, "stopped": "voxel under 1/500 of the largest side may freeze 3ds Max"}
 else:
@@ -307,7 +310,8 @@ Check in the result and the scene:
 
 - `voxel_ratio.verdict` is `ok`. A very small voxel can freeze 3ds Max; the doc says ESC aborts and
   restores the last value. A voxel under 1/500 of the largest side stops the chunk before any
-  change: tell the user, and rerun with `fine_voxel_ok` True only after their yes.
+  change: tell the user, and rerun with `fine_voxel_ok` True only after their yes. A voxel over 1/50
+  of the largest side also stops it: report the verdict and rerun with a smaller `voxel`.
 - Retopology computes only when its Compute button is pressed unless P1 found a compute method (none
   is documented in the saved docs). Ask the user to press Modify panel > Retopology > Compute, or
   call the method P1 listed. After any edit below a computed Retopology, press Reset, then Compute

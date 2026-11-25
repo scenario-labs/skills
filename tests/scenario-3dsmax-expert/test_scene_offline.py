@@ -65,6 +65,12 @@ class GateTests(unittest.TestCase):
         audit = clean_audit(maps={"missing_count": 0, "unreadable": 2})
         self.assertIn("maps inspected", blocking_failures(audit))
 
+    def test_unreadable_system_scale_fails_one_row(self):
+        audit = clean_audit(units={"system_type": "centimeters", "system_scale": "error: no units"})
+        rows = scene_gate.gates(audit, {})
+        self.assertEqual(blocking_failures(audit), ["system unit"])
+        self.assertGreater(len(rows), 1)
+
     def test_xref_errors_fail(self):
         audit = clean_audit(xrefs={"xref_scenes": [], "errors": ["getXRefFileCount: boom"]})
         self.assertIn("XRef records inspected", blocking_failures(audit))
@@ -134,9 +140,33 @@ class SceneKitTests(unittest.TestCase):
         def get(i):
             raise RuntimeError("bad record %d" % i)
         xrefs = types.SimpleNamespace(getXRefFileCount=lambda: 2, getXRefFile=get)
-        with mock.patch.object(rt, "xrefs", xrefs, create=True):
+        mgr = types.SimpleNamespace(recordCount=0)
+        with mock.patch.object(rt, "xrefs", xrefs, create=True), \
+                mock.patch.object(rt, "objXRefMgr", mgr, create=True):
             rep = ks.xref_report()
         self.assertEqual(len(rep["errors"]), 2)
+
+    def test_xref_object_count_error_is_reported(self):
+        xrefs = types.SimpleNamespace(getXRefFileCount=lambda: 0)
+        with mock.patch.object(rt, "xrefs", xrefs, create=True), \
+                mock.patch.object(rt, "objXRefMgr", None, create=True):
+            rep = ks.xref_report()
+        self.assertEqual(rep["xref_object_records"], "?")
+        self.assertTrue(any("objXRefMgr" in e for e in rep["errors"]))
+
+    def test_undo_run_keeps_the_cause(self):
+        @contextlib.contextmanager
+        def swallowing(on, label=None):
+            with contextlib.suppress(Exception):
+                yield
+
+        def fail():
+            raise KeyError("missing node")
+        with mock.patch.object(ks.pymxs, "undo", swallowing):
+            with self.assertRaises(RuntimeError) as cm:
+                ks._undo_run("scene: test", fail)
+        self.assertIsInstance(cm.exception.__cause__, KeyError)
+        self.assertIn("missing node", str(cm.exception))
 
     def test_unreadable_map_is_counted(self):
         rt.bitmaps = [_RaisingFilename()]

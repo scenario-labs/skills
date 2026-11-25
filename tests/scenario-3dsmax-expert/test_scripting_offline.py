@@ -128,10 +128,12 @@ PKG = """<ApplicationPackage AutodeskProduct="3ds Max" ProductType="Application"
 
 
 class PackageLint(unittest.TestCase):
-    def lint(self, smin, smax, module):
+    def lint(self, smin, smax, module, extra=()):
         d = tmpdir(self)
         (d / "Contents").mkdir()
         (d / "Contents" / "start.ms").write_text("-- start\n", encoding="utf-8")
+        for name in extra:
+            (d / "Contents" / name).write_text("-- extra\n", encoding="utf-8")
         (d / "PackageContents.xml").write_text(PKG % (smin, smax, module), encoding="utf-8")
         _, findings = package_lint.lint(str(d))
         return [f for f in findings if f["severity"] == "error"]
@@ -148,6 +150,9 @@ class PackageLint(unittest.TestCase):
     def test_wildcard_matches_a_file(self):
         self.assertEqual(self.lint("2027", "2027", "./Contents/*.ms"), [])
         self.assertTrue(self.lint("2027", "2027", "./Contents/*.py"))
+
+    def test_literal_bracket_name_is_a_file(self):
+        self.assertEqual(self.lint("2027", "2027", "./Contents/start[1].ms", extra=["start[1].ms"]), [])
 
 
 class PortScan(unittest.TestCase):

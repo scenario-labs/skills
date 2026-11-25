@@ -123,7 +123,7 @@ def lint(path, release=None):
                     add("error", "ModuleName", "%s: folder not found %s" % (where, mod))
                 if desc == "osl folders parts" and os.path.basename(full.rstrip("\\/")) != "OSL":
                     add("error", "OSL", "%s: the last folder must be named OSL" % where)
-            elif any(c in os.path.basename(full) for c in "*?["):
+            elif not os.path.isfile(full) and any(c in os.path.basename(full) for c in "*?["):
                 # file name wildcard: not in the saved 2026 page [verify]; at least one file must match
                 if not [f for f in glob.glob(full) if os.path.isfile(f)]:
                     add("error", "ModuleName", "%s: no file matches %s" % (where, mod))

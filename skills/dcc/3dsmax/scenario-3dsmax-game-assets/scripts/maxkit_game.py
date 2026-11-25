@@ -283,7 +283,8 @@ def _reset(nodes):
 def normalize_group(nodes, target_cm=None, measure="longest", pivot="bottom_center", up_fix=None):
     """Reset transforms, optionally rotate up axis, scale uniformly to a real size, set the pivot,
     move to the origin. Every step uses the shared bounds of all nodes, so the parts of a multipart
-    import keep their relative placement. Each node's pivot ends on the shared pivot, at the origin.
+    import keep their relative placement. Each root node's pivot (a node whose parent is outside the
+    group) ends on the shared pivot, at the origin; linked children follow their parent.
     Refuses unless 1 system unit is 1 cm.
 
     measure: "longest", "height" (Z) or "width" (X). pivot: "bottom_center" or "corner" (min x, y, z).
@@ -296,10 +297,13 @@ def normalize_group(nodes, target_cm=None, measure="longest", pivot="bottom_cent
                            "(scenario-3dsmax-scene)")
     lo, hi = _bounds(nodes)
     rep = {"names": [str(n.name) for n in nodes], "before": {"min": lo, "max": hi}}
+    # A child inherits its parent's rotate, scale and move: transform only the group's roots,
+    # or a linked child moves twice.
+    roots = [n for n in nodes if getattr(n, "parent", None) not in nodes]
     with _undo("game: normalize intake"):
         if up_fix == "y_up_to_z_up":
             c = rt.Point3(*[(lo[k] + hi[k]) / 2.0 for k in range(3)])
-            for n in nodes:
+            for n in roots:
                 n.pivot = c  # [verify] node.pivot
                 rt.rotate(n, rt.angleaxis(90, rt.Point3(1, 0, 0)))  # [verify] rotate, angleaxis
         _reset(nodes)
@@ -311,7 +315,7 @@ def normalize_group(nodes, target_cm=None, measure="longest", pivot="bottom_cent
                 raise RuntimeError("zero size along the measured axis")
             f = float(target_cm) / cur
             c = rt.Point3((lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0, lo[2])
-            for n in nodes:
+            for n in roots:
                 n.pivot = c
                 n.scale = rt.Point3(f, f, f)  # uniform only: non-uniform scale breaks UBX/USP and Datasmith instances
             _reset(nodes)
@@ -321,11 +325,11 @@ def normalize_group(nodes, target_cm=None, measure="longest", pivot="bottom_cent
             p = rt.Point3(lo[0], lo[1], lo[2])
         else:
             p = rt.Point3((lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0, lo[2])
-        for n in nodes:
+        for n in roots:
             n.pivot = p
             n.pos = rt.Point3(0, 0, 0)
     lo, hi = _bounds(nodes)
-    rep["after"] = {"min": lo, "max": hi, "pos": _p3(nodes[0].pos), "pivot": _p3(nodes[0].pivot)}
+    rep["after"] = {"min": lo, "max": hi, "pos": _p3(roots[0].pos), "pivot": _p3(roots[0].pivot)}
     return rep
 
 

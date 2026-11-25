@@ -56,8 +56,11 @@ def gates(audit, spec):
         rows.append(("audit sections present", False, "missing " + ", ".join(absent),
                      ", ".join(REQUIRED_SECTIONS), True))
     u = audit.get("units") or {}
-    rows.append(("system unit", u.get("system_type") == s["system_type"]
-                 and abs(float(u.get("system_scale") or 0) - s["system_scale"]) < 1e-9,
+    try:
+        scale_ok = abs(float(u.get("system_scale") or 0) - s["system_scale"]) < 1e-9
+    except (TypeError, ValueError):  # the audit wrote "error: ..." for an unreadable scale
+        scale_ok = False
+    rows.append(("system unit", u.get("system_type") == s["system_type"] and scale_ok,
                  "%s x %s" % (u.get("system_type"), u.get("system_scale")),
                  "%s x %s" % (s["system_type"], s["system_scale"]), True))
     origin = audit.get("origin") or {}

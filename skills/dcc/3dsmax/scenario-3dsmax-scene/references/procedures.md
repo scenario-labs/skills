@@ -90,9 +90,15 @@ system unit in a populated scene; the helper refuses (`fundamentals-scene__syste
 ```python
 # channel: batch | bridge | handoff
 # checked against fundamentals-scene__system-unit-setup.md and scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
-# Chunk body (scene_run.make prepends maxkit_scene). template_path comes from the runner.
+# Chunk body (scene_run.make prepends maxkit_scene). template_path and channel come from the runner.
+# Rule: the reset runs on batch only. A live session keeps layers, render settings and materials
+# that no object check sees, so bridge and handoff refuse.
 template_path = TEMPLATE_PATH              # set by the runner, e.g. via .format() or an args file
-if len(rt.objects) > 0 or rt.getSaveRequired():  # live session with work in it: refuse, never reset
+channel = CHANNEL                          # "batch", "bridge" or "handoff", set by the runner
+if channel != "batch":
+    result = {"changed": False, "reason": "live session: start a new scene (File > Reset), then use "
+              "the mcp-safe block below, or rerun this chunk on batch"}
+elif len(rt.objects) > 0 or rt.getSaveRequired():  # work in the scene: refuse, never reset
     result = {"changed": False, "reason": "session holds objects or unsaved changes"}
 else:
     rt.resetMaxFile(rt.Name("noPrompt"))

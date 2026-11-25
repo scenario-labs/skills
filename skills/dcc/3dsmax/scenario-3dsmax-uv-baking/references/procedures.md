@@ -546,6 +546,8 @@ import sys
 
 def bake_check(normal_maps, other_maps):
     """--normal only on normal maps; AO and color maps are read without it. Raises on a flag."""
+    if not normal_maps and not other_maps:
+        raise FileNotFoundError("no baked map to check: the bake wrote nothing")
     for files, extra in ((normal_maps, ["--normal"]), (other_maps, [])):
         if files:
             subprocess.run([sys.executable, "scripts/bake_check.py", *extra, "--diag", "255,0,0", *files],

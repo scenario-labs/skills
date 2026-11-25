@@ -661,6 +661,8 @@ ARGS = {"map": {"src_hips": "pelvis", "src_spine": "spine_01", "src_thigh_l": "t
 
 node = rt.getNodeByName
 first, last = maxkit_anim.frame_range()
+if not first <= ARGS["ref_frame"] <= last:  # checked before any controller changes
+    raise ValueError("ref_frame %s is outside the animation range %s-%s" % (ARGS["ref_frame"], first, last))
 targets = []
 # pymxs reads node.rotation as a value, not a sub-controller: assign through the node's PRS controller
 with pymxs.undo(True, "retarget: constrain"):

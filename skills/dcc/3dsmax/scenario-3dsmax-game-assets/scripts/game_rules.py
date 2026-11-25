@@ -172,7 +172,7 @@ def check_report(report, target="unreal", budgets=None):
             cv = n.get("convex_violations", -1)
             if cv > 0:
                 out.append(_f("error", "collision.convex", name, f"{cv} vertex/plane violations: hull is not convex"))
-            elif cv < 0:
+            elif cv < 0 and name.startswith("UCX_"):  # the audit measures UCX hulls only
                 out.append(_f("error", "collision.convex_unknown", name,
                               "convexity not measured (over 2000 faces or missing): split or simplify the hull"))
         m = LOD_RE.match(name)
