@@ -165,7 +165,7 @@ class AdTools(Temp):
     def test_review_scores_a_report_and_the_cli_writes_json(self):
         rep = {"comp": "AD_30", "fps": 30, "hook_text_frame": 2, "first_cut_f": 40,
                "texts": [{"text": "Tap to play", "words": 3, "frames": 45}, {"text": "A very long line of seven words here", "words": 8, "frames": 40}],
-               "cuts_per_10s": [{"window": "0-10 s", "cuts": 6}], "logo_first_f": 10, "cta_frames": 75, "endcard_frames": 90,
+               "cuts_per_10s": [{"window": "0-300", "cuts": 6}], "logo_first_f": 10, "cta_frames": 75, "endcard_frames": 90,
                "beat_offsets": [{"offset": 0.5}, {"offset": -2}], "zone_violations": [{"layer": "CTA", "zone": "feed"}]}
         res = adtools.review(rep)
         failed = sorted(r["check"].split(" (")[0] for r in res["rows"] if not r["pass"])
