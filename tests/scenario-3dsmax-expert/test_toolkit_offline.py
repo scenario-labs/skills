@@ -727,6 +727,25 @@ class ToolkitFixTests(unittest.TestCase):
             self.assertEqual([x.name for x in d.iterdir()], ["r.json"])
             q.unlink()
 
+    def test_result_write_bare_filename_stays_in_the_working_folder(self):
+        d = tmpdir()
+        seen = []
+        orig = result.tempfile.mkstemp
+
+        def spy(*a, **kw):
+            seen.append(kw.get("dir"))
+            return orig(*a, **kw)
+
+        cwd = os.getcwd()
+        os.chdir(d)
+        try:
+            with mock.patch.object(result.tempfile, "mkstemp", spy):
+                result.write(result.envelope(True, 1), "r.json")
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(seen, ["."])  # never the system temp folder, which may sit on another volume
+        self.assertEqual([x.name for x in d.iterdir()], ["r.json"])
+
     def test_result_write_interrupted_leaves_no_partial_file(self):
         d = tmpdir()
         q = d / "r.json"

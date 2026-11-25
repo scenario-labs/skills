@@ -104,7 +104,7 @@ def write(payload: dict, path, overwrite=None) -> str:
         raise FileExistsError(f"{path} exists and is not a result envelope; pick a new result_path")
     # Serialize to a sibling temporary file, then publish it in one step: an interrupted write
     # never leaves partial JSON at path, so a retry is not refused by the envelope check.
-    fd, tmp = tempfile.mkstemp(prefix=".mxk_result_", suffix=".tmp", dir=parent or None)
+    fd, tmp = tempfile.mkstemp(prefix=".mxk_result_", suffix=".tmp", dir=parent or ".")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(payload, fh, indent=1, ensure_ascii=False)

@@ -200,19 +200,20 @@ ARGS = json.loads(__ARGS__)
 # {"path": ".../planter_01.fbx", "name": "planter_01", "layer": "GEN_props",
 #  "known_axis": 2, "known_size_m": 0.85, "place_at": [0, 0, 0], "record": {...sidecar fields...},
 #  "save_as": ".../scene_v002.max"}  (batch: the session ends with the run, so save under a new name)
-report = maxkit_generation.land_model(
-    ARGS["path"], ARGS["name"], layer=ARGS.get("layer", "GEN_props"),
-    known_axis=ARGS.get("known_axis", 2), known_size_m=ARGS.get("known_size_m"),
-    place_at=ARGS.get("place_at"), record=ARGS.get("record"))
-report["renderer"] = str(rt.renderers.current)
-if ARGS.get("save_as"):
-    save_as = ARGS["save_as"]
+save_as = ARGS.get("save_as")
+if save_as:  # checked before the import, so a refused path leaves the open scene unchanged
     # saveMaxFile resolves a relative name against the scene folder, os.path against the Python
     # working folder: only an absolute path makes the existence check test the saved file
     if not os.path.isabs(save_as):
         raise ValueError("save_as must be an absolute path: " + save_as)
     if os.path.exists(save_as):
         raise FileExistsError(save_as)  # never over an existing scene
+report = maxkit_generation.land_model(
+    ARGS["path"], ARGS["name"], layer=ARGS.get("layer", "GEN_props"),
+    known_axis=ARGS.get("known_axis", 2), known_size_m=ARGS.get("known_size_m"),
+    place_at=ARGS.get("place_at"), record=ARGS.get("record"))
+report["renderer"] = str(rt.renderers.current)
+if save_as:
     if not rt.saveMaxFile(save_as, quiet=True):  # [verify] quiet: keyword
         raise RuntimeError("saveMaxFile failed: " + save_as)
     report["saved_scene"] = save_as
