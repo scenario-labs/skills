@@ -64,13 +64,13 @@ contiguous nor ordered.
   (upload first). Match the type: the API drops scalar-for-array mismatches silently and still
   charges; `workflow_run` wraps simple scalars into arrays, but only simple ones.
 - `inputs[]` is not the whole contract: a string input inherits the length ceiling of the node
-  behind it (a model's own prompt cap, observed as low as 4000 characters), which the record never
-  lists and which surfaces only at run time as a 400 quoting the cap but not the input key. The dry
-  run enforces the same validator at zero cost: route long texts through `dry_run=true` and shorten
-  to fit rather than retrying verbatim, and with several string inputs bisect with dry runs to find
-  the offender. The dry run also catches a prompt that a `transformText` node builds past the cap
-  with every input in range: shorten those inputs, or fix the graph per
-  `scenario-workflow-authoring`.
+  behind it (the model's `prompt` `max_length` from `model_schema_get`, 2,000 to 250,000 characters
+  across members at authoring time). The record never lists the cap, which surfaces only at run time
+  as a 400 quoting the cap but not the input key. The dry run enforces the same validator at zero
+  cost: route long texts through `dry_run=true` and shorten to fit rather than retrying verbatim,
+  and with several string inputs bisect with dry runs to find the offender. The dry run also catches
+  a prompt that a `transformText` node builds past the cap with every input in range: shorten those
+  inputs, or fix the graph per `scenario-workflow-authoring`.
 - `workflow_get` wraps `inputs_definition`/`editor_info` in `workflow`; `workflows_list` wraps
   `inputs`/`editorInfo` in `workflows`.
 
