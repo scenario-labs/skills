@@ -1,6 +1,6 @@
 ---
 name: scenario-after-effects-compositing
-description: "Use when keying a green or blue screen, pulling or cleaning a matte, rotoscoping, cutting out a person or product with no screen behind it, removing a logo, wire, mic or object from footage, building a clean plate, using track mattes, Set Matte or Alpha Add, or making a foreground sit in a background with light wrap, grain match and level match. Also when someone says the key has a green edge, the hair disappears, the matte chatters or has holes, there is a halo or a dark ring, the white shirt is green, the composite looks pasted on, the grain does not match, Object Matte or Roto Brush, or Content-Aware Fill smears."
+description: "Use when keying a green or blue screen, cleaning a matte, roto or Object Matte, a cutout with no screen, removing a logo, wire or object, a clean plate, track mattes, or matching a foreground to its background with light wrap, grain and levels. Also when the key has a green edge, hair disappears, the matte chatters or has holes, a halo or dark ring, or the composite looks pasted on."
 license: MIT
 ---
 
@@ -23,29 +23,25 @@ traps).
 ## Stance (the expert delta)
 
 1. **Key in pieces: garbage, soft matte, core matte.** One Keylight is never enough for a hard plate
-   (Leonard Wilkes K-uOFPoIm6U 00:01:12, 00:10:16; ActionVFX _0lcyyybbng 00:01:02). Measured mean
-   alpha error: 0.28 at defaults, 0.0051 for garbage, soft and core with a holdout.
+   (Leonard Wilkes K-uOFPoIm6U 00:01:12, 00:10:16; ActionVFX _0lcyyybbng 00:01:02).
 2. **Keylight View on Intermediate Result when Advanced Spill Suppressor follows** (Jake Bartlett
    tK_Z1dYgtxs 00:08:28). Final Result despills inside Keylight and leaves the suppressor nothing to
-   do. Measured shirt luma: 0.880 with Keylight's despill, 0.929 (the plate's) with Ultra.
+   do.
 3. **Clean with Clip Black and Clip White in Status view, never Screen Gain** (tK_Z1dYgtxs
    00:09:34). Measured: Screen Gain 130 opened holes in 54 % of the core. Clip 35/75 kept hair at
    0.44 coverage against 0.53 truth; 40/60 started eating it.
-4. **Screen Pre-blur is not free.** Bartlett starts near 0.3 (00:11:24). Measured on 1.4 px strands:
-   Pre-blur 1 dropped hair coverage from 0.44 to 0.02 [added]. Keep it at 0 on thin hair.
+4. **Screen Pre-blur is not free** (Bartlett starts near 0.3, 00:11:24). Measured on 1.4 px strands:
+   Pre-blur 1 dropped hair coverage from 0.44 to 0.02 [added].
 5. **Fix spill on the color, not by choking the alpha.** Split the alpha plate from the color plate
    (K-uOFPoIm6U 00:02:17, 00:22:44). The suppressor darkens greens; Ultra disturbs luminance least
    (00:18:30, 00:19:02).
 6. **Integration is three readings: levels per channel, grain per channel, a wrap you barely see**
-   (Ryan Connolly vJ8X58uknsk 00:01:34, 00:02:40; Danasa Arsad ZFJ3AKC2q8k 00:02:42). Measured: 1.5
-   % of comp height at 40 % Add lifted edges 4.7/255 against a window; 4 % at 100 % gave 20/255, a
-   glow.
+   (Ryan Connolly vJ8X58uknsk 00:01:34, 00:02:40; Danasa Arsad ZFJ3AKC2q8k 00:02:42).
 7. **One hero fix, propagated.** One cleaned frame tracked in (Anton Thallner 3tMsr8TRDP8 00:01:02),
-   one pre-render reused everywhere (_0lcyyybbng 00:09:31). Try the one-click tool first, then build
-   by hand (3tMsr8TRDP8 00:00:33).
-8. **A script cannot paint a matte.** Object Matte, Roto Brush, Refine Edge strokes, Mocha shapes
-   and Content-Aware Fill are GUI work. Object Matte added by script with no strokes renders alpha
-   1.0. Substitutes: keyed masks, an imported matte as track matte, offset patches.
+   one pre-render reused everywhere (_0lcyyybbng 00:09:31).
+8. **A script cannot paint a matte.** Object Matte, Roto Brush, Refine Edge, Mocha and Content-Aware
+   Fill are GUI work (Object Matte with no strokes renders alpha 1.0). Substitutes: keyed masks, an
+   imported matte, offset patches.
 
 ## Establish first
 
@@ -58,25 +54,23 @@ traps).
 | Alpha mode of every element                 | premultiplied read as straight leaves a dark ring                             | read `mainSource.alphaMode`                                            |
 | Deliverable                                 | keyed comp with alpha, or the final                                           | ProRes 4444 `High Quality with Alpha`                                  |
 | Channel                                     | bridge; strokes and panels go to a person                                     | bridge                                                                 |
-| Generated inputs                            | backgrounds, clean frames, mattes from scenario-after-effects-generation      | ask before generating                                                  |
 
 ## Procedure
 
-Full jobs are in [references/procedures.md](references/procedures.md). Helpers:
+Jobs: [references/procedures.md](references/procedures.md). Helpers:
 [scripts/comp.jsx](scripts/comp.jsx) (`AEX.comp`: `sampleColor`, `keyChain`, `setView`, `alphaView`,
-`overView`, `mask`, `lightWrap`, `preRender`), loaded with
+`overView`, `mask`, `lightWrap`, `rimLight`, `shadeLight`, `preRender`), loaded with
 `ae.py run job.jsx --lib <skill>/scripts/comp.jsx`.
-[scripts/matte_metrics.py](scripts/matte_metrics.py) reads rendered PNGs: alpha error against a
-reference, spill, grain, levels, edge width, difference.
+[scripts/matte_metrics.py](scripts/matte_metrics.py) reads rendered PNGs (procedure 3).
 
 ### 1. Inspect the plate
 
-Goal: know the screen, noise and junk. Pick the hardest frame (keying doc: tune on one intricate
-frame). `AEX.comp.sampleColor(comp, layer, [x, y], [halfW, halfH], t)` averages a box of clean
-screen. `matte_metrics.py grain` reads grain per channel on a flat area. List stands, markers and
-frame-edge junk. Trap: from a script, `sampleImage` returns `[0,0,0,0]` unless read at the comp's
-current time; the helper moves `comp.time` and restores it. GATE: the screen sample has one dominant
-channel; grain recorded per channel.
+Goal: know the screen, noise and junk. In a test session, start with `AEK.core.fresh(aepPath)`, then
+16 bpc. Strip a movie still's gAMA chunk before import ([procedure 1](references/procedures.md)):
+After Effects renders it darker. Pick the hardest frame (keying doc: tune on one intricate frame).
+`AEX.comp.sampleColor(comp, layer, [x, y], [halfW, halfH], t)` averages a box of clean screen.
+`matte_metrics.py grain` reads grain per channel on a flat area. List stands, markers and frame-edge
+junk. GATE: the screen sample has one dominant channel; grain recorded per channel.
 
 ### 2. Garbage matte
 
@@ -84,20 +78,19 @@ Goal: key only where the subject can be.
 `AEX.comp.mask(layer, null, {keys: [{t, points}], feather: 20})`, mode `add` around the subject or
 `subtract` on junk, keyed as the subject moves (K-uOFPoIm6U 00:16:11). Keep it loose: an exact
 garbage matte becomes roto (keying doc). GATE: alpha 0 on the stand and screen edges at first,
-middle and last frame. Measured: mean error 0.100 to 0.015, stand gone.
+middle and last frame.
 
 ### 3. Soft matte: the key chain
 
 Goal: all the hair and motion blur, nothing of the screen.
 `AEX.comp.keyChain(layer, {screen, clipBlack: 35, clipWhite: 75, cleaner: {chatter: true, contrast: 20}, spill: {method: "ultra", color: screen}})`
 adds `Keylight 906`, `ADBE KeyCleaner`, `ADBE Spill2` in that order with View on Intermediate
-Result. Tune clips with `setView(layer, idx, "status")` frames, then set it back. Uneven screen: a
-second Keylight sampled from what is left (tK_Z1dYgtxs 00:13:37); Ultra Tolerance near 100
-(00:03:31). Screen lit by colored light: unlock Despill Bias and Alpha Bias (00:17:30). Replace
-Method, Despill Bias and Edge Colour Correction act in Final Result only (in Intermediate Result,
-Hard and Soft Colour render identical): with the suppressor, fix shirt artifacts on the color plate
-(step 5). Keyed keying properties: Hold when several interact (keying doc). GATE: on `alphaView`, a
-box of screen reads 0 and a box inside the torso reads 1; hair shows as gray, never as gaps.
+Result. Tune clips on `setView(layer, idx, "status")` frames, then set it back. Uneven screen: a
+second Keylight sampled from what is left (tK_Z1dYgtxs 00:13:37). Colored screen light: unlock
+Despill Bias and Alpha Bias (00:17:30). Replace Method, Despill Bias and Edge Colour Correction act
+in Final Result only ([procedure 2](references/procedures.md)). Keyed keying properties: Hold when
+several interact (keying doc). GATE: on `alphaView`, a box of screen reads 0 and a box inside the
+torso reads 1; hair shows as gray, never as gaps.
 
 ### 4. Core matte and holdouts
 
@@ -105,12 +98,14 @@ Goal: a solid core that never hardens the edge. Core: a duplicate of the plate, 
 `ADBE Easy Levels2` on alpha (channel 5, input white 0.7), `ADBE Simple Choker` 3 to 5 so it stays
 inside the edge (K-uOFPoIm6U 00:10:47 to 00:11:51). Subtract a mask on the core over
 semi-transparent areas (veil, hair, motion-blurred edge) so the soft matte alone decides there
-(00:16:11). Soften the core only inward: blur no wider than the choke, with an unblurred duplicate
-of the core as its Alpha track matte (00:14:01; [procedure 2b](references/procedures.md)). Where
-hair and body mattes butt, set the upper one to Alpha Add, so a 15 px feather on each is safe
-(00:09:10). GATE: core holes under 1 %; core alpha 0 outside its unblurred edge. Measured: holdout
-speckle 0.171 to 0.058 standard deviation; Alpha Add seam 1.0 against 0.878 in Normal; inward blur 0
-px outside the core, 33,070 px without the matte.
+(00:16:11). Soften the core only inward: Channel Blur on alpha only (`ADBE Channel Blur-0004`, no
+wider than the choke), with an unblurred duplicate of the core as its Alpha track matte (00:14:01;
+[procedure 2b](references/procedures.md)). Never Box Blur or Gaussian Blur there: the core is a
+keyed copy of the plate, and they soften its color too. Where hair and body mattes butt, set the
+upper one to Alpha Add, so a 15 px feather on each is safe (00:09:10). GATE: core holes under 1 %
+(`matte_metrics.py holes` on alpha renders at first, middle and last frame); core alpha 0 outside
+its unblurred edge; interior detail (high-pass) equal to the unblurred core. Measured on a real
+plate: Box Blur 4 cut interior detail from 8.37 to 0.45, Channel Blur alpha left it at 8.37.
 
 ### 5. Precompose, check spill, pre-render
 
@@ -119,58 +114,59 @@ near 0 and luma within 1 % of the plate. Halo or spill left: recolor a color pla
 Alpha track matte, never choke the alpha (K-uOFPoIm6U 00:02:17, 00:22:44). Then
 `AEX.comp.preRender(keyComp, path, "High Quality with Alpha")` renders once, imports, and swaps
 every use, names kept (_0lcyyybbng 00:09:31). GATE: live and pre-rendered alpha differ by 0; the
-item reads `hasAlpha` true, `PREMULTIPLIED`. Measured: 1,503 ms down to 263 ms per frame.
+item reads `hasAlpha` true, `PREMULTIPLIED`.
 
 ### 6. Edges
 
 Goal: edges as soft as the plate, no ring. Read premultiplied files as premultiplied. An Edge Blur
-of 2 to 3 px (K-uOFPoIm6U 00:27:58) is a look choice: alpha error rose from 0.099 to 0.115 at 2 px.
-Pixel Motion Blur (`ADBE OFMotionBlur`) at 45 to 90 degrees matches a plate shot with a fast shutter
-(00:28:30); add it last, it is slow (ActionVFX HWNAGKi6apM 00:08:09). GATE: over white and over
-black, no dark or bright rim.
+of 2 to 3 px (K-uOFPoIm6U 00:27:58) is a look choice: it raises alpha error. Pixel Motion Blur
+(`ADBE OFMotionBlur`) at 45 to 90 degrees matches a fast-shutter plate (00:28:30); add it last, it
+is slow (HWNAGKi6apM 00:08:09). GATE: `matte_metrics.py rim` on the key over black and over white,
+before any light layer: median 0.85 to 1.15 (below, a dark ring; above, a bright edge).
 
 ### 7. Integrate
 
 Goal: the foreground shares the plate's light, levels and texture.
 
-- Levels: sample the element's and the plate's black and white, solve `ADBE Pro Levels2` output
-  black and white per channel ([procedure 6](references/procedures.md)). Light direction cannot be
-  graded (vJ8X58uknsk 00:01:05): flag it to the user.
-- Light wrap: `AEX.comp.lightWrap(comp, fg, bg, {radiusPct: 1.5, opacity: 40, mode: "add"})`. It
-  reads the foreground precomp, so masks on the foreground carry (ZFJ3AKC2q8k 00:02:14). Hero shots
-  add a second, smaller and stronger wrap limited to highlights (K-uOFPoIm6U 00:29:36).
-  Keylight-only key: Edge Brightness in Final Result is a quick wrap (tK_Z1dYgtxs 00:23:17).
-- Grain, last (vJ8X58uknsk 00:02:40): Add Grain (`VISINF Grain Implant`) with Viewing Mode Final
-  Output (3) and per-channel intensity = plate grain / grain at intensity 1; or Match Grain
-  (`VISINF Grain Duplication`) from the plate, Viewing Mode 5. GATE: blacks and whites within 2/255
-  per channel of the plate; grain within 10 % per channel at the same tone; the wrap shows only
-  against bright background.
+- Light first ([procedure 6b](references/procedures.md)). `matte_metrics.py light` on the foreground
+  alone and the plate reads the source direction and color, the subject's key direction, rim and
+  levels. A front-lit subject on a backlit plate: `AEX.comp.shadeLight` darkens the side away from
+  the source, `rimLight` adds a crescent in the source color. When that cannot carry it (hard key
+  light on the wrong side), pick or regrade the plate, or flag it to the user (vJ8X58uknsk
+  00:01:05).
+- Levels ([procedure 6](references/procedures.md)): with a neutral pair in both layers, solve per
+  channel. With none (sunset, colored element), solve on luma, one gain for the three channels, from
+  the subject's 1st and 99th percentile to the plate's near the subject.
+- Light wrap: `AEX.comp.lightWrap(comp, fg, bg, {radiusPct: 1.5, opacity: 40, mode: "add"})` copies
+  both layers with transforms, masks and effects (ZFJ3AKC2q8k 00:02:14); precompose a parented layer
+  first. Hero shots add a second, smaller, stronger wrap on highlights (K-uOFPoIm6U 00:29:36).
+- Grain, last (vJ8X58uknsk 00:02:40). Measure both layers, spatial and moving (`grain`, `tgrain`).
+  The plate grainier: Add Grain (`VISINF Grain Implant`, Viewing Mode 3) on the element only, where
+  it covers the plate, never over the whole frame (it doubles the plate's own grain). Both far
+  cleaner: one shared Add Grain on top ([procedure 7](references/procedures.md)). GATE (light,
+  source in frame): `key_strength` at least 0.3; rim facing at least 1.15 and 0.1 above the far
+  side. Report key direction and rim hue, then judge them on the frame (6b). Levels: subject 1st
+  percentile within 0.03 of the plate's, 99th no more than 0.02 above the plate's near the subject.
+  Grain within 10 % per channel at the same tone, or, on the shared route, moving grain on both
+  layers (`tgrain` only on static areas: on a moving subject it reads motion). Wrap:
+  `matte_metrics.py wrapbins`, darkest background bin under half the brightest.
 
 ### 8. Product cutout with no screen
 
-Goal: a 120-frame matte without a screen. Object Matte, run by a person: toolbar Object Matte tool
-(the former Roto Brush slot), double-click the layer, click the product, Space, Freeze
-([gui-paths](references/gui-paths.md)). Locked-off camera with a clean plate: Difference Matte
-(Effect > Keying) is the alternative (K-uOFPoIm6U 00:30:48; keying doc). A script then sets Feather,
-Shift Edge and Reduce Chatter by match name and pre-renders
-([procedure 8b](references/procedures.md)). Unattended substitute: an external matte (segmentation
-or layer separation through scenario-after-effects-generation), imported at the plate rate as a Luma
-or Alpha track matte. A rigid product can take a tracked mask (track from
-scenario-after-effects-tracking). GATE: matte frame count equals plate frame count; alpha at first,
-middle and last frame on one sheet. Measured: an external matte reproduced the reference exactly;
-one frame of slip doubled the best key's error (0.0101, edge 0.12).
+Goal: a matte without a screen. Routes ([procedure 8](references/procedures.md)): Object Matte
+strokes by a person, then a script sets Feather, Shift Edge and Reduce Chatter (8b); Difference
+Matte on a locked-off shot with a clean plate; unattended, an external matte from
+scenario-after-effects-generation as a Luma or Alpha track matte (8a); a rigid product, a tracked
+mask from scenario-after-effects-tracking. GATE: matte frame count equals plate frame count; alpha
+at first, middle and last frame on one sheet. Measured: one frame of slip doubled the best key's
+error (0.0101, edge 0.12).
 
 ### 9. Logo removal on a moving T-shirt
 
-Goal: no logo, fabric texture and grain intact. GUI path: Subtract mask around the logo, Window >
-Content-Aware Fill, Fill Method Surface, Alpha Expansion, Lighting Correction when light shifts
-(Content-Aware Fill doc). Scripted substitute: the plate offset by whole pattern periods under a
-tracked, feathered ellipse matte. Hero-frame route: clean one frame (paint, or an edit through
-scenario-after-effects-generation), track it in with a corner pin, add a masked Levels for lighting
-drift (3tMsr8TRDP8 00:01:02, 00:06:07). The patch mask sits before the pin, so it lines up on the
-hero frame only: key it on other frames (00:05:31). GATE: error inside the patch near the grain
-floor; no ring; patch present on every frame. Measured: 30.4 down to 3.45 against a 2.88 floor. A
-sub-pixel offset softened the grain (inner error 4.67 to 6.05): use whole pixels.
+Goal: no logo, fabric texture and grain intact. GUI: Content-Aware Fill. Scripted: the plate offset
+by whole pattern periods under a tracked, feathered matte, or a cleaned hero frame corner pinned in
+([procedure 9](references/procedures.md)). GATE: error inside the patch near the grain floor
+(measured 3.45 against 2.88); no ring; patch on every frame.
 
 ## Numbers
 
@@ -180,8 +176,7 @@ sub-pixel offset softened the grain (inner error 4.67 to 6.05): use whole pixels
 | Keylight clips, core       | 40/60 plus Levels input white 0.7          | alpha channel                                     |
 | Simple Choker on core      | 3 to 5 px (Wilkes 5 to 10)                 | plate pixels                                      |
 | Key Cleaner                | Reduce Chatter on, Alpha Contrast 20       | _0lcyyybbng 00:06:13                              |
-| Garbage feather            | 20 px                                      | 1280x720 plate                                    |
-| Holdout feather            | 6 px                                       | same                                              |
+| Garbage, holdout feather   | 20 px, 6 px                                | 1280x720 plate                                    |
 | Light wrap                 | 1 to 1.5 % of comp height, 30 to 40 %, Add | 1.5 % = 11 px at 720                              |
 | Grain match tolerance      | 10 % per channel                           | std of image minus 5x5 blur                       |
 | Level match tolerance      | 2/255 per channel                          | 1st and 99th percentile                           |
@@ -189,33 +184,33 @@ sub-pixel offset softened the grain (inner error 4.67 to 6.05): use whole pixels
 ## Quality gates
 
 Run [references/critique.md](references/critique.md). Measurable: chain order and View 10; no Status
-view left on; track mattes resolved; matte and plate frame counts equal; spill, levels and grain
-within tolerance; `ae.py probe` on alpha renders. Visual, one sheet per shot: hair as gray, no core
-holes, no rim over black or white, wrap invisible on dark areas.
+view left on; track mattes resolved; frame counts equal; spill, holes, rim, light, levels, grain and
+wrap within the step gates; `ae.py probe` on alpha renders. Visual, one sheet per shot: hair as
+gray, no core holes, light from the plate's side.
 
 ## Common mistakes
 
-| Mistake                                            | Symptom                                                    | Fix                                                                                                                        |
-| -------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Final Result plus Spill2                           | suppressor does nothing, shirt darker                      | View Intermediate Result                                                                                                   |
-| Hard Colour or Despill Bias with View Intermediate | no change in the render                                    | they act in Final Result; fix on the color plate                                                                           |
-| Screen Gain to clean the screen                    | holes in the core, hard hair                               | Clip Black and White in Status view                                                                                        |
-| Set Matte pointed at a layer keyed in place        | alpha 1.0 everywhere: it reads the source                  | point at a precomp of the key                                                                                              |
-| Matte of a matte                                   | the inner track matte is ignored                           | build the boolean inside a precomp                                                                                         |
-| Effects on the matte forgotten                     | edge moves (Simple Choker 20 moved it 7 px)                | the matte is read after its own effects                                                                                    |
-| Add Grain left in Preview                          | grain only in a box, its outline rendered                  | Viewing Mode Final Output                                                                                                  |
-| Add Grain at default intensity                     | about half the plate grain; 40 % more in shadows than mids | calibrate per channel on the subject's tone                                                                                |
-| Premultiplied read as straight                     | dark ring                                                  | Interpret Footage > Premultiplied                                                                                          |
-| Luma matte under inherited color settings          | 50 % gray reads 0.737                                      | test sessions: `AEK.core.fresh()` resets engine, bpc, working space, linear blending, gamma; a person's project: read them |
-| Sequence import in a shared folder                 | every numbered file joins                                  | one folder per sequence                                                                                                    |
+| Mistake                                            | Symptom                                     | Fix                                                                                                                        |
+| -------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Final Result plus Spill2                           | suppressor does nothing, shirt darker       | View Intermediate Result                                                                                                   |
+| Hard Colour or Despill Bias with View Intermediate | no change in the render                     | they act in Final Result; fix on the color plate                                                                           |
+| Screen Gain to clean the screen                    | holes in the core, hard hair                | Clip Black and White in Status view                                                                                        |
+| Set Matte pointed at a layer keyed in place        | alpha 1.0 everywhere: it reads the source   | point at a precomp of the key                                                                                              |
+| Matte of a matte                                   | the inner track matte is ignored            | build the boolean inside a precomp                                                                                         |
+| Effects on the matte forgotten                     | edge moves (Simple Choker 20 moved it 7 px) | the matte is read after its own effects                                                                                    |
+| Add Grain left in Preview                          | grain only in a box, its outline rendered   | Viewing Mode Final Output                                                                                                  |
+| Premultiplied read as straight                     | dark ring                                   | Interpret Footage > Premultiplied                                                                                          |
+| Luma matte under inherited color settings          | 50 % gray reads 0.737                       | test sessions: `AEK.core.fresh()` resets engine, bpc, working space, linear blending, gamma; a person's project: read them |
 
 ## Handoffs
 
 - Receives plates and track data from scenario-after-effects-tracking (point, planar or camera solve
   for masks, patches and corner pins).
 - Receives generated backgrounds, clean frames, mattes and elements through
-  scenario-after-effects-generation: raw input that needs level, grain and alpha checks here.
-- Receives 3D precomps from scenario-after-effects-3d; procedural elements from
+  scenario-after-effects-generation: raw input that needs level, grain and alpha checks here. A
+  seated object arrives with its light color gated there (`seat_check.py`); direction, rim and
+  contrast are gated here (6b).
+- Receives 3D precomps from scenario-after-effects-3d, procedural elements from
   scenario-after-effects-vfx.
 - Gives keyed and pre-rendered precomps to scenario-after-effects-color-delivery (grade, output with
   alpha) and scenario-after-effects-project (pre-render naming, collect).
@@ -223,13 +218,10 @@ holes, no rim over black or white, wrap invisible on dark areas.
 
 ## Version notes
 
-- 26.2: Object Matte replaces the Roto Brush tool in the toolbar; its effect is `ADBE Samurai`,
-  listed under Obsolete in `app.effects` on 27.0, Version 4 by default. Tutorials that start with
-  the Roto Brush tool predate it.
-- 23.0: track matte picker; any layer can be the matte, shared by many layers. Tutorials before it
-  say "the layer above".
-- 26.0: native Unmult (`ADBE Unmult`). Color Key and Luma Key are obsolete; use Keylight first.
-- The enum is spelled `BlendingMode.SILHOUETE_ALPHA` in the API.
+- 26.2: Object Matte replaces the Roto Brush tool; its effect is `ADBE Samurai` (Obsolete in
+  `app.effects` on 27.0).
+- 23.0: track matte picker, any layer as matte. 26.0: native Unmult (`ADBE Unmult`); Color Key and
+  Luma Key obsolete.
 
 ## References
 

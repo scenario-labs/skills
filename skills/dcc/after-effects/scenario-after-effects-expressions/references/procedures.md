@@ -240,26 +240,44 @@ return R;
 ```
 
 Pass: margins equal Pad X and Pad Y; gap equals Gap; lags `[L, 2L, 3L, 4L, 5L]`; idle `ratio` under
-2.5 and `repeat` 0 (the period must match `Idle (frames)`); count ends on "1,250,000";
+2.5 and `repeat` 0 (procedure 3; the period must match `Idle (frames)`); count ends on "1,250,000";
 `check.failed` 0. Measured on the built rig: margins 32 / 18, gap 14, lags 3 to 15, idle ratio 0.78,
 repeat 0.
 
 ## 3. Loops measured at the seam
 
-`AEX.expressions.seam(prop, comp, periodFrames, startFrame)` returns the step across the loop point
-and the median step inside it. Measured at 30 fps, three eased keys 0.5 s apart, period 30 frames:
+`AEX.expressions.seam(prop, comp, periodFrames, startFrame)` returns two numbers; a loop passes when
+both pass:
 
-| Expression                                          | Seam step / median | Reading                                                         |
-| --------------------------------------------------- | ------------------ | --------------------------------------------------------------- |
-| `loopOut("cycle")`, first and last key differ       | 596 px / 22 px     | jump                                                            |
-| `loopOut("cycle")`, last key equals the first       | 4.0 / 22           | no jump, a hitch where both eases stop                          |
-| `loopOut("pingpong")`                               | 4.0 / 22           | turns around at ease speed                                      |
-| `loopOut("offset")`                                 | 4.0 / 22           | each cycle starts where the last ended (+600 px per cycle here) |
-| `loopOut("continue")`                               | 0.04 / 22          | keeps the last velocity: 0 after an eased key, so it stops      |
-| `wiggle(1, 60, 1, 0.5, time % T)`                   | 18.8 / 1.15        | jump every T                                                    |
-| blended wiggle below                                | 3.5 / 1.5          | no jump; amplitude drops toward mid-loop (max offset 47 of 60)  |
-| circular noise (procedure 1)                        | 7.7 / 9.9          | no jump, full amplitude (max offset 78)                         |
-| `40 * Math.sin(2 * Math.PI * (time - inPoint) / T)` | 4.2 / 3.0          | exact loop                                                      |
+- `ratio`: the step across the loop point over the largest of the step just before it, the step just
+  after it and the median step. Under 2.5 passes. It catches a jump inside an otherwise smooth loop.
+- `repeat`: the distance between the value at `start` and at `start + period`. 0 passes (under 0.01
+  of `maxStep`). It catches a period that is not the loop length, and a cycle whose keys do not
+  close.
+
+The older measure (seam step over the median step, still returned as `medianRatio`) failed exact
+loops: a loop with a fast pass at its seam reads 2.57 against a slow median. Measured at 30 fps
+(period 30 frames unless noted):
+
+| Loop                                          | `ratio` | `repeat` | `medianRatio` | Verdict                                          |
+| --------------------------------------------- | ------- | -------- | ------------- | ------------------------------------------------ |
+| wobble `sin(a) + 0.35 sin(2a + 1.1)`, start 0 | 0.91    | 0        | 2.57          | exact, passes                                    |
+| same, start 7                                 | 0.51    | 0        | 0.51          | exact, passes                                    |
+| sine, fastest at the seam                     | 1.00    | 0        | 1.34          | exact, passes                                    |
+| cosine, slowest at the seam                   | 0.16    | 0        | 0.16          | exact, passes                                    |
+| circular noise (procedure 1), period 60       | 0.78    | 0        | 0.78          | exact, passes                                    |
+| `loopOut("cycle")`, last key equals the first | 0.18    | 0        | 0.18          | exact, passes                                    |
+| blended wiggle below, period 60               | 1.01    | 0        | 2.38          | exact, passes                                    |
+| `loopOut("cycle")`, first and last key differ | 0       | 600      | 0.14          | jump one frame after the seam, fails on `repeat` |
+| `wiggle(1, 60, 1, 0.5, time % T)`, period 60  | 5.68    | 0        | 16.3          | jump, fails on `ratio`                           |
+| sine of 27 frames checked as a 30-frame loop  | 0.89    | 25.7     | 1.09          | wrong period, fails on `repeat`                  |
+| circular noise of 0.7 s at 25 fps, 18 frames  | 0.24    | 4.6      | 0.55          | period not whole, fails on `repeat`              |
+| sawtooth reset every 30 frames                | 29      | 0        | 29            | jump, fails on `ratio`                           |
+
+Exact loops read at most 1.01; real jumps read 5.68 or more, or a `repeat` above 0. Check every loop
+at its delivery frame rate. Other loop modes, measured with three eased keys 0.5 s apart. `pingpong`
+turns around at ease speed. `offset` starts each cycle where the last ended (+600 px per cycle
+here). `continue` keeps the last velocity, 0 after an eased key, so it stops.
 
 ```javascript
 // expression (JavaScript engine): any 1D or 2D property > blended wiggle loop, period T in frames
@@ -272,9 +290,9 @@ linear(t, 0, T, wiggle(1, 60, 1, 0.5, t), wiggle(1, 60, 1, 0.5, t - T))
 A period set in seconds fails only when it is not a whole number of frames at the comp rate
 (`T * fps` not an integer). Measured with the circular noise at period 0.7 s: 16.8 frames at 24 fps
 (frame N against frame 0 off by 3.1 px), 17.5 at 25 fps (6.9 px), 21 at 30 fps (0 px). A 2 s period
-is whole at 24, 25 and 30 fps and repeated exactly at all three. The seam ratio stayed under 1 in
-every case: playback inside After Effects shows no jump; a rendered loop file of `round(T * fps)`
-frames does, at every repeat. A period control in frames is whole at any rate.
+is whole at 24, 25 and 30 fps and repeated exactly at all three. `ratio` stays under 1 in that case
+and only `repeat` catches it: playback inside After Effects shows no jump; a rendered loop file of
+`round(T * fps)` frames does, at every repeat. A period control in frames is whole at any rate.
 
 ## 4. Inertia and bounce from the last key
 
@@ -380,9 +398,14 @@ point differences for vectors.
 
 ```javascript
 // expression (JavaScript engine): an effect Point property (Gradient Ramp Start, CC Bend It Start) on a text or shape layer > stays on the layer and stays draggable
-// checked: note gSq19gpWwSU 00:11:13
+// checked: live 27.0
 thisLayer.toComp([0, 0, 0]) + value
 ```
+
+Measured (Jake Bartlett, gSq19gpWwSU 00:11:13): on a shape layer, Gradient Ramp Start and End read
+as comp coordinates. Without the expression the ramp stayed put when the layer moved 60 px. With it
+on Start and End, the ramp moved with the layer and with its parent: mid-gray landed on the layer's
+position in the frame. The value stays an offset from the layer's anchor, so it remains draggable.
 
 ```javascript
 // expression (JavaScript engine): any 2D Position > the comp-space position of a parented layer (survives re-parenting)
@@ -497,6 +520,17 @@ pass 0.9 ms (After Effects caches results per frame). `posterizeTime(6)` in fron
 loop did not reduce the first-pass cost (49.4 ms): it changes which time is shown, not how many
 frames get evaluated.
 
+Readers of an expression-driven property: `valueAtTime` on a property that carries its own
+expression returns its post-expression value, so the leader's expression runs for each time a reader
+asks. Measured on a Level slider that reads 30 audio samples per frame (procedure 13), 120 frames,
+in the open app: the leader alone took 71 ms on the first pass, and the first of 16 readers 93 ms
+(it paid the leader's evaluation). The next 15 readers took 4.7 to 5.8 ms each; readers of the same
+Level baked to keys 4.1 to 5.4 ms each. In the app the results are cached per frame, so the cost
+does not grow with readers times loop length. Out of process it does: `aerender` of 48 bars (96
+readers) took 4 to 5 s with Level live and 2 to 3 s with Level baked (Total Time Elapsed, 120 frames
+at 1280x720, two runs each). Round every reader's delay to whole frames so the times it asks for are
+times the leader already evaluated. Bake the leader once it is tuned.
+
 ```javascript
 // channel: bridge | handoff
 // checked: live 27.0
@@ -536,3 +570,120 @@ Measured: `typeof Intl` is "object"; `(1250000).toLocaleString()` gave "1,250,00
 250 000" with narrow no-break spaces (U+202F), `("de-DE")` "1.250.000". Pass the locale explicitly:
 the default depends on the machine. The regex formatter in procedure 1 gives the same output
 everywhere.
+
+## 13. Audio-reactive rig: amplitude to one Level, read by every element
+
+Convert Audio to Keyframes gives raw amplitude, one key per frame on "Audio Amplitude" > Both
+Channels. Raw, it flickers: on a 4 s kick track it changed direction 41 times. One controller turns
+it into a Level from 0 to 1 that rises over a few frames and falls slowly (peak hold with release);
+every element reads that Level, delayed in whole frames.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+// ARGS: {comp, audioLayer, from, to (shot window in frames)}. Needs --lib expressions.jsx. Adds a disabled "Audio Amplitude" layer and CTRL.
+var c = AEK.core.comp(ARGS.comp);
+// ARGS.beat: frames between hits (12 for 150 bpm at 30 fps); the release becomes (beat - attack) / 2
+var r = AEX.expressions.audioLevel(c, AEK.core.layer(c, ARGS.audioLayer), { from: ARGS.from, to: ARGS.to, attack: 2, beat: ARGS.beat });
+var lv = AEK.core.layer(c, "CTRL").property("ADBE Effect Parade").property("Level").property(1);
+r.stats = AEX.expressions.levelStats(lv, c, ARGS.from, ARGS.to);   // {max, min, valleys, valleysUnder, directionChanges}
+r.check = AEK.expr.check(c, 5);
+return r;
+```
+
+Gate on `stats`: `max` 1, `valleysUnder` at least 80 % of `valleys`. When it fails, the track has a
+sustained bed under the hits: raise `floorPct` (default 25) to 35, then 45, and measure again.
+Options of `audioLevel`: `from`, `to`, `attack` (2), `release` (frames; default from `beat`, else
+6), `beat`, `floorPct` (25), `ceilPct` (97). What `audioLevel` does: it opens the comp in the
+viewer, selects only the audio layer and runs the menu command found by its label
+(`app.findMenuCommandId("Convert Audio to Keyframes")`, 4218 on 27.0; no dialog). It sets Audio
+Floor and Audio Ceiling to the 25th and 97th percentiles of Both Channels over the shot window. It
+switches the amplitude layer off and writes this Level expression:
+
+```javascript
+// expression (JavaScript engine): CTRL (null) > Effects > Level > Slider
+// checked: live 27.0
+const a = thisComp.layer("Audio Amplitude").effect("Both Channels")(1);
+const fl = effect("Audio Floor")(1), ce = effect("Audio Ceiling")(1);
+const atk = Math.max(1, Math.round(effect("Attack (frames)")(1)));
+const rel = Math.max(0.5, effect("Release (frames)")(1));
+const fd = thisComp.frameDuration, K = atk + Math.ceil(rel * 4.6);
+let m = 0;
+for (let k = 0; k < K; k++) {
+  const n = clamp((a.valueAtTime(time - k * fd) - fl) / Math.max(ce - fl, 0.001), 0, 1);
+  const w = k < atk ? (k + 1) / atk : Math.exp(-(k - atk + 1) / rel);
+  m = Math.max(m, n * w);
+}
+m
+```
+
+The controls, all on CTRL:
+
+- Audio Floor, Audio Ceiling: amplitude units of the track (2.0 and 26.2 on the test track). Under
+  the floor reads 0, over the ceiling 1. Percentiles of the shot window keep a quiet intro from
+  flattening the loud part.
+- Attack (frames), 1 to 4: frames from a hit to full Level. 1 snaps in one frame; 2 measured as half
+  then full.
+- Release (frames), 2 to 15: frames for the Level to fall to 37 %. Keep it at most (beat spacing -
+  attack) / 2 so the Level drops under 0.2 before the next hit. The loop reads attack + 4.6 x
+  release samples, so a long release costs more.
+
+A reader, one per element, delayed by its distance from the center:
+
+```javascript
+// expression (JavaScript engine): BAR_nn (shape layer, rect drawn upward from the layer position) > Transform > Scale
+// checked: live 27.0
+const C = thisComp.layer("CTRL");
+const N = Math.round(C.effect("Bar Count")(1));
+const i = parseInt(thisLayer.name.replace(/\D/g, ""), 10);
+const d = Math.round(Math.abs(i + 0.5 - N / 2) - 0.5);
+const lv = C.effect("Level")(1).valueAtTime(time - d * Math.round(C.effect("Delay (frames)")(1)) * thisComp.frameDuration);
+[value[0], C.effect("Rest")(1) + C.effect("Max")(1) * lv]
+```
+
+The rect is 100 px tall and drawn from y = -100 to 0, so Scale Y in percent is the bar height in
+pixels. Color from the same Level:
+`linear(lv, 0.55, 0.9, C.effect("Base")(1), C.effect("Peak")(1))`.
+
+Measured at 30 fps on a track with kicks every 15 frames (attack 2, release 6, 48 bars, 97
+expressions, `check` 0 failed):
+
+- Raw amplitude peaked 1 frame after the hit, Level 2 frames after (0.47, 0.94, 1.0 on hit, +1, +2),
+  then 0.85, 0.72, 0.61 per frame.
+- Direction changes over 120 frames: raw 41, Level 15 (one rise and one fall per hit),
+  `smooth(0.2, 7)` 15 but peaking 3 frames after the hit, because its window is centered and also
+  reaches forward.
+- Center bar 55 to 314 px; the outer bar repeated it 23 frames later (`lagFrames` 23 = 23 steps x 1
+  frame).
+- Baking Level to keys (`AEK.expr.bake`) left every bar height unchanged at whole frames and cut the
+  `aerender` time (procedure 10).
+
+Measured on a music track with a hit every 12 to 13 frames (150 frames at 30 fps): release 6 and
+floor at the 25th percentile left 8 of 15 valleys above 0.2. `beat: 12` set the release to 5: 13 of
+16 valleys under 0.2, max 1, 33 direction changes against 63 for the raw amplitude.
+
+Check before building on it: `floor` under `ceiling`; `levelStats` passes the gate above. A drop
+that must hit on the beat needs attack 1: each attack frame delays the peak by one frame.
+
+A stroke on a layer that the Level scales grows with it. Divide the width by the layer scale to keep
+it constant on screen:
+
+```javascript
+// expression (JavaScript engine): RING_n (shape layer, ellipse with a stroke, Scale driven by the Level) > Contents > Ellipse 1 > Stroke 1 > Stroke Width
+// checked: live 27.0
+6 / (transform.scale[0] / 100)
+```
+
+An element that belongs to a reacting shape rides it through `toComp`, so it follows the scale with
+no keys. A badge on the outer ring at 45 degrees (ring drawn 640 px wide, layer at the ring center):
+
+```javascript
+// expression (JavaScript engine): BADGE (shape layer, unparented) > Transform > Position
+// checked: live 27.0
+const r = thisComp.layer("RING_3"), R = 640 / 2, a = -Math.PI / 4;
+r.toComp([R * Math.cos(a), R * Math.sin(a)])
+```
+
+The render carries the music with the `H.264 - Match Render Settings - 15 Mbps` template and no
+other setting: AAC 48 kHz stereo, measured. After baking, `AEK.motion.linearKeys` lists the Level's
+baked keys and the Audio Amplitude keys: expected for data keys, not a motion defect.

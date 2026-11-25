@@ -43,9 +43,16 @@ For a person, or a computer-use agent, doing the same steps as the procedures.
 ## Parallax and depth
 
 - Layer split: make each layer 3D (cube switch), set Position Z, Layer > New > Camera (50 mm).
+- Depth planes: script the mattes and clean plates (procedures, 9); in the comp, each plane is a 3D
+  layer like a layer split.
 - Depth: depth layer > Effect > Blur & Sharpen > Box Blur > Layer > Pre-compose; photo layer >
   Effect > Distort > Displacement Map > Displacement Map Layer: the precomp, Max Horizontal
   Displacement keyed down to 0.
+
+## Element on black
+
+- Effect > Color Correction > Levels > Input Black just above the measured black; Mode column:
+  Screen. Audio switch off in the timeline. Alternative: Effect > Keying > Unmult.
 
 ## 3D models
 

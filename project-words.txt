@@ -227,6 +227,7 @@ Ayres
 BCON
 BOTW
 BPTC
+BRNG
 BSDF
 Balatro
 Bammes
@@ -310,6 +311,7 @@ Damjanov
 Dawnosaur
 Decollider
 Demeusy
+Demi
 Demucs
 Denoiser
 Denoisers
@@ -370,6 +372,7 @@ Fungeon
 Funko
 Furcifer
 Furcifer's
+Futura
 GCAP
 GLES
 GLSL
@@ -606,6 +609,7 @@ Neill
 Neistadt
 Nemati
 NetworkBehaviour
+Neue
 Nicky
 Nidhogg
 Nihamkin
@@ -784,6 +788,7 @@ Schutte
 Schutte's
 Sculptris
 Seaut
+Segoe
 Sensei
 Serhii
 Seumas
@@ -830,6 +835,7 @@ Sybren
 Sybren's
 Szuflita
 TBDR
+TONDA
 Tamas
 Tanzillo
 Tanzillo's
@@ -963,6 +969,8 @@ aekit
 aeplugins
 aepx
 aerender
+aerendercore
+aerenders
 aescripts
 afade
 anguli
@@ -984,6 +992,7 @@ baborub
 basisu
 bboxes
 betweener
+beziers
 bigonial
 biharmonic
 bilal
@@ -1073,6 +1082,7 @@ fcurve
 fcurves
 ffprobe
 floreo
+fourcc
 fract
 frontalis
 gacha
@@ -1095,6 +1105,7 @@ hasattr
 hergé
 hitem
 hlsl
+homography
 hsgrey
 htdemucs
 humanik
@@ -1139,6 +1150,7 @@ lacunarity
 laggy
 lanczos
 layerize
+legalizer
 lerp
 lerped
 lerps

@@ -14,6 +14,57 @@ AEX.comp = (function () {
     // center is in the LAYER's own space. Uses a temporary null with a Color Control; the null is removed before returning.
     // Trap (measured on 27.0): read from a script, sampleImage() through valueAtTime(t) returns [0,0,0,0] unless t is the
     // comp's current time (or that frame was rendered twice). So the comp time is moved to t, .value is read, time restored.
+    // rimLight(comp, fg, {angle, widthPx, blurPx, color, opacity, mode, name}): a rim on the edge of the foreground
+    // that faces the light. angle = direction from the subject toward the plate's light source in comp pixels
+    // (0 = right, 90 = down, -90 = up, 180 = left). The crescent is the foreground minus a copy of itself shifted
+    // widthPx away from the light, blurred, clipped to the foreground, filled with the source color.
+    function rimLight(c, fg, o) {
+        o = o || {};
+        if (fg.parent) { throw new Error("rimLight: precompose a parented foreground first"); }
+        var name = o.name || "rim_light_v001", a = (o.angle || 0) * Math.PI / 180, wpx = o.widthPx || 8;
+        var dx = -Math.cos(a) * wpx, dy = -Math.sin(a) * wpx, inner, outer, k, l1, l2, cr, clip, m, s;
+        inner = AEK.build.comp(name + "_crescent", { width: c.width, height: c.height, fps: c.frameRate, duration: c.duration });
+        fg.copyToComp(inner); fg.copyToComp(inner);
+        l1 = inner.layer(1); l2 = inner.layer(2);
+        for (k = 1; k <= 2; k++) { if (inner.layer(k).hasTrackMatte) { inner.layer(k).removeTrackMatte(); } inner.layer(k).enabled = true; }
+        // the upper copy, shifted away from the light, cuts the lower one: what is left faces the light
+        l1.property("ADBE Transform Group").property("ADBE Position").expression = "value + [" + dx + ", " + dy + "]";
+        l2.setTrackMatte(l1, TrackMatteType.ALPHA_INVERTED);
+        outer = AEK.build.comp(name + "_matte", { width: c.width, height: c.height, fps: c.frameRate, duration: c.duration });
+        fg.copyToComp(outer);
+        clip = outer.layer(1); if (clip.hasTrackMatte) { clip.removeTrackMatte(); }
+        cr = outer.layers.add(inner); cr.name = "crescent";
+        AEK.build.effect(cr, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": o.blurPx === undefined ? wpx : o.blurPx, "ADBE Gaussian Blur 2-0003": 0 }, "rim soften");
+        cr.setTrackMatte(clip, TrackMatteType.ALPHA);   // the blurred rim stays inside the subject
+        m = c.layers.add(outer); m.name = name + " matte";
+        s = AEK.build.solid(c, name, o.color || [1, 0.8, 0.55]);
+        s.moveBefore(fg); m.moveBefore(s);
+        s.setTrackMatte(m, TrackMatteType.ALPHA);
+        s.blendingMode = (o.mode === "add") ? BlendingMode.ADD : BlendingMode.SCREEN;
+        s.property("ADBE Transform Group").property("ADBE Opacity").setValue(o.opacity === undefined ? 60 : o.opacity);
+        fg.enabled = true;
+        return { layer: s.name, matte: m.name, offset: [dx, dy], mode: AEK.core.enumName(BlendingMode, s.blendingMode) };
+    }
+    // shadeLight(comp, fg, {angle, center, radius, color, opacity, name}): a linear falloff across the foreground,
+    // white on the side facing the light and `color` on the far side, in Multiply, clipped to the foreground's alpha.
+    // center and radius (comp px) come from `matte_metrics.py light` (subject_center, subject_radius).
+    function shadeLight(c, fg, o) {
+        o = o || {};
+        if (fg.parent) { throw new Error("shadeLight: precompose a parented foreground first"); }
+        var name = o.name || "shade_light_v001", a = (o.angle || 0) * Math.PI / 180, r = o.radius || c.height / 4, ctr = o.center || [c.width / 2, c.height / 2];
+        var mc = AEK.build.comp(name + "_matte", { width: c.width, height: c.height, fps: c.frameRate, duration: c.duration }), cp, m, s;
+        fg.copyToComp(mc); cp = mc.layer(1); if (cp.hasTrackMatte) { cp.removeTrackMatte(); } cp.enabled = true;
+        m = c.layers.add(mc); m.name = name + " matte";
+        s = AEK.build.solid(c, name, [1, 1, 1]);
+        AEK.build.effect(s, "ADBE Ramp", { "ADBE Ramp-0001": [ctr[0] + Math.cos(a) * r, ctr[1] + Math.sin(a) * r], "ADBE Ramp-0002": [1, 1, 1, 1],
+            "ADBE Ramp-0003": [ctr[0] - Math.cos(a) * r, ctr[1] - Math.sin(a) * r], "ADBE Ramp-0004": (o.color || [0.6, 0.58, 0.66]).concat([1]), "ADBE Ramp-0005": 1 }, "falloff");
+        s.moveBefore(fg); m.moveBefore(s);
+        s.setTrackMatte(m, TrackMatteType.ALPHA);
+        s.blendingMode = BlendingMode.MULTIPLY;
+        s.property("ADBE Transform Group").property("ADBE Opacity").setValue(o.opacity === undefined ? 100 : o.opacity);
+        fg.enabled = true;
+        return { layer: s.name, from: [ctr[0] + Math.cos(a) * r, ctr[1] + Math.sin(a) * r], to: [ctr[0] - Math.cos(a) * r, ctr[1] - Math.sin(a) * r] };
+    }
     function sampleColor(c, l, center, half, t) {
         var n = c.layers.addNull(c.duration), cc, v, keep = c.time, zero;
         n.name = "AEX_sample_tmp";
@@ -115,12 +166,21 @@ AEX.comp = (function () {
     // Builds precomp "<name>_src" = background matted by the INVERTED foreground alpha, then in the main comp a layer of it,
     // blurred (Fast Box Blur, radius = o.radiusPct of comp height), matted by the foreground alpha, blend Add or Screen.
     // fgLayer must carry the key in its own alpha (a precomp layer of the keyed plate), bgLayer the background.
+    // Both layers are copied with copyToComp, so their transforms, masks, effects and start times carry into the wrap
+    // (adding .source dropped them: a scaled or moved background wrapped the wrong pixels). Parenting does not carry:
+    // a parented layer is precomposed first.
     // o {radiusPct (default 1.0), opacity (default 35), mode "add"|"screen", name}
     function lightWrap(c, fg, bg, o) {
         o = o || {};
         var name = o.name || ("light_wrap_" + c.name), r = Math.round(c.height * (o.radiusPct === undefined ? 1.0 : o.radiusPct) / 100);
+        if (bg.parent || fg.parent) { throw new Error("lightWrap: precompose a parented foreground or background first"); }
         var src = AEK.build.comp(name + "_src", { width: c.width, height: c.height, fps: c.frameRate, duration: c.duration });
-        var b = src.layers.add(bg.source), f = src.layers.add(fg.source);
+        bg.copyToComp(src);
+        fg.copyToComp(src);
+        var f = src.layer(1), b = src.layer(2);
+        f.enabled = true; b.enabled = true;
+        if (f.hasTrackMatte) { f.removeTrackMatte(); }
+        if (b.hasTrackMatte) { b.removeTrackMatte(); }
         b.setTrackMatte(f, TrackMatteType.ALPHA_INVERTED);
         var w = c.layers.add(src);
         w.name = name;
@@ -151,5 +211,5 @@ AEX.comp = (function () {
     }
 
     return { VIEW: VIEW, sampleColor: sampleColor, keyChain: keyChain, setView: setView, alphaView: alphaView,
-        overView: overView, mask: mask, lightWrap: lightWrap, preRender: preRender };
+        overView: overView, mask: mask, lightWrap: lightWrap, rimLight: rimLight, shadeLight: shadeLight, preRender: preRender };
 }());

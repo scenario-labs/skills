@@ -1,6 +1,6 @@
 ---
 name: scenario-after-effects-animation
-description: "Use when animating in After Effects with keyframes: slide-ins, pops, product cards, UI and logo moves, bounces, overshoot, anticipation, overlap and stagger, follow-through, arcs, parenting to nulls, camera moves from nulls, motion blur, or retiming. Also when someone says my animation feels stiff, floaty, robotic or linear, everything moves at once, the ease looks default, Easy Ease is not enough, the layer drifts between two identical keyframes, the bounce looks wrong, the overshoot wobbles, motion blur does not show, give me the timings in frames, convert a CSS cubic-bezier to After Effects, copy this ease to every layer, or judge whether the motion is finished."
+description: "Use when keyframing in After Effects: slide-ins, pops, product and UI moves, overshoot, bounce, anticipation, overlap, stagger, parenting to nulls, motion blur, retiming, graph checks. Also for 'stiff', 'floaty', 'linear', 'everything moves at once', 'default ease', 'drift between keys', 'the overshoot wobbles', 'no motion blur', 'CSS cubic-bezier to After Effects', 'is it finished'."
 license: MIT
 ---
 
@@ -23,9 +23,8 @@ traps).
 
 1. **Easy Ease is the starting point, never the result.** Every educator in the sources says so
    (Jake Bartlett 7pOCtlrrE3Y 00:04:21, Joey Korenman AG19fyRcOkA 00:27:27, Ben Marriott UVDpgP7sRbw
-   00:04:02). Measured: Easy Ease on a 20-frame move peaks at frame 10 and settles on frame 19; it
-   is symmetric and slow to leave. Entrances want a fast start and a long settle (`out_expo` settles
-   on frame 13 of 20).
+   00:04:02). It is symmetric and slow to leave (Numbers). Entrances want a fast start and a long
+   settle (`out_expo` settles on frame 13 of 20).
 2. **Elements that appear ease hard into rest and little out of the first key** (7pOCtlrrE3Y
    00:20:19). In numbers: out influence 10 to 20 %, in influence 80 to 90 %, or a cubic-bezier such
    as (0.16, 1, 0.3, 1).
@@ -34,16 +33,13 @@ traps).
    separated X, on Scale or on Rotation overshoots 9.7 %. On combined Position, overshoot with a
    third key.
 4. **Decide Separate Dimensions before easing.** Measured: separating Position resets every key to
-   linear, and recombining resets them again (Jake Bartlett 7pOCtlrrE3Y 00:14:15 saw the second
-   half).
+   linear, and recombining resets them again.
 5. **One curve, copied, makes one event** (Joey Korenman AG19fyRcOkA 00:29:47; Ben Marriott
    UVDpgP7sRbw 00:04:54). Animate the simplest element, then copy its ease (`copyEase`, the scripted
    form of pulling one handle on similar keys across layers, 7pOCtlrrE3Y 00:19:47) and offset list
    items 2 to 3 frames (Bricks PdHYC0gqIPA 00:10:44).
 6. **Overlap is what reads as weight.** Secondary properties land 3 to 6 frames after the main one,
-   and the next element starts before the previous one has settled (PdHYC0gqIPA 00:05:30). [added:
-   the product card of procedure 2 lands rotation 4 frames after position and starts the first chip
-   3 frames after the phone peaks.]
+   and the next element starts before the previous one has settled (PdHYC0gqIPA 00:05:30).
 7. **Gravity never slows before impact** (Cameron, MotionXP HpVtzOtaHlg 00:03:26). Measured: a
    linear contact key after an eased apex makes the ball slow down before the ground (51 px per
    frame on the last frame against a 69 px peak). Contact keys need broken Bezier handles at full
@@ -54,22 +50,25 @@ traps).
 
 ## Establish first
 
-| Input                         | Why it changes the plan                                                                               | Default                                                            |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Deliverable, platform, aspect | hook timing, hold length, safe area                                                                   | social 1080x1350 or 1080x1920                                      |
-| Frame rate                    | every number here is in frames                                                                        | 30 fps (multiply frame counts by 0.8 for 24 fps)                   |
-| Duration and beats            | entrance, hold, exit frame budget                                                                     | entrance 15 to 30 frames, hold 1.5 s or more, exit 15 to 20 frames |
-| Who edits it later            | keys (editable) versus expressions (rig)                                                              | keys for approved shots                                            |
-| Renderer                      | a comp made by script is on Classic 3D; Advanced 3D refuses the layer blur switch (see Version notes) | keep 2D layers 2D                                                  |
-| Plugins                       | ease panels (EaseCopy, Flow) change how eases are copied, not what they are                           | scripted eases (this skill), no plugin assumed                     |
-| Channel                       | bridge for scripted builds, handoff for a person                                                      | bridge                                                             |
+| Input                         | Why it changes the plan                                                                               | Default                                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Deliverable, platform, aspect | hook timing, hold length, safe area                                                                   | social 1080x1350 or 1080x1920                                                                         |
+| Frame rate                    | every number here is in frames                                                                        | 30 fps                                                                                                |
+| Duration and beats            | entrance, hold, exit frame budget                                                                     | entrance 15 to 30 frames, hold 1.5 s or more, exit 15 to 20 frames                                    |
+| Who edits it later            | keys (editable) versus expressions (rig)                                                              | keys for approved shots                                                                               |
+| Renderer                      | a comp made by script is on Classic 3D; Advanced 3D refuses the layer blur switch (see Version notes) | keep 2D layers 2D                                                                                     |
+| Plugins                       | ease panels (EaseCopy, Flow) change how eases are copied, not what they are                           | scripted eases (this skill), no plugin assumed                                                        |
+| Channel                       | bridge for scripted builds, handoff for a person                                                      | bridge                                                                                                |
+| Stills                        | a still without alpha drags its backdrop, shadow and reflection along                                 | a cutout with alpha (`ae.py probe` reads `alpha`); a movie frame's gAMA chunk stripped (procedure 16) |
+
+**Base rate:** frame counts in this skill assume 30 fps. For another rate, multiply by (target fps
+/ 30) and round to whole frames: 30 to 24 is x 0.8, 24 to 30 is x 1.25.
 
 ## Procedure
 
 Load the helpers with `ae.py run job.jsx --lib <this skill>/scripts/animation.jsx` (namespace
 `AEX.animation`). Code for every stage is in [references/procedures.md](references/procedures.md).
-In a person's session, work inside `--undo` and never call `app.open()` while the project has
-unsaved changes: the native Save panel blocks every later script.
+In a person's session, work inside `--undo`.
 
 1. **Block the timing in frames.** Write a beat table: element, property, start frame, end frame,
    from, to, ease name. Key the poses as Hold keys first and ease only once the timing reads (Jess
@@ -83,7 +82,8 @@ unsaved changes: the native Save panel blocks every later script.
 3. **Key and ease each move** with `AEX.animation.move(prop, comp, f0, v0, f1, v1, ease)` where
    `ease` is a name from the table in Numbers, a cubic-bezier tuple, or `{out, in}` influences. Use
    `overshoot()` for landings that must pass the target on combined Position, `bounce()` for
-   gravity. GATE: `AEK.motion.sample` gives the expected peak frame, overshoot % and settle frame.
+   gravity. Frames may be negative: keys before frame 0 put the move already under way on the first
+   frame. GATE: `AEK.motion.sample` gives the expected peak frame, overshoot % and settle frame.
 4. **Add overlap and offsets.** Secondary properties (rotation, scale squash, child text) land 3 to
    6 frames later. Stagger lists with `stagger(layers, comp, frames, "keys")` (keeps in-points) or
    `"layer"` (moves in-points). Make a layer appear, swap or vanish inside the fastest frames of a
@@ -99,10 +99,14 @@ unsaved changes: the native Save panel blocks every later script.
    Frame (16 in a comp made by script); 2D layer motion uses the Adaptive Sample Limit (-ZJKoNj4WpQ
    00:05:30). GATE: the fastest frame shows a centered smear about `speed * 0.5` px long, without
    stepped copies.
-7. **Check and judge.** Run [scripts/motion_report.jsx](scripts/motion_report.jsx) (numbers and
-   findings), then capture consecutive frames around entrance, settle and exit and read ONE contact
-   sheet; use [references/critique.md](references/critique.md). GATE: no unexplained finding, every
-   row of the critique passes.
+7. **Check and judge.** Call `AEX.animation.report(comp)` at the end of the job that built the comp
+   (on a shared After Effects the next job may find another project), or run
+   [scripts/motion_report.jsx](scripts/motion_report.jsx) in your own session. Mark a deliberate
+   snap with `intent()` or `allow` (procedure 14); read hero properties with `graph()` (procedure
+   15). Then read ONE contact sheet (frames as in Quality gates) against
+   [references/critique.md](references/critique.md). For a feed,
+   `AEX.animation.firstSeen(hero, comp)` must return 3 or less. GATE: `findings` empty, `crossings`
+   1 per overshoot, every critique row passes.
 
 ## Numbers
 
@@ -137,39 +141,38 @@ is px per frame at the frame shown; settle is the first frame within 1 % of the 
 
 ## Quality gates
 
-- **Measurable:** `motion_report.jsx` returns no finding you cannot justify (`linear`, `lockstep`,
+- **Measurable:** `motion_report.jsx` returns no finding outside `intended` (`linear`, `lockstep`,
   `drift`, `pop`, `default-ease`). Per move: peak frame, overshoot %, settle frame in the ranges
   above. Expressions: `expressionError` empty. Blur: comp and layer switches true, angle and phase
   as planned.
 - **Visual:** one contact sheet of consecutive frames (entrance every 3 frames, settle every frame,
-  exit every 3 frames). Spacing shrinks smoothly into rest; the next element moves before the
-  previous one has settled; blur smears along travel, centered; nothing pops on between two frames;
-  the exit keeps the layout. Optional onion skin (Echo on a precomp) for spacing in one image.
+  exit every 3 frames), read against the rows of [references/critique.md](references/critique.md):
+  spacing, overlap, centered blur, no pops, an exit that keeps the layout.
 
 ## Common mistakes
 
-| Mistake                                               | Symptom                                                        | Fix                                                                                                                                                           |
-| ----------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F9 on every key                                       | "plain", floaty, everything feels the same                     | shape eases from the Numbers table; `copyEase` from one reference                                                                                             |
-| Back ease on combined Position                        | no overshoot at all (measured 0 %)                             | separate dimensions before easing, or a third key with `overshoot()`                                                                                          |
-| Separating or recombining after easing                | every key turns linear                                         | separate first, ease after; re-ease after recombining                                                                                                         |
-| Handles pulled through two equal keys                 | the held pose drifts (measured 54 px)                          | Hold out of the first key, or zero spatial tangents; linear temporal does not fix it. By hand: Default Spatial Interpolation to Linear (xUmMHgZ9YfI 00:04:33) |
-| Linear contact keys on a bounce                       | ball slows before the ground                                   | broken Bezier contacts at speed 2h/d, `bounce()`                                                                                                              |
-| Everything starts on one frame                        | robotic, lockstep                                              | stagger list items 2 to 3 frames; vary when the group is organic                                                                                              |
-| Label parented to a chip that fades                   | the label shows at full opacity on the chip's first frames     | label Opacity `value * thisLayer.parent.transform.opacity / 100`, or precompose chip and label                                                                |
-| Stagger by `startTime` on layers that must show early | layers vanish before their in-point                            | stagger by keys (`"keys"` mode)                                                                                                                               |
-| Exit eased to a stop off screen                       | wasted frames, a sluggish end                                  | `in_cubic`, last key outside the frame                                                                                                                        |
-| Motion blur switch on the comp only                   | no blur                                                        | layer switches too; nulls need none                                                                                                                           |
-| Keyed Directional Blur                                | blur in the wrong direction on arcs                            | real motion blur                                                                                                                                              |
-| Spring expression on a product                        | 10 crossings, jelly                                            | keyed overshoot (2 crossings) or decay 8 or more                                                                                                              |
-| Scale on stroked shapes, or inside a scaled parent    | strokes thin out (measured half width at 50 %) and vanish at 0 | animate Size on the shape (UVDpgP7sRbw 00:03:44), or keep the parent at 100 %                                                                                 |
+| Mistake                                               | Symptom                                                        | Fix                                                                                            |
+| ----------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| F9 on every key                                       | "plain", floaty, everything feels the same                     | shape eases from the Numbers table; `copyEase` from one reference                              |
+| Handles pulled through two equal keys                 | the held pose drifts (measured 54 px)                          | Hold out of the first key, or zero spatial tangents; linear temporal does not fix it           |
+| Everything starts on one frame                        | robotic, lockstep                                              | stagger list items 2 to 3 frames; vary when the group is organic                               |
+| Label parented to a chip that fades                   | the label shows at full opacity on the chip's first frames     | label Opacity `value * thisLayer.parent.transform.opacity / 100`, or precompose chip and label |
+| Stagger by `startTime` on layers that must show early | layers vanish before their in-point                            | stagger by keys (`"keys"` mode)                                                                |
+| Exit eased to a stop off screen                       | wasted frames, a sluggish end                                  | `in_cubic`, last key outside the frame                                                         |
+| Empty first frames on a feed                          | the hero enters from off screen on frame 0                     | start its keys 3 to 6 frames before 0, or nearer the frame                                     |
+| Motion blur switch on the comp only                   | no blur                                                        | layer switches too; nulls need none                                                            |
+| Spring expression on a product                        | 10 crossings, jelly                                            | keyed overshoot (`graph` crossings 1) or decay 8 or more                                       |
+| Scale on stroked shapes, or inside a scaled parent    | strokes thin out (measured half width at 50 %) and vanish at 0 | animate Size on the shape (UVDpgP7sRbw 00:03:44), or keep the parent at 100 %                  |
 
 ## Handoffs
 
 - Receives: a built comp and layer structure from scenario-after-effects-project; vector layers from
   scenario-after-effects-shape-layers; text layers and animators from
-  scenario-after-effects-typography; generated stills, cutouts and clips land through
-  scenario-after-effects-generation (alpha, frame rate and size are fixed there, before keys go on).
+  scenario-after-effects-typography; stills, cutouts and clips land through
+  scenario-after-effects-generation (alpha, rate and size fixed before keys). A still without alpha
+  goes back there for a cutout (its procedure "Depth map and cutout of a supplied still", Scenario
+  MCP), floor reflection included, or it rides up. No Scenario MCP access: `AEX.animation.ovalMask`
+  (procedure 16).
 - Delivers: keyed comps with a motion report and a contact sheet to
   scenario-after-effects-motion-production for creative review; rigs that need controllers or loops
   to scenario-after-effects-expressions; character walk and IK work to
@@ -186,8 +189,7 @@ is px per frame at the frame shown; settle is the first frame within 1 % of the 
   comp made by script) takes the layer switch and renders the same smear as 2D (measured on 27.0).
   Advanced 3D (`ADBE Calder`) and Cinema 4D (`ADBE Ernst`) throw on `layer.motionBlur = true` for a
   3D layer: wrap it in try, read it back, and blur a precomp instead (scenario-after-effects-3d).
-- New comps made by script: Motion Blur off, shutter 180, phase 0, 16 samples, adaptive limit 128
-  (measured). Set phase -90 explicitly.
+- New comps made by script read shutter phase 0: set -90 explicitly (procedure 9).
 
 ## References
 
@@ -200,4 +202,5 @@ is px per frame at the frame shown; settle is the first frame within 1 % of the 
 - [references/gui-paths.md](references/gui-paths.md): menus, shortcuts and the scripted substitute
   for each.
 - [references/sources.md](references/sources.md): every source with URL and best timestamps.
-- [scripts/animation.jsx](scripts/animation.jsx) (`AEX.animation`) and `scripts/motion_report.jsx`.
+- [scripts/animation.jsx](scripts/animation.jsx) (`AEX.animation`: eases, move, overshoot, bounce,
+  stagger, motionCheck, intent, graph) and `scripts/motion_report.jsx`.

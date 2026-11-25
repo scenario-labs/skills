@@ -64,11 +64,43 @@ AEX.ad = (function () {
         return out;
     }
 
+    // Looks of the builder. GAME is the default (game ads: stroked white type, pops, a yellow CTA pill, store badges).
+    // BRAND is a brand spot: type in the brand color with no stroke, no pops, the CTA as a line of text, no pill, no badges,
+    // a gradient scrim under the hook line. sheet.style overrides any key: {endcardBg, textFill, textStroke (null: none),
+    // strokeWidth, textPop (percent, 0: none), logoPop (percent, 0: none), cta ("pill" | "text"), ctaFill, ctaTextFill,
+    // ctaSize, pulse, scrim (0 to 1: opacity of a dark gradient under the hook line), scrimColor}.
+    var GAME = { endcardBg: [0.1, 0.06, 0.19], textFill: [1, 1, 1], textStroke: [0, 0, 0], strokeWidth: 5, textPop: 112, logoPop: 85,
+        cta: "pill", ctaFill: [1, 0.8, 0], ctaTextFill: [0.1, 0.06, 0.19], ctaSize: 30, pulse: true, scrim: 0, scrimColor: [0, 0, 0] };
+    var BRAND = { endcardBg: [0.05, 0.05, 0.06], textFill: [0.96, 0.93, 0.86], textStroke: null, strokeWidth: 0, textPop: 0, logoPop: 0,
+        cta: "text", ctaFill: null, ctaTextFill: [0.96, 0.93, 0.86], ctaSize: 40, pulse: false, scrim: 0.55, scrimColor: [0, 0, 0] };
+    function styleOf(sheet) {
+        var base = (sheet.style && sheet.style.preset === "brand") ? BRAND : GAME, out = {}, k;
+        for (k in base) { if (base.hasOwnProperty(k)) { out[k] = base[k]; } }
+        for (k in (sheet.style || {})) { if (sheet.style.hasOwnProperty(k) && k !== "preset") { out[k] = sheet.style[k]; } }
+        return out;
+    }
+    // scrim(comp, textLayer, opacity, color): a soft dark band from the frame edge to past the text, so light type reads on
+    // a bright plate without a stroke. A comp-size solid with a mask that runs past three frame edges: only the inner edge
+    // shows the feather. Same in and out points as the text, placed right under it.
+    function scrim(c, tl, opacity, color) {
+        var b = AEK.text.measure(tl, tl.inPoint + 4 * c.frameDuration).comp, top = (b.top + b.bottom) / 2 < c.height / 2;
+        var edge = top ? b.bottom + b.height * 1.5 : b.top - b.height * 1.5, f = Math.round(b.height * 2);
+        var sl = AEK.build.solid(c, "SCRIM_" + tl.name, color || [0, 0, 0]);
+        var r = top ? [-f, -f, c.width + 2 * f, edge + f] : [-f, edge - f, c.width + 2 * f, c.height - edge + 2 * f];
+        AEK.build.mask(sl, { rect: r, feather: f });
+        tg(sl).property("ADBE Opacity").setValue(opacity * 100);
+        sl.inPoint = tl.inPoint; sl.outPoint = tl.outPoint;
+        sl.moveAfter(tl);
+        return { layer: sl.name, edge: Math.round(edge), feather: f };
+    }
+
     // build(sheet, items, fmt, opts): one comp from a beat sheet. fmt = layout key ("9x16", "1x1", "16x9").
     // opts {name, size:[w,h], protect: true (hook and end card become protected regions), bin}
+    // Shots tagged product: true in the sheet carry the comment "product" on their layer: report() reads it for the hook gate.
     function build(sheet, items, fmt, opts) {
         opts = opts || {};
-        var L = sheet.layout[fmt], fps = sheet.fps, size = opts.size || sheet.size, i, s, l, mv, rep = { shots: [], texts: [], fits: [] };
+        var L = sheet.layout[fmt], fps = sheet.fps, size = opts.size || sheet.size, i, s, l, mv, rep = { shots: [], texts: [], fits: [] }, ST = styleOf(sheet);
+        rep.style = (sheet.style && sheet.style.preset) || "game";
         var c = AEK.build.comp(opts.name || sheet.name, { width: size[0], height: size[1], fps: fps, duration: sheet.frames / fps, bg: [0, 0, 0], bin: opts.bin || "02_comps" });
         var mus = c.layers.add(items[sheet.music.key]); mus.name = "MUSIC"; levels(mus, sheet.music.db);
         for (i = 0; i < sheet.shots.length; i++) {
@@ -78,27 +110,36 @@ AEX.ad = (function () {
             var sc = Math.max(c.width / items[s.clip].width, c.height / items[s.clip].height) * 100;
             tg(l).property("ADBE Scale").setValue([sc, sc]);
             if (l.hasAudio) { l.audioEnabled = false; }   // captured game audio is muted and re-laid as designed sound
+            l.comment = s.product ? "product" : "";
             mv = new MarkerValue(s.id); mv.duration = (s.f1 - s.f0) / fps;
             if (opts.protect && i === 0) { mv.protectedRegion = true; }
             c.markerProperty.setValueAtTime(s.f0 / fps, mv);
             rep.shots.push({ id: s.id, f0: fr(c, l.inPoint), f1: fr(c, l.outPoint), cover: Math.round(sc * 10) / 10 });
         }
         var e = sheet.endcard, ef = e.f0 / fps;
-        var bg = AEK.build.solid(c, "ENDCARD_BG", [0.1, 0.06, 0.19]); toEnd(bg, ef);
+        var bg = AEK.build.solid(c, "ENDCARD_BG", ST.endcardBg); toEnd(bg, ef);
         mv = new MarkerValue("endcard"); mv.duration = (sheet.frames - e.f0) / fps; if (opts.protect) { mv.protectedRegion = true; }
         c.markerProperty.setValueAtTime(ef, mv);
         var logo = c.layers.add(items[e.logo]); logo.name = "LOGO"; toEnd(logo, ef);
-        fitWidth(logo, items[e.logo], L.logoW); tg(logo).property("ADBE Position").setValue(L.logo); pop(logo, c, 85, 6);
-        var pill = AEK.build.shape(c, "CTA_PILL", { name: "pill", type: "rect", size: [L.ctaW, 64], roundness: 32, fill: [1, 0.8, 0] }, { position: L.cta });
-        toEnd(pill, ef + 8 / fps);
-        var ct = addText(c, e.cta, { font: sheet.font, size: 30, fill: [0.1, 0.06, 0.19], position: [L.cta[0], L.cta[1] + 11], width: L.ctaW - 40, name: "CTA_TXT" });
-        toEnd(ct.layer, pill.inPoint);
-        // breathing pulse 100 to 104 % every 1.5 s, measured from the layer's own in point
-        var pulse = "var t = time - inPoint; var s = 100 + 2 * (1 - Math.cos(t * 2 * Math.PI / 1.5)); [s, s];";
-        AEK.expr.set(tg(pill).property("ADBE Scale"), pulse);
-        // the text pulses around the pill center: anchor on the pill center first
-        ct.layer.parent = pill;
-        for (i = 0; i < e.badges.length; i++) {
+        // a logo precomp plays its own animation from its start time: start it at the end card, not at 0
+        if (items[e.logo] instanceof CompItem) { logo.startTime = ef; logo.outPoint = c.duration; }
+        fitWidth(logo, items[e.logo], L.logoW); tg(logo).property("ADBE Position").setValue(L.logo); if (ST.logoPop) { pop(logo, c, ST.logoPop, 6); }
+        var ct, pill = null;
+        if (ST.cta === "pill") {
+            pill = AEK.build.shape(c, "CTA_PILL", { name: "pill", type: "rect", size: [L.ctaW, 64], roundness: 32, fill: ST.ctaFill }, { position: L.cta });
+            toEnd(pill, ef + 8 / fps);
+            ct = addText(c, e.cta, { font: sheet.font, size: ST.ctaSize, fill: ST.ctaTextFill, position: [L.cta[0], L.cta[1] + 11], width: L.ctaW - 40, name: "CTA_TXT" });
+            toEnd(ct.layer, pill.inPoint);
+            if (ST.pulse) {
+                // breathing pulse 100 to 104 % every 1.5 s, measured from the layer's own in point
+                AEK.expr.set(tg(pill).property("ADBE Scale"), "var t = time - inPoint; var s = 100 + 2 * (1 - Math.cos(t * 2 * Math.PI / 1.5)); [s, s];");
+            }
+            ct.layer.parent = pill;   // the text pulses around the pill center
+        } else {
+            ct = addText(c, e.cta, { font: e.ctaFont || sheet.font, size: ST.ctaSize, fill: ST.ctaTextFill, position: L.cta, width: L.ctaW, name: "CTA_TXT" });
+            toEnd(ct.layer, ef + (e.ctaDelay === undefined ? 8 : e.ctaDelay) / fps);
+        }
+        for (i = 0; i < (e.badges || []).length; i++) {
             var b = AEK.build.shape(c, "BADGE_" + (i + 1), { name: "badge", type: "rect", size: [L.badgeW, 48], roundness: 10, fill: [0, 0, 0], stroke: { color: [1, 1, 1], width: 2 } }, { position: L.badges[i] });
             toEnd(b, ef + 12 / fps);
             var bt = addText(c, e.badges[i], { font: sheet.font, size: 18, position: [L.badges[i][0], L.badges[i][1] + 6], width: L.badgeW - 20, name: "BADGE_" + (i + 1) + "_TXT" });
@@ -114,9 +155,11 @@ AEX.ad = (function () {
                 AEK.motion.ease(cp, k1, 33, 60); AEK.motion.ease(cp, k2, 50, 50); AEK.motion.ease(cp, k3, 80, 33);
             }
             if (s.text) {
-                var tx = addText(c, s.text, { font: sheet.font, size: L.size, stroke: [0, 0, 0], strokeWidth: 5, position: L.text, width: L.textW, name: "TXT_" + s.id, twoLines: true });
+                var tx = addText(c, s.text, { font: sheet.font, size: L.size, fill: ST.textFill, stroke: ST.textStroke || undefined, strokeWidth: ST.textStroke ? ST.strokeWidth : undefined,
+                    position: L.text, width: L.textW, name: "TXT_" + s.id, twoLines: true });
                 tx.layer.inPoint = s.f0 / fps; tx.layer.outPoint = (s.textF1 || s.f1) / fps;   // a line may hold across the next cut (textF1)
-                pop(tx.layer, c, 112, 4);
+                if (ST.textPop) { pop(tx.layer, c, ST.textPop, 4); }
+                if (ST.scrim && (s.scrim !== false)) { scrim(c, tx.layer, s.scrim || ST.scrim, ST.scrimColor); }
                 rep.fits.push({ layer: tx.layer.name, size: tx.fit.size, lines: tx.fit.lines || 1, overflow: tx.fit.overflow });
             }
         }
@@ -149,11 +192,7 @@ AEX.ad = (function () {
             if (!checked(l)) { continue; }
             ts = [Math.min(l.inPoint + 4 * c.frameDuration, l.outPoint - c.frameDuration), l.outPoint - c.frameDuration];
             for (k = 0; k < ts.length; k++) {
-                m = AEK.text.measure(l, ts[k]).comp;
-                if (l.parent) {   // parented layers: measure in comp space through the parent's position and scale
-                    var pp = tg(l.parent).property("ADBE Position").valueAtTime(ts[k], false), ps = tg(l.parent).property("ADBE Scale").valueAtTime(ts[k], false);
-                    m = { left: pp[0] + m.left * ps[0] / 100, top: pp[1] + m.top * ps[1] / 100, right: pp[0] + m.right * ps[0] / 100, bottom: pp[1] + m.bottom * ps[1] / 100 };
-                }
+                m = AEK.text.measure(l, ts[k]).comp;   // comp space through the whole parent chain (kit text.jsx)
                 for (j = 0; j < rects.length; j++) {
                     r = rects[j].rect;
                     if (m.left < r[0] || m.top < r[1] || m.right > r[2] || m.bottom > r[3]) {
@@ -235,8 +274,10 @@ AEX.ad = (function () {
             n = 0; for (j = 0; j < cuts.length; j++) { if (cuts[j].f >= w && cuts[j].f < w + 10 * fps) { n++; } }
             win.push({ window: w + "-" + Math.min(end, w + Math.round(10 * fps)), cuts: n });
         }
-        var logo = c.layers.byName("LOGO"), cta = c.layers.byName("CTA_TXT"), ec = c.layers.byName("ENDCARD_BG");
-        return { comp: c.name, fps: fps, frames: end, size: [c.width, c.height], hook_text_frame: hook, first_cut_f: cuts.length ? cuts[0].f : end,
+        var logo = c.layers.byName("LOGO"), cta = c.layers.byName("CTA_TXT"), ec = c.layers.byName("ENDCARD_BG"), hookShot = null;
+        // the shot on screen under the hook line: its layer comment says whether the sheet tagged it as showing the product
+        for (i = 1; i <= c.numLayers; i++) { l = c.layer(i); if (/^SHOT_/.test(l.name) && hook !== null && fr(c, l.inPoint) <= hook && fr(c, l.outPoint) > hook) { hookShot = { layer: l.name, product: l.comment === "product" }; } }
+        return { comp: c.name, fps: fps, frames: end, size: [c.width, c.height], hook_text_frame: hook, hook_shot: hookShot, first_cut_f: cuts.length ? cuts[0].f : end,
             cuts: cuts, cuts_per_10s: win, texts: texts,
             logo_first_f: logo ? fr(c, logo.inPoint) : null,
             cta_frames: cta ? fr(c, cta.outPoint) - fr(c, cta.inPoint) : 0,
@@ -245,6 +286,33 @@ AEX.ad = (function () {
             zone_violations: zones ? zoneCheck(c, zones) : [] };
     }
 
-    return { importMedia: importMedia, build: build, zoneRects: zoneRects, zoneCheck: zoneCheck, guides: guides,
+    // reformat(master, layouts, opts): one master comp (a product precomp, an end card, a brand spot) delivered in several
+    // formats. Each layout row {fmt, size:[w,h], scale (percent), position:[x,y], texts:[{name, text, font, size, fill,
+    // position, width}], zones, name} gives one comp (name, else "<prefix>_<fmt>") holding the master nested as MASTER under its own texts
+    // (names start with TXT_ so zoneCheck reads them). Real re-layout per format, never a crop of one frame.
+    // opts {prefix, bin, bg:[r,g,b]}. Returns {fmt: {comp (name), id, zoneViolations, fits}}.
+    function reformat(master, layouts, o) {
+        o = o || {};
+        var out = {}, i, j, L, c, m, t, r, fits;
+        for (i = 0; i < layouts.length; i++) {
+            L = layouts[i];
+            c = AEK.build.comp(L.name || ((o.prefix || master.name) + "_" + L.fmt), { width: L.size[0], height: L.size[1], fps: master.frameRate, duration: master.duration, bin: o.bin });
+            if (o.bg) { AEK.build.solid(c, "BG", o.bg); }
+            m = c.layers.add(master); m.name = "MASTER";
+            tg(m).property("ADBE Position").setValue(L.position || [L.size[0] / 2, L.size[1] / 2]);
+            if (L.scale) { tg(m).property("ADBE Scale").setValue([L.scale, L.scale]); }
+            fits = [];
+            for (j = 0; j < (L.texts || []).length; j++) {
+                t = L.texts[j];
+                r = addText(c, t.text, { font: t.font, size: t.size, fill: t.fill, position: t.position, name: t.name, width: t.width || L.size[0] * 0.9, twoLines: t.twoLines });
+                if (t.inPoint !== undefined) { toEnd(r.layer, t.inPoint); }
+                fits.push({ layer: t.name, size: r.fit.size, from: r.fit.from, overflow: r.fit.overflow });
+            }
+            out[L.fmt] = { comp: c.name, id: c.id, fits: fits, zoneViolations: L.zones ? zoneCheck(c, L.zones) : [] };
+        }
+        return out;
+    }
+
+    return { reformat: reformat, importMedia: importMedia, build: build, scrim: scrim, GAME: GAME, BRAND: BRAND, zoneRects: zoneRects, zoneCheck: zoneCheck, guides: guides,
         beatMarkers: beatMarkers, lineFor: lineFor, beatOffsets: beatOffsets, cuts: cutsOf, report: report, levels: levels };
 })();

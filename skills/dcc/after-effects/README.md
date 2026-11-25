@@ -8,37 +8,37 @@ against the same model without them. Start with the lead skill, `scenario-after-
 
 ## Skills
 
-| Skill                                      | Use it when                                                                       |
-| ------------------------------------------ | --------------------------------------------------------------------------------- |
-| `scenario-after-effects-expert`            | connecting to After Effects, running a job in the open project, routing a request |
-| `scenario-after-effects-3d`                | models, cameras, environment lights, shadows, extruded text, 2.5D parallax        |
-| `scenario-after-effects-animation`         | keyframes, easing, overshoot, overlap, arcs, motion blur, retiming                |
-| `scenario-after-effects-character-rigging` | 2D cut-out characters: joints, IK, walk cycles, Puppet pins, lip sync             |
-| `scenario-after-effects-color-delivery`    | color management, banding, render settings, transparent exports, platform specs   |
-| `scenario-after-effects-compositing`       | keying, mattes, roto, cleanup, light wrap, grain match                            |
-| `scenario-after-effects-expressions`       | expressions and expression rigs: controllers, loops, delays, counters             |
-| `scenario-after-effects-generation`        | generated images, video, 3D, voice and music from the Scenario MCP, landed in AE  |
-| `scenario-after-effects-motion-production` | ads and commercial pieces: hooks, pacing to music, end cards, variants            |
-| `scenario-after-effects-project`           | setting up, cleaning or handing over a project: naming, footage, fonts, precomps  |
-| `scenario-after-effects-scripting`         | versions from a spreadsheet, batch renders, templates, ExtendScript tools         |
-| `scenario-after-effects-shape-layers`      | icons, Trim Paths, Repeater, path morphs, SVG intake, Lottie                      |
-| `scenario-after-effects-tracking`          | point and planar tracks, screen replacement, stabilizing, camera solves           |
-| `scenario-after-effects-typography`        | kinetic type, text animators, captions synced to audio, text that must fit        |
-| `scenario-after-effects-vfx`               | glow, sparks, shockwaves, light rays, lightning, smoke and flame, built-in only   |
+| Skill                                      | Use it when                                                                                                                                              |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scenario-after-effects-expert`            | an agent must connect to, inspect, change or render from Adobe After Effects (27.0, 2026) by script, or route a request that spans crafts. Triggers...   |
+| `scenario-after-effects-3d`                | building 3D in After Effects: importing a GLB or FBX model, fitting it, product orbits, HDRI environment light, shadow catcher, floor and reflection...  |
+| `scenario-after-effects-animation`         | keyframing in After Effects: slide-ins, pops, product and UI moves, overshoot, bounce, anticipation, overlap, stagger, parenting to nulls, motion...     |
+| `scenario-after-effects-character-rigging` | rigging or animating a 2D cut-out character in After Effects: layered art, anchor points, parenting, IK, controllers, walk cycles that loop or stop...   |
+| `scenario-after-effects-color-delivery`    | finishing or delivering from After Effects: color management, OCIO or ACES, log footage, LUTs, grade order, bit depth, banding, grain, safe zones...     |
+| `scenario-after-effects-compositing`       | keying a green or blue screen, cleaning a matte, roto or Object Matte, a cutout with no screen, removing a logo, wire or object, a clean plate, track... |
+| `scenario-after-effects-expressions`       | writing, fixing or speeding up After Effects expressions or rigs: a box that fits its text, delay from one controller, a loop that jumps, inertial...    |
+| `scenario-after-effects-generation`        | an After Effects project needs generated media from the Scenario MCP: style frames, transparent cutouts, parallax planes, depth maps, video plates...    |
+| `scenario-after-effects-motion-production` | an After Effects job is a commercial piece with a brief: a game UA ad, social cut, trailer, promo, store preview or end card. Triggers: variants for...  |
+| `scenario-after-effects-project`           | an After Effects project must be set up, inherited, cleaned or handed over: comps named Comp 1, missing footage, fonts or effects, mixed frame rates...  |
+| `scenario-after-effects-scripting`         | an After Effects task needs a script or a pipeline: versions from a CSV, JSON or sheet, localized end cards in many ratios, a comp built from a data...  |
+| `scenario-after-effects-shape-layers`      | building or fixing shape layers in After Effects: line icons, logo reveals from Illustrator or SVG, Trim Paths draw-ons, Repeater bursts, ripples and... |
+| `scenario-after-effects-tracking`          | footage in After Effects must be tracked, stabilized or matchmoved: the track slips or drifts, the insert swims, replace a screen, corner pin a sign...  |
+| `scenario-after-effects-typography`        | animating text in After Effects: kinetic type, captions or lyrics synced to a voiceover, text animators and range or expression selectors, per-letter... |
+| `scenario-after-effects-vfx`               | building effects in After Effects with built-in tools: glow, sparks, bursts, embers, dust, smoke, flame, shockwave rings, light rays, lightning, heat... |
 
 ## Status
 
-- 15 skills written from 209 expert videos and 88 documentation pages and articles, each with
-  references, a review rubric, and scripts.
+- 15 skills written from 206 expert videos and 100 documentation pages and articles, each listed in
+  the skill's `references/sources.md`. Each skill has references, a review rubric, and scripts.
 - Each code block names its channel and how it was checked on a header line.
   - `checked: live 27.0`: run in After Effects 27.0 on macOS through the mailbox bridge.
-  - `checked: doc` or `checked: note`: taken from the documentation or an expert video, with the
-    source named.
-- Offline checks (`tests/scenario-after-effects-expert/`): every shipped Python script imports with
-  system Python, and the host-side helpers (runner, mailbox job files, offline ExtendScript checker,
-  ffprobe summary, delivery and timing tools) run against planted inputs with no After Effects
-  installed.
-- Blind-graded written plans (15 briefs, one grader each): 50 % without the skills, 90 % with them.
+  - `checked: doc`: taken from the documentation, with the source named.
+- Offline checks (`tests/scenario-after-effects-expert/`) need no After Effects:
+  - every shipped Python script imports with system Python;
+  - the host-side helpers run against planted inputs: runner, mailbox job files, offline
+    ExtendScript checker, ffprobe summary, delivery, timing, beat, layout, seat and effects
+    measuring tools;
+  - each effects builder returns what its comment documents.
 
 ## Requirements
 

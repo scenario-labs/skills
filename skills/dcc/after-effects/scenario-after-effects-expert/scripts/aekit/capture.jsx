@@ -2,17 +2,24 @@
 var AEK = AEK || {};
 AEK.capture = (function () {
     // frame(): comp.saveFrameToPng is asynchronous. The file appears after the call returns, so poll for it.
+    // timeoutMs defaults to AEK.capture.timeoutMs (180000): while other renders run, a first Advanced 3D frame can take over 60 s.
     function frame(c, seconds, path, timeoutMs) {
-        var f = AEK.core.abs(path), waited = 0, limit = timeoutMs || 60000;
+        var f = AEK.core.abs(path), waited = 0, limit = timeoutMs || AEK.capture.timeoutMs || 180000;
         if (f.exists) { f.remove(); }
         AEK.core.ensureFolder(f.parent.fsName);
         c.saveFrameToPng(seconds, f);
         while (!f.exists && waited < limit) { $.sleep(100); waited += 100; }
         if (!f.exists) { throw new Error("Frame not written after " + limit + " ms: " + path); }
-        $.sleep(150);
+        // a large 16-bit PNG can exist before it is complete: wait until its size holds for 150 ms
+        var size = -1;
+        while (waited < limit) { $.sleep(150); waited += 150; f = new File(f.fsName); if (f.length > 0 && f.length === size) { break; } size = f.length; }
         // At 32 bpc saveFrameToPng writes every value divided by 10 (white is 0.1): pngScale tells the reader. ae.py sheet --gain 10 shows it right.
-        var bpc = app.project.bitsPerChannel;
-        return { path: f.fsName, time: seconds, frame: Math.round(seconds * c.frameRate), waitedMs: waited, bpc: bpc, pngScale: bpc === 32 ? 0.1 : 1 };
+        // The comp background is NOT in the PNG: it is written transparent (a render shows it). bg gives the comp color as
+        // RRGGBB for `ae.py sheet --bg`, or put a solid of that color at the bottom of the comp before capturing.
+        var bpc = app.project.bitsPerChannel, bg = "", k, v;
+        for (k = 0; k < 3; k++) { v = Math.round(Math.max(0, Math.min(1, c.bgColor[k])) * 255); bg += (v < 16 ? "0" : "") + v.toString(16); }
+        return { path: f.fsName, time: seconds, frame: Math.round(seconds * c.frameRate), waitedMs: waited, limitMs: limit, bpc: bpc, pngScale: bpc === 32 ? 0.1 : 1,
+            transparentBg: true, bg: bg };
     }
     function statusName(s) {
         var names = ["WILL_CONTINUE", "NEEDS_OUTPUT", "UNQUEUED", "QUEUED", "RENDERING", "USER_STOPPED", "ERR_STOPPED", "DONE"], i;
@@ -20,20 +27,20 @@ AEK.capture = (function () {
         return String(s);
     }
     // frames(comp, [seconds...], dir, prefix): one PNG per time, named <prefix>_f<frame>.png
-    function frames(c, times, dir, prefix) {
+    function frames(c, times, dir, prefix, timeoutMs) {
         var out = [], i, fr, name;
         for (i = 0; i < times.length; i++) {
             fr = Math.round(times[i] * c.frameRate);
             name = (prefix || c.name.replace(/[^\w\-]+/g, "_")) + "_f" + ("00000" + fr).slice(-5) + ".png";
-            out.push(frame(c, times[i], dir + "/" + name));
+            out.push(frame(c, times[i], dir + "/" + name, timeoutMs));
         }
         return out;
     }
     // spread(comp, n, dir): n frames evenly spread over the work area, never the very last frame
-    function spread(c, n, dir, prefix) {
+    function spread(c, n, dir, prefix, timeoutMs) {
         var times = [], i, start = c.workAreaStart, dur = c.workAreaDuration - c.frameDuration;
         for (i = 0; i < n; i++) { times.push(start + (n === 1 ? 0 : dur * i / (n - 1))); }
-        return frames(c, times, dir, prefix);
+        return frames(c, times, dir, prefix, timeoutMs);
     }
     // queue(): render through the render queue. Blocks until done. opts: {template, renderSettings, start, duration}
     function queue(c, path, opts) {
@@ -65,5 +72,5 @@ AEK.capture = (function () {
         rqi.remove();
         return { outputModule: a, renderSettings: b };
     }
-    return { frame: frame, frames: frames, spread: spread, queue: queue, templates: templates };
+    return { frame: frame, frames: frames, spread: spread, queue: queue, templates: templates, timeoutMs: 180000 };
 })();

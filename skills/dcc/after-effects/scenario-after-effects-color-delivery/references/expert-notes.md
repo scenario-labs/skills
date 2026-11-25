@@ -125,8 +125,9 @@ Principles from the sources, grouped by expert, each with video id and timestamp
 - After Effects passed the audio level through (-27.8 LUFS); two-pass ffmpeg `loudnorm` brought it
   to -23.0 LUFS.
 - ProRes renders at 960x540 carried SD tags (smpte170m primaries and matrix); 540x960 carried
-  BT.709. The tag follows the frame size: read your own file's tags, then re-tag a ProRes with
-  `-c copy` or an encode with the `setparams` filter.
+  BT.709. The tag follows the frame size and matches the pixels: at 960x540 they are BT.601-encoded.
+  Convert the matrix to reach BT.709 (procedures.md, section 9); a re-tag shifts colors by up to 39
+  levels.
 - signalstats reports Y in the file's bit depth: the legal range is 16 to 235 at 8 bits, 64 to 940
   at 10, 256 to 3760 at 12 (ProRes 4444). One comp's black read 14, 59 and 250 in its H.264, ProRes
   422 and ProRes 4444 renders.

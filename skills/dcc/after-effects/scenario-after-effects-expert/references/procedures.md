@@ -126,8 +126,34 @@ python3 scripts/ae.py sheet <review folder>/sheet.jpg <review folder>/a.png <rev
   not at even spacing only.
 - For motion, capture 6 to 8 consecutive frames around a settle and read the spacing.
 - Read the sheet. A sheet that was not opened verifies nothing.
+- Sheets are scaled down to 1600 px wide by default. Pass `--max-width 0` to keep full-size tiles
+  when you need to inspect a detail.
 - `saveFrameToPng` honors motion blur and works with the app in the background. It is asynchronous:
-  `AEK.capture.frame` waits for the file.
+  `AEK.capture.frame` waits until the file exists and its size holds for 150 ms (a large 16-bit PNG
+  can appear before it is complete).
+- `ae.py frames` captures from the project open at that moment. On an After Effects shared by
+  several agents, another job can open its own project between your build and your capture. Capture
+  inside the job that opened or built the project:
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// ARGS: {aep: "<abs>.aep", comp: "MAIN", out: "<abs folder>"}. Open, check, capture and report in one job.
+AEK.core.open(ARGS.aep);
+var c = AEK.core.comp(ARGS.comp);
+return { project: app.project.file.fsName, frames: AEK.capture.spread(c, 6, ARGS.out, "review") };
+```
+
+- From the terminal, `ae.py frames "MAIN" --out <folder> --project <abs>.aep` refuses to capture
+  when another project is open. `ae.py templates "MAIN" --project <abs>.aep` does the same for the
+  template list.
+- The comp background is transparent in the PNG (alpha 0; the comp color stays in RGB at 8 bpc, RGB
+  reads 0 at 16 bpc). `ae.py frames --sheet` flattens on it; for `ae.py sheet`, pass `--bg RRGGBB`
+  (the `bg` field of each captured frame). Without it, feathered and glowing edges read too bright
+  on the sheet. Before measuring pixels on a PNG yourself:
+  `magick f.png -background '#<bg>' -flatten out.png`.
+- From a delivered movie: `ae.py sheet <out>.jpg --video <file>.mp4 --at 0,12,30,74` cuts those
+  frames (full range) and labels them.
 
 ## P6 Preview render without touching the person's queue
 
@@ -160,20 +186,84 @@ python3 scripts/ae.py probe <renders>/MAIN_spot.mp4
   13.2 s wall time, exit code 0).
 - The last lines read "Finished composition" and "Total Time Elapsed". Any other ending is a failure
   even with a file on disk.
-- `probe` returns codec, profile, size, frame rate, frame count, pixel format and an `alpha` flag.
-  Compare each with the brief.
+- `ae.py aerender` checks what a full disk breaks. Read `ok` and `why`:
+  - `disk`: under `--min-free-gb` (default 10 GB) free on the output volume before the start, a
+    "Disk Full", "output module failed" or 9988 line, or a volume left under 50 MB. Free space, then
+    render again.
+  - `stall`: no output line for `--stall` seconds (default 300). aerender, its child and
+    aerendercore are stopped. Raise `--stall` above the slowest frame time for heavy comps.
+  - `short`: the movie holds fewer frames (`ffprobe -count_packets`) than expected, or none. The
+    expected count is `--frames N`, else the span from the log header (`Duration` and `Frame Rate`),
+    else the highest PROGRESS frame. Measured on 27.0: a ProRes file cut at 1 MB on a full volume
+    while aerender printed "Finished composition" and exited 0. "Failed to write XMP metadata" in
+    the same log points to the disk.
+  - `render`: an error line or a non-zero exit code.
+  - `missing`: no output file.
+  - `folder`: the output folder cannot be created. A missing folder is created first and returned as
+    `created_folder`.
+- One `ae.py aerender` call writes one file from one output module template. Two deliverables of one
+  comp are two renders, or one master render and a conversion with ffmpeg.
+- `checks` names each check (`free_space`, `stall`, `log_errors`, `returncode`, `file`, `frames`)
+  with `ok`, `failed: ...` or `skipped: ...`. Read it to see which one failed. An audio or image
+  output reads `frames: not counted`.
+- On `render`, `missing` or `short`, the result carries `retry`: rerun once, alone. Two aerenders
+  that write into one output folder at the same time collide: one exits 0 with "Can not create a
+  file in directory ... Try checking write permissions" and no file. Measured on 27.0: 5 of 6 pairs
+  lost one render; with one output folder each, 6 of 6 rendered.
+- `frames_rendered`, `frames_span`, `free_gb_before` and `free_gb_after` come back in every result.
+  `--frames N` sets the count the file must hold.
+- A whole render queue (no `--comp`) goes through the scripting skill's `render_guarded.sh`. Both
+  treat as failed: an error line, a non-zero exit, a missing file, a movie that decodes short.
+- `probe --count` returns codec, profile, size, frame rate, header and counted frames, pixel format,
+  `alpha`, and `timecode` on a data track. Compare each with the brief.
+- The "High Quality" output modules write a timecode track. Drop it in a later ffmpeg pass with
+  `-map 0:v:0 -dn -write_tmcd 0`.
 
 ## P8 When After Effects stops answering
 
 1. `ae.py doctor`: read `status.age_s` and `windows`.
-2. One window and a recent job that renders: wait. The heartbeat stops during a render.
+2. One window and a recent job that renders: wait. The heartbeat stops during a render and during
+   another agent's long job.
 3. An extra window: `ae.py windows --shot <folder>`, then look at the picture.
 4. A dialog drawn by After Effects (Crash Repair Options, the disk cache warning, the Home screen):
    `ae.py key return` or `ae.py key escape`.
-5. A script alert, a save panel or a macOS privacy prompt: tell the person which window is open.
-   Nothing closes it from outside when the app is in the background.
-6. After a restart, read the result of the job that was running: it comes back with
+5. A script alert, a Save As or file panel, or a macOS privacy prompt: keys posted to a background
+   app do not close it. In a person's session, tell them which window is open and wait.
+6. Unattended test session only (no person works in this After Effects), heartbeat older than 180 s:
+   `ae.py restart --test-session`. It refuses while the heartbeat is younger, while another agent
+   restarts (lock folder in the bridge folder) and within 5 minutes of the last restart. It stops
+   the app, relaunches it in the background (`open -g`, no focus taken), answers Crash Repair with
+   Return and waits for the heartbeat. Measured end to end: 13 s from stop to the first heartbeat
+   (new process at 1 s, Return at 10 s), front app unchanged, next job ok. It waits for the old
+   process to exit before `open -g` (an `open` sent right after the stop starts nothing) and retries
+   `open` up to three times. Unsaved work in the open project is lost: never in a person's session.
+7. After a restart, read the result of the job that was running: it comes back with
    `interrupted: true` and is not run again. Check the project state before sending anything else.
+8. `interrupted: true` while the After Effects process did not change: an instance started by
+   `aerender` ran the bridge's startup sweep (bridge before 1.5.0). The runner keeps waiting for the
+   job's own result and marks it `recovered_after_sweep`. Bridge 1.5.0 does not start inside an
+   `aerender` instance; reinstall it with `ae.py install-bridge` and restart After Effects when no
+   job runs.
+
+### Several agents on one After Effects
+
+A Save As panel raised by one job stops every agent. Rules for test sessions where several agents
+share one application:
+
+- Each job is self-contained: it opens its own project with `AEK.core.open(path)` or starts one with
+  `AEK.core.fresh(path)`. Both close whatever is open WITHOUT saving, whoever left it dirty, so no
+  panel can open.
+- `fresh(path)` saves the new project at once: it has a file and no unsaved changes.
+- Every job ends with `AEK.core.save(path)` (or `AEK.core.save()` on a project that has a file). A
+  job that leaves an untitled project with unsaved changes gets a `warning` in its result.
+- Never call `app.open`, `app.newProject` or `app.project.save()` directly: `ae_check.py` reports
+  them as errors and `ae.py run` refuses to send the job (`--no-preflight` overrides, for a person
+  who has saved).
+- Capture frames, read templates and save inside the job that opened the project. Between two calls
+  another agent's project is open.
+- Never close or save a project another agent opened, outside the open and fresh routes above. A
+  person's session follows the Live session rules: no open, close or new project unasked.
+- Renders run out of process (`ae.py aerender`), each into its own output folder.
 
 ## P9 Report
 
@@ -186,3 +276,21 @@ Give, in this order:
 4. Files written: review frames, contact sheet, renders, safety copy.
 5. Assumptions: frame rate, fit mode, font mapping, which comps were in scope.
 6. Time taken per stage.
+
+## P10 Starting curves and settle
+
+Linear keys read as unfinished (Stance). Before handing motion to scenario-after-effects-animation,
+these CSS cubic-bezier values through `AEK.motion.bezier(prop, k1, k2, [x1, y1, x2, y2])` give a
+clean first pass:
+
+| Move                      | Curve            | Note                        |
+| ------------------------- | ---------------- | --------------------------- |
+| Wipe, bar, line draw      | 0.65, 0, 0.35, 1 | ease in and out, symmetric  |
+| Entrance, rise, scale up  | 0.16, 1, 0.3, 1  | fast start, long settle     |
+| Exit                      | 0.7, 0, 0.84, 0  | slow start, leaves at speed |
+| Tracking or blur settling | 0.22, 1, 0.36, 1 | long tail                   |
+
+`AEK.motion.sample(prop, comp, t0, t1)` reads the move back per frame. `settleFrame` is the first
+frame from which the value stays within 1 % of the travel from its end value. An eased move enters
+that band before its last key: a rise keyed to frame 40 read `settleFrame` 31. Compare keys with
+keys; use `settleFrame` for what the eye sees as stopped.

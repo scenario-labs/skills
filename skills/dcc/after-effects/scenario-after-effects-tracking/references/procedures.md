@@ -62,6 +62,20 @@ Input White `-0004` (0 to 1 at 8 bpc), Gamma `-0005`; Unsharp Mask `ADBE Unsharp
 
 ## P2. Background analysis (Warp Stabilizer or 3D Camera Tracker)
 
+Measured on 27.0: the analysis does not advance while any job runs, during `$.sleep`, or during
+render-queue renders. It completed in under 23 s while the app idled between short jobs. Changing
+Smoothness or Method later needs another idle pass (orange "Stabilizing" band); Framing changes
+apply at once. The analysis is saved in the project and survives a reopen.
+
+Warp Stabilizer judgment:
+
+- A banner "To avoid extreme cropping..." means Smoothness is above what the framing allows: lower
+  it, or diagnose with Stabilize Only (Jake Bartlett, 28L2XalNr5A 00:02:24).
+- Stabilize, Synthesize Edges avoids the zoom but can tear at the first frames and fast moves
+  (28L2XalNr5A 00:05:40, 00:04:01).
+- Stabilizing never removes baked-in blur: add Camera-Shake Deblur (`ADBE CameraShakeDeblur`) below
+  Warp Stabilizer, never on the unstabilized plate (28L2XalNr5A 00:01:36, 00:19:38).
+
 Job A adds the effect and returns at once. The app must then stay idle with the project open.
 
 ```javascript
@@ -117,13 +131,32 @@ the render (ORB matches plus `estimateAffinePartial2D`): Warp auto-scale measure
 python3 <skill>/scripts/track_external.py plane <shot.mp4> --corners "x,y x,y x,y x,y" --ref 0 --mode ref --out plane.json
 python3 <skill>/scripts/track_external.py shake <shot.mp4> --ref 0 --out shake.json
 python3 <skill>/scripts/track_external.py score plane.json truth.json     # when a known path exists
+python3 <skill>/scripts/track_external.py point plane.json --point 812,431 --out button.json   # carry a point
+python3 <skill>/scripts/track_external.py slide <shot.mp4> --track plane.json --point 812,431  # independent slide check
 ```
 
-Corners are UL, UR, LR, LL on the reference frame. `ref` registers every frame to the reference
-(warp back, measure the residual); `chain` is frame to frame; `hybrid` re-anchors every `--anchor`
-frames. Measured on a 72-frame shot with blur and noise: `ref` 0.657 px mean, `hybrid` 0.695,
-`chain` 1.414 (2.84 at the last frame). Shake: 0.43 px mean, 0.0014 degrees. `shake` rotation is
-clockwise-positive, as After Effects Rotation. Check `inliers` per frame: 0 means the pose was held.
+Pick the reference corners on a flat rigid part of the subject: the four corners of a button panel,
+a label, a screen bezel. Each corner sits on a high-contrast point (a panel corner, a printed mark),
+never on fabric, a reflection or an edge that turns away from camera.
+
+`slide` warps each frame back to the reference with the track's own map, then re-finds a 240 px
+patch around the point within a 128 px search (template match). It counts frames over 3 px and
+reports `jumps`: runs of 3 or more frames over 3 px, the sign of a track that moved to another
+feature. A repeated feature (a row of identical buttons) can give a single false spike at a small
+patch: keep the 240 px default. Measured on a 150-frame plate of a speaker turning in depth.
+`shake --corners` on the button panel: 71.4 px mean, 144.9 max, one jump from frame 11 to the end
+(79 px at frame 60). `plane --mode ref` on the same panel: 0.89 mean, 4.24 max, no jumps. Gate: mean
+under 1.5 px and `jumps` empty. Corners are UL, UR, LR, LL on the reference frame.
+`shake --corners "<quad>"` keeps only features inside that quad: the motion of one object about the
+frame center, for object stabilization (P15). A curved surface that turns (bottle, cylinder speaker)
+is not a plane. On a real 121-frame plate, the `plane` quad on a speaker's fabric skewed into a
+trapezoid (corners 94 px apart in x on one side). Track a flat rigid part of the object instead; use
+`shake --corners` only when it has none, and run `slide` on the result. `ref` registers every frame
+to the reference (warp back, measure the residual); `chain` is frame to frame; `hybrid` re-anchors
+every `--anchor` frames. Measured on a 72-frame shot with blur and noise: `ref` 0.657 px mean,
+`hybrid` 0.695, `chain` 1.414 (2.84 at the last frame). Shake: 0.43 px mean, 0.0014 degrees. `shake`
+rotation is clockwise-positive, as After Effects Rotation. Check `inliers` per frame: 0 on any frame
+but the reference means the pose was held; the reference frame always reads 0 in `plane`.
 
 ## P5. Screen insert with Corner Pin
 
@@ -154,15 +187,18 @@ Corner Pin with the layer and comp motion blur switches on rendered identical pi
 // channel: bridge
 // checked: live 27.0
 // ARGS.fixCorners: UL, UR, LR, LL at ARGS.frame from a re-registration of that one frame
-var l = AEK.core.comp(ARGS.comp).layer(ARGS.layer), fx = l.property("ADBE Effect Parade").property("Corner Pin");
+// the effect by match name: its display name changes with the install language
+var l = AEK.core.layer(AEK.core.comp(ARGS.comp), ARGS.layer), fx = AEX.track.effect(l, "ADBE Corner Pin");
 var before = AEX.track.readCorners(l, fx.propertyIndex, ARGS.frames, 0);
 AEX.track.reanchor(fx, ARGS.frame, ARGS.fixCorners, ARGS.ramp);
 var after = AEX.track.readCorners(l, fx.propertyIndex, ARGS.frames, 0);
 return { before: AEX.track.error(before, ARGS.reference), after: AEX.track.error(after, ARGS.reference) };
 ```
 
-Check: measured 1.414 to 0.909 px mean with a 36-frame ramp at frame 71. `reanchor` fits drift that
-grows steadily; a jump needs a split track (two tracks, new reference after the jump).
+Check: measured 1.414 to 0.909 px mean with a 36-frame ramp at frame 71. On a real 121-frame plate
+with a linear drift of up to 6.7 px, a 60-frame ramp at the last frame gave 3.35 to 1.66 px mean:
+the ramp covers only the frames it spans, so set it to the length of the drift. `reanchor` fits
+drift that grows steadily; a jump needs a split track (two tracks, new reference after the jump).
 
 ## P7. Stabilize by keys
 
@@ -209,16 +245,28 @@ open project keeps its own settings, so record them there too.
 ```javascript
 // channel: bridge
 // checked: live 27.0
-var c = AEK.core.comp(ARGS.comp), n = AEX.track.nullFromCorners(c, ARGS.plane, "screen_track", 0);
-var t = AEK.core.layer(c, ARGS.child);
-AEK.build.parent(t, n);
-return AEK.capture.queue(c, ARGS.out + "/slide.mp4", { template: "H.264 - Match Render Settings - 15 Mbps" });
+// ARGS.point: the attach point on the reference frame, in footage pixels
+var c = AEK.core.comp(ARGS.comp), n = AEX.track.nullFromCorners(c, ARGS.plane, "button_track", 0, { point: ARGS.point });
+var t = AEK.core.layer(c, ARGS.child);   // a pure-color proof marker centered on its anchor
+AEK.build.parent(t, n); t.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0, 0]);
+return AEK.capture.queue(c, ARGS.out + "/proof.mp4", { template: "H.264 - Match Render Settings - 15 Mbps" });
 ```
 
-Measure the slide on the render: locate the child per frame (color threshold or
-`track_external.py plane` on it) and compare with the tracked feature it should follow. Measured:
-1.22 px mean, 1.86 max over 72 frames (a similarity transform on a mildly tilted screen). The same
-frame test judges a 3D solve: a proof solid on the ground versus a ground feature.
+The null sits on `point` carried through each frame's homography; Rotation and Scale come from the
+homography's local derivative at that point. Measure the proof render:
+
+```bash
+python3 <skill>/scripts/track_external.py point plane.json --point 812,431 --out path.json
+python3 <skill>/scripts/track_external.py locate proof.mp4 --path path.json --color 0,255,0 --tol 45
+```
+
+Measured on a speaker turning in depth (120 frames, 1920x1080): 0.74 px mean, 1.03 max. The former
+null (corner centroid, top-edge angle and length) with a child on the button gave 10.0 mean, 19.9
+max: a similarity is wrong under perspective, and the error grows with the distance from the
+centroid. On a mildly tilted screen with the child at the center, the similarity gave 1.22 mean,
+1.86 max over 72 frames. Under perspective, give every element its own point instead of parenting it
+away from one null. Keep `--tol` low enough that the marker color is not found in the plate. The
+same frame test judges a 3D solve: a proof solid on the ground versus a ground feature.
 
 ## P10. Audit pinned inserts and trackers (after a Mocha paste or a script)
 
@@ -253,7 +301,9 @@ Check: `everyFrame` true, `switchOnly` false on moving inserts. Measured: it fla
 // channel: bridge
 // checked: live 27.0
 var l = AEK.core.comp(ARGS.comp).layer(ARGS.layer);
-var tr = AEX.track.pointTracker(l, "external", [{ name: "UL", centers: ARGS.points, startFrame: 0 }]);
+// ARGS.plane: corners per frame; ARGS.point: the attach point on the reference frame
+var pts = AEX.track.pointsFromCorners(ARGS.plane, ARGS.point);
+var tr = AEX.track.pointTracker(l, "external", [{ name: "UL", centers: pts, startFrame: 0 }]);
 return { keys: tr.property(1).property("ADBE MTracker Pt Feature Center").numKeys };
 ```
 
@@ -264,9 +314,25 @@ thisComp.layer("plate").motionTracker("external")("UL").attachPoint
 ```
 
 Check: measured 72 keys; the expression returned the tracked value at frame 48 exactly. Use it when
-another artist expects data in the Tracker panel.
+another artist expects data in the Tracker panel. `pointsFromCorners` is the same homography as
+`track_external.py point` (they agree within 0.001 px); measured on the speaker shot through the
+Motion Tracker: 0.80 px mean, 1.29 max on the proof render.
+
+**Tracked callout.** Only the dot rides the track: Position from the `attachPoint` expression. The
+label stays still where the plate behind it is clean, joined by a leader whose path expression reads
+the tracked point: `createPath([[p[0], p[1]], [ex, ey], [lx, ly]], [], [], false)`, with `p` the
+dot's Position. Write constant arrays into the expression element by element: an array concatenated
+whole into the string threw "invalid numeric result" on 27.0. Gate the label with
+scenario-after-effects-typography procedure 10 (`AEX.type.readability`). Cap height is at least 3.5
+% of the short side; contrast is at least 4.5:1 against the plate sampled behind the text. Then
+check on every frame that the label box covers no bright or busy plate detail.
 
 ## P12. Mocha AE data (GUI, then audit)
+
+What `plane` cannot do: it samples every feature inside the quad and has no exclusion hole.
+Reflections crossing the glass, fingers, or screen content that changes need Mocha AE: an Add-spline
+hole over the reflections, a layer above for fingers, the stable bezel tracked, then the Surface
+moved to the screen corners (TF3XVBy6sD4 00:04:33; UkC9qKS7c0Y 00:04:42).
 
 A person or a computer-use agent tracks in Mocha AE (gui-paths.md), then Create Track Data, Export
 Option "Corner Pin (Support Motion Blur)", Layer Export To the insert, Apply Export. The agent then
@@ -280,6 +346,19 @@ screen aspect, pin a comp-size solid, then nest a precomp at the real screen siz
 Mercedes, UkC9qKS7c0Y 00:12:48).
 
 ## P13. Sharpened tracking reference for the 3D Camera Tracker, then swap back
+
+Camera solve rules (stage 8):
+
+- Track a sharpened copy: Levels and Unsharp Mask (Amount 100, Radius 2) in a precomp, the tracker
+  on it, the original swapped back after Create Camera (wiISCTB4s1Y 00:01:04, 00:06:55).
+- In the GUI, set Ground Plane and Origin before creating anything. Create Shadow Catcher, Camera
+  and Light gives a contact shadow (m2bF4U6EBZU frame 00:06:00).
+- A solved scene that looks huge needs the free Normalize Track script (wiISCTB4s1Y 00:04:08;
+  m2bF4U6EBZU 00:06:44).
+- Move a placed title's anchor to its base before making it 3D (`AEK.build.anchor(layer, 0.5, 1)`),
+  so scale grows from the ground (wiISCTB4s1Y 00:05:18).
+- A failed solve can come out better on a second run: retrack before deeper surgery (m2bF4U6EBZU
+  00:02:25).
 
 Log or soft footage gives the solver little contrast. Track a graded, sharpened copy; it is never
 rendered (Guerrilla Filmmaking, wiISCTB4s1Y 00:01:04, 00:06:55). Set Input Black and White to where
@@ -319,3 +398,68 @@ after the swap; the title's anchor Y equals the bottom of its bounds (measured: 
 height 86, anchor Y 0, the baseline of a caps title). A huge solved scene: run the free Normalize
 Track script on the camera and solids after the ground plane is set; it needs a solid named
 "ground", "floor" or "wall" (wiISCTB4s1Y 00:04:08, 00:04:41).
+
+## P14. Corner Pin from four nulls
+
+Four tracked points, four nulls from a tracker, or a Mocha export to nulls: `cornerNulls` writes one
+null per corner (`<prefix>UL`, `UR`, `LR`, `LL`, anchor [0, 0], keyed on every frame);
+`pinFromNulls` puts a Corner Pin whose four expressions read each null with `toComp` and convert to
+the pinned layer with `fromComp`. The pinned layer may be scaled or moved; the pin follows any later
+edit of the nulls.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+// --lib track.jsx; ARGS: comp, insert (layer name), plane (corners per frame, UL UR LR LL), startFrame
+var c = AEK.core.comp(ARGS.comp), l = AEK.core.layer(c, ARGS.insert);
+var names = AEX.track.cornerNulls(c, ARGS.plane, "trk_", ARGS.startFrame || 0);
+var pin = AEX.track.pinFromNulls(l, names), err = "", k;
+for (k = 1; k <= 4; k++) { if (pin.property(k).expressionError) { err += pin.property(k).expressionError; } }
+return { nulls: names, expressionError: err };
+```
+
+```javascript
+// expression (JavaScript engine): Corner Pin > Upper Left (pinFromNulls writes one per corner)
+// checked: live 27.0
+var n = thisComp.layer("trk_UL");
+fromComp(n.toComp(n.anchorPoint));
+```
+
+Check: `expressionError` empty; each pinned corner read back in comp space equals its null. Measured
+on a 121-frame plate with the insert scaled 50 % and moved: 0.000 px maximum. An expression pin has
+no Position motion, so the layer motion blur switch does not blur it: for a moving insert use
+`cornerPin(..., {motionBlur: true})` with the same corners, or bake the expressions
+(`AEK.expr.bake`).
+
+## P15. Object stabilization and a stabilized insert
+
+Track the object, lock it, place the insert on the still frame, then give the motion back. The
+insert then rides on the object and the plate pixels return unchanged.
+
+```bash
+python3 <skill>/scripts/track_external.py shake <shot.mp4> --corners "x,y x,y x,y x,y" --ref 0 --out object.json
+```
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// --lib track.jsx; ARGS: plate (abs path), shake (object.json "shake" array), insertPos [x, y] on the reference frame
+var it = AEK.xio.importItem(ARGS.plate, {}), n = ARGS.shake.length, fps = it.frameRate, D = n / fps;
+var st = AEK.build.comp("STAB_plate_v001", { width: it.width, height: it.height, fps: fps, duration: D });
+var pl = st.layers.add(it); pl.name = "plate";
+var s = AEX.track.stabilize(pl, ARGS.shake, { smooth: 0, autoScale: false });
+var badge = AEK.build.shape(st, "INSERT_v001", { name: "b", type: "rect", size: [96, 40], fill: [0.97, 0.93, 0.85] }, { position: ARGS.insertPos });
+var m = AEK.build.comp("MAIN_insert_v001", { width: it.width, height: it.height, fps: fps, duration: D });
+var sl = m.layers.add(st);
+var r = AEX.track.restoreMotion(sl, ARGS.shake, {});   // also switches Collapse Transformations on
+sl.motionBlur = true; m.motionBlur = true;
+return { stabilize: s, restore: r };
+```
+
+Check: re-track the stabilized precomp's render with `shake --corners` on the same quad; render the
+main comp and count black pixels (0). Measured on a generated hand-held plate (960x544, 121 frames,
+the object moving 98 px): stabilized residual 1.55 px maximum and 0.74 px second-difference jitter
+(a turning cylinder keeps some), black pixels 0 with Collapse Transformations and 95,000 without,
+the plate after the round trip within 0.74 levels of the source, the insert within 1.15 px mean
+(2.32 max) of the tracked path. The 0.2 px jitter gate of stage 6 is for camera shake on a static
+scene; an object that turns in depth stays above it.

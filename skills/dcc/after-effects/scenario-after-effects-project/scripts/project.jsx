@@ -9,7 +9,19 @@ AEX.project = (function () {
     function srcOf(l) { var s = null; try { s = l.source; } catch (e) {} return s; }
     function has(a, v) { var i; for (i = 0; i < a.length; i++) { if (a[i] === v) { return true; } } return false; }
 
-    // tree(main): every item reachable from the main comp, with nesting depth. Unreached comps and footage are dead weight.
+    // roots(main): the comps that ship. main may be one comp or a list; comps in the render queue and comps named MAIN_ or
+    // DLV_ (deliverables) are added, so a deliverable that nests nothing of the master is never filed as unused.
+    function roots(main) {
+        var list = [], ids = {}, all = AEK.core.comps(), rq = app.project.renderQueue, i, c;
+        function push(x) { if (x && !ids[x.id]) { ids[x.id] = true; list.push(x); } }
+        if (main instanceof Array) { for (i = 0; i < main.length; i++) { push(main[i]); } } else { push(main); }
+        for (i = 1; i <= rq.numItems; i++) { try { push(rq.item(i).comp); } catch (e) {} }
+        for (i = 0; i < all.length; i++) { c = all[i]; if (/^(MAIN|DLV)_/.test(c.name)) { push(c); } }
+        return list;
+    }
+
+    // tree(main): every item reachable from the roots (main, the render queue, MAIN_ and DLV_ comps), with nesting depth.
+    // Unreached comps and footage are dead weight.
     function tree(main) {
         var seen = {}, order = [], maxDepth = 0;
         function visit(c, depth, parentName) {
@@ -26,7 +38,8 @@ AEX.project = (function () {
                 // track matte and effect layer inputs are layers of this comp: already covered by the loop
             }
         }
-        visit(main, 0, "");
+        var R = roots(main), r0;
+        for (r0 = 0; r0 < R.length; r0++) { visit(R[r0], 0, ""); }
         var unusedComps = [], unusedFootage = [], it, j;
         for (j = 1; j <= app.project.numItems; j++) {
             it = app.project.item(j);
@@ -34,7 +47,8 @@ AEX.project = (function () {
             if (isComp(it)) { unusedComps.push(it.name); }
             else if (it instanceof FootageItem) { unusedFootage.push(it.name); }
         }
-        return { reached: order.length, maxDepth: maxDepth, unusedComps: unusedComps, unusedFootage: unusedFootage, seen: seen };
+        var rootNames = []; for (r0 = 0; r0 < R.length; r0++) { rootNames.push(R[r0].name); }
+        return { reached: order.length, maxDepth: maxDepth, unusedComps: unusedComps, unusedFootage: unusedFootage, seen: seen, roots: rootNames, rootIds: R };
     }
 
     // collapseRisks(): collapsed precomps that will flatten (effect, closed mask, layer style) and adjustment layers inside collapsed comps
@@ -186,6 +200,7 @@ AEX.project = (function () {
     // Returns {renamed, rewritten, exprErrors}: expressions that named a renamed comp or layer are rewritten.
     function rename(main, mainName) {
         var t = tree(main), comps = AEK.core.comps(), i, j, c, users, l, base, name, n, taken = {}, out = [], order = [], inner, pairs = [];
+        if (main instanceof Array) { main = main[0]; }   // the first comp of a list is the one mainName applies to
         for (i = 0; i < comps.length; i++) { taken[comps[i].name] = true; }
         if (mainName && main.name !== mainName) { out.push({ from: main.name, to: mainName }); pairs.push({ kind: "comp", from: main.name, to: mainName }); delete taken[main.name]; main.name = mainName; taken[mainName] = true; }
         for (i = 0; i < comps.length; i++) { if (t.seen[comps[i].id]) { order.push(comps[i]); } }
@@ -193,7 +208,7 @@ AEX.project = (function () {
         for (i = 0; i < comps.length; i++) { if (!t.seen[comps[i].id]) { order.push(comps[i]); } }
         for (i = 0; i < order.length; i++) {
             c = order[i];
-            if (c === main || !DEFAULT_NAME.test(c.name)) { continue; }
+            if (c.id === main.id || !DEFAULT_NAME.test(c.name)) { continue; }
             users = c.usedIn; l = null;
             if (users.length) {
                 for (j = 1; j <= users[0].numLayers; j++) { if (srcOf(users[0].layer(j)) === c) { l = users[0].layer(j); break; } }
@@ -227,7 +242,8 @@ AEX.project = (function () {
         for (j = 1; j <= parentComp.numLayers; j++) { l = parentComp.layer(j); if (srcOf(l) === src && DEFAULT_NAME.test(l.name)) { l.name = src.name; } }
     }
 
-    // fileItems(main, scheme): numbered bins; reached comps split main / precomps, footage by kind, unreached items to the archive bin
+    // fileItems(main | [comps], scheme): numbered bins; roots (main, deliverables, render queue comps) in 01_Main, reached
+    // comps in 02_Precomps, footage by kind, unreached items to the archive bin
     function fileItems(main, scheme) {
         scheme = scheme || {};
         var b = {
@@ -236,12 +252,13 @@ AEX.project = (function () {
             unused: AEK.core.bin(scheme.unused || "99_Unused")
         };
         b.video = AEK.core.bin("Video", b.foot); b.stills = AEK.core.bin("Stills", b.foot); b.audio = AEK.core.bin("Audio", b.foot);
-        var t = tree(main), i, it, moved = { main: 0, precomps: 0, video: 0, stills: 0, audio: 0, solids: 0, unused: 0 }, items = [];
+        var t = tree(main), i, it, moved = { main: 0, precomps: 0, video: 0, stills: 0, audio: 0, solids: 0, unused: 0, roots: t.roots }, items = [], rootId = {};
+        for (i = 0; i < t.rootIds.length; i++) { rootId[t.rootIds[i].id] = true; }
         for (i = 1; i <= app.project.numItems; i++) { items.push(app.project.item(i)); }
         for (i = 0; i < items.length; i++) {
             it = items[i];
             if (it instanceof FolderItem) { continue; }
-            if (it === main) { it.parentFolder = b.main; moved.main++; }
+            if (rootId[it.id]) { it.parentFolder = b.main; moved.main++; }
             else if (it instanceof FootageItem && it.mainSource instanceof SolidSource) { it.parentFolder = b.solids; moved.solids++; }
             else if (!t.seen[it.id]) { it.parentFolder = b.unused; moved.unused++; }
             else if (isComp(it)) { it.parentFolder = b.pre; moved.precomps++; }
@@ -252,9 +269,90 @@ AEX.project = (function () {
         return moved;
     }
 
-    // color({bpc, workingSpace, linearize}): set, then read back what After Effects kept
+    // layout(comp, {t, safe: {top, bottom, left, right} (fractions), minGap (px), minSpanY, maxCenterOffset, skip: /regex/}):
+    // the per-format layout gate, measured from layer bounds at time t. A precomp layer is measured by its content (the
+    // union of its own visible layers), not by its frame (a precomp holding only a full-frame layer counts by its frame). Layers covering 90 % of the frame or more are backgrounds and
+    // are left out. Returns the blocks, then fails: a block outside the safe area, two blocks closer than minGap
+    // (default 3 % of the shorter side), content spanning less than minSpanY of the safe height (default 0.5 for a
+    // vertical frame, 0.35 otherwise), content center further than maxCenterOffset (default 0.12) of the safe height
+    // from the safe-area center.
+    function layout(c, o) {
+        o = o || {};
+        var t = o.t === undefined ? c.duration / 2 : o.t, W = c.width, H = c.height, z = o.safe || { top: 0.1, bottom: 0.1, left: 0.1, right: 0.1 };
+        var S = { left: W * z.left, top: H * z.top, right: W * (1 - z.right), bottom: H * (1 - z.bottom) };
+        var minGap = o.minGap === undefined ? Math.round(Math.min(W, H) * 0.03) : o.minGap, vertical = H > W * 1.2;
+        var minSpan = o.minSpanY === undefined ? (vertical ? 0.5 : 0.35) : o.minSpanY, maxOff = o.maxCenterOffset === undefined ? 0.12 : o.maxCenterOffset;
+        var blocks = [], i, l, b, fails = [];
+        function visible(L, tt) {
+            if (!L.enabled || L.guideLayer || L.adjustmentLayer || !(L instanceof AVLayer || L instanceof TextLayer || L instanceof ShapeLayer)) { return false; }
+            if (L instanceof AVLayer && !L.hasVideo) { return false; }
+            if (tt < L.inPoint || tt >= L.outPoint) { return false; }
+            if (o.skip && o.skip.test(L.name)) { return false; }
+            return L.property("ADBE Transform Group").property("ADBE Opacity").valueAtTime(tt, false) > 1;
+        }
+        function box(L, tt) {
+            var s = null; try { s = L.source; } catch (e) {}
+            if (s instanceof CompItem) {
+                var it = (tt - L.startTime) * (L.stretch ? 100 / L.stretch : 1), u = null, k, m, cs, q, j, pts;
+                for (k = 1; k <= s.numLayers; k++) {
+                    if (!visible(s.layer(k), it) || s.layer(k).isTrackMatte) { continue; }
+                    m = AEK.text.measure(s.layer(k), it).comp;
+                    if (m.width * m.height >= s.width * s.height * 0.9) { continue; }
+                    pts = [[m.left, m.top], [m.right, m.top], [m.left, m.bottom], [m.right, m.bottom]];
+                    for (j = 0; j < 4; j++) {
+                        q = AEK.text.toComp2D(L, pts[j], tt);
+                        if (!u) { u = { left: q.x, top: q.y, right: q.x, bottom: q.y }; }
+                        u.left = Math.min(u.left, q.x); u.top = Math.min(u.top, q.y); u.right = Math.max(u.right, q.x); u.bottom = Math.max(u.bottom, q.y);
+                    }
+                }
+                if (u) { return u; }   // a precomp whose only layer fills it (a cropped still) is measured by its own frame
+            }
+            m = AEK.text.measure(L, tt).comp;
+            return { left: m.left, top: m.top, right: m.right, bottom: m.bottom };
+        }
+        for (i = 1; i <= c.numLayers; i++) {
+            l = c.layer(i);
+            if (!visible(l, t) || l.isTrackMatte) { continue; }
+            b = box(l, t);
+            if (!b || (b.right - b.left) * (b.bottom - b.top) >= W * H * 0.9) { continue; }
+            blocks.push({ layer: l.name, box: [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)] });
+        }
+        var U = null, a, d, dx, dy, j2;
+        for (i = 0; i < blocks.length; i++) {
+            b = blocks[i].box;
+            if (b[0] < S.left - 0.5 || b[1] < S.top - 0.5 || b[2] > S.right + 0.5 || b[3] > S.bottom + 0.5) { fails.push({ rule: "outside safe area", layer: blocks[i].layer, box: b }); }
+            U = U ? [Math.min(U[0], b[0]), Math.min(U[1], b[1]), Math.max(U[2], b[2]), Math.max(U[3], b[3])] : b.slice(0);
+            for (j2 = i + 1; j2 < blocks.length; j2++) {
+                a = blocks[j2].box;
+                dx = Math.max(a[0] - b[2], b[0] - a[2]); dy = Math.max(a[1] - b[3], b[1] - a[3]);
+                d = Math.max(dx, dy);   // negative: the boxes overlap
+                if (d < minGap) { fails.push({ rule: d < 0 ? "blocks overlap" : "gap under " + minGap + " px", layers: [blocks[i].layer, blocks[j2].layer], gap: Math.round(d) }); }
+            }
+        }
+        var SH = S.bottom - S.top, res = { comp: c.name, t: t, size: [W, H], safe: [Math.round(S.left), Math.round(S.top), Math.round(S.right), Math.round(S.bottom)], minGap: minGap, blocks: blocks };
+        if (U) {
+            res.content = U;
+            res.spanY = Math.round((U[3] - U[1]) / SH * 100) / 100;
+            res.centerOffsetY = Math.round(((U[1] + U[3]) / 2 - (S.top + S.bottom) / 2) / SH * 100) / 100;
+            res.emptyBelow = Math.round((S.bottom - U[3]) / SH * 100) / 100;
+            res.emptyAbove = Math.round((U[1] - S.top) / SH * 100) / 100;
+            if (res.spanY < minSpan) { fails.push({ rule: "content spans " + res.spanY + " of the safe height (minimum " + minSpan + ")" }); }
+            if (Math.abs(res.centerOffsetY) > maxOff) { fails.push({ rule: "content centre off by " + res.centerOffsetY + " of the safe height (maximum " + maxOff + ")" }); }
+        } else {
+            fails.push({ rule: "no visible content" });
+        }
+        res.fails = fails; res.ok = fails.length === 0;
+        return res;
+    }
+
+    // color({bpc, workingSpace, linearize, engine, linearBlending, gamma}): set, then read back what After Effects kept.
+    // A new project inherits the color engine, bit depth, linear blending and gamma of the project open before it, and
+    // OCIO mode (engine 1) refuses 8 and 16 bpc: the engine is set first, and an inherited OCIO engine is switched back
+    // to Adobe color management (0) when the brief asks for 8 or 16 bpc and names no engine (engineReset in the result).
     function color(o) {
-        var p = app.project;
+        var p = app.project, reset = false;
+        if (o.engine !== undefined) { p.colorManagementSystem = o.engine; }
+        else if (o.bpc && o.bpc !== 32 && p.colorManagementSystem === 1) { p.colorManagementSystem = 0; reset = true; }
         if (o.bpc) { p.bitsPerChannel = o.bpc; }
         if (o.workingSpace) {
             // an unknown name is accepted silently and turns color management OFF (workingSpace reads "None")
@@ -264,7 +362,10 @@ AEX.project = (function () {
             p.workingSpace = o.workingSpace;
         }
         if (o.linearize !== undefined) { p.linearizeWorkingSpace = o.linearize; }
-        return { bpc: p.bitsPerChannel, workingSpace: p.workingSpace, linearize: p.linearizeWorkingSpace, gamma: p.workingGamma };
+        if (o.linearBlending !== undefined) { p.linearBlending = o.linearBlending; }
+        if (o.gamma !== undefined) { p.workingGamma = o.gamma; }
+        return { bpc: p.bitsPerChannel, workingSpace: p.workingSpace, linearize: p.linearizeWorkingSpace, gamma: p.workingGamma,
+            engine: p.colorManagementSystem, linearBlending: p.linearBlending, engineReset: reset };
     }
 
     // conformComps(fps, comps): change comp frame rates; reports keys that land between frames afterwards (they keep their seconds)
@@ -334,14 +435,49 @@ AEX.project = (function () {
             msPerFrame: Math.round((full - empty) / nFrames), budgetMsPerFrame: Math.round(1000 / c.frameRate), rows: rows };
     }
 
+    // sequenceFiles(item): every frame file of an image-sequence item, sorted, or null for a movie or a still.
+    // item.file is the first frame only: copying it alone turns the sequence into a still in the collected project.
+    var SEQ = /^(.*?)(\d{2,})\.(png|jpe?g|exr|tiff?|dpx|psd|tga|bmp)$/i;
+    function sequenceFiles(it) {
+        if (!it.file || it.mainSource.isStill) { return null; }
+        var m = SEQ.exec(decodeURI(it.file.name)), all, i, out = [], mm;
+        if (!m) { return null; }
+        all = it.file.parent.getFiles();
+        for (i = 0; i < all.length; i++) {
+            mm = (all[i] instanceof File) ? SEQ.exec(decodeURI(all[i].name)) : null;
+            if (mm && mm[1] === m[1] && mm[2].length === m[2].length && mm[3].toLowerCase() === m[3].toLowerCase()) { out.push(all[i]); }
+        }
+        out.sort(function (a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
+        return out;
+    }
     // collect(destDir, main): Collect Files stand-in. Copies the file of every footage item reached from main to
-    // <dest>/Footage/, relinks to the copy, saves the project as <dest>/<name>.aep. Originals are never touched.
+    // <dest>/Footage/ (an image sequence: all its frames, into Footage/<name>/), relinks to the copy, saves the
+    // project as <dest>/<name>.aep. Originals are never touched. sidecars lists what After Effects wrote beside the
+    // .aep (a "<name>.aep Logs" folder, an "Auto-Save" folder): leave them out of a handoff archive.
     function collect(dest, main, projectName) {
-        var t = tree(main), fdir = AEK.core.ensureFolder(dest + "/Footage"), i, it, src, target, res = { copied: [], skipped: [], bytes: 0 };
+        var t = tree(main), fdir = AEK.core.ensureFolder(dest + "/Footage"), i, j, it, src, target, res = { copied: [], skipped: [], bytes: 0, sequences: [] };
+        var frames, sdir, fps, firstOk;
         for (i = 1; i <= app.project.numItems; i++) {
             it = app.project.item(i);
             if (!isFootage(it) || !t.seen[it.id]) { continue; }
             if (it.footageMissing) { res.skipped.push({ name: it.name, why: "missing" }); continue; }
+            frames = sequenceFiles(it);
+            if (frames && frames.length > 1) {
+                sdir = AEK.core.ensureFolder(fdir.fsName + "/" + it.id + "_" + decodeURI(it.file.name).replace(SEQ, "$1").replace(/[^\w\-]+/g, "_"));
+                firstOk = true;
+                for (j = 0; j < frames.length; j++) {
+                    target = new File(sdir.fsName + "/" + decodeURI(frames[j].name));
+                    if (!target.exists && !frames[j].copy(target.fsName)) { firstOk = false; res.skipped.push({ name: it.name, why: "copy failed: " + decodeURI(frames[j].name) }); break; }
+                    res.bytes += target.length;
+                }
+                if (!firstOk) { continue; }
+                fps = it.mainSource.conformFrameRate;
+                it.replaceWithSequence(new File(sdir.fsName + "/" + decodeURI(frames[0].name)), true);
+                if (fps) { it.mainSource.conformFrameRate = fps; }
+                res.sequences.push({ name: it.name, frames: frames.length, to: sdir.fsName, framesNow: Math.round(it.duration * it.frameRate) });
+                res.copied.push({ name: it.name, to: sdir.fsName });
+                continue;
+            }
             src = it.file; target = new File(fdir.fsName + "/" + decodeURI(src.name));
             if (target.exists && target.length !== src.length) { target = new File(fdir.fsName + "/" + it.id + "_" + decodeURI(src.name)); }
             if (!target.exists && !src.copy(target.fsName)) { res.skipped.push({ name: it.name, why: "copy failed: " + src.error }); continue; }
@@ -351,6 +487,9 @@ AEX.project = (function () {
         var aep = new File(dest + "/" + (projectName || "collected") + ".aep");
         app.project.save(aep);
         res.project = aep.fsName; res.dirty = app.project.dirty;
+        var side = new Folder(dest).getFiles(), sc = [];
+        for (i = 0; i < side.length; i++) { if (side[i] instanceof Folder && /( Logs|^Auto-Save)$/.test(decodeURI(side[i].name))) { sc.push(decodeURI(side[i].name)); } }
+        res.sidecars = sc;
         return res;
     }
 
@@ -382,7 +521,7 @@ AEX.project = (function () {
         return out;
     }
 
-    return { tree: tree, collapseRisks: collapseRisks, inventory: inventory, findFile: findFile, relink: relink, fixFonts: fixFonts, missingFonts: missingFonts, nestedRates: nestedRates,
+    return { roots: roots, layout: layout, tree: tree, collapseRisks: collapseRisks, inventory: inventory, findFile: findFile, relink: relink, fixFonts: fixFonts, missingFonts: missingFonts, nestedRates: nestedRates,
         rename: rename, fileItems: fileItems, color: color, conformComps: conformComps, offFrameKeys: offFrameKeys,
         makeProxy: makeProxy, rewriteRefs: rewriteRefs, profile: profile, collect: collect, saveVersion: saveVersion, expose: expose, overrides: overrides,
         DEFAULT_NAME: DEFAULT_NAME };

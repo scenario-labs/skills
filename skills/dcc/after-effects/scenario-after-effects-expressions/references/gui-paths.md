@@ -55,3 +55,11 @@ are After Effects 27.0 (macOS shortcuts first, Windows in parentheses).
 | ----------------- | -------------------------------------------------------------------------------- |
 | On-screen readout | a text layer with a Source Text expression returning the value (`Math.round` it) |
 | Check a loop seam | Graph Editor with Show Post-Expression Graph on, zoom on the loop point          |
+
+## Audio-reactive rig
+
+| Task                              | Path                                                                                                           |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Amplitude keys from a music layer | select the audio layer, right-click > Keyframe Assistant > Convert Audio to Keyframes (adds "Audio Amplitude") |
+| See the Level against the music   | Graph Editor on CTRL > Level with Show Post-Expression Graph on; the waveform shows with LL on the audio layer |
+| Bake the Level                    | right-click the Level property > Keyframe Assistant > Convert Expression to Keyframes                          |

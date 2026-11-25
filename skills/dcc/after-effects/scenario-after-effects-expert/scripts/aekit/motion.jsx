@@ -51,7 +51,9 @@ AEK.motion = (function () {
         }
         return out;
     }
-    // sample(prop, comp, t0, t1): value per frame plus speed per second; finds peak speed, overshoot and settle frame
+    // sample(prop, comp, t0, t1): value per frame plus speed per second; finds peak speed, overshoot and settle frame.
+    // settleFrame: first frame from which the value stays within 1 % of the travel from its end value. An eased move reaches
+    // that band before its last key (a rise keyed to f40 read settleFrame 31): compare keys with keys, not with settleFrame.
     function sample(p, c, t0, t1) {
         var fd = c.frameDuration, t, v, prev = null, d, sp, out = { frames: [], peakSpeed: 0, peakFrame: 0, overshoot: 0, settleFrame: null }, j;
         var end = p.valueAtTime(t1, false), start = p.valueAtTime(t0, false), total = 0, dist, maxPast = 0;
@@ -72,19 +74,28 @@ AEK.motion = (function () {
         out.travel = total;
         return out;
     }
-    // linearKeys(comp): properties whose keys are still linear in time (the usual sign of unfinished motion)
-    function linearKeys(c) {
-        var out = [], i, l;
+    // linearKeys(comp, {baked}): properties whose keys are still linear in time (the usual sign of unfinished motion).
+    // Baked data (a key on every frame: tracker, Convert Audio to Keyframes, a baked expression) must stay linear: it is
+    // left out and listed in out.baked unless {baked: true}. The array is returned as before, with .baked attached.
+    function linearKeys(c, o) {
+        o = o || {};
+        var out = [], baked = [], i, l;
         for (i = 1; i <= c.numLayers; i++) {
             l = c.layer(i);
             AEK.core.walk(l, function (p) {
                 var k, lin = 0;
                 if (p.propertyType !== PropertyType.PROPERTY) { return; }
+                // a separated Position: the hidden leader reports its followers' key count as linear after a reopen; read the followers
+                try { if (p.dimensionsSeparated && p.isSeparationLeader) { return; } } catch (e0) {}
                 try { if (p.numKeys < 2) { return; } } catch (e) { return; }
                 for (k = 1; k <= p.numKeys; k++) { if (p.keyOutInterpolationType(k) === KeyframeInterpolationType.LINEAR && p.keyInInterpolationType(k) === KeyframeInterpolationType.LINEAR) { lin++; } }
-                if (lin) { out.push({ layer: l.name, property: p.name, matchName: p.matchName, keys: p.numKeys, linear: lin }); }
+                if (!lin) { return; }
+                var row = { layer: l.name, property: p.name, matchName: p.matchName, keys: p.numKeys, linear: lin };
+                var span = Math.round((p.keyTime(p.numKeys) - p.keyTime(1)) * c.frameRate);
+                if (!o.baked && p.numKeys >= 8 && span <= p.numKeys) { baked.push(row); } else { out.push(row); }
             });
         }
+        out.baked = baked;
         return out;
     }
     return { key: key, ease: ease, bezier: bezier, keys: keys, sample: sample, linearKeys: linearKeys };

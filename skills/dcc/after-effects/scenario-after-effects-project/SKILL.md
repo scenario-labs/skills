@@ -1,6 +1,6 @@
 ---
 name: scenario-after-effects-project
-description: "Use when an After Effects project must be set up, inherited, cleaned or handed over: a messy project from freelancers, comps named Comp 1 or Pre-comp 12, missing footage or red color bars, missing fonts, missing effects or plugins nobody has, mixed frame rates, 8 bpc banding, wrong working space, no folder or naming scheme, previews or renders that are slow, the Composition Profiler, proxies, precompose versus collapse transformations, a 3D precomp that went flat, Reduce Project, Remove Unused Footage, Collect Files, versioned saves, or Essential Properties to make variants from one precomp. Also when someone says the project is a mess, make it production ready, why is my preview slow, relink everything, or package the project for another artist."
+description: "Use when an After Effects project must be set up, inherited, cleaned or handed over: comps named Comp 1, missing footage, fonts or effects, mixed frame rates, banding or wrong working space, slow previews, proxies, precompose versus collapse, Reduce Project, relink everything, Collect Files, versioned saves, or Essential Properties for variants from one precomp."
 license: MIT
 ---
 
@@ -75,34 +75,34 @@ Never clean the received file in place: save it as `<name>_v000_received.aep` fi
 
 In a person's live session, never open, close or switch projects unasked. Opening or creating a
 project while the current one has unsaved changes raises a native Save As panel that nothing can
-close from outside, and it blocks After Effects. Ask, save first (`app.project.save()`), then open.
-`AEK.core.open` and `AEK.core.fresh` discard changes: test sessions only.
+close from outside, and it blocks After Effects. Ask them to save first. `AEK.core.open` and
+`AEK.core.fresh` discard changes: test sessions only.
 
 ## Procedure
 
 Load the helper: `ae.py run job.jsx --lib <skill>/scripts/project.jsx`. Each stage is one job, one
 undo group. Full code in [procedures.md](references/procedures.md).
 
-1. **Freeze and inventory.** Goal: a written picture of the mess. Save the received version
-   (`AEX.project.saveVersion`), then `AEX.project.inventory(main)`. Capture
-   `ae.py frames MAIN --spread 6 --sheet` as the before sheet. GATE: inventory JSON saved; before
-   frames exist.
+1. **Freeze and inventory.** Save the received version (`AEX.project.saveVersion`), run
+   `AEX.project.inventory(main)`, and capture the before frames in the same job
+   (`AEK.capture.spread`): on a shared After Effects another job can open its project in between.
+   GATE: inventory JSON saved; before frames exist.
 2. **Relink.** `AEX.project.relink([roots])` searches each missing file by name under the roots the
    user gives (drives, the delivery folder). It never picks between two candidates silently. GATE:
    `missing.length` 0, or each leftover listed for the producer.
 3. **Fonts and effects.** `AEX.project.missingFonts()`, then `AEX.project.fixFonts(fallback)` only
    with the user's fallback. Missing effects: list match names; rebuild natively, pre-render on a
-   machine that has the plugin, or disable and label. If a plugin crashes the project on open, a
-   person restarts in Safe Mode (Settings > Startup & Repair > Start in Safe Mode: third-party
-   plugins off) (Adobe documentation). Check the installed third-party effects for the yellow
-   warning icon in Effect Controls: they do not support Multi-Frame Rendering (Adobe documentation).
-   GATE: 0 substitutes; each missing effect has an owner.
-4. **Settings.** `AEX.project.color({bpc, workingSpace, linearize})` and read back: a new project
-   inherits the bit depth and working space of the one open before it [live 27.0]. Linearize only at
-   16 or 32 bpc (Adobe documentation). Before turning a working space on, set Preserve RGB
-   (Interpret Footage > Color) on control footage such as displacement maps, or its values get
-   converted (Adobe documentation). Set the expression engine to JavaScript and the time display to
-   frames. GATE: read-back equals the brief.
+   machine that has the plugin, or disable and label. A plugin that crashes the project on open:
+   Safe Mode, and effects without Multi-Frame Rendering support:
+   [procedures.md](references/procedures.md) 3. GATE: 0 substitutes; each missing effect has an
+   owner.
+4. **Settings.** `AEX.project.color({bpc, workingSpace, linearize, linearBlending})` and read back:
+   a new project inherits the color engine, bit depth, working space, linear blending and gamma of
+   the one open before it, and OCIO refuses 8 and 16 bpc; `color` resets an inherited OCIO engine
+   (`engineReset`) [live 27.0]. Linearize only at 16 or 32 bpc (Adobe documentation). Before turning
+   a working space on, set Preserve RGB (Interpret Footage > Color) on control footage such as
+   displacement maps, or its values get converted (Adobe documentation). Set the expression engine
+   to JavaScript and the time display to frames. GATE: read-back equals the brief.
 5. **Frame rates.** `AEX.project.conformComps(fps, comps)` on comps that must match; keep a
    deliberate low rate with `preserveNestedFrameRate`. GATE: `keysBetweenFrames` 0 after
    re-snapping; `nestedRateMismatch` empty or deliberate.
@@ -110,10 +110,10 @@ undo group. Full code in [procedures.md](references/procedures.md).
    tree (`PC_<parent>_<first named layer>`). Read the frames and give final names by role. A rename
    by script does not update expressions that name the comp or layer: they fail with "layer named
    'X' is missing" [live 27.0]. `rename` rewrites `comp("X")` and `layer("X")` references and
-   returns `exprErrors` for what it could not see (names built from variables). Apply final names
-   with the same care. `AEX.project.fileItems(main)` files items into `01_Main`, `02_Precomps`,
-   `03_Footage/Video|Stills|Audio`, `04_Solids`, `99_Unused`. GATE: `defaultNames` 0; `exprErrors`
-   empty; nothing at the root.
+   returns `exprErrors` for what it could not see (names built from variables).
+   `AEX.project.fileItems(main)` (one comp or a list; render-queue, `MAIN_` and `DLV_` comps count
+   as roots) files items into `01_Main`, `02_Precomps`, `03_Footage/Video|Stills|Audio`,
+   `04_Solids`, `99_Unused`. GATE: `defaultNames` 0; `exprErrors` empty; nothing at the root.
 7. **Structure.** Run `AEX.project.collapseRisks()`. For each collapsed precomp that flattens,
    decide: delete the effect (3D must interact), or turn collapse off (effect must follow the
    layer). `collapseRisks` does not flag two cases; check them by eye: point-control effects
@@ -130,13 +130,19 @@ undo group. Full code in [procedures.md](references/procedures.md).
 9. **Reduce.** Archive a copy, then `app.project.removeUnusedFootage()` and
    `app.project.reduceProject([main])`. GATE: audit errors 0; the main comp renders the same frames.
 10. **Save, collect, prove.** `AEX.project.saveVersion(dir, base)`. For handoff,
-    `AEX.project.collect(dest, main, name)` copies sources and relinks to the copies. Render
-    headless with `ae.py aerender` and `ae.py probe`. For a shared project, a person sets Auto-Save
-    with Maximum Project Versions (Settings > Auto-Save; older versions are deleted) (Adobe
-    documentation). GATE: every footage path under `dest`; aerender exit 0; the after sheet matches
-    the before sheet where nothing was meant to change.
+    `AEX.project.collect(dest, main, name)` copies sources (every frame of an image sequence) and
+    relinks to the copies; leave its `sidecars` (`<name>.aep Logs`, `Auto-Save`) out of the archive.
+    Render headless with `ae.py aerender` and `ae.py probe`. For a shared project, a person sets
+    Auto-Save with Maximum Project Versions (Settings > Auto-Save) (Adobe documentation). GATE:
+    every footage path under `dest`; aerender exit 0; the after sheet matches the before sheet where
+    nothing was meant to change.
 
-Variants of one element: build one precomp, expose controls with `AEX.project.expose`, override per
+New project with one master and several formats: `MAIN_` master, `DLV_<Brand>_<ratio>_<size>`
+deliverables placing the same `PC_` precomps with a layout per format, safe areas per format,
+`AEX.project.layout` gate on each hold frame ([procedures.md](references/procedures.md) 14). GATE:
+`layout(...).ok` per deliverable.
+
+Variants of one element: one precomp, controls exposed with `AEX.project.expose`, override per
 instance on the precomp layer's `essentialProperty` group, read them back with
 `AEX.project.overrides`. GATE: the source comp is unchanged and each instance shows its own values.
 
@@ -155,7 +161,9 @@ instance on the precomp layer's `essentialProperty` group, read them back with
 | Advanced 3D working quality                | Render Quality 12, Smoothness 2 (Jake Bartlett, 6wQjuplvypI 00:09:32)                                                                                    | per comp, raise for final                       |
 | Upscale warning                            | above 105 %                                                                                                                                              | footage pixels                                  |
 | Bit depth                                  | 8 for simple graphics, 16 for finishing, 32 for linear and HDR                                                                                           | project                                         |
-| Naming                                     | `MAIN_`, `PC_`, `UNUSED_`, version `_v###`                                                                                                               | items and files                                 |
+| Naming                                     | `MAIN_`, `PC_`, `DLV_<Brand>_<ratio>_<size>`, `UNUSED_`, version `_v###`                                                                                 | items and files                                 |
+| Safe area                                  | title 10 % per side; Reels and Stories top 14 %, bottom 35 %, sides 6 %                                                                                  | frame                                           |
+| Gap between text blocks                    | 3 % of the shorter side at least (32 px at 1080)                                                                                                         | frame                                           |
 
 ## Quality gates
 
@@ -170,20 +178,16 @@ layers.
 
 ## Common mistakes
 
-| Mistake                                         | Symptom                                            | Fix                                                             |
-| ----------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------- |
-| Trusting `getFontsByPostScriptName`             | audit says fonts are fine, render shows a fallback | `usedFonts[i].font.isSubstitute`                                |
-| Conforming comps late                           | jittery cuts, keys between frames                  | conform first, re-snap, check `offFrameKeys`                    |
-| Disabling an effect on a collapsed 3D precomp   | layers still render behind outside 3D layers       | delete the effect, or move it inside the precomp                |
-| Effect on a collapsed layer with point controls | gradient or light sweep stuck to the comp frame    | turn collapse off (Jake Bartlett, Ns41v75th_I 00:09:14)         |
-| Collapsed 3D precomp shows nothing in 3D        | inner camera ignored                               | add a camera in the parent comp                                 |
-| Draft render with proxies on                    | soft frames in a review render                     | set Proxy Use "Use No Proxies"                                  |
-| Typo in working space                           | color management silently off                      | validate against `listColorProfiles()`                          |
-| Reduce Project on the only copy                 | comps for later versions gone                      | archive `_v###` first, reduce the delivery copy                 |
-| Profiling with warm caches                      | everything looks cheap                             | purge All Memory & Disk Cache first                             |
-| Opening another project with unsaved changes    | After Effects stops answering (Save As panel)      | save first; never switch projects in a person's session unasked |
-| Renaming comps or layers with a plain `name =`  | expressions fail, "layer named 'X' is missing"     | `AEX.project.rename`, then read `exprErrors`                    |
-| Relinking by first match                        | wrong take with the same file name                 | stop on ambiguity, show the user                                |
+| Mistake                                         | Symptom                                            | Fix                                                     |
+| ----------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------- |
+| Trusting `getFontsByPostScriptName`             | audit says fonts are fine, render shows a fallback | `usedFonts[i].font.isSubstitute`                        |
+| Conforming comps late                           | jittery cuts, keys between frames                  | conform first, re-snap, check `offFrameKeys`            |
+| Disabling an effect on a collapsed 3D precomp   | layers still render behind outside 3D layers       | delete the effect, or move it inside the precomp        |
+| Effect on a collapsed layer with point controls | gradient or light sweep stuck to the comp frame    | turn collapse off (Jake Bartlett, Ns41v75th_I 00:09:14) |
+| Reduce Project on the only copy                 | comps for later versions gone                      | archive `_v###` first, reduce the delivery copy         |
+| Renaming comps or layers with a plain `name =`  | expressions fail, "layer named 'X' is missing"     | `AEX.project.rename`, then read `exprErrors`            |
+
+More mistakes: [critique.md](references/critique.md), Common mistakes.
 
 ## Handoffs
 
@@ -199,18 +203,8 @@ layers.
 
 ## Version notes
 
-- 22.0: Multi-Frame Rendering, Composition Profiler, `Property.essentialPropertySource`,
-  `app.setMultiFrameRenderingConfig()`. "Master Properties" is the pre-17.5 name of Essential
-  Properties.
-- 24.3: `app.purge(PurgeTarget.ALL_CACHES)` also clears the disk cache.
-- 24.5: `Project.usedFonts` and `replaceFont()`. Before that, replace fonts per layer through the
-  TextDocument.
-- 25.2 and 26.0: disk cache playback and Lossless Compressed Playback reduce the need for playback
-  proxies.
-- 26.2 and 26.3: SVG import and Illustrator paste as shape layers; fewer reasons to continuously
-  rasterize imported vectors.
-- 27.0: Auto-Save works before the first save and recovers after a crash; the AI Assistant can
-  rename and organize items (credits per action, a person must confirm).
+Feature versions (Multi-Frame Rendering, `usedFonts`, disk cache playback, SVG import, Auto-Save in
+27.0): [procedures.md](references/procedures.md), Version notes.
 
 ## References
 

@@ -1,6 +1,6 @@
 ---
 name: scenario-after-effects-motion-production
-description: "Use when an After Effects job is a commercial piece with a brief: an ad, a user-acquisition ad for a mobile game, a social cut, a trailer, a promo, an explainer, a store preview, an end card. Triggers: make five versions, variants for A/B testing, different hooks and calls to action, the first second, hook, the ad is too slow, cut to the beat, pacing to music, sound design, whoosh and impact placement, the mix is too quiet or too loud, LUFS, end card, call to action, safe zones for TikTok, Reels or Shorts, text hidden under the buttons, 9:16 to 1:1 and 16:9, a 10 second cut from the 20 second master, beat sheet, storyboard to timeline, review this ad, creative director pass, is this ready to ship."
+description: "Use when an After Effects job is a commercial piece with a brief: a game UA ad, social cut, trailer, promo, store preview or end card. Triggers: variants for A/B tests, hooks and calls to action, cut to the beat, sound design, LUFS, safe zones for TikTok, Reels or Shorts, 9:16 to 1:1 and 16:9, a shorter cut, review this ad, is this ready to ship."
 license: MIT
 ---
 
@@ -67,22 +67,25 @@ version traps).
    destination (Joey Korenman, 1nChUaFL3rc 00:02:54). Rate every clip 1 to 3 stars from its frames
    and order the shots in waves (1, 2, 3, 1, 2, 3), never a straight ramp (Lieu 00:19:25 to
    00:20:05). Write the hook (one unique thing), the intensity curve, one row per shot (clip, source
-   frame, text, SFX, level), the end card and a layout row per format. Hand animation-heavy beats to
-   scenario-after-effects-animation and type looks to scenario-after-effects-typography. GATE: total
-   frames match the placement; the hook line is 7 words or fewer; every text has
-   `frames >= 12 + 9 per word` [added]; key lines captioned; one CTA.
-2. **Beats from the music.** Goal: cuts on the beat. `adtools.py detect` (ffmpeg `silencedetect` on
-   a percussive stem) or `grid` from a known tempo, then `adtools.py snap sheet beats`. GATE: every
-   snapped cut within 1 frame of a beat; no shot under 18 frames; the payoff on a downbeat (a person
-   picks it by ear).
+   frame, text, SFX, level), the end card and a layout row per format. GATE: total frames match the
+   placement; the hook line is 7 words or fewer, over a shot that shows the product
+   (`product: true`); every text has `frames >= 12 + 9 per word` [added]; key lines captioned; one
+   CTA.
+2. **Beats from the music.** Goal: cuts on the beat. `adtools.py detect music.wav` fits a tempo and
+   a beat grid to the full mix and returns `bpm`, `offset`, `beats` and `confidence`; a `warning`
+   means a stem, `--bpm-range` or a known tempo (`grid`) (procedures 3). Then
+   `adtools.py snap sheet beats`. GATE: every snapped cut within 1 frame of a beat; no shot under 18
+   frames; the payoff on a downbeat (a person picks it by ear).
 3. **Build the master.** Goal: one comp from the sheet, one job, one undo step.
    `AEX.ad.build(sheet, items, "9x16", {protect: true})` makes shots, comp markers (protected hook
    and end card), text, SFX at their levels, the end card and the character; then
-   `AEX.ad.beatMarkers` on `MUSIC`. Procedure 2 in [procedures.md](references/procedures.md). Where
-   two gameplay shots match, scale 100 to 105 % with anticipation into the cut (Ben Marriott,
-   ythBGTLjot8 00:01:12, 00:07:38); on secondary hits, 116 % for 1 frame (Josh Noel, bYhtddGkVxQ
-   00:04:49). GATE: `fits` with no overflow, comp markers match the sheet, `AEX.ad.beatOffsets` all
-   within 1 frame; sheet of frames 0, 15, 30 shows the hook line readable on moving gameplay.
+   `AEX.ad.beatMarkers` on `MUSIC`. A brand or product spot: `sheet.style.preset "brand"` (no
+   stroke, no pops, text CTA, scrim under the hook). Procedure 2 in
+   [procedures.md](references/procedures.md). Where two gameplay shots match, scale 100 to 105 %
+   with anticipation into the cut (Ben Marriott, ythBGTLjot8 00:01:12, 00:07:38); on secondary hits,
+   116 % for 1 frame (Josh Noel, bYhtddGkVxQ 00:04:49). GATE: `fits` with no overflow, comp markers
+   match the sheet, `AEX.ad.beatOffsets` all within 1 frame; sheet of frames 0, 15, 30 shows the
+   hook line readable on moving gameplay.
 4. **Safe zones.** Goal: nothing important under platform UI. `AEX.ad.zoneCheck(comp, zones)` on
    every text, logo, CTA and badge layer; `AEX.ad.guides(comp, zones, {render: true})` for review
    frames. GATE: zero violations on every target network; review sheet with the overlay rendered
@@ -97,50 +100,52 @@ version traps).
 6. **End card.** Goal: a frame that sells one action. Logo, one CTA pill with a slow pulse, badges
    below the CTA and above the bottom band; enters on a beat; differs from the last gameplay frame.
    Logo animation recipes go to scenario-after-effects-shape-layers or scenario-after-effects-3d. A
-   playable end card (7x IPM, 47 % better CTR than static, AppTweak) is built outside After Effects:
-   offer it as a test cell. GATE: hold 75 frames or more [added], CTA on screen 60 frames or more
-   [added], inside every safe zone.
+   playable end card is a separate test cell ([critique.md](references/critique.md)). GATE: hold 75
+   frames or more [added], CTA on screen 60 frames or more [added], inside every safe zone.
 7. **Variants.** Goal: N test cells from one master. Expose hook text, CTA text and the hook shot
    (media replacement) with `addToMotionGraphicsTemplateAs`; per cell a comp holding one instance
-   with overrides; `AEX.ad.lineFor` breaks and measures each override in the master first. Naming
-   `<Game>_UA_9x16_20s_H<n>_C<n>_v001`. Batch mechanics at scale go to
+   with overrides; `AEX.ad.lineFor` breaks and measures each override in the master first. Naming:
+   [procedures.md](references/procedures.md) section 12. Batch mechanics at scale go to
    scenario-after-effects-scripting. Read the test by hold rate and IPM per cell (AppTweak). GATE:
    every override fits its box (copy that does not fit is rewritten, never shrunk in one cell);
    contact sheet of all first frames and all end cards side by side.
 8. **Formats and cuts.** Goal: 1:1, 16:9, shorter cuts from the same data. Other ratios use their
-   layout row; shorter cuts are derived sheets (drop shots, re-snap), or Time Remap keys that keep
-   hook and end card at speed 1. GATE: text inside the frame at 5 % margins; every shot whose cover
-   crop keeps under about 60 % of the capture gets a reframe pass by hand [added]; a 10 s cut passes
-   the same report.
+   layout row; a master that is not a gameplay ad (end card, brand spot, product mark) goes through
+   `AEX.ad.reformat(master, layouts)`, one comp per layout row with its own texts and zones
+   (procedures.md section 7b); shorter cuts are derived sheets (drop shots, re-snap), or Time Remap
+   keys that keep hook and end card at speed 1. GATE: text inside the frame at 5 % margins; every
+   shot whose cover crop keeps under about 60 % of the capture gets a reframe pass by hand [added];
+   a 10 s cut passes the same report.
 9. **Review and deliver.** Goal: a verdict per variant. `AEX.ad.report` then
-   `adtools.py review --render mix.aif`. Render each cell with
-   `H.264 - Match Render Settings - 15 Mbps` (writes `.mp4`; measured 18.9 Mbps, so the name is not
-   a cap) from the Render Queue or `aerender`, which exits 0 on a wrong comp name: gate on the file
-   with `ae.py probe` (procedures.md section 11). Over a network's cap, re-encode through
-   scenario-after-effects-color-delivery. GATE: scorecard errors at zero, warnings explained; every
-   file matches codec, size, rate, frame count, audio, and the size and bit-rate cap from the brief
-   (Apple previews: 500 MB); the person-judged list answered with frame numbers; someone who does
-   not know the game watches it once (Lieu 00:26:13). Rubric: [critique.md](references/critique.md).
+   `adtools.py review --render mix.aif --picture cell.mp4` (adds near-empty stretches and end-card
+   content). Render each cell with `H.264 - Match Render Settings - 15 Mbps` (writes `.mp4`;
+   measured 18.9 Mbps, so the name is not a cap) from the Render Queue or `aerender`, which exits 0
+   on a wrong comp name: gate on the file with `ae.py probe` (procedures.md section 11). Over a
+   network's cap, re-encode through scenario-after-effects-color-delivery. GATE: scorecard errors at
+   zero, warnings explained; every file matches codec, size, rate, frame count, audio, and the size
+   and bit-rate cap from the brief; the person-judged list answered with frame numbers; someone who
+   does not know the game watches it once (Lieu 00:26:13). Rubric:
+   [critique.md](references/critique.md).
 
 ## Numbers
 
-| Value                                  | Meaning                                                            | Source                                         |
-| -------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
-| hook text by frame 3                   | at 30 fps                                                          | [added]                                        |
-| 3 to 5 s                               | hook window                                                        | AppLovin doc                                   |
-| 12 + 9 frames per word, 30 minimum     | text reading time at 30 fps                                        | 1 s floor Plainly; rate [added]                |
-| 2 lines, 32 to 40 characters, 1 to 7 s | caption limits                                                     | Plainly doc                                    |
-| 4 to 12 cuts per 10 s                  | fast social cut; set per brief                                     | [added]                                        |
-| within 1 frame                         | cut to beat after snapping (measured worst 0.49)                   | [added], live                                  |
-| 0.35 s                                 | whoosh lead before the cut                                         | live                                           |
-| 75 frames                              | end-card hold minimum at 30 fps                                    | [added]                                        |
-| 14 % top, 35 % bottom, 6 % sides       | Meta Reels ads safe zone                                           | Meta Ads Guide, retrieved 2026-11-25           |
-| overlay file                           | TikTok in-feed and Google vertical safe zones (no printed numbers) | ads.tiktok.com, support.google.com, 2026-11-25 |
-| -14 LUFS, -1 dBTP                      | social mix target, true peak ceiling                               | [added]; EBU R 128 for the peak                |
-| -23 LUFS                               | broadcast target                                                   | EBU R 128                                      |
-| 15 to 30 s, 886 x 1920 or 1080 x 1920  | App Store preview                                                  | Apple, retrieved 2026-11-24                    |
-| 15 % of duration                       | Create Intro or Outro protected region                             | Adobe Help                                     |
-| 56 % / 32 %                            | share of a 9:16 capture's height kept by cover fit in 1:1 / 16:9   | live                                           |
+| Value                                  | Meaning                                                                    | Source                                         |
+| -------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------- |
+| hook text by frame 3                   | at 30 fps                                                                  | [added]                                        |
+| 3 to 5 s                               | hook window                                                                | AppLovin doc                                   |
+| 12 + 9 frames per word, 30 minimum     | text reading time at 30 fps                                                | 1 s floor Plainly; rate [added]                |
+| 2 lines, 32 to 40 characters, 1 to 7 s | caption limits                                                             | Plainly doc                                    |
+| 4.5:1, 3:1                             | text contrast on its background, body / large type (`adtools.py contrast`) | WCAG 2.2                                       |
+| 4 to 12 cuts per 10 s                  | fast social cut; set per brief                                             | [added]                                        |
+| within 1 frame                         | cut to beat after snapping (measured worst 0.49)                           | [added], live                                  |
+| 0.35 s                                 | whoosh lead before the cut                                                 | live                                           |
+| 75 frames                              | end-card hold minimum at 30 fps                                            | [added]                                        |
+| 14 % top, 35 % bottom, 6 % sides       | Meta Reels ads safe zone                                                   | Meta Ads Guide, retrieved 2026-11-25           |
+| overlay file                           | TikTok in-feed and Google vertical safe zones (no printed numbers)         | ads.tiktok.com, support.google.com, 2026-11-25 |
+| -14 LUFS, -1 dBTP                      | social mix target, true peak ceiling                                       | [added]; EBU R 128 for the peak                |
+| -23 LUFS                               | broadcast target                                                           | EBU R 128                                      |
+| 15 to 30 s, 886 x 1920 or 1080 x 1920  | App Store preview                                                          | Apple, retrieved 2026-11-24                    |
+| 56 % / 32 %                            | share of a 9:16 capture's height kept by cover fit in 1:1 / 16:9           | live                                           |
 
 ## Quality gates
 
@@ -164,16 +169,11 @@ version traps).
 | Text stroke over fill                     | white type renders nearly black at 40 px with a 5 px stroke (measured) | `strokeOverFill = false`                                    |
 | Shrinking a long line to fit              | 27 px hook at 540 wide                                                 | two balanced lines past 85 % shrink, else rewrite           |
 | Override text written as typed            | 500 to 1,037 px in a 400 px box (measured)                             | `AEX.ad.lineFor` in the master first                        |
-| Moving only the in point of a still       | logo out point at 36 s in a 20 s comp (measured)                       | set in and out points together                              |
-| Pop keys on a scaled layer                | logo jumps back to 100 %                                               | keys relative to the current scale                          |
-| Guide layer for review frames             | overlay missing from `saveFrameToPng` frames                           | `guideLayer = false` for review, disabled for delivery      |
 | Gain on every layer to reach -14 LUFS     | +0.1 dBTP, over the ceiling (measured)                                 | Compressor bus with Output Limit                            |
 | `outPoint` or `stretch` for a shorter cut | end card lost, or hook sped up                                         | derived sheet, or Time Remap keys holding hook and end card |
-| Three things changed per variant          | test result not attributable                                           | one variable per cell                                       |
-| Logo or black in the first frames         | hook wasted                                                            | logo on the end card only                                   |
-| HUD left on in captures                   | score and buttons compete with the hook                                | HUD off, or only the part the shot needs                    |
-| Music faded out at the end                | the ending brakes                                                      | cut before the next beat, reverb tail                       |
 | Trusting the `aerender` exit code         | exit 0, no file (wrong comp name, measured)                            | probe the output file                                       |
+
+More mistakes: [critique.md](references/critique.md), Common mistakes.
 
 ## Handoffs
 
@@ -188,13 +188,8 @@ version traps).
 
 ## Version notes
 
-- Essential Properties carry that name since 17.5 (October 2020; earlier builds say Master
-  Properties). `Property.essentialPropertySource` since 22.0.
-- Any layer as a track matte since 23.0; H.264 from the Render Queue since 23.0.
-- Audio Compressor, Gate and Distortion arrived in 26.0, De-esser in 27.0: on 25.x the mix bus has
-  no compressor, so render stems and mix outside After Effects.
-- Protected regions (Responsive Design - Time): set by script with `MarkerValue.protectedRegion`,
-  but on 27.0 a scripted out-point change or `stretch` ignored them (Procedure 8).
+Essential Properties, track mattes, the Audio Compressor (26.0) and protected regions by version:
+[procedures.md](references/procedures.md), Version notes.
 
 ## References
 

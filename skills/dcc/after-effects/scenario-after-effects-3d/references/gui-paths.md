@@ -90,3 +90,21 @@
   underneath to check cut-out edges (7tVyu-rjHbg 00:04:07).
 - Rendering: Composition > Add to Render Queue (Ctrl+M on Windows, Cmd+Ctrl+M on macOS), or aerender
   on a saved project.
+
+## Floor, contact shadow, reflection
+
+- Floor: Layer > New > Solid, one flat color, 3D switch, X Orientation 270; Material Options >
+  Accepts Shadows On. The pool of light comes from the key spot.
+- Contact shadow: a black solid on the floor plane, raised 1 px, Ellipse tool mask with Mask Feather
+  about 40 % of its depth; Material Options > Accepts Lights Off; Opacity 70 to 90 %.
+- Reflection: duplicate the 3D comp (Cmd+D in the Project panel), turn off everything except the
+  model, lights and camera, set the model's Scale Y negative. In an outer comp, stack the backdrop,
+  then the reflection comp with Effect > Blur & Sharpen > Compound Blur (Blur Layer = a precomp of a
+  Gradient Ramp). Its track matte is the same ramp precomp, luminance, inverted
+  (`TrackMatteType.LUMA_INVERTED`). The 3D comp goes on top with its floor at 70 to 90 % opacity.
+- Mask mode: Timeline > Masks > Mode popup (Subtract for a vignette).
+
+## Materials of a generated model
+
+- Roughness and Metallic are set per material in Properties panel > Material. Outside After Effects,
+  the GLB's own material factors can be edited before import (procedure 13).

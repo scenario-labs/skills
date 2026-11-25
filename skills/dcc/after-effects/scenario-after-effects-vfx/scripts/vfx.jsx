@@ -8,7 +8,11 @@
 //   AEX.pn        CC Particle World set from on-screen numbers (count, px, px/s)
 //   AEX.burst     energy hit: radial streaks through Polar Coordinates, core cones, a few sparks with Echo trails; particle-only planes
 //   AEX.atmo      embers and dust in three planes, beam, title hole, seamless loop
-//   AEX.smoke     lit procedural smoke; a small looping flame with embers and heat haze
+//   AEX.smoke     smoke plume and looping flame entry points (build, flame), embers, heat haze, crossfade loop
+//   AEX.fire      flame grown from a fixed source: one-sided displacement map, three noise scales, one tone map, sharpen
+//   AEX.plume     smoke plume: stringy wisps through a widening leaning mask, swayed with height, gray, Screen
+//   AEX.motes     dust in a light beam: few motes by depth, slow rise, soft discs, faint beam
+//   AEX.element   land a generated element on black (fire, smoke): foot, black level, palette, Screen, glow, thrown light
 //   AEX.shock     shockwave ring: polar band, stroke ring, ring of light, refraction, motion-blur split
 //   AEX.rays      light rays from a light-only layer, plate fallback, rays inside a light rig
 //   AEX.bolt      lightning strike: white core in a light rig, envelope, spill
@@ -243,14 +247,15 @@ AEX.light = (function () {
     function weights(total, n, k) { var a = [], s = 0, i; for (i = 0; i < n; i++) { a.push(Math.pow(k, i)); s += a[i]; } for (i = 0; i < n; i++) { a[i] = a[i] * total / s; } return a; }
     // bloom(layer, {radii, weights}): Gaussian copies named "<layer> bloom <radius>" (AEX.glow.copies). Returns the copy names.
     function bloom(src, o) { return AEX.glow.copies(src, o.radii, o.weights, { label: "bloom" }); }
-    // map(layer, tones): CC Toner in Pentone mode (Tones -0005 = 3): shadow, dark, mid, bright, high at luminance 0, 0.25, 0.5, 0.75, 1. Returns the effect.
+    // map(layer, tones), also toneMap (the name to call from other modules: ae_check reads ".map(" as the ES5 array method): CC Toner in Pentone mode (Tones -0005 = 3): shadow, dark, mid, bright, high at luminance 0, 0.25, 0.5, 0.75, 1. Returns the effect.
     function map(l, t) {
         t = t ? tones(t) : TONES;
         return U.fx(l, "CC Toner", { "CC Toner-0005": 3, "CC Toner-0003": t.shadow || BLACK, "CC Toner-0007": t.dark, "CC Toner-0002": t.mid, "CC Toner-0006": t.bright, "CC Toner-0001": t.high }, "Light map");
     }
     // rig(comp, name, o): comps <name>_light (put gray light layers here with add()) and <name>_sum (black, light in Add, bloom copies),
     // and a layer <name> in comp with o.gain, the map (o.tones, partial override of TONES) and Add. o.bloom default AEX.glow.plan({r0 12, n 5,
-    // total 2.0, k 0.75}). Comp names must be new: a second rig with the same name throws. Returns {light, sum, layer, bloom, warnings}.
+    // total 2.0, k 0.75}). o.headroom (h, 1 = off; 2 for a hit whose core and bloom sum above 1, which reads as a flat pale disc at the attack).
+    // Comp names must be new: a second rig with the same name throws. Returns {light, sum, layer, bloom, warnings}.
     function rig(c, name, o) {
         o = o || {};
         var lc = AEK.build.comp(name + "_light", { width: c.width, height: c.height, fps: c.frameRate, duration: c.duration });
@@ -259,11 +264,17 @@ AEX.light = (function () {
         var ll = hc.layers.add(lc);
         ll.name = "LIGHT";
         ll.blendingMode = BlendingMode.ADD;
-        var b = o.bloom || AEX.glow.plan({ r0: 12, n: 5, total: 2.0, k: 0.75 });
+        var b = o.bloom || AEX.glow.plan({ r0: 12, n: 5, total: 2.0, k: 0.75 }), hr = o.headroom || 1, i;
+        if (hr > 1) { b = { radii: b.radii, weights: [] }; for (i = 0; i < b.radii.length; i++) { b.weights.push((o.bloom || AEX.glow.plan({ r0: 12, n: 5, total: 2.0, k: 0.75 })).weights[i] / hr); } }
         if (b.radii.length) { bloom(ll, b); }
+        if (hr > 1) { U.gain(ll, 1 / hr, "Headroom"); }
         var l = c.layers.add(hc);
         l.name = name;
         if (o.gain) { U.gain(l, o.gain, "Gain"); }
+        // headroom: the sum is scaled by 1 / h before it clamps at 1, then a gamma of h brings the mid tones back; only a sum at h or more
+        // reaches the top tone, so a hot core rolls off instead of a flat disc of the top tone. The gamma also lifts the faint bloom tails into
+        // visible boxes (the copies' bounds): Input Black o.headroomBlack (0.02) cuts them
+        if (hr > 1) { U.fx(l, "ADBE Easy Levels2", { "ADBE Easy Levels2-0003": o.headroomBlack === undefined ? 0.02 : o.headroomBlack, "ADBE Easy Levels2-0005": hr }, "Headroom shoulder"); }
         map(l, o.tones);
         l.blendingMode = BlendingMode.ADD;
         return { light: lc, sum: hc, layer: l, bloom: b, warnings: check(tones(o.tones)) };
@@ -275,7 +286,7 @@ AEX.light = (function () {
         if (lum !== undefined && lum !== 1) { U.gain(l, lum, "Light level"); }
         return l;
     }
-    return { TONES: TONES, MAXCH: MAXCH, check: check, tones: tones, hex: U.hex, radii: radii, weights: weights, bloom: bloom, map: map, rig: rig, add: add };
+    return { TONES: TONES, MAXCH: MAXCH, check: check, tones: tones, hex: U.hex, radii: radii, weights: weights, bloom: bloom, map: map, toneMap: map, rig: rig, add: add };
 })();
 
 AEX.pn = (function () {
@@ -504,7 +515,8 @@ AEX.burst = (function () {
     // Body = streaks(), accent = sparks() with Echo trails, core = three cones, air glow. Motion blur switched on in every comp of the chain and on
     // every precomp layer (particles two comps deep get none otherwise). o = {name, center [x, y], dir (deg: 0 right, 90 down, -90 up), scale, energy,
     // seed, at (s), count, streaks (false = none), particles (false), trail ("echo" default, "widetime", "none"), trailOpts, core, air, bloom, tones}.
-    // The rig layer is in Add as built: over a lit plate set it to Screen. Returns the names made.
+    // The rig layer is in Add as built: over a lit plate set it to Screen. Returns {name, light, layer, air, streaks, sparks, core} (names; parts
+    // switched off are absent).
     function build(host, o) {
         var R = { name: o.name || "E" }, li;
         host.motionBlur = true;
@@ -524,7 +536,7 @@ AEX.burst = (function () {
     }
     // planes(host, o): the particle-only burst: a precomp (far sharp, three follower speed tiers, line leaders, embers, near bokeh, 4-frame flash), added to host
     // in Add with a blurred copy as the glow. o = {name, center [x, y] px, at (s), dir (deg, 0 right, -90 up), scale (speed and size), count
-    // (multiplier), seed, flash (peak %), glow (copy opacity %, 0 inside a light rig), followOpacity, lineScale (0.1), duration}. Used as the burst inside AEX.integrate; for a hero hit use build(). Returns {comp, layer, glow}.
+    // (multiplier), seed, flash (peak %), glow (copy opacity %, 0 inside a light rig), followOpacity, lineScale (0.1), duration}. Used as the burst inside AEX.integrate; for a hero hit use build(). Returns {comp, layer, glow} (names).
     function planes(host, o) {
         var sc = o.scale || 1, n = o.count || 1, fps = host.frameRate, R = {};
         var c = AEK.build.comp(o.name || "BURST", { width: host.width, height: host.height, fps: fps, duration: o.duration || host.duration, bg: [0, 0, 0] });
@@ -618,9 +630,9 @@ AEX.atmo = (function () {
         A.blendingMode = mode || BlendingMode.ADD; B.blendingMode = mode || BlendingMode.ADD;
         return [A, B];
     }
-    // build(host, o): embers and dust, three planes each, looped. o = {name, L (loop s, 4), P (pre-roll s, 4), F (crossfade s, 1), embers and dust
+    // build(host, o): embers and dust, three planes each, looped. Dust: 220 far motes at 5 px, 70 at 16 px, 24 soft discs at 110 px. o = {name, L (loop s, 4), P (pre-roll s, 4), F (crossfade s, 1), embers and dust
     // (count multipliers, 0 = none), beam [topX, topW, botX, botW] (dust only inside it), beamOpacity, warm (0 to 1), title [cx, cy, rx, ry]
-    // (density hole), titleDensity (0.3), titleFeather, glow (copy opacity %), seed}. Returns {comps, layer}.
+    // (density hole), titleDensity (0.3), titleFeather, glow (copy opacity %), seed}. Returns {comps, layer} (names: AEK.core.layer(host, r.layer)).
     function build(host, o) {
         var L = o.L || 4, P = o.P || 4, F = o.F || 1, H = host.height, n = o.embers === undefined ? 1 : o.embers, dn = o.dust === undefined ? 1 : o.dust, sd = o.seed || 0;
         var ecol = U.mix(CREAM, CORAL, o.warm === undefined ? 0.8 : o.warm), ehot = U.mix(CREAM, ecol, 0.6), nm = o.name || "ATMO";
@@ -632,9 +644,10 @@ AEX.atmo = (function () {
         }
         var sdu = AEK.build.comp(nm + "_DUST", { width: host.width, height: H, fps: host.frameRate, duration: P + L + 0.1, bg: [0, 0, 0] });
         if (dn > 0) {
-            plane(sdu, "DUST_FAR", { count: 700 * dn, life: 4, cy: H * 0.5, ry: 0.32, d: 2.4, rise: 4, drift: 6, col: U.scale(CREAM, 0.55), hot: U.scale(CREAM, 0.7), turb: 14, turbSize: 90, turbSpeed: 20, seed: sd + 4 });
-            plane(sdu, "DUST_MID", { count: 300 * dn, life: 4, cy: H * 0.5, ry: 0.32, d: 4.5, rise: 6, drift: 10, col: CREAM, hot: CREAM, turb: 24, turbSize: 160, turbSpeed: 25, seed: sd + 5 });
-            plane(sdu, "DUST_NEAR", { count: 14 * dn, life: 3, cy: H * 0.5, ry: 0.32, d: 22, rise: 10, drift: 30, col: U.scale(CREAM, 0.8), hot: CREAM, turb: 40, turbSize: 260, turbSpeed: 30, blur: 7, seed: sd + 6 });
+            // few motes, a slow rise, no swirl; a handful of large soft discs near the lens (Birth Rate of each plane stays above 0.05)
+            plane(sdu, "DUST_FAR", { count: 220 * dn, life: 4, cy: H * 0.5, ry: 0.32, d: 5, rise: 5, drift: 4, col: U.scale(CREAM, 0.9), hot: U.mix(U.scale(CREAM, 0.9), [1, 1, 1], 0.13), seed: sd + 4 });
+            plane(sdu, "DUST_MID", { count: 70 * dn, life: 4, cy: H * 0.5, ry: 0.32, d: 16, rise: 9, drift: 7, col: CREAM, hot: U.mix(CREAM, [1, 1, 1], 0.15), seed: sd + 5 });
+            plane(sdu, "DUST_NEAR", { count: 24 * dn, life: 3.5, cy: H * 0.5, ry: 0.32, d: 110, rise: 16, drift: 12, col: U.scale(CREAM, 0.22), hot: U.scale(CREAM, 0.24), seed: sd + 6 });
         }
         var atmo = AEK.build.comp(nm, { width: host.width, height: H, fps: host.frameRate, duration: L + 2 / host.frameRate, bg: [0, 0, 0] });
         var R = { comps: [se.name, sdu.name, atmo.name] }, dp, bm;
@@ -692,41 +705,17 @@ AEX.smoke = (function () {
         ellipse(mt, o.center[0], o.center[1], o.size[0], o.size[1], o.size[0] * 0.45, true);
         return c;
     }
-    // build(host, o): smoke lit from one side. o = {name, L (loop s), center [x, y], size [rx, ry], light [dx, dy] direction FROM the light
-    // ([1, -0.3] = lit from the left), edge (px shift, 30), edgeGain (stops, 2.4), body (opacity, 75), shade (far-side body level, 0.3), lightPass (opacity, 55),
-    // lightColor, scale, wisp, seed}. Layers: body (density shaded toward the far side, tinted warm gray, Screen), light pass (ramp through the density,
-    // Add), lit edge (density minus itself shifted toward the light). Returns {comps, layers}.
+    // build(host, o): a smoke plume from a source (AEX.plume): wisps of stringy noise rising through a widening, leaning plume mask, swayed more
+    // with height, gray, shaded toward the far side, tinted, Screen at low opacity. o = {name, L, F, center [x, y] (the plume's middle), size
+    // [rx, ry], light [dx, dy] (dx >= 0: lit from the left), shade, body (opacity %, 70), color, lean, scale (texture and sway scale; default
+    // 2.2 x ry / 860 between 0.2 and 1, so a small wisp gets fine wisps instead of two blobs of the 860 px plume's texture), seed}. The gray plume comp is
+    // <name>_DENS. Older keys (edge, edgeGain, lightPass, lightColor, wisp) are accepted and ignored. Returns {comps, layers, layer, grey} (names, so a job can return
+    // them as JSON: the layer itself is AEK.core.layer(host, r.layer)).
     function build(host, o) {
-        var nm = o.name || "SMOKE", W = host.width, H = host.height, R = {}, lc = o.lightColor || P.coral;
-        var dc = density(host, o, nm);
-        var ec = AEK.build.comp(nm + "_EDGE", { width: W, height: H, fps: host.frameRate, duration: dc.duration, bg: [0, 0, 0] });
-        AEK.build.solid(ec, "BLACK", [0, 0, 0]);
-        var d0 = ec.layers.add(dc), d1 = ec.layers.add(dc), e = o.edge || 30, lv = o.light || [1, -0.3], ln = Math.sqrt(lv[0] * lv[0] + lv[1] * lv[1]);
-        d1.property("ADBE Transform Group").property("ADBE Position").setValue([W / 2 + e * lv[0] / ln, H / 2 + e * lv[1] / ln]);
-        d1.blendingMode = BlendingMode.SUBTRACT;
-        var lx = o.center[0] - o.size[0] * lv[0] / ln, ly = o.center[1] - o.size[1] * lv[1] / ln;
-        // body shading: the density times a ramp from 1 on the light side to o.shade (0.3) on the far side. The light pass alone lost against
-        // the noise's own density (lit / far side 0.95 to 1.29 over four seeds): the far side must also get darker.
-        var shc = AEK.build.comp(nm + "_SHADED", { width: W, height: H, fps: host.frameRate, duration: dc.duration, bg: [0, 0, 0] }), sk = o.shade === undefined ? 0.3 : o.shade;
-        shc.layers.add(dc);
-        var shade = AEK.build.solid(shc, "SHADE", [1, 1, 1]);
-        U.fx(shade, "ADBE Ramp", { "ADBE Ramp-0001": [lx, ly], "ADBE Ramp-0002": [1, 1, 1], "ADBE Ramp-0003": [o.center[0] + o.size[0] * lv[0] / ln, o.center[1] + o.size[1] * lv[1] / ln], "ADBE Ramp-0004": [sk, sk, sk], "ADBE Ramp-0005": 1 });
-        shade.blendingMode = BlendingMode.MULTIPLY;
-        var body = host.layers.add(shc); body.name = nm + "_BODY";
-        U.fx(body, "ADBE Tint", { "ADBE Tint-0001": [0, 0, 0], "ADBE Tint-0002": U.scale(P.grey, 0.9) });
-        body.blendingMode = BlendingMode.SCREEN; U.opacity(body).setValue(o.body === undefined ? 75 : o.body);
-        var lp = AEK.build.solid(host, nm + "_LIGHTPASS", [0, 0, 0]);
-        U.fx(lp, "ADBE Ramp", { "ADBE Ramp-0001": [lx, ly], "ADBE Ramp-0002": lc, "ADBE Ramp-0003": [o.center[0] + o.size[0] * lv[0] / ln, o.center[1] + o.size[1] * lv[1] / ln], "ADBE Ramp-0004": U.scale(P.navy, 0.6), "ADBE Ramp-0005": 1 });
-        var lm = host.layers.add(dc); lm.name = nm + "_LIGHTPASS_MATTE";
-        lp.setTrackMatte(lm, TrackMatteType.LUMA);
-        lp.blendingMode = BlendingMode.ADD; U.opacity(lp).setValue(o.lightPass === undefined ? 55 : o.lightPass);
-        var el = host.layers.add(ec); el.name = nm + "_LITEDGE";
-        U.fx(el, "ADBE Box Blur2", { "ADBE Box Blur2-0001": 5, "ADBE Box Blur2-0002": 2 });
-        U.fx(el, "ADBE Exposure2", { "ADBE Exposure2-0003": o.edgeGain === undefined ? 2.4 : o.edgeGain });
-        U.fx(el, "ADBE Tint", { "ADBE Tint-0001": [0, 0, 0], "ADBE Tint-0002": U.mix(P.cream, lc, 0.5) });
-        el.blendingMode = BlendingMode.ADD;
-        R.comps = [dc.name, shc.name, ec.name]; R.layers = [body.name, lp.name, el.name];
-        return R;
+        var nm = o.name || "SMOKE", c = o.center || [host.width / 2, host.height / 2], sz = o.size || [400, 300], lv = o.light || [1, -0.3], k = o.scale || Math.min(1, Math.max(0.2, 2.2 * sz[1] / 860));
+        var r = AEX.plume.build(host, { name: nm, greyName: nm + "_DENS", base: [c[0], c[1] + sz[1]], height: 2.2 * sz[1] / k, width: 1.5 * sz[0] / k,
+            lean: o.lean, scale: k, seed: o.seed, L: o.L, F: o.F, light: lv[0] >= 0 ? 1 : -1, shade: o.shade, opacity: o.body, color: o.color });
+        return { comps: [r.grey], layers: [r.layer], layer: r.layer, grey: r.grey };
     }
     // FIRE: flame tones on the luminance map: tips ember red, body coral, hot coral, cream only where the density reaches 1 (the foot).
     var FIRE = { shadow: [0, 0, 0], dark: U.hex("#5A160C"), mid: U.hex("#E0452C"), bright: U.hex("#FF8A5C"), high: U.hex("#F1E9D8") };
@@ -847,39 +836,317 @@ AEX.smoke = (function () {
         adj.moveToBeginning();
         return adj;
     }
-    // flame(host, o): a small looping flame with embers and heat haze, gray light in an AEX.light rig (bloom radii 6 to 96, total 0.45, FIRE map).
-    // o = {name, base [x, y] (the foot), height (360), width (150), scale, seed, L (loop s, comp duration), F (crossfade, 0.8), rise (px/s), gain (0.8),
-    // baseFill, thrLo, thrHi, tipLevel, upBlur, poolLum (0.06), emberGain (1.1), emberCount, embers (false = none), heat (0 = none), tones, bloom}.
-    // A pool of light (radial cone, 0.06, flicker 92 + 8 x noise) lights the air at the foot. The rig layer is in Add as built: over a lit plate set
-    // it to Screen. Returns the names made.
+    // flame(host, o): a looping flame grown from a fixed source (AEX.fire), with embers and heat haze. o = {name, base [x, y] (the foot), height
+    // (px, 600), width (px, 280), scale, seed, L, F (0.8), embers (false = none), emberCount, emberGain, heat (0 = none), tones, glow, sharpen,
+    // hot, push, sway}. Older keys (baseFill, thrLo, thrHi, tipLevel, upBlur, gain, poolLum, rise) are accepted and ignored. The flame layer is
+    // in Screen. Returns {name, flame (grey comp), embers, heat, light (the glow layer), layer} (names).
     function flame(c, o) {
-        var R = { name: o.name || "F" }, fps = c.frameRate;
         o.L = o.L || c.duration; o.F = o.F || 0.8;
-        c.motionBlur = true;
-        var rig = AEX.light.rig(c, R.name, { tones: o.tones || FIRE, bloom: o.bloom || { radii: AEX.light.radii(6, 5), weights: AEX.light.weights(0.45, 5, 0.7) } });
-        var fl = flameSrc(o, fps), l = rig.light.layers.add(fl.comp);
-        l.name = "FLAME";
-        tr(l, "ADBE Position").setValue([o.base[0], o.base[1] - fl.by + fl.H / 2]);
-        AEX.light.add(l, o.gain || 0.8);
-        R.flame = fl.comp.name;
-        var pool = AEK.build.solid(rig.light, "POOL", [0, 0, 0]);
-        U.fx(pool, "ADBE Ramp", { "ADBE Ramp-0001": [o.base[0], o.base[1] - 0.3 * fl.h], "ADBE Ramp-0002": [1, 1, 1], "ADBE Ramp-0003": [o.base[0] + 420 * (o.scale || 1), o.base[1] - 0.3 * fl.h], "ADBE Ramp-0004": [0, 0, 0], "ADBE Ramp-0005": 2 });
-        AEX.light.add(pool, o.poolLum || 0.06);
-        // flicker 92 + 8 x noise, sampled on a circle so it repeats every L seconds (a noise of time alone broke the loop at frame L)
-        tr(pool, "ADBE Opacity").expression = "var a = 2 * Math.PI * time / " + o.L + "; 92 + 8 * noise([3 * Math.cos(a), 3 * Math.sin(a), 2]);";
-        if (o.embers !== false) {
-            var em = embers(o, fps), ec = AEK.build.comp(R.name + "_embers", { width: c.width, height: c.height, fps: fps, duration: o.L + 0.1 });
-            ec.motionBlur = true;
-            loop(ec, em.comp, o.L, em.P, o.F, "EMB");
-            var el = rig.light.layers.add(ec); el.name = "EMBERS";
-            AEX.light.add(el, o.emberGain || 1.1);
-            R.embers = ec.name;
-        }
-        if (o.heat !== 0) { R.heat = heat(c, o, o.base[1] - fl.h).name; }
-        R.light = rig.light.name; R.layer = rig.layer.name;
-        return R;
+        var r = AEX.fire.build(c, { name: o.name || "F", base: o.base, height: o.height, width: o.width, scale: o.scale, seed: o.seed, L: o.L, F: o.F,
+            embers: o.embers, emberCount: o.emberCount, emberGain: o.emberGain, heat: o.heat, tones: o.tones, glow: o.glow, sharpen: o.sharpen, hot: o.hot, push: o.push, sway: o.sway });
+        return { name: r.name, flame: r.grey, embers: r.embers, heat: r.heat, light: r.glow, layer: r.layer };
     }
     return { build: build, density: density, ellipse: ellipse, FIRE: FIRE, flame: flame, flameSrc: flameSrc, flameNoise: flameNoise, embers: embers, heat: heat, loop: loop };
+})();
+
+// AEX.fire: a flame grown from a fixed source by a one-sided displacement map, three noise
+// scales rising at their own speeds, gray until the end, coloured once by a CC Toner map that keeps most of the flame red and coral.
+// Uses AEX.smoke.loop, embers and heat. AEX.smoke.flame calls it.
+AEX.fire = (function () {
+    var U = AEX.vfxu, BLACK = [0, 0, 0], WHITE = [1, 1, 1], GREY = [0.5, 0.5, 0.5];
+    // tones: luminance 0, 0.25, 0.5, 0.75, 1. Most of a flame sits between 0.25 and 0.75: deep red to coral. Cream only in the hottest licks.
+    var TONES = { shadow: BLACK, dark: U.hex("#3A0C06"), mid: U.hex("#B0361F"), bright: [0.92, 0.42, 0.25], high: U.hex("#F1E9D8") };
+    function tr(l, mn) { return l.property("ADBE Transform Group").property(mn); }
+    function fxp(l, name) { return l.property("ADBE Effect Parade").property(name); }
+    // noiseLayer(comp, name, p): Fractal Noise rising at p.rise px/s, evolution p.evo degrees/s. Returns the solid.
+    function noiseLayer(c, name, p) {
+        var s = AEK.build.solid(c, name, BLACK), e;
+        e = U.fx(s, "ADBE Fractal Noise", { "ADBE Fractal Noise-0001": p.type || 1, "ADBE Fractal Noise-0003": p.invert ? 1 : 0, "ADBE Fractal Noise-0004": p.contrast,
+            "ADBE Fractal Noise-0005": p.bright || 0, "ADBE Fractal Noise-0006": 1, "ADBE Fractal Noise-0009": 0, "ADBE Fractal Noise-0011": p.sw, "ADBE Fractal Noise-0012": p.sh,
+            "ADBE Fractal Noise-0015": p.complexity || 6, "ADBE Fractal Noise-0017": p.subInf || 70, "ADBE Fractal Noise-0018": p.subScale || 56,
+            "ADBE Fractal Noise-0019": p.subRot || 0, "ADBE Fractal Noise-0027": p.seed || 0 }, "Noise");
+        e.property("ADBE Fractal Noise-0013").expression = "[" + c.width / 2 + ", " + c.height / 2 + " + time * " + p.rise + "]";
+        e.property("ADBE Fractal Noise-0023").expression = "time * " + p.evo;
+        if (p.mode) { s.blendingMode = p.mode; }
+        if (p.opacity !== undefined) { tr(s, "ADBE Opacity").setValue(p.opacity); }
+        return s;
+    }
+    // teardrop(layer, bx, by, w, h, feather): a mask from a round foot of width w at the base to a point h above it.
+    function teardrop(l, bx, by, w, h, f) {
+        var m = l.property("ADBE Mask Parade").addProperty("ADBE Mask Atom"), sh = new Shape(), r = w / 2;
+        sh.vertices = [[bx, by + 0.03 * h], [bx - 0.5 * r, by - 0.04 * h], [bx - r, by - 0.22 * h], [bx - 0.3 * w, by - 0.55 * h], [bx, by - h], [bx + 0.3 * w, by - 0.55 * h], [bx + r, by - 0.22 * h], [bx + 0.5 * r, by - 0.04 * h]];
+        sh.inTangents = [[0.3 * r, 0], [0.2 * r, 0.03 * h], [0, 0.1 * h], [0.08 * w, 0.15 * h], [0, 0], [0.06 * w, -0.2 * h], [0, -0.1 * h], [0.2 * r, -0.03 * h]];
+        sh.outTangents = [[-0.3 * r, 0], [-0.2 * r, -0.03 * h], [0, -0.1 * h], [-0.06 * w, -0.2 * h], [0, 0], [-0.08 * w, 0.15 * h], [0, 0.1 * h], [-0.2 * r, 0.03 * h]];
+        sh.closed = true;
+        m.property("ADBE Mask Shape").setValue(sh);
+        m.property("ADBE Mask Feather").setValue(f instanceof Array ? f : [f, f]);
+        return m;
+    }
+    // build(host, o): o = {name, base [x, y], height (px, 520), width (px, 220), scale, seed, L (s), F (crossfade s, 0.8), push (px, 140),
+    //   sway (px, 26), texMix (Overlay opacity %, 100), black (Levels input black, 0.06), gamma (0.85), tones, sharpen (80), glow (0.35),
+    //   embers (false = none), heat (0 = none), pool (0.18)}. Returns names.
+    function build(host, o) {
+        var s = o.scale || 1, nm = o.name || "FIRE", fps = host.frameRate, L = o.L || host.duration, F = o.F || 0.8, P = F, sd = o.seed || 0;
+        var h = (o.height || 600) * s, w = (o.width || 280) * s, W = Math.round(Math.max(3.2 * w, 1.6 * h)), H = Math.round(1.6 * h + 160 * s), bx = W / 2, by = H - 140 * s, R = { name: nm };
+        // 1. envelope: white teardrop over black, fading upward (static)
+        var env = AEK.build.comp(nm + "_env", { width: W, height: H, fps: fps, duration: L + 0.1 });
+        AEK.build.solid(env, "BLACK", BLACK);
+        var td = AEK.build.solid(env, "SHAPE", [o.core || 0.8, o.core || 0.8, o.core || 0.8]);
+        teardrop(td, bx, by, w, h, [0.12 * w, 0.12 * w]);
+        var rp = AEK.build.solid(env, "FADE_UP", BLACK);
+        U.fx(rp, "ADBE Ramp", { "ADBE Ramp-0001": [bx, by - 0.12 * h], "ADBE Ramp-0002": WHITE, "ADBE Ramp-0003": [bx, by - 1.3 * h], "ADBE Ramp-0004": BLACK, "ADBE Ramp-0005": 1 });
+        rp.blendingMode = BlendingMode.MULTIPLY;
+        // 2. displacement map: noise limited to 0 to 0.5 (one direction), mid gray over the foot so the base never moves
+        var msrc = AEK.build.comp(nm + "_map_src", { width: W, height: H, fps: fps, duration: L + P + 0.1 });
+        AEK.build.solid(msrc, "GREY", GREY);
+        var mn = noiseLayer(msrc, "MAP_NOISE", { type: 1, contrast: 130, sw: 80 * s, sh: 190 * s, complexity: 4, rise: 260 * s, evo: 160, seed: sd + 3 });
+        U.fx(mn, "ADBE Easy Levels2", { "ADBE Easy Levels2-0007": 0.5 }, "One side");
+        var pin = AEK.build.solid(msrc, "PIN_BASE", GREY);
+        U.rect(pin, -50, by - 0.08 * h, W + 50, H + 50, [1, 0.2 * h]);
+        var mloop = AEK.build.comp(nm + "_map", { width: W, height: H, fps: fps, duration: L + 0.1 });
+        AEX.smoke.loop(mloop, msrc, L, P, F, "MAP", true);
+        // 3. texture: stringy flames, big shadows (Multiply), fine hot specks (Add), each rising at its own speed (parallax)
+        var tsrc = AEK.build.comp(nm + "_tex_src", { width: W, height: H, fps: fps, duration: L + P + 0.1 });
+        noiseLayer(tsrc, "STRINGS", { type: o.stringType || 7, invert: true, contrast: 120, bright: 0, sw: 70 * s, sh: 200 * s, complexity: 6, subRot: 30, rise: 170 * s, evo: 150, seed: sd + 5 });
+        noiseLayer(tsrc, "SHADOWS", { type: 1, contrast: 120, bright: 20, sw: 240 * s, sh: 420 * s, complexity: 3, rise: 80 * s, evo: 60, seed: sd + 7, mode: BlendingMode.MULTIPLY, opacity: 40 });
+        noiseLayer(tsrc, "SPECKS", { type: 1, contrast: 80, bright: -45, sw: 12 * s, sh: 28 * s, complexity: 3, rise: 330 * s, evo: 300, seed: sd + 9, mode: BlendingMode.ADD, opacity: 35 });
+        var tloop = AEK.build.comp(nm + "_tex", { width: W, height: H, fps: fps, duration: L + 0.1 });
+        AEX.smoke.loop(tloop, tsrc, L, P, F, "TEX", true);
+        // 4. gray flame: envelope pushed up by the map, twisted a little, texture in Overlay, then Levels
+        var g = AEK.build.comp(nm + "_grey", { width: W, height: H, fps: fps, duration: L + 0.1 });
+        AEK.build.solid(g, "GROUND", BLACK);
+        var ml = g.layers.add(mloop); ml.enabled = false; ml.name = "MAP";
+        var tl = g.layers.add(tloop); tl.enabled = false; tl.name = "TEXMAP";
+        var el = g.layers.add(env); el.name = "ENVELOPE"; el.moveBefore(g.layer("GROUND"));
+        var push = (o.push === undefined ? 0.42 : o.push) * h;
+        U.fx(el, "ADBE Displacement Map", { "ADBE Displacement Map-0001": ml.index, "ADBE Displacement Map-0002": 5, "ADBE Displacement Map-0003": 0.35 * push,
+            "ADBE Displacement Map-0004": 5, "ADBE Displacement Map-0005": push, "ADBE Displacement Map-0006": 1, "ADBE Displacement Map-0008": 0 }, "Push up");
+        var tw = U.fx(el, "ADBE Turbulent Displace", { "ADBE Turbulent Displace-0001": 5, "ADBE Turbulent Displace-0002": (o.sway === undefined ? 0.05 : o.sway) * h,
+            "ADBE Turbulent Displace-0003": 0.22 * h, "ADBE Turbulent Displace-0005": 2, "ADBE Turbulent Displace-0010": sd + 11, "ADBE Turbulent Displace-0012": 1 }, "Sway");
+        AEX.vfx.loopNoise(tw, g, L, 2);
+        var tex = g.layers.add(tloop); tex.name = "TEXTURE"; tex.moveBefore(el);
+        U.fx(tex, "ADBE Displacement Map", { "ADBE Displacement Map-0001": ml.index, "ADBE Displacement Map-0002": 5, "ADBE Displacement Map-0003": 0.35 * push,
+            "ADBE Displacement Map-0004": 5, "ADBE Displacement Map-0005": push, "ADBE Displacement Map-0006": 1, "ADBE Displacement Map-0008": 0 }, "Push up");
+        tex.blendingMode = BlendingMode.OVERLAY; tr(tex, "ADBE Opacity").setValue(o.texMix === undefined ? 100 : o.texMix);
+        // hot core: the texture again, pushed the same way, seen only through a soft ellipse in the lower body, in Add: heat inside the
+        // flame that keeps the texture, so the hottest part is filaments, never a flat egg
+        var hot = g.layers.add(tloop); hot.name = "HOT_CORE"; hot.moveBefore(tex);
+        U.fx(hot, "ADBE Displacement Map", { "ADBE Displacement Map-0001": ml.index, "ADBE Displacement Map-0002": 5, "ADBE Displacement Map-0003": 0.35 * push,
+            "ADBE Displacement Map-0004": 5, "ADBE Displacement Map-0005": push, "ADBE Displacement Map-0006": 1, "ADBE Displacement Map-0008": 0 }, "Push up");
+        U.ellipse(hot, bx, by - 0.2 * h, 0.3 * w, 0.2 * h, [0.25 * w, 0.18 * h]);
+        hot.blendingMode = BlendingMode.ADD; tr(hot, "ADBE Opacity").setValue(o.hot === undefined ? 45 : o.hot);
+        var adj = AEK.build.adjustment(g, "GRADE"); adj.moveToBeginning();
+        U.fx(adj, "ADBE Easy Levels2", { "ADBE Easy Levels2-0003": o.black === undefined ? 0.22 : o.black, "ADBE Easy Levels2-0004": o.white === undefined ? 0.95 : o.white, "ADBE Easy Levels2-0005": o.gamma === undefined ? 0.9 : o.gamma }, "Levels");
+        // 5. colour once, sharpen; glow from a blurred copy; the flame in Screen over the plate
+        var fl = host.layers.add(g); fl.name = nm;
+        tr(fl, "ADBE Position").setValue([o.base[0], o.base[1] - by + H / 2]);
+        AEX.light.toneMap(fl, o.tones || TONES);
+        U.fx(fl, "ADBE Unsharp Mask2", { "ADBE Unsharp Mask2-0001": o.sharpen === undefined ? 80 : o.sharpen, "ADBE Unsharp Mask2-0002": 1.5 }, "Sharpen");
+        fl.blendingMode = BlendingMode.SCREEN;
+        var gl = host.layers.add(g); gl.name = nm + "_GLOW";
+        tr(gl, "ADBE Position").setValue([o.base[0], o.base[1] - by + H / 2]);
+        AEX.light.toneMap(gl, o.tones || TONES);
+        U.fx(gl, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": 40 * s, "ADBE Gaussian Blur 2-0003": 0 });
+        U.gain(gl, o.glow === undefined ? 0.25 : o.glow);
+        gl.blendingMode = BlendingMode.SCREEN; gl.moveAfter(fl);
+        if (o.embers !== false) {
+            var em = AEX.smoke.embers({ name: nm, base: o.base, height: 0.75 * h / s, scale: s, L: L, seed: sd, emberCount: o.emberCount || 1.5 }, fps), ec = AEK.build.comp(nm + "_embers", { width: host.width, height: host.height, fps: fps, duration: L + 0.1 });
+            ec.motionBlur = true; AEX.smoke.loop(ec, em.comp, L, em.P, F, "EMB");
+            var eb = host.layers.add(ec); eb.name = nm + "_EMBERS"; eb.motionBlur = true;
+            AEX.light.toneMap(eb, o.tones || TONES); U.gain(eb, o.emberGain || 2.0); eb.blendingMode = BlendingMode.SCREEN; R.embers = eb.name;
+        }
+        if (o.heat !== 0) { R.heat = AEX.smoke.heat(host, { name: nm, base: o.base, height: 0.75 * h / s, scale: s, L: L, F: F, heat: o.heat || 0.08, seed: sd }, o.base[1] - h).name; }
+        R.layer = fl.name; R.glow = gl.name; R.grey = g.name; R.W = W; R.H = H; R.by = by; R.h = h;
+        return R;
+    }
+    return { TONES: TONES, build: build, noiseLayer: noiseLayer, teardrop: teardrop };
+})();
+
+// AEX.plume: a smoke plume from a fixed source. Wisps are stringy Fractal Noise (type 7, Invert)
+// rising through a widening, leaning plume mask; a displacement map pinned at the source sways and curls it more with height; gray, low
+// opacity, lit from one side, Screen. AEX.smoke.build calls it.
+AEX.plume = (function () {
+    var U = AEX.vfxu, BLACK = [0, 0, 0], WHITE = [1, 1, 1], GREY = [0.5, 0.5, 0.5];
+    function tr(l, mn) { return l.property("ADBE Transform Group").property(mn); }
+    // cone(layer, bx, by, w0, w1, h, lean, feather): a plume mask: w0 wide at the source, w1 wide at height h, top shifted by lean px.
+    function cone(l, bx, by, w0, w1, h, lean, f) {
+        var m = l.property("ADBE Mask Parade").addProperty("ADBE Mask Atom"), sh = new Shape(), tx = bx + lean;
+        sh.vertices = [[bx - w0 / 2, by], [bx - 0.3 * w1 + 0.5 * lean, by - 0.5 * h], [tx - w1 / 2, by - h], [tx + w1 / 2, by - h], [bx + 0.3 * w1 + 0.5 * lean, by - 0.5 * h], [bx + w0 / 2, by]];
+        sh.inTangents = [[0, 0], [0.05 * w1, 0.2 * h], [0, 0.1 * h], [0, 0], [0, -0.2 * h], [0, 0]];
+        sh.outTangents = [[0, 0], [-0.05 * w1, -0.2 * h], [0, 0], [0, 0.1 * h], [0, 0.2 * h], [0, 0]];
+        sh.closed = true;
+        m.property("ADBE Mask Shape").setValue(sh);
+        m.property("ADBE Mask Feather").setValue(f instanceof Array ? f : [f, f]);
+        return m;
+    }
+    // build(host, o): o = {name, base [x, y] (the source), height (px, 900), width (px at the top, 640), lean (px, -180), scale, seed, L, F,
+    //   rise (px/s, 90), sway (px, 0.12 x height), opacity (%, 55), color (warm gray to cream), light (+1 lit from the left, -1 from the right), shade (0.45),
+    //   greyName (the gray comp's name, <name>_grey)}. Returns {name, layer, grey} (names).
+    function build(host, o) {
+        var s = o.scale || 1, nm = o.name || "PLUME", fps = host.frameRate, L = o.L || host.duration, F = o.F || 0.8, P = F, sd = o.seed || 0;
+        var W = host.width, H = host.height, bx = o.base[0], by = o.base[1], h = (o.height || 860) * s, w1 = (o.width || 760) * s, lean = (o.lean === undefined ? -240 : o.lean) * s, R = { name: nm };
+        // texture: wisps (type 7 Invert, stretched up), soft density (Multiply), each rising at its own speed
+        var tsrc = AEK.build.comp(nm + "_tex_src", { width: W, height: H, fps: fps, duration: L + P + 0.1 });
+        AEX.fire.noiseLayer(tsrc, "WISPS", { type: 7, invert: true, contrast: 115, bright: -10, sw: 110 * s, sh: 190 * s, complexity: 8, subInf: 80, subRot: 100, rise: (o.rise || 90) * s, evo: 50, seed: sd + 2 });
+        AEX.fire.noiseLayer(tsrc, "DENSITY", { type: 1, contrast: 140, bright: 15, sw: 700 * s, sh: 800 * s, complexity: 2, rise: 0.6 * (o.rise || 90) * s, evo: 25, seed: sd + 4, mode: BlendingMode.MULTIPLY, opacity: 35 });
+        var tl = AEK.build.comp(nm + "_tex", { width: W, height: H, fps: fps, duration: L + 0.1 });
+        AEX.smoke.loop(tl, tsrc, L, P, F, "TEX", true);
+        // mask: the widening, leaning plume, fading out toward its top and fading in just above the source
+        var mk = AEK.build.comp(nm + "_mask", { width: W, height: H, fps: fps, duration: L + 0.1 });
+        AEK.build.solid(mk, "BLACK", BLACK);
+        // a narrow column at the source (tight feather) and a wide crown above it (wide feather): the plume is thin where it is born
+        var cs = AEK.build.solid(mk, "CROWN", WHITE);
+        cone(cs, bx, by, 70 * s, w1, h, lean, [0.3 * w1, 0.22 * h]);
+        U.fx(cs, "ADBE Ramp", { "ADBE Ramp-0001": [bx, by - 0.12 * h], "ADBE Ramp-0002": BLACK, "ADBE Ramp-0003": [bx, by - 0.5 * h], "ADBE Ramp-0004": WHITE, "ADBE Ramp-0005": 1 });
+        var col = AEK.build.solid(mk, "COLUMN", WHITE);
+        cone(col, bx, by, 30 * s, 0.3 * w1, 0.62 * h, 0.3 * lean, [0.08 * w1, 0.04 * h]);
+        U.fx(col, "ADBE Ramp", { "ADBE Ramp-0001": [bx, by - 0.2 * h], "ADBE Ramp-0002": WHITE, "ADBE Ramp-0003": [bx, by - 0.6 * h], "ADBE Ramp-0004": BLACK, "ADBE Ramp-0005": 1 });
+        col.blendingMode = BlendingMode.SCREEN;
+        var fade = AEK.build.solid(mk, "FADE", BLACK);
+        U.fx(fade, "ADBE Ramp", { "ADBE Ramp-0001": [bx, by - 0.2 * h], "ADBE Ramp-0002": WHITE, "ADBE Ramp-0003": [bx + lean, by - 1.0 * h], "ADBE Ramp-0004": BLACK, "ADBE Ramp-0005": 1 });
+        fade.blendingMode = BlendingMode.MULTIPLY;
+        // sway map: noise around mid gray, mid gray over the source so it never moves
+        var msrc = AEK.build.comp(nm + "_map_src", { width: W, height: H, fps: fps, duration: L + P + 0.1 });
+        AEK.build.solid(msrc, "GREY", GREY);
+        var mn = AEX.fire.noiseLayer(msrc, "MAP_NOISE", { type: 1, contrast: 100, sw: 380 * s, sh: 520 * s, complexity: 3, rise: 0.8 * (o.rise || 90) * s, evo: 40, seed: sd + 6 });
+        var pin = AEK.build.solid(msrc, "PIN_BASE", GREY);
+        pin.property("ADBE Mask Parade"); U.rect(pin, -50, by - 0.1 * h, W + 50, H + 50, [1, 0.6 * h]);
+        var ml = AEK.build.comp(nm + "_map", { width: W, height: H, fps: fps, duration: L + 0.1 });
+        AEX.smoke.loop(ml, msrc, L, P, F, "MAP", true);
+        // gray plume: texture through the mask, swayed by the map, a little Turbulent Displace for curls, shaded toward the far side
+        var g = AEK.build.comp(o.greyName || nm + "_grey", { width: W, height: H, fps: fps, duration: L + 0.1 });
+        AEK.build.solid(g, "GROUND", BLACK);
+        var mapL = g.layers.add(ml); mapL.enabled = false; mapL.name = "MAP";
+        var tx = g.layers.add(tl); tx.name = "TEXTURE";
+        var mm = g.layers.add(mk); mm.name = "MASK";
+        tx.moveBefore(g.layer("GROUND")); mm.moveBefore(tx);
+        tx.setTrackMatte(mm, TrackMatteType.LUMA);
+        var adj = AEK.build.adjustment(g, "SWAY"); adj.moveToBeginning();
+        var sway = (o.sway === undefined ? 0.12 : o.sway) * h;
+        U.fx(adj, "ADBE Displacement Map", { "ADBE Displacement Map-0001": mapL.index, "ADBE Displacement Map-0002": 5, "ADBE Displacement Map-0003": sway,
+            "ADBE Displacement Map-0004": 5, "ADBE Displacement Map-0005": 0.15 * sway, "ADBE Displacement Map-0006": 1, "ADBE Displacement Map-0008": 0 }, "Sway");
+        var td = U.fx(adj, "ADBE Turbulent Displace", { "ADBE Turbulent Displace-0001": 5, "ADBE Turbulent Displace-0002": 28 * s, "ADBE Turbulent Displace-0003": 146 * s,
+            "ADBE Turbulent Displace-0005": 1.5, "ADBE Turbulent Displace-0010": sd + 9 }, "Curls");
+        AEX.vfx.loopNoise(td, g, L, 1);
+        var sh = AEK.build.solid(g, "SHADE", WHITE), lx = o.light === undefined ? 1 : o.light, sk = o.shade === undefined ? 0.45 : o.shade;
+        U.fx(sh, "ADBE Ramp", { "ADBE Ramp-0001": [bx - lx * 0.5 * w1, by - 0.5 * h], "ADBE Ramp-0002": WHITE, "ADBE Ramp-0003": [bx + lx * 0.5 * w1, by - 0.5 * h], "ADBE Ramp-0004": [sk, sk, sk], "ADBE Ramp-0005": 1 });
+        sh.blendingMode = BlendingMode.MULTIPLY; sh.moveBefore(mm);
+        var gr = AEK.build.adjustment(g, "GRADE"); gr.moveToBeginning();
+        U.fx(gr, "ADBE Easy Levels2", { "ADBE Easy Levels2-0003": o.floor === undefined ? 0.06 : o.floor, "ADBE Easy Levels2-0004": o.ceil === undefined ? 0.55 : o.ceil, "ADBE Easy Levels2-0005": 1.1 });
+        // into the host: tinted, Screen, low opacity
+        var pl = host.layers.add(g); pl.name = nm;
+        U.fx(pl, "ADBE Tint", { "ADBE Tint-0001": [0, 0, 0], "ADBE Tint-0002": o.color || U.mix(U.PALETTE.grey, U.PALETTE.cream, 0.6) });
+        U.fx(pl, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": 1.5 * s, "ADBE Gaussian Blur 2-0003": 0 });
+        pl.blendingMode = BlendingMode.SCREEN; tr(pl, "ADBE Opacity").setValue(o.opacity === undefined ? 70 : o.opacity);
+        R.layer = pl.name; R.grey = g.name;
+        return R;
+    }
+    return { build: build, cone: cone };
+})();
+
+// AEX.motes: dust in a light beam. Few motes in a deep, thin band, a slow rise with a light drift,
+// no swirl; size, softness and brightness by depth (far small and dim, a handful of large soft discs near); seen only inside the beam,
+// a faint share outside it; the beam itself soft and faint. Loops by the crossfade pair of AEX.atmo.
+AEX.motes = (function () {
+    var U = AEX.vfxu, CREAM = U.PALETTE.cream;
+    // layers: [name, count on screen, diameter px, rise px/s, drift px/s, brightness 0 to 1, blur px, life s]
+    var LAYERS = [["FAR", 220, 5, 5, 4, 0.9, 0, 4], ["MID", 70, 16, 9, 7, 1.0, 0, 4], ["NEAR", 24, 110, 16, 12, 0.22, 0, 3.5]];   // NEAR: 24 on screen keeps Birth Rate above 0.05
+    // build(host, o): o = {name, L (4), P (4), F (1), beam [topX, topW, botX, botW], beamFeather (220), beamOpacity (9), density (count
+    //   multiplier, 1), outside (share of motes visible outside the beam, 0.15), color (cream), seed}. Returns {comps, layer, beam} (names).
+    function build(host, o) {
+        var L = o.L || 4, P = o.P || 4, F = o.F || 1, H = host.height, nm = o.name || "MOTES", k = o.density === undefined ? 1 : o.density, sd = o.seed || 0, i;
+        var col = o.color || CREAM, sim = AEK.build.comp(nm + "_SIM", { width: host.width, height: H, fps: host.frameRate, duration: P + L + 0.1, bg: [0, 0, 0] });
+        for (i = 0; i < LAYERS.length; i++) {
+            var a = LAYERS[i], c = U.scale(col, a[5]), hot = U.mix(c, [1, 1, 1], 0.15 * a[5]);
+            AEX.atmo.plane(sim, nm + "_" + a[0], { count: a[1] * k, life: a[7], cy: H * 0.5, ry: 0.32, d: a[2], rise: a[3], drift: a[4], col: c, hot: hot, blur: a[6], seed: sd + i + 1 });
+        }
+        var mo = AEK.build.comp(nm, { width: host.width, height: H, fps: host.frameRate, duration: L + 2 / host.frameRate, bg: [0, 0, 0] });
+        var bo = o.beamFeather || 220, R = { comps: [sim.name, mo.name] };
+        // inside the beam: full; outside: a faint share
+        var mat = AEK.build.solid(mo, "BEAM_MATTE", [1, 1, 1]), m = mat.property("ADBE Mask Parade").addProperty("ADBE Mask Atom"), sh = new Shape(), b = o.beam;
+        sh.vertices = [[b[0] - b[1] / 2, -80], [b[0] + b[1] / 2, -80], [b[2] + b[3] / 2, H + 80], [b[2] - b[3] / 2, H + 80]]; sh.closed = true;
+        m.property("ADBE Mask Shape").setValue(sh); m.property("ADBE Mask Feather").setValue([bo, bo]);
+        var out = AEK.build.solid(mo, "OUTSIDE", [1, 1, 1]); U.opacity(out).setValue(100 * (o.outside === undefined ? 0.2 : o.outside)); out.moveAfter(mat);
+        var pre = AEK.build.comp(nm + "_MATTE", { width: host.width, height: H, fps: host.frameRate, duration: L + 0.1, bg: [0, 0, 0] });
+        mat.copyToComp(pre); out.copyToComp(pre); mat.remove(); out.remove();   // both made just above in this call
+        var matL = mo.layers.add(pre); matL.name = "MATTE";
+        var pr = AEX.atmo.loopPair(mo, sim, P, L, F, BlendingMode.ADD);
+        pr[0].moveAfter(matL);
+        pr[0].setTrackMatte(matL, TrackMatteType.LUMA); pr[1].setTrackMatte(matL, TrackMatteType.LUMA);
+        // the beam: soft, faint, brighter at its top
+        var bv = AEK.build.solid(host, nm + "_BEAM", U.scale(col, 0.9)), bmk = bv.property("ADBE Mask Parade").addProperty("ADBE Mask Atom");
+        bmk.property("ADBE Mask Shape").setValue(sh); bmk.property("ADBE Mask Feather").setValue([1.3 * bo, 1.3 * bo]);
+        U.fx(bv, "ADBE Ramp", { "ADBE Ramp-0001": [b[0], 0], "ADBE Ramp-0002": U.scale(col, 0.9), "ADBE Ramp-0003": [b[2], H], "ADBE Ramp-0004": U.scale(col, 0.2), "ADBE Ramp-0005": 1 });
+        U.opacity(bv).setValue(o.beamOpacity === undefined ? 18 : o.beamOpacity); bv.blendingMode = BlendingMode.ADD;
+        var ml = host.layers.add(mo); ml.name = nm; ml.blendingMode = BlendingMode.ADD;
+        R.layer = ml.name; R.beam = bv.name;
+        return R;
+    }
+    return { build: build, LAYERS: LAYERS };
+})();
+
+// AEX.element: land a generated element on black (fire, smoke) on a plate with the skill's own
+// integration steps: interpret, crush the black, palette, a feathered foot, Screen, a small glow, the light it throws (pool and lift driven by
+// the element's own luminance), grain.
+AEX.element = (function () {
+    var U = AEX.vfxu;
+    function tr(l, mn) { return l.property("ADBE Transform Group").property(mn); }
+    // land(host, item, o): o = {name, base [x, y] where the element's foot lands, foot (source row of the foot, default the source height),
+    //   scale (%, 100), conform (true: conform the footage rate to the comp's), black (Levels Input Black 0 to 1, the clip's background p99),
+    //   tones (CC Toner map, null = keep the source color), keep (Blend w. Original % of the map, 40), tint (a color: Tint black to it at
+    //   tintAmount %, for smoke), footFeather (px, 60), opacity (%), glow (gain, 0.25), glowRadius (px, 50), pool (0 to 1, 0.35), lift (0 to 1, 0.2),
+    //   poolColor, reach (px, 520)}. Returns {layer, glow, pool, lift, warnings} (layer names and warning texts).
+    function land(host, item, o) {
+        var nm = o.name || "ELEMENT", W = item.width, H = item.height, foot = o.foot === undefined ? H : o.foot, sc = o.scale || 100, k = sc / 100, w = [];
+        if (o.conform !== false && item.mainSource && Math.abs(item.frameRate - host.frameRate) > 0.01) {
+            var r0 = item.frameRate;
+            item.mainSource.conformFrameRate = host.frameRate;
+            w.push("conformed " + item.name + " from " + r0 + " to " + host.frameRate + " fps: motion plays " + (host.frameRate / r0).toFixed(2) + "x");
+        }
+        var l = host.layers.add(item); l.name = nm;
+        tr(l, "ADBE Anchor Point").setValue([W / 2, foot]);
+        tr(l, "ADBE Position").setValue(o.base);
+        tr(l, "ADBE Scale").setValue([sc, sc]);
+        // the source above its foot, faded over footFeather px: the foot sits on the floor line, what the clip shows below it is gone
+        // a mask feather straddles its edge: end the mask half a feather above the foot so the clip is fully gone at the foot row
+        var ff = o.footFeather === undefined ? 60 : o.footFeather;
+        U.rect(l, -200, -200, W + 200, foot - 0.5 * ff, [1, ff]);
+        U.fx(l, "ADBE Easy Levels2", { "ADBE Easy Levels2-0003": o.black || 0 }, "Black level");
+        if (o.tones) {
+            var tm = AEX.light.toneMap(l, o.tones);
+            tm.property("CC Toner-0004").setValue((o.keep === undefined ? 40 : o.keep) / 100);   // Blend w. Original reads 0 to 1 from a script
+        }
+        if (o.tint) {
+            var ti = U.fx(l, "ADBE Tint", { "ADBE Tint-0001": [0, 0, 0], "ADBE Tint-0002": o.tint });
+            ti.property("ADBE Tint-0003").setValue(o.tintAmount === undefined ? 100 : o.tintAmount);
+        }
+        l.blendingMode = BlendingMode.SCREEN;
+        if (o.opacity !== undefined) { tr(l, "ADBE Opacity").setValue(o.opacity); }
+        var R = { layer: nm, warnings: w };
+        if (o.glow !== 0) {
+            var g = l.duplicate(); g.name = nm + "_GLOW";
+            U.fx(g, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": (o.glowRadius || 50) * k, "ADBE Gaussian Blur 2-0003": 0 });
+            U.gain(g, o.glow === undefined ? 0.25 : o.glow);
+            g.moveAfter(l); R.glow = g.name;
+        }
+        // the light it throws: the element's mean luma in a box above the foot drives a floor pool and a radial lift of the plate
+        var sx = 0.25 * W, sy = 0.25 * (foot), env = "var e = thisComp.layer(\"" + nm + "\"); var c = e.sampleImage([" + W / 2 + ", " + (foot - sy) + "], [" + sx + ", " + sy + "], true, time); var y = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];";
+        var col = o.poolColor || U.PALETTE.coral, reach = (o.reach || 520) * k;
+        if (o.pool !== 0) {
+            var p = AEK.build.solid(host, nm + "_POOL", col);
+            U.ellipse(p, o.base[0], o.base[1] + 6, reach, 0.16 * reach, [0.6 * reach, 0.12 * reach]);
+            tr(p, "ADBE Opacity").expression = env + " Math.min(100, 100 * " + (o.pool === undefined ? 0.35 : o.pool) + " * y / 0.5);";
+            p.blendingMode = BlendingMode.SCREEN; p.moveAfter(l); R.pool = p.name;
+        }
+        if (o.lift !== 0) {
+            var lf = AEK.build.solid(host, nm + "_LIFT", col);
+            U.fx(lf, "ADBE Ramp", { "ADBE Ramp-0001": [o.base[0], o.base[1] - 0.3 * foot * k], "ADBE Ramp-0002": col, "ADBE Ramp-0003": [o.base[0] + 1.6 * reach, o.base[1] - 0.3 * foot * k], "ADBE Ramp-0004": [0, 0, 0], "ADBE Ramp-0005": 2 });
+            tr(lf, "ADBE Opacity").expression = env + " Math.min(100, 100 * " + (o.lift === undefined ? 0.2 : o.lift) + " * y / 0.5);";
+            lf.blendingMode = BlendingMode.SCREEN; lf.moveAfter(l); R.lift = lf.name;
+        }
+        return R;
+    }
+    return { land: land };
 })();
 
 AEX.shock = (function () {
@@ -1034,12 +1301,18 @@ AEX.rays = (function () {
     var U = AEX.vfxu;
     var DEFAULTS = { method: "lr", center: [960, 300], intensity: 100, radius: 60, amount: 95, zoom: 1, gain: 1, thr: 0.8, mode: "screen" };
     var MODES = { screen: BlendingMode.SCREEN, add: BlendingMode.ADD };
-    // rays(layer, o): a light-only layer made into rays in place. method "lr": CC Light Rays (intensity, radius = the emitting circle);
+    // rays(layer, o): a light-only layer made into rays in place. method "lr": CC Light Rays (intensity, radius = the emitting circle; o.disc,
+    // the source disc's radius in px, raises the radius to 1.2 x disc; o.preSoften and o.soften, Gaussian px before and after: soft beams, not wedges);
     // "zoom": CC Radial Fast Blur (amount, zoom 1 Standard / 2 Brightest), a starburst more than beams. Then o.gain, blend o.mode. Returns the layer.
     function rays(l, o) {
         o = U.merge(DEFAULTS, o);
         if (o.method === "lr") {
-            U.fx(l, "CC Light Rays", { "CC Light Rays-0001": o.intensity, "CC Light Rays-0002": o.center, "CC Light Rays-0003": o.radius });
+            // CC Light Rays emits from inside its radius only: a source disc larger than the radius covers its own rays (none visible)
+            var rad = o.radius;
+            if (o.disc && rad < 1.2 * o.disc) { rad = 1.2 * o.disc; }
+            if (o.preSoften) { U.fx(l, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": o.preSoften, "ADBE Gaussian Blur 2-0003": 0 }, "Soften source"); }
+            U.fx(l, "CC Light Rays", { "CC Light Rays-0001": o.intensity, "CC Light Rays-0002": o.center, "CC Light Rays-0003": rad });
+            if (o.soften) { U.fx(l, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": o.soften, "ADBE Gaussian Blur 2-0003": 0 }, "Soften rays"); }
         } else {
             U.fx(l, "CC Radial Fast Blur", { "CC Radial Fast Blur-0001": o.center, "CC Radial Fast Blur-0002": o.amount, "CC Radial Fast Blur-0003": o.zoom });
         }
@@ -1070,7 +1343,8 @@ AEX.rays = (function () {
     // DAY: a neutral daylight map for AEX.light (top tone 0.96, so Screen cannot reach 255 from the rays alone).
     var DAY = { shadow: [0, 0, 0], dark: [0.2, 0.19, 0.17], mid: [0.6, 0.59, 0.56], bright: [0.86, 0.85, 0.82], high: [0.96, 0.95, 0.92] };
     // rig(comp, lightComp, o): the light (level 1) and a CC Light Rays copy (Add) inside an AEX.light rig, bloom total o.bloom (1.2), map o.tones
-    // (DAY), rig layer in Screen under o.under. The sun disc maps to the top tone instead of clipping. Returns the rig.
+    // (DAY), rig layer in Screen under o.under. The sun disc maps to the top tone instead of clipping. preSoften (0.15 x disc or radius) and
+    // soften (6 px) by default. Returns the rig.
     function rig(c, light, o) {
         o = U.merge(DEFAULTS, o);
         var r = AEX.light.rig(c, o.name || "RAYRIG", { bloom: { radii: AEX.light.radii(12, 5), weights: AEX.light.weights(o.bloom || 1.2, 5, 0.75) }, tones: o.tones || DAY });
@@ -1078,7 +1352,8 @@ AEX.rays = (function () {
         if (o.under) { r.layer.moveAfter(o.under); }
         var src = r.light.layers.add(light); src.name = "SOURCE"; AEX.light.add(src, 1.0);
         var d = r.light.layers.add(light); d.name = "RAYS";
-        rays(d, U.merge(o, { mode: "add" }));
+        // in a rig, beams are softened by default: a sharp occluder edge cut hard-edged wedges
+        rays(d, U.merge(o, { mode: "add", preSoften: o.preSoften === undefined ? 0.15 * (o.disc || o.radius) : o.preSoften, soften: o.soften === undefined ? 6 : o.soften }));
         return r;
     }
     return { DEFAULTS: DEFAULTS, DAY: DAY, rays: rays, fromLight: fromLight, fromPlate: fromPlate, rig: rig };
@@ -1126,20 +1401,31 @@ AEX.bolt = (function () {
         r.core = core(r.light, o);
         return r;
     }
-    // spill(comp, rig, surfaceLayer, o): the rig's summed light, Gaussian o.spillBlur, Tint to the mid tone, gain o.spill, luma-matted by a
-    // duplicate of the surface, Add. It follows the envelope because it is the same light. Returns the layer.
+    // spill(comp, rig, surfaceLayer, o): the light the strike throws: a soft ellipse pool on the surface at o.to (mid tone, reach 2.4 x
+    // o.spillBlur, luma-matted by a duplicate of the surface) and a sky flash (a vertical ramp from the top down to o.to), both Add, both on the
+    // strike envelope. Level at the strike peak: o.spill / 4 for the pool (before the matte), o.spill / 40 for the sky. A blurred copy of the bolt's own light
+    // drew a box with hard vertical sides: its gain clipped the blurred line into a flat slab. Returns the pool layer.
     function spill(c, r, surf, o) {
         o = merge(o);
-        var l = c.layers.add(r.sum);
-        l.name = (o.name || "BOLT") + " spill";
-        U.fx(l, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": o.spillBlur, "ADBE Gaussian Blur 2-0003": 0 });
-        U.fx(l, "ADBE Tint", { "ADBE Tint-0001": [0, 0, 0], "ADBE Tint-0002": (o.tones || ELECTRIC).mid });
-        U.gain(l, o.spill, "Spill gain");
-        l.blendingMode = BlendingMode.ADD;
-        var m = surf.duplicate();
-        m.name = l.name + " matte";
-        m.moveBefore(l);
-        l.setTrackMatte(m, TrackMatteType.LUMA);
+        var t = o.tones || ELECTRIC, nm = (o.name || "BOLT") + " spill", reach = 2.4 * o.spillBlur, x = o.to[0], y = o.to[1];
+        function env(l, level) {
+            var ex = U.fx(l, "ADBE Exposure2", { "ADBE Exposure2-0022": 1 }, "Strike envelope");
+            ex.property("ADBE Exposure2-0003").expression = envExpr(o).replace(/;$/, "") + " + " + (Math.log(level) / Math.LN2).toFixed(4) + ";";   // the last statement is the value
+            l.blendingMode = BlendingMode.ADD;
+        }
+        var sky = AEK.build.solid(c, nm + " sky", [0, 0, 0]);
+        U.fx(sky, "ADBE Ramp", { "ADBE Ramp-0001": [x, 0], "ADBE Ramp-0002": U.scale(t.mid, 0.6), "ADBE Ramp-0003": [x, y], "ADBE Ramp-0004": [0, 0, 0], "ADBE Ramp-0005": 1 });
+        env(sky, o.spill / 40);
+        var l = AEK.build.solid(c, nm, t.mid);
+        U.ellipse(l, x, y, reach, 0.32 * reach, [0.9 * reach, 0.3 * reach]);
+        env(l, o.spill / 4);   // the luma matte of a dark surface scales it down again (a 0.15 gray keeps 15 %)
+        if (r && r.layer) { sky.moveAfter(r.layer); l.moveAfter(r.layer); }
+        if (surf) {
+            var m = surf.duplicate();
+            m.name = l.name + " matte";
+            m.moveBefore(l);
+            l.setTrackMatte(m, TrackMatteType.LUMA);
+        }
         return l;
     }
     return { ELECTRIC: ELECTRIC, DEFAULTS: DEFAULTS, envExpr: envExpr, condExpr: condExpr, core: core, strike: strike, spill: spill };
@@ -1237,7 +1523,7 @@ AEX.distort = (function () {
     // A ring is bipolar by default: an outer band at +amount and an inner band at radius - inner x width (inner 0.8) at innerAmount (-amount),
     // so the air between compresses like a lens edge; inner 0 gives the one-sign band, which slides the picture and barely reads in a still.
     // Keep |amount| / width at about 0.075 or under on fine texture: +/-8 px over 110 px held on grass, +/-11 over 80 tore it.
-    // Returns {layers, maps, warnings}.
+    // Returns {layers, maps, warnings} (layer names).
     function apply(host, plate, o) {
         var R = { layers: [], maps: [], warnings: [] }, ch, l, split = o.split || [0.88, 1, 1.14], i, q, rs = [], ring, fx;
         if (o.pad !== 0) { plate = padded(host, plate, o.pad || 48, o.padMode); }
@@ -1388,7 +1674,7 @@ AEX.integrate = (function () {
     // o = {name, burst: AEX.burst options, floorY, lightColor, interactive (70), reach (700), poolShift, pool (30), reflection (30), dim (30),
     //   black (the plate's 1st percentile RGB, required for the dim: without it no dim layer is made and a warning is returned), soft (px),
     //   grain (Noise %, 3), envRef (0.25 placeholder; measure it from a burst-only frame: 0.19 gave +31.2 % on the nearest surface, 0.25 gave +29.6 %),
-    //   envBox (260), bloomTotal (1.1), passes (false = burst only)}. Returns {layers, envelope, warnings}.
+    //   envBox (260), bloomTotal (1.1), passes (false = burst only)}. Returns {layers, envelope, warnings} (layer names).
     function build(host, plate, o) {
         var nm = o.name || "FX", b = o.burst, cx = b.center[0], cy = b.center[1], R = { layers: [], warnings: [] }, W = host.width, H = host.height;
         var lightColor = o.lightColor || U.mix(U.PALETTE.cream, U.PALETTE.coral, 0.55), reach = o.reach || 700;
@@ -1461,7 +1747,8 @@ AEX.pulse = (function () {
     // flash + bloom + plate. Measured as the flat disc (luma at 0.98 x the top tone) on the scene comp, frames 0 to 3 after the hit:
     // [[28, 1.0], [100, 0.25], [320, 0.06]] with flash 0.42: 155, 61, 48, 40 px; these values: 22, 21, 13, 6 px, a hot point inside a
     // coral falloff. The flash changes the disc more than the wide cone: flash 0.2 gave 30 px, 0.28 gave 38 px.
-    var CORE = [[18, 0.7], [90, 0.1], [320, 0.04]], FLASH = 0.12;
+    // Those discs were measured with flash 0.12 and FRONT bloom 0.9; 0.16 and 1.2 set the hit strength to 0.85 (vfx_measure.py flash), 0 % clipped.
+    var CORE = [[18, 0.7], [90, 0.1], [320, 0.04]], FLASH = 0.16;
     // RIMTHR, EDGE: with the origin inside the subject every edge is near the source, and the lit haze behind it is bright all round:
     // the 2 px choke let the BACK rig through on every edge and the rim lit them all, a cream outline round the whole silhouette.
     // The rim now takes only BACK light above RIMTHR (rings and streaks passing behind), and the choke and the rim fade to nothing at EDGE
@@ -1481,20 +1768,26 @@ AEX.pulse = (function () {
         tones: null,                                          // partial override of AEX.light.TONES for every map of the shot (rigs, rim, wrap, reflections)
         ring1: { r0: 30, r1: 1400, dur: 1.25, p: 3.5, lum: 0.55, wakeLum: 0.22, edgeW: 4 },
         ring2: { delay: 0.3, r0: 40, r1: 1000, dur: 1.6, p: 3, lum: 0.3, wakeLum: 0.14, edgeW: 3 },
-        floorRing: { lum: 0.4, edgeW: 6, r1: 1050, dur: 2.6, p: 3.2, dash: 1 },  // own slower travel so its last wisps stay in frame; dashes open into wisps
+        floorRing: { lum: 0.4, edgeW: 6, r1: 1050, dur: 2.6, p: 3.2, dash: 1 },  // wave "sphere": own slower travel so its last wisps stay in frame
+        wave: "floor", shell: 0, floorPersp: 1.3,           // "floor": the hero is a ring lying on the floor (floorWave); shell > 0 adds a faint screen circle
+                                                              // (ring1 at shell, no ring2); "sphere": both screen circles plus the floor ellipse, for a source in the air
+        floorWave: { lum: 0.6, r0: 90, r1: 1050, dur: 2.2, p: 3.2, edge: 0.022, edgePx: 6, band: 0.16, bandLum: 0.35, echo: 0.45, echoDelay: 0.3, echoR1: 700 },
+        bloomFloor: { r0: 8, n: 4, total: 0.6, k: 0.7 },
+        emit: "surface",                                      // streaks born on the subject's outline (subjectBox, else emberBand x 0.9) along its normal; "point": from center
         breakFrom: 150, breakTo: -28,                         // Fractal Noise brightness of the break matte: whole ring at the hit, wisps by the end
         streaks: 36, streakLum: [0.55, 1.0], streakGain: 1.8, streakSplit: 0.45, near: 5, nearGain: 0.9, motionBlur: 1,  // 45 % behind the subject, 5 near the lens
         embers: 22, emberBack: 0.4, emberD: [3, 16], emberLife: [3.2, 5.4], emberBand: [480, 205], subjectBox: null, emberMode: "shapes",
                                                               // shape-layer embers born on an ellipse around the subject (emberBand half axes around the origin, or
                                                               // subjectBox [x0, y0, x1, y1] x 1.1), 40 % of them in the BACK rig; "particles" = the CC Particle World burst
         haze: 0.22, rays: 0.4, dustLit: 0.8, holdout: 94, holdSoft: 1.5, choke: 2,  // holdout choked 2 px, softened 1.5 px (a 6 px blur left a dark contour)
-        rim: 2.4, rimW: 3, rimSrc: 6, rimThr: RIMTHR, edgeReach: EDGE, wrapFacing: 0.3, iR: 760,  // rim in a 3 px band from the BACK light above rimThr;
+        rim: 3.2, rimW: 3, rimSrc: 6, rimThr: RIMTHR, edgeReach: EDGE, wrapFacing: 0.3, iR: 760,  // rim in a 3 px band from the BACK light above rimThr;
                                                               // choke and rim fade out at edgeReach px from the origin (0 = everywhere); wrap 1.0 to wrapFacing at iR
         ambient: 45, ambientMask: [820, 520, 420], beam: 12, dust: 100,  // percent opacities in the scene comp; ambient haze ellipse [rx, ry, feather] px around the origin
-        interactive: 22, pool: 22, reflection: 25, refract: 24,
-        bloom: { r0: 10, n: 6, total: 0.9, k: 0.72 }, bloomBack: { r0: 16, n: 5, total: 0.7, k: 0.75 }, wrap: 3.5, wrapW: 26,
+        interactive: 40, pool: 35, reflection: 25, refract: 24,      // hit strength 0.85 on hero3d.mp4 (vfx_measure.py flash; band 0.7 to 0.95)
+        bloom: { r0: 10, n: 6, total: 1.2, k: 0.72 }, bloomBack: { r0: 16, n: 5, total: 0.7, k: 0.75 }, wrap: 3.5, wrapW: 26,
         halation: 0.4, halThr: 0.7, streak: 0.8, streakThr: 0.85, push: [100, 104], shake: 9, settle: 4.5,
-        ca: 0.0015, vignette: 70, grain: GRAIN, grainSize: 1.0, hold: 15  // last 15 frames frozen (time remap in the camera comp); grain: see GRAIN
+        ca: 0.0015, vignette: 70, grain: GRAIN, grainSize: 1.0, grainMask: "auto", grainMove: 0.82, grainWhite: 0.15, hold: null  // frames frozen at the end (time remap in the camera comp): null = 15 on a
+                                                              // still plate, 0 on a moving one (a hold freezes the plate's own motion too); grain: see GRAIN
     };
     function tg(l, mn) { return l.property("ADBE Transform Group").property(mn); }
     function rng(seed) { var x = seed * 9301 + 49297; return function () { x = (x * 9301 + 49297) % 233280; return x / 233280; }; }
@@ -1576,6 +1869,9 @@ AEX.pulse = (function () {
     // falloff(o, src, r, name): src seen through a radial ramp around the center (Multiply), cut below the floor line. Returns the comp.
     function falloff(o, src, r, name) {
         var c = comp(o, "_" + name);
+        // a black ground under src: a Multiply layer over transparent pixels shows itself, so over the transparent dust comp the ramp
+        // alone drew a disc of light round the origin (the cream dome; 68 % of the peak-frame rise on a dark plate)
+        AEK.build.solid(c, "GROUND", BLACK);
         c.layers.add(src);
         var m = AEK.build.solid(c, "FALLOFF", BLACK);
         U.fx(m, "ADBE Ramp", { "ADBE Ramp-0001": o.center, "ADBE Ramp-0002": WHITE, "ADBE Ramp-0003": [o.center[0] + r, o.center[1]], "ADBE Ramp-0004": BLACK, "ADBE Ramp-0005": 2 });
@@ -1608,8 +1904,10 @@ AEX.pulse = (function () {
         var a = o.at, s = o.s, c = comp(o, "_RINGS");
         var r1 = U.merge(o.ring1, { center: o.center, t0: a, r0: o.ring1.r0 * s, r1: o.ring1.r1 * s, fadeTo: 0, name: "R1", wake: 6, gap: 0.022, fall: 0.72 });
         var r2 = U.merge(o.ring2, { center: o.center, t0: a + o.ring2.delay, r0: o.ring2.r0 * s, r1: o.ring2.r1 * s, fadeTo: 0, name: "R2", wake: 4, gap: 0.02, fall: 0.7 });
-        var A = AEX.shock.stroke(c, r1), B = AEX.shock.stroke(c, r2);
-        hideBefore([A.edge, A.wake], r1); hideBefore([B.edge, B.wake], r2);
+        // wave "floor": the screen circle is only a faint shell of air around the hit; the ring on the floor carries the wave
+        if (o.wave === "floor") { r1.lum = o.shell; r1.wakeLum = 0.4 * o.shell; }
+        var A = AEX.shock.stroke(c, r1), B = o.wave === "floor" ? null : AEX.shock.stroke(c, r2);
+        hideBefore([A.edge, A.wake], r1); if (B) { hideBefore([B.edge, B.wake], r2); }
         var td = U.fx(AEK.build.adjustment(c, "WOBBLE"), "ADBE Turbulent Displace", { "ADBE Turbulent Displace-0002": 10, "ADBE Turbulent Displace-0003": 70 * s, "ADBE Turbulent Displace-0010": o.seed });
         td.property("ADBE Turbulent Displace-0006").expression = "time*160";
         td.property("ADBE Turbulent Displace-0002").expression = "var u=Math.min(1,Math.max(0,(time-" + a + ")/" + o.ring1.dur + ")); 6+34*u;";
@@ -1671,15 +1969,80 @@ AEX.pulse = (function () {
         l.setTrackMatte(pm, TrackMatteType.LUMA_INVERTED);
         return l;
     }
+    // floorWave(o): the wave as a ring lying on the floor plane, the hero of a hit from a subject standing on a floor. Each ring is a filled
+    // band between two closed paths projected through a pinhole: a floor point at depth z (px, positive away from the camera) lands at
+    // x = cx + X k, y = floorY - a z k, with k = D / (D + z), a = floorAspect and D set so the ring at r1 is floorPersp x wider at the front than
+    // at the back. The front half comes out lower, larger and thicker than the back half, as on a real floor. An edge band, a soft wake, a
+    // fainter echo ring, a stretched noise matte that breaks the band into arcs as it ages. Returns the comp <name>_FLOORWAVE (gray on black).
+    function floorWave(o) {
+        var c = comp(o, "_FLOORWAVE"), F = o.floorWave, s = o.s, p = Math.max(1.01, o.floorPersp), D = F.r1 * s * (p + 1) / (p - 1), i, j, g, nm, root;
+        var sh = c.layers.addShape(); sh.name = "WAVE";
+        tg(sh, "ADBE Anchor Point").setValue([0, 0]); tg(sh, "ADBE Position").setValue([0, 0]);
+        // [name, start (s), r1, duration, inner offset (share of r), width (share of r), width px, opacity %]
+        var spec = [["edge", o.at, F.r1, F.dur, 0, F.edge, F.edgePx, 100], ["wake", o.at, F.r1, F.dur, F.edge, F.band, 0, 100 * F.bandLum],
+            ["echo", o.at + F.echoDelay, F.echoR1, 1.1 * F.dur, 0, 1.2 * F.edge, 0.7 * F.edgePx, 100 * F.echo]];
+        function path(q, inner) {
+            var rr = inner ? "Math.max(0.5,r*(1-" + (q[4] + q[5]) + ")-" + q[6] * s + ")" : "r*(1-" + q[4] + ")";
+            return "var u=Math.min(1,Math.max(0,(time-" + q[1] + ")/" + q[3] + ")), r=" + F.r0 * s + "+" + (q[2] - F.r0) * s + "*(1-Math.pow(1-u," + F.p + "));\n" +
+                "var rr=" + rr + ",D=" + D + ",cx=" + o.center[0] + ",cy=" + o.floorY + ",a=" + o.floorAspect + ",N=96,pts=[],i,th,z,k;\n" +
+                "for(i=0;i<N;i++){th=2*Math.PI*i/N;z=rr*Math.sin(th);k=D/(D+z);pts.push([cx+rr*Math.cos(th)*k,cy-a*z*k]);}\ncreatePath(pts,[],[],true);";
+        }
+        for (i = 0; i < spec.length; i++) {
+            root = sh.property("ADBE Root Vectors Group"); root.addProperty("ADBE Vector Group");
+            g = root.property(root.numProperties); nm = spec[i][0]; g.name = nm;
+            for (j = 0; j < 2; j++) { sh.property("ADBE Root Vectors Group").property(nm).property("ADBE Vectors Group").addProperty("ADBE Vector Shape - Group"); }
+            sh.property("ADBE Root Vectors Group").property(nm).property("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Fill");
+            g = sh.property("ADBE Root Vectors Group").property(nm).property("ADBE Vectors Group");
+            g.property(1).property("ADBE Vector Shape").expression = path(spec[i], false);
+            g.property(2).property("ADBE Vector Shape").expression = path(spec[i], true);
+            g.property(3).property("ADBE Vector Fill Color").setValue([1, 1, 1, 1]);
+            g.property(3).property("ADBE Vector Fill Rule").setValue(2);   // even-odd: the inner path cuts the hole
+            sh.property("ADBE Root Vectors Group").property(nm).property("ADBE Vector Transform Group").property("ADBE Vector Group Opacity").expression =
+                "var u=Math.min(1,Math.max(0,(time-" + spec[i][1] + ")/" + spec[i][3] + ")); time<" + spec[i][1] + "?0:" + spec[i][7] + "*Math.pow(1-u,1.4);";
+        }
+        U.fx(sh, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": 2.5 * s, "ADBE Gaussian Blur 2-0003": 0 });
+        var td = U.fx(sh, "ADBE Turbulent Displace", { "ADBE Turbulent Displace-0002": 8, "ADBE Turbulent Displace-0003": 80 * s, "ADBE Turbulent Displace-0010": o.seed + 4 });
+        td.property("ADBE Turbulent Displace-0006").expression = "time*120";
+        // break matte: noise stretched along the floor, whole at the hit, arcs and wisps by the end
+        var nz = AEK.build.solid(c, "BREAK", BLACK);
+        var nf = U.fx(nz, "ADBE Fractal Noise", { "ADBE Fractal Noise-0004": 240, "ADBE Fractal Noise-0009": 0, "ADBE Fractal Noise-0011": 520 * s, "ADBE Fractal Noise-0012": 90 * s,
+            "ADBE Fractal Noise-0015": 3, "ADBE Fractal Noise-0027": o.seed + 6 });
+        nf.property("ADBE Fractal Noise-0023").expression = "time*90";
+        var br = nf.property("ADBE Fractal Noise-0005");
+        br.setValueAtTime(o.at + 0.15, 150); br.setValueAtTime(o.at + 1.4, -20);
+        nz.moveBefore(sh); nz.enabled = false; sh.setTrackMatte(nz, TrackMatteType.LUMA);
+        return c;
+    }
+    // floorMatte(o, chokeComp): the choked subject matte above the floor line only: the back half of the floor wave passes behind the
+    // subject, the front half in front of it. Returns the comp.
+    function floorMatte(o, ck) {
+        var c = comp(o, "_FWMATTE");
+        c.layers.add(ck);
+        below(AEK.build.solid(c, "BELOW FLOOR", BLACK), o, o.floorY, 30);
+        return c;
+    }
+    // subjectEllipse(o): {cx, cy, rx, ry} of the subject in comp px: subjectBox when given, else emberBand x 0.9 x s around the origin.
+    function subjectEllipse(o) {
+        if (o.subjectBox) { var b = o.subjectBox; return { cx: (b[0] + b[2]) / 2, cy: (b[1] + b[3]) / 2, rx: (b[2] - b[0]) / 2, ry: (b[3] - b[1]) / 2 }; }
+        return { cx: o.center[0], cy: o.center[1], rx: 0.9 * o.emberBand[0] * o.s, ry: 0.9 * o.emberBand[1] * o.s };
+    }
     // streaks(o, lightComp, sp): tapered strokes in one shape layer. Each streak is two groups on one decelerating, slightly falling path
     // (head at d0 + D (1 - exp(-t / tau))): a body tapered to 0 at the tail and a short head 1.7x wider and 1.25x brighter. Layer and comp
     // motion blur 180 degrees, 16 samples. sp = {name, n, seed, w [min, max] px, lum [min, max], d0 [min, max], D [min, max], blur, gain}. Returns the layer.
     function streaks(o, lc, sp) {
         var R = rng(sp.seed), l = lc.layers.addShape(), i, j, g, ang, d0, D, tau, lag, grav, del, life, w, lum, cx = o.center[0] - o.W / 2, cy = o.center[1] - o.H / 2, ex, st, tp, s = o.s, nm, parts;
+        var surf = o.emit === "surface", se = subjectEllipse(o), th, nx, ny, nn;
         l.name = sp.name;
         for (i = 0; i < sp.n; i++) {
-            ang = (-178 + 176 * (i + R()) / sp.n) * Math.PI / 180;                 // upper half, spread evenly with jitter
-            d0 = lerp(sp.d0[0], sp.d0[1], R()) * s; D = lerp(sp.D[0], sp.D[1], Math.pow(R(), 1.6)) * s;  // born past the subject's face; most short
+            if (surf) {
+                // born on the outline, over the top and both sides down to 20 degrees below the horizontal, leaving along the outline's normal
+                th = (-200 + 220 * (i + R()) / sp.n) * Math.PI / 180;
+                cx = se.cx + 0.92 * se.rx * Math.cos(th) - o.W / 2; cy = Math.min(se.cy + 0.92 * se.ry * Math.sin(th), o.floorY - 6) - o.H / 2;
+                nx = Math.cos(th) / se.rx; ny = Math.sin(th) / se.ry; nn = Math.sqrt(nx * nx + ny * ny); ang = Math.atan2(ny / nn, nx / nn);
+            } else {
+                ang = (-178 + 176 * (i + R()) / sp.n) * Math.PI / 180;             // upper half, spread evenly with jitter
+            }
+            d0 = lerp((surf ? sp.d0s : sp.d0)[0], (surf ? sp.d0s : sp.d0)[1], R()) * s; D = lerp(sp.D[0], sp.D[1], Math.pow(R(), 1.6)) * s;  // born past the face; most short
             tau = 0.08 + 0.4 * R(); lag = 0.03 + 0.12 * R(); grav = 60 + 260 * R(); del = Math.floor(4 * R()) / o.fps;
             life = 0.3 + 1.0 * R(); w = lerp(sp.w[0], sp.w[1], Math.pow(R(), 2.2)); lum = lerp(sp.lum[0], sp.lum[1], R());
             parts = [["b", lag, w, lum, 100], ["h", lag * 0.22, w * 1.7, Math.min(1, lum * 1.25), 70]];   // body, head
@@ -1784,12 +2147,16 @@ AEX.pulse = (function () {
         }
         l = cone(fc, "FLASH", o.center, o.flashR * o.s, o.flash);
         tg(l, "ADBE Opacity").expression = "100*" + E(o, "flash") + ";";
-        var nB = Math.round(o.streaks * o.streakSplit), nF = o.streaks - nB, sp = { d0: [200, 420], D: [240, 1140], lum: o.streakLum, gain: o.streakGain };
+        var nB = Math.round(o.streaks * o.streakSplit), nF = o.streaks - nB, sp = { d0: [200, 420], d0s: [0, 60], D: [240, 1140], lum: o.streakLum, gain: o.streakGain };
         var st = streaks(o, fc, U.merge(sp, { name: "STREAKS FRONT", n: nF, seed: o.seed * 7 + 1, w: [2, 9] }));
-        var nr = streaks(o, fc, { name: "STREAKS NEAR", n: o.near, seed: o.seed * 13 + 5, w: [16, 30], lum: [0.3, 0.5], d0: [260, 520], D: [700, 1500], blur: 9, gain: o.nearGain });
+        var nr = streaks(o, fc, { name: "STREAKS NEAR", n: o.near, seed: o.seed * 13 + 5, w: [16, 30], lum: [0.3, 0.5], d0: [260, 520], d0s: [40, 160], D: [700, 1500], blur: 9, gain: o.nearGain });
         var em = o.emberMode === "particles" ? embersPW(o, fc) : embers(o, fc, bc);
-        var rg = rings(o, bc);
-        var fr = floorRing(o, bc, pm);
+        var rg = o.wave === "floor" && !(o.shell > 0) ? null : rings(o, bc);   // floor wave with no shell: no screen circle at all
+        var fr = o.wave === "floor" ? null : floorRing(o, bc, pm), fw = null;
+        if (o.wave === "floor") {
+            fw = oneRig(o, sc, "FLOOR", o.bloomFloor);
+            AEX.light.add(fw.light.layers.add(floorWave(o)), o.floorWave.lum);
+        }
         var sb = streaks(o, bc, U.merge(sp, { name: "STREAKS BACK", n: nB, seed: o.seed * 11 + 3, w: [1.5, 6], lum: [0.45, 0.85] }));
         if (em.back) { em.back.moveToBeginning(); }
         var lh = bc.layers.add(falloff(o, dens, 900 * o.s, "LITHAZE")); lh.name = "LIT HAZE";
@@ -1804,7 +2171,7 @@ AEX.pulse = (function () {
         var dl = bc.layers.add(falloff(o, du, 650 * o.s, "DUSTLIT")); dl.name = "LIT DUST";
         tg(dl, "ADBE Opacity").expression = "100*" + E(o, "haze") + ";";
         AEX.light.add(dl, o.dustLit);
-        return { front: F, back: B, rings: rg, floorRing: fr.name, streaks: [st.name, nr.name, sb.name], embers: em };
+        return { front: F, back: B, floor: fw, rings: rg, floorRing: fr ? fr.name : null, streaks: [st.name, nr.name, sb.name], embers: em };
     }
     // facing(o, comp, reach, end): a radial ramp in Multiply from the origin (1.0) to end at reach px (default wrapFacing at iR): edges
     // near the source take more light. With the origin inside the subject every edge is near it: rimMatte uses reach = edgeReach, end 0.
@@ -1911,6 +2278,10 @@ AEX.pulse = (function () {
         var pmR = sc.layers.add(chokeMatte(o, pmc)); pmR.name = "PM_RIG"; pmR.enabled = false;
         tg(pmR, "ADBE Opacity").setValue(o.holdout);
         RG.back.layer.setTrackMatte(pmR, TrackMatteType.LUMA_INVERTED);
+        if (RG.floor) {
+            var pmF = sc.layers.add(floorMatte(o, pmR.source)); pmF.name = "PM_FLOOR"; pmF.enabled = false; tg(pmF, "ADBE Opacity").setValue(o.holdout);
+            RG.floor.layer.setTrackMatte(pmF, TrackMatteType.LUMA_INVERTED);
+        }
         var wm = sc.layers.add(wrapMatte(o, pmc)); wm.name = "WRAP MATTE"; wm.enabled = false;
         var wr = sc.layers.add(RG.back.sum); wr.name = "LIGHT WRAP";
         AEX.light["map"](wr, T);
@@ -1952,6 +2323,7 @@ AEX.pulse = (function () {
         tg(sk, "ADBE Anchor Point").setValue(c0); tg(sk, "ADBE Position").setValue(c0); tg(sk, "ADBE Scale").setValue([120, 10]);
         sk.blendingMode = BlendingMode.SCREEN;
         var order = rf ? [pl, am, bm, dl, il, po, rf.layer, refl[0], refl[1], RG.back.layer, wr, ri, RG.front.layer, ha, sk] : [pl, am, bm, dl, il, po, refl[0], refl[1], RG.back.layer, wr, ri, RG.front.layer, ha, sk], k;
+        if (RG.floor) { for (k = 0; k < order.length; k++) { if (order[k] === RG.back.layer) { order.splice(k, 0, RG.floor.layer); break; } } }
         for (k = 1; k < order.length; k++) { order[k].moveBefore(order[k - 1]); }
         en.moveToBeginning();
         R.comp = sc; R.rig = RG; for (k = order.length - 1; k >= 0; k--) { R.layers.push(order[k].name); }
@@ -1961,8 +2333,8 @@ AEX.pulse = (function () {
     }
     // camera(o, sceneComp): time remap frozen for the last o.hold frames, Motion Tile 112 % mirrored, push-in o.push to o.settle s, shake on
     // the ENV shake slider (o.shake px, 0.35 degrees). Returns the comp <name>_CAM.
-    function camera(o, sc) {
-        var c = comp(o, "_CAM", P.ink);
+    function camera(o, sc, sfx) {
+        var c = comp(o, sfx || "_CAM", P.ink);
         var l = c.layers.add(sc); l.name = "SCENE";
         l.timeRemapEnabled = true;
         l.property("ADBE Time Remapping").expression = "Math.min(time," + ((o.dur * o.fps - o.hold) / o.fps) + ");";
@@ -1975,23 +2347,78 @@ AEX.pulse = (function () {
         tg(l, "ADBE Rotate Z").expression = "var e=" + E(o, "shake") + "; noise(time*12+80)*0.35*e;";
         return c;
     }
-    // finish(o, camComp): the comp <name>_FINAL with AEX.lens.apply (CA, vignette, grain last; optics, halation and streak skipped). Returns {comp, lens}.
-    function finish(o, cam) {
-        var c = comp(o, "_FINAL", P.ink);
-        var r = AEX.lens.apply(c, cam, { skip: { optics: 1, halation: 1, streak: 1 }, ca: o.ca, vignette: o.vignette, grain: o.grain, grainSize: o.grainSize, mono: 0 });
+    // grainMatte(o, rig): where the effect covers the plate, as a luma matte through the same camera move: the rig sums in Screen,
+    // Levels Input White grainWhite (light at that level or more takes full grain), blurred 12 px. Returns the comp <name>_GRAINCAM.
+    function grainMatte(o, RG) {
+        var c = comp(o, "_FXLUMA"), srcs = [RG.front.sum, RG.back.sum], i, l;
+        if (RG.floor) { srcs.push(RG.floor.sum); }
+        for (i = 0; i < srcs.length; i++) { l = c.layers.add(srcs[i]); l.blendingMode = BlendingMode.SCREEN; }
+        var a = AEK.build.adjustment(c, "LEVEL");
+        U.fx(a, "ADBE Easy Levels2", { "ADBE Easy Levels2-0004": o.grainWhite });
+        U.fx(a, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": 12, "ADBE Gaussian Blur 2-0003": 0 });
+        return camera(o, c, "_GRAINCAM");
+    }
+    // finish(o, camComp, rig): the comp <name>_FINAL with AEX.lens.apply (CA, vignette, grain last; optics, halation and streak skipped).
+    // Grain goes only where the picture lost it. grainMask "auto" (default): when nothing resamples the plate (no CA, push 100 to 100,
+    // shake 0) it keeps its own grain, so grain goes only where the effect covers it (grainMatte as luma track matte). The lens CA and a
+    // camera move resample the whole plate (its grain std fell 37 % with CA alone, 45 % with CA and the move, on hero3d.mp4), so grain
+    // goes over the whole frame at grain x grainMove (0.82 put it at -0.5 %). "effect" or "frame" force one.
+    // Returns {comp, lens}.
+    function finish(o, cam, RG) {
+        var c = comp(o, "_FINAL", P.ink), moving = o.ca > 0 || o.shake > 0 || o.push[0] !== 100 || o.push[1] !== 100;
+        var mode = o.grainMask === "auto" ? (moving ? "frame" : "effect") : o.grainMask;
+        var r = AEX.lens.apply(c, cam, { skip: { optics: 1, halation: 1, streak: 1 }, ca: o.ca, vignette: o.vignette, grain: mode === "frame" && o.grainMask === "auto" ? o.grain * o.grainMove : o.grain, grainSize: o.grainSize, mono: 0 });
+        if (mode === "effect" && r.grain && RG) {
+            var gm = c.layers.add(grainMatte(o, RG)); gm.name = "GRAIN MATTE"; gm.enabled = false;
+            gm.moveBefore(r.grain); r.grain.setTrackMatte(gm, TrackMatteType.LUMA);
+        }
         return { comp: c, lens: r };
     }
     // build(plateItem, o): the whole shot on a HELD frame: every origin, mask and ellipse sits at fixed comp pixels (a moving camera needs a
     // held frame or a rebuild per shot). o overrides DEFAULTS (nested ring1, ring2, floorRing, bloom, bloomBack merge key by key).
-    // Returns {o, scene, cam, finalComp, layers, rig, dust, embers}: compare layers and counts with the plan (a broken expression drops elements silently).
+    // Returns {o, scene, cam, finalComp, layers, rig, dust, embers, warnings}: scene, cam and finalComp are comps (objects); layers and rig
+    // are names. Compare layers and counts with the plan (a broken expression drops elements silently).
     function build(plate, opts) {
         var o = U.merge(DEFAULTS, opts), k;
+        if (o.wave === "floor" && (!opts || opts.refract === undefined)) { o.refract = 0; }   // the refraction rides the screen circle
+        if (o.hold === null || o.hold === undefined) { o.hold = plate.mainSource && plate.mainSource.isStill ? 15 : 0; }
         for (k in DEFAULTS) { if (DEFAULTS.hasOwnProperty(k) && DEFAULTS[k] !== null && typeof DEFAULTS[k] === "object" && !(DEFAULTS[k] instanceof Array) && opts && opts[k]) { o[k] = U.merge(DEFAULTS[k], opts[k]); } }
-        var sc = scene(o, plate), cam = camera(o, sc.comp), fin = finish(o, cam), em = sc.rig.embers;
-        return { o: o, scene: sc.comp, cam: cam, finalComp: fin.comp, layers: sc.layers, rig: [sc.rig.front.light.name, sc.rig.back.light.name], dust: sc.dust,
+        var sc = scene(o, plate), cam = camera(o, sc.comp), fin = finish(o, cam, sc.rig), em = sc.rig.embers;
+        var rn = [sc.rig.front.light.name, sc.rig.back.light.name]; if (sc.rig.floor) { rn.push(sc.rig.floor.light.name); }
+        return { o: o, scene: sc.comp, cam: cam, finalComp: fin.comp, layers: sc.layers, rig: rn, dust: sc.dust,
             embers: em.pn || { count: em.count, sizes: em.sizes }, warnings: sc.warnings };
     }
+    // gateFrames(r, dir, o): the frames the pixel gates read (scripts/vfx_measure.py gates <dir>/manifest.json), written by one job: the
+    // plate alone (two consecutive frames and the calm frame), the scene comp and the subject matte at calm, peak and late times, the final
+    // comp at the same times and on the last two frames. r is what build() returned. o = {calm (s, 0), peak (frames after the hit, [0, 2, 4, 6, 8, 10, 12, 15]),
+    // late ([0.5, 1.5] s after the hit), prefix}. Returns the manifest (every path absolute).
+    function gateFrames(r, dir, g) {
+        g = g || {};
+        var o = r.o, fps = o.fps, pre = g.prefix || "g", calm = g.calm === undefined ? 0 : g.calm, pk = g.peak || [0, 2, 4, 6, 8, 10, 12, 15], late = g.late || [0.5, 1.5], i, t;
+        var mc = AEK.core.comp(o.name + "_PMATTE"), pc = comp(o, "_PLATEONLY"), pl = pc.layers.add(r.scene.layer("PLATE").source);
+        fitCover(pl, pl.source, o);
+        var M = { origin: o.center, at: o.at, fps: fps, scene: {}, matte: {}, outs: [], peaks: [], peakTimes: [] };
+        var times = [calm], last = Math.floor(o.dur * fps) - 1;
+        for (i = 0; i < pk.length; i++) { t = Math.round((o.at + pk[i] / fps) * 1000) / 1000; times.push(t); M.peakTimes.push(t); }
+        for (i = 0; i < late.length; i++) { times.push(Math.round((o.at + late[i]) * 1000) / 1000); }
+        for (i = 0; i < times.length; i++) {
+            t = times[i];
+            M.scene[String(t)] = AEK.capture.frame(r.scene, t, dir + "/" + pre + "_scene_" + Math.round(t * fps) + ".png").path;
+            M.matte[String(t)] = AEK.capture.frame(mc, t, dir + "/" + pre + "_matte_" + Math.round(t * fps) + ".png").path;
+            M.outs.push(AEK.capture.frame(r.finalComp, t, dir + "/" + pre + "_final_" + Math.round(t * fps) + ".png").path);
+            if (i > 0 && i <= pk.length) { M.peaks.push(M.outs[i]); }
+        }
+        M.calm = M.outs[0]; M.calmScene = M.scene[String(calm)];
+        M.hold = [AEK.capture.frame(r.finalComp, (last - 1) / fps, dir + "/" + pre + "_final_" + (last - 1) + ".png").path,
+            AEK.capture.frame(r.finalComp, last / fps, dir + "/" + pre + "_final_" + last + ".png").path];
+        M.plate = [AEK.capture.frame(pc, (last - 1) / fps, dir + "/" + pre + "_plate_" + (last - 1) + ".png").path,
+            AEK.capture.frame(pc, last / fps, dir + "/" + pre + "_plate_" + last + ".png").path];
+        M.plateFrame = AEK.capture.frame(pc, calm, dir + "/" + pre + "_plate_calm.png").path;
+        var f = new File(dir + "/manifest.json"); f.encoding = "UTF-8"; f.open("w"); f.write(AEK.json.stringify(M)); f.close();
+        M.manifest = f.fsName;
+        return M;
+    }
     return { DEFAULTS: DEFAULTS, build: build, env: env, productMatte: productMatte, cone: cone, density: density, falloff: falloff, dust: dust,
-        rings: rings, floorRing: floorRing, streaks: streaks, embers: embers, embersPW: embersPW, emberLayer: emberLayer, rigs: rigs, wrapMatte: wrapMatte, rimMatte: rimMatte, chokeMatte: chokeMatte,
-        interactiveComp: interactiveComp, scene: scene, camera: camera, finish: finish };
+        rings: rings, floorRing: floorRing, floorWave: floorWave, floorMatte: floorMatte, subjectEllipse: subjectEllipse, streaks: streaks, embers: embers, embersPW: embersPW, emberLayer: emberLayer, rigs: rigs, wrapMatte: wrapMatte, rimMatte: rimMatte, chokeMatte: chokeMatte,
+        interactiveComp: interactiveComp, scene: scene, camera: camera, finish: finish, gateFrames: gateFrames };
 })();

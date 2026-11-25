@@ -1,6 +1,6 @@
 ---
 name: scenario-after-effects-vfx
-description: "Use when building effects in After Effects with built-in tools: glow, sparks, bursts, embers, smoke, flame, shockwave rings, light rays, lightning, heat haze, lens finish, or when a glow burns to white, rays gray the frame, particles look like sand, or the effect does not sit in the plate."
+description: "Use when building effects in After Effects with built-in tools: glow, sparks, bursts, embers, dust, smoke, flame, shockwave rings, light rays, lightning, heat haze, lens finish, or when a glow burns to white, rays gray the frame, particles look like sand, or the effect does not sit in the plate."
 license: MIT
 ---
 
@@ -75,46 +75,48 @@ proceed from tool schemas and flag the gap. **REQUIRED BACKGROUND:** scenario-af
 3. **Build each element as gray light** inside `<name>_light`, level set with
    `AEX.light.add(layer, lum)`:
 
-| Ask                              | Built-in build                                                                                | Helper, procedures section |
-| -------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------- |
-| Sparks from a point              | CC Particle World from px targets, Composite                                                  | `AEX.pn.sparks`, 3         |
-| Burst with direction             | radial noise streaks through Polar Coordinates, core cones, 30 to 150 sparks with Echo trails | `AEX.burst.build`, 4       |
-| Embers, dust, title hole         | three planes, black-to-black color map, exact loop                                            | `AEX.atmo.build`, 5        |
-| Smoke lit from one side          | looping Fractal Noise density, lit edge by self-subtract                                      | `AEX.smoke.build`, 6       |
-| Small flame                      | rising noise, base fill, teardrop, threshold, heat ramp before the map, upward radial blur    | `AEX.smoke.flame`, 7       |
-| Shockwave ring                   | stroke wake, polar band or noise wisps; refraction                                            | `AEX.shock.*`, 8           |
-| Volumetric rays                  | CC Light Rays on the light only, under the foreground                                         | `AEX.rays.rig`, 9          |
-| Lightning                        | Advanced Lightning core, envelope, spill                                                      | `AEX.bolt.strike`, 10      |
-| Heat haze, glass ring            | red/green map precomps, padded plate, split                                                   | `AEX.distort.apply`, 11    |
-| Trail, snow, dissolve, loop, HUD | shape path, three snow planes, Gradient Wipe                                                  | 14 to 19                   |
+| Ask                                | Built-in build                                                                                               | Helper, procedures section             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| Sparks from a point in the air     | CC Particle World from px targets, Composite; from an object on a plate, the pulse's streaks and embers (13) | `AEX.pn.sparks`, 3                     |
+| Burst with direction               | radial noise streaks through Polar Coordinates, core cones, 30 to 150 sparks with Echo trails                | `AEX.burst.build`, 4                   |
+| Embers, dust in a beam, title hole | few motes by depth, soft discs, slow rise, no swirl, exact loop                                              | `AEX.atmo.build`, `AEX.motes.build`, 5 |
+| Smoke plume (stylized, accent)     | stringy noise through a narrow column and a wide leaning crown, swayed with height                           | `AEX.smoke.build`, 6                   |
+| Flame (stylized, accent)           | fixed source pushed up by a one-sided map, three noise scales, one tone map, sharpen                         | `AEX.smoke.flame`, 7                   |
+| Shockwave ring                     | stroke wake, polar band or noise wisps; refraction                                                           | `AEX.shock.*`, 8                       |
+| Volumetric rays                    | CC Light Rays on the light only, under the foreground                                                        | `AEX.rays.rig`, 9                      |
+| Lightning                          | Advanced Lightning core, envelope, spill                                                                     | `AEX.bolt.strike`, 10                  |
+| Heat haze, glass ring              | red/green map precomps, padded plate, split                                                                  | `AEX.distort.apply`, 11                |
+| Trail, snow, dissolve, loop, HUD   | shape path, three snow planes, Gradient Wipe                                                                 | 14 to 19                               |
 
-A generated element (fire, smoke on black, a particle texture) comes from
-scenario-after-effects-generation, model picked by the Scenario MCP `recommend` tool; treat it as
-footage on black. GATE: each element reads in gray over black on 3 frames; its peak sits at the
-level planned.
+**Routing rule for natural elements.** Built-in effects for stylized or energy looks, loops and
+small accents, a realistic wisp included (`vfx_measure.py wisp`: 8 % of the frame tall, 10 levels
+over the plate, 1 s). Realistic fire and smoke that fill the frame: an element on black from
+scenario-after-effects-generation (model picked by the Scenario MCP `recommend` tool), landed with
+`AEX.element.land` (procedures section 13). Dust stays built-in. GATE: each element reads in gray
+over black on 3 frames; its peak sits at the level planned.
 
 4. **Check the hierarchy.** Render start, peak and end. One hero, few large pieces, many small dim
    ones; sizes and brightness vary 5 to 10x; the core has a radial falloff; at least a third of the
    effect's area stays dark air. If not, remove pieces before adding any (critique.md gives what to
    do for each failure picture). GATE: the five visual checks pass on the peak frame.
 
-5. **Integrate on the plate.** `AEX.pulse.build()` on a held frame: subject matte (luma key on a
-   dark plate, else a supplied `matte`), `ENV` null, BACK and FRONT rigs in Screen, BACK held out by
-   the matte choked 2 px near the origin and unchoked past `edgeReach` (640 px), rim from BACK light
-   above 0.35, wrap, embers born around the subject (3 to 16 px, 40 % behind it), interactive light,
-   pool, reflections, hold, lens last. A moving plate: hold a frame, or parent origin, matte and
-   floor line to a tracked null. A bright daylight plate: the daylight variant (procedures section
-   13). Without a subject in front, `AEX.integrate.build()`. GATE: 0 % clipped; contour ratio
-   (procedures section 13) at least 1.0, 0.95 on the peak frames; plate blacks within 5 % outside
-   the peak, before the lens; grain std within 10 % of the plate's; flash frame mean luma about 0.2
-   at most.
+5. **Integrate on the plate.** `AEX.pulse.build()` with `subjectBox`: subject matte (luma key on a
+   dark plate, else a supplied `matte`), `ENV` null, FLOOR, BACK and FRONT rigs in Screen. The wave
+   is a ring on the floor plane in perspective, its back half behind the subject; streaks and embers
+   leave from the subject's outline. BACK is held out by the matte choked 2 px; rim, wrap,
+   interactive light, pool, reflections, lens last. A moving plate: no end hold, origin and floor
+   line on a tracked null. A daylight plate: procedures section 13. Without a subject in front,
+   `AEX.integrate.build()`. GATE: `AEX.pulse.gateFrames` then `vfx_measure.py gates` (exit 0): 0 %
+   clipped, contour ratio, far-side outline, blacks, grain, and hit strength 0.7 to 0.95 (under 0.5
+   the hit does nothing, over 1.0 it burns).
 
 6. **Lens and motion.** Optional lens finish (`AEX.lens.apply`): CA 0.15 % (2.7 px corners, 0
    center), halation above 0.75, CC Vignette 100 (-0.5 stop), Add Grain last at the plate's std over
-   4.2 levels per unit (dark) or 2.2 (mid gray); 1.5 only on clean CG. Motion blur: shutter 90 on
-   fast rings, the first 2 frames sharp (`AEX.shock.mbSplit`); the switch goes on the particle layer
-   and on every comp and nested comp layer above it. GATE: corner fringe 2 to 4 px; grain std within
-   10 % of the plate's, frame to frame or before the CA (channel-scale CA changes the spatial std).
+   4.2 levels per unit (dark) or 2.2 (mid gray), only where the picture lost grain (procedures 13).
+   Motion blur: shutter 90 on fast rings, the first 2 frames sharp (`AEX.shock.mbSplit`); the switch
+   goes on the particle layer and on every comp and nested comp layer above it. GATE: corner fringe
+   2 to 4 px; grain std within 10 % of the plate's, frame to frame or before the CA (channel-scale
+   CA changes the spatial std).
 
 7. **Loop, measure, render.** `AEX.vfx.loopNoise()` for noise; `AEX.atmo.loopPair()` for particles.
    `AEX.vfx.cost()` for frames, a render-queue job for ms per frame, `aerender` from the shell,
@@ -133,17 +135,9 @@ level planned.
 | size x width x 0.075 px                | visible particle diameter (`AEX.pn.K.diamPerWidth`); smallest visible size 0.015 for spheres at 1920 (2.2 px) |
 | 0.58 x width x Velocity                | px/s at the burst edge                                                                                        |
 | 3.2 x width x Gravity                  | px/s² with Resistance 0; Resistance R decays speed as exp(-0.7 R t)                                           |
-| 1/120 s x 16, decay 0.89, Maximum      | Echo trail on sparks, first in the stack; 1/60 s leaves beads                                                 |
 | 15 to 70 degrees                       | Cone Axis Extra Angle (emits on a cone at that angle; above 90 goes backwards)                                |
-| 45 %, Levels 0.28 to 0.72              | flame base fill and threshold, set together                                                                   |
-| 1.0 to 0.42                            | flame heat ramp, Multiply before the color map                                                                |
-| S at least 2 x (r1 + thickness)        | square polar precomp for a ring of radius r1                                                                  |
 | 90 degrees, 2 sharp frames             | shutter for a ring moving about 100 px per frame                                                              |
-| 0.68x / 0.33x Max                      | Displacement Map p95 / mean shift; air while Max at most 0.1 x noise scale                                    |
-| 0.15 %                                 | CA scale step: 2.7 px in 1080p corners                                                                        |
-| 100 = -0.5 stop                        | CC Vignette amount in the corner (30 = -0.13, 200 = -1.27)                                                    |
 | 4.2 / 2.2 levels per unit              | Add Grain frame-to-frame std near black / at mid gray                                                         |
-| ±8 px over 110 px                      | bipolar ring (out, then in); ±11 over 80 tears texture                                                        |
 
 ## Quality gates
 
@@ -166,24 +160,22 @@ level planned.
 
 ## Common mistakes
 
-| Mistake                                    | Symptom                                   | Fix                                                 |
-| ------------------------------------------ | ----------------------------------------- | --------------------------------------------------- |
-| Glow stack on a colored layer              | flat cream blob, clipped core             | light rig: gray light, Gaussian bloom, CC Toner map |
-| Rig in Add over a lit plate                | clipped highlights on the plate           | Screen; Add only over near-black                    |
-| Rays built from the whole frame            | gray haze, lifted blacks                  | rays from the light only, under the foreground      |
-| 16:9 polar precomp                         | ring with straight edges, capped at H / 2 | square precomp, side 2 x (r1 + thickness)           |
-| Shutter 180 or 360 on a fast ring          | ring smears to a disc                     | 90 degrees, first 2 frames sharp                    |
-| Sparks in Add, dense                       | white mass, no color                      | Transfer Mode 1 Composite, one Add at the end       |
-| Death Size below the visible minimum       | sparks vanish mid-life                    | Death Size at least 0.015 (spheres at 1920)         |
-| Optics Compensation on an adjustment layer | black corners                             | on the scene layer, then its Scale (FOV 12: 102 %)  |
-| Displacing an unpadded plate               | dark edges                                | mirrored Motion Tile pad (`AEX.distort.padded`)     |
-| One-sign ring, or Max over 0.1 x width     | picture slides out, or tears              | bipolar ring, ±8 px over 110 px                     |
-| Holdout matte blurred outward              | dark line between subject and glow        | choke 2 px, rim and wrap from the back light        |
-| Origin inside the subject                  | cream outline round every edge            | `edgeReach`, rim threshold                          |
-| One rig over and behind the subject        | glow ball, subject washed to cream        | BACK and FRONT rigs, BACK held out after bloom      |
-| Large flash or wide core                   | cream blob, flat disc                     | flash 0.12 over 380 px; cones 18, 90, 320 px        |
-| Cone Axis Extra Angle above 90             | burst thrown backwards                    | 15 to 70 degrees                                    |
-| `canAddProperty()` as a guard              | true for any match name                   | wrap `addProperty()` in try                         |
+More rows (polar precomp, padding, ring sign, Optics Compensation, origin inside the subject, Cone
+Axis angle, `canAddProperty`): critique.md, More mistakes.
+
+| Mistake                                    | Symptom                                | Fix                                                            |
+| ------------------------------------------ | -------------------------------------- | -------------------------------------------------------------- |
+| Glow stack on a colored layer              | flat cream blob, clipped core          | light rig: gray light, Gaussian bloom, CC Toner map            |
+| Rig in Add over a lit plate                | clipped highlights on the plate        | Screen; Add only over near-black                               |
+| Rays built from the whole frame            | gray haze, lifted blacks               | rays from the light only, under the foreground                 |
+| Shutter 180 or 360 on a fast ring          | ring smears to a disc                  | 90 degrees, first 2 frames sharp                               |
+| Sparks in Add, dense                       | white mass, no color                   | Transfer Mode 1 Composite, one Add at the end                  |
+| Death Size below the visible minimum       | sparks vanish mid-life                 | Death Size at least 0.015 (spheres at 1920)                    |
+| Holdout matte blurred outward              | dark line between subject and glow     | choke 2 px, rim and wrap from the back light                   |
+| One rig over and behind the subject        | glow ball, subject washed to cream     | BACK and FRONT rigs, BACK held out after bloom                 |
+| Large flash or wide core                   | cream blob, flat disc                  | flash 0.16 over 380 px; cones 18, 90, 320 px; rig `headroom` 2 |
+| Screen-facing ring on an object on a floor | a dome sitting on the subject          | `wave: "floor"`                                                |
+| Streaks from `center`                      | sparks leave from one point at the top | `emit: "surface"` with `subjectBox`                            |
 
 ## Handoffs
 
@@ -196,12 +188,8 @@ level planned.
 
 ## Version notes
 
-- Curl Noise (`ADBE Curl Noise`) is new in 26.3; Unmult (`ADBE Unmult`) native in 26.0; Quick Apply
-  of effects 26.2.
-- Advanced Lightning renders 8 bpc internally. OCIO color management blocks 16 bpc. At 32 bpc
-  `saveFrameToPng` writes values divided by 10.
-- HDR Highlight Compression renders differently on GPU and software on 27.0: avoid it for highlight
-  control.
+Version traps (Curl Noise, Unmult, Advanced Lightning at 8 bpc, OCIO, HDR Highlight Compression):
+procedures section 22.
 
 ## References
 
@@ -213,6 +201,8 @@ level planned.
   timestamp.
 - [references/gui-paths.md](references/gui-paths.md): Effect menu paths and settings per recipe.
 - [references/sources.md](references/sources.md): every source with URL.
+- Pixel gates: [scripts/vfx_measure.py](scripts/vfx_measure.py) (numpy, Pillow). Composite builders
+  return names; the layer is `AEK.core.layer(comp, r.layer)`.
 - Script: [scripts/vfx.jsx](scripts/vfx.jsx): `AEX.vfx`, `AEX.light`, `AEX.glow`, `AEX.pn`,
-  `AEX.burst`, `AEX.atmo`, `AEX.smoke`, `AEX.shock`, `AEX.rays`, `AEX.bolt`, `AEX.distort`,
-  `AEX.lens`, `AEX.integrate`, `AEX.pulse`.
+  `AEX.burst`, `AEX.atmo`, `AEX.smoke`, `AEX.fire`, `AEX.plume`, `AEX.motes`, `AEX.element`,
+  `AEX.shock`, `AEX.rays`, `AEX.bolt`, `AEX.distort`, `AEX.lens`, `AEX.integrate`, `AEX.pulse`.

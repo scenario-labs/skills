@@ -8,13 +8,15 @@ python3 <expert>/scripts/ae.py run job.jsx --lib <this skill>/scripts/animation.
 ```
 
 `AEX.animation` (in `scripts/animation.jsx`): `EASES`, `move`, `overshoot`, `bounce`,
-`springExpression`, `shiftKeys`, `stagger`, `animatedProps`, `copyEase`, `compPoint`, `motionCheck`.
-Jobs below that start with `AEK.core.fresh()` are test cases: they close the open project without
-saving. In a person's session, drop that line, work inside `--undo`, and never call `app.open()`
-while the project has unsaved changes: After Effects raises a native Save panel that blocks every
-later script. Use `AEK.core.open(path)` in tests only.
+`springExpression`, `shiftKeys`, `stagger`, `animatedProps`, `copyEase`, `compPoint`, `motionCheck`,
+`intent`, `graph`, `report`, `onScreen`, `firstSeen`, `ovalMask`. Jobs below that start with
+`AEK.core.fresh()` are test cases: they close the open project without saving. In a person's
+session, drop that line, work inside `--undo`, and never call `app.open()` while the project has
+unsaved changes: After Effects raises a native Save panel that blocks every later script. Use
+`AEK.core.open(path)` in tests only.
 
-All numbers below were measured at 30 fps unless the case says otherwise.
+All numbers below were measured at 30 fps unless the case says otherwise; at 24 fps multiply frame
+counts by 0.8 and round.
 
 ## 1. Apply a named ease and measure it
 
@@ -119,10 +121,10 @@ frames after the phone Y peak; each label reads 100 % opacity one frame after it
 without the expression and 25 % with it (chip 25 %); exit fastest on its last frame (328 px per
 frame); motion check: no finding; job 4.9 s with 16 frames. Contact sheet: the phone tilt resolves
 after the landing, chip 1 starts while the phone still rotates, the exit smears vertically and the
-chips leave with the phone. The first frame is empty: for a feed, start the phone at frame -3 (or
-lower the start Y) so something shows by frame 3. The other fix for the label is to precompose chip
-and label and key Opacity on the precomp layer: its Opacity applies to everything inside. Parenting
-passes Position, Scale and Rotation only.
+chips leave with the phone. The first frame is empty: for a feed, start the phone 3 to 6 frames
+before frame 0 (procedure 17) so it shows by frame 3. The other fix for the label is to precompose
+chip and label and key Opacity on the precomp layer: its Opacity applies to everything inside.
+Parenting passes Position, Scale and Rotation only.
 
 ## 3. Motion check, then upgrade a default scene
 
@@ -220,9 +222,11 @@ if (n===0 || n<numKeys) { value; } else {
 ```
 
 Measured (Scale 0 to 100): curve peak 109.8 on frame 7, settle 11, 2 crossings; keys peak 110 on
-frame 8, settle 12, 2 crossings; spring peak 109.1 on frame 8, settle 17, 10 crossings. Baking the
-spring wrote 61 keys and disabled the expression with the same values. Keys for product work; the
-spring for a deliberately elastic style.
+frame 8, settle 12, 2 crossings; spring peak 109.1 on frame 8, settle 17, 10 crossings. These counts
+are passes through the target level, out and back. `AEX.animation.graph` counts strict sign changes
+of value minus target instead: one overshoot that settles back from the far side reads `crossings` 1
+there (procedure 15). Baking the spring wrote 61 keys and disabled the expression with the same
+values. Keys for product work; the spring for a deliberately elastic style.
 
 ## 7. Stagger: startTime, keys or a delay expression
 
@@ -333,17 +337,32 @@ read the result back.
 
 ## 12. Motion report (read-only review)
 
+On an After Effects shared by several jobs, the project you built may be gone by the next call. Call
+the report at the end of the build job, before it returns:
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+// last lines of the job that built the comp
+var rep = AEX.animation.report(c);
+return { findings: rep.check.findings, layers: rep.layers, blur: rep.blur };
+```
+
+In your own session, the same report runs as a job file:
+
 ```bash
 python3 <expert>/scripts/ae.py run <this skill>/scripts/motion_report.jsx --lib <this skill>/scripts/animation.jsx --args '{"comp": "product_card"}'
 ```
 
-Returns per layer and animated transform property: keys (frame, in/out type, influences), peak speed
-per frame, peak frame, overshoot %, settle frame; then `motionCheck` and the blur settings.
-Separated Position followers are included. Measured on the product card: 124 ms; the separated phone
-Y is reported as `ADBE Position_1` (X is `ADBE Position_0`) with keys "0 b/b in 17 out 10", "15 b/b
-in 75 out 50", "24 b/b in 80 out 17", peak 207.7 px per frame, overshoot 3 %, settle frame 20; chips
-scale overshoot 9.7 %, settle 28, 31, 34; no findings. Read-only: safe in a person's session (pass
-no `open`).
+Its `open` argument closes whatever project is open, without saving: use it only in a session that
+is yours alone. Returns per layer and animated transform property: keys (frame, in/out type,
+influences), peak speed per frame, peak frame, overshoot %, settle frame; then `motionCheck` and the
+blur settings. Separated Position followers are included; nothing is added to the comp. Measured on
+the product card: 124 ms; the separated phone Y is reported as `ADBE Position_1` (X is
+`ADBE Position_0`) with keys "0 b/b in 17 out 10", "15 b/b in 75 out 50", "24 b/b in 80 out 17",
+peak 207.7 px per frame, overshoot 3 %, settle frame 20; chips scale overshoot 9.7 %, settle 28, 31,
+34; no findings. Called inside a build job on a still with a separated Y: 2 layers reported, no
+findings, blur on, 180, -90.
 
 ## 13. Frames and the contact sheet
 
@@ -353,3 +372,128 @@ python3 <expert>/scripts/ae.py frames "product_card" --times 0,0.133,0.267,0.4,0
 
 Times are seconds: at 30 fps frame N is N / 30. Read the one sheet; judge with
 [critique.md](critique.md).
+
+## 14. Mark an intended snap so the motion check keeps it
+
+Channel: bridge. `motionCheck` flags a `pop` wherever speed through a middle key jumps from rest to
+over half the segment peak. An anticipation that snaps into a release does exactly that by design.
+Mark it on the layer, or list it, and the finding moves to `intended` with the reason; any unmarked
+finding stays.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp), icon = AEK.core.layer(c, "CTRL_icon");
+// a layer marker "intended: pop: <why>" on the key's frame; a finding within 1 frame whose rule is named moves to `intended`
+AEX.animation.intent(icon, 39, "pop", "snap out of the anticipation into the release");
+var marked = AEX.animation.motionCheck(c);
+// same result without a marker: "layer|rule|frame"
+var listed = AEX.animation.motionCheck(c, { allow: ["CTRL_icon|pop|39"] });
+return { findings: marked.findings, intended: marked.intended, listed: listed.intended };
+```
+
+Measured on the icon keys of a logo build: Scale 100, 96.5, 102.5, 100 on frames 32, 39, 44, 54,
+eases (0.5, 0, 0.6, 1), (0.2, 0.6, 0.3, 1), (0.4, 0, 0.2, 1). The check reported `pop` at frame 39,
+"speed jumps from 0 to 5 per frame". With the marker, and again with the allow list, it moved to
+`intended` with `because` set. A second layer with an unmarked pop on frame 10 stayed in `findings`.
+Every finding now carries `frame`. Several rules on one marker: "intended: pop,linear: <why>".
+
+## 15. Read the graph: numbers and one picture per property
+
+Channel: bridge. `AEX.animation.graph(prop, comp, f0, f1, {out, name, width, height})` samples one
+property every frame. It projects each value on the travel from the first key to the last, so 1 is
+the target for any dimension. When the first and last keys are equal (a pop that returns to rest),
+it measures against the key farthest from the first.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp), l = AEK.core.layer(c, "product");
+var X = AEK.core.prop(l, ["ADBE Transform Group", "ADBE Position"]).getSeparationFollower(0);
+var g = AEX.animation.graph(X, c, 0, 40, { out: ARGS.out + "/graph_x.png", name: "GRAPH_x" });
+return { peakSpeedFrame: g.peakSpeedFrame, overshootPct: g.overshootPct, crossings: g.crossings, settleFrame: g.settleFrame, png: g.png.path };
+```
+
+Returns `frames`, `target`, `progress` and `speed` per frame, `peakSpeedFrame`, `overshootPct`
+(percent of travel past the target), `crossings` (strict sign changes of value minus target) and
+`settleFrame` (first frame that stays within 1 % of the target). The picture is a comp named `name`:
+white value line, orange speed line, gray target line, blue ticks on keys. It saves one PNG when
+`out` is set and then removes that comp (`removed` true; project items 2 before and 2 after,
+measured). Pass `keep: true` to keep it, or omit `out` to look at the comp itself; it then stays in
+the project until you remove it.
+
+Measured on the eased product move (X 2400 to 960, 6 % overshoot keyed with `overshoot()`, peak
+frame 16, rest 30): peak speed frame 2, overshoot 6 %, crossings 1, settle frame 24. Rotation keyed
+with a 28 % overshoot four frames later: crossings 1, settle frame 31. The `in_cubic` exit (frames
+100 to 116): peak speed frame 116, the last key, as the exit gate asks. Read `crossings` 1 as one
+clean overshoot, 2 as a return past the target, 3 or more as a wobble.
+
+## 16. A still without alpha
+
+Check before any key: `ae.py probe still.png` reports `"alpha": false` for an RGB file, and
+`item.mainSource.hasAlpha` reads false in a job. A still on a backdrop moves its backdrop, its floor
+shadow and its reflection with it. Routes, best first:
+
+1. A cutout with alpha from scenario-after-effects-generation (its procedure "Depth map and cutout
+   of a supplied still": a background-removal model through the Scenario MCP), then a new contact
+   shadow under the subject. The baked floor reflection goes with the background; any of it left in
+   the cutout rides up with the product.
+2. A key or roto from scenario-after-effects-compositing when the backdrop is flat or the subject
+   moves.
+3. The fallback without Scenario MCP access: a feathered elliptical mask, `AEX.animation.ovalMask`
+   (built on `AEK.build.mask`), when the backdrop is dark and plain and close to the comp
+   background.
+
+A still cut from a movie by ffmpeg carries a gAMA chunk (this one read gamma 0.51); strip it before
+import so After Effects renders the pixels as written:
+`magick in.png -define png:exclude-chunks=gAMA,cHRM,sRGB,iCCP out.png`. On this still, at 8 bpc with
+no working color space, the frame read the same with and without the chunk (product body 184, 94, 78
+both); on another still with the chunk, a border of 6, 10, 18 rendered at 0, 1, 4, enough to show
+the rectangle of a feathered still.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp), l = AEK.core.layer(c, ARGS.layer);
+// center and size in layer pixels; feather in px on each side of the path
+var m = AEX.animation.ovalMask(l, { center: [960, 560], size: [1300, 700], feather: 180 });
+return { mask: m, alpha: l.source.mainSource.hasAlpha };
+```
+
+Measured on a 1920 x 1080 render frame without alpha (a product on a navy floor): one mask `Mask 1`,
+feather 180, the backdrop faded into a dark comp. The mask leaves anything baked inside its oval:
+the floor reflection rose with the product. Read one frame at full size: a lighter oval edge shows
+when the backdrop is brighter than the comp background.
+
+Two settings remove both faults. Sample the plate's corner
+(`magick still.png -crop 40x40+0+0 -format "%[fx:mean.r*255]" info:`, same for g and b) and use that
+color for the comp background and the bottom solid. Put the oval's bottom edge, feather included,
+above the floor reflection, and add a new soft contact shadow (a blurred black ellipse whose scale
+and opacity follow the subject's height by expression). Measured on the same frame, comp background
+set to the plate's corner color (5, 8, 13), oval 1520 x 620, feather 110: the color steps 1 level
+across the feather (5, 8, 13 outside, 5, 9, 14 at the edge); against a background 8 levels brighter,
+the oval rim showed. Under the product the remaining reflection reads 18, 19, 24 on average.
+
+## 17. Something on screen by frame 3
+
+A feed shows the first frames before anyone decides to watch.
+`AEX.animation.firstSeen(layer, comp, {min: 0.5, opacity: 50})` returns the first frame where half
+the layer's box is inside the frame at 50 % opacity or more; `onScreen(layer, comp, frame)` gives
+`inside` (share of the box in frame) and `opacity`. Masks are not counted: on a masked still the box
+is the whole image.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp), l = AEK.core.layer(c, ARGS.layer);
+var Y = l.property("ADBE Transform Group").property("ADBE Position").getSeparationFollower(1);
+// keys may sit before frame 0: the move is already under way on frame 0
+AEX.animation.overshoot(Y, c, -4, 1360, 9, 18, 540, 4, 10, 80);
+return { first: AEX.animation.firstSeen(l, c), f0: AEX.animation.onScreen(l, c, 0), f3: AEX.animation.onScreen(l, c, 3) };
+```
+
+Measured at 24 fps on a separated Y from 1360 to 540 with a 4 % overshoot: keyed from frame 0 (peak
+13, rest 22), `firstSeen` 3 with 24 % of the box in frame on frame 0. Keyed from frame -4 (peak 9,
+rest 18; keys read back at frames -4, 9, 18), `firstSeen` 0 with 70 % in frame on frame 0 and 90 %
+on frame 3; overshoot still 4 %, settle frame 14, `graph` crossings 1. Gate for a feed: `firstSeen`
+3 or less.

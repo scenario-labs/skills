@@ -2,20 +2,45 @@
 
 Measured on After Effects 27.0, macOS, unless a source is named.
 
+## Common mistakes
+
+| Mistake                                                                                         | Symptom                                                                                                                          | Fix                                                                                                       |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Reference kept across `addProperty`                                                             | "Object is invalid"                                                                                                              | fetch the property again by match name                                                                    |
+| Layer addressed by index after adding layers                                                    | wrong layer changed                                                                                                              | new layers land on top: use names or `layer.id`                                                           |
+| `JSON`, `forEach`, `let` in a job                                                               | syntax or reference error                                                                                                        | ES3 only; `AEK.json`                                                                                      |
+| Frame saved and read at once                                                                    | missing or empty PNG                                                                                                             | poll for the file (`AEK.capture.frame` does)                                                              |
+| Broken expression assigned                                                                      | no error until evaluated                                                                                                         | `AEK.expr.set` evaluates and raises the message                                                           |
+| `replaceSource` with a shorter clip                                                             | layer out point pulled in                                                                                                        | `AEK.session.swap` (fit comp)                                                                             |
+| Seconds used for timing                                                                         | off by a frame at other rates                                                                                                    | frames, with the frame rate stated                                                                        |
+| `alert()` used as a probe                                                                       | every later job waits                                                                                                            | `AEK.log()`; the runner shadows dialogs                                                                   |
+| Display names (`property("Position")`)                                                          | fails on non-English installs                                                                                                    | match names (`ADBE Position`)                                                                             |
+| `~/` path                                                                                       | "File couldn't be opened for writing"                                                                                            | absolute path from `ARGS`                                                                                 |
+| Frame saved from a 32 bpc project                                                               | almost black sheet: values are written divided by 10                                                                             | `ae.py sheet ... --gain 10`                                                                               |
+| New project assumed to be at defaults                                                           | it inherits bit depth and working space from the last project                                                                    | read both back, then set them                                                                             |
+| Missing font written to a text layer                                                            | silent substitution at render                                                                                                    | `AEK.text.fontExists` first                                                                               |
+| A PNG made by ffmpeg imported as a still                                                        | it renders darker than its pixels (a border of 6,10,18 rendered 0,1,4): After Effects applies the file's gAMA chunk              | strip it first: `magick in.png -define png:exclude-chunks=gAMA,cHRM,sRGB,iCCP out.png`                    |
+| A string joined to an array with `+` (`"[" + a + "]"`, `s += a`)                                | "invalid numeric result (divide by zero?)": After Effects overloads `+` on arrays as vector math; `"" + a` even returns an array | `a.join(", ")` or `String(a)`                                                                             |
+| A Java-era reserved word (`final`, `class`, `int`) as a variable name or an unquoted object key | the whole job fails: "Illegal use of reserved word" (a dotted property, `M.final`, works)                                        | another name, or a quoted key; `ae_check.py` reports both                                                 |
+| `AEK.motion.linearKeys` or a hand check on a separated Position after a reopen                  | eased X and Y moves listed as linear: the hidden leader reports its followers' key count with Linear interpolation               | read `X Position` and `Y Position`; skip the leader (`isSeparationLeader`). The kit does since this round |
+| `layers.byName` or `property` with a typo                                                       | "null is not an object" on a later line                                                                                          | `AEK.core.layer`, `AEK.core.prop`: they name the missing item and list what exists                        |
+| A job ends with unsaved changes on a shared app                                                 | the next agent's raw `app.open` raises a Save As panel; everyone waits                                                           | end every test job with `AEK.core.save(path)`                                                             |
+
 ## What blocks a script
 
-| Blocker                                                                         | What happens                                                                                                                     | Way out                                                                                                                                                              |
-| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Any modal dialog                                                                | Every script and every Apple event waits. The caller only sees a timeout.                                                        | Close it. Avoid causing it.                                                                                                                                          |
-| `alert()`, `confirm()`, `prompt()` in a script                                  | A native window opens. `app.beginSuppressDialogs()` does not cover it. Keys and clicks sent to a background app do not close it. | The runner shadows the three functions in every job and returns their text in `dialogs`.                                                                             |
-| Home screen at launch                                                           | It is a modal overlay.                                                                                                           | It accepts a posted Return or Escape. It can be switched off in Preferences.                                                                                         |
-| Disk cache space warning at launch                                              | Modal.                                                                                                                           | Accepts a posted key.                                                                                                                                                |
-| Crash Repair Options after a forced stop                                        | Modal at the next launch, default button Continue.                                                                               | Accepts a posted Return.                                                                                                                                             |
-| "3D models or primitives ... require use of the Advanced 3D renderer"           | Raised after a script adds a model layer to a comp on another renderer. A comp made by script is on Classic 3D.                  | Set `comp.renderer = "ADBE Calder"` (Advanced 3D) before adding the layer.                                                                                           |
-| `app.open(file)` or `app.newProject()` with unsaved changes in the open project | A native Save As panel opens. A posted Escape does not close it when the app is in the background.                               | In a person's session, ask them to save first. In a session the agent owns, close with `CloseOptions.DO_NOT_SAVE_CHANGES` first (`AEK.core.open`, `AEK.core.fresh`). |
-| File dialogs (`File.openDialog`, `selectDialog`)                                | Wait for a person.                                                                                                               | Paths come from `ARGS`.                                                                                                                                              |
-| macOS privacy prompts (local network, cloud-synced folders)                     | Wait for a person.                                                                                                               | Keep agent files out of cloud-synced folders.                                                                                                                        |
-| macOS Automation permission missing                                             | `DoScriptFile` returns -1712 after the timeout, with no prompt when the screen is locked.                                        | Use the bridge channel.                                                                                                                                              |
+| Blocker                                                                                                               | What happens                                                                                                                                                  | Way out                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any modal dialog                                                                                                      | Every script and every Apple event waits. The caller only sees a timeout.                                                                                     | Close it. Avoid causing it.                                                                                                                                                                          |
+| `alert()`, `confirm()`, `prompt()` in a script                                                                        | A native window opens. `app.beginSuppressDialogs()` does not cover it. Keys and clicks sent to a background app do not close it.                              | The runner shadows the three functions in every job and returns their text in `dialogs`.                                                                                                             |
+| Home screen at launch                                                                                                 | It is a modal overlay.                                                                                                                                        | It accepts a posted Return or Escape. It can be switched off in Preferences.                                                                                                                         |
+| Disk cache space warning at launch                                                                                    | Modal.                                                                                                                                                        | Accepts a posted key.                                                                                                                                                                                |
+| Crash Repair Options after a forced stop                                                                              | Modal at the next launch, default button Continue.                                                                                                            | Accepts a posted Return.                                                                                                                                                                             |
+| "3D models or primitives ... require use of the Advanced 3D renderer"                                                 | Raised after a script adds a model layer to a comp on another renderer. A comp made by script is on Classic 3D.                                               | Set `comp.renderer = "ADBE Calder"` (Advanced 3D) before adding the layer.                                                                                                                           |
+| `app.open(file)` or `app.newProject()` with unsaved changes in the open project, left by this job or by another agent | A native Save As panel opens. A posted Escape does not close it when the app is in the background. On a shared app it stopped every agent for 3 to 4 minutes. | In a person's session, ask them to save first. In a session the agent owns, close with `CloseOptions.DO_NOT_SAVE_CHANGES` first (`AEK.core.open`, `AEK.core.fresh`). `ae.py run` refuses a raw call. |
+| `app.project.save()` on a project that was never saved                                                                | Save As panel, same effect.                                                                                                                                   | `AEK.core.save(path)`; without a path it throws on an untitled project.                                                                                                                              |
+| File dialogs (`File.openDialog`, `selectDialog`)                                                                      | Wait for a person.                                                                                                                                            | Paths come from `ARGS`.                                                                                                                                                                              |
+| macOS privacy prompts (local network, cloud-synced folders)                                                           | Wait for a person.                                                                                                                                            | Keep agent files out of cloud-synced folders.                                                                                                                                                        |
+| macOS Automation permission missing                                                                                   | `DoScriptFile` returns -1712 after the timeout, with no prompt when the screen is locked.                                                                     | Use the bridge channel.                                                                                                                                                                              |
 
 ## ExtendScript
 
@@ -36,13 +61,28 @@ Measured on After Effects 27.0, macOS, unless a source is named.
 - Enum values print as numbers. `AEK.core.enumName(KeyframeInterpolationType, v)` gives the name.
 - `comp.saveFrameToPng(time, file)` returns at once. The file appears about 100 ms later, longer for
   heavy frames.
+- `saveFrameToPng` writes the comp background as alpha 0 (the comp color stays in RGB in an 8 bpc
+  project; RGB reads 0 in a 16 bpc project). A viewer shows it white or checkered; dropping alpha
+  shows feathered and glowing edges too bright (a 40 px feather read 213 where the composite is
+  188). Flatten on the comp color: `ae.py sheet --bg RRGGBB` (`AEK.capture.frame` returns `bg`).
 - In a 32 bpc project `saveFrameToPng` writes every value divided by 10: white reads 0.1 and the
   frame looks almost black. At 8 and 16 bpc white reads 1.0. `AEK.capture.frame` returns `bpc` and
   `pngScale`; `ae.py sheet ... --gain 10` shows such frames at their real brightness.
 - A failed import throws inside `app.beginSuppressDialogs()` and leaves no dialog.
 - `e.line` in a caught error is the line in the evaluated text. The runner maps it back to the job
-  body and prints the source line.
+  body and prints the source line. An error thrown inside a kit module or a `--lib` file comes back
+  with `in` (`aekit/core.jsx:43 (function prop)`), `in_source`, and `line` set to the job line that
+  calls that function.
+- A wrong layer name or match name returns null, and the error appears on the next member access as
+  "null is not an object". The runner adds `null_from` and `hint`: the lookups on that line or on
+  the line that set the variable, and a near-miss match name
+  (`'ADBE Postion': did you mean 'ADBE Position'?`).
+- "Object is invalid": a reference taken before an `addProperty` on the same layer (a second mask,
+  an effect, a shape group) or before a precompose. Fetch it again by name.
 - The preferences file uses classic Mac line endings (CR only). Split on `\r` to parse it.
+- Reading a delivered H.264 back with ffmpeg's default conversion gave values about 1.7 levels lower
+  than After Effects on the same file. Measure with
+  `scale=in_range=tv:out_range=pc:flags=accurate_rnd+full_chroma_int` before judging blacks.
 
 ## New projects and color settings
 
@@ -88,9 +128,25 @@ Measured on After Effects 27.0, macOS, unless a source is named.
   `High Quality with Alpha` wrote ProRes 4444, `yuva444p12le`, premultiplied.
 - `aerender` with a comp name that does not exist prints "aerender ERROR: No comp was found with the
   given name." and exits with code 0. Read the log and probe the file. A missing output folder fails
-  with "Directory does not exist": create it first.
+  with "Directory does not exist" after about 15 s of launch; `ae.py aerender` creates the folder
+  first (`created_folder`).
 - A new queue item reads `NEEDS_OUTPUT` until its output module has a file. The Draft Settings
   render template uses the proxies set in the project; Best Settings does not.
+- `aerender` starts `aerendercore`, a second After Effects that runs the user Startup scripts with
+  `app.isRenderEngine` false. A bridge 1.4 started there swept the interactive job as stopped, and
+  once took a job from the inbox and ran it inside the render engine, where `saveFrameToPng` wrote
+  nothing for 60 s. Bridge 1.5.0 checks its own process name (`MacOS/After Effects`) and stays off
+  elsewhere.
+- A full output volume: an H.264 render printed "An output module failed" and left a 24-byte file; a
+  ProRes render printed "Finished composition", exited 0 and left a 1 MB file that ffprobe cannot
+  read. `ae.py aerender` reports both as failed.
+- Every aerender failure measured on 27.0 exited with code 0: full disk (three forms), a collision
+  on one output folder, a stop at frame 22 of 72 while other renders ran. Never read the exit code
+  alone; read `ok`, `why` and `checks`, then rerun once, alone.
+- On a shared machine, the first Advanced 3D frame of a new scene took over 60 s while other renders
+  ran (10.7 s alone), and a 6 s aerender took 93 s next to another one. `AEK.capture.frame`,
+  `frames` and `spread` take a timeout in ms as their last argument; the default is
+  `AEK.capture.timeoutMs`, 180000.
 - `aerender` takes no script arguments and reads the saved file. A comp on the Cinema 4D renderer
   can fail silently in `aerender` (version notes of the documentation set).
 
@@ -139,7 +195,33 @@ Measured on After Effects 27.0, macOS, unless a source is named.
   weight.
 - Scale reports three dimensions even on a 2D layer and needs three `KeyframeEase` objects per side.
   Position takes one.
-- In a shape layer the first group in Contents draws on top.
+- In a shape layer the first group in Contents draws on top. `AEK.build.shape(comp, name, [specs])`
+  adds groups in spec order, so `specs[0]` is the top group.
+- Mask mode is the `maskMode` attribute (`mask.maskMode = MaskMode.SUBTRACT`);
+  `mask.property("ADBE Mask Mode")` returns null.
+- The selector Amount of a text animator sits under the Advanced group: `ADBE Text Selector` >
+  `ADBE Text Range Advanced` > `ADBE Text Selector Max Amount`. `AEK.text.animator(layer, {amount})`
+  sets it and returns it as `amount` for keys.
+- A text layer parented to a null: its own Position is in parent space. `AEK.text.measure` and
+  `inFrame` walk the parent chain (anchor, scale, Z rotation, position); a measured box matched
+  `toComp()` within 0.001 px. 3D layers are read flat.
+
+## Version notes
+
+- Expressions run on the JavaScript engine by default. Read `app.project.expressionEngine` before
+  relying on syntax.
+- Track mattes: any layer can be the matte since 23.0 (`setTrackMatte`). The matte no longer sits
+  above its target.
+- H.264 renders from the Render Queue since 23.0. Media Encoder is not required for an MP4.
+- 3D: Advanced 3D is the renderer for models, environment lights and shadows. Its match name is
+  `ADBE Calder`; `ADBE Advanced 3d` is Classic 3D, which is what a comp made by script starts on.
+  Ray-traced 3D is gone.
+- Text: `app.fonts` since 24.0, character ranges since 24.3, `usedFonts` since 24.5.
+- `Layer.id` and `Project.layerByID()` since 22.0: stable handles across reordering.
+- Roto: Object Matte replaces the Roto Brush tool icon in 26.2.
+- CEP panels are on a removal path and UXP is beta only (27.1 beta). ExtendScript stays.
+- The in-app AI Assistant (27.0, beta) is separate from these channels. No outside agent access to
+  it is documented.
 
 ## Version traps
 

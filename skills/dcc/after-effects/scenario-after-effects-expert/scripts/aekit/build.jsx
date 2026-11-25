@@ -82,6 +82,8 @@ AEK.build = (function () {
         // after addProperty every earlier reference into this layer is invalid: return a fresh one
         return l.property("ADBE Root Vectors Group").property(root.numProperties);
     }
+    // shape(comp, name, spec | [specs], {position}): groups are added in spec order and the FIRST group draws on top
+    // (After Effects stacks shape groups like layers). Put the dot that must stay visible first.
     function shape(c, name, spec, o) {
         o = o || {};
         var l = c.layers.addShape();
@@ -143,6 +145,41 @@ AEK.build = (function () {
         pp.setValue([p0[0] + dx * Math.cos(rot) - dy * Math.sin(rot), p0[1] + dx * Math.sin(rot) + dy * Math.cos(rot)]);
         return { anchor: ap.value, position: pp.value, bounds: [r.left, r.top, r.width, r.height] };
     }
+    // mask(layer, {rect:[x,y,w,h] | ellipse:[x,y,w,h] | vertices:[[x,y]...], closed, feather (px or [x,y]), expansion (px),
+    //   opacity (0-100), mode: "add"|"subtract"|"intersect"|"none"|"lighten"|"darken"|"difference", inverted, name})
+    // Coordinates are in the layer's own space (a solid of comp size: comp pixels). Returns the mask group, fetched fresh.
+    // The mode is the maskMode attribute: property("ADBE Mask Mode") reads null.
+    // Adding a mask invalidates every mask reference taken before it: fetch earlier masks again by name.
+    function mask(l, o) {
+        o = o || {};
+        var parade = l.property("ADBE Mask Parade"), m = parade.addProperty("ADBE Mask Atom"), idx = m.propertyIndex, sh = new Shape(), r, k = 0.5523, cx, cy, rx, ry;
+        if (o.rect) {
+            r = o.rect; sh.vertices = [[r[0], r[1]], [r[0] + r[2], r[1]], [r[0] + r[2], r[1] + r[3]], [r[0], r[1] + r[3]]]; sh.closed = true;
+        } else if (o.ellipse) {
+            r = o.ellipse; rx = r[2] / 2; ry = r[3] / 2; cx = r[0] + rx; cy = r[1] + ry;
+            sh.vertices = [[cx, cy - ry], [cx + rx, cy], [cx, cy + ry], [cx - rx, cy]];
+            sh.inTangents = [[-rx * k, 0], [0, -ry * k], [rx * k, 0], [0, ry * k]];
+            sh.outTangents = [[rx * k, 0], [0, ry * k], [-rx * k, 0], [0, -ry * k]];
+            sh.closed = true;
+        } else if (o.vertices) {
+            sh.vertices = o.vertices; sh.closed = o.closed !== false;
+        } else {
+            throw new Error("mask(): pass rect, ellipse or vertices");
+        }
+        m = l.property("ADBE Mask Parade").property(idx);
+        m.property("ADBE Mask Shape").setValue(sh);
+        if (o.feather !== undefined) { m.property("ADBE Mask Feather").setValue(o.feather instanceof Array ? o.feather : [o.feather, o.feather]); }
+        if (o.expansion !== undefined) { m.property("ADBE Mask Offset").setValue(o.expansion); }
+        if (o.opacity !== undefined) { m.property("ADBE Mask Opacity").setValue(o.opacity); }
+        if (o.mode) {
+            var modes = { add: MaskMode.ADD, subtract: MaskMode.SUBTRACT, intersect: MaskMode.INTERSECT, none: MaskMode.NONE, lighten: MaskMode.LIGHTEN, darken: MaskMode.DARKEN, difference: MaskMode.DIFFERENCE };
+            if (!modes[o.mode]) { throw new Error("mask(): unknown mode '" + o.mode + "'"); }
+            m.maskMode = modes[o.mode];
+        }
+        if (o.inverted) { m.inverted = true; }
+        if (o.name) { m.name = o.name; }
+        return l.property("ADBE Mask Parade").property(idx);
+    }
     // camera(comp, name, {focalLength (mm, on a 36 mm film back), position:[x,y,z], pointOfInterest:[x,y,z]})
     function camera(c, name, o) {
         o = o || {};
@@ -154,5 +191,5 @@ AEK.build = (function () {
         return l;
     }
     return { comp: comp, solid: solid, adjustment: adjustment, nullLayer: nullLayer, shape: shape, shapeGroup: shapeGroup, effect: effect,
-        effectProps: effectProps, parent: parent, matte: matte, precompose: precompose, anchor: anchor, camera: camera };
+        effectProps: effectProps, parent: parent, matte: matte, precompose: precompose, anchor: anchor, mask: mask, camera: camera };
 })();

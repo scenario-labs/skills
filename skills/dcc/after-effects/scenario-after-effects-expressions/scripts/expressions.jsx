@@ -51,20 +51,27 @@ AEX.expressions = (function () {
         var s = 0, i; for (i = 0; i < a.length; i++) { s += (a[i] - b[i]) * (a[i] - b[i]); } return Math.sqrt(s);
     }
 
-    // seam(prop, comp, periodFrames, startFrame): the step across the loop point against the median step inside the loop.
-    // A seam step far above the median is a visible jump.
+    // seam(prop, comp, periodFrames, startFrame): the step across the loop point (frame start+P-1 to start+P) against the
+    // steps on each side of it (P-2 to P-1, and P to P+1) and the median step inside the loop.
+    // ratio = seam step / max(step before, step after, median): about 1 for a loop that repeats exactly, whatever its phase
+    // at the seam (fastest or slowest); a jump stands out of its own neighbors. repeat = distance between frame start and
+    // frame start+P (0 for an exact loop). medianRatio = seam step / median, kept for reference: it fails an exact loop whose
+    // seam falls on its fastest phase.
     function seam(p, c, period, start) {
-        var f0 = start || 0, steps = [], f, a, b, sorted, med, seamStep;
-        for (f = f0 + 1; f < f0 + period; f++) {
-            a = p.valueAtTime((f - 1) * c.frameDuration, false); b = p.valueAtTime(f * c.frameDuration, false);
-            steps.push(dist(a, b));
-        }
+        var f0 = start || 0, steps = [], f, sorted, med, seamStep, before, after, fd = c.frameDuration;
+        function v(fr) { return p.valueAtTime(fr * fd, false); }
+        for (f = f0 + 1; f < f0 + period; f++) { steps.push(dist(v(f - 1), v(f))); }
         sorted = steps.slice(0).sort(function (x, y) { return x - y; });
         med = sorted[Math.floor(sorted.length / 2)];
-        seamStep = dist(p.valueAtTime((f0 + period - 1) * c.frameDuration, false), p.valueAtTime((f0 + period) * c.frameDuration, false));
-        return { medianStep: Math.round(med * 1000) / 1000, maxStep: Math.round(sorted[sorted.length - 1] * 1000) / 1000,
-            seamStep: Math.round(seamStep * 1000) / 1000, ratio: med > 0 ? Math.round(seamStep / med * 100) / 100 : null,
-            repeat: Math.round(dist(p.valueAtTime(f0 * c.frameDuration, false), p.valueAtTime((f0 + period) * c.frameDuration, false)) * 1000) / 1000 };
+        seamStep = dist(v(f0 + period - 1), v(f0 + period));
+        before = dist(v(f0 + period - 2), v(f0 + period - 1));
+        after = dist(v(f0 + period), v(f0 + period + 1));
+        var ref = Math.max(before, after, med);
+        function r3(x) { return Math.round(x * 1000) / 1000; }
+        return { medianStep: r3(med), maxStep: r3(sorted[sorted.length - 1]), seamStep: r3(seamStep), stepBefore: r3(before), stepAfter: r3(after),
+            ratio: ref > 0 ? Math.round(seamStep / ref * 100) / 100 : (seamStep > 0 ? 999 : 0),
+            medianRatio: med > 0 ? Math.round(seamStep / med * 100) / 100 : null,
+            repeat: r3(dist(v(f0), v(f0 + period))) };
     }
 
     // lagFrames(leader, follower, comp, maxLag, from, to): the frame shift that best matches follower(t) to leader(t - lag)
@@ -176,5 +183,61 @@ AEX.expressions = (function () {
         return { renamed: oldName + " -> " + newName, edited: edited };
     }
 
-    return { probe: probe, compRect: compRect, margins: margins, atFrames: atFrames, seam: seam, lagFrames: lagFrames, timeEval: timeEval, CODE: CODE, rig: rig, renameLayer: renameLayer };
+    // LEVEL: CTRL > Level slider. Normalized amplitude (Audio Floor to Audio Ceiling), rise over Attack frames, exponential
+    // Release in frames (peak hold). It reads K = attack + ceil(4.6 x release) samples per frame: the tail is cut at 1 %.
+    CODE.level = 'const a = thisComp.layer("Audio Amplitude").effect("Both Channels")(1);\nconst fl = effect("Audio Floor")(1), ce = effect("Audio Ceiling")(1);\nconst atk = Math.max(1, Math.round(effect("Attack (frames)")(1)));\nconst rel = Math.max(0.5, effect("Release (frames)")(1));\nconst fd = thisComp.frameDuration, K = atk + Math.ceil(rel * 4.6);\nlet m = 0;\nfor (let k = 0; k < K; k++) {\n  const n = clamp((a.valueAtTime(time - k * fd) - fl) / Math.max(ce - fl, 0.001), 0, 1);\n  const w = k < atk ? (k + 1) / atk : Math.exp(-(k - atk + 1) / rel);\n  m = Math.max(m, n * w);\n}\nm';
+
+    // levelStats(prop, comp, from, to, low): the audio gates in numbers, on whole frames from..to. max and min; valleys =
+    // local minima (a fall then a rise); valleysUnder = valleys under `low` (default 0.2); directionChanges = rises turning
+    // to falls and back (about 2 per hit for a clean Level; raw amplitude many more). Read it on CTRL > Level and, to
+    // compare, on "Audio Amplitude" > Both Channels.
+    function levelStats(p, c, from, to, low) {
+        var v = [], f, i, d0 = 0, d, changes = 0, valleys = 0, under = 0, mx = -1e9, mn = 1e9;
+        low = (low === undefined) ? 0.2 : low;
+        for (f = from; f <= to; f++) { v.push(p.valueAtTime(f * c.frameDuration, false)); }
+        for (i = 0; i < v.length; i++) { mx = Math.max(mx, v[i]); mn = Math.min(mn, v[i]); }
+        for (i = 1; i < v.length; i++) {
+            d = v[i] > v[i - 1] + 1e-6 ? 1 : (v[i] < v[i - 1] - 1e-6 ? -1 : 0);
+            if (d === 0) { continue; }
+            if (d0 !== 0 && d !== d0) { changes++; if (d0 === -1) { valleys++; if (v[i - 1] < low) { under++; } } }
+            d0 = d;
+        }
+        return { frames: v.length, max: Math.round(mx * 1000) / 1000, min: Math.round(mn * 1000) / 1000, valleys: valleys, valleysUnder: under,
+            low: low, directionChanges: changes };
+    }
+
+    // audioLevel(comp, audioLayer, {floorPct: 25, ceilPct: 97, attack: 2, release: 6, beat, from, to (frames of the shot window), ctrl: "CTRL"}):
+    // beat (frames between hits): sets the release to (beat - attack) / 2, so the Level falls under 0.2 before the next hit.
+    // Convert Audio to Keyframes by its menu label (comp opened in the viewer, only the audio layer selected), floor and ceiling
+    // from percentiles of Both Channels over the window, a guide null with the controls and the Level expression.
+    // The "Audio Amplitude" layer is switched off; expressions still read it.
+    function audioLevel(c, al, o) {
+        o = o || {};
+        var cmd = app.findMenuCommandId("Convert Audio to Keyframes"), i, k, vals = [], fd = c.frameDuration;
+        if (!cmd) { throw new Error("audioLevel(): menu item Convert Audio to Keyframes not found"); }
+        if (!al.hasAudio) { throw new Error("audioLevel(): layer '" + al.name + "' has no audio"); }
+        c.openInViewer();
+        for (i = 1; i <= c.numLayers; i++) { c.layer(i).selected = false; }
+        al.selected = true;
+        app.executeCommand(cmd);
+        var amp = c.layer("Audio Amplitude");
+        if (!amp) { throw new Error("audioLevel(): Convert Audio to Keyframes made no Audio Amplitude layer"); }
+        var both = amp.property("ADBE Effect Parade").property("Both Channels").property(1);
+        var f0 = o.from || 0, f1 = (o.to === undefined) ? Math.round(c.duration / fd) - 1 : o.to;
+        for (k = f0; k <= f1; k++) { vals.push(both.valueAtTime(k * fd, false)); }
+        vals.sort(function (a, b) { return a - b; });
+        var fl = vals[Math.floor((vals.length - 1) * (o.floorPct === undefined ? 25 : o.floorPct) / 100)];
+        var ce = vals[Math.floor((vals.length - 1) * (o.ceilPct === undefined ? 97 : o.ceilPct) / 100)];
+        amp.enabled = false;
+        var rel = o.release || (o.beat ? Math.max(2, Math.round((o.beat - (o.attack || 2)) / 2 * 10) / 10) : 6);
+        var ctrl = c.layer(o.ctrl || "CTRL") || AEK.build.nullLayer(c, o.ctrl || "CTRL", { position: [c.width / 2, c.height / 2] });
+        ctrl.guideLayer = true;
+        AEK.expr.controls(ctrl, [{ type: "slider", name: "Audio Floor", value: fl }, { type: "slider", name: "Audio Ceiling", value: ce },
+            { type: "slider", name: "Attack (frames)", value: o.attack || 2 }, { type: "slider", name: "Release (frames)", value: rel },
+            { type: "slider", name: "Level", value: 0 }]);
+        AEK.expr.set(ctrl.property("ADBE Effect Parade").property("Level").property(1), CODE.level, [f0 * fd, f1 * fd]);
+        return { ctrl: ctrl.name, floor: fl, ceiling: ce, release: rel, keys: both.numKeys, samples: vals.length };
+    }
+
+    return { probe: probe, compRect: compRect, margins: margins, atFrames: atFrames, seam: seam, lagFrames: lagFrames, timeEval: timeEval, levelStats: levelStats, CODE: CODE, rig: rig, renameLayer: renameLayer, audioLevel: audioLevel };
 })();

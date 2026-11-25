@@ -18,7 +18,7 @@ light stand.
 3. Read the matte as numbers (shell)
 4. Track mattes: shared matte, boolean matte, Set Matte
 5. Pre-render a heavy key and swap every use
-6. Match levels per channel
+6. Match levels per channel; 6b match the light (key direction, rim, levels against the plate)
 7. Light wrap and grain
 8. Cutout with no screen: external matte, Object Matte settings
 9. Remove a logo from moving fabric: offset patch
@@ -31,7 +31,9 @@ Use first on any keying shot. Pick a time where the screen is clean and the subj
 ```javascript
 // channel: bridge | handoff
 // checked: live 27.0
-// ARGS: {plate, sequence, fps, screenBox: [x, y, halfW, halfH] in layer pixels, t (seconds)}
+// ARGS: {aep, plate, sequence, fps, screenBox: [x, y, halfW, halfH] in layer pixels, t (seconds)}
+// test session: a new project saved at ARGS.aep, at 16 bpc; in a person's project, drop this line and read the settings
+AEK.core.fresh(ARGS.aep); app.project.bitsPerChannel = 16;
 var A = ARGS, P = app.project;
 var it = AEK.xio.importItem(A.plate, { sequence: A.sequence, fps: A.fps });
 var c = AEK.build.comp("inspect_v001", { width: it.width, height: it.height, fps: A.fps, duration: it.duration });
@@ -43,6 +45,10 @@ return { item: it.name, frames: Math.round(it.duration * it.frameRate), fps: it.
     project: { bpc: P.bitsPerChannel, workingSpace: P.workingSpace, linearBlending: P.linearBlending },
     screen: [s[0], s[1], s[2]], dominant: dom };
 ```
+
+Stills cut from a movie: a PNG written by ffmpeg carries a gAMA chunk, which After Effects applies,
+so the still renders darker than its pixels (a 6, 10, 18 border rendered 0, 1, 4). Strip it before
+import: `magick in.png -define png:exclude-chunks=gAMA,cHRM,sRGB,iCCP out.png`.
 
 Check: `dominant` is the screen color; frame count and fps match the plate as shot. Measured screen
 on the test plate: [0.102, 0.576, 0.165]. If `workingSpace` or `linearBlending` is not what the
@@ -59,8 +65,9 @@ on the color layer (_0lcyyybbng 00:01:11).
 ```javascript
 // channel: bridge | handoff
 // checked: live 27.0
-// ARGS: {plate, sequence, fps, screen: [r,g,b], garbage: [{t, points}], holdout: [{t, points}] or null,
+// ARGS: {aep, plate, sequence, fps, screen: [r,g,b], garbage: [{t, points}], holdout: [{t, points}] or null,
 //        soft: [clipBlack, clipWhite], core: [clipBlack, clipWhite], choke (px), out}
+AEK.core.fresh(ARGS.aep); app.project.bitsPerChannel = 16;   // test session only (16 bpc for keys); end with AEK.core.save()
 var A = ARGS, it = AEK.xio.importItem(A.plate, { sequence: A.sequence, fps: A.fps });
 var key = AEK.build.comp("plate_key_v001", { width: it.width, height: it.height, fps: A.fps, duration: it.duration });
 var soft = key.layers.add(it); soft.name = "soft matte";
@@ -98,9 +105,11 @@ color on the suppressor (Ultra Desaturate, Luma Correction) or on a color plate.
 
 ### 2b. Soften the core only inward
 
-Blur the core for a softer transition without growing it: an unblurred duplicate of the core is its
-Alpha track matte, so the blur can only fade the core inside its own edge (K-uOFPoIm6U 00:14:01 to
-00:15:39). The core here is a layer, not a matte of a matte: its duplicate is the only matte.
+Blur the core's alpha for a softer transition without growing it: an unblurred duplicate of the core
+is its Alpha track matte, so the blur can only fade the core inside its own edge (K-uOFPoIm6U
+00:14:01 to 00:15:39). Blur the alpha channel only. The core is a keyed copy of the plate, color
+included, so a Box Blur or Gaussian Blur softens the whole interior. The core here is a layer, not a
+matte of a matte: its duplicate is the only matte.
 
 ```javascript
 // channel: bridge | handoff
@@ -109,13 +118,16 @@ Alpha track matte, so the blur can only fade the core inside its own edge (K-uOF
 var A = ARGS, c = AEK.core.comp(A.comp), core = AEK.core.layer(c, A.core);
 // duplicate BEFORE the blur: the matte must keep the hard edge
 var dup = core.duplicate(); dup.name = core.name + " inward matte_v001";
-AEK.build.effect(core, "ADBE Box Blur2", { "ADBE Box Blur2-0001": A.blur, "ADBE Box Blur2-0004": 0 }, "inward blur_v001");
+// Channel Blur -0004 = Alpha Blurriness; red, green and blue stay at 0, so the core's color stays sharp
+AEK.build.effect(core, "ADBE Channel Blur", { "ADBE Channel Blur-0004": A.blur }, "inward alpha blur_v001");
 return AEK.build.matte(core, dup, "alpha");
 ```
 
-Check: on `alphaView`, no alpha outside the unblurred core edge. Measured with choke 4 and blur 4: 0
-px outside the core with the matte, 33,070 px of blur spill without it; the softening inside the
-edge is the same.
+Check: on `alphaView`, no alpha outside the unblurred core edge; over gray, the high-pass of the
+interior equals the unblurred core. Measured on a generated 1912x1084 plate at half size (choke 4,
+blur 4): interior detail 8.37 (standard deviation of the high-pass, 0 to 255) unblurred, 8.37 with
+Channel Blur on alpha, 0.45 with a Box Blur; 0 px of alpha outside the core with the matte, 6,063 px
+without it. On a synthetic plate the Box Blur version spilled 33,070 px without its matte.
 
 Variants measured on the same frame (single Keylight, sampled screen, no garbage):
 
@@ -143,11 +155,19 @@ python3 $M spill final_over_gray_f00024.png --box 600,560,80,60   # green_excess
 python3 $M grain plate_f00024.png --box 40,300,120,120            # grain per channel, flat area
 python3 $M edge alpha_f00024.png --row 400 --x0 700 --x1 800      # 10-90 % edge width in px
 python3 $M diff version_a.png version_b.png --box 500,250,300,220 # mean and max difference, 0-255
+python3 $M holes alpha_f00024.png --erode 6                       # holes inside the eroded core, stray alpha outside
+python3 $M rim key_over_black.png key_over_white.png              # edge color against the surface just inside: median 0.85 to 1.15
 python3 skills/scenario-after-effects-expert/scripts/ae.py sheet sheet.jpg status_mid.png alpha_f00024.png final_f00024.png
 ```
 
 Check: the numbers move the way the change intended; then read one sheet. A previous version of the
-key is the reference when there is no truth matte.
+key is the reference when there is no truth matte. With no reference, `holes` replaces the body box:
+it erodes the matte 6 px (alpha above 0.5) and counts pixels under 0.95 inside, so a moving subject
+never puts the box across an edge. Measured on a 4:2:0 plate: 0.0 % holes, stray alpha at most
+0.0005 % on frames 0, 48 and 95. `rim` derives alpha from the two versions and compares each edge
+pixel's color with the surface 4 px inside. Measured on synthetic edges: clean 1.00, dark ring 0.50,
+bright rim 1.61; a real key 1.07 median. Run it on the key alone: a rim light added later reads as a
+bright edge by design.
 
 ## 4. Track mattes: shared matte, boolean matte, Set Matte
 
@@ -176,7 +196,8 @@ sm.enabled = false;
 return { mattes: r, matteVisible: c.layer("matte").enabled, frame: AEK.capture.frame(c, 0, A.out + "/shared_matte.png").path };
 ```
 
-Check: `matteVisible` false (`setTrackMatte` switches the matte's video off and it stays off after
+The Silhouette Alpha blending mode is spelled `BlendingMode.SILHOUETE_ALPHA` in the API. Check:
+`matteVisible` false (`setTrackMatte` switches the matte's video off and it stays off after
 `removeTrackMatte`); the frame shows the ellipse minus the bar in both targets. Measured traps:
 effects on the matte apply before it is read (Simple Choker 20 moved the edge 7 px); a Set Matte
 pointed at a layer carrying Keylight as an effect read alpha 1.0 everywhere, the same Set Matte on a
@@ -229,12 +250,133 @@ return { outputBlackWhite: set, plate: { black: pb, white: pw }, after: { black:
 ```
 
 Check: `after.black` and `after.white` equal the plate values within 2/255 per channel (measured:
-exact). A dark plate patch must be a real shadow of the plate, not a black border. Light direction
-cannot be graded (vJ8X58uknsk 00:01:05).
+exact). A dark plate patch must be a real shadow of the plate, not a black border.
+
+Picking the patches. The per-channel solve needs a neutral pair: a gray or white object and a shadow
+in both layers. A sunset or colored plate has none. Measured on a sunset: a plate white sampled next
+to the sun set Blue Output White to 0.77 and turned a navy strap teal. A colored element black (a
+red shadow) gave a negative Red Output Black. With no neutral pair, solve on luma: one gain and one
+offset for the three channels, from the subject's 1st and 99th luma percentiles to the plate's 1st
+and its 99th near the subject (`matte_metrics.py light` prints all four). The element keeps its own
+color; the light match (6b) handles the warmth.
+
+## 6b. Match the light
+
+Levels cannot move a light (vJ8X58uknsk 00:01:05). Measure it first, on the foreground alone
+(rendered with its alpha, PNG RGBA) and the plate at the same frame:
+
+```bash
+python3 <skill>/scripts/matte_metrics.py light fg_alone.png plate.png --ring 6
+```
+
+It reports the plate's source: the brightest 0.5 %, its direction from the subject, its color, and
+whether it is in frame. The subject's key direction comes from a plane fit of luma over its solid
+core. `rim_facing` and `rim_away` compare edge pixels with the same surface just inside, on the half
+toward and away from the source. Last come the rim hue against the source, and subject and plate
+luma 1st and 99th percentiles.
+
+Gate, when the source is in frame. These two readings separated the good composites from the bad
+ones on every case below:
+
+| Reading                   | Pass                                               |
+| ------------------------- | -------------------------------------------------- |
+| `key_strength`            | 0.3 or more (under it the subject is flat-lit)     |
+| `rim_facing`, `rim_away`  | facing at least 1.15, and 0.1 above away           |
+| subject luma p1 (levels)  | within 0.03 of plate p1                            |
+| subject luma p99 (levels) | no more than 0.02 above plate p99 near the subject |
+
+Readings to report and judge on the frame. `key_vs_source_deg` compares the subject's key with the
+source direction. It means something on a front or side-lit subject whose far side has no dark part
+(a strap, a dark cap). A backlit subject is lit mostly by its rim, and its key direction then points
+elsewhere. `rim_hue_vs_source_deg` compares the rim color with the source color. A sun disc clipped
+near white has no reliable hue, and a warm rim against it can read 18 degrees off while looking
+right.
+
+Measured, all over sunset or golden-hour plates with the sun in frame (the verdict is what the frame
+shows):
+
+| Composite                                | key_strength | rim facing / away | key vs source | rim hue | Frame                 |
+| ---------------------------------------- | ------------ | ----------------- | ------------- | ------- | --------------------- |
+| keyed speaker, front-lit, levels matched | 0.228        | 1.075 / 1.013     | 102.8         | 8.1     | pasted on             |
+| same key, before light match             | 0.244        | 1.030 / 0.987     | 103.5         | 2.1     | pasted on             |
+| same key after this procedure            | 0.332        | 1.176 / 1.017     | 45.4          | 4.1     | lit from the sun side |
+| generated product, studio-lit            | 0.136        | 1.022 / 0.968     | 53.2          | 2.4     | pasted on             |
+| studio-lit cutout seated on a terrace    | 0.140        | 1.017 / 0.980     | 79.4          | 5.7     | pasted on             |
+| same view relit by an edit model         | 1.034        | 1.308 / 1.065     | 75.3          | 18.1    | seated                |
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+// ARGS from `light`: angle = source_dir_deg, center = subject_center, radius = subject_radius, rimColor = source_rgb;
+//   eb, ew = subject luma p1, p99; tb, tw = plate p1, plate near p99; shadeColor: the plate's shadow tint
+var A = ARGS, c = AEK.core.comp(A.comp), fg = AEK.core.layer(c, A.fg), bg = AEK.core.layer(c, A.bg), i;
+var g = (A.tw - A.tb) / (A.ew - A.eb), ob = A.tb - A.eb * g, base = [14, 21, 28];
+var fx = AEK.build.effect(fg, "ADBE Pro Levels2", {}, "match levels_v001");
+for (i = 0; i < 3; i++) {   // luma solve: one gain for the three channels
+    fx.property("ADBE Pro Levels2-00" + base[i]).setValue(ob);
+    fx.property("ADBE Pro Levels2-00" + (base[i] + 1)).setValue(ob + g);
+}
+var shade = AEX.comp.shadeLight(c, fg, { angle: A.angle, center: A.center, radius: A.radius, color: A.shadeColor, opacity: 100 });
+// look the layer up again after each helper: they add layers and comps
+var rim = AEX.comp.rimLight(c, AEK.core.layer(c, A.fg), { angle: A.angle, widthPx: 10, blurPx: 8, color: A.rimColor, opacity: 75 });
+var wrap = AEX.comp.lightWrap(c, AEK.core.layer(c, A.fg), bg, { radiusPct: 1.0, opacity: 22, mode: "add" });
+return { levels: [ob, ob + g], shade: shade, rim: rim, wrap: wrap };
+```
+
+`shadeLight` is a Gradient Ramp in Multiply clipped to the foreground's alpha: white on the source
+side, `color` on the far side. `rimLight` builds a crescent: the foreground minus a copy shifted
+away from the light by `widthPx`, blurred, clipped to the foreground, then a solid of `color` in
+Screen. Both copy the layer with `copyToComp`, so a parented layer throws: precompose it first.
+Measured, 1920x1080: angle -151.7 degrees, radius 345 px, rim 10 px wide with 8 px blur at 75 %.
+Then re-run `light` on the lit foreground (light layers on, plate and grain off) and read the gates.
+
+Some foregrounds cannot be relit this way: a hard key light on the wrong side, a strong cast shadow.
+Then, in order: pick another plate whose source agrees with the subject's key, or regrade the plate
+(flip it if nothing in it reads as mirrored). Add the rim alone, so the edge facing the source
+glows. Flag what remains to the user with the `light` numbers.
 
 ## 7. Light wrap and grain
 
-The wrap is built from track mattes (no plugin); grain goes last, on whatever lacks it.
+The wrap is built from track mattes (no plugin). `lightWrap` copies the foreground and background
+layers into its source comp with `copyToComp`, so their scale, position, masks, effects and start
+times carry. A parented layer makes it throw: precompose it first. Measured with a background scaled
+160 % and moved: the old helper (it added the layer's source) wrapped pixels that differed from the
+visible background by 37.6 levels on average; the fixed helper by 0.00.
+
+Grain goes last, and only after both layers are measured. Read it two ways on the flattest static
+patches of each layer (on a moving subject, `tgrain` reads motion: measured 10.9 levels on a moving
+cap; read the plate on its screen or a static area):
+
+- **Spatial:** `matte_metrics.py grain` (high-pass of one frame). It also counts texture and noise
+  baked into a still.
+- **Moving:** `matte_metrics.py tgrain A.png B.png` on two neighboring frames. A still background
+  reads 0 here, whatever its spatial noise.
+
+Then pick the route:
+
+- **The plate carries real grain:** match grain only where an element replaced or covered the plate.
+  Put Add Grain on the element layer itself (its alpha limits it), or use an adjustment layer with
+  the element as Alpha or Luma track matte. Never over the whole frame: the plate keeps its own
+  grain, and independent grain adds to it. Measured on a clean element over a grainy plate, with
+  numpy grain at the plate's level (0.925 moving grain on untouched background). Over the whole
+  frame: background 1.309 (+42 %), element 0.925. Masked by the element's alpha: background 0.925,
+  element 0.924.
+- **Both layers far cleaner than the grain you add** (generated plates often are): one shared Add
+  Grain on a top adjustment layer over the composite. Measured on a generated plate over a generated
+  still: moving grain 0.23 and 0 levels; grain on the background only gave 0.23 and 0.49 (inverted);
+  one shared grain at intensity 0.5 gave 0.76 and 0.61.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+// ARGS: {comp, intensity}; shared route: one grain over everything, the top layer of the comp
+var c = AEK.core.comp(ARGS.comp), adj = AEK.build.adjustment(c, "FINISH_grain");
+adj.moveToBeginning();
+AEK.build.effect(adj, "VISINF Grain Implant", { "VISINF Grain Implant-0021": 3, "VISINF Grain Implant-0008": ARGS.intensity }, "shared grain");
+return { top: c.layer(1).name };
+```
+
+Matching route:
 
 ```javascript
 // channel: bridge | handoff
@@ -259,12 +401,27 @@ within 10 % per channel (measured within 1 % on a midtone wall at luma 0.33: pla
 tone (measured here 0.0080, 0.0088, 0.0098). Add Grain is tone dependent: with the same settings the
 dark desk (0.12) got 0.0227 in red, 40 % more, and the bright window (0.93) about 0.0017. Calibrate
 on the tone the subject sits against, then read shadows and highlights too. Wrap:
-`matte_metrics.py diff` with and without the wrap on an edge crop: a few levels against bright
-background, about 0 against dark, nothing outside the subject. Alternative grain: Match Grain,
-`VISINF Grain Duplication`, `-0013` = the plate's layer index (the plate may stay hidden), `-0002`
-Viewing Mode 5 (Final Output); measured within 3 to 5 %; mode 3 added no grain.
+`matte_metrics.py wrapbins wrap_on.png wrap_off.png plate.png alpha.png` bins the mean change on the
+subject by blurred background luma (0 to 0.25, to 0.5, to 0.75, to 1). An Add wrap over a dark but
+not black background is never 0: pass when the darkest bin is under half the brightest and nothing
+changes outside the subject. Measured at 1.0 % and 22 %: 1.64, 2.54, 3.10, 5.37 levels. Alternative
+grain: Match Grain, `VISINF Grain Duplication`, `-0013` = the plate's layer index (the plate may
+stay hidden), `-0002` Viewing Mode 5 (Final Output); measured within 3 to 5 %; mode 3 added no
+grain.
 
 ## 8. Cutout with no screen
+
+Routes, by shot:
+
+- **Object Matte (GUI):** toolbar Object Matte tool (the former Roto Brush slot), double-click the
+  layer, click the product, Space, Freeze (gui-paths.md). A script then sets Feather, Shift Edge and
+  Reduce Chatter by match name and pre-renders (8b).
+- **Difference Matte:** locked-off camera with a clean plate, Effect > Keying > Difference Matte
+  (K-uOFPoIm6U 00:30:48; keying doc).
+- **External matte (unattended):** segmentation or layer separation through
+  scenario-after-effects-generation, imported at the plate rate as a Luma or Alpha track matte (8a).
+  Measured: it reproduced the reference matte exactly.
+- **Rigid product:** a mask driven by a track from scenario-after-effects-tracking.
 
 ### 8a. External matte as a track matte
 
@@ -318,6 +475,16 @@ Reduce Chatter 0; the Refine Edge group has its own Feather and Shift Edge (`/HB
 `/HBspatialchoke`). Pre-render the result (procedure 5) before building on it.
 
 ## 9. Remove a logo from moving fabric: offset patch
+
+Routes:
+
+- **GUI:** Subtract mask around the logo, Window > Content-Aware Fill, Fill Method Surface, Alpha
+  Expansion, Lighting Correction when light shifts (Content-Aware Fill doc).
+- **Hero frame:** clean one frame (paint, or an edit through scenario-after-effects-generation),
+  track it in with a corner pin, add a masked Levels for lighting drift (3tMsr8TRDP8 00:01:02,
+  00:06:07). The patch mask sits before the pin, so it lines up on the hero frame only: key it on
+  other frames (00:05:31).
+- **Scripted (below):** the plate itself as the patch.
 
 The plate itself, shifted so clean fabric covers the logo, shown only through a feathered matte that
 follows the logo. Use whole pixels and whole pattern periods.

@@ -68,10 +68,21 @@ file saved as UTF-8 with a BOM reads without the BOM through `File.read()` with
 `encoding = "UTF-8"`. Quoted fields with commas, doubled quotes and an embedded line break came back
 intact (`"""Le jeu"", sur iOS, Android"` read as `"Le jeu", sur iOS, Android`). `_line` is the
 record number, not the physical line, when a field holds a line break. JSON data:
-`AEK.json.parse(AEX.batch.readText(path))`. ExtendScript has no `JSON` object.
+`AEX.batch.readJson(path)` reads a list of objects (or `readJson(path, "rows")` for an object that
+holds the list under `rows`) into the same `{header, rows}` shape, values as strings, `_line` = item
+number + 1. `validate`, `eachRow` and `fill` then work unchanged. ExtendScript has no `JSON` object;
+`AEK.json.parse` stands in.
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+var data = AEX.batch.readJson(ARGS.json);
+return { header: data.header, rows: data.rows.length, problems: AEX.batch.validate(data, { required: ["id", "name"], unique: ["id"] }) };
+```
 
 Validate before any build: controlled values and limits (Ov4Zd-Mgmbo 00:03:49; uo5k4_vu5Vk
-00:16:06).
+00:16:06). Every rule is optional: leave out `range`, `allowed` or `maxLength` when the data has
+none.
 
 ```javascript
 // channel: bridge
@@ -155,6 +166,9 @@ Check:
   defects. `ae.py sheet OUT.jpg f1.png f2.png ...` fits frames of different sizes into one tile box
   (a 512x512, a 640x360 and a 360x640 frame came out on one 1944x652 sheet). ImageMagick `montage`
   fails on some machines without a default font: pass `-font` if you use it.
+- `AEK.text.fit` and `measure` read the text at time 0. Fit before adding animators or keys that
+  change the text on frame 0 (a scale-in from 0 %, a typewriter), or the fit measures the first
+  state.
 - Resize rule: with `"fit"` (each layer at the same fraction of the frame, scale `min(sx, sy)`) the
   9:16 version was a shrunken landscape strip with the title and subtitle far apart. With `"short"`
   (scale by the short side, offsets kept from the center) the block stayed compact and the title
@@ -266,6 +280,9 @@ Measured:
   only plays a sound at the end.
 - After a full run the saved `.aep` still read QUEUED on all three items: `aerender` closes with
   DO_NOT_SAVE_CHANGES, so a rerun renders everything again. Resume with section 11.
+- `aerender` exits 0 on a full disk too: see section 13 before any long batch. For unattended runs,
+  wrap the whole-queue call in `scripts/render_guarded.sh`, or one comp in `ae.py aerender` from
+  scenario-after-effects-expert (section 13).
 - `aerender` takes no script arguments. Build in the open app, save, then render. On macOS,
   `aerendercore` inside the app bundle is undocumented (Adobe Community answer); the bridge plus
   `aerender` covers the same need.
@@ -412,7 +429,7 @@ done
 // checked: live 27.0
 // ARGS: {verified: ["v1.mp4"]} file names whose decode count passed; run on the saved batch copy
 var res = AEX.batch.resumeQueue(ARGS.verified);
-app.project.save();
+AEK.core.save();   // saves in place; refuses an untitled project instead of opening a Save As panel
 return res;
 ```
 
@@ -446,3 +463,197 @@ Measured on 27.0 (3 items of 1 s, H.264, whole-queue `aerender`):
   `/Volumes/<startup disk>` prefix on macOS; keep output names unique per row. To show the status in
   the person's sheet, they import or reference `status.csv` (the ledger pattern of Ov4Zd-Mgmbo
   00:11:25 to 00:11:57); set a row back to `ready` to rerun it.
+
+## 12. One comp from a data file: validated rows, undo groups, errors
+
+The versioning job (section 3) makes one comp per row. A chart, a list or a schedule is one comp
+whose layers come from the rows. Same rules: validate first, one undo group per row inside one group
+for the batch, `try/catch` per row, then render through the guarded pass.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+// ARGS: {csv, out}. CSV columns id,label,value,color,status. Builds comp CHART: one bar, label and value per ready row.
+var W = 1280, H = 720, FPS = 30, R = {}, i;
+var COLORS = { coral: [0.95, 0.42, 0.33], cream: [0.95, 0.91, 0.82], navy: [0.2, 0.3, 0.55] };
+var csv = AEX.batch.readCsv(ARGS.csv);
+var problems = AEX.batch.validate(csv, { required: ["id", "label", "value", "color", "status"],
+    allowed: { color: ["coral", "cream", "navy"], status: ["ready", "done", "hold"] }, range: { value: [0, 100] }, maxLength: { label: 12 }, unique: ["id"] });
+var bad = {}, rows = [], skipped = [];
+for (i = 0; i < problems.length; i++) { bad[problems[i].id] = problems[i].error; }
+for (i = 0; i < csv.rows.length; i++) {
+    var r = csv.rows[i];
+    if (bad[r.id]) { skipped.push({ id: r.id, line: r._line, reason: bad[r.id] }); }
+    else if (r.status !== "ready") { skipped.push({ id: r.id, line: r._line, reason: "status " + r.status }); }
+    else { rows.push(r); }
+}
+var c = AEK.build.comp("CHART", { width: W, height: H, fps: FPS, duration: 2, bg: [0.06, 0.07, 0.1] });
+app.beginUndoGroup("Chart: " + rows.length + " rows");
+var rep = AEX.batch.eachRow(rows, function (row, n) {
+    app.beginUndoGroup("row " + row.id);
+    try {
+        var v = parseFloat(row.value), x = W / 2 - (rows.length - 1) * 100 + n * 200, base = 600, hMax = 420;
+        var bar = AEK.build.shape(c, "BAR_" + row.id, { name: "bar", type: "rect", size: [120, 100], roundness: 0, position: [0, -50], fill: COLORS[row.color] });
+        var tg = bar.property("ADBE Transform Group"), f0 = 4 + 3 * n;
+        tg.property("ADBE Position").setValue([x, base]);
+        var sc = tg.property("ADBE Scale");
+        AEK.motion.key(sc, f0 / FPS, [100, 0]);
+        AEK.motion.key(sc, (f0 + 18) / FPS, [100, hMax * v / 100]);
+        AEK.motion.bezier(sc, 1, 2, [0.16, 1, 0.3, 1]);
+        AEK.text.add(c, row.label, { font: "Helvetica-Bold", size: 34, fill: [0.95, 0.91, 0.82], justify: "center", position: [x, base + 50], name: "LABEL_" + row.id });
+        var num = AEK.text.add(c, String(Math.round(v)), { font: "Helvetica-Bold", size: 40, fill: [0.95, 0.91, 0.82], justify: "center", position: [x, base - hMax * v / 100 - 20], name: "VALUE_" + row.id });
+        var op = num.property("ADBE Transform Group").property("ADBE Opacity");
+        AEK.motion.key(op, (f0 + 12) / FPS, 0); AEK.motion.key(op, (f0 + 20) / FPS, 100);
+        AEK.motion.bezier(op, 1, 2, [0.33, 0, 0.2, 1]);
+        return { bar: bar.name, height: Math.round(hMax * v / 100) };
+    } finally { app.endUndoGroup(); }
+});
+app.endUndoGroup();
+R.ok = rep.ok; R.failed = rep.failed; R.skipped = skipped;
+R.disk = AEX.batch.diskCheck(ARGS.out, 15e6 / 8 * c.duration, 2);
+if (!R.disk.ok) { throw new Error("Not enough space: " + R.disk.freeMB + " MB free, " + R.disk.needMB + " MB needed"); }
+AEX.batch.queue(c, ARGS.out + "/" + AEX.batch.fill("chart_{n}rows_v001", { n: rep.ok.length }) + ".mp4", { om: "H.264 - Match Render Settings - 15 Mbps", rs: "Best Settings" });
+app.project.save(new File(ARGS.out + "/chart_batch.aep"));
+return R;
+```
+
+Measured on a 6-row CSV (CRLF line ends): `validate` set aside "value 'abc' is not a number from 0
+to 100" (line 4) and "color 'green' is not one of coral, cream, navy" (line 5). The status gate
+skipped one `hold` row; 3 rows built 9 layers. One Edit > Undo (`app.executeCommand(16)`) took the
+comp from 9 layers to 0. In a first version the number check sat inside the row: `eachRow` caught
+"value 'abc' ..." with its line, but the bars were already placed by row index, so the chart showed
+an empty slot. Check anything that decides the layout in `validate` (`range` for numbers).
+`render_guarded.sh` then rendered 60 decoded frames, `RESULT ok`.
+
+## 13. Full disk: what aerender does, and the guarded render
+
+Measured on 27.0 with a 3 MB disk image as the output volume (whole-queue and single-comp
+`aerender`):
+
+| Case                                    | Exit code                 | Log                                                                                   | File                                  |
+| --------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------- |
+| ProRes 422, disk fills during the write | 0, "Finished composition" | no error line; "Failed to write XMP metadata" warning at the end                      | 1 MB, header says 60 frames, 0 decode |
+| ProRes 422, about 0.6 MB free at start  | 0                         | "Error Code: 9988" and "Disk Full ... (-1610153463)"                                  | none                                  |
+| H.264, about 0.6 MB free at start       | 0, "Finished composition" | "Rendering error while writing to file ... An output module failed ... (-1610153436)" | 24 bytes, no video                    |
+
+The next item of the same whole-queue run, written to another volume, rendered all 60 frames. A full
+startup disk can also hang `aerendercore` with no output; the watchdog below covers that case.
+
+A failed render, in this skill and in `ae.py aerender` (scenario-after-effects-expert, P7): an error
+line, a non-zero exit, a missing output file, or a movie that decodes fewer frames than its span.
+One comp goes through `ae.py aerender`; a whole queue run from a shell goes through
+`render_guarded.sh`.
+
+Before the run, check the space with the estimate from the stress render (section 3), and write the
+manifest of what is queued:
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// ARGS: {out, bytesPerFrame, frames, rows, manifest}
+var d = AEX.batch.diskCheck(ARGS.out, ARGS.bytesPerFrame * ARGS.frames * ARGS.rows, 2);
+if (!d.ok) { throw new Error("Render refused: " + d.why); }
+return { disk: d, manifest: AEX.batch.renderManifest(ARGS.manifest) };
+```
+
+`diskCheck` reads `df -k` through `system.callSystem` (macOS, Linux), creates the folder and writes
+a probe file in it. It returns `ok`, `why`, `freeMB`, `needMB`, `writable` and `aerenders` (aerender
+processes already running). Measured: the 3 MB volume read 3 MB free and a 46 MB need was refused; a
+folder set to read-only returned `writable` false, `why` "cannot write in ...". `renderManifest`
+writes one "path, frames" line per output of each QUEUED item.
+
+```bash
+# whole-queue render: free-space floor in MB, stall watchdog in seconds, logs off the output volume, then the manifest
+bash "<skill>/scripts/render_guarded.sh" "<project>/batch_copy.aep" "<project>/renders" 500 120 "<project>/logs" "<project>/logs/queue.tsv"
+```
+
+The script reads each item's "Output To", "Duration" and "Frame Rate" from the log, so it knows the
+frames each file must hold without the manifest; the manifest adds the items that never started. The
+log writes Duration as timecode (`0:00:02:00`) or, when the project's time display is set to frames,
+as a frame count (`00060`); the script reads both. Measured: a parser that assumed timecode read
+`00060` as 6,480,000 frames and failed a good 60-frame file. Measured on 27.0, two 60-frame items:
+
+| Case                                                         | aerender exit                                                                                           | `render_guarded.sh`                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| normal folder                                                | 0                                                                                                       | `noise_0.mp4 60 of 60`, `noise_1.mp4 60 of 60`, `RESULT ok`             |
+| output folder read-only                                      | 0, "aerender Error: ... Can not create a file in directory ... Try checking write permissions", no file | exit 1: the error line, both items "never started"                      |
+| movies cut to 31 of 60 frames after the run (fault injected) | 0                                                                                                       | exit 1: "short: 31 of 60 frames" for each; with or without the manifest |
+| 3 MB volume, ProRes                                          | 0, only "Failed to write XMP metadata"                                                                  | exit 1: "decodes no frames", with the XMP hint                          |
+| floor above the free space                                   | not started                                                                                             | exit 2                                                                  |
+
+A case-sensitive error grep, or a check that fails only files with 0 frames, passes the read-only
+case and the short movies (`RESULT ok`, measured). Two aerenders writing into one folder at the same
+time lose a render the same way (expert P7): give each its own output folder. Then requeue what
+failed with `resumeQueue` (section 11), fix the cause, and run again.
+
+## 14. One driver: build, guarded render, status ledger
+
+Section 3 renders three rows in the open app (`renderOnly`). Those items are DONE in the saved
+project, and a whole-queue `aerender` skips DONE items: they never pass through the guarded render.
+When every row must, skip `renderOnly` and run this driver twice: once with `only` set to the three
+stress rows, then, after their sheet passes, on all rows. The build job queues, writes the manifest
+and saves; the shell renders; [scripts/ledger.py](../scripts/ledger.py) writes the status file from
+what decoded.
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// build.jsx. ARGS: {data (.json or .csv), master, aep, renders, manifest, pattern, om, rs, only (optional list of ids),
+// maxWidth (fraction of the comp width, default 0.6), hold (seconds, a frame where all text is on screen)}.
+// The open project holds the master comp with text layers named like the data columns in capitals (NAME for name).
+var data = /\.json$/i.test(ARGS.data) ? AEX.batch.readJson(ARGS.data) : AEX.batch.readCsv(ARGS.data);
+var m = AEK.core.comp(ARGS.master), bin = AEK.core.bin("VERSIONS"), failBin = AEK.core.bin("_FAILED"), rows = [], i, k;
+var problems = AEX.batch.validate(data, { required: ["id"], unique: ["id"] }), bad = {};
+for (i = 0; i < problems.length; i++) { bad[problems[i].line] = problems[i].error; }   // by record: a duplicate id sets aside the second row only
+var q = app.project.renderQueue;
+// items queued earlier stay in the queue, switched off, so the saved copy renders this batch only
+for (i = 1; i <= q.numItems; i++) { if (q.item(i).status === RQItemStatus.QUEUED) { q.item(i).render = false; } }
+for (i = 0; i < data.rows.length; i++) {
+    var row = data.rows[i], use = !ARGS.only;
+    for (k = 0; ARGS.only && k < ARGS.only.length; k++) { if (ARGS.only[k] === row.id) { use = true; } }
+    if (!use) { continue; }
+    var res = { id: row.id, status: "failed", file: ARGS.renders + "/" + AEX.batch.fill(ARGS.pattern, row) + ".mp4", reason: bad[row._line] || "" };
+    rows.push(res);
+    if (res.reason) { continue; }
+    var built = null;
+    try {
+        built = AEX.batch.deepDuplicate(m, "_" + row.id, bin).comp;
+        for (k = 0; k < data.header.length; k++) {
+            var l = built.layer(data.header[k].toUpperCase());
+            if (!l || !l.property("ADBE Text Properties")) { continue; }
+            AEX.batch.setText(l, row[data.header[k]]);
+            var size0 = l.property("ADBE Text Properties").property("ADBE Text Document").value.fontSize;
+            var fit = AEK.text.fit(l, built.width * (ARGS.maxWidth || 0.6), { minSize: Math.round(size0 * 0.6), step: 2 });
+            if (fit.overflow || !AEK.text.inFrame(l, built, 0.05, ARGS.hold || 0).ok) { throw new Error("Text overflow on " + l.name + ": " + Math.round(fit.width) + " px at the " + fit.size + " px floor"); }
+        }
+        AEX.batch.queue(built, res.file, { om: ARGS.om, rs: ARGS.rs });
+        res.status = "built";
+    } catch (e) {
+        res.reason = e.toString();
+        if (built) { built.parentFolder = failBin; }
+    }
+}
+var manifest = AEX.batch.renderManifest(ARGS.manifest);
+app.project.save(new File(ARGS.aep));
+return { rows: rows, queued: manifest.length };
+```
+
+A throw inside the `try` (missing layer, text over the floor) fails that row with its reason and
+moves its comp to `_FAILED`. To measure a plate's padding around its text in comp pixels, use
+`AEX.expressions.compRect` and `margins` from scenario-after-effects-expressions.
+
+```bash
+# driver.sh: three stages; every stage reads the files of the stage before, never an exit code alone
+SK="<skill>/scripts"; AE="<expert skill>/scripts/ae.py"; W="<work folder>"
+python3 "$AE" run "$W/build.jsx" --lib "$SK/batch.jsx" --args "$(cat "$W/args.json")" > "$W/build.json"
+bash "$SK/render_guarded.sh" "$W/batch.aep" "$W/renders" 2000 120 "$W/logs" "$W/logs/queue.tsv" > "$W/guard.txt"
+python3 "$SK/ledger.py" "$W/build.json" "$W/guard.txt" "$W/status.csv"
+```
+
+`ledger.py` marks a row `done` only when `render_guarded.sh` printed "<file> N of N" for its file; a
+failed build, a short or missing file keeps `failed` with the reason. It exits 1 when any row
+failed. Measured on 27.0 with six JSON rows of names and roles (a 1920x1080 lower third, 120
+frames). The stress pass (`only`, 3 rows) and the full pass each printed `RESULT ok` with 120 of 120
+frames per file. `status.csv` read `done` for every row. A second file with a repeated id and a
+70-character name gave `done` for the first row, `failed` "Duplicate id 'b01' (also line 2)" and
+`failed` "Text overflow on NAME: 1541 px at the 42 px floor"; exit 1.

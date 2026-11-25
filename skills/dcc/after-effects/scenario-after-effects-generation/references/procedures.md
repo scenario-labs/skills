@@ -5,12 +5,35 @@ with the Scenario MCP. Jobs are function bodies for
 `ae.py run job.jsx --lib <skill>/scripts/gen.jsx --args '{...}'`. In a person's open project, add
 `--undo "Agent: <what>"` so the job is one undo step. Paths come from `ARGS` and are absolute.
 
+## Landing table
+
+What each generated type needs on arrival, measured on 27.0 with files from the Scenario MCP.
+
+| Asset                                     | Ask for                                                    | What arrives (measured)                                                         | Import and settings                                                               | Check                                            | Next                          |
+| ----------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------- |
+| Style frame, plate still                  | target aspect, 1.5 to 2x comp size, no text                | PNG 8-bit sRGB, no alpha                                                        | `land`, `place` fit cover                                                         | audit under 105 %                                | compositing                   |
+| Cutout (character, prop)                  | transparent background, margin, full figure                | PNG straight alpha; body alpha 252 to 253, stray alpha 1 pixels                 | alpha straight; Levels on alpha, Input White 0.98; anchor from the alpha bbox     | fringe on black and white                        | character-rigging             |
+| Upscaled still                            | 2x of the largest on-screen size                           | RGB, alpha dropped, flattened on white                                          | put the 1x alpha back; Premultiplied, matte white                                 | halo on black                                    | compositing                   |
+| Layer split                               | front-to-back planes, max 3 to 4                           | canvas-aligned PNGs, front first; binary alpha; back layer black where occluded | Z depth with scale compensation; the full frame as back plate                     | holes at the extreme camera frame                | 3d                            |
+| Depth planes (procedure 9)                | depth map plus one masked edit per plane                   | near-binary alpha from depth bands; clean plates that drift outside the mask    | the original composited back outside each edit mask                               | holes and ghosts at the end of the push          | 3d                            |
+| Element on black (procedure 10)           | pure black, locked camera, nothing else in frame           | tv range or lifted black (p99 2 to 12 / 255), audio track                       | `AEX.element.land` (vfx); audio off; darker luminance-matted fill over near white | corner lift, foot point, visibility on the plate | vfx                           |
+| Depth map                                 | from the approved frame; of a supplied still: procedure 11 | 8-bit gray, white = near, same size                                             | precompose plus Box Blur before Displacement Map                                  | tear at the max amount                           | 3d                            |
+| Cutout of a supplied still (procedure 11) | a background-removal model, no prompt                      | RGBA PNG at the input size; body alpha 255, colors unchanged inside             | alpha straight; no Levels lift when the body reads 255                            | fringe on black and white                        | compositing                   |
+| Object seated in a plate (procedure 12)   | plate and object under one light                           | relit view from an edit model, recut                                            | scale from a real size; shadow along the plate's lines                            | `seat_check.py`, push gates                      | compositing                   |
+| Video plate                               | locked camera, first and last frame = style frame          | MOV HEVC 4:4:4 10-bit, 24/1, 121 frames, bt709                                  | conform to comp fps if needed; `loopLayer` skipping the repeated last frame       | seam step vs normal step                         | compositing, color-delivery   |
+| GLB model                                 | named parts, no text, real size                            | GLB, named PBR materials, meters; footage 1920x1080 30 fps                      | `renderer = "ADBE Calder"` first; fit by `sourceRectAtTime`                       | model present after a warm-up frame              | 3d                            |
+| HDRI / skybox                             | 2:1 equirectangular, light sources in frame                | EXR and HDR linear, peak 2.4; PNG skybox 8-bit                                  | layer source of an Environment light (Advanced 3D only)                           | reflections, no crash                            | 3d                            |
+| Voiceover                                 | WAV 48 kHz, word timings on                                | mono 48 kHz, -21.6 LUFS, -4.7 dBTP, JSON timings                                | cue in frames, gain capped by true peak                                           | rendered mix true peak                           | typography, motion-production |
+| Music                                     | length = cut, BPM, no vocals                               | stereo 44.1 kHz, -14.1 LUFS                                                     | set the gain, then read voice and bed from solo renders                           | each stem and the mix, rendered                  | motion-production             |
+| Sound effects                             | one event per file                                         | mono 48 kHz, peak -1.0 dBFS, 15 LU loudness spread                              | turn loud ones down, never quiet ones up past 0 dB                                | events count, mix peak                           | motion-production             |
+
 ## 0. Generate, download, keep provenance (Scenario MCP)
 
 1. `recommend` with the need in plain words and `priority: "quality"`. Read `next_step`: on
    `proceed`, take the specialty or the top entry; on `ask_user`, present the options. For 3D,
    prefer the newest first-party model in the list. For a chain (style frame, then video, then
-   voice), `plan_generation` first.
+   voice), run `plan_generation` first; it is a catalog tool, called through
+   `scenario_tool_execute_read`.
 2. `model_schema_get`, then `model_run` with schema field names; `jobs_wait` on the returned
    `job_id`. For video:
    - Preview the start frame before the full render, and generate several small variations of the
@@ -49,6 +72,13 @@ ffmpeg -nostats -i vo.wav -af silencedetect=n=-45dB:d=0.15 -f null - 2>&1 | grep
 
 Check: alpha type and the top alpha value (a body at 252 to 253 needs a lift), fps as a ratio, frame
 count, color tags, sample rate, channels, integrated loudness, true peak, where speech starts.
+
+A still cut from a clip with ffmpeg carries gAMA and cHRM chunks (measured: a frame of a bt709
+H.264). After Effects applies gAMA and renders it darker than its pixels (a border of 6,10,18
+rendered 0,1,4), so a feathered still shows its rectangle on a comp of the same color. Strip the
+chunks before import: `magick in.png -define png:exclude-chunks=gAMA,cHRM,sRGB,iCCP out.png`. PNGs
+downloaded from the Scenario MCP (a plate, two cutouts, two depth maps) carried none of these
+chunks.
 
 ## 2. Land a transparent cutout (alpha, fringe, body, provenance, size, anchor)
 
@@ -95,7 +125,7 @@ matte white. Add `ADBE Simple Choker` (`-0002` Choke Matte 1) if a rim remains.
 ```javascript
 // channel: bridge
 // checked: live 27.0
-// ARGS: {layers:[front..back], plate: the full frame, z:[0, 600, 1500, 3000], push, truck, seconds}
+// ARGS: {layers:[front..back], plate: the full frame, z:[0, 600, 1500, 3000], push, truck, seconds, out}
 var A = ARGS, W = 1920, H = 1080, zoom = W * 50 / 36, c = AEK.build.comp("parallax", { width: W, height: H, fps: 24, duration: A.seconds });
 var list = A.layers.slice(0), i, it, l, s, tg, cam;
 // the back layer of a split is black where the front layers sat: the full frame replaces it
@@ -221,7 +251,7 @@ frame-to-frame change from 0.45 to 0.95 levels.
 ```javascript
 // channel: bridge
 // checked: live 27.0
-// ARGS: {glb, hdr, prov}
+// ARGS: {glb, hdr, prov, out}
 var A = ARGS, c = AEK.build.comp("product", { width: 1280, height: 720, fps: 24, duration: 4 });
 // set Advanced 3D before the model or the light: a Classic comp raises a dialog and crashed with an environment light
 c.renderer = "ADBE Calder";
@@ -242,6 +272,11 @@ AEK.capture.frame(c, 0, ARGS.out + "/warmup.png");
 return { rect: [r.width, r.height], scale: s, materials: mats };
 ```
 
+Check: four turntable frames on a sheet; the material names match the GLB. Measured: a 0.121 m model
+gave a 117 x 37.5 footprint at scale 100 (origin at its base), fitted at 863 %. HDR and EXR rendered
+identical frames; the 8-bit PNG skybox rendered 10 % brighter. Frames took 0.26 to 0.46 s, the first
+1.28 s. Camera, shadows and depth of field go to scenario-after-effects-3d.
+
 Motion blur on the model: `layer.motionBlur = true` throws "Motion blur is not supported by the
 current composition renderer" in an `ADBE Calder` comp. Precompose the model comp and blur the
 precomp layer:
@@ -259,11 +294,6 @@ return { frame: AEK.capture.frame(o, 0.5, ARGS.out + "/blurred.png").path };
 Check: a frame mid-turn against the same frame without the effect. Measured with a 360
 degrees-per-second turn: visible smear along the turn, edge detail (Laplacian variance) halved. CC
 Force Motion Blur also takes Shutter Angle (`-0003`) and Override Shutter (`-0002`).
-
-Check: four turntable frames on a sheet; the material names match the GLB. Measured: a 0.121 m model
-gave a 117 x 37.5 footprint at scale 100 (origin at its base), fitted at 863 %. HDR and EXR rendered
-identical frames; the 8-bit PNG skybox rendered 10 % brighter. Frames took 0.26 to 0.46 s, the first
-1.28 s. Camera, shadows and depth of field go to scenario-after-effects-3d.
 
 ## 7. Audio from a cue list, word markers, captions
 
@@ -331,3 +361,236 @@ return out;
 Check: `failed` empty and each row's size, fps and alpha against the probe. Measured: 16 files
 landed. A GLB reads as 1920x1080, 30 s, 30 fps footage; EXR and HDR as 2048x1024 stills; the timing
 JSON as a 0x0 still.
+
+## 9. Depth planes with clean plates behind them
+
+A model layer split arrived with binary edges and holes (procedure 3). Planes cut from the depth map
+by bands, with the area each plane hides rebuilt by a masked edit, give clean layers for a camera
+push. A straight push-in into an empty plate uncovers nothing behind the planes: there, the bands
+plus the full frame as back plate are enough, and steps 3 and 4 are skipped.
+
+1. Find each band on the depth map (white = near): sample rows with
+   `magick depth.png -crop 2048x10+0+Y +repage -format "%[fx:mean]" info:` and pick the gray range
+   of each object.
+2. Run the block below to make the mattes and the edit masks.
+3. Pick the edit model at run time: `recommend` with capability `img2img` and feature `mask`,
+   quality priority. Read the mask field in `model_schema_get` first: the convention (white = edit,
+   or edit where transparent) differs between models. Run one edit per edit mask on the full frame,
+   with a prompt that continues the background behind the object.
+4. Run the rest of the block to rebuild each plane from the original plus the edit.
+
+```bash
+# depth bands, white = near: -level LO%,HI% gives a near-binary matte with a soft edge of 1 to 2 %
+magick depth.png -colorspace gray -level 54%,56% mask_front.png
+magick depth.png -colorspace gray -level 6.8%,8% mask_mid.png
+# edit masks for the clean plates: white = rebuild, dilated 14 px past the object
+magick mask_front.png -threshold 50% -morphology Dilate Disk:14 edit_front.png
+magick mask_mid.png -threshold 50% -morphology Dilate Disk:14 edit_mid.png
+# Scenario MCP, one masked edit of the full frame per edit mask: clean_mid.png (edit_front), clean_back.png (edit_mid)
+# planes: the original pixels everywhere no edit was asked for
+magick frame.png mask_front.png -alpha off -compose CopyOpacity -composite plane_front.png
+magick frame.png clean_mid.png edit_front.png -composite \( mask_mid.png \) -alpha off -compose CopyOpacity -composite plane_mid.png
+magick frame.png clean_back.png edit_mid.png -composite plane_back.png
+# drift: how much the edit model changed outside its mask (the reason the original goes back on top)
+magick frame.png clean_back.png -compose difference -composite -colorspace gray d_back.png
+magick edit_mid.png -negate keep_back.png
+magick d_back.png keep_back.png -compose multiply -composite -format "back drift mean %[fx:mean*255] max %[fx:maxima*255]\n" info:
+for p in front mid; do magick plane_$p.png -format "plane_$p %wx%h alpha mean %[fx:mean.a]\n" info:; done
+```
+
+Check: measured on a 2048x1152 frame, bands 54 to 56 % (foreground grass) and 6.8 to 8 % (everything
+nearer than the far sky and lake) gave alpha means 0.189 and 0.492. The edit model changed pixels
+outside its mask by up to 39 levels (back) and 67 (mid), so the original goes back on top outside
+each edit mask. Inspect every rebuilt patch at 1:1 for a ghost of the removed object. Where a flat
+sky has to be continued, rebuild it row by row from the sky color at each row's edges instead of
+asking the edit model. The planes then go to scenario-after-effects-3d (procedures 8 and 14) for the
+push, the coverage check and a sway.
+
+## 10. A generated element on black (fire, smoke)
+
+Realistic fire or smoke that fills the frame is generated here as a clip on pure black, then landed
+by scenario-after-effects-vfx. Its routing rule sends that case here: stylized looks, loops, small
+accents and dust stay built-in effects.
+
+1. **Pick the model by the look, at run time.** `recommend` with capability `txt2video`, quality
+   priority, in plain words ("a realistic flame on pure black for Screen compositing"); `search`
+   with `target: "models"` for newer entries. The first picks differ in kind: one gave a perfect
+   black (0.01 / 255) with stylized, symmetric shapes; another gave realistic stock-like fire and a
+   natural plume with a lifted black. For a realistic element, run the first two picks on one prompt
+   and judge on a full frame, never the thumbnail. Turn generated sound off where the schema allows,
+   and take a 10-bit MOV when offered.
+2. **Prompt for a clean black.** "VFX stock footage element: <element>, isolated on a pure solid
+   black background. Locked-off static camera, no camera movement.
+   <motion and color in one sentence>. Nothing else in frame: no ground, no fuel, no logs, no smoke,
+   no sparks, no reflections, no text. Shot on a black stage for compositing, deep black everywhere
+   outside the <element>." Both picks kept the camera locked and the background black with it. What
+   still failed: a dark fuel shape at a flame's foot, a flame base running off the bottom edge,
+   smoke starting at the bottom edge, and a bright source point at a smoke column's foot. Plan the
+   frame so the source sits off screen or behind an object, and hide the foot with a mask (step 4).
+3. **Probe before import** (procedure 1): range, frame rate, audio, and the background 99th
+   percentile. Measured: an H.264 smoke clip (1080p, 24 fps, 96 frames) arrived tv range with an
+   sRGB tag and an AAC track, YMIN 9 to 15, corner YAVG 17.4 to 18.3; After Effects read that corner
+   at 2.2 mean (max 14); a 10-bit MOV fire clip had a background p99 of 2.2 / 255, a MOV smoke clip
+   12.2 / 255. Turn the layer's audio off (`audioEnabled = false`). A 24 fps clip in a 30 fps comp:
+   conform it (plays 1.25x faster, still reads as fire), or keep 24 and accept repeated frames.
+4. **Land it with the effects skill:** `AEX.element.land` in scenario-after-effects-vfx, procedures
+   section 13, "Generated element on black". It sets the foot mask, the black level (Levels Input
+   Black at the background p99), the palette, the glow, the light thrown on the plate, the heat haze
+   and the grain. Do not repeat those steps here.
+5. **Choose the blend by the plate under the element.** Screen only adds light, and nothing above
+   about 230 has room left. Over a plate near white, use a fill darker than the plate in Normal,
+   with the element as its luminance track matte. The job below compares the options.
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// ARGS: {clip, plate, blackIn, footRow, feather, out, bright: optional RGB of a solid used instead of the plate, tag}; needs --lib gen.jsx
+app.project.bitsPerChannel = 8;
+var A = ARGS, out = { frames: {} }, tag = A.tag || "g13";
+var el = AEX.gen.land(A.clip, { name: "smoke", fps: 24 });
+var pl = AEX.gen.land(A.plate, { name: "plate" });
+function foot(l) {
+    // mask over the clip that ends half a feather above the source point, feather on the vertical only
+    var W = l.source.width, y = A.footRow - A.feather / 2, s = new Shape();
+    var m = l.property("ADBE Mask Parade").addProperty("ADBE Mask Atom");
+    s.vertices = [[-50, -50], [W + 50, -50], [W + 50, y], [-50, y]]; s.closed = true;
+    m.property("ADBE Mask Shape").setValue(s);
+    m.property("ADBE Mask Feather").setValue([0, A.feather]);
+}
+function element(c, masked) {
+    var l = AEX.gen.place(c, el, { fit: "cover", name: "smoke" });
+    l.audioEnabled = false;
+    AEK.build.effect(l, "ADBE Easy Levels2", { "ADBE Easy Levels2-0003": A.blackIn });
+    if (masked) { foot(l); }
+    return l;
+}
+function variant(name) {
+    var c = AEK.build.comp("v " + name, { width: 960, height: 540, fps: 24, duration: 4, bg: [0, 0, 0] });
+    if (name !== "alone" && name !== "alone_nomask") {
+        if (A.bright) { AEK.build.solid(c, "plate", A.bright, {}); } else { AEX.gen.place(c, pl, { fit: "cover", name: "plate" }); }
+    }
+    if (name === "plate") { out.frames[name] = AEK.capture.frame(c, 2, A.out + "/" + tag + "_" + name + ".png").path; return; }
+    var l = element(c, name !== "alone_nomask");
+    if (name === "screen") { l.blendingMode = BlendingMode.SCREEN; }
+    if (name === "unmult") { AEK.build.effect(l, "ADBE Unmult", {}); }
+    if (name === "fill_cream" || name === "fill_gray") {
+        var col = name === "fill_cream" ? [0.96, 0.94, 0.9] : [0.62, 0.64, 0.68];
+        var f = AEK.build.solid(c, "fill", col, {});
+        f.moveBefore(l);
+        f.setTrackMatte(l, TrackMatteType.LUMA);
+    }
+    var t = [0.5, 2, 3.5], i;
+    for (i = 0; i < t.length; i++) { out.frames[name + "_" + i] = AEK.capture.frame(c, t[i], A.out + "/" + tag + "_" + name + "_" + i + ".png").path; }
+}
+var v = ["plate", "alone", "alone_nomask", "screen", "unmult", "fill_cream", "fill_gray"], k;
+for (k = 0; k < v.length; k++) { variant(v[k]); }
+return out;
+```
+
+Check: per variant, the mean signed change against the plate on the pixels where the element is
+denser than 0.15.
+
+- Over gray 102 (earlier run): Screen as is lifted the corner 1.3 levels mean, 8 at most; Levels
+  Input Black 0.03 first brought it to 0.0 (max 4), and the smoke body gain fell from 9.15 to 6.5
+  levels. Unmult: corner 103.0, min 100. Set Input Black just above the measured black, no higher.
+- Over the illustrated plate, sky at luminance 202: Screen +15.9, Unmult in Normal +9.5, cream fill
+  +10.6, gray fill (0.62, 0.64, 0.68) -10.9. Over its dark ground: Screen +33.3, gray fill +14.1.
+  Screen stays the right choice there.
+- Over a warm white solid (luminance 237): Screen +4.4, Unmult in Normal -1.4, cream fill +0.3. All
+  three nearly vanish. The gray fill with the smoke as luminance matte read at -17.2 and looked like
+  smoke on the frame.
+- Foot: without the mask, the source point peaked at luminance 179 to 194 in the bottom 40 rows; a
+  mask ending half a feather above it (feather 120 px, vertical only) left 11 to 18.
+- No newly clipped pixel in any variant.
+
+## 11. Depth map and cutout of a supplied still
+
+The still comes from the client or another tool, so nothing was generated with a transparent
+background or a depth pass. Upload it (`upload_asset`, then `upload_asset_complete`) into the
+project already set for the job, then find each route at run time.
+
+1. **Depth map.** `recommend` with img2img wording ("depth map of this photo") came back `no_match`;
+   the route is the catalog tool `asset_detect` (write lane, `scenario_tool_execute_write`). Find it
+   with `scenario_tools_search` query "detect depth", or the model with `search` `target: "models"`,
+   query "depth", sorted by `createdAt:desc` (look for a detection or ControlNet tool that takes one
+   `image` and a modality).
+2. Call it with `modality: "depth"` and `remove_background: false`. The default `true` strips the
+   background, and a plane cut needs the whole frame.
+3. **Cutout.** `recommend` with the words "remove the background from this product photo", quality
+   priority. Also run `search` query "remove background" sorted by `createdAt:desc` for newer
+   entries. In the schema, look for a single `image` file input, no prompt, and an alpha output at
+   the input size.
+4. Download both, write the sidecars, probe: the depth map is gray, white = near, at the input size;
+   the cutout is RGBA.
+
+```bash
+# depth ordering: mean of a 1-row strip from top to bottom should rise (white = near)
+for y in 100 600 1200 1800; do magick depth.png -crop 3840x1+0+$y +repage -colorspace gray -format "$y %[fx:mean]\n" info:; done
+# cutout: body alpha and color drift inside the body against the source
+magick cutout.png -alpha extract -threshold 99% -format "body pixels at 255+: %[fx:mean]\n" info:
+magick cutout.png -alpha extract -format "alpha bbox %@\n" info:
+```
+
+Check, measured on a 3840x2160 terrace plate and an 880x400 product still: `asset_detect` returned
+the same depth map on two runs, rows 100 to 2100 rising from 0.077 to 0.956. The top `recommend`
+cutout pick returned body alpha 254 to 255 with RGB identical to the source inside the body, so the
+Levels lift of procedure 2 was not needed. Model names change; the task words and the schema shape
+are what to search for.
+
+## 12. Seat a supplied object in a generated plate
+
+Studio light on a golden-hour plate reads pasted however good the shadow is. Light comes first, then
+scale, then the shadow, then the move. The compositing skill owns the light-match gate (direction
+and contrast); hand it the seated comp.
+
+1. **One light for both.** Either prompt the plate with the light the object already has (direction,
+   softness, color), or relight the object to the plate. Write the plate prompt with what scale and
+   shadows need: lens, camera height above the floor, level camera, horizon row, sun side and
+   height, an empty lit patch for the object.
+2. **Relight through an edit model.** `recommend` with "relight this product to match the lighting
+   of the reference scene", quality priority. Pass the object view and the plate as references, and
+   state the sun side, the warm rim and the brightness of the light parts. A first take came back
+   too dark (cream end caps gray): say how bright they stay. Ask for the largest size offered. Cut
+   the relit view out again with the route of procedure 11.
+3. **Gate the light before building.** `scripts/seat_check.py CUT.png PLATE.png --floor-top ROW`
+   compares the blue-to-red ratio of the object's brightest 2 % with the plate's lit ground. It
+   fails above a 0.15 gap. Measured: a studio-lit cutout on a sunset plate failed at +0.32 (cooler);
+   the relit view passed at -0.15. Judge the light direction by eye; the script reports the
+   highlight position only.
+4. **Scale from a stated real size.** For a level camera, pixels per meter at the object's base row
+   = (base row - horizon row) / camera height. Object width on screen = real length x that.
+   Measured: horizon at row 235, base at 850, camera 0.12 m: 5125 px/m, so a 0.16 m speaker is 820
+   px wide.
+5. **Shadow along the plate's own shadows.** Extend two shadow lines already in the plate (a railing
+   post, a wall edge) to where they meet near the horizon below the sun. The object's shadow runs
+   from its base away from that point. Build it from the silhouette: Fill dark warm brown, Corner
+   Pin mirrored about the base line and slanted along that direction, Gaussian blur, Multiply 40 to
+   45 %, plus a contact ellipse at 80 %. Start the mirror line inside the body: the blur erodes the
+   shadow's top edge, so a shadow mirrored at the base starts below it.
+6. **Gate the contact.** Write mattes of the object and of its shadow layers at the first and last
+   frame (`AEX.threeD.mattes`), then run
+   `python3 seat_check.py --contact obj.png cast.png,contact.png`. In every column where the object
+   rests, it measures the gap from the object's lowest row to the shadow's first row. Pass: 2 px or
+   less.
+7. **A push that reads.** On 2.5D planes at z 4000 / 1600 / 600 with a 50 mm camera, a 650 px push
+   read as a still (front plane grew 1.25 times). 850 px plus a 120 px truck grew it 1.35 times with
+   9 % subject-to-back parallax. A push alone shows little parallax near the frame center; the truck
+   adds it.
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// gates in the job (AEX.threeD from scenario-after-effects-3d, loaded with a second --lib)
+var g0 = AEX.threeD.screenRect(c, front, 0), g1 = AEX.threeD.screenRect(c, front, c.duration - c.frameDuration);
+R.frontGrowth = g1.width / g0.width;                       // at least 1.35
+R.parallax = AEX.threeD.parallax(c, { layer: speaker, point: baseAnchor }, { layer: back, point: horizonPoint }, 0, c.duration - c.frameDuration).relPct;   // at least 5
+```
+
+Check: front growth, parallax, every plane covering the frame at the last frame (`screenRect`),
+`AEX.gen.upscaled(c)` empty, the contact gate on the first and last frame, and the warmth gate.
+Measured on the rebuild: growth 1.35, parallax 8.97 %, upscaled empty.
+
+- Contact, cast shadow mirrored at the base with blur 70 source px: median gap 9 px at the first
+  frame and 12 at the last, worst column 34 and 44. The gap grew with the object (x 1.35, the push
+  growth): one transform, so the cause was the mirror line, not parenting. Anchor moved 160 source
+  px into the body: -3 px (tucked under) at both frames, worst column included.

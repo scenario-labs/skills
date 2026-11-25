@@ -59,6 +59,33 @@ AEX.batch = (function () {
         }
         return { header: head, rows: out };
     }
+    // fromJson(list): a JSON list of objects in the readCsv shape {header, rows: [{col: value, _line: n}]}, so validate,
+    // eachRow and fill work on it. Values become strings like CSV cells; header = keys of the first object, then new keys.
+    // _line is the item number + 1 (line 1 is the header in a CSV). A non-object item gets _error.
+    function isList(x) { return x !== null && typeof x === "object" && typeof x.length === "number"; }
+    function fromJson(list) {
+        if (!isList(list)) { throw new Error("fromJson(): expected a list of objects"); }
+        var head = [], seen = {}, out = [], i, k, o;
+        for (i = 0; i < list.length; i++) {
+            if (list[i] === null || typeof list[i] !== "object" || isList(list[i])) { continue; }
+            for (k in list[i]) { if (list[i].hasOwnProperty(k) && !seen[k]) { seen[k] = true; head.push(k); } }
+        }
+        for (i = 0; i < list.length; i++) {
+            o = { _line: i + 2 };
+            if (list[i] === null || typeof list[i] !== "object" || isList(list[i])) { o._error = "item " + (i + 1) + " is not an object"; }
+            for (k = 0; k < head.length; k++) {
+                var v = o._error ? undefined : list[i][head[k]];
+                o[head[k]] = (v === undefined || v === null) ? "" : String(v);
+            }
+            out.push(o);
+        }
+        return { header: head, rows: out };
+    }
+    // readJson(path, key): a JSON file holding a list (or an object whose `key` holds the list) in the readCsv shape.
+    function readJson(path, key) {
+        var d = AEK.json.parse(readText(path));
+        return fromJson(key ? d[key] : d);
+    }
     // fill("{id}_{lang}_{ratio}", row): output names from a pattern; unsafe file-name characters become "_"
     function fill(pattern, row) {
         return pattern.replace(/\{(\w+)\}/g, function (m, k) {
@@ -67,8 +94,10 @@ AEX.batch = (function () {
         });
     }
     // deepDuplicate(comp, suffix, bin): comp.duplicate() SHARES nested precomps; this copies every nested comp once and relinks the layers.
+    // suffix defaults to "_copy"; bin is optional.
     function deepDuplicate(c, suffix, bin, seen) {
         seen = seen || {};
+        if (suffix === undefined) { suffix = "_copy"; }
         var d = c.duplicate(), i, l, src, copy, copied = [];
         d.name = c.name + suffix;
         if (bin) { d.parentFolder = bin; }
@@ -90,8 +119,11 @@ AEX.batch = (function () {
         p.setValue(d);
         return p.value.text;
     }
-    // importOnce(path, cache): one footage item per file for the whole batch; throws on a missing file
+    // importOnce(path, cache): one footage item per file for the whole batch; throws on a missing file.
+    // Without a cache object it uses one shared by every call of this module.
+    var importCache = {};
     function importOnce(path, cache, bin) {
+        cache = cache || importCache;
         if (cache[path]) { return cache[path]; }
         var f = AEK.core.abs(path), it;
         if (!f.exists) { throw new Error("Image not found: " + path); }
@@ -185,26 +217,36 @@ AEX.batch = (function () {
         return rep;
     }
     function inList(a, v) { for (var k = 0; k < a.length; k++) { if (a[k] === v) { return true; } } return false; }
-    // validate(csv, {required: [col], allowed: {col: [values]}, maxLength: {col: n}, unique: [col]}): run before any build.
+    // validate(csv, {required: [col], allowed: {col: [values]}, range: {col: [min, max]}, maxLength: {col: n}, unique: [col]}): run before any build.
     // A missing required column stops at once: a header that differs from the layer name silently does nothing.
+    // Every rule is optional: a missing one is an empty list or object (ExtendScript throws on for-in over undefined).
     function validate(csv, rules) {
         rules = rules || {};
         var out = [], req = rules.required || [], uni = rules.unique || [], seen = {}, i, j, r, col, v, key;
+        var allowed = rules.allowed || {}, range = rules.range || {}, maxLength = rules.maxLength || {};
         for (j = 0; j < req.length; j++) { if (!inList(csv.header, req[j])) { out.push({ id: null, line: 1, error: "Missing column: " + req[j] }); } }
         if (out.length) { return out; }
         for (i = 0; i < csv.rows.length; i++) {
             r = csv.rows[i];
             if (r._error) { out.push({ id: r.id, line: r._line, error: r._error }); continue; }
             for (j = 0; j < req.length; j++) { if (r[req[j]] === "") { out.push({ id: r.id, line: r._line, error: "Empty " + req[j] }); } }
-            for (col in rules.allowed) {
-                if (rules.allowed.hasOwnProperty(col) && !inList(rules.allowed[col], r[col])) {
-                    out.push({ id: r.id, line: r._line, error: col + " '" + r[col] + "' is not one of " + rules.allowed[col].join(", ") });
+            for (col in allowed) {
+                if (allowed.hasOwnProperty(col) && !inList(allowed[col], r[col])) {
+                    out.push({ id: r.id, line: r._line, error: col + " '" + r[col] + "' is not one of " + allowed[col].join(", ") });
                 }
             }
-            for (col in rules.maxLength) {
-                if (rules.maxLength.hasOwnProperty(col)) {
+            for (col in range) {
+                if (range.hasOwnProperty(col)) {
+                    v = parseFloat(r[col]);
+                    if (isNaN(v) || String(r[col]).replace(/^\s+|\s+$/g, "") === "" || v < range[col][0] || v > range[col][1]) {
+                        out.push({ id: r.id, line: r._line, error: col + " '" + r[col] + "' is not a number from " + range[col][0] + " to " + range[col][1] });
+                    }
+                }
+            }
+            for (col in maxLength) {
+                if (maxLength.hasOwnProperty(col)) {
                     v = String(r[col] === undefined ? "" : r[col]);
-                    if (v.length > rules.maxLength[col]) { out.push({ id: r.id, line: r._line, error: col + " has " + v.length + " characters, limit " + rules.maxLength[col] }); }
+                    if (v.length > maxLength[col]) { out.push({ id: r.id, line: r._line, error: col + " has " + v.length + " characters, limit " + maxLength[col] }); }
                 }
             }
             for (j = 0; j < uni.length; j++) {
@@ -254,7 +296,47 @@ AEX.batch = (function () {
         }
         return out;
     }
-    return { readText: readText, writeText: writeText, parseCsv: parseCsv, readCsv: readCsv, fill: fill, deepDuplicate: deepDuplicate,
+    // freeSpace(folder): {freeMB, folder} on the volume that holds the folder (its nearest existing parent), read with df -k.
+    // macOS and Linux only (system.callSystem needs Allow Scripts to Write Files). Returns freeMB null when df gives nothing.
+    function freeSpace(path) {
+        var f = new Folder(path);
+        while (f && !f.exists) { f = f.parent; }
+        var out = system.callSystem('/bin/df -k "' + (f ? f.fsName : "/") + '"'), lines = out.split(/\r?\n/), cols;
+        cols = lines.length > 1 ? lines[1].replace(/^\s+|\s+$/g, "").split(/\s+/) : [];
+        return { folder: f ? f.fsName : "/", freeMB: cols.length > 3 ? Math.round(parseInt(cols[3], 10) / 1024) : null };
+    }
+    // diskCheck(folder, bytesNeeded, margin): refuses a render that would fill the volume (margin default 2, twice the estimate)
+    // or that cannot write its file: the folder is created and a probe file written and removed (a folder aerender cannot
+    // write gives exit 0 and no file). `aerenders` counts aerender processes already running: two that write into one
+    // folder at the same time lose a render with exit 0, so give each its own output folder (`ok` stays true).
+    function diskCheck(path, bytes, margin) {
+        var d = new Folder(path), probe, writable = false;
+        if (!d.exists) { d.create(); }
+        probe = new File(d.fsName + "/.aex_write_probe");
+        if (probe.open("w")) { writable = probe.write("x") && probe.close(); probe.remove(); }
+        var fs = freeSpace(path), needMB = Math.ceil(bytes * (margin || 2) / 1048576);
+        var ps = system.callSystem("/bin/ps -A -o comm"), n = 0, lines = ps.split(/\r?\n/), i;
+        for (i = 0; i < lines.length; i++) { if (/(^|\/)aerender$/.test(lines[i].replace(/\s+$/, ""))) { n++; } }
+        var why = "";   // if/else: a chained ?: returned its second branch here on 27.0
+        if (!writable) { why = "cannot write in " + d.fsName; } else if (fs.freeMB === null || fs.freeMB < needMB) { why = fs.freeMB + " MB free, " + needMB + " MB needed"; }
+        return { ok: why === "", why: why, freeMB: fs.freeMB, needMB: needMB, folder: fs.folder, writable: writable, aerenders: n };
+    }
+    // renderManifest(file): writes "path<TAB>frames" for every output of every QUEUED item, for render_guarded.sh, which then
+    // also fails an item that never started. Returns the rows.
+    function renderManifest(path) {
+        var rq = app.project.renderQueue, rows = [], txt = "", i, j, it;
+        for (i = 1; i <= rq.numItems; i++) {
+            it = rq.item(i);
+            if (it.status !== RQItemStatus.QUEUED) { continue; }
+            var fr = Math.round(it.timeSpanDuration / it.comp.frameDuration);
+            for (j = 1; j <= it.numOutputModules; j++) {
+                if (it.outputModule(j).file) { rows.push({ path: it.outputModule(j).file.fsName, frames: fr }); txt += it.outputModule(j).file.fsName + "\t" + fr + "\n"; }
+            }
+        }
+        writeText(path, txt);
+        return rows;
+    }
+    return { freeSpace: freeSpace, diskCheck: diskCheck, renderManifest: renderManifest, readText: readText, writeText: writeText, parseCsv: parseCsv, readCsv: readCsv, readJson: readJson, fromJson: fromJson, fill: fill, deepDuplicate: deepDuplicate,
         setText: setText, importOnce: importOnce, swapImage: swapImage, resize: resize, statusName: statusName, hasTemplate: hasTemplate,
         queue: queue, renderOnly: renderOnly, eachRow: eachRow, validate: validate, writeCsv: writeCsv, resumeQueue: resumeQueue };
 })();

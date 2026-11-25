@@ -178,14 +178,14 @@ AEX.shapes = (function () {
         }
         return f;
     }
-    // strokes(comp, {width, cap, join, scaleAware}): every Stroke and Gradient Stroke in the comp's shape layers against a house style.
-    // Reports the on-screen width (stroke x layer and parent scale, measured with toComp at time 0) next to the stored width.
+    // strokes(comp, {width, cap, join, scaleAware, time}): every Stroke and Gradient Stroke in the comp's shape layers against a house style.
+    // Reports the width after any expression and the on-screen width (x layer and parent Scale X at `time`, default 0). Group Scale is not included.
     function strokes(c, want) {
         var out = [], i, l, caps = { 1: "butt", 2: "round", 3: "projecting" }, joins = { 1: "miter", 2: "round", 3: "bevel" };
         want = want || {};
         function screenScale(layer) {
             var a = [0, 0], b = [1, 0], k, s = 1, cur = layer;
-            while (cur) { k = cur.property("ADBE Transform Group").property("ADBE Scale").value; s *= Math.abs(k[0]) / 100; cur = cur.parent; }
+            while (cur) { k = cur.property("ADBE Transform Group").property("ADBE Scale").valueAtTime(want.time || 0, false); s *= Math.abs(k[0]) / 100; cur = cur.parent; }
             return s;
         }
         for (i = 1; i <= c.numLayers; i++) {
@@ -193,17 +193,64 @@ AEX.shapes = (function () {
             if (l.matchName !== "ADBE Vector Layer") { continue; }
             AEK.core.walk(l.property("ADBE Root Vectors Group"), function (p) {
                 if (p.matchName !== "ADBE Vector Graphic - Stroke" && p.matchName !== "ADBE Vector Graphic - G-Stroke") { return; }
-                var w = p.property("ADBE Vector Stroke Width").value, cap = caps[p.property("ADBE Vector Stroke Line Cap").value],
+                // width after the expression (the constant on-screen width expression stores a small value); time = want.time or 0
+                var wp = p.property("ADBE Vector Stroke Width"), driven = !!(wp.expression && wp.expressionEnabled);
+                var w = wp.valueAtTime(want.time || 0, false), cap = caps[p.property("ADBE Vector Stroke Line Cap").value],
                     join = joins[p.property("ADBE Vector Stroke Line Join").value], onScreen = w * screenScale(l), issues = [];
-                if (want.width !== undefined && Math.abs((want.scaleAware ? onScreen : w) - want.width) > 0.01) { issues.push("width " + (want.scaleAware ? onScreen : w)); }
+                if (want.width !== undefined && Math.abs((want.scaleAware ? onScreen : w) - want.width) > 0.01) { issues.push("width " + Math.round((want.scaleAware ? onScreen : w) * 100) / 100); }
                 if (want.cap && cap !== want.cap) { issues.push("cap " + cap); }
                 if (want.join && join !== want.join) { issues.push("join " + join); }
-                if (p.property("ADBE Vector Stroke Width").expression && p.property("ADBE Vector Stroke Width").expressionEnabled) { issues.push("width driven by expression"); }
-                out.push({ layer: l.name, stroke: p.name, width: w, onScreen: Math.round(onScreen * 100) / 100, cap: cap, join: join, issues: issues });
+                if (driven && wp.expressionError) { issues.push("width expression error: " + wp.expressionError); }
+                out.push({ layer: l.name, stroke: p.name, width: Math.round(w * 1000) / 1000, onScreen: Math.round(onScreen * 100) / 100, expression: driven, cap: cap, join: join, issues: issues });
             });
         }
         return out;
     }
-    return { contents: contents, add: add, group: group, set: set, makeShape: makeShape, path: path, stroke: stroke, fill: fill,
+    // ripple(comp, name, {center, r0, spacing, copies, width, color, ringsPerSecond, fade, once, matte}): evenly spaced rings that
+    // travel outward. Offset Paths (Amount = spacing, Copies) gives equal spacing (Repeater Scale gives geometric spacing).
+    // Default: Copy Offset driven by (time * rate) % 1, a seamless endless loop. once: {start, frames, travel} keys Copy Offset
+    // 0 -> travel (default: copies, so every ring leaves past the rim) from frame `start` over `frames`, eased out, no expression.
+    // Repeater opacity follows the copy index, never the radius, so the fade by radius is an alpha matte. matte: "solid" (default:
+    // a solid with an outer feathered mask and an inner subtracted one), "shape" (a shape layer ring blurred by `fade` px, for
+    // shape-layers-only work) or "none". A mask feather spreads the edge over `feather` px on each side of the path (measured).
+    function ripple(c, name, o) {
+        o = o || {};
+        var ctr = o.center || [c.width / 2, c.height / 2], r0 = o.r0 || 60, sp = o.spacing || 40, n = o.copies || 8, fade = o.fade || sp, mt = o.matte || "solid";
+        var l = c.layers.addShape(); l.name = name;
+        l.property("ADBE Transform Group").property("ADBE Position").setValue(ctr);
+        var g = group(l, [], "rings");
+        set(add(l, g, "ADBE Vector Shape - Ellipse", "base"), { "ADBE Vector Ellipse Size": [2 * r0, 2 * r0] });
+        set(add(l, g, "ADBE Vector Filter - Offset", "spread"), { "ADBE Vector Offset Amount": sp, "ADBE Vector Offset Copies": n });
+        stroke(l, g, { color: o.color || [1, 1, 1, 1], width: o.width || 4 });
+        var co = function () { return contents(l, g).property("spread").property("ADBE Vector Offset Copy Offset"); }, loopFrames = null;
+        if (o.once) {
+            var f0 = o.once.start || 0, nf = o.once.frames || 30, tv = o.once.travel === undefined ? n : o.once.travel;
+            AEK.motion.key(co(), f0 * c.frameDuration, 0); AEK.motion.key(co(), (f0 + nf) * c.frameDuration, tv);
+            AEK.motion.bezier(co(), 1, 2, [0.2, 0, 0, 1]);
+        } else {
+            AEK.expr.set(co(), "(time * " + (o.ringsPerSecond || 1) + ") % 1");
+            loopFrames = Math.round(c.frameRate / (o.ringsPerSecond || 1));
+        }
+        // outermost ring at Copy Offset 1 sits at r0 + n * sp; innermost at Copy Offset 0 at r0
+        var rMax = r0 + n * sp, m = null;
+        if (mt === "solid") {
+            m = AEK.build.solid(c, name + "_fade", [1, 1, 1]);
+            // outer ring of the band, then the inner disc subtracted; both feathered by `fade` (kit mask builder)
+            AEK.build.mask(m, { ellipse: [ctr[0] - (rMax - fade), ctr[1] - (rMax - fade), 2 * (rMax - fade), 2 * (rMax - fade)], feather: fade });
+            AEK.build.mask(m, { ellipse: [ctr[0] - (r0 + fade), ctr[1] - (r0 + fade), 2 * (r0 + fade), 2 * (r0 + fade)], feather: fade, mode: "subtract" });
+        } else if (mt === "shape") {
+            m = c.layers.addShape(); m.name = name + "_fade";
+            m.property("ADBE Transform Group").property("ADBE Position").setValue(ctr);
+            var mg = group(m, [], "band");
+            set(add(m, mg, "ADBE Vector Shape - Ellipse", "outer"), { "ADBE Vector Ellipse Size": [2 * (rMax - fade), 2 * (rMax - fade)] });
+            set(add(m, mg, "ADBE Vector Shape - Ellipse", "inner"), { "ADBE Vector Ellipse Size": [2 * (r0 + fade), 2 * (r0 + fade)] });
+            set(add(m, mg, "ADBE Vector Filter - Merge", "cut"), { "ADBE Vector Merge Type": 3 });
+            fill(m, mg, [1, 1, 1, 1]);
+            AEK.build.effect(m, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": fade, "ADBE Gaussian Blur 2-0003": 0 }, "fade");
+        }
+        if (m) { l.setTrackMatte(m, TrackMatteType.ALPHA); }
+        return { layer: l.name, matte: m ? m.name : null, rMin: r0, rMax: rMax, spacing: sp, loopFrames: loopFrames };
+    }
+    return { ripple: ripple, contents: contents, add: add, group: group, set: set, makeShape: makeShape, path: path, stroke: stroke, fill: fill,
         dump: dump, order: order, resample: resample, firstVertex: firstVertex, reverse: reverse, lottie: lottie, strokes: strokes };
 })();

@@ -6,6 +6,13 @@ runs inside one undo step (`--undo "Agent: <what>"`). Paths come from `ARGS`. In
 drop `AEK.core.fresh()` and build inside their comp. Each procedure gives the goal, the steps, a
 numbered gate and the trap that was hit while measuring it.
 
+**What builders return.** Composite builders (`burst.build`, `burst.planes`, `atmo.build`,
+`motes.build`, `smoke.build`, `smoke.flame`, `plume.build`, `element.land`, `integrate.build`,
+`distort.apply`) return names, so a job can return them as JSON; get a layer with
+`AEK.core.layer(comp, r.layer)` and a comp with `AEK.core.comp(name)`. `light.rig` and the `shock`
+helpers return objects. `pulse.build` returns `scene`, `cam` and `finalComp` as comps and `layers`
+and `rig` as names.
+
 ## 0. Match names (read live from `app.effects` and the property trees on 27.0)
 
 Group headers inside CC effects (Producer, Physics, Particle) are flat entries in the effect:
@@ -156,6 +163,12 @@ Traps hit:
 - `AEX.glow.copies` clears the effects on its copies, so content drawn by an effect (CC Particle
   World sparks) does not bloom: 1,096 lit px against 13,803 with `keepEffects: true`.
   `AEX.glow.stack` says so in `warnings`; pass `keepEffects` or precompose.
+
+Headroom: a hit whose core and bloom sum above 1 reads as a flat pale disc of the top tone on its
+attack frames. `AEX.light.rig(c, name, {headroom: 2})` scales the light and bloom by 1 / 2 before
+the sum clamps, then a Levels gamma of 2 brings the mid tones back (Input Black 0.02 cuts the bloom
+tails the gamma lifts). Measured on a hit: flat disc 174 to 196 px on the four attack frames
+without, 28 to 93 px with headroom 2, background unchanged.
 
 ## 3. Particle units and counts
 
@@ -336,24 +349,29 @@ the peak frame.
 
 ## 5. Embers and dust, with the loop
 
-**Goal:** sparse floating particles in three depths that loop exactly, with an empty zone for a
-title.
+**Goal:** sparse floating particles at three depths that loop exactly, with an empty zone for a
+title; dust seen only where light falls on it.
 
-Steps (`AEX.atmo.build(host, o)`):
+Steps (`AEX.atmo.build(host, o)`; dust in a beam alone: `AEX.motes.build(host, o)`):
 
-1. Planes far, mid, near for embers (3.4, 6.5, 30 px) and dust (2.4, 4.5, 22 px); counts from the
-   alive-particle rule (section 3); near planes blurred.
-2. Custom color map from black to black (`-0028` 1, stops `-0074` to `-0078`): each particle fades
+1. Embers: planes far, mid, near (3.4, 6.5, 30 px); counts from the alive-particle rule (section 3);
+   near plane blurred.
+2. Dust: few motes, not a field. Far 220 on screen at 5 px, mid 70 at 16 px, near 24 soft discs at
+   110 px and 0.22 brightness. Slow rise (5, 9, 16 px/s), light drift, no Turbulent Displace and no
+   Twirl.
+3. Keep each plane's Birth Rate at 0.05 or more (count / (110 x life)): 10 near discs over 3.5 s
+   gave a rate of 0.026 and none appeared.
+4. Custom color map from black to black (`-0028` 1, stops `-0074` to `-0078`): each particle fades
    in and out by itself. Transfer Mode 3 Add is safe while density stays under 50 per 100x100 px.
-3. Turbulent Displace for drift. It dims small dots: 2.4 px lose 40 %, 4 px lose 9 %.
-4. Flicker `a + b * noise()` averages `a`: keep `a` near 85.
-5. Loop: the simulation comp is P + L long. Copy A starts at -P; copy B starts at L - P and shows
+5. Flicker `a + b * noise()` averages `a`: keep `a` near 85.
+6. Loop: the simulation comp is P + L long. Copy A starts at -P; copy B starts at L - P and shows
    over the last F seconds; A fades out and B in. Frame L equals frame 0 exactly.
-6. Title zone: an alpha matte (white solid with a Subtract ellipse at 1 - `titleDensity`, 70 % by
-   default) gives 2.5 to 8x fewer visible particles there; it dims more than it removes. For a
+7. Title zone: an alpha matte (white solid with a Subtract ellipse at 1 - `titleDensity`, 70 % by
+   default) gives 2.5 to 8x fewer visible particles there. It dims more than it removes: for a
    cleaner zone lower `titleDensity`.
-7. Dust only inside a light beam: luma-matte the dust to the beam shape; put the visible beam in the
-   host so the title hole does not cut it.
+8. Dust in a beam: luma-matte the dust to the beam (`AEX.motes` keeps `outside`, 0.2, outside it);
+   the visible beam is soft and faint (feather about 290 px, 10 to 18 % in Add), in the host so the
+   title hole does not cut it.
 
 ```javascript
 // channel: bridge | osascript | exe | handoff
@@ -362,111 +380,123 @@ Steps (`AEX.atmo.build(host, o)`):
 var c = AEK.core.comp(ARGS.comp);
 var r = AEX.atmo.build(c, { name: "ATMO", L: 4, P: 4, F: 1, embers: 1, dust: 1, beam: [1300, 260, 900, 900], beamOpacity: 16,
     warm: 0.8, title: [960, 500, 520, 160], titleDensity: 0.3, glow: 70, seed: 2 });
-return { atmo: r, frames: AEX.vfx.cost(c, [0, 2, 4], ARGS.out, "atmo") };
+var m = AEX.motes.build(c, { name: "MOTES", L: 4, beam: [620, 360, 1180, 760], seed: 3 });   // dust in a beam, no embers
+return { atmo: r, motes: m, frames: AEX.vfx.cost(c, [0, 2, 4], ARGS.out, "atmo") };
 ```
 
 **GATE 5:** frame L against frame 0 differs by 0; visible particles (peak above 0.06) inside the
-title ellipse at least 2.5x fewer than outside per area at `titleDensity` 0.3 (2.5 to 8x by layout);
-lower `titleDensity` for more. Visual: a few near embers clearly larger and brighter than the far
-field.
+title ellipse at least 2.5x fewer than outside per area at `titleDensity` 0.3. Visual: motes read as
+points of light inside the beam, a handful of large soft discs, nothing spins.
 
-Trap: the faint version read as nothing (dust lost in the beam). Do instead: raise the near plane,
-keep the far field dim, and judge the frame at viewing size.
+Traps: the faint version read as nothing (dust lost in the beam); 700 far motes read as sand; a
+Twirl on the beam drew concentric grooves. Judge the frame at viewing size.
 
 ## 6. Smoke
 
-**Goal:** procedural smoke lit from one side that loops.
+**Goal:** a plume of smoke rising from a source, thin where it is born, widening and thinning as it
+rises, lit from one side, looping.
 
-Steps (`AEX.smoke.build(host, o)`):
+Route: built-in smoke suits a stylized look, a loop or a small accent. Realistic smoke that fills
+the frame is an element on black (section 13, Generated element).
 
-1. Density precomp: two Fractal Noise scales (900 and 260 px), Turbulent Displace, CC Vector Blur 6
-   to 12, Fast Box Blur 5 to 7, radial matte.
-2. Every noise uses Cycle Evolution with whole revolutions over the same L (`AEX.vfx.loopNoise`):
-   the loop is exact.
-3. Body: density multiplied first by a ramp from 1 on the light side to `shade` (0.3) on the far
-   side (`<name>_SHADED` precomp), tinted warm gray, Screen, about 75 %.
-4. Light pass: a ramp from the light side through the density as luma matte, Add, about 55 %.
-5. Lit edge: density minus itself shifted 20 to 30 px toward the light (Subtract), Box Blur 5,
-   Exposure +2.4 stops, tinted, Add.
+Steps (`AEX.smoke.build(host, o)`, which calls `AEX.plume.build`):
+
+1. Texture: Fractal Noise type 7 with Invert (stringy wisps), 110 x 190 px, complexity 8, Sub
+   Influence 80, Sub Rotation 100, rising 90 px/s; a soft density noise (700 x 800 px) in Multiply
+   at 35 %. Each in a comp P + L long, looped by crossfade.
+2. Mask: a narrow column at the source (30 px wide, tight feather) under a wide leaning crown (760
+   px at the top, lean -240 px, feather 0.3 x width), a ramp fading the crown in above the column
+   and out toward the top.
+3. Sway: a Displacement Map from a noise comp around mid gray, pinned with mid gray over the source,
+   horizontal 0.12 x height; Turbulent Displace 28 px, size 146, for curls. The motion grows with
+   height.
+4. Shade toward the far side (Multiply ramp to 0.45), Levels (Input Black 0.06, Input White 0.55),
+   Tint toward warm gray and cream, Gaussian 1.5 px, Screen at about 70 %.
+5. The gray plume comp is `<name>_DENS`. `center` and `size` place the plume: its source sits at
+   center + size[1].
+6. Scale: the texture sizes above are for an 860 px plume. `scale` defaults to 2.2 x size[1] / 860
+   (0.2 to 1), so a small wisp gets finer wisps instead of three large blobs; pass `scale` to
+   override.
+
+Returns names, like every composite builder: `{comps, layers, layer, grey}`. A job can return them
+as JSON; the layer itself is `AEK.core.layer(host, r.layer)`.
 
 ```javascript
 // channel: bridge | osascript | exe | handoff
 // checked: live 27.0
 var c = AEK.core.comp(ARGS.comp);
-var r = AEX.smoke.build(c, { name: "SMOKE", L: 4, center: [960, 600], size: [520, 380], light: [1, -0.3], edge: 30, edgeGain: 2.4, wisp: 8, seed: 4 });
+var r = AEX.smoke.build(c, { name: "SMOKE", L: 4, center: [960, 600], size: [520, 380], light: [1, -0.3], seed: 4 });
+AEK.core.layer(c, r.layer).property("ADBE Transform Group").property("ADBE Opacity").setValue(70);
 return { smoke: r, frames: AEX.vfx.cost(c, [0, 2, 4], ARGS.out, "smoke") };
 ```
 
-**GATE 6:** frame L against frame 0 differs by 0; mean luma on the lit side at least 1.15x the far
-side (1.17 to 1.39 with `shade` 0.3 across seeds and frames; 1.01 to 1.29 without the shading). For
-a stronger side light lower `shade` (0.2 gave 1.20 to 1.34 on four seeds) and pick the seed: the
-ratio moves per seed. Traps: without the shaded body one seed gave 0.95 (no visible side light). CC
-Vector Blur above about 12 combs smoke into hair.
+A wisp as an accent (a thread of smoke over a hot object): it has to read at viewing size. Minimum:
+about 8 % of the frame tall, a rise of 10 levels or more (p95 of with minus without, inside its box)
+over the plate behind it, for 1 s or more. On a 1080p shot, `size` [80, 110] at 60 % faded in over
+0.6 s gave 12 to 16 levels and 19 to 21 % of the frame. [70, 90] at 40 % gave 1 to 3 levels and did
+not read. Its source (center y + size[1]) sits on the top edge of the surface it rises from: placed
+lower, its foot drew a faint white streak over the subject. Check: capture the same frames with the
+wisp on and off, then `vfx_measure.py wisp --with ... --without ... --box x0 y0 x1 y1` (exit 1 when
+it does not read). **GATE 6:** frame L against frame 0 differs by 0; 0 px at 255; the plume narrow
+at its source on every frame. Visual: wisps, not a blob; the top dissolves instead of ending on a
+line.
+
+Traps: a single cone mask read as a bush or an egg (the base as wide as the crown). A Multiply shade
+solid above the displaced layers showed through the displaced edges as a white frame: keep it under
+the displacement. Fractal Type 2 drew horizontal lines; noise stretched taller than about 2.5x combs
+the top into hair.
 
 ## 7. Flame
 
-**Goal:** a small flame standing on a point: a dense foot, three or four tongues licking upward and
-tearing off, cream only in the foot, coral body, ember-red tips, rising embers, heat haze above, a
-seamless loop.
+**Goal:** a flame standing on a fixed source: tongues licking upward and tearing off, mostly deep
+red to coral, cream only in thin hot licks, rising embers, heat haze above, a seamless loop.
 
-Steps (`AEX.smoke.flame(host, o)`, gray light in an `AEX.light` rig with bloom radii 6 to 96, total
-0.45, and the FIRE map: black, `#5A160C`, `#E0452C`, `#FF8A5C`, `#F1E9D8`):
+Route: built-in flame suits a stylized look, a loop, a torch or a candle-size accent. Realistic fire
+that fills the frame is an element on black (section 13, Generated element).
 
-1. **Noise** (`AEX.smoke.flameNoise`): two Fractal Noise layers, Basic, Invert on, contrast 140,
-   brightness -15, Uniform Scaling off (70 x 150 and 28 x 70 px), offset scrolled upward at 240 and
-   408 px/s (parallax), evolution `time * 140` and `time * 260`, the fine one Add at 55 %.
-2. **Density:** the noise, Screen a vertical ramp at 45 % (noise x (1 - ramp) + ramp: a solid foot,
-   a noise-eaten top), Multiply a shape comp: an opaque black ground, a body ellipse low and wide, a
-   narrower softer plume above it in Screen at 75 %, a taper ramp to 1.2 x the height. A Multiply
-   layer over transparency composites as itself: the shape comp needs the opaque ground.
-3. **Flame comp:** Turbulent Displace "Licks" (amount 22, size 55, complexity 2, 3 revolutions per
-   loop) and "Sway" (16, 260, 1 revolution); Levels as a soft threshold (Input Black 0.28, Input
-   White 0.72); CC Radial Fast Blur 22 centered 2,200 px below the flame (a one-direction smear
-   upward); Fast Box Blur 1.
-4. **Heat ramp** in Multiply, 1.0 at the foot to 0.42 at the top, BEFORE the luminance map: the
-   hottest tone stays at the foot (78 % of the cream pixels then sit in the lower 40 % of the
-   flame).
-5. **Light:** the flame at 0.8; a radial pool of light 0.06 around the foot, flicker 92 + 8 x noise.
-6. **Embers** (`AEX.smoke.embers`): three planes (far 14 on screen at 4.5 px, mid 10 at 8 px
-   shrinking to 4.5, near 3 at 16 px with Camera Lens Blur 6), emitted from the body, rising by
-   negative gravity 230 to 380 px/s² against Resistance 1.6 to 2.2 (terminal speed about 150 to 340
-   px/s), Turbulent Displace drift 34 / 170, flicker 80 + 20 x noise, light 1.1.
-7. **Loop:** upward-scrolling noise does not loop by Cycle Evolution. Every moving source (noise,
-   embers, heat map) lives in a comp P + L long; copy A starts at -P, copy B at L - P and fades in
-   over the last 0.8 s (Add for light, B over A for opaque maps; linear opacity keys, it is a mix).
-8. **Heat haze** (`AEX.smoke.heat`): `AEX.distort.hazeMap` (noise scale 90, rising 160 px/s) in a
-   feathered band from 260 px above the flame top down to its lower quarter, read by a Displacement
-   Map adjustment layer at the TOP of the host, 0.08 x 90 = 7.2 px: it bends the tips, the embers
-   and the plate haze together.
+Steps (`AEX.smoke.flame(host, o)`, which calls `AEX.fire.build`):
+
+1. **Source:** a teardrop envelope (narrow round foot, widest at 0.22 x height, a point at the top)
+   at gray 0.8, feathered 0.12 x width, a ramp fading it upward. The source does not move.
+2. **Push map:** Fractal Noise (80 x 190 px) rising 260 px/s, limited to 0 to 0.5 by Levels Output
+   White 0.5: the Displacement Map then pushes one way only. Mid gray over the foot pins the base.
+3. **Push:** Displacement Map on the envelope, vertical 0.42 x height, horizontal 0.35 x that; a
+   slow Turbulent Displace sway (0.05 x height, 2 revolutions per loop).
+4. **Texture, three scales rising at their own speeds:** stringy (type 7, Invert, 70 x 200 px, 170
+   px/s), shadows (240 x 420 px, Multiply 40 %, 80 px/s), specks (12 x 28 px, Add 35 %, 330 px/s).
+   Overlay on the envelope, pushed by the same map.
+5. **Hot core:** the texture again through a soft ellipse in the lower body, Add 45 %: the hottest
+   part stays filaments.
+6. **Gray until the end:** Levels (Input Black 0.22, White 0.95, gamma 0.9), then one CC Toner map,
+   then Unsharp Mask 80 at 1.5 px. Tones: black, `#3A0C06`, `#B0361F`, [0.92, 0.42, 0.25],
+   `#F1E9D8`.
+7. **Glow:** a mapped copy, Gaussian 40 px, gain 0.25, Screen.
+8. **Embers** (`AEX.smoke.embers`, 1.5x count, mapped, gain 2.0) and **heat haze**
+   (`AEX.smoke.heat`, 0.08): unchanged builders.
+9. **Loop:** every rising noise lives in a comp P + L long; copy A starts at -P, copy B at L - P and
+   fades in over the last 0.8 s.
 
 ```javascript
 // channel: bridge | osascript | exe | handoff
 // checked: live 27.0
-// A 380 px flame looping over 4 s, embers and heat haze, rig in Screen over the plate
+// A 600 px flame looping over 4 s, embers and heat haze, in Screen over the plate
 var c = AEK.core.comp(ARGS.comp);
-var r = AEX.smoke.flame(c, { name: "FLAME", base: [960, 860], height: 380, width: 150, scale: 1, seed: 6, L: 4, F: 0.8 });
-c.layer(r.layer).blendingMode = BlendingMode.SCREEN;
+var r = AEX.smoke.flame(c, { name: "FLAME", base: [960, 940], height: 680, seed: 4, L: 4, F: 0.8 });
 return { flame: r, frames: AEX.vfx.cost(c, [0, 1, 2, 3, 4], ARGS.out, "flame") };
 ```
 
-**GATE 7:** frame L against frame 0: 0 levels (the pool flicker loops over L, a `noise` on a circle
-of period L); pixels at 255 in all channels under 0.5 %; separate tongues above the foot on 3
-frames; motion per frame even over a 12-frame strip (0.22 to 0.27 levels, no stall, no jump).
-Visual: **cream only as a thin core at the foot**: at most about 15 % of the flame's area at the top
-tone, with coral around it. At 35.6 % of the flame at cream or white, the lower half reads as a soft
-white egg with coral edges. Do instead: a heat ramp that peaks at 0.9 instead of 1.0, a tighter
-second Levels masked to the lower third, and the rig in Screen.
+**GATE 7:** frame L against frame 0: 0 levels; pixels at 255 under 1 % (0 % measured on 8 frames);
+hot share (luma above 0.85 inside the flame) 5 to 20 %; motion even over a 12-frame strip. Visual:
+separate tongues above the foot, mostly red and coral, cream only in thin licks.
 
 Traps hit:
 
-- Base fill, threshold window and gain are coupled: base fill 70 % with threshold 0.26 to 0.80 and
-  gain 1.0 gave a flat cream egg; 25 % with 0.32 to 0.64 gave holes and rings in the body; 45 % with
-  0.28 to 0.72 and gain 0.8 holds.
-- CC Vector Blur with Direction Fading and a flat black map (the usual one-direction blur) changed
-  nothing visible: CC Radial Fast Blur centered far below the flame does the job.
-- Fractal Type 5 at contrast 140 ate the flame down to a small blob; Basic with Invert kept the
-  tongues.
-- Render: 0.2 to 0.6 s per frame at 1080p, embers and heat included.
+- Fractal Type 5 or 6 with Invert crushed the texture to near black, and Overlay then darkened the
+  flame to a white egg at the base: type 7 with Invert gives the stringy look.
+- A wide filled foot read as a flat cream bowl: a narrow teardrop foot at gray 0.8 fixed it.
+- Levels too narrow gave a monochrome coral flame: widen Levels and add the hot core.
+- CC Toner Blend w. Original reads 0 to 1 from a script (0.45, not 45).
+- Render: about 0.3 to 0.7 s per frame at 1080p, embers and heat included.
 
 ## 8. Shockwave ring
 
@@ -539,10 +569,14 @@ Steps:
 2. `AEX.rays.fromLight(comp, lightComp, {under: foreground})` or
    `AEX.rays.rig(comp, lightComp, {under: foreground})`: CC Light Rays (or CC Radial Fast Blur),
    Screen, placed under the foreground layer.
-3. CC Light Rays Radius is the emitting circle: 120 gave beams through every gap, 30 almost none.
-   Intensity is about linear (+3.8, +7.6, +15.2 levels at 50, 100, 200).
-4. In a rig with the DAY map (top tone 0.96) the sun disc maps to the top tone instead of clipping.
-5. Only a flattened plate: `AEX.rays.fromPlate` keeps what is above a threshold (Levels Input Black
+3. CC Light Rays Radius is the emitting circle: 120 gave beams through every gap, 30 almost none. A
+   source disc larger than the radius covers its own rays: pass `disc` (the disc's radius in px) and
+   the radius becomes 1.2 x disc. Intensity is about linear (+3.8, +7.6, +15.2 levels at 50, 100,
+   200); lower it toward 60 with a large radius.
+4. Soft beams: `AEX.rays.rig` blurs the source by 0.15 x disc before the rays and the rays by 6 px
+   after (`preSoften`, `soften`). A sharp occluder edge otherwise cut hard-edged wedges.
+5. In a rig with the DAY map (top tone 0.96) the sun disc maps to the top tone instead of clipping.
+6. Only a flattened plate: `AEX.rays.fromPlate` keeps what is above a threshold (Levels Input Black
    `-0003` = thr x Input White `-0004`). The rays then cross the foreground edge.
 
 ```javascript
@@ -576,8 +610,10 @@ Steps:
    flicker held on twos. Core, glow and spill follow it together (correlation 0.94).
 3. Conductivity State: +37 at each strike (a new bolt), +0.15 every 2 frames (even 0.15 replaces 62
    to 81 % of the core).
-4. Spill: `AEX.bolt.spill(comp, rig, surfaceLayer, o)`: the summed light, Gaussian 260, Tint to the
-   mid tone, gain 8, luma-matted by the ground.
+4. Spill: `AEX.bolt.spill(comp, rig, surfaceLayer, o)`: a soft ellipse pool at the strike point (mid
+   tone, reach 2.4 x `spillBlur`, luma-matted by the ground) and a sky flash (a vertical ramp from
+   the top), both Add, both on the strike envelope. A blurred copy of the bolt's light clipped into
+   a box with hard vertical sides.
 
 ```javascript
 // channel: bridge | osascript | exe | handoff
@@ -594,8 +630,7 @@ main bolt clearly brighter than its forks.
 
 Traps: the naive build (own glow, tint, three Glows) clipped 7,344 to 30,483 px in all channels.
 Forking takes 0 to 1 by script (30 threw out of range); Core and Glow Opacity take 0 to 100. A blue
-tone at 1.0 clipped the blue channel on up to 45,697 px: no channel at 1.0 in the map. There is no
-sky flash in this build: for a storm, add the envelope to a large soft layer over the sky.
+tone at 1.0 clipped the blue channel on up to 45,697 px: no channel at 1.0 in the map.
 
 ## 11. Distortion and heat haze
 
@@ -726,65 +761,83 @@ plate):
    light, haze and shake all read these sliders.
 3. **Two light rigs split by depth.** BACK (bloom r0 16, 5 copies, total 0.7) holds what lives
    behind and around the subject: rings, floor ring, back streaks, lit haze, rays, lit dust. FRONT
-   (bloom r0 10, 6 copies, total 0.9, k 0.72) holds what sits on or in front of it: core cones,
+   (bloom r0 10, 6 copies, total 1.2, k 0.72) holds what sits on or in front of it: core cones,
    flash, front and near streaks, embers. Each rig is its own `AEX.light.rig`, one CC Toner map, its
    layer in Screen.
 4. **Hold out the BACK rig after its bloom** with the choked matte: blur the matte 4 px, Levels
    black 0.82 / white 0.98 (the edge moves about 2 px inward), feather 1.5 px, matte layer at 94 %.
    Never blur the holdout outward.
 5. **Rim and light wrap from the BACK light.** Rim: the BACK gray sum above `rimThr` 0.35 (so only
-   rings and streaks passing behind light it), mapped, blur 6, gain 2.4, through the matte minus its
+   rings and streaks passing behind light it), mapped, blur 6, gain 3.2, through the matte minus its
    eroded copy (a band about 3 px inside the edge, feathered 1 px). Wrap: the same sum, blur 30,
    gain 3.5, through matte x inverted 26 px blurred matte, weighted 1.0 at the origin to 0.3 at 760
    px. When the origin sits inside the subject every edge faces it: the choke and the rim fade to
    nothing at `edgeReach` (640 px; the unchoked matte takes over in Lighten through a radial ramp),
    so the far edges keep the full holdout. Far-side outline at the peak: 41 levels without this, 20
    with it; `edgeReach: 0` turns it off.
-6. **Core and flash, small.** Core cones 18 / 90 / 320 px at 0.7 / 0.1 / 0.04 and flash 0.12 over a
+6. **Core and flash, small.** Core cones 18 / 90 / 320 px at 0.7 / 0.1 / 0.04 and flash 0.16 over a
    380 px cone. The light at the center on the attack is cones + flash + FRONT bloom (about 0.9x the
-   wide light again) + plate, all in Screen: budget them together. Flat disc (luma at 0.98 x the top
-   tone) on frames 0 to 3 after the hit: 22, 21, 13, 6 px (the old 28 / 100 / 320 at 1.0 / 0.25 /
-   0.06 with flash 0.42 gave 159, 63, 48, 40). The flash moves the disc most: 0.2 gave 30 px, 0.28
-   gave 38. The breathing glow reads `breath` (2.5) x `pre` on the soft cones only; the tight cone
-   reads `core`. 6b. **Embers around the subject.** Shape-layer embers born on an ellipse around the
-   subject (`subjectBox` [x0, y0, x1, y1] or `emberBand` half axes), diameters 3 to 16 px
-   stratified, life 3.2 to 5.4 s, rising with drift and flicker; 40 % (`emberBack`) in the BACK rig
-   at 0.8x size. Measured: 2.3 to 14.8 px in front (6.6x), 1.6 to 11.6 px behind (7.3x), 0 % of
-   their light on the subject. `emberMode: "particles"` keeps the CC Particle World burst.
-7. **Shockwave drawn twice.** The circle against the background (`AEX.shock.stroke`, r 30 to 1400
-   over 1.25 s, light 0.55, a second ring 0.3 s later at 0.3, a Fractal Noise break matte through
-   Polar keyed from 150 to -28) and its ellipse on the floor around the floor point under the
-   origin: h = floorY - center y, rx = sqrt(r² - h²), ry = floorAspect x rx (0.28 here, the sine of
-   the camera tilt). Give the floor ring its own slower travel (r1 1050, 2.6 s, fade (1 - u)^1.4),
-   an edge plus one soft band, dashes whose gap opens from 2 to 262 px with age, and the inverted
-   subject matte (its back half passes behind).
-8. **Tapered streaks in both rigs.** Each streak is two strokes on one decelerating, slightly
-   falling expression path: a body tapered to 0 at the tail and a head 1.7x wider and 1.25x
-   brighter. 20 in front (2 to 9 px, gain 1.8), 16 behind (1.5 to 6 px, light 0.45 to 0.85), 5 near
-   the lens (16 to 30 px, Gaussian Blur 9, gain 0.9). Born past the subject's face (d0 200 to 420
-   px). Layer and comp motion blur on, 180 degrees, 16 samples.
+   wide light again) + plate, all in Screen: budget them together. With flash 0.12, the flat disc
+   (luma at 0.98 x the top tone) on frames 0 to 3 after the hit: 22, 21, 13, 6 px (the old 28 / 100
+   / 320 at 1.0 / 0.25 / 0.06 with flash 0.42 gave 159, 63, 48, 40). The flash moves the disc most:
+   0.2 gave 30 px, 0.28 gave 38. The breathing glow reads `breath` (2.5) x `pre` on the soft cones
+   only; the tight cone reads `core`. 6b. **Embers around the subject.** Shape-layer embers born on
+   an ellipse around the subject (`subjectBox` [x0, y0, x1, y1] or `emberBand` half axes), diameters
+   3 to 16 px stratified, life 3.2 to 5.4 s, rising with drift and flicker; 40 % (`emberBack`) in
+   the BACK rig at 0.8x size. Measured: 2.3 to 14.8 px in front (6.6x), 1.6 to 11.6 px behind
+   (7.3x), 0 % of their light on the subject. `emberMode: "particles"` keeps the CC Particle World
+   burst.
+7. **Shockwave on the floor plane** (`wave: "floor"`, the default). A wave from an object standing
+   on a floor travels along the floor: the hero is a ring lying on the floor plane, drawn through a
+   pinhole so its front half is wider and lower than its back half. A point (X, Z) of a floor circle
+   maps to x = cx + X k and y = floorY - floorAspect x Z k, with k = D / (D + Z). `floorPersp` (1.3)
+   sets how much wider the front is at r1. The ring is a filled band between two paths (Fill Rule
+   even-odd): an edge (lum 0.6), a soft wake band and an echo 0.3 s later. It travels r 90 to 1050
+   px over 2.2 s, fades as (1 - u)^1.4 and breaks up under a noise matte from 0.15 s after the hit.
+   It lives in its own FLOOR rig, held out by the choked matte above the floor line only, so its
+   back half passes behind the subject and its front half crosses in front. No screen-facing circle
+   by default: at `shell` 0.12 it drew a thin arc over the subject 5 frames after the hit.
+   `wave: "sphere"` gives back the bright circle plus floor ellipse (a burst in the air, no floor in
+   view).
+8. **Tapered streaks in both rigs, born on the subject's outline** (`emit: "surface"`, the default).
+   Each streak is two strokes on one decelerating, slightly falling expression path: a body tapered
+   to 0 at the tail and a head 1.7x wider and 1.25x brighter. 20 in front (2 to 9 px, gain 1.8), 16
+   behind (1.5 to 6 px, light 0.45 to 0.85), 5 near the lens (16 to 30 px, Gaussian Blur 9, gain
+   0.9). Each is born on the subject ellipse (`subjectBox`, else `emberBand` x 0.9) at an angle
+   spread from -200 to +20 degrees, leaving along its normal, never below the floor line.
+   `emit: "point"` starts them all at `center` (a burst from a point in the air). Layer and comp
+   motion blur on, 180 degrees, 16 samples.
 9. **Interactive light that fades with distance.** The plate tinted 35 % from coral toward cream,
-   times a radial ramp from the origin (white to black at 760 px), Screen, 22 % x (hit + 0.3 flash).
-10. **Floor.** Pool: an ellipse under the source at 22 % on `hit`. Reflections of both rig sums,
+   times a radial ramp from the origin (white to black at 760 px), Screen, 40 % x (hit + 0.3 flash).
+10. **Floor.** Pool: an ellipse under the source at 35 % on `hit`. Reflections of both rig sums,
     mapped, flipped about floorY, Box Blur 16, alpha-matted to the floor, 25 %. Refraction:
     Displacement Map 24 px riding ring 1, hidden before the hit.
 11. **Air.** Ambient navy haze 45 %, behind the subject, masked by `ambientMask` (ellipse [820, 520,
     420] px around the origin) so the corners keep their black (plate blacks +2.6 to 3.9 % outside
     the peak; the old mask gave +6.2 to 8.3 %); a soft beam 12 % with dust inside it; lit haze and
-    rays from the BACK rig only, cut below the floor line.
+    rays from the BACK rig only, cut below the floor line. The lit dust's falloff sits over a black
+    GROUND solid. A Multiply falloff over a transparent comp shows itself: it drew a cream dome that
+    carried 68 % of the frame's rise at the peak.
 12. **Halation and lens streak** from the FRONT sum: threshold 0.7, blur 22, red-orange tint, 0.4;
     threshold 0.85, horizontal blur 240, scale 120 x 10 %, 0.8.
-13. **Camera comp.** Time remap `Math.min(time, holdStart)` on the scene layer, Motion Tile 112 %
-    mirror, push 100 to 104 %, shake 9 px and 0.35 degrees on `shake`.
+13. **Camera comp.** Time remap `Math.min(time, holdStart)` on the scene layer when `hold` is above
+    0, Motion Tile 112 % mirror, push 100 to 104 %, shake 9 px and 0.35 degrees on `shake`. `hold`
+    defaults to 15 frames on a still plate and 0 on a moving one: a hold on a video froze its last
+    15 frames.
 14. **Lens last** (`AEX.lens.apply`): CA 0.0015, vignette 70, Add Grain 0.17 (the plate's 0.73
-    levels over 4.2 per unit, section 12), mono off, size 1.0. `refract: 0` leaves the refraction
-    layer out. `tones` overrides the five tones for every map of the shot; `r.warnings` lists a tone
-    channel above 0.95.
+    levels over 4.2 per unit, section 12), mono off, size 1.0. Grain goes only where the picture
+    lost it (`grainMask: "auto"`). With nothing resampling the plate (CA 0, no push, no shake), only
+    where the effect covers it, through the rig sums as a luma matte: untouched tiles -6.7 %. CA and
+    the camera move resample the whole frame (CA alone took 37 % of the plate's grain std), so the
+    grain goes full frame at 0.82x: -0.5 %. Full frame at 1x gave +15.3 %; effect-only after CA gave
+    -37 %. `refract: 0` leaves the refraction layer out. `tones` overrides the five tones for every
+    map of the shot; `r.warnings` lists a tone channel above 0.95.
 
 **A moving plate.** The builder reads the origin, the floor line and the matte at build time and
 works on a held frame. On a moving plate, either hold one frame for the hit, or supply a matte video
 (it follows the video) and tie the origin and the floor line to a tracked null from
-scenario-after-effects-tracking by hand.
+scenario-after-effects-tracking by hand. The end hold is off on a moving plate (`hold` 0); pass
+`hold` to freeze the last frames anyway.
 
 **Daylight variant (bright plate).** A subject held over a sunlit landscape: no luma key, no core
 cone, the effect mostly as refraction. Holdout from a matte taken from the source before compositing
@@ -800,11 +853,14 @@ top-1 % saturation measured outside the subject box, so the subject's own colors
 // channel: bridge | osascript | exe | handoff
 // checked: live 27.0
 var plate = AEK.core.item(ARGS.plate);
-var r = AEX.pulse.build(plate, { name: "PULSE", center: [960, 520], floorY: 765, floorAspect: 0.28, s: 1, at: 0.8, seed: 7 });
-return { layers: r.layers, rigs: r.rig, frames: AEX.vfx.cost(r.finalComp, [0.7, 0.8, 0.97, 1.2, 1.8, 3.5, 4.97], ARGS.out, "pulse") };
+var r = AEX.pulse.build(plate, { name: "PULSE", center: [960, 520], floorY: 765, floorAspect: 0.28, subjectBox: [700, 330, 1220, 770], s: 1, at: 0.8, seed: 7 });
+var g = AEX.pulse.gateFrames(r, ARGS.out);   // then, from the shell: python3 scripts/vfx_measure.py gates <out>/manifest.json
+return { layers: r.layers, rigs: r.rig, manifest: g.manifest, frames: AEX.vfx.cost(r.finalComp, [0.7, 0.8, 0.97, 1.2, 1.8, 3.5, 4.97], ARGS.out, "pulse") };
 ```
 
-**GATE 13:**
+`subjectBox` is the subject's bounding box in comp px (from the matte or by eye): streaks and embers
+are born on its ellipse. **GATE 13** (every pixel gate is measured by `scripts/vfx_measure.py gates`
+on the manifest `AEX.pulse.gateFrames` writes; exit code 1 on a failure):
 
 - Pixels at 255 in all channels: 0 % on every frame, flash included.
 - Contour ratio: mean luma of the pixels 1 to 3 px outside the matte edge over the mean of those 6
@@ -812,16 +868,29 @@ return { layers: r.layers, rigs: r.rig, frames: AEX.vfx.cost(r.finalComp, [0.7, 
   midpoint, scene comp before the lens. Below 1.0 is a dark contour. At least 1.0 outside the peak;
   on the 20 peak frames at least 0.95 with `edgeReach` (0.96 measured; 1.02 with `edgeReach: 0`,
   which keeps the far-side outline). A 6 px outward holdout blur gave 0.76.
-- Far-side outline: mean luma 0 to 3 px inside the edge minus 6 to 12 px inside, more than 300 px
-  from the origin: at most about 20 levels at the peak.
-- Flash frame: mean luma at most about 0.2 against 0.14 calm (0.7 over 700 px gave 0.35 and a cream
-  blob).
+- Far-side outline: mean luma 1 to 3 px inside the edge minus 6 to 12 px inside, more than 300 px
+  from the origin: at most 20 levels at the peak. A subject whose edges all sit within 300 px of the
+  origin has no far side: the gate does not apply.
+- Hit strength: take the brightest final frame over the 15 after the hit (it comes 5 to 10 frames
+  late). Strength = the larger of headroom / 6 % and (ratio - 1) / 0.45, with headroom = (peak -
+  calm) / (1 - calm) and ratio = peak / calm. Aim for 0.7 to 0.95: under 0.5 the hit does nothing
+  (fails), over 1.0 it burns (fails). Defaults: 0.85 on a mid-dark plate, 0.80 on a bright one, 0.90
+  on a dark wide one. Raise or lower interactive, pool, flash and FRONT bloom together to move it.
+  Measured on one shot: 0.31 with everything at a third (fails), 0.73 with interactive 22, pool 22,
+  flash 0.12, bloom 0.9, 0.95 with 55, 45, 0.2, 1.4. The old core with flash 0.42 read above 1.0 on
+  all three plates.
 - Plate blacks (p1 luma beyond 900 px from the origin) within 5 % of the plate on the scene comp
-  outside the peak frame (+0.9 %); measure before the lens, since vignette 70 lowers p1 about 20 %.
-- Grain: frame-to-frame std within 10 % of the plate's on flat patches (on a held frame, the plate's
-  high-pass std; section 12).
+  outside the peak frame (+0.9 %), or within 1 level when the plate's p1 is under 2 levels. Measure
+  before the lens: vignette 70 lowers p1 about 20 %.
+- Grain: frame-to-frame std within 10 % of the plate's on its flattest tiles (on a still plate, the
+  high-pass std; section 12). Only tiles whose mean the effect moved by under 1 level count. Set
+  `grain` from the plate (std / 4.2): the default 0.17 is for a 0.73-level plate and put a clean
+  still plate at +91 % (0.044 gave +2.9 %). On a still plate the high-pass std is texture, which the
+  CA softens (-13.9 % on a bright still): there only a rise above 10 % fails.
 - The last 15 frames differ by 0 levels before grain.
 - Element counts returned by the job match the plan (layers, streaks, rings).
+- Visual: the ring travels along the floor, its back half behind the subject. Streaks leave from all
+  around the outline.
 - Visual: the subject keeps its own colors and reads through the flash; a thin rim on the edges
   facing the source and none on the far side; streaks pass both in front of and behind the subject;
   the floor ring stays inside the frame and breaks into wisps.
@@ -844,6 +913,47 @@ Traps hit:
   subject): the default is now shape-layer embers born around it.
 - The interactive light is a 2D ramp on a tinted plate: faces turned away brighten too. A normals
   pass from the 3D source is the real fix.
+- A bright screen-facing ring centered on the subject read as a dome sitting on it. Streaks from
+  `center` left from one point at its top. The floor wave and surface emission are now the defaults.
+- The brightest frame comes 5 to 10 frames after the hit, when rings, lit haze and dust have grown.
+  On the old build: 0.163 on the hit, 0.266 seven frames later. Measure the peak over the 15 frames
+  after the hit.
+- A Multiply layer over a transparent comp shows the Multiply layer itself: put a black solid under
+  it.
+
+### Generated element on black (realistic fire and smoke)
+
+Realistic fire or smoke that fills the frame comes from scenario-after-effects-generation as a clip
+on pure black; that skill covers the model and the prompt. Land it with
+`AEX.element.land(host, footageItem, o)`:
+
+1. Interpret: a clip at another frame rate is conformed to the comp's (24 to 30 fps plays 1.25x
+   faster and still reads as fire); the helper returns the speed in `warnings`.
+2. Foot: anchor at the element's source row, positioned on the floor line; a mask over the clip ends
+   half a feather above that row, feather 90 to 150 px at the bottom only. A mask feather straddles
+   its edge: a mask ending on the row left the clip's bottom edge as a hard line.
+3. Black level: Levels Input Black at the clip's background 99th percentile (fire about 0.012, smoke
+   about 0.05). A lifted black floor lifts the whole plate in Screen.
+4. Palette: CC Toner with the fire tones at Blend w. Original 0.45 turns yellow fire toward coral
+   and keeps the real color in the licks. Smoke: Tint black to cream at 70 %.
+5. Screen; a blurred copy (Gaussian 50 px, gain 0.2) for the glow in the air.
+6. The light it throws: a floor pool and a radial lift of the plate in Screen, their opacity driven
+   by the element's own mean luma (`sampleImage` above the foot), so the plate brightens when the
+   flame flares.
+7. Heat haze above a flame (`AEX.smoke.heat`); grain matched on an adjustment layer at the top;
+   clipping checked on After Effects frames.
+
+```javascript
+// channel: bridge | osascript | exe | handoff
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp), fire = AEK.xio.importItem(ARGS.clip);
+var r = AEX.element.land(c, fire, { name: "FIRE", base: [960, 940], foot: 1000, scale: 90, black: 0.012, tones: AEX.fire.TONES, keep: 45,
+    footFeather: 150, glow: 0.2, pool: 0.35, lift: 0.18 });
+return { land: r, frames: AEX.vfx.cost(c, [0, 1, 2, 3], ARGS.out, "fire") };
+```
+
+**GATE:** 0 % at 255 on 8 frames; no line at the foot on the crop at 100 %; plate blacks unchanged
+outside the element's light.
 
 ### Simple integration without a holdout
 
@@ -874,15 +984,16 @@ energy leaves it on frame 24. Order of operations:
 7. Interactive light through the ramp from the origin; floor pool.
 8. Refraction riding ring 1, hidden before the hit.
 9. Reflections of both rig sums on the floor.
-10. BACK rig: rings, floor ellipse, back streaks, lit haze, rays, lit dust; held out by the choked
-    matte after its bloom.
+10. FLOOR rig: the ring on the floor plane, held out above the floor line. BACK rig: back streaks,
+    lit haze, rays, lit dust; held out by the choked matte after its bloom.
 11. Light wrap, then rim, from the BACK sum, weighted toward the origin.
 12. FRONT rig: core cones, flash, front and near streaks, embers.
 13. Halation and lens streak from the FRONT sum.
 14. Camera comp: time remap hold, Motion Tile mirror, push, shake; final comp: CA, vignette, grain
     last.
 15. Render frames before, at and after the hit, a 12-frame strip from the hit and a 1:1 crop of the
-    peak; run the gates above; fix the worst failure picture in critique.md first.
+    peak; `AEX.pulse.gateFrames` then `vfx_measure.py gates`; fix the worst failure picture in
+    critique.md first.
 
 ## 14. Energy trail following a moving point
 
@@ -1152,3 +1263,14 @@ for (i = 0; i < app.effects.length; i++) {
 }
 return { plugins: found, route: found.length ? "plugin" : "built-in", ccParticleWorld: nativeOk };
 ```
+
+## 22. Version notes
+
+- Curl Noise (`ADBE Curl Noise`) is new in 26.3; Unmult (`ADBE Unmult`) native in 26.0; Quick Apply
+  of effects 26.2.
+- Colorama's match name is `APC Colorama`.
+- Advanced Lightning renders 8 bpc internally. OCIO color management blocks 16 bpc. At 32 bpc
+  `saveFrameToPng` writes values divided by 10.
+- HDR Highlight Compression renders differently on GPU and software on 27.0: avoid it for highlight
+  control.
+- After Effects 27.0 imports a 10-bit 4:4:4 HEVC MOV directly (no transcode).

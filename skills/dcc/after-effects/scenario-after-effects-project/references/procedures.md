@@ -7,8 +7,9 @@ from `ARGS` and are absolute. Every job that changes the project runs inside one
 (`--undo "Agent: <stage>"`).
 
 Session rule: never open, close or switch projects in a person's session unasked. With unsaved
-changes, opening or creating a project raises a Save As panel that blocks After Effects. Save first,
-then open.
+changes, opening or creating a project raises a Save As panel that blocks After Effects. Ask the
+person to save first. In a test session, `AEK.core.fresh(path)` and `AEK.core.open(path)` close
+without saving.
 
 ## 1. Freeze the received project and take an inventory
 
@@ -32,11 +33,10 @@ Read in the result: `missing` (with `missingFootagePath`), `missingFonts`, `defa
 rates, one moved file and one uninstalled font, the inventory returned all of them; the kit audit
 alone missed the font and both nested rate mismatches.
 
-Then capture the before sheet:
-
-```bash
-python3 ae.py frames "Comp 1" --spread 6 --out <project>/qc/before --sheet
-```
+Capture the before frames in the same job, before `return`:
+`inv.before = AEK.capture.spread(main, 6, ARGS.qc, "before");` with `ARGS.qc` an absolute folder. On
+an After Effects shared by several agents, `ae.py frames` from a later call can capture another
+agent's project. Build the sheet from the returned paths with `ae.py sheet`.
 
 ## 2. Relink missing footage by file name
 
@@ -73,6 +73,11 @@ read 0. Replace only with a fallback the user approved; a brand font is installe
 `aerender` prints "Project has missing fonts" on a project that still has one: grep its log as a
 second check.
 
+If a plugin crashes the project on open, a person restarts in Safe Mode (Settings > Startup &
+Repair > Start in Safe Mode: third-party plugins off) (Adobe documentation). Check the installed
+third-party effects for the yellow warning icon in Effect Controls: they do not support Multi-Frame
+Rendering (Adobe documentation).
+
 ## 4. Color and bit depth
 
 ```javascript
@@ -85,8 +90,15 @@ return AEX.project.color({ bpc: ARGS.bpc, workingSpace: ARGS.workingSpace, linea
 Live read-backs: 16 bpc, `Rec.709 Gamma 2.4`, gamma 2.4; 32 bpc with linearize true kept the working
 space. An unknown name assigned directly (`app.project.workingSpace = "Not A Profile"`) threw
 nothing and read back "None": `color()` validates against `listColorProfiles()` and throws instead.
-New projects do not have fixed color defaults in a shared session (read 8 and 16 bpc, sRGB, on two
-`newProject()` calls): always set and read back.
+
+A new project inherits the color settings of the project open before it: engine, bit depth, linear
+blending, gamma, linearize, and the working space in the Adobe engine. Live: after a project in OCIO
+(`colorManagementSystem` 1) at 32 bpc with linear blending on, `app.newProject()` read engine 1, 32
+bpc, linear blending on. Setting 16 bpc then threw "Not supported for OCIO color managed mode".
+`color()` sets the engine first: given `engine` (0 Adobe, 1 OCIO) it uses it; asked for 8 or 16 bpc
+with no engine on an OCIO project, it switches to 0 and returns `engineReset: true`. Linear blending
+stays as inherited unless `linearBlending` is passed: pass it, then compare every read-back field
+with the brief.
 
 ## 5. Conform comp frame rates
 
@@ -120,6 +132,10 @@ var renamed = AEX.project.rename(main, ARGS.mainName);
 var bins = AEX.project.fileItems(main, { main: "01_Main", precomps: "02_Precomps", footage: "03_Footage", solids: "04_Solids", unused: "99_Unused" });
 return { renamed: renamed, bins: bins, defaultsLeft: AEX.project.inventory(main).defaultNames };
 ```
+
+`main` may be a list (`[master, dlv169, dlv11, dlv916]`). Comps in the render queue and comps named
+`MAIN_` or `DLV_` count as roots too, so a deliverable that nests nothing of the master is filed in
+`01_Main`, never in `99_Unused`; `inventory` uses the same roots.
 
 Live: `Comp 1`, `Pre-comp 12`, `Comp 3`, `Comp 2` became `MAIN_BrandFilm_25`,
 `PC_BrandFilm_25_logo`, `PC_BrandFilm_25_logo_bg_2398`, `UNUSED_Comp2`; 13 items filed, 0 left at
@@ -308,7 +324,18 @@ return res;
 ```
 
 Live: 6 sources from four folders copied (7.1 MB), `outside` empty, project saved in the delivery
-folder, `dirty` false. Then prove it renders headless:
+folder, `dirty` false.
+
+An image sequence item points at its first frame (`item.file`). Copying that file alone turned a
+24-frame PNG sequence into a still (duration 0) in the collected project [live 27.0]. `collect`
+copies every frame of a sequence into `Footage/<id>_<name>/`, relinks with `replaceWithSequence`,
+keeps the conformed frame rate, and lists it in `sequences` with `frames` and `framesNow` (they must
+be equal).
+
+Beside a saved project After Effects writes a `<name>.aep Logs` folder and, with Auto-Save on, an
+`Auto-Save` folder of `<name> auto-save N.aep` copies. `collect` returns them in `sidecars`. Leave
+both out of the handoff archive, and never relink or version from an auto-save copy. Then prove it
+renders headless:
 
 ```bash
 mkdir -p <delivery>/check
@@ -345,3 +372,79 @@ property on each. `getMotionGraphicsTemplateControllerName(i)` is 1-based (index
 The essentialProperty group lists the controls in reverse order of exposure: address them by name.
 An overridden text that grows past the precomp frame is cropped at the precomp bounds (seen on the
 frame): size the rig comp for the longest text.
+
+## 14. New project: one master, several formats
+
+For a campaign built here rather than received: one master, deliverables per aspect ratio, each with
+its own layout.
+
+1. **Start.** In a test session: `AEK.core.fresh(<abs>/<Brand>_campaign_v001.aep)` (saved at once).
+   In a person's session, they create the project. Then `AEX.project.color(...)` and time display in
+   frames, as in stage 4.
+2. **Structure.** Elements as precomps cropped to their content (`PC_<role>`: `PC_product`,
+   `PC_wordmark`, `PC_tagline`), so a precomp layer's box is the element's box. One master
+   `MAIN_<Brand>_<fps>` at the main ratio. One comp per format,
+   `DLV_<Brand>_<ratio>_<width>x<height>` (`DLV_Tonda_9x16_1080x1920`); for ads, use the
+   motion-production name `<Brand>_<Type>_<ratio>_<length>_v###`. Each deliverable places the same
+   precomps with its own layout: never a scaled copy of the master.
+3. **Layout per format.** Same elements, different arrangement:
+
+| Format | Arrangement that holds                                                                                                                                  | Safe area (fractions of the frame)                               |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 16:9   | subject and text side by side, or the subject large with the text block under it and to one side                                                        | title safe 0.10 all sides                                        |
+| 1:1    | stacked: subject upper 55 to 60 %, text block below                                                                                                     | 0.10 all sides                                                   |
+| 9:16   | stacked and larger: subject about 85 % of the safe width, text under it; the lower band carries a design element (floor, glow, color field), never text | feeds 0.10; Reels and Stories: top 0.14, bottom 0.35, sides 0.06 |
+| 4:5    | as 1:1, subject a little larger                                                                                                                         | 0.10                                                             |
+
+A subject cut from footage: measure its box in the still (`magick <still> -fuzz 8% -trim info:`
+gives `WxH+X+Y`), put the precomp anchor on that box's center, then scale from that box, not from
+the frame. A still whose background differs from the comp color shows its own rectangle (a feathered
+mask makes a darker box): sample the still's border color and use it as the comp background, or key
+the subject. A still cut from a movie with ffmpeg carries a gAMA chunk that After Effects applies:
+it renders darker than its pixels (border 6,10,18 rendered 0,1,4), so the box shows whatever the
+background. Strip it before import:
+`magick in.png -define png:exclude-chunks=gAMA,cHRM,sRGB,iCCP out.png`. 4. **Gate per format.**
+`AEX.project.layout(dlv, {t, safe})` at the hold frame of every deliverable measures each visible
+layer from its bounds (a precomp by its content) and fails on: a block outside the safe area; two
+blocks closer than `minGap` (default 3 % of the shorter side); content spanning less than `minSpanY`
+of the safe height (0.5 vertical, 0.35 otherwise); content center further than `maxCenterOffset`
+(0.12) from the safe center. Read `emptyBelow` and `emptyAbove`: a vertical format with more than
+0.3 empty below reads unfinished. 5. **Bins, inventory, save.**
+`AEX.project.fileItems([main, ...deliverables])`, `inventory`, `saveVersion`. Capture the hold frame
+of each deliverable in the same job and read one sheet of all formats side by side. 6. **Render.**
+One `ae.py aerender` per deliverable, each into its own folder.
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// ARGS: {main: "MAIN_Tonda_30", dlv: ["DLV_Tonda_16x9_1920x1080", "DLV_Tonda_1x1_1080x1080", "DLV_Tonda_9x16_1080x1920"], t: 4}
+var main = AEK.core.comp(ARGS.main), out = { gates: [] }, list = [main], i, d, reels;
+for (i = 0; i < ARGS.dlv.length; i++) {
+    d = AEK.core.comp(ARGS.dlv[i]); list.push(d);
+    reels = d.height > d.width * 1.2 ? { top: 0.14, bottom: 0.35, left: 0.06, right: 0.06 } : null;
+    out.gates.push(AEX.project.layout(d, { t: ARGS.t, safe: reels || undefined, skip: /^(BG|FX)_/ }));
+}
+out.bins = AEX.project.fileItems(list);
+out.unused = AEX.project.inventory(list).unusedComps;
+return out;
+```
+
+Live: with the list form the master and three deliverables landed in `01_Main`, `unusedComps` empty,
+nothing at the root. The three layouts above passed (16:9 side by side spans 0.58 of the safe
+height; 9:16 spans 0.87 of the Reels-safe height). Moving the 16:9 tagline to 4 px under the
+wordmark bar made `layout` fail `gap under 32 px`.
+
+## Version notes
+
+- 22.0: Multi-Frame Rendering, Composition Profiler, `Property.essentialPropertySource`,
+  `app.setMultiFrameRenderingConfig()`. "Master Properties" is the pre-17.5 name of Essential
+  Properties.
+- 24.3: `app.purge(PurgeTarget.ALL_CACHES)` also clears the disk cache.
+- 24.5: `Project.usedFonts` and `replaceFont()`. Before that, replace fonts per layer through the
+  TextDocument.
+- 25.2 and 26.0: disk cache playback and Lossless Compressed Playback reduce the need for playback
+  proxies.
+- 26.2 and 26.3: SVG import and Illustrator paste as shape layers; fewer reasons to continuously
+  rasterize imported vectors.
+- 27.0: Auto-Save works before the first save and recovers after a crash; the AI Assistant can
+  rename and organize items (credits per action, a person must confirm).

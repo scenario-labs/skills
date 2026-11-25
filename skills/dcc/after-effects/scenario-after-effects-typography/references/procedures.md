@@ -1,8 +1,9 @@
 # Procedures: kinetic typography by script
 
 Every job runs through `ae.py run job.jsx --lib <this skill>/scripts/typography.jsx`
-(scenario-after-effects-expert toolkit). Jobs are ES3 function bodies: `ARGS` holds the `--args`
-JSON, `return` sends the result. In a user's session, never call `AEK.core.fresh()` (it closes the
+(scenario-after-effects-expert toolkit). Frame counts are at 24 fps unless a case says otherwise; at
+30 fps multiply by 1.25 and round. Jobs are ES3 function bodies: `ARGS` holds the `--args` JSON,
+`return` sends the result. In a user's session, never call `AEK.core.fresh()` (it closes the
 project): build into a new comp instead, and pass `--undo "Agent: <what>"` so the change is one undo
 step.
 
@@ -45,6 +46,46 @@ Check: `installed` true and `glyphs` true for every language string. A missing f
 silently by `TextDocument.font` and substituted at render. On the test Mac: 191 family groups;
 variable fonts Skia (wght 0.48 to 3.2, wdth 0.62 to 1.3), Kefa III and Noto Sans Syriac (wght);
 Helvetica-Bold covers German and Polish, not Japanese.
+
+### 1b. Picking a face and a pairing when the brief names none
+
+The brief's or the brand's face always comes first. Without one, pick by role from what the render
+machine has, in this order:
+
+1. Installed on the machine that renders (`getFontsByPostScriptName`), with glyphs for every
+   language of the job (`hasGlyphsFor`).
+2. One family in two weights before two families: a heavy weight for the title, a medium one for the
+   supporting line. The pair then shares proportions and x-height.
+3. Several weights in the family, so a later accent or a third level needs no second family.
+4. The cross-platform fallback (Arial) only when nothing above is installed. Report it: it is the
+   last resort.
+
+| Role                           | macOS (PostScript names)                               | Windows (PostScript names)         | Fallback on both                |
+| ------------------------------ | ------------------------------------------------------ | ---------------------------------- | ------------------------------- |
+| display (titles)               | AvenirNext-Bold, HelveticaNeue-Bold, Futura-Bold       | SegoeUI-Bold                       | Arial-BoldMT                    |
+| text (supporting lines)        | AvenirNext-Medium, HelveticaNeue-Medium, Futura-Medium | SegoeUI-Semibold                   | ArialMT                         |
+| condensed (long words in 9:16) | AvenirNextCondensed-Bold, HelveticaNeue-CondensedBold  | ArialNarrow-Bold (with Office)     | Arial-BoldMT                    |
+| serif (editorial contrast)     | Georgia-Bold, Charter-Bold                             | Georgia-Bold, Cambria-Bold         | TimesNewRomanPS-BoldMT          |
+| Japanese and Chinese           | HiraginoSans-W6                                        | YuGothic-Bold, MicrosoftYaHei-Bold | NotoSansCJKjp-Bold if installed |
+
+`AEX.type.pickFont(role, {text, candidates})` returns the first installed candidate that covers
+`text`, with `fallback` true when only the last one was found. `AEX.type.fontPair({text, pairs})`
+returns the first one-family pair (Avenir Next, Helvetica Neue, Futura, Segoe UI, then Arial).
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var pair = AEX.type.fontPair({ text: ARGS.text || "äöüßé" });
+var cjk = AEX.type.pickFont("cjk", { text: "日本語" });
+return { pair: pair, cjk: cjk, condensed: AEX.type.pickFont("condensed").font };
+```
+
+Measured on the test Mac: pair AvenirNext-Bold and AvenirNext-Medium (rank 1); `cjk`
+HiraginoSans-W6; condensed AvenirNextCondensed-Bold; serif Georgia-Bold. No pair covers Japanese:
+`fontPair({text: "日本語"})` returns nulls, so Japanese lines take the `cjk` role. Segoe UI, Inter,
+Montserrat and SF Pro were absent there. The Windows names are the fonts' PostScript names; check
+them on the Windows render machine with the same call. Size the pair 3:1 or more (title to
+supporting line, procedure 13).
 
 ## 2. Word timings from the voiceover, without listening
 
@@ -126,17 +167,45 @@ AEX.type.grouping(w, "word", [0, -25]);
 AEK.motion.key(sel(w, "pop").property("ADBE Text Percent Offset"), 0, -100); AEK.motion.key(sel(w, "pop").property("ADBE Text Percent Offset"), 20 / 24, 100);
 // tracking-in: whole line selected, the selector Amount keyed 100 -> 0 with an expo-out curve
 var t = AEK.text.add(c, "TRACKING IN", { font: "Helvetica-Bold", size: 96, fill: [1, 1, 1], justify: "center", position: [960, 900] });
-AEK.text.animator(t, { name: "track", properties: { tracking: 300, opacity: 0 } });
-var amt = function () { return sel(t, "track").property("ADBE Text Range Advanced").property("ADBE Text Selector Max Amount"); };
+AEK.text.animator(t, { name: "track", properties: { tracking: 300, opacity: 0 }, amount: 100 });
+AEX.type.trackingFit(t, "track", c, { margin: 0.05, t: 0 }); // 300 makes a 3,622 px line in a 1920 comp; fitted: 110
+var amt = function () { return AEX.type.amount(t, "track"); };
 AEK.motion.key(amt(), 0, 100); AEK.motion.key(amt(), 20 / 24, 0);
 AEK.motion.bezier(amt(), 1, 2, [0.16, 1, 0.3, 1]);
 return AEK.capture.spread(c, 6, ARGS.out, "looks");
 ```
 
+The range selector Amount is not a child of the selector: it is `ADBE Text Range Advanced` >
+`ADBE Text Selector Max Amount`. `AEK.text.animator(..., {amount})` sets it and returns `amount`;
+that handle goes stale after later `addProperty` calls, so
+`AEX.type.amount(layer, animatorName, selectorIndex)` fetches it fresh. Its range is -100 to 100;
+`setValue(-150)` throws "Value -150 out of range -100 to 100".
+
+Stack order for a look that people retype (Korenman, b1_p2qQf_Ts 00:05:13, 00:09:44, 00:14:39;
+Zammit, c-Q06JnT6mE):
+
+- An "Anchor Point Fix" animator first; every later animator inherits its anchor.
+- An unanimated "initial state" animator, then one animator per move holding the opposite value,
+  keys 2 to 4 frames apart.
+- To keep a sentence centered while words build, a second animator Based On Lines, Position only
+  (00:04:42).
+- For a pause, a middle Offset key at 50 % with a flat handle (00:14:42).
+
 Check with `sourceRectAtTime` (it includes animator offsets and tracking): rise top moves 9 to -71
-px over 20 frames; square top stays at 9 until a character is released; tracking width 3,622 px at
-frame 0, 1,145 at frame 5, 622 at rest (expo-out finishes 83 % of the move in a quarter of the
-time); word pop width 773 to 921 px. On the sheet: settled lines identical to the static text.
+px over 20 frames; square top stays at 9 until a character is released; with the unfitted 300,
+tracking width 3,622 px at frame 0, 1,145 at frame 5, 622 at rest (expo-out finishes 83 % of the
+move in a quarter of the time); word pop width 773 to 921 px. On the sheet: settled lines identical
+to the static text.
+
+Tracking-in width. Animator Tracking (`ADBE Text Tracking Amount`) adds 1 px per unit to every gap
+between characters, at any font size. Measured on "TRACKING IN" (11 characters, 10 gaps): 622, 1,622
+and 3,622 px at Tracking 0, 100 and 300 at 96 px; 1,425, 2,425 and 4,425 at 220 px. So the start
+line is `rest width + (characters - 1) x Tracking` wide.
+`AEX.type.trackingFit(layer, animatorName, comp, {margin: 0.05, t})` lowers an unkeyed Tracking
+until the line at time `t` fits the frame minus the margin. Measured: 300 became 110 for the 96 px
+line (width 1,722 px); 180 became 31 for "LAUNCH DAY" at 220 px, a title that already filled 73 % of
+the width. A tracking-in needs a line well inside the frame; frames 0 to 8 stayed in frame after the
+fit.
 
 ## 5. Expression selector: stagger by index
 
@@ -153,6 +222,54 @@ Measured: Amount `0` leaves the text untouched, `100` applies the full animator 
 equals `0`, the default `selectorValue * textIndex / textTotal` gives a partial gradient. Reading
 `Amount.valueAtTime()` from a script returns `100,100,100` whatever the expression: it is evaluated
 per character only at render. Judge an expression selector on frames, not on its script value.
+
+Accents (procedure stage 6): accent after the line lands with Gradient Ramp on the word, Blend With
+Original keyed 100 to 0 (Zammit 00:16:03). Randomize Order needs a non-zero Random Seed to keep its
+order across duplicates (Adobe help).
+
+## 5b. Per-character overshoot (expression selector below 0)
+
+Channel: bridge. A range selector cannot give a staggered overshoot. Its Amount accepts -100 to 100
+and a negative Amount applies the animator values inverted, but Amount scales every selected
+character at once. An Offset sweep selects each character from 0 to 100 % and never past it. An
+expression selector can: its Amount is computed per character, and a value below 0 inverts the
+offset for that character only. It clamps at -100 like the range selector.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var c = AEK.build.comp("overshoot", { width: 1920, height: 1080, fps: 30, duration: 3 });
+var w = AEK.text.add(c, "TONDA", { name: "word", font: "Helvetica-Bold", size: 260, fill: [1, 1, 1], justify: "center", position: [960, 600] });
+AEX.type.grouping(w, "character", [0, -50]);
+// frames from the layer in point: unit k starts at start + (k - 1) * stagger, peaks at + peak, rests at + settle
+AEX.type.overshoot(w, { properties: { position: [0, 200], opacity: 0 }, start: 2, stagger: 3, peak: 10, settle: 20, overshoot: 8 });
+return AEK.capture.frames(c, [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1], ARGS.out, "os");
+```
+
+```javascript
+// expression (JavaScript engine): Text > Animator "overshoot" > Expression Selector > Amount (what AEX.type.overshoot writes)
+// checked: live 27.0
+var f = thisComp.frameDuration, t0 = inPoint + (2 + (textIndex - 1) * 3) * f;
+var tp = t0 + 10 * f, t1 = t0 + 20 * f, o = 8 / 100;
+var e = time < tp ? easeOut(time, t0, tp, 0, 1 + o) : ease(time, tp, t1, 1 + o, 1);
+100 * (1 - e);
+```
+
+Measured at 30 fps with a one-letter layer (`sourceRectAtTime` follows expression selectors):
+Position offset 120 px, `overshoot: 8`: the letter passed its rest by 9.6 px (8.0 %) on frame 10 and
+settled on frame 17. On "TONDA" (offset 200 px) the highest letter passed by 16 px, the set 8 %.
+Fixed expression values -10 and -100 moved a letter 10 and 100 px past rest; -150 gave the same as
+-100. Opacity offset 0 cannot pass 100 %. Position, Scale and Rotation pass.
+
+Order and distance. `order: "center"` starts the middle letter first and works outward; `"right"`
+starts from the last letter. `vary: 0.5` gives the last letter to move half the offset of the first
+(linear in between), so the letters stop sharing one distance and one landing. A one-letter probe
+with `order: "center", vary: 0.5` still passed rest by 16 px of 200 (8 %) and settled by frame 20 at
+24 fps; expressions clean on "TONDA".
+
+For an overshoot of the whole line at once, a range selector is enough: key Amount 100, -8, 0
+(frames 0, 10, 18) with `AEX.type.amount`. Measured: the line rose 12 px past rest with a 150 px
+offset (8 %).
 
 ## 6. Per-character 3D flip
 
@@ -189,6 +306,9 @@ same flip (pixels above 150 on the flip line: 0, 14,300, 47,577, 59,810, 59,483 
 18, 30; flat at rest on the sheet). In that comp `l.motionBlur = true` throws "Motion blur is not
 supported by the current composition renderer": keep Classic 3D for blurred letters, or blur a
 precomp with CC Force Motion Blur (scenario-after-effects-3d).
+
+Inter-Character Blending and Fill & Stroke options are unavailable on per-character 3D layers (Adobe
+help).
 
 Orbit instead of flip: push the anchor back in Z in an unanimated setup animator, then rotate on Y
 through the selector (Korenman, b1_p2qQf_Ts 00:25:38 to 00:27:51; he uses 200 px).
@@ -258,12 +378,30 @@ thisComp.layer("vf").text.animator("weight").property.fontAxisWght
 
 Measured: returns 2.2 at 1 s. For a project-wide font swap use `AEK.session.setFont(ps, {map})` and
 `AEK.session.fontRuns(doc)` from the scenario-after-effects-expert kit (each run keeps its weight);
-`app.project.replaceFont` is not undoable.
+`app.project.replaceFont` is not undoable. Recheck widths after a swap: Georgia to Avenir Next at
+the same size changed three lines by -7.4 %, -2.9 % and +1.7 %.
 
-## 8. Fitting three languages in title safe
+## 8. Fitting three languages, or three formats, in title safe
 
 Channel: bridge. Order of remedies: rebreak at the designed size, then shrink to no less than 80 %,
-then scale-to-fit.
+then scale-to-fit. The same order reflows one title across 16:9, 9:16 and 1:1: safe width is 80 % of
+each comp width.
+
+Measure safe areas of 2D text with `AEK.text.measure` and `AEK.text.inFrame`: they walk the parent
+chain (anchor, scale, Z rotation, position). For 3D text, or a 3D parent, use
+`AEX.type.compBounds(layer, t)`: it reads the four corners of `sourceRectAtTime` through `toComp` (a
+temporary Point Control), so X and Y rotation, orientation and the camera count.
+`AEX.type.inFrame(layer, comp, margin, t)` calls the kit for 2D chains and `compBounds` otherwise,
+and reports `via`.
+
+Measured against the rendered pixel box (ImageMagick trim of the saved frame):
+
+- 2D text under a null at 60 % scale and 30 degrees Z: kit and `compBounds` both [1026, 621, 1701,
+  743], equal to the pixels.
+- 3D text turned 60 degrees in Y: pixels 343 px wide from x 809; `compBounds` [809, 407, 1152, 544];
+  kit [626, 421, 1301, 543], the unturned layer.
+- 3D text turned -50 degrees in X under a 3D null moved 400 px in Z: pixels 587 x 66 from (530,
+  441); `compBounds` [530, 442, 1118, 507]; kit off by 64 px and 56 px in height.
 
 ```javascript
 // channel: bridge | handoff
@@ -277,7 +415,7 @@ for (k in L) {
     var row = { width: Math.round(AEK.text.measure(l, 0).comp.width) };
     var s1 = l.duplicate(); row.shrink = AEK.text.fit(s1, maxW, { minSize: 60 }); s1.enabled = false;
     row.balanced = AEX.type.balance(l, maxW, 3); // edits l in place: point text with \r line breaks
-    row.safe = AEK.text.inFrame(l, c, 0.1, 0).ok;
+    row.safe = AEX.type.inFrame(l, c, 0.1, 0).ok;
     out[k] = row;
 }
 return out;
@@ -313,19 +451,40 @@ adds the animator and this Offset expression:
 // expression (JavaScript engine): Text > Animator "in-out" > Range Selector 1 > Offset (Ramp Up, Ease Low 100)
 // checked: live 27.0
 var f = thisComp.frameDuration, a = 12 * f, b = 10 * f;
-if (time < outPoint - b) { linear(time, inPoint, inPoint + a, -100, 100); }
-else { linear(time, outPoint - b, outPoint, 100, -100); }
+if (time < outPoint - b) { easeOut(time, inPoint, inPoint + a, -100, 100); }
+else { easeIn(time, outPoint - b, outPoint, 100, -100); }
 ```
 
-Measured: on a layer 0 to 48 frames, Offset at in, in + 6, in + 12, middle, out - 5 frames read
--100, 0, 100, 100, 0. After sliding the layer 12 frames later and trimming it to 42 frames, the same
-probes read the same values. The out runs the in backwards (last character leaves first); for a
-left-to-right exit add a second animator keyed the same way. Save the result as an animation preset
-only through the GUI (gui-paths.md); by script, rebuild it with `AEX.type.inOut`.
+The in starts fast and settles (`easeOut`); the out accelerates to the last frame (`easeIn`). Two
+exit orders, set with `exit`:
+
+- `"reverse"` (default): the same Ramp Up swept back, so the last character leaves first.
+- `"forward"`: the first animator holds Offset at 100 after the in, and a second animator
+  `<name> out` (Ramp Down, Ease Low 100, same properties or `outProperties`) sweeps Offset -100 to
+  100 with `easeIn`. Ramp Down at -100 selects nothing; moving right, it selects the first character
+  first.
+
+```javascript
+// expression (JavaScript engine): Text > Animator "in-out out" > Range Selector 1 > Offset (Ramp Down, Ease Low 100)
+// checked: live 27.0
+var b = 12 * thisComp.frameDuration;
+easeIn(time, outPoint - b, outPoint, -100, 100);
+```
+
+Measured at 24 fps on a layer 0 to 48 frames, `inFrames` and `outFrames` 12: in Offset -100, 25, 100
+at in, in + 6, in + 12; out Offset -100, -25, 82 at out - 13, out - 6, out - 1. After sliding the
+layer 12 frames later and trimming it, the probes read the same values. Bright pixels on frames 39
+to 45, left half against right half (percent of the half): `"reverse"` 9.0 / 8.0, 8.8 / 5.9, 6.9 /
+0.8 (right side leaves first); `"forward"` 8.9 / 8.0, 6.1 / 7.7, 0.3 / 5.6 (left side leaves first).
+Save the result as an animation preset only through the GUI (gui-paths.md); by script, rebuild it
+with `AEX.type.inOut`.
 
 ## 10. Readability report
 
-Channel: bridge. Read-only on the comp.
+Channel: bridge. The report changes nothing it leaves behind, but it is not read-only while it runs:
+it adds and removes a temporary "H" text layer per text layer (cap height), a temporary Point
+Control (3D bounds) and a temporary duplicate per layer (settled dwell). In a person's session run
+it inside `--undo` so the history shows one step.
 
 ```javascript
 // channel: bridge | handoff
@@ -335,13 +494,48 @@ var rep = AEX.type.readability(c, { bg: ARGS.bg, minFrames: 18, minCapRatio: 0.0
 return rep;
 ```
 
-Each row: words, frames on screen, frames per word, font, size, cap height in px (from a temporary
-"H" in the same font, scaled like the layer) and as a ratio of comp height, WCAG contrast of fill vs
-`bg`, `inSafe` at mid-life, tracking, leading ratio. Measured on the synced piece: 7 phrases, 22 to
-38 frames each, 6.4 to 8.3 frames per word, cap 79 px (7.3 % of 1080), contrast 19.07:1, all in
-safe. Built-to-fail layers raised: `safe` error (a 120 px line wider than 80 %), `contrast` error
-1.85:1 (gray 0.25 on 0.06), `size` warn (cap 20 px, 1.9 %), `dwell` warn (10 frames). Contrast over
-footage cannot be computed from colors: sample the rendered frame.
+Each row: words, frames on screen, `settled` frames with `settledFrom` and `settledTo`, font, size,
+cap height in px (from a temporary "H" in the same font, scaled like the layer) and as a ratio of
+the frame's short side (1080 in 16:9, 9:16 and 1:1 alike; a 46 px cap reads 4.2 % in all three), the
+lowest WCAG contrast and `runs` (contrast of every color run against `bg`), `inSafe` at mid-life,
+tracking, leading ratio.
+
+Contrast per run. `TextDocument.fillColor` is the first character only, so a colored word escapes a
+check that reads it. `AEX.type.colorRuns(doc)` reads `characterRange(i, i + 1)` per character and
+groups runs of one fill. Measured on "Sound, anywhere." with "anywhere." in a dark red: the document
+fill read 15.87:1 (cream on ink), the runs read 15.87:1 and 1.88:1, and the report raised a
+`contrast` error on that run. Under 3:1 is an error, 3:1 to 4.5:1 a warning.
+
+Settled dwell. `AEX.type.settled(layer, comp, {restFrame})` counts the longest run of frames where
+the text is at rest and the layer is at 100 % Opacity. It probes a temporary duplicate: each
+animator gets a Position of [0, 1000 x its index], so any selector still selecting a character
+changes `sourceRectAtTime`. Rest is the state at `restFrame`, or the most frequent state at full
+opacity. Parent motion (a push-in null) is not counted against rest. The `dwell` rule needs at least
+`minFrames` settled frames and `minPerWord` (6) per word. A word-synced phrase layer (more than one
+marker) is read while it builds, so its dwell stays its time on screen. Measured on a title with a
+staggered overshoot in (settles on frame 35) and a per-character exit from frame 94: 116 frames on
+screen, 60 settled (35 to 94), and the same 60 under a null pushing 100 to 104 %. A tagline in at 28
+with a 14-frame in and a 12-frame out, out at 110: 82 on screen, 63 settled (39 to 101). `inSafe`
+comes from `AEX.type.inFrame`, so parented layers are measured where they render. Measured on the
+synced piece: 7 phrases, 22 to 38 frames each, 6.4 to 8.3 frames per word, cap 79 px (7.3 % of
+1080), contrast 19.07:1, all in safe. Built-to-fail layers raised: `safe` error (a 120 px line wider
+than 80 %), `contrast` error 1.85:1 (gray 0.25 on 0.06), `size` warn (cap 20 px, 1.9 %), `dwell`
+warn (10 frames). Contrast over footage cannot be computed from colors: sample the rendered frame.
+
+Over footage. `AEX.type.readability(c, {sample: true})` (or
+`{sample: {frames: [..], grid: [4, 2]}}`) replaces `bg` with what lies under each text box. It
+switches every text layer off, nests the comp in a temporary comp, and reads the mean color of each
+grid cell of the box with `sampleImage()` at 5 frames across the layer's life (or the frames given).
+Each run's contrast is the worst against every cell. The row's `backdrop` gives the darkest and
+lightest cell with its frame. Text layers are switched back on, and the temporary comp, its null and
+that null's solid are removed. `sampleImage()` reads back from a script only after the comp has
+rendered at that time, so the helper saves one frame per sampled time to the temp folder first;
+without that render the value read 0, 0, 0, 0. Measured on a 5-second 1920 x 1080 render of a
+product turning on a dark floor, 3 labels, 40 cells each: a cream label over the product read
+17.39:1 against a passed black and 1.6:1 sampled (darkest cell 156, 63, 51; error raised); a cream
+label over the dark backdrop read 16.1:1 sampled; ink text read 1.03:1. In a probe, a sampled mean
+matched the mean of the same 400 x 400 crop of the rendered PNG within 0.002 per channel. 7.7 s for
+the 3 layers; project item count unchanged.
 
 ## 11. Onsets from Convert Audio to Keyframes (no transcript available)
 
@@ -387,3 +581,29 @@ ffmpeg -loglevel error -i frame.png -pix_fmt gray -f rawvideo - | python3 -c "im
 
 Check: `max` near the fill brightness (255 for white). If not, read `pngScale` and the project bit
 depth before drawing any conclusion.
+
+## 13. Layout check: an idea, not a default stack
+
+Channel: bridge. `AEX.type.layout(comp, {t, hold: [f0, f1]})` returns each text layer's comp bounds
+at `t` (seconds) and three warnings:
+
+- `stack`: every text layer centered on the vertical axis (within 2 % of the width). State the idea,
+  or align to a grid line (flush left on the safe line), cut one word in scale, or crop a word at
+  the frame edge.
+- `scale`: largest to smallest type size under 3:1. A title and a tagline at the same weight and a
+  2:1 ratio read as one block.
+- `hold`: no layer or parent moves between the hold frames. Add a secondary action that keeps the
+  letters settled: a parent null pushing 2 to 4 % over the hold.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp);
+return AEX.type.layout(c, { t: 60 / c.frameRate, hold: [40, 90] });
+```
+
+Measured on a reader's title card (TONDA at 250 px over "Sound, anywhere." at 84 px, both centered):
+`stack` and `scale` (2.98:1) raised; `hold` not raised because a push-in null scaled 100 to 104 %,
+reported in `moving`. Motion variety is judged on the sheet: if every unit rises the same distance
+on the same curve, use `order` and `vary` on `AEX.type.overshoot` (procedure 5b) or give the
+secondary line a different move.

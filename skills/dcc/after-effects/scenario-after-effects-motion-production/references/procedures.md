@@ -175,15 +175,26 @@ Detect beats outside After Effects, snap the cuts in the sheet, then write the b
 markers so the offsets are measured in the built comp.
 
 ```bash
-# percussive stem or the full track when the hits decay below -30 dB between beats
-python3 <skill>/scripts/adtools.py detect music.wav --fps 30 > beats.json       # silencedetect: one silence_end per onset
+python3 <skill>/scripts/adtools.py detect music.wav --fps 30 > beats.json       # full mix: tempo fit on an onset envelope
+python3 <skill>/scripts/adtools.py detect kick.wav --method silence --fps 30      # a percussive stem with silence between hits
 python3 <skill>/scripts/adtools.py grid --bpm 124 --offset 0.1 --seconds 20 --fps 30 > grid.json   # known tempo
 python3 <skill>/scripts/adtools.py snap sheet.json beats.json --max 8 --min-shot 18 --out sheet_snapped.json
 ```
 
-Measured on a 124 bpm bed (beat every 14.52 frames at 30 fps): detection matched the grid within
-0.01 frame on 42 beats. Ten cuts placed by eye sat 2.0 to 6.4 frames off the beat; after `snap` the
-worst was 0.49 frame (frames are whole, beats are not).
+`detect` (default `--method onset`) reads 60 s from `--start`, builds an onset envelope in three
+bands (low, mid, high), finds the tempo by autocorrelation within `--bpm-range` (default 70 to 180),
+fits the beat phase, and returns `{bpm, offset, beats, frames, confidence, onsets}`. A mix with
+steady drums reads `confidence` 0.3 or more. Under 0.2, or with onsets more than 25 ms from the
+grid, it adds a `warning`: run it on a stem, past a voice-over, or narrow `--bpm-range` to the tempo
+you hear (half or double tempo is the usual error), else use `grid` with the tempo from the brief.
+
+Measured: on two music beds of 126 and 122 bpm (known click positions), the fitted tempo was within
+0.02 bpm and every beat within 10 ms over 60 s; a 5 s excerpt read within 0.1 bpm. On a mix with
+voice-over over the music, the tempo came back wrong with a `warning`. `--method silence` (ffmpeg
+`silencedetect`) found 0 beats on a full mix whose level never drops below about -22 dB between
+hits: it only fits a stem. On a 124 bpm stem it matched the grid within 0.01 frame on 42 beats. Ten
+cuts placed by eye sat 2.0 to 6.4 frames off the beat; after `snap` the worst was 0.49 frame (frames
+are whole, beats are not).
 
 ```javascript
 // channel: bridge
@@ -223,7 +234,13 @@ python3 <skill>/scripts/adtools.py loud mix.aif          # integrated LUFS, LRA,
 
 Measured: the raw mix read -21.7 LUFS, -2.6 dBTP. +7.7 dB on every layer reached -14.2 LUFS but +0.1
 dBTP (over). The working route is a bus: nest the master, put `ADBE Aud Compressor` on the nested
-layer, raise Makeup Gain, keep Output Limit below the ceiling.
+layer, raise Makeup Gain, keep Output Limit below the ceiling. A plain level change is enough when
+the gain you need is smaller than the headroom: the measured true peak plus the gain stays at or
+under -1 dBTP. Measured on a single music bed: -17.6 LUFS, -6.9 dBTP, +3.6 dB on the music read
+-14.0 LUFS, -3.3 dBTP.
+
+A spot under 10 s cannot hold 75 frames of end card and two beats of picture: `review` switches to
+45-frame end-card and CTA holds below 10 s, and scales the cuts window to the length.
 
 ```javascript
 // channel: bridge
@@ -362,6 +379,56 @@ zero frame violations at 5 % margins. A 9:16 capture cover-fitted into 1:1 keeps
 height, into 16:9 31.6 %: those shots need a reframe by hand (pick the action per shot with a
 Position key) or a capture in the target ratio. The 16:9 end card came out left-weighted from the
 layout row: layout rows per format are a design pass, not a formula.
+
+## 7b. One master in several formats (end card, brand spot, product mark)
+
+A brand or product spot cut to music: `AEX.ad.build` with `sheet.style = {preset: "brand"}`. The
+preset drops the game-ad defaults (purple end card, white type with a black stroke, 112 % text pop,
+85 % logo pop, CTA pill with a pulse, badges): type in a light brand color without stroke, the CTA
+as a line of text that enters `ctaDelay` frames after the logo, a soft dark scrim under the hook
+line. Override any key in `sheet.style` (`endcardBg`, `textFill`, `cta`, `scrim`; list in
+`adprod.jsx`). Tag the shot that shows the product `product: true`. A logo that is a comp starts at
+the end-card frame, so its own animation plays on the card; to have it already drawing on the cut,
+set the layer's `startTime` a few frames earlier.
+
+`adtools.py review --picture cell.mp4` reads the rendered movie: it fails a run of near-empty frames
+longer than 9 frames (under 3 % of the frame differs from its median) and an end card whose median
+content is under 8 %. `adtools.py contrast frame.png --box x,y,w,h --fill RRGGBB` measures text
+contrast against the frame behind it.
+
+For a master that is not cut from shots (an end card, a product mark), build the master once as a
+comp and give each format its own layout row: the master nested, scaled and placed per format, its
+own text sizes and positions, its own zones. A crop of one frame is never a format.
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// ARGS: {aep, out}. Master PC_TONE_mark (1000x1000, 90 frames) built before this block in the same job.
+var zones5 = { frame5: { top: 0.05, bottom: 0.05, left: 0.05, right: 0.05, source: "5 % title safe" } };
+var zones916 = { frame5: zones5.frame5, reels: { top: 0.14, bottom: 0.35, left: 0.06, right: 0.06, source: "Meta Reels ads safe zone" } };
+var t = function (name, text, size, pos, at) { return { name: name, text: text, font: "Helvetica-Bold", size: size, fill: [0.96, 0.93, 0.87], position: pos, width: 900, inPoint: at }; };
+var layouts = [
+    { fmt: "16x9", name: "TONE_EC_16x9_3s_v001", size: [1920, 1080], scale: 78, position: [600, 540], zones: zones5, texts: [t("TXT_name", "TONE", 170, [1330, 520])] },
+    { fmt: "9x16", name: "TONE_EC_9x16_3s_v001", size: [1080, 1920], scale: 80, position: [540, 700], zones: zones916, texts: [t("TXT_name", "TONE", 150, [540, 1110])] },
+    { fmt: "1x1", name: "TONE_EC_1x1_3s_v001", size: [1080, 1080], scale: 62, position: [540, 440], zones: zones5, texts: [t("TXT_name", "TONE", 130, [540, 900])] }];
+var R = AEX.ad.reformat(AEK.core.comp("PC_TONE_mark"), layouts, { bg: [0.05, 0.06, 0.08] }), k, c;
+for (k in R) { if (R.hasOwnProperty(k)) { c = app.project.itemByID(R[k].id); R[k].frames = AEK.capture.frames(c, [0.3, 1.0, 2.9], ARGS.out, k); } }
+app.project.save(AEK.core.abs(ARGS.aep));
+return R;
+```
+
+- Each row returns `fits` (font size used, overflow) and `zoneViolations` from `AEX.ad.zoneCheck`,
+  which reads every `TXT_`, `LOGO`, `CTA_` and `BADGE_` layer 4 frames after its in point and on its
+  last frame.
+- Measured: a tagline at y 1240 in 9:16 ended at 1252, 4 px into the Reels bottom band (limit 1248):
+  reported on frames 22 and 89. Moved up 65 px, all three formats read zero violations.
+- Capture the review frames in the same job, then render each format out of process:
+  `ae.py aerender --project <aep> --comp TONE_EC_9x16_3s_v001 --out <file>.mp4 --frames 90` returned
+  90 counted frames per format.
+- Read one sheet with the three formats at the same times (`ae.py sheet` fits each frame into a
+  common tile; a 9:16 frame shows small in a 16:9 tile).
+- Legal range, color tags and bit-rate caps of the deliverables belong to
+  scenario-after-effects-color-delivery.
 
 ## 8. Shorter cuts
 
@@ -504,12 +571,42 @@ ae.py aerender --project <project>/AD_cells.aep --comp "<Game>_UA_9x16_20s_H1_C1
   --out <project>/renders/<Game>_UA_9x16_20s_H1_C1_v001.mp4 --template "H.264 - Match Render Settings - 15 Mbps"
 F=<project>/renders/<Game>_UA_9x16_20s_H1_C1_v001.mp4
 test -s "$F" || echo "FAIL: no file (check the comp name, the folder exists, the log)"
-python3 <lead skill>/scripts/ae.py probe "$F"    # codec, size, fps, frame count, audio, bit rate, file size
+python3 <lead skill>/scripts/ae.py probe "$F" --count    # codec, size, fps, counted frames, audio, bit rate, file size
 ```
 
-Measured on 27.0 with a saved 1 s 540x960 comp: a comp name one character off returned exit 0 and no
-file; the right name returned exit 0 and an H.264 540x960 30 fps file of 30 frames. Compare bit rate
-and file size with each network's cap from the brief or its spec page (Apple App Store previews: 500
-MB). Over the cap, re-encode with ffmpeg (`-maxrate`, `-bufsize`, `+faststart`) through
-scenario-after-effects-color-delivery. For a Render Queue render by script, create the folder first:
-`render()` throws "Directory does not exist".
+`ae.py aerender` itself fails with `why` on a full disk, a stalled render or a file shorter than the
+frames rendered; pass `--frames` with the cell's length. Measured on 27.0 with a saved 1 s 540x960
+comp: a comp name one character off returned exit 0 and no file; the right name returned exit 0 and
+an H.264 540x960 30 fps file of 30 frames. Compare bit rate and file size with each network's cap
+from the brief or its spec page (Apple App Store previews: 500 MB). Over the cap, re-encode with
+ffmpeg (`-maxrate`, `-bufsize`, `+faststart`) through scenario-after-effects-color-delivery. For a
+Render Queue render by script, create the folder first: `render()` throws "Directory does not
+exist".
+
+## 12. File and comp naming
+
+One pattern for every deliverable: `<Brand>_<Type>_<ratio>_<length>_v<###>`, the same string for the
+comp, the render and the file. Ratio as `16x9`, `9x16`, `1x1`, `4x5`; length in whole seconds (`5s`,
+`20s`); version with three digits.
+
+| Type           | Use                                       | Example                         |
+| -------------- | ----------------------------------------- | ------------------------------- |
+| `UA_H<n>_C<n>` | user acquisition test cell: hook n, CTA n | `Game_UA_9x16_20s_H1_C2_v001`   |
+| `EC`           | end card or packshot alone                | `Brand_EC_9x16_5s_v001`         |
+| `SPOT`         | brand or product spot                     | `Brand_SPOT_16x9_15s_v003`      |
+| `CUT<n>`       | shorter cut derived from a master         | `Brand_SPOT_CUT10_1x1_10s_v001` |
+
+- A new version raises `v<###>` on every file of the set, even the formats that did not change, so a
+  set always shares one number.
+- The master comp and its precomps keep the project skill's prefixes (`MAIN_`, `PC_`); only
+  delivered comps carry this pattern.
+
+## Version notes
+
+- Essential Properties carry that name since 17.5 (October 2020; earlier builds say Master
+  Properties). `Property.essentialPropertySource` since 22.0.
+- Any layer as a track matte since 23.0; H.264 from the Render Queue since 23.0.
+- Audio Compressor, Gate and Distortion arrived in 26.0, De-esser in 27.0: on 25.x the mix bus has
+  no compressor, so render stems and mix outside After Effects.
+- Protected regions (Responsive Design - Time): set by script with `MarkerValue.protectedRegion`,
+  but on 27.0 a scripted out-point change or `stretch` ignored them (Procedure 8).

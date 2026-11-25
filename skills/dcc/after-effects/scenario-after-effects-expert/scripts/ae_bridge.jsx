@@ -5,9 +5,19 @@
 // suppressed, and writes <id>.json to outbox. status.json is the heartbeat.
 // Needs: Settings > Scripting & Expressions > Allow Scripts to Write Files and Access Network.
 (function (g) {
-    var VERSION = "1.4.0";
+    var VERSION = "1.5.0";
     // aerender and render-engine instances also run Startup scripts: they must never take jobs meant for the interactive session
     try { if (app.isRenderEngine || app.isWatchFolder) { return; } } catch (e00) {}
+    // Measured on 27.0 (macOS): the aerendercore instance that aerender starts runs the Startup scripts with isRenderEngine
+    // false. Its own process name tells it apart: only the interactive application ("MacOS/After Effects") may host the bridge.
+    var SELF = { pid: "", comm: "" };
+    try {
+        if ($.os.indexOf("Mac") >= 0) {
+            var psOut = String(system.callSystem("/bin/ps -o pid=,comm= -p $PPID")).replace(/^\s+|\s+$/g, "");
+            SELF.pid = psOut.split(/\s+/)[0]; SELF.comm = psOut.substring(SELF.pid.length).replace(/^\s+/, "");
+            if (SELF.comm && !/\/MacOS\/After Effects$/.test(SELF.comm)) { return; }
+        }
+    } catch (e01) {}
     if (g.__aeBridge && g.__aeBridge.version === VERSION && g.__aeBridge.taskId !== null) { return; }
     if (g.__aeBridge && g.__aeBridge.stop) { try { g.__aeBridge.stop(); } catch (e0) {} }
     var B = { version: VERSION, root: null, busy: false, lastBeat: 0, taskId: null, jobs: 0, last: "" };
@@ -45,7 +55,7 @@
         writeAtomic(B.root.fsName + "/status.json",
             '{"bridge":' + q(B.version) + ',"ae":' + q(app.version) + ',"state":' + q(state) +
             ',"time":' + now() + ',"jobs":' + B.jobs + ',"last":' + q(B.last) +
-            ',"project":' + q(proj) + ',"dirty":' + (dirty ? "true" : "false") + "}");
+            ',"project":' + q(proj) + ',"dirty":' + (dirty ? "true" : "false") + ',"pid":' + q(SELF.pid) + "}");
         B.lastBeat = now();
     }
     // beginSuppressDialogs() hides the application's own error dialogs, NOT the script functions alert(), confirm() and
@@ -104,8 +114,17 @@
         beat("idle");
     };
     // Jobs found in running/ at start were interrupted by a quit, a crash or a kill: report them, do not run them again.
+    // A job is left alone when the heartbeat says another live process is running it (an instance this guard did not catch).
+    function ownerAlive() {
+        var st = new File(B.root.fsName + "/status.json"), txt = "", m;
+        try { if (!st.exists || !st.open("r")) { return false; } txt = st.read(); st.close(); } catch (e) { return false; }
+        m = /"state":"running"[\s\S]*"pid":"(\d+)"/.exec(txt);
+        if (!m || m[1] === SELF.pid || $.os.indexOf("Mac") < 0) { return false; }
+        try { return String(system.callSystem("/bin/ps -o comm= -p " + m[1])).indexOf("/MacOS/After Effects") >= 0; } catch (e2) { return false; }
+    }
     function sweep() {
         var left = (new Folder(B.root.fsName + "/running")).getFiles("*.jsx"), i, id;
+        if (left.length && ownerAlive()) { return; }
         for (i = 0; i < left.length; i++) {
             id = decodeURI(left[i].name).replace(/\.jsx$/, "");
             if (!(new File(B.root.fsName + "/outbox/" + id + ".json")).exists) {

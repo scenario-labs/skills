@@ -59,7 +59,8 @@ AEK.xio = (function () {
             s = (opts.fit === "cover") ? Math.max(c.width / it.width, c.height / it.height) : Math.min(c.width / it.width, c.height / it.height);
             l.property("ADBE Transform Group").property("ADBE Scale").setValue([s * 100, s * 100]);
         }
-        return { layer: l.name, index: l.index, matchName: l.matchName, inPoint: l.inPoint, outPoint: l.outPoint };
+        // a description, not the layer: get the layer back with app.project.layerByID(result.id) (22.0+)
+        return { layer: l.name, index: l.index, matchName: l.matchName, inPoint: l.inPoint, outPoint: l.outPoint, id: l.id };
     }
     return { describe: describe, importFile: importFile, importItem: importItem, importMany: importMany, replace: replace, addToComp: addToComp };
 })();

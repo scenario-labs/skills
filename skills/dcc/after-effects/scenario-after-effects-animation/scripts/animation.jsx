@@ -126,6 +126,8 @@ AEX.animation = (function () {
         var out = [];
         AEK.core.walk(l, function (p) {
             if (p.propertyType !== PropertyType.PROPERTY) { return; }
+            // a separated Position is hidden and reports its followers' key count with linear types: read the followers only
+            try { if (p.isSeparationLeader && p.dimensionsSeparated) { return; } } catch (e0) {}
             try { if (p.numKeys > 0) { out.push(p); } } catch (e) {}
         });
         return out;
@@ -164,11 +166,28 @@ AEX.animation = (function () {
         return [Math.round(v[0] * 10) / 10, Math.round(v[1] * 10) / 10];
     }
     function isDefaultEase(e) { return e.speed === 0 && Math.abs(e.influence - 33.33333) < 0.05; }
-    // motionCheck(comp): findings {rule, layer, property, key, message} for the habits experts call unfinished motion.
+    // intent(layer, frame, rules, why): marks a key as intended with a layer marker "intended: <rules>: <why>" at that frame.
+    // motionCheck moves a finding on that layer within 1 frame of the marker into `intended` instead of `findings`.
+    function intent(l, frame, rules, why) {
+        var c = l.containingComp, mv = new MarkerValue("intended: " + rules + (why ? ": " + why : ""));
+        l.property("ADBE Marker").setValueAtTime(frame * c.frameDuration, mv);
+        return mv.comment;
+    }
+    function intentsOf(l, c) {
+        var m = l.property("ADBE Marker"), out = [], k, s;
+        for (k = 1; k <= m.numKeys; k++) {
+            s = m.keyValue(k).comment;
+            if (/^intended\b/i.test(s)) { out.push({ frame: Math.round(m.keyTime(k) * c.frameRate), text: s }); }
+        }
+        return out;
+    }
+    // motionCheck(comp, {allow: ["layer|rule|frame", ...], popMin, popRatio}): findings {rule, layer, property, key, frame, message}
+    // for the habits experts call unfinished motion. Findings marked as intended (intent() markers or `allow`) go to `intended`.
     function motionCheck(c, o) {
         o = o || {};
-        var out = [], starts = {}, i, l, ps, j, p, k, nKeys = 0, nDefault = 0, fd = c.frameDuration;
-        function add(rule, layer, prop, key, msg) { out.push({ rule: rule, layer: layer, property: prop, key: key, message: msg }); }
+        var out = [], kept = [], starts = {}, i, l, ps, j, p, k, nKeys = 0, nDefault = 0, fd = c.frameDuration, marks = {};
+        function add(rule, layer, prop, key, msg) { out.push({ rule: rule, layer: layer, property: prop, key: key, frame: (prop !== "*" && key) ? Math.round(p.keyTime(key) * c.frameRate) : null, message: msg }); }
+        for (i = 1; i <= c.numLayers; i++) { marks[c.layer(i).name] = intentsOf(c.layer(i), c); }
         function same(a, b) { if (!(a instanceof Array)) { return Math.abs(a - b) < 0.001; } for (var q = 0; q < a.length; q++) { if (Math.abs(a[q] - b[q]) > 0.001) { return false; } } return true; }
         function dist(a, b) { if (!(a instanceof Array)) { return Math.abs(a - b); } var s = 0, q; for (q = 0; q < a.length; q++) { s += (a[q] - b[q]) * (a[q] - b[q]); } return Math.sqrt(s); }
         for (i = 1; i <= c.numLayers; i++) {
@@ -205,8 +224,142 @@ AEX.animation = (function () {
         }
         for (k in starts) { if (starts.hasOwnProperty(k) && starts[k] >= 3) { add("lockstep", "*", "*", null, starts[k] + " layers start moving on frame " + k + ": offset them (2 to 3 frames for list items)"); } }
         if (nKeys >= 4 && nDefault / nKeys > 0.6) { add("default-ease", "*", "*", null, Math.round(nDefault / nKeys * 100) + " % of keys are Easy Ease (33.33 % both sides): shape them"); }
-        return { keys: nKeys, defaultEase: nDefault, findings: out };
+        var allow = {}, q, x, hit;
+        if (o.allow) { for (q = 0; q < o.allow.length; q++) { allow[o.allow[q]] = true; } }
+        for (q = 0; q < out.length; q++) {
+            hit = null;
+            if (out[q].frame !== null && allow[out[q].layer + "|" + out[q].rule + "|" + out[q].frame]) { hit = "allow list"; }
+            if (!hit && out[q].frame !== null && marks[out[q].layer]) {
+                for (x = 0; x < marks[out[q].layer].length; x++) {
+                    var mk = marks[out[q].layer][x];
+                    if (Math.abs(mk.frame - out[q].frame) <= 1 && (mk.text.toLowerCase().indexOf(out[q].rule) >= 0 || /^intended\s*$/i.test(mk.text))) { hit = mk.text; }
+                }
+            }
+            if (hit) { out[q].because = hit; kept.push(out[q]); out.splice(q, 1); q--; }
+        }
+        return { keys: nKeys, defaultEase: nDefault, findings: out, intended: kept };
+    }
+    // graph(prop, comp, f0, f1, {out, name, width, height, keep}): the graph editor as numbers and as a picture. Progress is the value
+    // projected on the first-to-last-key travel (1 = target); speed is travel per frame. Builds a comp with a white value curve,
+    // an orange speed curve, a gray target line, a dark zero line and blue key ticks; saves one PNG when `out` (absolute file path)
+    // is given, then removes that comp unless keep is true. Without `out` the comp stays (it is the picture).
+    function graph(p, c, f0, f1, o) {
+        o = o || {};
+        var W = o.width || 960, H = o.height || 540, pad = 50, n = f1 - f0, i, v, a = p.keyValue(1), b = p.keyValue(p.numKeys), d = [], len2 = 0, prog = [], spd = [0], mx = 0;
+        function arr(x) { return x instanceof Array ? x : [x]; }
+        a = arr(a); b = arr(b);
+        for (i = 0; i < a.length; i++) { d.push(b[i] - a[i]); len2 += d[i] * d[i]; }
+        // first and last keys equal (anticipation, pulse, loop): measure against the key farthest from the first instead
+        if (len2 < 1e-9) {
+            var far = 0, kk, kv, dd;
+            for (kk = 2; kk <= p.numKeys; kk++) { kv = arr(p.keyValue(kk)); dd = 0; for (i = 0; i < a.length; i++) { dd += (kv[i] - a[i]) * (kv[i] - a[i]); } if (dd > far) { far = dd; b = kv; } }
+            d = []; len2 = 0; for (i = 0; i < a.length; i++) { d.push(b[i] - a[i]); len2 += d[i] * d[i]; }
+        }
+        for (i = 0; i <= n; i++) {
+            v = arr(p.valueAtTime((f0 + i) * c.frameDuration, false));
+            var s = 0, q; for (q = 0; q < a.length; q++) { s += (v[q] - a[q]) * d[q]; }
+            prog.push(len2 > 0 ? s / len2 : 0);
+            if (i > 0) { spd.push(Math.abs(prog[i] - prog[i - 1])); mx = Math.max(mx, spd[i]); }
+        }
+        // target: the last key's value on the same scale (1 for an ordinary move, 0 when first and last keys are equal)
+        var lastV = arr(p.keyValue(p.numKeys)), tg = 0, peakF = 0, maxP = -1e9, cross = 0;
+        for (i = 0; i < a.length; i++) { tg += (lastV[i] - a[i]) * d[i]; }
+        tg = len2 > 0 ? tg / len2 : 0;
+        for (i = 0; i <= n; i++) {
+            if (spd[i] === mx) { peakF = f0 + i; }
+            maxP = Math.max(maxP, prog[i]);
+            if (i > 0 && (prog[i - 1] - tg) * (prog[i] - tg) < 0) { cross++; }
+        }
+        var settle = null; for (i = n; i >= 0; i--) { if (Math.abs(prog[i] - tg) > 0.01) { settle = f0 + i + 1; break; } }
+        var R = { frames: [f0, f1], target: tg, progress: prog, speed: spd, peakSpeedFrame: peakF, overshootPct: tg === 1 ? Math.round(Math.max(0, maxP - 1) * 1000) / 10 : null, crossings: cross, settleFrame: settle };
+        var g = AEK.build.comp(o.name || "graph", { width: W, height: H, fps: c.frameRate, duration: c.frameDuration * 2, bg: [0.12, 0.12, 0.13] });
+        var lo = Math.min(0, Math.min.apply(null, prog)), hi = Math.max(1.15, maxP + 0.05);
+        function X(k) { return pad + (W - 2 * pad) * k / n - W / 2; }
+        function Y(val) { return H / 2 - pad - (H - 2 * pad) * (val - lo) / (hi - lo); }
+        function line(name, pts, color, w) {
+            var L = g.layers.addShape(); L.name = name;
+            var C = L.property("ADBE Root Vectors Group"), gi = C.addProperty("ADBE Vector Group").propertyIndex;
+            var V = function () { return L.property("ADBE Root Vectors Group").property(gi).property("ADBE Vectors Group"); };
+            V().addProperty("ADBE Vector Shape - Group");
+            var sh = new Shape(), z = [], k; for (k = 0; k < pts.length; k++) { z.push([0, 0]); }
+            sh.vertices = pts; sh.inTangents = z; sh.outTangents = z; sh.closed = false;
+            V().property(1).property("ADBE Vector Shape").setValue(sh);
+            V().addProperty("ADBE Vector Graphic - Stroke");
+            V().property(2).property("ADBE Vector Stroke Color").setValue(color); V().property(2).property("ADBE Vector Stroke Width").setValue(w || 3);
+            L.property("ADBE Transform Group").property("ADBE Position").setValue([W / 2, H / 2]);
+            return L;
+        }
+        var vp = [], sp = [];
+        for (i = 0; i <= n; i++) { vp.push([X(i), Y(prog[i])]); sp.push([X(i), H / 2 - pad - (H - 2 * pad) * (mx > 0 ? spd[i] / mx : 0) * 0.9]); }
+        line("target", [[X(0), Y(tg)], [X(n), Y(tg)]], [0.5, 0.5, 0.5], 1);
+        line("zero", [[X(0), Y(0)], [X(n), Y(0)]], [0.3, 0.3, 0.3], 1);
+        for (i = 1; i <= p.numKeys; i++) { var kf = Math.round(p.keyTime(i) * c.frameRate) - f0; if (kf >= 0 && kf <= n) { line("key " + i, [[X(kf), H / 2 - pad], [X(kf), -H / 2 + pad]], [0.35, 0.55, 1], 1); } }
+        line("speed", sp, [1, 0.55, 0.2], 3);
+        line("value", vp, [1, 1, 1], 3);
+        if (o.out) { R.png = AEK.capture.frame(g, 0, o.out); }
+        R.comp = g.name;
+        if (o.out && !o.keep) { g.remove(); R.comp = null; R.removed = true; }
+        return R;
+    }
+    // report(comp, props): the motion report as a function, to call at the end of the job that built the comp (shared app).
+    // Per animated transform property: keys, peak speed per frame, peak frame, overshoot %, settle frame; then motionCheck and blur.
+    function report(c, props) {
+        var out = { comp: c.name, fps: c.frameRate, layers: [] }, i, j, ps, p, s, k;
+        var want = props || ["ADBE Position", "ADBE Scale", "ADBE Rotate Z", "ADBE Opacity"];
+        // separated X and Y followers carry their own match names: anything starting with "ADBE Position" counts as Position
+        function wanted(mn) { for (var q = 0; q < want.length; q++) { if (want[q] === mn || (want[q] === "ADBE Position" && /^ADBE Position/.test(mn))) { return true; } } return false; }
+        for (i = 1; i <= c.numLayers; i++) {
+            ps = animatedProps(c.layer(i));
+            var L = { layer: c.layer(i).name, parent: c.layer(i).parent ? c.layer(i).parent.name : null, motionBlur: c.layer(i).motionBlur, props: [] };
+            for (j = 0; j < ps.length; j++) {
+                p = ps[j];
+                if (!wanted(p.matchName) || p.numKeys < 2) { continue; }
+                s = AEK.motion.sample(p, c, p.keyTime(1), p.keyTime(p.numKeys));
+                var ks = AEK.motion.keys(p, c), frames = [];
+                for (k = 0; k < ks.length; k++) { frames.push(ks[k].frame + " " + ks[k].inType.charAt(0) + "/" + ks[k].outType.charAt(0) + " in " + Math.round(ks[k].inInfluence) + " out " + Math.round(ks[k].outInfluence)); }
+                L.props.push({ property: p.matchName, keys: frames, peakPerFrame: Math.round(s.peakSpeed / c.frameRate * 10) / 10, peakFrame: s.peakFrame, overshootPct: s.overshoot, settleFrame: s.settleFrame });
+            }
+            if (L.props.length) { out.layers.push(L); }
+        }
+        out.check = motionCheck(c);
+        out.blur = { on: c.motionBlur, angle: c.shutterAngle, phase: c.shutterPhase, samples: c.motionBlurSamplesPerFrame, adaptiveLimit: c.motionBlurAdaptiveSampleLimit };
+        return out;
+    }
+    // onScreen(layer, comp, frame): share of the layer's box (sourceRectAtTime through toComp, parents included) inside the
+    // frame, and the layer's own Opacity, at that frame. Masks are not counted. Uses a temporary Point Control, removed at once.
+    function onScreen(l, c, f) {
+        var t = f * c.frameDuration, idx = l.property("ADBE Effect Parade").addProperty("ADBE Point Control").propertyIndex, i, v, xs = [], ys = [];
+        var corners = ["[r.left, r.top]", "[r.left + r.width, r.top]", "[r.left, r.top + r.height]", "[r.left + r.width, r.top + r.height]"];
+        for (i = 0; i < 4; i++) {
+            var pt = l.property("ADBE Effect Parade").property(idx).property(1);
+            pt.expression = "var r = thisLayer.sourceRectAtTime(time, false); thisLayer.toComp(" + corners[i] + ");";
+            v = pt.valueAtTime(t, false); xs.push(v[0]); ys.push(v[1]);
+        }
+        l.property("ADBE Effect Parade").property(idx).remove();
+        var x0 = Math.min(xs[0], xs[1], xs[2], xs[3]), x1 = Math.max(xs[0], xs[1], xs[2], xs[3]), y0 = Math.min(ys[0], ys[1], ys[2], ys[3]), y1 = Math.max(ys[0], ys[1], ys[2], ys[3]);
+        var area = Math.max(1e-6, (x1 - x0) * (y1 - y0)), iw = Math.max(0, Math.min(x1, c.width) - Math.max(x0, 0)), ih = Math.max(0, Math.min(y1, c.height) - Math.max(y0, 0));
+        var active = t >= l.inPoint && t < l.outPoint;
+        return { frame: f, inside: active ? Math.round(iw * ih / area * 1000) / 1000 : 0, opacity: l.property("ADBE Transform Group").property("ADBE Opacity").valueAtTime(t, false) };
+    }
+    // firstSeen(layer, comp, {min, opacity, last}): first frame (from 0) where at least `min` (default 0.5) of the layer's box is
+    // inside the frame at `opacity` (default 50) or more. The feed rule asks for frame 3 or earlier.
+    function firstSeen(l, c, o) {
+        o = o || {};
+        var f, r, last = o.last === undefined ? 30 : o.last;
+        for (f = 0; f <= last; f++) { r = onScreen(l, c, f); if (r.inside >= (o.min || 0.5) && r.opacity >= (o.opacity === undefined ? 50 : o.opacity)) { return f; } }
+        return null;
+    }
+    // ovalMask(layer, {center, size, feather, name}): the in-app minimum for a still without alpha: one elliptical mask in layer
+    // pixels, feathered. It hides a backdrop; it cannot remove a shadow or reflection baked inside the oval. Set the comp
+    // background to the plate's corner color, or the feathered rim shows (procedure 16).
+    function ovalMask(l, o) {
+        o = o || {};
+        var w = l.width, h = l.height, ctr = o.center || [w / 2, h / 2], sz = o.size || [w * 0.8, h * 0.8];
+        // the kit's mask builder: it returns the mask fetched fresh, safe after further addProperty calls on the layer
+        var m = AEK.build.mask(l, { ellipse: [ctr[0] - sz[0] / 2, ctr[1] - sz[1] / 2, sz[0], sz[1]], feather: o.feather === undefined ? 60 : o.feather, name: o.name });
+        return m.name;
     }
     return { EASES: EASES, move: move, overshoot: overshoot, springExpression: springExpression, bounce: bounce, shiftKeys: shiftKeys, stagger: stagger,
-        animatedProps: animatedProps, copyEase: copyEase, compPoint: compPoint, motionCheck: motionCheck };
+        animatedProps: animatedProps, copyEase: copyEase, compPoint: compPoint, intent: intent, motionCheck: motionCheck, graph: graph,
+        report: report, onScreen: onScreen, firstSeen: firstSeen, ovalMask: ovalMask };
 })();

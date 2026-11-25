@@ -65,9 +65,16 @@ the match names in [procedures.md](procedures.md).
   100 %, Type of Conversion Rect to Polar. Seam fix: a new adjustment layer inside the band comp
   with Effect > Distort > Offset (Shift Center To half the width) and two feathered masks at the
   edges. Composition > Composition Settings > Advanced > Shutter Angle 90, Shutter Phase -45.
+- **Wave on the floor:** a shape layer with two Ellipse paths (outer and inner edge of the band),
+  Add > Fill with Fill Rule Even-Odd. Transform: Group Scale Y at floorAspect x 100 %, Position at
+  the floor point under the source, so the ring lies on the floor (the scripted path also widens its
+  front half). Effect > Blur & Sharpen > Gaussian Blur 2 to 3 px. Put it under the subject with a
+  track matte from the subject matte above the floor line.
 - **Rays:** precompose the light source alone (sun disc, window, lamp and what it shines through);
-  on that precomp layer Effect > Generate > CC Light Rays, Radius 120, Intensity 100; mode Screen
-  (F4 shows the Mode column); drag the layer just below the foreground layer.
+  on that precomp layer Effect > Generate > CC Light Rays, Radius 120 or 1.2 x the sun disc's radius
+  if larger, Intensity 100 (about 60 with a large radius); mode Screen (F4 shows the Mode column);
+  drag the layer just below the foreground layer. For soft beams, Gaussian Blur the source a little
+  before the rays and 6 px after.
 - **Grain:** Effect > Noise & Grain > Add Grain on a top adjustment layer, Viewing Mode Final Output
   (the default Preview shows only a box), Intensity 1.5 to 2. Or Effect > Noise & Grain > Noise 2 %,
   Use Color Noise off, Clipping on.

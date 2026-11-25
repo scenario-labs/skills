@@ -56,19 +56,51 @@ AEX.track = (function () {
         return out;
     }
 
-    // nullFromCorners(comp, corners, name, startFrame): a null carrying Position (centroid), Rotation (top edge
-    // angle) and Scale (top edge length relative to the first frame) for layers parented to it.
-    function nullFromCorners(c, corners, name, startFrame) {
-        var n = c.layers.addNull(c.duration), tg, pos = [], rot = [], sc = [], i, dx, dy, len0, len, ang0, ang, prev = null, t;
+    // homography(src, dst): 3x3 map (row-major, h33 = 1) taking four points [UL, UR, LR, LL] onto four others.
+    function homography(s, d) {
+        var A = [], i, j, k, r, f, x = [], m;
+        for (i = 0; i < 4; i++) {
+            A.push([s[i][0], s[i][1], 1, 0, 0, 0, -s[i][0] * d[i][0], -s[i][1] * d[i][0], d[i][0]]);
+            A.push([0, 0, 0, s[i][0], s[i][1], 1, -s[i][0] * d[i][1], -s[i][1] * d[i][1], d[i][1]]);
+        }
+        for (i = 0; i < 8; i++) {  // Gaussian elimination with partial pivoting
+            m = i; for (r = i + 1; r < 8; r++) { if (Math.abs(A[r][i]) > Math.abs(A[m][i])) { m = r; } }
+            f = A[i]; A[i] = A[m]; A[m] = f;
+            for (r = i + 1; r < 8; r++) { f = A[r][i] / A[i][i]; for (k = i; k < 9; k++) { A[r][k] -= f * A[i][k]; } }
+        }
+        for (i = 7; i >= 0; i--) { f = A[i][8]; for (j = i + 1; j < 8; j++) { f -= A[i][j] * x[j]; } x[i] = f / A[i][i]; }
+        return [x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], 1];
+    }
+    function apply(H, p) {
+        var w = H[6] * p[0] + H[7] * p[1] + H[8];
+        return [(H[0] * p[0] + H[1] * p[1] + H[2]) / w, (H[3] * p[0] + H[4] * p[1] + H[5]) / w];
+    }
+    // pointsFromCorners(corners, point, ref): a point picked on frame `ref` (index in corners) carried through each
+    // frame's homography. Exact under perspective: the path for a pin, a callout or pointTracker().
+    function pointsFromCorners(corners, point, ref) {
+        var out = [], i, b = corners[ref || 0];
+        for (i = 0; i < corners.length; i++) { out.push(apply(homography(b, corners[i]), point)); }
+        return out;
+    }
+
+    // nullFromCorners(comp, corners, name, startFrame, {point, ref}): a null that sits on `point` (picked on frame
+    // `ref`; default the centroid of that frame's quad) carried through each frame's homography. Rotation and Scale
+    // come from the homography's local derivative at that point, relative to frame `ref`. Position is exact under
+    // perspective; a layer parented at a distance only gets the local rotation and scale, so give every element
+    // that must stick its own null (or pointTracker), on its own point.
+    function nullFromCorners(c, corners, name, startFrame, o) {
+        o = o || {};
+        var n = c.layers.addNull(c.duration), tg, pos = [], rot = [], sc = [], i, H, p, w, j, ang, s, prev = null, t;
+        var ref = o.ref || 0, b = corners[ref];
+        var p0 = o.point || [(b[0][0] + b[1][0] + b[2][0] + b[3][0]) / 4, (b[0][1] + b[1][1] + b[2][1] + b[3][1]) / 4];
         n.name = name || "track_null";
         for (i = 0; i < corners.length; i++) {
-            var q = corners[i];
-            pos.push([(q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4]);
-            dx = q[1][0] - q[0][0]; dy = q[1][1] - q[0][1]; len = Math.sqrt(dx * dx + dy * dy); ang = Math.atan2(dy, dx) * 180 / Math.PI;
-            if (i === 0) { len0 = len; ang0 = ang; }
-            ang = ang - ang0;
+            H = homography(b, corners[i]); p = apply(H, p0);
+            w = H[6] * p0[0] + H[7] * p0[1] + H[8];
+            j = [(H[0] - H[6] * p[0]) / w, (H[1] - H[7] * p[0]) / w, (H[3] - H[6] * p[1]) / w, (H[4] - H[7] * p[1]) / w];
+            ang = Math.atan2(j[2], j[0]) * 180 / Math.PI; s = Math.sqrt(Math.abs(j[0] * j[3] - j[1] * j[2]));
             if (prev !== null) { while (ang - prev > 180) { ang -= 360; } while (ang - prev < -180) { ang += 360; } }
-            prev = ang; rot.push(ang); sc.push([100 * len / len0, 100 * len / len0]);
+            prev = ang; pos.push(p); rot.push(ang); sc.push([100 * s, 100 * s]);
         }
         t = times(c, corners.length, startFrame || 0);
         tg = n.property("ADBE Transform Group");
@@ -174,6 +206,57 @@ AEX.track = (function () {
         return l.property("ADBE MTrackers").property(ti);
     }
 
+    // effect(layer, matchName): the first effect with that match name, or null (display names change with the install language)
+    function effect(l, mn) {
+        var fx = l.property("ADBE Effect Parade"), i;
+        for (i = 1; i <= fx.numProperties; i++) { if (fx.property(i).matchName === mn) { return fx.property(i); } }
+        return null;
+    }
+
+    // cornerNulls(comp, corners, prefix, startFrame): four nulls named <prefix>UL, UR, LR, LL keyed on every frame
+    // (comp space), the layout a point tracker or a Mocha export to nulls leaves. Returns the four names.
+    function cornerNulls(c, corners, prefix, startFrame) {
+        var tags = ["UL", "UR", "LR", "LL"], t = times(c, corners.length, startFrame || 0), k, i, n, v, names = [];
+        for (k = 0; k < 4; k++) {
+            n = c.layers.addNull(c.duration); n.name = (prefix || "track_") + tags[k];
+            v = []; for (i = 0; i < corners.length; i++) { v.push(corners[i][k]); }
+            // a null's anchor is its own corner; Position alone then equals the tracked point
+            n.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);
+            n.property("ADBE Transform Group").property("ADBE Position").setValuesAtTimes(t, v);
+            names.push(n.name);
+        }
+        return names;
+    }
+
+    // pinFromNulls(layer, [UL, UR, LR, LL] null names): Corner Pin driven by expressions that read each null's comp
+    // position (toComp) and convert it to the pinned layer's space (fromComp). The pin follows any later change to the
+    // nulls; the layer may be moved or scaled. Expression pins get no motion blur: bake them, or use cornerPin().
+    function pinFromNulls(l, names) {
+        var fx = l.property("ADBE Effect Parade").addProperty("ADBE Corner Pin"), idx = fx.propertyIndex, ord = [0, 1, 3, 2], k, p;
+        for (k = 0; k < 4; k++) {
+            p = l.property("ADBE Effect Parade").property(idx).property(k + 1);
+            p.expression = "var n = thisComp.layer(\"" + names[ord[k]] + "\");\nfromComp(n.toComp(n.anchorPoint));";
+        }
+        return l.property("ADBE Effect Parade").property(idx);
+    }
+
+    // restoreMotion(layer, shake, {startFrame}): the inverse of stabilize() without auto-scale: put on a precomp of
+    // the stabilized plate plus its insert, it gives the plate its motion back and the insert rides with it.
+    // Collapse Transformations is switched on: without it the precomp crops the stabilized plate at its frame,
+    // and those edges come back as black bands (95,000 px on a 960x544 frame moved 98 px, measured).
+    function restoreMotion(l, shake, o) {
+        o = o || {};
+        var c = l.containingComp, t = times(c, shake.length, o.startFrame || 0), tg = l.property("ADBE Transform Group"), pos = [], rot = [], i;
+        for (i = 0; i < shake.length; i++) { pos.push([c.width / 2 + shake[i][0], c.height / 2 + shake[i][1]]); rot.push(shake[i][2]); }
+        tg.property("ADBE Anchor Point").setValue([l.source.width / 2, l.source.height / 2]);
+        tg.property("ADBE Position").setValuesAtTimes(t, pos);
+        tg.property("ADBE Rotate Z").setValuesAtTimes(t, rot);
+        l.collapseTransformation = true;
+        return { frames: shake.length, collapsed: l.collapseTransformation };
+    }
+
     return { cornerPin: cornerPin, readCorners: readCorners, nullFromCorners: nullFromCorners, smoothPath: smoothPath,
-        stabilize: stabilize, reanchor: reanchor, error: error, pointTracker: pointTracker, col: col };
+        stabilize: stabilize, reanchor: reanchor, error: error, pointTracker: pointTracker, col: col,
+        effect: effect, cornerNulls: cornerNulls, pinFromNulls: pinFromNulls, restoreMotion: restoreMotion,
+        homography: homography, pointsFromCorners: pointsFromCorners };
 })();

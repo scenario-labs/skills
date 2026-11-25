@@ -11,11 +11,14 @@ spec.json is a list of deliverables. Every key except "file" is optional; only t
    "color": {"primaries": "bt709", "trc": "bt709", "space": "bt709", "range": "tv"},
    "faststart": true, "max_mb": 20,
    "audio": {"codec": "aac", "rate": 48000, "channels": 2, "lufs": -14, "lufs_tol": 1.0, "true_peak_max": -1.0},
-   "no_audio": true,
+   "no_audio": true, "no_data": true,
    "sequence_start": 0,
    "levels": {"every": 1, "min8": 16, "max8": 235}}
-"levels" checks the Y (luminance) floor and ceiling with ffmpeg signalstats. Limits are given in 8-bit units and scaled to the
+"levels" checks the Y (luminance) floor and ceiling with ffmpeg signalstats. With "max_out_pct" (example 0.01) it passes on area
+instead: the worst frame's share of pixels outside the broadcast range (signalstats BRNG, Y, U or V) must stay under it, and
+Y min and max are printed for information. Grain encoded by x264 leaves a few isolated overshoot pixels that a per-pixel limit fails. Limits are given in 8-bit units and scaled to the
 file's bit depth read by ffprobe (16 to 235 becomes 64 to 940 at 10 bits, 256 to 3760 at 12 bits). YUV files only.
+"no_data" fails on any data stream, such as the timecode (tmcd) track ffmpeg writes from an After Effects QuickTime.
 Needs ffprobe and ffmpeg on PATH. Standard library only. Exit code 1 when any row fails.
 """
 import glob
@@ -106,11 +109,13 @@ def bit_depth(stream):
 
 def luma_range(path, every):
     """Lowest YMIN and highest YMAX from ffmpeg signalstats, sampling one frame in `every`. Values are in the file's own bit depth."""
-    vf = "select=not(mod(n\\,%d)),signalstats,metadata=print" % max(1, int(every))
+    vf = "select=not(mod(n\\,%d)),signalstats=stat=brng,metadata=print" % max(1, int(every))
     p = run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-map", "0:v:0", "-vf", vf, "-f", "null", "-"])
     lo = [int(float(x)) for x in re.findall(r"signalstats\.YMIN=([\d.]+)", p.stderr)]
     hi = [int(float(x)) for x in re.findall(r"signalstats\.YMAX=([\d.]+)", p.stderr)]
-    return (min(lo), max(hi), len(lo)) if lo and hi else (None, None, 0)
+    # BRNG: share of the frame's pixels outside the broadcast range (Y, U or V), worst frame
+    br = [float(x) for x in re.findall(r"signalstats\.BRNG=([\d.e+-]+)", p.stderr)]
+    return (min(lo), max(hi), len(lo), max(br) if br else None) if lo and hi else (None, None, 0, None)
 
 
 def row(rows, name, expected, measured, ok):
@@ -186,9 +191,16 @@ def check(spec):
         if not pix.startswith("yuv"):
             row(rows, "Y levels", "YUV file", pix, False)
         else:
-            lo, hi, n = luma_range(path, lv.get("every", 1))
-            row(rows, "Y min (%d-bit)" % bits, ">= %d" % lo_lim, lo, lo is not None and lo >= lo_lim)
-            row(rows, "Y max (%d-bit)" % bits, "<= %d" % hi_lim, hi, hi is not None and hi <= hi_lim)
+            lo, hi, n, brng = luma_range(path, lv.get("every", 1))
+            if "max_out_pct" in lv:
+                # area tolerance: a few encoder overshoot pixels on grain pass, a clipped or lifted picture does not
+                pct = None if brng is None else brng * 100
+                row(rows, "Y min / max (%d-bit), information" % bits, "%d to %d" % (lo_lim, hi_lim), "%s to %s" % (lo, hi), True)
+                row(rows, "pixels outside legal range, worst frame %", "<= %s" % lv["max_out_pct"],
+                    None if pct is None else round(pct, 5), pct is not None and pct <= lv["max_out_pct"])
+            else:
+                row(rows, "Y min (%d-bit)" % bits, ">= %d" % lo_lim, lo, lo is not None and lo >= lo_lim)
+                row(rows, "Y max (%d-bit)" % bits, "<= %d" % hi_lim, hi, hi is not None and hi <= hi_lim)
     if "faststart" in spec and not is_seq:
         fs = moov_first(path)
         row(rows, "faststart (moov before mdat)", spec["faststart"], fs, fs == spec["faststart"])
@@ -196,6 +208,9 @@ def check(spec):
         row(rows, "size MB", "<= %s" % spec["max_mb"], round(size_mb, 2), size_mb <= spec["max_mb"])
     if spec.get("no_audio"):
         row(rows, "audio stream", "none", a.get("codec_name") if a else "none", a is None)
+    if spec.get("no_data") and not is_seq:
+        d = [s.get("codec_tag_string") or s.get("codec_name") for s in info["streams"] if s.get("codec_type") == "data"]
+        row(rows, "data streams", "none", ", ".join(d) if d else "none", not d)
     if "audio" in spec:
         exp = spec["audio"]
         if a is None:

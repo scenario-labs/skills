@@ -1,6 +1,6 @@
 ---
 name: scenario-after-effects-expressions
-description: "Use when writing, fixing, testing or speeding up After Effects expressions or expression rigs: a box that resizes to the text, sourceRectAtTime, lower-third template, second line follows the first, delay or follow-through from one controller, valueAtTime, loopOut, a loop that jumps, seamless wiggle loop, inertial bounce or overshoot, bounce back, counter with thousands separators, toLocaleString, dropdown menu control theme switch, sliders and controller nulls, wiggle that is the same on every layer, seedRandom, posterizeTime, toComp or fromComp, effect point does not follow the layer, text style expressions, highlight a word, JSON or CSV driven text, sourceData, expression error, orange warning banner, expression disabled, renamed layer broke my expressions, old expression does not work in the JavaScript engine, render is slow because of expressions, bake or convert expression to keyframes."
+description: "Use when writing, fixing or speeding up After Effects expressions or rigs: a box that fits its text, delay from one controller, a loop that jumps, inertial bounce, counters, dropdown themes, toComp, text style or JSON-driven text, music-reactive graphics from Convert Audio to Keyframes, an expression error, a rename that broke expressions, or a slow render to bake."
 license: MIT
 ---
 
@@ -44,6 +44,10 @@ toolkit, version traps).
 - **Text animators run after style expressions.** An animator Fill Color on a range overrides a
   `setFillColor` theme there (Nic and Kyle Hamrick, yG8UbiKKeYw 00:26:08; measured in 27.0). A theme
   switch must drive that animator too.
+- **Music drives one Level, never each element.** Convert Audio to Keyframes gives raw amplitude
+  that changes direction almost every frame. One controller normalizes it between a floor and a
+  ceiling, adds an attack and a release, and every element reads that Level with a whole-frame delay
+  [added, measured].
 - **A rename by script does not update expressions.** Measured in 27.0: the text keeps the old name
   and breaks. Rename through `AEX.expressions.renameLayer`, which rewrites the references.
 
@@ -68,7 +72,7 @@ Helper module: `scripts/expressions.jsx` (`AEX.expressions`), loaded with
 `ae.py run job.jsx --lib skills/scenario-after-effects-expressions/scripts/expressions.jsx`. It
 holds the rig builder, the rig's expressions (`AEX.expressions.CODE`) and the measuring tools:
 `probe` (evaluates any expression body and returns JSON), `compRect`, `margins`, `lagFrames`,
-`seam`, `atFrames`, `timeEval`, `renameLayer`.
+`seam`, `atFrames`, `timeEval`, `renameLayer`, `audioLevel` and `levelStats` (procedures 13).
 
 1. **Inspect.** Run the error report (procedures 9): every expression, its error, the engine, plus
    `AEK.expr.check(comp, 5)`. GATE: a list of existing failures before you touch anything.
@@ -77,8 +81,10 @@ holds the rig builder, the rig's expressions (`AEX.expressions.CODE`) and the me
    no control named "Slider Control 2".
 3. **Write each expression with `AEK.expr.set(prop, code, [times])`.** It throws with the engine's
    message, because a broken expression never throws at assignment. For a lower third,
-   `AEX.expressions.rig(comp, {name, title})` writes all 19 expressions (procedures 1). GATE:
-   `failed` 0.
+   `AEX.expressions.rig(comp, {name, title})` writes all 19 expressions (procedures 1). For music,
+   `AEX.expressions.audioLevel(comp, audioLayer, {from, to, beat})` builds CTRL > Level, and each
+   element reads Level with a whole-frame delay (procedures 13). GATE: `failed` 0; `levelStats` max
+   1, 80 % of valleys under 0.2.
 4. **Measure against the contract (procedures 2).** Box margins with short text, long text, a bigger
    size and 150 % scale; second-line gap with one and two lines; `lagFrames` per follower; `seam` on
    every loop; counter at its first, last and after-last frame; each dropdown item. GATE: the
@@ -87,26 +93,32 @@ holds the rig builder, the rig's expressions (`AEX.expressions.CODE`) and the me
    follower, nest the comp twice with different Theme values through Essential Properties, empty the
    text. GATE: the same numbers; `check` still 0.
 6. **Look once.** `AEK.capture.frames` at the move start, mid-move, settle, inside the idle, last
-   frame; `ae.py sheet`. GATE: the contact-sheet list in `references/critique.md`.
-7. **Cost and baking.** `timeEval` on any property with a loop over samples; bake with
-   `AEK.expr.bake` only for delivery targets that cannot run expressions or when evaluation
-   dominates render time (procedures 10). GATE: baked values equal the live values at whole frames.
+   frame; `ae.py sheet`. GATE: the contact-sheet list in `references/critique.md`; for music, two
+   element families respond, the group fills 60 % of the height, extras ride it through `toComp`.
+7. **Cost and baking.** `timeEval` on any property with a loop over samples (milliseconds for 120
+   frames, first pass). Bake with `AEK.expr.bake` for delivery targets that cannot run expressions,
+   and bake a leader that many layers read once it is tuned: in the app its results are cached per
+   frame, under `aerender` they are not (procedures 10). To decide, save the project twice (live,
+   leader baked) and compare `aerender` times. GATE: baked values equal the live values at whole
+   frames.
 8. **Report** the controls, the layer-name contract, the measured numbers, and any fallback chosen.
 
 ## Numbers
 
-| Value           | Measured or source                                                             | Relative to                                                     |
-| --------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| Box padding     | 32 px x, 18 px y on all sides                                                  | comp pixels, constant at any text scale with the `/ s` division |
-| Second line gap | 14 px from line 1 ink bottom                                                   | comp pixels; descenders add their depth (14 px at 72 px type)   |
-| Follow lag      | 3 frames per element                                                           | any frame rate                                                  |
-| Inertial bounce | amp 0.05, freq 4, decay 8, window 1 s; 10 to 11 % overshoot, settles in 0.7 s  | seconds after the last key (qXPzt3nNJRI 00:01:18)               |
-| Bounce back     | e 0.7, g 5000, nMax 9; 800 px drop rebounds 125 px, 7 to 8 hops                | pixels per second squared (qXPzt3nNJRI 00:04:04)                |
-| Seam ratio      | under 2.5 passes; cycle with open keys 27, naive wiggle 16, circular noise 0.8 | median step inside the loop                                     |
-| Stepped jitter  | `posterizeTime(4)` holds 6 frames                                              | 24 fps comp (R24oYxqk8C0 00:05:08)                              |
-| Film flicker    | `wiggle(24, 0.2)` on exposure                                                  | 24 fps (ZP_eglqgsYE 00:46:16)                                   |
-| Evaluation cost | 60-sample loop 48 ms, `smooth(1, 61)` 14 ms, one `valueAtTime` 4 ms            | 120 frames, first pass; cached passes under 1 ms                |
-| Auto leading    | `fontSize * 1.2`                                                               | text style `autoLeading` true                                   |
+| Value                     | Measured or source                                                                                                       | Relative to                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Box padding               | 32 px x, 18 px y on all sides                                                                                            | comp pixels, constant at any text scale with the `/ s` division |
+| Second line gap           | 14 px from line 1 ink bottom                                                                                             | comp pixels; descenders add their depth (14 px at 72 px type)   |
+| Follow lag                | 3 frames per element                                                                                                     | any frame rate                                                  |
+| Inertial bounce           | amp 0.05, freq 4, decay 8, window 1 s; 10 to 11 % overshoot, settles in 0.7 s                                            | seconds after the last key (qXPzt3nNJRI 00:01:18)               |
+| Bounce back               | e 0.7, g 5000, nMax 9; 800 px drop rebounds 125 px, 7 to 8 hops                                                          | pixels per second squared (qXPzt3nNJRI 00:04:04)                |
+| Seam `ratio` and `repeat` | pass: ratio under 2.5 and repeat 0; exact loops 0.16 to 1.01; naive wiggle 5.7, sawtooth 29; open cycle repeat 600       | ratio over the step before, after, or the median                |
+| Stepped jitter            | `posterizeTime(4)` holds 6 frames                                                                                        | 24 fps comp (R24oYxqk8C0 00:05:08)                              |
+| Film flicker              | `wiggle(24, 0.2)` on exposure                                                                                            | 24 fps (ZP_eglqgsYE 00:46:16)                                   |
+| Evaluation cost           | 60-sample loop 48 ms, `smooth(1, 61)` 14 ms, one `valueAtTime` 4 ms                                                      | 120 frames, first pass; cached passes under 1 ms                |
+| Auto leading              | `fontSize * 1.2`                                                                                                         | text style `autoLeading` true                                   |
+| Audio Level               | floor and ceiling = 25th and 97th percentile; attack 2 frames; release at most (beat - attack) / 2                       | gate: `levelStats` max 1, 80 % of valleys under 0.2             |
+| Level cost                | 2 + 28 samples per frame: 71 ms per 120 frames; each reader 5 ms; `aerender` of 96 readers 4 to 5 s live, 2 to 3 s baked | 1280x720, 120 frames                                            |
 
 ## Quality gates
 
@@ -128,30 +140,33 @@ counter right-aligned with separators; theme colors legible.
 
 ## Common mistakes
 
-| Mistake                                                    | Symptom                                            | Fix                                                               |
-| ---------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------- |
-| Box position `[w/2, h/2]` only                             | box drifts when font size or justification changes | add `left` and `top` (CVliDoNgoCg 00:09:32)                       |
-| `sourceRectAtTime(time)` on animated text                  | box breathes with the animator                     | fixed sample time, same for all four values                       |
-| Box parented, padding in pixels                            | padding grows with text scale                      | divide padding by `scale / 100`                                   |
-| Delay `time - 0.1`                                         | lag changes with frame rate                        | frames times `thisComp.frameDuration`                             |
-| `loopOut()` on keys that do not close                      | jump at every loop                                 | make the last key equal the first, or `pingpong`                  |
-| `wiggle(..., time % T)`                                    | jump every T                                       | blended wiggle or circular noise (procedures 3)                   |
-| `random()` without `seedRandom(n, true)`                   | value changes every frame                          | seed with `true` for a value held for the whole layer             |
-| `posterizeTime` to save render time                        | no saving measured                                 | bake, or reduce samples                                           |
-| `setFillColor(c)` with a four-value color                  | outside the documented `[R, G, B]` form            | pass `[c[0], c[1], c[2]]` (text-style doc)                        |
-| `setFillColor` on a layer with Fill off                    | no color; reading `fillColor` throws               | `setApplyFill(true).setFillColor(...)`                            |
-| Theme on Source Text, animator Fill Color on the same text | some characters keep the old color                 | read the dropdown in the animator's Fill Color too                |
-| Padding needed on a box that scales on                     | box builds from the wrong edge                     | Offset Paths, group anchor `[left - o, top - o]` (procedures 1)   |
-| Expression banner dismissed                                | later errors never show for a person               | Show Warning Banner back on in Preferences (GUSJhbPwpBE 00:02:35) |
-| `toCompVec` for a direction                                | wrong length on a scaled parent                    | point difference `toComp(b) - toComp(a)`                          |
-| One-line `if (...) a else b`                               | SyntaxError in the JavaScript engine               | braces or a ternary (GUSJhbPwpBE 00:08:31)                        |
-| `sourceText[0]`                                            | silently wrong value                               | `sourceText.value[0]` (GUSJhbPwpBE 00:10:46)                      |
-| `layer.name = ...` by script                               | "layer named ... is missing"                       | `AEX.expressions.renameLayer`                                     |
-| Precomposing a referenced layer                            | same error in the parent comp                      | point at the precomp layer, or keep references inside one comp    |
-| Reading `isAutoLeading`                                    | `undefined`                                        | `autoLeading`                                                     |
-| CSV `sourceData`                                           | null                                               | `dataValue([column, row])`, row 0 under the header                |
-| Edited JSON shows old text                                 | no refresh                                         | Reload Footage (`mainSource.reload()`)                            |
-| `toLocaleString()` without a locale                        | separator depends on the machine                   | pass `"en-US"` or use the regex formatter                         |
+| Mistake                                                    | Symptom                                               | Fix                                                               |
+| ---------------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------- |
+| Box position `[w/2, h/2]` only                             | box drifts when font size or justification changes    | add `left` and `top` (CVliDoNgoCg 00:09:32)                       |
+| `sourceRectAtTime(time)` on animated text                  | box breathes with the animator                        | fixed sample time, same for all four values                       |
+| Box parented, padding in pixels                            | padding grows with text scale                         | divide padding by `scale / 100`                                   |
+| Delay `time - 0.1`                                         | lag changes with frame rate                           | frames times `thisComp.frameDuration`                             |
+| `loopOut()` on keys that do not close                      | jump at every loop                                    | make the last key equal the first, or `pingpong`                  |
+| `wiggle(..., time % T)`                                    | jump every T                                          | blended wiggle or circular noise (procedures 3)                   |
+| `random()` without `seedRandom(n, true)`                   | value changes every frame                             | seed with `true` for a value held for the whole layer             |
+| `posterizeTime` to save render time                        | no saving measured                                    | bake, or reduce samples                                           |
+| `setFillColor(c)` with a four-value color                  | outside the documented `[R, G, B]` form               | pass `[c[0], c[1], c[2]]` (text-style doc)                        |
+| `setFillColor` on a layer with Fill off                    | no color; reading `fillColor` throws                  | `setApplyFill(true).setFillColor(...)`                            |
+| Theme on Source Text, animator Fill Color on the same text | some characters keep the old color                    | read the dropdown in the animator's Fill Color too                |
+| Padding needed on a box that scales on                     | box builds from the wrong edge                        | Offset Paths, group anchor `[left - o, top - o]` (procedures 1)   |
+| Expression banner dismissed                                | later errors never show for a person                  | Show Warning Banner back on in Preferences (GUSJhbPwpBE 00:02:35) |
+| `toCompVec` for a direction                                | wrong length on a scaled parent                       | point difference `toComp(b) - toComp(a)`                          |
+| One-line `if (...) a else b`                               | SyntaxError in the JavaScript engine                  | braces or a ternary (GUSJhbPwpBE 00:08:31)                        |
+| `sourceText[0]`                                            | silently wrong value                                  | `sourceText.value[0]` (GUSJhbPwpBE 00:10:46)                      |
+| `layer.name = ...` by script                               | "layer named ... is missing"                          | `AEX.expressions.renameLayer`                                     |
+| Precomposing a referenced layer                            | same error in the parent comp                         | point at the precomp layer, or keep references inside one comp    |
+| Reading `isAutoLeading`                                    | `undefined`                                           | `autoLeading`                                                     |
+| CSV `sourceData`                                           | null                                                  | `dataValue([column, row])`, row 0 under the header                |
+| Edited JSON shows old text                                 | no refresh                                            | Reload Footage (`mainSource.reload()`)                            |
+| Every element reads Audio Amplitude directly               | flicker, 41 direction changes in 4 s                  | one Level with attack and release (procedures 13)                 |
+| `smooth()` on the amplitude                                | peak 3 frames after the hit                           | the Level loop reads only past frames                             |
+| Fractional delays on readers of a leader                   | each reader asks for times the leader never evaluated | `Math.round` the delay in frames                                  |
+| `toLocaleString()` without a locale                        | separator depends on the machine                      | pass `"en-US"` or use the regex formatter                         |
 
 ## Handoffs
 

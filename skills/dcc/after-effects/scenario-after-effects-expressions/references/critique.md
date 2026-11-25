@@ -13,7 +13,7 @@ Score every line. A rig ships only when every "must" passes. Numbers come from `
 | Empty text                      | set Source Text to ""                                                                                                      | box size 0 (or the box is hidden), never a padding-only sliver                                                                                    |
 | Second line gap                 | `compRect(TXT_2).top - compRect(TXT_1).bottom` with one line, two lines, descenders                                        | equals Gap within 0.01 px                                                                                                                         |
 | Follow-through                  | `AEX.expressions.lagFrames(leader, follower, ...)` per element, at the delivery frame rate and one other                   | N x Lag frames for element N at every frame rate                                                                                                  |
-| Loop seam                       | `AEX.expressions.seam(prop, comp, periodFrames, start)`                                                                    | `ratio` (seam step / median step) under 2.5; `repeat` 0 for an idle that must loop exactly                                                        |
+| Loop seam                       | `AEX.expressions.seam(prop, comp, periodFrames, start)`                                                                    | `ratio` (seam step over the largest neighbor or median step) under 2.5 and `repeat` 0; exact loops read 1.01 at most, jumps 5.68 or more          |
 | Counter                         | Source Text at frame 0, at the end of the count, one frame before it, after it                                             | "0", "1,250,000" at and after the end, below it one frame before                                                                                  |
 | Theme                           | set the dropdown to each item, read the fills                                                                              | one distinct palette per item; out-of-range index clamps                                                                                          |
 | Text theme                      | read `TextDocument.fillColor` and `applyFill` per item; list the text animators with a Fill Color                          | three values per item, `applyFill` true; no animator Fill Color on a themed range, or that animator reads the same dropdown                       |
@@ -38,6 +38,26 @@ Score every line. A rig ships only when every "must" passes. Numbers come from `
   00:02:35). Scripted checks read `expressionError` and do not depend on it.
 - Legacy syntax is rewritten when the rig is meant to be edited later (`var` to `const`, implicit
   globals declared), even though it still runs.
+
+## Audio-reactive rigs (numbers)
+
+| Check             | Pass                                                                                                                                      |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| one leader        | every element reads CTRL > Level; nothing reads "Audio Amplitude" directly                                                                |
+| range             | `levelStats`: `max` 1 and `valleysUnder` at least 80 % of `valleys`; release at most (beat - attack) / 2                                  |
+| flicker           | Level changes direction about twice per hit (rise, fall); raw amplitude many times more                                                   |
+| timing            | Level peak at most Attack frames after the hit; on-beat drops use Attack 1                                                                |
+| delays            | reader delays are whole frames (`Math.round`), `lagFrames` gives distance x Delay                                                         |
+| cost              | Level baked before delivery when more than a few layers read it; baked and live bar heights equal at whole frames                         |
+| picture: spread   | at least two element families answer the Level on different delays (rings, then ticks or a glow), so the whole frame moves, not one shape |
+| picture: scale    | the reacting group fills 60 % or more of the frame height at its peak, measured with `compRect`                                           |
+| picture: anchored | every extra element (badge, label) rides a reacting shape through `toComp`, never floats on its own                                       |
+| strokes           | a stroke on a scaled layer is divided by the scale: same width on screen at rest and at peak                                              |
+
+Contact sheet for audio: one frame on a hit, one 2 frames later (peak), two during the release, one
+between beats. The center element peaks first, the outer ones follow in order, and the rest pose
+shows between beats. Measured on a speaker with rings, 24 ticks and a glow: group height 83 % at
+peak, ring lags 0, 2, 4, tick sweep 0 to 6 frames, ring stroke 6 px on screen at peak.
 
 ## Contact sheet (4 to 6 frames)
 

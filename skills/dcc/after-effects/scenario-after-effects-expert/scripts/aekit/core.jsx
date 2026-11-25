@@ -25,7 +25,11 @@ AEK.core = (function () {
     function itemById(id) { return app.project.itemByID(id); }
     function layer(c, nameOrIndex) {
         var l = (typeof nameOrIndex === "number") ? c.layer(nameOrIndex) : c.layers.byName(nameOrIndex);
-        if (!l) { throw new Error("No layer '" + nameOrIndex + "' in comp '" + c.name + "'"); }
+        if (!l) {
+            var names = [], i;
+            for (i = 1; i <= Math.min(c.numLayers, 40); i++) { names.push(c.layer(i).name); }
+            throw new Error("No layer '" + nameOrIndex + "' in comp '" + c.name + "'. Layers: " + names.join(", "));
+        }
         return l;
     }
     // prop(layer, ["ADBE Transform Group", "ADBE Position"]): match names first, display names second
@@ -33,7 +37,11 @@ AEK.core = (function () {
         var p = base, i, next;
         for (i = 0; i < path.length; i++) {
             next = p.property(path[i]);
-            if (!next) { throw new Error("Property '" + path[i] + "' not found under '" + p.name + "' (path " + path.join(" > ") + ")"); }
+            if (!next) {
+                var have = [], j;
+                try { for (j = 1; j <= Math.min(p.numProperties, 30); j++) { have.push(p.property(j).matchName); } } catch (e) {}
+                throw new Error("Property '" + path[i] + "' not found under '" + p.name + "' (path " + path.join(" > ") + "). Children: " + have.join(", "));
+            }
             p = next;
         }
         return p;
@@ -69,14 +77,29 @@ AEK.core = (function () {
     function enumName(enumObj, value) { var k; for (k in enumObj) { if (enumObj[k] === value) { return k; } } return String(value); }
     function frame(c, seconds) { return Math.round(seconds * c.frameRate); }
     function time(c, frames) { return frames * c.frameDuration; }
-    // fresh(): test sessions only. Closes the open project WITHOUT saving.
-    // fresh(): test sessions only. A new project keeps the bit depth, working space and linear blending of the
-    // project that was open before it, so the defaults are written back: 8 bpc, no working space, JavaScript engine.
-    function fresh() {
-        app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
-        app.newProject();
+    // fresh(path): test sessions only. Closes the open project WITHOUT saving, whoever left it dirty, then starts a new one.
+    // A new project keeps the bit depth, working space and linear blending of the project that was open before it, so the
+    // defaults are written back: 8 bpc, no working space, JavaScript engine. With an absolute path the new project is saved
+    // there at once: it has a file and no unsaved changes, so a later open or close by another job raises no Save As panel.
+    function fresh(path) {
+        app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES); app.newProject(); // DO_NOT_SAVE first: a dirty project would raise a Save As panel
         defaults();
+        if (path) { save(path); }
         return app.project;
+    }
+    // save(path): save without any dialog. With an absolute path: Save As to that file (the open project moves there).
+    // Without one: saves in place, and refuses an untitled project, where app.project.save() opens a Save As panel.
+    function save(path) {
+        var f;
+        if (path) {
+            f = abs(path);
+            ensureFolder(f.parent.fsName);
+            app.project.save(f);
+        } else {
+            if (!app.project.file) { throw new Error("The open project has never been saved: pass an absolute .aep path (app.project.save() would open a Save As panel)"); }
+            app.project.save(app.project.file);
+        }
+        return { path: app.project.file.fsName, dirty: app.project.dirty };
     }
     function defaults() {
         var p = app.project;
@@ -93,10 +116,11 @@ AEK.core = (function () {
     }
     // open(path): test sessions only. Closes the open project WITHOUT saving, then opens the file.
     // A bare app.open() on a project with unsaved changes raises a Save As panel that nothing can close from outside.
+    // Whoever left the open project dirty (this job, another agent), the close discards it first, so no panel can open.
     function open(path) {
         var f = abs(path);
         if (!f.exists) { throw new Error("Project not found: " + path); }
-        app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES); return app.open(f);
+        app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES); return app.open(f); // DO_NOT_SAVE first: no Save As panel
     }
     function info() {
         return {
@@ -109,5 +133,5 @@ AEK.core = (function () {
         };
     }
     return { items: items, comps: comps, item: item, itemById: itemById, comp: comp, layer: layer, prop: prop, walk: walk,
-        enumName: enumName, abs: abs, ensureFolder: ensureFolder, bin: bin, frame: frame, time: time, fresh: fresh, defaults: defaults, open: open, info: info };
+        enumName: enumName, abs: abs, ensureFolder: ensureFolder, bin: bin, frame: frame, time: time, fresh: fresh, save: save, defaults: defaults, open: open, info: info };
 })();

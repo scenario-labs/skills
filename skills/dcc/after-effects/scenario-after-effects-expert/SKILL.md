@@ -1,6 +1,6 @@
 ---
 name: scenario-after-effects-expert
-description: "Use when an agent must connect to, inspect, change or render from Adobe After Effects (27.0 and 2026) through a script, or when an After Effects request spans several crafts and needs routing. Triggers: connect to After Effects, run a script in my open project, the script did nothing, After Effects is not responding to scripts, a dialog is blocking, DoScriptFile times out, work in my live project without breaking it, undo what the agent did, swap placeholders for footage, change the font everywhere, check my project, audit the project, what changed, render preview frames, contact sheet, aerender, headless render, ExtendScript error, match name not found, which After Effects skill handles this."
+description: "Use when an agent must connect to, inspect, change or render from Adobe After Effects (27.0, 2026) by script, or route a request that spans crafts. Triggers: run a script in my open project, After Effects not responding to scripts, a dialog is blocking, undo what the agent did, swap placeholders, audit the project, contact sheet, aerender, ExtendScript error, which skill handles this."
 license: MIT
 ---
 
@@ -73,7 +73,6 @@ schemas and flag the gap.
   `ae.py key return`. A script's own `alert()` does not: nothing closes it from outside.
 - The runner shadows `alert`, `confirm` and `prompt` inside every job. Their text comes back in
   `dialogs`.
-- A job that was running when the app stopped is never run twice. It returns `interrupted: true`.
 
 ## The expert loop
 
@@ -120,37 +119,49 @@ Runner, Python standard library, any OS: [ae.py](scripts/ae.py).
 
 - `doctor`, `install-bridge`, `info`, `audit`, `stats`.
 - `run job.jsx | -e code [--undo NAME] [--args JSON] [--lib helper.jsx] [--kit all|none|a,b] [--timeout S] [--channel ...]`.
-- `frames COMP --times a,b | --spread N --out DIR [--sheet]`, `sheet OUT.jpg IMG...`,
+- `frames COMP --times a,b | --spread N --out DIR [--sheet] [--project P]`, `sheet OUT.jpg IMG...`,
   `render COMP --out FILE --template T`, `templates COMP`.
-- `aerender --project P --comp C --out FILE [--template T]`, `probe FILE` (ffprobe summary with
-  alpha detection).
-- `windows [--shot DIR]`, `key return|escape|tab`.
+- `aerender --project P --comp C --out FILE [--template T] [--min-free-gb 10] [--stall 300] [--frames N]`,
+  `probe FILE [--count]` (alpha, timecode track, counted frames).
+- `windows [--shot DIR]`, `key return|escape|tab`, `restart --test-session` (P8),
+  `sheet OUT --video FILE --at 0,30` (frames cut from a movie).
 
 A job is the body of a function in ExtendScript (ES3). `return` sends a value back. `ARGS` holds the
 `--args` JSON. The result is
-`{ok, result | error + line + source, log, dialogs, ms, project, dirty}`.
+`{ok, result | error + line + source, log, dialogs, ms, project, dirty}`; `dialogs` is always a
+list. An error thrown inside the kit or a `--lib` file adds `in` (file, line, function) and sets
+`line` to the job line that called it. "null is not an object" adds `hint`, naming the lookups on
+the line and a misspelled match name.
 
 Inside After Effects, namespace `AEK` ([aekit/](scripts/aekit/)):
 
 - `AEK.core`: `comp`, `item`, `itemById`, `layer`, `prop(base, [matchNames])`, `walk`, `abs`, `bin`,
-  `frame`, `time`, `enumName`, `info`.
+  `frame`, `time`, `enumName`, `info`, `save(path)`; test sessions only: `fresh(path)`,
+  `open(path)`. Prefer `layer` and `prop` to `layers.byName` and `property`: they throw with the
+  missing name and list what exists.
 - `AEK.stats`: `snapshot`, `diff`, `comp`. `AEK.audit`: `all`, `summary`, `project`, `footage`,
   `comps`, `comp`, `fonts`.
 - `AEK.capture`: `frame`, `frames`, `spread`, `queue`, `templates`. `AEK.xio`: `importFile`,
   `importItem`, `importMany`, `replace`, `addToComp`, `describe`.
-- `AEK.motion`: `key`, `ease`, `bezier` (exact CSS cubic-bezier), `keys`, `sample`, `linearKeys`.
+- `AEK.motion`: `key`, `ease`, `bezier` (exact CSS cubic-bezier; starting curves in procedures P10),
+  `keys`, `sample`, `linearKeys` (baked keys, one per frame, left out).
 - `AEK.build`: `comp`, `solid`, `adjustment`, `nullLayer`, `shape`, `shapeGroup`, `effect`,
-  `effectProps`, `parent`, `matte`, `precompose`, `anchor`, `camera`.
-- `AEK.text`: `add`, `style`, `measure`, `fit`, `inFrame`, `animator`, `fontExists`. `AEK.expr`:
-  `set`, `list`, `check`, `bake`, `controls`.
+  `effectProps`, `parent`, `matte`, `mask`, `precompose`, `anchor`, `camera`.
+- `AEK.text`: `add`, `style`, `measure`, `toComp2D`, `fit`, `inFrame` (parents included), `animator`
+  (`amount`), `fontExists`. `AEK.expr`: `set`, `list`, `check`, `bake`, `controls`.
 - `AEK.session`: `state`, `restore`, `print`, `changed`, `named`, `matchFiles`, `swap`, `setFont`,
   `fontRuns`.
 
 Run [ae_check.py](scripts/ae_check.py) on every job before sending it. It flags ES3 traps, dialogs,
-`~` paths, display-name lookups and expression traps (`--expr`).
+`~` paths, display-name lookups and near misses of match names; `--expr FILE` checks one expression
+file. `ae.py run` refuses a job with a raw `app.open`, `app.newProject` or `app.project.save()`.
 
 ## Live session
 
+- Several agents on one After Effects (test sessions): each job opens its own project
+  (`AEK.core.open(path)` or `AEK.core.fresh(path)`, both discard whatever is open), builds, captures
+  frames and ends with `AEK.core.save(path)`. Nothing else is saved between calls;
+  `frames --project P` refuses another agent's project. Details: procedures P8.
 - Take `AEK.session.state()` first and call `restore()` last. It puts back the current time, the
   work area, the layer selection and the render flags of the queue.
 - Never call `app.project.close()`, `app.newProject()`, `app.open()`, `app.quit()` or
@@ -158,8 +169,9 @@ Run [ae_check.py](scripts/ae_check.py) on every job before sending it. It flags 
   cache.
 - Never start the person's queued renders. `renderQueue.render()` renders every queued item.
   `AEK.capture.queue` switches theirs off for the run and back on after it.
-- Prefer `saveFrameToPng` frames for checks. They need no queue item. The call is asynchronous: wait
-  for the file.
+- Prefer `saveFrameToPng` frames for checks. They need no queue item; `AEK.capture.frame` waits for
+  the file. The comp background is transparent in them: pass the returned `bg` to
+  `ae.py sheet --bg`, and flatten on it before measuring pixels.
 - A placeholder swap keeps the layer: `AEK.session.swap` replaces the source directly when size and
   length match. Otherwise it wraps the clip in a fit comp of the placeholder's size and length.
 - Change fonts through the text document (`AEK.session.setFont`), never `app.project.replaceFont()`
@@ -168,20 +180,18 @@ Run [ae_check.py](scripts/ae_check.py) on every job before sending it. It flags 
 - Paths: absolute only. `~` in ExtendScript can resolve to a cloud-synced folder. Write agent files
   to a folder the person named.
 - If the app stops answering for more than 90 s with an extra window on screen, look at it
-  (`windows --shot`) and tell the person. Never stop the app with a signal: it is treated as a
+  (`windows --shot`) and tell the person. Never stop the app in their session: it is treated as a
   crash.
 
 ## Numbers
 
-| Value     | Meaning                                                                    |
-| --------- | -------------------------------------------------------------------------- |
-| about 1 s | bridge round trip for a small job (poll 0.3 s)                             |
-| 1.2 s     | measured: 4 placeholder swaps, 3 text layers restyled, 3 PNG frames, 1080p |
-| 100 ms    | one `saveFrameToPng` frame of a simple 1080p comp                          |
-| 13 s      | `aerender`, 60 frames of a 1080x1920 comp to H.264, GUI app open           |
-| 19 s      | relaunch to first heartbeat after a forced stop, crash dialog included     |
-| 105 %     | audit threshold for footage enlarged past its pixels                       |
-| 16 / 3088 | menu command ids: Edit > Undo, File > Increment and Save                   |
+| Value     | Meaning                                                          |
+| --------- | ---------------------------------------------------------------- |
+| about 1 s | bridge round trip for a small job (poll 0.3 s)                   |
+| 100 ms    | one `saveFrameToPng` frame of a simple 1080p comp                |
+| 13 s      | `aerender`, 60 frames of a 1080x1920 comp to H.264, GUI app open |
+| 105 %     | audit threshold for footage enlarged past its pixels             |
+| 16 / 3088 | menu command ids: Edit > Undo, File > Increment and Save         |
 
 ## Quality gates
 
@@ -190,27 +200,18 @@ Run [ae_check.py](scripts/ae_check.py) on every job before sending it. It flags 
   finding.
 - Visual: one contact sheet read before any claim. Subject present in every frame, no cut-off text,
   no empty frame inside a layer's span, no clipped glow at a layer edge.
-- Delivered files: `ae.py probe` matches the brief (codec, size, frame rate, frame count, alpha).
+- Delivered files: `ae.py probe --count` matches the brief (codec, size, frame rate, counted frames,
+  alpha, no stray timecode track).
+- `ae.py aerender` fails with a `why` (`disk`, `stall`, `short`, `render`, `missing`, `folder`) and
+  names each check in `checks`; aerender exits 0 on all. It creates a missing output folder. On
+  `render`, `missing` or `short`, rerun once, alone.
 - Report: assumptions listed, skipped items listed with the reason, the undo name given, the
   person's file untouched.
 
 ## Common mistakes
 
-| Mistake                                      | Symptom                                                       | Fix                                             |
-| -------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------- |
-| `alert()` used as a probe                    | every later job waits                                         | `AEK.log()`; the runner shadows dialogs         |
-| Display names (`property("Position")`)       | fails on non-English installs                                 | match names (`ADBE Position`)                   |
-| Reference kept across `addProperty`          | "Object is invalid"                                           | fetch the property again by match name          |
-| `~/` path                                    | "File couldn't be opened for writing"                         | absolute path from `ARGS`                       |
-| Layer addressed by index after adding layers | wrong layer changed                                           | new layers land on top: use names or `layer.id` |
-| `JSON`, `forEach`, `let` in a job            | syntax or reference error                                     | ES3 only; `AEK.json`                            |
-| Frame saved and read at once                 | missing or empty PNG                                          | poll for the file (`AEK.capture.frame` does)    |
-| Frame saved from a 32 bpc project            | almost black sheet: values are written divided by 10          | `ae.py sheet ... --gain 10`                     |
-| New project assumed to be at defaults        | it inherits bit depth and working space from the last project | read both back, then set them                   |
-| Missing font written to a text layer         | silent substitution at render                                 | `AEK.text.fontExists` first                     |
-| Broken expression assigned                   | no error until evaluated                                      | `AEK.expr.set` evaluates and raises the message |
-| `replaceSource` with a shorter clip          | layer out point pulled in                                     | `AEK.session.swap` (fit comp)                   |
-| Seconds used for timing                      | off by a frame at other rates                                 | frames, with the frame rate stated              |
+Alert used as a probe, display names, `~` paths, 32 bpc frames, inherited project settings, missing
+fonts, raw lookups: [references/traps.md](references/traps.md), Common mistakes.
 
 ## Routing
 
@@ -242,21 +243,9 @@ Run [ae_check.py](scripts/ae_check.py) on every job before sending it. It flags 
 
 ## Version notes
 
-- Expressions run on the JavaScript engine by default. Read `app.project.expressionEngine` before
-  relying on syntax.
-- Track mattes: any layer can be the matte since 23.0 (`setTrackMatte`). The matte no longer sits
-  above its target.
-- H.264 renders from the Render Queue since 23.0. Media Encoder is not required for an MP4.
-- 3D: Advanced 3D is the renderer for models, environment lights and shadows. Its match name is
-  `ADBE Calder`; `ADBE Advanced 3d` is Classic 3D, which is what a comp made by script starts on.
-  Ray-traced 3D is gone.
-- Text: `app.fonts` since 24.0, character ranges since 24.3, `usedFonts` since 24.5.
-- `Layer.id` and `Project.layerByID()` since 22.0: stable handles across reordering.
-- Roto: Object Matte replaces the Roto Brush tool icon in 26.2.
-- CEP panels are on a removal path and UXP is beta only (27.1 beta). ExtendScript stays.
-- The in-app AI Assistant (27.0, beta) is separate from these channels. No outside agent access to
-  it is documented.
-- More traps: [references/traps.md](references/traps.md).
+Read [references/traps.md](references/traps.md), Version notes, before relying on an API: expression
+engine, track mattes, H.264 in the queue, 3D renderer match names, text ranges, `Layer.id`, Object
+Matte, UXP and the AI Assistant.
 
 ## References
 

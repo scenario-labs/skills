@@ -14,6 +14,15 @@ The job blocks below ship as files in `scripts/jobs/`: `inspect.jsx` (2), `icon_
 `stroke_audit.jsx` (4), `burst.jsx` (5), `matte_eye.jsx` (7), `taper_wave.jsx` (8), `morph_fix.jsx`
 (9), `vector_intake.jsx` (11), `lottie_prep.jsx` (13). Each was run as shipped on test fixtures.
 
+Two builders, one layer type. `AEK.build.shape(comp, name, spec | [specs])`
+(scenario-after-effects-expert kit) makes a new layer of static groups in one call: rect, ellipse,
+star or path, with fill, stroke and Trim; the first spec draws on top. `AEX.shapes` (this skill)
+adds any item by match name at any depth: Repeater, Merge Paths, Offset Paths, Taper, Wave, nested
+groups, and edits to a layer that already exists. Build the base with either, then add operators
+with `AEX.shapes.add`.
+
+Frame counts below are at 30 fps unless a case says otherwise; at 24 fps multiply by 0.8 and round.
+
 ## Contents
 
 1. Match-name map (shape items, operators, stroke groups)
@@ -30,6 +39,10 @@ The job blocks below ship as files in `scripts/jobs/`: `inspect.jsx` (2), `icon_
 12. Resolution independence: Collapse Transformations and a constant on-screen stroke
 13. Lottie readiness audit and export copy
 14. Contact sheets for review
+15. Concentric rings and ripples: Repeater Scale versus Offset Paths, a fade by radius, a seamless
+    loop or one pass, keyed Repeater Offset
+16. Set type to shapes: Create Shapes from Text by script
+17. Where a path starts and which way it runs
 
 ## 1. Match-name map (dumped live from 27.0)
 
@@ -121,7 +134,10 @@ return AEX.shapes.strokes(c, { width: 2, cap: "round", join: "round", scaleAware
 Check: one row per stroke with stored `width`, `onScreen` (width times layer and parent Scale) and
 `issues`. Measured: a 2 px stroke on a layer at 200 % reported `onScreen` 4 and an issue; a 3 px
 stroke and a Butt cap were flagged. Group Transform Scale is not included: keep group Scale at 100
-in icons.
+in icons. Width is read with `valueAtTime` after any expression, so the constant on-screen
+expression (procedure 12) is audited on its result. Measured on a layer at 400 %: the plain 2 px
+stroke read `onScreen` 8 with an issue; with the expression it read width 0.5, `onScreen` 2,
+`expression: true` and no issue. An expression error is still an issue.
 
 ## 5. Radial burst
 
@@ -146,24 +162,28 @@ return AEX.shapes.order(l);
 
 Check: Copies x Rotation = 360; Repeater Position stays [0, 0]. Sheet at frames 0, 3, 6, 9, 12:
 empty, spokes shooting out, full ring, spokes leaving outward, dots, gone. For a spiral, Repeater
-Scale compounds: 85 % gives copy 9 at 0.85^9 = 23 %.
+Scale compounds: 85 % gives copy 9 at 0.85^9 = 23 %. For evenly spaced rings use Offset Paths
+instead (procedure 15).
 
 ## 6. Operator order (measured on contact sheets)
 
-| Stack inside one group                                       | Result                                              |
-| ------------------------------------------------------------ | --------------------------------------------------- |
-| Path > Trim (End 50) > Repeater 6 x 60 deg > Stroke          | six identical half spokes                           |
-| Path > Repeater > Trim (End 50, Simultaneously) > Stroke     | six identical half spokes                           |
-| Path > Repeater > Trim (End 50, Individually) > Stroke       | three full spokes: copies drawn one after another   |
-| Two ellipses > Merge 1 Merge or 2 Add > Fill (Non-Zero)      | same filled union                                   |
-| Concentric or overlapping ellipses > Merge 1 > Fill Even-Odd | the inner circle or the overlap becomes a hole      |
-| Same > Merge 2 Add > Fill Even-Odd                           | one union outline, no hole                          |
-| Two ellipses > Merge 3 Subtract > Fill                       | first path minus the second (crescent)              |
-| Two ellipses > Merge 4 Intersect > Fill                      | lens                                                |
-| Two ellipses > Merge 5 Exclude Intersections > Fill          | both minus the overlap                              |
-| Rect, Ellipse > Merge 4 > Stroke > Fill                      | the stroke follows the merged outline (not clipped) |
-| Rect > Repeater 4 > Gradient Fill                            | one gradient across all copies (compound)           |
-| Rect > Gradient Fill > Repeater 4                            | each copy carries its own gradient                  |
+| Stack inside one group                                                 | Result                                                                                                        |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Path > Trim (End 50) > Repeater 6 x 60 deg > Stroke                    | six identical half spokes                                                                                     |
+| Path > Repeater > Trim (End 50, Simultaneously) > Stroke               | six identical half spokes                                                                                     |
+| Path > Repeater > Trim (End 50, Individually) > Stroke                 | three full spokes: copies drawn one after another                                                             |
+| Two ellipses > Merge 1 Merge or 2 Add > Fill (Non-Zero)                | same filled union                                                                                             |
+| Concentric or overlapping ellipses > Merge 1 > Fill Even-Odd           | the inner circle or the overlap becomes a hole                                                                |
+| Same > Merge 2 Add > Fill Even-Odd                                     | one union outline, no hole                                                                                    |
+| Two ellipses > Merge 3 Subtract > Fill                                 | first path minus the second (crescent)                                                                        |
+| Two ellipses > Merge 4 Intersect > Fill                                | lens                                                                                                          |
+| Two ellipses > Merge 5 Exclude Intersections > Fill                    | both minus the overlap                                                                                        |
+| Rect, Ellipse > Merge 4 > Stroke > Fill                                | the stroke follows the merged outline (not clipped)                                                           |
+| Rect > Repeater 4 > Gradient Fill                                      | one gradient across all copies (compound)                                                                     |
+| Rect > Gradient Fill > Repeater 4                                      | each copy carries its own gradient                                                                            |
+| Ellipse > Stroke > Repeater 6 (Opacity Start 100, End 0)               | copies fade by index: 100, 84, 67, 50, 33, 17 % (measured brightness 255 to 43); End Opacity is never reached |
+| Ellipse > Repeater 6 > Stroke (same Opacity values)                    | no fade: every copy at 100 % (the Stroke paints the merged copies once)                                       |
+| Two groups in Contents, or two items in an `AEK.build.shape` spec list | the first one draws on top                                                                                    |
 
 Merge (1) and Add (2) are separate modes. Merge keeps every input as a subpath of one compound path,
 so the Fill Rule decides the holes (Even-Odd cuts nested paths and overlaps, like the counter of an
@@ -318,6 +338,7 @@ Intake routes by version (Adobe What's New pages, 26.0 to 27.0):
 | SVG file                                    | Import as comp or as footage                                                                                                                                | 26.2+            | footage is a raster still: avoid for animation                                                          |
 | Illustrator or SVG content on the clipboard | Edit > Paste in a comp (GUI)                                                                                                                                | 26.3+            | native, editable shape layers                                                                           |
 | `.ai` layers                                | Import, Composition - Retain Layer Sizes, then Create Shapes from Vector Layer                                                                              | all              | footage layers, then shapes (conversion is a GUI step, see above)                                       |
+| Figma frame                                 | Overlord transfer; for a mobile frame (393 x 852) double the comp first (Jake Bartlett, I6QlicggqtY 00:11:17)                                               | plugin           | shape layers, video master only                                                                         |
 | Illustrator text                            | Import as editable text layers: fonts, size, fills, positions, styles and variable font settings kept (Adobe help, Import SVG files > editable text layers) | 27.0             | text layers for scenario-after-effects-typography                                                       |
 | Illustrator paths, before 26.3              | Paste onto a selected solid                                                                                                                                 | 26.2 and earlier | mask paths in Difference mode: letter counters vanish in a Lottie export (Daniel, HZ1_afAjVb0 00:02:48) |
 
@@ -390,3 +411,125 @@ Check: in a 32 bpc project, `saveFrameToPng` wrote colors far too dark (0.95, 0.
 10, 2). Every value is divided by 10 in a 32 bpc PNG (white reads 0.1). Review frames from an 8 or
 16 bpc project, build the sheet with `ae.py sheet ... --gain 10`, or render through the render
 queue. A new project inherits the bit depth of the one before it.
+
+## 15. Concentric rings and ripples
+
+Channel: bridge. Two ways to make rings from one ellipse, measured on 27.0 with a 48 px radius:
+
+- Repeater Scale 125 % gives radii 48, 61, 77, 96, 121, 151: each copy is the last times 1.25, so
+  the gaps grow. Repeater Offset 1.5 scaled every radius by 1.25^1.5.
+- Offset Paths, Amount 30, Copies 6, gives radii 48, 78, 108, 138 and on: even 30 px gaps. Copy
+  Offset reads 1 by default, has no min or max, and moves every ring by Amount times its change (0.5
+  moved them 15 px).
+
+Repeater opacity fades by copy index, never by radius, and only when the paint sits above the
+Repeater (procedure 6). For a fade by radius, matte the rings with a feathered mask. A mask feather
+of F spreads the edge about F px on each side of the path. Radius 200 and feather 50 measured alpha
+255 at 140 px and less, about 46 % at 200 px, about 0 at 240 px. A Subtract mask gives the inverse.
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp);
+// rings every 30 px from radius 50, 7 copies, 1 ring per second outward, faded over 30 px at both ends
+var r = AEX.shapes.ripple(c, "waves", { center: [300, 300], r0: 50, spacing: 30, copies: 7, width: 4, ringsPerSecond: 1, fade: 30 });
+return { ripple: r, matteOn: AEK.core.layer(c, "waves_fade").enabled };
+```
+
+`ripple()` builds an ellipse, Offset Paths (Amount = spacing, Copies) and a Stroke, with the Copy
+Offset expression `(time * ringsPerSecond) % 1`. The matte is a solid `<name>_fade` with an outer
+feathered mask at `rMax - fade` and an inner Subtract mask at `r0 + fade`, where
+`rMax = r0 + copies * spacing`. `setTrackMatte` switches the matte layer off by itself (`matteOn`
+false). Returns `{layer, matte, rMin, rMax, spacing, loopFrames}`.
+
+Measured at 30 fps: even 30 px spacing; frame 0 and frame 30 byte-identical, so the loop is seamless
+at `loopFrames` 30; rings fade in at the center and out at the rim. In a logo build with spacing 46
+and 0.5 rings per second, `loopFrames` read 60.
+
+One pass instead of a loop, and a matte that is itself a shape layer:
+
+```javascript
+// channel: bridge | handoff
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp);
+// rings leave once over 36 frames from frame 0; Copy Offset keyed 0 -> 7 (every ring passes the rim), no expression
+var r = AEX.shapes.ripple(c, "waves", { center: [400, 400], r0: 50, spacing: 40, copies: 7, width: 6, fade: 40, matte: "shape", once: { start: 0, frames: 36 } });
+return r;
+```
+
+`once: {start, frames, travel}` keys Copy Offset from 0 to `travel` (default `copies`) with (0.2, 0,
+0, 1); `loopFrames` returns null. `matte: "shape"` builds the matte as a shape layer: an outer
+ellipse at `rMax - fade`, an inner one at `r0 + fade`, Merge Paths Subtract, a white Fill and
+Gaussian Blur (`ADBE Gaussian Blur 2`, Blurriness = `fade`, Repeat Edge Pixels off). Measured along
+a radius with `fade` 40: solid matte alpha 26, 155, 251 at 80, 100, 120 px and 237, 127, 15 at 260,
+280, 300 px; shape matte 12, 180, 255 and 255, 162, 8 at the same radii. `matte: "none"` adds no
+matte.
+
+Keyed Repeater Offset. Measured with 3 copies at Repeater Scale 160 %, no motion blur, one frame per
+row: an Offset keyed upward through 0 to 0.06 drew a fourth copy (the copy at index Copies, at full
+brightness) on every third frame. Fixed values in that range drew three copies, and so did keys
+between 0.2 and 0.224, between 0.99 and 1.024, and below 0. Under motion blur only some samples
+carry the extra copy, so it reads as a faint ghost ring. Two fixes: key the Ellipse Size and the
+Repeater Scale instead (Size 190 to 400 with Scale 160 to 185 %: 3 rings on each of the 29 frames
+across the move, counted along a radius without blur), or keep the keyed Offset at 0.1 or above
+(values from 0.074 to 1.45 measured clean).
+
+Trim Paths with Start and End equal draws nothing, at 0 and at 50 alike, with Round, Butt or
+Projecting caps (measured, 24 px stroke). A draw that starts on frame 0 with motion blur at phase
+-90 still shows a faint stub on frame 0: the shutter samples half a frame ahead, into the move.
+Measured on a both-ways ring draw (Start 50 to 0, End 50 to 100, 22 frames, (0.2, 0, 0, 1)): 480 px
+lit, peak 112 of 255, at phase -90; nothing with blur off or at phase -180. Start the draw on frame
+1 when frame 0 must be empty.
+
+## 16. Set type to shapes: Create Shapes from Text
+
+Channel: bridge. The menu command (id 3781 in 27.0) runs with no dialog on the selected text layer.
+It needs the comp open in the viewer and active: measured, 16 of 16 conversions with
+`openInViewer()` and `setActive()`, 0 of 3 without.
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+var c = AEK.core.comp(ARGS.comp), t = AEK.core.layer(c, ARGS.layer), i;
+var v = c.openInViewer(); if (v) { v.setActive(); }   // without the active viewer the command does nothing, silently
+for (i = 1; i <= c.numLayers; i++) { c.layer(i).selected = false; }
+t.selected = true;
+var n0 = c.numLayers;
+app.executeCommand(app.findMenuCommandId("Create Shapes from Text"));
+if (c.numLayers === n0) { return { converted: false, next: "GUI step: select '" + t.name + "', Layer > Create > Create Shapes from Text" }; }
+var s = c.layer(t.index - 1);   // the new layer sits right above the source
+return { converted: true, layer: s.name, sourceOn: t.enabled, order: AEX.shapes.order(s) };
+```
+
+Measured on "TONDA" in Avenir Next Bold 200 px: a layer `<text layer> Outlines`
+(`ADBE Vector Layer`) above the source, at the source Position, with the same `sourceRectAtTime`
+bounds; the source switched off. One group per character, named by the letter; each holds its
+outline paths (two for O, D and A, with Merge Paths for the counter), then Stroke, then Fill. The
+text stops being editable: keep the source layer, off. "Create Masks from Text" (id 2933) gives one
+solid with 8 masks for the same word. Every group is a normal shape group: Trim the Stroke for a
+draw-on, then fade in the Fill.
+
+Draw-on on these outlines. Add Trim Paths to each letter group and move it just above the Stroke
+(`trim.moveTo(strokeIndex)`), so it trims the merged outline; key End 0 to 100, then the Fill
+Opacity 0 to 100 about 10 frames later. Hold each group's Opacity at 0 (Hold keys) until its draw
+starts: at Trim End 0 a merged letter outline still left a 3 px speck on frame 4 (the D and the A),
+and so did Repeater copies trimmed Individually. With the hold, frame 4 read clean. Measured in the
+rebuilt TONDA lockup: 5 letter groups (T, O, N, D, A), stroke 3 px round, fill fading from 10 frames
+after each draw start; the word measured 673 px wide at Avenir Next Demi Bold sized to fit, the
+lockup 922 px (60 % of the safe width).
+
+## 17. Where a path starts and which way it runs
+
+Trim Paths reads from the path's first vertex in its direction. Measured with Trim End 10 on a 20 px
+stroke:
+
+- Ellipse: starts at the top (12 o'clock) and runs clockwise; the first 10 % covered x 0 to 122 px
+  right of center at the top.
+- Shape Direction 3 (reversed) on the same Ellipse: starts at the top and runs counterclockwise.
+- Rectangle 400 x 400: starts at the top-right corner and runs down the right edge (159 px for 10 %
+  of 1,600).
+- Polygon (Polystar Type 2, 6 points): starts at the top vertex and runs clockwise.
+
+So an arc centered on the right of an ellipse is Start 12.5 to End 37.5 (3 o'clock at 25 %), and
+Start 50 to 0 with End 50 to 100 draws an ellipse both ways from the bottom (6 o'clock at 50 %).
+Rotate the group 180 degrees to start from the top.
