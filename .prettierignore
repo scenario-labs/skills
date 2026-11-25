@@ -34,3 +34,6 @@ skills/game-engines/roblox/*/scripts/
 # reformat of the engine or an example would change what the film renders
 skills/scenario-kinetic-film/assets/engine/
 skills/scenario-kinetic-film/assets/examples/
+# ExtendScript (ES3) the After Effects expert tools send into After Effects,
+# kept as it was run there: prettier adds trailing commas, a syntax error in ES3
+skills/dcc/after-effects/*/scripts/
