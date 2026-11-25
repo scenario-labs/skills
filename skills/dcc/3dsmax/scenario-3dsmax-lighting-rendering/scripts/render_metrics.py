@@ -6,14 +6,14 @@ Needs numpy and Pillow. EXR input needs imageio with an EXR plugin, or convert f
 
 Library:
     load(path)                         -> float32 array HxWx3 in 0..1 (display) or linear (EXR)
-    noise(path, tile=64)               -> {sigma, p95_tile, worst_tiles}
+    noise(path, tile=64)               -> {sigma, p95_tile, worst_tiles}; ValueError under 3 x 3 px
     exposure(path)                     -> {mean, median, p01, p99, clipped_pct, crushed_pct}
     detail_ratio(test, reference)      -> gradient energy of test / reference (denoiser smear check)
     flicker(paths)                     -> {means, jumps, temporal_noise}
     estimate(seconds, test_px, final_px, frames=1, noise_now=None, noise_target=None,
              machines=1, margin=1.25)  -> {hours_per_frame, hours_total}
-    crops(path, out_dir, size=512)     -> [paths] 100 percent crops for visual review
-    downscale(src, dst, factor=0.5)    -> dst
+    crops(path, out_dir, size=512)     -> [paths] 100 percent crops for visual review (new files only)
+    downscale(src, dst, factor=0.5)    -> dst (a new file only)
 
 CLI: python render_metrics.py <command> <args...>   (prints JSON)
     noise IMG | exposure IMG | detail TEST REF | flicker IMG... | crops IMG OUTDIR
@@ -64,13 +64,18 @@ def _sigma(lum):
 
 
 def noise(path, tile=64):
+    """Tiles cover the whole image: edge tiles and images under one tile are measured too."""
     lum = _luma(load(path))
     h, w = lum.shape
     tiles = []
-    for y in range(0, h - tile + 1, tile):
-        for x in range(0, w - tile + 1, tile):
-            tiles.append((_sigma(lum[y:y + tile, x:x + tile]), x, y))
-    vals = np.array([t[0] for t in tiles]) if tiles else np.array([0.0])
+    for y in range(0, h, tile):
+        for x in range(0, w, tile):
+            part = lum[y:y + tile, x:x + tile]
+            if part.shape[0] >= 3 and part.shape[1] >= 3:  # the noise kernel needs 3 x 3
+                tiles.append((_sigma(part), x, y))
+    if not tiles:
+        raise ValueError(f"{path}: {w}x{h} px is too small to measure noise (needs 3 x 3)")
+    vals = np.array([t[0] for t in tiles])
     worst = sorted(tiles, reverse=True)[:5]
     return {"sigma": round(float(np.median(vals)), 5),
             "p95_tile": round(float(np.percentile(vals, 95)), 5),
@@ -103,14 +108,16 @@ def detail_ratio(test, reference):
 
 
 def flicker(paths):
-    """Per-frame mean luminance and frame-to-frame differences. A jump is > 3x the median step.
+    """Per-frame mean luminance and frame-to-frame differences.
+
+    A jump is a step above 3x the median step and above 0.001, so a zero median still finds one.
 
     temporal_noise is only meaningful when the camera and objects do not move (a locked test)."""
     frames = [_luma(load(p)) for p in paths]
     means = [float(f.mean()) for f in frames]
     steps = [abs(means[i + 1] - means[i]) for i in range(len(means) - 1)]
     med = float(np.median(steps)) if steps else 0.0
-    jumps = [i + 1 for i, s in enumerate(steps) if med > 0 and s > 3 * med]
+    jumps = [i + 1 for i, s in enumerate(steps) if s > max(3 * med, 1e-3)]
     tn = [float(np.abs(frames[i + 1] - frames[i]).mean()) for i in range(len(frames) - 1)]
     return {"means": [round(m, 4) for m in means], "jumps": jumps,
             "temporal_noise": round(float(np.median(tn)), 5) if tn else 0.0}
@@ -140,18 +147,30 @@ def crops(path, out_dir, size=512):
              "center": ((w - s) // 2, (h - s) // 2),
              "brightest": (min(max(0, bx - s // 2), w - s), min(max(0, by - s // 2), h - s))}
     stem = os.path.splitext(os.path.basename(path))[0]
+    paths = {key: os.path.join(out_dir, f"{stem}_crop_{key}.png") for key in boxes}
+    taken = [p for p in paths.values() if os.path.exists(p)]
+    if taken:
+        raise FileExistsError(f"crops exist, pass a new out_dir: {taken}")
     out = []
-    for key, (x, y) in boxes.items():
-        p = os.path.join(out_dir, f"{stem}_crop_{key}.png")
-        img.crop((x, y, x + s, y + s)).save(p)
-        out.append(p)
+    try:
+        for key, (x, y) in boxes.items():
+            with open(paths[key], "xb") as fh:  # "xb": never replaces a file written meanwhile
+                out.append(paths[key])
+                img.crop((x, y, x + s, y + s)).save(fh, format="PNG")
+    except BaseException:
+        for p in out:  # only files this call created
+            os.remove(p)
+        raise
     return out
 
 
 def downscale(src, dst, factor=0.5):
-    """Substitute for a frame buffer 'save at 50 percent'. Never overwrite src."""
-    if os.path.abspath(src) == os.path.abspath(dst):
+    """Substitute for a frame buffer 'save at 50 percent'. Never overwrites src or any file."""
+    if os.path.abspath(src) == os.path.abspath(dst) or (
+            os.path.exists(dst) and os.path.samefile(src, dst)):
         raise ValueError("dst must differ from src")
+    if os.path.exists(dst):
+        raise FileExistsError(f"{dst} exists: pass a new name")
     img = Image.open(src)
     w, h = img.size
     img.resize((max(1, round(w * factor)), max(1, round(h * factor))), Image.LANCZOS).save(dst)

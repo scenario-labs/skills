@@ -9,16 +9,18 @@ V-Ray and Corona builds and none is confirmed by a saved doc, so every setter on
 names that `getPropNames` returned on this scene's renderer, and dry_run is the default.
 
     renderer_info()                      -> {class, family, production_class}
-    prop_dump(obj, keywords=None)        -> {name: str(value)} for matching property names
-    set_props(obj, mapping, dry_run=True)-> {set, missing, before, after}
+    prop_dump(obj, keywords=None)        -> {name: str(value)} for matching property names,
+                                            or {"_error": msg} when the names cannot be read
+    set_props(obj, mapping, dry_run=True)-> {set, missing, before, after}, plus error when unreadable
     render_elements()                    -> [{index, class, name}]
     add_element(class_name, dry_run=True)-> {added, class, error}
     lights_report(keywords=None)         -> [{name, class, props}]
     color_report()                       -> {displays, views, file_io_spaces, interface_props}
-    bitmap_color_spaces(limit=2000)      -> [{file, color_space, source, status, data_guess}]
+    bitmap_color_spaces(limit=None)      -> [{file, color_space, source, status, data_guess}];
+                                            a cut list ends with a row whose status is "truncated"
     output_settings()                    -> {width, height, output_file, save_file}
     resolve(obj, concept)                -> first candidate property name that exists, or None
-    test_render(path, camera=None, size=None) -> {path, seconds, size}
+    test_render(path, camera=None, size=None) -> {path, seconds, size}; raises when no file is written
 
 Inline by prepending this file's text to the chunk passed to max_wrap.wrap (no __future__
 import here on purpose, so the concatenated chunk still compiles).
@@ -60,16 +62,17 @@ DATA_MAP_HINTS = ("normal", "nrm", "rough", "gloss", "metal", "height", "disp", 
 
 
 def _names(obj):
-    try:
-        return [str(n) for n in rt.getPropNames(obj)]
-    except Exception:
-        return []
+    # Raises when the names cannot be read: an empty list would pass as "no such setting".
+    return [str(n) for n in rt.getPropNames(obj)]
 
 
 def resolve(obj, concept, family=None):
     """First candidate name for a concept that really exists on obj (case-insensitive)."""
     family = family or renderer_info()["family"]
-    existing = {n.lower(): n for n in _names(obj)}
+    try:
+        existing = {n.lower(): n for n in _names(obj)}
+    except Exception:
+        return None
     for cand in CANDIDATES.get(concept, {}).get(family, []):
         if cand.lower() in existing:
             return existing[cand.lower()]
@@ -99,7 +102,11 @@ def prop_dump(obj, keywords=None):
     """Names and current values; filter by substrings (case-insensitive) when keywords given."""
     out = {}
     keys = tuple(k.lower() for k in keywords) if keywords else None
-    for name in _names(obj):
+    try:
+        names = _names(obj)
+    except Exception as exc:
+        return {"_error": f"getPropNames failed: {exc}"}
+    for name in names:
         if keys and not any(k in name.lower() for k in keys):
             continue
         try:
@@ -111,8 +118,13 @@ def prop_dump(obj, keywords=None):
 
 def set_props(obj, mapping, dry_run=True):
     """Set only properties that exist on obj. Never guess: unknown names come back in `missing`."""
-    existing = {n.lower(): n for n in _names(obj)}
     report = {"set": [], "missing": [], "before": {}, "after": {}}
+    try:
+        existing = {n.lower(): n for n in _names(obj)}
+    except Exception as exc:
+        report["error"] = f"getPropNames failed: {exc}"
+        report["missing"] = list(mapping)
+        return report
     for name, value in mapping.items():
         real = existing.get(name.lower())
         if real is None:
@@ -180,10 +192,14 @@ def color_report():
     return rep
 
 
-def bitmap_color_spaces(limit=2000):
-    """Read-only list of bitmap color spaces, with a guess of which files hold data."""
+def bitmap_color_spaces(limit=None):
+    """Read-only list of bitmap color spaces, with a guess of which files hold data.
+
+    limit=None reads every bitmap. A smaller limit appends a "truncated" row, which fails the
+    status check of procedure 2, so a cut audit never passes as complete."""
     out = []
-    for tex in list(rt.getClassInstances(rt.BitmapTexture))[:limit]:  # [verify] getClassInstances
+    texs = list(rt.getClassInstances(rt.BitmapTexture))  # [verify] getClassInstances
+    for tex in texs if limit is None else texs[:limit]:
         fname = str(getattr(tex, "filename", ""))
         try:
             bmp = tex.bitmap  # loads the file; missing files raise
@@ -194,6 +210,9 @@ def bitmap_color_spaces(limit=2000):
         data_guess = any(h in base for h in DATA_MAP_HINTS)
         out.append({"file": fname, "color_space": cs, "source": src, "status": status,
                     "data_guess": data_guess})
+    if limit is not None and len(texs) > limit:
+        out.append({"file": "", "color_space": "", "source": "", "data_guess": False,
+                    "status": f"truncated: {limit} of {len(texs)} bitmaps read"})
     return out
 
 
@@ -207,17 +226,26 @@ def test_render(path, camera=None, size=None):
     """Render one frame to a new file and time it. Close Render Setup first (pymxs renderer doc).
 
     path: a new file name (never an existing user file). size: (w, h) or None for scene size.
-    V-Ray layers and Corona CXR are not written by this route: only the beauty bitmap."""
+    Render elements are off, so only the beauty file is written (V-Ray layers and Corona CXR
+    are not written by this route either). A render that writes no file (cancelled or failed)
+    raises RuntimeError."""
     if os.path.exists(path):
         raise FileExistsError(f"{path} exists: pass a new versioned name")
     if rt.renderSceneDialog.isOpen():
         rt.renderSceneDialog.close()  # [verify] close() is in the struct help, not the saved page
-    kwargs = {"outputFile": path, "vfb": False}
+    kwargs = {"outputFile": path, "vfb": False, "renderElements": False}  # [verify] renderElements
     if camera is not None:
         kwargs["camera"] = camera
     if size is not None:
         kwargs["outputSize"] = rt.Point2(int(size[0]), int(size[1]))
     t0 = time.perf_counter()
-    rt.render(**kwargs)
-    return {"path": path, "seconds": round(time.perf_counter() - t0, 2),
-            "size": list(size) if size else None}
+    bmp = None
+    try:
+        bmp = rt.render(**kwargs)
+        seconds = round(time.perf_counter() - t0, 2)
+    finally:
+        if bmp is not None:
+            rt.close(bmp)  # frees the frame buffer now, not at the next garbage collection
+    if not os.path.exists(path):
+        raise RuntimeError(f"no file at {path}: render cancelled or failed")
+    return {"path": path, "seconds": seconds, "size": list(size) if size else None}

@@ -67,6 +67,9 @@ Ask in one round, then run:
 
 ## Procedure
 
+Unattended, every client GATE stops the run: return the pending approval request and start no later
+step.
+
 **1. Brief and reference board.** Write a one-page brief per view: story, feature to show, light,
 season, palette. Gather real photographs as references. Concept or mood variants from a clay render
 go to scenario-3dsmax-generation (one line in the brief: which views, which mood). GATE: the client
@@ -125,8 +128,9 @@ ground, match fps, re-sync after every path change (P9). GATE: people scale agai
 [added], feet on ground, speeds varied.
 
 **8. Aerial photo match.** Render size equals the photo size; focal from EXIF; camera height equals
-drone altitude; north from the map; sun date and time from EXIF; surroundings shadow-only (P6,
-`archviz_plan.py exif`). GATE: render overlaid on the photo with shadows continuous at the seam.
+drone height above the site; north from the map; sun date and time from EXIF; surroundings
+shadow-only (P6, `archviz_plan.py exif`). GATE: render overlaid on the photo with shadows continuous
+at the seam.
 
 **9. Animation.** Shot grammar from Simeon Balabanov: pan or tilt, truck or pedestal (linear), dolly
 (Quad In for an opening), zoom (focal only), focus pull (ease in and out), a pause after a cut

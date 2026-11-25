@@ -267,12 +267,12 @@ nodes = [rt.getNodeByName(n) for n in ["cloth_blanket"]]
 result = maxkit_fx.cache_tycache_modifiers(nodes)
 ```
 
-Check: every entry `ok`; Listener has no tyCache error; the `.tycm` file exists. Leave Keep cache in
-RAM on: off re-reads the whole cache from disk at every evaluation (tycache doc). Modifiers below
-can be disabled after caching (doc); on 2.101+ the modifier's `enabledModifiersBelow` function
-reports or sets that state (version history; arguments not in the saved docs, inspect with procedure
-2 first). A Particle Export cache from a flow is written by the operator (GUI or "auto-export on
-render"); this function does not cover it.
+Check: at least one entry, every entry `ok`; Listener has no tyCache error; the `.tycm` file exists.
+Leave Keep cache in RAM on: off re-reads the whole cache from disk at every evaluation (tycache
+doc). Modifiers below can be disabled after caching (doc); on 2.101+ the modifier's
+`enabledModifiersBelow` function reports or sets that state (version history; arguments not in the
+saved docs, inspect with procedure 2 first). A Particle Export cache from a flow is written by the
+operator (GUI or "auto-export on render"); this function does not cover it.
 
 ## 7. Verify a cache on disk
 

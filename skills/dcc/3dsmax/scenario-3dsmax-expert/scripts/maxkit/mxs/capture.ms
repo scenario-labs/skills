@@ -42,11 +42,16 @@ fn mxk_capture_views dir views:#(#view_persp_user, #view_front, #view_left, #vie
 fn mxk_capture_render p cam:undefined w:undefined h:undefined = (
     local outPath = mxk_nextFree p
     local bmp = undefined
+    local sized = w != undefined and h != undefined
+    if (w == undefined) != (h == undefined) or (sized and (w < 1 or h < 1)) do
+        return (mxk_dict #(#("path", outPath), #("saved", false), #("error", "pass w: and h: together, each 1 or more")))
     try (
-        if cam != undefined and w != undefined then
+        if cam != undefined and sized then
             bmp = render camera:cam outputwidth:w outputheight:h outputFile:outPath vfb:false  -- [verify] camera:, outputwidth:, outputheight:, vfb:
         else if cam != undefined then
             bmp = render camera:cam outputFile:outPath vfb:false
+        else if sized then
+            bmp = render outputwidth:w outputheight:h outputFile:outPath vfb:false
         else
             bmp = render outputFile:outPath vfb:false
     ) catch ()

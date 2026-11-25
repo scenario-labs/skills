@@ -8,10 +8,12 @@ Builds wrapped scripts that carry maxkit_scene.py, through the lead toolkit
 
 CLI, headless intake audit of one .max file (channel batch):
     python scene_run.py audit <scene.max> <out_dir> [--far-cm 100000]
+        (far cm = the spec's max_far_m x 100; exits 1 unless out_dir/scene_audit.json reads ok)
     python scene_run.py write-audit <out_dir>        # handoff: write the script only
 
 checked against the toolkit contract of scenario-3dsmax-expert (wrap, run_batch, result protocol).
 """
+import json
 import pathlib
 import sys
 
@@ -59,6 +61,22 @@ def mxs_audit_script(kit=("audit",)):
                 label="scene audit (read only)", undo=False)
 
 
+def audit_exit_code(res, envelope_path):
+    """0 only when run_batch succeeded and the envelope the audit script wrote reads ok."""
+    if not (isinstance(res, dict) and res.get("ok")):
+        return 1
+    try:
+        with open(envelope_path, encoding="utf-8") as fh:
+            env = json.load(fh)
+    except (OSError, ValueError) as exc:
+        print("audit result unreadable: %s" % exc)
+        return 1
+    if not (isinstance(env, dict) and env.get("ok") is True):
+        print("audit failed: %s" % (env.get("error") if isinstance(env, dict) else env))
+        return 1
+    return 0
+
+
 def main(argv):
     if len(argv) >= 3 and argv[1] == "write-audit":
         out = pathlib.Path(argv[2])
@@ -71,10 +89,14 @@ def main(argv):
         return 0
     if len(argv) >= 4 and argv[1] == "audit":
         far = float(argv[argv.index("--far-cm") + 1]) if "--far-cm" in argv else 100000.0
+        envelope = pathlib.Path(argv[3]) / "scene_audit.json"
+        if envelope.exists():  # a stale result would read as this run's
+            raise SystemExit("refusing to overwrite %s" % envelope)
         from max_batch import run_batch  # lead toolkit
-        res = run_batch(audit_script(argv[3], far), scene=argv[2], log_dir=argv[3])
+        res = run_batch(audit_script(argv[3], far), scene=argv[2], log_dir=argv[3],
+                        args={"result_path": str(envelope)}, require_result=True)
         print(res)
-        return 0 if isinstance(res, dict) and res.get("ok") else 1
+        return audit_exit_code(res, envelope)
     print(__doc__)
     return 2
 

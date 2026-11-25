@@ -14,13 +14,16 @@ Usage:
     python batch_many.py --job job_chunk.py --kit audit,xio,capture,maxkit_scripting \
         --out <out_dir> [--workers 2] [--timeout 1800] [--dry-run] <scene.max or folder> ...
 The job chunk is a pymxs snippet that sets `result`; it reads its arguments with
-cmd_args() from maxkit_scripting (keys: outdir, stem). Each file gets <out>/<stem>.json.
-Lead kit names go to max_wrap; maxkit_scripting (this skill) is prepended to the chunk.
-A failed file is retried once unless the exit code says a retry cannot help (-100, -130).
+cmd_args() from maxkit_scripting (keys: outdir, stem). Each file gets <out>/<stem>.json; when two
+inputs share a file name, stem adds a short hash of the full path. A rerun skips a file only when
+its result JSON says ok. Lead kit names go to max_wrap; maxkit_scripting (this skill) is prepended.
+A failed file is retried once, except after a timeout (--timeout is the limit per file) or an exit
+code that says a retry cannot help (-100, -130). A missing input, or no .max file found, exits 2.
 """
 import argparse
 import concurrent.futures as cf
 import csv
+import hashlib
 import json
 import os
 import sys
@@ -40,15 +43,34 @@ def _toolkit():
     return max_wrap, max_batch
 
 
-def collect(paths):
+def collect(paths, errors=None):
+    """Sorted absolute .max paths. Inputs that are missing, unreadable or hold no .max file are
+    appended to errors (a list) when one is given."""
+    errors = [] if errors is None else errors
     out = []
     for p in paths:
+        found = []
         if os.path.isdir(p):
-            for d, _, files in os.walk(p):
-                out += [os.path.join(d, f) for f in files if f.lower().endswith(".max")]
-        elif p.lower().endswith(".max"):
-            out.append(p)
+            for d, _, files in os.walk(p, onerror=lambda e: errors.append("cannot read %s" % e)):
+                found += [os.path.join(d, f) for f in files if f.lower().endswith(".max")]
+            if not found:
+                errors.append("no .max file in %s" % p)
+        elif os.path.isfile(p) and p.lower().endswith(".max"):
+            found.append(p)
+        else:
+            errors.append("not a .max file or folder: %s" % p)
+        out += found
     return sorted(set(os.path.abspath(p) for p in out))
+
+
+def stems(scenes):
+    """{scene: stem}: the file name, plus a hash of the full path when two scenes share it."""
+    base = {s: os.path.splitext(os.path.basename(s))[0] for s in scenes}
+    counts = {}
+    for b in base.values():
+        counts[b.lower()] = counts.get(b.lower(), 0) + 1
+    return {s: b if counts[b.lower()] == 1 else "%s_%s" % (b, hashlib.sha1(s.encode("utf-8")).hexdigest()[:8])
+            for s, b in base.items()}
 
 
 LOCAL_KIT = {"maxkit_scripting"}  # this skill's in-Max modules; max_wrap only knows the lead's kit
@@ -74,11 +96,12 @@ def _read_result(path):
         return None
 
 
-def run_one(scene, chunk, kit, out_dir, timeout, dry_run):
+def run_one(scene, chunk, kit, out_dir, timeout, dry_run, stem=None):
     max_wrap, max_batch = _toolkit()
-    stem = os.path.splitext(os.path.basename(scene))[0]
+    stem = stem or os.path.splitext(os.path.basename(scene))[0]
     result_path = os.path.join(out_dir, stem + ".json")
-    if os.path.exists(result_path):
+    previous = _read_result(result_path)
+    if isinstance(previous, dict) and previous.get("ok") is True:
         return {"scene": scene, "status": "skipped", "result": result_path}
     lead_kit, prelude = split_kit(kit)
     code = (prelude + "\n\n" + chunk) if prelude else chunk
@@ -102,6 +125,9 @@ def run_one(scene, chunk, kit, out_dir, timeout, dry_run):
         if res.get("exit_code") in (-100, -130) or "not found" in str(res.get("meaning")):
             # bad arguments, a script error or no 3dsmaxbatch: a retry repeats it
             break
+        if res.get("exit_code") is None:
+            # timeout: a second run would double the per-file limit
+            break
     ok = res.get("exit_code") == 0 and bool(payload and payload.get("ok"))
     return {"scene": scene, "status": "ok" if ok else "failed", "attempts": attempt,
             "seconds": round(time.time() - t0, 1), "result": result_path if payload else None,
@@ -124,10 +150,16 @@ def main(argv=None):
     kit = [k for k in a.kit.split(",") if k]
     a.out = os.path.abspath(a.out)  # 3ds Max runs elsewhere: never pass a relative path
     os.makedirs(a.out, exist_ok=True)
-    scenes = collect(a.inputs)
+    errors = []
+    scenes = collect(a.inputs, errors)
+    if errors or not scenes:
+        for e in errors or ["no .max file found"]:
+            print("input error: %s" % e, file=sys.stderr)
+        return 2
+    names = stems(scenes)
     rows = []
     with cf.ThreadPoolExecutor(max_workers=max(1, a.workers)) as pool:
-        futs = {pool.submit(run_one, s, chunk, kit, a.out, a.timeout, a.dry_run): s for s in scenes}
+        futs = {pool.submit(run_one, s, chunk, kit, a.out, a.timeout, a.dry_run, names[s]): s for s in scenes}
         for f in cf.as_completed(futs):
             try:
                 rows.append(f.result())

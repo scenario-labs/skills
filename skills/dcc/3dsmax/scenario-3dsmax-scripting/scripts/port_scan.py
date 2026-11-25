@@ -9,7 +9,7 @@ knowledge, not from the saved 3ds Max docs.
 
 Usage:
     python port_scan.py <file_or_folder> [--json]
-Exit code: 0 nothing found, 1 findings, 2 path not found.
+Exit code: 0 nothing found, 1 findings, 2 path not found, a folder not readable, or no .py file.
 """
 import argparse
 import ast
@@ -95,11 +95,12 @@ def scan_file(path):
     return findings
 
 
-def iter_files(root):
+def iter_files(root, errors=None):
+    """Yield the .py files under root. Folders that cannot be listed go to errors (a list)."""
     if os.path.isfile(root):
         yield root
         return
-    for d, _, files in os.walk(root):
+    for d, _, files in os.walk(root, onerror=errors.append if errors is not None else None):
         for f in files:
             if f.endswith(".py"):
                 yield os.path.join(d, f)
@@ -113,15 +114,22 @@ def main(argv=None):
     if not os.path.exists(args.path):
         print("not found: %s" % args.path, file=sys.stderr)
         return 2
-    findings = []
-    for f in iter_files(args.path):
+    findings, errors, checked = [], [], 0
+    for f in iter_files(args.path, errors):
         findings.extend(scan_file(f))
+        checked += 1
     if args.json:
         print(json.dumps(findings, indent=2))
     else:
         for f in findings:
             print("%s:%d %-7s %-15s %s" % (f["file"], f["line"], f["severity"], f["rule"], f["message"]))
-        print("%d finding(s)" % len(findings))
+        print("%d finding(s) in %d file(s)" % (len(findings), checked))
+    for e in errors:
+        print("cannot read: %s" % e, file=sys.stderr)
+    if errors or checked == 0:
+        if checked == 0:
+            print("no .py file checked under %s" % args.path, file=sys.stderr)
+        return 2
     return 1 if findings else 0
 
 

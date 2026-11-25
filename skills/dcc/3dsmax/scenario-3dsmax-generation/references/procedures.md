@@ -11,9 +11,9 @@ Conventions:
 - In-Max chunks set `result` and run inside the lead's `max_wrap.wrap(...)`, which adds the undo
   record, the result file and the inlined kit modules (`capture`, `xio`, `stats`, and this skill's
   `scripts/maxkit_generation.py`). Module names inside the chunk follow that inlining.
-- Arguments reach a chunk through an `ARGS` JSON literal that the runner substitutes. MAXScript for
-  `mcp-safe` takes them from placeholder lines at the top that the agent fills before proposing the
-  script.
+- Arguments reach a chunk through an `ARGS` JSON literal that the runner substitutes with
+  `repr(json.dumps(args))`, which keeps Windows backslashes. MAXScript for `mcp-safe` takes them
+  from placeholder lines at the top that the agent fills before proposing the script.
 - Files are written under the project folder on the machine that runs 3ds Max. Nothing is
   overwritten: new names get `_v002`.
 
@@ -56,7 +56,7 @@ Scene prep before any capture for an AI pass (VizAcademy UK, zARHVN_XN4U 00:24:3
 # channel: batch (render only), bridge, handoff
 # checked against scripting-pipeline__pymxs-renderer-2027.md and the lead's capture contract
 import json, os
-ARGS = json.loads('__ARGS__')  # {"out_dir": ..., "camera": "CAM_Hero", "size": [2048, 1152], "views": true}
+ARGS = json.loads(__ARGS__)  # {"out_dir": ..., "camera": "CAM_Hero", "size": [2048, 1152], "views": true}
 os.makedirs(ARGS["out_dir"], exist_ok=True)
 files = []
 beauty = os.path.join(ARGS["out_dir"], "source_render.png")
@@ -195,14 +195,21 @@ format "imported:% path:%\n" ok inPath
 # channel: batch, bridge, handoff
 # checked against scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md and scripts/maxkit_generation.py
 import json
-ARGS = json.loads('__ARGS__')
+import os
+ARGS = json.loads(__ARGS__)
 # {"path": ".../planter_01.fbx", "name": "planter_01", "layer": "GEN_props",
-#  "known_axis": 2, "known_size_m": 0.85, "place_at": [0, 0, 0], "record": {...sidecar fields...}}
+#  "known_axis": 2, "known_size_m": 0.85, "place_at": [0, 0, 0], "record": {...sidecar fields...},
+#  "save_as": ".../scene_v002.max"}  (batch: the session ends with the run, so save under a new name)
 report = maxkit_generation.land_model(
     ARGS["path"], ARGS["name"], layer=ARGS.get("layer", "GEN_props"),
     known_axis=ARGS.get("known_axis", 2), known_size_m=ARGS.get("known_size_m"),
     place_at=ARGS.get("place_at"), record=ARGS.get("record"))
 report["renderer"] = str(rt.renderers.current)
+if ARGS.get("save_as"):
+    if os.path.exists(ARGS["save_as"]):
+        raise FileExistsError(ARGS["save_as"])  # never over an existing scene
+    rt.saveMaxFile(ARGS["save_as"], quiet=True)  # [verify] quiet: keyword
+    report["saved_scene"] = ARGS["save_as"]
 result = report
 ```
 
@@ -215,11 +222,13 @@ import json
 from max_wrap import wrap
 from max_batch import run_batch
 
-args = {"path": "__PATH__", "name": "planter_01", "known_size_m": 0.85, "record": {"model_name": "__MODEL_NAME__"}}
-chunk = open("__CHUNK_FILE__", encoding="utf-8").read().replace("__ARGS__", json.dumps(args).replace("'", "\\'"))
-script = wrap(chunk, lang="python", kit=["maxkit_generation"], result_path="__RESULT_JSON__")
-res = run_batch(script, scene="__SCENE__.max")   # batch: save the scene under a new name inside the chunk if needed
-print(res)
+args = {"path": "__PATH__", "name": "planter_01", "known_size_m": 0.85, "record": {"model_name": "__MODEL_NAME__"},
+        "save_as": "__NEW_SCENE__.max"}  # a new name such as <scene>_v002.max; an existing file stops the chunk
+chunk = open("__CHUNK_FILE__", encoding="utf-8").read().replace("__ARGS__", repr(json.dumps(args)))
+script = wrap(chunk, lang="python", kit=["maxkit_generation"], kit_dirs=["__GENERATION_SCRIPTS__"],
+              result_path="__RESULT_JSON__")  # kit_dirs: this skill's scripts/ folder
+res = run_batch(script, scene="__SCENE__.max", args={"result_path": "__RESULT_JSON__"}, require_result=True)
+print(res)  # res["result"]["result"]["saved_scene"] is the landed scene
 ```
 
 MAXScript twin for `mcp-safe` (import only; scale and layer stay simple to keep the script readable
@@ -376,7 +385,7 @@ splat support, so in those scenes ask `scenario-3dsmax-lighting-rendering` which
 # channel: batch, bridge, handoff
 # checked against scripting-pipeline__maxscript-whats-new-2027.md (SPZImport, PLYImport) and fundamentals-scene__gaussian-splat-3dgs-in-3ds-max-2027.md
 import json
-ARGS = json.loads('__ARGS__')   # {"path": ".../world.spz", "name": "site_context", "record": {...}}
+ARGS = json.loads(__ARGS__)   # {"path": ".../world.spz", "name": "site_context", "record": {...}}
 rep = maxkit_generation.land_splat(ARGS["path"], ARGS["name"], record=ARGS.get("record"))
 rep["renderer"] = str(rt.renderers.current)
 rep["arnold"] = "arnold" in rep["renderer"].lower()
@@ -485,7 +494,7 @@ assemble it, send it as the reference video.
 # channel: batch, bridge, handoff
 # checked against scripting-pipeline__pymxs-renderer-2027.md (render, outputFile)
 import json, os
-ARGS = json.loads('__ARGS__')   # {"camera": "CAM_Walk", "start": 0, "end": 143, "out_dir": ...}
+ARGS = json.loads(__ARGS__)   # {"camera": "CAM_Walk", "start": 0, "end": 143, "out_dir": ...}
 cam = rt.getNodeByName(ARGS["camera"])          # [verify] getNodeByName
 os.makedirs(ARGS["out_dir"], exist_ok=True)
 done = []

@@ -41,7 +41,7 @@ def cache_report(folder, pattern="*", first=None, last=None):
         if m:
             frames.add(int(m.group(1)))
     missing = []
-    if first is not None and last is not None and frames:
+    if first is not None and last is not None:  # no parsed frame number: every frame is missing
         missing = [f for f in range(first, last + 1) if f not in frames]
     zero = [p.name for p, s in zip(files, sizes) if s == 0]
     return {

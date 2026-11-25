@@ -8,14 +8,15 @@ Functions
 - frames_for(seconds, fps) -> int
 - shot_ranges(durations_s, fps, start=0, pause_s=0.0) -> list of (first, last) frame ranges
 - render_budget(frames, sec_per_frame, nodes=1, margin=1.2) -> dict with hours and a verdict hint
-- exif_camera(photo_path) -> dict with render size, focal length, film width, altitude, timestamp (needs exiftool on PATH)
+- exif_camera(photo_path, site_elevation_m=None) -> dict with render size, focal length, film width, height
+  above the site, timestamp (needs exiftool on PATH)
 - aerial_camera(width_px, height_px, focal_35mm, altitude_m, ...) -> dict (no exiftool needed)
 - chunk(code, args=None) -> str: ARGS + maxkit_archviz.py + code, ready for max_wrap.wrap()
 
 CLI
   python archviz_plan.py budget --seconds 20 --fps 25 --spf 540 --nodes 4
   python archviz_plan.py shots --fps 30 2.5 3 2 4
-  python archviz_plan.py exif drone.jpg
+  python archviz_plan.py exif drone.jpg [--site-elevation 500]
 """
 from __future__ import annotations
 
@@ -99,7 +100,21 @@ def _num(v):
         return None
 
 
-def exif_camera(photo_path: str) -> dict:
+def camera_altitude(tags: dict, site_elevation_m: float | None = None):
+    """(height above the site in m or None, reference). RelativeAltitude (DJI XMP) is above takeoff;
+    GPSAltitude is above sea level, so it counts only with the site elevation subtracted."""
+    rel = _num(tags.get("RelativeAltitude"))
+    if rel is not None:
+        return rel, "RelativeAltitude (above takeoff)"
+    gps = _num(tags.get("GPSAltitude"))
+    if gps is None:
+        return None, "none"
+    if site_elevation_m is None:
+        return None, "GPSAltitude %s m above sea level: pass the site elevation" % gps
+    return gps - float(site_elevation_m), "GPSAltitude minus site elevation %s m" % site_elevation_m
+
+
+def exif_camera(photo_path: str, site_elevation_m: float | None = None) -> dict:
     """Read EXIF with exiftool (must be installed) and return aerial_camera() input and result."""
     exe = shutil.which("exiftool")
     if not exe:
@@ -109,11 +124,10 @@ def exif_camera(photo_path: str) -> dict:
     w = tags.get("ImageWidth") or tags.get("ExifImageWidth")
     h = tags.get("ImageHeight") or tags.get("ExifImageHeight")
     f35 = _num(tags.get("FocalLengthIn35mmFormat"))
-    # DJI writes RelativeAltitude (above takeoff) in XMP; GPSAltitude is above sea level.
-    alt = _num(tags.get("RelativeAltitude")) or _num(tags.get("GPSAltitude"))
+    alt, ref = camera_altitude(tags, site_elevation_m)
     ts = tags.get("DateTimeOriginal")
     missing = [k for k, v in {"width": w, "height": h, "focal_35mm": f35, "altitude": alt}.items() if v is None]
-    result = {"tags_missing": missing}
+    result = {"tags_missing": missing, "altitude_reference": ref}
     if not missing:
         result.update(aerial_camera(int(w), int(h), f35, alt, timestamp=ts))
     return result
@@ -144,8 +158,9 @@ def _main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = p.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("budget")
-    b.add_argument("--frames", type=int)
-    b.add_argument("--seconds", type=float)
+    work = b.add_mutually_exclusive_group(required=True)
+    work.add_argument("--frames", type=int)
+    work.add_argument("--seconds", type=float)
     b.add_argument("--fps", type=float, default=30)
     b.add_argument("--spf", type=float, required=True, help="measured seconds per frame")
     b.add_argument("--nodes", type=int, default=1)
@@ -156,14 +171,17 @@ def _main(argv=None) -> int:
     s.add_argument("durations", type=float, nargs="+")
     e = sub.add_parser("exif")
     e.add_argument("photo")
+    e.add_argument("--site-elevation", type=float, help="site elevation in m above sea level")
     a = p.parse_args(argv)
     if a.cmd == "budget":
-        frames = a.frames if a.frames else frames_for(a.seconds or 0, a.fps)
+        frames = a.frames if a.frames is not None else frames_for(a.seconds, a.fps)
+        if frames <= 0:
+            p.error("budget needs a positive --frames or --seconds")
         print(json.dumps(render_budget(frames, a.spf, a.nodes, a.margin), indent=2))
     elif a.cmd == "shots":
         print(json.dumps(shot_ranges(a.durations, a.fps, pause_s=a.pause)))
     else:
-        print(json.dumps(exif_camera(a.photo), indent=2))
+        print(json.dumps(exif_camera(a.photo, a.site_elevation), indent=2))
     return 0
 
 

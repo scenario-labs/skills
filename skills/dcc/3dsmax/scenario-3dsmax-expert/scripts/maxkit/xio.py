@@ -122,6 +122,13 @@ def export_fbx(path, preset=None, selected=False) -> dict:
     Not settable through mcp-safe if the exporter keeps them in INI files (setINISetting is blocked)."""
     rt = _rt()
     applied = {}
+    if preset:  # the exporter's parameters exist only once the plug-in is loaded
+        try:
+            loaded = rt.pluginManager.loadClass(rt.FBXEXP)  # [verify] pluginManager.loadClass, FBXEXP
+        except Exception as exc:
+            raise RuntimeError(f"FBX exporter plug-in could not be loaded: {exc}") from exc
+        if loaded is False:
+            raise RuntimeError("FBX exporter plug-in could not be loaded")
     for key, value in (preset or {}).items():
         rt.FBXExporterSetParam(key, value)  # [verify] FBXExporterSetParam
         applied[key] = value

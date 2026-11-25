@@ -7,11 +7,15 @@ strings, so Windows paths with spaces survive. Checked against scripting-pipelin
 
     command(script, scene=None, args=None, exe=None, listener_log=None, log=None,
             verbosity=3, dialog_monitor=True) -> list[str]
-    run_batch(script, scene=None, args=None, timeout=1800, log_dir=None, exe=None) -> dict
+    run_batch(script, scene=None, args=None, timeout=1800, log_dir=None, exe=None,
+              require_result=False) -> dict
 
 `script` is a .ms/.mxs/.py file, or code text (a string containing a newline), which run_batch
 writes to log_dir first. Code that came from max_wrap.wrap() reports through result_path, which
-run_batch passes as -mxsString result_path:"..." and reads back after the run.
+run_batch passes as -mxsString result_path:"..." and reads back after the run. An args
+"result_path" replaces the generated one, for both the argument and the readback; a file already
+there that the run does not rewrite counts as no result. require_result=True (use it for wrapped
+code) fails a run that leaves no result.
 
 Batch facts the caller must know: it uses a license, it has no viewport (capture.viewport fails,
 renders work), dialogs are suppressed or logged with -dm on, and MCP is not available in batch.
@@ -29,6 +33,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import uuid
 from pathlib import Path, PureWindowsPath
 
 EXIT_CODES = {
@@ -110,11 +115,19 @@ def _read(path) -> str:
         return ""
 
 
-def run_batch(script, scene=None, args=None, timeout: int = 1800, log_dir=None, exe=None) -> dict:
+def _mtime(path):
+    try:
+        return Path(path).stat().st_mtime_ns
+    except OSError:
+        return None
+
+
+def run_batch(script, scene=None, args=None, timeout: int = 1800, log_dir=None, exe=None,
+              require_result: bool = False) -> dict:
     """Run once, wait, return {ok, exit_code, meaning, result, stdout, listener_log, log, command, seconds}."""
     log_dir = Path(log_dir) if log_dir else Path(tempfile.mkdtemp(prefix="maxbatch_"))
     log_dir.mkdir(parents=True, exist_ok=True)
-    stamp = time.strftime("%Y%m%d_%H%M%S")
+    stamp = time.strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:12]  # unique per call in a shared log_dir
     text = os.fspath(script) if not isinstance(script, Path) else None
     if text is not None and "\n" in text:
         is_py = re.search(r"(?m)^\s*(import \w|from \w[\w.]* import |def \w|class \w)", text) is not None
@@ -122,15 +135,15 @@ def run_batch(script, scene=None, args=None, timeout: int = 1800, log_dir=None, 
         path = log_dir / f"job_{stamp}{suffix}"
         path.write_text(text, encoding="utf-8")
         script = path
-    result_path = log_dir / f"result_{stamp}.json"
+    all_args = dict(args or {})
+    result_path = Path(all_args.setdefault("result_path", str(log_dir / f"result_{stamp}.json")))
     listener = log_dir / f"listener_{stamp}.log"
     logf = log_dir / f"batch_{stamp}.log"
-    all_args = dict(args or {})
-    all_args.setdefault("result_path", str(result_path))
     cmd = command(script, scene, all_args, exe=exe, listener_log=listener, log=logf)
     if not (exe or find_exe()) or (os.name != "nt" and not exe):
         return {"ok": False, "exit_code": None, "meaning": "3dsmaxbatch.exe not found (Windows only)",
                 "result": None, "stdout": "", "listener_log": "", "log": "", "command": cmd, "seconds": 0}
+    before = _mtime(result_path)
     t0 = time.time()
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
@@ -140,13 +153,18 @@ def run_batch(script, scene=None, args=None, timeout: int = 1800, log_dir=None, 
     if isinstance(code, int) and code > 2**31:  # Windows reports negative codes as unsigned
         code -= 2**32
     result = None
-    if result_path.exists():
+    after = _mtime(result_path)
+    if after is not None and after != before:
         try:
             result = json.loads(_read(result_path))
         except ValueError:
             result = {"ok": False, "error": "result file is not JSON", "raw": _read(result_path)[:2000]}
     meaning = EXIT_CODES.get(code, "timeout" if code is None else f"user exit code {code}")
-    ok = code == 0 and (result is None or bool(result.get("ok", True)))
+    if result is None and require_result:
+        ok = False
+        meaning += "; no result file written"
+    else:
+        ok = code == 0 and (result is None or bool(result.get("ok", True)))
     return {"ok": ok, "exit_code": code, "meaning": meaning, "result": result, "stdout": out[-4000:],
             "listener_log": _read(listener)[-4000:], "log": _read(logf)[-4000:], "command": cmd,
             "seconds": round(time.time() - t0, 1)}

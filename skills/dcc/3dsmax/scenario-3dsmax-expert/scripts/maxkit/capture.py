@@ -70,11 +70,16 @@ def _save_bitmap(rt, bmp, path, size=None):
         rt.copy(bmp, out, quality=rt.Name("high"))  # copy src dest quality: (2027)
     path = next_free(os.fspath(path))
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    out.filename = path  # set format options before filename, filename before save
-    rt.save(out)
-    rt.close(out)
-    if out is not bmp:
-        rt.close(bmp)
+    try:
+        out.filename = path  # set format options before filename, filename before save
+        if not rt.save(out):  # save returns false when the write fails
+            raise RuntimeError(f"bitmap save failed: {path}")
+    finally:
+        with contextlib.suppress(Exception):
+            rt.close(out)
+        if out is not bmp:
+            with contextlib.suppress(Exception):
+                rt.close(bmp)
     return path, tw, th
 
 

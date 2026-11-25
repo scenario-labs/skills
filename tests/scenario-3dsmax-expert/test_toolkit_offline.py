@@ -583,6 +583,182 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(e["result"]["n"], "A")
 
 
+def _png(path, w, h, ctype, rows, plte=None, trns=None):
+    """A minimal 8-bit PNG (filter 0 rows) for the no-Pillow reader."""
+    import struct
+    import zlib
+
+    def chunk(t, body):
+        return struct.pack(">I", len(body)) + t + body + struct.pack(">I", zlib.crc32(t + body) & 0xFFFFFFFF)
+    data = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, ctype, 0, 0, 0))
+    if plte:
+        data += chunk(b"PLTE", plte)
+    if trns:
+        data += chunk(b"tRNS", trns)
+    data += chunk(b"IDAT", zlib.compress(b"".join(b"\x00" + r for r in rows))) + chunk(b"IEND", b"")
+    Path(path).write_bytes(data)
+    return str(path)
+
+
+class ReviewFixTests(unittest.TestCase):
+    def test_palette_transparency_kept_without_pillow(self):
+        d = tmpdir()
+        p = _png(d / "pal.png", 2, 1, 3, [b"\x00\x01"], plte=b"\xff\x00\x00\x00\x00\xff", trns=b"\x00\x00")
+        with mock.patch.object(max_review, "HAVE_PIL", False):
+            c = max_review.image_checks(p)
+        self.assertIn("transparent", c["flags"])
+        rgb = _png(d / "rgb.png", 2, 1, 2, [b"\xff\x00\x00\x00\x00\xff"], trns=b"\x00\xff\x00\x00\x00\x00")
+        _, _, ch, rows = max_review._read_png(rgb)
+        self.assertEqual((ch, rows[0][3], rows[0][7]), (4, 0, 255))
+
+    def test_compare_keeps_unmatched_pixels(self):
+        d = tmpdir()
+        a = _png(d / "a.png", 1, 1, 2, [b"\xff\x00\x00"])
+        b = _png(d / "b.png", 2, 1, 2, [b"\xff\x00\x00\x00\x00\xff"])
+        with mock.patch.object(max_review, "HAVE_PIL", False):
+            r = max_review.compare(a, b)
+            same = max_review.compare(a, a)
+        self.assertFalse(r["identical"])
+        self.assertFalse(r["same_size"])
+        self.assertTrue(same["identical"])
+
+    def test_contact_sheet_name_never_reused(self):
+        d = tmpdir()
+        out = d / "sheet_v001.png"
+        self.assertEqual(max_review._next_free(str(out)), str(out))
+        out.write_bytes(b"x")
+        self.assertEqual(max_review._next_free(str(out)), str(d / "sheet_v002.png"))
+
+
+class ToolkitFixTests(unittest.TestCase):
+    def test_wrap_adds_modules_the_chunk_calls(self):
+        scene_basic()
+        payload, _ = exec_generated(max_wrap.wrap("result = stats.snapshot()['objects']"))
+        self.assertTrue(payload["ok"], payload)
+        self.assertEqual(payload["result"], 8)
+        m = max_wrap.wrap("result = mxk_stats_snapshot()", lang="maxscript")
+        self.assertIn("fn mxk_stats_snapshot", m)
+
+    def test_error_recorded_when_undo_swallows_it(self):
+        import contextlib
+        rt.reset()
+
+        @contextlib.contextmanager
+        def swallowing_undo(on, label=None):
+            with contextlib.suppress(Exception):
+                yield
+        with mock.patch.object(pymxs, "undo", swallowing_undo):
+            payload, _ = exec_generated(max_wrap.wrap("raise ValueError('rolled back')"))
+        self.assertFalse(payload["ok"])
+        self.assertIn("rolled back", payload["error"])
+
+    def test_bare_alias_points_to_current_module_then_restored(self):
+        scene_basic()
+        stale = object()
+        sys.modules["stats"] = stale
+        try:
+            payload, _ = exec_generated(max_wrap.wrap("import stats\nresult = hasattr(stats, 'snapshot')",
+                                                      kit=["stats"]))
+            self.assertTrue(payload["result"])
+            self.assertIs(sys.modules["stats"], stale)
+        finally:
+            sys.modules.pop("stats", None)
+
+    def test_result_write_keeps_foreign_files(self):
+        d = tmpdir()
+        p = d / "project.json"
+        p.write_text('{"keep": 1}')
+        env = result.envelope(True, 1)
+        with self.assertRaises(FileExistsError):
+            result.write(env, p)
+        self.assertEqual(p.read_text(), '{"keep": 1}')
+        q = d / "r.json"
+        result.write(env, q)
+        result.write(result.envelope(True, 2), q)  # an earlier envelope is replaced
+        self.assertEqual(json.loads(q.read_text())["result"], 2)
+        with self.assertRaises(FileExistsError):
+            result.write(env, q, overwrite=False)
+        result.write(env, p, overwrite=True)
+
+    def test_jsonable_vector_components_finite(self):
+        out = result.to_jsonable(pymxs.Point3(float("nan"), 0, float("inf")))
+        self.assertEqual(out, ["nan", 0.0, "inf"])
+        json.dumps(out, allow_nan=False)
+
+    def test_audit_units_unreadable_and_scale(self):
+        data = {"scene": {"system_unit": None}, "nodes": []}
+        self.assertTrue(any("could not be read" in f["message"]
+                            for f in audit.units(data, {"units": "centimeters"})))
+        far = {"scene": {"system_unit": "centimeters", "system_scale": 100.0},
+               "nodes": [{"name": "T", "bbox_min": [1999, 0, 0], "bbox_max": [2001, 0, 0]}]}
+        self.assertTrue(any(f["node"] == "T" for f in audit.units(far)))
+
+    def test_bitmap_query_failure_blocks_maps(self):
+        scene_basic()
+        with mock.patch.object(type(rt), "getClassInstances", side_effect=RuntimeError("no access")):
+            data = stats.collect()
+        self.assertIn("no access", data["scene"]["bitmaps_error"])
+        self.assertTrue(any(f["severity"] == "error" for f in audit.maps(data)))
+        self.assertIsNone(stats.collect()["scene"]["bitmaps_error"])
+
+    def test_capture_save_failure_raises(self):
+        scene_basic()
+        rt.save_fails = True
+        with self.assertRaises(RuntimeError):
+            capture.viewport(str(tmpdir() / "x.png"))
+
+    def test_fbx_preset_loads_plugin_first(self):
+        scene_basic()
+        d = tmpdir()
+        xio.export_fbx(str(d / "a.fbx"), preset={"UpAxis": "Z"})
+        self.assertEqual(rt.pluginManager.loaded, [rt.FBXEXP])
+        rt.pluginManager.fail = True
+        with self.assertRaises(RuntimeError):
+            xio.export_fbx(str(d / "b.fbx"), preset={"UpAxis": "Z"})
+        self.assertFalse((d / "b.fbx").exists())
+
+    def test_check_fails_without_names_file(self):
+        with mock.patch.object(max_check, "load_names", return_value=set()):
+            r = max_check.check(code="print 1", lang="maxscript")
+        self.assertFalse(r["ok"])
+
+    def test_doctor_finds_batch_on_path(self):
+        env = {k: v for k, v in os.environ.items() if k not in max_env.ENV_KEYS}
+        with mock.patch.dict(os.environ, env, clear=True), \
+                mock.patch.object(max_env, "_open", return_value=False), \
+                mock.patch.object(max_env, "find_installs", return_value=[]), \
+                mock.patch.object(max_env.platform, "system", return_value="Windows"), \
+                mock.patch.object(max_env.shutil, "which", return_value=r"D:\Max\3dsmaxbatch.exe"):
+            d = max_env.doctor()
+        self.assertEqual(d["channel"], "batch")
+
+    def test_run_batch_result_path_unique_and_honored(self):
+        d = tmpdir()
+        seen = []
+
+        def fake_run(cmd, **kw):
+            seen.append(cmd)
+            arg = next(a for a in cmd if a.startswith("result_path:"))
+            path = arg.split(":", 1)[1].lstrip("@").strip('"').replace("\\\\", "\\")
+            if "nowrite" not in path:
+                Path(path).write_text('{"ok": false}')
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+        with mock.patch.object(max_batch.subprocess, "run", side_effect=fake_run):
+            custom = d / "custom.json"
+            r = max_batch.run_batch("print 1\n", log_dir=d, exe="x", args={"result_path": str(custom)})
+            self.assertFalse(r["ok"])
+            self.assertEqual(r["result"], {"ok": False})
+            stale = d / "nowrite.json"
+            stale.write_text('{"ok": true}')
+            r2 = max_batch.run_batch("print 1\n", log_dir=d, exe="x", args={"result_path": str(stale)},
+                                     require_result=True)
+            self.assertIsNone(r2["result"])
+            self.assertFalse(r2["ok"])
+            max_batch.run_batch("print 1\n", log_dir=d, exe="x")
+            max_batch.run_batch("print 1\n", log_dir=d, exe="x")
+        self.assertEqual(len({c[1] for c in seen}), len(seen))
+
+
 class StatusLineTests(unittest.TestCase):
     def test_in_max_modules_carry_no_run_note(self):
         for p in list((SCRIPTS / "maxkit").glob("*.py")) + list((SCRIPTS / "maxkit" / "mxs").glob("*.ms")):

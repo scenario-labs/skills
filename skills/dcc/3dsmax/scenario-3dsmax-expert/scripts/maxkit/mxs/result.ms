@@ -11,6 +11,10 @@ fn mxk_jsonStr s = (
     t = substituteString t "\n" "\\n"
     t = substituteString t "\r" "\\r"
     t = substituteString t "\t" "\\t"
+    for i = 1 to 31 where i != 9 and i != 10 and i != 13 do (  -- JSON escapes every control character
+        local c = bit.intAsChar i  -- [verify] bit.intAsChar
+        if (findString t c) != undefined do t = substituteString t c ("\\u" + (formattedPrint i format:"04x"))
+    )
     "\"" + t + "\""
 )
 

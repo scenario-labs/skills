@@ -38,7 +38,7 @@ CANDIDATES = {
     "symmetry": ("Symmetry",),  # [verify]
     "slice": ("SliceModifier", "Slice"),  # [verify]
     "poly_select": ("Poly_Select",),  # [verify]
-    "array": ("Array", "ArrayModifier"),  # [verify] outputType property is documented (2027.2)
+    "array": ("ArrayModifier",),  # [verify] rt.Array is the MAXScript collection class; outputType property is documented (2027.2)
     "displace": ("Displace",),  # [verify]
     "shell": ("Shell",),  # [verify]
     "ffd": ("FFD_4x4x4", "FFDBox"),  # [verify]
@@ -107,7 +107,7 @@ P1c, read current values of one modifier (MAXScript, safe for `mcp-safe`):
 		local pairs = for p in getPropNames m collect (p as string + "=" + ((getProperty m p) as string))
 		append out ((i as string) + " " + ((classOf m) as string) + " " + m.name + " :: " + (pairs as string))
 	)
-	out
+	result = out
 )
 ```
 
@@ -241,7 +241,7 @@ P2 for `mcp-safe` (MAXScript, same chain, Smart Bevel route):
 			if isProperty sb #width then sb.width = widths[i] else append log "SmartBevel width name unknown" -- [verify] width
 		)
 	)
-	log
+	result = log
 )
 ```
 
@@ -263,7 +263,7 @@ except NameError:
     import maxkit_modeling as mm
 
 ARGS = {"base": "GEO_Swirl", "operands": ["GEO_Plug_01"], "original": "GEO_Swirl_SRC",
-        "voxel": None, "face_target": 8000}
+        "voxel": None, "face_target": 8000, "fine_voxel_ok": False}  # True only after the user's yes
 NAMES = {
     "boolean": ("BooleanMod", "Boolean"),           # [verify]
     "method": ("method",), "method_openvdb": 1,     # [verify] property and enum
@@ -278,32 +278,36 @@ log = []
 bb = rt.nodeGetBoundingBox(base, rt.matrix3(1))  # [verify]
 side = max(float(bb[1][k] - bb[0][k]) for k in range(3))
 voxel = ARGS["voxel"] or round(side / 100.0, 4)  # [added] start near 1/100 of the largest side
-log.append(mm.voxel_ratio(base, voxel))
-with pymxs.undo(True, "modeling: vdb merge"):
-    for op in ARGS["operands"]:
-        b, rep = mm.add_mod(base, NAMES["boolean"])
-        # every new Boolean starts at Method Mesh and voxel 1.0: set both each time (uDfhmKCdR0U 00:12:38)
-        rep2 = mm.set_props(b, {NAMES["method"]: NAMES["method_openvdb"], NAMES["voxel"]: voxel})
-        log += [rep, rep2]
-        try:
-            b.AppendOperand(base, rt.getNodeByName(op))  # [verify]
-        except Exception as exc:
-            log.append("add operand in the GUI: %s" % exc)
-    r, rep = mm.add_mod(base, ("Retopology",), {NAMES["retopo_faces"]: ARGS["face_target"]})  # [verify]
-    log.append(rep)
-    if ARGS["original"]:
-        c, rep = mm.add_mod(base, ("Conform", "ConformModifier"),  # [verify]
-                            {NAMES["conform_target"]: rt.getNodeByName(ARGS["original"])})
+vr = mm.voxel_ratio(base, voxel)
+log.append(vr)
+if vr["ratio"] > 500 and not ARGS["fine_voxel_ok"]:
+    # stop before any change; unattended, report and wait
+    result = {"voxel": voxel, "log": log, "stopped": "voxel under 1/500 of the largest side may freeze 3ds Max"}
+else:
+    with pymxs.undo(True, "modeling: vdb merge"):
+        for op in ARGS["operands"]:
+            b, rep = mm.add_mod(base, NAMES["boolean"])
+            # every new Boolean starts at Method Mesh and voxel 1.0: set both each time (uDfhmKCdR0U 00:12:38)
+            rep2 = mm.set_props(b, {NAMES["method"]: NAMES["method_openvdb"], NAMES["voxel"]: voxel})
+            log += [rep, rep2]
+            try:
+                b.AppendOperand(base, rt.getNodeByName(op))  # [verify]
+            except Exception as exc:
+                log.append("add operand in the GUI: %s" % exc)
+        r, rep = mm.add_mod(base, ("Retopology",), {NAMES["retopo_faces"]: ARGS["face_target"]})  # [verify]
         log.append(rep)
-
-result = {"voxel": voxel, "log": log, "audit": mm.stack_audit(base)}
+        if ARGS["original"]:
+            c, rep = mm.add_mod(base, ("Conform", "ConformModifier"),  # [verify]
+                                {NAMES["conform_target"]: rt.getNodeByName(ARGS["original"])})
+            log.append(rep)
+    result = {"voxel": voxel, "log": log, "audit": mm.stack_audit(base)}
 ```
 
 Check in the result and the scene:
 
 - `voxel_ratio.verdict` is `ok`. A very small voxel can freeze 3ds Max; the doc says ESC aborts and
-  restores the last value. On `bridge`, never set a voxel under 1/500 of the largest side without
-  telling the user first.
+  restores the last value. A voxel under 1/500 of the largest side stops the chunk before any
+  change: tell the user, and rerun with `fine_voxel_ok` True only after their yes.
 - Retopology computes only when its Compute button is pressed unless P1 found a compute method (none
   is documented in the saved docs). Ask the user to press Modify panel > Retopology > Compute, or
   call the method P1 listed. After any edit below a computed Retopology, press Reset, then Compute
@@ -617,7 +621,7 @@ NAMES = {"distribution": ("distribution",), "surface_mode": 4,   # [verify] enum
 
 el = rt.getNodeByName(ARGS["element"])
 with pymxs.undo(True, "modeling: array on surface"):
-    a, rep = mm.add_mod(el, ("Array", "ArrayModifier"), {  # [verify]
+    a, rep = mm.add_mod(el, ("ArrayModifier",), {  # [verify] never "Array": that is the collection class
         NAMES["distribution"]: NAMES["surface_mode"],
         NAMES["surface_node"]: rt.getNodeByName(ARGS["surface"]),
         NAMES["remove"]: ARGS["remove_percent"], NAMES["seed"]: ARGS["seed"], NAMES["tbp"]: True})
@@ -645,6 +649,7 @@ Goal: the gate every procedure ends with.
 ```python
 # channel: bridge | handoff (batch: numbers only, no captures)
 # checked against the toolkit contract (capture.viewport, stats.snapshot)
+# wrap with kit=["capture", <path to maxkit_modeling.py>]; unwrapped, the lead's scripts folder is on sys.path
 import os
 import pymxs
 rt = pymxs.runtime
@@ -652,6 +657,10 @@ try:
     mm = maxkit_modeling
 except NameError:
     import maxkit_modeling as mm
+try:
+    capture
+except NameError:
+    from maxkit import capture
 
 ARGS = {"node": "GEO_Body", "out_dir": None, "expect_open_edges": 0, "max_ngons": 0}
 
@@ -672,8 +681,8 @@ if ARGS["out_dir"] and not rt.maxops.isInNonInteractiveMode():
         rt.redrawViews()
         for view in ("persp", "front", "left", "top"):
             path = os.path.join(ARGS["out_dir"], "%s_it%d_%s.png" % (ARGS["node"], it, view))
-            capture.viewport(path, view=view)  # lead toolkit; [verify] view names
-            shots.append(path)
+            shot = capture.viewport(path, view=view)  # lead toolkit; [verify] view names
+            shots.append(shot["path"])  # a suffixed name when the PNG already exists
 
 fails = []
 if checks["open_edges"] > ARGS["expect_open_edges"]:
@@ -697,7 +706,7 @@ P9 for `mcp-safe`: load `scripts/mxs/maxkit_modeling.ms` content into the propos
 -- checked against scripts/mxs/maxkit_modeling.ms
 (
 	local node = getNodeByName "GEO_Body"
-	#(mm.meshChecks node, mm.stackAudit node)
+	result = #(mm.meshChecks node, mm.stackAudit node)
 )
 ```
 

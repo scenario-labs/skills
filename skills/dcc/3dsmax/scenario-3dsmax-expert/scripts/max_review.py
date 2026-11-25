@@ -7,7 +7,7 @@ ImageMagick (`montage`).
 
     image_checks(path, sample=256) -> dict
     compare(a, b, sample=256) -> dict
-    contact_sheet(paths, out, cols=4, thumb=400, labels=True) -> str
+    contact_sheet(paths, out, cols=4, thumb=400, labels=True) -> str (a new file, never overwritten)
 
 image_checks keys: width, height, mean_luma (0..1), std_luma, clipped (fraction > 0.98), crushed
 (fraction < 0.02), center_luma, surround_luma, center_contrast (|center - surround|), unique_colors
@@ -20,6 +20,8 @@ from __future__ import annotations
 __version__ = "0.1.0"
 
 import math
+import os
+import re
 import shutil
 import struct
 import subprocess
@@ -40,7 +42,7 @@ def _read_png(path) -> tuple[int, int, int, list[bytes]]:
     data = Path(path).read_bytes()
     if data[:8] != b"\x89PNG\r\n\x1a\n":
         raise ValueError(f"{path} is not a PNG")
-    pos, idat, plte = 8, b"", None
+    pos, idat, plte, trns = 8, b"", None, None
     w = h = depth = ctype = interlace = 0
     while pos < len(data):
         ln = struct.unpack(">I", data[pos:pos + 4])[0]
@@ -51,6 +53,8 @@ def _read_png(path) -> tuple[int, int, int, list[bytes]]:
             w, h, depth, ctype, _, _, interlace = struct.unpack(">IIBBBBB", body)
         elif typ == b"PLTE":
             plte = body
+        elif typ == b"tRNS":
+            trns = body
         elif typ == b"IDAT":
             idat += body
         elif typ == b"IEND":
@@ -88,9 +92,18 @@ def _read_png(path) -> tuple[int, int, int, list[bytes]]:
         rows.append(bytes(line))
         prev = line
     if ctype == 3 and plte:
-        pal = [plte[j:j + 3] for j in range(0, len(plte), 3)]
+        alpha = trns or b""
+        pal = [plte[j:j + 3] + bytes([alpha[j // 3] if j // 3 < len(alpha) else 255])
+               for j in range(0, len(plte), 3)]
         rows = [b"".join(pal[v] for v in r) for r in rows]
-        ch = 3
+        ch = 4
+    elif ctype in (0, 2) and trns:  # one fully transparent gray level or color (8-bit: low bytes)
+        key = bytes(trns[1::2][:ch])
+        rows = [b"".join(r[x:x + ch] + (b"\x00" if r[x:x + ch] == key else b"\xff")
+                         for x in range(0, len(r), ch)) for r in rows]
+        if ch == 1:
+            rows = [b"".join(r[x:x + 1] * 3 + r[x + 1:x + 2] for x in range(0, len(r), 2)) for r in rows]
+        ch = 4
     return w, h, ch, rows
 
 
@@ -121,6 +134,20 @@ def _samples(path, sample: int):
             else:
                 out.append((row[x] / 255.0, row[x + 1] / 255.0, row[x + 2] / 255.0, row[x + 3] / 255.0))
     return w, h, gw, gh, out
+
+
+def _next_free(path: str) -> str:
+    """path if free, else the first stem_v002.ext, stem_v003.ext ... that does not exist."""
+    if not Path(path).exists():
+        return path
+    stem, ext = os.path.splitext(path)
+    m = re.match(r"^(.*)_v(\d{3,})$", stem)
+    base, n = (m.group(1), int(m.group(2))) if m else (stem, 1)
+    while True:
+        n += 1
+        cand = f"{base}_v{n:03d}{ext}"
+        if not Path(cand).exists():
+            return cand
 
 
 def _luma(p) -> float:
@@ -170,28 +197,39 @@ def image_checks(path, sample: int = 256) -> dict:
             "ok": not any(f in flags for f in ("all_black", "all_white", "uniform", "transparent"))}
 
 
+def _regrid(px, gw, gh, tw, th):
+    """Nearest-neighbour resample of a gw x gh pixel list onto tw x th."""
+    return [px[min(gh - 1, int((y + 0.5) * gh / th)) * gw + min(gw - 1, int((x + 0.5) * gw / tw))]
+            for y in range(th) for x in range(tw)]
+
+
 def compare(a, b, sample: int = 256) -> dict:
     """Mean absolute difference (0..1) and changed-pixel fraction (> 0.1) between two images on a grid.
 
+    Images of different sizes are compared on a common grid and are never "identical".
+
     Use it to prove an edit changed the render (or that a refactor did not)."""
-    _, _, gwa, gha, pa = _samples(a, sample)
-    _, _, gwb, ghb, pb = _samples(b, sample)
-    if (gwa, gha) != (gwb, ghb):
-        n = min(len(pa), len(pb))
-        pa, pb = pa[:n], pb[:n]
+    wa, ha, gwa, gha, pa = _samples(a, sample)
+    wb, hb, gwb, ghb, pb = _samples(b, sample)
+    same_size = (wa, ha) == (wb, hb)
+    if (gwa, gha) != (gwb, ghb):  # resample both onto one grid so no pixel is dropped
+        gw, gh = min(gwa, gwb), min(gha, ghb)
+        pa, pb = _regrid(pa, gwa, gha, gw, gh), _regrid(pb, gwb, ghb, gw, gh)
     diffs = [abs(_luma(x) - _luma(y)) for x, y in zip(pa, pb)]
     cdiff = [max(abs(x[i] - y[i]) for i in range(3)) for x, y in zip(pa, pb)]
     n = max(1, len(diffs))
     return {"a": str(a), "b": str(b), "mean_abs_luma_diff": round(sum(diffs) / n, 4),
             "changed_fraction": round(sum(1 for d in cdiff if d > 0.1) / n, 4),
             "max_channel_diff": round(max(cdiff) if cdiff else 0.0, 4),
-            "identical": all(d < 1e-6 for d in cdiff)}
+            "same_size": same_size, "identical": same_size and all(d < 1e-6 for d in cdiff)}
 
 
 def contact_sheet(paths, out, cols: int = 4, thumb: int = 400, labels: bool = True) -> str:
-    """One PNG grid of thumbnails (read this instead of many images). Pillow, else ImageMagick montage."""
+    """One PNG grid of thumbnails (read this instead of many images). Pillow, else ImageMagick montage.
+
+    Never overwrites: an existing out gets a _v002 style name. Returns the path written."""
     paths = [str(p) for p in paths]
-    out = str(out)
+    out = _next_free(str(out))
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     if HAVE_PIL:
         ims = [Image.open(p).convert("RGB") for p in paths]

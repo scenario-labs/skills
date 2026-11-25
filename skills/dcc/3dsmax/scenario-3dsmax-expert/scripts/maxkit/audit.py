@@ -8,7 +8,7 @@ and only collect() touches pymxs (names marked [verify] there).
     materials(...)    maps(...)        layers(...)     render(...)          -> [finding, ...]
 
 expect (all keys optional): units ("centimeters"), renderer (substring of the renderer class,
-"Arnold", "V_Ray", "Corona"), far_limit (system units; default 1 km converted from units),
+"Arnold", "V_Ray", "Corona"), far_limit (system units; default 1 km converted from units and system scale),
 max_faces (per object), layer0_empty (default True).
 Severity: error blocks delivery, warn needs a decision, info is context.
 Sources for the rules: units and far origin (fundamentals-scene digests, system-unit-setup doc);
@@ -61,7 +61,9 @@ def units(data=None, expect=None) -> list:
     out = []
     unit = _unit_key(sc.get("system_unit"))
     want = _unit_key(e.get("units"))
-    if want and unit and unit != want:
+    if want and not unit:
+        out.append(_f("error", "units", None, f"system unit could not be read; project expects {want}"))
+    elif want and unit != want:
         out.append(_f("error", "units", None, f"system unit is {unit}, project expects {want}; "
                       "never change system units under existing geometry, rescale or merge into a clean file"))
     scale = sc.get("system_scale")
@@ -70,6 +72,8 @@ def units(data=None, expect=None) -> list:
     far = e.get("far_limit")
     if far is None:
         far = 1000.0 * UNIT_PER_METER.get(unit or "centimeters", 100.0)  # 1 km [added]
+        if scale is not None and float(scale) > 0:
+            far /= float(scale)  # one system unit is scale x unit
     for n in d.get("nodes", []):
         lo, hi = n.get("bbox_min"), n.get("bbox_max")
         if lo and hi:
@@ -159,8 +163,12 @@ def materials(data=None, expect=None) -> list:
 
 def maps(data=None, expect=None) -> list:
     d = _data(data)
-    files = sorted({b["file"] for b in d.get("scene", {}).get("bitmaps", []) if not b.get("exists")})
-    return [_f("error", "maps", None, f"missing map: {f} (a modal dialog can block renders)") for f in files]
+    sc = d.get("scene", {})
+    files = sorted({b["file"] for b in sc.get("bitmaps") or [] if not b.get("exists")})
+    out = [_f("error", "maps", None, f"missing map: {f} (a modal dialog can block renders)") for f in files]
+    if sc.get("bitmaps_error"):
+        out.append(_f("error", "maps", None, f"bitmaps could not be listed: {sc['bitmaps_error']}"))
+    return out
 
 
 def layers(data=None, expect=None) -> list:

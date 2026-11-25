@@ -34,7 +34,7 @@ this skill's defaults, not Autodesk numbers.
 | ok + skipped + failed | equals total                                                                                                    |
 | Each `ok` file        | result JSON with `ok` true, export size above 0 bytes                                                           |
 | Each `failed` file    | exit code and a listener-log line naming the cause                                                              |
-| Retries               | only after -120 or a timeout; never after -100 or -130                                                          |
+| Retries               | once, after -120 or another failed run; never after a timeout, -100 or -130                                     |
 | Newer-version input   | listed as failed, run continues                                                                                 |
 | Dialogs               | no file hangs on Units Mismatch or missing files: third-party scenes opened by `load_scene` with explicit units |
 | Third-party scenes    | Safe Scene Script Execution on; blocked embedded scripts listed as findings, not silently run                   |

@@ -16,8 +16,9 @@ through the Scenario MCP in the agent, and these paths only land the files.
   Management (Khronos PBR Neutral Tone Map); Texture (Make Texture unique, Use CompositeMap for
   Non-Albedo base_color mtl, Unpack Metal/Roug/Occ); Light; Scene (Import Default Scene, Deploy to
   Layers); Back Ground and Post Process.
-- **Choose the material type once here** before batch imports: `#noPrompt` reuses the last settings.
-  Pick the scene's class (OpenPBR Mtl for Arnold or an OpenPBR scene).
+- **Choose the material type here** for the first import: the scene's class (OpenPBR Mtl for Arnold
+  or an OpenPBR scene). No saved doc says `#noPrompt` reuses it: check the material class of the
+  second import before batching (procedures, P4).
 - **FBX (2025, 2026, or quads)**: File > Import > Import > FBX. In the FBX Importer dialog, check
   Units (Automatic or the file's unit) and Axis Conversion (Up Axis Z for 3ds Max).
 - **Merge into a live scene** rather than replace: File > Import > Merge is for .max files only;

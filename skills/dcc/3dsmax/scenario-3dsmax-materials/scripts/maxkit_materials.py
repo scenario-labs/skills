@@ -116,7 +116,7 @@ def colorspace_for(color_role: str) -> str | None:
         return None
     for n in names:
         low = n.lower()
-        if "srgb" in low and "lin" not in low and "scene" not in low:
+        if any(h in low for h in _COLOR_HINTS) and "lin" not in low and "scene" not in low:
             return n
     return None
 
@@ -247,6 +247,10 @@ def build_material(target: str, maps: dict, name: str, flip_green: bool = False)
         if target == "corona":
             p, how = find_prop(m, ("roughnessMode",), ("roughness", "mode"))
             rep["warnings"].append(f"Corona roughness mode property {p} ({how}); set it to match the {role} map by hand if not set")
+        if role == "normal" and flip_green and target not in NORMAL_NODE:
+            rep["warnings"].append(f"flip_green: {target} has no normal node to flip in; normal left "
+                                   "unwired. Wire a green-flipped copy of the file instead")
+            continue
         if role == "normal" and target in NORMAL_NODE:
             ncls = find_class(NORMAL_NODE[target], kind="texturemap")
             if ncls is None:
@@ -274,10 +278,15 @@ def build_material(target: str, maps: dict, name: str, flip_green: bool = False)
     return m, rep
 
 
+_CM_PER_UNIT_TYPE = {"millimeters": 0.1, "centimeters": 1.0, "meters": 100.0, "kilometers": 1e5,
+                     "inches": 2.54, "feet": 30.48, "miles": 160934.4}
+
+
 def _unit_scale_to_cm() -> float:
-    u = _s(rt.units.SystemType).lower()  # [verify] units.SystemType
-    return {"millimeters": 10.0, "centimeters": 1.0, "meters": 0.01, "inches": 1 / 2.54,
-            "feet": 1 / 30.48, "kilometers": 1e-5}.get(u.strip("#"), 1.0)
+    """System units per centimeter: one system unit is SystemScale x SystemType (System Unit Setup)."""
+    u = _s(rt.units.SystemType).lower().strip("#")  # [verify] units.SystemType
+    scale = float(rt.units.SystemScale)  # [verify] units.SystemScale
+    return 1.0 / (_CM_PER_UNIT_TYPE.get(u, 1.0) * scale)
 
 
 def box_map(node, size_cm: float) -> dict:
@@ -362,7 +371,7 @@ def audit_textures() -> list[dict]:
             b = tex.bitmap  # [verify]
             cs, src, st = _s(b.colorSpace), _s(b.colorSpaceSource), _s(b.colorSpaceStatus)
         except Exception as e:
-            out.append({"severity": "warn", "rule": "colorspace_unreadable", "node": _s(tex.name), "message": str(e)})
+            out.append({"severity": "error", "rule": "colorspace_unreadable", "node": _s(tex.name), "message": str(e)})
             continue
         low = cs.lower()
         if "forceddefault" in st.lower() or "invalid" in st.lower():
@@ -380,7 +389,17 @@ def audit_textures() -> list[dict]:
     if vb is not None:
         for t in rt.getClassInstances(vb):
             p, _ = find_prop(t, ("HDRIMapName",), ("file",))  # [verify] HDRIMapName
-            fn = _s(rt.getProperty(t, p)) if p else ""  # [verify] getProperty
+            try:
+                fn = _s(rt.getProperty(t, p)) if p else ""  # [verify] getProperty
+            except Exception as e:
+                fn, p = "", f"{p}: {e}"
+            if not fn:
+                out.append({"severity": "error", "rule": "vraybitmap_unreadable", "node": _s(t.name),
+                            "message": f"file name not read ({p or 'no file property'})"})
+                continue
+            if not os.path.exists(fn):
+                out.append({"severity": "error", "rule": "missing_map", "node": _s(t.name), "message": fn})
+                continue
             stem = os.path.splitext(os.path.basename(fn))[0].lower()
             role = _role_from_name(fn)
             tagged = stem.endswith(("_raw", "_srgb", "_lin_srgb", "_acescg"))

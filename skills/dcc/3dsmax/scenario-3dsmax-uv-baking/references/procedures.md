@@ -104,7 +104,8 @@ Read the result:
   an error.
 - `td_outliers`: compare to the target; hero areas may sit above on purpose.
 - `min_gap_tex_px` under the padding rule: repack with more padding.
-- `outside_0_1_samples` on a single-tile asset: repack; on UDIM or tiling surfaces it is expected.
+- `outside_0_1_faces` or `outside_0_1_samples` on a single-tile asset: repack; on UDIM or tiling
+  surfaces it is expected.
 
 ---
 
@@ -442,8 +443,9 @@ fn uvb_setOption m optName val =
 
 Steps:
 
-1. Run `uvb_setupHighToLow $SM_Crate_low $SM_Crate_high outDir 512 1 10.0` (Raytrace) for aligned
-   meshes, or method 0 (Cage) when they do not line up (-SMLc0od_5Y 00:01:38).
+1. Run `maps = uvb_setupHighToLow $SM_Crate_low $SM_Crate_high outDir 512 1 10.0` (Raytrace) for
+   aligned meshes, or method 0 (Cage) when they do not line up (-SMLc0od_5Y 00:01:38). Then bind
+   `nm = maps[1]` and `ao = maps[2]`.
 2. Run `uvb_dumpOptions nm` and read the option names. The dialog labels are Normal Map Space, Sync
    With, X (Red), Y (Green), MikkT for Tangent, Calculate bitangent per pixel and Output into Normal
    Bump (BTT doc). The script names may differ: use the dumped strings.
@@ -541,8 +543,13 @@ Runner side, after the files come back:
 import subprocess
 import sys
 
-files = sys.argv[1:]  # normal maps first
-subprocess.run([sys.executable, "scripts/bake_check.py", "--normal", "--diag", "255,0,0", *files], check=False)
+
+def bake_check(normal_maps, other_maps):
+    """--normal only on normal maps; AO and color maps are read without it. Raises on a flag."""
+    for files, extra in ((normal_maps, ["--normal"]), (other_maps, [])):
+        if files:
+            subprocess.run([sys.executable, "scripts/bake_check.py", *extra, "--diag", "255,0,0", *files],
+                           check=True)
 ```
 
 Then run `max_review.image_checks(png)` and `max_review.contact_sheet(...)` on the lit captures of

@@ -66,7 +66,8 @@ def check_names(names, helpers=(), target="unreal"):
     socket_bases = set()
     for s in sockets:
         base = SOCKET_RE.match(s).group("base")
-        cands = [r for r in render if s[len("SOCKET_"):].startswith(r)]
+        rest = s[len("SOCKET_"):]
+        cands = [r for r in render if rest == r or re.fullmatch(re.escape(r) + r"_\d+", rest)]
         if not cands:
             out.append(_f("error", "socket.no_render_mesh", s, f"no render mesh matches '{base}'"))
         socket_bases.update(cands)
@@ -117,7 +118,13 @@ def check_report(report, target="unreal", budgets=None):
     unit = str(report.get("units", "")).lower()
     if target in ("unreal", "unity") and unit != "centimeters":
         out.append(_f("error", "units.system", "scene", f"system unit is {unit or '?'}; use centimeters"))
-    nodes = report.get("nodes", [])
+    scale = report.get("system_scale")
+    if target in ("unreal", "unity") and scale is not None and abs(float(scale) - 1.0) > 1e-6:
+        out.append(_f("error", "units.scale", "scene", f"system unit scale is {scale}; use 1 unit = 1 cm"))
+    nodes = report.get("nodes")
+    if not isinstance(nodes, list) or not nodes:
+        out.append(_f("error", "report.no_nodes", "scene", "audit lists no render mesh: nothing was checked"))
+        nodes = []
     helpers = report.get("helpers", [])
     out += check_names([n["name"] for n in nodes], [h["name"] for h in helpers], target)
     by_name = {n["name"]: n for n in nodes}
@@ -153,6 +160,8 @@ def check_report(report, target="unreal", budgets=None):
             uvs = [c for c in maps if c >= 1]
             if not uvs:
                 out.append(_f("error", "uv.none", name, "no UV channel"))
+            elif 1 not in uvs:
+                out.append(_f("error", "uv.channel1", name, f"no UVs in map channel 1 (channels {uvs})"))
             if target == "unreal" and len(uvs) > 8:
                 out.append(_f("error", "uv.count", name, f"{len(uvs)} UV channels; Unreal keeps 8"))
             if target == "datasmith" and len(uvs) > 6:
@@ -163,8 +172,14 @@ def check_report(report, target="unreal", budgets=None):
             cv = n.get("convex_violations", -1)
             if cv > 0:
                 out.append(_f("error", "collision.convex", name, f"{cv} vertex/plane violations: hull is not convex"))
+            elif cv < 0:
+                out.append(_f("error", "collision.convex_unknown", name,
+                              "convexity not measured (over 2000 faces or missing): split or simplify the hull"))
+        m = LOD_RE.match(name)
+        level = int(m.group("n")) if m else (None if is_col else 0)  # an unsuffixed render mesh is LOD0
         for key, limit in budgets.items():
-            if key == name or (key.upper().startswith("LOD") and name.upper().endswith("_" + key.upper())):
+            km = re.fullmatch(r"LOD(\d+)", key, re.IGNORECASE)
+            if key == name or (km and level is not None and int(km.group(1)) == level):
                 if n.get("tris", 0) > limit:
                     out.append(_f("error", "budget.tris", name, f"{n['tris']} tris over budget {limit}"))
     for base, levels in _group_lods(nodes).items():
@@ -274,7 +289,7 @@ def glb_summary(path):
         "generator": js.get("asset", {}).get("generator"),
         "size_m_xyz": [round(s, 4) for s in size] if size else None,
         "min_m": [round(v, 4) for v in lo] if size else None,
-        "height_axis_guess": None if not size else "Y" if size[1] >= max(size[0], size[2]) else "other",
+        "height_axis_guess": None if not size else "Y" if size[1] >= max(size[0], size[2]) else "other",  # longest side only
         "triangles": tris,
         "primitives": prims,
         "nodes": len(nodes),

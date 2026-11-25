@@ -7,6 +7,8 @@ passing tests here prove the Python logic, not the 3ds Max API.
 """
 from __future__ import annotations
 
+import copy as _copy
+
 import contextlib
 import itertools
 import os
@@ -131,6 +133,16 @@ class _Viewport:
         return FakeBitmap(320, 200)
 
 
+class _PluginManager:
+    def __init__(self):
+        self.loaded = []
+        self.fail = False
+
+    def loadClass(self, cls):
+        self.loaded.append(cls)
+        return not self.fail
+
+
 class _Runtime:
     BitmapTexture = BitmapTexture
     FBXEXP = FBXEXP
@@ -158,6 +170,8 @@ class _Runtime:
         self.maxFileName = "lobby_v001.max"
         self.save_required = False
         self.sceneMaterials = []
+        self.pluginManager = _PluginManager()
+        self.save_fails = False
         self.renderWidth, self.renderHeight = 1920, 1080
         self.executed = []
         self.import_adds = []
@@ -218,10 +232,14 @@ class _Runtime:
     def bitmap(self, w, h):
         return FakeBitmap(w, h)
 
-    def copy(self, src, dest, quality=None):
+    def copy(self, src, dest=None, quality=None):
+        if dest is None:  # one-argument copy returns a copy of the value
+            return _copy.copy(src)
         dest.color = src.color
 
     def save(self, bmp):
+        if self.save_fails:
+            return False
         _write_png(bmp)
         return True
 
@@ -232,7 +250,8 @@ class _Runtime:
     def getNodeByName(self, n):
         return next((o for o in self.objects if o.name == n), None)
 
-    def render(self, outputFile=None, vfb=True, camera=None, outputwidth=None, outputheight=None):
+    def render(self, outputFile=None, vfb=True, camera=None, outputwidth=None, outputheight=None,
+               frame=None, cancelled=None, renderElements=None):
         bmp = FakeBitmap(outputwidth or self.renderWidth // 10, outputheight or self.renderHeight // 10)
         bmp.filename = outputFile
         _write_png(bmp)
@@ -255,7 +274,7 @@ class _Runtime:
             fh.write(b"fake export " + str(path).encode())
         return True
 
-    def FBXExporterSetParam(self, k, v):
+    def FBXExporterSetParam(self, k, v=None):
         self.executed.append(("fbx", k, v))
 
 

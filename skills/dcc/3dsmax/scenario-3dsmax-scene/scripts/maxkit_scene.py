@@ -53,6 +53,17 @@ def _nodes():
     return list(rt.objects)
 
 
+def _undo_run(label, fn):
+    """Run fn inside one pymxs.undo record. An error rolls the record back; if the
+    context manager swallows that error, raise one here so no caller reports success."""
+    finished = []
+    with pymxs.undo(True, label):
+        fn()
+        finished.append(True)
+    if not finished:
+        raise RuntimeError("%s: rolled back after an error inside the undo record" % label)
+
+
 def _top_nodes():
     return [n for n in rt.objects if n.parent is None]
 
@@ -110,7 +121,7 @@ def origin_report(far_cm=100000.0):
     if lo_all[0] != float("inf"):
         ext = {"min": lo_all, "max": hi_all,
                "size_m": [round((b - a) * k / 100.0, 3) for a, b in zip(lo_all, hi_all)]}
-    return {"extents": ext, "far_count": len(far), "far": far[:200]}
+    return {"extents": ext, "far_cm": far_cm, "far_count": len(far), "far": far[:200]}
 
 
 def group_report():
@@ -221,27 +232,39 @@ def layer_report():
 
 
 def xref_report():
-    """XRef scene records and XRef object record count; existence of each file."""
-    scenes = []
-    n = _try(lambda: int(rt.xrefs.getXRefFileCount()), 0)    # [verify]
-    for i in range(1, (n if isinstance(n, int) else 0) + 1):
-        x = _try(lambda i=i: rt.xrefs.getXRefFile(i), None)  # [verify]
-        if x is None or isinstance(x, str):
+    """XRef scene records and XRef object record count; existence of each file.
+    errors lists the records that could not be read: the gate treats any as blocking."""
+    scenes, errors = [], []
+    try:
+        n = int(rt.xrefs.getXRefFileCount())                  # [verify]
+    except Exception as exc:
+        n = 0
+        errors.append("getXRefFileCount: %s" % exc)
+    for i in range(1, n + 1):
+        try:
+            x = rt.xrefs.getXRefFile(i)                       # [verify]
+        except Exception as exc:
+            errors.append("getXRefFile(%d): %s" % (i, exc))
             continue
-        f = _try(lambda x=x: str(x.filename), "?")           # [verify]
-        scenes.append({"file": f, "exists": bool(rt.doesFileExist(f)) if f != "?" else None,
+        try:
+            f = str(x.filename)                               # [verify]
+        except Exception as exc:
+            errors.append("XRef %d filename: %s" % (i, exc))
+            continue
+        scenes.append({"file": f, "exists": bool(rt.doesFileExist(f)),
                        "disabled": _try(lambda x=x: bool(x.disabled), "?")})  # [verify]
     obj_records = _try(lambda: int(rt.objXRefMgr.recordCount), "?")  # [verify]
-    return {"xref_scenes": scenes, "xref_object_records": obj_records}
+    return {"xref_scenes": scenes, "xref_object_records": obj_records, "errors": errors}
 
 
 def turbosmooth_report():
     rows = []
     for n in _nodes():
-        for m in list(n.modifiers):
+        for idx, m in enumerate(list(n.modifiers)):
             if str(rt.classOf(m)) in ("TurboSmooth", "OpenSubdiv"):
-                rows.append({"node": n.name, "modifier": str(rt.classOf(m)),
+                rows.append({"node": n.name, "modifier": str(rt.classOf(m)), "index": idx,
                              "iterations": _try(lambda m=m: int(m.iterations), "?"),  # [verify]
+                             "use_render_iterations": _try(lambda m=m: bool(m.useRenderIterations), "?"),  # [verify]
                              "render_iterations": _try(lambda m=m: int(m.renderIterations), "?")})  # [verify]
     return {"count": len(rows), "viewport_iter_above_0": [r for r in rows if r["iterations"] not in (0, "?")][:200]}
 
@@ -256,25 +279,42 @@ def point_report():
     return {"point_objects": len(rows), "rows": rows}
 
 
-def bitmap_nodes():
-    """(map, property, path) for file-based maps of the common renderers."""
-    found = []
+def bitmap_scan():
+    """(found, errors): found holds (map, property, path) for file-based maps of the common
+    renderers; errors names each class or map whose path could not be read."""
+    found, errors = [], []
     for cls_name, prop in (("BitmapTexture", "filename"),    # [verify] each pair
                            ("VRayBitmap", "HDRIMapName"),
                            ("CoronaBitmap", "filename"),
                            ("ai_image", "filename")):
         cls = getattr(rt, cls_name, None)
-        if cls is None:
+        if cls is None:  # renderer not installed
             continue
-        for m in _try(lambda cls=cls: list(rt.getClassInstances(cls)), []):  # [verify]
-            path = _try(lambda m=m, prop=prop: str(getattr(m, prop)), "")
+        try:
+            maps = list(rt.getClassInstances(cls))            # [verify]
+        except Exception as exc:
+            errors.append("%s instances: %s" % (cls_name, exc))
+            continue
+        for m in maps:
+            try:
+                path = str(getattr(m, prop))
+            except Exception as exc:
+                errors.append("%s.%s: %s" % (cls_name, prop, exc))
+                continue
             found.append((m, prop, path))
-    return found
+    return found, errors
+
+
+def bitmap_nodes():
+    return bitmap_scan()[0]
 
 
 def missing_maps_report():
-    missing = sorted({p for _, _, p in bitmap_nodes() if p and p != "None" and not rt.doesFileExist(p)})
-    return {"checked": len(bitmap_nodes()), "missing_count": len(missing), "missing": missing[:500]}
+    """unreadable counts maps the audit could not inspect: the gate treats any as blocking."""
+    found, errors = bitmap_scan()
+    missing = sorted({p for _, _, p in found if p and p != "None" and not rt.doesFileExist(p)})
+    return {"checked": len(found), "missing_count": len(missing), "missing": missing[:500],
+            "unreadable": len(errors), "errors": errors[:100]}
 
 
 def audit_scene(far_cm=100000.0):
@@ -319,12 +359,13 @@ def recenter(offset=None, helper_name="REF_SiteOrigin", dry_run=True):
             "skipped_animated": [n.name for n in skipped]}
     if dry_run:
         return plan
-    with pymxs.undo(True, "scene: recenter"):
+    def apply():
         d = rt.Point3(-offset[0], -offset[1], -offset[2])
         for n in moved:
             n.position = n.position + d                       # [verify] world position
         h = rt.Point(name=helper_name)                        # Point helper at 0,0,0
         rt.setUserProp(h, "original_offset", "%r" % (list(offset),))  # [verify]
+    _undo_run("scene: recenter", apply)
     plan["helper"] = helper_name
     return plan
 
@@ -341,7 +382,8 @@ def reset_scale(names=None, collapse=False, dry_run=True):
     if dry_run:
         return plan
     done, errors = [], []
-    with pymxs.undo(True, "scene: reset scale"):
+
+    def apply():
         for r in rows:
             n = rt.getNodeByName(r["node"])                   # [verify]
             if n is None:
@@ -353,6 +395,7 @@ def reset_scale(names=None, collapse=False, dry_run=True):
                 done.append(r["node"])
             except Exception as exc:
                 errors.append({"node": r["node"], "error": str(exc)})
+    _undo_run("scene: reset scale", apply)
     plan.update(done=done, errors=errors)
     return plan
 
@@ -381,13 +424,14 @@ def flatten_groups(dry_run=True):
             p = p.parent
         return "/".join(reversed(parts))
 
-    with pymxs.undo(True, "scene: flatten groups"):
+    def apply():
         for n in _nodes():
             gp = path_of(n)
             if gp:
                 rt.setUserProp(n, "group_path", gp)           # [verify]
         for h in outer:
             rt.explodeGroup(h)                                # [verify]
+    _undo_run("scene: flatten groups", apply)
     plan["remaining_group_heads"] = group_report()["groups"]
     return plan
 
@@ -400,7 +444,7 @@ def apply_layers(plan, dry_run=True):
            "missing_nodes": missing_nodes[:100]}
     if dry_run:
         return out
-    with pymxs.undo(True, "scene: layers"):
+    def apply():
         for lname, names in plan.items():
             layer = rt.LayerManager.getLayerFromName(lname)   # [verify]
             if layer is None:
@@ -409,21 +453,28 @@ def apply_layers(plan, dry_run=True):
                 n = rt.getNodeByName(s)
                 if n is not None:
                     layer.addNode(n)                          # [verify]
+    _undo_run("scene: layers", apply)
     out["after"] = layer_report()
     return out
 
 
 def rename_nodes(mapping, dry_run=True):
-    """mapping: {old: new}. Refuses if a new name collides with another node."""
+    """mapping: {old: new}. Refuses if a new name collides with another node or if two
+    old names map to one new name."""
     existing = {n.name for n in _nodes()}
     clashes = [v for k, v in mapping.items() if v in existing and v not in mapping]
-    if clashes or dry_run:
-        return {"renames": len(mapping), "clashes": clashes[:100]}
-    with pymxs.undo(True, "scene: rename"):
+    targets = list(mapping.values())
+    duplicates = sorted({v for v in targets if targets.count(v) > 1})
+    if clashes or duplicates or dry_run:
+        return {"renames": len(mapping), "clashes": clashes[:100],
+                "duplicate_targets": duplicates[:100]}
+
+    def apply():
         for old, new in mapping.items():
             n = rt.getNodeByName(old)
             if n is not None:
                 n.name = new
+    _undo_run("scene: rename", apply)
     return {"renamed": len(mapping), "after": name_report()}
 
 
@@ -433,13 +484,14 @@ def instance_copies(groups, dry_run=True):
     out = {"masters": len(todo), "replaced": sum(len(c) for _, c in todo)}
     if dry_run:
         return out
-    with pymxs.undo(True, "scene: copies to instances"):
+    def apply():
         for master_name, copies in todo:
             master = rt.getNodeByName(master_name)
             for s in copies:
                 n = rt.getNodeByName(s)
                 if n is not None and master is not None:
                     rt.instanceReplace(n, master)             # [verify]
+    _undo_run("scene: copies to instances", apply)
     return out
 
 
@@ -464,28 +516,38 @@ def relink_maps(search_dirs, dry_run=True):
         else:
             still.append(path)
     if not dry_run:
-        with pymxs.undo(True, "scene: relink maps"):
+        def apply():
             for m, prop, _old, new in todo:
                 setattr(m, prop, new)
+        _undo_run("scene: relink maps", apply)
     return {"relinked": fixed[:300], "ambiguous": ambiguous[:100],
             "still_missing": sorted(set(still))[:300], "dry_run": dry_run}
 
 
 def smooth_viewport_off(dry_run=True):
-    """TurboSmooth/OpenSubdiv: viewport iterations 0; keep a render value."""
+    """TurboSmooth/OpenSubdiv: viewport iterations 0, render count unchanged.
+    Each row targets one modifier by its stack index. The render count in effect
+    (renderIterations when useRenderIterations is on, else iterations) is kept."""
     rows = turbosmooth_report()["viewport_iter_above_0"]
     if dry_run:
         return {"would_change": len(rows), "rows": rows[:100]}
-    with pymxs.undo(True, "scene: smooth viewport off"):
+    skipped = []
+
+    def apply():
         for r in rows:
             n = rt.getNodeByName(r["node"])
-            for m in list(n.modifiers):
-                if str(rt.classOf(m)) == r["modifier"]:
-                    if r["render_iterations"] in (0, "?"):
-                        m.useRenderIterations = True          # [verify]
-                        m.renderIterations = int(r["iterations"])  # [verify]
-                    m.iterations = 0                          # [verify]
-    return {"changed": len(rows)}
+            mods = list(n.modifiers) if n is not None else []
+            m = mods[r["index"]] if r["index"] < len(mods) else None
+            if m is None or str(rt.classOf(m)) != r["modifier"]:
+                skipped.append(r)
+                continue
+            use_render = bool(m.useRenderIterations)          # [verify]
+            effective = int(m.renderIterations) if use_render else int(m.iterations)  # [verify]
+            m.renderIterations = effective                    # [verify]
+            m.useRenderIterations = True                      # [verify]
+            m.iterations = 0                                  # [verify]
+    _undo_run("scene: smooth viewport off", apply)
+    return {"changed": len(rows) - len(skipped), "skipped": skipped[:100]}
 
 
 def split_to_xref(node_names, out_path, dry_run=True):
@@ -500,8 +562,13 @@ def split_to_xref(node_names, out_path, dry_run=True):
     if not ok:
         out["error"] = "saveNodes failed"
         return out
-    with pymxs.undo(True, "scene: split to xref"):
+    def apply():
         rt.delete(nodes)
         rt.xrefs.addNewXRefFile(out_path)                     # [verify]
+    try:
+        _undo_run("scene: split to xref", apply)
+    except Exception as exc:
+        raise RuntimeError("split rolled back; %s was already saved by this call: "
+                           "pass a new out_path to retry (%s)" % (out_path, exc)) from exc
     out["xrefs"] = xref_report()
     return out

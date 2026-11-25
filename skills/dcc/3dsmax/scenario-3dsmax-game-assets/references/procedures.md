@@ -146,18 +146,16 @@ log("arrived:", arrived)
 names = arrived.get("nodes", []) if isinstance(arrived, dict) else list(arrived)  # xio contract: what arrived
 nodes = [rt.getNodeByName(str(n)) for n in names]
 geo = [n for n in nodes if n is not None and rt.superClassOf(n) == rt.GeometryClass]  # [verify]
-reports = []
-for n in geo:
-    reports.append(normalize_intake(n, target_cm=TARGET_CM if len(geo) == 1 else None,
-                                    measure=MEASURE, pivot="bottom_center", up_fix=UP_FIX))
+# one shared rotation, scale and move for all parts, so a multipart import keeps its layout
+report = normalize_group(geo, target_cm=TARGET_CM, measure=MEASURE, pivot="bottom_center", up_fix=UP_FIX)
 capture.views(os.path.join(os.path.dirname(SRC), "intake_views"))
-result = {"arrived": arrived, "normalized": reports, "audit": game_audit()}
+result = {"arrived": arrived, "normalized": report, "audit": game_audit()}
 ```
 
 Check: `after.pos` is [0,0,0]; `after.min` z is 0 for a bottom-center pivot; the size along the
 measured axis is within 1 percent of `TARGET_CM`. Look at the four captures: the model stands
 upright, front faces +Y or the direction the team agreed. Multi-part imports keep their relative
-scale: scale the group once (attach or link to a parent), not each part.
+placement: `normalize_group` measures the shared bounds and moves every part by the same amount.
 
 ## 5. Cleanup pass in the expert's order
 
@@ -221,7 +219,7 @@ hi.isHidden = True                 # [verify] node.isHidden
 lo = src
 steps = []
 for cls_names, wanted in (
-    (("ProOptimizer",), {("KeepUV", "KeepUVBoundaries"): True, ("VertexPercent",): 30.0, ("Calculate",): True}),   # [verify]
+    (("ProOptimizer",), {("KeepUV",): True, ("LockUV",): True, ("VertexPercent",): 30.0, ("Calculate",): True}),   # [verify]
     (("Retopology",), {("FaceCount", "TargetFaceCount"): FACES, ("Regularize",): 1.0, ("Adaptivity",): 0.0}),     # [verify]
     (("Weighted_Normals", "WeightedNormals"), {}),                                                                  # [verify]
 ):
@@ -523,9 +521,10 @@ result = ok
 ```
 
 Runner side: `python game_rules.py glb <file>` must give `size_m_xyz` equal to the real size in
-meters (1.2 for a 120 cm crate) and `height_axis_guess` "Y". The exporter flattens hierarchies,
-drops vertex colors and reads only Bitmap Texture maps into the glTF Material (doc known
-limitations). Duplicate node or material names get `_1`, `_2` suffixes.
+meters (1.2 for a 120 cm crate). Check the up axis in a viewer capture: `height_axis_guess` only
+says whether Y is the longest side, so a wide asset reads "other". The exporter flattens
+hierarchies, drops vertex colors and reads only Bitmap Texture maps into the glTF Material (doc
+known limitations). Duplicate node or material names get `_1`, `_2` suffixes.
 
 ## 14. Datasmith preparation
 

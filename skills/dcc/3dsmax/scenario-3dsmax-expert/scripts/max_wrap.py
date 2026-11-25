@@ -5,7 +5,7 @@ Runner side: plain Python 3.10+, any OS, never imports pymxs. The generated scri
 3ds Max. The generated code is checked against the saved 2027 docs.
 
     wrap(code, lang="python", kit=(), result_path=None, label="agent change", undo=True,
-         kit_dirs=None) -> str
+         kit_dirs=None, overwrite_result=None) -> str
 
 kit: each entry is a lead module name (Python: result, stats, capture, audit, xio; MAXScript:
 result, stats, audit, capture), a path to a .py file (lang="python") or .ms file
@@ -16,11 +16,13 @@ inlined as a module object bound to its file stem (a global of the chunk, also i
 `import <stem>` and `from maxkit import <stem>`); lead modules it imports (`from maxkit import
 stats`) are added automatically. In MAXScript the file's functions are inlined in the same outer
 block; lead twins it calls (mxk_stats_*, mxk_audit_*, mxk_capture_*) are added automatically.
+Lead modules the chunk itself uses (stats.snapshot(), mxk_audit_all ...) are added the same way.
 
 The chunk runs inside ONE undo record and the result protocol: the chunk sets `result` (and may
 call `log(...)` in Python, `mxk_note "..."` in MAXScript); the wrapper builds {ok, result, error, log, max_version}, writes it as JSON to
 result_path (Python form; MAXScript form only if result_path is given) and prints one line
-"MXK_RESULT <json>". The MAXScript form also returns the JSON text as the script's value, so an
+"MXK_RESULT <json>". The Python form replaces an existing result_path only when it holds an
+earlier envelope (overwrite_result=None; True replaces any file, False none). The MAXScript form also returns the JSON text as the script's value, so an
 mcp-safe client sees it even if Safe mode refuses the file write (undocumented).
 
 lang="python": for batch, bridge and handoff. kit names (result, stats, audit, capture, xio) are
@@ -48,6 +50,7 @@ PY_KIT = ("result", "stats", "capture", "audit", "xio")  # load order respects d
 PY_DEPS = {"audit": ("stats",), "xio": ("stats", "capture")}
 MXS_KIT = ("result", "stats", "audit", "capture")
 _PY_IMPORT = re.compile(r"\bmaxkit\.(\w+)|\bfrom\s+maxkit\s+import\s+([\w\s,()]+)")
+_PY_USE = re.compile(r"(?<![\w.])(stats|capture|audit|xio)\s*\.\s*[A-Za-z_]")
 _MXS_CALL = re.compile(r"\bmxk_(stats|audit|capture)_\w+")
 
 
@@ -79,6 +82,12 @@ def _lead_deps_py(src: str) -> set[str]:
         names = [a] if a else re.findall(r"\w+", b)
         out |= {n for n in names if n in PY_KIT}
     return out
+
+
+def _chunk_lead_py(code: str) -> list[str]:
+    """Lead modules a chunk uses by attribute (audit.all()) or imports."""
+    found = set(_PY_USE.findall(code)) | _lead_deps_py(code)
+    return [k for k in PY_KIT if k in found]
 
 
 def _py_modules(kit, kit_dirs) -> list[tuple[str, str]]:
@@ -132,7 +141,9 @@ _MXK_RESULT_PATH = {result_path!r}
 _MXK_ORDER = {order!r}
 _MXK_SOURCES = {sources}
 _MXK_CODE = {code!r}
+_MXK_OVERWRITE = {overwrite!r}
 _MXK_LOG = []
+_MXK_SAVED = {{}}
 
 
 def log(*parts):
@@ -148,7 +159,9 @@ def _mxk_load():
         mod = types.ModuleType("maxkit." + name)
         mod.__file__ = "<maxkit." + name + ">"
         sys.modules["maxkit." + name] = mod
-        sys.modules.setdefault(name, mod)  # domain helpers may `import stats` or `import maxkit_fx`
+        if name not in _MXK_SAVED:  # bare alias for `import stats` or `import maxkit_fx`, restored after the run
+            _MXK_SAVED[name] = sys.modules.get(name)
+        sys.modules[name] = mod
         setattr(pkg, name, mod)
         exec(compile(_MXK_SOURCES[name], mod.__file__, "exec"), mod.__dict__)
         mods[name] = mod
@@ -172,11 +185,20 @@ try:
     _mxk_chunk = compile(_MXK_CODE, "<agent chunk>", "exec")
     if _MXK_UNDO:
         with pymxs.undo(True, _MXK_LABEL):  # one undo record for the whole chunk  # [verify] pymxs.undo(on, label)
-            exec(_mxk_chunk, _mxk_ns)
+            try:
+                exec(_mxk_chunk, _mxk_ns)
+            except Exception:  # recorded here too: the undo context may swallow the exception
+                _mxk_ok, _mxk_err = False, traceback.format_exc(limit=6)
+                raise
     else:
         exec(_mxk_chunk, _mxk_ns)
 except Exception:
     _mxk_ok, _mxk_err = False, traceback.format_exc(limit=6)
+for _mxk_n, _mxk_m in _MXK_SAVED.items():
+    if _mxk_m is None:
+        sys.modules.pop(_mxk_n, None)
+    else:
+        sys.modules[_mxk_n] = _mxk_m
 try:
     rt.redrawViews()  # the viewport does not refresh while a script runs
 except Exception:
@@ -191,7 +213,7 @@ else:
 _mxk_path = _mxk_result_path()
 if _mxk_path:
     try:
-        _mxk_res_mod.write(_mxk_payload, _mxk_path)
+        _mxk_res_mod.write(_mxk_payload, _mxk_path, _MXK_OVERWRITE)
     except Exception as _mxk_exc:
         _mxk_payload["log"].append("result file not written: %s" % _mxk_exc)
 print("MXK_RESULT " + json.dumps(_mxk_payload, ensure_ascii=False))
@@ -211,7 +233,7 @@ def _indent(text: str, n: int) -> str:
 
 
 def wrap(code: str, lang: str = "python", kit=(), result_path=None, label: str = "agent change",
-         undo: bool = True, kit_dirs=None) -> str:
+         undo: bool = True, kit_dirs=None, overwrite_result=None) -> str:
     """Return one self-contained script (see module docstring).
 
     kit entries: a lead module name ("audit"), a path to a .py (Python) or .ms (MAXScript) file,
@@ -221,14 +243,16 @@ def wrap(code: str, lang: str = "python", kit=(), result_path=None, label: str =
         result_path = os.fspath(result_path)
     if lang in ("python", "py", "pymxs"):
         compile(code, "<agent chunk>", "exec")  # fail early on a syntax error in the chunk
-        mods = _py_modules(kit, kit_dirs)
+        mods = _py_modules(list(kit) + _chunk_lead_py(code), kit_dirs)
         order = [n for n, _ in mods]
         sources = "{\n" + "".join(f"    {n!r}: {src!r},\n" for n, src in mods) + "}"
         return _PY_TEMPLATE.format(version=__version__, label=label, undo=bool(undo),
-                                   result_path=result_path, order=tuple(order), sources=sources, code=code)
+                                   result_path=result_path, order=tuple(order), sources=sources, code=code,
+                                   overwrite=overwrite_result)
     if lang in ("maxscript", "mxs", "ms"):
         parts = [_MXS_HEAD.format(version=__version__)]
-        for name, src in _mxs_modules(kit, kit_dirs):
+        used = sorted(set(_MXS_CALL.findall(code)))
+        for name, src in _mxs_modules(list(kit) + used, kit_dirs):
             parts.append(f"    -- kit: {name}\n" + _indent(src, 4))
         lab = label.replace("\\", "\\\\").replace('"', '\\"')
         body = _indent(code, 12)

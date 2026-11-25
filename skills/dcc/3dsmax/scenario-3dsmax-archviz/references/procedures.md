@@ -136,7 +136,8 @@ result = made
 ```
 
 `ARGS` comes from `archviz_plan.chunk(code, {"out_dir": ...})`. `capture.render` writes to the next
-free file name and returns a dict with `path`.
+free file name and returns a dict with `path`. `make_camera` refuses a name already in the scene:
+give a rerun new candidate names.
 
 Runner side, after the chunk returns:
 
@@ -266,7 +267,8 @@ Goal: a render that drops onto a drone photo (iIYYzosZ1Mo 00:03:24 to 00:10:41).
 # channel: runner
 # status: runner-side; executed locally with fixed numbers; exif_camera needs exiftool installed
 import archviz_plan as ap
-plan = ap.exif_camera(photo_path)   # or ap.aerial_camera(8064, 6048, 24, 120) from read values
+plan = ap.exif_camera(photo_path, site_elevation_m=None)  # or ap.aerial_camera(8064, 6048, 24, 120)
+# Without RelativeAltitude, GPSAltitude is above sea level: pass the site elevation, or altitude is missing.
 print(plan)
 ```
 
@@ -349,7 +351,7 @@ first-frame time feeds `render_budget`. Before the first Vantage render (gMUKCma
 ```python
 # channel: batch | bridge | handoff
 # checked against ZHCVMQeWPEg 00:04:06 and 00:06:36; layer API [verify]
-result = anima_layer_prep(keep_layers=ARGS["keep_layers"], fps=30)
+result = anima_layer_prep(keep_layers=ARGS["keep_layers"], fps=ARGS["fps"])  # the P7 fps
 ```
 
 Then GUI: Anima menu > Import project, send only architecture and ground, draw paths in Anima,

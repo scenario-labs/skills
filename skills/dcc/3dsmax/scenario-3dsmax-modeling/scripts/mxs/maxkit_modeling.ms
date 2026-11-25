@@ -59,7 +59,7 @@ struct mmModeling
 	),
 
 	-- counts on a temporary copy; the user's node is not touched
-	fn meshChecks node =
+	fn meshChecks node weldTol:0.001 =
 	(
 		local tmp = copy node
 		convertToPoly tmp -- [verify]
@@ -72,6 +72,7 @@ struct mmModeling
 		)
 		local openE = (polyop.getOpenEdges tmp).numberSet -- [verify]
 		local nv = polyop.getNumVerts tmp -- [verify]
+		tmp.weldThreshold = weldTol -- [verify] weldVertsByThreshold reads this property
 		polyop.weldVertsByThreshold tmp #{1..nv} -- [verify]
 		local weldable = nv - (polyop.getNumVerts tmp)
 		delete tmp

@@ -22,7 +22,7 @@ outside the limb.
 Numbers:
 
 - Rigid link drift under 0.01 system units over the full range [added].
-- Piston halves `min_abs_dot` above 0.9999 [added].
+- Piston halves `min_abs_dot` above 0.9999 and `max_offset` under 0.01 system units [added].
 - Stroke distance inside the barrel and rod limits at every frame.
 - Every slider at min, default and max gives the expected target value within 0.001.
 - No LookAt Upnode on World where the parent rotates.

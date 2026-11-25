@@ -24,8 +24,8 @@ fn mxk_audit_all expectUnits:undefined expectRenderer:undefined farLimit:undefin
         append out (mxk_audit_f "error" "units" undefined ("system unit is " + u + ", project expects " + (expectUnits as string)))
     if units.SystemScale != 1.0 do  -- [verify] units.SystemScale
         append out (mxk_audit_f "warn" "units" undefined ("system scale is " + (units.SystemScale as string)))
-    local perMeter = case (toLower u) of ("millimeters": 1000.0; "centimeters": 100.0; "meters": 1.0; "inches": 39.3701; "feet": 3.28084; default: 100.0)
-    local far = if farLimit != undefined then farLimit else 1000.0 * perMeter
+    local perMeter = case (toLower u) of ("millimeters": 1000.0; "centimeters": 100.0; "meters": 1.0; "kilometers": 0.001; "inches": 39.3701; "feet": 3.28084; "miles": 0.000621371; default: 100.0)
+    local far = if farLimit != undefined then farLimit else (1000.0 * perMeter / (if units.SystemScale > 0 then units.SystemScale else 1.0))
     local seen = #(), counts = #(), layer0 = 0
     for o in objects do (  -- [verify] objects
         local n = o.name

@@ -69,13 +69,22 @@ def _node_record(rt, o) -> dict:
     return rec
 
 
-def _bitmap_files(rt) -> list[dict]:
+def _bitmap_files(rt, errors=None) -> list[dict]:
+    """Bitmap files in the scene. A failed query is appended to errors, never read as no bitmaps."""
     out = []
     for cls_name in ("BitmapTexture",):  # renderer bitmaps (VRayBitmap, CoronaBitmap) need their own pass [verify]
         cls = _safe(lambda: getattr(rt, cls_name), None)
         if cls is None:
+            if errors is not None:
+                errors.append(f"{cls_name} class not found")
             continue
-        for b in _safe(lambda: list(rt.getClassInstances(cls)), []):  # [verify] getClassInstances
+        try:
+            found = list(rt.getClassInstances(cls))  # [verify] getClassInstances
+        except Exception as exc:
+            if errors is not None:
+                errors.append(f"getClassInstances {cls_name}: {exc}")
+            continue
+        for b in found:
             fn = _safe(lambda: str(b.filename), "")  # [verify] BitmapTexture.filename
             if fn:
                 out.append({"file": fn, "exists": bool(_safe(lambda: rt.doesFileExist(fn), False))})
@@ -87,6 +96,7 @@ def collect() -> dict:
     from pymxs import runtime as rt
     nodes = [_node_record(rt, o) for o in list(rt.objects)]  # [verify] objects collection
     path = _safe(lambda: str(rt.maxFilePath) + str(rt.maxFileName), "")
+    bitmap_errors: list = []
     scene = {
         "file": path or None,
         "file_size": _safe(lambda: os.path.getsize(path), None) if path else None,
@@ -94,7 +104,8 @@ def collect() -> dict:
         "system_unit": _safe(lambda: str(rt.units.SystemType), None),  # [verify] units.SystemType
         "system_scale": _safe(lambda: float(rt.units.SystemScale), None),  # [verify] units.SystemScale
         "renderer": _safe(lambda: str(rt.classOf(rt.renderers.current)), None),
-        "bitmaps": _bitmap_files(rt),
+        "bitmaps": _bitmap_files(rt, bitmap_errors),
+        "bitmaps_error": "; ".join(bitmap_errors) or None,
         "layer_names": _safe(lambda: [str(rt.LayerManager.getLayer(i).name)  # [verify] LayerManager
                                       for i in range(int(rt.LayerManager.count))], None),
         "scene_materials": _safe(lambda: len(list(rt.sceneMaterials)), None),  # [verify] sceneMaterials

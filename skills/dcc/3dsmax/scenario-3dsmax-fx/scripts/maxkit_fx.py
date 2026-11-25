@@ -8,7 +8,7 @@ checked against scripting-pipeline__pymxs-using-2027.md
 Functions
 - fx_audit() -> list of findings {severity, rule, node, message}
 - discover(node, max_props=200) -> dict of class, property names and values, interfaces text
-- cache_tycache_modifiers(nodes=None) -> list of {node, ok, error}
+- cache_tycache_modifiers(nodes=None) -> list of {node, ok, error}; None means every scene node
 - time_evaluation(node, start, end) -> dict with seconds per frame and face counts
 
 tyFlow is a third-party plugin. Its operator graph has no documented scripting API in the
@@ -46,10 +46,8 @@ def _all_nodes():
 
 
 def _modifiers(node):
-    try:
-        return list(node.modifiers)
-    except Exception:
-        return []
+    """Modifier list of a node. Raises when the stack cannot be read: callers report it."""
+    return list(node.modifiers)
 
 
 def fx_audit():
@@ -82,7 +80,12 @@ def fx_audit():
 
     found = {}
     for node in _all_nodes():
-        names = [_cls(node).lower()] + [_cls(m).lower() for m in _modifiers(node)]
+        try:
+            mods = _modifiers(node)
+        except Exception as exc:
+            out.append(_finding("error", "modifiers", str(node.name), "could not read modifiers: %s" % exc))
+            mods = []
+        names = [_cls(node).lower()] + [_cls(m).lower() for m in mods]
         for key, label in FX_CLASS_HINTS.items():
             if any(key in n for n in names):
                 found.setdefault(key, []).append(str(node.name))
@@ -118,7 +121,12 @@ def discover(node, max_props=200):
         info["interfaces"] = str(stream)[:20000]
     except Exception as exc:
         info["interfaces"] = "<not available: %s>" % exc
-    for mod in _modifiers(node):
+    try:
+        mods = _modifiers(node)
+    except Exception as exc:
+        info["modifiers_error"] = str(exc)
+        mods = []
+    for mod in mods:
         info.setdefault("modifiers", []).append(
             {"class": _cls(mod), "props": [str(n) for n in list(rt.getPropNames(mod))][:max_props]})
     return info
@@ -131,8 +139,13 @@ def cache_tycache_modifiers(nodes=None):
     MAXScript Listener. Mode, filename and frame range must already be set on the modifier.
     """
     results = []
-    for node in (nodes or _all_nodes()):
-        for mod in _modifiers(node):
+    for node in (_all_nodes() if nodes is None else nodes):
+        try:
+            mods = _modifiers(node)
+        except Exception as exc:
+            results.append({"node": str(node.name), "ok": False, "error": "could not read modifiers: %s" % exc})
+            continue
+        for mod in mods:
             if _cls(mod).lower() != "tycache":  # [verify] modifier class name string
                 continue
             try:

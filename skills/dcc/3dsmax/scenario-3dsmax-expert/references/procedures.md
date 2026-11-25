@@ -1,9 +1,10 @@
 # Procedures (lead)
 
-Every block is a chunk for `max_wrap.wrap()` unless it says otherwise. Inside a chunk the kit
-modules (`stats`, `audit`, `capture`, `xio`), `rt`, `pymxs`, `log()` and `result` are already bound.
-Run `max_check.check(code=..., channel=...)` before sending. Names marked `[verify]` are not in the
-saved docs.
+Every block is a chunk for `max_wrap.wrap()` unless it says otherwise. `wrap()` inlines each lead
+module the chunk calls (`stats`, `audit`, `capture`, `xio`, or an `mxk_<module>_*` twin), so `kit`
+is needed only for sibling helpers. Inside a chunk those modules, `rt`, `pymxs`, `log()` and
+`result` are bound. Run `max_check.check(code=..., channel=...)` before sending. Names marked
+`[verify]` are not in the saved docs.
 
 ## P1. Find the channel
 
@@ -121,7 +122,7 @@ Then, runner side:
 import max_review
 paths = payload["result"]["captures"]  # payload: the parsed result JSON
 flags = {p: max_review.image_checks(p)["flags"] for p in paths}
-sheet = max_review.contact_sheet(paths, "review/sheet_v001.png", cols=2, thumb=600)
+sheet = max_review.contact_sheet(paths, "review/sheet_v001.png", cols=2, thumb=600)  # returns a free name
 ```
 
 Check:
@@ -256,8 +257,10 @@ import max_batch, max_wrap
 job = max_wrap.wrap(chunk, kit=["audit", "xio"])  # chunk reads out_dir from maxOps.mxsCmdLineArgs
 reports = []
 for scene in scenes:  # list of .max paths given by the user
-    r = max_batch.run_batch(job, scene=scene, args={"out_dir": out_dir}, timeout=1800, log_dir=log_dir)
-    reports.append({"scene": scene, "ok": r["ok"], "meaning": r["meaning"], "seconds": r["seconds"]})
+    r = max_batch.run_batch(job, scene=scene, args={"out_dir": out_dir}, timeout=1800, log_dir=log_dir,
+                            require_result=True)  # no result file means the run failed
+    reports.append({"scene": scene, "ok": r["ok"], "meaning": r["meaning"], "seconds": r["seconds"],
+                    "result": r["result"]})
 ```
 
 Check:

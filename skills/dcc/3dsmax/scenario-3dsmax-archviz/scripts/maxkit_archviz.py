@@ -13,6 +13,7 @@ Plugin property names (Forest Pack, RailClone, Chaos Scatter, Corona, V-Ray, Phy
 the saved docs. This module never guesses one silently: it looks names up with getPropNames and reports
 which candidate matched, so the first run in a session tells the agent the real names.
 """
+import contextlib
 import math
 import time
 
@@ -117,6 +118,8 @@ def make_camera(name, pos_m, target_m, focal_mm, film_mm=36.0, auto_vtilt=True, 
     cls_name: "Physical" (3ds Max Physical Camera, class name [verify]); falls back to Freecamera.
     Renderer-native cameras (VRayPhysicalCamera, CoronaCam) are created only when cls_name names them [verify].
     """
+    if rt.getNodeByName(name) is not None:  # time_test_frame finds the camera by name
+        raise ValueError("a node named %r exists: pick a new camera name" % name)
     m = _m_per_unit()
     p = rt.point3(*(v / m for v in pos_m))
     t = rt.point3(*(v / m for v in target_m))
@@ -189,7 +192,9 @@ def spline_closed_report(shapes):
         except Exception as exc:  # non-editable shapes may need an Edit Spline first
             out.append({"name": str(s.name), "error": str(exc)})
             continue
-        if open_ids:
+        if count == 0:
+            out.append({"name": str(s.name), "error": "no sub-splines: no boundary"})
+        elif open_ids:
             out.append({"name": str(s.name), "open_splines": open_ids})
     return out
 
@@ -205,7 +210,8 @@ def shadow_only(nodes):
 def anim_report():
     r = rt.animationRange  # [verify]
     return {"fps": float(rt.frameRate), "range": [int(r.start.frame), int(r.end.frame)],  # [verify] frameRate, .frame
-            "rendTimeType": int(rt.rendTimeType), "rendSaveFile": bool(rt.rendSaveFile),  # [verify] both
+            "rendTimeType": int(rt.rendTimeType), "rendNThFrame": int(rt.rendNThFrame),  # [verify] both
+            "rendSaveFile": bool(rt.rendSaveFile),  # [verify]
             "rendOutputFilename": str(rt.rendOutputFilename),  # [verify]
             "size": [int(rt.renderWidth), int(rt.renderHeight)],  # [verify] both
             "renderer": str(rt.classOf(rt.renderers.current))}
@@ -220,6 +226,7 @@ def set_anim_output(fps, first, last, out_path, width=None, height=None):
     rt.rendTimeType = 3          # range, per ZHCVMQeWPEg agent notes [verify] value
     rt.rendStart = first         # [verify]
     rt.rendEnd = last            # [verify]
+    rt.rendNThFrame = 1          # a draft stride would skip frames of the final sequence [verify]
     rt.rendSaveFile = True  # [verify]
     rt.rendOutputFilename = out_path  # [verify]
     if width and height:
@@ -229,18 +236,30 @@ def set_anim_output(fps, first, last, out_path, width=None, height=None):
 
 
 def time_test_frame(camera_name, frame, out_path):
-    """Render one frame to a new file and return seconds (feed archviz_plan.render_budget)."""
+    """Render one frame to a new file and return seconds (feed archviz_plan.render_budget).
+    Raises on a cancelled render, so a partial time never reaches the budget."""
     cam = rt.getNodeByName(camera_name)
+    flag = pymxs.byref(False)
     t0 = time.perf_counter()
-    rt.render(camera=cam, frame=frame, outputFile=out_path, vfb=False)  # [verify] camera/frame/vfb args
-    return round(time.perf_counter() - t0, 2)
+    bmp = rt.render(camera=cam, frame=frame, outputFile=out_path, vfb=False,
+                    cancelled=flag)  # [verify] camera/frame/vfb/cancelled args
+    seconds = round(time.perf_counter() - t0, 2)
+    if isinstance(bmp, tuple):  # by-reference values may come back with the result [verify]
+        bmp, cancelled = bmp[0], bmp[-1]
+    else:
+        cancelled = getattr(flag, "value", False)  # [verify] byref value
+    with contextlib.suppress(Exception):
+        rt.close(bmp)  # free the returned bitmap [verify]
+    if cancelled:
+        raise RuntimeError("test render cancelled: no frame time")
+    return seconds
 
 
 def anima_layer_prep(keep_layers, fps=30, layer_name="Anima"):
     """Anima round trip prep (ZHCVMQeWPEg 00:04:06, 00:06:36): layer, fps 30, hide all but kept layers."""
     lay = rt.LayerManager.getLayerFromName(layer_name)  # [verify] getLayerFromName
     if lay is None:
-        lay = rt.LayerManager.newLayerFromName(layer_name)  # [verify]
+        rt.LayerManager.newLayerFromName(layer_name)  # [verify]
     keep = set(keep_layers) | {layer_name}
     hidden = []
     for i in range(rt.LayerManager.count):  # [verify] count and getLayer(0-based)

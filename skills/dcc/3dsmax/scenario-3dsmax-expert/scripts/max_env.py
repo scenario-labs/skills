@@ -9,7 +9,7 @@ channel is one of "bridge", "mcp-safe", "batch", "handoff":
 - mcp-safe: the Autodesk 3ds Max MCP server (2027.3, Tech Preview) answers on 127.0.0.1:27200-27209.
   The agent itself reaches it only through an MCP client that supports MCP Apps (Autodesk: it
   "doesn't work with Claude Code in the terminal"). An open port proves only that 3ds Max runs it.
-- batch: 3dsmaxbatch.exe exists (Windows). No UI, no viewport capture, uses a license.
+- batch: 3dsmaxbatch.exe exists (Windows: MAX_BATCH_EXE, PATH or an install). No UI, no viewport capture, uses a license.
 - handoff: none of the above (for example macOS or Linux): write a script, the user runs it with
   Scripting > Run Script and sends back the result file and captures.
 MAX_CHANNEL forces the answer. The probe only opens TCP connections on 127.0.0.1; it sends nothing,
@@ -23,6 +23,7 @@ __version__ = "0.1.0"
 import json
 import os
 import platform
+import shutil
 import socket
 from pathlib import Path
 
@@ -89,7 +90,9 @@ def probe_bridge(host: str = "127.0.0.1"):
 def doctor() -> dict:
     osname = platform.system()
     installs = find_installs() if osname == "Windows" or os.environ.get("MAX_ROOT") else []
-    batch = os.environ.get("MAX_BATCH_EXE") or next((i["batch_exe"] for i in installs if i["batch_exe"]), None)
+    on_path = (shutil.which("3dsmaxbatch") or shutil.which("3dsmaxbatch.exe")) if osname == "Windows" else None
+    batch = (os.environ.get("MAX_BATCH_EXE") or on_path   # same order as max_batch.find_exe()
+             or next((i["batch_exe"] for i in installs if i["batch_exe"]), None))
     ports = probe_mcp()
     bridge = probe_bridge()
     env = {k: os.environ[k] for k in ENV_KEYS if k in os.environ}

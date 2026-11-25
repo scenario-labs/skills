@@ -9,7 +9,8 @@ checked against notes/game-assets digests (rules and numbers),
         scenario-3dsmax-expert/references/api-names.txt. Names not in the saved docs carry [verify].
 
 Call every function on the main thread only. Functions that change the scene open their own
-pymxs.undo record (nesting inside the max_wrap record is fine). Nothing here saves over a user
+pymxs.undo record (nesting inside the max_wrap record is fine). pymxs.undo rolls back and swallows
+an exception raised inside it (pymxs module doc, 2027), so _undo re-raises it after the record closes. Nothing here saves over a user
 file: export paths are versioned (_v002, _v003) when the target exists.
 
 Public functions:
@@ -17,6 +18,7 @@ Public functions:
     prop_names(obj)                       lower-case property names (getPropNames), for discovery
     set_props(obj, wanted)                {(candidate, ...): value} -> {"set": {}, "missing": []}
     normalize_intake(node, target_cm=None, measure="longest", pivot="bottom_center", up_fix=None)
+    normalize_group(nodes, ...)           same for a multipart import: one shared rotation, scale and move
     make_lod(node, level, vertex_percent, base_name=None)
     add_box_collision(node, index=0, pad_cm=0.0)
     set_fbx_params(params)                set then read back each FBX exporter parameter
@@ -24,6 +26,7 @@ Public functions:
     versioned(path)                       first free path: name.ext, name_v002.ext, ...
 """
 
+import contextlib
 import json
 import os
 
@@ -39,6 +42,9 @@ MXS_AUDIT = r'''fn gaJsonStr s = (
         local c = s[i]
         if c == "\"" then out += "\\\""
         else if c == "\\" then out += "\\\\"
+        else if c == "\n" then out += "\\n"
+        else if c == "\r" then out += "\\r"
+        else if c == "\t" then out += "\\t"
         else out += c
     )
     "\"" + out + "\""
@@ -188,6 +194,19 @@ FBX_PRESETS = {
 }
 
 
+@contextlib.contextmanager
+def _undo(label):
+    err = []
+    with pymxs.undo(True, label):
+        try:
+            yield
+        except Exception as exc:
+            err.append(exc)
+            raise
+    if err:
+        raise err[0]
+
+
 # ---------------------------------------------------------------- discovery
 
 def prop_names(obj):
@@ -239,47 +258,81 @@ def game_audit():
 # ---------------------------------------------------------------- intake
 
 def _is_cm():
-    return str(rt.units.SystemType).lower() == "centimeters"  # [verify] units.SystemType
+    """Centimeters with a 1.0 multiplier: 1 system unit = 1 cm."""
+    if str(rt.units.SystemType).lower() != "centimeters":  # [verify] units.SystemType
+        return False
+    return abs(float(rt.units.SystemScale) - 1.0) < 1e-6  # [verify] units.SystemScale
 
 
 def _p3(v):
     return [float(v.x), float(v.y), float(v.z)]
 
 
-def normalize_intake(node, target_cm=None, measure="longest", pivot="bottom_center", up_fix=None):
+def _bounds(nodes):
+    lo = [min(_p3(n.min)[k] for n in nodes) for k in range(3)]
+    hi = [max(_p3(n.max)[k] for n in nodes) for k in range(3)]
+    return lo, hi
+
+
+def _reset(nodes):
+    for n in nodes:
+        rt.ResetXForm(n)     # [verify]
+        rt.collapseStack(n)  # [verify]
+
+
+def normalize_group(nodes, target_cm=None, measure="longest", pivot="bottom_center", up_fix=None):
     """Reset transforms, optionally rotate up axis, scale uniformly to a real size, set the pivot,
-    move to the origin. Refuses unless the system unit is centimeters.
+    move to the origin. Every step uses the shared bounds of all nodes, so the parts of a multipart
+    import keep their relative placement. Each node's pivot ends on the shared pivot, at the origin.
+    Refuses unless 1 system unit is 1 cm.
 
     measure: "longest", "height" (Z) or "width" (X). pivot: "bottom_center" or "corner" (min x, y, z).
     up_fix: None, "y_up_to_z_up" (+90 deg about X). Returns before/after numbers."""
+    nodes = list(nodes)
+    if not nodes:
+        raise ValueError("no nodes to normalize")
     if not _is_cm():
-        raise RuntimeError("system unit is not centimeters; set units first (scenario-3dsmax-scene)")
-    rep = {"name": str(node.name), "before": {"min": _p3(node.min), "max": _p3(node.max)}}
-    with pymxs.undo(True, "game: normalize intake"):
+        raise RuntimeError("system unit is not 1 cm (type centimeters, scale 1); set units first "
+                           "(scenario-3dsmax-scene)")
+    lo, hi = _bounds(nodes)
+    rep = {"names": [str(n.name) for n in nodes], "before": {"min": lo, "max": hi}}
+    with _undo("game: normalize intake"):
         if up_fix == "y_up_to_z_up":
-            rt.rotate(node, rt.angleaxis(90, rt.Point3(1, 0, 0)))  # [verify] rotate, angleaxis
-        rt.ResetXForm(node)     # [verify]
-        rt.collapseStack(node)  # [verify]
+            c = rt.Point3(*[(lo[k] + hi[k]) / 2.0 for k in range(3)])
+            for n in nodes:
+                n.pivot = c  # [verify] node.pivot
+                rt.rotate(n, rt.angleaxis(90, rt.Point3(1, 0, 0)))  # [verify] rotate, angleaxis
+        _reset(nodes)
         if target_cm:
-            mn, mx = node.min, node.max
-            dims = (mx.x - mn.x, mx.y - mn.y, mx.z - mn.z)
+            lo, hi = _bounds(nodes)
+            dims = [hi[k] - lo[k] for k in range(3)]
             cur = {"longest": max(dims), "height": dims[2], "width": dims[0]}[measure]
             if cur <= 0:
                 raise RuntimeError("zero size along the measured axis")
             f = float(target_cm) / cur
-            node.scale = rt.Point3(f, f, f)  # uniform only: non-uniform scale breaks UBX/USP and Datasmith instances
-            rt.ResetXForm(node)     # [verify]
-            rt.collapseStack(node)  # [verify]
+            c = rt.Point3((lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0, lo[2])
+            for n in nodes:
+                n.pivot = c
+                n.scale = rt.Point3(f, f, f)  # uniform only: non-uniform scale breaks UBX/USP and Datasmith instances
+            _reset(nodes)
             rep["scale_factor"] = f
-        mn, mx = node.min, node.max
+        lo, hi = _bounds(nodes)
         if pivot == "corner":
-            p = rt.Point3(mn.x, mn.y, mn.z)
+            p = rt.Point3(lo[0], lo[1], lo[2])
         else:
-            p = rt.Point3((mn.x + mx.x) / 2.0, (mn.y + mx.y) / 2.0, mn.z)
-        node.pivot = p  # [verify] node.pivot
-        node.pos = rt.Point3(0, 0, 0)
-    rep["after"] = {"min": _p3(node.min), "max": _p3(node.max), "pos": _p3(node.pos),
-                    "pivot": _p3(node.pivot)}
+            p = rt.Point3((lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0, lo[2])
+        for n in nodes:
+            n.pivot = p
+            n.pos = rt.Point3(0, 0, 0)
+    lo, hi = _bounds(nodes)
+    rep["after"] = {"min": lo, "max": hi, "pos": _p3(nodes[0].pos), "pivot": _p3(nodes[0].pivot)}
+    return rep
+
+
+def normalize_intake(node, target_cm=None, measure="longest", pivot="bottom_center", up_fix=None):
+    """normalize_group for one node; same arguments. Returns before/after numbers."""
+    rep = normalize_group([node], target_cm, measure, pivot, up_fix)
+    rep["name"] = rep.pop("names")[0]
     return rep
 
 
@@ -294,16 +347,16 @@ def make_lod(node, level, vertex_percent, base_name=None):
     if cls is None:
         report["error"] = "ProOptimizer class not found; use Modifier List > ProOptimizer"
         return report
-    with pymxs.undo(True, f"game: LOD{level}"):
+    with _undo(f"game: LOD{level}"):
         lod = rt.copy(node)
         lod.name = report["lod"]
         mod = cls()
         rt.addModifier(lod, mod)
         report["flags"] = set_props(mod, {
-            ("KeepUV", "KeepUVBoundaries", "KeepUVs"): True,        # [verify]
-            ("KeepTextures", "KeepMaps"): True,                      # [verify]
-            ("KeepNormals", "ProtectNormals"): True,                 # [verify]
-            ("LockMat", "KeepMaterialBoundaries"): True,             # [verify]
+            ("KeepUV",): True,        # [verify] Keep Textures (ProOptimizer MAXScript page, 2027)
+            ("LockUV",): True,        # [verify] Keep UV Boundaries (same page)
+            ("KeepNormals",): True,   # [verify] same page
+            ("LockMat",): True,       # [verify] Keep Material Boundaries (same page)
         })
         report["percent"] = set_props(mod, {("VertexPercent", "OptLevel"): float(vertex_percent)})  # [verify]
         report["calculate"] = set_props(mod, {("Calculate",): True})  # [verify] if missing: GUI Calculate
@@ -315,7 +368,7 @@ def make_lod(node, level, vertex_percent, base_name=None):
 def add_box_collision(node, index=0, pad_cm=0.0):
     """Box hull around node's world bounding box, named UCX_<node>_<index:02d>, converted to mesh.
     Leave gaps between several hulls (Epic doc). Assumes centimeters."""
-    with pymxs.undo(True, "game: UCX box"):
+    with _undo("game: UCX box"):
         mn, mx = node.min, node.max
         w = (mx.x - mn.x) + 2 * pad_cm
         d = (mx.y - mn.y) + 2 * pad_cm
@@ -365,7 +418,7 @@ def export_fbx_game(path, nodes, target="unreal", extra=None):
     path = versioned(path)
     report = {"path": path, "params": set_fbx_params(params), "exported": []}
     copies = []
-    with pymxs.undo(True, "game: FBX export copies"):
+    with _undo("game: FBX export copies"):
         try:
             for n in nodes:
                 c = rt.copy(n)

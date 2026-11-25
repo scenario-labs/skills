@@ -15,6 +15,9 @@ fn gaJsonStr s = (
         local c = s[i]
         if c == "\"" then out += "\\\""
         else if c == "\\" then out += "\\\\"
+        else if c == "\n" then out += "\\n"
+        else if c == "\r" then out += "\\r"
+        else if c == "\t" then out += "\\t"
         else out += c
     )
     "\"" + out + "\""

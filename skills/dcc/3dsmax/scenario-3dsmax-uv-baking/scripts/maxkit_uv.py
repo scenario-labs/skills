@@ -103,6 +103,42 @@ def signed_area(uvs):
     return a * 0.5
 
 
+def _cross(a, b, c):
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+
+def _in_triangle(p, a, b, c):
+    d1, d2, d3 = _cross(a, b, p), _cross(b, c, p), _cross(c, a, p)
+    return not ((d1 < 0 or d2 < 0 or d3 < 0) and (d1 > 0 or d2 > 0 or d3 > 0))
+
+
+def triangulate(uvs):
+    """Ear clipping: triangles stay inside the polygon, so a concave face leaves its notch empty.
+    Returns index triples into uvs; a degenerate remainder falls back to a fan."""
+    n = len(uvs)
+    if n < 3:
+        return []
+    sign = 1.0 if signed_area(uvs) >= 0 else -1.0
+    idx = list(range(n))
+    tris = []
+    while len(idx) > 3:
+        m = len(idx)
+        for k in range(m):
+            a, b, c = idx[k - 1], idx[k], idx[(k + 1) % m]
+            if _cross(uvs[a], uvs[b], uvs[c]) * sign <= 0:
+                continue  # reflex or collinear corner
+            if any(_in_triangle(uvs[q], uvs[a], uvs[b], uvs[c])
+                   for q in idx if q not in (a, b, c) and uvs[q] not in (uvs[a], uvs[b], uvs[c])):
+                continue
+            tris.append((a, b, c))
+            del idx[k]
+            break
+        else:
+            break
+    tris.extend((idx[0], idx[t], idx[t + 1]) for t in range(1, len(idx) - 1))
+    return tris
+
+
 def build_shells(faces):
     """Union faces that share a map vertex. Returns list of face-index lists."""
     parent = {}
@@ -134,8 +170,13 @@ def texel_density(tex_size, uv_area, world_area_cm2):
     return tex_size * math.sqrt(uv_area / world_area_cm2)
 
 
-def _raster_triangles(tris, res, owner, shell_id, stats):
-    for (ax, ay), (bx, by), (cx, cy) in tris:
+def _raster_triangles(tris, res, owner, shell_id, stats, face_hit=None):
+    """tris: (face_index, a, b, c). Cross-shell overlap counts any shared cell. Inside one shell,
+    a cell whose center is strictly inside two different faces counts too; shared edges do not."""
+    if face_hit is None:
+        face_hit = [-1] * (res * res)
+    eps = 1e-9
+    for fi, (ax, ay), (bx, by), (cx, cy) in tris:
         d = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
         if abs(d) < 1e-14:
             continue
@@ -161,6 +202,15 @@ def _raster_triangles(tris, res, owner, shell_id, stats):
                     owner[k] = shell_id
                 elif cur != shell_id and cur != -2:
                     owner[k] = -2  # cross-shell overlap
+                    stats["overlap"] += 1
+                    continue
+                if owner[k] == -2 or min(w1, w2, w3) <= eps:
+                    continue
+                prev = face_hit[k]
+                if prev == -1:
+                    face_hit[k] = fi
+                elif prev != fi:
+                    owner[k] = -2  # two faces of one shell cover the cell
                     stats["overlap"] += 1
 
 
@@ -206,7 +256,9 @@ def analyze(faces, unit_to_cm, tex_size=2048, target_td=None, tol=0.15,
     mirrored = 0
     tds = []
     owner = [-1] * (raster * raster)
+    face_hit = [-1] * (raster * raster)
     stats = {"outside": 0, "overlap": 0}
+    outside_faces = 0
     total_world = 0.0
     total_uv = 0.0
     for sid, shell in enumerate(shells):
@@ -216,25 +268,28 @@ def analyze(faces, unit_to_cm, tex_size=2048, target_td=None, tol=0.15,
         tris = []
         for fi in shell:
             area, _, uvs = faces[fi]
+            if any(u < 0 or u > 1 or v < 0 or v > 1 for u, v in uvs):
+                outside_faces += 1  # counted before the raster clip, which may skip the face
             sa = signed_area(uvs)
             if sa < 0:
                 neg += 1
             w += area * cm2
             uv += abs(sa)
-            for t in range(1, len(uvs) - 1):
-                tris.append((uvs[0], uvs[t], uvs[t + 1]))
+            for a, b, c in triangulate(uvs):
+                tris.append((fi, uvs[a], uvs[b], uvs[c]))
         flipped += neg
         if neg * 2 > len(shell):
             mirrored += 1
         total_world += w
         total_uv += uv
         tds.append((texel_density(tex_size, uv, w), w, sid))
-        _raster_triangles(tris, raster, owner, sid, stats)
+        _raster_triangles(tris, raster, owner, sid, stats, face_hit)
 
     covered = sum(1 for v in owner if v != -1)
     out["coverage_pct"] = round(100.0 * covered / (raster * raster), 2)
     out["overlap_pct"] = round(100.0 * stats["overlap"] / (raster * raster), 3)
     out["outside_0_1_samples"] = stats["outside"]
+    out["outside_0_1_faces"] = outside_faces
     out["flipped_faces"] = flipped
     out["mirrored_shells"] = mirrored
     out["world_area_cm2"] = round(total_world, 2)
@@ -258,8 +313,8 @@ def analyze(faces, unit_to_cm, tex_size=2048, target_td=None, tol=0.15,
 
     if stats["overlap"]:
         findings.append({"severity": "error", "rule": "uv.overlap",
-                         "message": "%.3f%% of the sheet has overlapping shells (bake target needs none, unless mirrored halves are offset on purpose)" % out["overlap_pct"]})
-    if stats["outside"]:
+                         "message": "%.3f%% of the sheet has overlapping UVs (bake target needs none, unless mirrored halves are offset on purpose)" % out["overlap_pct"]})
+    if stats["outside"] or outside_faces:
         findings.append({"severity": "warning", "rule": "uv.outside_0_1",
                          "message": "UVs outside 0-1 (fine for UDIM or tiling, wrong for a single-tile bake)"})
     if flipped:

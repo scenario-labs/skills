@@ -47,6 +47,7 @@
 		if o.layer.name == "0" do onLayer0 += 1 -- [verify]
 	)
 	local nMissing = 0
+	local nUnread = 0 -- maps whose path could not be read: a nonzero value blocks the intake
 	local missing = #()
 	for b in getClassInstances BitmapTexture do -- [verify]; renderer bitmaps follow below
 	(
@@ -63,7 +64,7 @@
 		(
 			for b in getClassInstances pair[1] do
 			(
-				local f = try (getProperty b pair[2]) catch undefined
+				local f = try (getProperty b pair[2]) catch (nUnread += 1; undefined)
 				if f != undefined and f != "" and not (doesFileExist f) do
 				(
 					nMissing += 1
@@ -77,7 +78,7 @@
 	format "{\"objects\":%, \"non_unit_scale\":%, " nObj nScale to:ss
 	format "\"system\":\"% x %\", \"display\":\"%\", " units.SystemType units.SystemScale units.DisplayType to:ss -- [verify] units.DisplayType
 	format "\"default_named\":%, \"far_count\":%, \"far_max_m\":%, \"group_heads\":%, \"group_max_depth\":%, " nDefault nFar (farMax / 100.0) nHeads maxDepth to:ss
-	format "\"layers\":%, \"on_layer_0\":%, \"xref_scenes\":%, \"missing_bitmaps\":%, " LayerManager.count onLayer0 (xrefs.getXRefFileCount()) nMissing to:ss -- [verify] LayerManager, xrefs
+	format "\"layers\":%, \"on_layer_0\":%, \"xref_scenes\":%, \"missing_bitmaps\":%, \"unreadable_bitmaps\":%, " LayerManager.count onLayer0 (xrefs.getXRefFileCount()) nMissing nUnread to:ss -- [verify] LayerManager, xrefs
 	format "\"far_sample\":%, \"missing_sample\":%}" (farList as string) (missing as string) to:ss
 	ss as string
 )

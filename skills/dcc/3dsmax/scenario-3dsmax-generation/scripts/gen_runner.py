@@ -85,19 +85,33 @@ def asset_dir(project_root: str, kind: str, name: str, day: str | None = None) -
 def download(url: str, folder: str, filename: str) -> str:
     """Save a Scenario asset_download URL into folder/filename (redirects followed).
 
-    Refuses to overwrite: pick a new filename instead."""
+    Refuses to overwrite: pick a new filename instead. A failed, empty or short download
+    removes the file this call created, so a retry with the same arguments works."""
     dest = os.path.join(folder, filename)
     if os.path.exists(dest):
         raise FileExistsError(dest)
     req = urllib.request.Request(url, headers={"User-Agent": "asset-fetch/1.0"})
-    with urllib.request.urlopen(req, timeout=600) as resp, open(dest, "wb") as fh:
-        while True:
-            chunk = resp.read(1 << 20)
-            if not chunk:
-                break
-            fh.write(chunk)
-    if os.path.getsize(dest) == 0:
-        raise IOError(f"empty download: {dest}")
+    created = False
+    try:
+        with urllib.request.urlopen(req, timeout=600) as resp:
+            with open(dest, "xb") as fh:  # "x": never overwrite
+                created = True
+                got = 0
+                while True:
+                    chunk = resp.read(1 << 20)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+                    got += len(chunk)
+            expected = resp.headers.get("Content-Length")
+        if got == 0:
+            raise IOError(f"empty download: {dest}")
+        if expected is not None and expected.isdigit() and got < int(expected):
+            raise IOError(f"truncated download: {got} of {expected} bytes: {dest}")
+    except BaseException:
+        if created:
+            os.remove(dest)
+        raise
     return dest
 
 
@@ -144,6 +158,8 @@ def tile_sheet(png_path: str, out_path: str) -> str:
     if os.path.exists(out_path):
         raise FileExistsError(out_path)
     im = Image.open(png_path)
+    if im.mode in ("P", "PA") or "transparency" in im.info:
+        im = im.convert("RGBA")  # a new "P" sheet would not carry the palette or its transparency
     w, h = im.size
     sheet = Image.new(im.mode, (w * 2, h * 2))
     for dx in (0, w):

@@ -30,12 +30,16 @@ def build(chunk, result_path, kit=("capture",), label="lighting-rendering"):
 
 def run(chunk, scene, out_dir, name):
     script = Path(out_dir) / f"{name}.py"
-    script.write_text(build(chunk, str(Path(out_dir) / f"{name}.json")), encoding="utf-8")
-    return run_batch(str(script), scene=scene, timeout=3600)
+    result_path = str(Path(out_dir) / f"{name}.json")
+    with script.open("x", encoding="utf-8") as fh:  # "x": refuses a file already there
+        fh.write(build(chunk, result_path))
+    return run_batch(str(script), scene=scene, timeout=3600,
+                     args={"result_path": result_path}, require_result=True)
 ```
 
-Check in the result: `ok` is true and `error` is null; then read `result`. Renders go to new files
-only: `test_render` refuses an existing path.
+Check in the result: `ok` is true and `error` is null; then read `result`. `run` refuses an existing
+script name: pass a new `name`. Renders go to new files only: `test_render` refuses an existing
+path.
 
 ## 1. Inspect (read-only)
 
@@ -61,8 +65,9 @@ mcp-safe: propose `scripts/mxs/render_audit.ms` as is (MAXScript, read-only, no 
 its value is the report text.
 
 Check: `renderer.family` is the one the user expects; if it is `scanline` or `other`, stop and ask
-which renderer the project uses (never switch it yourself). Every light has an on state. Save the
-JSON as the baseline for the diff at the end.
+which renderer the project uses (never switch it yourself). Every light has an on state. A dump
+holding `_error` was not read: treat those settings as unknown, never as absent. Save the JSON as
+the baseline for the diff at the end.
 
 ## 2. Color pipeline audit (read-only)
 
@@ -485,7 +490,7 @@ resume (_biqhqTpW5c 00:13:34). V-Ray: aborting skips the denoiser, soft stop app
 
 ```python
 # channel: batch | bridge | handoff
-# note: frame keyword of render() [verify]
+# note: frame and renderElements keywords of render() [verify]; close from scripting-pipeline__maxscript-bitmap-values-2027.md
 import os
 
 OUT = os.path.join(str(rt.getDir(rt.Name("renderoutput"))), "flicker")  # or a project path passed in
@@ -497,8 +502,13 @@ for f in range(START, START + COUNT):
     path = os.path.join(OUT, f"flicker_{f:04d}_v001.png")
     if os.path.exists(path):
         raise FileExistsError(path)
-    rt.render(camera=cam, frame=f, outputFile=path, vfb=False,  # [verify] frame keyword
-              outputSize=rt.Point2(640, 360))
+    bmp = rt.render(camera=cam, frame=f, outputFile=path, vfb=False,  # [verify] frame keyword
+                    renderElements=False,  # [verify] renderElements keyword
+                    outputSize=rt.Point2(640, 360))
+    if bmp is not None:
+        rt.close(bmp)  # frees the frame buffer inside the loop
+    if not os.path.exists(path):
+        raise RuntimeError(f"no file at {path}: render cancelled or failed")
     done.append(path)
 result = {"frames": done}
 ```

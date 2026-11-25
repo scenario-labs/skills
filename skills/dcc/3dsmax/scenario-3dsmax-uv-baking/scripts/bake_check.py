@@ -15,6 +15,17 @@ import json
 import sys
 
 
+def sample(rgb, step):
+    """Every step-th pixel in row-major order, one row in memory at a time."""
+    w, h = rgb.size
+    px = []
+    for y in range(h):
+        row = rgb.crop((0, y, w, y + 1)).tobytes()
+        for x in range((-y * w) % step, w, step):
+            px.append((row[3 * x], row[3 * x + 1], row[3 * x + 2]))
+    return px
+
+
 def check(path, diag=(255, 0, 0), tol=8, normal=False, bg=(0, 0, 0)):
     from PIL import Image  # Pillow
     im = Image.open(path)
@@ -22,7 +33,7 @@ def check(path, diag=(255, 0, 0), tol=8, normal=False, bg=(0, 0, 0)):
     rgb = im.convert("RGB")
     w, h = rgb.size
     step = max(1, (w * h) // 1_000_000)  # sample up to about one million pixels
-    px = list(rgb.getdata())[::step]
+    px = sample(rgb, step)
     n = len(px)
     dr, dg, db = diag
     miss = sum(1 for r, g, b in px if abs(r - dr) <= tol and abs(g - dg) <= tol and abs(b - db) <= tol)

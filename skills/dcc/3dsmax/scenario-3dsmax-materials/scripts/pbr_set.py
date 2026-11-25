@@ -207,12 +207,12 @@ def tagged_copy(report: dict, out_dir: str) -> dict:
 
 def seam_preview(path: str, out: str) -> str:
     """Write a 2 x 2 tile of the image to out. Returns out, or a command if Pillow is missing."""
+    if os.path.exists(out):  # before the fallback too: the returned command would replace out
+        raise FileExistsError(out)
     try:
         from PIL import Image  # type: ignore
     except ImportError:
         return f'magick montage "{path}" "{path}" "{path}" "{path}" -tile 2x2 -geometry +0+0 "{out}"'
-    if os.path.exists(out):
-        raise FileExistsError(out)
     with Image.open(path) as im:
         w, h = im.size
         sheet = Image.new(im.mode, (w * 2, h * 2))

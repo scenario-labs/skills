@@ -39,15 +39,18 @@ Goal: know units, origin, structure, weight and missing files before touching an
 # checked against the toolkit contract of scenario-3dsmax-expert and scripting-pipeline__3dsmaxbatch-2020.md
 import sys
 sys.path.insert(0, sys.argv[1])            # this skill's scripts/ folder
-from scene_run import audit_script
+import os
+from scene_run import audit_exit_code, audit_script
 from max_batch import run_batch            # lead toolkit, found by scene_run
 
 scene, out_dir = sys.argv[2], sys.argv[3]  # never hard-code paths
+envelope = os.path.join(out_dir, "scene_audit.json")  # must not exist yet
 res = run_batch(audit_script(out_dir, far_cm=100000.0), scene=scene, log_dir=out_dir, timeout=3600)
-print(res["ok"], res.get("error"))
+print("audit ok" if audit_exit_code(res, envelope) == 0 else "audit failed")
 ```
 
-Then judge it offline: `python scripts/scene_gate.py <out_dir>/scene_audit.json spec.json`.
+`far_cm` is the spec's `max_far_m` x 100: the gate fails when the audit cutoff is larger. Then judge
+it offline: `python scripts/scene_gate.py <out_dir>/scene_audit.json spec.json`.
 
 `-sceneFile` already prints missing plug-ins and XRefs to the console log (`3dsmaxbatch-2020.md`);
 keep that log with the JSON. Opening a client file headless also keeps Safe Scene Script Execution
@@ -89,8 +92,11 @@ system unit in a populated scene; the helper refuses (`fundamentals-scene__syste
 # checked against fundamentals-scene__system-unit-setup.md and scripting-pipeline__maxscript-file-loading-saving-importfile-exportfile-2027.md
 # Chunk body (scene_run.make prepends maxkit_scene). template_path comes from the runner.
 template_path = TEMPLATE_PATH              # set by the runner, e.g. via .format() or an args file
-rt.resetMaxFile(rt.Name("noPrompt"))
-result = set_units_on_empty_scene("centimeters", 1.0, "metric", "centimeters")
+if len(rt.objects) > 0 or rt.getSaveRequired():  # live session with work in it: refuse, never reset
+    result = {"changed": False, "reason": "session holds objects or unsaved changes"}
+else:
+    rt.resetMaxFile(rt.Name("noPrompt"))
+    result = set_units_on_empty_scene("centimeters", 1.0, "metric", "centimeters")
 if result["changed"]:
     if rt.doesFileExist(template_path):
         result["saved"] = False
@@ -442,16 +448,17 @@ with pymxs.undo(True, "scene: import " + ext):
 new = [n for n in rt.objects if n.name not in before]
 multi = [n.name for n in new if n.material is not None and str(rt.classOf(n.material)) == "Multimaterial"]
 lights = [n.name for n in new if rt.superClassOf(n) == rt.light]
-open_shapes = []
+open_shapes, uninspected = [], []
 for n in new:
     if rt.superClassOf(n) == rt.shape:
         try:
-            if not all(rt.isClosed(n, i) for i in range(1, rt.numSplines(n) + 1)):  # [verify]
+            count = int(rt.numSplines(n))                    # [verify]
+            if count == 0 or not all(rt.isClosed(n, i) for i in range(1, count + 1)):
                 open_shapes.append(n.name)
-        except Exception:
-            pass
+        except Exception:  # not an editable spline: inspect after an Edit Spline
+            uninspected.append(n.name)
 result = {"ok": bool(ok), "new_objects": len(new), "multi_material_objects": len(multi),
-          "lights": len(lights), "open_shapes": open_shapes[:100],
+          "lights": len(lights), "open_shapes": open_shapes[:100], "uninspected_shapes": uninspected[:100],
           "units": units_report(), "origin": origin_report()}
 ```
 
@@ -463,8 +470,8 @@ Check:
   (file-link doc).
 - A linked Daylight System prompts for exposure control; answer Yes or renders overexpose (file-link
   doc, written for Scanline and Quicksilver).
-- `open_shapes` empty before extruding CAD outlines: closed polylines on separate `3D-` layers are
-  prepared in AutoCAD (Autodesk, 1pEqaqq8v_Y 04:54).
+- `open_shapes` and `uninspected_shapes` both empty before extruding CAD outlines: closed polylines
+  on separate `3D-` layers are prepared in AutoCAD (Autodesk, 1pEqaqq8v_Y 04:54).
 - Units: SketchUp and 3ds Max in the same unit (mm in sQiA1X4XlMw 00:33); DWG link has Rescale and
   Incoming File Units (Revit link doc).
 - Origin: survey-coordinate CAD sits kilometers away; run P4 on the link helper.

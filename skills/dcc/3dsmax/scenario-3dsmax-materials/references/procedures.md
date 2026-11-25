@@ -101,10 +101,13 @@ material slots listed for each class are the names to trust over this file.
 import json
 import subprocess
 import sys
+from pathlib import Path
+
+SKILL = Path("skills/scenario-3dsmax-materials")  # adjust to the installed skill folder
 
 
 def arrival_check(set_dir, out_json, tag_dir=None):
-    cmd = [sys.executable, "-I", "skills/scenario-3dsmax-materials/scripts/pbr_set.py", set_dir, "--json", out_json]
+    cmd = [sys.executable, "-I", str(SKILL / "scripts" / "pbr_set.py"), set_dir, "--json", out_json]
     if tag_dir:
         cmd += ["--tag-copy", tag_dir]  # V-Ray name tags, copies only
     subprocess.run(cmd, check=True, capture_output=True)

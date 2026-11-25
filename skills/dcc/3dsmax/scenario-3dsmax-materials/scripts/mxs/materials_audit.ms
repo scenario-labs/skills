@@ -5,13 +5,18 @@
 
 (
 	local out = stringStream ""
-	local dataWords = #("rough", "gloss", "metal", "normal", "nrm", "height", "disp", "bump", "ao", "occlusion", "opacity", "mask", "alpha", "orm")
-	fn roleOf f dataWords = (
+	local dataWords = #("rough", "gloss", "metal", "normal", "nrm", "height", "disp", "bump", "ao", "occlusion", "opacity", "mask", "alpha", "orm", "arm")
+	-- same lists and order as maxkit_materials._role_from_name: the last role token wins
+	local colorWords = #("basecolor", "albedo", "diffuse", "diff", "col", "color", "colour", "emissi")
+	fn roleOf f dataWords colorWords = (
 		local toks = filterString (toLower (getFilenameFile f)) "_-. "
 		local r = undefined
 		for i = toks.count to 1 by -1 while r == undefined do (
 			for w in dataWords while r == undefined do (
 				if (findString toks[i] w) == 1 do r = #data
+			)
+			for w in colorWords while r == undefined do (
+				if (findString toks[i] w) == 1 do r = #color
 			)
 		)
 		r
@@ -38,10 +43,11 @@
 			local src = if b != undefined then b.colorSpaceSource else #notSet
 			local st = if b != undefined then b.colorSpaceStatus else #notSet
 			local isRaw = (findString (toLower (cs as string)) "raw") != undefined or (findString (toLower (cs as string)) "data") != undefined
-			local role = roleOf f dataWords
+			local role = roleOf f dataWords colorWords
 			local flag = "ok"
 			if role == #data and not isRaw do flag = "ERROR data_map_as_color"
 			if st == #forcedDefault or st == #invalid do flag = "ERROR colorspace_failed"
+			if b == undefined do flag = "ERROR colorspace_unreadable"
 			format "%\t%\t%\t%\t%\n" flag (filenameFromPath f) cs src st to:out
 		)
 	)

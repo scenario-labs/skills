@@ -12,6 +12,7 @@ Usage:
 Exit code: 0 no errors, 1 errors found, 2 file not found or not XML.
 """
 import argparse
+import glob
 import json
 import os
 import re
@@ -101,7 +102,8 @@ def lint(path, release=None):
                 add("error", "Series", "%s: SeriesMin/SeriesMax must be YYYY or YYYY.u.h.bbbb" % where)
             else:
                 lo, hi = _series_tuple(smin), _series_tuple(smax)
-                if lo and hi and lo[:1] > hi[:1]:
+                # a shorter SeriesMax covers every later part: "2027" includes 2027.3
+                if lo and hi and lo[:len(hi)] > hi:
                     add("error", "Series", "%s: SeriesMin > SeriesMax" % where)
                 if release and hi and not (lo[:1] <= (int(release),) <= hi[:1]):
                     add("error", "Series", "%s: release %s outside SeriesMin %s .. SeriesMax %s "
@@ -114,12 +116,17 @@ def lint(path, release=None):
             if not mod:
                 add("error", "ModuleName", "%s: ComponentEntry without ModuleName" % where)
                 continue
-            full = os.path.normpath(os.path.join(root_dir, mod))
+            # Windows separators read the same on any OS
+            full = os.path.normpath(os.path.join(root_dir, mod.replace("\\", "/")))
             if desc in FOLDER_PARTS:
                 if not os.path.isdir(full):
                     add("error", "ModuleName", "%s: folder not found %s" % (where, mod))
                 if desc == "osl folders parts" and os.path.basename(full.rstrip("\\/")) != "OSL":
                     add("error", "OSL", "%s: the last folder must be named OSL" % where)
+            elif any(c in os.path.basename(full) for c in "*?["):
+                # file name wildcard: not in the saved 2026 page [verify]; at least one file must match
+                if not [f for f in glob.glob(full) if os.path.isfile(f)]:
+                    add("error", "ModuleName", "%s: no file matches %s" % (where, mod))
             elif not os.path.isfile(full):
                 add("error", "ModuleName", "%s: file not found %s" % (where, mod))
             ext = os.path.splitext(mod)[1].lower()

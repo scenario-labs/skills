@@ -4,7 +4,7 @@ Checked against scripting-pipeline__pymxs-using-2027.md.
 
     to_jsonable(value, depth=0) -> JSON-safe value
     envelope(ok, result, error, log, max_version) -> dict
-    write(payload, path) -> str
+    write(payload, path, overwrite=None) -> str
     max_version() -> str | None
 
 Pure Python apart from max_version(); safe to import outside 3ds Max.
@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import math
 import os
 
 _MAX_DEPTH = 8
@@ -28,7 +29,7 @@ def to_jsonable(value, depth: int = 0):
     if value is None or isinstance(value, (bool, int, str)):
         return value
     if isinstance(value, float):
-        return value if value == value and value not in (float("inf"), float("-inf")) else str(value)
+        return value if math.isfinite(value) else str(value)
     if isinstance(value, dict):
         return {str(k): to_jsonable(v, depth + 1) for k, v in value.items()}
     if isinstance(value, (list, tuple, set)):
@@ -39,7 +40,7 @@ def to_jsonable(value, depth: int = 0):
         except Exception:
             continue
         if all(isinstance(v, (int, float)) for v in vals):
-            return [float(v) for v in vals]
+            return [to_jsonable(float(v), depth + 1) for v in vals]
     name = getattr(value, "name", None)
     if isinstance(name, str) and hasattr(value, "parent"):
         return name  # a scene node
@@ -64,12 +65,29 @@ def envelope(ok, result=None, error=None, log=None, max_version=None) -> dict:
             "log": [str(x) for x in (log or [])], "max_version": max_version}
 
 
-def write(payload: dict, path) -> str:
-    """Write the envelope as UTF-8 JSON; creates the parent folder. Returns the path."""
+_ENVELOPE_KEYS = {"ok", "result", "error", "log", "max_version"}
+
+
+def _is_envelope(path) -> bool:
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return False
+    return isinstance(data, dict) and set(data) == _ENVELOPE_KEYS
+
+
+def write(payload: dict, path, overwrite=None) -> str:
+    """Write the envelope as UTF-8 JSON; creates the parent folder. Returns the path.
+
+    overwrite None replaces only an earlier result envelope, True replaces any file, False never
+    replaces. A refused path raises FileExistsError and leaves the file untouched."""
     path = os.fspath(path)
     parent = os.path.dirname(path)
     if parent:
         os.makedirs(parent, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
+    if os.path.exists(path) and not (overwrite or (overwrite is None and _is_envelope(path))):
+        raise FileExistsError(f"{path} exists and is not a result envelope; pick a new result_path")
+    with open(path, "w" if os.path.exists(path) else "x", encoding="utf-8") as fh:
         json.dump(payload, fh, indent=1, ensure_ascii=False)
     return path

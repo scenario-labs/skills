@@ -330,7 +330,8 @@ result = {"drift": drift, "coaxial": coax, "stroke": stroke, "bbox_hits": hits}
 Pass criteria:
 
 - `max_drift` under 0.01 system units on every rigid pair: the rig solves without stretching.
-- `min_abs_dot` above 0.9999 on every piston pair: halves stay coaxial.
+- `min_abs_dot` above 0.9999 and `max_offset` under 0.01 system units on every piston pair: the axes
+  stay parallel and on one line [added].
 - Every `stroke` ok: the rod never leaves the barrel and never bottoms out. Read the limits from the
   model (barrel length, rod length) [added].
 - `bbox_hits` empty, or each remaining hit confirmed clear on a capture at the listed frames.
@@ -493,11 +494,17 @@ for v in range(1, int(rt.skinOps.GetNumberVertices(old)) + 1):  # [verify]
         b = old_names[int(rt.skinOps.GetVertexWeightBoneID(old, v, i)) - 1]  # [verify]
         row[b] = row.get(b, 0.0) + float(rt.skinOps.GetVertexWeight(old, v, i))  # [verify]
     weights.append(row)
-with open(ARGS["backup_json"], "w", encoding="utf-8") as fh:
-    json.dump({"bones": old_names, "weights": weights}, fh)
+try:
+    with open(ARGS["backup_json"], "x", encoding="utf-8") as fh:  # "x": never replace an older backup
+        json.dump({"bones": old_names, "weights": weights}, fh)
+    saved = True
+except FileExistsError:
+    saved = False
 
 missing = sorted({b for row in weights for b in row if b not in ARGS["bone_map"]})
-if missing:
+if not saved:
+    result = {"ok": False, "error": "backup_json exists: pass a new file name"}
+elif missing:
     result = {"ok": False, "unmapped_bones": missing}
 else:
     with pymxs.undo(True, "skin: transfer"):
@@ -609,16 +616,17 @@ com = [maxkit_anim.world_pos(node(p), f)[2] for f in range(first, last + 1)]
 result = {
     "range": (first, last),
     "foot_phases": feet,
-    "worst_foot_slide": max((ph["slide"] for s in feet.values() for ph in s), default=0.0),
+    "worst_foot_slide": max((ph["slide"] for s in feet.values() for ph in s), default=None),  # None: no contact
     "hand_contacts": hands,
     "com_min": min(com), "com_max": max(com),
 }
 ```
 
 Pass criteria: `worst_foot_slide` under 1 cm per contact phase [added, the expert judges by eye];
-`height_jitter` under 0.5 cm in contacts; hand contacts present where the reference shows them; COM
-never drops below a plausible height. Then a side-by-side contact sheet against the reference video
-frames (critique.md).
+`None` means no foot came within `foot_tol` of `ground_z`, which fails: check `ground_z` and the
+take; `height_jitter` under 0.5 cm in contacts; hand contacts present where the reference shows
+them; COM never drops below a plausible height. Then a side-by-side contact sheet against the
+reference video frames (critique.md).
 
 GUI only: Workbench curve filters, Mixer Time Warp curve, IK key on a planted foot. Biped scripting
 (`biped.loadBipFile`, `biped.saveBipFile`, layer functions) is `[verify]`.
@@ -648,26 +656,37 @@ Constrain-and-bake, on a copy of the target skeleton:
 # note: [added] method; constraint and controller names [verify]; sampling helpers in scripts/maxkit_anim.py
 import pymxs
 rt = pymxs.runtime
-ARGS = {"map": {"src_hips": "pelvis", "src_spine": "spine_01", "src_thigh_l": "thigh_l"}, "root": "pelvis"}
+ARGS = {"map": {"src_hips": "pelvis", "src_spine": "spine_01", "src_thigh_l": "thigh_l"}, "root": "pelvis",
+        "ref_frame": 0, "leg_ratio": 0.5}  # rest-pose frame (step 1); target leg length / source leg length
 
 node = rt.getNodeByName
 first, last = maxkit_anim.frame_range()
 targets = []
+# pymxs reads node.rotation as a value, not a sub-controller: assign through the node's PRS controller
 with pymxs.undo(True, "retarget: constrain"):
     for s, t in ARGS["map"].items():
         oc = rt.Orientation_Constraint()  # [verify]
-        node(t).rotation.controller = oc
+        rt.setPropertyController(node(t).controller, "Rotation", oc)  # [verify]
         oc.appendTarget(node(s), 100.0)  # [verify]
         oc.relative = True  # [verify] keep the rest-pose offset
         targets.append(node(t))
     pc = rt.Position_Constraint()  # [verify]
-    node(ARGS["root"]).position.controller = pc
+    rt.setPropertyController(node(ARGS["root"]).controller, "Position", pc)  # [verify]
     pc.appendTarget(node([k for k, v in ARGS["map"].items() if v == ARGS["root"]][0]), 100.0)
     pc.relative = True  # [verify]
 samples = maxkit_anim.sample_world(targets, first, last)
+# the constraint copies the source root's travel: scale it from the rest pose by the leg ratio,
+# and shift every baked bone by the same amount so the skeleton stays on its root
+root, k = node(ARGS["root"]), float(ARGS["leg_ratio"])
+r0 = next(tm for n, tm in samples[ARGS["ref_frame"]] if n == root).position  # [verify] Matrix3.position
+for f in samples:
+    p = next(tm for n, tm in samples[f] if n == root).position
+    shift = rt.Point3((k - 1) * (p.x - r0.x), (k - 1) * (p.y - r0.y), (k - 1) * (p.z - r0.z))
+    for n, tm in samples[f]:
+        tm.position = tm.position + shift  # [verify] settable on a Matrix3 copy
 with pymxs.undo(True, "retarget: bake"):
     for n in targets:
-        n.transform.controller = rt.prs()  # [verify] plain Position/Rotation/Scale
+        n.controller = rt.prs()  # [verify] plain Position/Rotation/Scale
     maxkit_anim.apply_world_samples(samples)
 result = {"baked": [str(n.name) for n in targets], "frames": (first, last),
           "loop": maxkit_anim.loop_gap(targets, first, last)}

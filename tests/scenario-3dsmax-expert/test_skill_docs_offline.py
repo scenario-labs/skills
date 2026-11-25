@@ -1,6 +1,6 @@
 """Checks the 3ds Max skills' text and code blocks with no 3ds Max installed.
 
-- Every Python block compiles; every MAXScript block and .ms file balances its brackets.
+- Every Python block compiles; every MAXScript block and .ms file matches its brackets in order.
 - Every Python or MAXScript block carries a source line ("checked against <source>") and a
   channel line.
 - MAXScript blocks for the mcp-safe channel avoid the calls Safe Scene Script Execution blocks.
@@ -9,7 +9,6 @@
 Warnings (a missing section, a short body) print without failing.
 """
 
-import ast
 import re
 import unittest
 from pathlib import Path
@@ -43,15 +42,26 @@ def frontmatter(text):
 
 
 def mxs_balance(code):
-    # strip strings and comments, then count brackets
+    # strip strings and comments, then match brackets in order
     s = re.sub(r'@"[^"]*"', '""', code)
     s = re.sub(r'"(?:\\.|[^"\\])*"', '""', s)
     s = re.sub(r"/\*.*?\*/", "", s, flags=re.S)
     s = re.sub(r"--[^\n]*", "", s)
-    out = []
-    for a, b in ("()", "[]", "{}"):
-        if s.count(a) != s.count(b):
-            out.append(f"unbalanced {a}{b}: {s.count(a)} vs {s.count(b)}")
+    pairs, stack, out = {")": "(", "]": "[", "}": "{"}, [], []
+    for i, ch in enumerate(s):
+        if ch in "([{":
+            stack.append((ch, i))
+        elif ch in pairs:
+            line = s.count("\n", 0, i) + 1
+            if not stack:
+                out.append(f"unmatched {ch} on line {line}")
+            elif stack[-1][0] != pairs[ch]:
+                out.append(f"{stack[-1][0]} closed by {ch} on line {line}")
+                stack.pop()
+            else:
+                stack.pop()
+    for ch, i in stack:
+        out.append(f"unclosed {ch} from line {s.count(chr(10), 0, i) + 1}")
     return out
 
 
@@ -109,7 +119,8 @@ def check_skill(d):
             continue
         try:
             t = f.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as e:
+            errs.append(f"{f.relative_to(d).as_posix()}: not UTF-8 ({e.reason} at byte {e.start})")
             continue
         rel = f.relative_to(d).as_posix()
         for bad, label in BAD_TEXT:
@@ -121,7 +132,7 @@ def check_skill(d):
         n_verify += t.count("[verify]")
         if f.suffix == ".py":
             try:
-                ast.parse(t, filename=str(f))
+                compile(t, str(f), "exec")
             except SyntaxError as e:
                 errs.append(f"{rel}: syntax error line {e.lineno}: {e.msg}")
             if re.search(r"not yet run", t, re.I):
@@ -145,7 +156,7 @@ def check_skill(d):
                 if lang in ("python", "py"):
                     n_py += 1
                     try:
-                        ast.parse(code)
+                        compile(code, f"{rel} block", "exec")
                     except SyntaxError as e:
                         errs.append(f"{rel}: python block does not compile (line {e.lineno}: {e.msg}): {code.strip().splitlines()[0][:60]}")
                 else:

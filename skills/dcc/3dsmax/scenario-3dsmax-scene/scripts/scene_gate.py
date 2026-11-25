@@ -10,10 +10,16 @@ spec.json keys (all optional; defaults in DEFAULT_SPEC):
     system_type, system_scale, max_far_m, max_default_named, max_group_depth,
     max_on_layer_0, max_missing_maps, max_copy_groups, max_viewport_smooth,
     max_faces_per_node, max_file_mb
+The audit must carry the units, origin, maps and xrefs sections, and its far cutoff
+(origin.far_cm, set by audit_scene(far_cm=...)) must not exceed max_far_m: run the
+audit with far_cm = max_far_m x 100. A missing section, a larger cutoff, an unreadable
+map or an unreadable XRef record fails a blocking gate.
 status: logic run on sample JSON.
 """
 import json
 import sys
+
+REQUIRED_SECTIONS = ("units", "origin", "maps", "xrefs")
 
 DEFAULT_SPEC = {
     "system_type": "centimeters",   # project choice, not a 3ds Max default
@@ -44,15 +50,25 @@ def _load(path):
 def gates(audit, spec):
     """Return a list of (name, ok, measured, limit, blocking)."""
     s = dict(DEFAULT_SPEC, **(spec or {}))
-    u = audit.get("units", {})
     rows = []
+    absent = [k for k in REQUIRED_SECTIONS if not isinstance(audit.get(k), dict)]
+    if absent:
+        rows.append(("audit sections present", False, "missing " + ", ".join(absent),
+                     ", ".join(REQUIRED_SECTIONS), True))
+    u = audit.get("units") or {}
     rows.append(("system unit", u.get("system_type") == s["system_type"]
                  and abs(float(u.get("system_scale") or 0) - s["system_scale"]) < 1e-9,
                  "%s x %s" % (u.get("system_type"), u.get("system_scale")),
                  "%s x %s" % (s["system_type"], s["system_scale"]), True))
-    far = audit.get("origin", {}).get("far", [])
+    origin = audit.get("origin") or {}
+    far = origin.get("far", [])
     far_max = max([r.get("distance_m", 0) for r in far] or [0])
-    rows.append(("far from origin", far_max <= s["max_far_m"], far_max, s["max_far_m"], True))
+    cutoff = origin.get("far_cm")
+    if not isinstance(cutoff, (int, float)) or cutoff / 100.0 > s["max_far_m"]:
+        rows.append(("far from origin", False, "audit cutoff %s cm" % cutoff,
+                     "cutoff <= %s cm" % (s["max_far_m"] * 100.0), True))
+    else:
+        rows.append(("far from origin", far_max <= s["max_far_m"], far_max, s["max_far_m"], True))
     n = audit.get("names", {})
     rows.append(("default names", n.get("default_named", 0) <= s["max_default_named"],
                  n.get("default_named", 0), s["max_default_named"], False))
@@ -66,11 +82,15 @@ def gates(audit, spec):
                  lay.get("on_layer_0", 0), s["max_on_layer_0"], False))
     rows.append(("layer names off convention", not lay.get("off_convention"),
                  len(lay.get("off_convention", [])), 0, False))
-    m = audit.get("maps", {})
+    m = audit.get("maps") or {}
+    unread = m.get("unreadable", 0)
+    rows.append(("maps inspected", unread == 0, "%s unreadable" % unread, 0, True))
     rows.append(("missing maps", m.get("missing_count", 0) <= s["max_missing_maps"],
                  m.get("missing_count", 0), s["max_missing_maps"], True))
-    x = audit.get("xrefs", {}).get("xref_scenes", [])
+    xr = audit.get("xrefs") or {}
+    x = xr.get("xref_scenes", [])
     broken = [r for r in x if r.get("exists") is False]
+    rows.append(("XRef records inspected", not xr.get("errors"), len(xr.get("errors", [])), 0, True))
     rows.append(("broken XRef files", not broken, len(broken), 0, True))
     sc = audit.get("scale", {})
     rows.append(("geometry scale not (1,1,1)", sc.get("non_unit_scale", 0) == 0,

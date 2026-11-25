@@ -316,6 +316,9 @@ def check(paths=None, code=None, lang=None, channel=None) -> dict:
     names = load_names()
     res = {"ok": True, "errors": [], "warnings": [], "unknown_names": [], "python": [],
            "names_loaded": len(names)}
+    if not names:
+        res["errors"].append({"file": str(NAMES_FILE), "line": None,
+                              "message": "API names reference missing, unreadable or empty"})
     items = []
     for p in ([paths] if isinstance(paths, (str, Path)) else (paths or [])):
         try:

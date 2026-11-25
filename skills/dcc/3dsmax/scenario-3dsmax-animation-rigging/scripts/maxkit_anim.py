@@ -109,6 +109,8 @@ def find_skin(node):
 def skin_report(node, limit=4, tol=1e-3):
     """Per-vertex influence count, weight sum and unweighted vertices of the node's Skin.
 
+    Every weight above 0 counts as an influence; tol applies to the weight sum only.
+
     Needs a UI session (bridge or handoff): skinOps reads the modifier shown in the Modify panel.
     """
     skin = find_skin(node)
@@ -126,7 +128,7 @@ def skin_report(node, limit=4, tol=1e-3):
         live = 0
         for i in range(1, count + 1):
             w = float(rt.skinOps.GetVertexWeight(skin, v, i))  # [verify]
-            if w > tol:
+            if w > 0.0:
                 live += 1
                 used.add(int(rt.skinOps.GetVertexWeightBoneID(skin, v, i)))  # [verify]
             total += w
@@ -146,12 +148,13 @@ def skin_report(node, limit=4, tol=1e-3):
 def contact_slide(node, start, end, ground_z=0.0, height_tol=2.0):
     """Foot or hand contact phases and the slide distance inside each phase.
 
-    A frame is in contact when the node is within height_tol of ground_z (system units).
+    A frame is in contact when the node is within height_tol of ground_z (system units), above or
+    below it.
     """
     phases, current = [], []
     for f in range(start, end + 1):
         p = world_pos(node, f)
-        if p[2] - ground_z <= height_tol:
+        if abs(p[2] - ground_z) <= height_tol:
             current.append((f, p))
         elif current:
             phases.append(current)
@@ -182,15 +185,26 @@ def pivot_distance_drift(pairs, start, end, step=1):
 
 
 def axis_alignment(pairs, start, end, axis=1, step=1):
-    """Piston halves must stay coaxial: smallest |dot| of their aim axes over the range."""
+    """Piston halves must stay coaxial over the range.
+
+    min_abs_dot: smallest |dot| of their aim axes (parallel). max_offset: largest distance from
+    b's pivot to a's axis line (same line), in system units.
+    """
     out = []
     for a, b in pairs:
-        worst, at = 1.0, start
+        worst, at, offset, off_at = 1.0, start, 0.0, start
         for f in range(start, end + 1, step):
-            d = abs(_dot(world_axis(a, f, axis), world_axis(b, f, axis)))
+            ua = world_axis(a, f, axis)
+            d = abs(_dot(ua, world_axis(b, f, axis)))
             if d < worst:
                 worst, at = d, f
-        out.append({"pair": (str(a.name), str(b.name)), "min_abs_dot": worst, "frame": at})
+            v = _sub(world_pos(b, f), world_pos(a, f))
+            along = _dot(v, ua)
+            sep = math.sqrt(max(_dot(v, v) - along * along, 0.0))
+            if sep > offset:
+                offset, off_at = sep, f
+        out.append({"pair": (str(a.name), str(b.name)), "min_abs_dot": worst, "frame": at,
+                    "max_offset": offset, "offset_frame": off_at})
     return out
 
 
@@ -242,7 +256,7 @@ def loop_gap(nodes, first, last):
 
 def sample_world(nodes, start, end):
     """World transforms per frame, parents first, for baking before constraints are removed."""
-    ordered = sorted(nodes, key=lambda n: _depth(n))
+    ordered = sorted(nodes, key=_depth)
     samples = {}
     for f in range(start, end + 1):
         with pymxs.attime(f):  # [verify]

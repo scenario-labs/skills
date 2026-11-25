@@ -19,7 +19,8 @@ the gap.
 ## Stance (the expert delta)
 
 - A vague brief gets invented details. Work in short stages, each with a defined finished result
-  approved before the next (Forever Stu, kBo57xFC3ic 00:03:12).
+  approved before the next (Forever Stu, kBo57xFC3ic 00:03:12). Unattended, finish the current
+  stage, report it and stop before the next.
 - Judge geometry in orthographic top views against dimensions, never from one attractive perspective
   (kBo57xFC3ic 00:08:50).
 - Name the renderer and the material class in every plan. Otherwise the agent defaults to Physical
@@ -139,18 +140,22 @@ Runner side (plain Python 3.10+, any OS, never imports pymxs):
     `<name>.ms` (also `mxs/<name>.ms`) in `kit_dirs`.
   - Siblings inline their helpers this way, for example
     `kit=["audit", "maxkit_archviz"], kit_dirs=[<their scripts folder>]`. Each file becomes a module
-    bound to its file stem. Lead modules it imports are added automatically.
+    bound to its file stem. Lead modules it imports are added automatically, as are lead modules the
+    chunk itself calls.
 - `max_batch.command(script, scene=None, args=None, exe=None, listener_log=None, log=None, verbosity=3, dialog_monitor=True)`
   returns an argument list, never a shell string. Strings go as `-mxsString key:"..."`, numbers and
   booleans as `-mxsValue key:"..."`.
-- `max_batch.run_batch(script, scene=None, args=None, timeout=1800, log_dir=None, exe=None)` returns
-  `{ok, exit_code, meaning, result, stdout, listener_log, log, command, seconds}`. Exit codes: -100
-  bad arguments, -110 cannot start, -120 connection lost, -130 error in the script.
+- `max_batch.run_batch(script, scene=None, args=None, timeout=1800, log_dir=None, exe=None, require_result=False)`
+  returns `{ok, exit_code, meaning, result, stdout, listener_log, log, command, seconds}`. Pass
+  `require_result=True` for a wrapped job: a missing result file then fails the run. Exit codes:
+  -100 bad arguments, -110 cannot start, -120 connection lost, -130 error in the script.
 - `max_check.check(paths=None, code=None, lang=None, channel=None)` returns
   `{ok, errors, warnings, unknown_names, python}`. Python must compile under 3.13. MAXScript is
   checked for bracket and string balance. With `channel="mcp-safe"` it flags the block list.
-  `unknown_names` are names missing from `references/api-names.txt`.
-- `max_review.image_checks(png)`, `compare(a, b)`, `contact_sheet(pngs, out)`.
+  `unknown_names` are names missing from `references/api-names.txt`. An unreadable or empty names
+  file is an error.
+- `max_review.image_checks(png)`, `compare(a, b)`, `contact_sheet(pngs, out)`. An existing `out`
+  gets a `_v002` style name; use the returned path.
 
 Inside 3ds Max (`scripts/maxkit/`, main thread only; twins in `scripts/maxkit/mxs/` named
 `mxk_<module>_<fn>`):

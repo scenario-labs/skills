@@ -78,10 +78,10 @@ Code, channels and result checks: [procedures.md](references/procedures.md); GUI
    `python scripts/game_rules.py report <file> --target unreal`. GATE: units, tris per node, open
    edges, isolated vertices, transforms and names are known; captures from four views exist.
 2. **Intake and cleanup** (imported, scanned, CAD or generated meshes). How: `xio.import_any`, then
-   `maxkit_game.normalize_intake(node, target_cm, measure, pivot)`. Run the cleanup order from
-   Stance 8. Generated assets enter through scenario-3dsmax-generation. GATE: dimensions within 1
-   percent of the real size, scale [1,1,1], no negative scale, 0 isolated vertices, open edges only
-   where intended.
+   `maxkit_game.normalize_intake(node, target_cm, measure, pivot)`, or `normalize_group(nodes, ...)`
+   for a multipart import. Run the cleanup order from Stance 8. Generated assets enter through
+   scenario-3dsmax-generation. GATE: dimensions within 1 percent of the real size, scale [1,1,1], no
+   negative scale, 0 isolated vertices, open edges only where intended.
 3. **Topology route.** Hard-surface prop or kit piece: mid-poly (Stance 1). Dense scan, CAD or
    generated mesh: ProOptimizer, then Retopology, then a normal bake from the original; a plain
    reduction that keeps UVs can beat retopology on props (O6G6taj5M14 00:12:24). Triangulated CAD:
