@@ -300,6 +300,27 @@
         "scenario-roblox-ui",
         "scenario-roblox-vfx-audio"
       ]
+    },
+    {
+      "title": "Expert tools: After Effects",
+      "description": "Motion design software. A lead and fourteen specialists that drive Adobe After Effects 27.0 and 2026 through ExtendScript, a mailbox bridge in the open session, osascript, AfterFX.exe, or aerender: project hygiene, keyframe animation, shape layers, typography, expressions, scripting and batch versions, character rigging, compositing, tracking, 3D, effects, color and delivery, ads and variants, generated media from Scenario.",
+      "skills": [
+        "scenario-after-effects-expert",
+        "scenario-after-effects-3d",
+        "scenario-after-effects-animation",
+        "scenario-after-effects-character-rigging",
+        "scenario-after-effects-color-delivery",
+        "scenario-after-effects-compositing",
+        "scenario-after-effects-expressions",
+        "scenario-after-effects-generation",
+        "scenario-after-effects-motion-production",
+        "scenario-after-effects-project",
+        "scenario-after-effects-scripting",
+        "scenario-after-effects-shape-layers",
+        "scenario-after-effects-tracking",
+        "scenario-after-effects-typography",
+        "scenario-after-effects-vfx"
+      ]
     }
   ]
 }
