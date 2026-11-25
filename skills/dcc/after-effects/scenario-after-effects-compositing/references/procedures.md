@@ -18,7 +18,8 @@ light stand.
 3. Read the matte as numbers (shell)
 4. Track mattes: shared matte, boolean matte, Set Matte
 5. Pre-render a heavy key and swap every use
-6. Match levels per channel; 6b match the light (key direction, rim, levels against the plate)
+6. Match levels per channel; 6b match the light (integration_check.py gates, route by the baked
+   light, relight in a precomp, fitted plate)
 7. Light wrap and grain
 8. Cutout with no screen: external matte, Object Matte settings
 9. Remove a logo from moving fabric: offset patch
@@ -262,78 +263,182 @@ color; the light match (6b) handles the warmth.
 
 ## 6b. Match the light
 
-Levels cannot move a light (vJ8X58uknsk 00:01:05). Measure it first, on the foreground alone
-(rendered with its alpha, PNG RGBA) and the plate at the same frame:
+Levels cannot move a light (vJ8X58uknsk 00:01:05). The gate is
+[integration_check.py](../scripts/integration_check.py), run on the first and the last frame. Render
+these frames as PNG at the same time:
+
+- the composite, and the plate alone (foreground, light and shadow layers off);
+- the matte: an alpha view of the key (`AEX.comp.alphaView`);
+- the neutral: the foreground before any light layer. For a keyed photograph, the keyed plate
+  itself; for a 3D element, the model under ambient light only;
+- the element: the foreground with its light layers, plate and grain off. When it is opaque in its
+  core, the composite itself can stand in (light, shade and rim read only the core and the band
+  inside the edge).
 
 ```bash
-python3 <skill>/scripts/matte_metrics.py light fg_alone.png plate.png --ring 6
+python3 <skill>/scripts/integration_check.py --comp comp.png --plate plate.png --elem elem.png \
+    --matte matte.png --neutral neutral.png [--sun X,Y] [--light back|side|front] \
+    [--no-shadow "held in the air, shadow off frame"] --out check.json
+python3 <skill>/scripts/integration_check.py --selftest planted/   # planted sphere, seven defects
 ```
 
-It reports the plate's source: the brightest 0.5 %, its direction from the subject, its color, and
-whether it is in frame. The subject's key direction comes from a plane fit of luma over its solid
-core. `rim_facing` and `rim_away` compare edge pixels with the same surface just inside, on the half
-toward and away from the source. Last come the rim hue against the source, and subject and plate
-luma 1st and 99th percentiles.
+The check divides the element as lit by the neutral, pixel by pixel. A cream cap beside red fabric
+then reads the same as one material, so the albedo no longer moves the light reading.
 
-Gate, when the source is in frame. These two readings separated the good composites from the bad
-ones on every case below:
+| Gate     | Reads                                                                            | Pass                                                          |
+| -------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| light    | plane fit of the ratio over the matte core, against the direction to the source  | back: see below; side: within 45 degrees, change 0.15 or more |
+| shade    | ratio on the third of the element away from the source over the third facing it  | 0.75 or less; a reading for a render under back light         |
+| rim      | ratio profiled inward from the edge points facing the source                     | see below                                                     |
+| material | light on the shade third (composite / neutral, linear, per channel) per material | largest over smallest 4.0 or less                             |
+| finish   | element 1st percentile luma against the plate's in the same rows; edge width     | not 0.02 below; edge 0.8 x plate or more; a render: see below |
 
-| Reading                   | Pass                                               |
-| ------------------------- | -------------------------------------------------- |
-| `key_strength`            | 0.3 or more (under it the subject is flat-lit)     |
-| `rim_facing`, `rim_away`  | facing at least 1.15, and 0.1 above away           |
-| subject luma p1 (levels)  | within 0.03 of plate p1                            |
-| subject luma p99 (levels) | no more than 0.02 above plate p99 near the subject |
+The rim gate reads the profile of the light, not its sum. From up to 400 edge points whose outward
+normal faces the source, it marches inward and samples the ratio. Pass needs three readings. Peak
+over the core median: 2.0 or more (one stop between the sun on the edge and sky fill on the body;
+outdoors 3 to 8). Half width at half maximum: 0.12 or more of the local radius (half the chord
+inward). Inner hardness, the largest 1 px drop of the normalized profile: 0.15 or less. A stroke or
+halo is narrow and hard inside: it fails even when it is bright. Light on a turning surface is wide
+and fades. A grounded element adds the five shadow gates (density, hue, length, softness, contact;
+the script's docstring). Exit 0 passes, 1 fails, 2 means a gate was skipped for a missing input.
+Give `--shadow` whenever the plate itself is derived from the composite (a registered or cleaned
+frame).
 
-Readings to report and judge on the frame. `key_vs_source_deg` compares the subject's key with the
-source direction. It means something on a front or side-lit subject whose far side has no dark part
-(a strap, a dark cap). A backlit subject is lit mostly by its rim, and its key direction then points
-elsewhere. `rim_hue_vs_source_deg` compares the rim color with the source color. A sun disc clipped
-near white has no reliable hue, and a warm rim against it can read 18 degrees off while looking
-right.
+Under `--light back` the light gate follows what a sun behind the subject does to a lit body. The
+sun lights the edge facing it and the sky lights the top, so the gradient lies between the source's
+screen direction and straight up. Pass: 30 degrees or less beyond that sector, change 0.15 or more.
+The center of the core over the edge band facing the source reads 1.1 or less. For a source clearly
+left or right, the far-side edge over the source-side edge reads 1.3 or less. Lambert spheres and
+lying cylinders, the sun 10 to 70 degrees from straight behind, sky 0.2 to 1 of the sun, with a
+ground bounce: 675 cases read at most 26 degrees beyond, 1.00 and 1.27, and all pass. The old rule,
+within 45 degrees of the source, failed 264 of them. A front-lit sphere declared back-lit reads 1.97
+center over edge and fails. Within about 40 degrees of straight behind, the gradient points up
+whichever side the sun is on: the rim gate and the route carry that case.
 
-Measured, all over sunset or golden-hour plates with the sun in frame (the verdict is what the frame
-shows):
+The blacks of a render on the ground follow its own albedo. Navy rubber (albedo 0.02) beside
+concrete (0.35) in the same shade is darker than the concrete's darkest pixel, and no haze lifts it
+at 1.5 m. With `--rendered`, a ground box and the plate, the check reads the plate's black in a band
+at the subject's distance or closer (from the base down, with its occlusion shadows). It fails
+crushed blacks: below that black and clipped (over 0.5 % of the core at black) or lit under 0.05 of
+the shade light. It fails milky blacks on a dark material (darkest albedo 0.1 or less): above that
+albedo in full light plus the plate's near black. Renders by construction (dark and light albedo,
+grounds 0.2 to 0.6, hazy or clear, 2 and 8 m) all pass; the plate-rows rule failed 20 of 36. A keyed
+photograph keeps the plate-rows rule: its neutral is not an albedo.
 
-| Composite                                | key_strength | rim facing / away | key vs source | rim hue | Frame                 |
-| ---------------------------------------- | ------------ | ----------------- | ------------- | ------- | --------------------- |
-| keyed speaker, front-lit, levels matched | 0.228        | 1.075 / 1.013     | 102.8         | 8.1     | pasted on             |
-| same key, before light match             | 0.244        | 1.030 / 0.987     | 103.5         | 2.1     | pasted on             |
-| same key after this procedure            | 0.332        | 1.176 / 1.017     | 45.4          | 4.1     | lit from the sun side |
-| generated product, studio-lit            | 0.136        | 1.022 / 0.968     | 53.2          | 2.4     | pasted on             |
-| studio-lit cutout seated on a terrace    | 0.140        | 1.017 / 0.980     | 79.4          | 5.7     | pasted on             |
-| same view relit by an edit model         | 1.034        | 1.308 / 1.065     | 75.3          | 18.1    | seated                |
+A 3D element takes `--rendered`, its neutral the same model under a white ambient light at 100 %.
+The rim is then read, not gated: a sun 20 degrees behind the view axis gives a physical rim 0.03 to
+0.04 of the radius wide. A rim layer added in the comp over the render takes `--comp-rim` too, which
+gates its inner hardness only; the pixels cannot tell the two apart, so the flag says which. Under
+back light a render's shade is a reading: only the edge sees the sun, both thirds sit in sky light,
+and the references read 0.48 to 1.02. Its change may fall under 0.15 when sky and ground bounce
+balance.
+
+Material catches a render whose colors drift from its neutral under one light. A cream cap rendered
+olive-gray beside a fabric at the right level read 6.3; a relight, a fitted plate and the planted
+sphere read 1.1 to 2.8. Exposure stays a reading: the shade side's light over the plate's shadowed
+ground (`--ground-shadow`, default the `--plate-shadow` box) divided by `--ground-albedo` (default
+0.35, concrete). That cap read 0.66; a front-lit cutout rejected for its light read 2.02. Concrete's
+albedo (0.2 to 0.4) and the shade side's orientation against the ground each move the factor by up
+to 2x, the size of the error it would look for, so it cannot gate. Beside it, `shadeHue` (ln B/R of
+the shade side's light) against `groundShadowHue`: the cap's shade light ran 0.19 warmer than the
+plate's shadowed ground.
+
+What it can conclude for a keyed photograph: the ratio is the relight over the keyed plate, so the
+gates measure what the relight added. They cannot see the light baked into the photograph. The
+reading `route` does, on the neutral alone: valid there because it is one photograph under one
+light. It splits the core into five chroma clusters and divides each pixel by its cluster's median,
+so albedo drops out. On a rounded object the diffuse peak sits at sin(angle) of the radius from the
+center, so the angle from the camera is asin(highlight offset). Planted: a sphere lit from behind
+reads 55 degrees, a front-lit one 15.
+
+Route by the gap. The plate's source, from `--light`: front 45 degrees or less from the camera axis,
+side 90, back 135 or more. Gap = plate bound minus the foreground's angle.
+
+| Gap        | Tool                                                                                   |
+| ---------- | -------------------------------------------------------------------------------------- |
+| 90 or less | levels for a small gap; a relight inside a precomp (build below) toward 90             |
+| above 90   | choose or generate a plate lit from the foreground's side; then levels, wrap and grain |
+
+Above 90 the photograph's lit side has to become its shade side. A relight darkens it but its baked
+highlights stay (nails, buttons): the frame passes the gates and still reads as a studio shot.
+
+Measured on a keyed hand holding a speaker, a soft studio photograph (route: highlight offset 0.40
+of the radius toward the top, 24 degrees from the camera), 1920x1080, last frame:
+
+| Composite                                            | light | shade | rim peak / width / hardness | Verdict             |
+| ---------------------------------------------------- | ----- | ----- | --------------------------- | ------------------- |
+| sunset, levels and ramp in the main comp             | 2.7   | 0.757 | 1.48 / 0.061 / 0.178        | fail (shade, rim)   |
+| sunset, relight in a precomp, rim 8 px stroke + glow | 8.3   | 0.652 | 2.41 / 0.040 / 0.205        | fail (rim: outline) |
+| sunset, relight, sun-lit copy through the rim matte  | 5.5   | 0.644 | 2.14 / 0.210 / 0.071        | pass                |
+| plate generated with the sun behind the camera       | 0.08  | na    | na (`--light front`)        | pass                |
+
+Gap on the sunset plate: 111 degrees, so the plate route; the relit frame passes and still carries
+the studio highlights. Gap on the generated plate: 21 degrees.
+
+Build, relight (gap up to 90). Precompose the foreground and light it inside, so a half-transparent
+edge takes the same light as the body; matted light layers in the main comp left a light outline on
+the shade side. The rim is the key lit by the sun: a second copy with Levels gains in the sun color,
+shown through the soft directional matte of `rimLight`. That matte is wide where the outline faces
+the sun (a round end), near zero along a straight edge seen side-on, and fades inward over its blur.
 
 ```javascript
 // channel: bridge | handoff
 // checked: live 27.0
-// ARGS from `light`: angle = source_dir_deg, center = subject_center, radius = subject_radius, rimColor = source_rgb;
-//   eb, ew = subject luma p1, p99; tb, tw = plate p1, plate near p99; shadeColor: the plate's shadow tint
-var A = ARGS, c = AEK.core.comp(A.comp), fg = AEK.core.layer(c, A.fg), bg = AEK.core.layer(c, A.bg), i;
-var g = (A.tw - A.tb) / (A.ew - A.eb), ob = A.tb - A.eb * g, base = [14, 21, 28];
-var fx = AEK.build.effect(fg, "ADBE Pro Levels2", {}, "match levels_v001");
-for (i = 0; i < 3; i++) {   // luma solve: one gain for the three channels
-    fx.property("ADBE Pro Levels2-00" + base[i]).setValue(ob);
-    fx.property("ADBE Pro Levels2-00" + (base[i] + 1)).setValue(ob + g);
+// ARGS: fill = per-channel gain that brings the camera-facing body to the plate's shade level and color;
+//   black = output black; angle = direction to the source in comp px (-90 up, 180 left); center, radius = the
+//   subject; shadeColor; sun = {gain:[r,g,b], width, blur}; bloom = {blur, color, opacity}; wrap = {radiusPct, opacity}
+var A = ARGS, c = AEK.core.comp(A.comp), fg = AEK.core.layer(c, A.fg), bg = AEK.core.layer(c, A.bg);
+var base = [14, 21, 28], keyComp = fg.source;
+function gains(l, name, gn, black) {
+    var f = AEK.build.effect(l, "ADBE Pro Levels2", {}, name);
+    for (var k = 0; k < 3; k++) {
+        f.property("ADBE Pro Levels2-00" + base[k]).setValue(black);
+        f.property("ADBE Pro Levels2-00" + (base[k] + 1)).setValue(black + gn[k]);
+    }
 }
-var shade = AEX.comp.shadeLight(c, fg, { angle: A.angle, center: A.center, radius: A.radius, color: A.shadeColor, opacity: 100 });
-// look the layer up again after each helper: they add layers and comps
-var rim = AEX.comp.rimLight(c, AEK.core.layer(c, A.fg), { angle: A.angle, widthPx: 10, blurPx: 8, color: A.rimColor, opacity: 75 });
-var wrap = AEX.comp.lightWrap(c, AEK.core.layer(c, A.fg), bg, { radiusPct: 1.0, opacity: 22, mode: "add" });
-return { levels: [ob, ob + g], shade: shade, rim: rim, wrap: wrap };
+gains(fg, "shade fill_v001", A.fill, A.black);
+var pre = c.layers.precompose([fg.index], "fg_lit_v001", true), fgl = AEK.core.layer(c, "fg_lit_v001");
+fgl.name = A.fg;
+var inner = pre.layer(1);
+var shade = AEX.comp.shadeLight(pre, inner, { angle: A.angle, center: A.center, radius: A.radius, color: A.shadeColor, opacity: 100 });
+AEK.core.layer(pre, shade.layer).preserveTransparency = true;
+var rr = AEX.comp.rimLight(pre, inner, { angle: A.angle, widthPx: A.sun.width, blurPx: A.sun.blur, opacity: 100, name: "sun_side_v001" });
+var m = AEK.core.layer(pre, rr.matte);
+var sunL = pre.layers.add(keyComp); sunL.name = "sun-lit key_v001";
+gains(sunL, "sun gain_v001", A.sun.gain, A.black);
+sunL.moveAfter(m);
+AEK.core.layer(pre, rr.layer).remove();                 // the helper's flat solid: replaced by the sun-lit key
+sunL.setTrackMatte(m, TrackMatteType.ALPHA);
+var wrap = AEX.comp.lightWrap(c, fgl, bg, { radiusPct: A.wrap.radiusPct, opacity: A.wrap.opacity, mode: "add" });
+var bm = c.layers.add(m.source); bm.name = "bloom matte_v001";   // outward bloom: the same matte, blurred past the edge
+AEK.build.effect(bm, "ADBE Gaussian Blur 2", { "ADBE Gaussian Blur 2-0001": A.bloom.blur, "ADBE Gaussian Blur 2-0003": 0 }, "bloom spread");
+var bs = AEK.build.solid(c, "bloom_v001", A.bloom.color);
+bm.moveToBeginning(); bs.moveAfter(bm);
+bs.setTrackMatte(bm, TrackMatteType.ALPHA);
+bs.blendingMode = BlendingMode.SCREEN;
+bs.property("ADBE Transform Group").property("ADBE Opacity").setValue(A.bloom.opacity);
+return { shade: shade, rimMatte: m.source.name, wrap: wrap, bloom: bs.name };
 ```
 
-`shadeLight` is a Gradient Ramp in Multiply clipped to the foreground's alpha: white on the source
-side, `color` on the far side. `rimLight` builds a crescent: the foreground minus a copy shifted
-away from the light by `widthPx`, blurred, clipped to the foreground, then a solid of `color` in
-Screen. Both copy the layer with `copyToComp`, so a parented layer throws: precompose it first.
-Measured, 1920x1080: angle -151.7 degrees, radius 345 px, rim 10 px wide with 8 px blur at 75 %.
-Then re-run `light` on the lit foreground (light layers on, plate and grain off) and read the gates.
+Values that passed, sun at upper left: fill 0.58 / 0.52 / 0.50 (the plate's rock face in shade read
+luma 0.30 against the neutral hand's median 0.58), output black 0.025, angle -153 degrees. Ramp to
+0.42 / 0.40 / 0.45 over 380 px; sun gain 1.35 / 0.92 / 0.52 through a 40 px matte with 30 px blur.
+Bloom 18 px at 30 % Screen in 1.0 / 0.55 / 0.25; wrap 1.5 % at 30 %. The wrap takes the plate behind
+each edge, so there is none where the edge crosses dark hillside. `shadeLight` is a Gradient Ramp in
+Multiply, white on the source side. `rimLight` is the foreground minus a copy shifted away from the
+light, blurred; it copies the layer with `copyToComp`, so a parented layer throws: precompose first.
+A wrap at 2.5 % and 45 % washed a thin navy strap pale.
 
-Some foregrounds cannot be relit this way: a hard key light on the wrong side, a strong cast shadow.
-Then, in order: pick another plate whose source agrees with the subject's key, or regrade the plate
-(flip it if nothing in it reads as mirrored). Add the rim alone, so the edge facing the source
-glows. Flag what remains to the user with the `light` numbers.
+Build, fitted plate (gap above 90). Generate the same place and hour with the sun behind or beside
+the camera, soft warm light, long shadows going away, no sun disc in frame
+(scenario-after-effects-generation). No relight: one Levels gain per channel in the plate's light
+color, read on a lit gray rock (R:G:B 1 : 0.73 : 0.49). Exposure puts the skin near the lit rock
+(gains 0.90 / 0.73 / 0.56); input black 0.07 brings the key's floor toward the plate's. Wrap 1.5 %
+at 25 %; shared grain. Run the check with `--light front`: the finish must add no side light (change
+under 0.15; measured 0.08).
+
+`matte_metrics.py light` stays a reading (source in frame, rim hue, levels percentiles). Its key
+direction is a plane fit of raw luma, so a bright cap beside dark fabric reads as a light direction.
 
 ## 7. Light wrap and grain
 

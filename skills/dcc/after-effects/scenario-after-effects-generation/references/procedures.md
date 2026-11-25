@@ -539,34 +539,44 @@ are what to search for.
 
 ## 12. Seat a supplied object in a generated plate
 
-Studio light on a golden-hour plate reads pasted however good the shadow is. Light comes first, then
-scale, then the shadow, then the move. The compositing skill owns the light-match gate (direction
-and contrast); hand it the seated comp.
+Studio light on a golden-hour plate reads pasted however good the shadow is. Route by what exists,
+then light, scale, shadow, move, and the gate:
+
+| Route                  | When                                                                                      | Shadow and shading come from                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 1. Model               | a GLB exists, or image-to-3D through the Scenario MCP can make one (`recommend`, quality) | one sun in Advanced 3D: the 3D skill's procedure 17                              |
+| 2. Still only          | no model is wanted; the product's own pixels must stay                                    | the object relit to the plate (steps 2 and 3), a neutral copy kept for the check |
+| 3. Mirrored silhouette | a flat object (a card, a sticker), or a small, far one                                    | step 5 below; never for a round object near the camera                           |
+
+The compositing skill's `integration_check.py` is the gate for every route, on the first and last
+frame (step 8). Hand it the comp, the plate alone, the element over black, its neutral and the
+shadow layers alone.
 
 1. **One light for both.** Either prompt the plate with the light the object already has (direction,
    softness, color), or relight the object to the plate. Write the plate prompt with what scale and
    shadows need: lens, camera height above the floor, level camera, horizon row, sun side and
    height, an empty lit patch for the object.
-2. **Relight through an edit model.** `recommend` with "relight this product to match the lighting
-   of the reference scene", quality priority. Pass the object view and the plate as references, and
-   state the sun side, the warm rim and the brightness of the light parts. A first take came back
-   too dark (cream end caps gray): say how bright they stay. Ask for the largest size offered. Cut
-   the relit view out again with the route of procedure 11.
-3. **Gate the light before building.** `scripts/seat_check.py CUT.png PLATE.png --floor-top ROW`
+2. **Relight through an edit model (route 2).** `recommend` with "relight this product to match the
+   lighting of the reference scene", quality priority. Pass the object view and the plate as
+   references, and state the sun side, the warm rim and the brightness of the light parts. A first
+   take came back too dark (cream end caps gray): say how bright they stay. Ask for the largest size
+   offered. Cut the relit view out again with the route of procedure 11; keep the studio cutout as
+   the neutral.
+3. **Gate the warmth before building.** `scripts/seat_check.py CUT.png PLATE.png --floor-top ROW`
    compares the blue-to-red ratio of the object's brightest 2 % with the plate's lit ground. It
    fails above a 0.15 gap. Measured: a studio-lit cutout on a sunset plate failed at +0.32 (cooler);
-   the relit view passed at -0.15. Judge the light direction by eye; the script reports the
-   highlight position only.
+   the relit view passed at -0.15. Direction, shade and rim are gated by `integration_check.py`
+   (step 8).
 4. **Scale from a stated real size.** For a level camera, pixels per meter at the object's base row
    = (base row - horizon row) / camera height. Object width on screen = real length x that.
    Measured: horizon at row 235, base at 850, camera 0.12 m: 5125 px/m, so a 0.16 m speaker is 820
    px wide.
 5. **Shadow along the plate's own shadows.** Extend two shadow lines already in the plate (a railing
    post, a wall edge) to where they meet near the horizon below the sun. The object's shadow runs
-   from its base away from that point. Build it from the silhouette: Fill dark warm brown, Corner
-   Pin mirrored about the base line and slanted along that direction, Gaussian blur, Multiply 40 to
-   45 %, plus a contact ellipse at 80 %. Start the mirror line inside the body: the blur erodes the
-   shadow's top edge, so a shadow mirrored at the base starts below it.
+   from its base away from that point. Route 1 places the sun there and renders the shadow. Route 3
+   builds it from the silhouette: Fill dark warm brown, Corner Pin mirrored about the base line and
+   slanted along that direction, blur growing with distance, Multiply, plus a contact band. Start
+   the mirror line inside the body: the blur erodes the shadow's top edge.
 6. **Gate the contact.** Write mattes of the object and of its shadow layers at the first and last
    frame (`AEX.threeD.mattes`), then run
    `python3 seat_check.py --contact obj.png cast.png,contact.png`. In every column where the object
@@ -594,3 +604,25 @@ Measured on the rebuild: growth 1.35, parallax 8.97 %, upscaled empty.
   frame and 12 at the last, worst column 34 and 44. The gap grew with the object (x 1.35, the push
   growth): one transform, so the cause was the mirror line, not parenting. Anchor moved 160 source
   px into the body: -3 px (tucked under) at both frames, worst column included.
+
+8. **Gate the integration.** On the first and last frame:
+
+```bash
+python3 <compositing skill>/scripts/integration_check.py --comp comp.png --plate plate.png \
+    --elem elem.png --neutral neutral.png --shadow shadow.png --sun X,Y \
+    --plate-shadow X,Y,W,H --plate-lit X,Y,W,H --plate-length RATIO --light back --out check.json
+```
+
+Route 1 adds `--rendered` (the rim is read, not gated) and a neutral of the same model under one
+white ambient light. Before that, check the model's base colors against the product's brand colors
+and correct them in a copy of the texture. Then calibrate the sun and an environment built from the
+plate on the plate's own lit and shadowed ground (3D skill, procedure 17): residual under 5 % per
+channel. Exit 0 passes. Measured on the terrace shot: a mirrored-silhouette build with a relit
+cutout failed contact (6 px gap, overhang 0.065), shadow density and hue, blacks (0.11 against the
+plate's 0.34) and rim. The model under guessed lights passed the shadow gates, but its cream caps
+read olive-gray. Calibrated, caps read cream; with the base colors written for the renderer and a
+shadowed kicker, the camera-facing coral fabric fell from 0.20 to 0.074 linear, red instead of
+orange.
+
+When the seat passes its shadow gates and still reads as CG, finish it with an image edit guided by
+the render: [render-to-real.md](render-to-real.md).

@@ -9,12 +9,11 @@ license: MIT
 Target line: After Effects 27.0 and 2026, driven through the scenario-after-effects-expert channels
 and toolkit.
 
-Expert level here means the renderer is chosen on purpose, the model is fitted by numbers before
-anything moves, the camera rides a null, and every shot is judged on rendered frames because the 3D
-viewer lies. If a sibling skill named here is missing from your available skills, load it with
-`skill_get` (Scenario MCP) or ask the user to install it
-(https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas and flag
-the gap.
+Expert level here means the renderer is chosen on purpose, the model is fitted by numbers, the
+camera rides a null, and every shot is judged on rendered frames. If a sibling skill named here is
+missing from your available skills, load it with `skill_get` (Scenario MCP) or ask the user to
+install it (https://github.com/scenario-labs/skills#install); unattended, proceed from tool schemas
+and flag the gap.
 
 **REQUIRED BACKGROUND:** scenario-after-effects-expert (channels, review loop, toolkit, version
 traps).
@@ -26,8 +25,7 @@ traps).
    made by script is Classic 3D, and adding a model by script does not switch it. Geometry Options
    grayed out means the wrong renderer (Film Riot 0oS3FnBwOkI 00:00:08).
 2. **Advanced 3D for models, extrusion, Substance and shadow color; Classic 3D for flat 2.5D
-   layers.** Classic renders cut-out layers just as fast (254 against 255 ms per frame) and keeps
-   layer motion blur [added, measured].
+   layers.** Classic renders cut-out layers as fast and keeps layer motion blur [added, measured].
 3. **Fit before you animate.** Real-world units decide how a 50 mm or 24 mm lens behaves (Evan
    Abrams M7v547PJ5Hk 00:04:35). By script, `sourceRectAtTime` gives the model's front footprint at
    scale 100; it ignores rotation and scale. Scale to a target height, put the anchor at the base,
@@ -41,11 +39,9 @@ traps).
    00:05:38; Ryan Connolly 9LxKSsftUS4 00:03:07). Match both to the plate's sun side and color
    (wwsHGbZN6ZU 00:09:49).
 6. **Focus on the middle of the subject, with a focus area.** Advanced 3D depth of field keeps only
-   one plane sharp at Focus Area Width 0 (Jake Bartlett DK04C1mro-U 00:04:31). Measured: focus on
-   the base left the product soft; the footprint middle with Focus Area Width 150 kept it sharp.
+   one plane sharp at Focus Area Width 0 (Jake Bartlett DK04C1mro-U 00:04:31).
 7. **Motion blur on a model goes through a precomp.** Advanced 3D has no native motion blur
    (Bartlett iOZkdYZPVU0 00:20:16); CC Force Motion Blur on the precomp, off until the final render.
-   Measured on 27.0: Advanced 3D refuses the layer switch; a model in a Classic comp stays sharp.
 8. **2.5D is depth plus scale compensation, and only what the camera reveals needs paint** (MDMZ
    7tVyu-rjHbg 00:15:42; Motion Science u3qluraimKY 00:06:06). Scale = base x (zoom + z) / zoom
    keeps a layer's framed size exactly (measured 1056 px at three depths).
@@ -68,20 +64,17 @@ Full jobs are in [references/procedures.md](references/procedures.md). Helpers: 
 
 ### 1. Comp and renderer
 
-Goal: the comp renders what the shot needs. Build it with
-`AEK.build.comp(name, {renderer: "advanced"})`, or call `AEX.threeD.use(c, "advanced")` before
-adding any model or light; both set `ADBE Calder`. In the GUI: Composition Settings > 3D Renderer.
-GATE: `AEX.threeD.rendererName(c)` returns `advanced`; `ADBE Extrsn Depth` on a 3D text accepts a
-value.
+Build it with `AEK.build.comp(name, {renderer: "advanced"})`, or call
+`AEX.threeD.use(c, "advanced")` before adding any model or light; both set `ADBE Calder`. In the
+GUI: Composition Settings > 3D Renderer. GATE: `AEX.threeD.rendererName(c)` returns `advanced`;
+`ADBE Extrsn Depth` on a 3D text accepts a value.
 
 ### 2. Bring the asset in
 
-Goal: the model is a layer. `AEK.xio.importItem` returns the item; in a comp it becomes
-`ADBE 3D Model Layer`.
+`AEK.xio.importItem` returns the item; in a comp it becomes `ADBE 3D Model Layer`.
 
 - Units: set them in the GUI Model Settings dialog at import; centimeters against meters is a 100x
   error that breaks camera presets (Abrams 00:04:35). By script, `fitModel` sets the size.
-- Heavy mesh: test at 960x540.
 - Materials sit under `ADBE3D Material Parade` by name. On 27.0 Roughness, Metallic, Opacity,
   Emission and Ambient refuse `setValue`, keys and expressions ("hidden"). A product that reads as
   soft plastic: lower the hard parts' roughness in a copy of the GLB with
@@ -91,7 +84,6 @@ Goal: the model is a layer. `AEK.xio.importItem` returns the item; in a comp it 
 
 ### 3. Fit and ground
 
-Goal: right size, centered, standing on the floor.
 `AEX.threeD.fitModel(layer, comp, {height, x, floorY, rotateY})`: anchor at the footprint's bottom
 center, scale = height / rect height x 100. For scans with odd axes, parent to a null at the floor
 point (Abrams 00:06:55). GATE: the base sits on the floor line on a rendered frame; widthPx and
@@ -100,9 +92,8 @@ in the footprint).
 
 ### 4. Light, shadow and catcher
 
-Goal: believable shading and a contact shadow. Environment light:
-`AEX.threeD.envLight(c, {intensity, source})`, source an EXR or HDR item. Key:
-`AEX.threeD.keyLight(c, position, target, {type: "SPOT", darkness, diffusion})`. Catcher:
+Environment light: `AEX.threeD.envLight(c, {intensity, source})`, source an EXR, HDR or PNG item.
+Key: `AEX.threeD.keyLight(c, position, target, {type: "SPOT", darkness, diffusion})`. Catcher:
 `AEX.threeD.shadowCatcher(c, floorY, {shadowColor})`, moved above the plate. Shadow Darkness 50 %
 keeps shadows from going black (Abrams 00:13:50). Rotate the environment light to place highlights
 (Motion Nations 65WsmkXZEso 00:10:48), then key its Y Rotation across the shot so they travel
@@ -113,34 +104,32 @@ its source (wwsHGbZN6ZU 00:09:49; procedure 11). Product on a visible floor (pro
 distance. GATE: the shadow lands on the plate, falling away from its sun; no white floor visible; on
 a floor, a dark contact band under the base. No far edge: tilt past half the vertical field of view
 (11.4 degrees at 50 mm) and size the floor to reach the top ray (procedure 12). If no shadow appears
-in the GUI, Renderer Options > Fit to Scene (wwsHGbZN6ZU 00:06:10).
+in the GUI, Renderer Options > Fit to Scene (wwsHGbZN6ZU 00:06:10). Model seated in a still plate
+(procedure 17): lights calibrated on the plate's ground in linear light, a kicker, one comp per
+pass.
 
 ### 5. 3D text behind the product
 
-Goal: a title with depth that never cuts through the model. Text layer 3D, anchor at its base, Z
-behind the product, `ADBE Extrsn Depth` 20 to 300 and `ADBE Bevel Styles` in Advanced 3D (Film Riot
-uses 300 at 00:00:39). Lay out before animating the camera: write what must read at the first,
-middle and last frame, then check it on mattes (procedure 15). GATE: `AEX.threeD.mattes` plus
-[scripts/layout_check.py](scripts/layout_check.py) at those three frames: the title 90 % visible or
-more and inside the frame; no letter intersects the model.
+Text layer 3D, anchor at its base, Z behind the product, `ADBE Extrsn Depth` 20 to 300 and
+`ADBE Bevel Styles` in Advanced 3D (Film Riot uses 300 at 00:00:39). Lay out before animating the
+camera: write what must read at the first, middle and last frame, then check it on mattes (procedure
+15). GATE: `AEX.threeD.mattes` plus [scripts/layout_check.py](scripts/layout_check.py) at those
+three frames: the title 90 % visible or more and inside the frame; no letter intersects the model.
 
 ### 6. Camera rig and move
 
-Goal: a smooth orbit and push.
 `AEX.threeD.orbitRig(c, center, {focalLength, distance, tilt, from, to, push, influence | bezier})`:
 a 3D null at the subject, a one-node camera parented to it, Y rotation on the null, the push on the
 camera. Leave `height` out: the camera then sits at distance x tan(-tilt) and pushes along its view
 line, so the subject stays centered (measured: height 0 at tilt -9 put it 211 px high).
 `bezier: [0.25, 0, 0.35, 1]` spreads the move; [0.3, 0, 0.12, 1] spends it in the first two seconds.
-Lens: 50 mm for objects, 24 mm for interiors (Abrams 00:19:07). Constant drift: Create Orbit Null
-([gui-paths](references/gui-paths.md)). GATE: `AEX.threeD.screenPoint` of the null reads the comp
-center at both ends; no linear key; no frame crops the product. `AEX.threeD.parallax` of the subject
-against a far reference: 25 % of comp width or more over the shot, 3 % or more per 1 s window except
-a final hold.
+Constant drift: Create Orbit Null ([gui-paths](references/gui-paths.md)). GATE:
+`AEX.threeD.screenPoint` of the null reads the comp center at both ends; no linear key; no frame
+crops the product. `AEX.threeD.parallax` of the subject against a far reference: 25 % of comp width
+or more over the shot, 3 % or more per 1 s window except a final hold.
 
 ### 7. Depth of field
 
-Goal: subject sharp, background soft, focus follows the subject.
 `AEX.threeD.focusOn(camera, "product", {aperture, areaWidth})` writes a Focus Distance expression to
 the middle of the footprint. Advanced 3D adds Focus Area Width and Near/Far Blur Level; Classic 3D
 keeps Blur Level and iris. GATE: Focus Distance expression has no `expressionError`; the subject is
@@ -151,23 +140,23 @@ sampled frame. Over it, rack the focus (`focusOn` option `rack`) or lower the ap
 
 ### 8. Motion blur
 
-Goal: blur that matches the move. Advanced 3D: CC Force Motion Blur on the precomp layer in an outer
-comp (samples 8, shutter 90 to 180, iOZkdYZPVU0 00:20:16), off while iterating. Classic 3D: layer
-switch plus comp switch (7tVyu-rjHbg 00:24:26). GATE: a frame of the fastest move shows directional
-smear; a frame of a still moment does not.
+Advanced 3D: CC Force Motion Blur on the precomp layer in an outer comp (samples 8, shutter 90 to
+180, iOZkdYZPVU0 00:20:16), off while iterating. Classic 3D: layer switch plus comp switch
+(7tVyu-rjHbg 00:24:26). GATE: a frame of the fastest move shows directional smear; a frame of a
+still moment does not.
 
 ### 9. Render and judge
 
-Goal: the shot holds on real frames. Render one warm-up frame and discard it (`AEX.threeD.warmUp`):
-the first frame of a new scene can come back without the model. Then three frames on one sheet
-(`ae.py sheet`), then `ae.py aerender` on the saved project. Grain over the render: `ADBE Noise`
-with Clipping (`-0003`) at 1. Plate integration: [critique](references/critique.md) item 10. GATE:
-checks in [references/critique.md](references/critique.md); `ae.py probe` on the output.
+Render one warm-up frame and discard it (`AEX.threeD.warmUp`): the first frame of a new scene can
+come back without the model. Then three frames on one sheet (`ae.py sheet`), then `ae.py aerender`
+on the saved project. Grain over the render: `ADBE Noise` with Clipping (`-0003`) at 1. Plate
+integration: [critique](references/critique.md) item 10. GATE: checks in
+[references/critique.md](references/critique.md); `ae.py probe` on the output.
 
 ### 10. 2.5D from a still
 
-Goal: a camera move from one image. Layers route: planes from scenario-after-effects-generation
-(depth thresholds, clean plates behind) in a Classic 3D comp, each pushed in Z, scale by
+Layers route: planes from scenario-after-effects-generation (depth thresholds, clean plates behind)
+in a Classic 3D comp, each pushed in Z, scale by
 `AEX.threeD.parallaxScale(base, z, zoom, 1.06 to 1.1)`, camera push with eased keys. Cap the push
 with `AEX.threeD.maxPush` so the foreground stays in frame through the hold; sway a plane with Wave
 Warp, Pinning 8 (procedure 14). Depth-map route: Displacement Map with the depth layer PRECOMPOSED
@@ -191,14 +180,17 @@ contact shadow, push cap, light, shadow, DoF, motion blur, displacement, frame t
 
 ## Quality gates
 
-Measurable: the GATE lines above and [critique](references/critique.md) section 1. Visual, on one
-sheet: product centered and uncropped, title readable, base on its shadow, shadow and highlights on
-the plate's sun side, no white catcher, no floor edge, subject sharp, smear only on fast frames.
+Measurable: the GATE lines above and [critique](references/critique.md) section 1; a model in a
+plate passes `integration_check.py --rendered` on the first and last frame; its lights match the
+plate's lit and shadowed ground within 5 % per channel. A branded product's base color is checked
+against the brand color (`glb_material.py list --brand`) and corrected in the texture, never by a
+grade. Visual, on one sheet: product centered and uncropped, title readable, base on its shadow,
+shadow and highlights on the plate's sun side, no white catcher, no floor edge, subject sharp, smear
+only on fast frames.
 
 ## Common mistakes
 
-More rows (fit by eye, focus at the base, scripted materials, Z push without scale):
-[critique](references/critique.md) section 5.
+More rows: [critique](references/critique.md) section 5.
 
 | Mistake                                                    | Symptom                                                            | Fix                                                              |
 | ---------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------- |
@@ -209,6 +201,9 @@ More rows (fit by eye, focus at the base, scripted materials, Z push without sca
 | Tilted camera at height 0                                  | subject high in frame, drifts during the push                      | `orbitRig` without `height`                                      |
 | Product on a floor with spot shadows only                  | floats above the floor                                             | `contactShadow`; reflection for gloss                            |
 | Push past `maxPush`                                        | the foreground leaves before the hold                              | cap the push or lower the camera                                 |
+| Sun for a plate placed by eye                              | front-lit model, shadow at its own angle                           | `sunLight` from the plate's shadow lines (procedure 17)          |
+| Fill and ambient guessed in a plate                        | olive caps, charcoal navy, flat CG look                            | calibrate on the plate's ground in linear light (procedure 17)   |
+| GLB colors trusted in a linear project                     | fabric twice as bright and more orange than the product            | `glb_material.py linear-store`, then `tint` (procedure 17)       |
 
 ## Handoffs
 
@@ -229,13 +224,11 @@ More rows (fit by eye, focus at the base, scripted materials, Z push without sca
 
 ## References
 
-- [references/procedures.md](references/procedures.md): every job, with channel, checked line and
-  the check that follows; version table.
-- [scripts/threed.jsx](scripts/threed.jsx) (`AEX.threeD`) and
-  [scripts/glb_material.py](scripts/glb_material.py) (GLB material factors).
-- [references/expert-notes.md](references/expert-notes.md): principles by expert with timestamps.
-- [references/critique.md](references/critique.md): the self-review rubric with numbers and
-  contact-sheet checks.
-- [references/gui-paths.md](references/gui-paths.md): menus, panels, shortcuts and the settings
-  scripts cannot reach.
-- [references/sources.md](references/sources.md): every video and document used.
+- [procedures](references/procedures.md): jobs and version table.
+- [scripts/threed.jsx](scripts/threed.jsx) (`AEX.threeD`),
+  [scripts/glb_material.py](scripts/glb_material.py),
+  [scripts/env_from_plate.py](scripts/env_from_plate.py).
+- [expert-notes](references/expert-notes.md): principles by expert.
+- [critique](references/critique.md): the self-review rubric.
+- [gui-paths](references/gui-paths.md): menus and settings scripts cannot reach.
+- [sources](references/sources.md): videos and documents used.

@@ -38,6 +38,10 @@ against the same model without them. Start with the lead skill, `scenario-after-
   - the host-side helpers run against planted inputs: runner, mailbox job files, offline
     ExtendScript checker, ffprobe summary, delivery, timing, beat, layout, seat and effects
     measuring tools;
+  - the integration check fails each planted defect (light side, shadow density, hue, length,
+    softness, contact, blacks, material) and passes physically lit reference renders;
+  - the mask and put-back tool, the environment builder and the model material editor run on planted
+    inputs, and the material editor refuses to write over its source;
   - each effects builder returns what its comment documents.
 
 ## Requirements

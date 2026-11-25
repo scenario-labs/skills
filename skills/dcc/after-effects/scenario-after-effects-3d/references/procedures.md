@@ -23,6 +23,7 @@ project inside one undo step (`--undo NAME`).
 14. 2.5D: keep the foreground in frame, sway a plane
 15. Layout before the camera move, and a move that reads
 16. Version notes
+17. A model seated in a still plate (low sun, push-in)
 
 ## 1. Read the renderer and what it exposes
 
@@ -547,3 +548,135 @@ Check, measured at 1920x1080 on a generated speaker GLB:
   property).
 - Tutorials before 25.2 say FBX cannot be imported; before 26.3 they fake depth of field with Camera
   Lens Blur.
+
+## 17. A model seated in a still plate (low sun, push-in)
+
+A cutout with a mirrored silhouette is never the shadow of a round object. When a model exists, or
+image-to-3D can make one, the shadow and the shading come from one light in Advanced 3D. Lights are
+calibrated on the plate's own ground, never guessed: guessed fills turned cream caps olive-gray and
+a navy strap charcoal. The model's colors are checked before any light is set.
+
+0. **Model colors first.** Two traps, both measured on 27.0. In a linearized project, Advanced 3D
+   shades with the sRGB-encoded value of a glTF base color: textures as stored, factors encoded. A
+   coral fabric (linear luminance 0.19) rendered as 0.41, a 0.35 floor as 0.63. Write a copy with
+   [glb_material.py](../scripts/glb_material.py) `linear-store`, and the calibration floor too. For
+   a branded product, `list --brand MATERIAL=#RRGGBB` reports each material's mean base color in
+   linear light and its distance to the brand color; `tint` scales the texture per channel in linear
+   light so the mean matches and the weave stays. Correct the texture, never the comp's grade.
+   Measured: the generated fabric sat 14 Delta E from the brand coral, a little orange.
+
+1. **Linear project.** `app.project.bitsPerChannel = 16`, working space `sRGB IEC61966-2.1`,
+   `linearizeWorkingSpace = true`. Frames saved by script are then linear: encode them to sRGB
+   before any check. Solid colors are linear values here: a Multiply shadow solid takes the plate's
+   shadow over lit ratio per channel in linear light.
+2. **Camera from the plate.** Horizon row, lens, camera height and tilt from the plate's prompt or
+   its own lines. Zoom = comp width x focal length / 36. Real size: px per m at the base row = (base
+   row - horizon row) / camera height in m.
+3. **Sun direction from the plate's shadows.** Extend two shadow lines already in the plate (a
+   railing post, a wall edge) to where they meet near the horizon, at screen x `xv`. Azimuth =
+   atan((xv - comp width / 2) / zoom); elevation from the sun disc's height above the horizon.
+   Measured on a terrace plate: lines met at x 127 to 161, azimuth -17, sun disc 3 to 4 degrees up.
+4. **Environment from the plate.** [env_from_plate.py](../scripts/env_from_plate.py) maps the plate
+   onto the part of the sphere the camera sees and clamps the sun disc (the parallel light carries
+   it). It extends the sky by the plate's own horizon profile around the sun, and puts the plate's
+   lit and shadowed ground below. Map orientation, measured with probe maps on a model: top is up, u
+   0.75 looks into the plate, u 0.5 left, u 0 right, u 0.25 toward the camera. The zenith is solved
+   so an up-facing floor gets the hue of the sky the calibration needs.
+5. **Calibrate on the plate's ground.** Read the plate's sunlit and shadowed ground in linear light,
+   per channel, in two boxes side by side. Render a GLB floor of a stated albedo (0.35, plain
+   diffuse, roughness 1) under the same camera, with a vertical quad casting the sun's shadow on it.
+   Set the environment intensity so the floor in shadow equals the shadowed ground. Then set the
+   sun's intensity and color so the lit floor equals the sunlit ground. Iterate: intensity and color
+   do not map linearly to the render (measured: the floor value grew about 1.4 times faster than the
+   environment intensity, and a sun's gain flattened past about 1000 %). Gate: residual under 5 %
+   per channel on both boxes, rechecked after any change to the map. Then remove the floor: the
+   catcher passes take the shadow.
+6. **Kicker for the sun-side edge.** A sun close behind the subject lights a thin edge only (table
+   below). A cinematographer adds a kicker: a parallel light at the sun's azimuth or a little wider,
+   higher (10 to 25 degrees), same color, shadows on. Name it "kicker" in the comp. Then render the
+   lit pass with the kicker off and compare the camera-facing material: it must not move. Measured:
+   an unshadowed kicker reached camera-facing fabric through its normal map and tripled its level
+   (0.06 to 0.18); with shadows on, the facing band held at 0.074 to 0.079.
+7. **One Advanced 3D comp per pass, the same camera keys in each.**
+   - lit: the calibrated sun and the kicker (shadows on), the plate environment.
+   - sun only: the sun and the kicker, blooming in the main comp above a threshold (Levels Input
+     Black 0.6), so only what clips blooms.
+   - shadow: the model with Casts Shadows Only, the sun, a catcher.
+   - contact: the model with Casts Shadows Only, a parallel light from straight above (elevation
+     89.9), a catcher.
+   - neutral: the model under one white ambient light at 100 % (its base color), the `--neutral` of
+     `integration_check.py --rendered`.
+8. **Main comp, bottom to top.** Plate. The shadow pass as alpha matte of a Multiply solid, and the
+   contact pass the same way. The lit pass, a light Add veil matted to the model (the plate's haze),
+   bloom (Add) and grain.
+9. **Plate move for the push.** A plate is one flat image: cut it at the wall's base. Key a Corner
+   Pin on each part, every frame, from the homography of its own plane (floor, wall) through the
+   same camera. Four floor points and four wall points, projected per frame, solved as 8x8.
+10. **Finish to the plate.** Key the model's blur with the push: the enlarged plate softens.
+    Measured: 2.7 to 4.0 px matched the plate's edges and kept the fabric weave readable. Grow the
+    shadow's softness with distance: Compound Blur through a radial ramp keyed at the base.
+11. **Gate.** Capture comp, plate alone, element over black, neutral through the same stack and the
+    shadow layers alone at the first and last frame. Build the shadow matte from the linear capture
+    (encoding it thins the soft far end). Run the compositing skill's
+    `integration_check.py --rendered` with `--sun`, the plate's shadow and lit boxes and
+    `--plate-length`.
+
+```javascript
+// channel: bridge
+// checked: live 27.0
+// ARGS: {glb, env (plate environment PNG), envI, lights: [{name, az, el, i, color, shadows}], az, el, catcher}
+app.project.bitsPerChannel = 16; app.project.workingSpace = "sRGB IEC61966-2.1"; app.project.linearizeWorkingSpace = true;
+var W = 1920, H = 1080, FY = 1000, tgt = [W / 2 - 40, FY, 820];
+var glbItem = AEK.xio.importItem(ARGS.glb, {}), envItem = AEK.xio.importItem(ARGS.env, {});
+function comp3d(name) { var c = AEK.build.comp(name, { width: W, height: H, fps: 24, duration: 4, bg: [0, 0, 0] }); AEX.threeD.use(c, "advanced"); return c; }
+function model(c, castOnly) {
+    var m = c.layers.add(glbItem); m.property("ADBE Transform Group").property("ADBE Position").setValue(tgt);   // fitted as in procedure 2
+    if (castOnly) { m.property("ADBE Compositing Options Group").property("ADBE Casts Shadows").setValue(2); }   // 2 = Only
+    return m;
+}
+var cS = comp3d("lit"); model(cS, false);
+for (var i = 0; i < ARGS.lights.length; i++) {          // the calibrated sun, then the kicker (both cast shadows)
+    var L = ARGS.lights[i];
+    AEX.threeD.sunLight(cS, tgt, L.az, L.el, { intensity: L.i, color: L.color, shadows: L.shadows, name: L.name });
+}
+AEX.threeD.envLight(cS, { intensity: ARGS.envI, source: envItem });
+var cH = comp3d("shadow"); model(cH, true);
+AEX.threeD.sunLight(cH, tgt, ARGS.az, ARGS.el, { color: [1, 1, 1] });
+AEX.threeD.shadowCatcher(cH, FY, { size: ARGS.catcher, x: tgt[0], z: tgt[2] });   // 2000 px, centered on the model
+var cC = comp3d("contact"); model(cC, true);
+AEX.threeD.sunLight(cC, tgt, 0, 89.9, { color: [1, 1, 1] });
+AEX.threeD.shadowCatcher(cC, FY, { size: ARGS.catcher, x: tgt[0], z: tgt[2] });
+var cN = comp3d("neutral"); model(cN, false);
+var amb = cN.layers.addLight("ambient", [W / 2, H / 2]); amb.lightType = LightType.AMBIENT;
+amb.property("ADBE Light Options Group").property("ADBE Light Intensity").setValue(100);
+return { passes: [cS.name, cH.name, cC.name, cN.name] };
+```
+
+Measured on the terrace plate, in linear light: sunlit ground 0.316 / 0.205 / 0.147, shadowed 0.147
+/ 0.134 / 0.133. With the model and floor written `linear-store` and the map from the plate:
+environment 217 %, sun 1100 % with color [1, 0.58, 0.21]. Residual: -2.4 to -0.5 % lit, +1.4 to +3.2
+% shadow. Kicker: azimuth -50, elevation 14, 700 %, shadows on. Camera-facing fabric in shade: 0.074
+linear (target 0.08 to 0.10 for a 0.20 coral beside a 0.35 ground in shadow), its top 0.25, its
+underside 0.083.
+
+What the renderer did, measured on 27.0 with a 16 cm speaker GLB, 1920x1080:
+
+| Need              | Result                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Shadow catcher    | Accepts Shadows Only works. A 10000 px catcher drew a second shadow wedge far away; 2000 px centered did not             |
+| Catcher edge      | the far edge drew a thin line near the horizon: mask both shadow mattes from the wall's base row down                    |
+| Cast only         | Casts Shadows Only (2) on the model: the shadow without the model, in a pass of its own                                  |
+| Softness          | a parallel light's shadow is hard; Compound Blur through a distance ramp gave 18 px near and 44 px far                   |
+| Ambient           | no ambient occlusion: the contact pass (light from straight above) gives the dark band under the base                    |
+| Shadow color      | the pass as matte of a Multiply solid at the plate's shadow over lit ratio, linear: hue within 0.02                      |
+| Environment light | a white upper half lit an upward floor, a white lower half did not: top is up. Around the horizon, unsettled             |
+| Output range      | the render clamps at 1.0 per channel; a 3D comp saved at 32 bpc came back in steps of 1/25: work at 16 bpc               |
+| Neutral           | one white ambient light at 100 % renders the base color as the renderer reads it (encoded unless written `linear-store`) |
+| Base color        | textures taken as stored, factors encoded: coral fabric 0.19 rendered 0.41; `linear-store` gave 0.204 and caps 0.765     |
+| Dark materials    | a navy rubber (albedo 0.02) took a gray specular sheen of about 0.015 from the environment; roughness 1 kept it navy     |
+| No light          | a comp with no light renders a default headlight; a sun alone from behind leaves the front black                         |
+| Sun rim           | a sun about 20 degrees off the view axis lights an edge band of about 1 - cos 20 = 0.06 of the radius                    |
+| Cap shadow        | a shadowed kicker along the body's axis lets the end cap shade the near part of the top                                  |
+
+Check, `integration_check.py --rendered` on the first and last frame: shade 0.72 and 0.69, density
+gap 0.005 and 0.003, contact 0 and -3 px, blacks within 0.04 of the plate's, material 3.7 (limit 4).

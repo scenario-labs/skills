@@ -14,7 +14,8 @@ Prints one JSON line:
   objectBR / plateBR   blue-to-red ratio of the brightest pixels of the object and of the plate's ground
   warmthGap            objectBR - plateBR (pass within 0.15: the highlights carry the same light color)
   highlightOffset      where the object's highlights sit, as an offset from its matte center in matte widths
-                       (information only: a strap or a dark side fools it, so the light direction is judged by eye)
+                       (information only: a strap or a dark side fools it; the light direction is gated by the
+                       compositing skill's integration_check.py)
 Exit code 1 when the warmth check fails.
 
 --contact reads two mattes of one frame written by AEX.threeD.mattes (the object alone, its shadow layers alone, comma-separated and combined). In every

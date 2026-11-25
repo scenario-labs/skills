@@ -52,12 +52,24 @@ AEX.threeD = (function () {
         l.property("ADBE Transform Group").property("ADBE Position").setValue(pos);
         if (target && l.lightType !== LightType.POINT) { l.property("ADBE Transform Group").property("ADBE Anchor Point").setValue(target); }
         var lo = l.property("ADBE Light Options Group");
-        lo.property("ADBE Light Intensity").setValue(o.intensity || 100);
+        // an explicit 0 must stay 0 (o.intensity || 100 turned it into 100 and lit a pass that was meant dark)
+        lo.property("ADBE Light Intensity").setValue(o.intensity === undefined ? 100 : o.intensity);
         if (o.color) { lo.property("ADBE Light Color").setValue(o.color); }
         if (l.lightType === LightType.SPOT) { lo.property("ADBE Light Cone Angle").setValue(o.cone || 70); }
         lo.property("ADBE Casts Shadows").setValue(1);
         lo.property("ADBE Light Shadow Darkness").setValue(o.darkness === undefined ? 60 : o.darkness);
         if (l.lightType !== LightType.PARALLEL) { lo.property("ADBE Light Shadow Diffusion").setValue(o.diffusion === undefined ? 15 : o.diffusion); }
+        return l;
+    }
+    // sunLight(comp, target, az, el, {intensity, color, shadows, name}): a parallel light from a plate's sun. az: degrees from
+    // straight away from the camera (negative = left), el: degrees above the floor. Read az from where the plate's own shadow
+    // lines meet near the horizon, el from the sun's height. The light sits 20000 px from target along that direction.
+    function sunLight(c, target, az, el, o) {
+        o = o || {};
+        var r = Math.PI / 180, k = 20000;
+        var pos = [target[0] + k * Math.sin(az * r) * Math.cos(el * r), target[1] - k * Math.sin(el * r), target[2] + k * Math.cos(az * r) * Math.cos(el * r)];
+        var l = keyLight(c, pos, target, { name: o.name || "sun", type: "PARALLEL", intensity: o.intensity, darkness: 100, color: o.color });
+        l.property("ADBE Light Options Group").property("ADBE Casts Shadows").setValue(o.shadows === false ? 0 : 1);
         return l;
     }
     // envLight(comp, {intensity, source: footage item or null, shadows}): environment light; with a source, the source layer is added
@@ -68,7 +80,7 @@ AEX.threeD = (function () {
         if (o.source && c.renderer !== RENDERER.advanced) { throw new Error("envLight: set the comp to Advanced 3D (AEX.threeD.use) before giving the light a layer source"); }
         var l = c.layers.addLight(o.name || "environment", [c.width / 2, c.height / 2]);
         l.lightType = LightType.ENVIRONMENT;
-        l.property("ADBE Light Options Group").property("ADBE Light Intensity").setValue(o.intensity || 100);
+        l.property("ADBE Light Options Group").property("ADBE Light Intensity").setValue(o.intensity === undefined ? 100 : o.intensity);
         try { l.property("ADBE Light Options Group").property("ADBE Casts Shadows").setValue(o.shadows ? 1 : 0); } catch (e0) {}
         if (o.source) {
             var s = c.layers.add(o.source); s.name = (o.name || "environment") + " source"; s.enabled = false;
@@ -279,7 +291,7 @@ AEX.threeD = (function () {
         return { near: [a0, a1], far: [b0, b1], relPx: rel, relPct: rel / c.width * 100 };
     }
     return { RENDERER: RENDERER, rendererName: rendererName, use: use, settable: settable, fitModel: fitModel, shadowCatcher: shadowCatcher,
-        keyLight: keyLight, envLight: envLight, orbitRig: orbitRig, floor: floor, contactShadow: contactShadow, reflection: reflection,
+        keyLight: keyLight, sunLight: sunLight, envLight: envLight, orbitRig: orbitRig, floor: floor, contactShadow: contactShadow, reflection: reflection,
         focusOn: focusOn, screenRect: screenRect, screenPoint: screenPoint, maxPush: maxPush, parallaxScale: parallaxScale, warmUp: warmUp,
         mattes: mattes, parallax: parallax, dofBlur: dofBlur };
 })();

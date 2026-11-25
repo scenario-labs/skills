@@ -43,8 +43,8 @@ traps).
    `layer.comment` and a sidecar file. A client or a later agent must be able to regenerate or
    replace the file [added].
 8. **An agent can judge stills; ease needs a hand.** Generated motion arrives slow and evenly timed
-   (Yaroflasher 00:09:42). Speed it up with Time Remap (stage 5), and leave easing and the edit to
-   animation and motion-production (3AIZ4FT61aw 00:13:12).
+   (Yaroflasher 00:09:42). Speed it up with Time Remap, and leave easing and the edit to animation
+   and motion-production (3AIZ4FT61aw 00:13:12).
 
 ## Establish first
 
@@ -66,24 +66,22 @@ Full jobs: [references/procedures.md](references/procedures.md). Helper:
 
 ### 1. Plan the generated parts
 
-Goal: a shot list where each generated asset has a job, a target size and a fps. For multi-step
-chains, run the catalog tool `plan_generation` (`scenario_tool_execute_read`), then `recommend`
-(quality priority) per asset type. Pick the best and newest model it returns. For 3D, prefer the
-newest first-party model it offers. Prompting and model craft live in the Scenario skills:
-`scenario-image`, `scenario-image-editing`, `scenario-video`, `scenario-3d`, `scenario-skyboxes`,
-`scenario-audio`. GATE: every asset row names its `recommend` call, target size, fps and the sibling
-that takes it over.
+For multi-step chains, run the catalog tool `plan_generation` (`scenario_tool_execute_read`), then
+`recommend` (quality priority) per asset type. Pick the best, newest model it returns. For 3D,
+prefer the newest first-party model it offers. Prompting and model craft live in the Scenario
+skills: `scenario-image`, `scenario-image-editing`, `scenario-video`, `scenario-3d`,
+`scenario-skyboxes`, `scenario-audio`. GATE: every asset row names its `recommend` call, target
+size, fps and the sibling that takes it over.
 
 ### 2. Generate and download
 
-Before a full video render, preview the start frame and run small variations (ZPajb_N6tBs 00:03:30);
-prompt detailed for control, short for variety (K67WetORDEo 00:08:11). Upscale the still first when
-the clip is reframed or delivered above the generator's size (stance 6). Run `model_schema_get`,
-`model_run`, `jobs_wait`, then `asset_download`. For a 3D asset, `asset_download` can return the
-original source file (measured: a compressed .blend); take the GLB from the asset `url` from
-`asset_get` and check its magic bytes (`glTF`). A speech model can return a second asset with word
-timings: download both. For a supplied still, the depth map and the cutout have their own route
-(procedure 11). GATE: `file` and `ffprobe` agree with the expected type; a sidecar `<asset>.json`
+Before a full video render, preview the start frame with small variations (ZPajb_N6tBs 00:03:30).
+Upscale the still first when the clip is reframed or exceeds the generator's size. Run
+`model_schema_get`, `model_run`, `jobs_wait`, then `asset_download`. For a 3D asset,
+`asset_download` can return the original source file (measured: a compressed .blend); take the GLB
+from the asset `url` from `asset_get` and check its magic bytes (`glTF`). A speech model can return
+a second asset with word timings: download both. Supplied still: depth map and cutout per
+procedure 11. GATE: `file` and `ffprobe` agree with the expected type; a sidecar `<asset>.json`
 holds job id, asset id, model, prompt and seed.
 
 ### 3. Probe before import
@@ -107,8 +105,7 @@ file; `AEX.gen.upscaled(comp)` is empty, or the layer is replaced by an upscaled
 
 ### 5. Prepare per type
 
-Goal: the asset holds up in the composite. Fix alpha body, fringe, loop, scale, depth tearing and
-levels per the table. Cases with numbers are in
+Fix alpha body, fringe, loop, scale, depth tearing and levels per the table. Measured cases:
 [references/procedures.md](references/procedures.md).
 
 - Slow clip: Time Remap, new end key first, then remove the old.
@@ -118,22 +115,24 @@ levels per the table. Cases with numbers are in
 - Planes for a camera push: cut them from the depth map by bands, the full frame as back plate. A
   push into an empty plate reveals nothing; rebuild hidden parts with a masked edit only when the
   move uncovers them (procedure 9).
-- A supplied object seated in a plate: match the light first (plate prompted to the object's light,
-  or the object relit to the plate's). Then real-world scale, the plate's shadow direction and a
-  push sized by the gates (procedure 12).
+- A supplied object seated in a plate, routed by what exists (procedure 12). A model, or one from
+  image-to-3D: seat it in Advanced 3D under a sun placed from the plate's shadow lines (3D skill
+  procedure 17). Only a still: relight it to the plate and keep a neutral copy for the check. A
+  mirrored-silhouette shadow only for a flat, small or far object.
+- A seat that still reads as CG: an image edit guided by the render finishes it, a pinned card
+  carries it through a push, a card relight corrects its light
+  ([references/render-to-real.md](references/render-to-real.md),
+  [scripts/finish_putback.py](scripts/finish_putback.py)).
 - Element on black (realistic fire, smoke): pick the model by the look with `recommend`, prompt for
   a clean black, land it with the effects skill's `AEX.element.land`. Over a plate near white, a
-  darker fill with the element as luminance matte instead of Screen (procedure 10).
-- Model motion blur: `layer.motionBlur` throws under `ADBE Calder`; use CC Force Motion Blur on its
-  precomp. GATE: the numbers in Quality gates pass, and the contact sheet shows no halo, hole, jump
-  or garbled detail.
+  darker fill with the element as luminance matte instead of Screen (procedure 10). GATE: the
+  numbers in Quality gates pass, and the contact sheet shows no halo, hole, jump or garbled detail.
 
 ### 6. Review and hand off
 
-Goal: one `ae.py sheet` per asset: the asset on black and on white, the loop seam, the extreme
-parallax and depth frames. Score it with [references/critique.md](references/critique.md), then hand
-the comp to the sibling that owns the next step. GATE: no reject item open. Reject a take with
-broken anatomy, garbled text or the wrong subject, and regenerate it once.
+One `ae.py sheet` per asset: the asset on black and on white, the loop seam, the extreme parallax
+and depth frames. Score it with [references/critique.md](references/critique.md), then hand the comp
+to the sibling that owns the next step. GATE: no reject item open.
 
 ## Numbers
 
@@ -159,20 +158,20 @@ broken anatomy, garbled text or the wrong subject, and regenerate it once.
 - Measurable: `AEX.gen.upscaled(comp)` empty; fringe under 1 level against an exact composite; loop
   seam step at or under a normal frame step; zero near-black pixels from layer holes; true peak at
   or under -1 dBTP on the rendered mix; caption words match the voice at probe frames; every
-  generated item has a comment. A seated object passes
-  [scripts/seat_check.py](scripts/seat_check.py) (light, then `--contact` at 2 px or less on the
-  first and last frame); a push grows the front plane at least 1.35 times with subject-to-back
-  parallax of at least 5 % of the width.
+  generated item has a comment. A seated object passes the compositing skill's
+  `integration_check.py` on the first and last frame; [scripts/seat_check.py](scripts/seat_check.py)
+  gates warmth before the build.
 - Visual: on the contact sheet, no light or dark edge on black and white, no doubled object at the
   depth extreme, no ghost at the loop seam, readable product and logo across frames, no wrong finger
-  count, no garbled text.
+  count, no garbled text. Between passing takes, the full-size read against a real photograph
+  decides.
 
 ## What stays hand-made
 
 - Timing and easing: generated motion is evenly paced; retime, ease and hold keys by hand (Jake In
   Motion QLZNiwaKqWg 00:09:00; agent walkthrough 3AIZ4FT61aw 00:13:12).
-- Typography: set titles, prices and legal lines as live text, never generated pixels (3AIZ4FT61aw
-  00:12:39; Jake In Motion 00:03:29 keeps "do not generate any assets" for the design).
+- Typography: titles, prices and legal lines stay live text, never generated pixels (3AIZ4FT61aw
+  00:12:39).
 - The edit: shot order, length and cuts follow the locked audio (3AIZ4FT61aw 00:18:51).
 - Final color: grade the composite as one, with Lumetri and scopes (Dan, Lines To Designs
   eMDDDdoUgT4 00:08:25).
@@ -195,7 +194,8 @@ broken anatomy, garbled text or the wrong subject, and regenerate it once.
 | Voice raised by loudness alone                     | true peak over 0 dBFS                                              | cap gain by true peak; measure the mix                                        |
 | Word timings trusted blindly                       | caption 7 frames early                                             | check sentence starts against silencedetect (measured up to 0.29 s early)     |
 | Layer motion blur on a model in Advanced 3D        | "Motion blur is not supported by the current composition renderer" | CC Force Motion Blur on a precomp                                             |
-| Studio-lit product still dropped on a sunset plate | pasted look, cool highlights on a warm scene                       | relight to the plate, then `seat_check.py`                                    |
+| Studio-lit product still dropped on a sunset plate | pasted look, cool highlights on a warm scene                       | seat the model, or relight; gate with `integration_check.py`                  |
+| Mirrored silhouette as a round object's shadow     | short, pale, even shadow; wide contact ellipse                     | the model's own shadow from the plate's sun (procedure 12)                    |
 | Add Grain left on Preview                          | grain in a box, outline drawn in the frame                         | Viewing Mode Final Output                                                     |
 
 ## Handoffs
@@ -219,6 +219,7 @@ broken anatomy, garbled text or the wrong subject, and regenerate it once.
 
 - [references/procedures.md](references/procedures.md): the landing table, then the jobs that were
   run, with what to check in each result.
+- [references/render-to-real.md](references/render-to-real.md): the image-edit finish of a seat.
 - [references/expert-notes.md](references/expert-notes.md): expert judgment by source, with
   timestamps.
 - [references/critique.md](references/critique.md): the rubric for generated media in a comp.
