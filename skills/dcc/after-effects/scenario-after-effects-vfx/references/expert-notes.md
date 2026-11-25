@@ -5,7 +5,7 @@ source. Items marked [added] are this skill's additions measured on After Effect
 half is grouped by subject (energy and light, particles, natural elements and distortion,
 integration), then by channel.
 
-## Andrew Kramer: lightning and plate integration (yxncS9gVDYI)
+## Andrew Kramer, Video Copilot: lightning and plate integration (yxncS9gVDYI)
 
 - Turn the effect's own glow off (Advanced Lightning Glow Opacity 0) and build glow from three
   stacked Glow effects at low intensity, radius about 25 to 30, about 100, and larger, plus
@@ -123,7 +123,7 @@ integration), then by channel.
 ## Compositing sources: making an effect sit (HWNAGKi6apM, gomawnMPWEg, vJ8X58uknsk)
 
 - Over bright plates, remove black with Unmult, not Screen or Add, so the element does not brighten
-  what is behind (HWNAGKi6apM 00:08:23). Unmult is native since 26.0.
+  what is behind (ActionVFX, HWNAGKi6apM 00:08:23). Unmult is native since 26.0.
 - Fake light wrap: a backplate copy, Fast Blur 12, luma matte to the rim, Add (HWNAGKi6apM
   00:17:30).
 - Match blacks with Levels per channel after placing an element (ProductionCrate, gomawnMPWEg frames
@@ -300,7 +300,7 @@ integration), then by channel.
   after impact by Turbulent Displace ramped from the stop (00:10:25); a wiggle shake 0 to about 27
   to 0.
 
-### Stock effects studio tutorials: fire, explosion and debris (Fga78PEHC2E, wQHwO4U7AiM)
+### ActionVFX: fire, explosion and debris (Fga78PEHC2E, wQHwO4U7AiM)
 
 - Fire on a plate: Screen, Levels to crush blacks, Tint plus Curves, then three Glows (threshold 15
   radius 120, radius 600, threshold 90 radius 80) (Fga78PEHC2E). An adjustment layer brightening the
@@ -380,7 +380,7 @@ integration), then by channel.
 - Distortion pulls the corners inward and scales with focal length (00:06:08 to 00:07:15); oval
   bokeh from a custom Lens Blur shape (00:08:30).
 
-### Stock effects studio tutorial: camera shake (jgw-aIsWT5Y)
+### ActionVFX: camera shake (jgw-aIsWT5Y)
 
 - Shake as a decaying spike: a slider keyed 0, about 80 at the hit, 0 with a small tail, `wiggle`
   frequency 11 (00:02:34 to 00:06:20). Hide the edges with Motion Tile 120 % Mirror Edges or a scale

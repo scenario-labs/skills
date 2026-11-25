@@ -22,9 +22,9 @@ version traps).
 ## Stance (the expert delta)
 
 - Pick the tracker from the geometry. A flat target is a planar or corner pin job; a camera move
-  with parallax is a 3D solve; a simple 2D follow is a point track (Ben Brownlee, TF3XVBy6sD4
-  00:02:30; Film Riot, kFCNhHI5yOg). Warp Stabilizer is none of the three: it is a self-contained
-  shake analyzer that smooths the camera path and gives no data to attach things to.
+  with parallax is a 3D solve; a simple 2D follow is a point track (Boris FX, TF3XVBy6sD4 00:02:30;
+  Film Riot, kFCNhHI5yOg). Warp Stabilizer is none of the three: it is a self-contained shake
+  analyzer that smooths the camera path and gives no data to attach things to.
 - Never apply data straight to content you still edit. Data goes on a null, a proof solid or a
   precomp (Film Riot, kFCNhHI5yOg 00:01:48; Mark Christiansen, C_dO9HGrYS8).
 - The spline or search box is a search area; the Surface and the Grid show the data (Ben Brownlee,
@@ -85,7 +85,7 @@ GATE: route stated with the reason; frame rate and size match; `slide` run on th
 
 3. **Track outside After Effects when the GUI is out of reach.**
    `track_external.py plane SHOT --corners "x,y x,y x,y x,y" --ref N --mode ref` registers every
-   frame to frame N. Pick N on the largest, clearest view (Mocha AE doc, "Track from the largest,
+   frame to frame N. Pick N on the largest, clearest view (Boris FX doc, "Track from the largest,
    clearest point"). The four reference corners come from the person, a marker or a detector.
    `shake` returns per-frame `[dx, dy, rot]` for a static scene. Corners go on a flat rigid part
    (P4). Reflections, fingers or changing screen content need Mocha AE in the GUI
@@ -189,8 +189,8 @@ GATE: route stated with the reason; frame rate and size match; `slide` run on th
 
 - Warp Stabilizer and the 3D Camera Tracker need idle time; an "Adobe Analysis Server" process runs
   beside the app [added]. No script call starts or waits for the analysis.
-- Mocha AE is the effect `mochaAECC`. Its tracking and export run in its own window. It does not
-  solve cameras.
+- Mocha AE is the effect `mochaAECC`. Its tracking and export run in its own window. Camera solves
+  need Mocha Pro.
 - Shadow catchers: 24.5. Mask Tracker up to 5x faster: 26.3. Warp Stabilizer is not allowed in a
   MOGRT that must run without After Effects.
 

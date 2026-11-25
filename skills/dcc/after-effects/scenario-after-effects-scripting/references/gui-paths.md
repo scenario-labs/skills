@@ -33,7 +33,7 @@ in brackets.
 - Multi-machine: Render Settings > Skip Existing Files (allow multi-machine rendering), image
   sequence output, one output module per item.
 - 3D renderer before an `aerender` batch: Composition > Composition Settings > Advanced > 3D
-  Renderer (open-source render queue README); switch a Cinema 4D comp to Classic 3D or Advanced 3D.
+  Renderer (nexrender README); switch a Cinema 4D comp to Classic 3D or Advanced 3D.
 
 ## Essential Graphics and MOGRT
 

@@ -46,7 +46,7 @@ proceed from tool schemas and flag the gap. **REQUIRED BACKGROUND:** scenario-af
   is choked about 2 px, never blurred outward, and the BACK light comes back as a rim and a light
   wrap on the edges facing the source. Interactive light is the plate tinted toward the light color,
   fading with distance from the origin. One envelope null with sliders from one hit time drives
-  light, reflection, pool, interactive light and shake (HWNAGKi6apM 00:17:30).
+  light, reflection, pool, interactive light and shake (ActionVFX, HWNAGKi6apM 00:17:30).
 - **A loop is exact: frame L equals frame 0.** Fractal Noise and Turbulent Displace with Cycle
   Evolution and whole revolutions; particles from two offset copies of a longer simulation (Jake
   Bartlett, kdttSozSLG4 00:03:20).

@@ -6,7 +6,7 @@ marks this skill's own measured additions.
 ## Choosing the tracker
 
 - Flat target: Mocha or a corner pin. Camera move with parallax: the 3D Camera Tracker. Simple 2D:
-  the point tracker to a null (consensus of Ben Brownlee TF3XVBy6sD4, Film Riot kFCNhHI5yOg, Mark
+  the point tracker to a null (consensus of Boris FX TF3XVBy6sD4, Film Riot kFCNhHI5yOg, Mark
   Christiansen C_dO9HGrYS8).
 - The native point tracker needs sharp, unchanging points; the Camera Tracker needs camera movement
   and static objects; Mocha handles blurry, texture-poor planes (Ben Brownlee, TF3XVBy6sD4
@@ -14,7 +14,7 @@ marks this skill's own measured additions.
 - Planar tracking is the fallback when the 3D Camera Tracker "gives us nothing" on a locked-off shot
   (TF3XVBy6sD4 00:02:30; Javier Mercedes, UkC9qKS7c0Y 00:03:01).
 - Planar means low parallax, not flat: distant backgrounds, faces, rocky ground, torsos and car
-  bodies can track (Mocha AE doc, Tracking Basics).
+  bodies can track (Boris FX doc, Tracking Basics).
 - Choose only the channels the shot needs; a handheld push toward a wall needs position, rotation
   and scale (Ryan Connolly, kFCNhHI5yOg 00:00:12).
 
@@ -40,12 +40,12 @@ marks this skill's own measured additions.
   corners (UkC9qKS7c0Y 00:04:42).
 - Switch the cog off on finished layers before tracking others, or their keys change (UkC9qKS7c0Y
   00:09:00).
-- Start from the largest, clearest frame and track both ways (Mocha AE doc, Tips for Tracking).
+- Start from the largest, clearest frame and track both ways (Boris FX doc, Tips for Tracking).
   Raise Min % Pixels Used when it drifts (same doc).
 - Settings shown for a hard car track: Luminance, Min % Pixels Used 20, Smoothing 0, Large Motion,
   all five motion types (Ben Brownlee, 1tWKdbjKLNE frame 00:06:33).
 - AdjustTrack fixes drift, not jitter. Adjust at the peak of drift, then check halfway between keys;
-  hundreds of adjustment keys mean retrack (Mocha AE doc, AdjustTrack).
+  hundreds of adjustment keys mean retrack (Boris FX doc, AdjustTrack).
 - "Track is good in Mocha but wrong in After Effects" checklist: data created, right layer, right
   data type, Surface set, insert resolution, resolution again (1tWKdbjKLNE 00:06:54).
 - The insert must match the tracked footage size. UHD footage in an HD comp: precomp at UHD and
@@ -55,9 +55,9 @@ marks this skill's own measured additions.
   pin, then a precomp at the real screen size (1170 x 2532) (UkC9qKS7c0Y 00:12:48). Use it when the
   replacement's aspect differs from the screen.
 - Stabilizing from Mocha: export After Effects Transform with Invert and target the footage layer
-  (1tWKdbjKLNE 00:01:47); delete anchor point keys after pasting Transform data (Mocha AE doc).
+  (1tWKdbjKLNE 00:01:47); delete anchor point keys after pasting Transform data (Boris FX doc).
 - Mocha clip length, frame rate, size and pixel aspect must equal the After Effects footage or
-  exports drift (Mocha AE doc, Export).
+  exports drift (Boris FX doc, Export).
 
 ## Patches and inserts
 
@@ -96,15 +96,15 @@ marks this skill's own measured additions.
   `threeDLayer = true`, keeps the anchor at the base.
 - The point context menu offers Create Shadow Catcher, Camera and Light next to Create Text, Solid
   or Null and Camera (Cinecom, m2bF4U6EBZU frame 00:06:00; Adobe doc: a white solid at footage size
-  set to accept shadows only, plus a light if none exists). Solves from the tracker's paid edition
-  build the catcher by hand with Accepts Shadows = Only (Ben Brownlee, wEM6eyrrAgY 00:07:53); the
-  renderer choice belongs to scenario-after-effects-3d.
+  set to accept shadows only, plus a light if none exists). Mocha Pro solves build the catcher by
+  hand with Accepts Shadows = Only (Ben Brownlee, wEM6eyrrAgY 00:07:53); the renderer choice belongs
+  to scenario-after-effects-3d.
 - Retrack a failed solve: results vary between runs (m2bF4U6EBZU 00:02:25).
 - Normalize scripts fix a huge solved scale; Guerrilla treats it as routine, Cinecom only when the
   space looks huge (wiISCTB4s1Y 00:04:08; m2bF4U6EBZU 00:06:44). The free Normalize Track script
   needs a solid named "ground", "floor" or "wall" (wiISCTB4s1Y 00:04:41).
-- Solves from the tracker's paid edition: about 1 HPix average error; track at full resolution,
-  proxies misalign; export only the nulls you need (Ben Brownlee, wEM6eyrrAgY 00:00:48 to 00:02:11).
+- Mocha Pro solves: about 1 HPix average error; track at full resolution, proxies misalign; export
+  only the nulls you need (Ben Brownlee, wEM6eyrrAgY 00:00:48 to 00:02:11).
 - [added] Measured on 27.0: the "Average Error" row is a property whose NAME stays "Average Error:
   -" after a finished solve. A script cannot read it.
 

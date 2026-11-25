@@ -337,7 +337,7 @@ moved to the screen corners (TF3XVBy6sD4 00:04:33; UkC9qKS7c0Y 00:04:42).
 A person or a computer-use agent tracks in Mocha AE (gui-paths.md), then Create Track Data, Export
 Option "Corner Pin (Support Motion Blur)", Layer Export To the insert, Apply Export. The agent then
 runs P10 and P8. Mocha's clip size, frame rate and pixel aspect must equal the footage, or the
-exported data drifts (Mocha AE doc, Export to After Effects). Mocha's Corner Pin values are written
+exported data drifts (Boris FX doc, Export to After Effects). Mocha's Corner Pin values are written
 in the target layer's own pixels, so the insert must be a precomp at the tracked footage size with
 the art Fit to Comp inside (Ben Brownlee, 1tWKdbjKLNE 00:04:05). UHD footage scaled to 50 % in an HD
 comp: make the precomp UHD and set the insert layer's scale to 50 % as well; the Support Motion Blur

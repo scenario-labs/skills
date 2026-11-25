@@ -350,8 +350,8 @@ Measured: run 1 wrote the hook strings as typed. Every override came back one li
 and fit do not reach it. `AEX.ad.lineFor` measures in the master, breaks into two balanced lines and
 refuses copy that still does not fit (run 2 rejected a 39-character hook at 521 px; the rewrite
 "NOBODY SAW THIS COMBO" fit at 284 px). Hook clip overrides land in a `Media Replacement Comps`
-folder as `Hook Clip_<file>` comps. 3.5 s for 5 cells with 10 frames. Test-cell design (ad network
-doc): change one variable per cell. Here H1 to H4 share C1; H1 C2 changes only the CTA.
+folder as `Hook Clip_<file>` comps. 3.5 s for 5 cells with 10 frames. Test-cell design (AppLovin):
+change one variable per cell. Here H1 to H4 share C1; H1 C2 changes only the CTA.
 
 ## 7. Other aspect ratios from the same sheet
 

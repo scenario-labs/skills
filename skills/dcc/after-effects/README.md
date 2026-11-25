@@ -71,8 +71,8 @@ sibling-install line follow its conventions. The scripts in each `scripts/` fold
 (ES3) as After Effects runs it, so prettier skips them and the markdown code blocks keep their
 formatting.
 
-Experts whose public videos or articles are cited are named in each `sources.md`. Some sources are
-cited by link and described by kind (an ad network, a stock effects studio, a video automation
+Experts and well-known vendors whose public videos or articles are cited are named in each
+`sources.md`. A lesser-known company is cited by link and described by kind (a video automation
 company). No generative platform other than Scenario is named. Video sources carry their YouTube id
 and timestamps, so each claim can be checked against the video. Sources cited as saved documentation
 file names (`scripting-automation__...`) point to the build project on the author's machine; they

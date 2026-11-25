@@ -33,7 +33,7 @@ expert's number, both are given.
   made by smearing edge pixels inward (00:30:48 to 00:32:27).
 - Works at 16 bpc (frame 00:07:32).
 
-## Danasa (_0lcyyybbng)
+## Danasa, ActionVFX (_0lcyyybbng)
 
 - Denoise and render the plate before keying; draw a garbage mask first (00:01:11). [added] An
   animated garbage matte took mean alpha error from 0.100 to 0.015 and removed the light stand.
@@ -97,7 +97,7 @@ expert's number, both are given.
   inward, K-uOFPoIm6U 00:30:48 to 00:32:27).
 - A hold-out matte is a masked duplicate of the keyed layer placed directly above it.
 
-## Danasa Arsad (ZFJ3AKC2q8k): light wrap
+## Danasa Arsad, ActionVFX (ZFJ3AKC2q8k): light wrap
 
 - Light from the background wraps around the foreground edge (00:00:06). Build it once and save it
   as a preset (00:02:42).
@@ -110,7 +110,7 @@ expert's number, both are given.
   height at 40 % Add lifted edges by 4.7/255 against a bright window and about 0 against a dark
   desk, reaching about 20 px inward; 4 % at 100 % lifted 20/255.
 
-## Stock effects studio team (HWNAGKi6apM): elements over plates
+## ActionVFX team (HWNAGKi6apM): elements over plates
 
 - Remove black from elements over bright plates with Unmult, not Screen or Add, which brighten what
   is behind (00:08:23).

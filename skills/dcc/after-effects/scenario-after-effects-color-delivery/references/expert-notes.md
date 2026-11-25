@@ -78,7 +78,7 @@ Principles from the sources, grouped by expert, each with video id and timestamp
   default, grain 0.3 to 0.5.
 - Put grain on its own adjustment layer because the preview misleads otherwise (00:03:34).
 
-## InLightVFX (x2sx-P5f-iM) and a stock effects studio (pYzN_g-1N_w): OCIO and ACES
+## InLightVFX (x2sx-P5f-iM) and ActionVFX (pYzN_g-1N_w): OCIO and ACES
 
 - The display color space is preview only; export color comes from the output module's Output Color
   Space (x2sx-P5f-iM 00:05:57 to 00:06:12).

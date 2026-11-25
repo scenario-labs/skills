@@ -31,7 +31,7 @@ own additions. Numbers come from the sources or from the live tests (marked "mea
   interesting" [00:26:44].
 - Do not mix music down to inaudible; if it must be that quiet, it is the wrong music [00:21:51].
 
-### Ad network, high-performing video ads (doc, retrieved 2026-11-24)
+### AppLovin, high-performing video ads (doc, retrieved 2026-11-24)
 
 - Hook within the first 3 to 5 s. Five hook types: direct problem callout, bold claim, unexpected
   demo, social validation, data or authority.
@@ -44,7 +44,7 @@ own additions. Numbers come from the sources or from the live tests (marked "mea
 - 45 s blueprint for long placements: hook 0 to 4 s, problem 4 to 9, escalation 9 to 14, mechanism
   14 to 22, proof 22 to 27, offer 27 to 36, CTA 36 to 45.
 
-### App marketing study (doc, 2023-10-16)
+### AppTweak (doc, 2023-10-16)
 
 - An end card that differs from the last video frame: 3x IPM against a repeated frame. Playable end
   cards: 7x IPM, 47 % better CTR than static.
@@ -157,7 +157,7 @@ own additions. Numbers come from the sources or from the live tests (marked "mea
 
 | Question                              | Positions                                                                 | Deciding condition                                          |
 | ------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Length                                | 30+ s for rewarded and interstitial (ad network doc) vs short social cuts | placement and guaranteed attention                          |
+| Length                                | 30+ s for rewarded and interstitial (AppLovin) vs short social cuts       | placement and guaranteed attention                          |
 | Cut on the beat or action on the beat | Lieu prefers action on the beat; Noel cuts on it                          | cut-driven montage vs a shot with a strong action inside it |
 | Sync method                           | markers and splits vs amplitude keyframes                                 | discrete hits vs continuous pulse                           |
 | Pre-production depth                  | full boards and styleframes (SOM) vs skip for simple pieces (MotionMedia) | client involvement and scope                                |

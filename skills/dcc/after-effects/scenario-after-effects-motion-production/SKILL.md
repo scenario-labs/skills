@@ -24,30 +24,30 @@ version traps).
 - **Lead with the one thing only this product does.** Shared genre features waste time; the friend
   test is what a viewer would repeat (Derek Lieu, GDC, QWd7F0z1W_Y 00:05:37, 00:08:59). Put the one
   piece of context needed to read the rest first (00:10:12).
-- **Frame 0 is the hook.** No fade from black, no unknown logo in the opening (Lieu 00:23:49). Ad
-  network guidance asks for the hook within 3 to 5 s; a feed decides sooner, so the line is on
-  screen by frame 3 [added].
+- **Frame 0 is the hook.** No fade from black, no unknown logo in the opening (Lieu 00:23:49).
+  AppLovin asks for the hook within 3 to 5 s; a feed decides sooner, so the line is on screen by
+  frame 3 [added].
 - **Shape intensity, not a ramp.** Cold open high, a dip that teaches, climb, climax, a deep dip for
   the call to action, a short button.
 - **One variable per test cell.** Hooks change with the CTA fixed, then the CTA changes with the
-  best hook (ad network doc). A variant that changes three things teaches nothing.
+  best hook (AppLovin doc). A variant that changes three things teaches nothing.
 - **Lock timing before animating.** An animatic or beat sheet against the music first; retiming
   animated scenes is "difficult and frustrating" (Cameron Shefer-Boswell, Gqr0WrahBBs 00:05:00).
 - **The end card is its own frame.** An end card that differs from the last gameplay frame: 3x IPM
-  (app marketing study, 2023). One call to action only (Lieu 00:17:18).
+  (AppTweak, 2023). One call to action only (Lieu 00:17:18).
 - **Measure sound, then judge it.** Layer hits by frequency (Herman Huang, tzfzkTAQsnE 00:00:34); a
   whoosh peaks on the cut, so it starts before it [added, measured 0.35 s]. Loudness is read from a
   rendered mix: the Audio panel shows peak levels only; After Effects has no loudness (LUFS) meter
   and no master fader.
 - **Text is read, not seen.** A line stays on screen for its reading time even if that crosses a cut
-  [added]. Caption every game ad: most viewers play muted (ad network example: 64 % higher Day 0
+  [added]. Caption every game ad: most viewers play muted (AppLovin example: 64 % higher Day 0
   ROAS); bold type, benefit keywords highlighted.
 
 ## Establish first
 
 - **Placement and length:** feed (6 to 20 s), interstitial (5+ s guaranteed attention), rewarded
   (unskippable up to 60 s), store preview (Apple: 15 to 30 s, poster frame default 5 s). Length
-  follows placement (ad network doc).
+  follows placement (AppLovin doc).
 - **Networks:** each one's safe zone with its source and date (Numbers). Ask for the overlay files
   when a network publishes no numbers.
 - **Sizes and rate:** 1080x1920 at the capture's rate, usually 30 fps; durations restated in frames.
@@ -106,9 +106,9 @@ version traps).
    (media replacement) with `addToMotionGraphicsTemplateAs`; per cell a comp holding one instance
    with overrides; `AEX.ad.lineFor` breaks and measures each override in the master first. Naming:
    [procedures.md](references/procedures.md) section 12. Batch mechanics at scale go to
-   scenario-after-effects-scripting. Read the test by hold rate and IPM per cell (app marketing
-   study). GATE: every override fits its box (copy that does not fit is rewritten, never shrunk in
-   one cell); contact sheet of all first frames and all end cards side by side.
+   scenario-after-effects-scripting. Read the test by hold rate and IPM per cell (AppTweak). GATE:
+   every override fits its box (copy that does not fit is rewritten, never shrunk in one cell);
+   contact sheet of all first frames and all end cards side by side.
 8. **Formats and cuts.** Goal: 1:1, 16:9, shorter cuts from the same data. Other ratios use their
    layout row; a master that is not a gameplay ad (end card, brand spot, product mark) goes through
    `AEX.ad.reformat(master, layouts)`, one comp per layout row with its own texts and zones
@@ -132,7 +132,7 @@ version traps).
 | Value                                  | Meaning                                                                    | Source                                         |
 | -------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------- |
 | hook text by frame 3                   | at 30 fps                                                                  | [added]                                        |
-| 3 to 5 s                               | hook window                                                                | ad network doc                                 |
+| 3 to 5 s                               | hook window                                                                | AppLovin doc                                   |
 | 12 + 9 frames per word, 30 minimum     | text reading time at 30 fps                                                | 1 s floor caption guide; rate [added]          |
 | 2 lines, 32 to 40 characters, 1 to 7 s | caption limits                                                             | caption guide                                  |
 | 4.5:1, 3:1                             | text contrast on its background, body / large type (`adtools.py contrast`) | WCAG 2.2                                       |
