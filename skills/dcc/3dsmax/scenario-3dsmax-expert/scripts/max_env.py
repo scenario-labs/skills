@@ -118,7 +118,7 @@ def doctor() -> dict:
             lvl = int(env["ADSK_3DSMAX_MCP_LEVEL"])
             notes.append(f"admin MCP level {lvl} ({LEVELS.get(lvl, 'unknown')}); read at startup only")
         except ValueError:
-            pass
+            notes.append(f"ADSK_3DSMAX_MCP_LEVEL={env['ADSK_3DSMAX_MCP_LEVEL']!r} is not a number; ignored")
     if osname != "Windows" and not forced:
         notes.append("3ds Max runs on Windows only: from this machine use handoff, or a remote Windows "
                      "machine reached through a bridge or an MCP client there")

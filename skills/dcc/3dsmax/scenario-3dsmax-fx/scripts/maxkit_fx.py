@@ -19,7 +19,8 @@ import contextlib
 import time
 
 import pymxs
-from pymxs import runtime as rt
+
+rt = pymxs.runtime
 
 FX_CLASS_HINTS = {
     "tyflow": "tyFlow object",

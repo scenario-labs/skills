@@ -373,6 +373,15 @@ class EnvTests(unittest.TestCase):
         self.assertTrue(any("Windows only" in n for n in d["notes"]))
         json.dumps(d)
 
+    def test_doctor_notes_an_invalid_mcp_level(self):
+        env = {k: v for k, v in os.environ.items() if k not in max_env.ENV_KEYS}
+        env["ADSK_3DSMAX_MCP_LEVEL"] = "high"
+        with mock.patch.dict(os.environ, env, clear=True), \
+                mock.patch.object(max_env, "_open", return_value=False), \
+                mock.patch.object(max_env.platform, "system", return_value="Darwin"):
+            d = max_env.doctor()
+        self.assertTrue(any("not a number" in n for n in d["notes"]))
+
     def test_doctor_sees_mcp_port(self):
         with mock.patch.object(max_env, "_open", side_effect=lambda h, p, timeout=0.25: p == 27201), \
                 mock.patch.dict(os.environ, {}, clear=False):
