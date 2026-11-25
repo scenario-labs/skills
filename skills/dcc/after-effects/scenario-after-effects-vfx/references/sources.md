@@ -37,26 +37,26 @@ Title as published, channel, and URL. Documentation rows are marked doc.
 
 ### Particles
 
-| Title                                                                                | Channel                          | URL                                                                             |
-| ------------------------------------------------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------------- |
-| CC Particle Systems II + CC Particle World / Effects of After Effects                | Jake In Motion                   | https://www.youtube.com/watch?v=7Fp9207Ds5I                                     |
-| Endless Particle World (loops, samples, and tips in After Effects)                   | Texturelabs                      | https://www.youtube.com/watch?v=awCqRPTasBc                                     |
-| After Effects Tutorial - Spark Particles Quick VFX                                   | Surfaced Studio                  | https://www.youtube.com/watch?v=gQoSJhbmqqo                                     |
-| How To Create Atmospheric Particles in After Effects Without Using Plug Ins Tutorial | Ignace Aleya                     | https://www.youtube.com/watch?v=34VLajDswtA                                     |
-| Advanced Sand Disintegration Effect in After Effects (No Plugins!)                   | Ignace Aleya                     | https://www.youtube.com/watch?v=36OeLwyfXX4                                     |
-| Create Particles Along a Path / After Effects Tutorial (No Plugins)                  | SonduckFilm                      | https://www.youtube.com/watch?v=-m1TRt4pubM                                     |
-| Particle Shapes with Depth in After Effects                                          | Michael Tierney                  | https://www.youtube.com/watch?v=mD_tzQc5Bu0                                     |
-| Particle Playground / Effects of After Effects                                       | Jake In Motion                   | https://www.youtube.com/watch?v=qzzEy76cCXo                                     |
-| Create Bounce Particles on a Floor / After Effects Tutorial                          | SonduckFilm                      | https://www.youtube.com/watch?v=4TpoAxhS2M4                                     |
-| Create Fun Confetti in After Effects ANY SHAPE NO PLUGINS. After Effects Tutorial    | Glitter and Motion               | https://www.youtube.com/watch?v=kvIxSduLeRM                                     |
-| FREE Floating Dust / Pollen / Bokeh Effect - After Effects                           | Creation Effects                 | https://www.youtube.com/watch?v=Ia_Z8xE8QHo                                     |
-| Particle Explosions with CC Mr Mercury in After Effects / Tutorial                   | Manuel does Motion               | https://www.youtube.com/watch?v=kElBx9dRB80                                     |
-| Create Laser Welding Sparks with SABER & CC Particle World!                          | Beta-1 Studios                   | https://www.youtube.com/watch?v=_IeCk4OuvAo                                     |
-| TURNING INTO SAND (Disintegration) - After Effects VFX Tutorial (No Plugins)         | VFX Studio Koliba                | https://www.youtube.com/watch?v=wFH3oxTzHcc                                     |
-| CC Rainfall + CC Snowfall / Effects of After Effects                                 | Jake In Motion                   | https://www.youtube.com/watch?v=c2TT33Vn0OU                                     |
-| Shatter / Effects of After Effects                                                   | Jake In Motion                   | https://www.youtube.com/watch?v=UJI7cbilZYA                                     |
-| Adobe: Simulation effects (Particle Playground section)                              | Adobe (doc)                      | https://helpx.adobe.com/after-effects/using/simulation-effects.html             |
-| CycoreFX HD 1.8.1 Manual: CC Particle Systems II and CC Particle World               | Cycore FX (effects author) (doc) | http://www.cycorefx.com/downloads/cfx_hd_std/CycoreFX%20HD%201.8.1%20Manual.pdf |
+| Title                                                                                | Channel                          | URL                                                                              |
+| ------------------------------------------------------------------------------------ | -------------------------------- | -------------------------------------------------------------------------------- |
+| CC Particle Systems II + CC Particle World / Effects of After Effects                | Jake In Motion                   | https://www.youtube.com/watch?v=7Fp9207Ds5I                                      |
+| Endless Particle World (loops, samples, and tips in After Effects)                   | Texturelabs                      | https://www.youtube.com/watch?v=awCqRPTasBc                                      |
+| After Effects Tutorial - Spark Particles Quick VFX                                   | Surfaced Studio                  | https://www.youtube.com/watch?v=gQoSJhbmqqo                                      |
+| How To Create Atmospheric Particles in After Effects Without Using Plug Ins Tutorial | Ignace Aleya                     | https://www.youtube.com/watch?v=34VLajDswtA                                      |
+| Advanced Sand Disintegration Effect in After Effects (No Plugins!)                   | Ignace Aleya                     | https://www.youtube.com/watch?v=36OeLwyfXX4                                      |
+| Create Particles Along a Path / After Effects Tutorial (No Plugins)                  | SonduckFilm                      | https://www.youtube.com/watch?v=-m1TRt4pubM                                      |
+| Particle Shapes with Depth in After Effects                                          | Michael Tierney                  | https://www.youtube.com/watch?v=mD_tzQc5Bu0                                      |
+| Particle Playground / Effects of After Effects                                       | Jake In Motion                   | https://www.youtube.com/watch?v=qzzEy76cCXo                                      |
+| Create Bounce Particles on a Floor / After Effects Tutorial                          | SonduckFilm                      | https://www.youtube.com/watch?v=4TpoAxhS2M4                                      |
+| Create Fun Confetti in After Effects ANY SHAPE NO PLUGINS. After Effects Tutorial    | Glitter and Motion               | https://www.youtube.com/watch?v=kvIxSduLeRM                                      |
+| FREE Floating Dust / Pollen / Bokeh Effect - After Effects                           | Creation Effects                 | https://www.youtube.com/watch?v=Ia_Z8xE8QHo                                      |
+| Particle Explosions with CC Mr Mercury in After Effects / Tutorial                   | Manuel does Motion               | https://www.youtube.com/watch?v=kElBx9dRB80                                      |
+| Create Laser Welding Sparks with SABER & CC Particle World!                          | Beta-1 Studios                   | https://www.youtube.com/watch?v=_IeCk4OuvAo                                      |
+| TURNING INTO SAND (Disintegration) - After Effects VFX Tutorial (No Plugins)         | VFX Studio Koliba                | https://www.youtube.com/watch?v=wFH3oxTzHcc                                      |
+| CC Rainfall + CC Snowfall / Effects of After Effects                                 | Jake In Motion                   | https://www.youtube.com/watch?v=c2TT33Vn0OU                                      |
+| Shatter / Effects of After Effects                                                   | Jake In Motion                   | https://www.youtube.com/watch?v=UJI7cbilZYA                                      |
+| Adobe: Simulation effects (Particle Playground section)                              | Adobe (doc)                      | https://helpx.adobe.com/after-effects/using/simulation-effects.html              |
+| CycoreFX HD 1.8.1 Manual: CC Particle Systems II and CC Particle World               | Cycore FX (effects author) (doc) | https://www.cycorefx.com/downloads/cfx_hd_std/CycoreFX%20HD%201.8.1%20Manual.pdf |
 
 ### Energy and light
 
