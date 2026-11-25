@@ -4,6 +4,8 @@ var AEX = AEX || {};
 AEX.threeD = (function () {
     // internal renderer names on 27.0: the name "ADBE Advanced 3d" is CLASSIC 3D; the Advanced 3D renderer is "ADBE Calder"
     var RENDERER = { classic: "ADBE Advanced 3d", advanced: "ADBE Calder", cinema4d: "ADBE Ernst" };
+    // A layer name inside a double-quoted expression string: backslashes first, then quotes.
+    function esc(s) { return String(s).replace(/\\/g, "\\\\").replace(/"/g, "\\\""); }
     function rendererName(c) { var k; for (k in RENDERER) { if (RENDERER.hasOwnProperty(k) && RENDERER[k] === c.renderer) { return k; } } return c.renderer; }
     // use(comp, "advanced"|"classic"|"cinema4d"): a new comp made by script is Classic 3D; set it before adding models
     function use(c, which) { c.renderer = RENDERER[which || "advanced"]; return rendererName(c); }
@@ -196,7 +198,7 @@ AEX.threeD = (function () {
         var probe = AEK.build.nullLayer(c, "__probe"), fx = probe.property("ADBE Effect Parade");
         fx.addProperty("ADBE Point Control");
         var a = probe.property("ADBE Effect Parade").property(1).property(1);
-        a.expression = "thisComp.layer(\"" + l.name.replace(/"/g, "\\\"") + "\").toComp([" + pt[0] + "," + pt[1] + "," + (pt[2] || 0) + "]);";
+        a.expression = "thisComp.layer(\"" + esc(l.name) + "\").toComp([" + pt[0] + "," + pt[1] + "," + (pt[2] || 0) + "]);";
         var v = a.valueAtTime(t || 0, false), err = a.expressionError;
         probe.remove();
         if (err) { throw new Error(err); }
@@ -228,7 +230,7 @@ AEX.threeD = (function () {
         var probe = AEK.build.nullLayer(c, "__probe"), fx = probe.property("ADBE Effect Parade");
         fx.addProperty("ADBE Point Control"); fx.addProperty("ADBE Point Control");
         var a = probe.property("ADBE Effect Parade").property(1).property(1), b = probe.property("ADBE Effect Parade").property(2).property(1);
-        var ref = "thisComp.layer(\"" + l.name.replace(/"/g, "\\\"") + "\")";
+        var ref = "thisComp.layer(\"" + esc(l.name) + "\")";
         a.expression = "var L = " + ref + "; L.toComp([0, 0, 0]);";
         b.expression = "var L = " + ref + "; L.toComp([L.width, L.height, 0]);";
         var p = a.valueAtTime(t || 0, false), q = b.valueAtTime(t || 0, false), err = a.expressionError;
@@ -247,7 +249,7 @@ AEX.threeD = (function () {
     function dofBlur(c, cam, l, pt, t) {
         var probe = AEK.build.nullLayer(c, "__dof"), fx = probe.property("ADBE Effect Parade");
         fx.addProperty("ADBE Slider Control");
-        var a = fx.property(1).property(1), cn = cam.name.replace(/"/g, "\\\""), ln = l.name.replace(/"/g, "\\\"");
+        var a = fx.property(1).property(1), cn = esc(cam.name), ln = esc(l.name);
         a.expression = "var C = thisComp.layer(\"" + cn + "\"); var L = thisComp.layer(\"" + ln + "\");\n" +
             "length(C.toWorld([0, 0, 0]), L.toWorld([" + pt[0] + "," + pt[1] + "," + (pt[2] || 0) + "]));";
         var d = a.valueAtTime(t || 0, false), err = a.expressionError;
