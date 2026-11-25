@@ -37,8 +37,7 @@ What each generated type needs on arrival, measured on 27.0 with files from the 
 2. `model_schema_get`, then `model_run` with schema field names; `jobs_wait` on the returned
    `job_id`. For video:
    - Preview the start frame before the full render, and generate several small variations of the
-     same shot (framing, spacing, movement), not new ideas (Jonathan Lam (Tuts+) ZPajb_N6tBs
-     00:03:30).
+     same shot (framing, spacing, movement), not new ideas (Jonathan Lam, ZPajb_N6tBs 00:03:30).
    - Write two prompts per shot: a detailed one for control, a short one for variety (Yaroflasher
      K67WetORDEo 00:08:11).
    - Ask for a constant camera speed ("keep the camera speed constant through the whole shot") when

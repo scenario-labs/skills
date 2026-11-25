@@ -78,10 +78,11 @@ given where they exist.
    insert. Apply Export.
 7. Mattes: Matte > Apply Matte, or Create AE Masks (native masks ignore Mocha's feather).
 
-- Paste paths: Edit > Paste Mocha Mask (command 5007) for mask data. Mocha Pro camera solves paste
-  with Edit > Paste Mocha Camera (not present in this install: command id 0).
-- Mocha Pro adds the Insert, Remove and Stabilize modules and camera solves; Mocha AE gives planar
-  tracks, masks and AdjustTrack (Boris FX doc).
+- Paste paths: Edit > Paste Mocha Mask (command 5007) for mask data. Camera solves from the
+  tracker's paid edition paste with Edit > Paste Mocha Camera (not present in this install: command
+  id 0).
+- Mocha AE gives planar tracks, masks and AdjustTrack. The insert, remove and stabilize modules and
+  camera solves belong to its paid edition (Mocha AE doc).
 
 ## Mask Tracker (26.3)
 

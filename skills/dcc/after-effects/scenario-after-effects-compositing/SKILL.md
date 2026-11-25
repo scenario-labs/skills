@@ -23,7 +23,7 @@ traps).
 ## Stance (the expert delta)
 
 1. **Key in pieces: garbage, soft matte, core matte.** One Keylight is never enough for a hard plate
-   (Leonard Wilkes K-uOFPoIm6U 00:01:12, 00:10:16; ActionVFX _0lcyyybbng 00:01:02).
+   (Leonard Wilkes K-uOFPoIm6U 00:01:12, 00:10:16; Danasa _0lcyyybbng 00:01:02).
 2. **Keylight View on Intermediate Result when Advanced Spill Suppressor follows** (Jake Bartlett
    tK_Z1dYgtxs 00:08:28). Final Result despills first and leaves the suppressor nothing.
 3. **Clean with Clip Black and Clip White in Status view, never Screen Gain** (tK_Z1dYgtxs

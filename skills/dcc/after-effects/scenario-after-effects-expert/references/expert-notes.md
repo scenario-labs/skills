@@ -21,7 +21,7 @@ rules they state for any project. Format: (expert or channel, video id, time). V
 ## Where agents pay off
 
 - Wiring: sorting the Project panel, renaming 40 layers called "Shape Layer N" by what they are,
-  labels by type, trimming layers to content (Plainly, bEO3z86mtbI 00:03:02).
+  labels by type, trimming layers to content (bEO3z86mtbI 00:03:02).
 - "The expression on its own is never the problem. It's the rig built around it." Data-driven
   animation is about 10 percent animation and 90 percent wiring (bEO3z86mtbI 00:04:17).
 - Rules over hand keys: asked for a dot with a trail of followers, the agent wrote one follow rule

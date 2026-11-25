@@ -29,7 +29,7 @@ version traps).
 - The display transform is preview only. Export color comes from the output module, or from an
   in-comp transform with Preserve RGB, never both (InLightVFX, x2sx-P5f-iM 05:57, 06:45).
 - Declare the color space of every input. The OCIO default of ACES2065-1 is wrong for almost every
-  real clip (ActionVFX, pYzN_g-1N_w frame 06:29).
+  real clip (pYzN_g-1N_w frame 06:29).
 - Grade in a known order: input transform, exposure and balance, look, secondaries. Lumetri sections
   process top to bottom, so a Look can need saturation rebalanced (Jake Bartlett, y4fuhIPxmJg
   10:24). Fix exposure before a hue-to-brightness curve (Lumetri Curves) on clipped highlights
@@ -75,11 +75,11 @@ version traps).
    is the Output Module's Output Color Space (InLightVFX, x2sx-P5f-iM 05:23 to 06:12). GATE: a
    person confirms the GUI settings, or the project starts from a saved template `.aep`.
 3. **Input transform.** Log footage: set one clip in Interpret Footage (GUI), then Remember
-   Interpretation and Apply Interpretation to the other clips (ActionVFX, pYzN_g-1N_w 08:28).
-   Scripted: ffmpeg `lut3d` before import, the log original kept for the colorist. Never add Apply
-   Color LUT (`ADBE Apply Color LUT2`) by script: it opens a file panel that blocks the application.
-   GATE: midgray and black in a frame look right; PSNR or a scope reading against a reference when
-   one exists.
+   Interpretation and Apply Interpretation to the other clips (pYzN_g-1N_w 08:28). Scripted: ffmpeg
+   `lut3d` before import, the log original kept for the colorist. Never add Apply Color LUT
+   (`ADBE Apply Color LUT2`) by script: it opens a file panel that blocks the application. GATE:
+   midgray and black in a frame look right; PSNR or a scope reading against a reference when one
+   exists.
 4. **Grade stack.** Top to bottom: grain (finishing on top of everything, M7Ml1KoO4jY), titles,
    look, base grade, plates. Put Lumetri on adjustment layers below the titles (`moveAfter`). Script
    only scalar sliders (Exposure `ADBE Lumetri-0011`, Blacks `-0016`, Saturation `-0020`; full list

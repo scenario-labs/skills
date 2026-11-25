@@ -268,7 +268,7 @@ def zone(png, name, source=""):
 DEFAULT_RULES = {
     "hook_text_by_frame": 3,          # [added] the hook line is on screen within the first 3 frames
     "first_cut_max_f": 45,            # [added] the opening shot changes within 1.5 s at 30 fps
-    "min_text_frames": 30,            # 1 s minimum on screen (Plainly caption guidance: 1 to 7 s)
+    "min_text_frames": 30,            # 1 s minimum on screen (caption guidance: 1 to 7 s)
     "frames_per_word": 9,             # [added] reading-rate floor at 30 fps, plus the base below
     "text_base_frames": 12,           # [added]
     "max_words": 7,                   # [added] words per on-screen line set

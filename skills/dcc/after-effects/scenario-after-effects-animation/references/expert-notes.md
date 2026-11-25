@@ -99,7 +99,7 @@ measured values come from the live cases in [procedures.md](procedures.md).
 - Stagger list items 2 to 3 frames apart and fade everything in. (PdHYC0gqIPA 00:10:44, 00:03:56)
 - In 3D, hide layers by moving them in Z, not by fading. (PdHYC0gqIPA 00:14:33)
 
-## Jess Riley (Tuts+)
+## Jess Riley
 
 - No good motion without good graphic design first: hierarchy, balance, contrast, negative space,
   rhythm. (0N0NHlvMEWs 00:02:16)

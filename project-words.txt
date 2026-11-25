@@ -804,7 +804,6 @@ Sirota
 Skels
 Skia
 Slerp
-Smadex
 Snitsaruk
 Snopek
 Soderlind
@@ -1209,7 +1208,6 @@ naoki
 nasojugal
 nasolabial
 nativization
-nexrender
 ngons
 nihei
 nlapinski

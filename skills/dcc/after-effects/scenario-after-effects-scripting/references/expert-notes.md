@@ -43,7 +43,7 @@ Media Encoder for H.264); their patterns hold, their UI does not.
 - A script plus a CSV runs on old versions where Essential Graphics media replacement does not
   (00:00:32); in 2026 both routes are available.
 
-## Plainly team: responsive MOGRT (SkIOeqJEKD0, 2025)
+## Video automation company team: responsive MOGRT (SkIOeqJEKD0, 2025)
 
 - A template must survive 3 or 303 characters, any brand color, font and duration (00:00:00,
   00:00:31).
@@ -91,7 +91,7 @@ Media Encoder for H.264); their patterns hold, their UI does not.
   the code before production use (frame 00:00:30, 00:00:44).
 - Save every working script to a library with a name and a description (00:01:40).
 
-## Docs (aerender, scripting guide, nexrender README)
+## Docs (aerender, scripting guide, open-source render queue README)
 
 - `aerender` with no `-comp` renders the whole queue as saved and honors only `-project`, `-log`,
   `-v`, `-mem_usage`, `-close` (aerender doc). Live: only QUEUED items render, DONE items are
@@ -111,20 +111,20 @@ Media Encoder for H.264); their patterns hold, their UI does not.
   `app.quit()`, kill hung instances by PID after a timeout, cap concurrency (three in the reported
   setup) (Adobe Community answer, scripts without GUI on macOS).
 - Comps using the Cinema 4D renderer can render nothing under `aerender` ("Couldn't find a result
-  file"); Classic 3D and Advanced 3D are fine (nexrender README).
+  file"); Classic 3D and Advanced 3D are fine (open-source render queue README).
 
-## Template systems compared (named factually)
+## Template systems compared (by kind)
 
-| Tool                             | What it is                                 | What it adds over a script plus `aerender`                                                                                                                                                                                                                                          | Deciding condition                                                             |
-| -------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Templater (Dataclay)             | Paid After Effects panel and bot           | Google Sheets, JSON or form data, `Templater Settings` effect per layer, Scale factor and Attachment layout rules, replicate one comp per row, bot polling a `render status` column, Media Encoder handoff (uo5k4_vu5Vk 00:17:10 to 00:39:22)                                       | Artists who want a panel and a layout engine without code                      |
-| Plainly                          | Hosted service                             | Upload an After Effects template, feed rows by spreadsheet or API, renders in the cloud (Plainly blog, 2026)                                                                                                                                                                        | No render machines in house, API-driven volume                                 |
-| nexrender                        | Open-source Node tool                      | JSON jobs (`template.src`, `composition`, assets by `layerName`, `data` assets set any property by value or expression, `script` assets with `NX.get`), copies the project to a temp folder, runs `aerender`, server and workers for a farm, post-render actions (nexrender README) | Developers running a farm from code; each worker needs After Effects installed |
-| Custom ExtendScript (this skill) | `AEX.batch` plus the bridge and `aerender` | Full control, report per row, no extra license                                                                                                                                                                                                                                      | Studio pipelines with a developer, agents                                      |
+| Tool                             | What it is                                 | What it adds over a script plus `aerender`                                                                                                                                                                                                                      | Deciding condition                                                             |
+| -------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Template panel                   | Paid After Effects panel and bot           | Google Sheets, JSON or form data, a settings effect per layer, Scale factor and Attachment layout rules, replicate one comp per row, bot polling a `render status` column, Media Encoder handoff (uo5k4_vu5Vk 00:17:10 to 00:39:22)                             | Artists who want a panel and a layout engine without code                      |
+| Hosted render service            | Hosted service                             | Upload an After Effects template, feed rows by spreadsheet or API, renders in the cloud (vendor blog, sources.md)                                                                                                                                               | No render machines in house, API-driven volume                                 |
+| Open-source render queue         | Open-source Node tool                      | JSON jobs (`template.src`, `composition`, assets by `layerName`, `data` assets set any property by value or expression, `script` assets), copies the project to a temp folder, runs `aerender`, server and workers for a farm, post-render actions (its README) | Developers running a farm from code; each worker needs After Effects installed |
+| Custom ExtendScript (this skill) | `AEX.batch` plus the bridge and `aerender` | Full control, report per row, no extra license                                                                                                                                                                                                                  | Studio pipelines with a developer, agents                                      |
 
-For nexrender on After Effects 2023 and later, set `outputModule` (for example
+For the open-source render queue on After Effects 2023 and later, set `outputModule` (for example
 `H.264 - Match Render Settings - 15 Mbps`), `outputExt` and `settingsTemplate` in the job;
-`aerender` often renders nothing without a configured output module (nexrender README).
+`aerender` often renders nothing without a configured output module (its README).
 
 ## Platform status (docs and version deltas)
 

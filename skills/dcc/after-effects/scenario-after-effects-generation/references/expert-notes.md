@@ -13,7 +13,7 @@ Principles and judgment by source, with timestamps. Generator names from the vid
 - A reference image that was too large crashed After Effects during the session: resize references
   before import [00:10:31].
 
-## Jonathan Lam (Tuts+) (ZPajb_N6tBs): finishing a generated video in After Effects
+## Jonathan Lam (ZPajb_N6tBs): finishing a generated video in After Effects
 
 - Generate plates with a slow camera move and empty graphic space for type [00:01:00].
 - Generate several variations of the same scene with small changes in framing, spacing or movement,
@@ -36,7 +36,7 @@ Principles and judgment by source, with timestamps. Generator names from the vid
 - Generated timing comes as even, uneased motion; hold-key stacks and real easing are hand work
   [00:09:00].
 
-## Plainly (bEO3z86mtbI): an agent driving After Effects
+## A video automation company's presenter (bEO3z86mtbI): an agent driving After Effects
 
 - Back up the project before an agent edits it [00:02:03].
 - Expect a linear first pass from the agent; refine motion afterwards [00:04:39].

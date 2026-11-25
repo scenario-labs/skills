@@ -1,6 +1,6 @@
 ---
 name: scenario-after-effects-scripting
-description: "Use when an After Effects task needs a script or a pipeline: versions from a CSV, JSON or sheet, localized end cards in many ratios, a comp built from a data file, batch renders with named outputs, aerender or a render farm, a batch that crashed or filled the disk, MOGRT export by script, undo groups, ExtendScript errors, or choosing between a custom script, Templater, Plainly and nexrender."
+description: "Use when an After Effects task needs a script or a pipeline: versions from a CSV, JSON or sheet, localized end cards in many ratios, a comp built from a data file, batch renders with named outputs, aerender or a render farm, a batch that crashed or filled the disk, MOGRT export by script, undo groups, ExtendScript errors, or choosing between a custom script, a template panel, a hosted render service and an open-source render queue."
 license: MIT
 ---
 
@@ -74,8 +74,8 @@ version traps).
 
 1. **Preflight the project and the machine** (procedures.md section 1). Run `ae.py audit` (its
    `fonts.missing` rule also catches a substitute font after reopen), list templates, and refuse any
-   comp on the Cinema 4D renderer (`ADBE Ernst`): `aerender` renders nothing from it (nexrender
-   README).
+   comp on the Cinema 4D renderer (`ADBE Ernst`): `aerender` renders nothing from it (render queue
+   README, sources.md).
    ```bash
    python3 ae.py templates "MASTER"
    ```
@@ -207,7 +207,7 @@ More rows (resize, data cells, ES3, dialogs, output modules):
 - [references/procedures.md](references/procedures.md): full jobs (CSV, versioning, render queue,
   aerender, MOGRT, deep duplicate), channel, checked line, what to check.
 - [references/expert-notes.md](references/expert-notes.md): principles by expert with timestamps,
-  and Templater, Plainly and nexrender compared.
+  and the template systems compared.
 - [references/critique.md](references/critique.md): rubric with numbers and the contact sheet
   checklist.
 - [references/gui-paths.md](references/gui-paths.md): menus and panels for the same steps.

@@ -47,7 +47,7 @@ effects and encoders must exist on each machine (aerender doc). Measured: with a
 installed and one comp set to `ADBE Ernst`, `problems` held exactly "font not installed:
 NoSuchFont-Bold" and "Cinema 4D renderer under aerender: EXTRUDED"; 62 ms. `ADBE Ernst` is the
 Cinema 4D renderer; `ADBE Advanced 3d` is Classic 3D and `ADBE Calder` Advanced 3D, both safe under
-`aerender` (nexrender README). On a clean 27.0 install the output module list holds
+`aerender` (open-source render queue README). On a clean 27.0 install the output module list holds
 `H.264 - Match Render Settings -  5 Mbps` (two spaces), `H.264 - Match Render Settings - 15 Mbps`,
 `H.264 - Match Render Settings - 40 Mbps`, `High Quality`, `High Quality with Alpha`, `Lossless`,
 `Lossless with Alpha`, `Alpha Only`, `AIFF 48kHz`, `Multi-Machine Sequence`, `Photoshop`,

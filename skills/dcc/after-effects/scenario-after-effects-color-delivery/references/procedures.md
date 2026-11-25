@@ -299,10 +299,10 @@ the viewer only; the export behaves as if the display transform were None (InLig
 05:23 to 06:12). The file's color comes from Output Module > Color > Output Color Space (OCIO) or
 Output Profile (Adobe), set in the GUI.
 
-Camera-log version for a colorist (ActionVFX, pYzN_g-1N_w 09:32 to 10:37; InLightVFX, x2sx-P5f-iM
-07:52 to 08:58): one more output module whose Output Color Space is the input transform used on the
-footage (Show All), in ProRes 4444, EXR or DPX, without the look layers. It lets the colorist reuse
-the grade of the other shots. The color space menus are GUI work; once set, save the module as a
+Camera-log version for a colorist (pYzN_g-1N_w 09:32 to 10:37; InLightVFX, x2sx-P5f-iM 07:52 to
+08:58): one more output module whose Output Color Space is the input transform used on the footage
+(Show All), in ProRes 4444, EXR or DPX, without the look layers. It lets the colorist reuse the
+grade of the other shots. The color space menus are GUI work; once set, save the module as a
 template and reuse it with `render`.
 
 ## 8. Templates and aerender

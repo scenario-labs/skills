@@ -22,7 +22,7 @@ schemas and flag the gap.
 - A dialog stops every script. Close open dialogs before a run and never open one from a job
   (workflow demo, 3AIZ4FT61aw 00:04:22; measured on 27.0).
 - Protect the project first: "It's operating on your live project file and undo does not always save
-  you" (Plainly, bEO3z86mtbI 00:02:03).
+  you" (bEO3z86mtbI 00:02:03).
 - Wiring is the agent's strength: rigs, renames, versions and checks. "The expression on its own is
   never the problem. It's the rig built around it" (bEO3z86mtbI 00:04:17).
 - A first agent pass moves like a slideshow: "Linear movement, no overshoot, no anticipation"

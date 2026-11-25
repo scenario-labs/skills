@@ -8,15 +8,15 @@ scale them for other rates.
 
 | Check                   | Pass                                                                                                                     | Source                                                                                                            |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Hook line on screen     | by frame 3                                                                                                               | [added]; AppLovin asks for the hook in the first 3 to 5 s, a feed decides sooner                                  |
+| Hook line on screen     | by frame 3                                                                                                               | [added]; ad network guidance asks for the hook in the first 3 to 5 s, a feed decides sooner                       |
 | First cut               | by frame 45                                                                                                              | [added]                                                                                                           |
-| Text on screen          | at least 30 frames, and at least 12 + 9 frames per word                                                                  | 1 s floor from Plainly (captions 1 to 7 s); the per-word rate is [added]                                          |
-| Captions                | key lines captioned, bold, benefit keywords highlighted                                                                  | AppLovin (most viewers play muted)                                                                                |
-| Words per line set      | 7 or fewer, 2 lines max, 32 to 40 characters per line                                                                    | Plainly                                                                                                           |
+| Text on screen          | at least 30 frames, and at least 12 + 9 frames per word                                                                  | 1 s floor from the caption guide (captions 1 to 7 s); the per-word rate is [added]                                |
+| Captions                | key lines captioned, bold, benefit keywords highlighted                                                                  | ad network doc (most viewers play muted)                                                                          |
+| Words per line set      | 7 or fewer, 2 lines max, 32 to 40 characters per line                                                                    | caption guide                                                                                                     |
 | Cuts per 10 s window    | 4 to 12 for a fast social cut                                                                                            | [added]; set per brief                                                                                            |
 | Logo first frame        | not before frame 30, unless the brand is known                                                                           | Derek Lieu [00:23:49]                                                                                             |
 | CTA visible             | 60 frames or more                                                                                                        | [added]                                                                                                           |
-| End card hold           | 75 frames or more, and different from the last gameplay frame                                                            | hold [added]; different frame: AppTweak (3x IPM)                                                                  |
+| End card hold           | 75 frames or more, and different from the last gameplay frame                                                            | hold [added]; different frame: app marketing study (3x IPM)                                                       |
 | Hook over the product   | the shot under the hook line shows the product (`product: true` in the sheet; read `hook_shot` in the report)            | [added]                                                                                                           |
 | Near-empty frames       | no run longer than 9 frames with under 3 % of the frame carrying content (`review --picture`)                            | [added]                                                                                                           |
 | End-card content        | median 8 % of the frame or more during the hold                                                                          | [added]                                                                                                           |
@@ -77,9 +77,9 @@ scale them for other rates.
 
 ## After launch
 
-Read each test cell by hold rate (time watched before skip or close) and IPM (AppTweak). A playable
-end card (7x IPM, 47 % better CTR than static, AppTweak) is a separate test cell built outside After
-Effects.
+Read each test cell by hold rate (time watched before skip or close) and IPM (app marketing study).
+A playable end card (7x IPM, 47 % better CTR than static, app marketing study) is a separate test
+cell built outside After Effects.
 
 ## Common mistakes
 
