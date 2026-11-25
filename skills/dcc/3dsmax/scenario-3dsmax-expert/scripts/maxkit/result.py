@@ -78,11 +78,24 @@ def _is_envelope(path) -> bool:
     return isinstance(data, dict) and set(data) == _ENVELOPE_KEYS
 
 
+def _publish_new(tmp: str, path: str) -> None:
+    """Put tmp at path only when nothing is there: the test and the creation are one step."""
+    try:
+        os.link(tmp, path)
+    except FileExistsError:
+        raise FileExistsError(f"{path} exists; pick a new result_path") from None
+    except OSError:  # a volume without hard links: exclusive creation, then the copy
+        with open(tmp, encoding="utf-8") as src, open(path, "x", encoding="utf-8") as out:
+            out.write(src.read())
+    os.remove(tmp)
+
+
 def write(payload: dict, path, overwrite=None) -> str:
     """Write the envelope as UTF-8 JSON; creates the parent folder. Returns the path.
 
     overwrite None replaces only an earlier result envelope, True replaces any file, False never
-    replaces. A refused path raises FileExistsError and leaves the file untouched."""
+    replaces: it creates the file in one step, so a file that appears meanwhile is kept. A refused
+    path raises FileExistsError and leaves the file untouched."""
     path = os.fspath(path)
     parent = os.path.dirname(path)
     if parent:
@@ -95,9 +108,12 @@ def write(payload: dict, path, overwrite=None) -> str:
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(payload, fh, indent=1, ensure_ascii=False)
-        if overwrite is False and os.path.exists(path):
-            raise FileExistsError(f"{path} exists; pick a new result_path")
-        os.replace(tmp, path)
+        if overwrite is False:
+            _publish_new(tmp, path)
+        else:
+            if overwrite is None and os.path.exists(path) and not _is_envelope(path):
+                raise FileExistsError(f"{path} exists and is not a result envelope; pick a new result_path")
+            os.replace(tmp, path)
     except BaseException:
         with contextlib.suppress(OSError):
             os.remove(tmp)

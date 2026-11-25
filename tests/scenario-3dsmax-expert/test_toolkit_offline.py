@@ -689,6 +689,44 @@ class ToolkitFixTests(unittest.TestCase):
             result.write(env, q, overwrite=False)
         result.write(env, p, overwrite=True)
 
+    def test_result_write_never_replaces_when_overwrite_is_false(self):
+        d = tmpdir()
+        env = result.envelope(True, 1)
+        q = d / "r.json"
+        result.write(env, q, overwrite=False)
+        self.assertEqual(json.loads(q.read_text())["result"], 1)
+        with self.assertRaises(FileExistsError):
+            result.write(result.envelope(True, 2), q, overwrite=False)
+        self.assertEqual(json.loads(q.read_text())["result"], 1)
+        self.assertEqual([x.name for x in d.iterdir()], ["r.json"])
+        # A volume without hard links still creates the file in one exclusive step.
+        with mock.patch.object(result.os, "link", side_effect=OSError("no hard links")):
+            n = d / "n.json"
+            result.write(env, n, overwrite=False)
+            self.assertEqual(json.loads(n.read_text())["result"], 1)
+            with self.assertRaises(FileExistsError):
+                result.write(result.envelope(True, 2), n, overwrite=False)
+            self.assertEqual(json.loads(n.read_text())["result"], 1)
+        self.assertEqual(sorted(x.name for x in d.iterdir()), ["n.json", "r.json"])
+
+    def test_result_write_keeps_a_file_that_appears_during_the_write(self):
+        d = tmpdir()
+        q = d / "r.json"
+        env = result.envelope(True, 1)
+        orig = result.json.dump
+
+        def racing_dump(obj, fh, **kw):
+            q.write_text('{"keep": 1}')  # another process creates the path mid-write
+            return orig(obj, fh, **kw)
+
+        for mode in (None, False):
+            with mock.patch.object(result.json, "dump", racing_dump):
+                with self.assertRaises(FileExistsError):
+                    result.write(env, q, overwrite=mode)
+            self.assertEqual(q.read_text(), '{"keep": 1}')
+            self.assertEqual([x.name for x in d.iterdir()], ["r.json"])
+            q.unlink()
+
     def test_result_write_interrupted_leaves_no_partial_file(self):
         d = tmpdir()
         q = d / "r.json"
