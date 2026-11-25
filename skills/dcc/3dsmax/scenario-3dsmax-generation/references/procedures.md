@@ -214,6 +214,8 @@ report = maxkit_generation.land_model(
     place_at=ARGS.get("place_at"), record=ARGS.get("record"))
 report["renderer"] = str(rt.renderers.current)
 if save_as:
+    if os.path.exists(save_as):  # again: another run may have saved this name during the import
+        raise FileExistsError(save_as)
     if not rt.saveMaxFile(save_as, quiet=True):  # [verify] quiet: keyword
         raise RuntimeError("saveMaxFile failed: " + save_as)
     report["saved_scene"] = save_as
