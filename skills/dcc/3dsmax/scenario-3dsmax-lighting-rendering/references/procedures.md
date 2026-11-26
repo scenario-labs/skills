@@ -201,10 +201,10 @@ The sun block below uses `make_light` and `sun_position` from 4a.
 
 ```python
 # channel: batch | bridge | handoff
-# checked against x8H1CNNFPgc and 4MeUNMFxiPE notes; VRaySun, CoronaSun, ArnoldLight [verify]
+# checked against x8H1CNNFPgc and 4MeUNMFxiPE notes; VRaySun, CoronaSun, Arnold_Light [verify]
 TARGET = (0.0, 0.0, 0.0)        # room center on the floor, cm
 fam = renderer_info()["family"]
-sun_cls = {"vray": ["VRaySun"], "corona": ["CoronaSun"], "arnold": ["ArnoldLight"]}[fam]  # Arnold: distant light type [verify]
+sun_cls = {"vray": ["VRaySun"], "corona": ["CoronaSun"], "arnold": ["Arnold_Light"]}[fam]  # Arnold: distant light type [verify]
 sun = make_light(sun_cls, "LGT_sun", sun_position(TARGET, elevation_deg=35, azimuth_deg=210), aim_at=TARGET)
 node = sun.get("node")
 if node is not None and getattr(node, "target", None) is not None:  # target-based suns
@@ -252,7 +252,7 @@ import math
 SUBJECT = (0.0, 0.0, 50.0)    # subject center, cm
 CAMERA = (0.0, -400.0, 60.0)  # 80 mm camera in the video (00:00:43)
 fam = renderer_info()["family"]
-area = {"vray": ["VRayLight"], "corona": ["CoronaLight"], "arnold": ["ArnoldLight"]}[fam]
+area = {"vray": ["VRayLight"], "corona": ["CoronaLight"], "arnold": ["Arnold_Light"]}[fam]
 
 
 def around(angle_deg, dist, height):

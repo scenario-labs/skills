@@ -329,7 +329,7 @@ if "arnold" not in str(rt.classOf(rt.renderers.current)).lower():
     rt.renderers.current = rt.Arnold()          # [verify] Arnold class name
 if len(list(rt.lights)) == 0:
     with pymxs.undo(True, "fx: skydome for volume"):
-        sky = rt.ArnoldLight()                  # [verify] class; set type Skydome in GUI if no property
+        sky = rt.Arnold_Light()                  # [verify] class; set type Skydome in GUI if no property
 rt.render(outputFile=OUT)
 result = {"rendered": OUT}
 ```
