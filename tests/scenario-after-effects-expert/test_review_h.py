@@ -177,6 +177,10 @@ class BatchFromJson(unittest.TestCase):
         self.assertNotIn("error", out)
         self.assertEqual(out["result"]["header"], ["id", "hasOwnProperty", "toString"])
         self.assertEqual(out["result"]["rows"][0]["hasOwnProperty"], "label")
+        # a row without the field reads empty, never the inherited function's text
+        self.assertEqual(out["result"]["rows"][1]["hasOwnProperty"], "")
+        self.assertEqual(out["result"]["rows"][0]["toString"], "")
+        self.assertEqual(out["result"]["rows"][1]["toString"], "x")
 
 
 if __name__ == "__main__":

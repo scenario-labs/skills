@@ -74,7 +74,7 @@ AEX.batch = (function () {
             o = { _line: i + 2 };
             if (list[i] === null || typeof list[i] !== "object" || isList(list[i])) { o._error = "item " + (i + 1) + " is not an object"; }
             for (k = 0; k < head.length; k++) {
-                var v = o._error ? undefined : list[i][head[k]];
+                var v = (o._error || !Object.prototype.hasOwnProperty.call(list[i], head[k])) ? undefined : list[i][head[k]];   // a missing field is empty, never an inherited member
                 o[head[k]] = (v === undefined || v === null) ? "" : String(v);
             }
             out.push(o);
