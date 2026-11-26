@@ -41,19 +41,48 @@ def _write_json(path, data, **kw):
 
 
 
-def frames(src):
+def _sequence(src):
+    return sorted(glob.glob(os.path.join(src, "*.png")) + glob.glob(os.path.join(src, "*.jpg")))
+
+
+def iter_frames(src):
+    """Color frames one at a time, in order: a PNG or JPG folder by file name, or a video file."""
     if os.path.isdir(src):
-        files = sorted(glob.glob(os.path.join(src, "*.png")) + glob.glob(os.path.join(src, "*.jpg")))
-        return [cv2.imread(f) for f in files], None
+        for f in _sequence(src):
+            yield cv2.imread(f)
+        return
     cap = cv2.VideoCapture(src)
-    fps = cap.get(cv2.CAP_PROP_FPS) or None
-    out = []
-    while True:
-        ok, f = cap.read()
-        if not ok:
-            break
-        out.append(f)
-    return out, fps
+    try:
+        while True:
+            ok, f = cap.read()
+            if not ok:
+                break
+            yield f
+    finally:
+        cap.release()
+
+
+def video_fps(src):
+    if os.path.isdir(src):
+        return None
+    cap = cv2.VideoCapture(src)
+    try:
+        return cap.get(cv2.CAP_PROP_FPS) or None
+    finally:
+        cap.release()
+
+
+def frame_at(src, index):
+    """One color frame by index, decoded without keeping the frames before it."""
+    for i, f in enumerate(iter_frames(src)):
+        if i == index:
+            return f
+    raise ValueError("frame %d is past the end of %s" % (index, src))
+
+
+def frames(src):
+    """Every color frame in memory, and the frame rate. The trackers below stream with iter_frames instead."""
+    return list(iter_frames(src)), video_fps(src)
 
 
 def gray(f):
@@ -105,42 +134,62 @@ def refine(gref, gj, mref, Hpred):
 
 
 def track_plane(fr, corners, ref, mode, anchor):
-    n = len(fr)
-    g = [gray(f) for f in fr]
+    """fr: color frames, any iterable. Only grayscale frames before the reference are kept (the backward pass
+    needs them); after it, two working frames and the reference."""
     q0 = np.float32(corners).reshape(-1, 1, 2)
-    m0 = region_mask(g[ref].shape, corners, 0.95)
-    H = [None] * n; H[ref] = np.eye(3); inl = [0] * n; rep = [0.0] * n
-    for step in (1, -1):  # forward then backward from the reference frame
-        i = ref
-        while 0 <= i + step < n:
-            j = i + step
-            qi = cv2.perspectiveTransform(q0, H[i]).reshape(-1, 2)
-            Hc, k, e = homography(g[i], g[j], region_mask(g[i].shape, qi, 0.95))
-            Hj = Hc @ H[i] if Hc is not None else H[i]  # hold the last pose when lost; inliers flag it
-            if mode == "ref" or (mode == "hybrid" and abs(j - ref) % anchor == 0):
-                Hr, k2, e2 = refine(g[ref], g[j], m0, Hj)
-                if Hr is not None:
-                    Hj, k, e = Hr, k2, e2
-            H[j], inl[j], rep[j] = Hj, k, e
-            i = j
-    out = [cv2.perspectiveTransform(q0, h).reshape(-1, 2).round(3).tolist() for h in H]
-    return out, inl, rep
+    H, inl, rep, before = {}, {}, {}, []
+    st = {}
+
+    def step(gi, gj, Hi, j):
+        qi = cv2.perspectiveTransform(q0, Hi).reshape(-1, 2)
+        Hc, k, e = homography(gi, gj, region_mask(gi.shape, qi, 0.95))
+        Hj = Hc @ Hi if Hc is not None else Hi  # hold the last pose when lost; inliers flag it
+        if mode == "ref" or (mode == "hybrid" and abs(j - ref) % anchor == 0):
+            Hr, k2, e2 = refine(st["gref"], gj, st["m0"], Hj)
+            if Hr is not None:
+                Hj, k, e = Hr, k2, e2
+        return Hj, k, e
+
+    n, gprev = 0, None
+    for i, f in enumerate(fr):  # forward from the reference frame while decoding
+        n = i + 1
+        g = gray(f)
+        if i < ref:
+            before.append(g)
+        elif i == ref:
+            st["gref"], st["m0"] = g, region_mask(g.shape, corners, 0.95)
+            H[i], inl[i], rep[i] = np.eye(3), 0, 0.0
+        else:
+            H[i], inl[i], rep[i] = step(gprev, g, H[i - 1], i)
+        gprev = g
+    if ref >= n:
+        raise ValueError("reference frame %d is past the last frame (%d frames)" % (ref, n))
+    gprev = st["gref"]
+    for j in range(ref - 1, -1, -1):  # then backward from the reference frame
+        g = before[j]
+        H[j], inl[j], rep[j] = step(gprev, g, H[j + 1], j)
+        before[j] = None
+        gprev = g
+    out = [cv2.perspectiveTransform(q0, H[i]).reshape(-1, 2).round(3).tolist() for i in range(n)]
+    return out, [inl[i] for i in range(n)], [rep[i] for i in range(n)]
 
 
-def track_shake(fr, ref, quad=None):
-    g = [gray(f) for f in fr]
-    h, w = g[ref].shape
+def track_shake(fr, ref, quad=None, ref_frame=None):
+    """fr: color frames, any iterable. ref_frame: the reference frame in color, needed before the first frame
+    when fr is a stream (main reads it with frame_at); a list supplies it by index."""
+    gref = gray(ref_frame if ref_frame is not None else fr[ref])
+    h, w = gref.shape
     if quad:
-        m = region_mask(g[ref].shape, quad, 1.0)
+        m = region_mask(gref.shape, quad, 1.0)
     else:
         m = np.zeros((h, w), np.uint8); m[int(h * 0.05):int(h * 0.95), int(w * 0.05):int(w * 0.95)] = 255
-    pts = cv2.goodFeaturesToTrack(g[ref], 600, 0.01, 10, mask=m)
+    pts = cv2.goodFeaturesToTrack(gref, 600, 0.01, 10, mask=m)
     res, inl = [], []
     prev = pts
-    for j in range(len(g)):
+    for j, f in enumerate(fr):
         # seed each frame from the previous frame's points, but measure against the reference: no accumulated drift
         guess = prev if j > 0 else pts
-        p1, st, _ = cv2.calcOpticalFlowPyrLK(g[ref], g[j], pts, guess.copy(), winSize=(41, 41), maxLevel=5,
+        p1, st, _ = cv2.calcOpticalFlowPyrLK(gref, gray(f), pts, guess.copy(), winSize=(41, 41), maxLevel=5,
                                              flags=cv2.OPTFLOW_USE_INITIAL_FLOW)
         ok = st.ravel() == 1
         A, mk = cv2.estimateAffinePartial2D(pts[ok], p1[ok], method=cv2.RANSAC, ransacReprojThreshold=2.0)
@@ -200,18 +249,21 @@ def slide(src, trk, pt, patch, search, every, ambig=0.02):
     map, then find the reference patch (context around the point) by template matching. A good track finds it
     where it was; a tracker that slid or jumped to a similar neighbor feature finds it offset. Offsets are in
     reference-frame pixels; score is the normalized correlation of the best match (1 = identical)."""
-    fr, _ = frames(src)
     M = mappings(trk)
     ref = trk.get("ref", 0)
-    g0 = gray(fr[ref])
+    g0 = gray(frame_at(src, ref))
     h, w = g0.shape
     x, y = int(round(pt[0])), int(round(pt[1]))
     r = patch // 2
     tpl = g0[max(y - r, 0):y + r, max(x - r, 0):x + r]
     ox, oy = x - max(x - r, 0), y - max(y - r, 0)
     rows = []
-    for i in range(0, min(len(fr), len(M)), every):
-        back = cv2.warpPerspective(gray(fr[i]), np.linalg.inv(M[i]), (w, h), flags=cv2.INTER_LINEAR)
+    for i, f in enumerate(iter_frames(src)):
+        if i >= len(M):
+            break
+        if i % every:
+            continue
+        back = cv2.warpPerspective(gray(f), np.linalg.inv(M[i]), (w, h), flags=cv2.INTER_LINEAR)
         x0, y0 = max(x - r - search, 0), max(y - r - search, 0)
         win = back[y0:min(y + r + search, h), x0:min(x + r + search, w)]
         res = cv2.matchTemplate(win, tpl, cv2.TM_CCOEFF_NORMED)
@@ -250,11 +302,13 @@ def runs(rows, px, n):
 
 def locate(src, rgb, tol, path):
     """Centroid of a pure-color proof marker on every frame of a render, against the expected path
-    (a list of [x, y], one per frame, as `point` writes it): the slide of whatever rides the track."""
-    fr, _ = frames(src)
+    (a list of [x, y], one per frame, as `point` writes it): the slide of whatever rides the track.
+    complete is true only when every frame has a marker and the frame, marker and path counts agree:
+    the gate reads it before meanPx, which averages only the frames where the marker was found."""
     col = np.array(rgb[::-1], np.float32)  # frames are BGR
-    rows = []
-    for i, f in enumerate(fr):
+    rows, n = [], 0
+    for i, f in enumerate(iter_frames(src)):
+        n = i + 1
         d = np.abs(f.astype(np.float32) - col).max(2)
         ys, xs = np.nonzero(d <= tol)
         if len(xs) < 4:
@@ -263,9 +317,12 @@ def locate(src, rgb, tol, path):
         e = float(np.hypot(cx - path[i][0], cy - path[i][1])) if i < len(path) else None
         rows.append([i, round(cx, 2), round(cy, 2), round(e, 2) if e is not None else None])
     err = np.array([r_[3] for r_ in rows if r_[3] is not None])
-    return {"frames": len(fr), "found": int(len(err)), "meanPx": round(float(err.mean()), 2) if len(err) else None,
+    missing = [r_[0] for r_ in rows if r_[1] is None]
+    return {"frames": n, "found": int(len(err)), "pathFrames": len(path), "missing": missing,
+            "complete": bool(n > 0 and not missing and len(err) == n == len(path)),
+            "meanPx": round(float(err.mean()), 2) if len(err) else None,
             "maxPx": round(float(err.max()), 2) if len(err) else None,
-            "lastPx": rows[-1][3], "perFrame": rows}
+            "lastPx": rows[-1][3] if rows else None, "perFrame": rows}
 
 
 def banner(path):
@@ -313,17 +370,19 @@ def main():
         for f in [a.src] + a.truth:
             print(json.dumps(banner(f)))
         return
-    fr, fps = frames(a.src)
-    res = {"fps": fps, "size": [fr[0].shape[1], fr[0].shape[0]], "ref": a.ref, "frames": len(fr)}
+    first = frame_at(a.src, 0)
+    res = {"fps": video_fps(a.src), "size": [first.shape[1], first.shape[0]], "ref": a.ref}
     if a.cmd == "plane":
         cs = [[float(v) for v in p.split(",")] for p in a.corners.split()]
         res["mode"] = a.mode
-        res["corners"], res["inliers"], res["reproj"] = track_plane(fr, cs, a.ref, a.mode, a.anchor)
+        res["corners"], res["inliers"], res["reproj"] = track_plane(iter_frames(a.src), cs, a.ref, a.mode, a.anchor)
+        res["frames"] = len(res["corners"])
     else:
         q = [[float(v) for v in p.split(",")] for p in a.corners.split()] if a.corners else None
-        res["shake"], res["inliers"] = track_shake(fr, a.ref, q)
+        res["shake"], res["inliers"] = track_shake(iter_frames(a.src), a.ref, q, frame_at(a.src, a.ref))
+        res["frames"] = len(res["shake"])
     _write_json(a.out, res) if a.out else print(json.dumps(res))
-    print("wrote", a.out, "frames", len(fr), file=sys.stderr)
+    print("wrote", a.out, "frames", res["frames"], file=sys.stderr)
 
 
 if __name__ == "__main__":

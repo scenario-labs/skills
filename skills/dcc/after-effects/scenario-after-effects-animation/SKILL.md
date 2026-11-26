@@ -77,7 +77,7 @@ In a person's session, work inside `--undo`.
    object.
 2. **Build the hierarchy.** One master null for anything that exits together; one null per camera
    move in a chain (PdHYC0gqIPA 00:05:30). Set the null's anchor and position so parent space is
-   known, then parent with `child.parent = null` (keeps the layer on screen). GATE:
+   known, then parent with `child.parent = ctrlNull` (keeps the layer on screen). GATE:
    `AEX.animation.compPoint(child, t)` returns the intended comp position.
 3. **Key and ease each move** with `AEX.animation.move(prop, comp, f0, v0, f1, v1, ease)` where
    `ease` is a name from the table in Numbers, a cubic-bezier tuple, or `{out, in}` influences. Use

@@ -111,32 +111,39 @@ AEX.project = (function () {
         return out;
     }
 
-    // findFile(name, roots, maxDepth): first file with this exact name under any root (breadth first, never follows aliases)
+    // findFile(name, roots, maxDepth): every file with this exact name under all roots (breadth first, never follows
+    // aliases), one entry per path even when roots overlap
     function findFile(name, roots, maxDepth) {
-        var queue = [], i, f, kids, j;
+        var queue = [], i, f, kids, j, out = [], seenPath = {};
         for (i = 0; i < roots.length; i++) { queue.push({ f: new Folder(roots[i]), d: 0 }); }
         while (queue.length) {
             f = queue.shift();
             if (!f.f.exists) { continue; }
             kids = f.f.getFiles();
             for (j = 0; j < kids.length; j++) {
-                if (kids[j] instanceof File && decodeURI(kids[j].name) === name) { return kids[j]; }
+                if (kids[j] instanceof File && decodeURI(kids[j].name) === name && !seenPath[kids[j].fsName]) { seenPath[kids[j].fsName] = true; out.push(kids[j]); }
             }
             if (f.d < (maxDepth || 6)) { for (j = 0; j < kids.length; j++) { if (kids[j] instanceof Folder && !kids[j].alias) { queue.push({ f: kids[j], d: f.d + 1 }); } } }
         }
-        return null;
+        return out;
     }
 
-    // relink(roots): relink every missing footage item by file name under the search roots; never guesses between two candidates
+    // relink(roots): relink every missing footage item by file name under the search roots. Two or more files of
+    // that name leave the item untouched and list it in `ambiguous` with its candidates, for a person to choose.
     function relink(roots) {
-        var res = { relinked: [], notFound: [] }, i, it, oldPath, name, hit;
+        var res = { relinked: [], notFound: [], ambiguous: [] }, i, it, oldPath, name, hits, hit, k, cand;
         for (i = 1; i <= app.project.numItems; i++) {
             it = app.project.item(i);
             if (!isFootage(it) || !it.footageMissing) { continue; }
             oldPath = it.mainSource.missingFootagePath || "";
-            name = oldPath.split("/").pop();
-            hit = name ? findFile(name, roots) : null;
-            if (!hit) { res.notFound.push({ name: it.name, path: oldPath }); continue; }
+            name = oldPath.split(/[\/\\]/).pop();
+            hits = name ? findFile(name, roots) : [];
+            if (!hits.length) { res.notFound.push({ name: it.name, path: oldPath }); continue; }
+            if (hits.length > 1) {
+                cand = []; for (k = 0; k < hits.length; k++) { cand.push(hits[k].fsName); }
+                res.ambiguous.push({ name: it.name, path: oldPath, candidates: cand }); continue;
+            }
+            hit = hits[0];
             // an image file with a frame number in a moving item is a sequence; a movie with digits in its name is not
             if (!it.mainSource.isStill && /\d{3,}\.(png|jpe?g|exr|tiff?|dpx|psd|tga)$/i.test(name)) { it.replaceWithSequence(hit, true); } else { it.replace(hit); }
             res.relinked.push({ name: it.name, from: oldPath, to: hit.fsName, missingNow: it.footageMissing });
@@ -167,12 +174,37 @@ AEX.project = (function () {
     // pairs [{kind: "comp"|"layer", from, to, scope: comp id for layers}]: rewrites comp("from") and layer("from") in place.
     // Indirect references (a name built from a string variable) are not seen: read exprErrors afterwards.
     function rewriteRefs(pairs) {
-        var comps = AEK.core.comps(), res = { rewritten: 0, exprErrors: [] }, i, j;
+        var comps = AEK.core.comps(), res = { rewritten: 0, exprErrors: [] }, i, j, k, ids = {}, qs = ['"', "'"];
+        // comp name (current or renamed from) -> ids of the comps it can name, to resolve comp("X").layer("Y")
+        function addId(name, id) { if (!ids.hasOwnProperty(name)) { ids[name] = {}; } ids[name][id] = true; }
+        for (i = 0; i < comps.length; i++) { addId(comps[i].name, comps[i].id); }
+        for (k = 0; k < pairs.length; k++) {
+            if (pairs[k].kind !== "comp") { continue; }
+            for (i = 0; i < comps.length; i++) { if (comps[i].name === pairs[k].to) { addId(pairs[k].from, comps[i].id); } }
+        }
+        var QUAL = /(?:^|[^\w$.])comp\(\s*(?:"([^"]*)"|'([^']*)')\s*\)\s*\.\s*$/;
+        // layer("from") right after comp("X") and a dot targets comp X; any other layer("from") targets the comp that owns the expression
+        function swapLayer(code, p, ownerId) {
+            var out = "", rest = code, q, at, bq, idx, needle, m, nm, target;
+            while (true) {
+                at = -1;
+                for (q = 0; q < 2; q++) { idx = rest.indexOf("layer(" + qs[q] + p.from + qs[q] + ")"); if (idx >= 0 && (at < 0 || idx < at)) { at = idx; bq = q; } }
+                if (at < 0) { break; }
+                needle = "layer(" + qs[bq] + p.from + qs[bq] + ")";
+                out += rest.substring(0, at);
+                m = QUAL.exec(out);
+                nm = m ? (m[1] ? m[1] : m[2]) : null;
+                target = m ? (!!nm && ids.hasOwnProperty(nm) && ids[nm][p.scope] === true) : (p.scope === ownerId);
+                out += target ? "layer(" + qs[bq] + p.to + qs[bq] + ")" : needle;
+                rest = rest.substring(at + needle.length);
+            }
+            return out + rest;
+        }
         function swap(code, c) {
-            var k, q, p, qs = ['"', "'"];
+            var k, q, p;
             for (k = 0; k < pairs.length; k++) {
                 p = pairs[k];
-                if (p.kind === "layer" && p.scope !== c.id) { continue; }
+                if (p.kind === "layer") { code = swapLayer(code, p, c.id); continue; }
                 for (q = 0; q < 2; q++) { code = code.split(p.kind + "(" + qs[q] + p.from + qs[q] + ")").join(p.kind + "(" + qs[q] + p.to + qs[q] + ")"); }
             }
             return code;
@@ -202,7 +234,14 @@ AEX.project = (function () {
         var t = tree(main), comps = AEK.core.comps(), i, j, c, users, l, base, name, n, taken = {}, out = [], order = [], inner, pairs = [];
         if (main instanceof Array) { main = main[0]; }   // the first comp of a list is the one mainName applies to
         for (i = 0; i < comps.length; i++) { taken[comps[i].name] = true; }
-        if (mainName && main.name !== mainName) { out.push({ from: main.name, to: mainName }); pairs.push({ kind: "comp", from: main.name, to: mainName }); delete taken[main.name]; main.name = mainName; taken[mainName] = true; }
+        if (mainName && main.name !== mainName) {
+            out.push({ from: main.name, to: mainName, usedIn: main.usedIn.length }); pairs.push({ kind: "comp", from: main.name, to: mainName });
+            // as for a precomp below: a layer that shows the main comp's name follows it, so record it first
+            users = main.usedIn;
+            for (j = 0; j < users.length; j++) { layerPairs(users[j], main, mainName, pairs); }
+            delete taken[main.name]; main.name = mainName; taken[mainName] = true;
+            for (j = 0; j < users.length; j++) { renameLayersOf(users[j], main); }
+        }
         for (i = 0; i < comps.length; i++) { if (t.seen[comps[i].id]) { order.push(comps[i]); } }
         order.sort(function (x, y) { return t.seen[x.id].depth - t.seen[y.id].depth; });
         for (i = 0; i < comps.length; i++) { if (!t.seen[comps[i].id]) { order.push(comps[i]); } }
@@ -420,15 +459,20 @@ AEX.project = (function () {
         }
         var empty, full, rows = [], i, l, without, states = [];
         for (i = 1; i <= c.numLayers; i++) { states.push(c.layer(i).enabled); }
-        for (i = 1; i <= c.numLayers; i++) { c.layer(i).enabled = false; }
-        empty = measure();
-        for (i = 1; i <= c.numLayers; i++) { c.layer(i).enabled = states[i - 1]; }
-        full = measure();
-        for (i = 1; i <= c.numLayers; i++) {
-            l = c.layer(i);
-            if (!l.enabled || !l.hasVideo) { continue; }
-            l.enabled = false; without = measure(); l.enabled = true;
-            rows.push({ index: i, layer: l.name, costMsPerFrame: Math.round((full - without) / nFrames), costShare: Math.round(100 * (full - without) / Math.max(1, full - empty)) });
+        // a failed render (bad template, unfinished queue) must not leave layers switched off
+        try {
+            for (i = 1; i <= c.numLayers; i++) { c.layer(i).enabled = false; }
+            empty = measure();
+            for (i = 1; i <= c.numLayers; i++) { c.layer(i).enabled = states[i - 1]; }
+            full = measure();
+            for (i = 1; i <= c.numLayers; i++) {
+                l = c.layer(i);
+                if (!states[i - 1] || !l.hasVideo) { continue; }
+                l.enabled = false; without = measure(); l.enabled = true;
+                rows.push({ index: i, layer: l.name, costMsPerFrame: Math.round((full - without) / nFrames), costShare: Math.round(100 * (full - without) / Math.max(1, full - empty)) });
+            }
+        } finally {
+            for (i = 1; i <= states.length; i++) { try { if (c.layer(i).enabled !== states[i - 1]) { c.layer(i).enabled = states[i - 1]; } } catch (e) {} }
         }
         rows.sort(function (a, b) { return b.costMsPerFrame - a.costMsPerFrame; });
         return { comp: c.name, startFrame: Math.round(t * c.frameRate), frames: nFrames, fullMs: full, emptyMs: empty,
@@ -455,15 +499,31 @@ AEX.project = (function () {
     // project as <dest>/<name>.aep. Originals are never touched. sidecars lists what After Effects wrote beside the
     // .aep (a "<name>.aep Logs" folder, an "Auto-Save" folder): leave them out of a handoff archive.
     function collect(dest, main, projectName) {
+        var aep = new File(dest + "/" + (projectName || "collected") + ".aep");
+        if (aep.exists) { throw new Error("collect: " + aep.fsName + " exists; give a new folder or project name"); }
         var t = tree(main), fdir = AEK.core.ensureFolder(dest + "/Footage"), i, j, it, src, target, res = { copied: [], skipped: [], bytes: 0, sequences: [] };
-        var frames, sdir, fps, firstOk;
+        var frames, sdir, fps, firstOk, claimed = {}, base;
+        // claimed[destination path] = source path: a destination is reused only for that same source, never because
+        // a file is already there (two voice.wav of equal size stay two files)
+        // names tried: <name> (files only), <id>_<name>, <id>_2_<name>, ...
+        function freeDest(dir, name, srcPath, isFolder) {
+            var k = isFolder ? 1 : 0, p, x;
+            while (true) {
+                p = dir + "/" + (k ? it.id + "_" : "") + (k > 1 ? k + "_" : "") + name;
+                if (claimed[p] === srcPath) { return p; }
+                x = isFolder ? new Folder(p) : new File(p);
+                if (!claimed.hasOwnProperty(p) && !x.exists) { claimed[p] = srcPath; return p; }
+                k++;
+            }
+        }
         for (i = 1; i <= app.project.numItems; i++) {
             it = app.project.item(i);
             if (!isFootage(it) || !t.seen[it.id]) { continue; }
             if (it.footageMissing) { res.skipped.push({ name: it.name, why: "missing" }); continue; }
             frames = sequenceFiles(it);
             if (frames && frames.length > 1) {
-                sdir = AEK.core.ensureFolder(fdir.fsName + "/" + it.id + "_" + decodeURI(it.file.name).replace(SEQ, "$1").replace(/[^\w\-]+/g, "_"));
+                base = decodeURI(it.file.name).replace(SEQ, "$1").replace(/[^\w\-]+/g, "_");
+                sdir = AEK.core.ensureFolder(freeDest(fdir.fsName, base, it.file.parent.fsName + "/" + base, true));
                 firstOk = true;
                 for (j = 0; j < frames.length; j++) {
                     target = new File(sdir.fsName + "/" + decodeURI(frames[j].name));
@@ -478,13 +538,11 @@ AEX.project = (function () {
                 res.copied.push({ name: it.name, to: sdir.fsName });
                 continue;
             }
-            src = it.file; target = new File(fdir.fsName + "/" + decodeURI(src.name));
-            if (target.exists && target.length !== src.length) { target = new File(fdir.fsName + "/" + it.id + "_" + decodeURI(src.name)); }
+            src = it.file; target = new File(freeDest(fdir.fsName, decodeURI(src.name), src.fsName, false));
             if (!target.exists && !src.copy(target.fsName)) { res.skipped.push({ name: it.name, why: "copy failed: " + src.error }); continue; }
             it.replace(target); res.bytes += target.length;
             res.copied.push({ name: it.name, to: target.fsName });
         }
-        var aep = new File(dest + "/" + (projectName || "collected") + ".aep");
         app.project.save(aep);
         res.project = aep.fsName; res.dirty = app.project.dirty;
         var side = new Folder(dest).getFiles(), sc = [];
@@ -493,11 +551,15 @@ AEX.project = (function () {
         return res;
     }
 
-    // saveVersion(dir, base): save as <base>_v###.aep with the next free number in dir; never overwrites
+    // saveVersion(dir, base): save as <base>_v###.aep with the next number in dir (three digits at least, more past
+    // 999); throws rather than save over an existing file
     function saveVersion(dir, base) {
-        var files = new Folder(dir).getFiles(function (f) { return f instanceof File; }), n = 0, i, m, re = new RegExp("^" + base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "_v(\\d{3})\\.aep$");
+        var files = new Folder(dir).getFiles(function (f) { return f instanceof File; }), n = 0, i, m, re = new RegExp("^" + base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "_v(\\d{3,})\\.aep$", "i");
+        if (!files) { files = []; }
         for (i = 0; i < files.length; i++) { m = re.exec(decodeURI(files[i].name)); if (m && parseInt(m[1], 10) > n) { n = parseInt(m[1], 10); } }
-        var name = base + "_v" + ("00" + (n + 1)).slice(-3) + ".aep", f = new File(dir + "/" + name);
+        var num = String(n + 1); while (num.length < 3) { num = "0" + num; }
+        var name = base + "_v" + num + ".aep", f = new File(dir + "/" + name);
+        if (f.exists) { throw new Error("saveVersion: " + f.fsName + " exists"); }
         AEK.core.ensureFolder(dir);
         app.project.save(f);
         return { saved: f.fsName, version: n + 1, dirty: app.project.dirty };

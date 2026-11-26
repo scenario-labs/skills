@@ -94,13 +94,14 @@ GATE: route stated with the reason; frame rate and size match; `slide` run on th
 
 4. **Apply the data.** Load `scripts/track.jsx` with `--lib`.
    `AEX.track.cornerPin(layer, corners, {motionBlur: true})` keys all four corners on every frame. A
-   point that must stick (a callout, a pin): `pointsFromCorners(corners, [x, y])` carries it through
-   each frame's homography into `pointTracker`, or
-   `nullFromCorners(comp, corners, name, 0, {point})` puts a null on it
+   point that must stick (a callout, a pin): `pointsFromCorners(corners, [x, y], ref)` carries it
+   through each frame's homography into `pointTracker`, or
+   `nullFromCorners(comp, corners, name, 0, {point, ref})` puts a null on it
    ([P9, P11](references/procedures.md)). Under perspective, give each element its own point. Four
    tracked points: `cornerNulls` then `pinFromNulls` ([P14](references/procedures.md)). GATE:
    `numKeys` equals the frame count; `track_external.py slide` on the attach point gives mean under
-   1.5 px and no `jumps` (P4); a proof render's `locate` reads under 1 px mean (P9).
+   1.5 px and no `jumps` (P4); a proof render's `locate` reads `complete` true and under 1 px mean
+   (P9).
 
 5. **Fix a slip at a frame.** Measure the error per frame first (`score` or `readCorners` against a
    re-track). If one region slips, re-register that frame to the reference and call

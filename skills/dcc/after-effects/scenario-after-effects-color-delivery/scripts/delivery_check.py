@@ -19,6 +19,9 @@ instead: the worst frame's share of pixels outside the broadcast range (signalst
 Y min and max are printed for information. Grain encoded by x264 leaves a few isolated overshoot pixels that a per-pixel limit fails. Limits are given in 8-bit units and scaled to the
 file's bit depth read by ffprobe (16 to 235 becomes 64 to 940 at 10 bits, 256 to 3760 at 12 bits). YUV files only.
 "no_data" fails on any data stream, such as the timecode (tmcd) track ffmpeg writes from an After Effects QuickTime.
+An image sequence is probed frame by frame: one frame off the spec fails its row. A sequence has no frame rate, duration or
+moov atom, so "fps", "duration" and "faststart" fail on it; check them on the encoded movie.
+An empty spec list, or a deliverable with no key besides "file", fails.
 Needs ffprobe and ffmpeg on PATH. Standard library only. Exit code 1 when any row fails.
 """
 import glob
@@ -90,6 +93,8 @@ def moov_first(path):
 def loudness(path):
     """Integrated loudness (LUFS) and true peak (dBTP) from ffmpeg's ebur128 filter."""
     p = run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-map", "0:a:0", "-af", "ebur128=peak=true", "-f", "null", "-"])
+    if p.returncode != 0:
+        raise RuntimeError("ffmpeg loudness analysis failed on %s: %s" % (path, p.stderr.strip()[-300:]))
     text = p.stderr
     summary = text[text.rfind("Summary:"):] if "Summary:" in text else text
     i = re.search(r"I:\s+(-?[\d.]+|-inf)\s+LUFS", summary)
@@ -107,10 +112,12 @@ def bit_depth(stream):
     return int(m.group(1)) if m else 8
 
 
-def luma_range(path, every):
+def luma_range(path, every, input_args=()):
     """Lowest YMIN and highest YMAX from ffmpeg signalstats, sampling one frame in `every`. Values are in the file's own bit depth."""
     vf = "select=not(mod(n\\,%d)),signalstats=stat=brng,metadata=print" % max(1, int(every))
-    p = run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-map", "0:v:0", "-vf", vf, "-f", "null", "-"])
+    p = run(["ffmpeg", "-hide_banner", "-nostats"] + list(input_args) + ["-i", path, "-map", "0:v:0", "-vf", vf, "-f", "null", "-"])
+    if p.returncode != 0:
+        raise RuntimeError("ffmpeg levels analysis failed on %s: %s" % (path, p.stderr.strip()[-300:]))
     lo = [int(float(x)) for x in re.findall(r"signalstats\.YMIN=([\d.]+)", p.stderr)]
     hi = [int(float(x)) for x in re.findall(r"signalstats\.YMAX=([\d.]+)", p.stderr)]
     # BRNG: share of the frame's pixels outside the broadcast range (Y, U or V), worst frame
@@ -121,6 +128,9 @@ def luma_range(path, every):
 def row(rows, name, expected, measured, ok):
 
     rows.append({"check": name, "expected": expected, "measured": measured, "pass": bool(ok)})
+
+
+SEQ_NA = "not measurable on an image sequence"
 
 
 def check(spec):
@@ -135,63 +145,87 @@ def check(spec):
             row(rows, "exists", "sequence", "no files", False)
             return rows
         nums = [int(re.findall(r"(\d+)\D*$", os.path.basename(f))[0]) for f in files]
-        gaps = [n for n in range(nums[0], nums[-1] + 1) if n not in set(nums)]
+        present = set(nums)
+        gaps = [n for n in range(nums[0], nums[-1] + 1) if n not in present]
         row(rows, "gaps", 0, len(gaps), not gaps)
         if "sequence_start" in spec:
             row(rows, "first number", spec["sequence_start"], nums[0], nums[0] == spec["sequence_start"])
-        probe_path = files[0]
         frames = len(files)
         size_mb = sum(os.path.getsize(f) for f in files) / 1048576.0
     else:
         if not os.path.exists(path):
             row(rows, "exists", True, False, False)
             return rows
-        probe_path = path
+        files = [path]
         size_mb = os.path.getsize(path) / 1048576.0
         frames = None
-    info = ffprobe(probe_path)
-    v = next((s for s in info["streams"] if s.get("codec_type") == "video"), None)
+    # every member of a sequence is probed: one odd frame fails the row
+    members = []
+    for f in files:
+        info = ffprobe(f)
+        streams = info.get("streams", [])
+        v = next((s for s in streams if s.get("codec_type") == "video"), None)
+        if v is None:
+            row(rows, "video stream", True, "none in " + os.path.basename(f), False)
+            return rows
+        members.append((f, info, v))
+    info, v = members[0][1], members[0][2]
     a = next((s for s in info["streams"] if s.get("codec_type") == "audio"), None)
-    if v is None:
-        row(rows, "video stream", True, False, False)
-        return rows
+
+    def per_member(name, expected, measure, ok):
+        bad = [(f, measure(f_info, f_v)) for f, f_info, f_v in members if not ok(measure(f_info, f_v))]
+        if not bad:
+            row(rows, name, expected, measure(info, v), True)
+        elif not is_seq:
+            row(rows, name, expected, bad[0][1], False)
+        else:
+            row(rows, name, expected, "%s in %d of %d frames, first %s" % (bad[0][1], len(bad), len(members), os.path.basename(bad[0][0])), False)
+
     if frames is None:
         frames = int(v.get("nb_frames") or 0)
         if not frames:
             c = run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", path])
+            if c.returncode != 0:
+                raise RuntimeError(c.stderr.strip() or "ffprobe could not count the frames of " + path)
             frames = int((c.stdout.strip() or "0").split(",")[0])
     fps = rate(v.get("avg_frame_rate") or v.get("r_frame_rate") or "0/1")
     duration = float(info.get("format", {}).get("duration") or 0) if not is_seq else None
-    pix = v.get("pix_fmt", "")
-    simple = [("codec", v.get("codec_name")), ("profile", v.get("profile")), ("width", v.get("width")),
-              ("height", v.get("height")), ("pix_fmt", pix)]
-    for key, meas in simple:
+    for key, field in (("codec", "codec_name"), ("profile", "profile"), ("width", "width"), ("height", "height"), ("pix_fmt", "pix_fmt")):
         if key in spec:
-            row(rows, key, spec[key], meas, str(meas).lower() == str(spec[key]).lower())
-    if "fps" in spec and not is_seq:
-        row(rows, "fps", spec["fps"], round(fps, 3), abs(fps - spec["fps"]) < 0.01)
+            per_member(key, spec[key], lambda i, s, field=field: s.get(field),
+                       lambda m, key=key: str(m).lower() == str(spec[key]).lower())
+    if "fps" in spec:
+        if is_seq:
+            row(rows, "fps", spec["fps"], SEQ_NA, False)
+        else:
+            row(rows, "fps", spec["fps"], round(fps, 3), abs(fps - spec["fps"]) < 0.01)
     if "frames" in spec:
         row(rows, "frames", spec["frames"], frames, frames == spec["frames"])
-    if "duration" in spec and duration is not None:
-        tol = 1.0 / fps if fps else 0.05
-        row(rows, "duration", spec["duration"], round(duration, 3), abs(duration - spec["duration"]) <= tol + 1e-6)
+    if "duration" in spec:
+        if is_seq:
+            row(rows, "duration", spec["duration"], SEQ_NA, False)
+        else:
+            tol = 1.0 / fps if fps else 0.05
+            row(rows, "duration", spec["duration"], round(duration, 3), abs(duration - spec["duration"]) <= tol + 1e-6)
     if "alpha" in spec:
-        has = pix.startswith(ALPHA_PREFIXES)
-        row(rows, "alpha", spec["alpha"], has, has == spec["alpha"])
+        per_member("alpha", spec["alpha"], lambda i, s: s.get("pix_fmt", "").startswith(ALPHA_PREFIXES),
+                   lambda m: m == spec["alpha"])
     if "color" in spec:
-        tags = {"primaries": v.get("color_primaries"), "trc": v.get("color_transfer"), "space": v.get("color_space"), "range": v.get("color_range")}
+        names = {"primaries": "color_primaries", "trc": "color_transfer", "space": "color_space", "range": "color_range"}
         for k, exp in spec["color"].items():
-            row(rows, "color " + k, exp, tags.get(k), tags.get(k) == exp)
-    if "levels" in spec and not is_seq:
+            per_member("color " + k, exp, lambda i, s, k=k: s.get(names.get(k, "")), lambda m, exp=exp: m == exp)
+    if "levels" in spec:
         # Legal (video) range is 16 to 235 at 8 bits, scaled by 2^(bits - 8): 64 to 940 at 10 bits, 256 to 3760 at 12 bits.
         lv = spec["levels"] if isinstance(spec["levels"], dict) else {}
         bits = bit_depth(v)
         scale = 2 ** (bits - 8)
         lo_lim, hi_lim = lv.get("min8", 16) * scale, lv.get("max8", 235) * scale
-        if not pix.startswith("yuv"):
-            row(rows, "Y levels", "YUV file", pix, False)
+        not_yuv = [m[2].get("pix_fmt", "") for m in members if not m[2].get("pix_fmt", "").startswith("yuv")]
+        if not_yuv:
+            row(rows, "Y levels", "YUV file", not_yuv[0], False)
         else:
-            lo, hi, n, brng = luma_range(path, lv.get("every", 1))
+            # ffmpeg reads the printf pattern itself; its image2 demuxer needs the first number
+            lo, hi, n, brng = luma_range(path, lv.get("every", 1), ["-start_number", str(nums[0])] if is_seq else [])
             if "max_out_pct" in lv:
                 # area tolerance: a few encoder overshoot pixels on grain pass, a clipped or lifted picture does not
                 pct = None if brng is None else brng * 100
@@ -201,16 +235,22 @@ def check(spec):
             else:
                 row(rows, "Y min (%d-bit)" % bits, ">= %d" % lo_lim, lo, lo is not None and lo >= lo_lim)
                 row(rows, "Y max (%d-bit)" % bits, "<= %d" % hi_lim, hi, hi is not None and hi <= hi_lim)
-    if "faststart" in spec and not is_seq:
-        fs = moov_first(path)
-        row(rows, "faststart (moov before mdat)", spec["faststart"], fs, fs == spec["faststart"])
+    if "faststart" in spec:
+        if is_seq:
+            row(rows, "faststart (moov before mdat)", spec["faststart"], SEQ_NA, False)
+        else:
+            fs = moov_first(path)
+            row(rows, "faststart (moov before mdat)", spec["faststart"], fs, fs == spec["faststart"])
     if "max_mb" in spec:
         row(rows, "size MB", "<= %s" % spec["max_mb"], round(size_mb, 2), size_mb <= spec["max_mb"])
     if spec.get("no_audio"):
-        row(rows, "audio stream", "none", a.get("codec_name") if a else "none", a is None)
-    if spec.get("no_data") and not is_seq:
-        d = [s.get("codec_tag_string") or s.get("codec_name") for s in info["streams"] if s.get("codec_type") == "data"]
-        row(rows, "data streams", "none", ", ".join(d) if d else "none", not d)
+        per_member("audio stream", "none",
+                   lambda i, s: next((x.get("codec_name") for x in i["streams"] if x.get("codec_type") == "audio"), "none"),
+                   lambda m: m == "none")
+    if spec.get("no_data"):
+        per_member("data streams", "none",
+                   lambda i, s: ", ".join(x.get("codec_tag_string") or x.get("codec_name") or "data" for x in i["streams"] if x.get("codec_type") == "data") or "none",
+                   lambda m: m == "none")
     if "audio" in spec:
         exp = spec["audio"]
         if a is None:
@@ -229,6 +269,8 @@ def check(spec):
                     row(rows, "integrated LUFS", "%s +/- %s" % (exp["lufs"], tol), i_lufs, i_lufs is not None and abs(i_lufs - exp["lufs"]) <= tol)
                 if "true_peak_max" in exp:
                     row(rows, "true peak dBTP", "<= %s" % exp["true_peak_max"], tp, tp is not None and tp <= exp["true_peak_max"])
+    if not rows:
+        row(rows, "requirements", "at least one key besides file", "none", False)
     return rows
 
 
@@ -237,6 +279,9 @@ def main():
         print(__doc__)
         sys.exit(2)
     specs = _read_json(sys.argv[1])
+    if not isinstance(specs, list) or not specs or not all(isinstance(s, dict) and "file" in s for s in specs):
+        print("FAIL  %s: expected a non-empty list of deliverables, each with a \"file\" key" % sys.argv[1])
+        sys.exit(1)
     report, failed = [], 0
     for spec in specs:
         try:

@@ -41,13 +41,14 @@ AEX.rig = (function () {
     // world(comp, layer, pointInLayer | null, [seconds]): comp-space position of a layer point (null = its anchor) at each time.
     // Reads through a temporary probe null with a toComp() expression, so parenting and expressions are included.
     function world(c, l, pt, times) {
-        var pr = c.layers.addNull(c.duration), p, out = [], i, v;
-        pr.name = "__probe_" + l.id;
-        p = P(pr);
-        p.expression = "var L = thisComp.layer(" + q(l.name) + "); L.toComp(" + (pt ? "[" + pt[0] + "," + pt[1] + "]" : "L.transform.anchorPoint") + ");";
-        for (i = 0; i < times.length; i++) { v = p.valueAtTime(times[i], false); out.push([v[0], v[1]]); }
-        var err = p.expressionError;
-        pr.remove();
+        var pr = c.layers.addNull(c.duration), p, out = [], i, v, err;
+        try {
+            pr.name = "__probe_" + l.id;
+            p = P(pr);
+            p.expression = "var L = thisComp.layer(" + q(l.name) + "); L.toComp(" + (pt ? "[" + pt[0] + "," + pt[1] + "]" : "L.transform.anchorPoint") + ");";
+            for (i = 0; i < times.length; i++) { v = p.valueAtTime(times[i], false); out.push([v[0], v[1]]); }
+            err = p.expressionError;
+        } finally { pr.remove(); }
         if (err !== "") { throw new Error("world(): " + err); }
         return out;
     }

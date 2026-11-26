@@ -108,13 +108,14 @@ const x = a.toComp([0, 0])[0];
 const y = a.toComp([0, r.top + r.height])[1] + gap;
 const me = sourceRectAtTime(time, false);
 const s = transform.scale / 100;
-const p = [x + anchorPoint[0] * s[0], y + (anchorPoint[1] - me.top) * s[1]];
-hasParent ? parent.fromComp(p) : p
+const off = [anchorPoint[0] * s[0], (anchorPoint[1] - me.top) * s[1]];
+hasParent ? add(parent.fromComp([x, y]), off) : add([x, y], off)
 ```
 
 Measured: gap 14.00 px for one line, two lines, descenders, 120 px type, a moved line 1, line 1 at
 70 % scale, and TXT_2 parented to a moved null. Descenders in line 1 push line 2 down by the
-descender depth (14 px at 72 px Helvetica Bold).
+descender depth (14 px at 72 px Helvetica Bold). The ink offset `off` is added after
+`parent.fromComp`, in parent space: a scaled or rotated parent then does not scale it a second time.
 
 Baseline variant (line 2 does not move when line 1 gains descenders; needs Gap larger than the
 descender depth):
@@ -130,8 +131,9 @@ const lead = st.autoLeading ? st.fontSize * 1.2 : st.leading;
 const base = a.toComp([0, (lines - 1) * lead]);
 const me = sourceRectAtTime(time, false);
 const s = transform.scale / 100;
-const p = [base[0] + anchorPoint[0] * s[0], base[1] + gap + (anchorPoint[1] - me.top) * s[1]];
-hasParent ? parent.fromComp(p) : p
+const off = [anchorPoint[0] * s[0], (anchorPoint[1] - me.top) * s[1]];
+const tg = [base[0], base[1] + gap];
+hasParent ? add(parent.fromComp(tg), off) : add(tg, off)
 ```
 
 Measured: line 2 top stayed at 500.4 px with and without descenders in a two-line name (last
@@ -510,7 +512,10 @@ Measured: `layer.name = "..."` by script left the expression text unchanged; the
 `expressionError`. Renaming an effect by script also left its references. Precomposing a referenced
 layer broke `thisComp.layer("TXT_1")` in the main comp. A failed expression keeps
 `expressionEnabled` true and returns 0 on Opacity. `renameLayer` matches `layer("name")` in every
-comp: use it only when the old name is unique in the project.
+comp: use it only when the old name is unique in the project. It also matches single quotes and
+spaces inside the parentheses, and keeps each expression's enabled state. `review` lists the
+expressions that still quote the old name after the rewrite (a name held in a variable): fix those
+by hand.
 
 ## 10. Cost and baking
 

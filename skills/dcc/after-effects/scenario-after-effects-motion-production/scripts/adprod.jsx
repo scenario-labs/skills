@@ -68,11 +68,12 @@ AEX.ad = (function () {
     // BRAND is a brand spot: type in the brand color with no stroke, no pops, the CTA as a line of text, no pill, no badges,
     // a gradient scrim under the hook line. sheet.style overrides any key: {endcardBg, textFill, textStroke (null: none),
     // strokeWidth, textPop (percent, 0: none), logoPop (percent, 0: none), cta ("pill" | "text"), ctaFill, ctaTextFill,
-    // ctaSize, pulse, scrim (0 to 1: opacity of a dark gradient under the hook line), scrimColor}.
+    // ctaSize, pulse, badges (false: endcard.badges are not built), scrim (0 to 1: opacity of a dark gradient under the
+    // hook line), scrimColor}.
     var GAME = { endcardBg: [0.1, 0.06, 0.19], textFill: [1, 1, 1], textStroke: [0, 0, 0], strokeWidth: 5, textPop: 112, logoPop: 85,
-        cta: "pill", ctaFill: [1, 0.8, 0], ctaTextFill: [0.1, 0.06, 0.19], ctaSize: 30, pulse: true, scrim: 0, scrimColor: [0, 0, 0] };
+        cta: "pill", ctaFill: [1, 0.8, 0], ctaTextFill: [0.1, 0.06, 0.19], ctaSize: 30, pulse: true, badges: true, scrim: 0, scrimColor: [0, 0, 0] };
     var BRAND = { endcardBg: [0.05, 0.05, 0.06], textFill: [0.96, 0.93, 0.86], textStroke: null, strokeWidth: 0, textPop: 0, logoPop: 0,
-        cta: "text", ctaFill: null, ctaTextFill: [0.96, 0.93, 0.86], ctaSize: 40, pulse: false, scrim: 0.55, scrimColor: [0, 0, 0] };
+        cta: "text", ctaFill: null, ctaTextFill: [0.96, 0.93, 0.86], ctaSize: 40, pulse: false, badges: false, scrim: 0.55, scrimColor: [0, 0, 0] };
     function styleOf(sheet) {
         var base = (sheet.style && sheet.style.preset === "brand") ? BRAND : GAME, out = {}, k;
         for (k in base) { if (base.hasOwnProperty(k)) { out[k] = base[k]; } }
@@ -139,7 +140,7 @@ AEX.ad = (function () {
             ct = addText(c, e.cta, { font: e.ctaFont || sheet.font, size: ST.ctaSize, fill: ST.ctaTextFill, position: L.cta, width: L.ctaW, name: "CTA_TXT" });
             toEnd(ct.layer, ef + (e.ctaDelay === undefined ? 8 : e.ctaDelay) / fps);
         }
-        for (i = 0; i < (e.badges || []).length; i++) {
+        for (i = 0; i < (ST.badges ? (e.badges || []).length : 0); i++) {
             var b = AEK.build.shape(c, "BADGE_" + (i + 1), { name: "badge", type: "rect", size: [L.badgeW, 48], roundness: 10, fill: [0, 0, 0], stroke: { color: [1, 1, 1], width: 2 } }, { position: L.badges[i] });
             toEnd(b, ef + 12 / fps);
             var bt = addText(c, e.badges[i], { font: sheet.font, size: 18, position: [L.badges[i][0], L.badges[i][1] + 6], width: L.badgeW - 20, name: "BADGE_" + (i + 1) + "_TXT" });

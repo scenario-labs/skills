@@ -255,7 +255,7 @@ return { a: AEX.animation.compPoint(AEK.core.layer(c, ARGS.layers[0]), ARGS.f1 *
 ```
 
 Measured: a new null's anchor is [0, 0]. Children at x 300 and 900 under a null at 600 scaled to 50
-% land at 450 and 750. `parent = null` kept a layer at its comp position (position rewritten to
+% land at 450 and 750. `parent = nul` kept a layer at its comp position (position rewritten to
 [-500, -300]); `setParentWithJump` kept the numbers and moved it to the null's space. A stroked
 child under the 50 % null renders its stroke at half width.
 
@@ -264,15 +264,20 @@ child under the 50 % null renders its stroke at half width.
 ```javascript
 // channel: bridge | handoff
 // checked: live 27.0
-var c = AEK.core.comp(ARGS.comp), i, l;
+var c = AEK.core.comp(ARGS.comp), i, l, precomp = [];
 c.motionBlur = true; c.shutterAngle = 180; c.shutterPhase = -90; // a new comp reads phase 0
-for (i = 1; i <= c.numLayers; i++) { l = c.layer(i); if (!l.nullLayer && !l.isTrackMatte) { l.motionBlur = true; } }
-return { angle: c.shutterAngle, phase: c.shutterPhase, samples: c.motionBlurSamplesPerFrame, limit: c.motionBlurAdaptiveSampleLimit };
+for (i = 1; i <= c.numLayers; i++) {
+    l = c.layer(i);
+    if (l.nullLayer || l.isTrackMatte) { continue; }
+    try { l.motionBlur = true; } catch (e) { precomp.push(l.name); } // 3D layer under Advanced 3D or Cinema 4D (procedure 11)
+}
+return { angle: c.shutterAngle, phase: c.shutterPhase, samples: c.motionBlurSamplesPerFrame, limit: c.motionBlurAdaptiveSampleLimit, needPrecomp: precomp };
 ```
 
 Measured on a 100 px square at 30 px per frame (row of pixels read with ImageMagick): either switch
 off gives a hard edge; 180 / -90 gives a 15 px ramp centered on each edge; 180 / 0 puts the whole 15
-px ramp ahead of the object; 360 gives 30 px, 720 gives 60 px. New comps by script: switch off,
+px ramp ahead of the object; 360 gives 30 px, 720 gives 60 px. `needPrecomp` lists the 3D layers the
+renderer refused: blur a precomp of them instead (procedure 11). New comps by script: switch off,
 angle 180, phase 0, 16 samples, adaptive limit 128.
 
 Samples: `motionBlurSamplesPerFrame` (2 to 64) sets the samples for Classic 3D layers, shape layers
@@ -396,7 +401,9 @@ Measured on the icon keys of a logo build: Scale 100, 96.5, 102.5, 100 on frames
 eases (0.5, 0, 0.6, 1), (0.2, 0.6, 0.3, 1), (0.4, 0, 0.2, 1). The check reported `pop` at frame 39,
 "speed jumps from 0 to 5 per frame". With the marker, and again with the allow list, it moved to
 `intended` with `because` set. A second layer with an unmarked pop on frame 10 stayed in `findings`.
-Every finding now carries `frame`. Several rules on one marker: "intended: pop,linear: <why>".
+Every finding now carries `frame`. Several rules on one marker: "intended: pop,linear: <why>". A
+`lockstep` finding carries its start frame: `"*|lockstep|0"` in `allow` keeps three layers that move
+as one. `default-ease` has no frame: `"*|default-ease"` keeps it.
 
 ## 15. Read the graph: numbers and one picture per property
 
@@ -416,11 +423,11 @@ return { peakSpeedFrame: g.peakSpeedFrame, overshootPct: g.overshootPct, crossin
 
 Returns `frames`, `target`, `progress` and `speed` per frame, `peakSpeedFrame`, `overshootPct`
 (percent of travel past the target), `crossings` (strict sign changes of value minus target) and
-`settleFrame` (first frame that stays within 1 % of the target). The picture is a comp named `name`:
-white value line, orange speed line, gray target line, blue ticks on keys. It saves one PNG when
-`out` is set and then removes that comp (`removed` true; project items 2 before and 2 after,
-measured). Pass `keep: true` to keep it, or omit `out` to look at the comp itself; it then stays in
-the project until you remove it.
+`settleFrame` (first frame that stays within 1 % of the target; null when the last sampled frame is
+still outside). The picture is a comp named `name`: white value line, orange speed line, gray target
+line, blue ticks on keys. It saves one PNG when `out` is set and then removes that comp (`removed`
+true; project items 2 before and 2 after, measured). Pass `keep: true` to keep it, or omit `out` to
+look at the comp itself; it then stays in the project until you remove it.
 
 Measured on the eased product move (X 2400 to 960, 6 % overshoot keyed with `overshoot()`, peak
 frame 16, rest 30): peak speed frame 2, overshoot 6 %, crossings 1, settle frame 24. Rotation keyed

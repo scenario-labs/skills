@@ -245,8 +245,8 @@ open project keeps its own settings, so record them there too.
 ```javascript
 // channel: bridge
 // checked: live 27.0
-// ARGS.point: the attach point on the reference frame, in footage pixels
-var c = AEK.core.comp(ARGS.comp), n = AEX.track.nullFromCorners(c, ARGS.plane, "button_track", 0, { point: ARGS.point });
+// ARGS.point: the attach point on the reference frame, in footage pixels; ARGS.ref: the `ref` of plane.json
+var c = AEK.core.comp(ARGS.comp), n = AEX.track.nullFromCorners(c, ARGS.plane, "button_track", 0, { point: ARGS.point, ref: ARGS.ref });
 var t = AEK.core.layer(c, ARGS.child);   // a pure-color proof marker centered on its anchor
 AEK.build.parent(t, n); t.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0, 0]);
 return AEK.capture.queue(c, ARGS.out + "/proof.mp4", { template: "H.264 - Match Render Settings - 15 Mbps" });
@@ -259,6 +259,9 @@ homography's local derivative at that point. Measure the proof render:
 python3 <skill>/scripts/track_external.py point plane.json --point 812,431 --out path.json
 python3 <skill>/scripts/track_external.py locate proof.mp4 --path path.json --color 0,255,0 --tol 45
 ```
+
+`locate` passes only with `complete` true: a marker on every frame, and equal frame, marker and path
+counts (`missing` lists the frames without one). Then read `meanPx`.
 
 Measured on a speaker turning in depth (120 frames, 1920x1080): 0.74 px mean, 1.03 max. The former
 null (corner centroid, top-edge angle and length) with a child on the button gave 10.0 mean, 19.9
@@ -273,17 +276,30 @@ same frame test judges a 3D solve: a proof solid on the ground versus a ground f
 ```javascript
 // channel: bridge | handoff
 // checked: live 27.0
-var comp = AEK.core.comp(ARGS.comp), rows = [], i, j, k, l, e, keys, span, pk, mt;
+var comp = AEK.core.comp(ARGS.comp), rows = [], i, j, k, l, e, keys, span, f0, pk, mt, miss;
+// frames of the span without a key on that corner: a key count alone passes a pin keyed twice on one frame
+function missing(p, f0, n) {
+    var m = 0, f, t, ki;
+    for (f = 0; f < n; f++) {
+        t = (f0 + f) / comp.frameRate;
+        ki = p.numKeys ? p.nearestKeyIndex(t) : 0;
+        if (!ki || Math.abs(p.keyTime(ki) - t) > 0.25 / comp.frameRate) { m++; }
+    }
+    return m;
+}
 for (i = 1; i <= comp.numLayers; i++) {
     l = comp.layer(i);
     if (!(l instanceof AVLayer)) { continue; }
-    span = Math.round((Math.min(l.outPoint, comp.duration) - Math.max(l.inPoint, 0)) * comp.frameRate);
+    f0 = Math.round(Math.max(l.inPoint, 0) * comp.frameRate);
+    span = Math.round(Math.min(l.outPoint, comp.duration) * comp.frameRate) - f0;
     for (j = 1; j <= l.property("ADBE Effect Parade").numProperties; j++) {
         e = l.property("ADBE Effect Parade").property(j);
         if (e.matchName !== "ADBE Corner Pin" && e.matchName !== "CC Power Pin") { continue; }
-        keys = []; for (k = 1; k <= 4; k++) { keys.push(e.property(k).numKeys); }
+        keys = []; miss = [];
+        for (k = 1; k <= 4; k++) { keys.push(e.property(k).numKeys); miss.push(missing(e.property(k), f0, span)); }
         pk = l.property("ADBE Transform Group").property("ADBE Position").numKeys;
-        rows.push({ layer: l.name, keys: keys, framesInSpan: span, everyFrame: keys[0] >= span,
+        rows.push({ layer: l.name, keys: keys, framesInSpan: span, missingFrames: miss,
+            everyFrame: span > 0 && miss[0] === 0 && miss[1] === 0 && miss[2] === 0 && miss[3] === 0,
             blurReady: l.motionBlur && comp.motionBlur && pk > 1, switchOnly: l.motionBlur && pk <= 1 });
     }
     mt = l.property("ADBE MTrackers");
@@ -292,8 +308,9 @@ for (i = 1; i <= comp.numLayers; i++) {
 return rows;
 ```
 
-Check: `everyFrame` true, `switchOnly` false on moving inserts. Measured: it flagged a pin keyed on
-60 of 72 frames and a switch-only blur.
+Check: `everyFrame` true (each of the four corners has a key on every frame of the span;
+`missingFrames` counts the gaps per corner), `switchOnly` false on moving inserts. Measured: it
+flagged a pin keyed on 60 of 72 frames and a switch-only blur.
 
 ## P11. Store a track in a Motion Tracker
 
@@ -301,8 +318,8 @@ Check: `everyFrame` true, `switchOnly` false on moving inserts. Measured: it fla
 // channel: bridge
 // checked: live 27.0
 var l = AEK.core.comp(ARGS.comp).layer(ARGS.layer);
-// ARGS.plane: corners per frame; ARGS.point: the attach point on the reference frame
-var pts = AEX.track.pointsFromCorners(ARGS.plane, ARGS.point);
+// ARGS.plane: corners per frame; ARGS.point: the attach point on frame ARGS.ref (the `ref` of plane.json)
+var pts = AEX.track.pointsFromCorners(ARGS.plane, ARGS.point, ARGS.ref);
 var tr = AEX.track.pointTracker(l, "external", [{ name: "UL", centers: pts, startFrame: 0 }]);
 return { keys: tr.property(1).property("ADBE MTracker Pt Feature Center").numKeys };
 ```
@@ -402,10 +419,10 @@ Track script on the camera and solids after the ground plane is set; it needs a 
 ## P14. Corner Pin from four nulls
 
 Four tracked points, four nulls from a tracker, or a Mocha export to nulls: `cornerNulls` writes one
-null per corner (`<prefix>UL`, `UR`, `LR`, `LL`, anchor [0, 0], keyed on every frame);
-`pinFromNulls` puts a Corner Pin whose four expressions read each null with `toComp` and convert to
-the pinned layer with `fromComp`. The pinned layer may be scaled or moved; the pin follows any later
-edit of the nulls.
+null per corner (`<prefix>UL`, `UR`, `LR`, `LL`, anchor [0, 0], keyed on every frame). When those
+names are taken it uses `<prefix>2_` and so on, and returns the names it gave; `pinFromNulls` puts a
+Corner Pin whose four expressions read each null with `toComp` and convert to the pinned layer with
+`fromComp`. The pinned layer may be scaled or moved; the pin follows any later edit of the nulls.
 
 ```javascript
 // channel: bridge | handoff
@@ -427,9 +444,9 @@ fromComp(n.toComp(n.anchorPoint));
 
 Check: `expressionError` empty; each pinned corner read back in comp space equals its null. Measured
 on a 121-frame plate with the insert scaled 50 % and moved: 0.000 px maximum. An expression pin has
-no Position motion, so the layer motion blur switch does not blur it: for a moving insert use
-`cornerPin(..., {motionBlur: true})` with the same corners, or bake the expressions
-(`AEK.expr.bake`).
+no Position motion, so the layer motion blur switch does not blur it. Baking the expressions
+(`AEK.expr.bake`) adds Corner Pin keys, still without Position motion. For a moving insert, use
+`cornerPin(..., {motionBlur: true})` with the same corners.
 
 ## P15. Object stabilization and a stabilized insert
 

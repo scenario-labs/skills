@@ -70,7 +70,7 @@ traps).
 | After Effects version of the team           | `Save a Copy As` an older version drops newer features | 27.0 or 26.x                                                                                                                                          |
 | Channel                                     | bridge in a live session, handoff for a person         | bridge                                                                                                                                                |
 
-Never clean the received file in place: save it as `<name>_v000_received.aep` first, then work in
+Never clean the received file in place: save it as `<name>_received_v001.aep` first, then work in
 `_v001`.
 
 In a person's live session, never open, close or switch projects unasked. Opening or creating a
@@ -88,7 +88,7 @@ undo group. Full code in [procedures.md](references/procedures.md).
    (`AEK.capture.spread`): on a shared After Effects another job can open its project in between.
    GATE: inventory JSON saved; before frames exist.
 2. **Relink.** `AEX.project.relink([roots])` searches each missing file by name under the roots the
-   user gives (drives, the delivery folder). It never picks between two candidates silently. GATE:
+   user gives (drives, the delivery folder). Two candidates leave the item in `ambiguous`. GATE:
    `missing.length` 0, or each leftover listed for the producer.
 3. **Fonts and effects.** `AEX.project.missingFonts()`, then `AEX.project.fixFonts(fallback)` only
    with the user's fallback. Missing effects: list match names; rebuild natively, pre-render on a

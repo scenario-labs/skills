@@ -87,12 +87,13 @@ AEX.type = (function () {
     function compBounds(l, t) {
         var fx = l.property("ADBE Effect Parade"), idx = fx.addProperty("ADBE Point Control").propertyIndex, i, v, xs = [], ys = [];
         var corners = ["[r.left, r.top]", "[r.left + r.width, r.top]", "[r.left, r.top + r.height]", "[r.left + r.width, r.top + r.height]"];
-        for (i = 0; i < 4; i++) {
-            var pt = l.property("ADBE Effect Parade").property(idx).property(1);
-            pt.expression = "var r = thisLayer.sourceRectAtTime(time, false); thisLayer.toComp(" + corners[i] + ");";
-            v = pt.valueAtTime(t || 0, false); xs.push(v[0]); ys.push(v[1]);
-        }
-        l.property("ADBE Effect Parade").property(idx).remove();
+        try {
+            for (i = 0; i < 4; i++) {
+                var pt = l.property("ADBE Effect Parade").property(idx).property(1);
+                pt.expression = "var r = thisLayer.sourceRectAtTime(time, false); thisLayer.toComp(" + corners[i] + ");";
+                v = pt.valueAtTime(t || 0, false); xs.push(v[0]); ys.push(v[1]);
+            }
+        } finally { l.property("ADBE Effect Parade").property(idx).remove(); }
         function mn(a) { return Math.min(a[0], a[1], a[2], a[3]); }
         function mx(a) { return Math.max(a[0], a[1], a[2], a[3]); }
         return { left: mn(xs), top: mn(ys), right: mx(xs), bottom: mx(ys), width: mx(xs) - mn(xs), height: mx(ys) - mn(ys) };
@@ -217,30 +218,44 @@ AEX.type = (function () {
     }
     // settled(layer, comp, {restFrame}): frames where the text is at rest and fully opaque. Works on a temporary duplicate
     // (removed before returning): every animator gets a Position probe of [0, 1000 x its index], so any selector that still
-    // selects a character changes sourceRectAtTime. The rest state is the text at `restFrame`, or else the most frequent
-    // state among frames at 100 % layer opacity. Parent motion (a push-in) does not count against rest.
-    // Returns {frames (longest run of settled frames), first, last, total, onScreen}.
+    // selects a character changes sourceRectAtTime. The rest state is the text at `restFrame`; else the most frequent state
+    // among frames at 100 % layer opacity where no animator selects a character (the text as typed, so a state an animator
+    // hides is never rest); else, when an animator selects text on every frame, the most frequent state at 100 % opacity.
+    // Parent motion (a push-in) does not count against rest.
+    // Returns {frames (longest run of settled frames), first, last, total, onScreen, restBy: "restFrame" | "unselected" | "frequency"}.
     function settled(l, c, o) {
         o = o || {};
-        var fps = c.frameRate, f0 = Math.round(l.inPoint * fps), f1 = Math.round(l.outPoint * fps) - 1, d = l.duplicate(), i, j, p, sig = [], op = [], count = {}, rest = null, best = 0;
-        d.enabled = false;
-        var an = function () { return d.property("ADBE Text Properties").property("ADBE Text Animators"); };
-        for (i = 1; i <= an().numProperties; i++) {
-            if (!an().property(i).enabled) { continue; }
-            if (!an().property(i).property("ADBE Text Animator Properties").property("ADBE Text Position 3D")) { an().property(i).property("ADBE Text Animator Properties").addProperty("ADBE Text Position 3D"); }
-            p = an().property(i).property("ADBE Text Animator Properties").property("ADBE Text Position 3D");
-            while (p.numKeys) { p.removeKey(1); }
-            if (p.expression) { p.expression = ""; }
-            p.setValue([0, 1000 * i, 0]);
+        var fps = c.frameRate, f0 = Math.round(l.inPoint * fps), f1 = Math.round(l.outPoint * fps) - 1, d = l.duplicate(), i, j, p, sig = [], base = [], op = [], rest = null, by = null;
+        function key(r) { return Math.round(r.left * 2) + "," + Math.round(r.top * 2) + "," + Math.round(r.width * 2) + "," + Math.round(r.height * 2); }
+        try {
+            d.enabled = false;
+            var an = function () { return d.property("ADBE Text Properties").property("ADBE Text Animators"); };
+            for (i = 1; i <= an().numProperties; i++) {
+                if (!an().property(i).enabled) { continue; }
+                if (!an().property(i).property("ADBE Text Animator Properties").property("ADBE Text Position 3D")) { an().property(i).property("ADBE Text Animator Properties").addProperty("ADBE Text Position 3D"); }
+                p = an().property(i).property("ADBE Text Animator Properties").property("ADBE Text Position 3D");
+                while (p.numKeys) { p.removeKey(1); }
+                if (p.expression) { p.expression = ""; }
+                p.setValue([0, 1000 * i, 0]);
+            }
+            for (j = f0; j <= f1; j++) {
+                sig.push(key(d.sourceRectAtTime(j / fps, false)));
+                op.push(l.property("ADBE Transform Group").property("ADBE Opacity").valueAtTime(j / fps, false));
+            }
+            // the same frames with every animator off: the text as typed, the state no selector touches
+            for (i = 1; i <= an().numProperties; i++) { an().property(i).enabled = false; }
+            for (j = f0; j <= f1; j++) { base.push(key(d.sourceRectAtTime(j / fps, false))); }
+        } finally { d.remove(); }
+        function mostFrequent(unselectedOnly) {
+            var count = {}, best = 0, r = null;
+            for (j = 0; j < sig.length; j++) {
+                if (op[j] < 99.9 || (unselectedOnly && sig[j] !== base[j])) { continue; }
+                count[sig[j]] = (count[sig[j]] || 0) + 1; if (count[sig[j]] > best) { best = count[sig[j]]; r = sig[j]; }
+            }
+            return r;
         }
-        for (j = f0; j <= f1; j++) {
-            var r = d.sourceRectAtTime(j / fps, false);
-            sig.push(Math.round(r.left * 2) + "," + Math.round(r.top * 2) + "," + Math.round(r.width * 2) + "," + Math.round(r.height * 2));
-            op.push(l.property("ADBE Transform Group").property("ADBE Opacity").valueAtTime(j / fps, false));
-        }
-        d.remove();
-        if (o.restFrame !== undefined && o.restFrame >= f0 && o.restFrame <= f1) { rest = sig[o.restFrame - f0]; }
-        else { for (j = 0; j < sig.length; j++) { if (op[j] >= 99.9) { count[sig[j]] = (count[sig[j]] || 0) + 1; if (count[sig[j]] > best) { best = count[sig[j]]; rest = sig[j]; } } } }
+        if (o.restFrame !== undefined && o.restFrame >= f0 && o.restFrame <= f1) { rest = sig[o.restFrame - f0]; by = "restFrame"; }
+        else { rest = mostFrequent(true); by = "unselected"; if (rest === null) { rest = mostFrequent(false); by = "frequency"; } }
         var run = 0, longest = 0, first = null, last = null, start = null, total = 0;
         for (j = 0; j < sig.length; j++) {
             if (rest !== null && sig[j] === rest && op[j] >= 99.9) {
@@ -248,7 +263,7 @@ AEX.type = (function () {
                 if (run > longest) { longest = run; first = start; last = f0 + j; }
             } else { run = 0; }
         }
-        return { frames: longest, first: first, last: last, total: total, onScreen: f1 - f0 + 1 };
+        return { frames: longest, first: first, last: last, total: total, onScreen: f1 - f0 + 1, restBy: by };
     }
     // readability(comp, {bg:[r,g,b], minFrames, minPerWord, minCapRatio, safe, minContrast}): one row per text layer + findings.
     // Cap height is measured against the short side of the frame (1080 in 16:9, 9:16 and 1:1 alike); safe area through parents.
@@ -262,37 +277,41 @@ AEX.type = (function () {
         s = s === true ? {} : (s || {});
         var g = s.grid || [4, 2], fr = s.frames, i, j, k, off = [], cells = [], t;
         if (!fr) { fr = []; var a = Math.round(l.inPoint * c.frameRate), z = Math.round(l.outPoint * c.frameRate) - 1; for (i = 0; i < 5; i++) { fr.push(Math.round(a + (z - a) * i / 4)); } }
-        for (i = 1; i <= c.numLayers; i++) { if (c.layer(i) instanceof TextLayer && c.layer(i).enabled) { c.layer(i).enabled = false; off.push(c.layer(i)); } }
-        var tmp = app.project.items.addComp("_backdrop_probe", c.width, c.height, c.pixelAspect, c.duration, c.frameRate);
-        var nest = tmp.layers.add(c); nest.name = "under";
-        // one Color Control per cell; sampleImage reads back from a script only once the comp has rendered at that time,
-        // so each time is rendered once (a frame saved to the temp folder) before the values are read
-        var nItems = app.project.numItems, nl = tmp.layers.addNull(), nsrc = nl.source, n = g[0] * g[1], ids = [], png = Folder.temp.fsName + "/_backdrop_probe.png";
-        for (i = 0; i < n; i++) { ids.push(nl.property("ADBE Effect Parade").addProperty("ADBE Color Control").propertyIndex); }
-        var vw = tmp.openInViewer(); if (vw) { vw.setActive(); }
-        for (k = 0; k < fr.length; k++) {
-            t = fr[k] / c.frameRate;
-            var b = compBounds(l, t), cw = (b.right - b.left) / g[0], chh = (b.bottom - b.top) / g[1], q = 0;
-            for (i = 0; i < g[0]; i++) {
-                for (j = 0; j < g[1]; j++) {
-                    var x = b.left + cw * (i + 0.5), y = b.top + chh * (j + 0.5);
-                    nl.property("ADBE Effect Parade").property(ids[q++]).property(1).expression = 'thisComp.layer("under").sampleImage([' + x + ',' + y + '],[' + (cw / 2) + ',' + (chh / 2) + '],true,time);';
+        var tmp = null, nsrc = null, nItems = app.project.numItems;
+        try {
+            for (i = 1; i <= c.numLayers; i++) { if (c.layer(i) instanceof TextLayer && c.layer(i).enabled) { c.layer(i).enabled = false; off.push(c.layer(i)); } }
+            tmp = app.project.items.addComp("_backdrop_probe", c.width, c.height, c.pixelAspect, c.duration, c.frameRate);
+            var nest = tmp.layers.add(c); nest.name = "under";
+            // one Color Control per cell; sampleImage reads back from a script only once the comp has rendered at that time,
+            // so each time is rendered once (a frame saved to the temp folder) before the values are read
+            var nl = tmp.layers.addNull(), n = g[0] * g[1], ids = [], png = Folder.temp.fsName + "/_backdrop_probe.png";
+            nsrc = nl.source;
+            for (i = 0; i < n; i++) { ids.push(nl.property("ADBE Effect Parade").addProperty("ADBE Color Control").propertyIndex); }
+            var vw = tmp.openInViewer(); if (vw) { vw.setActive(); }
+            for (k = 0; k < fr.length; k++) {
+                t = fr[k] / c.frameRate;
+                var b = compBounds(l, t), cw = (b.right - b.left) / g[0], chh = (b.bottom - b.top) / g[1], q = 0;
+                for (i = 0; i < g[0]; i++) {
+                    for (j = 0; j < g[1]; j++) {
+                        var x = b.left + cw * (i + 0.5), y = b.top + chh * (j + 0.5);
+                        nl.property("ADBE Effect Parade").property(ids[q++]).property(1).expression = 'thisComp.layer("under").sampleImage([' + x + ',' + y + '],[' + (cw / 2) + ',' + (chh / 2) + '],true,time);';
+                    }
+                }
+                tmp.time = t; AEK.capture.frame(tmp, t, png);
+                q = 0;
+                for (i = 0; i < g[0]; i++) {
+                    for (j = 0; j < g[1]; j++) {
+                        var v = nl.property("ADBE Effect Parade").property(ids[q++]).property(1).valueAtTime(t, false);
+                        cells.push({ frame: fr[k], cell: [i, j], rgb: [v[0], v[1], v[2]], lum: lum([v[0], v[1], v[2]]) });
+                    }
                 }
             }
-            tmp.time = t; AEK.capture.frame(tmp, t, png);
-            q = 0;
-            for (i = 0; i < g[0]; i++) {
-                for (j = 0; j < g[1]; j++) {
-                    var v = nl.property("ADBE Effect Parade").property(ids[q++]).property(1).valueAtTime(t, false);
-                    cells.push({ frame: fr[k], cell: [i, j], rgb: [v[0], v[1], v[2]], lum: lum([v[0], v[1], v[2]]) });
-                }
-            }
+        } finally {
+            if (tmp) { tmp.remove(); }
+            // the null's solid (and a Solids folder made for it) stay in the project after the comp goes: remove them too
+            if (nsrc) { var fld = nsrc.parentFolder; nsrc.remove(); if (fld !== app.project.rootFolder && fld.numItems === 0 && app.project.numItems >= nItems) { fld.remove(); } }
+            for (i = 0; i < off.length; i++) { off[i].enabled = true; }
         }
-        tmp.remove();
-        // the null's solid (and a Solids folder made for it) stay in the project after the comp goes: remove them too
-        var fld = nsrc.parentFolder; nsrc.remove();
-        if (fld !== app.project.rootFolder && fld.numItems === 0 && app.project.numItems >= nItems) { fld.remove(); }
-        for (i = 0; i < off.length; i++) { off[i].enabled = true; }
         var dk = cells[0], lt = cells[0];
         for (i = 1; i < cells.length; i++) { if (cells[i].lum < dk.lum) { dk = cells[i]; } if (cells[i].lum > lt.lum) { lt = cells[i]; } }
         function rd(cl) { return { frame: cl.frame, cell: cl.cell, rgb: [Math.round(cl.rgb[0] * 255), Math.round(cl.rgb[1] * 255), Math.round(cl.rgb[2] * 255)] }; }
@@ -311,12 +330,18 @@ AEX.type = (function () {
             frames = Math.round((l.outPoint - l.inPoint) * fps);
             mid = Math.max(l.inPoint, Math.min(l.outPoint - c.frameDuration, (l.inPoint + l.outPoint) / 2));
             inf = inFrame(l, c, safe, mid);
-            // cap height from a temporary "H" in the same font and size, scaled like the layer (removed at once)
+            // cap height from a temporary "H" in the same font and size, parented with a jump to the layer so its scale and
+            // every parent's apply; read in comp pixels at mid-life through toComp (removed at once)
             probe = c.layers.addText("H");
-            var pd = probe.property("ADBE Text Properties").property("ADBE Text Document").value;
-            pd.font = d.font; pd.fontSize = d.fontSize; probe.property("ADBE Text Properties").property("ADBE Text Document").setValue(pd);
-            cap = probe.sourceRectAtTime(0, false).height * l.property("ADBE Transform Group").property("ADBE Scale").value[1] / 100;
-            probe.remove();
+            try {
+                var pd = probe.property("ADBE Text Properties").property("ADBE Text Document").value;
+                pd.font = d.font; pd.fontSize = d.fontSize; probe.property("ADBE Text Properties").property("ADBE Text Document").setValue(pd);
+                probe.setParentWithJump(l);
+                var pci = probe.property("ADBE Effect Parade").addProperty("ADBE Point Control").propertyIndex;
+                var pcp = probe.property("ADBE Effect Parade").property(pci).property(1);
+                pcp.expression = "var r = thisLayer.sourceRectAtTime(time, false); [length(thisLayer.toComp([0, r.top]), thisLayer.toComp([0, r.top + r.height])), 0];";
+                cap = pcp.valueAtTime(mid, false)[0];
+            } finally { probe.remove(); }
             var words = d.text.split(/\s+/).length, synced = l.property("ADBE Marker").numKeys > 1;
             var st = synced ? null : settled(l, c, {});
             var dwell = synced ? frames : st.frames, need = Math.max(minF, Math.round(perWord * words));
@@ -329,7 +354,7 @@ AEX.type = (function () {
                 if (cmin === null || cr < cmin) { cmin = cr; }
                 if (cr < minC) { findings.push({ severity: cr < 3 ? "error" : "warn", rule: "contrast", where: l.name + " \"" + runs0[j].text + "\"", message: "contrast " + Math.round(cr * 100) / 100 + ":1 below " + minC + ":1" }); }
             }
-            rows.push({ layer: l.name, words: words, frames: frames, settled: synced ? "synced" : st.frames, settledFrom: synced ? null : st.first, settledTo: synced ? null : st.last, font: d.font, size: d.fontSize, capPx: Math.round(cap), capRatio: Math.round(cap / side * 1000) / 1000, contrast: cmin === null ? null : Math.round(cmin * 100) / 100, runs: runs, inSafe: inf.ok, tracking: d.tracking, leadingRatio: d.autoLeading ? "auto" : Math.round(d.leading / d.fontSize * 100) / 100,
+            rows.push({ layer: l.name, words: words, frames: frames, settled: synced ? "synced" : st.frames, settledFrom: synced ? null : st.first, settledTo: synced ? null : st.last, settledBy: synced ? null : st.restBy, font: d.font, size: d.fontSize, capPx: Math.round(cap), capRatio: Math.round(cap / side * 1000) / 1000, contrast: cmin === null ? null : Math.round(cmin * 100) / 100, runs: runs, inSafe: inf.ok, tracking: d.tracking, leadingRatio: d.autoLeading ? "auto" : Math.round(d.leading / d.fontSize * 100) / 100,
                 backdrop: under ? { cells: under.cells.length, frames: under.frames, darkest: under.darkest, lightest: under.lightest } : null });
             if (dwell < need) { findings.push({ severity: "warn", rule: "dwell", where: l.name, message: (synced ? "on screen " : "settled ") + dwell + " frames, minimum " + need + " at " + fps + " fps" }); }
             if (cap / side < minCap) { findings.push({ severity: "warn", rule: "size", where: l.name, message: "cap height " + Math.round(cap) + " px is " + Math.round(cap / side * 1000) / 10 + " % of the short side of the frame" }); }

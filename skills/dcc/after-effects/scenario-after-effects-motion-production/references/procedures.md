@@ -392,9 +392,11 @@ the end-card frame, so its own animation plays on the card; to have it already d
 set the layer's `startTime` a few frames earlier.
 
 `adtools.py review --picture cell.mp4` reads the rendered movie: it fails a run of near-empty frames
-longer than 9 frames (under 3 % of the frame differs from its median) and an end card whose median
-content is under 8 %. `adtools.py contrast frame.png --box x,y,w,h --fill RRGGBB` measures text
-contrast against the frame behind it.
+longer than 9 frames (under 3 % of the frame differs from its median), the opening included, and an
+end card whose median content is under 8 %. A movie ffmpeg cannot decode fails the review. Rule
+frame counts are at 30 fps; `review` scales them to the report's frame rate.
+`adtools.py contrast frame.png --box x,y,w,h --fill RRGGBB` measures text contrast against the frame
+behind it.
 
 For a master that is not cut from shots (an end card, a product mark), build the master once as a
 comp and give each format its own layout row: the master nested, scaled and placed per format, its
@@ -493,7 +495,8 @@ var m = AEX.ad.build(S, items, "9x16", { name: "AD_master_9x16", protect: true }
 AEX.ad.beatMarkers(m.layers.byName("MUSIC"), ARGS.beats);
 var hook = m.layers.byName("TXT_hook").property("ADBE Text Properties").property("ADBE Text Document");
 hook.addToMotionGraphicsTemplateAs(m, "Hook Text");
-m.layers.byName("CTA_TXT").property("ADBE Text Properties").property("ADBE Text Document").addToMotionGraphicsTemplateAs(m, "CTA");
+var cta = m.layers.byName("CTA_TXT").property("ADBE Text Properties").property("ADBE Text Document");
+cta.addToMotionGraphicsTemplateAs(m, "CTA");
 m.layers.byName("SHOT_hook").addToMotionGraphicsTemplateAs(m, "Hook Clip");
 var k = ARGS.cell, name = ARGS.game + "_UA_9x16_20s_H" + k.h + "_C" + k.c + "_v001";
 var v = AEK.build.comp(name, { width: 540, height: 960, fps: 30, duration: 20 });
@@ -507,10 +510,15 @@ var B = ARGS.bus;
 AEK.build.effect(inst, "ADBE Aud Compressor", { "ADBE Aud Compressor-0001": B.threshold, "ADBE Aud Compressor-0002": B.ratio,
     "ADBE Aud Compressor-0004": B.attack, "ADBE Aud Compressor-0005": B.release, "ADBE Aud Compressor-0006": 0,
     "ADBE Aud Compressor-0007": B.makeup, "ADBE Aud Compressor-0008": B.limit }, "BUS_COMP");
-// the report reads the master with the variant's own hook text in place
-var d0 = hook.value, d1 = hook.value; d1.text = hookLine.text; hook.setValue(d1);
-R.report = AEX.ad.report(m, ARGS.zones);
-hook.setValue(d0);
+// the report reads the master with every text override of the variant in place, then the master texts come back
+var d0 = hook.value, d1 = hook.value, c0 = cta.value, c1 = cta.value;
+d1.text = hookLine.text; c1.text = k.cta;
+try {
+    hook.setValue(d1); cta.setValue(c1);
+    R.report = AEX.ad.report(m, ARGS.zones);
+} finally {
+    hook.setValue(d0); cta.setValue(c0);
+}
 AEX.ad.guides(v, ARGS.zones, { render: true });
 R.review = AEK.capture.frames(v, [0, 0.5, 1, 7.5, 12, 18.5], ARGS.out, "08_review");
 v.layers.byName("GUIDE_meta_reels_ads").enabled = false; v.layers.byName("GUIDE_tiktok_infeed_measured").enabled = false;

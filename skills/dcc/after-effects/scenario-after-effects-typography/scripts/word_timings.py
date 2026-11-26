@@ -7,6 +7,7 @@ ffmpeg silencedetect pass, used to cross-check phrase onsets and to split phrase
 
 Output (stdout or --out): {"fps", "lead", "words": [{"i", "word", "start", "end", "f0", "f1", "frames", "phrase"}],
 "phrases": [{"p", "text", "f0", "f1"}], "checks": {...}}. Pass it to a job with --args.
+Exit 1 when two words share a first frame (checks.same_frame): one marker per word cannot hold both.
 
 Standard library only.
 """
@@ -77,7 +78,9 @@ def main():
             phrases[-1]["text"] += " " + w["word"]
             phrases[-1]["f1"] = w["f1"]
     checks = {"words": len(out), "phrases": len(phrases),
-              "increasing": all(out[i]["f0"] <= out[i + 1]["f0"] for i in range(len(out) - 1)),
+              "increasing": all(out[i]["f0"] < out[i + 1]["f0"] for i in range(len(out) - 1)),
+              "same_frame": [[out[i]["word"], out[i + 1]["word"], out[i]["f0"]] for i in range(len(out) - 1)
+                             if out[i]["f0"] == out[i + 1]["f0"]],
               "short": [w["word"] for w in out if w["frames"] < a.min_frames]}
     if a.silence:
         _, ends = load_silences(a.silence)
@@ -88,13 +91,17 @@ def main():
             if near is not None:
                 offs.append(round((onset - near) * fps, 2))
         checks["phrase_onset_vs_silence_end_frames"] = offs
-        checks["silence_agrees"] = all(abs(o) <= 2 for o in offs)
+        # None when nothing was compared (no silence_end in the log, or one phrase): unavailable, never a pass
+        checks["silence_agrees"] = all(abs(o) <= 2 for o in offs) if offs else None
     res = {"fps": fps, "lead": a.lead, "words": out, "phrases": phrases, "checks": checks}
     text = json.dumps(res, indent=1)
     if a.out:
         with open(a.out, "w", encoding="utf-8") as fh:
             fh.write(text)
     print(text if not a.out else json.dumps(checks))
+    if checks["same_frame"]:
+        sys.exit("words share a first frame (one marker per word cannot hold both): %s; merge them in the transcript"
+                 % ", ".join("%s/%s at %d" % tuple(x) for x in checks["same_frame"]))
 
 
 if __name__ == "__main__":

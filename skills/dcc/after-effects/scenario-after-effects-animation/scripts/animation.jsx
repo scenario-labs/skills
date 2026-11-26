@@ -25,8 +25,9 @@ AEX.animation = (function () {
     // move(prop, comp, f0, v0, f1, v1, ease): two keys at FRAMES; ease is a name in EASES, a [x1,y1,x2,y2] tuple,
     // or {out: influence, "in": influence} for zero-speed influences (Easy Ease is {out: 33.33, "in": 33.33}).
     function move(p, c, f0, v0, f1, v1, ease) {
-        var k0 = AEK.motion.key(p, f0 * c.frameDuration, v0), k1 = AEK.motion.key(p, f1 * c.frameDuration, v1);
-        k0 = p.nearestKeyIndex(f0 * c.frameDuration);
+        // the first key's index shifts when the second key lands before it: read it again once both exist
+        AEK.motion.key(p, f0 * c.frameDuration, v0);
+        var k1 = AEK.motion.key(p, f1 * c.frameDuration, v1), k0 = p.nearestKeyIndex(f0 * c.frameDuration);
         if (typeof ease === "string") { ease = EASES[ease]; if (!ease) { throw new Error("Unknown ease name"); } }
         if (ease instanceof Array) {
             if (ease[0] === 0 && ease[1] === 0 && ease[2] === 1 && ease[3] === 1) {
@@ -48,8 +49,9 @@ AEX.animation = (function () {
         var peak, i;
         if (v0 instanceof Array) { peak = []; for (i = 0; i < v0.length; i++) { peak.push(v1[i] + (v1[i] - v0[i]) * pct / 100); } }
         else { peak = v1 + (v1 - v0) * pct / 100; }
-        var k0 = AEK.motion.key(p, f0 * c.frameDuration, v0), kp = AEK.motion.key(p, fPeak * c.frameDuration, peak), k1 = AEK.motion.key(p, f1 * c.frameDuration, v1);
-        k0 = p.nearestKeyIndex(f0 * c.frameDuration); kp = p.nearestKeyIndex(fPeak * c.frameDuration);
+        // earlier indices shift when a later call adds a key before them: read them again once all three exist
+        AEK.motion.key(p, f0 * c.frameDuration, v0); AEK.motion.key(p, fPeak * c.frameDuration, peak);
+        var k1 = AEK.motion.key(p, f1 * c.frameDuration, v1), k0 = p.nearestKeyIndex(f0 * c.frameDuration), kp = p.nearestKeyIndex(fPeak * c.frameDuration);
         var n = dims(p);
         p.setInterpolationTypeAtKey(k0, p.keyInInterpolationType(k0), KeyframeInterpolationType.BEZIER);
         p.setInterpolationTypeAtKey(kp, KeyframeInterpolationType.BEZIER, KeyframeInterpolationType.BEZIER);
@@ -72,8 +74,8 @@ AEX.animation = (function () {
     // contact keys Bezier with broken handles at speed 2h/d (full speed into and out of the ground), influence 33.33.
     // Linear contact keys are wrong: the segment then peaks mid-fall and slows before the ground. Returns [{frame, value, kind}].
     function bounce(p, c, f0, ground, height, fallFrames, n, apexInfluence) {
-        var out = [], f = f0, h = height, d = fallFrames, i, k, inf = apexInfluence || 33.33, dir = ground > ground - height ? 1 : -1;
-        k = AEK.motion.key(p, f * c.frameDuration, ground - h); out.push({ frame: f, value: ground - h, kind: "apex" });
+        var out = [], f = f0, h = height, d = fallFrames, i, j, k, last, inf = apexInfluence || 33.33, dir = ground > ground - height ? 1 : -1;
+        AEK.motion.key(p, f * c.frameDuration, ground - h); out.push({ frame: f, value: ground - h, kind: "apex" });
         f += d; out.push({ frame: f, value: ground, kind: "contact" }); AEK.motion.key(p, f * c.frameDuration, ground);
         for (i = 1; i <= n; i++) {
             h = h / 2; d = Math.max(1, Math.round(d / 2));
@@ -81,12 +83,14 @@ AEX.animation = (function () {
             f += d; AEK.motion.key(p, f * c.frameDuration, ground); out.push({ frame: f, value: ground, kind: "contact" });
         }
         function segSpeed(a, b) { return 2 * Math.abs(out[b].value - out[a].value) / ((out[b].frame - out[a].frame) * c.frameDuration); }
-        for (k = 1; k <= p.numKeys; k++) {
+        // only the keys made here: a key the property already had keeps its interpolation and ease
+        for (j = 0; j < out.length; j++) {
+            k = p.nearestKeyIndex(out[j].frame * c.frameDuration); last = j === out.length - 1;
             p.setInterpolationTypeAtKey(k, KeyframeInterpolationType.BEZIER, KeyframeInterpolationType.BEZIER);
-            if (out[k - 1].kind === "contact") {
+            if (out[j].kind === "contact") {
                 p.setTemporalContinuousAtKey(k, false); p.setTemporalAutoBezierAtKey(k, false);
-                var vin = segSpeed(k - 2, k - 1) * dir, vout = k < p.numKeys ? -segSpeed(k - 1, k) * dir : 0;
-                p.setTemporalEaseAtKey(k, [new KeyframeEase(vin, inf)], [new KeyframeEase(vout, k < p.numKeys ? inf : 33.33)]);
+                var vin = segSpeed(j - 1, j) * dir, vout = last ? 0 : -segSpeed(j, j + 1) * dir;
+                p.setTemporalEaseAtKey(k, [new KeyframeEase(vin, inf)], [new KeyframeEase(vout, last ? 33.33 : inf)]);
             } else { p.setTemporalEaseAtKey(k, [new KeyframeEase(0, inf)], [new KeyframeEase(0, inf)]); }
         }
         return out;
@@ -143,13 +147,31 @@ AEX.animation = (function () {
         }
         return out;
     }
-    // copyEase(src, dst): copies influence per key (and speed rescaled by the value change), keys paired by index
+    // speedScale(src, dst, ka, kb, i, n): factor turning a src speed into a dst speed on the segment ka to kb, ease dimension i of n.
+    // One ease on a multi-value property is a path speed (lengths); otherwise dimension i (signed, so a reversed move flips it).
+    function speedScale(src, dst, ka, kb, i, n) {
+        function arr(x) { return x instanceof Array ? x : [x]; }
+        function travel(p) {
+            var a = arr(p.keyValue(ka)), b = arr(p.keyValue(kb)), s = 0, q;
+            if (n === 1 && a.length > 1) { for (q = 0; q < a.length; q++) { s += (b[q] - a[q]) * (b[q] - a[q]); } return Math.sqrt(s); }
+            q = Math.min(i, a.length - 1); return b[q] - a[q];
+        }
+        var st = travel(src), sd = src.keyTime(kb) - src.keyTime(ka), dd = dst.keyTime(kb) - dst.keyTime(ka);
+        if (Math.abs(st) < 1e-9 || sd <= 0 || dd <= 0) { return 1; }
+        return travel(dst) / st * (sd / dd);
+    }
+    // copyEase(src, dst): copies influence and speed per key, keys paired by index. Speed is rescaled by the travel and the
+    // duration of the neighboring segment; a speed of 0 stays 0. At the first and last key the speed is copied as is.
     function copyEase(src, dst) {
-        var n = Math.min(src.numKeys, dst.numKeys), k, ie, oe, i, done = 0;
+        var n = Math.min(src.numKeys, dst.numKeys), k, ie, oe, i, done = 0, si, so;
         for (k = 1; k <= n; k++) {
             ie = src.keyInTemporalEase(k); oe = src.keyOutTemporalEase(k);
             var di = dst.keyInTemporalEase(k).length, a = [], b = [];
-            for (i = 0; i < di; i++) { a.push(new KeyframeEase(0, ie[Math.min(i, ie.length - 1)].influence)); b.push(new KeyframeEase(0, oe[Math.min(i, oe.length - 1)].influence)); }
+            for (i = 0; i < di; i++) {
+                si = ie[Math.min(i, ie.length - 1)]; so = oe[Math.min(i, oe.length - 1)];
+                a.push(new KeyframeEase(si.speed === 0 || k === 1 ? si.speed : si.speed * speedScale(src, dst, k - 1, k, i, di), si.influence));
+                b.push(new KeyframeEase(so.speed === 0 || k === n ? so.speed : so.speed * speedScale(src, dst, k, k + 1, i, di), so.influence));
+            }
             dst.setInterpolationTypeAtKey(k, src.keyInInterpolationType(k), src.keyOutInterpolationType(k));
             if (src.keyInInterpolationType(k) === KeyframeInterpolationType.BEZIER || src.keyOutInterpolationType(k) === KeyframeInterpolationType.BEZIER) { dst.setTemporalEaseAtKey(k, a, b); }
             done++;
@@ -159,10 +181,11 @@ AEX.animation = (function () {
     // compPoint(layer, seconds): the layer's anchor point in comp space, parents included (temporary Point Control + toComp).
     function compPoint(l, t) {
         var fx = l.property("ADBE Effect Parade"), e = fx.addProperty("ADBE Point Control"), idx = e.propertyIndex, v;
-        var pt = l.property("ADBE Effect Parade").property(idx).property(1);
-        pt.expression = "thisLayer.toComp(thisLayer.anchorPoint)";
-        v = pt.valueAtTime(t, false);
-        l.property("ADBE Effect Parade").property(idx).remove();
+        try {
+            var pt = l.property("ADBE Effect Parade").property(idx).property(1);
+            pt.expression = "thisLayer.toComp(thisLayer.anchorPoint)";
+            v = pt.valueAtTime(t, false);
+        } finally { l.property("ADBE Effect Parade").property(idx).remove(); }
         return [Math.round(v[0] * 10) / 10, Math.round(v[1] * 10) / 10];
     }
     function isDefaultEase(e) { return e.speed === 0 && Math.abs(e.influence - 33.33333) < 0.05; }
@@ -222,13 +245,15 @@ AEX.animation = (function () {
             }
             if (first !== null) { starts[first] = (starts[first] || 0) + 1; }
         }
-        for (k in starts) { if (starts.hasOwnProperty(k) && starts[k] >= 3) { add("lockstep", "*", "*", null, starts[k] + " layers start moving on frame " + k + ": offset them (2 to 3 frames for list items)"); } }
+        // lockstep carries its start frame, so allow "*|lockstep|<frame>" exempts it; frame-less findings take "*|<rule>"
+        for (k in starts) { if (starts.hasOwnProperty(k) && starts[k] >= 3) { out.push({ rule: "lockstep", layer: "*", property: "*", key: null, frame: Number(k), message: starts[k] + " layers start moving on frame " + k + ": offset them (2 to 3 frames for list items)" }); } }
         if (nKeys >= 4 && nDefault / nKeys > 0.6) { add("default-ease", "*", "*", null, Math.round(nDefault / nKeys * 100) + " % of keys are Easy Ease (33.33 % both sides): shape them"); }
         var allow = {}, q, x, hit;
         if (o.allow) { for (q = 0; q < o.allow.length; q++) { allow[o.allow[q]] = true; } }
         for (q = 0; q < out.length; q++) {
             hit = null;
             if (out[q].frame !== null && allow[out[q].layer + "|" + out[q].rule + "|" + out[q].frame]) { hit = "allow list"; }
+            if (out[q].frame === null && allow[out[q].layer + "|" + out[q].rule]) { hit = "allow list"; }
             if (!hit && out[q].frame !== null && marks[out[q].layer]) {
                 for (x = 0; x < marks[out[q].layer].length; x++) {
                     var mk = marks[out[q].layer][x];
@@ -270,7 +295,8 @@ AEX.animation = (function () {
             maxP = Math.max(maxP, prog[i]);
             if (i > 0 && (prog[i - 1] - tg) * (prog[i] - tg) < 0) { cross++; }
         }
-        var settle = null; for (i = n; i >= 0; i--) { if (Math.abs(prog[i] - tg) > 0.01) { settle = f0 + i + 1; break; } }
+        // null when the last sampled frame is still outside the band: the settle frame lies past the window
+        var settle = f0; for (i = n; i >= 0; i--) { if (Math.abs(prog[i] - tg) > 0.01) { settle = i === n ? null : f0 + i + 1; break; } }
         var R = { frames: [f0, f1], target: tg, progress: prog, speed: spd, peakSpeedFrame: peakF, overshootPct: tg === 1 ? Math.round(Math.max(0, maxP - 1) * 1000) / 10 : null, crossings: cross, settleFrame: settle };
         var g = AEK.build.comp(o.name || "graph", { width: W, height: H, fps: c.frameRate, duration: c.frameDuration * 2, bg: [0.12, 0.12, 0.13] });
         var lo = Math.min(0, Math.min.apply(null, prog)), hi = Math.max(1.15, maxP + 0.05);
@@ -330,12 +356,13 @@ AEX.animation = (function () {
     function onScreen(l, c, f) {
         var t = f * c.frameDuration, idx = l.property("ADBE Effect Parade").addProperty("ADBE Point Control").propertyIndex, i, v, xs = [], ys = [];
         var corners = ["[r.left, r.top]", "[r.left + r.width, r.top]", "[r.left, r.top + r.height]", "[r.left + r.width, r.top + r.height]"];
-        for (i = 0; i < 4; i++) {
-            var pt = l.property("ADBE Effect Parade").property(idx).property(1);
-            pt.expression = "var r = thisLayer.sourceRectAtTime(time, false); thisLayer.toComp(" + corners[i] + ");";
-            v = pt.valueAtTime(t, false); xs.push(v[0]); ys.push(v[1]);
-        }
-        l.property("ADBE Effect Parade").property(idx).remove();
+        try {
+            for (i = 0; i < 4; i++) {
+                var pt = l.property("ADBE Effect Parade").property(idx).property(1);
+                pt.expression = "var r = thisLayer.sourceRectAtTime(time, false); thisLayer.toComp(" + corners[i] + ");";
+                v = pt.valueAtTime(t, false); xs.push(v[0]); ys.push(v[1]);
+            }
+        } finally { l.property("ADBE Effect Parade").property(idx).remove(); }
         var x0 = Math.min(xs[0], xs[1], xs[2], xs[3]), x1 = Math.max(xs[0], xs[1], xs[2], xs[3]), y0 = Math.min(ys[0], ys[1], ys[2], ys[3]), y1 = Math.max(ys[0], ys[1], ys[2], ys[3]);
         var area = Math.max(1e-6, (x1 - x0) * (y1 - y0)), iw = Math.max(0, Math.min(x1, c.width) - Math.max(x0, 0)), ih = Math.max(0, Math.min(y1, c.height) - Math.max(y0, 0));
         var active = t >= l.inPoint && t < l.outPoint;

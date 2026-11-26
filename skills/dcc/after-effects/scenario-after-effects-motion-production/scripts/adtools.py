@@ -290,9 +290,15 @@ DEFAULT_RULES = {
 
 def occupancy(path, fps=None, w=96, h=54):
     """Share of each frame (0 to 1) whose pixels differ by more than 12 levels from the frame's median, on a 96x54 grey
-    copy: a flat background reads 0, a full photo about 0.5. One value per frame of the movie."""
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-vf", "scale=%d:%d,format=gray" % (w, h), "-f", "rawvideo", "-"], capture_output=True).stdout
+    copy: a flat background reads 0, a full photo about 0.5. One value per frame of the movie. Raises RuntimeError when
+    ffmpeg fails or decodes no frame, so a partial or unreadable movie is never scored."""
+    p = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-vf", "scale=%d:%d,format=gray" % (w, h), "-f", "rawvideo", "-"], capture_output=True)
+    raw = p.stdout
+    if p.returncode != 0:
+        raise RuntimeError("ffmpeg could not decode %s: %s" % (path, p.stderr.decode("utf-8", "replace").strip()[-300:]))
     n, out = len(raw) // (w * h), []
+    if n == 0:
+        raise RuntimeError("ffmpeg decoded no frame from " + path)
     for i in range(n):
         fr = raw[i * w * h:(i + 1) * w * h]
         med = sorted(fr)[len(fr) // 2]
@@ -313,10 +319,14 @@ def low_runs(occ, floor, min_len):
 
 
 def contrast(png, box, fill):
-    """WCAG contrast ratio between a text color and the median luminance of the plate inside the text box (pixels within
-    40 levels of the fill are text and are left out). 4.5 is the floor for body text, 3 for large type."""
+    """WCAG contrast ratio between a text color and the plate inside the text box (pixels within 40 levels of the fill are
+    text and are left out): against the median plate luminance, and the tenth percentile of the per-pixel ratios (the
+    worst tenth of the plate). 4.5 is the floor for body text, 3 for large type."""
     x, y, bw, bh = [int(v) for v in box.split(",")]
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", png, "-vf", "crop=%d:%d:%d:%d,format=rgb24" % (bw, bh, x, y), "-f", "rawvideo", "-"], capture_output=True).stdout
+    p = subprocess.run(["ffmpeg", "-v", "error", "-i", png, "-vf", "crop=%d:%d:%d:%d,format=rgb24" % (bw, bh, x, y), "-f", "rawvideo", "-"], capture_output=True)
+    if p.returncode != 0:
+        return {"error": "ffmpeg could not read the box: " + p.stderr.decode("utf-8", "replace").strip()[-300:]}
+    raw = p.stdout
     fr = [int(fill[i:i + 2], 16) for i in (0, 2, 4)]
     def lum(rgb):
         c = [v / 255.0 for v in rgb]
@@ -330,22 +340,33 @@ def contrast(png, box, fill):
     if not plate:
         return {"error": "no plate pixels in the box"}
     plate.sort()
-    pl, p90, lf = plate[len(plate) // 2], plate[int(len(plate) * 0.9)], lum(fr)
+    pl, lf = plate[len(plate) // 2], lum(fr)
     ratio = lambda a, b: (max(a, b) + 0.05) / (min(a, b) + 0.05)
-    return {"ratio_median": round(ratio(lf, pl), 2), "ratio_worst10": round(ratio(lf, p90 if lf < p90 else plate[int(len(plate) * 0.1)]), 2), "plate_pixels": len(plate)}
+    ratios = sorted(ratio(lf, v) for v in plate)
+    return {"ratio_median": round(ratio(lf, pl), 2), "ratio_worst10": round(ratios[int(len(ratios) * 0.1)], 2), "plate_pixels": len(plate)}
+
+
+# rule frame counts are at 30 fps; review() scales them to the report's rate (max_beat_offset_f stays a frame tolerance,
+# the text reading time is scaled once it is summed)
+AT_30_FPS = ("hook_text_by_frame", "first_cut_max_f", "logo_not_before_f", "cta_min_frames", "endcard_min_frames", "max_low_frames",
+             "short_endcard_min_frames", "short_cta_min_frames")
 
 
 def review(rep, render=None, rules=None, picture=None):
     r = dict(DEFAULT_RULES)
     r.update(rules or {})
     fps = rep["fps"]
+    k30 = fps / 30.0
+    at = lambda frames30: int(math.floor(frames30 * k30 + 0.5))
+    for key in AT_30_FPS:
+        r[key] = at(r[key])
     rows = []
     def add(name, value, ok, note=""):
         rows.append({"check": name, "value": value, "pass": bool(ok), "note": note})
     add("hook text on screen by frame", rep["hook_text_frame"], rep["hook_text_frame"] is not None and rep["hook_text_frame"] <= r["hook_text_by_frame"])
     add("first cut frame", rep["first_cut_f"], rep["first_cut_f"] <= r["first_cut_max_f"])
     for t in rep["texts"]:
-        need = max(r["min_text_frames"], r["text_base_frames"] + r["frames_per_word"] * t["words"])
+        need = at(max(r["min_text_frames"], r["text_base_frames"] + r["frames_per_word"] * t["words"]))
         add("text '%s' frames (%d words, needs %d)" % (t["text"], t["words"], need), t["frames"],
             t["frames"] >= need and t["words"] <= r["max_words"])
     for w in rep["cuts_per_10s"]:
@@ -370,14 +391,21 @@ def review(rep, render=None, rules=None, picture=None):
     add("safe-zone violations", len(rep["zone_violations"]), len(rep["zone_violations"]) == 0,
         "; ".join(sorted(set(v["layer"] + "@" + v["zone"] for v in rep["zone_violations"])))[:300])
     if picture:
-        occ = occupancy(picture)
-        runs = [x for x in low_runs(occ, r["min_occupancy"], r["max_low_frames"]) if x[0] > 0]
-        add("near-empty stretches (frames under %d %% content, %d+ frames)" % (r["min_occupancy"] * 100, r["max_low_frames"]), runs, not runs)
-        ef = rep.get("frames", len(occ)) - rep.get("endcard_frames", 0)
-        hold = sorted(occ[ef + 6:]) if rep.get("endcard_frames") else []
-        if hold:
-            med = hold[len(hold) // 2]
-            add("end-card content (median share of the frame)", med, med >= r["endcard_min_occupancy"], "a lone small wordmark on a flat ground reads as an empty frame")
+        try:
+            occ = occupancy(picture)
+        except RuntimeError as e:
+            occ = None
+            add("picture decode", str(e), False)
+        if occ is not None:
+            runs = low_runs(occ, r["min_occupancy"], r["max_low_frames"])
+            add("near-empty stretches (frames under %d %% content, %d+ frames)" % (r["min_occupancy"] * 100, r["max_low_frames"]), runs, not runs)
+            ef = rep.get("frames", len(occ)) - rep.get("endcard_frames", 0)
+            hold = sorted(occ[ef + at(6):]) if rep.get("endcard_frames") else []
+            if hold:
+                med = hold[len(hold) // 2]
+                add("end-card content (median share of the frame)", med, med >= r["endcard_min_occupancy"], "a lone small wordmark on a flat ground reads as an empty frame")
+            elif rep.get("endcard_frames"):
+                add("end-card content (median share of the frame)", "movie has %d frames, end card starts at %d" % (len(occ), ef), False)
     if render:
         L = loud(render)
         add("integrated loudness (LUFS)", L["integrated_lufs"], L["integrated_lufs"] is not None and abs(L["integrated_lufs"] - r["lufs_target"]) <= r["lufs_tol"])
@@ -429,7 +457,12 @@ def main():
     elif a.cmd == "zone":
         res = zone(a.png, a.name, a.source)
     elif a.cmd == "occupancy":
-        occ = occupancy(a.file)
+        try:
+            occ = occupancy(a.file)
+        except RuntimeError as e:
+            json.dump({"file": a.file, "error": str(e)}, sys.stdout, indent=1)
+            print()
+            sys.exit(1)
         res = {"file": a.file, "frames": len(occ), "occupancy": occ, "low_runs_3pct_9f": low_runs(occ, 0.03, 9)}
     elif a.cmd == "contrast":
         res = contrast(a.png, a.box, a.fill.lstrip("#"))

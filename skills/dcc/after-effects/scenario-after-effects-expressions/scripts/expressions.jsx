@@ -103,8 +103,9 @@ AEX.expressions = (function () {
         boxSize: 'const t = thisComp.layer("TXT_1");\nconst c = thisComp.layer("CTRL");\nconst r = t.sourceRectAtTime(time, false);\nconst s = t.transform.scale / 100;\nconst w = r.width > 0 ? r.width + 2 * c.effect("Pad X")(1) / s[0] : 0;\nconst h = r.height > 0 ? r.height + 2 * c.effect("Pad Y")(1) / s[1] : 0;\n[w, h]',
         // BOX > Rectangle Path > Position: centers the rect on the ink box, so font, size and justification changes stay inside
         boxPos: 'const r = thisComp.layer("TXT_1").sourceRectAtTime(time, false);\n[r.left + r.width / 2, r.top + r.height / 2]',
-        // TXT_2 > Position: under the ink bottom of TXT_1 plus Gap, left on the TXT_1 origin; any parent
-        line2: 'const a = thisComp.layer("TXT_1");\nconst gap = thisComp.layer("CTRL").effect("Gap")(1);\nconst r = a.sourceRectAtTime(time, false);\nconst x = a.toComp([0, 0])[0];\nconst y = a.toComp([0, r.top + r.height])[1] + gap;\nconst me = sourceRectAtTime(time, false);\nconst s = transform.scale / 100;\nconst p = [x + anchorPoint[0] * s[0], y + (anchorPoint[1] - me.top) * s[1]];\nhasParent ? parent.fromComp(p) : p',
+        // TXT_2 > Position: under the ink bottom of TXT_1 plus Gap, left on the TXT_1 origin; any parent. The ink offset is
+        // added after fromComp, in parent space: added in comp space, a scaled parent would scale it twice.
+        line2: 'const a = thisComp.layer("TXT_1");\nconst gap = thisComp.layer("CTRL").effect("Gap")(1);\nconst r = a.sourceRectAtTime(time, false);\nconst x = a.toComp([0, 0])[0];\nconst y = a.toComp([0, r.top + r.height])[1] + gap;\nconst me = sourceRectAtTime(time, false);\nconst s = transform.scale / 100;\nconst off = [anchorPoint[0] * s[0], (anchorPoint[1] - me.top) * s[1]];\nhasParent ? add(parent.fromComp([x, y]), off) : add([x, y], off)',
         // Bar N > Position: follows MOVE with N x Lag frames of delay; the number comes from the layer name
         follow: 'const lead = thisComp.layer("MOVE").transform.position;\nconst lag = thisComp.layer("CTRL").effect("Lag (frames)")(1);\nconst i = parseInt(thisLayer.name.replace(/\\D/g, ""), 10);\nconst d = i * Math.round(lag) * thisComp.frameDuration;\nvalue + (lead.valueAtTime(time - d) - lead.valueAtTime(0))',
         // DOT > Position: seamless idle, period in frames, noise sampled on a circle so frame 0 and frame T are the same point
@@ -163,24 +164,34 @@ AEX.expressions = (function () {
         return { expressions: rep.length, set: rep };
     }
 
+    function reEsc(t) { return String(t).replace(/[\\^$.*+?()[\]{}|\/]/g, "\\$&"); }
     // renameLayer(comp, oldName, newName): renames a layer AND rewrites layer("oldName") in every expression of every comp.
-    // A rename by script leaves the expression text unchanged, so references break.
+    // A rename by script leaves the expression text unchanged, so references break. Matches double or single quotes and
+    // spaces inside the parentheses; keeps each expression's enabled state. `review` lists expressions that still hold the
+    // old name in quotes after the rewrite (a name in a variable, a string): check those by hand.
     function renameLayer(c, oldName, newName) {
-        var l = AEK.core.layer(c, oldName), comps = AEK.core.comps(), i, j, edited = [];
-        var pat = 'layer("' + esc(oldName) + '")', rep = 'layer("' + esc(newName) + '")';
-        l.name = newName;
+        var l = AEK.core.layer(c, oldName), comps = AEK.core.comps(), i, j, k, edited = [], review = [], todo = [];
+        var dq = '"' + esc(oldName) + '"', sq = "'" + String(oldName).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+        var re = new RegExp("layer\\(\\s*(?:" + reEsc(dq) + "|" + reEsc(sq) + ")\\s*\\)", "g"), rep = 'layer("' + esc(newName) + '")';
         for (i = 0; i < comps.length; i++) {
             for (j = 1; j <= comps[i].numLayers; j++) {
                 AEK.core.walk(comps[i].layer(j), function (p) {
                     if (p.propertyType !== PropertyType.PROPERTY) { return; }
                     var ex = ""; try { if (p.canSetExpression) { ex = p.expression; } } catch (e) { return; }
-                    if (ex === "" || ex.indexOf(pat) < 0) { return; }
-                    p.expression = ex.split(pat).join(rep);
-                    edited.push(comps[i].name + " > " + comps[i].layer(j).name + " > " + p.name);
+                    if (ex === "") { return; }
+                    var nx = ex.replace(re, function () { return rep; }), where = comps[i].name + " > " + comps[i].layer(j).name + " > " + p.name;
+                    if (nx.indexOf(dq) >= 0 || nx.indexOf(sq) >= 0) { review.push(where); }
+                    if (nx !== ex) { todo.push({ p: p, ex: nx, on: p.expressionEnabled, where: where }); }
                 });
             }
         }
-        return { renamed: oldName + " -> " + newName, edited: edited };
+        l.name = newName;
+        for (k = 0; k < todo.length; k++) {
+            todo[k].p.expression = todo[k].ex;
+            if (todo[k].p.expressionEnabled !== todo[k].on) { todo[k].p.expressionEnabled = todo[k].on; }
+            edited.push(todo[k].where);
+        }
+        return { renamed: oldName + " -> " + newName, edited: edited, review: review };
     }
 
     // LEVEL: CTRL > Level slider. Normalized amplitude (Audio Floor to Audio Ceiling), rise over Attack frames, exponential

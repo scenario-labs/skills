@@ -49,11 +49,13 @@ res.stillMissing = AEX.project.inventory(AEK.core.comp(ARGS.main)).missing.lengt
 return res;
 ```
 
-`relink` reads `FileSource.missingFootagePath`, searches that exact file name breadth first under
-each root (6 levels), and calls `replace()` (or `replaceWithSequence()` for a numbered image file).
-Read `relinked[].missingNow` (false) and `notFound`. Live: a clip moved to another folder after save
-came back missing on reopen; relink found it and `footageMissing` turned false. Check the relinked
-shot on the after sheet: same name does not mean same take.
+`relink` reads `FileSource.missingFootagePath` and collects every file of that exact name under all
+roots, breadth first (6 levels). With exactly one, it calls `replace()` (or `replaceWithSequence()`
+for a numbered image file). With two or more, the item stays untouched and goes to `ambiguous` with
+its `candidates`: show them to the user. Read `relinked[].missingNow` (false) and `notFound`. Live:
+a clip moved to another folder after save came back missing on reopen; relink found it and
+`footageMissing` turned false. Check the relinked shot on the after sheet: same name does not mean
+same take.
 
 ## 3. Missing fonts
 
@@ -148,10 +150,12 @@ that name the comp or layer: the next evaluation fails with "layer named 'X' is 
 expression is disabled. `rename` records each old name (including a precomp layer that follows its
 comp's name) and rewrites `comp("X")` and `layer("X")`, both quote styles, then evaluates every
 expression at three times. Live: `thisComp.layer("Pre-comp 12")` and `comp('Pre-comp 12')` became
-`PC_Test_25_logo`, 2 rewritten, 0 errors, values unchanged (Opacity 50, X 320). Names built from
-variables or string concatenation are not rewritten: they show up in `exprErrors`; hand those to
-scenario-after-effects-expressions. When you give final names by role, rename by script and then
-call
+`PC_Test_25_logo`, 2 rewritten, 0 errors, values unchanged (Opacity 50, X 320). A layer reference
+qualified by a comp, `comp("MAIN_A").layer("Pre-comp 1")`, is rewritten when it targets the comp
+holding the renamed layer, from any comp. The main comp's users get the same layer pairs as a
+precomp's. Names built from variables or string concatenation are not rewritten: they show up in
+`exprErrors`; hand those to scenario-after-effects-expressions. When you give final names by role,
+rename by script and then call
 `AEX.project.rewriteRefs([{kind: "comp", from, to}, {kind: "layer", from, to, scope: parentComp.id}])`:
 it rewrites and returns `{rewritten, exprErrors}`.
 
@@ -300,7 +304,8 @@ return AEX.project.saveVersion(ARGS.dir, ARGS.base);
 ```
 
 Live: three calls wrote `_v001`, `_v002`, `_v003`; `dirty` false after each; the open project is the
-newest file. Never write over an existing version.
+newest file. Past `_v999` the number keeps all its digits (`_v1000`). If the next file exists
+anyway, `saveVersion` throws instead of saving over it.
 
 ## 12. Collect Files substitute
 
@@ -325,6 +330,10 @@ return res;
 
 Live: 6 sources from four folders copied (7.1 MB), `outside` empty, project saved in the delivery
 folder, `dirty` false.
+
+Each source gets its own destination: two `voice.wav` from different folders become `voice.wav` and
+`<id>_voice.wav`, even at equal size. A file already in the folder before the run is never reused or
+overwritten. `collect` throws before copying when `<name>.aep` already exists in `dest`.
 
 An image sequence item points at its first frame (`item.file`). Copying that file alone turned a
 24-frame PNG sequence into a still (duration 0) in the collected project [live 27.0]. `collect`

@@ -131,13 +131,15 @@ var c = AEK.core.comp(ARGS.comp);
 return AEX.shapes.strokes(c, { width: 2, cap: "round", join: "round", scaleAware: true });
 ```
 
-Check: one row per stroke with stored `width`, `onScreen` (width times layer and parent Scale) and
-`issues`. Measured: a 2 px stroke on a layer at 200 % reported `onScreen` 4 and an issue; a 3 px
-stroke and a Butt cap were flagged. Group Transform Scale is not included: keep group Scale at 100
-in icons. Width is read with `valueAtTime` after any expression, so the constant on-screen
-expression (procedure 12) is audited on its result. Measured on a layer at 400 %: the plain 2 px
-stroke read `onScreen` 8 with an issue; with the expression it read width 0.5, `onScreen` 2,
-`expression: true` and no issue. An expression error is still an issue.
+Check: one row per stroke with stored `width`, `onScreen` (width through layer and parent Scale and
+Rotation) and `issues`. `onScreen` is null, with an issue, when the chain is not a uniform 2D scale:
+non-uniform scale, a 3D layer, or a camera parent. Rebuild that geometry at delivery size. Measured:
+a 2 px stroke on a layer at 200 % reported `onScreen` 4 and an issue; a 3 px stroke and a Butt cap
+were flagged. Group Transform Scale is not included: keep group Scale at 100 in icons. Width is read
+with `valueAtTime` after any expression, so the constant on-screen expression (procedure 12) is
+audited on its result. Measured on a layer at 400 %: the plain 2 px stroke read `onScreen` 8 with an
+issue; with the expression it read width 0.5, `onScreen` 2, `expression: true` and no issue. An
+expression error is still an issue.
 
 ## 5. Radial burst
 
@@ -292,28 +294,42 @@ Job file: `scripts/jobs/vector_intake.jsx`.
 ```javascript
 // channel: bridge | handoff
 // checked: live 27.0
+// ARGS: {svg} and/or {ai, comp}: absolute paths; each part runs only when its file is given
 function imp(path, as) {
   var io = new ImportOptions(new File(path)); if (as) { io.importAs = as; }
   app.beginSuppressDialogs(); try { return app.project.importFile(io); } finally { app.endSuppressDialogs(false); }
 }
-var R = {}, seen = {}, i;
-// SVG as native shape layers: COMP_CROPPED_LAYERS is the only comp mode it accepts, and importFile returns null.
-// Project items are not in creation order: compare ids to find the new comp.
-for (i = 1; i <= app.project.numItems; i++) { seen[app.project.item(i).id] = true; }
-imp(ARGS.svg, ImportAsType.COMP_CROPPED_LAYERS);
-for (i = 1; i <= app.project.numItems; i++) { if (!seen[app.project.item(i).id] && app.project.item(i) instanceof CompItem) { R.svgComp = app.project.item(i).name; R.svgLayer = app.project.item(i).layer(1).matchName; } }
-// Illustrator file as footage, then try Create Shapes from Vector Layer on that one selected layer
-var c = AEK.core.comp(ARGS.comp), foot = imp(ARGS.ai, ImportAsType.FOOTAGE), src = c.layers.add(foot);
-for (i = 1; i <= app.project.numItems; i++) { app.project.item(i).selected = false; }
-var n0 = c.numLayers, v = c.openInViewer();
-if (v) { v.setActive(); }
-for (i = 1; i <= c.numLayers; i++) { c.layer(i).selected = false; }
-src.selected = true;
-app.executeCommand(app.findMenuCommandId("Create Shapes from Vector Layer"));   // id 3973 in 27.0: no dialog, but often no effect
-R.converted = c.numLayers > n0;
-if (!R.converted) { R.next = "GUI step: select '" + src.name + "' in comp '" + c.name + "', Layer > Create > Create Shapes from Vector Layer"; return R; }
-R.newLayer = c.layer(src.index - 1).name; R.srcEnabled = src.enabled;
-R.order = AEX.shapes.order(c.layer(src.index - 1));
+var R = {}, seen = {}, bad = [], i, c = null, it;
+// every input is checked before the first import, so a bad request leaves the project untouched
+if (!ARGS.svg && !ARGS.ai) { throw new Error("vector_intake: give ARGS.svg, ARGS.ai (with ARGS.comp), or both"); }
+if (ARGS.svg && !new File(ARGS.svg).exists) { bad.push("SVG not found: " + ARGS.svg); }
+if (ARGS.ai && !new File(ARGS.ai).exists) { bad.push("Illustrator file not found: " + ARGS.ai); }
+if (ARGS.ai) { try { c = AEK.core.comp(ARGS.comp); } catch (e) { bad.push(e.message); } }
+if (bad.length) { throw new Error(bad.join("; ")); }
+if (ARGS.svg) {
+  // SVG as native shape layers: COMP_CROPPED_LAYERS is the only comp mode it accepts, and importFile returns null.
+  // Project items are not in creation order: compare ids to find the new comp.
+  for (i = 1; i <= app.project.numItems; i++) { seen[app.project.item(i).id] = true; }
+  imp(ARGS.svg, ImportAsType.COMP_CROPPED_LAYERS);
+  R.svgComp = null;
+  for (i = 1; i <= app.project.numItems; i++) {
+    it = app.project.item(i);
+    if (!seen[it.id] && it instanceof CompItem) { R.svgComp = it.name; R.svgLayer = it.numLayers ? it.layer(1).matchName : ""; }
+  }
+}
+if (ARGS.ai) {
+  // Illustrator file as footage, then try Create Shapes from Vector Layer on that one selected layer
+  var foot = imp(ARGS.ai, ImportAsType.FOOTAGE), src = c.layers.add(foot);
+  for (i = 1; i <= app.project.numItems; i++) { app.project.item(i).selected = false; }
+  var n0 = c.numLayers, v = c.openInViewer();
+  if (v) { v.setActive(); }
+  for (i = 1; i <= c.numLayers; i++) { c.layer(i).selected = false; }
+  src.selected = true;
+  app.executeCommand(app.findMenuCommandId("Create Shapes from Vector Layer"));   // id 3973 in 27.0: no dialog, but often no effect
+  R.converted = c.numLayers > n0;
+  if (!R.converted) { R.next = "GUI step: select '" + src.name + "' in comp '" + c.name + "', Layer > Create > Create Shapes from Vector Layer"; }
+  else { R.newLayer = c.layer(src.index - 1).name; R.srcEnabled = src.enabled; R.order = AEX.shapes.order(c.layer(src.index - 1)); }
+}
 return R;
 ```
 
@@ -354,7 +370,8 @@ Prepare the `.ai` before import (Megan Friesth, qV3KXRrGm-A):
 ```javascript
 // expression (JavaScript engine): Shape Layer > Contents > Group > Stroke > Stroke Width
 // checked: live 27.0
-// constant on-screen width through layer and parent scale (not through group Transform scale)
+// constant on-screen width through layer and parent scale (not through group Transform scale);
+// valid for a uniform 2D scale only: it measures one direction
 var px = 2;
 var s = length(toComp([0, 0]), toComp([1, 0]));
 s > 0 ? px / s : value;
@@ -366,6 +383,10 @@ precomp layer at 400 % with Collapse Transformations off rendered soft edges (8 
 pixels); on, crisp (0). SVG footage at 200 % was soft with the switch off and crisp with it on. Set
 it by script: `layer.collapseTransformation = true`.
 
+The expression measures the X direction only. Under a non-uniform scale (X and Y differ anywhere in
+the chain) or a 3D layer, a stroke has no single on-screen width: rebuild the geometry at delivery
+size instead. `stroke_audit.jsx` flags those layers.
+
 ## 13. Lottie readiness audit
 
 ```javascript
@@ -373,14 +394,33 @@ it by script: `layer.collapseTransformation = true`.
 // checked: live 27.0
 var c = AEK.core.comp(ARGS.comp);
 var before = AEX.shapes.lottie(c);
-var dup = c.duplicate(); dup.name = c.name + "_lottie";          // never fix the master
-for (var i = 1; i <= dup.numLayers; i++) {
-  AEK.core.walk(dup.layer(i), function (p) {
-    if (p.propertyType === PropertyType.PROPERTY && p.canSetExpression && p.expression && p.expressionEnabled) { AEK.expr.bake(p, dup, 0, dup.duration); }
-  });
+// never fix a master: the comp and every comp nested in it get an export copy, rewired to the other copies
+var copies = {}, made = [], id, k;
+function exportCopy(src) {
+  if (copies[src.id]) { return copies[src.id]; }
+  var d = src.duplicate(), i, s;
+  d.name = src.name + "_lottie"; copies[src.id] = d; made.push(d.name);
+  for (i = 1; i <= d.numLayers; i++) {
+    s = null; try { s = d.layer(i).source; } catch (e) {}
+    if (s instanceof CompItem) { d.layer(i).replaceSource(exportCopy(s), false); }
+  }
+  return d;
 }
-return { before: before, after: AEX.shapes.lottie(dup) };
+var dup = exportCopy(c);
+for (id in copies) {
+  if (!copies.hasOwnProperty(id)) { continue; }
+  for (k = 1; k <= copies[id].numLayers; k++) {
+    AEK.core.walk(copies[id].layer(k), function (p) {
+      if (p.propertyType === PropertyType.PROPERTY && p.canSetExpression && p.expression && p.expressionEnabled) { AEK.expr.bake(p, copies[id], 0, copies[id].duration); }
+    });
+  }
+}
+return { before: before, after: AEX.shapes.lottie(dup), copies: made };
 ```
+
+The audit and the preparation walk nested comps, each once. `where` is the layer path from the top
+comp (`Outer > Precomp > layer`). The job bakes only in the `_lottie` copies: the top comp and each
+nested comp are duplicated and the copies rewired to each other (`copies` lists them).
 
 Check: findings `{severity, where, what}`, by severity:
 

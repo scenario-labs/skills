@@ -215,10 +215,23 @@ AEX.track = (function () {
 
     // cornerNulls(comp, corners, prefix, startFrame): four nulls named <prefix>UL, UR, LR, LL keyed on every frame
     // (comp space), the layout a point tracker or a Mocha export to nulls leaves. Returns the four names.
+    // thisComp.layer(name) reads the first layer of that name: when a run's names are taken, the prefix gets
+    // _2, _3 and so on until all four are free, so each insert keeps its own nulls.
+    function freePrefix(c, base) {
+        var tags = ["UL", "UR", "LR", "LL"], used = {}, i, k, p, n = 1, clash;
+        for (i = 1; i <= c.numLayers; i++) { used[c.layer(i).name] = true; }
+        do {
+            p = n === 1 ? base : base.replace(/_$/, "") + "_" + n + "_";
+            clash = false;
+            for (k = 0; k < 4; k++) { if (used[p + tags[k]]) { clash = true; } }
+            n++;
+        } while (clash);
+        return p;
+    }
     function cornerNulls(c, corners, prefix, startFrame) {
-        var tags = ["UL", "UR", "LR", "LL"], t = times(c, corners.length, startFrame || 0), k, i, n, v, names = [];
+        var tags = ["UL", "UR", "LR", "LL"], t = times(c, corners.length, startFrame || 0), k, i, n, v, names = [], pre = freePrefix(c, prefix || "track_");
         for (k = 0; k < 4; k++) {
-            n = c.layers.addNull(c.duration); n.name = (prefix || "track_") + tags[k];
+            n = c.layers.addNull(c.duration); n.name = pre + tags[k];
             v = []; for (i = 0; i < corners.length; i++) { v.push(corners[i][k]); }
             // a null's anchor is its own corner; Position alone then equals the tracked point
             n.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);
@@ -228,11 +241,18 @@ AEX.track = (function () {
         return names;
     }
 
-    // pinFromNulls(layer, [UL, UR, LR, LL] null names): Corner Pin driven by expressions that read each null's comp
-    // position (toComp) and convert it to the pinned layer's space (fromComp). The pin follows any later change to the
-    // nulls; the layer may be moved or scaled. Expression pins get no motion blur: bake them, or use cornerPin().
+    // pinFromNulls(layer, [UL, UR, LR, LL] null names, as cornerNulls returns them): Corner Pin driven by expressions
+    // that read each null's comp position (toComp) and convert it to the pinned layer's space (fromComp). The pin
+    // follows any later change to the nulls; the layer may be moved or scaled. Each name must match exactly one layer.
+    // Expression pins have no Position motion, so no motion blur: use cornerPin(..., {motionBlur: true}) for that.
     function pinFromNulls(l, names) {
-        var fx = l.property("ADBE Effect Parade").addProperty("ADBE Corner Pin"), idx = fx.propertyIndex, ord = [0, 1, 3, 2], k, p;
+        var c = l.containingComp, ord = [0, 1, 3, 2], k, p, i, hits, fx, idx;
+        for (k = 0; k < 4; k++) {
+            hits = 0;
+            for (i = 1; i <= c.numLayers; i++) { if (c.layer(i).name === names[k]) { hits++; } }
+            if (hits !== 1) { throw new Error("pinFromNulls: '" + names[k] + "' names " + hits + " layers in '" + c.name + "', need exactly 1"); }
+        }
+        fx = l.property("ADBE Effect Parade").addProperty("ADBE Corner Pin"); idx = fx.propertyIndex;
         for (k = 0; k < 4; k++) {
             p = l.property("ADBE Effect Parade").property(idx).property(k + 1);
             p.expression = "var n = thisComp.layer(\"" + names[ord[k]] + "\");\nfromComp(n.toComp(n.anchorPoint));";

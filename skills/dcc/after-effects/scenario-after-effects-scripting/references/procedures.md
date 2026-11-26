@@ -71,7 +71,8 @@ record number, not the physical line, when a field holds a line break. JSON data
 `AEX.batch.readJson(path)` reads a list of objects (or `readJson(path, "rows")` for an object that
 holds the list under `rows`) into the same `{header, rows}` shape, values as strings, `_line` = item
 number + 1. `validate`, `eachRow` and `fill` then work unchanged. ExtendScript has no `JSON` object;
-`AEK.json.parse` stands in.
+`AEK.json.parse` stands in. It accepts strict JSON only: double quotes, no comments, no trailing
+commas.
 
 ```javascript
 // channel: bridge
@@ -147,7 +148,7 @@ var rep = AEX.batch.eachRow(rows, function (row) {
         throw e;
     }
 });
-var first = queued.slice(0, ARGS.renderFirst || 3);
+var first = queued.slice(0, ARGS.renderFirst === undefined ? 3 : ARGS.renderFirst);
 var ren = AEX.batch.renderOnly(first);
 for (j = 0; j < queued.length; j++) { frames.push(AEK.capture.frame(queued[j].comp, 1.5, OUT + "/f_" + queued[j].comp.name + ".png").path); }
 var failed = AEK.core.items(function (it) { return it.parentFolder === failBin; });

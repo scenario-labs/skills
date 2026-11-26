@@ -136,72 +136,111 @@ AEX.shapes = (function () {
         var v = s.vertices.slice(0).reverse(), it = s.outTangents.slice(0).reverse(), ot = s.inTangents.slice(0).reverse();
         return makeShape(v, it, ot, s.closed);
     }
-    // lottie(comp): features a Lottie export drops or changes, per the LottieFiles compatibility matrix and the expert notes
+    // lottie(comp): features a Lottie export drops or changes, per the LottieFiles compatibility matrix and the expert notes.
+    // Nested comps are audited too (each once); `where` is the layer path from the top comp, "Outer > Precomp > layer".
     function lottie(c) {
-        var f = [], i, l, fx;
-        function flag(sev, where, what) { f.push({ severity: sev, where: where, what: what }); }
-        for (i = 1; i <= c.numLayers; i++) {
-            l = c.layer(i);
-            if (!l.enabled) { flag("info", l.name, "layer switched off: confirm the exporter skips hidden layers, or delete it in the export copy"); continue; }
-            if (l instanceof CameraLayer) { flag("drop", l.name, "camera layer"); continue; }
-            if (l instanceof LightLayer) { flag("drop", l.name, "light layer"); continue; }
-            if (l.guideLayer) { flag("drop", l.name, "guide layer (skipped by design)"); }
-            if (l.adjustmentLayer) { flag("drop", l.name, "adjustment layer"); }
-            if (l.threeDLayer) { flag("partial", l.name, "3D layer: Z kept, X/Y rotation and Z order limited"); }
-            if (l.hasAudio && !l.hasVideo) { flag("drop", l.name, "audio layer"); }
-            if (l.hasTrackMatte) { flag(l.trackMatteType === TrackMatteType.ALPHA || l.trackMatteType === TrackMatteType.ALPHA_INVERTED ? "ok" : "partial", l.name, "track matte " + AEK.core.enumName(TrackMatteType, l.trackMatteType)); }
-            if (l.timeRemapEnabled) { flag("partial", l.name, "time remap: linear only"); }
-            if (l instanceof AVLayer && l.source && l.source.mainSource && !(l.source instanceof CompItem) && !(l.source.mainSource instanceof SolidSource)) {
-                if (l.source.mainSource.isStill) { flag("size", l.name, "raster or vector footage: embedded as base64 PNG, convert vector art to shapes"); }
-                else if (l.hasVideo) { flag("drop", l.name, "video footage"); }
+        var f = [], seen = {};
+        function audit(cc, pre) {
+            var i, l, at;
+            function flag(sev, where, what) { f.push({ severity: sev, where: pre + where, what: what }); }
+            for (i = 1; i <= cc.numLayers; i++) {
+                l = cc.layer(i);
+                if (!l.enabled) { flag("info", l.name, "layer switched off: confirm the exporter skips hidden layers, or delete it in the export copy"); continue; }
+                at = layerChecks(l, flag);
+                if (at && !seen[at.id]) { seen[at.id] = true; audit(at, pre + l.name + " > "); }
             }
-            // basic text is supported by the matrix; animators and text on a path are partial
-            if (l.matchName === "ADBE Text Layer") {
-                var tp = l.property("ADBE Text Properties"), an = tp.property("ADBE Text Animators"), po = tp.property("ADBE Text Path Options"), tpath = po ? po.property("ADBE Text Path") : null;
-                flag("check", l.name, "text layer (basic, supported): the font is referenced by name and must exist in the runtime; for a custom font run Create Shapes from Text or ship the font");
-                if (an && an.numProperties > 0) { flag("partial", l.name, "text animators: per-character animators partial, complex range selectors may drop"); }
-                if (tpath && tpath.value > 0) { flag("partial", l.name, "text on a path: partial"); }
-            }
-            fx = l.property("ADBE Effect Parade");
-            if (fx) { for (var e = 1; e <= fx.numProperties; e++) { if (!fx.property(e).enabled) { continue; } flag(fx.property(e).matchName === "ADBE Drop Shadow" || fx.property(e).matchName === "ADBE Gaussian Blur 2" || fx.property(e).matchName === "ADBE Fill" || fx.property(e).matchName === "ADBE Tint" ? "partial" : "drop", l.name, "effect " + fx.property(e).name + " (" + fx.property(e).matchName + ")"); } }
-            AEK.core.walk(l, function (p) {
-                var mn = p.matchName;
-                if (p.propertyType === PropertyType.PROPERTY && p.canSetExpression && p.expressionEnabled && p.expression) { flag("drop", l.name, "expression on " + p.name + ": bake to keyframes"); }
-                if (mn === "ADBE Vector Filter - Merge") { flag("check", l.name, "Merge Paths: not in the Lottie matrix, test in the target player or flatten the boolean"); }
-                if (mn === "ADBE Vector Filter - Offset" || mn === "ADBE Vector Filter - PB" || mn === "ADBE Vector Filter - Twist" || mn === "ADBE Vector Filter - Roughen" || mn === "ADBE Vector Filter - Wiggler" || mn === "ADBE Vector Filter - Zigzag" || mn === "ADBE Vector Filter - RC") { flag("check", l.name, p.name + ": not in the Lottie matrix, test in the target player or bake the path"); }
-                if (mn === "ADBE Vector Graphic - G-Fill" || mn === "ADBE Vector Graphic - G-Stroke") { flag("partial", l.name, p.name + ": two-stop linear is safest"); }
-                // taper is active when a length is above 0 (the widths default to 0, which means a full point)
-                if (mn === "ADBE Vector Stroke Taper" && p.property("ADBE Vector Taper Start Length") && (p.property("ADBE Vector Taper Start Length").value > 0 || p.property("ADBE Vector Taper End Length").value > 0)) { flag("check", l.name, "stroke taper in use: not in the Lottie matrix"); }
-                if (mn === "ADBE Vector Stroke Wave" && p.property("ADBE Vector Taper Wave Amount") && p.property("ADBE Vector Taper Wave Amount").value !== 0) { flag("check", l.name, "stroke wave in use: not in the Lottie matrix"); }
-                if (mn === "ADBE Mask Atom" && p.property("ADBE Mask Feather") && (p.property("ADBE Mask Feather").value[0] || p.property("ADBE Mask Feather").value[1])) { flag("check", l.name, "feathered mask"); }
-            });
         }
+        seen[c.id] = true;
+        audit(c, "");
         return f;
     }
-    // strokes(comp, {width, cap, join, scaleAware, time}): every Stroke and Gradient Stroke in the comp's shape layers against a house style.
-    // Reports the width after any expression and the on-screen width (x layer and parent Scale X at `time`, default 0). Group Scale is not included.
-    function strokes(c, want) {
-        var out = [], i, l, caps = { 1: "butt", 2: "round", 3: "projecting" }, joins = { 1: "miter", 2: "round", 3: "bevel" };
-        want = want || {};
-        function screenScale(layer) {
-            var a = [0, 0], b = [1, 0], k, s = 1, cur = layer;
-            while (cur) { k = cur.property("ADBE Transform Group").property("ADBE Scale").valueAtTime(want.time || 0, false); s *= Math.abs(k[0]) / 100; cur = cur.parent; }
-            return s;
+    // layerChecks(layer, flag): the per-layer Lottie checks; returns the layer's source comp, or null
+    function layerChecks(l, flag) {
+        var fx, sub = null;
+        if (l instanceof CameraLayer) { flag("drop", l.name, "camera layer"); return null; }
+        if (l instanceof LightLayer) { flag("drop", l.name, "light layer"); return null; }
+        if (l.guideLayer) { flag("drop", l.name, "guide layer (skipped by design)"); }
+        if (l.adjustmentLayer) { flag("drop", l.name, "adjustment layer"); }
+        if (l.threeDLayer) { flag("partial", l.name, "3D layer: Z kept, X/Y rotation and Z order limited"); }
+        if (l.hasAudio && !l.hasVideo) { flag("drop", l.name, "audio layer"); }
+        if (l.hasTrackMatte) { flag(l.trackMatteType === TrackMatteType.ALPHA || l.trackMatteType === TrackMatteType.ALPHA_INVERTED ? "ok" : "partial", l.name, "track matte " + AEK.core.enumName(TrackMatteType, l.trackMatteType)); }
+        if (l.timeRemapEnabled) { flag("partial", l.name, "time remap: linear only"); }
+        if (l instanceof AVLayer && l.source && l.source.mainSource && !(l.source instanceof CompItem) && !(l.source.mainSource instanceof SolidSource)) {
+            if (l.source.mainSource.isStill) { flag("size", l.name, "raster or vector footage: embedded as base64 PNG, convert vector art to shapes"); }
+            else if (l.hasVideo) { flag("drop", l.name, "video footage"); }
         }
+        // basic text is supported by the matrix; animators and text on a path are partial
+        if (l.matchName === "ADBE Text Layer") {
+            var tp = l.property("ADBE Text Properties"), an = tp.property("ADBE Text Animators"), po = tp.property("ADBE Text Path Options"), tpath = po ? po.property("ADBE Text Path") : null;
+            flag("check", l.name, "text layer (basic, supported): the font is referenced by name and must exist in the runtime; for a custom font run Create Shapes from Text or ship the font");
+            if (an && an.numProperties > 0) { flag("partial", l.name, "text animators: per-character animators partial, complex range selectors may drop"); }
+            if (tpath && tpath.value > 0) { flag("partial", l.name, "text on a path: partial"); }
+        }
+        fx = l.property("ADBE Effect Parade");
+        if (fx) { for (var e = 1; e <= fx.numProperties; e++) { if (!fx.property(e).enabled) { continue; } flag(fx.property(e).matchName === "ADBE Drop Shadow" || fx.property(e).matchName === "ADBE Gaussian Blur 2" || fx.property(e).matchName === "ADBE Fill" || fx.property(e).matchName === "ADBE Tint" ? "partial" : "drop", l.name, "effect " + fx.property(e).name + " (" + fx.property(e).matchName + ")"); } }
+        AEK.core.walk(l, function (p) {
+            var mn = p.matchName;
+            if (p.propertyType === PropertyType.PROPERTY && p.canSetExpression && p.expressionEnabled && p.expression) { flag("drop", l.name, "expression on " + p.name + ": bake to keyframes"); }
+            if (mn === "ADBE Vector Filter - Merge") { flag("check", l.name, "Merge Paths: not in the Lottie matrix, test in the target player or flatten the boolean"); }
+            if (mn === "ADBE Vector Filter - Offset" || mn === "ADBE Vector Filter - PB" || mn === "ADBE Vector Filter - Twist" || mn === "ADBE Vector Filter - Roughen" || mn === "ADBE Vector Filter - Wiggler" || mn === "ADBE Vector Filter - Zigzag" || mn === "ADBE Vector Filter - RC") { flag("check", l.name, p.name + ": not in the Lottie matrix, test in the target player or bake the path"); }
+            if (mn === "ADBE Vector Graphic - G-Fill" || mn === "ADBE Vector Graphic - G-Stroke") { flag("partial", l.name, p.name + ": two-stop linear is safest"); }
+            // taper is active when a length is above 0 (the widths default to 0, which means a full point)
+            if (mn === "ADBE Vector Stroke Taper" && p.property("ADBE Vector Taper Start Length") && (p.property("ADBE Vector Taper Start Length").value > 0 || p.property("ADBE Vector Taper End Length").value > 0)) { flag("check", l.name, "stroke taper in use: not in the Lottie matrix"); }
+            if (mn === "ADBE Vector Stroke Wave" && p.property("ADBE Vector Taper Wave Amount") && p.property("ADBE Vector Taper Wave Amount").value !== 0) { flag("check", l.name, "stroke wave in use: not in the Lottie matrix"); }
+            if (mn === "ADBE Mask Atom" && p.property("ADBE Mask Feather") && (p.property("ADBE Mask Feather").value[0] || p.property("ADBE Mask Feather").value[1])) { flag("check", l.name, "feathered mask"); }
+        });
+        if (l instanceof AVLayer && l.source instanceof CompItem) { sub = l.source; }
+        return sub;
+    }
+    // chainScale(layer, t): on-screen length of one layer pixel through the layer and its parents, as {ok, s, why}.
+    // Each 2D layer maps v to rotate(scale(v)), child first; composed this way the kit matched toComp to 1e-13 px.
+    // A stroke has one on-screen width only when the composed map is a uniform scale: non-uniform scale anywhere
+    // that survives the chain, a 3D layer, or a camera or light parent gives ok false.
+    function mul2(A, B) { return [[A[0][0] * B[0][0] + A[0][1] * B[1][0], A[0][0] * B[0][1] + A[0][1] * B[1][1]], [A[1][0] * B[0][0] + A[1][1] * B[1][0], A[1][0] * B[0][1] + A[1][1] * B[1][1]]]; }
+    function lin2(sx, sy, deg) { var a = deg * Math.PI / 180, co = Math.cos(a), si = Math.sin(a); return [[co * sx, -si * sy], [si * sx, co * sy]]; }
+    // singular values of a 2x2 map: the longest and shortest stretch of a unit vector
+    function stretch(A) {
+        var e = A[0][0] * A[0][0] + A[0][1] * A[0][1] + A[1][0] * A[1][0] + A[1][1] * A[1][1], d = Math.abs(A[0][0] * A[1][1] - A[0][1] * A[1][0]);
+        var hi = Math.sqrt((e + Math.sqrt(Math.max(0, e * e - 4 * d * d))) / 2);
+        return [hi, hi > 0 ? d / hi : 0];
+    }
+    function chainScale(layer, t) {
+        var A = [[1, 0], [0, 1]], cur = layer, tg, k, r, sv;
+        while (cur) {
+            if (!(cur instanceof AVLayer)) { return { ok: false, s: null, why: "camera or light in the parent chain" }; }
+            if (cur.threeDLayer) { return { ok: false, s: null, why: "3D layer '" + cur.name + "' in the chain" }; }
+            tg = cur.property("ADBE Transform Group");
+            k = tg.property("ADBE Scale").valueAtTime(t, false); r = tg.property("ADBE Rotate Z").valueAtTime(t, false);
+            A = mul2(lin2(k[0] / 100, k[1] / 100, r), A);
+            cur = cur.parent;
+        }
+        sv = stretch(A);
+        if (sv[0] - sv[1] > 1e-4 * Math.max(sv[0], 1e-9)) { return { ok: false, s: null, why: "non-uniform scale (" + Math.round(sv[1] * 1000) / 1000 + " to " + Math.round(sv[0] * 1000) / 1000 + ")" }; }
+        return { ok: true, s: sv[0], why: "" };
+    }
+    // strokes(comp, {width, cap, join, scaleAware, time}): every Stroke and Gradient Stroke in the comp's shape layers against a house style.
+    // Reports the width after any expression and the on-screen width through layer and parent Scale and Rotation at `time`
+    // (default 0). Group Scale is not included. onScreen is null when the chain is not a uniform 2D scale; with scaleAware
+    // that row fails: rebuild the geometry at delivery size.
+    function strokes(c, want) {
+        var out = [], i, l, sc, caps = { 1: "butt", 2: "round", 3: "projecting" }, joins = { 1: "miter", 2: "round", 3: "bevel" };
+        want = want || {};
         for (i = 1; i <= c.numLayers; i++) {
             l = c.layer(i);
             if (l.matchName !== "ADBE Vector Layer") { continue; }
+            sc = chainScale(l, want.time || 0);
             AEK.core.walk(l.property("ADBE Root Vectors Group"), function (p) {
                 if (p.matchName !== "ADBE Vector Graphic - Stroke" && p.matchName !== "ADBE Vector Graphic - G-Stroke") { return; }
                 // width after the expression (the constant on-screen width expression stores a small value); time = want.time or 0
                 var wp = p.property("ADBE Vector Stroke Width"), driven = !!(wp.expression && wp.expressionEnabled);
                 var w = wp.valueAtTime(want.time || 0, false), cap = caps[p.property("ADBE Vector Stroke Line Cap").value],
-                    join = joins[p.property("ADBE Vector Stroke Line Join").value], onScreen = w * screenScale(l), issues = [];
-                if (want.width !== undefined && Math.abs((want.scaleAware ? onScreen : w) - want.width) > 0.01) { issues.push("width " + Math.round((want.scaleAware ? onScreen : w) * 100) / 100); }
+                    join = joins[p.property("ADBE Vector Stroke Line Join").value], onScreen = sc.ok ? w * sc.s : null, issues = [];
+                if (want.scaleAware && !sc.ok) { issues.push("on-screen width not measurable: " + sc.why + "; rebuild at delivery size"); }
+                else if (want.width !== undefined && Math.abs((want.scaleAware ? onScreen : w) - want.width) > 0.01) { issues.push("width " + Math.round((want.scaleAware ? onScreen : w) * 100) / 100); }
                 if (want.cap && cap !== want.cap) { issues.push("cap " + cap); }
                 if (want.join && join !== want.join) { issues.push("join " + join); }
                 if (driven && wp.expressionError) { issues.push("width expression error: " + wp.expressionError); }
-                out.push({ layer: l.name, stroke: p.name, width: Math.round(w * 1000) / 1000, onScreen: Math.round(onScreen * 100) / 100, expression: driven, cap: cap, join: join, issues: issues });
+                out.push({ layer: l.name, stroke: p.name, width: Math.round(w * 1000) / 1000, onScreen: onScreen === null ? null : Math.round(onScreen * 100) / 100, expression: driven, cap: cap, join: join, issues: issues });
             });
         }
         return out;

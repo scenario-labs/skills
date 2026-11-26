@@ -131,7 +131,7 @@ AEX.delivery = (function () {
     }
     // guides(comp, [{name, margins, color}]): one guide shape layer with a rectangle per safe box; guide layers do not render
     function guides(c, list) {
-        var l = c.layers.addShape(), i, g, bx, w, h;
+        var l = c.layers.addShape(), i, bx, w, h;
         l.name = "SAFE_GUIDES";
         for (i = 0; i < list.length; i++) {
             bx = box(c, list[i].margins); w = bx[2] - bx[0]; h = bx[3] - bx[1];

@@ -38,7 +38,7 @@ Capture from an 8 or 16 bpc project: in 32 bpc, `saveFrameToPng` writes every va
 
 | Look for                                                             | Means                                                                                                                  |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Stroke weights differ between icons of one set                       | Layer or parent scale changed the stroke; use the constant-width expression or build at final size                     |
+| Stroke weights differ between icons of one set                       | Layer or parent scale changed the stroke; uniform scale: constant-width expression, else build at final size           |
 | A stroke edge is soft or stair-stepped at large scale                | A precomp or vector footage with Collapse Transformations off                                                          |
 | A morph passes through a thin sliver or a bow tie                    | First vertex or path direction mismatch                                                                                |
 | Stripes or pattern spill outside the mask                            | Merge order wrong, or the Intersect sees the copies unmerged                                                           |

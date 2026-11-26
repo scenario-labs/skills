@@ -5,16 +5,16 @@ footage's own frame rate and pixel size.
 
 ## Track data
 
-| Check                          | Pass                                                                 | How                                                                                                                                                |
-| ------------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Keys cover the span            | keys on every frame of the layer span, all four corners              | procedures P10 `everyFrame`                                                                                                                        |
-| Data written as tracked        | round-trip error under 0.01 px                                       | `AEX.track.readCorners` versus the input                                                                                                           |
-| Accuracy                       | mean under 1 px, worst frame under 2 px                              | `track_external.py score` against a known path; on a real plate with no known path, `slide` (an independent re-find, not the track's own residual) |
-| No slide to a neighbor feature | `slide` mean under 1.5 px and `jumps` empty                          | procedures P4; a turning object goes on a flat rigid part                                                                                          |
-| Placed element sticks          | `locate` on a proof render: mean under 1 px against the `point` path | procedures P9                                                                                                                                      |
-| No lost frames                 | `inliers` above 8 on every frame but the reference (0 by design)     | `plane.json`                                                                                                                                       |
-| Drift                          | error at the last frame no more than 1.5x the mean                   | per-frame list from `score`                                                                                                                        |
-| Corner order                   | UL, UR, LL, LR in Corner Pin                                         | an insert with a visible grid is not twisted on the sheet                                                                                          |
+| Check                          | Pass                                                             | How                                                                                                                                                |
+| ------------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keys cover the span            | keys on every frame of the layer span, all four corners          | procedures P10 `everyFrame`                                                                                                                        |
+| Data written as tracked        | round-trip error under 0.01 px                                   | `AEX.track.readCorners` versus the input                                                                                                           |
+| Accuracy                       | mean under 1 px, worst frame under 2 px                          | `track_external.py score` against a known path; on a real plate with no known path, `slide` (an independent re-find, not the track's own residual) |
+| No slide to a neighbor feature | `slide` mean under 1.5 px and `jumps` empty                      | procedures P4; a turning object goes on a flat rigid part                                                                                          |
+| Placed element sticks          | `locate` on a proof render: `complete`, mean under 1 px          | procedures P9                                                                                                                                      |
+| No lost frames                 | `inliers` above 8 on every frame but the reference (0 by design) | `plane.json`                                                                                                                                       |
+| Drift                          | error at the last frame no more than 1.5x the mean               | per-frame list from `score`                                                                                                                        |
+| Corner order                   | UL, UR, LL, LR in Corner Pin                                     | an insert with a visible grid is not twisted on the sheet                                                                                          |
 
 ## Background analyzers
 

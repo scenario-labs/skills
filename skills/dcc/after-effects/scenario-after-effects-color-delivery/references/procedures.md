@@ -81,7 +81,7 @@ var fx = g.property("ADBE Effect Parade").property(1);
 fx.property("ADBE Lumetri-0011").setValue(ARGS.exposure || 0);    // Basic Correction > Exposure
 fx.property("ADBE Lumetri-0012").setValue(ARGS.contrast || 0);    // Contrast
 fx.property("ADBE Lumetri-0016").setValue(ARGS.blacks || 0);      // Blacks
-fx.property("ADBE Lumetri-0020").setValue(ARGS.saturation || 100); // Saturation
+fx.property("ADBE Lumetri-0020").setValue(ARGS.saturation === undefined ? 100 : ARGS.saturation); // Saturation, 0 kept
 if (t) { g.moveAfter(t); }   // no title: the grade stays on top of the plate
 var f = AEK.capture.frame(c, ARGS.t || 0, ARGS.out + "/grade_check.png");
 var order = [], i; for (i = 1; i <= c.numLayers; i++) { order.push(c.layer(i).name); }
@@ -146,9 +146,13 @@ Secondary is GUI only):
 // channel: bridge | handoff
 // checked: live 27.0
 // ARGS.protect: [{name, color: [r, g, b, 1] sampled on the GRADED frame, hue, light, sat, tol, soft}]
-var c = AEK.core.comp(ARGS.comp), sec = AEK.build.adjustment(c, "GRADE_protect"), i, P, fx;
-// added on top, so it sits above GRADE_base; keep any grain layer above it
-for (i = 1; i <= c.numLayers; i++) { if (c.layer(i).name === "FINISH_grain") { sec.moveAfter(c.layer(i)); break; } }
+var c = AEK.core.comp(ARGS.comp), sec = AEK.build.adjustment(c, "GRADE_protect"), i, P, fx, base = null, grain = null;
+for (i = 1; i <= c.numLayers; i++) {
+    if (c.layer(i).name === "GRADE_base") { base = c.layer(i); }
+    if (c.layer(i).name === "FINISH_grain") { grain = c.layer(i); }
+}
+// right above GRADE_base: below the titles, which keep their colors, and below any grain layer
+if (base) { sec.moveBefore(base); } else if (grain) { sec.moveAfter(grain); }
 for (i = 0; i < ARGS.protect.length; i++) {
     P = ARGS.protect[i];
     fx = AEK.build.effect(sec, "ADBE Change Color", {}, "protect " + P.name);
@@ -180,7 +184,7 @@ pass on delta E, so read the chroma column too.
 var c = AEK.core.comp(ARGS.comp);
 var d = AEK.build.adjustment(c, "FINISH_dither");
 AEK.build.effect(d, "ADBE Noise", {});
-d.property("ADBE Effect Parade").property(1).property("ADBE Noise-0001").setValue(ARGS.amount || 1.2);
+d.property("ADBE Effect Parade").property(1).property("ADBE Noise-0001").setValue(ARGS.amount === undefined ? 1.2 : ARGS.amount);
 d.property("ADBE Effect Parade").property(1).property("ADBE Noise-0003").setValue(1);   // 0 wraps highlights into cyan specks
 var r = AEX.delivery.render(c, [{ template: "TIFF Sequence with Alpha", file: ARGS.out + "/band/band_[#####].tif" }], { start: ARGS.t || 0, duration: 1 / c.frameRate });
 return r;

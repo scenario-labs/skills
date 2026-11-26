@@ -12,6 +12,8 @@ import re
 import subprocess
 import sys
 
+FFMPEG_TIMEOUT_S = 600
+
 
 def rms_per_frame(path, fps, rate=48000):
     n = int(round(rate / fps))
@@ -20,7 +22,14 @@ def rms_per_frame(path, fps, rate=48000):
     cmd = ["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", str(rate), "-af",
            "asetnsamples=n=%d:p=0,astats=metadata=1:reset=1,ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-" % n,
            "-f", "null", "-"]
-    out = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=FFMPEG_TIMEOUT_S).stdout
+    except FileNotFoundError:
+        sys.exit("ffmpeg not found on PATH: install it, then run again")
+    except subprocess.TimeoutExpired:
+        sys.exit("ffmpeg did not finish decoding %s within %d s" % (path, FFMPEG_TIMEOUT_S))
+    except subprocess.CalledProcessError as e:
+        sys.exit("ffmpeg failed on %s (exit %d): %s" % (path, e.returncode, (e.stderr or "").strip()))
     vals = []
     for m in re.finditer(r"RMS_level=(-?[\d.]+|-inf)", out):
         v = m.group(1)
@@ -44,7 +53,13 @@ def main():
     ap.add_argument("--min-hold", type=int, default=2, help="frames a shape stays before it may change")
     ap.add_argument("--lead", type=int, default=1, help="frames the mouth moves before the sound")
     a = ap.parse_args()
+    if a.shapes < 1:
+        ap.error("--shapes must be 1 or more")
+    if a.fps <= 0:
+        ap.error("--fps must be above 0")
     db = rms_per_frame(a.audio, a.fps)
+    if not db:
+        sys.exit("no audio frames decoded from %s: ffmpeg returned no RMS level" % a.audio)
     voiced = sorted(v for v in db if v > a.silence)
     # thresholds between open shapes: evenly spaced percentiles of the voiced frames
     th = [pct(voiced, 100.0 * k / (a.shapes - 1)) for k in range(1, a.shapes - 1)] if a.shapes > 2 else []
@@ -73,7 +88,7 @@ def main():
             clean.append(k)
         if len(clean) > 1 and clean[-1][1] == clean[-2][1]:
             clean.pop()
-    if clean[-1][1] != 0:
+    if clean and clean[-1][1] != 0:
         clean.append([len(db), 0])
     counts = {}
     for s in raw:

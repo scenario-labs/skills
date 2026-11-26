@@ -102,14 +102,15 @@ Code for every stage is in [procedures.md](references/procedures.md); shipped jo
    clip.
 6. **Hold resolution and stroke width.** Shape layers stay vector at any scale. Turn Collapse
    Transformations on for precomps and vector footage scaled above 100 %. Where a layer or parent
-   scales, drive Stroke Width with the constant on-screen expression. Then run `stroke_audit.jsx`
-   with `scaleAware: true`. GATE: every stroke at spec on screen.
+   scales uniformly, drive Stroke Width with the constant on-screen expression; under non-uniform
+   scale, rebuild at delivery size. Then run `stroke_audit.jsx` with `scaleAware: true`. GATE: every
+   stroke at spec on screen.
 7. **Review.** Capture from an 8 or 16 bpc project with `ae.py frames ... --sheet`; read one sheet
    against [critique.md](references/critique.md). GATE: every visual row passes.
-8. **Prepare Lottie.** `lottie_prep.jsx` duplicates the comp, bakes every expression to keys and
-   returns the findings before and after. Remove or flatten what remains, then export in the
-   Bodymovin or LottieFiles panel (GUI). GATE: no `drop` rows; `check` rows tested in the target
-   player against an After Effects frame at the same time.
+8. **Prepare Lottie.** `lottie_prep.jsx` duplicates the comp and its nested comps, bakes every
+   expression in the copies and returns the findings before and after. Remove or flatten what
+   remains, then export in the Bodymovin or LottieFiles panel (GUI). GATE: no `drop` rows; `check`
+   rows tested in the target player against an After Effects frame at the same time.
 
 ## Numbers
 

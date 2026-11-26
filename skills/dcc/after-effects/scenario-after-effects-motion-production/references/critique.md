@@ -2,7 +2,7 @@
 
 Run the numbers first (`AEX.ad.report` in After Effects, then `adtools.py review` on the report and
 the rendered mix). Then read one contact sheet per question below. Frame numbers assume 30 fps;
-scale them for other rates.
+`adtools.py review` scales them to the report's frame rate.
 
 ## Numbers (scripted, every variant)
 

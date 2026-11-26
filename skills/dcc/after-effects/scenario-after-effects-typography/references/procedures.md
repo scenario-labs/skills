@@ -102,9 +102,12 @@ python3 <skill>/scripts/word_timings.py <project>/align/vo.json --fps 24 --lead 
 Output: `words[]` with `f0` (first frame, already `lead` frames early), `f1`, `frames`, `phrase`;
 `phrases[]`; `checks`. A new phrase starts after a pause of 0.18 s or more, or after `.`, `!`, `?`.
 Check: `checks.increasing` true, `checks.silence_agrees` true (phrase onsets within 2 frames of a
-`silence_end`). Measured on a synthetic 8.5 s voiceover: 27 words, 7 phrases, onsets 0 to 1.1 frames
-before the silence end. `checks.short` lists words held fewer than 6 frames before the next word: 15
-of 27 at speech pace, which is why words accumulate inside a phrase instead of replacing each other.
+`silence_end`). `silence_agrees` reads null when nothing was compared (one phrase, or no
+`silence_end` in the log). Two words on one first frame are listed in `checks.same_frame` and the
+script exits 1: merge them in the transcript. Measured on a synthetic 8.5 s voiceover: 27 words, 7
+phrases, onsets 0 to 1.1 frames before the silence end. `checks.short` lists words held fewer than 6
+frames before the next word: 15 of 27 at speech pace, which is why words accumulate inside a phrase
+instead of replacing each other.
 
 ## 3. Phrase layers with one marker per word and an expression-selector reveal
 
@@ -495,8 +498,9 @@ return rep;
 ```
 
 Each row: words, frames on screen, `settled` frames with `settledFrom` and `settledTo`, font, size,
-cap height in px (from a temporary "H" in the same font, scaled like the layer) and as a ratio of
-the frame's short side (1080 in 16:9, 9:16 and 1:1 alike; a 46 px cap reads 4.2 % in all three), the
+cap height in px (from a temporary "H" in the same font, parented to the layer with a jump and read
+through `toComp` at mid-life, so the layer's and its parents' scales count) and as a ratio of the
+frame's short side (1080 in 16:9, 9:16 and 1:1 alike; a 46 px cap reads 4.2 % in all three), the
 lowest WCAG contrast and `runs` (contrast of every color run against `bg`), `inSafe` at mid-life,
 tracking, leading ratio.
 
@@ -509,18 +513,22 @@ fill read 15.87:1 (cream on ink), the runs read 15.87:1 and 1.88:1, and the repo
 Settled dwell. `AEX.type.settled(layer, comp, {restFrame})` counts the longest run of frames where
 the text is at rest and the layer is at 100 % Opacity. It probes a temporary duplicate: each
 animator gets a Position of [0, 1000 x its index], so any selector still selecting a character
-changes `sourceRectAtTime`. Rest is the state at `restFrame`, or the most frequent state at full
-opacity. Parent motion (a push-in null) is not counted against rest. The `dwell` rule needs at least
-`minFrames` settled frames and `minPerWord` (6) per word. A word-synced phrase layer (more than one
-marker) is read while it builds, so its dwell stays its time on screen. Measured on a title with a
-staggered overshoot in (settles on frame 35) and a per-character exit from frame 94: 116 frames on
-screen, 60 settled (35 to 94), and the same 60 under a null pushing 100 to 104 %. A tagline in at 28
-with a 14-frame in and a 12-frame out, out at 110: 82 on screen, 63 settled (39 to 101). `inSafe`
-comes from `AEX.type.inFrame`, so parented layers are measured where they render. Measured on the
-synced piece: 7 phrases, 22 to 38 frames each, 6.4 to 8.3 frames per word, cap 79 px (7.3 % of
-1080), contrast 19.07:1, all in safe. Built-to-fail layers raised: `safe` error (a 120 px line wider
-than 80 %), `contrast` error 1.85:1 (gray 0.25 on 0.06), `size` warn (cap 20 px, 1.9 %), `dwell`
-warn (10 frames). Contrast over footage cannot be computed from colors: sample the rendered frame.
+changes `sourceRectAtTime`. Rest is the state at `restFrame`, or else the most frequent state at
+full opacity among frames where no animator selects a character. A state an animator hides (a reveal
+holding the text at 0 % for 60 frames) is then never rest, however long it lasts. When an animator
+selects text on every frame, rest falls back to the most frequent state at full opacity; `settledBy`
+in the row reads `frequency` then. Parent motion (a push-in null) is not counted against rest. The
+`dwell` rule needs at least `minFrames` settled frames and `minPerWord` (6) per word. A word-synced
+phrase layer (more than one marker) is read while it builds, so its dwell stays its time on screen.
+Measured on a title with a staggered overshoot in (settles on frame 35) and a per-character exit
+from frame 94: 116 frames on screen, 60 settled (35 to 94), and the same 60 under a null pushing 100
+to 104 %. A tagline in at 28 with a 14-frame in and a 12-frame out, out at 110: 82 on screen, 63
+settled (39 to 101). `inSafe` comes from `AEX.type.inFrame`, so parented layers are measured where
+they render. Measured on the synced piece: 7 phrases, 22 to 38 frames each, 6.4 to 8.3 frames per
+word, cap 79 px (7.3 % of 1080), contrast 19.07:1, all in safe. Built-to-fail layers raised: `safe`
+error (a 120 px line wider than 80 %), `contrast` error 1.85:1 (gray 0.25 on 0.06), `size` warn (cap
+20 px, 1.9 %), `dwell` warn (10 frames). Contrast over footage cannot be computed from colors:
+sample the rendered frame.
 
 Over footage. `AEX.type.readability(c, {sample: true})` (or
 `{sample: {frames: [..], grid: [4, 2]}}`) replaces `bg` with what lies under each text box. It

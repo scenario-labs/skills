@@ -31,7 +31,7 @@ multiply by 1.25 and round.
 Pick frames: just before the first word, at each word onset + 4 frames inside one phrase, the last
 frame of each phrase, mid-exit.
 
-- Reveal order matches reading order; no word appears before it is spoken.
+- Reveal order matches reading order; no word appears more than 2 frames before it is spoken.
 - Settled text sits on its baseline: no character left raised, rotated or transparent at rest.
 - The sentence does not jump sideways while it builds (center alignment with words revealed in
   place).
