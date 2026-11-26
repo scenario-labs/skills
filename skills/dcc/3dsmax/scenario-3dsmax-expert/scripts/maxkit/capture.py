@@ -11,7 +11,8 @@ scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md.
 
 Rules: no viewport exists in 3ds Max Batch (views and viewport raise there; use render).
 Never overwrite: an existing path gets a _v002 style suffix (next_free). An Arnold render can
-crash 3ds Max: save a new increment before render() (max-mcp-known-limitations-2027-3).
+crash 3ds Max: save a new increment before render() (max-mcp-known-limitations-2027-3). In 3ds Max
+Batch 2027.3 every Arnold render() crashed it, so render refuses Arnold there.
 """
 from __future__ import annotations
 
@@ -59,6 +60,13 @@ def _interactive(rt) -> bool:
         return not bool(rt.maxops.isInNonInteractiveMode())
     except Exception:
         return True
+
+
+def _renderer(rt) -> str:
+    try:
+        return str(rt.classOf(rt.renderers.current))
+    except Exception:
+        return ""
 
 
 def _save_bitmap(rt, bmp, path, size=None):
@@ -119,6 +127,10 @@ def render(path, camera=None, size=None) -> dict:
 
     Does not touch Render Setup: size goes to the render() call only. Save first."""
     rt = _rt()
+    renderer = _renderer(rt)
+    if "arnold" in renderer.lower() and not _interactive(rt):
+        raise RuntimeError("Arnold crashes 3ds Max Batch (2027.3): render in a live session, or set "
+                           "renderers.current to Default_Scanline_Renderer for a check render")
     cam = rt.getNodeByName(camera) if isinstance(camera, str) else camera
     if isinstance(camera, str) and cam is None:
         raise ValueError(f"camera {camera!r} not found")
@@ -130,7 +142,7 @@ def render(path, camera=None, size=None) -> dict:
         kw["outputwidth"], kw["outputheight"] = w, h  # [verify] outputwidth/outputheight keywords
     os.makedirs(os.path.dirname(kw["outputFile"]) or ".", exist_ok=True)
     bmp = rt.render(**kw)
-    info = {"path": kw["outputFile"], "renderer": str(rt.classOf(rt.renderers.current)),
+    info = {"path": kw["outputFile"], "renderer": renderer,
             "camera": str(cam.name) if cam is not None else None,
             "width": int(bmp.width) if bmp is not None else None,
             "height": int(bmp.height) if bmp is not None else None}

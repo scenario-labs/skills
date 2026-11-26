@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -540,6 +541,14 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(r["camera"], "Cam - Lobby")
         with self.assertRaises(ValueError):
             capture.render(str(d / "r.png"), camera="nope")
+
+    def test_render_refuses_arnold_in_batch(self):
+        rt.maxops.batch = True
+        with self.assertRaises(RuntimeError):
+            capture.render(str(tmpdir() / "r.png"))
+        rt.renderers.current = types.SimpleNamespace(cls="Default_Scanline_Renderer")
+        r = capture.render(str(tmpdir() / "r.png"))
+        self.assertEqual(r["renderer"], "Default_Scanline_Renderer")
 
 
 class XioTests(unittest.TestCase):

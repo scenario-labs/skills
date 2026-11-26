@@ -42,6 +42,8 @@ fn mxk_capture_views dir views:#(#view_persp_user, #view_front, #view_left, #vie
 fn mxk_capture_render p cam:undefined w:undefined h:undefined = (
     local outPath = mxk_nextFree p
     local bmp = undefined
+    if maxOps.isInNonInteractiveMode() and (matchPattern ((classOf renderers.current) as string) pattern:"*arnold*") do
+        return (mxk_dict #(#("path", outPath), #("saved", false), #("error", "Arnold crashes 3ds Max Batch (2027.3): render in a live session or switch to Default_Scanline_Renderer")))
     local sized = w != undefined and h != undefined
     if (w == undefined) != (h == undefined) or (sized and (w < 1 or h < 1)) do
         return (mxk_dict #(#("path", outPath), #("saved", false), #("error", "pass w: and h: together, each 1 or more")))

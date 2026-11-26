@@ -56,7 +56,7 @@ TCP ports on 127.0.0.1 only and sends nothing. `MAX_CHANNEL` overrides it.
 | Change scene        | yes         | level 10 scripts; level 2 is undo and redo only | yes                | yes              |
 | Python allowed      | yes         | level 20 only (admin)                           | yes                | yes              |
 | Import and export   | yes         | not documented                                  | yes                | yes              |
-| Render to file      | yes         | yes; modal dialogs block it                     | yes                | yes              |
+| Render to file      | not Arnold  | yes; modal dialogs block it                     | yes                | yes              |
 | Viewport capture    | no viewport | not documented                                  | yes (bridge tool)  | user screenshot  |
 | Approval per script | no          | yes, script preview                             | not documented     | user runs it     |
 | Headless            | yes         | no (not in Batch)                               | no                 | no               |
@@ -220,9 +220,10 @@ saved docs.
 - Merge with `#autoRenameDups #renameMtlDups #neverReparent`: the defaults prompt, and an incoming
   "Wood" never replaces the scene's "Wood".
 - One main thread: a long script freezes the UI. Split work into stages.
-- Save first: an Arnold render can crash 3ds Max. Reading a Batch Render view's camera crashes it.
-  Biped `scaleFootprints` crashes it. After a crash the user reopens 3ds Max and the MCP connection
-  (c3acjyR7j7E 00:09:37); resume from the last `_v002`.
+- Save first: an Arnold render can crash 3ds Max. In 3dsmaxbatch 2027.3 every one did, so
+  `capture.render` refuses Arnold in batch: render Arnold in a live session. Reading a Batch Render
+  view's camera crashes it. Biped `scaleFootprints` crashes it. After a crash the user reopens 3ds
+  Max and the MCP connection (c3acjyR7j7E 00:09:37); resume from the last `_v002`.
 - Autosave and `holdMaxFile()` are no substitute for a saved `_v002`.
 - Scripts cannot overwrite rendered `.tx` files, re-imported `.abc` caches, or text files a script
   opened. Write new names.

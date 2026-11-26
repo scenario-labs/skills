@@ -18,7 +18,7 @@ there that the run does not rewrite counts as no result. require_result=True (us
 code) fails a run that leaves no result.
 
 Batch facts the caller must know: it uses a license, it has no viewport (capture.viewport fails,
-renders work), dialogs are suppressed or logged with -dm on, and MCP is not available in batch.
+Scanline renders work, every Arnold render crashed 3ds Max Batch 2027.3), dialogs are suppressed or logged with -dm on, and MCP is not available in batch.
 The scene file passed with -sceneFile is opened, never saved, unless the script saves it: save
 under a new name (_v002), never over the user's file.
 """

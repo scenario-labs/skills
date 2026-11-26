@@ -42,8 +42,9 @@ the sibling skill that owns the domain. None has been checked in a running 3ds M
 - A script cannot close a dialog it opened. Avoid opening any.
 - Modal dialogs (missing files, units mismatch from `maxstart.max`, a stuck render) block renders.
   Fix the cause first.
-- An Arnold render can crash 3ds Max. Reading a Batch Render view's camera crashes it. Biped
-  `scaleFootprints` and footstep retiming crash it. Save first.
+- An Arnold render can crash 3ds Max, and in 3dsmaxbatch 2027.3 every one did. Reading a Batch
+  Render view's camera crashes it. Biped `scaleFootprints` and footstep retiming crash it. Save
+  first.
 - Scripts cannot overwrite rendered `.tx` files, re-imported `.abc` caches, or text files a script
   opened.
 - The Autodesk Assistant checks in after 10 tool steps and stops at 25. Long chats raise the error
