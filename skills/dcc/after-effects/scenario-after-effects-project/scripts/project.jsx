@@ -193,6 +193,9 @@ AEX.project = (function () {
     // refScan(code, fn, swap): reads an expression as JavaScript and finds each call fn("name") or fn('name') in code.
     // swap(name, textBefore) returns the new name, or null to keep the call. The new name keeps the quote style.
     // String, template and regex literals and comments are copied byte for byte, so a quoted "layer('X')" stays.
+    // JavaScript line terminators: LF, CR (CRLF too), LS, PS. A line comment or a regex literal ends at any of them.
+    var EOL = /[\n\r\u2028\u2029]/;
+    function eol(c, i) { while (i < c.length && !EOL.test(c.charAt(i))) { i++; } return i; }
     function refScan(code, fn, swap) {
         var out = "", i = 0, n = code.length, ch, nx, j, k, e, w, s, to, last = "", depth = 0, tpl = [], inTpl = false, cls;
         var KW = " return typeof instanceof in of new delete void throw case do else yield await ";
@@ -205,15 +208,18 @@ AEX.project = (function () {
                 out += ch; i++; continue;
             }
             if (ch === "/" && (nx === "/" || nx === "*")) {
-                j = nx === "/" ? code.indexOf("\n", i) : code.indexOf("*/", i + 2);
+                j = nx === "/" ? eol(code, i) : code.indexOf("*/", i + 2);
                 j = j < 0 ? n : (nx === "/" ? j : j + 2);
                 out += code.substring(i, j); i = j; continue;
             }
             if (ch === '"' || ch === "'") { s = readStr(code, i); j = s ? s.end : n; out += code.substring(i, j); i = j; last = "a"; continue; }
             if (ch === "`") { out += ch; i++; inTpl = true; continue; }
+            if ((ch === "+" || ch === "-") && nx === ch) {   // ++ or --: after an operand it is postfix, and a slash after it divides
+                out += ch + nx; i += 2; last = (last === "a" || last === ")" || last === "]") ? "a" : ch; continue;
+            }
             if (ch === "/" && /^$|[(,=:[!&|?{};+\-*%<>~^]/.test(last)) {   // a regex literal, up to its closing slash
                 j = i + 1; cls = false;
-                while (j < n && code.charAt(j) !== "\n") {
+                while (j < n && !EOL.test(code.charAt(j))) {
                     if (code.charAt(j) === "\\") { j += 2; continue; }
                     if (code.charAt(j) === "[") { cls = true; } else if (code.charAt(j) === "]") { cls = false; } else if (code.charAt(j) === "/" && !cls) { j++; break; }
                     j++;

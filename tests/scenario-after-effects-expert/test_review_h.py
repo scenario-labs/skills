@@ -4,6 +4,8 @@
   comment stays byte for byte; real calls are rewritten in both quote styles, with spaces inside the parentheses.
 - An escaped quote inside a string does not end it; a disabled expression stays disabled.
 - A comp named hasOwnProperty or __proto__ does not break the comp name lookup of rewriteRefs.
+- Review round 3: a line comment ends at CR, CRLF, LS and PS; a slash after postfix ++ or -- divides; a JSON
+  field named hasOwnProperty gets its header column in AEX.batch.fromJson.
 
 The module files are loaded as shipped in a Node vm with After Effects stand-ins. No After Effects, no network.
 """
@@ -18,6 +20,7 @@ HERE = Path(__file__).parent
 FAMILY = HERE.parents[1] / "skills" / "dcc" / "after-effects"
 EXPRESSIONS = FAMILY / "scenario-after-effects-expressions" / "scripts" / "expressions.jsx"
 PROJECT = FAMILY / "scenario-after-effects-project" / "scripts" / "project.jsx"
+BATCH = FAMILY / "scenario-after-effects-scripting" / "scripts" / "batch.jsx"
 
 HARNESS = r"""
 const fs = require("fs"), vm = require("vm");
@@ -49,6 +52,7 @@ vm.runInContext(fs.readFileSync(file, "utf8"), ctx);
 const out = {};
 try {
   if (mode === "rename") { out.result = ctx.AEX.expressions.renameLayer(comps[0], S.from, S.to); }
+  else if (mode === "rows") { out.result = ctx.AEX.batch.fromJson(S.rows); }
   else { out.result = ctx.AEX.project.rewriteRefs(S.pairs); }
 } catch (e) { out.error = String(e); }
 out.exprs = comps.map((c) => c._layers.map((l) => l.props.map((p) => ({ text: p._ex, on: p.expressionEnabled }))));
@@ -110,6 +114,25 @@ class RenameLayer(unittest.TestCase):
         self.assertEqual(out["exprs"][0][1][0]["text"], "thisComp.layer('Big \"J\"').index + thisComp.layer(\"Big \\\"J\\\"\").index")
         self.assertTrue(all(out["parses"]))
 
+    def test_line_terminators_and_postfix_division(self):
+        cases = [
+            ('// note\rthisComp.layer("CTRL").transform.opacity', '// note\rthisComp.layer("Controls").transform.opacity'),
+            ('// note\r\nthisComp.layer("CTRL").index', '// note\r\nthisComp.layer("Controls").index'),
+            ('// note\u2028thisComp.layer("CTRL").index', '// note\u2028thisComp.layer("Controls").index'),
+            ('var n = 10; n++ / thisComp.layer("CTRL").transform.opacity', 'var n = 10; n++ / thisComp.layer("Controls").transform.opacity'),
+            ('var n = 10; n-- / thisComp.layer("CTRL").index', 'var n = 10; n-- / thisComp.layer("Controls").index'),
+            ('var a = [1]; a[0]++ / thisComp.layer("CTRL").index', 'var a = [1]; a[0]++ / thisComp.layer("Controls").index'),
+            ('var x = 1; x = ++x / 2 + thisComp.layer("CTRL").index; var r = /layer\\("CTRL"\\)/',
+             'var x = 1; x = ++x / 2 + thisComp.layer("Controls").index; var r = /layer\\("CTRL"\\)/'),
+        ]
+        spec = {"from": "CTRL", "to": "Controls",
+                "comps": [{"name": "Main", "id": 1, "layers": [{"name": "CTRL", "exprs": []},
+                                                                {"name": "A", "exprs": [{"text": a, "on": True} for a, _ in cases]}]}]}
+        out = node(EXPRESSIONS, "rename", spec)
+        self.assertNotIn("error", out)
+        for (before, want), g in zip(cases, out["exprs"][0][1]):
+            self.assertEqual(g["text"], want, before)
+
 
 @unittest.skipUnless(shutil.which("node"), "node is not installed")
 class RewriteRefs(unittest.TestCase):
@@ -136,6 +159,24 @@ class RewriteRefs(unittest.TestCase):
         self.assertEqual(got[2], exprs[2])
         self.assertEqual(out["result"]["rewritten"], 2)
         self.assertTrue(all(out["parses"]))
+
+    def test_postfix_division_and_carriage_return(self):
+        exprs = ['var i = 1; i++ / thisComp.layer("Pre-comp 1").transform.opacity',
+                 '// note\rthisComp.layer("Pre-comp 1").index']
+        out = node(PROJECT, "refs", self.spec(exprs))
+        self.assertNotIn("error", out)
+        got = [e["text"] for e in out["exprs"][2][0]]
+        self.assertEqual(got, ['var i = 1; i++ / thisComp.layer("PC_Logo").transform.opacity',
+                               '// note\rthisComp.layer("PC_Logo").index'])
+
+
+@unittest.skipUnless(shutil.which("node"), "node is not installed")
+class BatchFromJson(unittest.TestCase):
+    def test_a_field_named_hasOwnProperty_gets_its_column(self):
+        out = node(BATCH, "rows", {"comps": [], "rows": [{"id": "1", "hasOwnProperty": "label"}, {"id": "2", "toString": "x"}]})
+        self.assertNotIn("error", out)
+        self.assertEqual(out["result"]["header"], ["id", "hasOwnProperty", "toString"])
+        self.assertEqual(out["result"]["rows"][0]["hasOwnProperty"], "label")
 
 
 if __name__ == "__main__":

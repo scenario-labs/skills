@@ -68,7 +68,7 @@ AEX.batch = (function () {
         var head = [], seen = {}, out = [], i, k, o;
         for (i = 0; i < list.length; i++) {
             if (list[i] === null || typeof list[i] !== "object" || isList(list[i])) { continue; }
-            for (k in list[i]) { if (Object.prototype.hasOwnProperty.call(list[i], k) && !seen[k]) { seen[k] = true; head.push(k); } }
+            for (k in list[i]) { if (Object.prototype.hasOwnProperty.call(list[i], k) && !Object.prototype.hasOwnProperty.call(seen, k)) { seen[k] = true; head.push(k); } }
         }
         for (i = 0; i < list.length; i++) {
             o = { _line: i + 2 };
