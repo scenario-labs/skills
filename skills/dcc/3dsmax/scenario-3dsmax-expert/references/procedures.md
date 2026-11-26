@@ -148,8 +148,8 @@ result = {"renders": out, "renderer": str(rt.classOf(rt.renderers.current))}
 Check:
 
 - Each file exists, and `image_checks` raises no flags.
-- The render time is reported. A render that never returns usually means a modal dialog (missing
-  maps, units mismatch).
+- The render time is reported. A render that never returns usually means a modal dialog (units
+  mismatch; `capture.render` refuses missing maps before rendering in a live session).
 
 ## P7. Import an asset and report what arrived
 

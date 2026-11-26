@@ -39,6 +39,19 @@ fn mxk_capture_views dir views:#(#view_persp_user, #view_front, #view_left, #vie
     out
 )
 
+-- The color of a bitmap whose sampled pixels all match, else undefined. An aborted render is flat.
+fn mxk_flatColor bmp rows:16 = (
+    local w = bmp.width, h = bmp.height, seen = undefined, flat = true
+    for i = 0 to rows - 1 while flat do (
+        local row = getPixels bmp [0, (i * (h - 1) / (rows - 1))] w  -- [verify] getPixels
+        for j = 1 to row.count by 4 while flat do (
+            local k = [(row[j].r as integer), (row[j].g as integer), (row[j].b as integer)]
+            if seen == undefined then seen = k else if k != seen do flat = false
+        )
+    )
+    if flat then seen else undefined
+)
+
 fn mxk_capture_render p cam:undefined w:undefined h:undefined = (
     local outPath = mxk_nextFree p
     local bmp = undefined
@@ -47,6 +60,12 @@ fn mxk_capture_render p cam:undefined w:undefined h:undefined = (
     local sized = w != undefined and h != undefined
     if (w == undefined) != (h == undefined) or (sized and (w < 1 or h < 1)) do
         return (mxk_dict #(#("path", outPath), #("saved", false), #("error", "pass w: and h: together, each 1 or more")))
+    if not maxOps.isInNonInteractiveMode() do (
+        local missing = #()
+        for t in getClassInstances BitmapTexture where t.filename != undefined and t.filename != "" and not (doesFileExist t.filename) do appendIfUnique missing t.filename
+        if missing.count > 0 do
+            return (mxk_dict #(#("path", outPath), #("saved", false), #("missing_maps", missing), #("error", "missing maps: a live render stops on the modal Missing Map Files dialog; relink or remove them first")))
+    )
     try (
         if cam != undefined and sized then
             bmp = render camera:cam outputwidth:w outputheight:h outputFile:outPath vfb:false  -- [verify] camera:, outputwidth:, outputheight:, vfb:
@@ -57,9 +76,14 @@ fn mxk_capture_render p cam:undefined w:undefined h:undefined = (
         else
             bmp = render outputFile:outPath vfb:false
     ) catch ()
-    local res = mxk_dict #(#("path", outPath), #("saved", doesFileExist outPath), \
+    local flat = if bmp != undefined then mxk_flatColor bmp else undefined
+    local pairs = #(#("path", outPath), #("saved", doesFileExist outPath), \
         #("renderer", ((classOf renderers.current) as string)), \
         #("camera", (if cam == undefined then undefined else cam.name)))
+    if flat != undefined do (
+        append pairs #("flat_color", flat)
+        append pairs #("error", "one flat color: the render most likely aborted (read the render log), or the camera sees nothing")
+    )
     if bmp != undefined do close bmp
-    res
+    mxk_dict pairs
 )

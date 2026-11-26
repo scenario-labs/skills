@@ -8,6 +8,8 @@ scripting-pipeline__maxscript-viewport-drawing-methods-getviewportdib-2027.md.
     viewport(path, view=None, size=None) -> {"path", "width", "height", "view"}
     views(dir, views=("persp", "front", "left", "top"), size=None, stem="view") -> [dict, ...]
     render(path, camera=None, size=None) -> {"path", "renderer", "camera", "width", "height"}
+        raises before rendering in a live session when maps are missing (the Missing Map Files
+        dialog is modal and stops the script), and after rendering when the frame is one flat color
 
 Rules: no viewport exists in 3ds Max Batch (views and viewport raise there; use render).
 Never overwrite: an existing path gets a _v002 style suffix (next_free). An Arnold render can
@@ -19,6 +21,11 @@ from __future__ import annotations
 import contextlib
 import os
 import re
+
+try:
+    from maxkit import stats as _stats
+except ImportError:  # inlined by max_wrap or run from scripts/maxkit
+    import stats as _stats  # type: ignore
 
 VIEW_TYPES = {  # short name -> viewport type name  [verify] the #view_* names are not in the saved docs
     "persp": "view_persp_user", "front": "view_front", "back": "view_back", "left": "view_left",
@@ -67,6 +74,20 @@ def _renderer(rt) -> str:
         return str(rt.classOf(rt.renderers.current))
     except Exception:
         return ""
+
+
+def _flat_color(rt, bmp, rows=16, step=4):
+    """The color of a bitmap whose sampled pixels all match, else None. An aborted render is flat."""
+    w, h = int(bmp.width), int(bmp.height)
+    seen = None
+    for y in sorted({round(i * (h - 1) / (rows - 1)) for i in range(rows)}):
+        for c in list(rt.getPixels(bmp, rt.Point2(0, y), w))[::step]:  # an array of colors
+            key = (round(float(c.r)), round(float(c.g)), round(float(c.b)))
+            if seen is None:
+                seen = key
+            elif key != seen:
+                return None
+    return seen
 
 
 def _save_bitmap(rt, bmp, path, size=None):
@@ -131,6 +152,11 @@ def render(path, camera=None, size=None) -> dict:
     if "arnold" in renderer.lower() and not _interactive(rt):
         raise RuntimeError("Arnold crashes 3ds Max Batch (2027.3): render in a live session, or set "
                            "renderers.current to Default_Scanline_Renderer for a check render")
+    if _interactive(rt):
+        missing = sorted({b["file"] for b in _stats._bitmap_files(rt) if not b["exists"]})
+        if missing:
+            raise RuntimeError(f"{len(missing)} missing map(s), first {missing[0]}: a live render stops on the "
+                               "modal Missing Map Files dialog and may then abort. Relink or remove them first")
     cam = rt.getNodeByName(camera) if isinstance(camera, str) else camera
     if isinstance(camera, str) and cam is None:
         raise ValueError(f"camera {camera!r} not found")
@@ -142,10 +168,16 @@ def render(path, camera=None, size=None) -> dict:
         kw["outputwidth"], kw["outputheight"] = w, h  # [verify] outputwidth/outputheight keywords
     os.makedirs(os.path.dirname(kw["outputFile"]) or ".", exist_ok=True)
     bmp = rt.render(**kw)
-    info = {"path": kw["outputFile"], "renderer": renderer,
-            "camera": str(cam.name) if cam is not None else None,
-            "width": int(bmp.width) if bmp is not None else None,
-            "height": int(bmp.height) if bmp is not None else None}
-    with contextlib.suppress(Exception):
-        rt.close(bmp)
+    try:
+        flat = _flat_color(rt, bmp) if bmp is not None else None
+        info = {"path": kw["outputFile"], "renderer": renderer,
+                "camera": str(cam.name) if cam is not None else None,
+                "width": int(bmp.width) if bmp is not None else None,
+                "height": int(bmp.height) if bmp is not None else None}
+    finally:
+        with contextlib.suppress(Exception):
+            rt.close(bmp)
+    if flat is not None:
+        raise RuntimeError(f"{kw['outputFile']} is one flat color {flat}: the render most likely aborted "
+                           "(read the render log), or the camera sees nothing")
     return info

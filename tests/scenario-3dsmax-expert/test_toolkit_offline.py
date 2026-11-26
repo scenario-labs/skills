@@ -536,11 +536,20 @@ class CaptureTests(unittest.TestCase):
     def test_render(self):
         d = tmpdir()
         rt.objects.append(FakeNode("Cam - Lobby", cls="Physical", superclass=pymxs.camera))
+        with self.assertRaisesRegex(RuntimeError, "missing_rough.png"):  # the modal dialog would stop it
+            capture.render(str(d / "r.png"), camera="Cam - Lobby")
+        rt.bitmaps = rt.bitmaps[:1]
         r = capture.render(str(d / "r.png"), camera="Cam - Lobby", size=480)
         self.assertEqual((r["width"], r["height"]), (480, 270))
         self.assertEqual(r["camera"], "Cam - Lobby")
         with self.assertRaises(ValueError):
             capture.render(str(d / "r.png"), camera="nope")
+
+    def test_render_raises_on_a_flat_frame(self):
+        rt.bitmaps = []
+        rt.render_flat = True  # an aborted Arnold render came back all white
+        with self.assertRaisesRegex(RuntimeError, "flat color"):
+            capture.render(str(tmpdir() / "r.png"))
 
     def test_render_refuses_arnold_in_batch(self):
         rt.maxops.batch = True

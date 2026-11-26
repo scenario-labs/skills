@@ -169,7 +169,8 @@ Inside 3ds Max (`scripts/maxkit/`, main thread only; twins in `scripts/maxkit/mx
 - `capture.viewport(path, view=None, size=None)`,
   `capture.views(dir, views=("persp", "front", "left", "top"), size=None, stem="view")`,
   `capture.render(path, camera=None, size=None)`. Each writes a new file (`_v002`) and never
-  overwrites.
+  overwrites. In a live session `render` refuses a scene with missing maps (their dialog is modal),
+  and it raises on a frame of one flat color, which an aborted render leaves.
 - `xio.import_any(path, **opts)`, `xio.export_fbx(path, preset=None, selected=False)`,
   `xio.export_gltf(path, selected=False)`, `xio.export_usd(path, selected=False)`,
   `xio.gltf_precheck()`.

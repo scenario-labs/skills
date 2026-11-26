@@ -80,10 +80,16 @@ class FakeNode:
 
 
 class FakeBitmap:
-    def __init__(self, width=64, height=48, color=(90, 120, 160)):
+    def __init__(self, width=64, height=48, color=(90, 120, 160), flat=False):
         self.width, self.height, self.color = width, height, color
+        self.flat = flat  # True: one color, like a render that aborted
         self.filename = None
         self.closed = False
+
+    def pixel(self, x, y):
+        """The lighter block _write_png paints, unless the bitmap is flat."""
+        inside = self.width // 4 <= x < self.width // 2 and self.height // 4 <= y < self.height // 2
+        return (230, 220, 200) if inside and not self.flat else self.color
 
 
 class _Units:
@@ -178,6 +184,7 @@ class _Runtime:
         self.last_merge = None
         self.undo_labels = []
         self.redraws = 0
+        self.render_flat = False
 
     # class queries
     def superClassOf(self, o):
@@ -247,12 +254,21 @@ class _Runtime:
         if bmp is not None:
             bmp.closed = True
 
+    def Point2(self, x, y):
+        return (x, y)
+
+    def getPixels(self, bmp, pos, count):
+        x0, y = int(pos[0]), int(pos[1])
+        return [types.SimpleNamespace(r=c[0], g=c[1], b=c[2])
+                for c in (bmp.pixel(x, y) for x in range(x0, x0 + count))]
+
     def getNodeByName(self, n):
         return next((o for o in self.objects if o.name == n), None)
 
     def render(self, outputFile=None, vfb=True, camera=None, outputwidth=None, outputheight=None,
                frame=None, cancelled=None, renderElements=None):
-        bmp = FakeBitmap(outputwidth or self.renderWidth // 10, outputheight or self.renderHeight // 10)
+        bmp = FakeBitmap(outputwidth or self.renderWidth // 10, outputheight or self.renderHeight // 10,
+                         flat=self.render_flat)
         bmp.filename = outputFile
         _write_png(bmp)
         return bmp
@@ -287,7 +303,7 @@ def _write_png(bmp):
         img = Image.new("RGB", (bmp.width, bmp.height), bmp.color)
         for x in range(bmp.width // 4, bmp.width // 2):  # a lighter block so the image is not uniform
             for y in range(bmp.height // 4, bmp.height // 2):
-                img.putpixel((x, y), (230, 220, 200))
+                img.putpixel((x, y), bmp.pixel(x, y))
         img.save(bmp.filename)
     except ImportError:
         with open(bmp.filename, "wb") as fh:
