@@ -19,11 +19,13 @@ without saving.
 // ARGS: {main: "Comp 1", dir: "<project>/aep", base: "BrandFilm"}
 var main = AEK.core.comp(ARGS.main);
 var frozen = AEX.project.saveVersion(ARGS.dir, ARGS.base + "_received"); // _received_v001.aep, never overwritten
+var work = AEX.project.saveVersion(ARGS.dir, ARGS.base); // the open project moves to <base>_v001.aep: later saves miss the received file
 var inv = AEX.project.inventory(main);
 var lines = [];
 for (var i = 0; i < inv.findings.length; i++) { lines.push(inv.findings[i].severity + " " + inv.findings[i].rule + " @ " + inv.findings[i].where); }
 inv.findings = lines;
 inv.frozen = frozen.saved;
+inv.working = work.saved;
 return inv;
 ```
 

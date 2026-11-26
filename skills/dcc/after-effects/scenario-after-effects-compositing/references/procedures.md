@@ -500,9 +500,9 @@ for (i = 0; i < 3; i++) {
 return { wrap: w, grainIntensity: set, frame: AEK.capture.frame(c, A.t || 0, A.out + "/integrated.png").path };
 ```
 
-Check: `matte_metrics.py grain` on a flat area of the background and of the plate, at the same tone:
+Check: `matte_metrics.py grain` on a flat area of the element and of the plate, at the same tone:
 within 10 % per channel (measured within 1 % on a midtone wall at luma 0.33: plate 0.0163, 0.0109,
-0.0272; result 0.0163, 0.0110, 0.0275). First run once at intensity 1 to read `grainAt1` on that
+0.0272; result 0.0164, 0.0110, 0.0275). First run once at intensity 1 to read `grainAt1` on that
 tone (measured here 0.0080, 0.0088, 0.0098). Add Grain is tone dependent: with the same settings the
 dark desk (0.12) got 0.0227 in red, 40 % more, and the bright window (0.93) about 0.0017. Calibrate
 on the tone the subject sits against, then read shadows and highlights too. Wrap:

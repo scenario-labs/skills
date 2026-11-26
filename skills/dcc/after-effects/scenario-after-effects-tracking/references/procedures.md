@@ -277,13 +277,13 @@ same frame test judges a 3D solve: a proof solid on the ground versus a ground f
 // channel: bridge | handoff
 // checked: live 27.0
 var comp = AEK.core.comp(ARGS.comp), rows = [], i, j, k, l, e, keys, span, f0, pk, mt, miss;
-// frames of the span without a key on that corner: a key count alone passes a pin keyed twice on one frame
+// comp frames of the span without a key on that corner: a key count alone passes a pin keyed twice on one frame
 function missing(p, f0, n) {
-    var m = 0, f, t, ki;
+    var m = [], f, t, ki;
     for (f = 0; f < n; f++) {
         t = (f0 + f) / comp.frameRate;
         ki = p.numKeys ? p.nearestKeyIndex(t) : 0;
-        if (!ki || Math.abs(p.keyTime(ki) - t) > 0.25 / comp.frameRate) { m++; }
+        if (!ki || Math.abs(p.keyTime(ki) - t) > 0.25 / comp.frameRate) { m.push(f0 + f); }
     }
     return m;
 }
@@ -299,7 +299,7 @@ for (i = 1; i <= comp.numLayers; i++) {
         for (k = 1; k <= 4; k++) { keys.push(e.property(k).numKeys); miss.push(missing(e.property(k), f0, span)); }
         pk = l.property("ADBE Transform Group").property("ADBE Position").numKeys;
         rows.push({ layer: l.name, keys: keys, framesInSpan: span, missingFrames: miss,
-            everyFrame: span > 0 && miss[0] === 0 && miss[1] === 0 && miss[2] === 0 && miss[3] === 0,
+            everyFrame: span > 0 && !miss[0].length && !miss[1].length && !miss[2].length && !miss[3].length,
             blurReady: l.motionBlur && comp.motionBlur && pk > 1, switchOnly: l.motionBlur && pk <= 1 });
     }
     mt = l.property("ADBE MTrackers");
@@ -308,9 +308,12 @@ for (i = 1; i <= comp.numLayers; i++) {
 return rows;
 ```
 
-Check: `everyFrame` true (each of the four corners has a key on every frame of the span;
-`missingFrames` counts the gaps per corner), `switchOnly` false on moving inserts. Measured: it
-flagged a pin keyed on 60 of 72 frames and a switch-only blur.
+Check: `everyFrame` true (each of the four corners has a key on every frame of the span),
+`switchOnly` false on moving inserts. `keys` and `missingFrames` follow the Corner Pin order (UL,
+UR, LL, LR); `missingFrames` lists the comp frames without a key on that corner. Measured: it
+flagged a pin keyed on 60 of 72 frames and a switch-only blur. With one key removed from Upper Right
+at frame 12, `missingFrames` read `[[], [12], [], []]`; a Lower Left key moved half a frame (30 keys
+on each corner) read `[[], [], [12], []]`.
 
 ## P11. Store a track in a Motion Tracker
 

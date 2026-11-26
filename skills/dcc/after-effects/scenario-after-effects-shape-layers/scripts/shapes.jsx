@@ -207,7 +207,8 @@ AEX.shapes = (function () {
     function chainScale(layer, t) {
         var A = [[1, 0], [0, 1]], cur = layer, tg, k, r, sv;
         while (cur) {
-            if (!(cur instanceof AVLayer)) { return { ok: false, s: null, why: "camera or light in the parent chain" }; }
+            // ShapeLayer and TextLayer are not `instanceof AVLayer` in 27.0: test for the two kinds without a 2D scale
+            if (cur instanceof CameraLayer || cur instanceof LightLayer) { return { ok: false, s: null, why: "camera or light in the parent chain" }; }
             if (cur.threeDLayer) { return { ok: false, s: null, why: "3D layer '" + cur.name + "' in the chain" }; }
             tg = cur.property("ADBE Transform Group");
             k = tg.property("ADBE Scale").valueAtTime(t, false); r = tg.property("ADBE Rotate Z").valueAtTime(t, false);

@@ -35,9 +35,10 @@ except ImportError:
 # and 1.05 to 1.37x the calm mean; the same shots with the old hot core and flash used 2.0 to 7.8 % and 1.10 to 1.49x.
 LIMITS = {"clip": 0.0, "contour": 1.0, "contourPeak": 0.95, "outline": 20.0, "grain": 0.10, "blacks": 0.05, "blacksLevels": 1.0,
           "flashHeadroom": 0.06, "flashRatio": 1.45, "strengthMin": 0.5,
-          "wispContrast": 10.0, "wispHeight": 0.08, "wispSeconds": 1.0, "holdMove": 0.25}
+          "wispContrast": 10.0, "wispHeight": 0.08, "wispSeconds": 1.0, "holdMove": 0.005}
 # Hold: largest mean absolute luma change between consecutive held frames of the camera comp (before grain), in levels. The scene
-# is frozen by time remap there, so a camera push or shake still running in the hold is the only thing that moves it.
+# is frozen by time remap there, so a camera push or shake still running in the hold is the only thing that moves it. Measured on
+# the section 13 shot at 16 bpc: 0.000 with the camera settled, 0.021 with the push running through the hold, 0.39 with the shake.
 # Hit strength = max(headroom / flashHeadroom, (ratio - 1) / (flashRatio - 1)): 1.0 is the ceiling on either reading. A pulse below
 # strengthMin does not light the scene (fails); aim for 0.7 to 0.95.
 # Wisp: brightest 5 % of (with - without) luma inside the wisp's box, in levels, and its visible height (rows with 3 or more pixels

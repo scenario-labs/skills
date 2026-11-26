@@ -513,7 +513,8 @@ Measured: `layer.name = "..."` by script left the expression text unchanged; the
 layer broke `thisComp.layer("TXT_1")` in the main comp. A failed expression keeps
 `expressionEnabled` true and returns 0 on Opacity. `renameLayer` matches `layer("name")` in every
 comp: use it only when the old name is unique in the project. It also matches single quotes and
-spaces inside the parentheses, and keeps each expression's enabled state. `review` lists the
+spaces inside the parentheses, and keeps each expression's enabled state: assigning `expression` by
+script turns a disabled expression back on (measured, new or same text). `review` lists the
 expressions that still quote the old name after the rewrite (a name held in a variable): fix those
 by hand.
 

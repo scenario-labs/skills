@@ -103,10 +103,12 @@ AEK.session = (function () {
     // (replaceSource with a shorter clip pulls the out point in). opts: {fit: "cover"|"contain", bin}
     function swap(l, it, opts) {
         opts = opts || {};
-        // k maps layer time to source time: a layer at 50 % stretch plays 10 s of comp time from 20 s of source
+        // source time = (comp time - startTime) * 100 / stretch: a layer at 50 % stretch plays 10 s of comp time from 20 s of
+        // source; a reversed layer (negative stretch) reads its source backward, so the visible source span is [lo, hi] either way
         var c = l.containingComp, before = print(l), wasLocked = l.locked, pw = before.width, ph = before.height, res, fitComp, inner, s,
-            k = Math.abs(l.stretch) ? 100 / Math.abs(l.stretch) : 1,
-            span = (l.outPoint - l.inPoint) * k, offset = Math.max(0, l.inPoint - l.startTime) * k, srcEnd = (l.outPoint - l.startTime) * k,
+            sr = l.stretch ? 100 / l.stretch : 1, k = Math.abs(sr),
+            ta = (l.inPoint - l.startTime) * sr, tb = (l.outPoint - l.startTime) * sr,
+            offset = Math.max(0, Math.min(ta, tb)), srcEnd = Math.max(ta, tb), span = srcEnd - offset,
             named = l.name, clipDur;
         if (!pw || !ph) { throw new Error("Layer '" + l.name + "' has no source size: not a placeholder that can be swapped"); }
         if (wasLocked) { l.locked = false; }
@@ -125,6 +127,8 @@ AEK.session = (function () {
             res.mode = "fitComp"; res.fitComp = fitComp.name; res.scale = Math.round(s * 10000) / 100;
         }
         l.name = named;
+        // a reversed layer whose in point sits on source time 0 loses that one frame in replaceSource (in point 4 -> 3.99967);
+        // writing the in point back does not hold and shifts the out point a frame instead, so drift under 0.0005 s is left alone
         if (Math.abs(l.inPoint - before.inPoint) > 0.0005 || Math.abs(l.outPoint - before.outPoint) > 0.0005) {
             l.inPoint = before.inPoint; l.outPoint = before.outPoint;
         }

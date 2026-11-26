@@ -25,7 +25,9 @@ AEX.animation = (function () {
     // move(prop, comp, f0, v0, f1, v1, ease): two keys at FRAMES; ease is a name in EASES, a [x1,y1,x2,y2] tuple,
     // or {out: influence, "in": influence} for zero-speed influences (Easy Ease is {out: 33.33, "in": 33.33}).
     function move(p, c, f0, v0, f1, v1, ease) {
-        // the first key's index shifts when the second key lands before it: read it again once both exist
+        // f1 before f0 would put the ease on the outer sides of the two keys (measured): refuse it
+        if (!(f1 > f0)) { throw new Error("move(): f1 must come after f0"); }
+        // read the first key's index again once both keys exist
         AEK.motion.key(p, f0 * c.frameDuration, v0);
         var k1 = AEK.motion.key(p, f1 * c.frameDuration, v1), k0 = p.nearestKeyIndex(f0 * c.frameDuration);
         if (typeof ease === "string") { ease = EASES[ease]; if (!ease) { throw new Error("Unknown ease name"); } }
@@ -47,6 +49,7 @@ AEX.animation = (function () {
     // with zero speed (the turn-around); out of f0 is a fast start, into f1 a long settle.
     function overshoot(p, c, f0, v0, fPeak, f1, v1, pct, outInfluence, settleInfluence) {
         var peak, i;
+        if (!(f0 < fPeak && fPeak < f1)) { throw new Error("overshoot(): frames must run f0 < fPeak < f1"); }
         if (v0 instanceof Array) { peak = []; for (i = 0; i < v0.length; i++) { peak.push(v1[i] + (v1[i] - v0[i]) * pct / 100); } }
         else { peak = v1 + (v1 - v0) * pct / 100; }
         // earlier indices shift when a later call adds a key before them: read them again once all three exist
@@ -254,7 +257,8 @@ AEX.animation = (function () {
             hit = null;
             if (out[q].frame !== null && allow[out[q].layer + "|" + out[q].rule + "|" + out[q].frame]) { hit = "allow list"; }
             if (out[q].frame === null && allow[out[q].layer + "|" + out[q].rule]) { hit = "allow list"; }
-            if (!hit && out[q].frame !== null && marks[out[q].layer]) {
+            // hasOwnProperty: ExtendScript objects inherit a native "*" operator, so marks["*"] is a function, not undefined
+            if (!hit && out[q].frame !== null && marks.hasOwnProperty(out[q].layer)) {
                 for (x = 0; x < marks[out[q].layer].length; x++) {
                     var mk = marks[out[q].layer][x];
                     if (Math.abs(mk.frame - out[q].frame) <= 1 && (mk.text.toLowerCase().indexOf(out[q].rule) >= 0 || /^intended\s*$/i.test(mk.text))) { hit = mk.text; }

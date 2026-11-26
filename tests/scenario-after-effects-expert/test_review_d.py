@@ -188,6 +188,13 @@ class Manifest(Temp):
         moved = save(self.tmp / "hold_moved.png", np.roll(noisy(4), 3, axis=1))
         r = vm.gates(self.manifest(holdFrames=[str(self.tmp / "hold_0.png"), moved]))
         self.assertIn("hold", r["fails"])
+        # a slow push creeping through the hold: one level on 2 % of the pixels, 0.02 level on average (0.021 was read live)
+        creep = np.round(noisy(4))
+        creep[:14, :] += 1
+        crept = save(self.tmp / "hold_creep.png", creep)
+        r = vm.gates(self.manifest(holdFrames=[save(self.tmp / "hold_still.png", np.round(noisy(4))), crept]))
+        self.assertIn("hold", r["fails"])
+        self.assertLess(r["hold"]["move"], 0.25)
 
     def test_fewer_held_frames_than_asked_is_inconclusive(self):
         r = vm.gates(self.manifest(holdFrames=[str(self.tmp / "hold_0.png")], holdCount=15))

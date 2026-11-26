@@ -135,11 +135,12 @@ Check: one row per stroke with stored `width`, `onScreen` (width through layer a
 Rotation) and `issues`. `onScreen` is null, with an issue, when the chain is not a uniform 2D scale:
 non-uniform scale, a 3D layer, or a camera parent. Rebuild that geometry at delivery size. Measured:
 a 2 px stroke on a layer at 200 % reported `onScreen` 4 and an issue; a 3 px stroke and a Butt cap
-were flagged. Group Transform Scale is not included: keep group Scale at 100 in icons. Width is read
-with `valueAtTime` after any expression, so the constant on-screen expression (procedure 12) is
-audited on its result. Measured on a layer at 400 %: the plain 2 px stroke read `onScreen` 8 with an
-issue; with the expression it read width 0.5, `onScreen` 2, `expression: true` and no issue. An
-expression error is still an issue.
+were flagged. A 10 px stroke at 120 % rotated 10 degrees, under a parent at 150 % rotated 30
+degrees, reported `onScreen` 18; the rendered frame measured 18.1 px. Group Transform Scale is not
+included: keep group Scale at 100 in icons. Width is read with `valueAtTime` after any expression,
+so the constant on-screen expression (procedure 12) is audited on its result. Measured on a layer at
+400 %: the plain 2 px stroke read `onScreen` 8 with an issue; with the expression it read width 0.5,
+`onScreen` 2, `expression: true` and no issue. An expression error is still an issue.
 
 ## 5. Radial burst
 
@@ -420,7 +421,11 @@ return { before: before, after: AEX.shapes.lottie(dup), copies: made };
 
 The audit and the preparation walk nested comps, each once. `where` is the layer path from the top
 comp (`Outer > Precomp > layer`). The job bakes only in the `_lottie` copies: the top comp and each
-nested comp are duplicated and the copies rewired to each other (`copies` lists them).
+nested comp are duplicated and the copies rewired to each other (`copies` lists them). Measured on
+Outer nesting Inner twice and Deep (Deep also inside Inner): three copies, and both Inner layers and
+both Deep layers point at the copies (`replaceSource`). A precomp layer without its own name takes
+the copy's name. The masters keep their expressions enabled; each copied expression became 31 keys
+for 1 s at 30 fps.
 
 Check: findings `{severity, where, what}`, by severity:
 

@@ -674,6 +674,9 @@ var r = AEX.distort.apply(c, plate, { pad: 48,
 return AEX.vfx.cost(c, [0.5, 0.7, 1.0], ARGS.out, "distort");
 ```
 
+Measured on a 1080p product plate: the ring's p95 shift 5.0 px, read from its two maps (amount 5,
+0.071 x the band). At 100 % it visibly bends the subject's edges and the fabric weave as it passes.
+
 Bipolar ring with an envelope on the haze (keys: off before 0.8 s, full at 0.93 s, fading out from
 2.5 to 4.5 s):
 
@@ -891,8 +894,9 @@ bpc.
   `grain` from the plate (std / 4.2): the default 0.17 is for a 0.73-level plate and put a clean
   still plate at +91 % (0.044 gave +2.9 %). On a still plate the high-pass std is texture, which the
   CA softens (-13.9 % on a bright still): there only a rise above 10 % fails.
-- Hold: the held frames of the camera comp, before grain, move at most 0.25 level from one to the
-  next (`hold`). A push or shake still running at the end fails it.
+- Hold: the held frames of the camera comp, before grain, differ by 0 levels from one to the next
+  (`hold`, limit 0.005 level; 0.000 measured with the camera settled). A push still running through
+  the hold read 0.021 and a shake 0.39: both fail.
 - Element counts returned by the job match the plan (layers, streaks, rings).
 - Visual: the ring travels along the floor, its back half behind the subject. Streaks leave from all
   around the outline.

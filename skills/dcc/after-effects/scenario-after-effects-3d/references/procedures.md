@@ -510,12 +510,12 @@ mattes, then size the move.
 // ARGS: {comp, out, product, title}; the title layer must exist already (procedure 12 builds none)
 var c = AEK.core.comp(ARGS.comp), m = AEK.core.layer(c, ARGS.product || "product"), t = AEK.core.layer(c, ARGS.title || "title");
 var T = [0, c.duration / 2, c.duration - c.frameDuration], R = {}, i;
-R.mattes = AEX.threeD.mattes(c, ["title", "product"], T, ARGS.out, "lay");
+R.mattes = AEX.threeD.mattes(c, [t.name, m.name], T, ARGS.out, "lay");
 var near = { layer: m, point: m.property("ADBE Transform Group").property("ADBE Anchor Point").value };
 var far = { layer: t, point: t.property("ADBE Transform Group").property("ADBE Anchor Point").value };
 R.total = AEX.threeD.parallax(c, near, far, T[0], T[2]).relPct;
 R.windows = [];
-for (i = 0; i < 4; i++) { R.windows.push(AEX.threeD.parallax(c, near, far, i, Math.min(i + 1, T[2])).relPct); }
+for (i = 0; i < T[2]; i++) { R.windows.push(AEX.threeD.parallax(c, near, far, i, Math.min(i + 1, T[2])).relPct); }
 return R;
 ```
 

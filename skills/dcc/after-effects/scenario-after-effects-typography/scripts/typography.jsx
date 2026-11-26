@@ -232,11 +232,14 @@ AEX.type = (function () {
             var an = function () { return d.property("ADBE Text Properties").property("ADBE Text Animators"); };
             for (i = 1; i <= an().numProperties; i++) {
                 if (!an().property(i).enabled) { continue; }
-                if (!an().property(i).property("ADBE Text Animator Properties").property("ADBE Text Position 3D")) { an().property(i).property("ADBE Text Animator Properties").addProperty("ADBE Text Position 3D"); }
+                // an animator made without Position still lists it, hidden, and setValue on it throws until it is added
                 p = an().property(i).property("ADBE Text Animator Properties").property("ADBE Text Position 3D");
                 while (p.numKeys) { p.removeKey(1); }
                 if (p.expression) { p.expression = ""; }
-                p.setValue([0, 1000 * i, 0]);
+                try { p.setValue([0, 1000 * i, 0]); } catch (eh) {
+                    an().property(i).property("ADBE Text Animator Properties").addProperty("ADBE Text Position 3D");
+                    an().property(i).property("ADBE Text Animator Properties").property("ADBE Text Position 3D").setValue([0, 1000 * i, 0]);
+                }
             }
             for (j = f0; j <= f1; j++) {
                 sig.push(key(d.sourceRectAtTime(j / fps, false)));
