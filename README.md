@@ -46,9 +46,9 @@ assets, and custom-trained models, for games, entertainment, and any creative ve
 
 The expert tools at the bottom of the list work differently: teams of skills that drive DCC (digital
 content creation) software and game engines installed on your machine (ZBrush, Blender, Maya, Unreal
-Engine, Unity, Godot, Roblox Studio), distilled from expert tutorials, conference talks, and
-official documentation. They need the application, not the Scenario MCP server, and each family
-folder's README records how it was built and how far it was verified.
+Engine, Unity, Godot, Roblox Studio, After Effects), distilled from expert tutorials, conference
+talks, and official documentation. They need the application, not the Scenario MCP server, and each
+family folder's README records how it was built and how far it was verified.
 
 Skills follow the [Agent Skills](https://agentskills.io) format.
 
@@ -70,7 +70,8 @@ scripts: select its "Expert tools" group in the installer menu, or run the comma
 README ([ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md),
 [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md),
 [Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md),
-[Roblox Studio](skills/game-engines/roblox/README.md)).
+[Roblox Studio](skills/game-engines/roblox/README.md),
+[After Effects](skills/dcc/after-effects/README.md)).
 
 **Pick, or install one skill.**
 
@@ -489,6 +490,32 @@ and avatar items, performance, monetization. Procedures were run live in Roblox 
 | [scenario-roblox-tooling](skills/game-engines/roblox/scenario-roblox-tooling/SKILL.md)           | Roblox team tooling: Rojo and Script Sync, Wally, Rokit, luau-lsp, Selene, StyLua, Lune and in-engine tests, GitHub Actions CI, Open Cloud publishing and Luau Execution                 |
 | [scenario-roblox-ui](skills/game-engines/roblox/scenario-roblox-ui/SKILL.md)                     | Roblox game UI and input: HUD, menus, shop grids, scaling from phone to TV, safe areas, layouts and StyleSheets, gamepad navigation, the Input Action System, localization               |
 | [scenario-roblox-vfx-audio](skills/game-engines/roblox/scenario-roblox-vfx-audio/SKILL.md)       | Roblox VFX and audio: particles, beams, trails, flipbooks, hit and explosion effects, the Audio API with wires and emitters, 3D sound, music and ducking, footsteps                      |
+
+### Expert tools: After Effects
+
+Motion design software. A lead and fourteen specialists that drive Adobe After Effects 27.0 and 2026
+through ExtendScript, a mailbox bridge in the open session, osascript, AfterFX.exe, or aerender:
+project hygiene, keyframe animation, shape layers, typography, expressions, scripting and batch
+versions, character rigging, compositing, tracking, 3D, effects, color and delivery, ads and
+variants, generated media from Scenario.
+
+| Skill                                                                                                                  | Use it for                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| [scenario-after-effects-expert](skills/dcc/after-effects/scenario-after-effects-expert/SKILL.md)                       | After Effects lead: the mailbox bridge, osascript, AfterFX.exe, aerender, the inspect-change-verify loop, audits, contact sheets, routing |
+| [scenario-after-effects-3d](skills/dcc/after-effects/scenario-after-effects-3d/SKILL.md)                               | 3D in After Effects: GLB and FBX models, Advanced 3D, environment lights, shadow catchers, cameras, depth of field, 2.5D parallax         |
+| [scenario-after-effects-animation](skills/dcc/after-effects/scenario-after-effects-animation/SKILL.md)                 | Keyframe animation in After Effects: easing, overshoot, anticipation, overlap and stagger, arcs, nulls, motion blur, retiming             |
+| [scenario-after-effects-character-rigging](skills/dcc/after-effects/scenario-after-effects-character-rigging/SKILL.md) | 2D cut-out characters in After Effects: art prep, joints and parenting, IK, walk and run cycles, Puppet pins, lip sync                    |
+| [scenario-after-effects-color-delivery](skills/dcc/after-effects/scenario-after-effects-color-delivery/SKILL.md)       | Color and delivery in After Effects: color management, OCIO and ACES, banding, render settings, ProRes 4444 alpha, platform specs         |
+| [scenario-after-effects-compositing](skills/dcc/after-effects/scenario-after-effects-compositing/SKILL.md)             | Compositing in After Effects: keying green and blue screens, mattes, roto, object removal, clean plates, light wrap, grain match          |
+| [scenario-after-effects-expressions](skills/dcc/after-effects/scenario-after-effects-expressions/SKILL.md)             | After Effects expressions: sourceRectAtTime boxes, controllers, delays, loops, inertial bounce, counters, rigs that stay fast             |
+| [scenario-after-effects-generation](skills/dcc/after-effects/scenario-after-effects-generation/SKILL.md)               | Generated media in After Effects: style frames, cutouts, parallax layers, plates, 3D models, HDRIs, voice and music from Scenario         |
+| [scenario-after-effects-motion-production](skills/dcc/after-effects/scenario-after-effects-motion-production/SKILL.md) | Ads and commercial motion in After Effects: briefs, hooks, pacing to music, end cards, safe zones, variants for A/B tests                 |
+| [scenario-after-effects-project](skills/dcc/after-effects/scenario-after-effects-project/SKILL.md)                     | After Effects projects: inherited or messy projects, naming, missing footage and fonts, frame rates, precomps, proxies, handover          |
+| [scenario-after-effects-scripting](skills/dcc/after-effects/scenario-after-effects-scripting/SKILL.md)                 | After Effects scripting: versions from CSV or JSON, localized end cards, batch renders, aerender, templates, ExtendScript tools           |
+| [scenario-after-effects-shape-layers](skills/dcc/after-effects/scenario-after-effects-shape-layers/SKILL.md)           | Shape layers in After Effects: line icons, logo reveals from SVG, Trim Paths, Repeater bursts, stroke taper, morphs, Lottie               |
+| [scenario-after-effects-tracking](skills/dcc/after-effects/scenario-after-effects-tracking/SKILL.md)                   | Tracking in After Effects: point and planar tracks, screen replacement, corner pins, Warp Stabilizer, 3D Camera Tracker                   |
+| [scenario-after-effects-typography](skills/dcc/after-effects/scenario-after-effects-typography/SKILL.md)               | Typography in After Effects: kinetic type, text animators and selectors, captions synced to audio, text that must fit                     |
+| [scenario-after-effects-vfx](skills/dcc/after-effects/scenario-after-effects-vfx/SKILL.md)                             | Effects in After Effects with built-in tools: glow, sparks, shockwaves, light rays, lightning, heat haze, smoke and flame                 |
 
 ## Example prompts
 

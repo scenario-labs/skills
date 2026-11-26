@@ -1,0 +1,39 @@
+# Sources
+
+## Videos
+
+| Expert                                    | Credential                                          | URL                                         | Best for                                                                     | Best timestamps                                            |
+| ----------------------------------------- | --------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Evan Abrams (Adobe Live)                  | Motion designer and educator, Adobe Live host       | https://www.youtube.com/watch?v=M7v547PJ5Hk | Model import units, null orbit rig, environment light, interiors             | 00:04:35, 00:06:55, 00:10:15, 00:13:50, 00:19:07           |
+| Abhishek Dubey (Motion Nations)           | Motion designer and educator                        | https://www.youtube.com/watch?v=65WsmkXZEso | Product spot in Advanced 3D, HDRI rotation, shared ease                      | 00:02:01, 00:03:07, 00:04:28, 00:13:44                     |
+| Abhishek Dubey (Motion Nations)           | same                                                | https://www.youtube.com/watch?v=wwsHGbZN6ZU | HDRI, shadow catcher, tracked 3D insert                                      | 00:05:38, 00:06:10, 00:08:11, 00:09:49                     |
+| Max Novak                                 | VFX artist and educator                             | https://www.youtube.com/watch?v=QlbZDu2tZfE | CG integration over a plate: HDRI match, blur, grain                         | 00:04:29, 00:09:12, 00:10:18                               |
+| Cameron (Motion Science)                  | Motion designer and educator                        | https://www.youtube.com/watch?v=zgMHWFolli8 | Camera rigs, shake, motion blur settings, DoF links                          | 00:13:08, 00:14:22, 00:16:31, 00:18:02, 00:19:15           |
+| Cameron (Motion Science)                  | same                                                | https://www.youtube.com/watch?v=u3qluraimKY | Parallax from a photo, repainting behind cut-outs                            | 00:06:06                                                   |
+| Ryan Connolly (Film Riot, on Adobe Video) | Filmmaker, Film Riot host                           | https://www.youtube.com/watch?v=0oS3FnBwOkI | Extruded 3D text, Classic versus Advanced 3D                                 | 00:00:08, 00:02:20                                         |
+| Ryan Connolly (Adobe Video x Film Riot)   | same                                                | https://www.youtube.com/watch?v=9LxKSsftUS4 | Advanced 3D compositing in live action, depth blur                           | 00:00:13, 00:01:44, 00:02:15, 00:02:37, 00:03:39           |
+| Mohamed Mehrez (MDMZ)                     | Motion designer and educator                        | https://www.youtube.com/watch?v=7tVyu-rjHbg | 2.5D parallax from a photo, scale compensation, ground anchor                | 00:04:07, 00:15:42, 00:16:48, 00:20:12, 00:24:26           |
+| Jake Bartlett (Jake In Motion)            | After Effects educator, School of Motion instructor | https://www.youtube.com/watch?v=iOZkdYZPVU0 | Product renders in Advanced 3D, 3D layer instances, motion blur workaround   | 00:02:21, 00:07:07, 00:12:41, 00:14:12, 00:19:26, 00:20:16 |
+| Jake Bartlett (Jake In Motion)            | same                                                | https://www.youtube.com/watch?v=DK04C1mro-U | 26.3 features: Draft 3D, depth of field in Advanced 3D                       | 00:05:33                                                   |
+| Matt Dombrowski                           | Educator, digital media professor                   | https://www.youtube.com/watch?v=PfVBb4ZEhq8 | Depth-map displacement, map polarity, map source choice, keying back to zero | 00:01:44, 00:03:07, 00:03:39, 00:04:11                     |
+| Tom Lulofs (TomsProject)                  | Motion designer                                     | https://www.youtube.com/watch?v=XsbXd4pirnE | Cut-layer parallax from a still, elements placed in Z                        | 00:05:35, 00:06:43, 00:08:46                               |
+
+## Documentation
+
+| Page                                   | URL                                                                                                                                                       | Used for                                                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 3D layers                              | https://helpx.adobe.com/after-effects/using/3d-layers.html                                                                                                | 3D properties, Orientation versus Rotation, what breaks intersections and shadows                               |
+| Advanced 3D renderer                   | https://helpx.adobe.com/after-effects/using/advanced-3d-renderer.html                                                                                     | Supported content, Render Options (quality, shadow resolution, smoothness, casting box), Draft 3D, requirements |
+| 3D models in After Effects             | https://helpx.adobe.com/after-effects/using/3d-compositing-in-after-effects.html                                                                          | Import formats, Casts and Accepts Shadows, shadow catcher, environment light sources, 3D Layer Instance         |
+| Cameras, lights and points of interest | https://helpx.adobe.com/after-effects/using/cameras-lights-points-interest.html                                                                           | Camera types, presets, zoom, Focus Distance, light types and options                                            |
+| Image-based lighting                   | https://helpx.adobe.com/after-effects/using/image-based-lighting.html                                                                                     | Environment light, Accepts Lights, casting box and shadow softness                                              |
+| Animated environment lights            | https://helpx.adobe.com/after-effects/desktop/work-with-3d-composition/create-realistic-reflections-and-ambient-lighting/animated-environment-lights.html | Video and comp layers as environment sources, background layer                                                  |
+| Substance 3D materials                 | https://helpx.adobe.com/after-effects/desktop/work-with-3d-composition/work-with-materials/apply-substance-3d-materials.html                              | .sbsar materials on models, text and shapes                                                                     |
+| 3D Camera Tracker                      | https://helpx.adobe.com/after-effects/desktop/work-with-3d-composition/3d-camera-tracker-effect/tracking-3d-camera-movement.html                          | Solve, Create Solid and Camera                                                                                  |
+
+## Live measurements
+
+All `checked: live 27.0` blocks ran on After Effects 27.0 on macOS through the bridge on 2026-11-25:
+renderer names and exposed properties per renderer, model footprint and fit, shadow catcher,
+environment and key lights, orbit rig, focus expression, motion blur paths, parallax scale
+compensation, depth-map displacement, frame timing and an aerender of the product shot.

@@ -127,6 +127,9 @@ Trailers and clips, storyboarded, generated, cut, graded, and captioned. 37 skil
 npx skills add scenario-labs/skills --skill scenario scenario-moderation scenario-report scenario-video scenario-storyboards scenario-video-assembly scenario-caption-studio scenario-formats scenario-image scenario-image-editing scenario-text-overlay scenario-video-editing scenario-video-color-grade scenario-audio scenario-seedance-music-video scenario-seedance-storyboard scenario-seedance-drafts scenario-reel-recast scenario-video-ads scenario-consistency scenario-asset-analysis scenario-minimax-video scenario-gemini-omni scenario-grok-imagine-video scenario-veo scenario-seedance scenario-kling scenario-vidu scenario-wan scenario-runway scenario-luma-video scenario-ad-variants scenario-thumbnails scenario-kinetic-music-video scenario-ace-step scenario-motion-loops scenario-kinetic-film
 ```
 
+Working in After Effects? Add the expert tools for it:
+[After Effects](skills/dcc/after-effects/README.md).
+
 ### Marketing Artist
 
 Store art and ads that stay on brand at every size. 31 skills.
@@ -254,4 +257,5 @@ Teams of skills that drive DCC software and game engines installed on your machi
 application, not the Scenario MCP server. Each family installs as one set:
 [ZBrush](skills/dcc/zbrush/README.md), [Blender](skills/dcc/blender/README.md),
 [Maya](skills/dcc/maya/README.md), [Unreal Engine](skills/game-engines/unreal/README.md),
-[Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md).
+[Unity](skills/game-engines/unity/README.md), [Godot](skills/game-engines/godot/README.md),
+[After Effects](skills/dcc/after-effects/README.md).

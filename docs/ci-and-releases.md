@@ -102,6 +102,9 @@ pointing at this repository, and hook steps read the index through them.
   is the one setting that stops prettier folding a frontmatter `description` across lines, so the
   description stays on the one line `pnpm style` reads and every skill has shipped with. Their
   fenced code is therefore left as written.
+- The After Effects expert tools set it on every markdown file, and `.prettierignore` skips their
+  `scripts/`: their code is ExtendScript (ES3), where the trailing commas prettier adds are a syntax
+  error.
 - A merged commit that only reformats, like the one that introduced the wrap, goes in
   `.git-blame-ignore-revs` so blame skips it.
 

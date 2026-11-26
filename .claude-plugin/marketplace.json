@@ -364,6 +364,29 @@
         "./skills/game-engines/roblox/scenario-roblox-ui",
         "./skills/game-engines/roblox/scenario-roblox-vfx-audio"
       ]
+    },
+    {
+      "name": "24.-expert-tools-after-effects",
+      "description": "Motion design software. A lead and fourteen specialists that drive Adobe After Effects 27.0 and 2026 through ExtendScript, a mailbox bridge in the open session, osascript, AfterFX.exe, or aerender: project hygiene, keyframe animation, shape layers, typography, expressions, scripting and batch versions, character rigging, compositing, tracking, 3D, effects, color and delivery, ads and variants, generated media from Scenario.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/dcc/after-effects/scenario-after-effects-expert",
+        "./skills/dcc/after-effects/scenario-after-effects-3d",
+        "./skills/dcc/after-effects/scenario-after-effects-animation",
+        "./skills/dcc/after-effects/scenario-after-effects-character-rigging",
+        "./skills/dcc/after-effects/scenario-after-effects-color-delivery",
+        "./skills/dcc/after-effects/scenario-after-effects-compositing",
+        "./skills/dcc/after-effects/scenario-after-effects-expressions",
+        "./skills/dcc/after-effects/scenario-after-effects-generation",
+        "./skills/dcc/after-effects/scenario-after-effects-motion-production",
+        "./skills/dcc/after-effects/scenario-after-effects-project",
+        "./skills/dcc/after-effects/scenario-after-effects-scripting",
+        "./skills/dcc/after-effects/scenario-after-effects-shape-layers",
+        "./skills/dcc/after-effects/scenario-after-effects-tracking",
+        "./skills/dcc/after-effects/scenario-after-effects-typography",
+        "./skills/dcc/after-effects/scenario-after-effects-vfx"
+      ]
     }
   ]
 }

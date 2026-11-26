@@ -7,6 +7,7 @@ accept = ["200..=299", "429"]
 exclude = [
   # Bot protection answers automated requests with 403 (x.com only from CI runners).
   '^https://discussions\.unity\.com/',
+  '^https://helpx\.adobe\.com/',
   '^https://polycount\.com/',
   '^https://x\.com/',
   # Ad network help centers behind the same kind of bot protection.
