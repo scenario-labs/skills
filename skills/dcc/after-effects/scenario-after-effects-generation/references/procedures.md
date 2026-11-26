@@ -581,7 +581,7 @@ shadow layers alone.
    frame (`AEX.threeD.mattes`), then run
    `python3 seat_check.py --contact obj.png cast.png,contact.png`. In every column where the object
    rests, it measures the gap from the object's lowest row to the shadow's first row. Pass: 2 px or
-   less.
+   less, with shadow below at least 90 % of those columns (a column with none floats).
 7. **A push that reads.** On 2.5D planes at z 4000 / 1600 / 600 with a 50 mm camera, a 650 px push
    read as a still (front plane grew 1.25 times). 850 px plus a 120 px truck grew it 1.35 times with
    9 % subject-to-back parallax. A push alone shows little parallax near the frame center; the truck

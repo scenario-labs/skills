@@ -112,12 +112,12 @@ var cam = c.layers.addCamera("cam", [c.width / 2, c.height / 2]);
 cam.autoOrient = AutoOrientType.NO_AUTO_ORIENT;                 // one-node: Point of Interest is hidden from here on
 cam.property("ADBE Camera Options Group").property("ADBE Camera Zoom").setValue(c.width * (ARGS.focalLength || 50) / 36);
 cam.parent = rig;
-var ct = cam.property("ADBE Transform Group"), rt = rig.property("ADBE Transform Group"), d = ARGS.distance || 1100, h = ARGS.height || 150, k;
+var ct = cam.property("ADBE Transform Group"), rt = rig.property("ADBE Transform Group"), d = ARGS.distance || 1100, h = ARGS.height === undefined ? 150 : ARGS.height, k;
 ct.property("ADBE Rotate X").setValue(-8);
 AEK.motion.key(ct.property("ADBE Position"), 0, [0, -h, -d]);                       // only Z changes on the camera
-AEK.motion.key(ct.property("ADBE Position"), c.duration, [0, -h, -d + (ARGS.push || 250)]);
-AEK.motion.key(rt.property("ADBE Rotate Y"), 0, ARGS.from || -35);
-AEK.motion.key(rt.property("ADBE Rotate Y"), c.duration, ARGS.to || 35);
+AEK.motion.key(ct.property("ADBE Position"), c.duration, [0, -h, -d + (ARGS.push === undefined ? 250 : ARGS.push)]);
+AEK.motion.key(rt.property("ADBE Rotate Y"), 0, ARGS.from === undefined ? -35 : ARGS.from);
+AEK.motion.key(rt.property("ADBE Rotate Y"), c.duration, ARGS.to === undefined ? 35 : ARGS.to);
 for (k = 1; k <= 2; k++) { AEK.motion.ease(ct.property("ADBE Position"), k, 33, 33); AEK.motion.ease(rt.property("ADBE Rotate Y"), k, 33, 33); }
 return { orbit: AEK.motion.keys(rt.property("ADBE Rotate Y"), c), camStart: ct.property("ADBE Position").keyValue(1), camEnd: ct.property("ADBE Position").keyValue(2), parent: cam.parent.name };
 ```
@@ -183,7 +183,7 @@ var key = AEX.threeD.keyLight(c, ARGS.position, ARGS.target, { type: ARGS.type |
 var out = { key: AEK.core.enumName(LightType, key.lightType), options: AEX.threeD.settable(key.property("ADBE Light Options Group")) };
 if (ARGS.hdri) {
     if (AEX.threeD.rendererName(c) !== "advanced") { return { error: "switch the comp to Advanced 3D first: a layer source in a Classic comp crashed 27.0" }; }
-    var env = AEX.threeD.envLight(c, { intensity: ARGS.envIntensity || 80, source: AEK.core.item(ARGS.hdri) });
+    var env = AEX.threeD.envLight(c, { intensity: ARGS.envIntensity === undefined ? 80 : ARGS.envIntensity, source: AEK.core.item(ARGS.hdri) });
     out.env = env.lightSource.name;
 }
 return out;
@@ -238,7 +238,7 @@ for (i = 0; i < A.layers.length; i++) {
 }
 cam.moveToBeginning();
 var p = cam.property("ADBE Transform Group").property("ADBE Position");
-AEK.motion.key(p, 0, [480, 270, -zoom]); AEK.motion.key(p, c.duration, [520, 260, -zoom + (A.push || 300)]);
+AEK.motion.key(p, 0, [480, 270, -zoom]); AEK.motion.key(p, c.duration, [520, 260, -zoom + (A.push === undefined ? 300 : A.push)]);
 AEK.motion.ease(p, 1, 40, 40); AEK.motion.ease(p, 2, 40, 40);
 for (i = 0; i < A.layers.length; i++) { out.push({ name: A.layers[i].name, end: AEX.threeD.screenRect(c, AEK.core.layer(c, A.layers[i].name), c.duration - c.frameDuration) }); }
 return out;
@@ -264,8 +264,7 @@ AEK.build.effect(depth, "ADBE Box Blur2", { "ADBE Box Blur2-0001": ARGS.blur || 
 var pre = AEK.build.precompose(c, [depth.index], ARGS.depth + "_soft", true);
 var map = AEK.core.layer(c, ARGS.depth + "_soft"); map.enabled = false;
 photo = AEK.core.layer(c, ARGS.image);
-AEK.build.effect(photo, "ADBE Displacement Map", { "ADBE Displacement Map-0005": 0 });
-var fx = photo.property("ADBE Effect Parade").property(1);
+var fx = AEK.build.effect(photo, "ADBE Displacement Map", { "ADBE Displacement Map-0005": 0 });   // the photo may carry a grade already
 fx.property("ADBE Displacement Map-0001").setValue(map.index);
 var amt = fx.property("ADBE Displacement Map-0003");
 AEK.motion.key(amt, 0, ARGS.max || 40); AEK.motion.key(amt, c.duration, 0);
@@ -318,10 +317,9 @@ if (ARGS.tint && env.lightSource) {
     var holder = AEK.core.layer(c, srcName + " tinted"); holder.enabled = false;
     env.lightSource = holder;
     var inner = pre.layer(1); inner.enabled = true;
-    AEK.build.effect(inner, "ADBE Tint", {});
-    var fx = inner.property("ADBE Effect Parade").property(1);
+    var fx = AEK.build.effect(inner, "ADBE Tint", {});    // the source may carry effects already
     fx.property(2).setValue(ARGS.tint);                 // Map White To
-    fx.property(3).setValue(ARGS.amount || 20);         // Amount to Tint, percent
+    fx.property(3).setValue(ARGS.amount === undefined ? 20 : ARGS.amount);   // Amount to Tint, percent
     out.source = env.lightSource.name; out.amount = fx.property(3).value;
 }
 return out;
@@ -428,7 +426,8 @@ Check: the `list` output shows each material's `roughness`, `metallic` and wheth
 them (a factor multiplies the texture, so `--roughness-scale 0.5` works on textured materials).
 Measured: caps at roughness 0.52 and 0.62 rendered broad soft highlights; at 0.22 they showed small
 crisp speculars from the same HDRI and key. Change hard parts (caps, plastic, metal) and leave
-fabric alone. The script refuses to overwrite its source and stops on a file that is not a GLB.
+fabric alone. The script refuses to overwrite any existing file and stops on a file that is not a
+GLB.
 
 ## 14. 2.5D: keep the foreground in frame, sway a plane
 
@@ -444,8 +443,9 @@ the largest push that keeps `keep` px of it visible; plan at 90 % of it.
 var c = AEK.core.comp("parallax"), front = AEK.core.layer(c, "front"), cam = AEK.core.layer(c, "cam");
 var zoom = cam.property("ADBE Camera Options Group").property("ADBE Camera Zoom").value;
 var sF = front.property("ADBE Transform Group").property("ADBE Scale").value[0] / 100;
-var edgeOffset = (ARGS.edgeRow - front.source.height / 2) * sF;
-var push = Math.min(ARGS.push, AEX.threeD.maxPush(zoom, 0, edgeOffset, c.height / 2, 60) * 0.9);
+var zF = front.property("ADBE Transform Group").property("ADBE Position").value[2];
+var edgeOffset = (ARGS.edgeRow - front.source.height / 2) * sF * zoom / (zoom + zF);   // on screen, at the plane's depth
+var push = Math.min(ARGS.push, AEX.threeD.maxPush(zoom, zF, edgeOffset, c.height / 2, 60) * 0.9);
 var p = cam.property("ADBE Transform Group").property("ADBE Position");
 while (p.numKeys > 0) { p.removeKey(1); }                 // replaces the push of procedure 8
 AEK.motion.key(p, 0, [c.width / 2, c.height / 2, -zoom]);
@@ -484,7 +484,7 @@ mattes, then size the move.
    it), smaller, or offset to one side.
 2. **Build the layout, then animate.** Run the move once without rendering and write the mattes:
    `AEX.threeD.mattes(c, ["title", "product"], [0, mid, last], dir, "lay")` writes one PNG per layer
-   and time with only that layer drawn, cameras and lights on.
+   and time with only that layer drawn, cameras and lights as they were.
 3. **Measure:** `python3 layout_check.py lay_title_0.png lay_product_0.png` for each time. It prints
    the visible fraction of the title, whether it stays inside the frame with a 2 % margin, and the
    product matte's offset from the frame center. Pass: 0.9 or more, inside, offset within 2 % of the
@@ -507,6 +507,8 @@ mattes, then size the move.
 ```javascript
 // channel: bridge
 // checked: live 27.0, after the procedure 12 build at 1920x1080 (layers "product" and "title"; title anchor at its baseline center)
+// ARGS: {comp, out, product, title}; the title layer must exist already (procedure 12 builds none)
+var c = AEK.core.comp(ARGS.comp), m = AEK.core.layer(c, ARGS.product || "product"), t = AEK.core.layer(c, ARGS.title || "title");
 var T = [0, c.duration / 2, c.duration - c.frameDuration], R = {}, i;
 R.mattes = AEX.threeD.mattes(c, ["title", "product"], T, ARGS.out, "lay");
 var near = { layer: m, point: m.property("ADBE Transform Group").property("ADBE Anchor Point").value };

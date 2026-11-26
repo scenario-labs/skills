@@ -8,7 +8,8 @@ READ.png   the layer that must read (a title, a logo)
 FRONT.png  the layer in front of it (the product)
 Prints one JSON line: visible fraction of READ, whether READ sits inside the frame with a 2 % margin (a camera move can
 carry a title off the edge without anything covering it), the bounding box and center of both mattes, and the front
-matte's center offset from the frame center in px. Exit code 1 when the visible fraction is under --min or READ leaves the frame.
+matte's center offset from the frame center in px. Exit code 1 when the visible fraction is under --min or READ leaves the frame,
+2 when either matte is empty (nothing to measure).
 Needs ImageMagick 7 (`magick`) on the PATH. Alpha above 50 % counts as covered.
 """
 import json
@@ -41,11 +42,16 @@ def main(argv):
     size = magick(read, "-format", "%w %h", "info:").split()
     w, h = int(size[0]), int(size[1])
     a_read = area(read)
+    if a_read == 0 or area(front) == 0:
+        # an empty matte gives a fallback box and a visible fraction of 1: no measurement, no pass
+        print(json.dumps({"read": read, "front": front, "pass": False,
+                          "error": "a matte holds no layer pixels: %s cannot be measured" % (read if a_read == 0 else front)}))
+        return 2
     both = float(magick(
         "(", read, "-alpha", "extract", "-threshold", "50%", ")",
         "(", front, "-alpha", "extract", "-threshold", "50%", ")",
         "-compose", "multiply", "-composite", "-format", "%[fx:mean]", "info:"))
-    visible = 1.0 if a_read == 0 else 1.0 - both / a_read
+    visible = 1.0 - both / a_read
     fb, rb = bbox(front), bbox(read)
     mx, my = 0.02 * w, 0.02 * h
     in_frame = rb["x"] >= mx and rb["y"] >= my and rb["x"] + rb["w"] <= w - mx and rb["y"] + rb["h"] <= h - my

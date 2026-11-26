@@ -2,7 +2,7 @@
 """glb_material.py: read and change a GLB's materials before After Effects imports it.
 
 After Effects 27.0 refuses Roughness and Metallic on a model layer by script ("hidden"); the importer reads the
-glTF factors and textures, so edit them in the file. The source is never overwritten: the result goes to a new path.
+glTF factors and textures, so edit them in the file. The result goes to a new path: an existing file is never overwritten.
 
   python3 glb_material.py list model.glb [--brand Fabric_Coral=#E0452C]
   python3 glb_material.py set model.glb model_v002.glb --material Rubber_Cream --roughness 0.25
@@ -17,6 +17,8 @@ It also gives the per-channel scale from the model to the brand, the luminance r
 
 tint: scales the base color per channel in linear light so its mean equals the brand color. A texture keeps its
 pattern (each pixel gets the same per-channel scale); a material without texture gets a new factor.
+A texture another material also uses is copied first, so only the named material changes (set and
+linear-store too).
 
 set --normal-flatten K: rewrites the normal texture with its tilt scaled by K (0..1), so a weave keeps its pattern
 with less depth. Use it when a back light lights the camera-facing side through a strong normal map.
@@ -68,13 +70,16 @@ def write_glb(path, doc, binary):
         js = json.dumps(doc, separators=(",", ":")).encode("utf-8")
         js += b" " * ((4 - len(js) % 4) % 4)
     total = 12 + 8 + len(js) + (8 + len(binary) if binary else 0)
-    with open(path, "wb") as f:
-        f.write(struct.pack("<4sII", b"glTF", 2, total))
-        f.write(struct.pack("<II", len(js), 0x4E4F534A))
-        f.write(js)
-        if binary:
-            f.write(struct.pack("<II", len(binary), 0x004E4942))
-            f.write(binary)
+    try:
+        with open(path, "xb") as f:
+            f.write(struct.pack("<4sII", b"glTF", 2, total))
+            f.write(struct.pack("<II", len(js), 0x4E4F534A))
+            f.write(js)
+            if binary:
+                f.write(struct.pack("<II", len(binary), 0x004E4942))
+                f.write(binary)
+    except FileExistsError:
+        sys.exit("%s exists: write to a new file (model_v002.glb), the tool never overwrites one" % path)
 
 
 # ---------- PNG, 8 bit, standard library ----------
@@ -161,6 +166,39 @@ def image_bytes(doc, binary, tex_index):
     return img, binary[off:off + bv["byteLength"]]
 
 
+def texture_slots(node):
+    """Every texture reference ({"index": n, ...} under a key ending in Texture) in a material, extensions included."""
+    out = []
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k.endswith("Texture") and isinstance(v, dict) and "index" in v:
+                out.append(v)
+            else:
+                out.extend(texture_slots(v))
+    elif isinstance(node, list):
+        for v in node:
+            out.extend(texture_slots(v))
+    return out
+
+
+def own_texture(doc, slots):
+    """slots: texture references that all name one texture and take the same edit. Returns the texture index to edit.
+    When anything else uses that texture or its image, the slots move to a copy of both, so the others keep the original."""
+    t = slots[0]["index"]
+    users = [r for m in doc.get("materials", []) for r in texture_slots(m) if r["index"] == t]
+    src = doc["textures"][t]["source"]
+    shared_image = sum(1 for tx in doc["textures"] if tx.get("source") == src) > 1
+    if not shared_image and all(any(u is s for s in slots) for u in users):
+        return t
+    doc["images"].append(dict(doc["images"][src]))
+    tex = dict(doc["textures"][t])
+    tex["source"] = len(doc["images"]) - 1
+    doc["textures"].append(tex)
+    for s in slots:
+        s["index"] = len(doc["textures"]) - 1
+    return s["index"]
+
+
 def replace_image(doc, binary, tex_index, new_bytes):
     """Append the new image at the end of the buffer and point the image at a new bufferView."""
     img = doc["images"][doc["textures"][tex_index]["source"]]
@@ -189,6 +227,14 @@ def map_texture(doc, binary, tex_index, fn):
     """fn(list of 3 channel byte tables) -> rewrite texture through per-channel 256-entry tables."""
     _img, data = image_bytes(doc, binary, tex_index)
     w, h, ch, px = png_decode(data)
+    if ch < 3:
+        # gray (and gray with alpha) becomes RGB(A): the tables are per channel, and alpha must stay out of them
+        rgb = bytearray(w * h * (ch + 2))
+        for k in range(3):
+            rgb[k::ch + 2] = px[0::ch]
+        if ch == 2:
+            rgb[3::4] = px[1::2]
+        px, ch = rgb, ch + 2
     tables = fn()
     out = bytearray(px)
     for k in range(min(3, ch)):
@@ -307,29 +353,31 @@ def main():
             sc = [br[i] / mb[i] if mb[i] > 0 else 1.0 for i in range(3)]
             p = m.setdefault("pbrMetallicRoughness", {})
             if "baseColorTexture" in p:
-                binary = map_texture(doc, binary, p["baseColorTexture"]["index"],
+                binary = map_texture(doc, binary, own_texture(doc, [p["baseColorTexture"]]),
                                      lambda sc=sc: [[int(round(255 * l2s(DEC[v] * sc[k]))) for v in range(256)] for k in range(3)])
             else:
                 f = p.get("baseColorFactor", [1, 1, 1, 1])
                 p["baseColorFactor"] = [min(1.0, f[i] * sc[i]) for i in range(3)] + [f[3] if len(f) > 3 else 1]
             changed.append({"name": m["name"], "scale": [round(v, 3) for v in sc], "after": describe(doc, binary, m, brands)})
     elif a.cmd == "linear-store":
-        done = set()
+        groups = {}
         for m in mats:
             p = m.setdefault("pbrMetallicRoughness", {})
             if "baseColorFactor" in p:
                 f = p["baseColorFactor"]
                 p["baseColorFactor"] = [s2l(f[i]) for i in range(3)] + [f[3] if len(f) > 3 else 1]
-            if "baseColorTexture" in p and p["baseColorTexture"]["index"] not in done:
-                done.add(p["baseColorTexture"]["index"])
-                binary = map_texture(doc, binary, p["baseColorTexture"]["index"],
-                                     lambda: [[int(round(255 * DEC[v])) for v in range(256)] for _k in range(3)])
+            if "baseColorTexture" in p:
+                groups.setdefault(p["baseColorTexture"]["index"], []).append(p["baseColorTexture"])
             changed.append(m.get("name"))
+        for slots in groups.values():
+            binary = map_texture(doc, binary, own_texture(doc, slots),
+                                 lambda: [[int(round(255 * DEC[v])) for v in range(256)] for _k in range(3)])
     else:
         names = set(a.material)
         missing = names - set(m.get("name") for m in mats)
         if missing:
             sys.exit("no material named: %s" % ", ".join(sorted(missing)))
+        normals = {}
         for m in mats:
             if not a.all and m.get("name") not in names:
                 continue
@@ -341,9 +389,11 @@ def main():
             if a.metallic is not None:
                 p["metallicFactor"] = max(0.0, min(1.0, a.metallic))
             if a.normal_flatten is not None and "normalTexture" in m:
-                k = max(0.0, min(1.0, a.normal_flatten))
-                binary = flatten_normal(doc, binary, m["normalTexture"]["index"], k)
+                normals.setdefault(m["normalTexture"]["index"], []).append(m["normalTexture"])
             changed.append(m.get("name"))
+        for slots in normals.values():
+            k = max(0.0, min(1.0, a.normal_flatten))
+            binary = flatten_normal(doc, binary, own_texture(doc, slots), k)
     write_glb(a.dst, doc, binary)
     print(json.dumps({"written": a.dst, "changed": changed}, indent=1))
 
@@ -351,6 +401,8 @@ def main():
 def flatten_normal(doc, binary, tex_index, k):
     _img, data = image_bytes(doc, binary, tex_index)
     w, h, ch, px = png_decode(data)
+    if ch < 3:
+        sys.exit("normal texture %d is gray: a normal map needs RGB" % tex_index)
     out = bytearray(px)
     for i in range(0, len(px), ch):
         x = (px[i] / 127.5 - 1) * k

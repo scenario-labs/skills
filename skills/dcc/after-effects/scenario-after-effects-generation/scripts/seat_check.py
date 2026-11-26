@@ -21,11 +21,13 @@ Exit code 1 when the warmth check fails.
 --contact reads two mattes of one frame written by AEX.threeD.mattes (the object alone, its shadow layers alone, comma-separated and combined). In every
 column where the object rests (middle 80 % of its width, lowest row within 5 % of its height of the lowest) it measures the gap in px between the object's lowest matte row and the
 shadow's first row (alpha over half the shadow's own peak), and gates on the worst column: above --max-gap (default 2)
-the object floats there. Run it on the first and the last frame of the move. Needs ImageMagick 7 (`magick`) and Python 3 standard library only.
+the object floats there. Shadow must sit below 90 % of the resting columns or more; mattes of different sizes fail. Run it on the first and the last frame of the move. Needs ImageMagick 7 (`magick`) and Python 3 standard library only.
 """
 import json
 import subprocess
 import sys
+
+COVERAGE = 0.9   # share of resting columns that need shadow below them, as in integration_check.py
 
 
 def magick(*args):
@@ -67,35 +69,52 @@ def alpha_rows(path):
 def contact(obj, shadow, max_gap):
     """Per column across the middle 80 % of the object's width: the object's lowest matte row (alpha over 50 %) and the
     shadow's first row below it (alpha over half the shadow's peak). Columns whose lowest row sits within 5 % of the object's
-    height of its lowest row count: where it rests (a strap, a handle or a rounded end above the floor is left out). The gate is the worst column."""
+    height of its lowest row count: where it rests (a strap, a handle or a rounded end above the floor is left out). The
+    resting columns come from the object matte alone. A resting column with no shadow below it has no contact: the gate
+    needs shadow under 90 % of them or more, and the worst gap among those within --max-gap."""
     w, h, oa = alpha_rows(obj)
     sa = None
     for part in shadow.split(","):          # cast and contact shadow mattes, combined by their maximum
-        _, _, a = alpha_rows(part)
+        pw, ph, a = alpha_rows(part)
+        if (pw, ph) != (w, h):
+            return fail("shadow matte %s is %dx%d, the object matte %dx%d" % (part, pw, ph, w, h))
         sa = a if sa is None else bytes(max(p, q) for p, q in zip(sa, a))
-    peak = max(sa) or 1
+    peak = max(sa)
+    if peak == 0:
+        return fail("the shadow mattes are empty")
     cols = [x for x in range(w) if any(oa[y * w + x] > 127 for y in range(0, h, 2))]
+    if not cols:
+        return fail("the object matte is empty")
     x0, x1 = cols[0], cols[-1]
     m = (x1 - x0) // 10
-    gaps, lows = [], []
+    lows = {}
     for x in range(x0 + m, x1 - m + 1, 4):
         ys = [y for y in range(h) if oa[y * w + x] > 127]
-        if not ys:
-            continue
-        low = ys[-1]
-        sy = next((y for y in range(low - 3, h) if sa[y * w + x] > peak / 2), None)
-        if sy is None:
-            continue
-        gaps.append(sy - low)
-        lows.append(low)
-    top = min(y for y in range(0, h) if any(oa[y * w + x] > 127 for x in range(x0, x1 + 1, 4)))
-    keep = [g for g, lo in zip(gaps, lows) if lo >= max(lows) - 0.05 * (max(lows) - top)]   # where it rests: not a strap, not a rounded end
-    gaps = keep
-    out = {"objectBottom": max(lows), "columns": len(gaps), "gapMax": max(gaps), "gapMedian": sorted(gaps)[len(gaps) // 2],
-           "shadowPeak": round(peak / 255.0, 3)}
-    out["pass"] = out["gapMax"] <= max_gap
+        if ys:
+            lows[x] = ys[-1]
+    if not lows:
+        return fail("no object column to sample")
+    top = min(y for y in range(h) if any(oa[y * w + x] > 127 for x in range(x0, x1 + 1, 4)))
+    bottom = max(lows.values())
+    resting = [x for x in sorted(lows) if lows[x] >= bottom - 0.05 * (bottom - top)]
+    gaps = []
+    for x in resting:
+        low = lows[x]
+        sy = next((y for y in range(max(low - 3, 0), h) if sa[y * w + x] > peak / 2), None)
+        if sy is not None:
+            gaps.append(sy - low)
+    cover = len(gaps) / float(len(resting))
+    out = {"objectBottom": bottom, "restingColumns": len(resting), "columns": len(gaps), "coverage": round(cover, 3),
+           "coverageLimit": COVERAGE, "gapMax": max(gaps) if gaps else None,
+           "gapMedian": sorted(gaps)[len(gaps) // 2] if gaps else None, "shadowPeak": round(peak / 255.0, 3)}
+    out["pass"] = bool(gaps) and out["gapMax"] <= max_gap and cover >= COVERAGE
     print(json.dumps(out))
     return 0 if out["pass"] else 1
+
+
+def fail(reason):
+    print(json.dumps({"pass": False, "error": reason}))
+    return 1
 
 
 def main(argv):

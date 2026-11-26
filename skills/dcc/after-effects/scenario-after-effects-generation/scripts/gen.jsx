@@ -77,15 +77,22 @@ AEX.gen = (function () {
         }
         return out;
     }
+    // Punctuation and spaces in ASCII, Latin-1, General Punctuation, Arabic, Hebrew, Devanagari, CJK and fullwidth forms.
+    // ExtendScript regular expressions have no Unicode property escapes, so the ranges are explicit.
+    var PUNCT_ONLY = new RegExp("^[\\s\\x21-\\x2F\\x3A-\\x40\\x5B-\\x60\\x7B-\\x7E\\u00A1-\\u00A9\\u00AB-\\u00B1\\u00B4\\u00B6-\\u00B8" +
+        "\\u00BB\\u00BF\\u00D7\\u00F7\\u055A-\\u055F\\u0589\\u05BE\\u05C0\\u05C3\\u05C6\\u05F3\\u05F4\\u060C\\u061B\\u061F" +
+        "\\u066A-\\u066D\\u06D4\\u0964\\u0965\\u2000-\\u206F\\u2E00-\\u2E7F\\u3000-\\u303F\\u30FB\\uFE10-\\uFE1F\\uFE30-\\uFE4F" +
+        "\\uFF01-\\uFF0F\\uFF1A-\\uFF20\\uFF3B-\\uFF40\\uFF5B-\\uFF65]*$");
     // wordMarkers(layer, sentences, {offset seconds, skipPunct}): one layer marker per word, duration = word length.
     // sentences: [{text, words:[{word, startTime, endTime}]}] in seconds, as the speech model returns them.
+    // skipPunct (default on) drops a word made only of punctuation and spaces; words in any script stay.
     function wordMarkers(l, sentences, o) {
         o = o || {};
         var mk = l.property("ADBE Marker"), n = 0, i, j, w, m, off = o.offset || 0;
         for (i = 0; i < sentences.length; i++) {
             for (j = 0; j < sentences[i].words.length; j++) {
                 w = sentences[i].words[j];
-                if (o.skipPunct !== false && !/[A-Za-z0-9]/.test(w.word)) { continue; }
+                if (o.skipPunct !== false && PUNCT_ONLY.test(String(w.word))) { continue; }
                 m = new MarkerValue(w.word); m.duration = Math.max(0, w.endTime - w.startTime);
                 mk.setValueAtTime(l.startTime + off + w.startTime, m); n++;
             }

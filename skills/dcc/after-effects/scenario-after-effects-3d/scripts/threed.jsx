@@ -215,28 +215,37 @@ AEX.threeD = (function () {
         var co = cam.property("ADBE Camera Options Group"), aim;
         co.property("ADBE Camera Depth of Field").setValue(1);
         if (o.aperture) { co.property("ADBE Camera Aperture").setValue(o.aperture); }
-        if (o.areaWidth) { try { co.property("ADBE Camera Focus Area Width").setValue(o.areaWidth); } catch (e) {} }
+        if (o.areaWidth !== undefined) { try { co.property("ADBE Camera Focus Area Width").setValue(o.areaWidth); } catch (e) {} }
         aim = o.base ? "t.anchorPoint" : "[t.anchorPoint[0], r.top + r.height / 2, 0]";
-        var ex = "var t = thisComp.layer(\"" + layerName + "\");\nvar r = t.sourceRectAtTime(time, false);\nvar d = length(toWorld([0, 0, 0]), t.toWorld(" + aim + "));";
+        var ex = "var t = thisComp.layer(\"" + esc(layerName) + "\");\nvar r = t.sourceRectAtTime(time, false);\nvar d = length(toWorld([0, 0, 0]), t.toWorld(" + aim + "));";
         // rack: {layer, from, to, amount}: between from and to (s), Focus Distance eases toward the anchor of a second layer by amount (0 to 1)
         if (o.rack) {
-            ex += "\nvar u = thisComp.layer(\"" + o.rack.layer + "\");\nvar d2 = length(toWorld([0, 0, 0]), u.toWorld(u.anchorPoint));" +
+            ex += "\nvar u = thisComp.layer(\"" + esc(o.rack.layer) + "\");\nvar d2 = length(toWorld([0, 0, 0]), u.toWorld(u.anchorPoint));" +
                 "\nd + (d2 - d) * ease(time, " + o.rack.from + ", " + o.rack.to + ", 0, " + (o.rack.amount === undefined ? 1 : o.rack.amount) + ");";
         } else { ex += "\nd;"; }
         return AEK.expr.set(co.property("ADBE Camera Focus Distance"), ex, [0]);
     }
-    // screenRect(comp, layer, t): where a 3D layer lands in the frame (camera projection included), through a temporary probe null
+    // screenRect(comp, layer, t): where a 3D layer lands in the frame (camera projection included), through a temporary probe null.
+    // All four corners are projected: two opposite corners give no box once the layer is rotated.
     function screenRect(c, l, t) {
-        var probe = AEK.build.nullLayer(c, "__probe"), fx = probe.property("ADBE Effect Parade");
-        fx.addProperty("ADBE Point Control"); fx.addProperty("ADBE Point Control");
-        var a = probe.property("ADBE Effect Parade").property(1).property(1), b = probe.property("ADBE Effect Parade").property(2).property(1);
+        var probe = AEK.build.nullLayer(c, "__probe"), fx = probe.property("ADBE Effect Parade"), i, v, err = "";
+        var corners = ["[0, 0, 0]", "[L.width, 0, 0]", "[0, L.height, 0]", "[L.width, L.height, 0]"], pts = [];
+        for (i = 0; i < 4; i++) { fx.addProperty("ADBE Point Control"); }
         var ref = "thisComp.layer(\"" + esc(l.name) + "\")";
-        a.expression = "var L = " + ref + "; L.toComp([0, 0, 0]);";
-        b.expression = "var L = " + ref + "; L.toComp([L.width, L.height, 0]);";
-        var p = a.valueAtTime(t || 0, false), q = b.valueAtTime(t || 0, false), err = a.expressionError;
+        for (i = 0; i < 4; i++) {
+            v = probe.property("ADBE Effect Parade").property(i + 1).property(1);
+            v.expression = "var L = " + ref + "; L.toComp(" + corners[i] + ");";
+            pts.push(v.valueAtTime(t || 0, false));
+            if (v.expressionError) { err = v.expressionError; }
+        }
         probe.remove();
         if (err) { throw new Error(err); }
-        return { left: p[0], top: p[1], right: q[0], bottom: q[1], width: q[0] - p[0], height: q[1] - p[1] };
+        var x0 = pts[0][0], x1 = pts[0][0], y0 = pts[0][1], y1 = pts[0][1];
+        for (i = 1; i < 4; i++) {
+            x0 = Math.min(x0, pts[i][0]); x1 = Math.max(x1, pts[i][0]);
+            y0 = Math.min(y0, pts[i][1]); y1 = Math.max(y1, pts[i][1]);
+        }
+        return { left: x0, top: y0, right: x1, bottom: y1, width: x1 - x0, height: y1 - y0 };
     }
     // parallaxScale(baseScale, z, zoom, overscan): scale that keeps a layer's framed size after moving it to depth z,
     // for a camera at z = -zoom looking down +z. overscan 1.1 leaves 10 % margin for the camera move.
@@ -259,7 +268,7 @@ AEX.threeD = (function () {
         var A = co.property("ADBE Camera Aperture").valueAtTime(t || 0, false), Z = co.property("ADBE Camera Zoom").valueAtTime(t || 0, false);
         return { distance: d, focus: s, aperture: A, zoom: Z, blurPx: A * Z * Math.abs(d - s) / (d * s) };
     }
-    // mattes(comp, names, times, dir, prefix): one PNG per named layer and time with only that layer drawn (cameras and lights stay on),
+    // mattes(comp, names, times, dir, prefix): one PNG per named layer and time with only that layer drawn (cameras and lights keep their flag),
     // written as <prefix>_<name>_<frame>.png. Their alpha is the layer's on-screen matte: compare two of them to measure what hides what.
     // Every layer's enabled flag is restored afterwards. Names with spaces are written with underscores.
     function mattes(c, names, times, dir, prefix) {
@@ -269,8 +278,8 @@ AEX.threeD = (function () {
             for (k = 0; k < names.length; k++) {
                 for (i = 1; i <= c.numLayers; i++) {
                     l = c.layer(i);
-                    on = (l instanceof CameraLayer) || (l instanceof LightLayer) || l.name === names[k];
-                    if (l instanceof LightLayer && l.lightType === LightType.ENVIRONMENT) { on = keep[i - 1]; }
+                    // a disabled camera turned on above the active one would take over the view
+                    on = ((l instanceof CameraLayer) || (l instanceof LightLayer)) ? keep[i - 1] : l.name === names[k];
                     if (l.enabled !== on) { l.enabled = on; }
                 }
                 for (j = 0; j < times.length; j++) {

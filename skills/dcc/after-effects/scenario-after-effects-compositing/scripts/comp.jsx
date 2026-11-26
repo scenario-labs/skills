@@ -68,7 +68,7 @@ AEX.comp = (function () {
     function sampleColor(c, l, center, half, t) {
         var n = c.layers.addNull(c.duration), cc, v, keep = c.time, zero;
         n.name = "AEX_sample_tmp";
-        cc = n.property("ADBE Effect Parade").addProperty("ADBE Color Control");
+        n.property("ADBE Effect Parade").addProperty("ADBE Color Control");
         cc = n.property("ADBE Effect Parade").property(1).property(1);
         cc.expression = "thisComp.layer(" + l.index + ").sampleImage([" + center[0] + "," + center[1] + "],[" + half[0] + "," + half[1] + "],true,time)";
         c.time = t;

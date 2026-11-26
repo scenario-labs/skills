@@ -7,7 +7,7 @@ sun's azimuth, and blends up to a zenith color. The ground below is the plate's 
 shadowed ground (near the nadir and away from the sun). The zenith color is solved so the map's light on an
 up-facing floor has the hue of --sky-target. That target is the uniform sky solved on the plate's shadowed ground.
 
-  python3 env_from_plate.py plate.png env.png --focal 50 --tilt 6.5 --sun -17,4 \
+  python3 env_from_plate.py plate.png env.png --focal 50 --tilt 6.5 --sun=-17,4 \
       --lit 0.316,0.205,0.147 --shadow 0.147,0.134,0.133 --sky-target 0.234,0.214,0.212
 
 Orientation, measured on After Effects 27.0 with a model under probe maps: the top of the map is up; u = 0.75 looks
@@ -17,6 +17,7 @@ sRGB-encoded and normalized to its peak; the peak is printed. numpy and Pillow.
 """
 import argparse
 import json
+import sys
 
 import numpy as np
 from PIL import Image
@@ -52,7 +53,13 @@ def main():
     ap.add_argument("--far-deg", type=float, default=30.0, help="angle over which the horizon falls to that value")
     ap.add_argument("--zenith-margin", type=float, default=1.25, help="above 1: the zenith keeps some of every channel")
     ap.add_argument("--ground-gain", type=float, default=0.557, help="ground radiance over the plate ground value, in the sky's units")
-    a = ap.parse_args()
+    # "--sun -17,4" as two arguments: argparse on Python 3.12 reads a value starting with a minus sign as a flag
+    argv = sys.argv[1:]
+    for i in range(len(argv) - 1):
+        if argv[i] == "--sun":
+            argv[i:i + 2] = ["--sun=" + argv[i + 1]]
+            break
+    a = ap.parse_args(argv)
 
     with Image.open(a.plate) as im:
         plate = s2l(np.asarray(im.convert("RGB")).astype(np.float64) / 255.0)
@@ -120,10 +127,13 @@ def main():
     cosw = np.clip(np.sin(EL), 0, None) * np.cos(EL)
     wsum = cosw.sum()
     E0 = (build(np.zeros(3)) * cosw[..., None]).sum((0, 1)) / wsum
-    F = (k * cosw).sum() / wsum
+    # the zenith reaches only the sky the plate does not show, with weight 1 - k (build above)
+    C = (np.where(seen, 0.0, 1 - k) * cosw).sum() / wsum
+    if C < 1e-6:
+        sys.exit("the plate shows the whole upper sky: no zenith to solve")
     zen_dir = tgt / tgt.max()
     s = max((E0 / zen_dir).max() * a.zenith_margin, 1e-6)
-    zen = (s * zen_dir - E0) / (1 - F)
+    zen = (s * zen_dir - E0) / C
     zen = np.clip(zen, 0, None)
     up = build(zen)
     E = (up * cosw[..., None]).sum((0, 1)) / wsum

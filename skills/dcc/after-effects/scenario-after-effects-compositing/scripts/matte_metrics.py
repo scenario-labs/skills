@@ -120,21 +120,33 @@ def load_rgba(p):
     return np.asarray(Image.open(p).convert("RGBA"), np.float32) / 255.0
 
 
+def window(a, r, step=1, fill=0):
+    """Every shift of a within a (2r+1) square, sampled every step px. Pixels past the frame edge read fill; nothing
+    wraps to the opposite edge."""
+    h, w = a.shape
+    p = np.pad(a, r, mode="constant", constant_values=fill)
+    for dy in range(-r, r + 1, step):
+        for dx in range(-r, r + 1, step):
+            yield p[r + dy:r + dy + h, r + dx:r + dx + w]
+
+
 def shift_or(m, r):
-    """Binary dilation by a (2r+1) square (numpy only)."""
+    """Binary dilation by a (2r+1) square (numpy only). Outside the frame is empty: it grows nothing."""
     out = m.copy()
-    for dy in range(-r, r + 1):
-        for dx in range(-r, r + 1):
-            out |= np.roll(np.roll(m, dy, 0), dx, 1)
+    for s in window(m, r, fill=False):
+        out |= s
     return out
 
 
 def erode(m, r):
+    """Binary erosion by a (2r+1) square. Outside the frame counts as inside the mask: a subject cut by the frame
+    edge keeps its pixels there, since the frame edge is not its outline."""
     return ~shift_or(~m, r)
 
 
 def depth_in(m, rmax):
-    """Distance in px (square metric) from the outside of mask m, capped at rmax."""
+    """Distance in px (square metric) from the outside of mask m, capped at rmax. The frame edge is not an outline
+    (erode())."""
     d = np.zeros(m.shape, np.int32)
     cur = m.copy()
     for k in range(1, rmax + 1):
@@ -167,13 +179,13 @@ def hue_gap(a, b):
 
 
 def local_mean(v, m, k):
-    """Mean of v over mask m in a (2k+1) window around each pixel (nan where m is empty), sampled every 2 px."""
-    num = np.zeros_like(v); den = np.zeros_like(v)
+    """Mean of v over mask m in a (2k+1) window around each pixel (nan where m is empty), sampled every 2 px. Pixels
+    past the frame edge are outside m: the mean is over the part of the window inside the frame."""
+    num = np.zeros(v.shape, np.float32); den = np.zeros(v.shape, np.float32)
     vm = np.where(m, v, 0).astype(np.float32); mm = m.astype(np.float32)
-    for dy in range(-k, k + 1, 2):
-        for dx in range(-k, k + 1, 2):
-            num += np.roll(np.roll(vm, dy, 0), dx, 1)
-            den += np.roll(np.roll(mm, dy, 0), dx, 1)
+    for sv, sm in zip(window(vm, k, 2), window(mm, k, 2)):
+        num += sv
+        den += sm
     return np.where(den > 0, num / np.maximum(den, 1), np.nan)
 
 
@@ -187,6 +199,8 @@ def cmd_light(a):
     rgb = f[..., :3]
     bg = load(a.bg)
     S = al > 0.9
+    if not S.any():
+        return {"error": "no subject pixel with alpha over 0.9"}
     ys, xs = np.nonzero(S)
     cx, cy = xs.mean(), ys.mean()
     rad = np.sqrt(S.sum() / np.pi)
@@ -246,8 +260,9 @@ def cmd_light(a):
         "rim_rgb": [round(float(v), 3) for v in rim_rgb] if rim_rgb is not None else None,
         "rim_hue_vs_source_deg": hue_gap(hue_deg(list(rim_rgb)), hue_deg(list(src_rgb))) if rim_rgb is not None else None,
         "subject_luma_p1_p99": [round(float(np.percentile(L[S], q)), 3) for q in (1, 99)],
-        "plate_luma_p1_p99": [round(float(np.percentile(BL[BL < thr], q)), 3) for q in (1, 99)],
-        "plate_near_luma_p1_p99": [round(float(np.percentile(BL[diffuse], q)), 3) for q in (1, 99)],
+        # None when the plate, or the subject's surroundings, hold only source pixels
+        "plate_luma_p1_p99": [round(float(np.percentile(BL[BL < thr], q)), 3) for q in (1, 99)] if (BL < thr).any() else None,
+        "plate_near_luma_p1_p99": [round(float(np.percentile(BL[diffuse], q)), 3) for q in (1, 99)] if diffuse.any() else None,
     }
     return out
 
@@ -265,13 +280,7 @@ def cmd_rim(a):
     Lb = B @ LUMA
     Ls = np.where(S, Lb, 0)
     # inner reference per edge pixel: mean of the inner band in a local window
-    k = a.inner + 3
-    num = np.zeros_like(Lb); den = np.zeros_like(Lb)
-    for dy in range(-k, k + 1, 2):
-        for dx in range(-k, k + 1, 2):
-            num += np.roll(np.roll(np.where(inner, Ls, 0), dy, 0), dx, 1)
-            den += np.roll(np.roll(inner.astype(np.float32), dy, 0), dx, 1)
-    ref = np.where(den > 0, num / np.maximum(den, 1), np.nan)
+    ref = local_mean(Ls, inner, a.inner + 3)
     sel = edge & ~np.isnan(ref) & (ref > 0.02)
     ratio = (Lb[sel] / al[sel]) / ref[sel]
     if not sel.any():
@@ -293,8 +302,9 @@ def cmd_holes(a):
 
 
 def cmd_wrapbins(a):
-    """Light wrap by background brightness: mean change (0-255) between renders with and without the wrap, on the
-    subject (alpha view above 0.5), binned by the background's luma blurred 9 px."""
+    """Light wrap by background brightness: mean change (0-255) between renders with and without the wrap, over the
+    subject pixels the wrap changed (alpha view above 0.5, change over 0.01), binned by the background's luma blurred
+    9 px. The wrap lights a band at the edge: unchanged core pixels would scale each bin by its share of edge."""
     on, off, bg = load(a.on), load(a.off), load(a.bg)
     m = load(a.alpha)[..., 0] > 0.5
     d = np.abs(on - off).mean(2) * 255

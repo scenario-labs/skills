@@ -490,8 +490,8 @@ Matching route:
 var A = ARGS, c = AEK.core.comp(A.comp), fg = AEK.core.layer(c, A.fg), bg = AEK.core.layer(c, A.bg);
 var w = AEX.comp.lightWrap(c, fg, bg, { radiusPct: A.radiusPct || 1.5, opacity: A.opacity || 40, mode: "add" });
 // Add Grain: Viewing Mode 3 = Final Output; the default (Preview) grains only a box and renders its outline
-var gi = AEK.build.effect(bg, "VISINF Grain Implant", { "VISINF Grain Implant-0021": 3 }, "match grain_v001").propertyIndex;
-var fx = bg.property("ADBE Effect Parade").property(gi), k = ["0002", "0003", "0004"], set = [], i;
+var gi = AEK.build.effect(fg, "VISINF Grain Implant", { "VISINF Grain Implant-0021": 3 }, "match grain_v001").propertyIndex;
+var fx = fg.property("ADBE Effect Parade").property(gi), k = ["0002", "0003", "0004"], set = [], i;
 for (i = 0; i < 3; i++) {
     // per-channel intensity scales grain linearly: target / grain measured at intensity 1
     set.push(A.plateGrain[i] / A.grainAt1[i]);
@@ -507,12 +507,12 @@ tone (measured here 0.0080, 0.0088, 0.0098). Add Grain is tone dependent: with t
 dark desk (0.12) got 0.0227 in red, 40 % more, and the bright window (0.93) about 0.0017. Calibrate
 on the tone the subject sits against, then read shadows and highlights too. Wrap:
 `matte_metrics.py wrapbins wrap_on.png wrap_off.png plate.png alpha.png` bins the mean change on the
-subject by blurred background luma (0 to 0.25, to 0.5, to 0.75, to 1). An Add wrap over a dark but
-not black background is never 0: pass when the darkest bin is under half the brightest and nothing
-changes outside the subject. Measured at 1.0 % and 22 %: 1.64, 2.54, 3.10, 5.37 levels. Alternative
-grain: Match Grain, `VISINF Grain Duplication`, `-0013` = the plate's layer index (the plate may
-stay hidden), `-0002` Viewing Mode 5 (Final Output); measured within 3 to 5 %; mode 3 added no
-grain.
+subject pixels it changed by blurred background luma (0 to 0.25, to 0.5, to 0.75, to 1). An Add wrap
+over a dark but not black background is never 0: pass when the darkest bin is under half the
+brightest and nothing changes outside the subject. Measured at 1.0 % and 22 %: 1.64, 2.54, 3.10,
+5.37 levels. Alternative grain: Match Grain, `VISINF Grain Duplication`, `-0013` = the plate's layer
+index (the plate may stay hidden), `-0002` Viewing Mode 5 (Final Output); measured within 3 to 5 %;
+mode 3 added no grain.
 
 ## 8. Cutout with no screen
 

@@ -67,7 +67,8 @@ Gates (value, limit, pass; values 0-1 unless stated)
             gives a lower bound: it passes when the bound reaches 70 % of the expected length, or when the expected
             tip lies outside the frame and the shadow reaches the frame edge.
   softness  edge width of the cast shadow in its far third over its near third. Pass: >= 1.3.
-  contact   worst gap in px between a resting column's lowest row and the shadow (pass <= 2), and darkening beyond the
+  contact   worst gap in px between a resting column's lowest row and the shadow (pass <= 2), the share of resting
+            columns with shadow below them (pass >= 0.9; a column with none has no contact), and darkening beyond the
             resting footprint on the side the shadow does not fall, over the element width (pass <= 0.04).
   material  in linear light, the light on the shade third (composite / neutral, per channel) for each material
             (five chroma clusters of the neutral, 2 % of the third or more). One light gives one value for every
@@ -105,6 +106,9 @@ photograph's lit side has to become its shade side, the hard case for a relight 
 is then "plate": prefer a plate lit from the foreground's side, and relight in full when the plate is imposed. Otherwise
 "relight". A reading, never a gate.
 
+--only takes gate names only; light, shade and rim are read together. An unknown or empty name exits 2 without running a
+gate. A selected gate that cannot measure (missing input, matte core under 20 px) is skipped, never passed.
+
 Prints one JSON object. Exit 0: every gate run passed. Exit 1: a gate failed. Exit 2: no gate failed but some were
 skipped for a missing input (listed in "skipped").
 """
@@ -123,7 +127,10 @@ PLATE_ANGLE = {"front": 45.0, "side": 90.0, "back": 135.0}   # bound of the plat
 ROUTE_GAP = 90.0
 LIMITS = {"lightAngle": 45.0, "lightStrength": 0.15, "shade": 0.75, "density": 0.10, "hue": 0.10,
           "lengthTol": 0.30, "softness": 1.3, "gap": 2.0, "overhang": 0.04, "black": 0.02, "edge": 0.8, "rim": 2.0, "rimWidth": 0.12, "rimHard": 0.15,
-          "material": 4.0, "backSector": 30.0, "faceOverEdge": 1.1, "sideOverSun": 1.3, "occFloor": 0.05, "darkAlbedo": 0.1, "clipShare": 0.005}
+          "material": 4.0, "backSector": 30.0, "faceOverEdge": 1.1, "sideOverSun": 1.3, "occFloor": 0.05, "darkAlbedo": 0.1, "clipShare": 0.005,
+          "contactCoverage": 0.9}
+GATES = ("light", "shade", "rim", "density", "hue", "length", "softness", "contact", "finish", "material")
+MIN_PX = 20   # fewest pixels a selection needs before a gate reads it
 
 
 def rgb(path):
@@ -314,13 +321,26 @@ def run(a):
     plate = rgb(a.plate) if a.plate else None
     elem = rgb(a.elem) if a.elem else None
     neutral = rgb(a.neutral) if a.neutral else None
-    only = set(a.only.split(",")) if a.only else None
+    only = None
+    if a.only is not None:
+        only = {v.strip() for v in a.only.split(",") if v.strip()}
+        unknown = sorted(only - set(GATES))
+        if not only or unknown:
+            res["error"] = "--only takes gate names from %s; got %s" % (",".join(GATES), ",".join(unknown) or "none")
+            res["verdict"] = "incomplete"
+            print(json.dumps(res))
+            return 2
     g = {}
     if m is None:
         res["error"] = "no matte: give --matte or an RGBA --elem"
         print(json.dumps(res))
         return 1
     mb = m > 0.5
+    if mb.sum() < MIN_PX:
+        res["error"] = "the matte holds fewer than %d px over 0.5: no element to measure" % MIN_PX
+        res["verdict"] = "incomplete"
+        print(json.dumps(res))
+        return 2
     ys, xs = np.nonzero(mb)
     cy, cx = ys.mean(), xs.mean()
     ext = max(ys.max() - ys.min(), xs.max() - xs.min()) + 1
@@ -350,6 +370,8 @@ def run(a):
     if only is None or only & {"light", "shade", "rim"}:
         if elem is None or neutral is None or d is None:
             g["light"] = g["shade"] = g["rim"] = skip("needs --elem, --neutral and a source (--sun or --plate)")
+        elif (core & (luma(neutral) > 0.03)).sum() < MIN_PX:
+            g["light"] = g["shade"] = g["rim"] = skip("the matte core (opaque, eroded) holds too few lit pixels to measure")
         else:
             le, ln = luma(elem), luma(neutral)
             ok = core & (ln > 0.03)
@@ -407,14 +429,20 @@ def run(a):
                     beyond = abs(sa)
                 dist = np.zeros(m.shape, np.float32)
                 cur, k9, step = op.copy(), 0, max(1, int(ext / 200))
+                stalled = False
                 while cur.any():
                     dist[cur] = k9
-                    cur = erode(cur, step)
+                    nxt = erode(cur, step)
+                    # erode() pads with the edge: a matte that fills the frame never shrinks
+                    if nxt.sum() == cur.sum():
+                        stalled = True
+                        break
+                    cur = nxt
                     k9 += step
                 inner = op & (dist >= 0.6 * dist.max()) & (ln > 0.03)
                 fe = band & (outn > 0.5)
                 face = (float(np.median(rat_all[inner]) / max(np.median(rat_all[fe]), 1e-4))
-                        if inner.sum() > 20 and fe.sum() > 20 else None)
+                        if inner.sum() > 20 and fe.sum() > 20 and not stalled else None)
                 # side: the edge on the far side over the edge on the source's side, read only for a source clearly left or right
                 ox = -mgx / (np.hypot(mgx, mgy) + 1e-9) * np.sign(d[0])
                 ss, os_ = band & (ox > 0.5), band & (ox < -0.5)
@@ -433,6 +461,8 @@ def run(a):
                                   note="back light: degrees beyond the sector from the source's screen direction to straight "
                                        "up; center over the edge facing the source; far-side edge over source-side edge; a rendered "
                                        "element may show no gradient")
+                if stalled:
+                    g["light"] = skip("the opaque matte fills the frame: no edge to read the center against")
                 if a.rendered:
                     g["shade"]["note"] = "rendered, back light: a reading (the sun reaches only the edge; both thirds sit in sky light)"
                     g["shade"]["pass"] = None
@@ -570,32 +600,40 @@ def run(a):
             g["contact"] = skip("needs a shadow (--shadow, or --plate to derive it)")
         else:
             sfull = np.clip(s / max(np.quantile(s[s > 0], 0.99), 1e-4), 0, 1)
-            gaps = []
-            for yb, x in fp[::2]:
+            gaps, sampled = [], fp[::2]
+            for yb, x in sampled:
                 yb, x = int(yb), int(x)
                 col = np.nonzero(sfull[max(yb - 3, 0):, x] > 0.5)[0]
                 if col.size:
                     gaps.append(col[0] - min(3, yb))
             gap = max(gaps) if gaps else None
+            # a resting column with no shadow below it has no contact: count it against the coverage
+            cover = len(gaps) / max(len(sampled), 1)
             near = (sn > 0.25) & dilate(np.zeros_like(mb) | _pts_mask(fp, H, W), max(4, int(0.12 * objh)))
             ny, nx = np.nonzero(near)
             back = -u
             over = ((nx * back[0] + ny * back[1]).max() - (fp[:, 1] * back[0] + fp[:, 0] * back[1]).max()) if nx.size else 0.0
             over = max(over, 0.0) / elem_w
-            ok = gap is not None and gap <= LIMITS["gap"] and over <= LIMITS["overhang"]
+            ok = (gap is not None and gap <= LIMITS["gap"] and over <= LIMITS["overhang"]
+                  and cover >= LIMITS["contactCoverage"])
             g["contact"] = gate(gap, LIMITS["gap"], ok, overhang=r3(over), overhangLimit=LIMITS["overhang"],
-                                columns=len(gaps), note="gap in px under resting columns; overhang beyond the footprint against the shadow direction, over element width")
+                                columns=len(gaps), restingColumns=len(sampled), coverage=r3(cover),
+                                coverageLimit=LIMITS["contactCoverage"],
+                                note="gap in px under resting columns; coverage: share of resting columns with shadow below; "
+                                     "overhang beyond the footprint against the shadow direction, over element width")
 
     # 8: blacks and edges
-    if only is None or "finish" in only:
+    rows = np.zeros_like(mb)
+    rows[top:bot + 1] = True
+    rows &= ~dilate(mb, 3)
+    if sn is not None:
+        rows &= ~(sn > 0.1)
+    if (only is None or "finish" in only) and (core.sum() < MIN_PX or rows.sum() < MIN_PX):
+        g["finish"] = skip("needs a matte core and plate pixels beside the element in its rows (%d px each)" % MIN_PX)
+    elif only is None or "finish" in only:
         ref = plate if plate is not None else comp
         lc = luma(comp)
         eblack = np.quantile(lc[core], 0.01)
-        rows = np.zeros_like(mb)
-        rows[top:bot + 1] = True
-        rows &= ~dilate(mb, 3)
-        if sn is not None:
-            rows &= ~(sn > 0.1)
         pblack = np.quantile(luma(ref)[rows], 0.002)
         # element edge: profiles across the matte boundary in the composite
         mbl = blur(m, 1)
@@ -663,7 +701,9 @@ def run(a):
                            edgesPass=bool(ok_e), edgeSamples=[len(ew), len(pw)], **extra)
 
     # 9: material (gate), exposure and shade color (readings), in linear light, on the composite inside the core
-    if (only is None or "material" in only) and neutral is not None:
+    if (only is None or "material" in only) and (neutral is None or core.sum() < MIN_PX):
+        g["material"] = skip("needs --neutral and a matte core of %d px or more" % MIN_PX)
+    elif only is None or "material" in only:
         cl, nl = srgb_lin(comp[core]), srgb_lin(neutral[core])
         yy9, xx9 = np.nonzero(core)
         if d is not None and a.light != "front":
@@ -720,6 +760,9 @@ def run(a):
         elif e_sh is not None:
             res["exposure"] = {"shadeLight": r3(e_sh), "note": "no ground box (--ground-shadow or --plate-shadow)"}
 
+    for k in (GATES if only is None else sorted(only)):
+        if k not in g:
+            g[k] = skip("selected but not measured")
     if a.no_shadow:
         for k in ("density", "hue", "length", "softness", "contact"):
             if k in g:

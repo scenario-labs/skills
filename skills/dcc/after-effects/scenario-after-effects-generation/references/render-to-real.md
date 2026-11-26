@@ -17,7 +17,9 @@ python3 scripts/finish_putback.py mask comp_f000.png elem_f000.png edit/ --dilat
 
 It writes `region.png` (the matte dilated and blurred), `guide.png` (padded at the right and bottom
 to a multiple of 16) and `mask.png` (the padded guide, alpha 0 over the region: transparent is
-edited).
+edited). Both steps refuse an output that is one of their inputs. They rewrite their own earlier
+outputs, and replace any other existing file only with `--replace`. An empty element or region
+writes nothing and exits 1.
 
 The dilation is a per-model test. The edit fills the region it is given, and the room around the
 outline is also where it draws contact and bounce. Measured on the terrace shot (the object about

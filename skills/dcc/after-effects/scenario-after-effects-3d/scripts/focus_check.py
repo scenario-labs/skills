@@ -10,7 +10,8 @@ SOFT.png   the same matte with Depth of Field on (as rendered)
 --height   the frame height the mattes were written at; the result is scaled to 1080 lines
 
 Finds the Gaussian sigma that turns the sharp matte into the soft one (least RMSE over the layer's box, padded),
-prints one JSON line: sigma in px, sigma at 1080 lines, the fit error, and pass. Exit code 1 over the limit.
+prints one JSON line: sigma in px, sigma at 1080 lines, the fit error, and pass. Exit code 1 over the limit,
+2 when the sharp matte holds no foreground (nothing to measure: the layer is off screen or the matte is wrong).
 Needs ImageMagick 7 (`magick`) on the PATH and the Python 3 standard library.
 """
 import json
@@ -41,6 +42,12 @@ def main(argv):
     limit = float(argv[argv.index("--limit") + 1]) if "--limit" in argv else 2.0
     height = float(argv[argv.index("--height") + 1]) if "--height" in argv else 1080.0
     w, h = (int(v) for v in magick(sharp, "-format", "%w %h", "info:").stdout.split())
+    fg = magick(sharp, "-alpha", "extract", "-threshold", "50%", "-format", "%[fx:maxima]", "info:").stdout.strip()
+    if float(fg) <= 0:
+        # an empty matte gives a fallback box, identical crops and a false pass at sigma 0
+        print(json.dumps({"sharp": sharp, "soft": soft, "pass": False, "limit": limit,
+                          "error": "no foreground in the sharp matte: the layer cannot be measured"}))
+        return 2
     geo = magick(sharp, "-alpha", "extract", "-threshold", "50%", "-format", "%@", "info:").stdout.strip()
     bw, bh = (int(v) for v in geo.split("+")[0].split("x"))
     bx, by = int(geo.split("+")[1]), int(geo.split("+")[2])

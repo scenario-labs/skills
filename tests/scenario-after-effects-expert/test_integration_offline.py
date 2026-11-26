@@ -445,7 +445,7 @@ class FinishPutback(Temp):
         guide = self.write("comp.png", comp)
         el = self.write("elem.png", elem, "RGBA")
         rc, res = call(["mask", str(guide), str(el), str(self.tmp / "t1"), "--threshold", "0.5"])
-        self.assertEqual((rc, res["elementPx"]), (0, 0))
+        self.assertEqual((rc, res["elementPx"]), (1, 0))
         rc, res = call(["mask", str(guide), str(el), str(self.tmp / "t2"), "--threshold", "0.2"])
         self.assertEqual(res["elementPx"], int(ell.sum()))
 
