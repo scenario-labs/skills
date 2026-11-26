@@ -55,7 +55,7 @@ AEK.motion = (function () {
     // settleFrame: first frame from which the value stays within 1 % of the travel from its end value. An eased move reaches
     // that band before its last key (a rise keyed to f40 read settleFrame 31): compare keys with keys, not with settleFrame.
     function sample(p, c, t0, t1) {
-        var fd = c.frameDuration, t, v, prev = null, d, sp, out = { frames: [], peakSpeed: 0, peakFrame: 0, overshoot: 0, settleFrame: null }, j;
+        var fd = c.frameDuration, t, v, prev = null, sp, out = { frames: [], peakSpeed: 0, peakFrame: 0, overshoot: 0, settleFrame: null }, j;
         var end = p.valueAtTime(t1, false), start = p.valueAtTime(t0, false), total = 0, dist, maxPast = 0;
         function len(a, b) { if (!(a instanceof Array)) { return Math.abs(a - b); } var s = 0; for (j = 0; j < a.length; j++) { s += (a[j] - b[j]) * (a[j] - b[j]); } return Math.sqrt(s); }
         total = len(start, end);

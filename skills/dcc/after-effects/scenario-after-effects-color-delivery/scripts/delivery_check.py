@@ -138,6 +138,7 @@ def check(spec):
     path = spec["file"]
     is_seq = "%" in path
     files = []
+    found = 0  # rows the discovery of a sequence adds by itself: they are not a requirement of the spec
     if is_seq:
         pattern = re.sub(r"%0?(\d*)d", lambda m: "[0-9]" * int(m.group(1) or 1), path)
         files = sorted(glob.glob(pattern))
@@ -148,6 +149,7 @@ def check(spec):
         present = set(nums)
         gaps = [n for n in range(nums[0], nums[-1] + 1) if n not in present]
         row(rows, "gaps", 0, len(gaps), not gaps)
+        found = len(rows)
         if "sequence_start" in spec:
             row(rows, "first number", spec["sequence_start"], nums[0], nums[0] == spec["sequence_start"])
         frames = len(files)
@@ -269,7 +271,7 @@ def check(spec):
                     row(rows, "integrated LUFS", "%s +/- %s" % (exp["lufs"], tol), i_lufs, i_lufs is not None and abs(i_lufs - exp["lufs"]) <= tol)
                 if "true_peak_max" in exp:
                     row(rows, "true peak dBTP", "<= %s" % exp["true_peak_max"], tp, tp is not None and tp <= exp["true_peak_max"])
-    if not rows:
+    if len(rows) == found:
         row(rows, "requirements", "at least one key besides file", "none", False)
     return rows
 

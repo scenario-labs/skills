@@ -68,7 +68,7 @@ AEX.batch = (function () {
         var head = [], seen = {}, out = [], i, k, o;
         for (i = 0; i < list.length; i++) {
             if (list[i] === null || typeof list[i] !== "object" || isList(list[i])) { continue; }
-            for (k in list[i]) { if (list[i].hasOwnProperty(k) && !seen[k]) { seen[k] = true; head.push(k); } }
+            for (k in list[i]) { if (Object.prototype.hasOwnProperty.call(list[i], k) && !seen[k]) { seen[k] = true; head.push(k); } }
         }
         for (i = 0; i < list.length; i++) {
             o = { _line: i + 2 };
@@ -231,12 +231,12 @@ AEX.batch = (function () {
             if (r._error) { out.push({ id: r.id, line: r._line, error: r._error }); continue; }
             for (j = 0; j < req.length; j++) { if (r[req[j]] === "") { out.push({ id: r.id, line: r._line, error: "Empty " + req[j] }); } }
             for (col in allowed) {
-                if (allowed.hasOwnProperty(col) && !inList(allowed[col], r[col])) {
+                if (Object.prototype.hasOwnProperty.call(allowed, col) && !inList(allowed[col], r[col])) {
                     out.push({ id: r.id, line: r._line, error: col + " '" + r[col] + "' is not one of " + allowed[col].join(", ") });
                 }
             }
             for (col in range) {
-                if (range.hasOwnProperty(col)) {
+                if (Object.prototype.hasOwnProperty.call(range, col)) {
                     v = parseFloat(r[col]);
                     if (isNaN(v) || String(r[col]).replace(/^\s+|\s+$/g, "") === "" || v < range[col][0] || v > range[col][1]) {
                         out.push({ id: r.id, line: r._line, error: col + " '" + r[col] + "' is not a number from " + range[col][0] + " to " + range[col][1] });
@@ -244,7 +244,7 @@ AEX.batch = (function () {
                 }
             }
             for (col in maxLength) {
-                if (maxLength.hasOwnProperty(col)) {
+                if (Object.prototype.hasOwnProperty.call(maxLength, col)) {
                     v = String(r[col] === undefined ? "" : r[col]);
                     if (v.length > maxLength[col]) { out.push({ id: r.id, line: r._line, error: col + " has " + v.length + " characters, limit " + maxLength[col] }); }
                 }

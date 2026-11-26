@@ -170,13 +170,97 @@ AEX.project = (function () {
         return res;
     }
 
+    // readStr(code, i): the string literal that opens at i, as {end: index after its closing quote, val: its value}; null if it does not close on its line
+    function readStr(code, i) {
+        var q = code.charAt(i), k = i + 1, val = "", c;
+        while (k < code.length) {
+            c = code.charAt(k);
+            if (c === q) { return { end: k + 1, val: val }; }
+            if (c === "\n" || c === "\r") { return null; }
+            if (c !== "\\") { val += c; k++; continue; }
+            c = code.charAt(k + 1); k += 2;
+            if (c === "n") { val += "\n"; } else if (c === "t") { val += "\t"; } else if (c === "r") { val += "\r"; }
+            else if (c === "b") { val += "\b"; } else if (c === "f") { val += "\f"; } else if (c === "v") { val += "\u000B"; }
+            else if (c === "0") { val += "\u0000"; }
+            else if (c === "x") { val += String.fromCharCode(parseInt(code.substr(k, 2), 16)); k += 2; }
+            else if (c === "u") { val += String.fromCharCode(parseInt(code.substr(k, 4), 16)); k += 4; }
+            else if (c === "\r" && code.charAt(k) === "\n") { k++; }
+            else if (c !== "\n" && c !== "\r") { val += c; }
+        }
+        return null;
+    }
+    function quoteAs(s, q) { return q + String(s).replace(/\\/g, "\\\\").split(q).join("\\" + q).replace(/\n/g, "\\n").replace(/\r/g, "\\r") + q; }
+    // refScan(code, fn, swap): reads an expression as JavaScript and finds each call fn("name") or fn('name') in code.
+    // swap(name, textBefore) returns the new name, or null to keep the call. The new name keeps the quote style.
+    // String, template and regex literals and comments are copied byte for byte, so a quoted "layer('X')" stays.
+    function refScan(code, fn, swap) {
+        var out = "", i = 0, n = code.length, ch, nx, j, k, e, w, s, to, last = "", depth = 0, tpl = [], inTpl = false, cls;
+        var KW = " return typeof instanceof in of new delete void throw case do else yield await ";
+        while (i < n) {
+            ch = code.charAt(i); nx = code.charAt(i + 1);
+            if (inTpl) {   // template literal: ${ opens code until its closing brace
+                if (ch === "\\") { out += ch + nx; i += 2; continue; }
+                if (ch === "`") { inTpl = false; last = "a"; }
+                else if (ch === "$" && nx === "{") { out += "${"; i += 2; tpl.push(depth); depth++; inTpl = false; last = "{"; continue; }
+                out += ch; i++; continue;
+            }
+            if (ch === "/" && (nx === "/" || nx === "*")) {
+                j = nx === "/" ? code.indexOf("\n", i) : code.indexOf("*/", i + 2);
+                j = j < 0 ? n : (nx === "/" ? j : j + 2);
+                out += code.substring(i, j); i = j; continue;
+            }
+            if (ch === '"' || ch === "'") { s = readStr(code, i); j = s ? s.end : n; out += code.substring(i, j); i = j; last = "a"; continue; }
+            if (ch === "`") { out += ch; i++; inTpl = true; continue; }
+            if (ch === "/" && /^$|[(,=:[!&|?{};+\-*%<>~^]/.test(last)) {   // a regex literal, up to its closing slash
+                j = i + 1; cls = false;
+                while (j < n && code.charAt(j) !== "\n") {
+                    if (code.charAt(j) === "\\") { j += 2; continue; }
+                    if (code.charAt(j) === "[") { cls = true; } else if (code.charAt(j) === "]") { cls = false; } else if (code.charAt(j) === "/" && !cls) { j++; break; }
+                    j++;
+                }
+                out += code.substring(i, j); i = j; last = "a"; continue;
+            }
+            if (/[\w$]/.test(ch)) {
+                j = i; while (j < n && /[\w$]/.test(code.charAt(j))) { j++; }
+                w = code.substring(i, j);
+                if (w === fn) {
+                    k = j; while (/\s/.test(code.charAt(k))) { k++; }
+                    if (code.charAt(k) === "(") {
+                        k++; while (/\s/.test(code.charAt(k))) { k++; }
+                        s = (code.charAt(k) === '"' || code.charAt(k) === "'") ? readStr(code, k) : null;
+                        if (s) {
+                            e = s.end; while (/\s/.test(code.charAt(e))) { e++; }
+                            if (code.charAt(e) === ")") {
+                                to = swap(s.val, out);
+                                out += code.substring(i, k) + (typeof to === "string" ? quoteAs(to, code.charAt(k)) : code.substring(k, s.end)) + code.substring(s.end, e + 1);
+                                i = e + 1; last = ")"; continue;
+                            }
+                        }
+                    }
+                }
+                out += w; i = j; last = KW.indexOf(" " + w + " ") >= 0 ? "(" : "a"; continue;
+            }
+            if (ch === "{") { depth++; }
+            else if (ch === "}") {
+                depth--;
+                if (tpl.length && tpl[tpl.length - 1] === depth) { tpl.pop(); out += ch; i++; inTpl = true; continue; }
+            }
+            if (!/\s/.test(ch)) { last = ch; }
+            out += ch; i++;
+        }
+        return out;
+    }
+
     // rewriteRefs(pairs): a rename by script leaves expressions on the old name ("layer named 'X' is missing").
-    // pairs [{kind: "comp"|"layer", from, to, scope: comp id for layers}]: rewrites comp("from") and layer("from") in place.
-    // Indirect references (a name built from a string variable) are not seen: read exprErrors afterwards.
+    // pairs [{kind: "comp"|"layer", from, to, scope: comp id for layers}]: rewrites comp("from") and layer("from") in place,
+    // in code only (strings and comments stay as written). Indirect references (a name built from a string variable) are
+    // not seen: read exprErrors afterwards.
     function rewriteRefs(pairs) {
-        var comps = AEK.core.comps(), res = { rewritten: 0, exprErrors: [] }, i, j, k, ids = {}, qs = ['"', "'"];
-        // comp name (current or renamed from) -> ids of the comps it can name, to resolve comp("X").layer("Y")
-        function addId(name, id) { if (!ids.hasOwnProperty(name)) { ids[name] = {}; } ids[name][id] = true; }
+        var comps = AEK.core.comps(), res = { rewritten: 0, exprErrors: [] }, i, j, k, ids = {};
+        // comp name (current or renamed from) -> ids of the comps it can name, to resolve comp("X").layer("Y").
+        // Keys carry a prefix: a comp named hasOwnProperty or __proto__ stays an ordinary entry.
+        function known(name) { return Object.prototype.hasOwnProperty.call(ids, "#" + name); }
+        function addId(name, id) { if (!known(name)) { ids["#" + name] = {}; } ids["#" + name][id] = true; }
         for (i = 0; i < comps.length; i++) { addId(comps[i].name, comps[i].id); }
         for (k = 0; k < pairs.length; k++) {
             if (pairs[k].kind !== "comp") { continue; }
@@ -184,28 +268,16 @@ AEX.project = (function () {
         }
         var QUAL = /(?:^|[^\w$.])comp\(\s*(?:"([^"]*)"|'([^']*)')\s*\)\s*\.\s*$/;
         // layer("from") right after comp("X") and a dot targets comp X; any other layer("from") targets the comp that owns the expression
-        function swapLayer(code, p, ownerId) {
-            var out = "", rest = code, q, at, bq, idx, needle, m, nm, target;
-            while (true) {
-                at = -1;
-                for (q = 0; q < 2; q++) { idx = rest.indexOf("layer(" + qs[q] + p.from + qs[q] + ")"); if (idx >= 0 && (at < 0 || idx < at)) { at = idx; bq = q; } }
-                if (at < 0) { break; }
-                needle = "layer(" + qs[bq] + p.from + qs[bq] + ")";
-                out += rest.substring(0, at);
-                m = QUAL.exec(out);
-                nm = m ? (m[1] ? m[1] : m[2]) : null;
-                target = m ? (!!nm && ids.hasOwnProperty(nm) && ids[nm][p.scope] === true) : (p.scope === ownerId);
-                out += target ? "layer(" + qs[bq] + p.to + qs[bq] + ")" : needle;
-                rest = rest.substring(at + needle.length);
-            }
-            return out + rest;
-        }
         function swap(code, c) {
-            var k, q, p;
+            var k, p;
             for (k = 0; k < pairs.length; k++) {
                 p = pairs[k];
-                if (p.kind === "layer") { code = swapLayer(code, p, c.id); continue; }
-                for (q = 0; q < 2; q++) { code = code.split(p.kind + "(" + qs[q] + p.from + qs[q] + ")").join(p.kind + "(" + qs[q] + p.to + qs[q] + ")"); }
+                code = refScan(code, p.kind, function (v, before) {
+                    if (v !== p.from) { return null; }
+                    if (p.kind !== "layer") { return p.to; }
+                    var m = QUAL.exec(before), nm = m ? (m[1] ? m[1] : m[2]) : null;
+                    return (m ? (!!nm && known(nm) && ids["#" + nm][p.scope] === true) : (p.scope === c.id)) ? p.to : null;
+                });
             }
             return code;
         }
@@ -512,7 +584,7 @@ AEX.project = (function () {
                 p = dir + "/" + (k ? it.id + "_" : "") + (k > 1 ? k + "_" : "") + name;
                 if (claimed[p] === srcPath) { return p; }
                 x = isFolder ? new Folder(p) : new File(p);
-                if (!claimed.hasOwnProperty(p) && !x.exists) { claimed[p] = srcPath; return p; }
+                if (!Object.prototype.hasOwnProperty.call(claimed, p) && !x.exists) { claimed[p] = srcPath; return p; }
                 k++;
             }
         }

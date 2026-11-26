@@ -87,14 +87,15 @@ def contact(obj, shadow, max_gap):
         return fail("the object matte is empty")
     x0, x1 = cols[0], cols[-1]
     m = (x1 - x0) // 10
-    lows = {}
+    lows, highs = {}, {}
     for x in range(x0 + m, x1 - m + 1, 4):
         ys = [y for y in range(h) if oa[y * w + x] > 127]
         if ys:
-            lows[x] = ys[-1]
+            lows[x], highs[x] = ys[-1], ys[0]
     if not lows:
         return fail("no object column to sample")
-    top = min(y for y in range(h) if any(oa[y * w + x] > 127 for x in range(x0, x1 + 1, 4)))
+    # height from the sampled columns themselves: another column grid can sit below every sampled one on a thin matte
+    top = min(highs.values())
     bottom = max(lows.values())
     resting = [x for x in sorted(lows) if lows[x] >= bottom - 0.05 * (bottom - top)]
     gaps = []

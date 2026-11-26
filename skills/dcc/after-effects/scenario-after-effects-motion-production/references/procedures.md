@@ -414,7 +414,7 @@ var layouts = [
     { fmt: "9x16", name: "TONE_EC_9x16_3s_v001", size: [1080, 1920], scale: 80, position: [540, 700], zones: zones916, texts: [t("TXT_name", "TONE", 150, [540, 1110])] },
     { fmt: "1x1", name: "TONE_EC_1x1_3s_v001", size: [1080, 1080], scale: 62, position: [540, 440], zones: zones5, texts: [t("TXT_name", "TONE", 130, [540, 900])] }];
 var R = AEX.ad.reformat(AEK.core.comp("PC_TONE_mark"), layouts, { bg: [0.05, 0.06, 0.08] }), k, c;
-for (k in R) { if (R.hasOwnProperty(k)) { c = app.project.itemByID(R[k].id); R[k].frames = AEK.capture.frames(c, [0.3, 1.0, 2.9], ARGS.out, k); } }
+for (k in R) { if (Object.prototype.hasOwnProperty.call(R, k)) { c = app.project.itemByID(R[k].id); R[k].frames = AEK.capture.frames(c, [0.3, 1.0, 2.9], ARGS.out, k); } }
 app.project.save(AEK.core.abs(ARGS.aep));
 return R;
 ```

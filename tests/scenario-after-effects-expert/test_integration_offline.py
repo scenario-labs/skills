@@ -58,8 +58,12 @@ class Temp(unittest.TestCase):
 # ---------------------------------------------------------------- integration_check
 
 _SHARED = tempfile.TemporaryDirectory()
-unittest.addModuleCleanup(_SHARED.cleanup)
 _CACHE = {}
+
+
+def tearDownModule():
+    # a cleanup registered at import time runs after the first module of a whole-folder run, not after this one
+    _SHARED.cleanup()
 
 
 def save_png(path, a):

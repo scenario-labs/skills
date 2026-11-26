@@ -211,7 +211,7 @@ AEX.rig = (function () {
             P(L.ground).setValue([c.width / 2, g + 21 * o.scale]);
         }
         n.layers = {};
-        for (i in L) { if (L.hasOwnProperty(i)) { n.layers[i] = L[i].name; } }
+        for (i in L) { if (Object.prototype.hasOwnProperty.call(L, i)) { n.layers[i] = L[i].name; } }
         n.L = L;
         return n;
     }

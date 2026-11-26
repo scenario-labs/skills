@@ -97,7 +97,7 @@ AEK.text = (function () {
         function A() { return l.property("ADBE Text Properties").property("ADBE Text Animators").property(idx); }
         if (o.name) { A().name = o.name; }
         for (k in o.properties) {
-            if (!o.properties.hasOwnProperty(k)) { continue; }
+            if (!Object.prototype.hasOwnProperty.call(o.properties, k)) { continue; }
             if (!PROPS[k]) { throw new Error("animator(): unknown property '" + k + "'"); }
             // addProperty invalidates what it returns for the next sibling: the value is set on a fresh lookup
             A().property("ADBE Text Animator Properties").addProperty(PROPS[k]);

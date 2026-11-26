@@ -41,8 +41,8 @@ AEK.stats = (function () {
         var d = {}, k, keys = ["items", "comps", "footage", "folders", "missingFootage", "solids", "layers", "keys", "expressions", "effects", "renderQueue"], i;
         for (i = 0; i < keys.length; i++) { k = keys[i]; if (a[k] !== b[k]) { d[k] = [a[k], b[k]]; } }
         d.compsAdded = []; d.compsRemoved = [];
-        for (k in b.perComp) { if (b.perComp.hasOwnProperty(k) && !a.perComp[k]) { d.compsAdded.push(b.perComp[k].name + " (id " + k + ")"); } }
-        for (k in a.perComp) { if (a.perComp.hasOwnProperty(k) && !b.perComp[k]) { d.compsRemoved.push(a.perComp[k].name + " (id " + k + ")"); } }
+        for (k in b.perComp) { if (Object.prototype.hasOwnProperty.call(b.perComp, k) && !a.perComp[k]) { d.compsAdded.push(b.perComp[k].name + " (id " + k + ")"); } }
+        for (k in a.perComp) { if (Object.prototype.hasOwnProperty.call(a.perComp, k) && !b.perComp[k]) { d.compsRemoved.push(a.perComp[k].name + " (id " + k + ")"); } }
         return d;
     }
     return { comp: compStats, snapshot: snapshot, diff: diff };

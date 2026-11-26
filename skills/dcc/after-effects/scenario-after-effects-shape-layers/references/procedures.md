@@ -399,17 +399,18 @@ var before = AEX.shapes.lottie(c);
 var copies = {}, made = [], id, k;
 function exportCopy(src) {
   if (copies[src.id]) { return copies[src.id]; }
-  var d = src.duplicate(), i, s;
+  var d = src.duplicate(), i, s, nm;
   d.name = src.name + "_lottie"; copies[src.id] = d; made.push(d.name);
   for (i = 1; i <= d.numLayers; i++) {
     s = null; try { s = d.layer(i).source; } catch (e) {}
-    if (s instanceof CompItem) { d.layer(i).replaceSource(exportCopy(s), false); }
+    // a layer without its own name shows its source name: keep the name expressions read, or it becomes X_lottie
+    if (s instanceof CompItem) { nm = d.layer(i).name; d.layer(i).replaceSource(exportCopy(s), false); d.layer(i).name = nm; }
   }
   return d;
 }
 var dup = exportCopy(c);
 for (id in copies) {
-  if (!copies.hasOwnProperty(id)) { continue; }
+  if (!Object.prototype.hasOwnProperty.call(copies, id)) { continue; }
   for (k = 1; k <= copies[id].numLayers; k++) {
     AEK.core.walk(copies[id].layer(k), function (p) {
       if (p.propertyType === PropertyType.PROPERTY && p.canSetExpression && p.expression && p.expressionEnabled) { AEK.expr.bake(p, copies[id], 0, copies[id].duration); }
@@ -423,9 +424,10 @@ The audit and the preparation walk nested comps, each once. `where` is the layer
 comp (`Outer > Precomp > layer`). The job bakes only in the `_lottie` copies: the top comp and each
 nested comp are duplicated and the copies rewired to each other (`copies` lists them). Measured on
 Outer nesting Inner twice and Deep (Deep also inside Inner): three copies, and both Inner layers and
-both Deep layers point at the copies (`replaceSource`). A precomp layer without its own name takes
-the copy's name. The masters keep their expressions enabled; each copied expression became 31 keys
-for 1 s at 30 fps.
+both Deep layers point at the copies (`replaceSource`). A precomp layer without its own name would
+show the copy's name and break `thisComp.layer("Inner")`: the job writes its former name back after
+the replace (measured: the baked values matched the master, `expressionError` empty). The masters
+keep their expressions enabled; each copied expression became 31 keys for 1 s at 30 fps.
 
 Check: findings `{severity, where, what}`, by severity:
 

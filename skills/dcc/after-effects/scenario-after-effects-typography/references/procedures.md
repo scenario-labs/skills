@@ -413,7 +413,7 @@ var c = AEK.build.comp("fit", { width: 1920, height: 1080, fps: 24, duration: 1 
 var maxW = c.width * 0.8, out = {}, k;
 var L = { en: "Make every frame readable", de: "Mach jedes Einzelbild lesbar und verständlich", fi: "Tee jokaisesta kuvaruudusta luettava" };
 for (k in L) {
-    if (!L.hasOwnProperty(k)) { continue; }
+    if (!Object.prototype.hasOwnProperty.call(L, k)) { continue; }
     var l = AEK.text.add(c, L[k], { name: k, font: "Helvetica-Bold", size: 110, fill: [1, 1, 1], justify: "center", position: [960, 540] });
     var row = { width: Math.round(AEK.text.measure(l, 0).comp.width) };
     var s1 = l.duplicate(); row.shrink = AEK.text.fit(s1, maxW, { minSize: 60 }); s1.enabled = false;

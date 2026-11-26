@@ -254,7 +254,8 @@ def gates(manifest):
     o = M["origin"]
     R = {"clip": {}, "contour": {}, "outline": {}}
     clipped = {}
-    for p in M["outs"]:
+    # every final frame is read: the flash frames too (a white core at frame 7 is in peaks only, and flash reads a frame mean)
+    for p in list(M["outs"]) + [q for q in M.get("peaks", []) if q not in M["outs"]]:
         clipped[os.path.basename(p)] = clip_share(load(p))
         R["clip"][os.path.basename(p)] = round(clipped[os.path.basename(p)] * 100, 4)
     for t, p in sorted(M["scene"].items(), key=lambda kv: float(kv[0])):
@@ -271,7 +272,8 @@ def gates(manifest):
     if "holdFrames" not in M:
         notes.append("manifest without holdFrames (before version 2): the hold is not measured")
     elif len(M["holdFrames"]) >= 2:
-        R["hold"] = {"move": round(hold_motion(M["holdFrames"]), 3), "frames": len(M["holdFrames"])}
+        hold_raw = hold_motion(M["holdFrames"])   # the verdict reads the unrounded value: 0.0054 rounds to the limit
+        R["hold"] = {"move": round(hold_raw, 4), "frames": len(M["holdFrames"])}
     elif M.get("holdCount", 0) > 1:
         R["hold"] = {"inconclusive": "%d held frames asked, %d captured" % (M["holdCount"], len(M["holdFrames"]))}
     fails = []
@@ -305,7 +307,7 @@ def gates(manifest):
         h = R["hold"]
         if "inconclusive" in h:
             fails.append("hold (inconclusive)")
-        elif h["move"] > LIMITS["holdMove"]:
+        elif hold_raw > LIMITS["holdMove"]:
             fails.append("hold")
     if all(v is None for v in R["outline"].values()):
         R["outlineNote"] = "no matte edge beyond 300 px from the origin: the far-side outline does not apply"

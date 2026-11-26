@@ -35,7 +35,7 @@ the rig's API: expressions find layers by name, so keep them unique.
 // ARGS: {"comp": "char", "pivots": {"R upper arm": [400, 242], "R forearm": [400, 362]}, "chains": [["torso", "R upper arm", "R forearm", "R hand"]]}
 var c = AEK.core.comp(ARGS.comp), out = { pivots: [], chains: [], moved: [] }, k, i, l, before, after;
 for (k in ARGS.pivots) {
-    if (!ARGS.pivots.hasOwnProperty(k)) { continue; }
+    if (!Object.prototype.hasOwnProperty.call(ARGS.pivots, k)) { continue; }
     l = AEK.core.layer(c, k);
     before = AEX.rig.world(c, l, [0, 0], [0])[0];          // a fixed art point, layer space
     out.pivots.push(AEX.rig.pivot(l, ARGS.pivots[k]));

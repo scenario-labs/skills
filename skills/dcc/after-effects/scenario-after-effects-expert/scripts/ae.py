@@ -769,7 +769,7 @@ def aerender(project, comp, out, template=None, render_settings=None, start=None
     try:
         proc.stdout.close()
     except OSError:
-        pass
+        pass  # the pipe is already closed once the reader thread has drained it: nothing left to release
     # "(n)" counts the frames of the span from 1 (also with -s and -e): the highest n is the number of frames rendered
     rendered = [int(m.group(1)) for l in lines for m in re.finditer(r"PROGRESS:\s+[\d:;]+\s+\((\d+)\)", l)]
     # PROGRESS lines carry frame counts and paths that can match a pattern

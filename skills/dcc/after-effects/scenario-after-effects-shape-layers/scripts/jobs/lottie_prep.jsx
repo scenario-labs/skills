@@ -6,17 +6,18 @@ var before = AEX.shapes.lottie(c);
 var copies = {}, made = [], id, k;
 function exportCopy(src) {
   if (copies[src.id]) { return copies[src.id]; }
-  var d = src.duplicate(), i, s;
+  var d = src.duplicate(), i, s, nm;
   d.name = src.name + "_lottie"; copies[src.id] = d; made.push(d.name);
   for (i = 1; i <= d.numLayers; i++) {
     s = null; try { s = d.layer(i).source; } catch (e) {}
-    if (s instanceof CompItem) { d.layer(i).replaceSource(exportCopy(s), false); }
+    // a layer without its own name shows its source name: keep the name expressions read, or it becomes X_lottie
+    if (s instanceof CompItem) { nm = d.layer(i).name; d.layer(i).replaceSource(exportCopy(s), false); d.layer(i).name = nm; }
   }
   return d;
 }
 var dup = exportCopy(c);
 for (id in copies) {
-  if (!copies.hasOwnProperty(id)) { continue; }
+  if (!Object.prototype.hasOwnProperty.call(copies, id)) { continue; }
   for (k = 1; k <= copies[id].numLayers; k++) {
     AEK.core.walk(copies[id].layer(k), function (p) {
       if (p.propertyType === PropertyType.PROPERTY && p.canSetExpression && p.expression && p.expressionEnabled) { AEK.expr.bake(p, copies[id], 0, copies[id].duration); }

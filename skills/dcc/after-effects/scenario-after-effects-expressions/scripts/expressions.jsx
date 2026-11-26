@@ -164,22 +164,102 @@ AEX.expressions = (function () {
         return { expressions: rep.length, set: rep };
     }
 
-    function reEsc(t) { return String(t).replace(/[\\^$.*+?()[\]{}|\/]/g, "\\$&"); }
+    // readStr(code, i): the string literal that opens at i, as {end: index after its closing quote, val: its value}; null if it does not close on its line
+    function readStr(code, i) {
+        var q = code.charAt(i), k = i + 1, val = "", c;
+        while (k < code.length) {
+            c = code.charAt(k);
+            if (c === q) { return { end: k + 1, val: val }; }
+            if (c === "\n" || c === "\r") { return null; }
+            if (c !== "\\") { val += c; k++; continue; }
+            c = code.charAt(k + 1); k += 2;
+            if (c === "n") { val += "\n"; } else if (c === "t") { val += "\t"; } else if (c === "r") { val += "\r"; }
+            else if (c === "b") { val += "\b"; } else if (c === "f") { val += "\f"; } else if (c === "v") { val += "\u000B"; }
+            else if (c === "0") { val += "\u0000"; }
+            else if (c === "x") { val += String.fromCharCode(parseInt(code.substr(k, 2), 16)); k += 2; }
+            else if (c === "u") { val += String.fromCharCode(parseInt(code.substr(k, 4), 16)); k += 4; }
+            else if (c === "\r" && code.charAt(k) === "\n") { k++; }
+            else if (c !== "\n" && c !== "\r") { val += c; }
+        }
+        return null;
+    }
+    function quoteAs(s, q) { return q + String(s).replace(/\\/g, "\\\\").split(q).join("\\" + q).replace(/\n/g, "\\n").replace(/\r/g, "\\r") + q; }
+    // refScan(code, fn, swap): reads an expression as JavaScript and finds each call fn("name") or fn('name') in code.
+    // swap(name, textBefore) returns the new name, or null to keep the call. The new name keeps the quote style.
+    // String, template and regex literals and comments are copied byte for byte, so a quoted "layer('X')" stays.
+    function refScan(code, fn, swap) {
+        var out = "", i = 0, n = code.length, ch, nx, j, k, e, w, s, to, last = "", depth = 0, tpl = [], inTpl = false, cls;
+        var KW = " return typeof instanceof in of new delete void throw case do else yield await ";
+        while (i < n) {
+            ch = code.charAt(i); nx = code.charAt(i + 1);
+            if (inTpl) {   // template literal: ${ opens code until its closing brace
+                if (ch === "\\") { out += ch + nx; i += 2; continue; }
+                if (ch === "`") { inTpl = false; last = "a"; }
+                else if (ch === "$" && nx === "{") { out += "${"; i += 2; tpl.push(depth); depth++; inTpl = false; last = "{"; continue; }
+                out += ch; i++; continue;
+            }
+            if (ch === "/" && (nx === "/" || nx === "*")) {
+                j = nx === "/" ? code.indexOf("\n", i) : code.indexOf("*/", i + 2);
+                j = j < 0 ? n : (nx === "/" ? j : j + 2);
+                out += code.substring(i, j); i = j; continue;
+            }
+            if (ch === '"' || ch === "'") { s = readStr(code, i); j = s ? s.end : n; out += code.substring(i, j); i = j; last = "a"; continue; }
+            if (ch === "`") { out += ch; i++; inTpl = true; continue; }
+            if (ch === "/" && /^$|[(,=:[!&|?{};+\-*%<>~^]/.test(last)) {   // a regex literal, up to its closing slash
+                j = i + 1; cls = false;
+                while (j < n && code.charAt(j) !== "\n") {
+                    if (code.charAt(j) === "\\") { j += 2; continue; }
+                    if (code.charAt(j) === "[") { cls = true; } else if (code.charAt(j) === "]") { cls = false; } else if (code.charAt(j) === "/" && !cls) { j++; break; }
+                    j++;
+                }
+                out += code.substring(i, j); i = j; last = "a"; continue;
+            }
+            if (/[\w$]/.test(ch)) {
+                j = i; while (j < n && /[\w$]/.test(code.charAt(j))) { j++; }
+                w = code.substring(i, j);
+                if (w === fn) {
+                    k = j; while (/\s/.test(code.charAt(k))) { k++; }
+                    if (code.charAt(k) === "(") {
+                        k++; while (/\s/.test(code.charAt(k))) { k++; }
+                        s = (code.charAt(k) === '"' || code.charAt(k) === "'") ? readStr(code, k) : null;
+                        if (s) {
+                            e = s.end; while (/\s/.test(code.charAt(e))) { e++; }
+                            if (code.charAt(e) === ")") {
+                                to = swap(s.val, out);
+                                out += code.substring(i, k) + (typeof to === "string" ? quoteAs(to, code.charAt(k)) : code.substring(k, s.end)) + code.substring(s.end, e + 1);
+                                i = e + 1; last = ")"; continue;
+                            }
+                        }
+                    }
+                }
+                out += w; i = j; last = KW.indexOf(" " + w + " ") >= 0 ? "(" : "a"; continue;
+            }
+            if (ch === "{") { depth++; }
+            else if (ch === "}") {
+                depth--;
+                if (tpl.length && tpl[tpl.length - 1] === depth) { tpl.pop(); out += ch; i++; inTpl = true; continue; }
+            }
+            if (!/\s/.test(ch)) { last = ch; }
+            out += ch; i++;
+        }
+        return out;
+    }
+
     // renameLayer(comp, oldName, newName): renames a layer AND rewrites layer("oldName") in every expression of every comp.
     // A rename by script leaves the expression text unchanged, so references break. Matches double or single quotes and
-    // spaces inside the parentheses; keeps each expression's enabled state. `review` lists expressions that still hold the
-    // old name in quotes after the rewrite (a name in a variable, a string): check those by hand.
+    // spaces inside the parentheses; strings and comments stay as written; keeps each expression's enabled state. `review`
+    // lists expressions that still hold the old name in quotes after the rewrite (a name in a variable, a string): check those by hand.
     function renameLayer(c, oldName, newName) {
         var l = AEK.core.layer(c, oldName), comps = AEK.core.comps(), i, j, k, edited = [], review = [], todo = [];
         var dq = '"' + esc(oldName) + '"', sq = "'" + String(oldName).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
-        var re = new RegExp("layer\\(\\s*(?:" + reEsc(dq) + "|" + reEsc(sq) + ")\\s*\\)", "g"), rep = 'layer("' + esc(newName) + '")';
+        function swap(v) { return v === String(oldName) ? String(newName) : null; }
         for (i = 0; i < comps.length; i++) {
             for (j = 1; j <= comps[i].numLayers; j++) {
                 AEK.core.walk(comps[i].layer(j), function (p) {
                     if (p.propertyType !== PropertyType.PROPERTY) { return; }
                     var ex = ""; try { if (p.canSetExpression) { ex = p.expression; } } catch (e) { return; }
                     if (ex === "") { return; }
-                    var nx = ex.replace(re, function () { return rep; }), where = comps[i].name + " > " + comps[i].layer(j).name + " > " + p.name;
+                    var nx = refScan(ex, "layer", swap), where = comps[i].name + " > " + comps[i].layer(j).name + " > " + p.name;
                     if (nx.indexOf(dq) >= 0 || nx.indexOf(sq) >= 0) { review.push(where); }
                     if (nx !== ex) { todo.push({ p: p, ex: nx, on: p.expressionEnabled, where: where }); }
                 });

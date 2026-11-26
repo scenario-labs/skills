@@ -26,8 +26,8 @@ AEX.vfxu = (function () {
     // merge(defaults, o): a copy of defaults with o's own keys on top. Returns the new object.
     function merge(d, o) {
         var r = {}, k;
-        for (k in d) { if (d.hasOwnProperty(k)) { r[k] = d[k]; } }
-        if (o) { for (k in o) { if (o.hasOwnProperty(k)) { r[k] = o[k]; } } }
+        for (k in d) { if (Object.prototype.hasOwnProperty.call(d, k)) { r[k] = d[k]; } }
+        if (o) { for (k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) { r[k] = o[k]; } } }
         return r;
     }
     // fx(layer, matchName, props, name): AEK.build.effect with props optional. Returns the effect.
@@ -94,7 +94,7 @@ AEX.vfx = (function () {
     function pw(l, o, name) {
         var p = {}, k, i;
         for (i = 0; i < GUIDES.length; i++) { p["CC Particle World" + GUIDES[i]] = 0; }
-        for (k in o) { if (o.hasOwnProperty(k)) { if (!PW[k]) { throw new Error("pw: unknown key " + k); } p["CC Particle World" + PW[k]] = o[k]; } }
+        for (k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) { if (!PW[k]) { throw new Error("pw: unknown key " + k); } p["CC Particle World" + PW[k]] = o[k]; } }
         return AEK.build.effect(l, "CC Particle World", p, name);
     }
     // pwProp(fx, key): one CC Particle World property by friendly key.
@@ -241,7 +241,7 @@ AEX.light = (function () {
     // check(tones): warnings for a tone with a channel above MAXCH (that channel clips in the core). Returns an array of strings.
     function check(t) {
         var w = [], k, i;
-        for (k in t) { if (t.hasOwnProperty(k) && t[k] && t[k].length === 3) { for (i = 0; i < 3; i++) { if (t[k][i] > MAXCH) { w.push("tone " + k + " has channel " + i + " at " + t[k][i] + " (above " + MAXCH + "): it clips in the core"); break; } } } }
+        for (k in t) { if (Object.prototype.hasOwnProperty.call(t, k) && t[k] && t[k].length === 3) { for (i = 0; i < 3; i++) { if (t[k][i] > MAXCH) { w.push("tone " + k + " has channel " + i + " at " + t[k][i] + " (above " + MAXCH + "): it clips in the core"); break; } } } }
         return w;
     }
     // tones(o): TONES with o's own keys on top (a partial override keeps the other tones).
@@ -1831,7 +1831,7 @@ AEX.pulse = (function () {
             shake: T + "t<-0.5?0:Math.exp(-Math.max(0,t)/3.5);",
             pre: T + "var b=0.12+0.04*Math.sin(time*2*Math.PI/1.5)*(t<0?1:Math.exp(-t/15)); var a=(t>-9&&t<0.5)?0.18*Math.pow((t+9)/9,2):0; b+a;"
         }, k, sl;
-        for (k in ex) { if (ex.hasOwnProperty(k)) { sl = U.fx(n, "ADBE Slider Control", {}, k); sl.property(1).expression = ex[k]; } }
+        for (k in ex) { if (Object.prototype.hasOwnProperty.call(ex, k)) { sl = U.fx(n, "ADBE Slider Control", {}, k); sl.property(1).expression = ex[k]; } }
         return n;
     }
     // E(o, key): the expression text reading one ENV slider of the scene comp.
@@ -2395,7 +2395,7 @@ AEX.pulse = (function () {
         var o = U.merge(DEFAULTS, opts), k;
         if (o.wave === "floor" && (!opts || opts.refract === undefined)) { o.refract = 0; }   // the refraction rides the screen circle
         if (o.hold === null || o.hold === undefined) { o.hold = plate.mainSource && plate.mainSource.isStill ? 15 : 0; }
-        for (k in DEFAULTS) { if (DEFAULTS.hasOwnProperty(k) && DEFAULTS[k] !== null && typeof DEFAULTS[k] === "object" && !(DEFAULTS[k] instanceof Array) && opts && opts[k]) { o[k] = U.merge(DEFAULTS[k], opts[k]); } }
+        for (k in DEFAULTS) { if (Object.prototype.hasOwnProperty.call(DEFAULTS, k) && DEFAULTS[k] !== null && typeof DEFAULTS[k] === "object" && !(DEFAULTS[k] instanceof Array) && opts && opts[k]) { o[k] = U.merge(DEFAULTS[k], opts[k]); } }
         var sc = scene(o, plate), cam = camera(o, sc.comp), fin = finish(o, cam, sc.rig), em = sc.rig.embers;
         var rn = [sc.rig.front.light.name, sc.rig.back.light.name]; if (sc.rig.floor) { rn.push(sc.rig.floor.light.name); }
         return { o: o, scene: sc.comp, cam: cam, finalComp: fin.comp, layers: sc.layers, rig: rn, dust: sc.dust,

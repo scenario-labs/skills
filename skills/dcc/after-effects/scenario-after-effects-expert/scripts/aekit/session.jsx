@@ -62,7 +62,7 @@ AEK.session = (function () {
         ignore = ignore || ["source", "sourceId", "width", "height"];
         for (i = 0; i < ignore.length; i++) { skip[ignore[i]] = true; }
         for (k in a) {
-            if (!a.hasOwnProperty(k) || skip[k]) { continue; }
+            if (!Object.prototype.hasOwnProperty.call(a, k) || skip[k]) { continue; }
             if (k === "effects") { if (a.effects.join("|") !== b.effects.join("|")) { out.push(k); } }
             else if (typeof a[k] === "number" && typeof b[k] === "number") { if (Math.abs(a[k] - b[k]) > 0.0005) { out.push(k + " " + a[k] + " -> " + b[k]); } }
             else if (a[k] !== b[k]) { out.push(k + " " + a[k] + " -> " + b[k]); }
@@ -166,7 +166,7 @@ AEK.session = (function () {
             return td;
         }
         if (!exists(ps)) { throw new Error("Font not installed: " + ps); }
-        if (opts.map) { for (k in opts.map) { if (opts.map.hasOwnProperty(k) && !exists(opts.map[k])) { throw new Error("Font not installed: " + opts.map[k]); } } }
+        if (opts.map) { for (k in opts.map) { if (Object.prototype.hasOwnProperty.call(opts.map, k) && !exists(opts.map[k])) { throw new Error("Font not installed: " + opts.map[k]); } } }
         for (i = 0; i < all.length; i++) {
             for (j = 1; j <= all[i].numLayers; j++) {
                 l = all[i].layer(j);

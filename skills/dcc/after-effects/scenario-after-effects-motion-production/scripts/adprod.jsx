@@ -12,7 +12,7 @@ AEX.ad = (function () {
     // importMedia({key: absPath}): {key: FootageItem}
     function importMedia(map) {
         var out = {}, k, d;
-        for (k in map) { if (map.hasOwnProperty(k)) { d = AEK.xio.importFile(map[k], { bin: "01_media" }); out[k] = AEK.core.itemById(d.id); } }
+        for (k in map) { if (Object.prototype.hasOwnProperty.call(map, k)) { d = AEK.xio.importFile(map[k], { bin: "01_media" }); out[k] = AEK.core.itemById(d.id); } }
         return out;
     }
 
@@ -76,8 +76,8 @@ AEX.ad = (function () {
         cta: "text", ctaFill: null, ctaTextFill: [0.96, 0.93, 0.86], ctaSize: 40, pulse: false, badges: false, scrim: 0.55, scrimColor: [0, 0, 0] };
     function styleOf(sheet) {
         var base = (sheet.style && sheet.style.preset === "brand") ? BRAND : GAME, out = {}, k;
-        for (k in base) { if (base.hasOwnProperty(k)) { out[k] = base[k]; } }
-        for (k in (sheet.style || {})) { if (sheet.style.hasOwnProperty(k) && k !== "preset") { out[k] = sheet.style[k]; } }
+        for (k in base) { if (Object.prototype.hasOwnProperty.call(base, k)) { out[k] = base[k]; } }
+        for (k in (sheet.style || {})) { if (Object.prototype.hasOwnProperty.call(sheet.style, k) && k !== "preset") { out[k] = sheet.style[k]; } }
         return out;
     }
     // scrim(comp, textLayer, opacity, color): a soft dark band from the frame edge to past the text, so light type reads on
@@ -178,7 +178,7 @@ AEX.ad = (function () {
     // zoneRects(comp, zones): zones {name: {top, bottom, left, right (fractions of the frame), source}} -> [{name, rect:[l, t, r, b]}]
     function zoneRects(c, zones) {
         var out = [], k, z;
-        for (k in zones) { if (zones.hasOwnProperty(k)) { z = zones[k]; out.push({ name: k, rect: [c.width * z.left, c.height * z.top, c.width * (1 - z.right), c.height * (1 - z.bottom)] }); } }
+        for (k in zones) { if (Object.prototype.hasOwnProperty.call(zones, k)) { z = zones[k]; out.push({ name: k, rect: [c.width * z.left, c.height * z.top, c.width * (1 - z.right), c.height * (1 - z.bottom)] }); } }
         return out;
     }
 

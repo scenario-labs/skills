@@ -249,7 +249,7 @@ AEX.animation = (function () {
             if (first !== null) { starts[first] = (starts[first] || 0) + 1; }
         }
         // lockstep carries its start frame, so allow "*|lockstep|<frame>" exempts it; frame-less findings take "*|<rule>"
-        for (k in starts) { if (starts.hasOwnProperty(k) && starts[k] >= 3) { out.push({ rule: "lockstep", layer: "*", property: "*", key: null, frame: Number(k), message: starts[k] + " layers start moving on frame " + k + ": offset them (2 to 3 frames for list items)" }); } }
+        for (k in starts) { if (Object.prototype.hasOwnProperty.call(starts, k) && starts[k] >= 3) { out.push({ rule: "lockstep", layer: "*", property: "*", key: null, frame: Number(k), message: starts[k] + " layers start moving on frame " + k + ": offset them (2 to 3 frames for list items)" }); } }
         if (nKeys >= 4 && nDefault / nKeys > 0.6) { add("default-ease", "*", "*", null, Math.round(nDefault / nKeys * 100) + " % of keys are Easy Ease (33.33 % both sides): shape them"); }
         var allow = {}, q, x, hit;
         if (o.allow) { for (q = 0; q < o.allow.length; q++) { allow[o.allow[q]] = true; } }
@@ -258,7 +258,7 @@ AEX.animation = (function () {
             if (out[q].frame !== null && allow[out[q].layer + "|" + out[q].rule + "|" + out[q].frame]) { hit = "allow list"; }
             if (out[q].frame === null && allow[out[q].layer + "|" + out[q].rule]) { hit = "allow list"; }
             // hasOwnProperty: ExtendScript objects inherit a native "*" operator, so marks["*"] is a function, not undefined
-            if (!hit && out[q].frame !== null && marks.hasOwnProperty(out[q].layer)) {
+            if (!hit && out[q].frame !== null && Object.prototype.hasOwnProperty.call(marks, out[q].layer)) {
                 for (x = 0; x < marks[out[q].layer].length; x++) {
                     var mk = marks[out[q].layer][x];
                     if (Math.abs(mk.frame - out[q].frame) <= 1 && (mk.text.toLowerCase().indexOf(out[q].rule) >= 0 || /^intended\s*$/i.test(mk.text))) { hit = mk.text; }

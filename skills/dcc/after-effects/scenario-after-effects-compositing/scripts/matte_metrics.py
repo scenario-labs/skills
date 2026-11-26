@@ -15,10 +15,11 @@
   wrapbins ON.png OFF.png BG.png ALPHA.png     light wrap change on the subject, binned by background luma
 
 Values are 0-1 unless stated. A render of an alpha view (alpha as gray over black) is read from its red channel.
-Prints one JSON object.
+Prints one JSON object. Exit code 1 when that object carries an "error" key (nothing could be measured).
 """
 import argparse
 import json
+import sys
 import numpy as np
 from PIL import Image
 
@@ -335,7 +336,11 @@ def main():
     q = s.add_parser("holes"); q.add_argument("img"); q.add_argument("--erode", type=int, default=6)
     q = s.add_parser("wrapbins"); q.add_argument("on"); q.add_argument("off"); q.add_argument("bg"); q.add_argument("alpha")
     a = p.parse_args()
-    print(json.dumps(globals()["cmd_" + a.cmd](a)))
+    res = globals()["cmd_" + a.cmd](a)
+    print(json.dumps(res))
+    if isinstance(res, dict) and "error" in res:
+        # the reason stays on stdout; the exit code tells a caller that reads no JSON that nothing was measured
+        sys.exit(1)
 
 
 if __name__ == "__main__":

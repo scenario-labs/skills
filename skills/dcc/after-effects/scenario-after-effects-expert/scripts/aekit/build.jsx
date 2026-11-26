@@ -101,7 +101,7 @@ AEK.build = (function () {
         idx = e.propertyIndex;
         if (name) { e.name = name; }
         for (k in props) {
-            if (!props.hasOwnProperty(k)) { continue; }
+            if (!Object.prototype.hasOwnProperty.call(props, k)) { continue; }
             p = l.property("ADBE Effect Parade").property(idx).property(k);
             if (!p) { throw new Error("Effect '" + matchName + "' has no property '" + k + "'"); }
             p.setValue(props[k]);

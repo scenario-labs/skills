@@ -33,7 +33,7 @@ AEK.json = (function () {
                 try { return q("<" + (v.matchName || v.typeName || v.constructor.name || "object") + (v.name ? " " + v.name : "") + ">"); }
                 catch (e) { return q("<object>"); }
             }
-            for (k in v) { if (v.hasOwnProperty(k) && typeof v[k] !== "function") { a.push(q(String(k)) + ":" + str(v[k], depth + 1)); } }
+            for (k in v) { if (Object.prototype.hasOwnProperty.call(v, k) && typeof v[k] !== "function") { a.push(q(String(k)) + ":" + str(v[k], depth + 1)); } }
             return "{" + a.join(",") + "}";
         }
         return q(String(v));
@@ -57,7 +57,7 @@ AEK.json = (function () {
                         h = s.substr(i + 2, 4);
                         if (!/^[0-9a-fA-F]{4}$/.test(h)) { fail("bad \\u escape"); }
                         out += String.fromCharCode(parseInt(h, 16)); i += 6;
-                    } else if (ESC.hasOwnProperty(c)) { out += ESC[c]; i += 2; } else { fail("bad escape"); }
+                    } else if (Object.prototype.hasOwnProperty.call(ESC, c)) { out += ESC[c]; i += 2; } else { fail("bad escape"); }
                 } else if (c.charCodeAt(0) < 32) { fail("control character in a string"); } else { out += c; i++; }
             }
             fail("unterminated string");

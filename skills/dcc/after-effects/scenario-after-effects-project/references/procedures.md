@@ -150,14 +150,15 @@ frames.
 `rename` returns `{renamed, rewritten, exprErrors}`. A rename by script does not update expressions
 that name the comp or layer: the next evaluation fails with "layer named 'X' is missing" and the
 expression is disabled. `rename` records each old name (including a precomp layer that follows its
-comp's name) and rewrites `comp("X")` and `layer("X")`, both quote styles, then evaluates every
-expression at three times. Live: `thisComp.layer("Pre-comp 12")` and `comp('Pre-comp 12')` became
-`PC_Test_25_logo`, 2 rewritten, 0 errors, values unchanged (Opacity 50, X 320). A layer reference
-qualified by a comp, `comp("MAIN_A").layer("Pre-comp 1")`, is rewritten when it targets the comp
-holding the renamed layer, from any comp. The main comp's users get the same layer pairs as a
-precomp's. Names built from variables or string concatenation are not rewritten: they show up in
-`exprErrors`; hand those to scenario-after-effects-expressions. When you give final names by role,
-rename by script and then call
+comp's name) and rewrites `comp("X")` and `layer("X")`, both quote styles, in code only (string
+literals and comments stay as written). It then evaluates every expression at three times. Live:
+`thisComp.layer("Pre-comp 12")` and `comp('Pre-comp 12')` became `PC_Test_25_logo`, 2 rewritten, 0
+errors, values unchanged (Opacity 50, X 320). A layer reference qualified by a comp,
+`comp("MAIN_A").layer("Pre-comp 1")`, is rewritten when it targets the comp holding the renamed
+layer, from any comp. The main comp's users get the same layer pairs as a precomp's. Names built
+from variables or string concatenation are not rewritten: they show up in `exprErrors`; hand those
+to scenario-after-effects-expressions. When you give final names by role, rename by script and then
+call
 `AEX.project.rewriteRefs([{kind: "comp", from, to}, {kind: "layer", from, to, scope: parentComp.id}])`:
 it rewrites and returns `{rewritten, exprErrors}`.
 

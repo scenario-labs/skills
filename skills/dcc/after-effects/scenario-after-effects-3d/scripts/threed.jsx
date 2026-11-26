@@ -6,7 +6,7 @@ AEX.threeD = (function () {
     var RENDERER = { classic: "ADBE Advanced 3d", advanced: "ADBE Calder", cinema4d: "ADBE Ernst" };
     // A layer name inside a double-quoted expression string: backslashes first, then quotes.
     function esc(s) { return String(s).replace(/\\/g, "\\\\").replace(/"/g, "\\\""); }
-    function rendererName(c) { var k; for (k in RENDERER) { if (RENDERER.hasOwnProperty(k) && RENDERER[k] === c.renderer) { return k; } } return c.renderer; }
+    function rendererName(c) { var k; for (k in RENDERER) { if (Object.prototype.hasOwnProperty.call(RENDERER, k) && RENDERER[k] === c.renderer) { return k; } } return c.renderer; }
     // use(comp, "advanced"|"classic"|"cinema4d"): a new comp made by script is Classic 3D; set it before adding models
     function use(c, which) { c.renderer = RENDERER[which || "advanced"]; return rendererName(c); }
     // settable(group): every property of a group with its value and whether this renderer exposes it (hidden ones throw on setValue)

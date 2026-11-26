@@ -31,7 +31,7 @@ AEX.shapes = (function () {
     function set(p, values) {
         var k, q;
         for (k in values) {
-            if (!values.hasOwnProperty(k)) { continue; }
+            if (!Object.prototype.hasOwnProperty.call(values, k)) { continue; }
             q = p.property(k);
             if (!q) { throw new Error("'" + p.matchName + "' has no property '" + k + "'"); }
             q.setValue(values[k]);

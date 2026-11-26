@@ -35,7 +35,7 @@ AEK.audit = (function () {
             if (c.width % 2 || c.height % 2) { F(out, "warn", "comp.oddSize", c.name, c.width + "x" + c.height + ": H.264 and HEVC need even dimensions"); }
             layers(out, c);
         }
-        for (k in rates) { if (rates.hasOwnProperty(k)) { n++; list.push(k + " fps x" + rates[k]); } }
+        for (k in rates) { if (Object.prototype.hasOwnProperty.call(rates, k)) { n++; list.push(k + " fps x" + rates[k]); } }
         if (n > 1) { F(out, "warn", "comp.mixedFrameRates", "project", "Comps use " + n + " frame rates: " + list.join(", ")); }
     }
     function layers(out, c) {
