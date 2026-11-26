@@ -70,7 +70,11 @@ AEX.vfxu = (function () {
     function scale(c, k) { return [c[0] * k, c[1] * k, c[2] * k]; }
     // The palette the builders default to (ink ground, navy haze, coral energy, cream cores, warm gray). Pass your own colors in o.
     var PALETTE = { ink: hex("#0D0F14"), navy: hex("#1B2740"), coral: hex("#E0452C"), cream: hex("#F1E9D8"), grey: hex("#8C8577") };
-    return { merge: merge, fx: fx, stops: stops, gain: gain, opacity: opacity, ellipse: ellipse, rect: rect, hex: hex, mix: mix, scale: scale, PALETTE: PALETTE };
+    // lit(name): a comp, layer or effect name as a complete quoted expression string literal (backslashes first, then quotes).
+    function lit(n) { return "\"" + String(n).replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\n/g, "\\n").replace(/\r/g, "\\r") + "\""; }
+    // pad3(n): an integer as text, zero-padded to at least 3 digits and never truncated (1000 stays "1000").
+    function pad3(n) { var t = String(n); while (t.length < 3) { t = "0" + t; } return t; }
+    return { merge: merge, fx: fx, lit: lit, pad3: pad3, stops: stops, gain: gain, opacity: opacity, ellipse: ellipse, rect: rect, hex: hex, mix: mix, scale: scale, PALETTE: PALETTE };
 })();
 
 AEX.vfx = (function () {
@@ -98,7 +102,7 @@ AEX.vfx = (function () {
     // followExpr(nullName, axis): Producer Position X or Y expression that puts the producer on a layer's anchor.
     // Measured: one unit = the particle layer's WIDTH on both axes (0.25 = 240 px in X and in Y on a 960x540 layer), 0 = layer center.
     function followExpr(nullName, axis) {
-        return "var L = thisComp.layer(\"" + nullName + "\");\nvar p = fromComp(L.toComp(L.anchorPoint));\n" +
+        return "var L = thisComp.layer(" + AEX.vfxu.lit(nullName) + ");\nvar p = fromComp(L.toComp(L.anchorPoint));\n" +
             (axis === "x" ? "(p[0] - width / 2) / width;" : "(p[1] - height / 2) / width;");
     }
     // follow(fx, nullName): wire Producer Position X and Y of a CC Particle World effect to a layer. Returns the effect.
@@ -145,7 +149,7 @@ AEX.vfx = (function () {
         var out = [], i, t0, ms, f;
         for (i = 0; i < times.length; i++) {
             t0 = new Date().getTime();
-            f = AEK.capture.frame(c, times[i], dir + "/" + prefix + "_f" + ("000" + Math.round(times[i] * c.frameRate)).slice(-3) + ".png");
+            f = AEK.capture.frame(c, times[i], dir + "/" + prefix + "_f" + AEX.vfxu.pad3(Math.round(times[i] * c.frameRate)) + ".png");
             ms = new Date().getTime() - t0 - 150;
             out.push({ frame: f.frame, ms: ms, path: f.path });
         }
@@ -218,7 +222,7 @@ AEX.glow = (function () {
     function gain(c, srcName, total, o) {
         var q = U.merge(o || {}, { total: total }), p = plan(q), i, l;
         for (i = 0; i < p.radii.length; i++) {
-            l = c.layer(srcName + " glow " + p.radii[i]);
+            l = c.layer((p.prefix || srcName) + " glow " + p.radii[i]);
             l.property("ADBE Effect Parade").property("ADBE Exposure2").property("ADBE Exposure2-0003").setValue(U.stops(p.weights[i]));
         }
         return p.weights;
@@ -1130,7 +1134,7 @@ AEX.element = (function () {
             g.moveAfter(l); R.glow = g.name;
         }
         // the light it throws: the element's mean luma in a box above the foot drives a floor pool and a radial lift of the plate
-        var sx = 0.25 * W, sy = 0.25 * (foot), env = "var e = thisComp.layer(\"" + nm + "\"); var c = e.sampleImage([" + W / 2 + ", " + (foot - sy) + "], [" + sx + ", " + sy + "], true, time); var y = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];";
+        var sx = 0.25 * W, sy = 0.25 * (foot), env = "var e = thisComp.layer(" + U.lit(nm) + "); var c = e.sampleImage([" + W / 2 + ", " + (foot - sy) + "], [" + sx + ", " + sy + "], true, time); var y = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];";
         var col = o.poolColor || U.PALETTE.coral, reach = (o.reach || 520) * k;
         if (o.pool !== 0) {
             var p = AEK.build.solid(host, nm + "_POOL", col);
@@ -1500,11 +1504,20 @@ AEX.distort = (function () {
     // padded(host, plateItem, pad, mode): the plate centered in a comp pad px larger on each side, so displacement samples picture beyond
     // the frame edge instead of transparent black. mode "mirror" (default): Motion Tile with mirrored edges on the plate, the border continues
     // the picture. mode "scale": the plate over a 112 % copy of itself (a displaced border pulled in a scaled sliver: 525 dark border px
-    // against the plate's 76 on a daylight plate). One pad comp per plate and mode. Returns the comp.
+    // against the plate's 76 on a daylight plate). One pad comp per plate item, mode, size, rate and duration: a same-named comp holding
+    // another source or settings is left alone and the next free name (PAD_<plate>_2...) is used. Returns the comp.
     function padded(host, plate, pad, mode) {
-        var mir = mode !== "scale", nm = "PAD_" + plate.name.replace(/\.[a-z0-9]+$/i, "") + (mir ? "" : "_S");
-        var c = AEK.build.comp(nm, { width: host.width + 2 * pad, height: host.height + 2 * pad, fps: host.frameRate, duration: host.duration, bg: [0, 0, 0], reuse: true });
-        if (c.numLayers) { return c; }
+        var mir = mode !== "scale", base = "PAD_" + plate.name.replace(/\.[a-z0-9]+$/i, "") + (mir ? "" : "_S"), nm, c, n, src;
+        var W = host.width + 2 * pad, H = host.height + 2 * pad;
+        for (n = 1; ; n++) {
+            if (n > 50) { throw new Error("padded: 50 comps named " + base + " hold other plates or settings"); }
+            nm = n === 1 ? base : base + "_" + n;
+            c = AEK.build.comp(nm, { width: W, height: H, fps: host.frameRate, duration: host.duration, bg: [0, 0, 0], reuse: true });
+            if (c.width !== W || c.height !== H || c.frameRate !== host.frameRate || c.duration !== host.duration) { continue; }
+            if (!c.numLayers) { break; }
+            src = c.layer(1).source;
+            if (c.numLayers === (mir ? 1 : 2) && src && src.id === plate.id) { return c; }
+        }
         var k = 100 * host.width / plate.width, over, under;
         if (mir) {
             over = c.layers.add(plate);
@@ -1693,9 +1706,9 @@ AEX.integrate = (function () {
         var env = host.layers.addNull(); env.name = nm + "_ENVELOPE"; env.guideLayer = true; env.enabled = false;
         var sl = U.fx(env, "ADBE Slider Control", {}, "light");
         var eb = o.envBox || 260, ref = o.envRef || 0.25;
-        sl.property(1).expression = "var s = thisComp.layer(\"" + bl.name + "\").sampleImage([" + cx + ", " + cy + "], [" + eb + ", " + eb + "], true, time);\n" +
+        sl.property(1).expression = "var s = thisComp.layer(" + U.lit(bl.name) + ").sampleImage([" + cx + ", " + cy + "], [" + eb + ", " + eb + "], true, time);\n" +
             "clamp((0.2126 * s[0] + 0.7152 * s[1] + 0.0722 * s[2]) / " + ref + ", 0, 1.5);";
-        var E = "thisComp.layer(\"" + env.name + "\").effect(\"light\")(1)";
+        var E = "thisComp.layer(" + U.lit(env.name) + ").effect(\"light\")(1)";
         // dim toward the plate's own black (o.black): a palette dark lighter than the plate's black raised its blacks 6.4 to 9 %
         var dm = null;
         if (o.black) {
@@ -1822,7 +1835,7 @@ AEX.pulse = (function () {
         return n;
     }
     // E(o, key): the expression text reading one ENV slider of the scene comp.
-    function E(o, k) { return "comp(\"" + o.name + "_SCENE\").layer(\"ENV\").effect(\"" + k + "\")(1)"; }
+    function E(o, k) { return "comp(" + U.lit(o.name + "_SCENE") + ").layer(\"ENV\").effect(" + U.lit(k) + ")(1)"; }
     // productMatte(o, plate): the subject matte comp, white = subject. With o.matte (a footage or comp item: a key from the
     // pre-composite source, a roto, a 3D matte pass; it may move) that matte fitted to the frame, read by luma or, with matteMode "alpha",
     // by its alpha. Without it, a luma key of the plate between keyLo and keyHi cut below keyBottom: it holds only on a DARK plate
@@ -2078,7 +2091,7 @@ AEX.pulse = (function () {
         var cx = o.center[0] - o.W / 2, cy = o.center[1] - o.H / 2, band = o.emberBand, ds = emberSizes(o), lf = o.emberLife instanceof Array ? o.emberLife : [o.emberLife * 0.9, o.emberLife * 1.5];
         if (o.subjectBox) { var b = o.subjectBox; cx = (b[0] + b[2]) / 2 - o.W / 2; cy = (b[1] + b[3]) / 2 - o.H / 2; band = [0.55 * (b[2] - b[0]), 0.55 * (b[3] - b[1])]; }
         s.name = nm;
-        var step = 7; while (gcd(step, n) !== 1) { step += 2; }
+        var step = 7; while (n > 1 && gcd(step, n) !== 1) { step += 2; }   // gcd(step, 0) is step: no search for an empty plane
         for (k = 0; k < n; k++) {
             ang = (-172 + 164 * (k + R()) / n) * Math.PI / 180; ex = Math.cos(ang); ey = Math.sin(ang);
             rx = band[0] * o.s * lerp(1.0, 1.15, R()); ry = band[1] * o.s * lerp(1.0, 1.25, R());
@@ -2390,32 +2403,72 @@ AEX.pulse = (function () {
     }
     // gateFrames(r, dir, o): the frames the pixel gates read (scripts/vfx_measure.py gates <dir>/manifest.json), written by one job: the
     // plate alone (two consecutive frames and the calm frame), the scene comp and the subject matte at calm, peak and late times, the final
-    // comp at the same times and on the last two frames. r is what build() returned. o = {calm (s, 0), peak (frames after the hit, [0, 2, 4, 6, 8, 10, 12, 15]),
-    // late ([0.5, 1.5] s after the hit), prefix}. Returns the manifest (every path absolute).
+    // comp at the same times, on every frame of the flash window and on the last two frames, and the camera comp (before grain) on every
+    // held frame. r is what build() returned. o = {calm (s, 0), peak (frames after the hit, [0, 2, 4, 6, 8, 10, 12, 15]), flash (frames
+    // after the hit, 0 to 15), late ([0.5, 1.5] s after the hit), prefix, replace}. Every time must fall on a frame before the end.
+    // An existing PNG or manifest.json at a planned path stops the job before any write unless o.replace. The plate-only comp is
+    // created under a free name and removed at the end. Returns the manifest (every path absolute).
     function gateFrames(r, dir, g) {
         g = g || {};
         var o = r.o, fps = o.fps, pre = g.prefix || "g", calm = g.calm === undefined ? 0 : g.calm, pk = g.peak || [0, 2, 4, 6, 8, 10, 12, 15], late = g.late || [0.5, 1.5], i, t;
-        var mc = AEK.core.comp(o.name + "_PMATTE"), pc = comp(o, "_PLATEONLY"), pl = pc.layers.add(r.scene.layer("PLATE").source);
-        fitCover(pl, pl.source, o);
-        var M = { origin: o.center, at: o.at, fps: fps, scene: {}, matte: {}, outs: [], peaks: [], peakTimes: [] };
-        var times = [calm], last = Math.floor(o.dur * fps) - 1;
-        for (i = 0; i < pk.length; i++) { t = Math.round((o.at + pk[i] / fps) * 1000) / 1000; times.push(t); M.peakTimes.push(t); }
-        for (i = 0; i < late.length; i++) { times.push(Math.round((o.at + late[i]) * 1000) / 1000); }
+        var fl = g.flash, last = Math.floor(o.dur * fps) - 1, hold = o.hold || 0, bad = [];
+        if (!fl) { fl = []; for (i = 0; i <= 15; i++) { fl.push(i); } }
+        function at(fr) { return Math.round((o.at + fr / fps) * 1000) / 1000; }
+        function check(tt, what) { if (!(tt >= 0) || !(tt < o.dur) || Math.round(tt * fps) > last) { bad.push(what + " " + tt + " s"); } return tt; }
+        var M = { version: 2, origin: o.center, at: o.at, fps: fps, scene: {}, matte: {}, outs: [], peaks: [], peakTimes: [], flashTimes: [], holdFrames: [], holdCount: hold };
+        var times = [check(calm, "calm")];
+        for (i = 0; i < pk.length; i++) { t = check(at(pk[i]), "peak"); times.push(t); M.peakTimes.push(t); }
+        for (i = 0; i < late.length; i++) { times.push(check(Math.round((o.at + late[i]) * 1000) / 1000, "late")); }
+        for (i = 0; i < fl.length; i++) { M.flashTimes.push(check(at(fl[i]), "flash")); }
+        if (bad.length) { throw new Error("gateFrames: times not on a frame before the shot's end (" + o.dur + " s, last frame " + last + "): " + bad.join(", ")); }
+        // plan every capture first: a path planned twice is captured once, and no file is written before the collision check
+        var plan = [], seen = {};
+        function want(cKey, tt, name) {
+            var path = dir + "/" + pre + "_" + name + ".png";
+            if (!seen[path]) { seen[path] = 1; plan.push({ c: cKey, t: tt, path: path }); }
+            return path;
+        }
         for (i = 0; i < times.length; i++) {
             t = times[i];
-            M.scene[String(t)] = AEK.capture.frame(r.scene, t, dir + "/" + pre + "_scene_" + Math.round(t * fps) + ".png").path;
-            M.matte[String(t)] = AEK.capture.frame(mc, t, dir + "/" + pre + "_matte_" + Math.round(t * fps) + ".png").path;
-            M.outs.push(AEK.capture.frame(r.finalComp, t, dir + "/" + pre + "_final_" + Math.round(t * fps) + ".png").path);
-            if (i > 0 && i <= pk.length) { M.peaks.push(M.outs[i]); }
+            M.scene[String(t)] = want("scene", t, "scene_" + Math.round(t * fps));
+            M.matte[String(t)] = want("matte", t, "matte_" + Math.round(t * fps));
+            M.outs.push(want("fin", t, "final_" + Math.round(t * fps)));
         }
+        for (i = 0; i < M.flashTimes.length; i++) { t = M.flashTimes[i]; M.peaks.push(want("fin", t, "final_" + Math.round(t * fps))); }
         M.calm = M.outs[0]; M.calmScene = M.scene[String(calm)];
-        M.hold = [AEK.capture.frame(r.finalComp, (last - 1) / fps, dir + "/" + pre + "_final_" + (last - 1) + ".png").path,
-            AEK.capture.frame(r.finalComp, last / fps, dir + "/" + pre + "_final_" + last + ".png").path];
-        M.plate = [AEK.capture.frame(pc, (last - 1) / fps, dir + "/" + pre + "_plate_" + (last - 1) + ".png").path,
-            AEK.capture.frame(pc, last / fps, dir + "/" + pre + "_plate_" + last + ".png").path];
-        M.plateFrame = AEK.capture.frame(pc, calm, dir + "/" + pre + "_plate_calm.png").path;
-        var f = new File(dir + "/manifest.json"); f.encoding = "UTF-8"; f.open("w"); f.write(AEK.json.stringify(M)); f.close();
-        M.manifest = f.fsName;
+        M.hold = [want("fin", (last - 1) / fps, "final_" + (last - 1)), want("fin", last / fps, "final_" + last)];
+        for (i = Math.max(0, last - hold + 1); hold > 1 && i <= last; i++) { M.holdFrames.push(want("cam", i / fps, "hold_" + i)); }
+        M.plate = [want("plate", (last - 1) / fps, "plate_" + (last - 1)), want("plate", last / fps, "plate_" + last)];
+        M.plateFrame = want("plate", calm, "plate_calm");
+        var mf = AEK.core.abs(dir + "/manifest.json"), taken = [];
+        if (!g.replace) {
+            for (i = 0; i < plan.length; i++) { if (AEK.core.abs(plan[i].path).exists) { taken.push(plan[i].path); } }
+            if (mf.exists) { taken.push(mf.fsName); }
+            if (taken.length) { throw new Error("gateFrames: " + taken.length + " file(s) already exist, first " + taken[0] + ": pick a new folder or prefix, or pass replace: true"); }
+        }
+        var pc = null, nm, n, comps, f, scale = null;
+        try {
+            for (n = 1; !pc; n++) {
+                nm = o.name + "_PLATEONLY" + (n === 1 ? "" : "_" + n);
+                try { pc = AEK.build.comp(nm, { width: o.W, height: o.H, fps: o.fps, duration: o.dur, bg: BLACK }); } catch (e) { if (n >= 50) { throw e; } }
+            }
+            var pl = pc.layers.add(r.scene.layer("PLATE").source);
+            fitCover(pl, pl.source, o);
+            comps = { scene: r.scene, matte: AEK.core.comp(o.name + "_PMATTE"), fin: r.finalComp, cam: r.cam, plate: pc };
+            for (i = 0; i < plan.length; i++) {
+                f = AEK.capture.frame(comps[plan[i].c], plan[i].t, plan[i].path);
+                if (scale === null) { scale = f.pngScale; } else if (f.pngScale !== scale) { throw new Error("gateFrames: frames written at two PNG scales (" + scale + ", " + f.pngScale + ")"); }
+            }
+        } finally {
+            if (pc) { pc.remove(); }
+        }
+        M.pngScale = scale === null ? 1 : scale;
+        mf.encoding = "UTF-8";
+        var ok = mf.open("w");
+        ok = ok && mf.write(AEK.json.stringify(M));
+        ok = mf.close() && ok;
+        if (!ok) { var err = mf.error; if (mf.exists) { mf.remove(); } throw new Error("gateFrames: manifest not written to " + mf.fsName + (err ? " (" + err + ")" : "")); }
+        M.manifest = mf.fsName;
         return M;
     }
     return { DEFAULTS: DEFAULTS, build: build, env: env, productMatte: productMatte, cone: cone, density: density, falloff: falloff, dust: dust,

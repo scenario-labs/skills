@@ -65,7 +65,7 @@ function comp(name, o) {
     height: o.height || 1080,
     frameRate: o.fps || 30,
     duration: o.duration || 4,
-    numLayers: 3,
+    numLayers: o.numLayers === undefined ? 3 : o.numLayers,
     frameDuration: 1 / 30,
   });
   c.layers = M("layers", {
@@ -80,19 +80,38 @@ function comp(name, o) {
   return c;
 }
 const comps = {};
+// files that exist on the stand-in disk, the frames captured, the files written
+const failWrite = new Set(),
+  failCapture = new Set(),
+  disk = new Set(),
+  captured = [],
+  written = {};
 const AEK = {
   core: {
     comp: (n) => comps[n] || comp(n),
     layer: (c, n) => layer(typeof n === "string" ? n : "L" + n),
     item: (n) =>
       M(n, { width: 1920, height: 1080, frameRate: 30, duration: 5 }),
-    abs: (p) => M(p, { fsName: p }),
+    abs: (p) => new sandbox.File(p),
     ensureFolder: () => {},
     frame: (c, s) => Math.round(s * 30),
     log: () => {},
   },
   build: {
-    comp: (n, o) => (comps[n] = comp(n, o)),
+    // like the kit: a name in use throws unless reuse; a new comp starts empty
+    comp: (n, o) => {
+      if (comps[n]) {
+        if (o && o.reuse) {
+          return comps[n];
+        }
+        throw new Error("A comp named '" + n + "' already exists");
+      }
+      comps[n] = comp(n, Object.assign({ numLayers: 0 }, o));
+      comps[n].remove = () => {
+        delete comps[n];
+      };
+      return comps[n];
+    },
     solid: (c, n) => layer(n),
     adjustment: (c, n) => layer(n),
     nullLayer: (c, n) => layer(n),
@@ -113,7 +132,14 @@ const AEK = {
     describe: () => ({}),
   },
   capture: {
-    frame: (c, s, p) => ({ path: p, time: s, frame: Math.round(s * 30) }),
+    frame: (c, s, p) => {
+      if (failCapture.has(p)) {
+        throw new Error("Frame not written: " + p);
+      }
+      captured.push({ comp: String(c.name), time: s, path: p });
+      disk.add(p);
+      return { path: p, time: s, frame: Math.round(s * 30), pngScale: 1 };
+    },
     frames: () => [],
     timeoutMs: 1000,
   },
@@ -149,10 +175,25 @@ const sandbox = {
     return {
       fsName: p,
       encoding: "",
-      open() {},
-      write() {},
-      close() {},
-      exists: true,
+      open() {
+        return !failWrite.has(p);
+      },
+      write(t) {
+        written[p] = t;
+        disk.add(p);
+        return true;
+      },
+      close() {
+        return true;
+      },
+      remove() {
+        disk.delete(p);
+        delete written[p];
+        return true;
+      },
+      get exists() {
+        return disk.has(p);
+      },
       parent: { fsName: path.dirname(p) },
     };
   },
@@ -219,8 +260,16 @@ function kind(v) {
   }
   return "other";
 }
-sandbox.host = () =>
-  AEK.build.comp("HOST", { width: 1920, height: 1080, fps: 30, duration: 4 });
+sandbox.host = () => {
+  delete comps.HOST;
+  return AEK.build.comp("HOST", {
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    duration: 4,
+    numLayers: 3,
+  });
+};
 sandbox.plateItem = M("plate", {
   width: 1920,
   height: 1080,
@@ -395,9 +444,162 @@ for (const [mod, fn, call, spec] of SPEC) {
   console.log(errs.length ? "FAIL" : "ok  ", mod + "." + fn, errs.join("; "));
   bad += errs.length ? 1 : 0;
 }
+
+// Pure-logic checks: each names the defect it guards against.
+function check(label, fn) {
+  let err = null;
+  try {
+    err = fn();
+  } catch (e) {
+    err = "threw " + e.message;
+  }
+  console.log(err ? "FAIL" : "ok  ", label, err || "");
+  bad += err ? 1 : 0;
+}
+const run = (code) => vm.runInContext(code, sandbox, { timeout: 10000 });
+check("vfx.cost: frame numbers padded, never truncated", () => {
+  const c = comp("COST");
+  const f = run("AEX.vfx.cost")(c, [0, 1000 / 30], "/d", "p");
+  const a = f[0].path,
+    b = f[1].path;
+  return a === "/d/p_f000.png" && b === "/d/p_f1000.png"
+    ? null
+    : "paths " + a + ", " + b;
+});
+check("vfxu.lit: a name with quotes and backslashes reads back whole", () => {
+  const name = 'Null "A" \\ 2';
+  const l = run("AEX.vfxu.lit")(name);
+  if (eval(l) !== name) {
+    return "literal " + l;
+  }
+  const ex = run("AEX.vfx.followExpr")(name, "x");
+  return ex.indexOf("thisComp.layer(" + l + ")") >= 0 ? null : "follow " + ex;
+});
+check("glow.gain: copies made with a prefix are found by the prefix", () => {
+  const c = comp("GAIN"),
+    asked = [];
+  c.layer = (n) => {
+    asked.push(n);
+    return layer(n);
+  };
+  run("AEX.glow.gain")(c, "SRC", 2, { prefix: "PFX", n: 2 });
+  return asked.join() === "PFX glow 12,PFX glow 24" ? null : asked.join();
+});
+check(
+  "pulse.build: all embers in BACK leaves an empty FRONT plane (terminates)",
+  () => {
+    const r = run(
+      'AEX.pulse.build(plateItem, { name: "EMB", dur: 4, embers: 10, emberBack: 1 })',
+    );
+    const e = r.embers;
+    return e.count[0] === 0 && e.count[1] === 10 && e.sizes.length === 10
+      ? null
+      : JSON.stringify(e);
+  },
+);
+let G = null;
+check(
+  "pulse.gateFrames: every flash frame, hold on the camera comp, pngScale",
+  () => {
+    G = run('AEX.pulse.build(plateItem, { name: "GATE", dur: 4 })');
+    sandbox.G = G;
+    const m = run('AEX.pulse.gateFrames(G, "/g1")');
+    const fr = m.peaks.map((p) => Number(p.match(/_(\d+)\.png$/)[1]));
+    for (let i = 1; i < fr.length; i++) {
+      if (fr[i] !== fr[i - 1] + 1) {
+        return "flash frames " + fr.join();
+      }
+    }
+    if (fr.length !== 16) {
+      return "flash frames " + fr.length;
+    }
+    const holdComps = captured
+      .filter((c) => /_hold_/.test(c.path))
+      .map((c) => c.comp);
+    if (!m.holdFrames.length || m.holdFrames.length !== m.holdCount) {
+      return "hold frames " + m.holdFrames.length + " of " + m.holdCount;
+    }
+    if (holdComps.some((n) => n !== "GATE_CAM")) {
+      return "hold from " + holdComps.join();
+    }
+    if (comps.GATE_PLATEONLY) {
+      return "plate-only comp left in the project";
+    }
+    const j = JSON.parse(written["/g1/manifest.json"]);
+    return j.pngScale === 1 &&
+      j.version === 2 &&
+      m.manifest === "/g1/manifest.json"
+      ? null
+      : "manifest " + written["/g1/manifest.json"];
+  },
+);
+check(
+  "pulse.gateFrames: an existing frame or manifest stops it before any write",
+  () => {
+    const n = captured.length;
+    try {
+      run('AEX.pulse.gateFrames(G, "/g1")');
+    } catch (e) {
+      return /already exist/.test(e.message) && captured.length === n
+        ? null
+        : e.message;
+    }
+    return "no error on a second run into the same folder";
+  },
+);
+check("pulse.gateFrames: late time past the end is refused", () => {
+  try {
+    run('AEX.pulse.gateFrames(G, "/g2", { late: [0.5, 9] })');
+  } catch (e) {
+    return /late/.test(e.message) && !disk.has("/g2/manifest.json")
+      ? null
+      : e.message;
+  }
+  return "no error";
+});
+check(
+  "pulse.gateFrames: an existing plate-only comp is kept, the temporary one removed",
+  () => {
+    const mine = comp("GATE_PLATEONLY");
+    comps.GATE_PLATEONLY = mine;
+    run('AEX.pulse.gateFrames(G, "/g3")');
+    return comps.GATE_PLATEONLY === mine && !comps.GATE_PLATEONLY_2
+      ? null
+      : Object.keys(comps).join();
+  },
+);
+check(
+  "pulse.gateFrames: a failed capture still removes the temporary comp",
+  () => {
+    failCapture.add("/g4/g_hold_119.png");
+    try {
+      run('AEX.pulse.gateFrames(G, "/g4")');
+    } catch (e) {
+      return !comps.GATE_PLATEONLY_2 && !disk.has("/g4/manifest.json")
+        ? null
+        : "comp or manifest left after: " + e.message;
+    }
+    return "no error";
+  },
+);
+check(
+  "pulse.gateFrames: a failed manifest write throws and leaves no manifest",
+  () => {
+    failWrite.add("/g5/manifest.json");
+    try {
+      run('AEX.pulse.gateFrames(G, "/g5")');
+    } catch (e) {
+      return /manifest not written/.test(e.message) &&
+        !disk.has("/g5/manifest.json")
+        ? null
+        : e.message;
+    }
+    return "no error";
+  },
+);
 console.log(
   bad
     ? bad + " builder(s) do not match"
-    : "all builders match their documented returns",
+    : "all builders match their documented returns, all logic checks pass",
 );
 process.exit(bad ? 1 : 0);

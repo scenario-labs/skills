@@ -107,8 +107,8 @@ over black on 3 frames; its peak sits at the level planned.
    interactive light, pool, reflections, lens last. A moving plate: no end hold, origin and floor
    line on a tracked null. A daylight plate: procedures section 13. Without a subject in front,
    `AEX.integrate.build()`. GATE: `AEX.pulse.gateFrames` then `vfx_measure.py gates` (exit 0): 0 %
-   clipped, contour ratio, far-side outline, blacks, grain, and hit strength 0.7 to 0.95 (under 0.5
-   the hit does nothing, over 1.0 it burns).
+   clipped, contour ratio, far-side outline, blacks, grain, hold, hit strength 0.7 to 0.95 (under
+   0.5 the hit does nothing, over 1.0 it burns).
 
 6. **Lens and motion.** Optional lens finish (`AEX.lens.apply`): CA 0.15 % (2.7 px corners, 0
    center), halation above 0.75, CC Vignette 100 (-0.5 stop), Add Grain last at the plate's std over

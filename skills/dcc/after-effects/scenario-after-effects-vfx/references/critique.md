@@ -140,7 +140,7 @@ emission spread, subject in the light).
 | One-sign ring, or Max over 0.1 x width     | picture slides out, or tears              | bipolar ring, ±8 px over 110 px (±11 over 80 tears texture)      |
 | Origin inside the subject                  | cream outline round every edge            | `edgeReach`, rim threshold                                       |
 | Cone Axis Extra Angle above 90             | burst thrown backwards                    | 15 to 70 degrees                                                 |
-| `canAddProperty()` as a guard              | true for any match name                   | wrap `addProperty()` in try                                      |
+| `canAddProperty()` as a guard on shapes    | true for any name on shape Contents       | wrap `addProperty()` in try                                      |
 | Using a builder's return as a layer        | `Function r.layer.property is undefined`  | composite builders return names: `AEK.core.layer(comp, r.layer)` |
 
 ## Numbers moved from the skill body

@@ -11,9 +11,11 @@ Luma is Rec. 709 on the encoded values, 0 to 1 (levels = luma x 255). Frames fro
   vfx_measure.py grain --plate A B --shot A B        frame-to-frame std on flat tiles the effect leaves alone, shot over plate
   vfx_measure.py blacks --plate IMG --shot IMG --origin X Y     p1 luma beyond --beyond px from the origin, shot over plate
   vfx_measure.py wisp --with IMG... --without IMG... --box X0 Y0 X1 Y1 [--fps 30]   smoke accent: contrast and height per frame, verdict
-  vfx_measure.py gates MANIFEST.json                 every gate above from the manifest AEX.pulse.gateFrames writes
+  vfx_measure.py gates MANIFEST.json                 every gate above from the manifest AEX.pulse.gateFrames writes, plus the hold
+
+A gate that has nothing to measure (an empty band, region or tile set) is inconclusive, and an inconclusive gate fails.
 """
-import argparse, json, os, sys
+import argparse, json, math, os, re, sys
 
 
 def _read_json(path):
@@ -33,7 +35,9 @@ except ImportError:
 # and 1.05 to 1.37x the calm mean; the same shots with the old hot core and flash used 2.0 to 7.8 % and 1.10 to 1.49x.
 LIMITS = {"clip": 0.0, "contour": 1.0, "contourPeak": 0.95, "outline": 20.0, "grain": 0.10, "blacks": 0.05, "blacksLevels": 1.0,
           "flashHeadroom": 0.06, "flashRatio": 1.45, "strengthMin": 0.5,
-          "wispContrast": 10.0, "wispHeight": 0.08, "wispSeconds": 1.0}
+          "wispContrast": 10.0, "wispHeight": 0.08, "wispSeconds": 1.0, "holdMove": 0.25}
+# Hold: largest mean absolute luma change between consecutive held frames of the camera comp (before grain), in levels. The scene
+# is frozen by time remap there, so a camera push or shake still running in the hold is the only thing that moves it.
 # Hit strength = max(headroom / flashHeadroom, (ratio - 1) / (flashRatio - 1)): 1.0 is the ceiling on either reading. A pulse below
 # strengthMin does not light the scene (fails); aim for 0.7 to 0.95.
 # Wisp: brightest 5 % of (with - without) luma inside the wisp's box, in levels, and its visible height (rows with 3 or more pixels
@@ -87,6 +91,7 @@ def chess_dist(m, n):
 
 
 def contour(frame, matte):
+    """Near-to-far luma ratio; None when either band has no pixel (inconclusive)."""
     m = matte_mask(matte)
     y = luma(load(frame))
     rows = np.where(m.any(axis=1))[0]
@@ -98,6 +103,8 @@ def contour(frame, matte):
     upper[:mid, :] = True
     near = (d >= 1) & (d <= 3) & upper
     far = (d >= 6) & (d <= 14) & upper
+    if not near.any() or not far.any():
+        return None
     return float(y[near].mean() / max(y[far].mean(), 1e-6))
 
 
@@ -148,7 +155,9 @@ def grain(plate, shot):
     temporal grain: then the high-pass std (luma minus its 5 x 5 mean) of one frame is compared instead."""
     tiles, size = flat_tiles(luma(load(plate[0])))
     yp, ys = luma(load(plate[0])), luma(load(shot[0]))
-    tiles = [(ty, tx) for ty, tx in tiles if abs(ys[ty:ty + size, tx:tx + size].mean() - yp[ty:ty + size, tx:tx + size].mean()) * 255 < 1.0] or tiles
+    tiles = [(ty, tx) for ty, tx in tiles if abs(ys[ty:ty + size, tx:tx + size].mean() - yp[ty:ty + size, tx:tx + size].mean()) * 255 < 1.0]
+    if not tiles:
+        return {"mode": None, "tiles": 0, "inconclusive": "no flat tile the effect leaves alone: grain not measured"}
     p = temporal_std(plate[0], plate[1], tiles, size)
     if p < 0.05:
         p, s, mode = highpass_std(plate[0], tiles, size), highpass_std(shot[0], tiles, size), "highpass"
@@ -167,7 +176,7 @@ def blacks(plate, shot, origin, beyond=900):
     yy, xx = np.mgrid[0:yp.shape[0], 0:yp.shape[1]]
     far = np.hypot(xx - origin[0], yy - origin[1]) > beyond
     if not far.any():
-        far = np.ones_like(yp, dtype=bool)
+        return {"inconclusive": "no pixel beyond %g px from the origin: pass a smaller --beyond" % beyond}
     p1p, p1s = float(np.percentile(yp[far], 1)), float(np.percentile(ys[far], 1))
     r = {"plateP1": round(p1p, 4), "shotP1": round(p1s, 4), "levels": round((p1s - p1p) * 255, 2)}
     r["change"] = None if p1p < 2 / 255 else round(p1s / p1p - 1, 3)
@@ -177,6 +186,12 @@ def blacks(plate, shot, origin, beyond=900):
 def flash(calm, peaks, max_headroom, max_ratio):
     """Brightest final frame among `peaks` (every frame of the 15 after the hit: the peak comes 5 to 10 frames late) against the calm frame.
     headroom = (peak - calm) / (1 - calm): the share of the light still available that the hit uses. Pass: headroom and ratio within limits."""
+    if not (isinstance(max_headroom, (int, float)) and math.isfinite(max_headroom) and max_headroom > 0):
+        raise SystemExit("flash: max headroom must be a finite number above 0, got %r" % (max_headroom,))
+    if not (isinstance(max_ratio, (int, float)) and math.isfinite(max_ratio) and max_ratio > 1):
+        raise SystemExit("flash: max ratio must be a finite number above 1, got %r" % (max_ratio,))
+    if not peaks:
+        raise SystemExit("flash: no peak frame to measure")
     c = float(luma(load(calm)).mean())
     vals = [(float(luma(load(p)).mean()), p) for p in peaks]
     pk, path = max(vals)
@@ -188,32 +203,63 @@ def flash(calm, peaks, max_headroom, max_ratio):
 
 def wisp(withs, withouts, box, fps=30):
     """Each pair: the same frame with and without the wisp. Contrast = p95 of the luma rise inside box (levels); height = rows of the box with
-    3 or more pixels risen 4 levels, over the frame height. Frame numbers are read from the file names (last number)."""
-    import re
+    3 or more pixels risen 4 levels, over the frame height. Frame numbers are read from the file names (last number); both lists must
+    hold the same frame numbers, once each, and frames are paired by number."""
+    def by_frame(paths, side):
+        out = {}
+        for p in paths:
+            n = re.findall(r"(\d+)", os.path.basename(p))
+            if not n:
+                raise SystemExit("wisp: no frame number in the %s file name %s" % (side, os.path.basename(p)))
+            if int(n[-1]) in out:
+                raise SystemExit("wisp: frame %d appears twice in the %s frames" % (int(n[-1]), side))
+            out[int(n[-1])] = p
+        return out
+    fw, fo = by_frame(withs, "--with"), by_frame(withouts, "--without")
+    if set(fw) != set(fo):
+        raise SystemExit("wisp: --with and --without hold different frames (only with: %s; only without: %s)"
+                         % (sorted(set(fw) - set(fo)), sorted(set(fo) - set(fw))))
     x0, y0, x1, y1 = [int(v) for v in box]
     rows = []
-    for a, b in zip(withs, withouts):
+    for fr in sorted(fw):
+        a, b = fw[fr], fo[fr]
         ya, yb = luma(load(a)), luma(load(b))
         d = (ya - yb)[y0:y1, x0:x1] * 255
         h = int(((d >= 4).sum(axis=1) >= 3).sum())
-        n = re.findall(r"(\d+)", os.path.basename(a))
-        rows.append({"frame": int(n[-1]) if n else None, "contrast": round(float(np.percentile(d, 95)), 2), "height": round(h / ya.shape[0], 3)})
+        rows.append({"frame": fr, "contrast": round(float(np.percentile(d, 95)), 2), "height": round(h / ya.shape[0], 3)})
     ok = [r["frame"] for r in rows if r["contrast"] >= LIMITS["wispContrast"] and r["height"] >= LIMITS["wispHeight"] and r["frame"] is not None]
     span = (max(ok) - min(ok)) / fps if ok else 0.0
     return {"frames": rows, "readsFor": round(span, 2), "pass": bool(span >= LIMITS["wispSeconds"])}
 
 
+def hold_motion(paths):
+    """Largest mean absolute luma change between consecutive frames, in levels."""
+    ys = [luma(load(p)) for p in paths]
+    return float(max(np.abs(a - b).mean() for a, b in zip(ys, ys[1:])) * 255)
+
+
 def gates(manifest):
-    """Manifest from AEX.pulse.gateFrames: {origin, at, plate: [A, B], calm, peaks: [...], scene: {t: path}, matte: {t: path}, outs: [...],
-    hold: [A, B], peakTimes: [...]}. Every path absolute."""
+    """Manifest from AEX.pulse.gateFrames: {version, origin, at, plate: [A, B], calm, peaks: [...], scene: {t: path}, matte: {t: path},
+    outs: [...], hold: [A, B], holdFrames: [...], holdCount, peakTimes: [...], pngScale}. Every path absolute. A manifest written before
+    version 2 (no pngScale, no holdFrames) is read as scale 1 and its hold is not measured; a note says so."""
     M = _read_json(manifest)
+    notes = []
+    scale = M.get("pngScale")
+    if scale is None:
+        notes.append("manifest without pngScale (before version 2): frames read as scale 1")
+    elif scale != 1:
+        raise SystemExit("gates: frames written at pngScale %s (a 32 bpc project): the limits are set on 8 and 16 bpc frames; "
+                         "capture again at 16 bpc" % scale)
     o = M["origin"]
     R = {"clip": {}, "contour": {}, "outline": {}}
+    clipped = {}
     for p in M["outs"]:
-        R["clip"][os.path.basename(p)] = round(clip_share(load(p)) * 100, 4)
+        clipped[os.path.basename(p)] = clip_share(load(p))
+        R["clip"][os.path.basename(p)] = round(clipped[os.path.basename(p)] * 100, 4)
     for t, p in sorted(M["scene"].items(), key=lambda kv: float(kv[0])):
         peak = t in [str(x) for x in M.get("peakTimes", [])]
-        R["contour"][t] = {"ratio": round(contour(p, M["matte"][t]), 3), "peak": peak}
+        ratio = contour(p, M["matte"][t])
+        R["contour"][t] = {"ratio": None if ratio is None else round(ratio, 3), "peak": peak}
         ol = outline(p, M["matte"][t], o)
         R["outline"][t] = None if ol is None else round(ol, 1)
     R["flash"] = flash(M["calm"], M["peaks"], LIMITS["flashHeadroom"], LIMITS["flashRatio"])
@@ -221,11 +267,21 @@ def gates(manifest):
         R["grain"] = grain(M["plate"], M["hold"])
     if M.get("plateFrame") and M.get("calmScene"):
         R["blacks"] = blacks(M["plateFrame"], M["calmScene"], o)
+    if "holdFrames" not in M:
+        notes.append("manifest without holdFrames (before version 2): the hold is not measured")
+    elif len(M["holdFrames"]) >= 2:
+        R["hold"] = {"move": round(hold_motion(M["holdFrames"]), 3), "frames": len(M["holdFrames"])}
+    elif M.get("holdCount", 0) > 1:
+        R["hold"] = {"inconclusive": "%d held frames asked, %d captured" % (M["holdCount"], len(M["holdFrames"]))}
     fails = []
-    if max(R["clip"].values()) > LIMITS["clip"]:
+    if not clipped:
+        fails.append("clip (inconclusive: no final frame)")
+    elif max(clipped.values()) > LIMITS["clip"]:
         fails.append("clip")
     for t, v in R["contour"].items():
-        if v["ratio"] < (LIMITS["contourPeak"] if v["peak"] else LIMITS["contour"]):
+        if v["ratio"] is None:
+            fails.append("contour " + t + " (inconclusive: a band around the matte is empty)")
+        elif v["ratio"] < (LIMITS["contourPeak"] if v["peak"] else LIMITS["contour"]):
             fails.append("contour " + t)
     for t, v in R["outline"].items():
         if v is not None and v > LIMITS["outline"] and t in [str(x) for x in M.get("peakTimes", [])]:
@@ -234,14 +290,26 @@ def gates(manifest):
         fails.append("flash")
     if "grain" in R:   # on a still plate (high-pass mode) only added grain fails: a lower high-pass std is texture softened by the CA
         g = R["grain"]
-        if (g["mode"] == "temporal" and abs(g["change"]) > LIMITS["grain"]) or (g["mode"] == "highpass" and g["change"] > LIMITS["grain"]):
+        if "inconclusive" in g:
+            fails.append("grain (inconclusive)")
+        elif (g["mode"] == "temporal" and abs(g["change"]) > LIMITS["grain"]) or (g["mode"] == "highpass" and g["change"] > LIMITS["grain"]):
             fails.append("grain")
     if "blacks" in R:
         b = R["blacks"]
-        if (b["change"] is None and abs(b["levels"]) > LIMITS["blacksLevels"]) or (b["change"] is not None and abs(b["change"]) > LIMITS["blacks"]):
+        if "inconclusive" in b:
+            fails.append("blacks (inconclusive)")
+        elif (b["change"] is None and abs(b["levels"]) > LIMITS["blacksLevels"]) or (b["change"] is not None and abs(b["change"]) > LIMITS["blacks"]):
             fails.append("blacks")
+    if "hold" in R:
+        h = R["hold"]
+        if "inconclusive" in h:
+            fails.append("hold (inconclusive)")
+        elif h["move"] > LIMITS["holdMove"]:
+            fails.append("hold")
     if all(v is None for v in R["outline"].values()):
         R["outlineNote"] = "no matte edge beyond 300 px from the origin: the far-side outline does not apply"
+    if notes:
+        R["notes"] = notes
     R["limits"] = LIMITS
     R["fails"] = fails
     return R
@@ -271,7 +339,10 @@ def main():
     elif a.cmd == "flash":
         out = flash(a.calm, a.peak, a.max_headroom, a.max_ratio)
     elif a.cmd == "contour":
-        out = {"contourRatio": round(contour(a.frame, a.matte), 3)}
+        r = contour(a.frame, a.matte)
+        out = {"contourRatio": None if r is None else round(r, 3)}
+        if r is None:
+            out["inconclusive"] = "a band around the matte is empty"
     elif a.cmd == "outline":
         out = {"outlineLevels": outline(a.frame, a.matte, a.origin, a.min_dist)}
     elif a.cmd == "grain":
@@ -283,7 +354,7 @@ def main():
     else:
         out = gates(a.manifest)
     print(json.dumps(out, indent=1))
-    if (a.cmd == "gates" and out["fails"]) or (a.cmd in ("wisp", "flash") and not out["pass"]):
+    if (a.cmd == "gates" and out["fails"]) or (a.cmd in ("wisp", "flash") and not out["pass"]) or "inconclusive" in out:
         sys.exit(1)
 
 

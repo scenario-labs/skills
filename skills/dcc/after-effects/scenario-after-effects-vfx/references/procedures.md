@@ -74,8 +74,8 @@ for (i = 1; i <= fx.numProperties; i++) {
 return out;
 ```
 
-Trap: `canAddProperty()` returns true even for an invented match name; only `addProperty()` throws.
-Wrap it in try.
+Trap: `canAddProperty()` is false for an effect that is not installed, but on shape Contents it is
+true even for an invented match name, and only `addProperty()` throws. Wrap `addProperty()` in try.
 
 ## 1. Bit depth
 
@@ -670,7 +670,7 @@ as air while Max is at most 0.1 x the noise scale and melts from 0.2x.
 var c = AEK.core.comp(ARGS.comp), plate = AEK.core.item(ARGS.plate);
 var r = AEX.distort.apply(c, plate, { pad: 48,
     haze: { scale: 200, amount: 18, region: [0, 600, 1920, 1080], feather: 160, rise: 90 },
-    ring: { center: [960, 540], radius: 420, width: 70, at: 0.5, frames: 20, fade: 10, amount: 40 } });
+    ring: { center: [960, 540], radius: 420, width: 70, at: 0.5, frames: 20, fade: 10, amount: 5 } });
 return AEX.vfx.cost(c, [0.5, 0.7, 1.0], ARGS.out, "distort");
 ```
 
@@ -860,7 +860,11 @@ return { layers: r.layers, rigs: r.rig, manifest: g.manifest, frames: AEX.vfx.co
 
 `subjectBox` is the subject's bounding box in comp px (from the matte or by eye): streaks and embers
 are born on its ellipse. **GATE 13** (every pixel gate is measured by `scripts/vfx_measure.py gates`
-on the manifest `AEX.pulse.gateFrames` writes; exit code 1 on a failure):
+on the manifest `AEX.pulse.gateFrames` writes; exit code 1 on a failure). A gate with nothing to
+measure (an empty band, region or tile set) is inconclusive and fails. `gateFrames` stops before
+writing when a frame or `manifest.json` already exists in the folder (pass `replace: true`), and
+refuses a time past the shot's last frame. Frames from a 32 bpc project are refused: capture at 16
+bpc.
 
 - Pixels at 255 in all channels: 0 % on every frame, flash included.
 - Contour ratio: mean luma of the pixels 1 to 3 px outside the matte edge over the mean of those 6
@@ -871,14 +875,14 @@ on the manifest `AEX.pulse.gateFrames` writes; exit code 1 on a failure):
 - Far-side outline: mean luma 1 to 3 px inside the edge minus 6 to 12 px inside, more than 300 px
   from the origin: at most 20 levels at the peak. A subject whose edges all sit within 300 px of the
   origin has no far side: the gate does not apply.
-- Hit strength: take the brightest final frame over the 15 after the hit (it comes 5 to 10 frames
-  late). Strength = the larger of headroom / 6 % and (ratio - 1) / 0.45, with headroom = (peak -
-  calm) / (1 - calm) and ratio = peak / calm. Aim for 0.7 to 0.95: under 0.5 the hit does nothing
-  (fails), over 1.0 it burns (fails). Defaults: 0.85 on a mid-dark plate, 0.80 on a bright one, 0.90
-  on a dark wide one. Raise or lower interactive, pool, flash and FRONT bloom together to move it.
-  Measured on one shot: 0.31 with everything at a third (fails), 0.73 with interactive 22, pool 22,
-  flash 0.12, bloom 0.9, 0.95 with 55, 45, 0.2, 1.4. The old core with flash 0.42 read above 1.0 on
-  all three plates.
+- Hit strength: take the brightest final frame over the 15 after the hit (`gateFrames` captures
+  every one; it comes 5 to 10 frames late). Strength = the larger of headroom / 6 % and (ratio - 1)
+  / 0.45, with headroom = (peak - calm) / (1 - calm) and ratio = peak / calm. Aim for 0.7 to 0.95:
+  under 0.5 the hit does nothing (fails), over 1.0 it burns (fails). Defaults: 0.85 on a mid-dark
+  plate, 0.80 on a bright one, 0.90 on a dark wide one. Raise or lower interactive, pool, flash and
+  FRONT bloom together to move it. Measured on one shot: 0.31 with everything at a third (fails),
+  0.73 with interactive 22, pool 22, flash 0.12, bloom 0.9, 0.95 with 55, 45, 0.2, 1.4. The old core
+  with flash 0.42 read above 1.0 on all three plates.
 - Plate blacks (p1 luma beyond 900 px from the origin) within 5 % of the plate on the scene comp
   outside the peak frame (+0.9 %), or within 1 level when the plate's p1 is under 2 levels. Measure
   before the lens: vignette 70 lowers p1 about 20 %.
@@ -887,7 +891,8 @@ on the manifest `AEX.pulse.gateFrames` writes; exit code 1 on a failure):
   `grain` from the plate (std / 4.2): the default 0.17 is for a 0.73-level plate and put a clean
   still plate at +91 % (0.044 gave +2.9 %). On a still plate the high-pass std is texture, which the
   CA softens (-13.9 % on a bright still): there only a rise above 10 % fails.
-- The last 15 frames differ by 0 levels before grain.
+- Hold: the held frames of the camera comp, before grain, move at most 0.25 level from one to the
+  next (`hold`). A push or shake still running at the end fails it.
 - Element counts returned by the job match the plan (layers, streaks, rings).
 - Visual: the ring travels along the floor, its back half behind the subject. Streaks leave from all
   around the outline.
