@@ -204,7 +204,7 @@ From `sources/3dsmax-version-deltas.md` and the saved docs.
 - **Gaussian splats (2027.2+):** Arnold renders and relights them; V-Ray and Corona do not yet.
 - **Script renders:** close Render Setup first; a modal dialog (including a Units Mismatch from
   `maxstart.max`) blocks a scripted render; an Arnold render can crash 3ds Max, so save a versioned
-  copy first. In 3dsmaxbatch 2027.3 every Arnold render crashed: render Arnold in a live session.
+  copy first.
 
 ## References
 

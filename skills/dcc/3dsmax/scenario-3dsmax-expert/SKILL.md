@@ -143,9 +143,8 @@ Runner side (plain Python 3.10+, any OS, never imports pymxs):
     bound to its file stem. Lead modules it imports are added automatically, as are lead modules the
     chunk itself calls.
 - `max_batch.command(script, scene=None, args=None, exe=None, listener_log=None, log=None, verbosity=3, dialog_monitor=True)`
-  returns an argument list, never a shell string. Strings go as `-mxsString key:value`, backslashes
-  doubled (3dsmaxbatch adds the quotes and drops any inside, so a value holding one is refused),
-  numbers and booleans as `-mxsValue key:value`.
+  returns an argument list, never a shell string. Strings go as `-mxsString key:value`, numbers and
+  booleans as `-mxsValue key:value`.
 - `max_batch.run_batch(script, scene=None, args=None, timeout=1800, log_dir=None, exe=None, require_result=False)`
   returns `{ok, exit_code, meaning, result, stdout, listener_log, log, command, seconds}`. Pass
   `require_result=True` for a wrapped job: a missing result file then fails the run. Exit codes:
@@ -169,8 +168,7 @@ Inside 3ds Max (`scripts/maxkit/`, main thread only; twins in `scripts/maxkit/mx
 - `capture.viewport(path, view=None, size=None)`,
   `capture.views(dir, views=("persp", "front", "left", "top"), size=None, stem="view")`,
   `capture.render(path, camera=None, size=None)`. Each writes a new file (`_v002`) and never
-  overwrites. In a live session `render` refuses a scene with missing maps (their dialog is modal),
-  and it raises on a frame of one flat color, which an aborted render leaves.
+  overwrites.
 - `xio.import_any(path, **opts)`, `xio.export_fbx(path, preset=None, selected=False)`,
   `xio.export_gltf(path, selected=False)`, `xio.export_usd(path, selected=False)`,
   `xio.gltf_precheck()`.
@@ -194,8 +192,7 @@ saved docs.
   `run_batch` exit code 0 and `result.ok` true.
 - Visual: the contact sheet shows the subject in every view, with no `all_black`, `uniform` or
   `low_contrast_center` flag. Cameras are captured with Safe Frame on.
-- Report: the assumptions list is present, the new file names are listed, and the user's file is
-  untouched.
+- Report: assumptions and new file names listed, the user's file untouched.
 
 ## Common mistakes
 
@@ -221,10 +218,9 @@ saved docs.
 - Merge with `#autoRenameDups #renameMtlDups #neverReparent`: the defaults prompt, and an incoming
   "Wood" never replaces the scene's "Wood".
 - One main thread: a long script freezes the UI. Split work into stages.
-- Save first: an Arnold render can crash 3ds Max. In 3dsmaxbatch 2027.3 every one did, so
-  `capture.render` refuses Arnold in batch: render Arnold in a live session. Reading a Batch Render
-  view's camera crashes it. Biped `scaleFootprints` crashes it. After a crash the user reopens 3ds
-  Max and the MCP connection (c3acjyR7j7E 00:09:37); resume from the last `_v002`.
+- Save first: an Arnold render can crash 3ds Max (in 3dsmaxbatch 2027.3, every one did). Reading a
+  Batch Render view's camera crashes it. Biped `scaleFootprints` crashes it. After a crash the user
+  reopens 3ds Max and the MCP connection (c3acjyR7j7E 00:09:37); resume from the last `_v002`.
 - Autosave and `holdMaxFile()` are no substitute for a saved `_v002`.
 - Scripts cannot overwrite rendered `.tx` files, re-imported `.abc` caches, or text files a script
   opened. Write new names.

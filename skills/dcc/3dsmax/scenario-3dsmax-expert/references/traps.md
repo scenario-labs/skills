@@ -1,7 +1,8 @@
 # Current 3ds Max traps (2027.3)
 
 Facts follow `3dsmax-version-deltas` and the saved docs. Each trap gives the symptom, the fix and
-the sibling skill that owns the domain. None has been checked in a running 3ds Max.
+the sibling skill that owns the domain. None has been checked in a running 3ds Max, except the batch
+Arnold crash.
 
 ## Across domains
 
