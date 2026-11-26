@@ -416,9 +416,12 @@ REM checked against scripting-pipeline__3dsmaxbatch-2020.md
 "C:\Program Files\Autodesk\3ds Max 2027\3dsmaxbatch.exe" "<<JOB_PY>>" -sceneFile "<<SCENE_MAX>>" -mxsString outdir:"<<OUT_DIR>>" -mxsString stem:"<<STEM>>" -listenerlog "<<OUT_DIR>>\_logs\<<STEM>>_listener.log" -log "<<OUT_DIR>>\_logs\<<STEM>>_max.log" -dm on -v 3
 ```
 
-`max_batch.command()` builds this list and quotes `-mxsString` values; whether 3dsmaxbatch reads
-them from argv with the quotes intact is not documented [verify on the first run]. The batch options
-come from the 2020 page; the 2027 page is an overview only.
+`max_batch.command()` builds this list. 3dsmaxbatch 2027.3 puts each `-mxsString` value in quotes
+itself, as a regular MAXScript string, so `command()` passes it unquoted with backslashes doubled;
+it refuses a value holding a double quote, which 3dsmaxbatch drops. Typed by hand,
+`outdir:"C:\renders"` reaches MAXScript as `"C:\renders"`, where `\r` is a carriage return: double
+the backslashes or use forward slashes. The batch options come from the 2020 page; the 2027 page is
+an overview only.
 
 Exit codes: 0 success; -100 bad arguments (fix the command, do not retry); -110 Max could not start
 (license, install); -120 lost contact with Max (retry once); -130 Max reported an error while

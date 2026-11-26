@@ -190,17 +190,18 @@ class BatchTests(unittest.TestCase):
     def test_command_list_and_args(self):
         cmd = max_batch.command(r"C:\Jobs\My Job\audit.ms", scene=r"C:\Projects\Lobby Scene\lobby v001.max",
                                 args={"result_path": r"C:\Out Dir\r.json", "frames": 10, "fast": True,
-                                      "label": 'say "hi"'},
+                                      "label": "say hi"},
                                 exe=r"C:\Program Files\Autodesk\3ds Max 2027\3dsmaxbatch.exe",
                                 listener_log=r"C:\Out Dir\l.log")
         self.assertIsInstance(cmd, list)
         self.assertEqual(cmd[0], r"C:\Program Files\Autodesk\3ds Max 2027\3dsmaxbatch.exe")
         self.assertEqual(cmd[1], r"C:\Jobs\My Job\audit.ms")
         self.assertEqual(cmd[cmd.index("-sceneFile") + 1], r"C:\Projects\Lobby Scene\lobby v001.max")
-        self.assertIn('result_path:@"C:\\Out Dir\\r.json"', cmd)
-        self.assertIn('frames:"10"', cmd)
-        self.assertIn('fast:"true"', cmd)
-        self.assertIn('label:"say \\"hi\\""', cmd)
+        # 3dsmaxbatch adds the quotes around an -mxsString value: escaped, never quoted here
+        self.assertIn(r"result_path:C:\\Out Dir\\r.json", cmd)
+        self.assertIn("frames:10", cmd)
+        self.assertIn("fast:true", cmd)
+        self.assertIn("label:say hi", cmd)
         self.assertEqual(cmd[cmd.index("-dm") + 1], "on")
 
     def test_windows_quoting_round_trip(self):
@@ -215,6 +216,8 @@ class BatchTests(unittest.TestCase):
     def test_bad_values(self):
         with self.assertRaises(ValueError):
             max_batch.command("a.ms", args={"bad key": "x"}, exe="x")
+        with self.assertRaises(ValueError):  # 3dsmaxbatch would drop the quotes
+            max_batch.command("a.ms", args={"label": 'say "hi"'}, exe="x")
         with self.assertRaises(ValueError):
             max_batch.command("a.ms", verbosity=9, exe="x")
 

@@ -12,7 +12,7 @@ strings, so Windows paths with spaces survive. Checked against scripting-pipelin
 
 `script` is a .ms/.mxs/.py file, or code text (a string containing a newline), which run_batch
 writes to log_dir first. Code that came from max_wrap.wrap() reports through result_path, which
-run_batch passes as -mxsString result_path:"..." and reads back after the run. An args
+run_batch passes as -mxsString result_path:<path> and reads back after the run. An args
 "result_path" replaces the generated one, for both the argument and the readback; a file already
 there that the run does not rewrite counts as no result. require_result=True (use it for wrapped
 code) fails a run that leaves no result.
@@ -45,28 +45,30 @@ EXIT_CODES = {
 }
 
 
-def _mxs_string(value: str) -> str:
-    """A MAXScript string literal. Verbatim @"..." when the value has a backslash and no quote."""
+def _mxs_escape(value: str) -> str:
+    """The inside of a MAXScript string literal: backslashes doubled. 3dsmaxbatch drops quotes."""
     s = os.fspath(value)
-    if "\\" in s and '"' not in s:
-        return '@"' + s + '"'
-    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    if '"' in s:
+        raise ValueError(f"3dsmaxbatch drops double quotes from -mxsString values: {s!r}")
+    return s.replace("\\", "\\\\")
 
 
 def _arg_pairs(args) -> list[str]:
-    # Each pair is ONE argv item holding literal quotes (string1:"Hello"). subprocess quotes it for
-    # the Windows command line. Whether 3dsmaxbatch reads argv or the raw command line is not
-    # documented: if a key arrives without its quotes, compare with the doc's typed example.  # [verify]
+    # Each pair is ONE argv item. 3dsmaxbatch 2027.3 puts an -mxsString value in "..." itself, as a
+    # regular MAXScript string: the value goes without quotes, backslashes doubled. Quoted or verbatim
+    # (@"...") values fail to parse, an undoubled C:\runs turns \r into a carriage return, and a
+    # double quote inside the value is dropped, so such a value is refused. Spaces pass. An
+    # -mxsValue is read as a MAXScript value: 10, 0.85, true.
     out: list[str] = []
     for key, value in (args or {}).items():
         if not str(key).isidentifier():
             raise ValueError(f"argument name {key!r} must be a MAXScript identifier")
         if isinstance(value, bool):
-            out += ["-mxsValue", f'{key}:"{"true" if value else "false"}"']
+            out += ["-mxsValue", f"{key}:{'true' if value else 'false'}"]
         elif isinstance(value, (int, float)):
-            out += ["-mxsValue", f'{key}:"{value!r}"']  # the doc: the value must be in quotation marks
+            out += ["-mxsValue", f"{key}:{value!r}"]
         else:
-            out += ["-mxsString", f"{key}:{_mxs_string(str(value))}"]
+            out += ["-mxsString", f"{key}:{_mxs_escape(str(value))}"]
     return out
 
 

@@ -143,8 +143,9 @@ Runner side (plain Python 3.10+, any OS, never imports pymxs):
     bound to its file stem. Lead modules it imports are added automatically, as are lead modules the
     chunk itself calls.
 - `max_batch.command(script, scene=None, args=None, exe=None, listener_log=None, log=None, verbosity=3, dialog_monitor=True)`
-  returns an argument list, never a shell string. Strings go as `-mxsString key:"..."`, numbers and
-  booleans as `-mxsValue key:"..."`.
+  returns an argument list, never a shell string. Strings go as `-mxsString key:value`, backslashes
+  doubled (3dsmaxbatch adds the quotes and drops any inside, so a value holding one is refused),
+  numbers and booleans as `-mxsValue key:value`.
 - `max_batch.run_batch(script, scene=None, args=None, timeout=1800, log_dir=None, exe=None, require_result=False)`
   returns `{ok, exit_code, meaning, result, stdout, listener_log, log, command, seconds}`. Pass
   `require_result=True` for a wrapped job: a missing result file then fails the run. Exit codes:
