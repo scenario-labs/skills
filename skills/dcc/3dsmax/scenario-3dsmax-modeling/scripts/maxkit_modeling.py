@@ -227,7 +227,7 @@ def mesh_checks(node, weld_tol=0.001):
         nf = int(po.getNumFaces(tmp))  # [verify]
         nv = int(po.getNumVerts(tmp))  # [verify]
         degs = [int(po.getFaceDeg(tmp, i)) for i in range(1, nf + 1)]  # [verify] 1-based index
-        open_edges = len(list(po.getOpenEdges(tmp)))  # [verify] returns a bitarray
+        open_edges = int(po.getOpenEdges(tmp).numberSet)  # a BitArray: len() counts every edge
         all_verts = rt.execute("#{1..%d}" % nv)
         tmp.weldThreshold = float(weld_tol)  # [verify] weldVertsByThreshold reads this, not an argument
         po.weldVertsByThreshold(tmp, all_verts)  # [verify]

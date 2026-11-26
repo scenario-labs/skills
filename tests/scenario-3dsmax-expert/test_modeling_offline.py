@@ -17,6 +17,17 @@ sys.path[:0] = [str(HERE / "fakes"), str(SCRIPTS)]
 import maxkit_modeling  # noqa: E402
 
 
+class BitArray:
+    """Like a MAXScript BitArray: iterating it yields every bit, numberSet counts the set ones."""
+
+    def __init__(self, size, set_bits=()):
+        self.bits = [i + 1 in set_bits for i in range(size)]
+        self.numberSet = sum(self.bits)
+
+    def __iter__(self):
+        return iter(self.bits)
+
+
 class Poly:
     def __init__(self):
         self.name = "tmp"
@@ -36,7 +47,7 @@ class PolyOp:
         return 4
 
     def getOpenEdges(self, n):
-        return []
+        return BitArray(12, set_bits={3, 7})
 
     def weldVertsByThreshold(self, n, verts):
         n.used_threshold = n.weldThreshold
@@ -78,6 +89,7 @@ class MeshChecks(unittest.TestCase):
         self.assertEqual(rt.tmp.used_threshold, 0.001)
         self.assertEqual(out["weldable_verts"], 2)
         self.assertEqual(out["weld_tol"], 0.001)
+        self.assertEqual(out["open_edges"], 2)
         self.assertEqual(rt.deleted, [rt.tmp])
 
     def test_ms_twin_sets_weld_threshold(self):
