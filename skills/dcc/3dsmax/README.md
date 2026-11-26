@@ -29,8 +29,8 @@ them. Start with the lead skill, `scenario-3dsmax-expert`.
   review rubric, and scripts.
 - Offline checks (`tests/scenario-3dsmax-expert/`): every Python block compiles, every MAXScript
   block and file balances, every code block names its source and channel, and blocks for Autodesk's
-  MCP channel avoid the calls Safe Scene Script Execution blocks. The family suite runs 182 tests
-  offline, 64 of them on the lead's toolkit against a simulated `pymxs`.
+  MCP channel avoid the calls Safe Scene Script Execution blocks. The family suite runs 184 tests
+  offline, 66 of them on the lead's toolkit against a simulated `pymxs`.
 - API names the saved documentation does not confirm are marked `[verify]`: the agent confirms each
   in the live session before relying on it.
 - Blind-graded written plans (12 briefs, one grader each, graded before a final edit pass): 62 %
