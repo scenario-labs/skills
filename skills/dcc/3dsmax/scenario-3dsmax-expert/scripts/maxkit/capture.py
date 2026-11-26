@@ -77,10 +77,13 @@ def _renderer(rt) -> str:
 
 
 def _flat_color(rt, bmp, rows=16, step=4):
-    """The color of a bitmap whose sampled pixels all match, else None. An aborted render is flat."""
+    """The color of a bitmap whose sampled pixels all match, else None. An aborted render is flat.
+
+    rows=None, step=1 reads every pixel: confirm a flat sample with it before failing a render."""
     w, h = int(bmp.width), int(bmp.height)
     seen = None
-    for y in sorted({round(i * (h - 1) / (rows - 1)) for i in range(rows)}):
+    ys = range(h) if rows is None or rows >= h else sorted({round(i * (h - 1) / (rows - 1)) for i in range(rows)})
+    for y in ys:
         for c in list(rt.getPixels(bmp, rt.Point2(0, y), w))[::step]:  # an array of colors
             key = (round(float(c.r)), round(float(c.g)), round(float(c.b)))
             if seen is None:
@@ -153,7 +156,11 @@ def render(path, camera=None, size=None) -> dict:
         raise RuntimeError("Arnold crashes 3ds Max Batch (2027.3): render in a live session, or set "
                            "renderers.current to Default_Scanline_Renderer for a check render")
     if _interactive(rt):
-        missing = sorted({b["file"] for b in _stats._bitmap_files(rt) if not b["exists"]})
+        errors = []
+        missing = sorted({b["file"] for b in _stats._bitmap_files(rt, errors) if not b["exists"]})
+        if errors:
+            raise RuntimeError(f"could not check the scene for missing maps ({'; '.join(errors)}): not rendering, "
+                               "since a missing map opens a modal dialog in a live session")
         if missing:
             raise RuntimeError(f"{len(missing)} missing map(s), first {missing[0]}: a live render stops on the "
                                "modal Missing Map Files dialog and may then abort. Relink or remove them first")
@@ -170,6 +177,8 @@ def render(path, camera=None, size=None) -> dict:
     bmp = rt.render(**kw)
     try:
         flat = _flat_color(rt, bmp) if bmp is not None else None
+        if flat is not None:  # the sample can fall between the rows of a small subject: read every pixel
+            flat = _flat_color(rt, bmp, rows=None, step=1)
         info = {"path": kw["outputFile"], "renderer": renderer,
                 "camera": str(cam.name) if cam is not None else None,
                 "width": int(bmp.width) if bmp is not None else None,

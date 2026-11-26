@@ -551,6 +551,25 @@ class CaptureTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "flat color"):
             capture.render(str(tmpdir() / "r.png"))
 
+    def test_render_keeps_a_subject_between_sampled_rows(self):
+        class Band:  # a 512-row frame lit only on rows 246 to 265, between the sampled rows 238 and 273
+            width, height, closed = 64, 512, False
+
+            def pixel(self, x, y):
+                return (230, 220, 200) if 246 <= y < 266 and 16 <= x < 32 else (0, 0, 0)
+
+        rt.bitmaps = []
+        with mock.patch.object(rt, "render", lambda **kw: Band()):
+            r = capture.render(str(tmpdir() / "band.png"))
+        self.assertEqual(r["height"], 512)
+
+    def test_render_stops_when_the_map_check_fails(self):
+        def broken(cls):
+            raise RuntimeError("getClassInstances failed")
+        with mock.patch.object(rt, "getClassInstances", broken), \
+                self.assertRaisesRegex(RuntimeError, "could not check"):
+            capture.render(str(tmpdir() / "r.png"))
+
     def test_render_refuses_arnold_in_batch(self):
         rt.maxops.batch = True
         with self.assertRaises(RuntimeError):

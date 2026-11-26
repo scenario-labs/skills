@@ -40,11 +40,14 @@ fn mxk_capture_views dir views:#(#view_persp_user, #view_front, #view_left, #vie
 )
 
 -- The color of a bitmap whose sampled pixels all match, else undefined. An aborted render is flat.
-fn mxk_flatColor bmp rows:16 = (
+-- rows:0 step:1 reads every pixel: confirm a flat sample with it before failing a render.
+fn mxk_flatColor bmp rows:16 step:4 = (
     local w = bmp.width, h = bmp.height, seen = undefined, flat = true
+    if rows < 2 or rows > h do rows = h
     for i = 0 to rows - 1 while flat do (
-        local row = getPixels bmp [0, (i * (h - 1) / (rows - 1))] w  -- [verify] getPixels
-        for j = 1 to row.count by 4 while flat do (
+        local y = if rows == h then i else (i * (h - 1) / (rows - 1))
+        local row = getPixels bmp [0, y] w
+        for j = 1 to row.count by step while flat do (
             local k = [(row[j].r as integer), (row[j].g as integer), (row[j].b as integer)]
             if seen == undefined then seen = k else if k != seen do flat = false
         )
@@ -77,7 +80,8 @@ fn mxk_capture_render p cam:undefined w:undefined h:undefined = (
             bmp = render outputFile:outPath vfb:false
     ) catch ()
     local flat = if bmp != undefined then mxk_flatColor bmp else undefined
-    local pairs = #(#("path", outPath), #("saved", doesFileExist outPath), \
+    if flat != undefined do flat = mxk_flatColor bmp rows:0 step:1  -- the sample can miss a small subject
+    local pairs = #(#("path", outPath), #("saved", (doesFileExist outPath) and flat == undefined), \
         #("renderer", ((classOf renderers.current) as string)), \
         #("camera", (if cam == undefined then undefined else cam.name)))
     if flat != undefined do (
