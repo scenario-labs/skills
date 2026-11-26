@@ -5,7 +5,8 @@
 -- Returns one string (JSON-like) as the last expression; the client reads it back.
 (
 	local farCm = 100000.0 -- 1 km [added] archviz default; pass a larger value for site models
-	local cmPer = (case units.SystemType of ( -- [verify] units struct names
+	-- A case in parentheses followed by an operator ends this block for the parser: assign, then scale.
+	local cmPer = case units.SystemType of ( -- [verify] units struct names
 		#inches: 2.54
 		#feet: 30.48
 		#miles: 160934.4
@@ -14,7 +15,8 @@
 		#meters: 100.0
 		#kilometers: 100000.0
 		default: 1.0
-	)) * units.SystemScale -- [verify]
+	)
+	cmPer *= units.SystemScale -- [verify]
 	local ss = stringStream ""
 	local nObj = objects.count
 	local nDefault = 0
