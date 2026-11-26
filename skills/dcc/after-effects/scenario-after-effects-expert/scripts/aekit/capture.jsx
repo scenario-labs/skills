@@ -49,19 +49,24 @@ AEK.capture = (function () {
         AEK.core.ensureFolder(f.parent.fsName);
         var held = [];   // the person's own queued items: switched off for this render, switched back on after it
         for (i = 1; i <= rq.numItems; i++) { if (rq.item(i).status === RQItemStatus.QUEUED) { rq.item(i).render = false; held.push(i); } }
-        rqi = rq.items.add(c);
-        if (opts.renderSettings) { rqi.applyTemplate(opts.renderSettings); }
-        if (opts.start !== undefined) { rqi.timeSpanStart = opts.start; }
-        if (opts.duration !== undefined) { rqi.timeSpanDuration = opts.duration; }
-        om = rqi.outputModule(1);
-        if (opts.template) { om.applyTemplate(opts.template); }
-        om.file = f;
-        rq.render();
-        status = rqi.status;
-        var res = { path: om.file ? om.file.fsName : f.fsName, done: status === RQItemStatus.DONE, status: statusName(status),
-            ms: (new Date()).getTime() - t0, template: opts.template || "", frames: Math.round(rqi.timeSpanDuration * c.frameRate) };
-        rqi.remove();
-        for (i = 0; i < held.length; i++) { try { rq.item(held[i]).render = true; } catch (e) {} }
+        var res;
+        // a bad template name or a failed render throws: the person's queue is put back either way
+        try {
+            rqi = rq.items.add(c);
+            if (opts.renderSettings) { rqi.applyTemplate(opts.renderSettings); }
+            if (opts.start !== undefined) { rqi.timeSpanStart = opts.start; }
+            if (opts.duration !== undefined) { rqi.timeSpanDuration = opts.duration; }
+            om = rqi.outputModule(1);
+            if (opts.template) { om.applyTemplate(opts.template); }
+            om.file = f;
+            rq.render();
+            status = rqi.status;
+            res = { path: om.file ? om.file.fsName : f.fsName, done: status === RQItemStatus.DONE, status: statusName(status),
+                ms: (new Date()).getTime() - t0, template: opts.template || "", frames: Math.round(rqi.timeSpanDuration * c.frameRate) };
+        } finally {
+            try { if (rqi) { rqi.remove(); } } catch (e0) {}
+            for (i = 0; i < held.length; i++) { try { rq.item(held[i]).render = true; } catch (e) {} }
+        }
         if (!res.done) { throw new Error("Render did not finish (status " + res.status + ") for " + path); }
         return res;
     }

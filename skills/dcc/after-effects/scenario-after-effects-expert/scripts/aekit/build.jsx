@@ -32,8 +32,9 @@ AEK.build = (function () {
     //   points, outerRadius, innerRadius, vertices, inTangents, outTangents, closed,
     //   fill:[r,g,b] | null, stroke:{color:[r,g,b], width, cap:"butt"|"round"|"projecting", join:"miter"|"round"|"bevel"}, trim:{start, end, offset}}
     function shapeGroup(l, s) {
-        var root = l.property("ADBE Root Vectors Group"), g = root.addProperty("ADBE Vector Group"), name = s.name || "Shape";
-        var gc = l.property("ADBE Root Vectors Group").property(root.numProperties).property("ADBE Vectors Group"), p, sh, st, tr, i;
+        var root = l.property("ADBE Root Vectors Group"), name = s.name || "Shape";
+        root.addProperty("ADBE Vector Group");
+        var gc = l.property("ADBE Root Vectors Group").property(root.numProperties).property("ADBE Vectors Group"), p, sh, st, tr;
         root.property(root.numProperties).name = name;
         if (s.type === "ellipse") {
             p = gc.addProperty("ADBE Vector Shape - Ellipse");

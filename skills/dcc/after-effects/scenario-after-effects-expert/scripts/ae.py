@@ -14,7 +14,7 @@
   ae.py probe FILE                     ffprobe summary of a delivered file
   ae.py windows [--shot DIR]           After Effects windows (a second window usually means a dialog)
   ae.py key return|escape|tab          press one key in After Effects without bringing it forward
-  ae.py restart --test-session         unattended test sessions only: stop and relaunch a blocked After Effects (lock, cooldown)
+  ae.py restart --test-session         unattended test sessions only, with AE_AGENT_TEST_SESSION=1 set by the operator: stop and relaunch a blocked After Effects (lock, cooldown)
   ae.py sheet OUT.jpg --video FILE --at 0,12,30    contact sheet of frames cut from a delivered movie
 
 A job is the BODY of a function: use `return` to send a value back. The kit modules (aekit/*.jsx)
@@ -244,7 +244,7 @@ def explain_block():
         info["error"] = ("After Effects has not polled for %.0f s: it is busy (render, import, heavy script) or a modal dialog is open." % s["age_s"])
         if panel:
             info["error"] += (" A system panel is open (%s). Keys posted to a background app do not close it. In a person's session, tell them. "
-                              "In an unattended test session, wait until the heartbeat is 180 s old, then `ae.py restart --test-session`." % ", ".join(repr(w["name"]) for w in panel))
+                              "In an unattended test session, wait until the heartbeat is 180 s old, then `ae.py restart --test-session` (needs AE_AGENT_TEST_SESSION=1, set by the operator)." % ", ".join(repr(w["name"]) for w in panel))
         elif extra:
             info["error"] += (" %d extra window(s) on screen: run `ae.py windows --shot DIR` and look. A dialog drawn by After Effects (Crash Repair, disk cache, Home) "
                               "takes `ae.py key return`; a script alert or a Save panel does not." % len(extra))
@@ -610,7 +610,11 @@ def probe(path, count=False):
         e = {"type": s.get("codec_type"), "codec": s.get("codec_name"), "profile": s.get("profile")}
         if s.get("codec_type") == "video":
             num, den = (s.get("r_frame_rate", "0/1").split("/") + ["1"])[:2]
-            e.update({"width": s.get("width"), "height": s.get("height"), "fps": round(float(num) / float(den or 1), 3), "pix_fmt": s.get("pix_fmt"),
+            try:
+                fps = round(float(num) / (float(den) or 1), 3)   # ffprobe writes 0/0 for a stream with no timing
+            except ValueError:
+                fps = None
+            e.update({"width": s.get("width"), "height": s.get("height"), "fps": fps, "pix_fmt": s.get("pix_fmt"),
                       "frames": int(s["nb_frames"]) if str(s.get("nb_frames", "")).isdigit() else None,
                       "color": [s.get("color_range"), s.get("color_space"), s.get("color_transfer"), s.get("color_primaries")],
                       "alpha": bool(re.match(r"(yuva|gbrap|rgba|bgra|argb|abgr|ayuv|ya\d)", s.get("pix_fmt", "")))})
@@ -632,6 +636,8 @@ def render(comp, out, template=None, render_settings=None, start=None, duration=
     res = run_js(body, kit="core,capture", timeout=timeout, channel=channel)
     if res.get("ok") and os.path.exists(res["result"]["path"]):
         res["probe"] = probe(res["result"]["path"])
+        if res["probe"].get("ok") is False and shutil.which("ffprobe"):
+            res.update({"ok": False, "why": "probe", "error": "ffprobe cannot read the rendered file: " + str(res["probe"].get("error", ""))[:300]})
     return res
 
 
@@ -653,7 +659,7 @@ def stop_tree(proc):
             continue
 
 
-AERENDER_FAIL = re.compile(r"disk full|not enough (disk )?space|no space left|\(9988\)|9988|output module failed|unable to write|could not write|can not create a file|error while writing|error: ", re.I)
+AERENDER_FAIL = re.compile(r"disk full|not enough (disk )?space|no space left|\(9988\)|output module failed|unable to write|could not write|can not create a file|error while writing|error: ", re.I)
 AERENDER_RETRY = "rerun once, alone, or give each aerender that runs at the same time its own output folder"
 
 
@@ -688,10 +694,11 @@ def free_gb(path):
         return None
 
 
-def aerender(project, comp, out, template=None, render_settings=None, start=None, end=None, extra=None, min_free_gb=10.0, stall=300, frames_expected=None):
+def aerender(project, comp, out, template=None, render_settings=None, start=None, end=None, extra=None, min_free_gb=10.0, stall=300, frames_expected=None, timeout=None):
     """Render out of process. Fails (ok false, with "why") on: under min_free_gb free before the start, a "Disk Full" or
     output module error line (9988), no new output line for `stall` seconds (aerender is stopped), and a movie whose
-    counted frames differ from the frames aerender reported or from frames_expected."""
+    counted frames differ from the frames aerender reported or from frames_expected. `timeout` (seconds) stops it even while
+    it prints. aerender is stopped too when this call is interrupted (Ctrl-C, SIGTERM)."""
     inst = installs()
     if not inst or not os.path.exists(inst[0]["aerender"]):
         return {"ok": False, "error": "aerender not found"}
@@ -731,25 +738,49 @@ def aerender(project, comp, out, template=None, render_settings=None, start=None
             last[0] = time.time()
     th = threading.Thread(target=reader, daemon=True)
     th.start()
-    stalled = False
-    while proc.poll() is None:
-        if stall and time.time() - last[0] > stall:
-            stalled = True
+    stalled = timed_out = False
+    import signal
+
+    def on_term(signum, frame):
+        raise KeyboardInterrupt("SIGTERM")
+    old_term = None
+    if threading.current_thread() is threading.main_thread():
+        try:
+            old_term = signal.signal(signal.SIGTERM, on_term)
+        except (ValueError, OSError):
+            old_term = None
+    try:
+        while proc.poll() is None:
+            if stall and time.time() - last[0] > stall:
+                stalled = True
+                break
+            if timeout and time.time() - t0 > timeout:
+                timed_out = True
+                break
+            time.sleep(0.5)
+    finally:
+        # the child runs in its own session: a stop, a timeout or an interrupt of this process does not reach it otherwise
+        if proc.poll() is None:
             stop_tree(proc)
-            break
-        time.sleep(0.5)
+        if old_term is not None:
+            signal.signal(signal.SIGTERM, old_term)
     th.join(5)
     rc = proc.wait()
+    try:
+        proc.stdout.close()
+    except OSError:
+        pass
     # "(n)" counts the frames of the span from 1 (also with -s and -e): the highest n is the number of frames rendered
     rendered = [int(m.group(1)) for l in lines for m in re.finditer(r"PROGRESS:\s+[\d:;]+\s+\((\d+)\)", l)]
-    failed = [l for l in lines if AERENDER_FAIL.search(l)]
+    # PROGRESS lines carry frame counts and paths that can match a pattern
+    failed = [l for l in lines if not l.lstrip().startswith("PROGRESS") and AERENDER_FAIL.search(l)]
     span = span_frames(lines)
     res = {"ok": True, "returncode": rc, "seconds": round(time.time() - t0, 1), "command": cmd, "tail": lines[-12:],
            "frames_rendered": max(rendered) if rendered else None, "frames_span": span, "free_gb_before": gb, "free_gb_after": free_gb(out_abs)}
     if created:
         res["created_folder"] = created
     # every check by name: "ok", "failed: ...", or "skipped: ..."; the first failure becomes "why"
-    checks = res["checks"] = {"free_space": "ok", "stall": "failed" if stalled else "ok", "log_errors": "failed: %d line(s)" % len(failed) if failed else "ok",
+    checks = res["checks"] = {"free_space": "ok", "stall": "failed" if stalled else "ok", "timeout": "failed" if timed_out else "ok", "log_errors": "failed: %d line(s)" % len(failed) if failed else "ok",
                               "returncode": "ok" if rc == 0 else "failed: %d" % rc, "file": "ok" if os.path.exists(out_abs) or "[#" in out_abs else "failed: missing",
                               "frames": "skipped: an earlier check failed"}
     if os.path.splitext(out_abs)[1].lower() not in (".mp4", ".mov", ".m4v", ".avi", ".mxf"):
@@ -757,10 +788,12 @@ def aerender(project, comp, out, template=None, render_settings=None, start=None
     why = None
     if stalled:
         why = ("stall", "aerender wrote nothing for %d s and was stopped (a full disk can hang it)." % stall)
+    elif timed_out:
+        why = ("timeout", "aerender ran past --timeout %d s and was stopped." % timeout)
     elif failed and re.search(r"directory does not exist", " ".join(failed), re.I):
         why = ("folder", "aerender reported: " + " | ".join(failed[:3]) + ". Create the output folder, then render again.")
     elif failed:
-        why = ("disk" if re.search(r"disk|space|9988", " ".join(failed), re.I) else "render", "aerender reported: " + " | ".join(failed[:3]))
+        why = ("disk" if re.search(r"disk|space|9988|output module failed", " ".join(failed), re.I) else "render", "aerender reported: " + " | ".join(failed[:3]))
     elif rc != 0:
         why = ("render", "aerender exited with code %d" % rc)
     elif not os.path.exists(out_abs) and "[#" not in out_abs:
@@ -785,18 +818,24 @@ def aerender(project, comp, out, template=None, render_settings=None, start=None
         why = ("disk", "the output volume is full (%.2f GB left): %s" % (left, why[1]))
     if why:
         res.update({"ok": False, "why": why[0], "error": why[1]})
-        if why[0] not in ("disk", "folder"):
+        if why[0] in ("render", "missing", "short"):
             res["retry"] = AERENDER_RETRY
     return res
 
 
+TEST_SESSION_ENV = "AE_AGENT_TEST_SESSION"
+
+
 def restart(test_session=False, min_stale=180, cooldown=300, wait=180):
     """Unattended TEST sessions only: stop a blocked After Effects and start it again in the background.
-    Refuses without --test-session, while the heartbeat is younger than min_stale seconds, while another agent restarts
+    Refuses without --test-session and AE_AGENT_TEST_SESSION=1 in the environment, while the heartbeat is younger than min_stale seconds, while another agent restarts
     (lock folder in the bridge folder), and within `cooldown` seconds of the last restart. Never in a person's session:
     the stop discards their unsaved work and is treated as a crash (Crash Repair at the next launch, answered here)."""
     if not test_session:
         return {"ok": False, "error": "refused: pass --test-session. A restart discards unsaved work: never in a person's session; tell the person which window is open instead."}
+    # the flag is the agent's own claim: the operator who sets up the unattended session also sets this variable
+    if os.environ.get(TEST_SESSION_ENV) != "1":
+        return {"ok": False, "error": "refused: %s=1 is not set in the environment. The person who sets up an unattended test session sets it; an agent never sets it itself. In a person's session, tell them which window is open instead." % TEST_SESSION_ENV}
     root = bridge_dir()
     s = status()
     if s is not None and s["age_s"] < min_stale:
@@ -894,6 +933,7 @@ def doctor():
         c.append("FAIL no After Effects found in the default location")
     if not d["pid"]:
         c.append("FAIL After Effects is not running (the bridge lives inside the application)")
+    read_pref = False
     for p in d["prefs"][:1]:
         startup = os.path.join(p, "Scripts", "Startup", "ae_bridge.jsx")
         d["bridge_installed"] = os.path.exists(startup)
@@ -903,9 +943,13 @@ def doctor():
                 txt = _read_text(pf, errors="replace")
             except Exception:
                 continue
+            read_pref = True
             m = re.search(r'"Pref_SCRIPTING_FILE_NETWORK_SECURITY"\s*=\s*"(\d)"', txt)
             d["allow_file_network"] = (m.group(1) == "1") if m else None
             c.append(("ok   " if d["allow_file_network"] else "FAIL ") + "Allow Scripts to Write Files and Access Network (Settings > Scripting & Expressions)")
+    if not read_pref:
+        d["allow_file_network"] = None
+        c.append("WARN scripting preference not readable: check Settings > Scripting & Expressions > Allow Scripts to Write Files and Access Network by hand")
     s = d["status"]
     if s is None:
         c.append("FAIL no bridge heartbeat: run ae_bridge.jsx once from File > Scripts > Run Script File")
@@ -920,6 +964,7 @@ def doctor():
     for tool in ("ffmpeg", "ffprobe"):
         if not d[tool]:
             c.append("WARN %s not found: no contact sheets, no checks on delivered files" % tool)
+    d["ok"] = not any(x.startswith("FAIL") for x in c)
     return d
 
 
@@ -983,6 +1028,7 @@ def main():
     a.add_argument("--min-free-gb", type=float, default=10.0, help="refuse to start under this much free space on the output volume (default 10)")
     a.add_argument("--stall", type=int, default=300, help="stop aerender after this many seconds without a new output line (default 300, 0 = never)")
     a.add_argument("--frames", type=int, help="frames the file must hold (default: the frames aerender reported)")
+    a.add_argument("--timeout", type=int, help="stop aerender after this many seconds in total, even while it prints (default: none)")
     p = sub.add_parser("probe")
     p.add_argument("file")
     p.add_argument("--count", action="store_true", help="also count the video frames actually in the file")
@@ -991,7 +1037,7 @@ def main():
     k = sub.add_parser("key")
     k.add_argument("key")
     rs = sub.add_parser("restart", help="unattended test sessions only: relaunch a blocked After Effects")
-    rs.add_argument("--test-session", action="store_true", help="required: confirms no person works in this After Effects")
+    rs.add_argument("--test-session", action="store_true", help="required: confirms no person works in this After Effects; AE_AGENT_TEST_SESSION=1 must also be set by the operator")
     rs.add_argument("--min-stale", type=int, default=180, help="refuse while the heartbeat is younger than this (s, default 180)")
     s = sub.add_parser("sheet")
     s.add_argument("out")
@@ -1039,7 +1085,7 @@ def main():
         res = run_js(guard + "return AEK.capture.templates(AEK.core.comp(%s));" % js(args.comp), kit="core,capture", timeout=args.timeout or 60, channel=args.channel)
     elif args.cmd == "aerender":
         res = aerender(args.project, args.comp, args.out, template=args.template, render_settings=args.render_settings, start=args.start, end=args.end,
-                       min_free_gb=args.min_free_gb, stall=args.stall, frames_expected=args.frames)
+                       min_free_gb=args.min_free_gb, stall=args.stall, frames_expected=args.frames, timeout=args.timeout)
     elif args.cmd == "probe":
         res = probe(args.file, count=args.count)
     elif args.cmd == "windows":

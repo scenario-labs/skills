@@ -88,7 +88,8 @@ AEK.motion = (function () {
                 // a separated Position: the hidden leader reports its followers' key count as linear after a reopen; read the followers
                 try { if (p.dimensionsSeparated && p.isSeparationLeader) { return; } } catch (e0) {}
                 try { if (p.numKeys < 2) { return; } } catch (e) { return; }
-                for (k = 1; k <= p.numKeys; k++) { if (p.keyOutInterpolationType(k) === KeyframeInterpolationType.LINEAR && p.keyInInterpolationType(k) === KeyframeInterpolationType.LINEAR) { lin++; } }
+                // a segment is linear when key k leaves linear and key k + 1 arrives linear
+                for (k = 1; k < p.numKeys; k++) { if (p.keyOutInterpolationType(k) === KeyframeInterpolationType.LINEAR && p.keyInInterpolationType(k + 1) === KeyframeInterpolationType.LINEAR) { lin++; } }
                 if (!lin) { return; }
                 var row = { layer: l.name, property: p.name, matchName: p.matchName, keys: p.numKeys, linear: lin };
                 var span = Math.round((p.keyTime(p.numKeys) - p.keyTime(1)) * c.frameRate);

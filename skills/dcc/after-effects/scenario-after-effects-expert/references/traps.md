@@ -54,7 +54,8 @@ Measured on After Effects 27.0, macOS, unless a source is named.
   `Folder.userData` is reliable.
 - After `addProperty` on a shape, text or effect group, earlier references into that layer are
   invalid ("Object is invalid"). Fetch the property again.
-- `canAddProperty(matchName)` returned true for an invented match name. Only `addProperty` throws.
+- On shape Contents, `canAddProperty(matchName)` returned true for an invented match name. Only
+  `addProperty` throws. On a layer's effects group it returned false for an uninstalled effect.
 - `layers.precompose` invalidates the reference to the precomposed layer. Keep its name and index
   first.
 - `app.project.item(i)` order is not creation order. Find a new item by its `id`.

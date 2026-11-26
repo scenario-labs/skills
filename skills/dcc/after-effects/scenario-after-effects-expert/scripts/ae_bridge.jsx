@@ -147,4 +147,3 @@
     };
     try { B.start(); } catch (e5) {}
 })($.global);
-"ae_bridge started";

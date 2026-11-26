@@ -14,6 +14,8 @@ python3 scripts/ae.py run -e "return AEK.core.info();"
 Check in the `doctor` output:
 
 - `checks` holds three `ok` lines: startup bridge, the scripting preference, bridge alive.
+- `ok` is false when any check reads `FAIL`. An unreadable preferences file gives
+  `WARN scripting preference not readable`: check the setting by hand.
 - `status.age_s` is under 6. Above that, After Effects is busy or a dialog is open.
 - `windows` lists one main window. A second window is usually a dialog.
 
@@ -166,6 +168,7 @@ var r = AEK.capture.queue(c, ARGS.out, { template: "H.264 - Match Render Setting
 return { render: r, queueBefore: st.queue, queueAfter: AEK.session.state().queue };
 ```
 
+- `ae.py render` returns `ok: false` with `why: "probe"` when ffprobe cannot read the file.
 - `queueBefore` and `queueAfter` must be equal. On 27.0 a person's `QUEUED` item stayed `QUEUED`
   with `render: true`, and its output file was not written.
 - `renderQueue.render()` blocks the app until it ends. Keep previews short, or use P7.
@@ -188,10 +191,12 @@ python3 scripts/ae.py probe <renders>/MAIN_spot.mp4
   even with a file on disk.
 - `ae.py aerender` checks what a full disk breaks. Read `ok` and `why`:
   - `disk`: under `--min-free-gb` (default 10 GB) free on the output volume before the start, a
-    "Disk Full", "output module failed" or 9988 line, or a volume left under 50 MB. Free space, then
-    render again.
+    "Disk Full", "output module failed" or "(9988)" line, or a volume left under 50 MB. Free space,
+    then render again.
   - `stall`: no output line for `--stall` seconds (default 300). aerender, its child and
     aerendercore are stopped. Raise `--stall` above the slowest frame time for heavy comps.
+  - `timeout`: the render ran past `--timeout` seconds (no limit by default) and was stopped.
+    aerender is also stopped when `ae.py` is interrupted.
   - `short`: the movie holds fewer frames (`ffprobe -count_packets`) than expected, or none. The
     expected count is `--frames N`, else the span from the log header (`Duration` and `Frame Rate`),
     else the highest PROGRESS frame. Measured on 27.0: a ProRes file cut at 1 MB on a full volume
@@ -203,13 +208,13 @@ python3 scripts/ae.py probe <renders>/MAIN_spot.mp4
     `created_folder`.
 - One `ae.py aerender` call writes one file from one output module template. Two deliverables of one
   comp are two renders, or one master render and a conversion with ffmpeg.
-- `checks` names each check (`free_space`, `stall`, `log_errors`, `returncode`, `file`, `frames`)
-  with `ok`, `failed: ...` or `skipped: ...`. Read it to see which one failed. An audio or image
-  output reads `frames: not counted`.
-- On `render`, `missing` or `short`, the result carries `retry`: rerun once, alone. Two aerenders
-  that write into one output folder at the same time collide: one exits 0 with "Can not create a
-  file in directory ... Try checking write permissions" and no file. Measured on 27.0: 5 of 6 pairs
-  lost one render; with one output folder each, 6 of 6 rendered.
+- `checks` names each check (`free_space`, `stall`, `timeout`, `log_errors`, `returncode`, `file`,
+  `frames`) with `ok`, `failed: ...` or `skipped: ...`. Read it to see which one failed. An audio or
+  image output reads `frames: not counted`.
+- On `render`, `missing` or `short` only, the result carries `retry`: rerun once, alone. Two
+  aerenders that write into one output folder at the same time collide: one exits 0 with "Can not
+  create a file in directory ... Try checking write permissions" and no file. Measured on 27.0: 5 of
+  6 pairs lost one render; with one output folder each, 6 of 6 rendered.
 - `frames_rendered`, `frames_span`, `free_gb_before` and `free_gb_after` come back in every result.
   `--frames N` sets the count the file must hold.
 - A whole render queue (no `--comp`) goes through the scripting skill's `render_guarded.sh`. Both
@@ -230,13 +235,15 @@ python3 scripts/ae.py probe <renders>/MAIN_spot.mp4
 5. A script alert, a Save As or file panel, or a macOS privacy prompt: keys posted to a background
    app do not close it. In a person's session, tell them which window is open and wait.
 6. Unattended test session only (no person works in this After Effects), heartbeat older than 180 s:
-   `ae.py restart --test-session`. It refuses while the heartbeat is younger, while another agent
-   restarts (lock folder in the bridge folder) and within 5 minutes of the last restart. It stops
-   the app, relaunches it in the background (`open -g`, no focus taken), answers Crash Repair with
-   Return and waits for the heartbeat. Measured end to end: 13 s from stop to the first heartbeat
-   (new process at 1 s, Return at 10 s), front app unchanged, next job ok. It waits for the old
-   process to exit before `open -g` (an `open` sent right after the stop starts nothing) and retries
-   `open` up to three times. Unsaved work in the open project is lost: never in a person's session.
+   `ae.py restart --test-session`. The operator who sets up the session also sets
+   `AE_AGENT_TEST_SESSION=1` in the environment; an agent never sets it. It refuses without it,
+   while the heartbeat is younger, while another agent restarts (lock folder in the bridge folder)
+   and within 5 minutes of the last restart. It stops the app, relaunches it in the background
+   (`open -g`, no focus taken), answers Crash Repair with Return and waits for the heartbeat.
+   Measured end to end: 13 s from stop to the first heartbeat (new process at 1 s, Return at 10 s),
+   front app unchanged, next job ok. It waits for the old process to exit before `open -g` (an
+   `open` sent right after the stop starts nothing) and retries `open` up to three times. Unsaved
+   work in the open project is lost: never in a person's session.
 7. After a restart, read the result of the job that was running: it comes back with
    `interrupted: true` and is not run again. Check the project state before sending anything else.
 8. `interrupted: true` while the After Effects process did not change: an instance started by

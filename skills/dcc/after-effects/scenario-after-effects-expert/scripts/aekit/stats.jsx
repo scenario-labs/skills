@@ -27,7 +27,7 @@ AEK.stats = (function () {
         for (i = 1; i <= app.project.numItems; i++) {
             it = app.project.item(i);
             if (it instanceof CompItem) {
-                s.comps++; cs = compStats(it); s.perComp[it.name] = cs;
+                s.comps++; cs = compStats(it); s.perComp[String(it.id)] = cs;   // by item id: two comps can share a name
                 s.layers += cs.layers; s.keys += cs.keys; s.expressions += cs.expressions; s.effects += cs.effects;
             } else if (it instanceof FootageItem) {
                 s.footage++;
@@ -41,8 +41,8 @@ AEK.stats = (function () {
         var d = {}, k, keys = ["items", "comps", "footage", "folders", "missingFootage", "solids", "layers", "keys", "expressions", "effects", "renderQueue"], i;
         for (i = 0; i < keys.length; i++) { k = keys[i]; if (a[k] !== b[k]) { d[k] = [a[k], b[k]]; } }
         d.compsAdded = []; d.compsRemoved = [];
-        for (k in b.perComp) { if (b.perComp.hasOwnProperty(k) && !a.perComp[k]) { d.compsAdded.push(k); } }
-        for (k in a.perComp) { if (a.perComp.hasOwnProperty(k) && !b.perComp[k]) { d.compsRemoved.push(k); } }
+        for (k in b.perComp) { if (b.perComp.hasOwnProperty(k) && !a.perComp[k]) { d.compsAdded.push(b.perComp[k].name + " (id " + k + ")"); } }
+        for (k in a.perComp) { if (a.perComp.hasOwnProperty(k) && !b.perComp[k]) { d.compsRemoved.push(a.perComp[k].name + " (id " + k + ")"); } }
         return d;
     }
     return { comp: compStats, snapshot: snapshot, diff: diff };

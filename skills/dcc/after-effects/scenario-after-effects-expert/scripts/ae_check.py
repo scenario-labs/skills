@@ -114,14 +114,21 @@ EXPR = [
 
 def strip_comments_and_strings(src, keep_strings=False):
     out, i, n = [], 0, len(src)
+    last = [""]  # last non-space character emitted: a join of `out` per character made the scan quadratic
+
+    def emit(s):
+        out.append(s)
+        t = s.rstrip()
+        if t:
+            last[0] = t[-1]
     while i < n:
         c = src[i]
-        prev = "".join(out).rstrip()[-1:] if out else ""
+        prev = last[0]
         if c == "/" and i + 1 < n and src[i + 1] not in "/*" and (prev == "" or prev in "(,=:[!&|?{};"):
             j = i + 1  # regular expression literal
             while j < n and src[j] != "/" and src[j] != "\n":
                 j += 2 if src[j] == "\\" else 1
-            out.append("/re/")
+            emit("/re/")
             i = j + 1
         elif c == "/" and i + 1 < n and src[i + 1] == "/":
             while i < n and src[i] != "\n":
@@ -129,18 +136,21 @@ def strip_comments_and_strings(src, keep_strings=False):
         elif c == "/" and i + 1 < n and src[i + 1] == "*":
             j = src.find("*/", i + 2)
             j = n if j < 0 else j + 2
-            out.append("\n" * src[i:j].count("\n"))
+            emit("\n" * src[i:j].count("\n"))
             i = j
         elif c in "\"'":
             j = i + 1
             while j < n and src[j] != c and src[j] != "\n":
                 j += 2 if src[j] == "\\" else 1
-            out.append(src[i:j + 1] if keep_strings else c + "s" * 0 + c)
-            if keep_strings is False and src[i + 1:i + 3] == "~/":
-                out[-1] = c + "~/" + c
+            if keep_strings:
+                emit(src[i:j + 1])
+            elif src[i + 1:i + 3] == "~/":
+                emit(c + "~/" + c)
+            else:
+                emit(c + c)
             i = j + 1
         else:
-            out.append(c)
+            emit(c)
             i += 1
     return "".join(out)
 
@@ -154,6 +164,11 @@ def scan(src, rules, name):
                 if msg.startswith("remove():") and removes_own(clean, line):
                     continue
                 findings.append({"severity": sev, "file": name, "line": n, "message": msg, "source": src.split("\n")[n - 1].strip()[:140]})
+    if rules is ES3:
+        # the line rule above cannot see a comma whose closing bracket sits on a later line
+        for m in re.finditer(r",[ \t]*\n\s*[\]}]", clean):
+            n = clean.count("\n", 0, m.start()) + 1
+            findings.append({"severity": "error", "file": name, "line": n, "message": "trailing comma: a syntax error in ES3 objects and arrays", "source": src.split("\n")[n - 1].strip()[:140]})
     # the display-name rule needs the string content
     for n, line in enumerate(src.split("\n"), 1):
         if line.strip().startswith("//"):

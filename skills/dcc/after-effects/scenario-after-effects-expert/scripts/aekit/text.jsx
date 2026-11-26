@@ -21,7 +21,11 @@ AEK.text = (function () {
         if (o.tracking !== undefined) { d.tracking = o.tracking; }
         if (o.leading !== undefined) { d.leading = o.leading; }
         if (o.justify) { d.justification = JUST[o.justify]; }
-        if (o.allCaps !== undefined) { d.allCaps = o.allCaps; }
+        // allCaps is read-only on TextDocument; fontCapsOption (24.0+) is the writable one
+        if (o.allCaps !== undefined) {
+            if (typeof FontCapsOption !== "undefined") { d.fontCapsOption = o.allCaps ? FontCapsOption.FONT_ALL_CAPS : FontCapsOption.FONT_NORMAL_CAPS; }
+            else { d.allCaps = o.allCaps; }
+        }
         p.setValue(d);
         d = p.value;
         return { text: d.text, font: d.font, size: d.fontSize, tracking: d.tracking, leading: d.leading };
@@ -89,13 +93,14 @@ AEK.text = (function () {
     // amount (percent, -100 to 100): the selector's Amount, under ADBE Text Range Advanced > ADBE Text Selector Max Amount. Key it for a tracking-in.
     // Animator values are OFFSETS from the base style; the selector decides which characters get them.
     function animator(l, o) {
-        var anims = l.property("ADBE Text Properties").property("ADBE Text Animators"), a = anims.addProperty("ADBE Text Animator"), idx = a.propertyIndex, k, p, sel, adv, pre;
+        var anims = l.property("ADBE Text Properties").property("ADBE Text Animators"), a = anims.addProperty("ADBE Text Animator"), idx = a.propertyIndex, k, sel, adv, pre;
         function A() { return l.property("ADBE Text Properties").property("ADBE Text Animators").property(idx); }
         if (o.name) { A().name = o.name; }
         for (k in o.properties) {
             if (!o.properties.hasOwnProperty(k)) { continue; }
             if (!PROPS[k]) { throw new Error("animator(): unknown property '" + k + "'"); }
-            p = A().property("ADBE Text Animator Properties").addProperty(PROPS[k]);
+            // addProperty invalidates what it returns for the next sibling: the value is set on a fresh lookup
+            A().property("ADBE Text Animator Properties").addProperty(PROPS[k]);
             A().property("ADBE Text Animator Properties").property(PROPS[k]).setValue(o.properties[k]);
         }
         A().property("ADBE Text Selectors").addProperty("ADBE Text Selector");

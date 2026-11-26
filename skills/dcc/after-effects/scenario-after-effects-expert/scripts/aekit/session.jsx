@@ -103,16 +103,19 @@ AEK.session = (function () {
     // (replaceSource with a shorter clip pulls the out point in). opts: {fit: "cover"|"contain", bin}
     function swap(l, it, opts) {
         opts = opts || {};
+        // k maps layer time to source time: a layer at 50 % stretch plays 10 s of comp time from 20 s of source
         var c = l.containingComp, before = print(l), wasLocked = l.locked, pw = before.width, ph = before.height, res, fitComp, inner, s,
-            span = l.outPoint - l.inPoint, offset = Math.max(0, l.inPoint - l.startTime), named = l.name, clipDur;
+            k = Math.abs(l.stretch) ? 100 / Math.abs(l.stretch) : 1,
+            span = (l.outPoint - l.inPoint) * k, offset = Math.max(0, l.inPoint - l.startTime) * k, srcEnd = (l.outPoint - l.startTime) * k,
+            named = l.name, clipDur;
         if (!pw || !ph) { throw new Error("Layer '" + l.name + "' has no source size: not a placeholder that can be swapped"); }
         if (wasLocked) { l.locked = false; }
         res = { layer: named, comp: c.name, item: it.name, mode: "direct", fitComp: "", scale: 100, shortByFrames: 0 };
         clipDur = (it.mainSource && it.mainSource.isStill) ? span : it.duration;
-        if (it.width === pw && it.height === ph && offset === 0 && clipDur + 0.0005 >= l.outPoint - l.startTime) {
+        if (it.width === pw && it.height === ph && offset === 0 && clipDur + 0.0005 >= srcEnd) {
             l.replaceSource(it, false);
         } else {
-            fitComp = app.project.items.addComp("FIT_" + named + "_" + c.name, pw, ph, 1, Math.max(c.frameDuration, l.outPoint - l.startTime), c.frameRate);
+            fitComp = app.project.items.addComp("FIT_" + named + "_" + c.name, pw, ph, 1, Math.max(c.frameDuration, srcEnd), c.frameRate);
             if (opts.bin) { fitComp.parentFolder = (typeof opts.bin === "string") ? AEK.core.bin(opts.bin) : opts.bin; }
             inner = fitComp.layers.add(it);
             inner.startTime = offset;
@@ -125,7 +128,7 @@ AEK.session = (function () {
         if (Math.abs(l.inPoint - before.inPoint) > 0.0005 || Math.abs(l.outPoint - before.outPoint) > 0.0005) {
             l.inPoint = before.inPoint; l.outPoint = before.outPoint;
         }
-        if (clipDur + 0.0005 < span) { res.shortByFrames = Math.round((span - clipDur) * c.frameRate); }
+        if (clipDur + 0.0005 < span) { res.shortByFrames = Math.round((span - clipDur) / k * c.frameRate); }
         if (wasLocked) { l.locked = true; }
         res.changed = changed(before, print(l));
         res.upscaled = res.scale > 105;
@@ -144,7 +147,8 @@ AEK.session = (function () {
     function setFont(ps, opts) {
         opts = opts || {};
         var all = opts.comps || AEK.core.comps(), out = [], i, j, l, st, k, td, runs, r0, r1, row, wasLocked;
-        function exists(name) { return app.fonts.getFontsByPostScriptName(name).length > 0; }
+        // a reopened project can keep a stand-in object under a missing font's name: isSubstitute tells it apart
+        function exists(name) { var f = app.fonts.getFontsByPostScriptName(name); return !!(f && f.length) && f[0].isSubstitute !== true; }
         function target(old) { return (opts.map && opts.map[old]) ? opts.map[old] : ps; }
         function apply(td) {
             var n = td.text.length, a = 0, b, f;

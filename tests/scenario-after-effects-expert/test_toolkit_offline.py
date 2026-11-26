@@ -81,6 +81,7 @@ class Mailbox(unittest.TestCase):
         thread = threading.Thread(target=serve, daemon=True)
         thread.start()
         self.addCleanup(thread.join, 5)
+        seen["thread"] = thread
         return seen
 
 
@@ -169,6 +170,7 @@ class BridgeChannel(Mailbox):
         self.beat()
         seen = self.stand_in_bridge(lambda text: {"ok": True, "result": {"items": 7}, "log": [], "ms": 12})
         res = ae.run_js("return app.project.numItems;", kit="none", timeout=10)
+        seen["thread"].join(5)  # the stand-in archives the job after it publishes the result
         self.assertTrue(res["ok"], res)
         self.assertEqual(res["result"], {"items": 7})
         self.assertIn("return app.project.numItems;", seen["text"])

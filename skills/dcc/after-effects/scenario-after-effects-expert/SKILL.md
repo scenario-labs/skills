@@ -49,7 +49,8 @@ schemas and flag the gap.
   duration in frames.
 - **Fonts and plugins:** check that a font or an effect exists before using it
   (`AEK.text.fontExists`, false for a missing font and for its stand-in;
-  `effects.canAddProperty(matchName)`, false for an unknown effect).
+  `effects.canAddProperty(matchName)`, false for an uninstalled effect; on shape Contents it is true
+  for any name).
 
 ## Channel decision
 
@@ -121,10 +122,10 @@ Runner, Python standard library, any OS: [ae.py](scripts/ae.py).
 - `run job.jsx | -e code [--undo NAME] [--args JSON] [--lib helper.jsx] [--kit all|none|a,b] [--timeout S] [--channel ...]`.
 - `frames COMP --times a,b | --spread N --out DIR [--sheet] [--project P]`, `sheet OUT.jpg IMG...`,
   `render COMP --out FILE --template T`, `templates COMP`.
-- `aerender --project P --comp C --out FILE [--template T] [--min-free-gb 10] [--stall 300] [--frames N]`,
+- `aerender --project P --comp C --out FILE [--template T] [--min-free-gb 10] [--stall 300] [--frames N] [--timeout S]`,
   `probe FILE [--count]` (alpha, timecode track, counted frames).
-- `windows [--shot DIR]`, `key return|escape|tab`, `restart --test-session` (P8),
-  `sheet OUT --video FILE --at 0,30` (frames cut from a movie).
+- `windows [--shot DIR]`, `key return|escape|tab`, `restart --test-session` (P8, operator sets
+  `AE_AGENT_TEST_SESSION=1`), `sheet OUT --video FILE --at 0,30` (frames cut from a movie).
 
 A job is the body of a function in ExtendScript (ES3). `return` sends a value back. `ARGS` holds the
 `--args` JSON. The result is
@@ -202,9 +203,9 @@ file. `ae.py run` refuses a job with a raw `app.open`, `app.newProject` or `app.
   no empty frame inside a layer's span, no clipped glow at a layer edge.
 - Delivered files: `ae.py probe --count` matches the brief (codec, size, frame rate, counted frames,
   alpha, no stray timecode track).
-- `ae.py aerender` fails with a `why` (`disk`, `stall`, `short`, `render`, `missing`, `folder`) and
-  names each check in `checks`; aerender exits 0 on all. It creates a missing output folder. On
-  `render`, `missing` or `short`, rerun once, alone.
+- `ae.py aerender` fails with a `why` (`disk`, `stall`, `timeout`, `short`, `render`, `missing`,
+  `folder`) and names each check in `checks`; aerender exits 0 on all. It creates a missing output
+  folder. On `render`, `missing` or `short`, rerun once, alone.
 - Report: assumptions listed, skipped items listed with the reason, the undo name given, the
   person's file untouched.
 
