@@ -11,9 +11,12 @@ Pillow or ImageMagick (`montage`).
     contact_sheet(paths, out, cols=4, thumb=400, labels=True) -> str (a new file, never overwritten)
 
 image_checks keys: width, height, mean_luma (0..1), std_luma, clipped (fraction > 0.98), crushed
-(fraction < 0.02), center_luma, surround_luma, center_contrast (|center - surround|), unique_colors
-(on the sample), alpha_mean, flags (all_black, all_white, uniform, mostly_clipped, mostly_crushed,
-transparent, low_contrast_center), histogram (16 luma bins).
+(fraction < 0.02, transparent black pixels included), center_luma, surround_luma, center_contrast
+(|center - surround|), unique_colors (on the sample), alpha_mean, flags (all_black, all_white, uniform,
+mostly_clipped, mostly_crushed, transparent, low_contrast_center), histogram (16 luma bins), ok.
+ok is false on a broken image: all_black, all_white, uniform, transparent or low_contrast_center.
+mostly_clipped and mostly_crushed are notes to report: a white sky, an unlit floor or a transparent
+background raises them in a sound render.
 Thresholds are [added] defaults, tuned to catch an empty or broken render, not to judge art.
 """
 from __future__ import annotations
@@ -165,6 +168,9 @@ def _luma(p) -> float:
     return 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2]
 
 
+FAILING = ("all_black", "all_white", "uniform", "transparent", "low_contrast_center")  # flags that make ok false
+
+
 def image_checks(path, sample: int = 256) -> dict:
     """Numbers and flags that catch broken renders: black, white, uniform, clipped, crushed, empty center."""
     w, h, gw, gh, px = _samples(path, sample)
@@ -205,7 +211,7 @@ def image_checks(path, sample: int = 256) -> dict:
             "clipped": round(clipped, 4), "crushed": round(crushed, 4), "center_luma": round(cm, 4),
             "surround_luma": round(sm, 4), "center_contrast": round(abs(cm - sm), 4), "unique_colors": uniq,
             "alpha_mean": round(alpha, 4), "histogram": [round(c / n, 4) for c in hist], "flags": flags,
-            "ok": not any(f in flags for f in ("all_black", "all_white", "uniform", "transparent"))}
+            "ok": not any(f in flags for f in FAILING)}
 
 
 def _regrid(px, gw, gh, tw, th):

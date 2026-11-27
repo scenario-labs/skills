@@ -151,13 +151,16 @@ Then, runner side:
 # status: checked offline with generated images only
 import max_review
 paths = payload["result"]["captures"]  # payload: the parsed result JSON
-flags = {p: max_review.image_checks(p)["flags"] for p in paths}
+checks = {p: max_review.image_checks(p) for p in paths}
+failed = {p: c["flags"] for p, c in checks.items() if not c["ok"]}
 sheet = max_review.contact_sheet(paths, "review/sheet_v001.png", cols=2, thumb=600)  # returns a free name
 ```
 
 Check:
 
-- No `all_black`, `uniform` or `low_contrast_center` flag.
+- `failed` is empty: no image has `all_black`, `all_white`, `uniform`, `transparent` or
+  `low_contrast_center`. Report `mostly_clipped` and `mostly_crushed` without failing: a white sky,
+  an unlit floor or a transparent background raises them.
 - Open the sheet. The subject reads in every view, and the top view matches the plan dimensions.
 
 ## P6. Render test views through cameras
@@ -192,7 +195,7 @@ different in Arnold. A final Arnold render needs a live session.
 
 Check:
 
-- Each file exists, and `image_checks` raises no flags.
+- Each file exists, and `image_checks` returns `ok` (the flags are in P5).
 - The render time is reported. A render that never returns usually means a modal dialog (units
   mismatch; `capture.render` refuses missing maps before rendering in a live session).
 

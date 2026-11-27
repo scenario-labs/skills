@@ -697,6 +697,15 @@ class ReviewFixTests(unittest.TestCase):
         _, _, ch, rows = max_review._read_png(rgb)
         self.assertEqual((ch, rows[0]), (4, bytes([0, 0, 0, 0, 0, 0, 0, 255])))
 
+    def test_ok_fails_broken_images_only(self):
+        d = tmpdir()
+        flat = _png(d / "flat.png", 8, 8, 0, [bytes([128, 134] * 4)] * 8)  # near uniform, nothing in the center
+        bold = _png(d / "bold.png", 8, 8, 0, [bytes([0] * 5 + [255] * 3)] * 8)  # mostly black and white
+        with mock.patch.object(max_review, "HAVE_PIL", False):
+            a, b = max_review.image_checks(flat), max_review.image_checks(bold)
+        self.assertEqual((a["flags"], a["ok"]), (["low_contrast_center"], False))
+        self.assertEqual((sorted(b["flags"]), b["ok"]), (["mostly_clipped", "mostly_crushed"], True))
+
     def test_compare_keeps_unmatched_pixels(self):
         d = tmpdir()
         a = _png(d / "a.png", 1, 1, 2, [b"\xff\x00\x00"])

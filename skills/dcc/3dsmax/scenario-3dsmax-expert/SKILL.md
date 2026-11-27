@@ -191,8 +191,9 @@ saved docs.
 
 - Measurable: zero audit errors, or each one reported. The diff shows only the intended changes.
   `run_batch` exit code 0 and `result.ok` true.
-- Visual: the contact sheet shows the subject in every view, with no `all_black`, `uniform` or
-  `low_contrast_center` flag. Cameras are captured with Safe Frame on.
+- Visual: the contact sheet shows the subject in every view, and `image_checks()` returns `ok` for
+  each image. `mostly_clipped` and `mostly_crushed` are reported, not failed. Cameras are captured
+  with Safe Frame on.
 - Report: assumptions and new file names listed, the user's file untouched.
 
 ## Common mistakes

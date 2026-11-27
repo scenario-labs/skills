@@ -30,8 +30,8 @@ it as open.
 ## C. Looking
 
 - [ ] Four views or the camera renders were captured to new files.
-- [ ] `image_checks` raised none of `all_black`, `all_white`, `uniform`, `mostly_clipped`,
-      `low_contrast_center`.
+- [ ] `image_checks` returned `ok` for every image (none of `all_black`, `all_white`, `uniform`,
+      `transparent`, `low_contrast_center`); `mostly_clipped` and `mostly_crushed` were reported.
 - [ ] One contact sheet was read (not each image), and what it shows was described in one line per
       view.
 - [ ] Top and front views were checked against plan dimensions when geometry changed.
