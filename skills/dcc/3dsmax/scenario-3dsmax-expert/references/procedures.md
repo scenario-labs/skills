@@ -145,6 +145,22 @@ for cam_name in cameras:  # list passed by the caller; never guess camera names
 result = {"renders": out, "renderer": str(rt.classOf(rt.renderers.current))}
 ```
 
+An Arnold scene in batch: `capture.render` refuses Arnold there. Run the P3 save first, then render
+the check image with Scanline set in memory only.
+
+```python
+# channel: batch
+# checked against scripting-pipeline__pymxs-renderer-2027.md (renderers.current)
+scene_renderer = str(rt.classOf(rt.renderers.current))
+if "arnold" in scene_renderer.lower() and rt.maxops.isInNonInteractiveMode():
+    rt.renderers.current = rt.Default_Scanline_Renderer()  # in memory: never save after this line
+check = capture.render(render_dir + "/check_" + cam_name + ".png", camera=cam_name, size=1280)  # both passed by the caller
+result = {"render": check, "scene_renderer": scene_renderer}
+```
+
+Report the scene's renderer and say the check image is Scanline: materials, lights and exposure look
+different in Arnold. A final Arnold render needs a live session.
+
 Check:
 
 - Each file exists, and `image_checks` raises no flags.

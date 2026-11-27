@@ -39,7 +39,9 @@ the gap.
 - **Channel:** ask the user, or run `max_env.doctor()` (below).
 - **Release:** 3ds Max 2027.3 assumed. 3ds Max opens older files, never newer ones (ArchViz
   Explained, xGm1OBHd50Y 00:01:23).
-- **Renderer:** read `renderers.current`. Never switch it unasked.
+- **Renderer:** read `renderers.current`. Never switch it unasked. Batch cannot render Arnold: for a
+  check image, set `Default_Scanline_Renderer` after the save, never save again, and say the look
+  differs (P6).
 - **Units:** system unit and scale from `stats.snapshot()`. State the unit behind every number.
 - **Deliverable:** stills, animation, engine export (FBX, glTF, USD) or a clean scene.
 - **Marked-up screenshot:** ask for one. Rectangles and splines on a capture carry intent better
@@ -218,9 +220,9 @@ saved docs.
 - Merge with `#autoRenameDups #renameMtlDups #neverReparent`: the defaults prompt, and an incoming
   "Wood" never replaces the scene's "Wood".
 - One main thread: a long script freezes the UI. Split work into stages.
-- Save first: an Arnold render can crash 3ds Max (in 3dsmaxbatch 2027.3, every one did). Reading a
-  Batch Render view's camera crashes it. Biped `scaleFootprints` crashes it. After a crash the user
-  reopens 3ds Max and the MCP connection (c3acjyR7j7E 00:09:37); resume from the last `_v002`.
+- Save first: an Arnold render can crash 3ds Max. Reading a Batch Render view's camera crashes it.
+  Biped `scaleFootprints` crashes it. After a crash the user reopens 3ds Max and the MCP connection
+  (c3acjyR7j7E 00:09:37); resume from the last `_v002`.
 - Autosave and `holdMaxFile()` are no substitute for a saved `_v002`.
 - Scripts cannot overwrite rendered `.tx` files, re-imported `.abc` caches, or text files a script
   opened. Write new names.
@@ -258,7 +260,6 @@ From `3dsmax-version-deltas` (2027.3, released 2026-11-19):
 
 - Python 3.13.9 and PySide 6.8.3. MaxPlus and Python 2 are gone.
 - OpenPBR is the default material since 2026, and the viewport shows a simplified OpenPBR shader.
-- New scenes start under OCIO. Studios on V-Ray or Corona often switch to Gamma workflow by choice.
 - 2027.1 adds unit rules in Preferences > Files and `loadMaxFile ignoreFileUnits:`.
 - 2027.3 adds the Khronos glTF importer and exporter. The exporter flattens hierarchies and drops
   vertex colors. Exporter settings are global state, not part of a job.
