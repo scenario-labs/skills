@@ -300,6 +300,24 @@
         "scenario-roblox-ui",
         "scenario-roblox-vfx-audio"
       ]
+    },
+    {
+      "title": "Expert tools: 3ds Max",
+      "description": "DCC software. A lead and eleven specialists that drive Autodesk 3ds Max 2027 on Windows through pymxs and MAXScript, Autodesk's 3ds Max MCP server, community bridges, or 3dsmaxbatch: scenes, modeling, game assets, UVs and baking, materials, lighting and rendering with Arnold, V-Ray, and Corona, archviz, animation and rigging, FX, scripting, generated assets from Scenario.",
+      "skills": [
+        "scenario-3dsmax-expert",
+        "scenario-3dsmax-animation-rigging",
+        "scenario-3dsmax-archviz",
+        "scenario-3dsmax-fx",
+        "scenario-3dsmax-game-assets",
+        "scenario-3dsmax-generation",
+        "scenario-3dsmax-lighting-rendering",
+        "scenario-3dsmax-materials",
+        "scenario-3dsmax-modeling",
+        "scenario-3dsmax-scene",
+        "scenario-3dsmax-scripting",
+        "scenario-3dsmax-uv-baking"
+      ]
     }
   ]
 }

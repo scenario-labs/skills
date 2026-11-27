@@ -23,14 +23,14 @@ REPO = HERE.parents[1]
 FAMILY = next(REPO.glob(f"skills/*/{APP}"))
 
 # Modules that only exist inside the application, or behind its Python bridge.
-APP_MODULES = {"bpy", "bmesh", "mathutils", "gpu", "maya", "pymel", "unreal", "zbrush", "UnityEngine"}
+APP_MODULES = {"bpy", "bmesh", "mathutils", "gpu", "maya", "pymel", "unreal", "zbrush", "UnityEngine", "pymxs"}
 # Scripts that only ever load inside the application, where the lead's launcher
 # has already put its own scripts/ on sys.path.
 INSIDE_APP = {"zb_plugin_ops"}
 
 
 SKILLS = {path.parent.name for path in REPO.glob("skills/**/SKILL.md")}
-SKILL_LIKE = re.compile(r"(scenario-)?(zbrush|blender|maya|unreal|unity|godot|roblox)-[a-z0-9*-]+")
+SKILL_LIKE = re.compile(r"(scenario-)?(zbrush|blender|maya|unreal|unity|godot|roblox|3dsmax)-[a-z0-9*-]+")
 
 
 class FamilyScripts(unittest.TestCase):
