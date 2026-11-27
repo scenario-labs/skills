@@ -106,14 +106,13 @@ What to tell the user to set up:
    `saveMaxFile` overwrites silently.
 4. **Change inside one undo record**, on a new layer, kept editable. One stage per call.
 5. **Verify with numbers:** a second snapshot and `stats.diff(a, b)`, then `audit.all()` again.
-6. **Verify by looking:** `capture.views()` (persp, front, left, top), one
-   `max_review.contact_sheet()`, `image_checks()` on each image. Look at the sheet before claiming
-   anything.
+6. **Verify by looking:** `capture.views()` (persp, front, left, top); in batch, `capture.render()`
+   through the cameras and a temporary top camera (P5). Then one `max_review.contact_sheet()` and
+   `image_checks()` on each image. Look at the sheet before claiming anything.
 7. **Report:** what changed (the diff), the files written, captures, open findings, the assumptions
    list and minutes per stage.
 
-Expect 10 to 22 minutes per task through a bridge. Connection drops cost 25 of 35 minutes in one
-test (UuWmWAvB4Y0). Save before long steps.
+Expect 10 to 22 minutes per task through a bridge (UuWmWAvB4Y0). Save before long steps.
 
 ```python
 # channel: batch | bridge | handoff
@@ -263,7 +262,6 @@ From `3dsmax-version-deltas` (2027.3, released 2026-11-19):
 - 2027.1 adds unit rules in Preferences > Files and `loadMaxFile ignoreFileUnits:`.
 - 2027.3 adds the Khronos glTF importer and exporter. The exporter flattens hierarchies and drops
   vertex colors. Exporter settings are global state, not part of a job.
-- Bake to Texture replaces Render to Texture. Phoenix has been at end of support since April 2026.
 - More traps across domains: [references/traps.md](references/traps.md).
 
 ## References

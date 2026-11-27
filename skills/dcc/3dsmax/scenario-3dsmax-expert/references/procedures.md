@@ -105,7 +105,7 @@ hidden on their layer until the user approves.
 
 ## P5. Verify by looking
 
-Goal: four framed views, one contact sheet, read once.
+Goal: four framed views (in batch, the cameras and a top view), one contact sheet, read once.
 
 ```python
 # channel: bridge | handoff (no viewport in batch)
@@ -113,6 +113,36 @@ Goal: four framed views, one contact sheet, read once.
 shots = capture.views(capture_dir, views=("persp", "front", "left", "top"), size=1024)  # capture_dir passed by the caller
 result = {"captures": [s["path"] for s in shots]}
 ```
+
+In batch there is no viewport: render the cameras (P6) and a top view through a temporary
+orthographic camera framed on the visible geometry. Run it after the P3 save, so the camera is never
+saved.
+
+```python
+# channel: batch
+# checked against scripting-pipeline__pymxs-renderer-2027.md (render camera:)
+import math
+
+boxes = [rt.nodeGetBoundingBox(o, rt.matrix3(1)) for o in rt.geometry if not o.isHidden]  # [verify] isHidden
+lo = [min(float(getattr(b[0], a)) for b in boxes) for a in "xyz"]
+hi = [max(float(getattr(b[1], a)) for b in boxes) for a in "xyz"]
+aspect = float(rt.renderWidth) / float(rt.renderHeight)  # [verify] renderWidth; size=<int> keeps the aspect
+width = 1.1 * max(hi[0] - lo[0], (hi[1] - lo[1]) * aspect)  # the frame's horizontal span, system units
+dist = (hi[2] - lo[2]) + 2 * width  # keeps the camera above the geometry
+cx, cy = (lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2
+tgt = rt.Targetobject(pos=rt.Point3(cx, cy, lo[2]))
+cam = rt.Targetcamera(name="TMP_top_check", pos=rt.Point3(cx, cy - 0.001 * width, lo[2] + dist), target=tgt)  # offset: +Y up
+cam.orthoProjection = True  # [verify] orthoProjection
+cam.fov = math.degrees(2 * math.atan(width / (2 * dist)))  # ortho frame width = 2 * dist * tan(fov / 2)
+try:
+    top = capture.render(render_dir + "/top_check.png", camera=cam, size=1280)  # render_dir passed by the caller
+finally:
+    rt.delete(cam)  # its target goes with it
+result = {"top": top, "frame_width": width}
+```
+
+Use a Targetcamera: its orthographic frame follows the distance to its target. The frame is
+`frame_width` system units across, which gives the scale for checking dimensions.
 
 Then, runner side:
 
@@ -129,7 +159,6 @@ Check:
 
 - No `all_black`, `uniform` or `low_contrast_center` flag.
 - Open the sheet. The subject reads in every view, and the top view matches the plan dimensions.
-- In batch, render through cameras with `capture.render()` instead.
 
 ## P6. Render test views through cameras
 
