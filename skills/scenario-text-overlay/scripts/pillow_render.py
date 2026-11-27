@@ -20,6 +20,7 @@ from html_render import MIN_SHRINK_SIZE, google_fonts_url
 _FONT_FETCH_TIMEOUT_S = 20
 
 _ARABIC_RE = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]")
+_BIDI_CONTROLS_RE = re.compile(r"[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]")
 
 _SYSTEM_FONT_CANDIDATES = (
     "/System/Library/Fonts/Helvetica.ttc",
@@ -35,16 +36,62 @@ _ARABIC_FONT_CANDIDATES = (
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
 )
 
+_ARABIC_RESHAPER = None
 
-def _shape_arabic_if_needed(text):
-    if not _ARABIC_RE.search(text):
-        return text
-    try:
+
+def _has_raqm():
+    from PIL import features
+
+    return bool(features.check("raqm"))
+
+
+def _uses_raqm(font):
+    if font is None:
+        return False
+    from PIL import ImageFont
+
+    raqm = getattr(getattr(ImageFont, "Layout", None), "RAQM", None)
+    return raqm is not None and getattr(font, "layout_engine", None) == raqm
+
+
+def _get_arabic_reshaper():
+    global _ARABIC_RESHAPER
+    if _ARABIC_RESHAPER is None:
         import importlib
 
         arabic_reshaper = importlib.import_module("arabic_reshaper")
-        bidi_algo = importlib.import_module("bidi.algorithm")
-        return bidi_algo.get_display(arabic_reshaper.reshape(text))
+        # Keep vowel marks and pre-shift them so visual-order reversal leaves
+        # each combining mark after its base glyph.
+        _ARABIC_RESHAPER = arabic_reshaper.ArabicReshaper(
+            configuration={"delete_harakat": False, "shift_harakat_position": True}
+        )
+    return _ARABIC_RESHAPER
+
+
+def _bidi_display(text):
+    import importlib
+
+    bidi = importlib.import_module("bidi")
+    get_display = getattr(bidi, "get_display", None)
+    if get_display is None:
+        get_display = importlib.import_module("bidi.algorithm").get_display
+    try:
+        visual = get_display(text)
+    except AssertionError:
+        # Legacy bidi.algorithm asserts on U+2066..U+2069 isolate controls.
+        try:
+            visual = get_display(_BIDI_CONTROLS_RE.sub("", text))
+        except AssertionError:
+            return text
+    return _BIDI_CONTROLS_RE.sub("", visual)
+
+
+def _shape_arabic_if_needed(text, font=None):
+    if not _ARABIC_RE.search(text) or _uses_raqm(font):
+        return text
+    try:
+        reshaper = _get_arabic_reshaper()
+        return _bidi_display(reshaper.reshape(text))
     except ImportError:
         return text
 
@@ -99,10 +146,9 @@ def _load_font(font_path, size, is_arabic=False):
 
     if is_arabic and not font_path:
         candidates = list(_ARABIC_FONT_CANDIDATES)
-    elif is_arabic and font_path:
-        # Google Fonts .ttf subsets lack U+FE70..U+FEFF Arabic Presentation Forms
-        # required by arabic_reshaper when Pillow has no libraqm; prefer system
-        # Arabic-Presentation-Forms font first.
+    elif is_arabic and font_path and not _has_raqm():
+        # Without libraqm, arabic_reshaper emits U+FE70..U+FEFF presentation
+        # forms that Google Fonts .ttf subsets omit; try system Arabic fonts first.
         candidates = list(_ARABIC_FONT_CANDIDATES) + [font_path]
     else:
         candidates = [font_path] if font_path else list(_SYSTEM_FONT_CANDIDATES)
@@ -110,7 +156,7 @@ def _load_font(font_path, size, is_arabic=False):
         try:
             return ImageFont.truetype(str(candidate), size)
         except OSError:
-            if font_path and not is_arabic:
+            if font_path and candidate == font_path:
                 raise SystemExit(f"cannot load font {font_path!r}")
     try:
         return ImageFont.load_default(size=size)
@@ -119,7 +165,7 @@ def _load_font(font_path, size, is_arabic=False):
 
 
 def _line_width(draw, line, font, letter_spacing):
-    shaped = _shape_arabic_if_needed(line)
+    shaped = _shape_arabic_if_needed(line, font=font)
     width = draw.textlength(shaped, font=font)
     if letter_spacing and len(shaped) > 1 and not _ARABIC_RE.search(line):
         width += letter_spacing * (len(shaped) - 1)
@@ -151,7 +197,7 @@ def _wrap(draw, text, font, max_width, letter_spacing):
 
 
 def _draw_line(draw, x, y, line, font, color, letter_spacing):
-    shaped = _shape_arabic_if_needed(line)
+    shaped = _shape_arabic_if_needed(line, font=font)
     if not letter_spacing or _ARABIC_RE.search(line):
         draw.text((x, y), shaped, font=font, fill=color)
         return

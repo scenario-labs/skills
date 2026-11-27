@@ -232,5 +232,93 @@ class CacheFontTests(unittest.TestCase):
         self.assertEqual(len(handles), 1)
 
 
+class ArabicShapingAndFontTests(unittest.TestCase):
+    def setUp(self):
+        self.original_download = pillow_render._download
+        pillow_render._download = offline
+
+    def tearDown(self):
+        pillow_render._download = self.original_download
+
+    def test_basic_layout_preserves_harakat_and_placement(self):
+        from PIL import ImageFont
+
+        basic_font = mock.Mock(layout_engine=ImageFont.Layout.BASIC)
+        shaped = pillow_render._shape_arabic_if_needed("بُ", font=basic_font)
+        self.assertIn("\u064f", shaped)
+        self.assertEqual(list(shaped), ["\ufe8f", "\u064f"])
+
+        vocalized = pillow_render._shape_arabic_if_needed("مَرْحَبًا", font=basic_font)
+        for mark in ("\u064e", "\u0652", "\u064b"):
+            self.assertIn(mark, vocalized)
+
+    def test_raqm_layout_passes_logical_text_unchanged(self):
+        from PIL import ImageFont
+
+        raqm_font = mock.Mock(layout_engine=ImageFont.Layout.RAQM)
+        text = "مرحبا بالعالم"
+        self.assertEqual(pillow_render._shape_arabic_if_needed(text, font=raqm_font), text)
+
+    def test_load_font_prefers_explicit_face_when_raqm_available(self):
+        sentinel = object()
+        seen = []
+
+        def fake_truetype(path, size):
+            seen.append(path)
+            return sentinel
+
+        with (
+            mock.patch.object(pillow_render, "_has_raqm", return_value=True),
+            mock.patch("PIL.ImageFont.truetype", side_effect=fake_truetype),
+        ):
+            loaded = pillow_render._load_font("/custom/Brand.ttf", 36, is_arabic=True)
+        self.assertIs(loaded, sentinel)
+        self.assertEqual(seen, ["/custom/Brand.ttf"])
+
+        seen.clear()
+        with (
+            mock.patch.object(pillow_render, "_has_raqm", return_value=False),
+            mock.patch("PIL.ImageFont.truetype", side_effect=fake_truetype),
+        ):
+            pillow_render._load_font("/custom/Brand.ttf", 36, is_arabic=True)
+        self.assertEqual(seen, [pillow_render._ARABIC_FONT_CANDIDATES[0]])
+
+    def test_arabic_with_bidi_isolates_renders_and_handles_legacy_assertion(self):
+        with redirect_stderr(io.StringIO()):
+            image = pillow_render.render_text_payload(
+                payload(), "مرحبا \u2067عالم\u2069 123"
+            )
+        self.assertIsNotNone(image.getchannel("A").getbbox())
+
+        def legacy_get_display(value):
+            if any(ch in value for ch in "\u2066\u2067\u2068\u2069"):
+                raise AssertionError("isolate unsupported")
+            return value[::-1]
+
+        fake_bidi = mock.Mock(spec=[])
+        fake_algo = mock.Mock(get_display=legacy_get_display)
+
+        def fake_import(name):
+            if name == "bidi":
+                return fake_bidi
+            if name == "bidi.algorithm":
+                return fake_algo
+            raise ImportError(name)
+
+        with mock.patch("importlib.import_module", side_effect=fake_import):
+            out = pillow_render._bidi_display("abc\u2067def\u2069")
+        self.assertEqual(out, "fedcba")
+
+    def test_arabic_skips_positive_letter_spacing(self):
+        with redirect_stderr(io.StringIO()):
+            plain = pillow_render.render_text_payload(payload(), "مرحبا")
+            spaced = pillow_render.render_text_payload(
+                payload(letter_spacing=12.0), "مرحبا"
+            )
+        self.assertEqual(
+            plain.getchannel("A").getbbox(), spaced.getchannel("A").getbbox()
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
