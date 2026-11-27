@@ -2,8 +2,9 @@
 """max_review: offline checks on PNGs captured or rendered from 3ds Max (maxkit.capture, a
 manual screenshot, or a render). Runner side; never imports pymxs.
 
-System python3. Uses Pillow when installed; otherwise a pure-Python PNG reader (8-bit, non-interlaced) so the checks still run. contact_sheet needs Pillow or
-ImageMagick (`montage`).
+System python3. Uses Pillow when installed; otherwise a pure-Python PNG reader (8- or 16-bit,
+non-interlaced; capture.render's PNGs are 16-bit RGBA) so the checks still run. contact_sheet needs
+Pillow or ImageMagick (`montage`).
 
     image_checks(path, sample=256) -> dict
     compare(a, b, sample=256) -> dict
@@ -38,7 +39,8 @@ except Exception:  # pragma: no cover
 # ---------------------------------------------------------------- pure-Python PNG reader
 
 def _read_png(path) -> tuple[int, int, int, list[bytes]]:
-    """Return (width, height, channels, rows) for an 8-bit non-interlaced PNG (gray, GA, RGB, RGBA, palette)."""
+    """Return (width, height, channels, rows) of 8-bit samples for an 8- or 16-bit non-interlaced PNG (gray, GA, RGB,
+    RGBA, palette). 16-bit samples keep their high byte."""
     data = Path(path).read_bytes()
     if data[:8] != b"\x89PNG\r\n\x1a\n":
         raise ValueError(f"{path} is not a PNG")
@@ -59,11 +61,12 @@ def _read_png(path) -> tuple[int, int, int, list[bytes]]:
             idat += body
         elif typ == b"IEND":
             break
-    if depth != 8 or interlace:
-        raise ValueError("only 8-bit non-interlaced PNG supported without Pillow")
+    if depth not in (8, 16) or interlace:
+        raise ValueError("only 8- or 16-bit non-interlaced PNG supported without Pillow")
     ch = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ctype]
+    bpp = ch * depth // 8  # bytes per pixel: the filters' unit
     raw = zlib.decompress(idat)
-    stride = w * ch
+    stride = w * bpp
     rows, prev = [], bytearray(stride)
     i = 0
     for _ in range(h):
@@ -71,26 +74,34 @@ def _read_png(path) -> tuple[int, int, int, list[bytes]]:
         line = bytearray(raw[i + 1:i + 1 + stride])
         i += 1 + stride
         if f == 1:
-            for x in range(ch, stride):
-                line[x] = (line[x] + line[x - ch]) & 255
+            for x in range(bpp, stride):
+                line[x] = (line[x] + line[x - bpp]) & 255
         elif f == 2:
             for x in range(stride):
                 line[x] = (line[x] + prev[x]) & 255
         elif f == 3:
             for x in range(stride):
-                a = line[x - ch] if x >= ch else 0
+                a = line[x - bpp] if x >= bpp else 0
                 line[x] = (line[x] + ((a + prev[x]) >> 1)) & 255
         elif f == 4:
             for x in range(stride):
-                a = line[x - ch] if x >= ch else 0
+                a = line[x - bpp] if x >= bpp else 0
                 b = prev[x]
-                c = prev[x - ch] if x >= ch else 0
+                c = prev[x - bpp] if x >= bpp else 0
                 p = a + b - c
                 pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
                 pr = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
                 line[x] = (line[x] + pr) & 255
         rows.append(bytes(line))
         prev = line
+    if depth == 16:
+        if ctype in (0, 2) and trns:  # match the 16-bit key before the low bytes go
+            n = 2 * ch
+            rows = [b"".join(r[x:x + n:2] + (b"\x00" if r[x:x + n] == trns[:n] else b"\xff")
+                             for x in range(0, len(r), n)) for r in rows]
+            ch, trns = ch + 1, None  # gray and alpha, or RGBA
+        else:
+            rows = [r[::2] for r in rows]
     if ctype == 3 and plte:
         alpha = trns or b""
         pal = [plte[j:j + 3] + bytes([alpha[j // 3] if j // 3 < len(alpha) else 255])

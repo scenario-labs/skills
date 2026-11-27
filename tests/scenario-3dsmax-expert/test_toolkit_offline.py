@@ -632,21 +632,41 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(e["result"]["n"], "A")
 
 
-def _png(path, w, h, ctype, rows, plte=None, trns=None):
-    """A minimal 8-bit PNG (filter 0 rows) for the no-Pillow reader."""
+def _png(path, w, h, ctype, rows, plte=None, trns=None, depth=8, filters=None):
+    """A minimal PNG for the no-Pillow reader. rows are already filtered with filters (default 0)."""
     import struct
     import zlib
 
     def chunk(t, body):
         return struct.pack(">I", len(body)) + t + body + struct.pack(">I", zlib.crc32(t + body) & 0xFFFFFFFF)
-    data = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, ctype, 0, 0, 0))
+    data = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, depth, ctype, 0, 0, 0))
     if plte:
         data += chunk(b"PLTE", plte)
     if trns:
         data += chunk(b"tRNS", trns)
-    data += chunk(b"IDAT", zlib.compress(b"".join(b"\x00" + r for r in rows))) + chunk(b"IEND", b"")
+    filters = filters or [0] * len(rows)
+    data += chunk(b"IDAT", zlib.compress(b"".join(bytes([f]) + r for f, r in zip(filters, rows)))) + chunk(b"IEND", b"")
     Path(path).write_bytes(data)
     return str(path)
+
+
+def _filter_rows(rows, bpp, filters):
+    """Encode raw rows with PNG filters 0 (None), 1 (Sub) or 4 (Paeth)."""
+    out, prev = [], bytes(len(rows[0]))
+    for raw, f in zip(rows, filters):
+        enc = bytearray(raw)
+        for x in range(len(raw)):
+            a = raw[x - bpp] if x >= bpp else 0
+            if f == 1:
+                enc[x] = (raw[x] - a) & 255
+            elif f == 4:
+                b, c = prev[x], (prev[x - bpp] if x >= bpp else 0)
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                enc[x] = (raw[x] - (a if (pa <= pb and pa <= pc) else (b if pb <= pc else c))) & 255
+        out.append(bytes(enc))
+        prev = raw
+    return out
 
 
 class ReviewFixTests(unittest.TestCase):
@@ -659,6 +679,23 @@ class ReviewFixTests(unittest.TestCase):
         rgb = _png(d / "rgb.png", 2, 1, 2, [b"\xff\x00\x00\x00\x00\xff"], trns=b"\x00\xff\x00\x00\x00\x00")
         _, _, ch, rows = max_review._read_png(rgb)
         self.assertEqual((ch, rows[0][3], rows[0][7]), (4, 0, 255))
+
+    def test_16_bit_png_read_without_pillow(self):
+        import struct
+        d = tmpdir()
+        px = [[(0xFFFF, 0, 0, 0xFFFF), (0, 0x8000, 0, 0xFFFF)], [(0, 0, 0xFFFF, 0), (0x1234, 0x5678, 0x9ABC, 0xFFFF)]]
+        raw = [b"".join(struct.pack(">4H", *p) for p in row) for row in px]
+        p = _png(d / "rgba16.png", 2, 2, 6, _filter_rows(raw, 8, [1, 4]), depth=16, filters=[1, 4])
+        w, h, ch, rows = max_review._read_png(p)  # Sub and Paeth step by 8 bytes per pixel here
+        self.assertEqual((w, h, ch), (2, 2, 4))
+        self.assertEqual(rows, [bytes([255, 0, 0, 255, 0, 128, 0, 255]), bytes([0, 0, 255, 0, 18, 86, 154, 255])])
+        with mock.patch.object(max_review, "HAVE_PIL", False):
+            self.assertEqual(max_review.image_checks(p)["alpha_mean"], 0.75)
+        # a 16-bit tRNS key matches the full value, not only the high byte
+        rgb = _png(d / "rgb16.png", 2, 1, 2, [struct.pack(">6H", 0, 0, 1, 0, 0, 2)], trns=struct.pack(">3H", 0, 0, 1),
+                   depth=16)
+        _, _, ch, rows = max_review._read_png(rgb)
+        self.assertEqual((ch, rows[0]), (4, bytes([0, 0, 0, 0, 0, 0, 0, 255])))
 
     def test_compare_keeps_unmatched_pixels(self):
         d = tmpdir()
