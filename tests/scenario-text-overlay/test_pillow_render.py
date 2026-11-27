@@ -309,6 +309,39 @@ class ArabicShapingAndFontTests(unittest.TestCase):
             out = pillow_render._bidi_display("abc\u2067def\u2069")
         self.assertEqual(out, "fedcba")
 
+    def test_basic_layout_mirrors_paired_punctuation_and_retains_isolates(self):
+        from PIL import ImageFont
+
+        basic_font = mock.Mock(layout_engine=ImageFont.Layout.BASIC)
+        shaped_parens = pillow_render._shape_arabic_if_needed("(مرحبا)", font=basic_font)
+        self.assertEqual(shaped_parens, "(ﺎﺒﺣﺮﻣ)")
+
+        shaped_mixed = pillow_render._shape_arabic_if_needed(
+            "مرحبا (Hello) عالم", font=basic_font
+        )
+        self.assertIn("(Hello)", shaped_mixed)
+        self.assertNotIn(")Hello(", shaped_mixed)
+
+        shaped_ltr = pillow_render._shape_arabic_if_needed(
+            "Hello (مرحبا) world", font=basic_font
+        )
+        self.assertEqual(shaped_ltr, "Hello (ﺎﺒﺣﺮﻣ) world")
+
+        shaped_rli = pillow_render._shape_arabic_if_needed(
+            "مرحبا \u2067(عالم)\u2069 123", font=basic_font
+        )
+        self.assertEqual(shaped_rli, "123 (ﻢﻟﺎﻋ) ﺎﺒﺣﺮﻣ")
+
+        shaped_lri = pillow_render._shape_arabic_if_needed(
+            "مرحبا \u2066(Hello)\u2069 عالم", font=basic_font
+        )
+        self.assertEqual(shaped_lri, "ﻢﻟﺎﻋ (Hello) ﺎﺒﺣﺮﻣ")
+
+        shaped_math = pillow_render._shape_arabic_if_needed(
+            "1 < 2 و 3 < 4", font=basic_font
+        )
+        self.assertEqual(shaped_math, "4 > 3 ﻭ 2 > 1")
+
     def test_arabic_skips_positive_letter_spacing(self):
         with redirect_stderr(io.StringIO()):
             plain = pillow_render.render_text_payload(payload(), "مرحبا")

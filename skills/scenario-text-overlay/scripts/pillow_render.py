@@ -21,6 +21,16 @@ _FONT_FETCH_TIMEOUT_S = 20
 
 _ARABIC_RE = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]")
 _BIDI_CONTROLS_RE = re.compile(r"[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]")
+_L1_IGNORABLE = frozenset(("BN", "LRE", "RLE", "LRO", "RLO", "PDF"))
+_L1_WHITESPACE = frozenset(("WS", "FSI", "LRI", "RLI", "PDI"))
+_L1_BREAK = frozenset(("B", "S"))
+_BIDI_DEBUG_RE = re.compile(
+    r"original_classes:\s*\[(.*?)\],\s*levels:\s*\[(.*?)\],\s*paragraphs:\s*\[(.*?)\],\s*\}\s*\Z",
+    re.S,
+)
+_BIDI_CLASS_RE = re.compile(r"([A-Z]+),")
+_BIDI_LEVEL_RE = re.compile(r"Level\(\s*(\d+),\s*\)")
+_BIDI_PARA_RE = re.compile(r"range:\s*(\d+)\.\.(\d+),\s*level:\s*Level\(\s*(\d+),\s*\)")
 
 _SYSTEM_FONT_CANDIDATES = (
     "/System/Library/Fonts/Helvetica.ttc",
@@ -68,19 +78,116 @@ def _get_arabic_reshaper():
     return _ARABIC_RESHAPER
 
 
+def _apply_l1_levels(classes, levels, para_level):
+    reset = True
+    for idx in range(len(classes) - 1, -1, -1):
+        cls = classes[idx]
+        if cls in _L1_BREAK:
+            levels[idx] = para_level
+            reset = True
+        elif reset and (cls in _L1_WHITESPACE or cls in _L1_IGNORABLE):
+            levels[idx] = para_level
+        elif cls in _L1_IGNORABLE:
+            pass
+        else:
+            reset = False
+    after_break = False
+    for idx, cls in enumerate(classes):
+        if cls in _L1_BREAK:
+            after_break = True
+        elif after_break and cls in _L1_IGNORABLE:
+            levels[idx] = para_level
+        else:
+            after_break = False
+
+
+def _reorder_and_mirror(text, get_display, mirrored):
+    if not text or not mirrored or not any(ch in mirrored for ch in text):
+        return get_display(text)
+    # python-bidi 0.6.x wraps unicode_bidi::reorder_line, which skips UAX #9 L4
+    # glyph mirroring; read its resolved levels so odd-level brackets mirror.
+    dbg = get_display(text, debug=True)
+    idx_cls = dbg.rfind("\n    original_classes: [") if isinstance(dbg, str) else -1
+    match = _BIDI_DEBUG_RE.search(dbg, idx_cls) if idx_cls >= 0 else None
+    if match is None:
+        return get_display(text)
+    byte_classes = _BIDI_CLASS_RE.findall(match.group(1))
+    byte_levels = [int(raw) for raw in _BIDI_LEVEL_RE.findall(match.group(2))]
+    paras = [
+        (int(start), int(end), int(level))
+        for start, end, level in _BIDI_PARA_RE.findall(match.group(3))
+    ]
+    chars = list(text)
+    byte_to_char = {}
+    char_byte_start = []
+    pos = 0
+    for idx, ch in enumerate(chars):
+        byte_to_char[pos] = idx
+        char_byte_start.append(pos)
+        pos += len(ch.encode("utf-8"))
+    byte_to_char[pos] = len(chars)
+    if pos != len(byte_levels) or pos != len(byte_classes):
+        return get_display(text)
+
+    parts = []
+    for start_b, end_b, para_level in paras:
+        c_start, c_end = byte_to_char[start_b], byte_to_char[end_b]
+        p_chars = chars[c_start:c_end]
+        levels = [byte_levels[char_byte_start[i]] for i in range(c_start, c_end)]
+        classes = [byte_classes[char_byte_start[i]] for i in range(c_start, c_end)]
+        _apply_l1_levels(classes, levels, para_level)
+        p_chars = [
+            mirrored.get(ch, ch) if (levels[i] & 1) else ch for i, ch in enumerate(p_chars)
+        ]
+        if levels:
+            max_lv = max(levels)
+            min_odd = min((lv for lv in levels if lv & 1), default=None)
+            if min_odd is not None:
+                for lv in range(max_lv, min_odd - 1, -1):
+                    run_start = None
+                    for idx, clv in enumerate(levels):
+                        if clv >= lv:
+                            if run_start is None:
+                                run_start = idx
+                        elif run_start is not None:
+                            p_chars[run_start:idx] = reversed(p_chars[run_start:idx])
+                            run_start = None
+                    if run_start is not None:
+                        p_chars[run_start:] = reversed(p_chars[run_start:])
+        parts.append("".join(p_chars))
+    return "".join(parts)
+
+
 def _bidi_display(text):
     import importlib
 
     bidi = importlib.import_module("bidi")
     get_display = getattr(bidi, "get_display", None)
-    if get_display is None:
-        get_display = importlib.import_module("bidi.algorithm").get_display
+    if get_display is not None:
+        try:
+            mirrored = getattr(importlib.import_module("bidi.algorithm"), "MIRRORED", None)
+        except ImportError:
+            mirrored = None
+        if not isinstance(mirrored, dict):
+            mirrored = {}
+        try:
+            visual = _reorder_and_mirror(text, get_display, mirrored)
+        except TypeError:
+            visual = get_display(text)
+        except AssertionError:
+            try:
+                visual = get_display(_BIDI_CONTROLS_RE.sub("", text))
+            except AssertionError:
+                return text
+        return _BIDI_CONTROLS_RE.sub("", visual)
+
+    legacy_get_display = importlib.import_module("bidi.algorithm").get_display
     try:
-        visual = get_display(text)
+        visual = legacy_get_display(text)
     except AssertionError:
         # Legacy bidi.algorithm asserts on U+2066..U+2069 isolate controls.
         try:
-            visual = get_display(_BIDI_CONTROLS_RE.sub("", text))
+            visual = legacy_get_display(_BIDI_CONTROLS_RE.sub("", text))
         except AssertionError:
             return text
     return _BIDI_CONTROLS_RE.sub("", visual)
