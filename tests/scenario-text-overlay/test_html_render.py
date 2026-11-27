@@ -89,6 +89,11 @@ class TextLayerHtmlTests(unittest.TestCase):
         self.assertIn("document.fonts.ready", document)
         self.assertIn("data-fitted-size", document)
 
+    def test_text_layer_sets_auto_dir_and_plaintext_bidi(self):
+        document = html_render.text_layer_html(self.payload(), "مرحبا 123", 40)
+        self.assertIn('id="overlay-text" dir="auto"', document)
+        self.assertIn("unicode-bidi:plaintext;", document)
+
 
 class FindBrowserTests(unittest.TestCase):
     def test_explicit_missing_browser_errors(self):
