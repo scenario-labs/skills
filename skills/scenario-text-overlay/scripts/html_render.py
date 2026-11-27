@@ -128,7 +128,8 @@ def text_layer_html(payload, rendered_text, font_size, measure=False):
         f"{head}"
         f'<div style="position:absolute; left:{box["x"]}px; top:{box["y"]}px;'
         f' width:{box["w"]}px;{clip}">'
-        f'<div id="overlay-text" style="'
+        f'<div id="overlay-text" dir="auto" style="'
+        f"unicode-bidi:plaintext; "
         f"font-family:'{family}'; "
         f"font-weight:{payload['font_weight']}; "
         f"font-style:{payload['font_style']}; "

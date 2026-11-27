@@ -19,12 +19,34 @@ from html_render import MIN_SHRINK_SIZE, google_fonts_url
 
 _FONT_FETCH_TIMEOUT_S = 20
 
+_ARABIC_RE = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]")
+
 _SYSTEM_FONT_CANDIDATES = (
     "/System/Library/Fonts/Helvetica.ttc",
     "/System/Library/Fonts/Supplemental/Arial.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
 )
+
+_ARABIC_FONT_CANDIDATES = (
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+    "/System/Library/Fonts/GeezaPro.ttc",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+)
+
+
+def _shape_arabic_if_needed(text):
+    if not _ARABIC_RE.search(text):
+        return text
+    try:
+        import importlib
+
+        arabic_reshaper = importlib.import_module("arabic_reshaper")
+        bidi_algo = importlib.import_module("bidi.algorithm")
+        return bidi_algo.get_display(arabic_reshaper.reshape(text))
+    except ImportError:
+        return text
 
 
 def _download(url):
@@ -72,15 +94,23 @@ def resolve_font_file(payload):
     return None
 
 
-def _load_font(font_path, size):
+def _load_font(font_path, size, is_arabic=False):
     from PIL import ImageFont
 
-    candidates = [font_path] if font_path else list(_SYSTEM_FONT_CANDIDATES)
+    if is_arabic and not font_path:
+        candidates = list(_ARABIC_FONT_CANDIDATES)
+    elif is_arabic and font_path:
+        # Google Fonts .ttf subsets lack U+FE70..U+FEFF Arabic Presentation Forms
+        # required by arabic_reshaper when Pillow has no libraqm; prefer system
+        # Arabic-Presentation-Forms font first.
+        candidates = list(_ARABIC_FONT_CANDIDATES) + [font_path]
+    else:
+        candidates = [font_path] if font_path else list(_SYSTEM_FONT_CANDIDATES)
     for candidate in candidates:
         try:
             return ImageFont.truetype(str(candidate), size)
         except OSError:
-            if font_path:
+            if font_path and not is_arabic:
                 raise SystemExit(f"cannot load font {font_path!r}")
     try:
         return ImageFont.load_default(size=size)
@@ -89,9 +119,10 @@ def _load_font(font_path, size):
 
 
 def _line_width(draw, line, font, letter_spacing):
-    width = draw.textlength(line, font=font)
-    if letter_spacing and len(line) > 1:
-        width += letter_spacing * (len(line) - 1)
+    shaped = _shape_arabic_if_needed(line)
+    width = draw.textlength(shaped, font=font)
+    if letter_spacing and len(shaped) > 1 and not _ARABIC_RE.search(line):
+        width += letter_spacing * (len(shaped) - 1)
     return width
 
 
@@ -120,16 +151,17 @@ def _wrap(draw, text, font, max_width, letter_spacing):
 
 
 def _draw_line(draw, x, y, line, font, color, letter_spacing):
-    if not letter_spacing:
-        draw.text((x, y), line, font=font, fill=color)
+    shaped = _shape_arabic_if_needed(line)
+    if not letter_spacing or _ARABIC_RE.search(line):
+        draw.text((x, y), shaped, font=font, fill=color)
         return
-    for char in line:
+    for char in shaped:
         draw.text((x, y), char, font=font, fill=color)
         x += draw.textlength(char, font=font) + letter_spacing
 
 
 def _layout(draw, payload, text, size, font_path):
-    font = _load_font(font_path, size)
+    font = _load_font(font_path, size, is_arabic=bool(_ARABIC_RE.search(text)))
     lines = _wrap(draw, text, font, payload["bbox"][0]["w"], payload["letter_spacing"])
     line_height = round(size * payload["line_height"])
     return font, lines, line_height

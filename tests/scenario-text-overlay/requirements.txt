@@ -1,2 +1,4 @@
 chevron
 pillow
+arabic-reshaper
+python-bidi
